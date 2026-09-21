@@ -38,3 +38,7 @@ the `<name>` should be a parameter, not an edit. Easy to bring up, easy to tear 
 ## Session
 
 - Created: 2026-07-20
+
+## Disposition (2026-09-21)
+
+Retired from this board: operator infrastructure, not template content. Zero repo files would change (kind ingress config, MikroTik NAT, a `dev` convenience command for personal dogfooding). Belongs with the operator's infra tasks. Still depends on 070 (Aspire publish) landing first if it is ever picked up elsewhere.
