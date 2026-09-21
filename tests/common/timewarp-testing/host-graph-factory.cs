@@ -12,8 +12,9 @@ using System.Net.Sockets;
 // Create* methods (task 145-002 / findings §3 C-create). Each call constructs NEW hosts —
 // never process-static, never refcounted. Ordering:
 //   Api-only: Api :7255
-//   Web-only: Web :7000
-//   Web+Api:  Api first (BFF HttpClient bases point at :7255), then Web :7000
+//   Web-only: Web :7000 https + :7001 http
+//   Web+Api:  Api first (BFF HttpClient bases point at :7255), then Web :7000/:7001
+//   Web+Yarp: Web, then Yarp :8443 (task 120 standalone gateway smoke; no Api)
 //   Full:     Api, Web, then Yarp :8443 (Yarp depends on the others for DI identity only)
 // Port preflight fails with a teaching error so parallel/leaked hosts are obvious.
 // Per-host Action<IServiceCollection> runs after each host's built-in test wiring
@@ -61,7 +62,7 @@ public static class HostGraphFactory
   /// </summary>
   public static async Task<HostGraph> CreateWebAsync(Action<IServiceCollection>? configureWeb = null)
   {
-    EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
+    EnsureWebPortsAreFree();
     WebTestServerApplication web = new(configureWeb);
     await Task.CompletedTask.ConfigureAwait(false);
     return new HostGraph { Web = web };
@@ -70,7 +71,7 @@ public static class HostGraphFactory
 #if(web && api)
 
   /// <summary>
-  /// Api then Web (ports 7255, 7000). Web's built-in wiring includes MockAccessTokenProvider
+  /// Api then Web (ports 7255, 7000/7001). Web's built-in wiring includes MockAccessTokenProvider
   /// and HttpClient base addresses for BFF → Api.
   /// </summary>
   public static async Task<HostGraph> CreateWebWithApiAsync
@@ -80,7 +81,7 @@ public static class HostGraphFactory
   )
   {
     EnsurePortIsFree(ApiTestServerApplication.ApiPort, "Api.Server (ApiTestServerApplication)");
-    EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
+    EnsureWebPortsAreFree();
 
     // Api first: Web BFF clients default to https://localhost:7255.
     ApiTestServerApplication api = new(configureApi);
@@ -99,7 +100,7 @@ public static class HostGraphFactory
 #endif
 #if(web && api && yarp)
 
-  /// <summary>Api, Web, then Yarp (ports 7255, 7000, 8443).</summary>
+  /// <summary>Api, Web, then Yarp (ports 7255, 7000/7001, 8443).</summary>
   public static async Task<HostGraph> CreateWebApiYarpAsync
   (
     Action<IServiceCollection>? configureApi = null,
@@ -108,7 +109,7 @@ public static class HostGraphFactory
   )
   {
     EnsurePortIsFree(ApiTestServerApplication.ApiPort, "Api.Server (ApiTestServerApplication)");
-    EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
+    EnsureWebPortsAreFree();
     EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
 
     ApiTestServerApplication api = new(configureApi);
@@ -127,6 +128,43 @@ public static class HostGraphFactory
       await api.DisposeAsync().ConfigureAwait(false);
       throw;
     }
+  }
+#endif
+#if(web && yarp)
+
+  /// <summary>
+  /// Web then Yarp (ports 7000/7001, 8443). No Api host — standalone gateway smoke for
+  /// generated Web.Server /api carve-outs (task 120).
+  /// </summary>
+  public static async Task<HostGraph> CreateWebYarpAsync
+  (
+    Action<IServiceCollection>? configureWeb = null,
+    Action<IServiceCollection>? configureYarp = null
+  )
+  {
+    EnsureWebPortsAreFree();
+    EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
+
+    WebTestServerApplication web = new(configureWeb);
+    try
+    {
+      YarpTestServerApplication yarp = new(web, configureServices: configureYarp);
+      await Task.CompletedTask.ConfigureAwait(false);
+      return new HostGraph { Web = web, Yarp = yarp };
+    }
+    catch
+    {
+      await web.DisposeAsync().ConfigureAwait(false);
+      throw;
+    }
+  }
+#endif
+
+#if(web)
+  private static void EnsureWebPortsAreFree()
+  {
+    EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
+    EnsurePortIsFree(WebTestServerApplication.WebHttpPort, "Web.Server HTTP (WebTestServerApplication)");
   }
 #endif
 

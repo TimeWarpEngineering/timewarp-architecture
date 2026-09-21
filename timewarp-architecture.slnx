@@ -77,6 +77,11 @@
     <Project Path="tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj" />
     <!--#endif -->
     <Project Path="tests/container-apps/aspire/aspire-tests/aspire-tests.csproj" />
+    <!--#if (yarp) -->
+    <!--#if (web) -->
+    <Project Path="tests/container-apps/yarp/yarp-integration-tests/yarp-integration-tests.csproj" />
+    <!--#endif -->
+    <!--#endif -->
   </Folder>
   <!--#if (false) -->
   <Folder Name="/tests/tools/">
