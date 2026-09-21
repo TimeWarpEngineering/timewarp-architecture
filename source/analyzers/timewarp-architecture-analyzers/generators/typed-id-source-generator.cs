@@ -29,6 +29,7 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
+/// <summary>Source generator that emits the typed-id BCL surface and EF ValueConverters for [TypedId] structs.</summary>
 [Generator]
 public sealed class TypedIdSourceGenerator : IIncrementalGenerator
 {
@@ -61,6 +62,7 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
     [assembly: TimeWarp.Architecture.TypedIdsEmbedded]
     """;
 
+  /// <summary>Registers incremental generator steps for [TypedId] BCL and EF converter emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     context.RegisterPostInitializationOutput(static ctx =>
@@ -250,13 +252,17 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
         IParsable<{{name}}>,
         ISpanParsable<{{name}}>
       {
+        /// <summary>The underlying Guid. Empty means an uninitialized default.</summary>
         public Guid Value { get; }
+        /// <summary>True when this id is <see cref="Guid.Empty"/> (uninitialized default).</summary>
         public bool IsEmpty => Value == Guid.Empty;
 
         private {{name}}(Guid value) => Value = value;
 
+        /// <summary>Mints a new id with a Guid v7 (time-ordered, non-empty).</summary>
         public static {{name}} New() => new(Guid.CreateVersion7());
 
+        /// <summary>Creates an id from a non-empty Guid. Throws if <paramref name="value"/> is empty.</summary>
         public static {{name}} From(Guid value)
         {
           if (value == Guid.Empty)
@@ -264,15 +270,22 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
           return new {{name}}(value);
         }
 
+        /// <summary>Orders ids by their underlying Guid.</summary>
         public int CompareTo({{name}} other) => Value.CompareTo(other.Value);
 
+        /// <summary>True when <paramref name="left"/> is less than <paramref name="right"/> by Guid order.</summary>
         public static bool operator <({{name}} left, {{name}} right) => left.CompareTo(right) < 0;
+        /// <summary>True when <paramref name="left"/> is greater than <paramref name="right"/> by Guid order.</summary>
         public static bool operator >({{name}} left, {{name}} right) => left.CompareTo(right) > 0;
+        /// <summary>True when <paramref name="left"/> is less than or equal to <paramref name="right"/> by Guid order.</summary>
         public static bool operator <=({{name}} left, {{name}} right) => left.CompareTo(right) <= 0;
+        /// <summary>True when <paramref name="left"/> is greater than or equal to <paramref name="right"/> by Guid order.</summary>
         public static bool operator >=({{name}} left, {{name}} right) => left.CompareTo(right) >= 0;
 
+        /// <summary>Formats the underlying Guid as a string.</summary>
         public override string ToString() => Value.ToString();
 
+        /// <summary>Parses a Guid string; throws on empty or invalid values.</summary>
         public static {{name}} Parse(string s, IFormatProvider? provider)
         {
           if (!TryParse(s, provider, out {{name}} result))
@@ -280,6 +293,7 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
           return result;
         }
 
+        /// <summary>Tries to parse a Guid string; returns false for empty or invalid values.</summary>
         public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, out {{name}} result)
         {
           if (Guid.TryParse(s, provider, out Guid g) && g != Guid.Empty)
@@ -291,6 +305,7 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
           return false;
         }
 
+        /// <summary>Parses a Guid span; throws on empty or invalid values.</summary>
         public static {{name}} Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
         {
           if (!TryParse(s, provider, out {{name}} result))
@@ -298,6 +313,7 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
           return result;
         }
 
+        /// <summary>Tries to parse a Guid span; returns false for empty or invalid values.</summary>
         public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out {{name}} result)
         {
           if (Guid.TryParse(s, provider, out Guid g) && g != Guid.Empty)

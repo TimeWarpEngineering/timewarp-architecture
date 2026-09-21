@@ -23,16 +23,24 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Process-local <see cref="IWebAuthnChallengeStore"/> for tests and single-instance hosts.
+/// </summary>
 public sealed class InMemoryWebAuthnChallengeStore : IWebAuthnChallengeStore
 {
   private readonly InMemoryChallengeStoreCore<WebAuthnCeremonyType> Core;
 
+  /// <summary>
+  /// Creates a store keyed by ceremony type, with optional clock, TTL, and capacity bound.
+  /// </summary>
   public InMemoryWebAuthnChallengeStore(TimeProvider? timeProvider = null, TimeSpan? timeToLive = null, int maxEntries = 10_000)
   {
     Core = new InMemoryChallengeStoreCore<WebAuthnCeremonyType>(timeProvider, timeToLive, maxEntries);
   }
 
+  /// <inheritdoc />
   public byte[] Issue(WebAuthnCeremonyType ceremonyType) => Core.Issue(ceremonyType);
 
+  /// <inheritdoc />
   public bool TryConsume(WebAuthnCeremonyType ceremonyType, byte[] challenge) => Core.TryConsume(ceremonyType, challenge);
 }

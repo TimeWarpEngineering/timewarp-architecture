@@ -11,6 +11,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Outcome of <see cref="WebAuthnAuthentication.Verify"/> — assertion verified, or a typed failure reason.
+/// </summary>
 public sealed class WebAuthnAssertionResult
 {
   private WebAuthnAssertionResult(bool isValid, WebAuthnFailureReason failureReason)
@@ -19,8 +22,10 @@ public sealed class WebAuthnAssertionResult
     FailureReason = failureReason;
   }
 
+  /// <summary>True when the assertion signature verified against the stored COSE public key.</summary>
   public bool IsValid { get; }
 
+  /// <summary><see cref="WebAuthnFailureReason.None"/> on success; otherwise the reject cause.</summary>
   public WebAuthnFailureReason FailureReason { get; }
 
   internal static WebAuthnAssertionResult Success() => new(true, WebAuthnFailureReason.None);

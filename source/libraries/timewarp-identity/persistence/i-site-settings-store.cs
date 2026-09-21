@@ -17,6 +17,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Durable persistence port for the singleton site-settings aggregate — snapshot-on-get with version CAS.
+/// </summary>
 public interface ISiteSettingsStore
 {
   /// <summary>The singleton row, or null when the store has never been seeded.</summary>

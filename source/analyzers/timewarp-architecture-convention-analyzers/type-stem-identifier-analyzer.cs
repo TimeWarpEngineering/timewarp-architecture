@@ -47,9 +47,11 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0023: a named type that already names the role is the identifier.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class TypeStemIdentifierAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0023.</summary>
   public const string DiagnosticId = "TWA0023";
 
   private const string OptOutAttributeName = "TypeStemIdentifierAttribute";
@@ -69,8 +71,10 @@ public sealed class TypeStemIdentifierAnalyzer : DiagnosticAnalyzer
 
   private static readonly ImmutableHashSet<string> UntypedBoxMetadataNames = CreateUntypedBoxMetadataNames();
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0023.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

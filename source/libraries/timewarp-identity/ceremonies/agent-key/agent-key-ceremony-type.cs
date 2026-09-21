@@ -14,9 +14,17 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Ceremony a one-time agent-key challenge was issued for — registration and token issuance stay domain-separated.
+/// </summary>
 public enum AgentKeyCeremonyType
 {
+  /// <summary>Uninitialized value; fails closed and matches no real ceremony.</summary>
   None = 0,
+
+  /// <summary>Register a new agent public key against a principal.</summary>
   Registration = 1,
+
+  /// <summary>Prove possession of an existing agent key to mint an access token.</summary>
   TokenIssuance = 2,
 }

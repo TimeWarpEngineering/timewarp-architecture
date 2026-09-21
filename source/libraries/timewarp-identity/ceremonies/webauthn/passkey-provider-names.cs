@@ -19,6 +19,9 @@ using System.Collections.Frozen;
 using System.Reflection;
 using System.Text.Json;
 
+/// <summary>
+/// Maps WebAuthn authenticator AAGUID bytes to human-readable passkey provider names for UI labels.
+/// </summary>
 public static class PasskeyProviderNames
 {
   private static readonly Lazy<FrozenDictionary<string, string>> Map = new(LoadMap);
@@ -37,6 +40,9 @@ public static class PasskeyProviderNames
     return Map.Value.TryGetValue(key, out string? name) ? name : null;
   }
 
+  /// <summary>
+  /// Resolves a 16-byte AAGUID array to a provider display name, or null when null, unknown, or all-zero.
+  /// </summary>
   public static string? TryResolve(byte[]? aaguid) =>
     aaguid is null ? null : TryResolve(aaguid.AsSpan());
 

@@ -14,6 +14,9 @@
 
 namespace TimeWarp.Foundation.Features;
 
+/// <summary>
+/// FastEndpoints bridge that dispatches <typeparamref name="TRequest"/> through the mediator OneOf pipeline.
+/// </summary>
 public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest, OneOf<TResponse, SharedProblemDetails>>
   where TRequest : IRequest<OneOf<TResponse, SharedProblemDetails>>
   where TResponse : class
@@ -21,6 +24,9 @@ public abstract class BaseFastEndpoint<TRequest, TResponse> : Endpoint<TRequest,
   private ISender Sender => HttpContext?.RequestServices.GetRequiredService<ISender>()
     ?? throw new InvalidOperationException("ISender is not available.");
 
+  /// <summary>
+  /// Sends the request via mediator and writes JSON success or problem+json failure.
+  /// </summary>
   public override async Task HandleAsync(TRequest request, CancellationToken cancellationToken)
   {
     OneOf<TResponse, SharedProblemDetails> oneOfResponse = await Sender.Send(request, cancellationToken).ConfigureAwait(false);

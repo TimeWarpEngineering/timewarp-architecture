@@ -16,4 +16,16 @@
 
 namespace TimeWarp.Identity;
 
-public sealed record WebAuthnRelyingParty(string Id, string Name, IReadOnlyList<string> Origins);
+/// <summary>
+/// Relying-party identity used when building WebAuthn options and verifying ceremony responses.
+/// </summary>
+/// <param name="Id">RP ID (typically the registrable domain) hashed into authenticator data.</param>
+/// <param name="Name">Human-readable name shown by the platform passkey UI.</param>
+/// <param name="Origins">Exact origin allow-list; empty accepts any https origin whose host equals <paramref name="Id"/>.</param>
+public sealed record WebAuthnRelyingParty(
+  /// <summary>RP ID (typically the registrable domain) hashed into authenticator data.</summary>
+  string Id,
+  /// <summary>Human-readable name shown by the platform passkey UI.</summary>
+  string Name,
+  /// <summary>Exact origin allow-list; empty accepts any https origin whose host equals <see cref="Id"/>.</summary>
+  IReadOnlyList<string> Origins);

@@ -12,11 +12,17 @@
 
 namespace TimeWarp.Foundation.Services;
 
+/// <summary>
+/// Default <see cref="IDateTimeService"/> with wall-clock UTC and per-instance unique timestamps.
+/// </summary>
 public class DateTimeService : IDateTimeService
 {
   // A private field to store the last value used
   private long LastValueUsed = DateTime.UtcNow.Ticks;
 
+  /// <summary>
+  /// Current UTC wall-clock time.
+  /// </summary>
   public DateTime UtcNow => DateTime.UtcNow;
 
   /// <summary>

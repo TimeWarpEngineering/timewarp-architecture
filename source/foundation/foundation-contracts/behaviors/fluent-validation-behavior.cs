@@ -15,16 +15,25 @@
 
 namespace TimeWarp.Foundation.Behaviors;
 
+/// <summary>
+/// Mediator pipeline behavior that returns FluentValidation failures as a <see cref="SharedProblemDetails"/> OneOf arm.
+/// </summary>
 public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private readonly IValidator<TRequest>[] Validators;
 
+    /// <summary>
+    /// Creates the behavior with the validators registered for <typeparamref name="TRequest"/>.
+    /// </summary>
     public FluentValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
     {
         Validators = validators.ToArray();
     }
 
+    /// <summary>
+    /// Runs validators and short-circuits to a problem details result on failure; otherwise continues the pipeline.
+    /// </summary>
     public async Task<TResponse> Handle
     (
         TRequest request,

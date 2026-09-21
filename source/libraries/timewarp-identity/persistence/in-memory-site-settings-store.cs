@@ -12,11 +12,15 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Process-local <see cref="ISiteSettingsStore"/> for tests and zero-infra hosts.
+/// </summary>
 public sealed class InMemorySiteSettingsStore : ISiteSettingsStore
 {
   private readonly Lock WriteLock = new();
   private SiteSettings? Stored;
 
+  /// <inheritdoc />
   public Task<SiteSettings?> GetAsync(CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
@@ -24,6 +28,7 @@ public sealed class InMemorySiteSettingsStore : ISiteSettingsStore
     return Task.FromResult(stored?.Snapshot(stored.Version));
   }
 
+  /// <inheritdoc />
   public Task AddAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(siteSettings);
@@ -43,6 +48,7 @@ public sealed class InMemorySiteSettingsStore : ISiteSettingsStore
     return Task.CompletedTask;
   }
 
+  /// <inheritdoc />
   public Task UpdateAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(siteSettings);

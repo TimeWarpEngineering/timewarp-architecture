@@ -11,6 +11,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Builds the Entra v2.0 issuer URI bytes stored as <see cref="Credential.PublicMaterial"/> for EntraAccount rows.
+/// </summary>
 public static class EntraIssuerMaterial
 {
   /// <summary>

@@ -19,12 +19,14 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
+/// <summary>Source generator that emits the MockWebApiService factory registry from GetMockResponseFactory contracts.</summary>
 [Generator]
 public sealed class MockResponseFactoryRegistryGenerator : IIncrementalGenerator
 {
   private const string HostTypeName = "MockWebApiService";
   private const string FactoryMethodName = "GetMockResponseFactory";
 
+  /// <summary>Registers incremental generator steps for mock-response factory registry emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     context.RegisterSourceOutput(context.CompilationProvider, static (spc, compilation) => Execute(spc, compilation));

@@ -3,7 +3,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <!-- Curated allowlist (task 210-006/M32): ids that still fire on current foundation code.
-       Dropped as unused vs the pre-audit list: CS1591 (already repo-root 1591), CA1002,
+       Dropped as unused vs the pre-audit list: CS1591 (packable gate is root task 177), CA1002,
        CA1303, CA1715, CA1720, CA2201, RS0030. -->
   <PropertyGroup>
     <NoWarn>$(NoWarn);CA1034</NoWarn>   <!-- Nested public policy types (CorsPolicy.AnyPolicy) — Enumeration members -->

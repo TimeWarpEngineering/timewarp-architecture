@@ -44,6 +44,7 @@ public sealed class SettlementFundingService
   private readonly ICreditLedger Ledger;
   private readonly IPrincipalStore Principals;
 
+  /// <summary>Creates a funding service that credits the ledger and promotes TrustTier after settle.</summary>
   public SettlementFundingService(ICreditLedger ledger, IPrincipalStore principals)
   {
     Ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));

@@ -13,6 +13,9 @@ namespace TimeWarp.Identity;
 
 // TypedId attribute namespace: dual-mode MSBuild <Using> in timewarp-identity.csproj (task 115).
 
+/// <summary>
+/// Stable typed identity for a principal — server-minted and distinct from <see cref="CredentialId"/>.
+/// </summary>
 [TypedId]
 public readonly partial record struct PrincipalId;
 

@@ -32,8 +32,10 @@ namespace TimeWarp.Architecture.Attributes;
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class EndpointAllowAnonymousAttribute : Attribute
 {
+  /// <summary>Why this endpoint is anonymous. Empty or whitespace does not satisfy TWA0013.</summary>
   public string Reason { get; }
 
+  /// <summary>Marks the contract anonymous and records the reason the generator (and reviewers) can trust.</summary>
   public EndpointAllowAnonymousAttribute(string reason)
   {
     Reason = reason;

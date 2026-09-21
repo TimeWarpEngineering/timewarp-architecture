@@ -12,6 +12,9 @@
 
 namespace TimeWarp.Foundation.Features;
 
+/// <summary>
+/// API request that carries the caller's <see cref="UserId"/> for authenticated operations.
+/// </summary>
 public interface IAuthApiRequest : IApiRequest
 {
   /// <summary>
@@ -24,8 +27,14 @@ public interface IAuthApiRequest : IApiRequest
   public Guid UserId { get; set; }
 }
 
+/// <summary>
+/// Shared FluentValidation rules for every <see cref="IAuthApiRequest"/>.
+/// </summary>
 public sealed class AuthApiRequestValidator : AbstractValidator<IAuthApiRequest>
 {
+  /// <summary>
+  /// Requires a non-empty <see cref="IAuthApiRequest.UserId"/>.
+  /// </summary>
   public AuthApiRequestValidator()
   {
     RuleFor(r => r.UserId).NotEmpty();

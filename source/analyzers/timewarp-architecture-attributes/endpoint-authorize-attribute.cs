@@ -24,10 +24,27 @@
 
 namespace TimeWarp.Architecture.Attributes;
 
+/// <summary>
+/// Declares authorization for a generated FastEndpoint (policy, schemes, and/or roles). This is
+/// the sole server-auth marker — <c>IAuthApiRequest</c> is a client/mock signal and does not
+/// secure the HTTP shim. Mutually exclusive with <see cref="EndpointAllowAnonymousAttribute"/>.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class EndpointAuthorizeAttribute : Attribute
 {
+  /// <summary>
+  /// Named policy passed to FastEndpoints <c>Policies(...)</c>. Must match a policy the hosting
+  /// server registers (TWA0024). Leave null to require authentication with no further restriction.
+  /// </summary>
   public string? Policy { get; set; }
+
+  /// <summary>
+  /// Comma-separated authentication schemes passed to FastEndpoints <c>AuthSchemes(...)</c>.
+  /// Required when the named policy has no <c>AddAuthenticationSchemes</c> (for example
+  /// permission policies) so non-default handlers still run.
+  /// </summary>
   public string? AuthenticationSchemes { get; set; }
+
+  /// <summary>Comma-separated role names the principal must have.</summary>
   public string? Roles { get; set; }
 }

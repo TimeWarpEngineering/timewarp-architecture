@@ -20,6 +20,9 @@ namespace TimeWarp.Foundation.Enumerations;
 /// </summary>
 public abstract class Enumeration : IComparable
 {
+  /// <summary>
+  /// Initializes an enumeration member with its numeric value, display name, and optional alternate codes.
+  /// </summary>
   protected Enumeration(int value, string name, IReadOnlyList<string>? alternateCodes)
   {
     Value = value;
@@ -27,17 +30,23 @@ public abstract class Enumeration : IComparable
     AlternateCodes = alternateCodes ?? [];
   }
 
+  /// <summary>
+  /// External-system identifiers that resolve to this member via <see cref="FromAlternateCode{T}"/> or <see cref="FromString{T}"/>.
+  /// </summary>
   public IReadOnlyList<string> AlternateCodes { get; }
+  /// <summary>
+  /// Canonical display name used by <see cref="FromName{T}"/> and returned by <see cref="ToString"/>.
+  /// </summary>
   public string Name { get; }
 
+  /// <summary>
+  /// Stable numeric identity used for equality, comparison, and <see cref="FromValue{T}"/> lookup.
+  /// </summary>
   public int Value { get; }
 
   /// <summary>
   /// Get the EnumerationItem from an alternate code.
   /// </summary>
-  /// <typeparam name="T"></typeparam>
-  /// <param name="alternateCode"></param>
-  /// <returns></returns>
   public static T FromAlternateCode<T>(string alternateCode) where T : Enumeration =>
     Parse<T>
     (
@@ -49,18 +58,13 @@ public abstract class Enumeration : IComparable
   /// <summary>
   /// Get the EnumerationItem from its Name
   /// </summary>
-  /// <typeparam name="T"></typeparam>
-  /// <param name="name"></param>
-  /// <returns></returns>
   public static T FromName<T>(string name) where T : Enumeration =>
     Parse<T>(name, "name", item => item.Name == name);
 
   /// <summary>
   /// Get the EnumerationItem from a display name or alternate code.
   /// </summary>
-  /// <typeparam name="T"></typeparam>
   /// <param name="value">The string value to search for</param>
-  /// <returns></returns>
   public static T FromString<T>(string value) where T : Enumeration =>
     Parse<T>
     (
@@ -72,12 +76,12 @@ public abstract class Enumeration : IComparable
   /// <summary>
   /// Get the EnumerationItem from its value
   /// </summary>
-  /// <typeparam name="T"></typeparam>
-  /// <param name="value"></param>
-  /// <returns></returns>
   public static T FromValue<T>(int value) where T : Enumeration =>
     Parse<T>(value, "value", item => item.Value == value);
 
+  /// <summary>
+  /// Enumerates every public static readonly field declared on <typeparamref name="T"/>.
+  /// </summary>
   public static IEnumerable<T> GetAll<T>() where T : Enumeration
   {
     Type type = typeof(T);
@@ -86,6 +90,9 @@ public abstract class Enumeration : IComparable
     return fields.Select(info => info.GetValue(null)).OfType<T>();
   }
 
+  /// <summary>
+  /// Compares members by <see cref="Value"/>; null sorts before any member.
+  /// </summary>
   public int CompareTo(object? other)
   {
     if (other is null) return 1;
@@ -98,6 +105,9 @@ public abstract class Enumeration : IComparable
     return Value.CompareTo(otherEnumeration.Value);
   }
 
+  /// <summary>
+  /// True when <paramref name="value"/> is the same runtime type and <see cref="Value"/>.
+  /// </summary>
   public override bool Equals(object? value)
   {
     if (value is not Enumeration otherValue) return false;
@@ -108,8 +118,14 @@ public abstract class Enumeration : IComparable
     return typeMatches && valueMatches;
   }
 
+  /// <summary>
+  /// Hash code derived from <see cref="Value"/>.
+  /// </summary>
   public override int GetHashCode() => Value.GetHashCode();
 
+  /// <summary>
+  /// Returns the member's <see cref="Name"/>.
+  /// </summary>
   public override string ToString() => Name;
 
   private static T Parse<T>(object value, string description, Func<T, bool> predicate) where T : Enumeration

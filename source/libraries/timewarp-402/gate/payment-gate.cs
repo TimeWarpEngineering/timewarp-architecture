@@ -22,6 +22,7 @@
 namespace TimeWarp.X402;
 
 using System.Text.Json;
+
 /// <summary>Orchestrates config policy, challenge building, and facilitator verify/settle.</summary>
 public sealed class PaymentGate
 {
@@ -33,6 +34,7 @@ public sealed class PaymentGate
 
   private readonly IFacilitatorClient Facilitator;
 
+  /// <summary>Creates a payment gate that uses the given facilitator for verify and settle.</summary>
   public PaymentGate(IFacilitatorClient facilitator)
   {
     Facilitator = facilitator ?? throw new ArgumentNullException(nameof(facilitator));

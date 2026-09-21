@@ -6,11 +6,13 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Source generator that emits strongly-typed state accessors into BaseComponent and BaseHandler partials.</summary>
 [Generator]
 public sealed class StateAccessSourceGenerator : IIncrementalGenerator
 {
   private const string AttributeName = "StateAccess";
 
+  /// <summary>Registers incremental generator steps for [StateAccess] accessor emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     // The marker attribute and the BaseComponent/BaseHandler partials live in the consumer's

@@ -28,7 +28,6 @@ partial class CounterState
   /// <summary>
   /// Use in Tests ONLY, to initialize the State
   /// </summary>
-  /// <param name="count"></param>
   public void Initialize(int count)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());

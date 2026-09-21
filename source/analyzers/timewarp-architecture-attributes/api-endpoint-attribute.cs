@@ -12,5 +12,11 @@
 
 namespace TimeWarp.Architecture.Attributes;
 
+/// <summary>
+/// Opts a contract class into FastEndpoint source generation. The generator emits the HTTP
+/// endpoint; do not hand-write a matching <c>BaseFastEndpoint</c> shim. Pair with exactly one of
+/// <see cref="EndpointAuthorizeAttribute"/> or <see cref="EndpointAllowAnonymousAttribute"/> —
+/// without an auth marker the generator emits no auth config (fail-closed, not anonymous).
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 public sealed class ApiEndpointAttribute : Attribute;

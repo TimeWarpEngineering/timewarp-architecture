@@ -36,11 +36,15 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0013/TWA0014/TWA0020: [ApiEndpoint] contracts must declare a coherent auth posture.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0013 (missing auth posture marker).</summary>
   public const string MissingPostureId = "TWA0013";
+  /// <summary>Diagnostic identifier TWA0014 (conflicting auth posture).</summary>
   public const string ConflictingPostureId = "TWA0014";
+  /// <summary>Diagnostic identifier TWA0020 ([ApiEndpoint] combined with [ClientOnlyContract]).</summary>
   public const string ClientOnlyContradictionId = "TWA0020";
 
   private const string Category = "Design";
@@ -81,9 +85,11 @@ public class EndpointAuthPostureAnalyzer : DiagnosticAnalyzer
       description: "Task 131-001 F-004: [ApiEndpoint] opts a contract into FastEndpoint generation; [ClientOnlyContract] opts it out of server hosting (TWA0006). Both on the same operation (outer or nested Query/Command) is a contradiction — generators skip ClientOnly and TWA0006 treats it as coverage opt-out."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(MissingPosture, ConflictingPosture, ClientOnlyContradiction);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0013, TWA0014, and TWA0020.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

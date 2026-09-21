@@ -22,6 +22,9 @@
 
 namespace TimeWarp.Foundation.Types;
 
+/// <summary>
+/// Canonical <see cref="JsonSerializerOptions"/> for the contract seam (SPA, mocks, tests, and host JSON).
+/// </summary>
 public static class ContractSerializationDefaults
 {
   /// <summary>The canonical contract-seam serializer options (camelCase properties; PascalCase string enums).</summary>

@@ -12,6 +12,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Outcome of <see cref="WebAuthnRegistration.Verify"/> — verified credential material, or a typed failure reason.
+/// </summary>
 public sealed class WebAuthnRegistrationResult
 {
   private readonly byte[] CredentialIdField;
@@ -32,13 +35,19 @@ public sealed class WebAuthnRegistrationResult
     AaguidField = aaguid;
   }
 
+  /// <summary>True when registration structural checks and COSE key import succeeded.</summary>
   public bool IsValid { get; }
 
+  /// <summary><see cref="WebAuthnFailureReason.None"/> on success; otherwise the reject cause.</summary>
   public WebAuthnFailureReason FailureReason { get; }
 
 #pragma warning disable CA1819 // Binary material is intentionally exposed as byte[] copies
+  /// <summary>Verified credential id bytes (defensive copy); empty on failure.</summary>
   public byte[] CredentialId => CredentialIdField.ToArray();
+
+  /// <summary>Verified COSE public key bytes (defensive copy); empty on failure.</summary>
   public byte[] CosePublicKey => CosePublicKeyField.ToArray();
+
   /// <summary>16-byte authenticator AAGUID from attested credential data; empty when absent.</summary>
   public byte[] Aaguid => AaguidField is null ? [] : AaguidField.ToArray();
 #pragma warning restore CA1819

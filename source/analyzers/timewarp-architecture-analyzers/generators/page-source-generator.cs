@@ -21,6 +21,7 @@ namespace TimeWarp.Architecture.Analyzers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+/// <summary>Source generator that emits [Route], navigation helpers, and parameter props for [Page] Blazor pages.</summary>
 [Generator]
 public sealed partial class PageSourceGenerator : IIncrementalGenerator
 {
@@ -30,6 +31,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
   [GeneratedRegex(@"\{(\w+)\s*:?(\w+)\}?")]
   private static partial Regex RouteParam();
 
+  /// <summary>Registers incremental generator steps for [Page] surface emission.</summary>
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
     IncrementalValueProvider<string> rootNamespace = context.AnalyzerConfigOptionsProvider.Select(

@@ -32,9 +32,12 @@ public sealed record PaymentConfigEvaluation(
 /// <summary>Validates seller options before challenge emission.</summary>
 public static class PaymentConfigEvaluator
 {
+  /// <summary>Error code for a disabled payment surface (maps to HTTP 503).</summary>
   public const string ErrorDisabled = "payment_disabled";
+  /// <summary>Error code for incomplete or invalid payment options (maps to HTTP 503).</summary>
   public const string ErrorMisconfigured = "payment_misconfigured";
 
+  /// <summary>Classifies options as Ready, Disabled, or Misconfigured before any 402 challenge is built.</summary>
   public static PaymentConfigEvaluation Evaluate(PaymentOptions options)
   {
     ArgumentNullException.ThrowIfNull(options);

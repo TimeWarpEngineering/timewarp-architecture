@@ -18,10 +18,20 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Why <see cref="AgentKeyProof.Verify"/> or <see cref="AgentPublicKey.TryParse"/> rejected agent-key material.
+/// </summary>
 public enum AgentKeyFailureReason
 {
+  /// <summary>No failure; pairs with a valid proof result.</summary>
   None = 0,
+
+  /// <summary>Public key bytes are empty, oversized, trailing-padded, or not a parseable EC SPKI.</summary>
   MalformedPublicKey = 1,
+
+  /// <summary>Key parsed as EC but is not the accepted P-256 curve.</summary>
   UnsupportedAlgorithm = 2,
+
+  /// <summary>ECDSA signature does not verify over the domain-separated challenge bytes.</summary>
   SignatureInvalid = 3,
 }

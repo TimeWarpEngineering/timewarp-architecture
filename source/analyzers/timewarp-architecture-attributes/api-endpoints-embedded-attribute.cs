@@ -11,5 +11,9 @@
 
 namespace TimeWarp.Architecture.Attributes;
 
+/// <summary>
+/// Assembly marker applied by hosted-contracts compilations so host generators walk only marked
+/// referenced assemblies instead of the whole reference closure.
+/// </summary>
 [AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
 public sealed class ApiEndpointsEmbeddedAttribute : Attribute;

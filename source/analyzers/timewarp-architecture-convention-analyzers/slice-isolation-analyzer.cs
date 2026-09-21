@@ -18,9 +18,11 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
 
+/// <summary>Roslyn analyzer for TWA0009: product slices must not reference types owned by another product slice.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class SliceIsolationAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0009.</summary>
   public const string DiagnosticId = "TWA0009";
 
   private const string OptOutAttributeFullName = "CrossSliceReferenceAttribute";
@@ -43,8 +45,10 @@ public class SliceIsolationAnalyzer : DiagnosticAnalyzer
       description: "Slices are independently removable vertical units. A reference from one product slice into another couples them so neither can be deleted cleanly; genuinely shared code belongs in Components or a contracts assembly. Product may depend on the Applications platform slice one-way."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0009.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

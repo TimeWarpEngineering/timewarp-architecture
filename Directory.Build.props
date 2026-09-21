@@ -75,8 +75,15 @@
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
 
     <!-- IDE0005 (unnecessary usings) at warning severity requires a documentation file during
-         build (Roslyn #41640 / EnableGenerateDocumentationFile). We emit the file but do not
-         require public API XML docs — CS1591 stays suppressed. Task 170. -->
+         build (Roslyn #41640 / EnableGenerateDocumentationFile). We emit the file.
+         CS1591 (missing XML on publicly visible members), task 177:
+           packable (IsPackable=true) — warning, and TreatWarningsAsErrors fails the build so
+             published NuGet surface stays documented;
+           template/app/tests     — stay in NoWarn (Purpose/Design regions are the agent SSOT).
+         Other XML-doc ids (broken cref/param tags) stay suppressed — do not re-enable
+         RCS1141/1228 (empty-shell generators). The CS1591 add-to-NoWarn is applied in
+         Directory.Build.targets (PackableXmlDocs) because child props/csproj flip IsPackable
+         after this file runs. Task 170 originally suppressed CS1591 everywhere. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Suppress specific warnings -->
@@ -86,8 +93,9 @@
     <!-- CA1812: False positives for DI-instantiated classes -->
     <!-- IL2026, IL2067, IL2070, IL2075, IL3050, IL2104, IL3053: AOT warnings (not yet implemented) -->
     <!-- XML-doc noise once GenerateDocumentationFile is on for IDE0005 (Roslyn #41640):
-         missing/broken cref/param tags are not house style gates — only IDE0005 is. -->
-    <NoWarn>$(NoWarn);CA1014;CA1716;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053;1591;1570;1571;1572;1573;1574;1580;1581;1584;1587;1589;1590;1592;1710;1711;1712;1734;0419</NoWarn>
+         broken cref/param tags are not house style gates. CS1591 is omitted here and
+         added only when IsPackable != true (see PackableXmlDocs in Directory.Build.targets). -->
+    <NoWarn>$(NoWarn);CA1014;CA1716;CA1724;CA1812;IL2026;IL2067;IL2070;IL2075;IL3050;IL2104;IL3053;1570;1571;1572;1573;1574;1580;1581;1584;1587;1589;1590;1592;1710;1711;1712;1734;0419</NoWarn>
   </PropertyGroup>
 
   <!-- Code analyzers applied to all projects -->

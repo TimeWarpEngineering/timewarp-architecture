@@ -15,9 +15,11 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
+/// <summary>Roslyn analyzer for TWA0004: every source file must contain a #region Purpose block.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class PurposeRegionAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0004.</summary>
   public const string DiagnosticId = "TWA0004";
 
   private static readonly DiagnosticDescriptor Rule =
@@ -32,8 +34,10 @@ public class PurposeRegionAnalyzer : DiagnosticAnalyzer
       description: "Every source file embeds agent/human context in a '#region Purpose' block. Trivial files use a one-line Purpose rather than being exempt. See the agent-context-regions skill."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0004.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

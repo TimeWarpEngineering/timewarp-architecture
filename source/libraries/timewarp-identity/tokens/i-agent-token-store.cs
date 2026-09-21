@@ -41,6 +41,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Issues and validates opaque scoped agent access tokens — expiry only; callers re-check principal liveness.
+/// </summary>
 public interface IAgentTokenStore
 {
   /// <summary>Mints a new opaque bearer token for the given principal/scopes, valid for the given lifetime.</summary>

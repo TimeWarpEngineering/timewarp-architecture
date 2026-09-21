@@ -28,6 +28,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Builds and verifies domain-separated agent-key signatures over a one-time challenge (browser-less proof of possession).
+/// </summary>
 public static class AgentKeyProof
 {
   private const string RegistrationPrefix = "TimeWarp.Identity.AgentKey.Register.v1:";
@@ -42,6 +45,9 @@ public static class AgentKeyProof
     return [.. prefixBytes, .. challenge];
   }
 
+  /// <summary>
+  /// Verifies a DER ECDSA P-256 signature over <see cref="BuildSignedData"/> for the given SPKI public key.
+  /// </summary>
   public static AgentKeyProofResult Verify(AgentKeyCeremonyType ceremonyType, byte[] publicKeySpki, byte[] challenge, byte[] signature)
   {
     ArgumentNullException.ThrowIfNull(publicKeySpki);

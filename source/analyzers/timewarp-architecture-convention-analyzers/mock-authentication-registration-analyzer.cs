@@ -26,9 +26,11 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
+/// <summary>Roslyn analyzer for TWA0021: mock SPA auth providers must register only through MockAuthenticationRegistration.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class MockAuthenticationRegistrationAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0021.</summary>
   public const string DiagnosticId = "TWA0021";
 
   private static readonly DiagnosticDescriptor Rule =
@@ -65,9 +67,11 @@ public sealed class MockAuthenticationRegistrationAnalyzer : DiagnosticAnalyzer
       "Replace"
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0021.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

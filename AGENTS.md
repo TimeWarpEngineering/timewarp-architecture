@@ -360,10 +360,12 @@ Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
 ## Documentation
 
 Purpose/Design regions (TWA0004 + the reconcile-on-edit rule) plus skills are the
-documentation of record for generated apps. The eight repo skills under `skills/`
-ship in those apps (pinned to the analyzers they ship beside; `skills/*/analysis/`
-does not ship). The timewarp.software copy is discovery/always-latest; both come
-from the same release commit.
+documentation of record for generated apps. Published packages (`IsPackable=true`)
+carry real XML summaries on public surface (CS1591 is a warning there; template/app
+code keeps CS1591 in NoWarn and does not add hollow `///`). The eight repo skills
+under `skills/` ship in those apps (pinned to the analyzers they ship beside;
+`skills/*/analysis/` does not ship). The timewarp.software copy is discovery/always-latest;
+both come from the same release commit.
 
 `documentation/` is **maintainer-only** and is not packed into the template
 (generated apps have no `documentation/` tree). It holds

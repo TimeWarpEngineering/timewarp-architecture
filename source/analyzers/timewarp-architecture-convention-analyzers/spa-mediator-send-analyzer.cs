@@ -47,9 +47,11 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using Microsoft.CodeAnalysis.Operations;
 
+/// <summary>Roslyn analyzer for TWA0022: SPA client code must dispatch through TimeWarp.State ActionSet methods, not mediator Send.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0022.</summary>
   public const string DiagnosticId = "TWA0022";
 
   private const string BlazorWasmSdkProperty = "build_property.UsingMicrosoftNETSdkBlazorWebAssembly";
@@ -70,8 +72,10 @@ public sealed class SpaMediatorSendAnalyzer : DiagnosticAnalyzer
       description: "Client-side dispatch goes through the TimeWarp.State generated ActionSet methods, which link the component's CancellationToken into the action. A raw Mediator/ISender Send skips that wiring and cannot be prevented by access modifiers, because Mediator is inherited protected."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0022.</summary>
   public override void Initialize(AnalysisContext context)
   {
     // Deliberately NOT GeneratedCodeAnalysisFlags.None — razor `@code` blocks live in generated

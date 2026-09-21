@@ -11,12 +11,27 @@
 
 namespace TimeWarp.Foundation.Types;
 
+/// <summary>
+/// Binary / stream download arm of <c>IApiService.GetResponse</c>'s OneOf result.
+/// </summary>
 public class FileResponse
 {
+  /// <summary>
+  /// Response body stream; the caller owns disposal.
+  /// </summary>
   public Stream FileStream { get; }
+  /// <summary>
+  /// Suggested download file name when the server provided one.
+  /// </summary>
   public string? FileName { get; init; }
+  /// <summary>
+  /// MIME content type of <see cref="FileStream"/> when known.
+  /// </summary>
   public string? ContentType { get; init; }
 
+  /// <summary>
+  /// Wraps an unbuffered response stream for the file-download OneOf arm.
+  /// </summary>
   public FileResponse(Stream fileStream)
   {
     FileStream = fileStream;

@@ -21,9 +21,11 @@ namespace TimeWarp.Architecture.Analyzers;
 using System.Collections.Generic;
 using System.Text.Json;
 
+/// <summary>Roslyn analyzer for TWA0010: a directive naming a template.json flag requires that flag in DefineConstants.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TemplateFlagConstantsAnalyzer : DiagnosticAnalyzer
 {
+  /// <summary>Diagnostic identifier TWA0010.</summary>
   public const string DiagnosticId = "TWA0010";
 
   private const string TemplateFileName = "template.json";
@@ -40,8 +42,10 @@ public class TemplateFlagConstantsAnalyzer : DiagnosticAnalyzer
       description: "The dotnet-new template's feature-flag regions are kept in the repository build only when the project defines the flag as a preprocessor symbol. template.json is the authority for which flags exist; a directive naming an undefined flag means the repository compiles without code the template ships."
     );
 
+  /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+  /// <summary>Registers syntax/compilation actions that report TWA0010.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

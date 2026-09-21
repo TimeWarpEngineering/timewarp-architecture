@@ -48,12 +48,18 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Builds <c>navigator.credentials.create</c> options and verifies a completed WebAuthn attestation (attestation none).
+/// </summary>
 public static class WebAuthnRegistration
 {
   private const string CreateCeremonyType = "webauthn.create";
   private const int Es256 = -7;
   private const int Rs256 = -257;
 
+  /// <summary>
+  /// Serializes PublicKeyCredentialCreationOptionsJSON for the browser (ES256/RS256, attestation none).
+  /// </summary>
   public static string BuildOptionsJson(WebAuthnRelyingParty rp, byte[] challenge, byte[] userHandle, string userName, string userDisplayName)
   {
     ArgumentNullException.ThrowIfNull(rp);
@@ -84,6 +90,9 @@ public static class WebAuthnRegistration
     return JsonSerializer.Serialize(options);
   }
 
+  /// <summary>
+  /// Verifies client data, RP binding, user presence, credential id match, and COSE key import — never throws on adversarial bytes.
+  /// </summary>
   public static WebAuthnRegistrationResult Verify(WebAuthnRelyingParty rp, byte[] expectedChallenge, byte[] clientDataJson, byte[] attestationObject, byte[] credentialId)
   {
     ArgumentNullException.ThrowIfNull(rp);

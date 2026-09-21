@@ -44,6 +44,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Parses ECDSA P-256 public keys in SPKI DER form and derives the server-computed key id (SHA-256 of the accepted bytes).
+/// </summary>
 public static class AgentPublicKey
 {
   private const int MaxSpkiLength = 2 * 1024;

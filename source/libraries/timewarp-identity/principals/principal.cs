@@ -43,6 +43,9 @@
 
 namespace TimeWarp.Identity;
 
+/// <summary>
+/// Identity subject aggregate: kind, trust progression, quarantine risk flag, and optional display name.
+/// </summary>
 public sealed class Principal : Entity<PrincipalId>
 {
   private Principal(
@@ -64,11 +67,22 @@ public sealed class Principal : Entity<PrincipalId>
     MergedIntoPrincipalId = mergedIntoPrincipalId;
   }
 
+  /// <summary>Immutable principal class set at create time.</summary>
   public PrincipalKind Kind { get; }
+
+  /// <summary>Progression-only trust ladder; risk is <see cref="IsQuarantined"/>, not a tier.</summary>
   public TrustTier TrustTier { get; private set; }
+
+  /// <summary>Orthogonal risk flag — quarantine does not demote trust tier.</summary>
   public bool IsQuarantined { get; private set; }
+
+  /// <summary>UTC create stamp minted by <see cref="Create"/>.</summary>
   public DateTimeOffset CreatedAt { get; }
+
+  /// <summary>Optional display name; null when unset or whitespace-only.</summary>
   public string? DisplayName { get; private set; }
+
+  /// <summary>Target principal after merge; null while this principal is not retired.</summary>
   public PrincipalId? MergedIntoPrincipalId { get; private set; }
 
   /// <summary>True when not quarantined and not merged into another principal.</summary>
@@ -78,6 +92,9 @@ public sealed class Principal : Entity<PrincipalId>
   public bool IsFundedAndActive =>
     IsActive && TrustTier is TrustTier.Funded or TrustTier.Established;
 
+  /// <summary>
+  /// Mints a Provisional, non-quarantined principal at version 0 for a defined non-<see cref="PrincipalKind.None"/> kind.
+  /// </summary>
   public static Principal Create(PrincipalKind kind)
   {
     if (!Enum.IsDefined(kind) || kind == PrincipalKind.None)
@@ -104,6 +121,7 @@ public sealed class Principal : Entity<PrincipalId>
   internal Principal Snapshot(long version) =>
     new(Id, Kind, TrustTier, IsQuarantined, CreatedAt, DisplayName, MergedIntoPrincipalId, version);
 
+  /// <summary>Sets or clears the display name (whitespace-only becomes null).</summary>
   public void SetDisplayName(string? displayName)
   {
     if (displayName is null)
@@ -152,11 +170,13 @@ public sealed class Principal : Entity<PrincipalId>
     }
   }
 
+  /// <summary>Raises the orthogonal quarantine risk flag without changing trust tier.</summary>
   public void Quarantine()
   {
     IsQuarantined = true;
   }
 
+  /// <summary>Clears the quarantine risk flag.</summary>
   public void ClearQuarantine()
   {
     IsQuarantined = false;

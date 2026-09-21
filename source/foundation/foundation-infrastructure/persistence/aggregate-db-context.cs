@@ -51,12 +51,21 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using TimeWarp.Foundation.Application.Services;
 using TimeWarp.Foundation.Entities;
 
+/// <summary>
+/// EF Core base that validates aggregate invariants and increments <see cref="Entity{TId}.Version"/> on save.
+/// </summary>
 public abstract class AggregateDbContext : DbContext
 {
   internal const string VersionPropertyName = nameof(Entity<>.Version);
 
+  /// <summary>
+  /// Creates the context with the given EF Core options.
+  /// </summary>
   protected AggregateDbContext(DbContextOptions options) : base(options) { }
 
+  /// <summary>
+  /// Validates changed aggregates, increments modified versions, then persists.
+  /// </summary>
   public override int SaveChanges(bool acceptAllChangesOnSuccess)
   {
     List<EntityEntry> aggregateRootEntries = ChangedAggregateRootEntries();
@@ -65,6 +74,9 @@ public abstract class AggregateDbContext : DbContext
     return base.SaveChanges(acceptAllChangesOnSuccess);
   }
 
+  /// <summary>
+  /// Validates changed aggregates, increments modified versions, then persists asynchronously.
+  /// </summary>
   public override Task<int> SaveChangesAsync
   (
     bool acceptAllChangesOnSuccess,
@@ -77,6 +89,9 @@ public abstract class AggregateDbContext : DbContext
     return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
   }
 
+  /// <summary>
+  /// Registers the aggregate Version concurrency convention, then defers to <see cref="OnConfigureConventions"/>.
+  /// </summary>
   protected sealed override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {
     configurationBuilder.Conventions.Add(_ => new AggregateVersionConvention());
