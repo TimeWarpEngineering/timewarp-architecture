@@ -33,3 +33,7 @@ tests cover the breadth).
 - Blocked-ish on 058 slice 3 (integration/host strategy): E2E needs a running app to point at.
 - Keep assertions on outcomes a user/business cares about (order placed, payment captured,
   confirmation shown), not implementation details.
+
+## Disposition (2026-09-21)
+
+Retired as superseded. Task 104-022 delivered the three sunny-day money paths (passkey onboarding, agent register→pay→call, voluntary tip) as a Jaribu suite (`program-104-sunny-paths-tests.cs`) on `HostGraphFactory` with a software authenticator and `MockFacilitatorClient`. That is the product-story coverage this task asked for; a browser-Playwright project would duplicate it. Reopen only if browser-level coverage becomes a requirement in its own right.

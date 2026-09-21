@@ -103,3 +103,7 @@ tell the grammar boundary. Alternatives floated: `create-role.contracts.cs` (dot
 
 - Created: 2026-07-30 (investigation request: configurable layer separator / scannability of
   `create-role-contracts.cs`-style names)
+
+## Disposition (2026-09-21)
+
+Retired as won't-do. No consumer asks for a separator other than the hyphen; the grammar is kebab by house rule (tw-csharp, tw-feature-placement) and the registry SSOT (`feature-filename-grammar.json`) stays `{layers, unroutedLayers, functions}`. Making the separator configurable is generality with no user and would widen TWA0015/0016 and the membership guard for nothing.

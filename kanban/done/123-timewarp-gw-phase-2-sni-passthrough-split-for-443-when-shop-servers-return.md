@@ -50,3 +50,7 @@ srcnat masquerade can be retired if goldensea-gw routes back to 10.10.1.0/24.
 Origin: task 112 checklist (see `kanban/done/112-*/task.md` and its runbooks
 `runbook-public-path.md` / `runbook-wsl-bridged-dns.md` for the full chain). Router work is
 Steve-driven (RouterOS commands run manually); agent guides and verifies.
+
+## Disposition (2026-09-21)
+
+Retired from this board: operator infrastructure, not template content. Router/NAT work on timewarp-gw with zero repo files; blocked on the shop web server returning from maintenance (see done task 112, Phase 2 extraction). Belongs with the operator's infra tasks.
