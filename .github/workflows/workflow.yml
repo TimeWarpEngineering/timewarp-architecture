@@ -2,7 +2,6 @@ name: CI/CD
 
 # Single canonical workflow. Jobs:
 #   - ci: main build/test/publish pipeline (former sole workflow.yml job)
-#   - repo-audit: ganda repo audit (runfile +x, shebang, TW0007, kebab, …)
 #   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
 #   - template-smoke: pack → install → generate → build (former template-smoke.yml)
 # Path semantics from the former separate workflows are preserved via detect-paths
@@ -24,8 +23,6 @@ on:
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'timewarp-architecture.slnx'
-      - '.editorconfig'
-      - '.githooks/**'
       - '**/SKILL.md'
       - '**/eval.yaml'
       - '.vally.yaml'
@@ -51,8 +48,6 @@ on:
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'timewarp-architecture.slnx'
-      - '.editorconfig'
-      - '.githooks/**'
       - '**/SKILL.md'
       - '**/eval.yaml'
       - '.vally.yaml'
@@ -126,65 +121,6 @@ jobs:
           echo "skill=$skill" >> "$GITHUB_OUTPUT"
           echo "template=$template" >> "$GITHUB_OUTPUT"
           echo "ci=$ci skill=$skill template=$template"
-
-  repo-audit:
-    # Guard for runfile-executable / shebang / TW0007 / kebab / memsearch / peacock.
-    # TimeWarp.Ganda current versions live only on GitHub Packages (nuget.org tops out at
-    # 1.0.0-beta.15 and lacks later checks). Install from github only — fail closed rather
-    # than soft-fallback to the public feed (review M1).
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Install ganda
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUGET_USER: ${{ github.actor }}
-        run: |
-          set -euo pipefail
-          config="$(mktemp)"
-          cat > "$config" <<EOF
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="github" value="https://nuget.pkg.github.com/TimeWarpEngineering/index.json" />
-            </packageSources>
-            <packageSourceCredentials>
-              <github>
-                <add key="Username" value="${NUGET_USER}" />
-                <add key="ClearTextPassword" value="${GITHUB_TOKEN}" />
-              </github>
-            </packageSourceCredentials>
-          </configuration>
-          EOF
-          dotnet tool install --global TimeWarp.Ganda --prerelease --configfile "$config"
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-          export PATH="$HOME/.dotnet/tools:$PATH"
-          version="$(ganda --version | head -1)"
-          echo "installed ganda: $version"
-          # nuget.org TimeWarp.Ganda tops out at 1.0.0-beta.15; refuse a public-feed install.
-          case "$version" in
-            *1.0.0-beta.1[0-5]*|*1.0.0-beta.[0-9][+]*|*1.0.0-beta.[0-9])
-              echo "ganda $version is nuget.org-vintage; GitHub Packages did not supply a current tool." >&2
-              exit 1
-              ;;
-          esac
-
-      - name: ganda repo audit
-        run: ganda repo audit
 
   ci:
     needs: [detect-paths]

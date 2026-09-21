@@ -49,7 +49,10 @@ files); removed locally, nothing to change in the repo.
 - [x] TW0007 `.editorconfig` entry; SourceGenerators version verified; `dev build` 0/0
 - [x] memsearch hooks scaffolded via ganda
 - [x] `peacock.color` set
-- [x] audit step present in the PR workflow (or note why it already is)
+- [x] audit step NOT added to CI — `TimeWarp.Ganda` is not installable there yet (no GitHub
+      Packages publish, nuget.org tops out at 1.0.0-beta.15, and ganda's GitHub releases carry
+      no binary assets); local `ganda repo audit` via the `tw-pr` skill remains the gate until a
+      separate ganda task ships CI installability
 - [x] `ganda repo audit` exit 0 on the branch
 - [x] Implementation review: disposition `accepted-exceptions` (M1 fixed, M2 wontfix)
 
@@ -70,9 +73,15 @@ Brought master back to a clean `ganda repo audit` (ganda 1.0.0-beta.29). Prefer 
 - `global-usings-analyzer`: `[*.cs]` `dotnet_diagnostic.TW0007.filename = global-usings.cs`. CPM pin `TimeWarp.SourceGenerators` **1.0.0-beta.10 → 1.0.0-beta.11** (TW0007 is in beta.11; diagnostic stays package-default disabled so this is not a using sweep). `dev build` **0/0**.
 - `memsearch-scaffold`: `ganda repo audit --fix --checks memsearch-scaffold` (not hand-written hooks). Added `.githooks/pre-commit`, `pre-push`, `post-checkout` and unified `post-commit`/`post-merge` with the baseline dispatcher.
 - `vscode-window-icon`: fixer set `peacock.color` to `#83F8E4` (matches `peacock.remoteColor`).
-- CI guard: new `repo-audit` job in `.github/workflows/workflow.yml` runs `ganda repo audit` on push/PR. Installs `TimeWarp.Ganda` from GitHub Packages only (`packages: read`; nuget.org omitted so a 401 cannot soft-fallback to public `1.0.0-beta.15`). Post-install version gate refuses nuget.org-vintage tools. Path filters now include `.editorconfig` and `.githooks/**` so audit-only PRs still fire the job.
+- CI guard: **not added.** An earlier revision of this branch added a `repo-audit` job to
+  `.github/workflows/workflow.yml` that installed `TimeWarp.Ganda` from GitHub Packages, but
+  that install can never succeed: ganda's own workflow has no GitHub Packages publish step,
+  nuget.org only carries `TimeWarp.Ganda` up to `1.0.0-beta.15` (this task needs beta.27+
+  checks), and ganda's GitHub releases carry no binary assets. The job failed on this branch's
+  own PR (#392). Reverted before merge; `ganda repo audit` stays a local pre-PR gate via the
+  `tw-pr` skill until a separate ganda task makes the tool installable in CI.
 
-**Not in scope:** `kebab-path-names` (untracked leftover tree on the operator master checkout; nothing tracked). TW0007 **severity** left at package default (disabled); enabling it would be a dedicated file-level-using sweep.
+**Not in scope:** `kebab-path-names` (untracked leftover tree on the operator master checkout; nothing tracked). TW0007 **severity** left at package default (disabled); enabling it would be a dedicated file-level-using sweep. CI-side `ganda repo audit` enforcement (see CI guard note above).
 
 **Gates:** `ganda repo audit` exit 0 (28/28). `./bin/dev build` 0 Warning(s) / 0 Error(s). Executable-bit and shebang changes do not affect `dev test` product code.
 
@@ -92,7 +101,7 @@ rg -n 'dotnet_diagnostic.TW0007.filename' .editorconfig
 rg -n 'TimeWarp.SourceGenerators' Directory.Packages.props
 rg -n 'peacock.color' .vscode/settings.json
 test -x .githooks/pre-commit.cs && test -x .githooks/pre-push.cs && echo hooks-executable
-rg -n 'repo-audit:|ganda repo audit|nuget.org-vintage|nuget.pkg.github.com' .github/workflows/workflow.yml
+git diff master..HEAD -- .github/workflows/workflow.yml   # expect: empty (no CI job added)
 ```
 
 **Expect**
@@ -105,8 +114,8 @@ rg -n 'repo-audit:|ganda repo audit|nuget.org-vintage|nuget.pkg.github.com' .git
 - `Directory.Packages.props` pins `TimeWarp.SourceGenerators` at `1.0.0-beta.11`.
 - `.vscode/settings.json` has `"peacock.color": "#83F8E4"`.
 - `.githooks/pre-commit.cs` and `pre-push.cs` exist and are executable; `hooks-executable` prints.
-- `workflow.yml` defines job `repo-audit` whose last step is `ganda repo audit`.
-- Install ganda step: GitHub Packages only (no nuget.org `packageSources` add); version `case` refuses `1.0.0-beta.15` and earlier.
+- `git diff master..HEAD -- .github/workflows/workflow.yml` is empty — no `repo-audit` CI job;
+  `ganda repo audit` stays a local pre-PR gate (see CI guard note above).
 
 **Automated gate**
 
@@ -115,7 +124,7 @@ ganda repo audit    # expect: Repository passes all audit checks. / exit 0
 ./bin/dev build     # expect: 0 Warning(s) 0 Error(s)
 ```
 
-**Not in scope:** full `dev test` (metadata/config only). Enabling `dotnet_diagnostic.TW0007.severity`. Live GitHub Packages install of ganda on a runner (needs `packages: read` against the org feed).
+**Not in scope:** full `dev test` (metadata/config only). Enabling `dotnet_diagnostic.TW0007.severity`. CI-side `ganda repo audit` enforcement — deferred until `TimeWarp.Ganda` is installable in CI (see CI guard note above).
 
 **Review disposition:** `accepted-exceptions` (0 open). Effort 1, roster `general`, 2 rounds.
 
@@ -125,7 +134,7 @@ ganda repo audit    # expect: Repository passes all audit checks. / exit 0
 | suggestion | 0 | 1 | 1 |
 | nit | 0 | 0 | 0 |
 
-- M1 (suggestion, **fixed**): `repo-audit` install no longer lists nuget.org; post-install version gate refuses nuget.org-vintage `1.0.0-beta.15` or earlier so the CI guard cannot silently run stale checks.
+- M1 (suggestion, **fixed** at review time): `repo-audit` install no longer lists nuget.org; post-install version gate refuses nuget.org-vintage `1.0.0-beta.15` or earlier so the CI guard cannot silently run stale checks. **Superseded:** the whole `repo-audit` CI job was reverted after review — it failed on PR #392 itself because `TimeWarp.Ganda` is not installable via GitHub Packages (ganda's workflow never publishes there) and nuget.org tops out at beta.15. See the CI guard note in Results above.
 - M2 (suggestion, **wontfix**): `kanban/**` stays out of workflow path filters; the required guard is co-located `*-tests.cs` under `source/**`.
 
 Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
