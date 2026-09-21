@@ -129,8 +129,9 @@ jobs:
 
   repo-audit:
     # Guard for runfile-executable / shebang / TW0007 / kebab / memsearch / peacock.
-    # TimeWarp.Ganda is not on nuget.org at current versions; install from GitHub Packages
-    # (same source as timewarp-ganda/install-ganda.cs).
+    # TimeWarp.Ganda current versions live only on GitHub Packages (nuget.org tops out at
+    # 1.0.0-beta.15 and lacks later checks). Install from github only — fail closed rather
+    # than soft-fallback to the public feed (review M1).
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -159,7 +160,6 @@ jobs:
           <configuration>
             <packageSources>
               <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
               <add key="github" value="https://nuget.pkg.github.com/TimeWarpEngineering/index.json" />
             </packageSources>
             <packageSourceCredentials>
@@ -172,6 +172,16 @@ jobs:
           EOF
           dotnet tool install --global TimeWarp.Ganda --prerelease --configfile "$config"
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          version="$(ganda --version | head -1)"
+          echo "installed ganda: $version"
+          # nuget.org TimeWarp.Ganda tops out at 1.0.0-beta.15; refuse a public-feed install.
+          case "$version" in
+            *1.0.0-beta.1[0-5]*|*1.0.0-beta.[0-9][+]*|*1.0.0-beta.[0-9])
+              echo "ganda $version is nuget.org-vintage; GitHub Packages did not supply a current tool." >&2
+              exit 1
+              ;;
+          esac
 
       - name: ganda repo audit
         run: ganda repo audit

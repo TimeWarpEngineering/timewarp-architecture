@@ -51,11 +51,13 @@ files); removed locally, nothing to change in the repo.
 - [x] `peacock.color` set
 - [x] audit step present in the PR workflow (or note why it already is)
 - [x] `ganda repo audit` exit 0 on the branch
+- [x] Implementation review: disposition `accepted-exceptions` (M1 fixed, M2 wontfix)
 
 ## Session
 
 - Created: 2026-09-21 cockpit session (board audit follow-up)
 - Implementer: grok task-work 2026-09-21 (claim worktree)
+- Review oracle: grok task-work 2026-09-21 (effort 1, general; rounds 1–2)
 
 ## Results
 
@@ -68,7 +70,7 @@ Brought master back to a clean `ganda repo audit` (ganda 1.0.0-beta.29). Prefer 
 - `global-usings-analyzer`: `[*.cs]` `dotnet_diagnostic.TW0007.filename = global-usings.cs`. CPM pin `TimeWarp.SourceGenerators` **1.0.0-beta.10 → 1.0.0-beta.11** (TW0007 is in beta.11; diagnostic stays package-default disabled so this is not a using sweep). `dev build` **0/0**.
 - `memsearch-scaffold`: `ganda repo audit --fix --checks memsearch-scaffold` (not hand-written hooks). Added `.githooks/pre-commit`, `pre-push`, `post-checkout` and unified `post-commit`/`post-merge` with the baseline dispatcher.
 - `vscode-window-icon`: fixer set `peacock.color` to `#83F8E4` (matches `peacock.remoteColor`).
-- CI guard: new `repo-audit` job in `.github/workflows/workflow.yml` runs `ganda repo audit` on push/PR. Installs `TimeWarp.Ganda` from GitHub Packages (`packages: read`, same source as `timewarp-ganda/install-ganda.cs`) because current ganda is not on nuget.org (public feed stops at 1.0.0-beta.15). Path filters now include `.editorconfig` and `.githooks/**` so audit-only PRs still fire the job.
+- CI guard: new `repo-audit` job in `.github/workflows/workflow.yml` runs `ganda repo audit` on push/PR. Installs `TimeWarp.Ganda` from GitHub Packages only (`packages: read`; nuget.org omitted so a 401 cannot soft-fallback to public `1.0.0-beta.15`). Post-install version gate refuses nuget.org-vintage tools. Path filters now include `.editorconfig` and `.githooks/**` so audit-only PRs still fire the job.
 
 **Not in scope:** `kebab-path-names` (untracked leftover tree on the operator master checkout; nothing tracked). TW0007 **severity** left at package default (disabled); enabling it would be a dedicated file-level-using sweep.
 
@@ -90,7 +92,7 @@ rg -n 'dotnet_diagnostic.TW0007.filename' .editorconfig
 rg -n 'TimeWarp.SourceGenerators' Directory.Packages.props
 rg -n 'peacock.color' .vscode/settings.json
 test -x .githooks/pre-commit.cs && test -x .githooks/pre-push.cs && echo hooks-executable
-rg -n 'repo-audit:|ganda repo audit' .github/workflows/workflow.yml
+rg -n 'repo-audit:|ganda repo audit|nuget.org-vintage|nuget.pkg.github.com' .github/workflows/workflow.yml
 ```
 
 **Expect**
@@ -104,6 +106,7 @@ rg -n 'repo-audit:|ganda repo audit' .github/workflows/workflow.yml
 - `.vscode/settings.json` has `"peacock.color": "#83F8E4"`.
 - `.githooks/pre-commit.cs` and `pre-push.cs` exist and are executable; `hooks-executable` prints.
 - `workflow.yml` defines job `repo-audit` whose last step is `ganda repo audit`.
+- Install ganda step: GitHub Packages only (no nuget.org `packageSources` add); version `case` refuses `1.0.0-beta.15` and earlier.
 
 **Automated gate**
 
@@ -114,8 +117,23 @@ ganda repo audit    # expect: Repository passes all audit checks. / exit 0
 
 **Not in scope:** full `dev test` (metadata/config only). Enabling `dotnet_diagnostic.TW0007.severity`. Live GitHub Packages install of ganda on a runner (needs `packages: read` against the org feed).
 
+**Review disposition:** `accepted-exceptions` (0 open). Effort 1, roster `general`, 2 rounds.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 0 | 0 |
+| suggestion | 0 | 1 | 1 |
+| nit | 0 | 0 | 0 |
+
+- M1 (suggestion, **fixed**): `repo-audit` install no longer lists nuget.org; post-install version gate refuses nuget.org-vintage `1.0.0-beta.15` or earlier so the CI guard cannot silently run stale checks.
+- M2 (suggestion, **wontfix**): `kanban/**` stays out of workflow path filters; the required guard is co-located `*-tests.cs` under `source/**`.
+
+Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Notes
 
 Origin of each check in timewarp-ganda: `global-usings-analyzer` 3791aff (2026-09-20),
 `runfile-shebang`/`runfile-executable` a10946c (2026-06-17), `memsearch-scaffold` ee9936f,
 `vscode-window-icon` b71e0c5, `kebab-path-names` 45c63de.
+
+Review kitchen: `review/review-framework.md`, `review/round-1/`, `review/round-2/`, `review/disposition.md`.
