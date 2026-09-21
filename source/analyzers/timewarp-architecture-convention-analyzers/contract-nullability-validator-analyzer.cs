@@ -34,7 +34,6 @@ namespace TimeWarp.Architecture.Analyzers;
 /// (<c>x => x.Prop.Trim()</c>) are intentionally skipped to avoid false positives.
 /// </para>
 /// </summary>
-/// <summary>Roslyn analyzer for TWA0002/TWA0003: contract property nullability must agree with FluentValidation presence rules.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
 {
