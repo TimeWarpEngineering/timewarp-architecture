@@ -80,6 +80,8 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 
 Historical: before this cleanup, `dev test` was green with the workarounds (72 passed / 6 skipped / 0 failed). That skip count is not comparable to the suite shape after epic 145.
 
+Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1 (general). Disposition clean; 0 findings.
+
 ## Results
 
 Removed the three web-spa workarounds that task 058 left behind. TimeWarp.State / .Plus 12.0.0-beta.3 was already on the branch (task 237).
@@ -91,6 +93,14 @@ Removed the three web-spa workarounds that task 058 left behind. TimeWarp.State 
 3. **Weather fetch.** `Update_WeatherForecastState_With_WeatherForecasts_From_Server` is not skipped. `AspireSpaTestApplication` points the `api-server` `HttpClient` at the Aspire ingress HTTP endpoint and registers `MockAccessTokenProvider` through `MockAuthenticationRegistration` (Testing + `Authentication:UseMock`). The action returns 5 forecasts (`PassedTestNodeStateProperty`, about 372 ms inside the suite).
 
 `dotnet run tools/dev-cli/dev.cs -- build`: 0 warnings, 0 errors. `dotnet run tools/dev-cli/dev.cs -- test`: exit 0. web-spa suite 40 passed / 0 skipped / 0 failed (the quarantined weather fact is one of the 40). The only remaining skip in `dev test` is web-server `RunForever` (manual, unrelated). Shell message-bar pixels were not checked in a browser; the handler path was proven headless.
+
+### Review
+
+Effort 1, roster `general`, one round. Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition **clean**. No wontfix and no escalation.
+
+- Framework: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/review-framework.md`
+- Last merged: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/round-1/merged.md`
+- Disposition: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/disposition.md`
 
 ### How to validate
 
@@ -128,6 +138,7 @@ ganda repo audit
 ## Session
 
 - Implementation: ganda task-work implementer (2026-09-22)
+- Review: grok session `01a0c8ad-9504-7392-896d-5f8b9eff692b` (2026-09-22)
 
 ## 4. Modernize integration tests to Aspire testing (the bigger one)
 
