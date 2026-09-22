@@ -67,6 +67,9 @@
 // Guarded by aspire-tests/ingress-smoke-tests.cs (task 117): a request-level smoke through the
 // ingress with a foreign Host header on a web route — the exact shape that 502'd when this hop
 // ran over https — so a regression to the https cluster fails CI instead of shipping green.
+// Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so
+// "Healthy" means "answers HTTP through the DCP host proxy", not merely "container Running".
+// AddYarp registers no health check of its own; see the inline note at the call site.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -208,6 +211,22 @@ internal class Program
     // NOT a resource reference — this explicit reference keeps the services__web-server__* env
     // injected so the ingress can resolve that address.
     yarp = yarp.WithReference(webServer);
+
+    // Readiness, not liveness (task 058-001): WITHOUT a health check the ingress reports Healthy
+    // the moment DCP reports the YARP container Running, which is strictly weaker than "serves
+    // traffic" — the DCP host-side proxy already accepts connections while Kestrel inside the
+    // container is still starting, so a request issued in that window gets an immediate
+    // connection EOF (HttpRequestException / "The response ended prematurely"), not an HTTP
+    // status. Measured gap: up to ~810ms after WaitForResourceHealthyAsync("ingress") returned.
+    // Every Aspire.Hosting.Testing suite that waits for "ingress" then sends a request raced
+    // that window. This HTTP check probes the SAME host-side endpoint URL those tests use, so
+    // Healthy now means "the proxy is wired AND YARP routed a request to a live web-server".
+    // Path "/" (the default) is the web catch-all route -> SPA shell 200, which holds in every
+    // environment — unlike "/health", which aspire-service-defaults maps only in Development.
+    // Web-gated: with web excluded there is no catch-all, so "/" would 404 forever.
+    // AppHost health checks run only while the AppHost runs the app (local dev + testing);
+    // publish mode emits a manifest and never executes them, so deployments are unaffected.
+    yarp = yarp.WithHttpHealthCheck(endpointName: "http");
 #endif
     yarp = yarp.WithConfiguration(yarpConfiguration =>
     {
