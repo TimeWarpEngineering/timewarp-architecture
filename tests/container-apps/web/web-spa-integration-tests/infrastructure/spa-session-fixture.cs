@@ -17,10 +17,9 @@
 // the base's default (Inner.DisposeAsync(), i.e. DistributedApplication.DisposeAsync()) is
 // exactly what the old per-class CleanUpOnce called, so there is nothing to add here.
 //
-// Lazy-create + skip-aware parity (145-006 requirement, still holds under session sharing):
-// SessionFixture.GetAsync<SpaSessionFixture>() only creates on first call. The quarantined
-// weather-forecast-fetch class (task 058) has no SetupOnce at all — its only fact is [Skip] —
-// so it never calls GetAsync and never triggers the shared boot, exactly as before.
+// Lazy-create still holds under session sharing: SessionFixture.GetAsync<SpaSessionFixture>()
+// creates on first call. The weather-forecast fetch class calls GetAsync from SetupOnce, so it
+// shares this boot with the other SPA classes. A class with no SetupOnce still never creates it.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;

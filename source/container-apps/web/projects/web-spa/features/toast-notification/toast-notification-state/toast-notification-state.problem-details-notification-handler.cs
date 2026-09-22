@@ -1,13 +1,13 @@
 #region Purpose
-// Turns published API problem-details notifications into error toasts.
+// Turns published API problem-details notifications into shell error message bars.
 #endregion
 
 #region Design
-// Replaces AddProblemDetailsActionSet as the HandleError path: handlers publish, this
-// INotificationHandler displays. OperationCancelled (499) is swallowed — user-initiated
-// cancellation is not an error toast. Nested in the state partial for feature cohesion.
-// ShowToastAsync throws FluentServiceProviderException when FluentToastProvider is not in the
-// tree (headless SPA tests). Swallow that — the problem is already in the notification.
+// Replaces a toast action as the HandleError path: handlers publish, this
+// INotificationHandler records a FluentMessageBar row. OperationCancelled (499) is ignored —
+// user-initiated cancellation is not an error. Nested in the state partial for feature cohesion.
+// Mutates state and re-renders subscribers. Does not Send (TWS0002) and does not call
+// INotificationService, so a headless host with no message-bar provider still completes.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -16,10 +16,11 @@ partial class ToastNotificationState
 {
   internal sealed class ProblemDetailsNotificationHandler
   (
-    INotificationService ToastService
+    IStore store,
+    Subscriptions subscriptions
   ) : INotificationHandler<ProblemDetailsNotification>
   {
-    public async Task Handle
+    public Task Handle
     (
       ProblemDetailsNotification problemDetailsNotification,
       CancellationToken cancellationToken
@@ -28,22 +29,13 @@ partial class ToastNotificationState
       _ = cancellationToken;
       if (problemDetailsNotification.SharedProblemDetails.Status == Constants.OperationCancelled)
       {
-        return;
+        return Task.CompletedTask;
       }
 
       string message = problemDetailsNotification.SharedProblemDetails.Detail ?? "An error occurred";
-      try
-      {
-        await ToastService.ShowToastAsync(options =>
-        {
-          options.Intent = ToastIntent.Error;
-          options.Title = message;
-        });
-      }
-      catch (FluentServiceProviderException<FluentToastProvider>)
-      {
-        // Headless hosts register INotificationService without a FluentToastProvider in the tree.
-      }
+      store.GetState<ToastNotificationState>().AddMessage(MessageBarIntent.Error, message, body: null);
+      subscriptions.ReRenderSubscribers<ToastNotificationState>();
+      return Task.CompletedTask;
     }
   }
 }

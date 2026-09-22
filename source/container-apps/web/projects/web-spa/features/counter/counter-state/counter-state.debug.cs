@@ -6,8 +6,9 @@
 // Hydrate rebuilds state from the camelCased key/value bag Redux DevTools sends
 // during time-travel debugging, so member names must round-trip through
 // CamelCase.MemberNameToCamelCase.
-// Initialize(int) is guarded by ThrowIfNotTestAssembly so production code cannot
-// bypass action-based mutation.
+// Initialize(int) is guarded by TestCaller.Ensure so production code cannot
+// bypass action-based mutation. State's ThrowIfNotTestAssembly rejects kebab
+// *-tests names (timewarp-state#607).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Counters;
@@ -30,7 +31,7 @@ partial class CounterState
   /// </summary>
   public void Initialize(int count)
   {
-    ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
+    TimeWarp.Architecture.TestCaller.Ensure(Assembly.GetCallingAssembly());
     Count = count;
   }
 }

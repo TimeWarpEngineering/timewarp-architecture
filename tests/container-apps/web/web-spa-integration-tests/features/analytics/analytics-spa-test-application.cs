@@ -7,7 +7,7 @@
 // C-create (AGENTS.md fixture-lifetime default): these facts substitute IWebServerApiService,
 // which the closed-box AspireSpaTestApplication cannot do. TrackEventBehavior is compile-time
 // on ClientPipeline. Recording is a singleton so SpaTestScope sees the same instance the
-// TrackEvent handler resolves. Headless toasts swallow FluentServiceProviderException.
+// TrackEvent handler resolves. Message-bar handlers record state and do not need a provider.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Features.Analytics;
@@ -43,10 +43,6 @@ internal sealed class AnalyticsSpaTestApplication : ISpaTestApplication, IDispos
 
     IJSRuntime fakeJsRuntime = FakeItEasy.A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);
-
-    // Generated Publisher_ClientPipeline resolves ExceptionNotificationHandler by concrete
-    // type. The handler swallows FluentServiceProviderException when FluentToastProvider is
-    // absent (headless).
 
     ServiceProvider = services.BuildServiceProvider();
   }

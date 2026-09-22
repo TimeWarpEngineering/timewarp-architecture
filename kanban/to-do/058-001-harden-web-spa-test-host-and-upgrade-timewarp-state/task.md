@@ -69,16 +69,65 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 ## Checklist
 
 - [x] Upgrade TimeWarp.State (+ .Plus) past beta.1; migrate web-spa state handlers — done by 237
-- [ ] Remove the `<AssemblyName>` override on web-spa-integration-tests; suite still green
-- [ ] Exception / problem-details notification handlers on `FluentMessageBar`; test-host handler
+- [x] Remove the `<AssemblyName>` override on web-spa-integration-tests; suite still green
+- [x] Exception / problem-details notification handlers on `FluentMessageBar`; test-host handler
       removal workaround deleted
-- [ ] SPA→server weather fetch wired in the test host; quarantined test un-skipped and passing
-- [ ] `dev build` 0/0, `dev test` green, `ganda repo audit` 0
+- [x] SPA→server weather fetch wired in the test host; quarantined test un-skipped and passing
+- [x] `dev build` 0/0, `dev test` green, `ganda repo audit` 0
 - [x] Section 4 (Aspire migration) — closed as moot by epic 145; no work
 
 ## Notes
 
-Not blocking — `dev test` is green with these workarounds (72 passed / 6 skipped / 0 failed).
+Historical: before this cleanup, `dev test` was green with the workarounds (72 passed / 6 skipped / 0 failed). That skip count is not comparable to the suite shape after epic 145.
+
+## Results
+
+Removed the three web-spa workarounds that task 058 left behind. TimeWarp.State / .Plus 12.0.0-beta.3 was already on the branch (task 237).
+
+1. **Assembly name.** Deleted `<AssemblyName>web-spa-integration-Tests</AssemblyName>` and the matching `InternalsVisibleTo` entries (`web-spa.csproj`, `web-contracts.csproj`). The kebab assembly `web-spa-integration-tests` loads. `State.Initialize()` no longer calls the case-sensitive guard, but `ThrowIfNotTestAssembly` still does (`assembly.FullName.Contains("Test")`). Debug seeders (`CounterState`, `ApplicationState`, `AnalyticsState`, `WeatherForecastsState`) now call `TestCaller.Ensure`, which accepts `test` ordinal-ignore-case and still throws `FieldAccessException` for any other caller. Filed as [timewarp-state#607](https://github.com/TimeWarpEngineering/timewarp-state/issues/607). The AssemblyName override stays deleted.
+
+2. **Message bars.** `ExceptionNotificationHandler` and `ProblemDetailsNotificationHandler` append to `ToastNotificationState` and re-render subscribers. They do not call `INotificationService` and do not `Send` (TWS0002). `AddNotification` / `DismissMessage` mutate the same list through the action pipeline. `MessageBars` paints `FluentMessageBar` rows at the top of `TimeWarpPage` and `TimeWarpFocusedPage` (`AllowDismiss=false`; dismiss dispatches `DismissMessage` so a re-render does not bring the row back). The SPA test host no longer mentions removing `INotificationHandler<ExceptionNotification>`. Headless proof: `CloneStateBehavior.Should.RollBackState_When_Exception` sees the error bar, and `AddNotification_Records_MessageBar_Without_Provider` records a success bar with no FluentUI provider in the tree.
+
+3. **Weather fetch.** `Update_WeatherForecastState_With_WeatherForecasts_From_Server` is not skipped. `AspireSpaTestApplication` points the `api-server` `HttpClient` at the Aspire ingress HTTP endpoint and registers `MockAccessTokenProvider` through `MockAuthenticationRegistration` (Testing + `Authentication:UseMock`). The action returns 5 forecasts (`PassedTestNodeStateProperty`, about 372 ms inside the suite).
+
+`dotnet run tools/dev-cli/dev.cs -- build`: 0 warnings, 0 errors. `dotnet run tools/dev-cli/dev.cs -- test`: exit 0. web-spa suite 40 passed / 0 skipped / 0 failed (the quarantined weather fact is one of the 40). The only remaining skip in `dev test` is web-server `RunForever` (manual, unrelated). Shell message-bar pixels were not checked in a browser; the handler path was proven headless.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests
+dotnet test -c Release -- --filter-class FetchWeatherForecasts_Action_Should
+dotnet test -c Release -- --filter-class CloneStateBehavior
+```
+
+Style Guide (running app): open the notifications card, click Error, then Throw exception. A `FluentMessageBar` appears at the top of the page. Dismiss removes it and it stays gone.
+
+**Expect**
+
+- Weather fact passes and `WeatherForecasts.Count` is 5. No `[Skip]`.
+- Clone fact passes: after the thrown action, `ToastNotificationState.Messages` has one error bar titled `Test Rollback of State`, and the counter `Guid` is unchanged.
+- `web-spa-integration-tests.csproj` has no `<AssemblyName>` override. Assembly name is `web-spa-integration-tests`.
+- No `IToastService` / `FluentToastProvider` usage under `web-spa`.
+
+**Automated gate**
+
+```bash
+dotnet run tools/dev-cli/dev.cs -- build
+dotnet run tools/dev-cli/dev.cs -- test
+ganda repo audit
+```
+
+**Not in scope**
+
+- Aspire migration of the SPA suite (epic 145 two-lane model).
+- Broader FluentUI v5 visual cleanup beyond this notification path.
+- Fixing `ThrowIfNotTestAssembly` inside TimeWarp.State (timewarp-state#607).
+
+## Session
+
+- Implementation: ganda task-work implementer (2026-09-22)
 
 ## 4. Modernize integration tests to Aspire testing (the bigger one)
 

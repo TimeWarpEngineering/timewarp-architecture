@@ -210,8 +210,6 @@ internal sealed class NestedDispatchSpaTestApplication : IDisposable
     services.AddScoped<NestedDispatchProbeState.UpdateActionSet.Handler>();
     services.AddScoped<NestedDispatchProbeState.FetchActionSet.Handler>();
     services.AddScoped<ISender<ClientPipeline>, ProbeSender>();
-    // Generated Publisher_ClientPipeline resolves ExceptionNotificationHandler by concrete
-    // type. This probe does not publish ExceptionNotification.
     ServiceProvider = services.BuildServiceProvider();
   }
 
