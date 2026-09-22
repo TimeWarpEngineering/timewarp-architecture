@@ -388,6 +388,10 @@ dotnet_diagnostic.globalusingsanalyzer0001.filename = global-usings.cs
 dotnet_diagnostic.globalusingsanalyzer0002.enabled = true
 dotnet_diagnostic.globalusingsanalyzer0003.severity = warning
 
+# TW0007 file-level usings (TimeWarp.SourceGenerators ≥ 1.0.0-beta.11). Must sit under [*.cs].
+# Filename only — TW0007 is disabled by default; do not set severity without a using sweep.
+dotnet_diagnostic.TW0007.filename = global-usings.cs
+
 # Task 147-007: EF Core scaffold output under platform/postgres/migrations/ — tooling-mandated
 # basenames (timestamp_Name.cs, *.Designer.cs, *ModelSnapshot.cs), not house kebab / Purpose regions.
 # generated_code=true skips TWA0004 (PurposeRegionAnalyzer uses GeneratedCodeAnalysisFlags.None).
