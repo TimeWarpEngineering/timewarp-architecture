@@ -80,7 +80,7 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 
 Historical: before this cleanup, `dev test` was green with the workarounds (72 passed / 6 skipped / 0 failed). That skip count is not comparable to the suite shape after epic 145.
 
-Review trail: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`. Effort 1 (general). Disposition clean; 0 findings.
+Review trail: `review/review-framework.md`, `review/round-1/`, `review/round-2/merged.md`, `review/disposition.md`. Effort 1 (general). Disposition clean; 0 findings. Round 2 re-verified the same product diff.
 
 ## Results
 
@@ -96,11 +96,11 @@ Removed the three web-spa workarounds that task 058 left behind. TimeWarp.State 
 
 ### Review
 
-Effort 1, roster `general`, one round. Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition **clean**. No wontfix and no escalation.
+Effort 1, roster `general`, two rounds (round 2 re-verified the same product diff). Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition **clean**. No wontfix and no escalation.
 
-- Framework: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/review-framework.md`
-- Last merged: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/round-1/merged.md`
-- Disposition: `kanban/to-do/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/disposition.md`
+- Framework: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/review-framework.md`
+- Last merged: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/round-2/merged.md`
+- Disposition: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/disposition.md`
 
 ### How to validate
 
@@ -139,6 +139,7 @@ ganda repo audit
 
 - Implementation: ganda task-work implementer (2026-09-22)
 - Review: grok session `01a0c8ad-9504-7392-896d-5f8b9eff692b` (2026-09-22)
+- Review re-verify: grok session `01a0c8c8-5d89-7543-89ce-9db5ac7c3f37` (2026-09-22)
 
 ## 4. Modernize integration tests to Aspire testing (the bigger one)
 

@@ -15,3 +15,10 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2
+
+**Date:** 2026-09-22
+**Session:** grok `01a0c8c8-5d89-7543-89ce-9db5ac7c3f37`
+**Diff scope:** Same product commit `12cfb442` vs `origin/master`. Commits after it (`6609ac61`, `d0522d46`, `714cd7a1`) are kanban-only. The folder now lives under `kanban/done/` (moved after round 1).
+**Re-check:** Handlers do not `Send` or call `INotificationService`. `StateTransactionBehavior` in TimeWarp.State 12.0.0-beta.3 restores state, then publishes `ExceptionNotification`. `TestCaller.Ensure` accepts `test` ordinal-ignore-case. Weather fetch is not skipped; ingress HTTP client and `MockAccessTokenProvider` registration remain.
