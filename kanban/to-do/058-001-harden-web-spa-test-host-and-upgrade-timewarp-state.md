@@ -36,12 +36,45 @@ up properly:
    needs wiring in the test host (HttpClient/base address / auth) so the action actually returns 5
    forecasts. **Un-skip once the fetch works.**
 
+## Rescope (2026-09-22)
+
+Board audit against master. Item 1's package half is **done**: task 237 moved the repo to
+`TimeWarp.State` / `.Plus` 12.0.0-beta.3 and `TimeWarp.Mediator` 14.0.0-beta.1 and migrated the
+handlers. Section 4 (Aspire testing migration) is **moot**: epic 145 settled the two-lane model —
+in-proc `HostGraphFactory` / `SessionHostFixture` C-create for DI-substitution suites, Aspire
+closed-box only for topology — and `web-spa-integration-tests` already runs on it. Do not migrate
+the SPA suite to Aspire.
+
+What is still open, and this task's whole scope:
+
+1. **Remove the `<AssemblyName>web-spa-integration-Tests</AssemblyName>` override** in
+   `tests/container-apps/web/web-spa-integration-tests/*.csproj`. beta.3 fixed the case-sensitive
+   test guard; verify by deleting the override and running the suite. If State still trips on the
+   kebab name, that is a State bug — file it on timewarp-state, do not keep the override.
+2. **Migrate `ExceptionNotificationHandler` (and the sibling `ProblemDetailsNotificationHandler`)
+   off `IToastService` / `FluentToastProvider`** to the FluentUI v5 `FluentMessageBar` pattern the
+   rest of web-spa uses (tw-blazor-css-strategy skill; look at how Section / Card surface
+   errors today). Then delete the SPA test host's `INotificationHandler<ExceptionNotification>`
+   removal workaround in `spa-test-application.cs`; the handler must run headless without a
+   rendered provider. Handler rule applies: never `Send` an action from a handler (TWS0002);
+   publish a notification or mutate state.
+3. **Un-quarantine** `WeatherForecastsState_.FetchWeatherForecasts_Action_Should
+   .Update_WeatherForecastState_With_WeatherForecasts_From_Server`: wire the SPA→server fetch in
+   the test host (base address / auth via `MockAccessTokenProvider`) so the action returns the
+   5 forecasts, remove the `[Skip]`.
+
+Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip count down by one;
+`ganda repo audit` exit 0.
+
 ## Checklist
 
-- [ ] Upgrade TimeWarp.State (+ .Plus) past beta.1; migrate web-spa state handlers to the new API.
-- [ ] Remove the `<AssemblyName>` override on web-spa-integration-tests.
-- [ ] Fix the SPA→server weather fetch in `SpaTestApplication`; un-skip the quarantined test.
-- [ ] Reconsider the toast-handler removal once FluentUI test support allows a real/stub provider.
+- [x] Upgrade TimeWarp.State (+ .Plus) past beta.1; migrate web-spa state handlers — done by 237
+- [ ] Remove the `<AssemblyName>` override on web-spa-integration-tests; suite still green
+- [ ] Exception / problem-details notification handlers on `FluentMessageBar`; test-host handler
+      removal workaround deleted
+- [ ] SPA→server weather fetch wired in the test host; quarantined test un-skipped and passing
+- [ ] `dev build` 0/0, `dev test` green, `ganda repo audit` 0
+- [x] Section 4 (Aspire migration) — closed as moot by epic 145; no work
 
 ## Notes
 
