@@ -19,6 +19,8 @@
 // bind through the private constructor exactly like Handle/PublicMaterial. This keeps the
 // detach-and-attach replacement path (PersistReplacementAsync) a single-row write with no
 // owned-entity state to reconcile. Fingerprint is computed, never stored.
+// Task 250: AccountHint (display-only Entra preferred_username) is a nullable text column capped at
+// Credential.MaxAccountHintLength; it is NOT indexed — nothing looks a credential up by it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -71,6 +73,7 @@ public sealed class CredentialEntityTypeConfiguration : IEntityTypeConfiguration
     builder.Property(credential => credential.Label);
     builder.Property(credential => credential.Nickname).HasMaxLength(Credential.MaxNicknameLength);
     builder.Property(credential => credential.LastUsedAt);
+    builder.Property(credential => credential.AccountHint).HasMaxLength(Credential.MaxAccountHintLength);
 
     // RegisteredWith: three private scalar properties mapped by name (see Design region).
     builder.Ignore(credential => credential.RegisteredWith);

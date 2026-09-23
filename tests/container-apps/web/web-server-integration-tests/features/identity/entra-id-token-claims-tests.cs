@@ -41,11 +41,11 @@ public class TryRead_Given_
     claims.Issuer.ShouldBe(Issuer);
     claims.DisplayName.ShouldBe("Test User");
     claims.PreferredUsername.ShouldBeNull();
-    claims.CredentialLabel.ShouldBe("Test User");
+    claims.AccountHint.ShouldBeNull("name identifies the person, not the account");
     return Task.CompletedTask;
   }
 
-  public static Task Preferred_Username_Should_Win_Credential_Label_Over_Name()
+  public static Task Preferred_Username_Should_Be_The_Account_Hint()
   {
     ClaimsPrincipal principal = PrincipalWith(
       new Claim("tid", TenantId.ToString("D")),
@@ -63,11 +63,11 @@ public class TryRead_Given_
     failure.ShouldBe(EntraIdTokenClaimReadFailure.None);
     claims.DisplayName.ShouldBe("Test User");
     claims.PreferredUsername.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
-    claims.CredentialLabel.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+    claims.AccountHint.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
     return Task.CompletedTask;
   }
 
-  public static Task Name_Only_Should_Be_Credential_Label()
+  public static Task Name_Only_Should_Leave_Account_Hint_Null()
   {
     ClaimsPrincipal principal = PrincipalWith(
       new Claim("tid", TenantId.ToString("D")),
@@ -77,11 +77,11 @@ public class TryRead_Given_
 
     EntraIdTokenClaims.TryRead(principal, out EntraIdTokenClaims claims, out _).ShouldBeTrue();
     claims.PreferredUsername.ShouldBeNull();
-    claims.CredentialLabel.ShouldBe("Test User");
+    claims.AccountHint.ShouldBeNull("name identifies the person, not the account");
     return Task.CompletedTask;
   }
 
-  public static Task Neither_Name_Nor_Preferred_Username_Should_Fall_Back_To_Microsoft_365()
+  public static Task Neither_Name_Nor_Preferred_Username_Should_Leave_Account_Hint_Null()
   {
     ClaimsPrincipal principal = PrincipalWith(
       new Claim("tid", TenantId.ToString("D")),
@@ -91,7 +91,7 @@ public class TryRead_Given_
     EntraIdTokenClaims.TryRead(principal, out EntraIdTokenClaims claims, out _).ShouldBeTrue();
     claims.DisplayName.ShouldBeNull();
     claims.PreferredUsername.ShouldBeNull();
-    claims.CredentialLabel.ShouldBe(EntraIdTokenClaims.FallbackCredentialLabel);
+    claims.AccountHint.ShouldBeNull();
     return Task.CompletedTask;
   }
 

@@ -35,8 +35,8 @@
 // let a revoked credential rehydrate as active, which is exactly the state-loss class this token
 // exists to prevent.
 //
-// Add-time identity (task 248-001): Label is the PROVIDER name (AAGUID map — "Proton Pass"; Entra
-// display label) and is immutable; Nickname is the USER's name for the row, optional, mutable via
+// Add-time identity (task 248-001): Label is the PROVIDER name (AAGUID map — "Proton Pass";
+// "Microsoft 365" for Entra since task 250 — the account itself is AccountHint) and is immutable; Nickname is the USER's name for the row, optional, mutable via
 // Rename (1..MaxNicknameLength chars after trim). The two were one field before 248-001 (a
 // caller-supplied label silently overwrote the provider name), which made same-provider rows
 // indistinguishable once renamed. Rows created before 248-001: the postgres migration moves every
@@ -66,6 +66,16 @@
 // Design region: a last-used write that loses the Version CAS is DROPPED, never retried). Snapshot
 // copies LastUsedAt — same "incomplete snapshot silently loses state" reasoning as RevokedAt.
 //
+// Account hint (task 250): AccountHint is DISPLAY-ONLY text naming the external account behind the
+// credential — today the Entra ID token's preferred_username (UPN/email). It is never a lookup or join
+// key (Entra joins on tid+oid in Handle, RFC 219 fork 1) and never a verification input. Unlike Label
+// it is mutable, because the upstream value can change (UPN rename): SetAccountHint is the named
+// mutation, and it returns whether the stored value changed so a sign-in refresh writes only on a
+// real difference. Normalized like Label (trim, empty -> null) and capped at MaxAccountHintLength
+// (truncated, not rejected — the value arrives from a token, and a hostile or odd claim must not fail
+// a sign-in). PII: hosts expose it only on the caller's own credential list and never log it.
+// Snapshot copies it — the same "incomplete snapshot silently loses state" reasoning as RevokedAt.
+//
 // IAggregateRoot: deliberately NOT implemented here, for the same reason as Principal — see
 // principal.cs's Design region. Identity's own guard clauses (Create, Revoke, Restore) are the invariant
 // enforcement; aligning with the nested-Invariants/IAggregateRoot pattern is a later task.
@@ -80,6 +90,9 @@ public sealed class Credential : Entity<CredentialId>
 {
   /// <summary>Upper bound for <see cref="Nickname"/> after trimming (matches the contract validator).</summary>
   public const int MaxNicknameLength = 64;
+
+  /// <summary>Upper bound for <see cref="AccountHint"/> after trimming; longer values are truncated.</summary>
+  public const int MaxAccountHintLength = 256;
 
   private readonly byte[] HandleField;
   private readonly byte[] PublicMaterialField;
@@ -105,6 +118,7 @@ public sealed class Credential : Entity<CredentialId>
     string? registeredBrowser,
     string? registeredOs,
     DateTimeOffset? lastUsedAt,
+    string? accountHint,
     long version)
     : base(id, version)
   {
@@ -121,6 +135,7 @@ public sealed class Credential : Entity<CredentialId>
     RegisteredBrowser = RegisteredWith.Browser;
     RegisteredOs = RegisteredWith.Os;
     LastUsedAt = lastUsedAt;
+    AccountHint = accountHint;
   }
 
   /// <summary>Owning principal; mutable only via <see cref="ReparentTo"/> during merge.</summary>
@@ -158,6 +173,12 @@ public sealed class Credential : Entity<CredentialId>
   /// <summary>UTC instant of the most recent successful authentication; null until <see cref="MarkUsed"/> runs.</summary>
   public DateTimeOffset? LastUsedAt { get; private set; }
 
+  /// <summary>
+  /// Display-only name of the external account behind the credential (Entra preferred_username);
+  /// never a lookup key. Null when not captured.
+  /// </summary>
+  public string? AccountHint { get; private set; }
+
   /// <summary>True when <see cref="RevokedAt"/> is set.</summary>
   public bool IsRevoked => RevokedAt is not null;
 
@@ -171,7 +192,8 @@ public sealed class Credential : Entity<CredentialId>
     byte[] publicMaterial,
     string? label = null,
     string? nickname = null,
-    RegisteredWith? registeredWith = null)
+    RegisteredWith? registeredWith = null,
+    string? accountHint = null)
   {
     ArgumentNullException.ThrowIfNull(handle);
     ArgumentNullException.ThrowIfNull(publicMaterial);
@@ -214,6 +236,7 @@ public sealed class Credential : Entity<CredentialId>
       context.Browser,
       context.Os,
       lastUsedAt: null,
+      NormalizeAccountHint(accountHint),
       version: 0);
   }
 
@@ -238,6 +261,7 @@ public sealed class Credential : Entity<CredentialId>
       RegisteredWith.Browser,
       RegisteredWith.Os,
       LastUsedAt,
+      AccountHint,
       version);
 
   /// <summary>
@@ -255,6 +279,22 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     Nickname = normalized;
+  }
+
+  /// <summary>
+  /// Replaces the display-only <see cref="AccountHint"/> (trimmed; empty/whitespace clears it; longer
+  /// than <see cref="MaxAccountHintLength"/> is truncated). Returns true when the stored value changed.
+  /// </summary>
+  public bool SetAccountHint(string? accountHint)
+  {
+    string? normalized = NormalizeAccountHint(accountHint);
+    if (string.Equals(normalized, AccountHint, StringComparison.Ordinal))
+    {
+      return false;
+    }
+
+    AccountHint = normalized;
+    return true;
   }
 
   /// <summary>
@@ -338,6 +378,12 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     return trimmed;
+  }
+
+  private static string? NormalizeAccountHint(string? accountHint)
+  {
+    string? trimmed = NormalizeLabel(accountHint);
+    return trimmed is { Length: > MaxAccountHintLength } ? trimmed[..MaxAccountHintLength] : trimmed;
   }
 
   private static string? NormalizeLabel(string? label)

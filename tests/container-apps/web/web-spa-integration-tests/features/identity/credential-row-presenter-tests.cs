@@ -1,6 +1,6 @@
-#region Purpose
-// Task 248-001/248-002: the CredentialList row text rules — title, context line, fingerprint,
-// inline-rename prefill, last-used text, and the revoke confirmation — pinned host-free through
+﻿#region Purpose
+// Task 248-001/248-002/250: the CredentialList row text rules — title, context line, fingerprint,
+// inline-rename prefill, last-used text, the revoke confirmation, and the no-repeat dedupe (250) — pinned host-free through
 // CredentialRowPresenter.
 #endregion
 
@@ -34,14 +34,61 @@ public class Row_Should_
 
   public static Task Context_Line_Is_Provider_Attachment_And_Client_Skipping_Unknowns()
   {
-    CredentialSummary full = Summary(label: "1Password", registeredWith: new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"));
+    CredentialSummary full = Summary(nickname: "Work laptop", label: "1Password", registeredWith: new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"));
     CredentialRowPresenter.ContextLine(full, "Passkey").ShouldBe("1Password · Built-in · Chrome on Windows");
 
-    CredentialSummary roamingNoOs = Summary(label: null, registeredWith: new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", null));
+    CredentialSummary roamingNoOs = Summary(nickname: "Key", label: null, registeredWith: new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", null));
     CredentialRowPresenter.ContextLine(roamingNoOs, "Passkey").ShouldBe("Passkey · Roaming · Safari");
 
-    CredentialSummary unknown = Summary(label: "Proton Pass", registeredWith: RegisteredWith.Unknown);
+    CredentialSummary unknown = Summary(nickname: "Phone", label: "Proton Pass", registeredWith: RegisteredWith.Unknown);
     CredentialRowPresenter.ContextLine(unknown, "Passkey").ShouldBe("Proton Pass");
+    return Task.CompletedTask;
+  }
+
+  public static Task Context_Line_Drops_Provider_That_Repeats_The_Title()
+  {
+    // Un-renamed passkey with Unknown context: title is the provider, so the line is empty (row hides it).
+    CredentialSummary unrenamed = Summary(label: "Proton Pass", registeredWith: RegisteredWith.Unknown);
+    CredentialRowPresenter.Title(unrenamed, "Passkey").ShouldBe("Proton Pass");
+    CredentialRowPresenter.ContextLine(unrenamed, "Passkey").ShouldBe(string.Empty);
+
+    // Case-insensitive: a nickname equal to the provider still does not repeat it.
+    CredentialSummary sameCase = Summary(nickname: "proton pass", label: "Proton Pass",
+      registeredWith: new RegisteredWith(AuthenticatorAttachment.Platform, null, null));
+    CredentialRowPresenter.ContextLine(sameCase, "Passkey").ShouldBe("Built-in");
+
+    // Un-renamed passkey WITH context keeps the context, drops only the repeated provider.
+    CredentialSummary withContext = Summary(label: "1Password",
+      registeredWith: new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"));
+    CredentialRowPresenter.ContextLine(withContext, "Passkey").ShouldBe("Built-in · Chrome on Windows");
+    return Task.CompletedTask;
+  }
+
+  public static Task Entra_Row_Context_Line_Is_The_Account_Hint_Only()
+  {
+    CredentialSummary linked = Entra(accountHint: "steve@contoso.com");
+    CredentialRowPresenter.Title(linked, "Microsoft 365").ShouldBe("Microsoft 365");
+    CredentialRowPresenter.ContextLine(linked, "Microsoft 365").ShouldBe("steve@contoso.com");
+
+    CredentialSummary noHint = Entra(accountHint: null);
+    CredentialRowPresenter.ContextLine(noHint, "Microsoft 365").ShouldBe(string.Empty, "a link made before task 250 has no hint until the next sign-in");
+    return Task.CompletedTask;
+  }
+
+  public static Task Revoke_Confirmation_Does_Not_Repeat_The_Title()
+  {
+    DateTimeOffset now = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
+
+    string entra = CredentialRowPresenter.RevokeConfirmation(Entra(accountHint: "steve@contoso.com", fingerprint: "5c7d9e01"), "Microsoft 365", "Unlink", now);
+    entra.ShouldStartWith("Unlink “Microsoft 365”? steve@contoso.com, created ");
+    entra.ShouldNotContain("Microsoft 365, ");
+    entra.ShouldEndWith(", never used, fingerprint 5c7d9e01. This cannot be undone.");
+
+    string entraNoHint = CredentialRowPresenter.RevokeConfirmation(Entra(accountHint: null), "Microsoft 365", "Unlink", now);
+    entraNoHint.ShouldStartWith("Unlink “Microsoft 365”? Created ");
+
+    string unrenamed = CredentialRowPresenter.RevokeConfirmation(Summary(label: "Proton Pass"), "Passkey", "Delete", now);
+    unrenamed.ShouldStartWith("Delete “Proton Pass”? Created ");
     return Task.CompletedTask;
   }
 
@@ -112,6 +159,21 @@ public class Row_Should_
     typeof(CredentialSummary).GetProperties().Select(p => p.Name).ShouldNotContain(nameof(Credential.Handle));
     return Task.CompletedTask;
   }
+
+  private static CredentialSummary Entra(string? accountHint, string fingerprint = "0123abcd") =>
+    new
+    (
+      CredentialId.New(),
+      CredentialType.EntraAccount,
+      "Microsoft 365",
+      nickname: null,
+      new DateTimeOffset(2026, 9, 23, 12, 0, 0, TimeSpan.Zero),
+      revokedAt: null,
+      isActive: true,
+      RegisteredWith.Unknown,
+      fingerprint,
+      accountHint: accountHint
+    );
 
   private static CredentialSummary Summary
   (

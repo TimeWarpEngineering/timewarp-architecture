@@ -46,11 +46,11 @@ provider).
 
 ## Checklist
 
-- [ ] ContextLine dedupes provider vs title; empty line hidden; confirmation deduped
-- [ ] Settings Microsoft 365 `Subtitle` removed (parameter deleted if unused)
-- [ ] `preferred_username` captured, stored, mapped, migrated, exposed, rendered
-- [ ] Tests (presenter, render, contract, server link)
-- [ ] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+- [x] ContextLine dedupes provider vs title; empty line hidden; confirmation deduped
+- [x] Settings Microsoft 365 `Subtitle` removed (parameter deleted if unused)
+- [x] `preferred_username` captured, stored, mapped, migrated, exposed, rendered
+- [x] Tests (presenter, render, contract, server link)
+- [x] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
 
 ## Notes
 
@@ -61,3 +61,61 @@ provider).
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
+- Implemented under `ganda task work` (implement oracle, headless Claude) 2026-09-24.
+
+## Results
+
+**Presenter / list.** `CredentialRowPresenter.ContextLine` is now account hint · provider ·
+attachment · client, and it drops any part that equals the rendered title or an earlier part
+(ordinal-ignore-case). It returns `""` when nothing is left, and `CredentialList` hides the context
+`<p>` in that case. `RevokeConfirmation` follows the same rule: "Unlink “Microsoft 365”?
+steve@contoso.com, created …", and "Delete “Proton Pass”? Created …" for an un-renamed passkey.
+The `Subtitle` parameter had no other caller, so it is deleted from `CredentialList`, and the
+Settings Microsoft 365 card heading is the fixed text "Microsoft 365" (it no longer swaps in the
+account label).
+
+**Linked account.** An Entra credential's `Label` is now the provider (`EntraIdTokenClaims.ProviderLabel`,
+"Microsoft 365"), the same rule passkeys follow since 248-001. The account is the new
+`Credential.AccountHint`: the trimmed `preferred_username`, or null. It is display-only and never a
+join key (the join stays tid+oid in `Handle`). It is truncated at `MaxAccountHintLength` = 256
+instead of rejected, and `Snapshot` copies it. EF maps it as an unindexed `character varying(256)`.
+Migration `20260923180147_AddCredentialAccountHint` adds the column and a data step: an existing
+Entra `Label` that looks like an email moves to `AccountHint`, and every Entra `Label` becomes
+"Microsoft 365". Down reverses both. The in-memory store gets parity through `Snapshot`.
+`GetCredentials.CredentialSummary.AccountHint` exposes it (last ctor parameter, default null), and
+it stays scoped to the caller's own credentials under the existing IDOR rule.
+
+**Refresh decision (recorded in the `entra-ticket-processor-application.cs` Design region).**
+Sign-in updates the hint as well as link. When a sign-in resolves to an existing active Entra
+credential (the sync-hit path and the already-linked return in bootstrap), the stored hint is
+refreshed if the token's `preferred_username` differs. This backfills links made before this task
+and follows UPN renames. A token without the claim keeps the stored hint. The write happens only
+when the value changes, and a lost Version race is dropped (advisory, like last-used). The hint is
+never logged.
+
+**Tests.** Presenter: title==provider dedupe (including a case-insensitive nickname), empty line,
+Entra hint-only line, confirmation dedupe. Render: an Entra row renders title "Microsoft 365" and
+context "steve@contoso.com", with "Microsoft 365" appearing once in the whole markup; an un-renamed
+passkey has no context `<p>`. Contract round-trip carries `AccountHint`. Server: link and bootstrap
+store the provider Label plus the `preferred_username` hint (the ticket processor and the
+challenge endpoint); sync-hit backfills, skips an unchanged write, keeps the hint when the claim is
+absent, and follows a rename. Existing tests that pinned the old Label = UPN/name behavior are updated.
+
+**Gates.** `dev build` 0 warnings / 0 errors · `dev test` exit 0 (21 suites, 1392 passed, 0
+failed) · `dev template-smoke` SUCCEEDED · `ganda repo audit` 29/29 (after
+`--fix --checks bin-dev` built the gitignored local `bin/dev`).
+
+**Not performed:** the manual Settings page check. No AppHost was started (`dev run` / `aspire run`
+were not used). Note: `dev test` includes the existing closed-box `web-spa-integration-tests` lane,
+which boots the AppHost via `Aspire.Hosting.Testing` as part of the standard suite.
+
+### How to validate
+
+- **Smoke:** from the task worktree, `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class CredentialList_Should_`,
+  then `-- --filter-class Row_Should_`; and `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Bootstrap_Given_`.
+- **Expect:** all pass, including `Render_Entra_Row_With_Account_Hint_And_No_Repeated_Label`
+  (title "Microsoft 365", context "steve@contoso.com", label rendered once),
+  `Hide_Context_Line_When_Nothing_Differs_From_Title`, `Revoke_Confirmation_Does_Not_Repeat_The_Title`,
+  and `Sync_Hit_Should_Refresh_Account_Hint_And_Keep_It_When_Claim_Absent`. Manual check (not performed
+  here): with a linked Microsoft 365 account, Settings shows "Microsoft 365" once as the card heading,
+  once as the row title, and the account email as the context line, with no subtitle.

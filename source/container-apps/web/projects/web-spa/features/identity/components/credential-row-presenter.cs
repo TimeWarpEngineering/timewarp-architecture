@@ -19,6 +19,14 @@
 // are pinned in tests; a stamp in the future (clock skew) reads as "just now". The same text is
 // restated in RevokeConfirmation between created and fingerprint, so the user confirms the row's
 // usage before revoking.
+// Dedupe (task 250): a row whose title already IS the provider (no nickname — every Entra row, and an
+// un-renamed passkey) must not repeat it. Every context part, and the confirmation's identity clause,
+// drops a part that equals the rendered title or an earlier part (ordinal-ignore-case) — the rule is
+// "never say the same words twice on one row", not a per-type special case. An empty context line is
+// returned as "" and the row hides its <p>. AccountHint (the linked Entra account, "steve@contoso.com")
+// leads the context line: for an Entra row it is the only thing that tells WHICH account is linked,
+// while the provider is already the title. It is also restated in the confirmation so "Unlink
+// Microsoft 365?" names the account being unlinked.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -56,16 +64,37 @@ public static class CredentialRowPresenter
       (var browser, var os) => $"{browser} on {os}"
     };
 
-  /// <summary>Provider · attachment · client, skipping unknown parts.</summary>
-  public static string ContextLine(CredentialSummary credential, string fallbackLabel)
-  {
-    string?[] parts =
+  /// <summary>
+  /// Account hint · provider · attachment · client, skipping unknown parts and any part that repeats
+  /// the title or an earlier part. Empty when nothing is left (the row hides the line).
+  /// </summary>
+  public static string ContextLine(CredentialSummary credential, string fallbackLabel) =>
+    string.Join(" \u00b7 ", DistinctFromTitle(credential, fallbackLabel,
     [
+      credential.AccountHint,
       Provider(credential, fallbackLabel),
       AttachmentWord(credential.RegisteredWith),
       ClientText(credential.RegisteredWith)
-    ];
-    return string.Join(" \u00b7 ", parts.Where(part => !string.IsNullOrWhiteSpace(part)));
+    ]));
+
+  /// <summary>Non-blank parts that differ (ordinal-ignore-case) from the title and from each other, in order.</summary>
+  private static List<string> DistinctFromTitle(CredentialSummary credential, string fallbackLabel, string?[] parts)
+  {
+    List<string> kept = [];
+    string title = Title(credential, fallbackLabel);
+    foreach (string? part in parts)
+    {
+      if (string.IsNullOrWhiteSpace(part)
+          || string.Equals(part, title, StringComparison.OrdinalIgnoreCase)
+          || kept.Contains(part, StringComparer.OrdinalIgnoreCase))
+      {
+        continue;
+      }
+
+      kept.Add(part);
+    }
+
+    return kept;
   }
 
   public static string CreatedText(CredentialSummary credential) =>
@@ -121,12 +150,20 @@ public static class CredentialRowPresenter
   public static string NicknameDefault(CredentialSummary credential, string fallbackLabel) =>
     !string.IsNullOrWhiteSpace(credential.Nickname) ? credential.Nickname! : Provider(credential, fallbackLabel);
 
-  /// <summary>Confirmation sentence restating title, provider, created, last used, and fingerprint.</summary>
-  public static string RevokeConfirmation(CredentialSummary credential, string fallbackLabel, string actionLabel, DateTimeOffset? now = null) =>
-    $"{actionLabel} \u201c{Title(credential, fallbackLabel)}\u201d? "
-    + $"{Provider(credential, fallbackLabel)}, created {CreatedText(credential)}, "
-    + $"{LastUsedClause(credential, now ?? DateTimeOffset.UtcNow)}, fingerprint {credential.Fingerprint}. "
-    + "This cannot be undone.";
+  /// <summary>
+  /// Confirmation sentence restating title, account hint and provider (each only when it differs from
+  /// the title), created, last used, and fingerprint.
+  /// </summary>
+  public static string RevokeConfirmation(CredentialSummary credential, string fallbackLabel, string actionLabel, DateTimeOffset? now = null)
+  {
+    List<string> clauses =
+      DistinctFromTitle(credential, fallbackLabel, [credential.AccountHint, Provider(credential, fallbackLabel)]);
+    clauses.Add((clauses.Count == 0 ? "Created " : "created ") + CreatedText(credential));
+    clauses.Add(LastUsedClause(credential, now ?? DateTimeOffset.UtcNow));
+    clauses.Add($"fingerprint {credential.Fingerprint}");
+    return $"{actionLabel} \u201c{Title(credential, fallbackLabel)}\u201d? "
+      + string.Join(", ", clauses) + ". This cannot be undone.";
+  }
 }
 
 /// <summary>Inline-rename result raised by CredentialList.</summary>

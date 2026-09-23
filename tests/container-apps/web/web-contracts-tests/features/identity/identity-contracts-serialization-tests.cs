@@ -1,4 +1,4 @@
-#region Purpose
+﻿#region Purpose
 // Round-trip tests for the identity feature contracts (tasks 104-003, 104-004, 104-005) — the shapes
 // where serialization can actually diverge: typed-id (PrincipalId/CredentialId) Responses with a ctor
 // Guard, optional-property Commands, list properties, and enum properties
@@ -416,13 +416,20 @@ public class GetCredentials_Response_Should
           CredentialId.New(), CredentialType.AgentKey, label: null, nickname: null,
           DateTimeOffset.UtcNow.AddDays(-5), revokedAt: DateTimeOffset.UtcNow, isActive: false,
           RegisteredWith.Unknown, "b71e04dd"
+        ),
+        new GetCredentials.CredentialSummary
+        (
+          CredentialId.New(), CredentialType.EntraAccount, "Microsoft 365", nickname: null,
+          DateTimeOffset.UtcNow.AddDays(-2), revokedAt: null, isActive: true,
+          RegisteredWith.Unknown, "5c7d9e01",
+          accountHint: "steve@contoso.com"
         )
       ]
     );
 
     GetCredentials.Response parsed = ContractSerialization.RoundTrip(response);
 
-    parsed.Credentials.Count.ShouldBe(2);
+    parsed.Credentials.Count.ShouldBe(3);
     parsed.Credentials[0].Id.ShouldBe(response.Credentials[0].Id);
     parsed.Credentials[0].Type.ShouldBe(CredentialType.Passkey);
     parsed.Credentials[0].Label.ShouldBe("1Password");
@@ -439,6 +446,10 @@ public class GetCredentials_Response_Should
     parsed.Credentials[1].RegisteredWith.IsUnknown.ShouldBeTrue();
     parsed.Credentials[1].Fingerprint.ShouldBe("b71e04dd");
     parsed.Credentials[1].LastUsedAt.ShouldBeNull("never-used rides the wire as an explicit null (task 248-002)");
+    parsed.Credentials[0].AccountHint.ShouldBeNull("passkeys carry no external account (task 250)");
+    parsed.Credentials[2].Type.ShouldBe(CredentialType.EntraAccount);
+    parsed.Credentials[2].Label.ShouldBe("Microsoft 365");
+    parsed.Credentials[2].AccountHint.ShouldBe("steve@contoso.com");
     return Task.CompletedTask;
   }
 
