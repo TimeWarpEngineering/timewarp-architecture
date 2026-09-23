@@ -48,6 +48,33 @@ distinguishable without touching the sign-in path. Child of 248.
 - [x] CredentialList row + inline rename + revoke confirmation text
 - [x] Gates: build 0/0, test, template-smoke
 
+## Fix loop (2026-09-23, cockpit) — PR #397 conflicts with master
+
+Master merged task 246 (PR #396) after this branch forked. 246 renamed `CredentialList`'s
+parameters `Delete*` → `Revoke*` (`RevokeLabel`, `RevokeDataQa`, `RevokeDisabled`,
+`RevokeDisabledHint`, `RevokeDisabledHintDataQa`, `OnRevoke`), renamed the default data-qa
+`DeletePasskey` → `RevokePasskey`, added `CanRevoke` on the Passkeys/Settings pages bound to
+`CredentialsState.CanUnlink(ActiveCredentialCount)` with the hint "Add another passkey or agent
+key before revoking this one.", and set the revoke status text to "Credential revoked.".
+GitHub reports #397 CONFLICTING; overlapping files:
+
+- `web-spa/features/identity/components/CredentialList.razor`
+- `web-spa/features/identity/credentials-state/credentials-state.cs`
+- `web-spa/features/identity/pages/passkeys-page/PasskeysPage.razor`
+- `web-spa/features/application/pages/SettingsPage.razor` and `.razor.cs`
+
+Required on THIS branch (no rebase, no squash): `git merge origin/master`, resolve so that BOTH
+land — 246's Revoke naming and last-credential disable + hint, AND this task's row (nickname
+title, context line, fingerprint, inline rename, two-step restating confirmation). The two-step
+confirm's final button raises the `OnRevoke` callback (246's name), and the disabled state from
+246 must also disable the first step of the confirm. Keep 246's new tests
+(`credentials-state-revoke-guard-tests.cs`, the prerender facts in `protected-page-deep-link-tests.cs`
+asserting `RevokePasskey` + hint) green alongside this task's `credential-list-render-tests.cs`.
+Then gates IN THE FOREGROUND: `dev build` 0/0, `dev test`, `dev template-smoke`; commit the merge;
+push to the existing PR branch. Also confirm CI actually runs on the pushed commit
+(`gh pr checks 397`) — the branch showed no workflow runs at all before this loop; if still none
+after the push, say so in Results.
+
 ## Notes
 
 - Parent: 248. Sibling 248-002 (last used) depends on this landing first.
