@@ -5,7 +5,8 @@
 #region Design
 // DefaultApiHandler owns transport + toast-on-error. HandleSuccess updates status strings
 // only; callers (Settings, PasskeysPage) sequence RevokeCredential then FetchCredentials
-// so the list stays the single source of truth. Task 169.
+// so the list stays the single source of truth. Task 169. StatusMessage says "Credential
+// revoked." — the action serves passkeys, agent keys and Entra unlink alike (task 246 vocabulary).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -54,7 +55,7 @@ partial class CredentialsState
       {
         _ = response;
         _ = cancellationToken;
-        CredentialsState.StatusMessage = "Passkey deleted.";
+        CredentialsState.StatusMessage = "Credential revoked.";
         CredentialsState.CeremonyError = null;
         return Task.CompletedTask;
       }

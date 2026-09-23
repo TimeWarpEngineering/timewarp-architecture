@@ -22,6 +22,9 @@
 // (CredentialsState.AddExistingPasskey). 229 card rules apply to the merged credential set.
 // Task 233: markup is Section + CredentialList + FluentButton (Primary / Outline / danger Outline).
 // No page-local twe-settings vocabulary; no raw <button>.
+// Task 246: the passkey row action is Revoke (not Delete) and is disabled with a visible hint
+// when the row is the last active credential of any kind — same CanUnlink(ActiveCredentialCount)
+// predicate as Unlink, mirroring RevokeCredential.Handler's count; the server 409 stays the rule.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
