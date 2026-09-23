@@ -53,6 +53,8 @@ use" before revoking. Child of 248; lands after 248-001.
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
 - Implemented: `ganda task work 248-002` headless implementer (Claude Fable 5.1), 2026-09-23, in the
   claim worktree on branch `task/248-002-credential-last-used-timestamp-written-on-every-su`.
+- Reviewed: `ganda task work 248-002` review oracle (Claude Fable 5.1) + `general` reviewer sub-agent
+  (Claude sonnet), 2026-09-23, effort 1; artifacts under `review/`.
 
 ## Results
 
@@ -142,6 +144,16 @@ Then `dev run`, sign in with a passkey, open **Settings**.
   and still never `handle` / `publicMaterial`.
 - Issue an agent token and call any bearer-protected route repeatedly within five minutes: the key
   row's `Version` advances once (at issuance) and not per request.
+
+### Review disposition
+
+- **Rounds:** 1 — roster `general`, effort 1 (tw-implementation-review).
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (open 0, fixed 0, wontfix 0).
+- **Disposition: clean** — no findings raised; no fix loop, no wontfix, no escalation.
+- **Oracle spot-checks:** ceremony handlers make no `UpdateCredentialAsync` call ahead of
+  `RecordAsync`; runfile `credential-last-used-tests.cs` 4/4; `CredentialUsageRecorder` class 9/9.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### Notes for reviewers
 
