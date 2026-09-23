@@ -23,6 +23,16 @@
 // (CredentialsState.AddExistingPasskey). 229 card rules apply to the merged credential set.
 // Task 233: markup is Section + CredentialList + FluentButton (Primary / Outline / danger Outline).
 // No page-local twe-settings vocabulary; no raw <button>.
+// Task 246: the passkey row action is Revoke (not Delete) and is disabled with a visible hint
+// when the row is the last active credential of any kind — same CanUnlink(ActiveCredentialCount)
+// predicate as Unlink, mirroring RevokeCredential.Handler's count; the server 409 stays the rule.
+// Task 248-001: CredentialList rows carry nickname/context/fingerprint and an inline Rename that
+// dispatches CredentialsState.RenameCredential then FetchCredentials; the passkey list is handed
+// PendingListRenameCredentialId (null while AddPasskeyPrompt owns the pending nickname, so the
+// page never shows two editors) so a just-created passkey opens its editor prefilled with the
+// provider name; Cancel there clears the pending state (ClearPendingNickname). Revoke/Unlink is
+// two-step inside CredentialList (restating confirmation) and both steps honor 246's disable.
+// Rename outcomes land in the shell notification region, not the page-local bars below.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

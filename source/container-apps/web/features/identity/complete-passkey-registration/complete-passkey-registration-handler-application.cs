@@ -30,6 +30,8 @@
 // Concurrency note (104-028): zero Update* calls. AddCredentialAsync's first-credential rule
 // auto-promotes the STORED principal Provisional -> Keyed; this handler's in-hand `principal` local
 // is deliberately left stale afterward.
+// Task 248-001: RegisteredWith is resolved from the command's browser hints plus
+// IRequestUserAgentAccessor; the response carries CredentialId + ProviderLabel for the nickname prompt.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -45,6 +47,7 @@ public sealed partial class CompletePasskeyRegistration
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly IBrowserSessionService BrowserSessionService;
     private readonly IRequestHostAccessor RequestHostAccessor;
+    private readonly IRequestUserAgentAccessor RequestUserAgentAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
 
     public Handler
@@ -54,6 +57,7 @@ public sealed partial class CompletePasskeyRegistration
       IWebAuthnChallengeStore challengeStore,
       IBrowserSessionService browserSessionService,
       IRequestHostAccessor requestHostAccessor,
+      IRequestUserAgentAccessor requestUserAgentAccessor,
       IOptions<WebAuthnOptions> options
     )
     {
@@ -62,6 +66,7 @@ public sealed partial class CompletePasskeyRegistration
       ChallengeStore = challengeStore;
       BrowserSessionService = browserSessionService;
       RequestHostAccessor = requestHostAccessor;
+      RequestUserAgentAccessor = requestUserAgentAccessor;
       Options = options;
     }
 
@@ -99,12 +104,16 @@ public sealed partial class CompletePasskeyRegistration
 
       // Label from AAGUID → provider map (task 168) so Settings shows "Proton Pass" / "1Password"
       // like passkeys.io — not a free-form user name.
+      RegisteredWith registeredWith =
+        RegistrationContext.Resolve(command.AuthenticatorAttachment, command.Transports, RequestUserAgentAccessor.GetUserAgent());
       var credential = Credential.Create(
         principal.Id,
         CredentialType.Passkey,
         materials.CredentialId,
         materials.CosePublicKey,
-        materials.ProviderLabel);
+        materials.ProviderLabel,
+        nickname: null,
+        registeredWith);
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
@@ -123,7 +132,7 @@ public sealed partial class CompletePasskeyRegistration
 
       await BrowserSessionService.IssueAsync(principal.Id, displayName: null, cancellationToken);
 
-      return new Response(principal.Id);
+      return new Response(principal.Id, credential.Id, materials.ProviderLabel);
     }
   }
 }

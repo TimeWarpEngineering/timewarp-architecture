@@ -13,6 +13,12 @@
 // RP-ID credential scoping (task 104-031): register and authenticate on the SAME host.
 // Task 233: the credential list is the shared CredentialList (same as Settings). This page
 // is still the Developer ceremony playground — not a product Settings replacement.
+// Task 246: Revoke is disabled with a visible hint when the row is the last active credential
+// of ANY kind (CredentialsState.ActiveCredentialCount counts passkeys + agent keys + Entra,
+// the same set RevokeCredential.Handler counts via ListCredentialsAsync(includeRevoked: false)).
+// The client mirrors the server so the button is never offered when it can only 409; the
+// server LastCredential guard remains the authority. State-driven: Revoke → Fetch refreshes
+// the count, so the last remaining row flips to disabled without a reload.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

@@ -27,5 +27,7 @@ public class AgentBearerStoresModule : IModule
   {
     serviceCollection.AddSingleton<IPrincipalStore, InMemoryPrincipalStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
+    // Last-used stamps for bearer validation (task 248-002) — same singleton shape as web.
+    serviceCollection.AddSingleton<CredentialUsageRecorder>();
   }
 }

@@ -22,6 +22,16 @@
 // IsActive is the wire-friendly derived flag (!IsRevoked) rather than re-deriving "active" from
 // RevokedAt on the client — same "derive server-side, ship the answer" reasoning as other read
 // contracts in this feature.
+// Task 248-001 discriminators: Nickname (user-chosen, RenameCredential), Label (provider name —
+// AAGUID map / Entra display — immutable), RegisteredWith (attachment + browser/OS FAMILY captured at
+// registration; never a raw User-Agent), and Fingerprint — the last 8 hex of SHA-256(handle),
+// computed server-side (CredentialFingerprint). Fingerprint is the ONLY thing derived from the
+// handle that may cross the wire: it is one-way and 32 bits, so it discriminates rows without
+// disclosing material. The reflection + json.ShouldNotContain pins on Handle/PublicMaterial stay.
+// Task 248-002: LastUsedAt (nullable; null = never used) is the server's stamp from
+// Credential.LastUsedAt; the SPA renders it relative ("Last used 3 minutes ago" / "Never used") and
+// restates it in the revoke confirmation. It is the last ctor parameter and defaults to null so the
+// mock factory's second row is honest about a never-used passkey.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf via IPermissionEvaluator.
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
 // agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
@@ -77,19 +87,32 @@ public static partial class GetCredentials
   {
     public CredentialId Id { get; }
     public CredentialType Type { get; }
+    /// <summary>Provider label (AAGUID / Entra display); null when unknown.</summary>
     public string? Label { get; }
+    /// <summary>User-chosen nickname; null until renamed.</summary>
+    public string? Nickname { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? RevokedAt { get; }
     public bool IsActive { get; }
+    /// <summary>Registration context (attachment, browser family, OS family).</summary>
+    public RegisteredWith RegisteredWith { get; }
+    /// <summary>8 lowercase hex chars derived one-way from the handle; display-only.</summary>
+    public string Fingerprint { get; }
+    /// <summary>UTC instant of the most recent successful authentication; null when never used.</summary>
+    public DateTimeOffset? LastUsedAt { get; }
 
     public CredentialSummary
     (
       CredentialId id,
       CredentialType type,
       string? label,
+      string? nickname,
       DateTimeOffset createdAt,
       DateTimeOffset? revokedAt,
-      bool isActive
+      bool isActive,
+      RegisteredWith registeredWith,
+      string fingerprint,
+      DateTimeOffset? lastUsedAt = null
     )
     {
       if (id.IsEmpty)
@@ -100,9 +123,13 @@ public static partial class GetCredentials
       Id = id;
       Type = type;
       Label = label;
+      Nickname = nickname;
       CreatedAt = createdAt;
       RevokedAt = revokedAt;
       IsActive = isActive;
+      RegisteredWith = Guard.Against.Null(registeredWith);
+      Fingerprint = Guard.Against.NullOrWhiteSpace(fingerprint);
+      LastUsedAt = lastUsedAt;
     }
   }
 
@@ -111,8 +138,31 @@ public static partial class GetCredentials
     return _ => new Response
     (
       [
-        new CredentialSummary(CredentialId.New(), CredentialType.Passkey, "laptop", DateTimeOffset.UtcNow.AddDays(-30), revokedAt: null, isActive: true),
-        new CredentialSummary(CredentialId.New(), CredentialType.Passkey, "phone", DateTimeOffset.UtcNow.AddDays(-7), revokedAt: null, isActive: true)
+        new CredentialSummary
+        (
+          CredentialId.New(),
+          CredentialType.Passkey,
+          "1Password",
+          "Work laptop",
+          DateTimeOffset.UtcNow.AddDays(-30),
+          revokedAt: null,
+          isActive: true,
+          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
+          "3f9a1c2e",
+          lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2)
+        ),
+        new CredentialSummary
+        (
+          CredentialId.New(),
+          CredentialType.Passkey,
+          "1Password",
+          nickname: null,
+          DateTimeOffset.UtcNow.AddDays(-7),
+          revokedAt: null,
+          isActive: true,
+          new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
+          "b71e04dd"
+        )
       ]
     );
   }

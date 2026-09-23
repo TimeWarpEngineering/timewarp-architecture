@@ -13,6 +13,10 @@
 // success publishes "Passkey created." (handlers never dispatch actions — TWS0002). CeremonyFailed
 // is the page-facing flag; callers sequence FetchCredentials only when it is false so Fetch
 // cannot mask the failure. Task 169 + 247.
+// Task 248-001: the browser JSON also carries authenticatorAttachment + transports (registration
+// context hints, forwarded verbatim); success records PendingNicknameCredentialId with the
+// response's ProviderLabel as the prefill so the UI can prompt "name this passkey". Ownership defaults
+// to the list (PendingNicknameOwnedByPrompt=false); AddPasskeyPrompt claims it right after success.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -35,12 +39,12 @@ partial class CredentialsState
       {
       }
 
-      public Action(string label)
+      public Action(string nickname)
       {
-        Label = label;
+        Nickname = nickname;
       }
 
-      public string? Label { get; }
+      public string? Nickname { get; }
     }
 
     internal sealed class Handler : BaseHandler<Action>
@@ -99,7 +103,9 @@ partial class CredentialsState
             CredentialId = root.GetProperty("credentialId").GetString()!,
             ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
             AttestationObject = root.GetProperty("attestationObject").GetString()!,
-            Label = action.Label
+            Nickname = action.Nickname,
+            AuthenticatorAttachment = ReadOptionalString(root, "authenticatorAttachment"),
+            Transports = ReadOptionalStrings(root, "transports")
           };
 
           OneOf<AddPasskey.Response, FileResponse, SharedProblemDetails> completeResult =
@@ -112,6 +118,9 @@ partial class CredentialsState
           }
 
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
+          CredentialsState.PendingNicknameCredentialId = completeResult.AsT0.CredentialId.Value;
+          CredentialsState.PendingNicknameDefault = completeResult.AsT0.ProviderLabel;
+          CredentialsState.PendingNicknameOwnedByPrompt = false; // the list owns it unless the prompt claims it
           await Publisher.Publish
           (
             new OutcomeNotification(MessageBarIntent.Success, "Passkey created."),
@@ -138,6 +147,30 @@ partial class CredentialsState
       {
         CredentialsState.CeremonyFailed = true;
         return Publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
+      }
+
+      private static string? ReadOptionalString(JsonElement root, string propertyName) =>
+        root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String
+          ? element.GetString()
+          : null;
+
+      private static List<string>? ReadOptionalStrings(JsonElement root, string propertyName)
+      {
+        if (!root.TryGetProperty(propertyName, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
+        {
+          return null;
+        }
+
+        List<string> values = [];
+        foreach (JsonElement item in element.EnumerateArray())
+        {
+          if (item.ValueKind == JsonValueKind.String && item.GetString() is { Length: > 0 } value)
+          {
+            values.Add(value);
+          }
+        }
+
+        return values.Count == 0 ? null : values;
       }
 
       private async Task<Guid> ResolveUserIdAsync()

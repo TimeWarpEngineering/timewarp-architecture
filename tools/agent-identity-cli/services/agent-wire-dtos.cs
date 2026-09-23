@@ -21,7 +21,8 @@ internal sealed class RegisterRequest
   public string PublicKey { get; set; } = string.Empty;
   public string Challenge { get; set; } = string.Empty;
   public string Signature { get; set; } = string.Empty;
-  public string? Label { get; set; }
+  /// <summary>User nickname for the key (task 248-001 renamed the wire field from Label).</summary>
+  public string? Nickname { get; set; }
 }
 
 internal sealed class RegisterResponse

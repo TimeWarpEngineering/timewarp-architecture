@@ -12,6 +12,7 @@
 
   private bool IsListBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
+  private bool CanRevoke => CredentialsState.CanUnlink(CredentialsState.ActiveCredentialCount);
 
   protected override async Task OnInitializedAsync()
   {
@@ -45,6 +46,8 @@
       );
       await RefreshSessionAsync();
       await NoSubCredentialsState.FetchCredentials();
+      // Task 248-001: prompt for a nickname, prefilled with the provider name, on the new row.
+      await NoSubCredentialsState.SetPendingNickname(result.AsT0.CredentialId.Value, result.AsT0.ProviderLabel ?? string.Empty);
     }
     catch (JSException jsException)
     {
@@ -108,6 +111,14 @@
     await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
     await NoSubCredentialsState.FetchCredentials();
   }
+
+  private async Task RenameAsync(CredentialRename rename)
+  {
+    await NoSubCredentialsState.RenameCredential(rename.CredentialId, rename.Nickname);
+    await NoSubCredentialsState.FetchCredentials();
+  }
+
+  private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
 }
 
 <TimeWarpPage Title="Passkeys">
@@ -139,9 +150,16 @@
                       IsBusy="IsListBusy"
                       EmptyMessage="No passkeys on this account yet."
                       FallbackLabel="Passkey"
-                      DeleteLabel="Delete"
-                      DeleteDataQa="DeletePasskey"
-                      OnDelete="ConfirmRevokeAsync" />
+                      RevokeLabel="Revoke"
+                      RevokeDataQa="RevokePasskey"
+                      RevokeDisabled="@(!CanRevoke)"
+                      RevokeDisabledHint="Add another passkey or agent key before revoking this one."
+                      RevokeDisabledHintDataQa="RevokePasskeyHint"
+                      OnRevoke="ConfirmRevokeAsync"
+                      OnRename="RenameAsync"
+                      OnRenameCancel="CancelPendingNicknameAsync"
+                      PendingRenameCredentialId="CredentialsState.PendingListRenameCredentialId"
+                      PendingRenameDefault="CredentialsState.PendingNicknameDefault" />
     </Section>
   </div>
 </TimeWarpPage>

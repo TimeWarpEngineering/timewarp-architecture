@@ -35,6 +35,37 @@
 // let a revoked credential rehydrate as active, which is exactly the state-loss class this token
 // exists to prevent.
 //
+// Add-time identity (task 248-001): Label is the PROVIDER name (AAGUID map — "Proton Pass"; Entra
+// display label) and is immutable; Nickname is the USER's name for the row, optional, mutable via
+// Rename (1..MaxNicknameLength chars after trim). The two were one field before 248-001 (a
+// caller-supplied label silently overwrote the provider name), which made same-provider rows
+// indistinguishable once renamed. Rows created before 248-001: the postgres migration moves every
+// agent-key Label into Nickname (agent keys have no provider, so that Label was always a user name);
+// pre-existing passkey Labels cannot be told apart (AAGUID name vs user-typed) and stay as Label —
+// such a row shows the old user name as its provider until renamed. In-memory stores start empty.
+// RegisteredWith is captured once at Create (attachment + browser/OS
+// family; see its Design region) and never changes. Fingerprint is computed from HandleField on demand
+// (CredentialFingerprint) — display-safe, never the handle itself. Snapshot copies Nickname and
+// RegisteredWith too — the same "incomplete snapshot silently loses state" reasoning as RevokedAt.
+// RegisteredWith is mirrored into three PRIVATE scalar properties (Registered{Attachment,Browser,Os})
+// that the EF mapping binds by name through the private constructor — chosen over an owned/complex
+// type so the store's detach-and-attach replacement path (PersistReplacementAsync) stays a
+// single-row operation. (EF rejects field-only properties whose name differs from the field, so
+// these are properties, not fields.)
+//
+// Last-used (task 248-002): LastUsedAt is the UTC instant of the most recent successful
+// authentication with this credential — null until the first one. It is set ONLY through MarkUsed
+// (named mutation, no public setter) and is monotonic: MarkUsed ignores an instant at or before the
+// current value, so a late-arriving stale write can never rewind the stamp. MarkUsed takes the
+// instant from the caller (the write points own the clock — CredentialUsageRecorder) instead of
+// reading UtcNow here, so coalescing and tests are deterministic; it is the one domain stamp that
+// is NOT wall-clock-in-the-entity (CreatedAt/RevokedAt still are, D5). MarkUsed does not check
+// IsRevoked: it is advisory display state, and every write point has already rejected a revoked
+// credential before verifying — the guard belongs at the authentication ladder, not here.
+// Persistence and the revoke race are the recorder's concern (see CredentialUsageRecorder's
+// Design region: a last-used write that loses the Version CAS is DROPPED, never retried). Snapshot
+// copies LastUsedAt — same "incomplete snapshot silently loses state" reasoning as RevokedAt.
+//
 // IAggregateRoot: deliberately NOT implemented here, for the same reason as Principal — see
 // principal.cs's Design region. Identity's own guard clauses (Create, Revoke, Restore) are the invariant
 // enforcement; aligning with the nested-Invariants/IAggregateRoot pattern is a later task.
@@ -47,8 +78,18 @@ namespace TimeWarp.Identity;
 /// </summary>
 public sealed class Credential : Entity<CredentialId>
 {
+  /// <summary>Upper bound for <see cref="Nickname"/> after trimming (matches the contract validator).</summary>
+  public const int MaxNicknameLength = 64;
+
   private readonly byte[] HandleField;
   private readonly byte[] PublicMaterialField;
+
+  // Private scalar projections of RegisteredWith so the EF mapping (private properties mapped by
+  // name, see CredentialEntityTypeConfiguration) can persist three columns without an owned/complex
+  // type. Never read by domain code — RegisteredWith is the public surface.
+  private AuthenticatorAttachment RegisteredAttachment { get; }
+  private string? RegisteredBrowser { get; }
+  private string? RegisteredOs { get; }
 
   private Credential(
     CredentialId id,
@@ -59,6 +100,11 @@ public sealed class Credential : Entity<CredentialId>
     DateTimeOffset createdAt,
     DateTimeOffset? revokedAt,
     string? label,
+    string? nickname,
+    AuthenticatorAttachment registeredAttachment,
+    string? registeredBrowser,
+    string? registeredOs,
+    DateTimeOffset? lastUsedAt,
     long version)
     : base(id, version)
   {
@@ -69,6 +115,12 @@ public sealed class Credential : Entity<CredentialId>
     CreatedAt = createdAt;
     RevokedAt = revokedAt;
     Label = label;
+    Nickname = nickname;
+    RegisteredWith = new RegisteredWith(registeredAttachment, registeredBrowser, registeredOs);
+    RegisteredAttachment = RegisteredWith.Attachment;
+    RegisteredBrowser = RegisteredWith.Browser;
+    RegisteredOs = RegisteredWith.Os;
+    LastUsedAt = lastUsedAt;
   }
 
   /// <summary>Owning principal; mutable only via <see cref="ReparentTo"/> during merge.</summary>
@@ -91,8 +143,20 @@ public sealed class Credential : Entity<CredentialId>
   /// <summary>UTC revoke stamp when revoked; null while active.</summary>
   public DateTimeOffset? RevokedAt { get; private set; }
 
-  /// <summary>Optional human label; null when unset or whitespace-only at create.</summary>
+  /// <summary>Provider label (AAGUID / Entra display); immutable; null when unknown or whitespace-only at create.</summary>
   public string? Label { get; }
+
+  /// <summary>User-chosen nickname; null until <see cref="Rename"/> or a nickname was supplied at create.</summary>
+  public string? Nickname { get; private set; }
+
+  /// <summary>Registration context captured at create; <see cref="RegisteredWith.Unknown"/> when nothing was captured.</summary>
+  public RegisteredWith RegisteredWith { get; }
+
+  /// <summary>Display-safe 8-hex discriminator derived from the handle (never the handle itself).</summary>
+  public string Fingerprint => CredentialFingerprint.Compute(HandleField);
+
+  /// <summary>UTC instant of the most recent successful authentication; null until <see cref="MarkUsed"/> runs.</summary>
+  public DateTimeOffset? LastUsedAt { get; private set; }
 
   /// <summary>True when <see cref="RevokedAt"/> is set.</summary>
   public bool IsRevoked => RevokedAt is not null;
@@ -105,7 +169,9 @@ public sealed class Credential : Entity<CredentialId>
     CredentialType type,
     byte[] handle,
     byte[] publicMaterial,
-    string? label = null)
+    string? label = null,
+    string? nickname = null,
+    RegisteredWith? registeredWith = null)
   {
     ArgumentNullException.ThrowIfNull(handle);
     ArgumentNullException.ThrowIfNull(publicMaterial);
@@ -131,6 +197,8 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     string? normalizedLabel = NormalizeLabel(label);
+    string? normalizedNickname = NormalizeNickname(nickname);
+    RegisteredWith context = registeredWith ?? RegisteredWith.Unknown;
 
     return new Credential(
       CredentialId.New(),
@@ -141,6 +209,11 @@ public sealed class Credential : Entity<CredentialId>
       DateTimeOffset.UtcNow,
       revokedAt: null,
       normalizedLabel,
+      normalizedNickname,
+      context.Attachment,
+      context.Browser,
+      context.Os,
+      lastUsedAt: null,
       version: 0);
   }
 
@@ -151,7 +224,54 @@ public sealed class Credential : Entity<CredentialId>
   /// that already passed Create's guards.
   /// </summary>
   internal Credential Snapshot(long version) =>
-    new(Id, PrincipalId, Type, HandleField.ToArray(), PublicMaterialField.ToArray(), CreatedAt, RevokedAt, Label, version);
+    new(
+      Id,
+      PrincipalId,
+      Type,
+      HandleField.ToArray(),
+      PublicMaterialField.ToArray(),
+      CreatedAt,
+      RevokedAt,
+      Label,
+      Nickname,
+      RegisteredWith.Attachment,
+      RegisteredWith.Browser,
+      RegisteredWith.Os,
+      LastUsedAt,
+      version);
+
+  /// <summary>
+  /// Sets the user-chosen nickname. Trimmed; must be 1..<see cref="MaxNicknameLength"/> characters.
+  /// </summary>
+  /// <exception cref="ArgumentException">The nickname is empty/whitespace or too long after trimming.</exception>
+  public void Rename(string nickname)
+  {
+    ArgumentNullException.ThrowIfNull(nickname);
+
+    string? normalized = NormalizeNickname(nickname);
+    if (normalized is null)
+    {
+      throw new ArgumentException("Nickname must contain at least one non-whitespace character.", nameof(nickname));
+    }
+
+    Nickname = normalized;
+  }
+
+  /// <summary>
+  /// Records a successful authentication at <paramref name="now"/>. Monotonic: an instant at or
+  /// before the current <see cref="LastUsedAt"/> is ignored (returns false) so a stale write never
+  /// rewinds the stamp. Returns true when the stamp advanced.
+  /// </summary>
+  public bool MarkUsed(DateTimeOffset now)
+  {
+    if (LastUsedAt is not null && now <= LastUsedAt.Value)
+    {
+      return false;
+    }
+
+    LastUsedAt = now;
+    return true;
+  }
 
   /// <summary>One-shot revoke: sets <see cref="RevokedAt"/>; throws if already revoked.</summary>
   public void Revoke()
@@ -197,6 +317,27 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     PrincipalId = target;
+  }
+
+  private static string? NormalizeNickname(string? nickname)
+  {
+    if (nickname is null)
+    {
+      return null;
+    }
+
+    string trimmed = nickname.Trim();
+    if (trimmed.Length == 0)
+    {
+      return null;
+    }
+
+    if (trimmed.Length > MaxNicknameLength)
+    {
+      throw new ArgumentException($"Nickname cannot exceed {MaxNicknameLength} characters after trimming.", nameof(nickname));
+    }
+
+    return trimmed;
   }
 
   private static string? NormalizeLabel(string? label)

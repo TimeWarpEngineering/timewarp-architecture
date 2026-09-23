@@ -4,9 +4,10 @@
 
 #region Design
 // DefaultApiHandler owns transport + ProblemDetailsNotification on error. HandleSuccess
-// publishes the "Credential removed." outcome to the shell region; callers (Settings,
+// publishes the "Credential revoked." outcome to the shell region — the action serves
+// passkeys, agent keys and Entra unlink alike (task 246 vocabulary); callers (Settings,
 // PasskeysPage) sequence RevokeCredential then FetchCredentials so the list stays the
-// single source of truth. Task 169 + 247.
+// single source of truth. Task 169 + 246 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -57,7 +58,7 @@ partial class CredentialsState
         CredentialsState.CeremonyFailed = false;
         return Publisher.Publish
         (
-          new OutcomeNotification(MessageBarIntent.Success, "Credential removed."),
+          new OutcomeNotification(MessageBarIntent.Success, "Credential revoked."),
           cancellationToken
         );
       }

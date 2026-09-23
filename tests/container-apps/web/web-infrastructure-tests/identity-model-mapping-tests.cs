@@ -66,6 +66,33 @@ public class Map
     uniqueHandle.ShouldNotBeNull("Unique index on (Type, Handle) is required for handle uniqueness");
   }
 
+  public static async Task Credential_maps_nickname_and_registered_with_scalars_but_not_the_record_or_fingerprint()
+  {
+    await using PostgresDbContext db = CreateModelOnlyContext();
+
+    IEntityType entityType = db.Model.FindEntityType(typeof(Credential)).ShouldNotBeNull();
+
+    IProperty nickname = entityType.FindProperty(nameof(Credential.Nickname)).ShouldNotBeNull();
+    nickname.IsNullable.ShouldBeTrue();
+    nickname.GetMaxLength().ShouldBe(Credential.MaxNicknameLength);
+
+    IProperty attachment = entityType.FindProperty("RegisteredAttachment").ShouldNotBeNull();
+    attachment.ClrType.ShouldBe(typeof(AuthenticatorAttachment));
+    attachment.IsNullable.ShouldBeFalse();
+    entityType.FindProperty("RegisteredBrowser").ShouldNotBeNull().GetMaxLength().ShouldBe(RegisteredWith.MaxFamilyLength);
+    entityType.FindProperty("RegisteredOs").ShouldNotBeNull().GetMaxLength().ShouldBe(RegisteredWith.MaxFamilyLength);
+
+    // Task 248-002: LastUsedAt is a plain nullable column riding the same Version CAS.
+    IProperty lastUsedAt = entityType.FindProperty(nameof(Credential.LastUsedAt)).ShouldNotBeNull();
+    lastUsedAt.ClrType.ShouldBe(typeof(DateTimeOffset?));
+    lastUsedAt.IsNullable.ShouldBeTrue();
+
+    // The record and the computed fingerprint are projections, never columns.
+    entityType.FindProperty(nameof(Credential.RegisteredWith)).ShouldBeNull();
+    entityType.FindProperty(nameof(Credential.Fingerprint)).ShouldBeNull();
+    entityType.GetNavigations().ShouldNotContain(n => n.Name == nameof(Credential.RegisteredWith));
+  }
+
   public static async Task Exposes_principals_and_credentials_dbsets()
   {
     await using PostgresDbContext db = CreateModelOnlyContext();

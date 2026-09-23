@@ -70,8 +70,11 @@ export function IsSupported(): boolean {
   return typeof window.PublicKeyCredential !== "undefined";
 }
 
-// Returns a JSON string: { credentialId, clientDataJson, attestationObject } — matching
-// CompletePasskeyRegistration.Command's field names.
+// Returns a JSON string: { credentialId, clientDataJson, attestationObject,
+// authenticatorAttachment, transports } — matching CompletePasskeyRegistration.Command /
+// AddPasskey.Command field names. authenticatorAttachment is null when the browser does not
+// report it; transports is null when getTransports() is unavailable (task 248-001: both are
+// display-only registration-context hints, reduced server-side).
 // preferHybrid: optional; when true, sets hints: ["hybrid"] for cross-device focused UI.
 export async function CreateCredential(
   optionsJson: string,
@@ -90,11 +93,15 @@ export async function CreateCredential(
 
   const credential = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential;
   const response = credential.response as AuthenticatorAttestationResponse;
+  const transports =
+    typeof response.getTransports === "function" ? response.getTransports() : null;
 
   return JSON.stringify({
     credentialId: bufferToBase64Url(credential.rawId),
     clientDataJson: bufferToBase64Url(response.clientDataJSON),
     attestationObject: bufferToBase64Url(response.attestationObject),
+    authenticatorAttachment: credential.authenticatorAttachment ?? null,
+    transports: transports,
   });
 }
 

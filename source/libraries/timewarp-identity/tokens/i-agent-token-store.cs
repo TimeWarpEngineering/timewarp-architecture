@@ -46,8 +46,12 @@ namespace TimeWarp.Identity;
 /// </summary>
 public interface IAgentTokenStore
 {
-  /// <summary>Mints a new opaque bearer token for the given principal/scopes, valid for the given lifetime.</summary>
-  string Issue(PrincipalId principalId, IReadOnlyCollection<string> scopes, TimeSpan lifetime);
+  /// <summary>
+  /// Mints a new opaque bearer token for the given principal/scopes, valid for the given lifetime.
+  /// <paramref name="credentialId"/> is the agent key that proved possession; it rides on the grant so
+  /// validators can record credential usage (task 248-002).
+  /// </summary>
+  string Issue(PrincipalId principalId, CredentialId credentialId, IReadOnlyCollection<string> scopes, TimeSpan lifetime);
 
   /// <summary>
   /// Validates a presented bearer token. Returns the grant if it exists and has not expired;

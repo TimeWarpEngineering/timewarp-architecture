@@ -54,6 +54,7 @@
      --fontFamilyBase is set at runtime by Fluent's design-token JS (Segoe UI Variable + fallbacks);
      the trailing sans-serif covers the prerender window before that JS runs (task 073). */
   --twe-font-sans: var(--fontFamilyBase, sans-serif);
+  --twe-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   --twe-text-page-title: 28px;
   --twe-text-section-title: 18px;
   --twe-text-body: 14px;

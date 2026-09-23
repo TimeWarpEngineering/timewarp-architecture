@@ -27,9 +27,14 @@
 // exactly the enumeration leak this paragraph otherwise prevents. Checking quarantine post-Verify
 // makes the "the caller has already cryptographically proven possession" premise for the distinct
 // 403 actually true, since nothing before Verify can produce it.
-// Concurrency note (104-028): this handler makes zero Update* calls — no sign-count persisted
-// (Credential has no such field; see authenticator-data.cs), so nothing here needs to write back to
-// the store at all.
+// Last-used (task 248-002): after Verify AND the quarantine check pass, the handler stamps
+// Credential.LastUsedAt through CredentialUsageRecorder.RecordAsync — a passkey sign-in is
+// per-ceremony, so it writes every time (no coalescing). This is the handler's ONLY Update* call
+// (the 104-028 note that it made none is superseded): no sign-count is persisted (Credential has no
+// such field; see authenticator-data.cs). The write is advisory — a lost version race against a
+// concurrent RevokeCredential is dropped by the recorder, never retried, and never fails the
+// sign-in (see CredentialUsageRecorder's Design region). It runs BEFORE the session is issued so
+// that a store failure (not a lost race) surfaces before a cookie is minted.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -54,6 +59,7 @@ public sealed partial class CompletePasskeyAuthentication
     private readonly IBrowserSessionService BrowserSessionService;
     private readonly IRequestHostAccessor RequestHostAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
+    private readonly CredentialUsageRecorder UsageRecorder;
     private readonly ILogger<Handler> Logger;
 
     public Handler
@@ -63,6 +69,7 @@ public sealed partial class CompletePasskeyAuthentication
       IBrowserSessionService browserSessionService,
       IRequestHostAccessor requestHostAccessor,
       IOptions<WebAuthnOptions> options,
+      CredentialUsageRecorder usageRecorder,
       ILogger<Handler> logger
     )
     {
@@ -71,6 +78,7 @@ public sealed partial class CompletePasskeyAuthentication
       BrowserSessionService = browserSessionService;
       RequestHostAccessor = requestHostAccessor;
       Options = options;
+      UsageRecorder = usageRecorder;
       Logger = logger;
     }
 
@@ -127,6 +135,9 @@ public sealed partial class CompletePasskeyAuthentication
       {
         return IdentityProblems.Quarantined();
       }
+
+      // Per-ceremony last-used stamp; a lost race against a concurrent revoke is dropped (Design region).
+      await UsageRecorder.RecordAsync(PrincipalStore, credential, cancellationToken);
 
       await BrowserSessionService.IssueAsync(principal.Id, principal.DisplayName, cancellationToken);
 

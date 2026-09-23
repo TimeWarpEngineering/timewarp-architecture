@@ -82,6 +82,27 @@ public class Returns_
     sessionResponse.PrincipalId.ShouldBe(registeredPrincipalId);
   }
 
+  public static async Task Stamps_Credential_LastUsedAt_Given_Valid_Authentication()
+  {
+    // Task 248-002: a passkey sign-in is per-ceremony, so every successful assertion writes LastUsedAt.
+    IntegrationSoftwareAuthenticator authenticator = new();
+    PrincipalId principalId = await RegisterPasskey(authenticator);
+    IPrincipalStore store = Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Credential before = (await store.ListCredentialsAsync(principalId)).Single();
+    before.LastUsedAt.ShouldBeNull("registration alone is not a use");
+
+    DateTimeOffset justBefore = DateTimeOffset.UtcNow.AddSeconds(-1);
+    CompletePasskeyAuthentication.Command authenticateCommand = await BuildValidAuthenticateCommand(authenticator);
+    HttpResponseMessage httpResponse = await TestApiService.GetHttpResponseMessage(authenticateCommand, CancellationToken.None);
+    httpResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+    Credential after = (await store.ListCredentialsAsync(principalId)).Single();
+    after.LastUsedAt.ShouldNotBeNull();
+    after.LastUsedAt.Value.ShouldBeGreaterThanOrEqualTo(justBefore);
+    after.LastUsedAt.Value.ShouldBeLessThanOrEqualTo(DateTimeOffset.UtcNow.AddSeconds(1));
+    after.Version.ShouldBe(before.Version + 1, "exactly one write per ceremony");
+  }
+
   public static async Task BadRequest_Given_Unknown_Credential()
   {
     // Never registered — FindCredentialByHandleAsync must return null.

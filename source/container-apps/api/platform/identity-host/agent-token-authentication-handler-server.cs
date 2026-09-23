@@ -11,6 +11,10 @@
 // Callers of IAgentTokenStore.Validate MUST re-read the principal for liveness (IAgentTokenStore
 // Design region) — this handler does that after a successful Validate, same as web.
 // Instance TokenWasPresented is safe: ASP.NET Core resolves a fresh handler per request.
+// Last-used (task 248-002): same coalesced CredentialUsageRecorder.RecordCoalescedAsync call as web
+// after liveness — on this host's own IPrincipalStore. With per-process in-memory stores the key
+// row usually lives on web-server, so the Get returns null and the call is a no-op; behind a
+// shared durable store it stamps exactly like web.
 // Namespace is TimeWarp.Architecture.Api.Server (platform cluster, not Features.Identity).
 #endregion
 
@@ -30,6 +34,7 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
 {
   private readonly IAgentTokenStore TokenStore;
   private readonly IPrincipalStore PrincipalStore;
+  private readonly CredentialUsageRecorder UsageRecorder;
   private bool TokenWasPresented;
 
   public AgentTokenAuthenticationHandler
@@ -38,11 +43,13 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
     ILoggerFactory logger,
     UrlEncoder encoder,
     IAgentTokenStore tokenStore,
-    IPrincipalStore principalStore
+    IPrincipalStore principalStore,
+    CredentialUsageRecorder usageRecorder
   ) : base(options, logger, encoder)
   {
     TokenStore = tokenStore;
     PrincipalStore = principalStore;
+    UsageRecorder = usageRecorder;
   }
 
   protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -75,6 +82,9 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
       // Quarantine at validation time is a silent Fail -> 401 — see this class's Design region.
       return AuthenticateResult.Fail("Principal not found or inactive.");
     }
+
+    // Coalesced last-used stamp for the issuing agent key (task 248-002, Design region).
+    await UsageRecorder.RecordCoalescedAsync(PrincipalStore, grant.CredentialId, Context.RequestAborted);
 
     List<Claim> claims = [new Claim(AgentTokenDefaults.PrincipalIdClaimType, grant.PrincipalId.Value.ToString())];
     claims.AddRange(grant.Scopes.Select(scope => new Claim(AgentTokenDefaults.ScopeClaimType, scope)));

@@ -16,7 +16,7 @@
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
-  private bool CanUnlink => CredentialsState.ActiveCredentialCount > 1;
+  private bool CanRevoke => CredentialsState.CanUnlink(CredentialsState.ActiveCredentialCount);
   private string Microsoft365CardTitle =>
     EntraAccounts.Count == 1 ? DisplayEntraLabel(EntraAccounts[0]) : "Microsoft 365";
 
@@ -77,6 +77,14 @@
     await NoSubCredentialsState.FetchCredentials();
   }
 
+  private async Task RenameAsync(CredentialRename rename)
+  {
+    await NoSubCredentialsState.RenameCredential(rename.CredentialId, rename.Nickname);
+    await NoSubCredentialsState.FetchCredentials();
+  }
+
+  private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
+
   private async Task<bool> LoadEntraOfferedAsync()
   {
     try
@@ -111,9 +119,16 @@
                         IsBusy="IsBusy"
                         EmptyMessage="No passkeys on this account yet."
                         FallbackLabel="Passkey"
-                        DeleteLabel="Delete"
-                        DeleteDataQa="DeletePasskey"
-                        OnDelete="ConfirmRevokeAsync" />
+                        RevokeLabel="Revoke"
+                        RevokeDataQa="RevokePasskey"
+                        RevokeDisabled="@(!CanRevoke)"
+                        RevokeDisabledHint="Add another passkey or agent key before revoking this one."
+                        RevokeDisabledHintDataQa="RevokePasskeyHint"
+                        OnRevoke="ConfirmRevokeAsync"
+                        OnRename="RenameAsync"
+                        OnRenameCancel="CancelPendingNicknameAsync"
+                        PendingRenameCredentialId="CredentialsState.PendingListRenameCredentialId"
+                        PendingRenameDefault="CredentialsState.PendingNicknameDefault" />
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
           <FluentButton Appearance="ButtonAppearance.Primary"
                         data-qa="CreatePasskey"
@@ -144,12 +159,13 @@
                           FallbackLabel="Microsoft 365"
                           Subtitle="Microsoft 365"
                           TitleDataQa="Microsoft365AccountLabel"
-                          DeleteLabel="Unlink"
-                          DeleteDataQa="Unlink"
-                          DeleteDisabled="@(!CanUnlink)"
-                          DeleteDisabledHint="Add a passkey first"
-                          DeleteDisabledHintDataQa="UnlinkMicrosoft365Hint"
-                          OnDelete="ConfirmRevokeAsync" />
+                          RevokeLabel="Unlink"
+                          RevokeDataQa="Unlink"
+                          RevokeDisabled="@(!CanRevoke)"
+                          RevokeDisabledHint="Add a passkey first"
+                          RevokeDisabledHintDataQa="UnlinkMicrosoft365Hint"
+                          OnRevoke="ConfirmRevokeAsync"
+                          OnRename="RenameAsync" />
           @if (CanLinkMicrosoft365)
           {
             <FluentButton Appearance="ButtonAppearance.Primary"

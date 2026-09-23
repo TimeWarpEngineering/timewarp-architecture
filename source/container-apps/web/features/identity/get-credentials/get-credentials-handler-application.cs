@@ -14,10 +14,13 @@
 // already requires an authenticated principal to reach this handler at all (same posture as
 // IAgentCallerContext's Design region).
 // Secret-material omission (load-bearing, security): CredentialSummary's constructor only ever
-// receives Id/Type/Label/CreatedAt/RevokedAt/IsActive — Credential.Handle and Credential.PublicMaterial
-// are never read here, so there is no code path that could accidentally leak them even under a future
-// refactor that adds a field; the contract's CredentialSummary shape (see get-credentials.cs's Design
-// region) is what makes serializing either one impossible even if this handler tried.
+// receives Id/Type/Label/Nickname/CreatedAt/RevokedAt/IsActive/RegisteredWith/Fingerprint —
+// Credential.Handle and Credential.PublicMaterial are never read here, so there is no code path that
+// could accidentally leak them even under a future refactor that adds a field; the contract's
+// CredentialSummary shape (see get-credentials.cs's Design region) is what makes serializing either
+// one impossible even if this handler tried. Fingerprint (task 248-001) is Credential.Fingerprint —
+// the domain computes the one-way digest from its private handle field; this handler never touches
+// the handle bytes to produce it.
 // A pure read — no IPrincipalStore Update* call, so no concurrency note applies (matches
 // GetCurrentSession.Handler's Design region reasoning).
 #endregion
@@ -55,9 +58,13 @@ public sealed partial class GetCredentials
           credential.Id,
           credential.Type,
           credential.Label,
+          credential.Nickname,
           credential.CreatedAt,
           credential.RevokedAt,
-          isActive: !credential.IsRevoked))
+          isActive: !credential.IsRevoked,
+          credential.RegisteredWith,
+          credential.Fingerprint,
+          credential.LastUsedAt))
         .ToList();
 
       return new Response(summaries);

@@ -78,9 +78,12 @@ public class ShouldShow_Given_
       CredentialId.New(),
       type,
       label: type.ToString(),
+      nickname: null,
       DateTimeOffset.UtcNow,
       revokedAt: isActive ? null : DateTimeOffset.UtcNow,
-      isActive
+      isActive,
+      RegisteredWith.Unknown,
+      "0123abcd"
     );
 }
 

@@ -26,6 +26,8 @@
 // EfRolePermissionStore when connected — same dual-mode gate as principal-role store.
 // Site settings (task 219-006): ISiteSettingsStore defaults to singleton InMemorySiteSettingsStore.
 // PostgresDbModule swaps to scoped EfSiteSettingsStore when connected.
+// CredentialUsageRecorder (task 248-002) is NOT a store: a singleton coalescing gate over whichever
+// IPrincipalStore the caller hands it — no postgres swap needed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -44,6 +46,10 @@ public class InMemoryIdentityStoresModule : IModule
     serviceCollection.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
     serviceCollection.AddSingleton<IAgentKeyChallengeStore, InMemoryAgentKeyChallengeStore>();
     serviceCollection.AddSingleton<IAgentTokenStore, InMemoryAgentTokenStore>();
+
+    // Last-used stamps (task 248-002): process singleton that owns the per-credential coalescing map;
+    // it takes IPrincipalStore per call, so it is unaffected by PostgresDbModule's scoped swap.
+    serviceCollection.AddSingleton<CredentialUsageRecorder>();
 
     // Web-app principal→role default; PostgresDbModule swaps to EfPrincipalRoleStore when connected.
     serviceCollection.AddSingleton<IPrincipalRoleStore, InMemoryPrincipalRoleStore>();

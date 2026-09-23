@@ -79,6 +79,9 @@ public class Credentials : PrincipalStoreContract_.Credentials
   public static new Task Get_credential_by_id() =>
     ((PrincipalStoreContract_.Credentials)new Credentials()).Get_credential_by_id();
 
+  public static new Task Nickname_and_registered_with_round_trip_through_update() =>
+    ((PrincipalStoreContract_.Credentials)new Credentials()).Nickname_and_registered_with_round_trip_through_update();
+
   public static new Task Update_missing_credential_fails() =>
     ((PrincipalStoreContract_.Credentials)new Credentials()).Update_missing_credential_fails();
 

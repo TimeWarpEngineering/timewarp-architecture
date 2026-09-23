@@ -59,11 +59,13 @@ public class CompletePasskeyRegistration_Response_Should
 
   public static Task SerializeAndDeserialize_Via_Constructor()
   {
-    CompletePasskeyRegistration.Response response = new(PrincipalId.New());
+    CompletePasskeyRegistration.Response response = new(PrincipalId.New(), CredentialId.New(), "Proton Pass");
 
     CompletePasskeyRegistration.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
+    parsed.CredentialId.ShouldBe(response.CredentialId);
+    parsed.ProviderLabel.ShouldBe("Proton Pass");
     return Task.CompletedTask;
   }
 
@@ -71,7 +73,7 @@ public class CompletePasskeyRegistration_Response_Should
   {
     // PrincipalId's own [TypedId] JsonConverter fail-closes on an empty guid before the Response
     // ctor's Guard even runs — either seam rejecting it is the contract that matters here.
-    const string json = """{"principalId":"00000000-0000-0000-0000-000000000000"}""";
+    string json = $$"""{"principalId":"00000000-0000-0000-0000-000000000000","credentialId":"{{Guid.NewGuid()}}"}""";
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<CompletePasskeyRegistration.Response>(json, ContractSerialization.Options));
@@ -163,14 +165,14 @@ public class CompleteAgentKeyRegistration_Command_Should
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<CompleteAgentKeyRegistration_Command_Should>();
 
-  public static Task SerializeAndDeserialize_Including_Optional_Label()
+  public static Task SerializeAndDeserialize_Including_Optional_Nickname()
   {
     CompleteAgentKeyRegistration.Command command = new()
     {
       PublicKey = "AQIDBA",
       Challenge = "BQYHCA",
       Signature = "CQoLDA",
-      Label = "prod-worker-3"
+      Nickname = "prod-worker-3"
     };
 
     CompleteAgentKeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
@@ -178,11 +180,11 @@ public class CompleteAgentKeyRegistration_Command_Should
     parsed.PublicKey.ShouldBe(command.PublicKey);
     parsed.Challenge.ShouldBe(command.Challenge);
     parsed.Signature.ShouldBe(command.Signature);
-    parsed.Label.ShouldBe(command.Label);
+    parsed.Nickname.ShouldBe(command.Nickname);
     return Task.CompletedTask;
   }
 
-  public static Task SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Nickname()
   {
     CompleteAgentKeyRegistration.Command command = new()
     {
@@ -193,7 +195,7 @@ public class CompleteAgentKeyRegistration_Command_Should
 
     CompleteAgentKeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
 
-    parsed.Label.ShouldBeNull();
+    parsed.Nickname.ShouldBeNull();
     return Task.CompletedTask;
   }
 }
@@ -404,13 +406,16 @@ public class GetCredentials_Response_Should
       [
         new GetCredentials.CredentialSummary
         (
-          CredentialId.New(), CredentialType.Passkey, "laptop",
-          DateTimeOffset.UtcNow.AddDays(-10), revokedAt: null, isActive: true
+          CredentialId.New(), CredentialType.Passkey, "1Password", "Work laptop",
+          DateTimeOffset.UtcNow.AddDays(-10), revokedAt: null, isActive: true,
+          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"), "3f9a1c2e",
+          lastUsedAt: new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero)
         ),
         new GetCredentials.CredentialSummary
         (
-          CredentialId.New(), CredentialType.AgentKey, label: null,
-          DateTimeOffset.UtcNow.AddDays(-5), revokedAt: DateTimeOffset.UtcNow, isActive: false
+          CredentialId.New(), CredentialType.AgentKey, label: null, nickname: null,
+          DateTimeOffset.UtcNow.AddDays(-5), revokedAt: DateTimeOffset.UtcNow, isActive: false,
+          RegisteredWith.Unknown, "b71e04dd"
         )
       ]
     );
@@ -420,12 +425,20 @@ public class GetCredentials_Response_Should
     parsed.Credentials.Count.ShouldBe(2);
     parsed.Credentials[0].Id.ShouldBe(response.Credentials[0].Id);
     parsed.Credentials[0].Type.ShouldBe(CredentialType.Passkey);
-    parsed.Credentials[0].Label.ShouldBe("laptop");
+    parsed.Credentials[0].Label.ShouldBe("1Password");
+    parsed.Credentials[0].Nickname.ShouldBe("Work laptop");
     parsed.Credentials[0].IsActive.ShouldBeTrue();
     parsed.Credentials[0].RevokedAt.ShouldBeNull();
+    parsed.Credentials[0].RegisteredWith.ShouldBe(new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"));
+    parsed.Credentials[0].Fingerprint.ShouldBe("3f9a1c2e");
+    parsed.Credentials[0].LastUsedAt.ShouldBe(new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero));
     parsed.Credentials[1].Label.ShouldBeNull();
+    parsed.Credentials[1].Nickname.ShouldBeNull();
     parsed.Credentials[1].IsActive.ShouldBeFalse();
     parsed.Credentials[1].RevokedAt.ShouldNotBeNull();
+    parsed.Credentials[1].RegisteredWith.IsUnknown.ShouldBeTrue();
+    parsed.Credentials[1].Fingerprint.ShouldBe("b71e04dd");
+    parsed.Credentials[1].LastUsedAt.ShouldBeNull("never-used rides the wire as an explicit null (task 248-002)");
     return Task.CompletedTask;
   }
 
@@ -442,15 +455,49 @@ public class GetCredentials_Response_Should
 
     GetCredentials.Response response = new
     (
-      [new GetCredentials.CredentialSummary(CredentialId.New(), CredentialType.Passkey, "laptop", DateTimeOffset.UtcNow, revokedAt: null, isActive: true)]
+      [
+        new GetCredentials.CredentialSummary
+        (
+          CredentialId.New(), CredentialType.Passkey, "laptop", nickname: null, DateTimeOffset.UtcNow,
+          revokedAt: null, isActive: true, RegisteredWith.Unknown, "0123abcd"
+        )
+      ]
     );
 
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
 
     // Wire-level check SECOND, belt-and-suspenders — matches Credential_List_Tests.cs's
-    // integration-level twin.
+    // integration-level twin. Task 248-001: the fingerprint IS on the wire (one-way, 8 hex) and
+    // is the only handle-derived value allowed there.
     json.ToLowerInvariant().ShouldNotContain("handle");
     json.ToLowerInvariant().ShouldNotContain("publicmaterial");
+    json.ShouldContain("\"fingerprint\":\"0123abcd\"");
+    return Task.CompletedTask;
+  }
+}
+
+public class RenameCredential_Command_Should
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<RenameCredential_Command_Should>();
+
+  public static Task SerializeAndDeserialize_Including_Generated_CredentialId_And_Nickname()
+  {
+    RenameCredential.Command command = new() { UserId = Guid.NewGuid(), CredentialId = Guid.NewGuid(), Nickname = "Work laptop" };
+
+    RenameCredential.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.UserId.ShouldBe(command.UserId);
+    parsed.CredentialId.ShouldBe(command.CredentialId);
+    parsed.Nickname.ShouldBe("Work laptop");
+    return Task.CompletedTask;
+  }
+
+  public static Task Route_Is_Rename_Under_The_Credential()
+  {
+    Guid id = Guid.NewGuid();
+    RenameCredential.Command command = new() { UserId = Guid.NewGuid(), CredentialId = id, Nickname = "x" };
+    command.GetRoute().ShouldBe($"api/identity/credentials/{id}/rename");
     return Task.CompletedTask;
   }
 }
@@ -477,7 +524,7 @@ public class AddPasskey_Command_Should
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<AddPasskey_Command_Should>();
 
-  public static Task SerializeAndDeserialize_Including_Optional_Label()
+  public static Task SerializeAndDeserialize_Including_Optional_Nickname()
   {
     AddPasskey.Command command = new()
     {
@@ -485,7 +532,9 @@ public class AddPasskey_Command_Should
       CredentialId = "AQIDBA",
       ClientDataJson = "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
       AttestationObject = "o2NmbXRkbm9uZQ",
-      Label = "MacBook"
+      Nickname = "MacBook",
+      AuthenticatorAttachment = "platform",
+      Transports = ["internal", "hybrid"]
     };
 
     AddPasskey.Command parsed = ContractSerialization.RoundTrip(command);
@@ -493,11 +542,13 @@ public class AddPasskey_Command_Should
     parsed.CredentialId.ShouldBe(command.CredentialId);
     parsed.ClientDataJson.ShouldBe(command.ClientDataJson);
     parsed.AttestationObject.ShouldBe(command.AttestationObject);
-    parsed.Label.ShouldBe("MacBook");
+    parsed.Nickname.ShouldBe("MacBook");
+    parsed.AuthenticatorAttachment.ShouldBe("platform");
+    parsed.Transports.ShouldBe(["internal", "hybrid"]);
     return Task.CompletedTask;
   }
 
-  public static Task SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Nickname()
   {
     AddPasskey.Command command = new()
     {
@@ -509,7 +560,7 @@ public class AddPasskey_Command_Should
 
     AddPasskey.Command parsed = ContractSerialization.RoundTrip(command);
 
-    parsed.Label.ShouldBeNull();
+    parsed.Nickname.ShouldBeNull();
     return Task.CompletedTask;
   }
 }
@@ -544,7 +595,7 @@ public class AddAgentKey_Command_Should
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<AddAgentKey_Command_Should>();
 
-  public static Task SerializeAndDeserialize_Including_Optional_Label()
+  public static Task SerializeAndDeserialize_Including_Optional_Nickname()
   {
     AddAgentKey.Command command = new()
     {
@@ -552,7 +603,7 @@ public class AddAgentKey_Command_Should
       PublicKey = "AQIDBA",
       Challenge = "BQYHCA",
       Signature = "CQoLDA",
-      Label = "prod-worker-4"
+      Nickname = "prod-worker-4"
     };
 
     AddAgentKey.Command parsed = ContractSerialization.RoundTrip(command);
@@ -560,11 +611,11 @@ public class AddAgentKey_Command_Should
     parsed.PublicKey.ShouldBe(command.PublicKey);
     parsed.Challenge.ShouldBe(command.Challenge);
     parsed.Signature.ShouldBe(command.Signature);
-    parsed.Label.ShouldBe("prod-worker-4");
+    parsed.Nickname.ShouldBe("prod-worker-4");
     return Task.CompletedTask;
   }
 
-  public static Task SerializeAndDeserialize_Without_Label()
+  public static Task SerializeAndDeserialize_Without_Nickname()
   {
     AddAgentKey.Command command = new()
     {
@@ -576,7 +627,7 @@ public class AddAgentKey_Command_Should
 
     AddAgentKey.Command parsed = ContractSerialization.RoundTrip(command);
 
-    parsed.Label.ShouldBeNull();
+    parsed.Nickname.ShouldBeNull();
     return Task.CompletedTask;
   }
 }
