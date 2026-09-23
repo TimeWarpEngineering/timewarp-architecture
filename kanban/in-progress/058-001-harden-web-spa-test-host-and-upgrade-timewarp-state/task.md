@@ -82,7 +82,7 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 
 Historical: before this cleanup, `dev test` was green with the workarounds (72 passed / 6 skipped / 0 failed). That skip count is not comparable to the suite shape after epic 145.
 
-Review trail: `review/review-framework.md`, `review/round-1/`, `review/round-2/merged.md`, `review/disposition.md`. Effort 1 (general). Disposition clean; 0 findings. Round 2 re-verified the same product diff.
+Review trail: `review/review-framework.md`, `review/round-1/`, `review/round-2/`, `review/round-3/merged.md`, `review/disposition.md`. Effort 1 (general). Disposition clean; 0 findings across three rounds. Round 2 re-verified the original product diff; round 3 (2026-09-23) reviewed the fix-loop delta (`4a34830b` ingress health check, `c0b72263` api gating).
 
 ## Results
 
@@ -104,11 +104,13 @@ Fix: the AppHost gives the yarp resource `WithHttpHealthCheck(endpointName: "htt
 
 ### Review
 
-Effort 1, roster `general`, two rounds (round 2 re-verified the same product diff). Counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition **clean**. No wontfix and no escalation.
+Effort 1, roster `general`, three rounds. Rounds 1–2 covered the original product commit `12cfb442` (round 2 re-verified it). Round 3 (2026-09-23, Claude Fable 5.1 headless review oracle) covered the template-smoke fix-loop delta `b494fcf4..HEAD`: `4a34830b` (yarp `WithHttpHealthCheck` readiness gate) and `c0b72263` (`#if(api)` gating of the SPA test-host mock auth and global usings). Reviewer re-verified against the repo and decompiled Aspire 13.5.4: health check lives in the same web-gated block as the `/` catch-all; `AddYarp` always creates the `http` endpoint and no health check; no builder-graph `WaitFor` edge targets the ingress; all other api-symbol users in the suite are already template-excluded when `api` is off; TWA0008 / TWA0010 clean. Orchestrator re-ran `dev build` on the clean worktree at `10ad134c`: 0 warnings / 0 errors.
 
-- Framework: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/review-framework.md`
-- Last merged: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/round-2/merged.md`
-- Disposition: `kanban/done/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/disposition.md`
+Final counts: bug 0/0/0, suggestion 0/0/0, nit 0/0/0 (open/fixed/wontfix). Disposition **clean**. No wontfix and no escalation.
+
+- Framework: `kanban/in-progress/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/review-framework.md`
+- Last merged: `kanban/in-progress/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/round-3/merged.md`
+- Disposition: `kanban/in-progress/058-001-harden-web-spa-test-host-and-upgrade-timewarp-state/review/disposition.md`
 
 ### How to validate
 
@@ -178,6 +180,7 @@ the SPA mock-auth types are not present in a no-api generated app. Required fix 
 - Review: grok session `01a0c8ad-9504-7392-896d-5f8b9eff692b` (2026-09-22)
 - Review re-verify: grok session `01a0c8c8-5d89-7543-89ce-9db5ac7c3f37` (2026-09-22)
 - Template-smoke fix loop: ganda task-work implementer, Claude Fable 5.1 headless (2026-09-23)
+- Review round 3: ganda task-work review oracle, Claude Fable 5.1 headless; general reviewer subagent `a5c403d4a1947539e` (2026-09-23)
 
 ## 4. Modernize integration tests to Aspire testing (the bigger one)
 

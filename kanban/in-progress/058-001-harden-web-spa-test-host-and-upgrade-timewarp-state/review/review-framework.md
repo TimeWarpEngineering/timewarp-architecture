@@ -22,3 +22,12 @@
 **Session:** grok `01a0c8c8-5d89-7543-89ce-9db5ac7c3f37`
 **Diff scope:** Same product commit `12cfb442` vs `origin/master`. Commits after it (`6609ac61`, `d0522d46`, `714cd7a1`) are kanban-only. The folder now lives under `kanban/done/` (moved after round 1).
 **Re-check:** Handlers do not `Send` or call `INotificationService`. `StateTransactionBehavior` in TimeWarp.State 12.0.0-beta.3 restores state, then publishes `ExceptionNotification`. `TestCaller.Ensure` accepts `test` ordinal-ignore-case. Weather fetch is not skipped; ingress HTTP client and `MockAccessTokenProvider` registration remain.
+
+## Round 3
+
+**Date:** 2026-09-23
+**Session:** Claude Fable 5.1 headless (ganda task-work review oracle)
+**Diff scope:** Product delta since round 2: `b494fcf4..HEAD`, i.e. commit `4a34830b` (AppHost `WithHttpHealthCheck` on the yarp resource; Design-region reconciliation in `base-test.cs` and `ingress-smoke-tests.cs`) and commit `c0b72263` (`#if(api)` gating of the SPA test host mock-auth block and the Authentication / Configuration global usings, for the SmokeNoApi template tier). Other commits after round 2 are kanban-only. The folder now lives under `kanban/in-progress/` (reopened for the template-smoke fix loop).
+**Effort:** 1 (general only)
+**Reviewer roster:** general
+**Re-check:** health check placement inside `#if yarp` / `#if web`; "/" resolves to the web catch-all; api-gated names actually vanish when the `TimeWarp.Architecture.Services` global using is dropped; TWA0008 / TWA0010 compliance of the new directives and comments.
