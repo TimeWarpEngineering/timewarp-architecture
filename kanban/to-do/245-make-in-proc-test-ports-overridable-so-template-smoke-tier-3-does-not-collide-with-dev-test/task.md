@@ -61,6 +61,7 @@ workflow constraint (Steve, 2026-09-23): fix the ports, do not serialize people.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
 - Implement (resume, ganda task work headless): 2026-09-23, Claude Fable 5.1
+- Review oracle (ganda task work headless): 2026-09-23, Claude Fable 5.1 (general reviewer, effort 1; gate re-run delegated to a sonnet subagent)
 
 ## Results
 
@@ -92,6 +93,19 @@ bytes, no socket bind); `019f6a8b-0000-7000-…` Guid fixtures. Nothing binds a 
   get-weather-forecasts-tests.cs` fails with the teaching error on the default base and passes
   with `TIMEWARP_TEST_PORT_BASE=17000`.
 - `ganda repo audit` → passes all checks.
+
+### Review disposition
+
+- Rounds: 1; roster: general (effort 1). Artifacts: `review/review-framework.md`,
+  `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Final counts: bug 0 / suggestion 0 / nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions** — M1 (nit): `TIMEWARP_TEST_PORT_BASE` is a second string
+  literal in `template-smoke-harness.cs`; dev-cli cannot reference the testing library and a
+  divergence is self-diagnosing via the concurrent-gate teaching error. Decided by review oracle.
+- Reviewer re-ran gates in this worktree (2026-09-23): `dev build` 0/0; `yarp-integration-tests`
+  under `TIMEWARP_TEST_PORT_BASE=17000` 4/4 (hosts on 17000/17001/18443, cluster rewrite → 17001 —
+  the one path tier 3 never exercises); invalid value raises the teaching error; 7255-listener proof
+  fails bare / passes on 17000 (5/5); `ganda repo audit` passes.
 
 ### How to validate
 
