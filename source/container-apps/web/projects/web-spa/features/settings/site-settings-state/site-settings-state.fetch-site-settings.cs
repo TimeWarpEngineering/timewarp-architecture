@@ -43,7 +43,7 @@ partial class SiteSettingsState
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
         SiteSettingsState.Version = response.Version;
-        SiteSettingsState.SaveError = null;
+        SiteSettingsState.SaveFailed = false;
         SiteSettingsState.ConfigurationTenantId = response.ConfigurationTenantId;
         SiteSettingsState.ConfigurationTenantDisplayName = response.ConfigurationTenantDisplayName;
         SiteSettingsState.ConfigurationTenantDomain = response.ConfigurationTenantDomain;

@@ -23,7 +23,8 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public bool? EntraAllowBootstrap { get; private set; }
   public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
   public long Version { get; private set; }
-  public string? SaveError { get; private set; }
+  /// <summary>True when the last UpdateSiteSettings failed; the problem itself is on NotificationState.</summary>
+  public bool SaveFailed { get; private set; }
   public string? ConfigurationTenantId { get; private set; }
   public string? ConfigurationTenantDisplayName { get; private set; }
   public string? ConfigurationTenantDomain { get; private set; }
@@ -50,7 +51,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     EntraAllowBootstrap = null;
     PasskeyPromptMode = PasskeyPromptMode.Soft;
     Version = 0;
-    SaveError = null;
+    SaveFailed = false;
     ConfigurationTenantId = null;
     ConfigurationTenantDisplayName = null;
     ConfigurationTenantDomain = null;

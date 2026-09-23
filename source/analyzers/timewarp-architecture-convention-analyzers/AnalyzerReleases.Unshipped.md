@@ -24,3 +24,4 @@ TWA0021 | Security | Warning | MockAuthenticationRegistrationAnalyzer: mock auth
 TWA0022 | Design | Warning | SpaMediatorSendAnalyzer: direct mediator Send in SPA client code instead of a generated ActionSet method
 TWA0023 | Naming | Disabled | DisabledByDefault: TypeStemIdentifierAnalyzer — identifier must end with the type stem (interface I-strip)
 TWA0024 | Design | Warning | EndpointAuthorizePolicyAgreementAnalyzer: [EndpointAuthorize] Policy is not registered by this server
+TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with Error/Success intent outside the shell MessageBars host

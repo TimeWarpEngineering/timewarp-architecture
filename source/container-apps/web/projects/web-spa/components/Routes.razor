@@ -1,4 +1,7 @@
 @namespace TimeWarp.Architecture.Components
+@* Resolving NotificationState.NavigationListener once per circuit hooks LocationChanged so a
+   stale failure never follows the user to the next page (task 247). Nothing else to call. *@
+@inject NotificationState.NavigationListener NavigationListener
 
 @code
 {

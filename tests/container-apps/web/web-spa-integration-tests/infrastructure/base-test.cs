@@ -77,6 +77,9 @@ public sealed class SpaTestScope : IDisposable
 
   public IStore Store { get; }
 
+  /// <summary>Scope services, for resolving pipeline seams (IPublisher, listeners) a test drives directly.</summary>
+  public IServiceProvider ServiceProvider => ServiceScope.ServiceProvider;
+
   private SpaTestScope(IServiceScope serviceScope)
   {
     ServiceScope = serviceScope;

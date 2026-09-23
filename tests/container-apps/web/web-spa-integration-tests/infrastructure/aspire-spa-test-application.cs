@@ -15,8 +15,10 @@
 // IApiServerApiService factory sit in the api conditional. A generated app with the api
 // flag off drops the Services import and the api-server client, so those names do not
 // resolve. The named HttpClient stays outside that conditional: it only names Foundation
-// ServiceNames. Message-bar handlers mutate ToastNotificationState and do not need a
-// rendered FluentUI provider.
+// ServiceNames. Message-bar handlers mutate NotificationState and do not need a
+// rendered FluentUI provider. NavigationManager is the headless TestNavigationManager so
+// RouteState.ChangeRoute and NotificationState.NavigationListener (both registered here as
+// in the SPA) can be exercised without a renderer (task 247).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -24,6 +26,7 @@ namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 using FakeItEasy;
 using global::Aspire.Hosting;
 using global::Aspire.Hosting.Testing;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 /// <summary>
@@ -119,5 +122,10 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // Replace JSRuntime with a fake for testing
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);
+
+    // Headless navigation: RouteState.ChangeRoute → NavigationManager → LocationChanged →
+    // NotificationState.NavigationListener (same registration shape as web-spa program.cs).
+    services.AddScoped<NavigationManager, TestNavigationManager>();
+    services.AddScoped<TimeWarp.Architecture.Features.NotificationState.NavigationListener>();
   }
 }

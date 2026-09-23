@@ -17,8 +17,6 @@
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
   private bool CanUnlink => CredentialsState.ActiveCredentialCount > 1;
-  private string? ErrorMessage => CredentialsState.CeremonyError;
-  private string? StatusMessage => CredentialsState.StatusMessage;
   private string Microsoft365CardTitle =>
     EntraAccounts.Count == 1 ? DisplayEntraLabel(EntraAccounts[0]) : "Microsoft 365";
 
@@ -65,7 +63,7 @@
 
   private async Task FetchCredentialsIfCeremonySucceeded()
   {
-    if (CredentialsState.CeremonyError is not null)
+    if (CredentialsState.CeremonyFailed)
     {
       return;
     }
@@ -163,20 +161,6 @@
           }
         </FluentStack>
       </Section>
-    }
-
-    @if (!string.IsNullOrEmpty(StatusMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
-        @StatusMessage
-      </FluentMessageBar>
-    }
-
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
-        @ErrorMessage
-      </FluentMessageBar>
     }
 
   </div>

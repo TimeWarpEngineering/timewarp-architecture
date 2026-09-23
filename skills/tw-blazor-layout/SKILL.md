@@ -55,6 +55,26 @@ descendants by **cascading it**, and you keep the routed layout empty so it does
 - **Guard interop for prerender.** Theme/JS-interop calls in the layout or shell must be gated on
   "is interactive," or they throw during server-side prerender.
 
+## The shell owns the notification region
+
+Every page gets exactly **one** notification region, owned by the shell — not by pages, cards, or
+feature components. Both page shells (the full shell and its focused variant) render the
+notification-region host directly below the page title/breadcrumb and above the first card. The
+host paints a state store that holds the current bars; it is the single place an operation outcome
+(success or failure) becomes visible.
+
+- **Lifetime, not per-page markup.** Errors stay visible until dismissed or until the route
+  changes — a navigation listener clears the region on the router's location-changed event.
+  Success bars auto-dismiss after a fixed interval and are also dismissible by hand. Pages never
+  wire this up themselves; it comes free from the shell.
+- **Spacing is a token, not a margin.** The region owns the gap between stacked bars and the gap
+  before the first card via design tokens in `tokens.css`, applied in the host's own isolated CSS.
+  Pages never add top/bottom margin to compensate — if spacing looks wrong, fix the token, not the
+  page.
+- **Pages never add their own.** A page, card, or feature component that renders its own outcome
+  bar duplicates the region and breaks the one-region-per-page rule; report outcomes through the
+  shared state store instead (see the `tw-blazor` skill, "Operation outcomes").
+
 ## Reference implementation (timewarp-architecture)
 
 Concrete instance of the pattern in this repo:
@@ -74,3 +94,6 @@ Concrete instance of the pattern in this repo:
   one is the *styling* (Tier-2 scope-handle `.twe-shell`).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
   pages and state live in product slice namespaces (`…Features.<Id>`). See skill `tw-slice-isolation`.
+- **Notification region:** `components/MessageBars.razor` + `NotificationState`
+  (`features/notification/notification-state/`), painted by both shells; TWA0025 keeps outcome
+  bars out of pages.

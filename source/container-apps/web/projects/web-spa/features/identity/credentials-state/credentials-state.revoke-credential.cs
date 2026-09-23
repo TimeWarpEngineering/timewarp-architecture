@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// DefaultApiHandler owns transport + toast-on-error. HandleSuccess updates status strings
-// only; callers (Settings, PasskeysPage) sequence RevokeCredential then FetchCredentials
-// so the list stays the single source of truth. Task 169.
+// DefaultApiHandler owns transport + ProblemDetailsNotification on error. HandleSuccess
+// publishes the "Credential removed." outcome to the shell region; callers (Settings,
+// PasskeysPage) sequence RevokeCredential then FetchCredentials so the list stays the
+// single source of truth. Task 169 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -53,10 +54,12 @@ partial class CredentialsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
-        _ = cancellationToken;
-        CredentialsState.StatusMessage = "Passkey deleted.";
-        CredentialsState.CeremonyError = null;
-        return Task.CompletedTask;
+        CredentialsState.CeremonyFailed = false;
+        return Publisher.Publish
+        (
+          new OutcomeNotification(MessageBarIntent.Success, "Credential removed."),
+          cancellationToken
+        );
       }
 
       private async Task<Guid> ResolveUserIdAsync()

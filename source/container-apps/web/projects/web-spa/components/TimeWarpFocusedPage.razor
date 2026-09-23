@@ -20,8 +20,9 @@
   // Cascades self so descendants can reach the shell if needed (parity with TimeWarpPage).
   // CSS isolation-first (native root .twe-focused); tokens only — no hard-coded colors/sizes
   // beyond the logo width/height reserve matching TimeWarpPage's horizontal lockup.
-  // MessageBars sits above ChildContent so pipeline failures (FluentMessageBar rows on
-  // ToastNotificationState) surface on auth screens the same way they do in TimeWarpPage.
+  // MessageBars sits above ChildContent: the ONE notification region per page (task 247), so
+  // pipeline failures and ceremony outcomes on NotificationState surface on auth screens the
+  // same way they do in TimeWarpPage. Auth pages render no outcome bars of their own.
   #endregion
 
   [Parameter] public RenderFragment? ChildContent { get; set; }

@@ -19,7 +19,6 @@
   )]
   [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
-  private string? ErrorMessage;
   private bool IsBusy;
   private bool? IsAuthenticated;
   private bool ShowMicrosoft365;
@@ -67,9 +66,10 @@
     NavigationManager.NavigateTo(destination is "/" or "" ? "/Settings" : destination);
   }
 
+  // Ceremony failures go to the shell's MessageBars region (TimeWarpFocusedPage hosts it)
+  // via NotificationState — no page-local error bar (task 247).
   private async Task ContinueWithPasskey()
   {
-    ErrorMessage = null;
     IsBusy = true;
     try
     {
@@ -78,7 +78,7 @@
 
       if (result.IsT1)
       {
-        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
         return;
       }
 
@@ -86,7 +86,7 @@
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      await ReportCeremonyFailureAsync(jsException);
     }
     finally
     {
@@ -96,7 +96,6 @@
 
   private async Task CreatePasskey()
   {
-    ErrorMessage = null;
     IsBusy = true;
     try
     {
@@ -105,7 +104,7 @@
 
       if (result.IsT1)
       {
-        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
         return;
       }
 
@@ -113,13 +112,22 @@
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      await ReportCeremonyFailureAsync(jsException);
     }
     finally
     {
       IsBusy = false;
     }
   }
+
+  private Task ReportCeremonyFailureAsync(JSException jsException) =>
+    NoSubNotificationState.AddNotification
+    (
+      MessageBarIntent.Error,
+      "The browser could not complete the passkey ceremony",
+      jsException.Message,
+      CancellationToken
+    );
 
   private async Task RefreshSessionAsync()
   {
@@ -190,13 +198,6 @@
         </p>
       </FluentStack>
     </Card>
-
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
-        @ErrorMessage
-      </FluentMessageBar>
-    }
   </div>
 </TimeWarpFocusedPage>
 

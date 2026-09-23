@@ -11,8 +11,8 @@
 // browser calls go through WebAuthnJsModule (IJSRuntime import of ./js/features/web-authn.js
 // named exports) so Login does not require window.Spa. Mock mode has no GetMockResponseFactory
 // on ceremony contracts, so MockWebApiService falls through to a 501 SharedProblemDetails —
-// callers surface that as a "passkeys not supported" style error via FormatError, same as
-// PasskeysPage before this extract.
+// callers report that SharedProblemDetails through NotificationState.ReportProblem (task 247:
+// no page-local formatting or bars).
 // Cookie session is set by the server on complete; this client only reads IsAuthenticated via
 // GetCurrentSession. No profile fields are collected or required.
 // When SPA uses IdentitySessionAuthenticationStateProvider (default non-mock / non-Entra path),
@@ -197,9 +197,6 @@ public sealed class PasskeyCeremonyClient
 
   // Settings credential list/add/revoke HTTP lives on CredentialsState (task 169). This client
   // is the WebAuthn ceremony helper for Login / Passkeys demo only.
-
-  public static string FormatError(SharedProblemDetails problem) =>
-    $"{problem.Title}: {problem.Detail}";
 
   private void NotifyIdentitySessionIfNeeded()
   {

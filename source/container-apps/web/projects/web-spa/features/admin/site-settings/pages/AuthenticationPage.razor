@@ -11,7 +11,10 @@
   Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
   SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Enabled/AllowBootstrap
   drift banner stay outside the form (read-only / host config, not bindable policy).
-  Save is FluentButton submit Primary (RoleForm pattern), disabled while busy.
+  Save is FluentButton submit Primary (RoleForm pattern), disabled while busy. Save outcomes
+  (409 concurrency included) are painted by the shell's MessageBars region — no page-local
+  error bar; SaveFailed only decides whether to reload the draft. The drift banner is static
+  Warning guidance and stays inline (task 247).
   Layout is FormSection / FormGrid / FormField / FormActions. Passkey prompt is
   FluentSelect (no native select, no page-local CSS). Tenant line and drift banner
   stay outside the EditForm. FormActions sits after FormSection (hairline above
@@ -81,7 +84,7 @@
   private async Task HandleValidSubmit()
   {
     await NoSubSiteSettingsState.UpdateSiteSettings(Command);
-    if (string.IsNullOrEmpty(SiteSettingsState.SaveError))
+    if (!SiteSettingsState.SaveFailed)
     {
       SyncDraftFromState();
     }
@@ -132,13 +135,6 @@
             <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
           </FormField>
         </FormGrid>
-
-        @if (!string.IsNullOrEmpty(SiteSettingsState.SaveError))
-        {
-          <FluentMessageBar Intent="MessageBarIntent.Error" Title="Could not save" AllowDismiss="false">
-            @SiteSettingsState.SaveError
-          </FluentMessageBar>
-        }
       </FormSection>
       <FormActions>
         <FluentButton Type=ButtonType.Submit

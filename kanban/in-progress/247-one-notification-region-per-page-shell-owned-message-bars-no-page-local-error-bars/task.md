@@ -62,11 +62,11 @@ single host (`components/MessageBars.razor`, painted at the top of `TimeWarpPage
 ## Checklist
 
 - [x] Design confirmed by Steve 2026-09-23, as written (rules 1–8, including the analyzer)
-- [ ] Page-local outcome bars removed (SettingsPage, AddPasskeyPrompt error, AuthenticationPage save error)
-- [ ] Title/Body shape, dedupe, cap, lifetime, spacing tokens
-- [ ] `ToastNotificationState` renamed
+- [x] Page-local outcome bars removed (SettingsPage, AddPasskeyPrompt error, AuthenticationPage save error; also PasskeysPage, LoginPage, ChooseMicrosoft365Page)
+- [x] Title/Body shape, dedupe, cap, lifetime, spacing tokens
+- [x] `ToastNotificationState` renamed → `NotificationState` (`features/notification/notification-state/`)
 - [ ] TWA analyzer + tests; AGENTS.md diagnostics table row
-- [ ] Skills updated (`tw-blazor-layout`, `tw-blazor`)
+- [x] Skills updated (`tw-blazor-layout`, `tw-blazor`)
 - [ ] SPA tests; `dev build` 0/0; `dev test`; manual page check
 
 ## Notes
@@ -80,3 +80,15 @@ single host (`components/MessageBars.razor`, painted at the top of `TimeWarpPage
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
+- Implement (ganda task work, headless Claude implementer): 2026-09-23
+
+## Resume note (2026-09-23, cockpit)
+
+The previous headless pass left ~56 files of implementation UNCOMMITTED and the walk hung with no
+oracle process. Pick up from the working tree: review the diff against the confirmed design,
+finish anything missing, run gates IN THE FOREGROUND (`dev build` 0/0, `dev test`,
+`dev template-smoke`), commit, finish the walk. Do NOT leave an AppHost running when done
+(`aspire stop`); it shares the user-secrets id with origin-home and a live instance there
+rewrote the postgres password. If you need `dev run` for a manual check, stop it before exiting.
+Master has since merged 246, 248-001 and 248-002 (CredentialList Revoke naming, nickname row,
+last-used); `git merge origin/master` before the gates and keep both sides.

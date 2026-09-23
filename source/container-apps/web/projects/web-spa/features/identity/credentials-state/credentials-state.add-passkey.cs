@@ -8,10 +8,11 @@
 //   2. browser WebAuthnJsModule.CreateCredentialAsync (import of web-authn.js, not window.Spa)
 //   3. HTTP AddPasskey (authenticated attach)
 // Both HTTP legs go through IWebServerApiService inside this ActionSet (not the page, not a
-// ceremony client GetResponse for Settings). JSException and API Fail set CeremonyError on
-// state (no toast from this handler — pages sequence). Success: LastAddedCredentialId + status.
-// Callers sequence FetchCredentials only when CeremonyError is still null so Fetch cannot
-// wipe the error. Task 169.
+// ceremony client GetResponse for Settings). Outcomes go to the shell region: API Fail
+// publishes ProblemDetailsNotification, a JSException publishes an Error OutcomeNotification,
+// success publishes "Passkey created." (handlers never dispatch actions — TWS0002). CeremonyFailed
+// is the page-facing flag; callers sequence FetchCredentials only when it is false so Fetch
+// cannot mask the failure. Task 169 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -47,24 +48,26 @@ partial class CredentialsState
       private readonly IWebServerApiService ApiService;
       private readonly IJSRuntime JsRuntime;
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
+      private readonly IPublisher<ClientPipeline> Publisher;
 
       public Handler
       (
         IStore store,
         IWebServerApiService apiService,
         IJSRuntime jsRuntime,
-        AuthenticationStateProvider authenticationStateProvider
+        AuthenticationStateProvider authenticationStateProvider,
+        IPublisher<ClientPipeline> publisher
       ) : base(store)
       {
         ApiService = apiService;
         JsRuntime = jsRuntime;
         AuthenticationStateProvider = authenticationStateProvider;
+        Publisher = publisher;
       }
 
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        CredentialsState.CeremonyError = null;
-        CredentialsState.StatusMessage = null;
+        CredentialsState.CeremonyFailed = false;
 
         try
         {
@@ -75,7 +78,7 @@ partial class CredentialsState
 
           if (!startResult.IsT0)
           {
-            Fail(ToProblem(startResult));
+            await FailAsync(ToProblem(startResult), cancellationToken);
             return;
           }
 
@@ -104,23 +107,37 @@ partial class CredentialsState
 
           if (!completeResult.IsT0)
           {
-            Fail(ToProblem(completeResult));
+            await FailAsync(ToProblem(completeResult), cancellationToken);
             return;
           }
 
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
-          CredentialsState.StatusMessage = "Passkey created.";
+          await Publisher.Publish
+          (
+            new OutcomeNotification(MessageBarIntent.Success, "Passkey created."),
+            cancellationToken
+          );
         }
         catch (JSException jsException)
         {
-          CredentialsState.CeremonyError =
-            $"The browser could not complete the passkey ceremony: {jsException.Message}";
+          CredentialsState.CeremonyFailed = true;
+          await Publisher.Publish
+          (
+            new OutcomeNotification
+            (
+              MessageBarIntent.Error,
+              "The browser could not complete the passkey ceremony",
+              jsException.Message
+            ),
+            cancellationToken
+          );
         }
       }
 
-      private void Fail(SharedProblemDetails problem)
+      private Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
       {
-        CredentialsState.CeremonyError = $"{problem.Title}: {problem.Detail}";
+        CredentialsState.CeremonyFailed = true;
+        return Publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
       }
 
       private async Task<Guid> ResolveUserIdAsync()

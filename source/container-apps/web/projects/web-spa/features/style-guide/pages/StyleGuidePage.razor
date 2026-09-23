@@ -29,10 +29,10 @@
   private string FormDemoName { get; set; } = "Ada Lovelace";
   private string FormDemoEmail { get; set; } = "ada@example.test";
 
-  // Message bars go through OUR ToastNotificationState pipeline (the generated ActionSet
+  // Message bars go through OUR NotificationState pipeline (the generated ActionSet
   // dispatcher), not a direct INotificationService call — the point is to exercise the app's own path.
   private async Task ShowMessage(MessageBarIntent intent, string title) =>
-    await ToastNotificationState.AddNotification(intent, title, CancellationToken);
+    await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
 
   // Exercises the exception path end-to-end: a handler throws ->
   // StateTransactionBehavior publishes ExceptionNotification -> ExceptionNotificationHandler
@@ -120,7 +120,7 @@
       </Card>
 
       <Card Title="Message bars (FluentUI)">
-        <p class="sg-subtitle">Inline page/panel status — prefer FluentMessageBar over custom alerts. Sticky status uses AllowDismiss=false.</p>
+        <p class="sg-subtitle">Component reference only. Operation outcomes never render inline — they go to the shell's single notification region above (TWA0025); static Info/Warning guidance may stay in a component.</p>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
           <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
             Operation completed successfully.
@@ -138,7 +138,7 @@
       </Card>
 
       <Card Title="Notifications (message bars)">
-        <p class="sg-subtitle">Dispatched through the app's ToastNotificationState pipeline. Bars render at the top of the page. The last button throws inside an action to exercise the exception → message bar path.</p>
+        <p class="sg-subtitle">Dispatched through the app's NotificationState pipeline. Bars render in the shell region at the top of the page; identical messages dedupe, Success auto-dismisses, and the stack caps at three with "+N more". The last button throws inside an action to exercise the exception → message bar path.</p>
         <div class="sg-row">
           <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastInfo" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Heads up — this is an info message."))">Info</FluentButton>
           <FluentButton Appearance="ButtonAppearance.Primary" data-qa="ToastSuccess" OnClick="@(() => ShowMessage(MessageBarIntent.Success, "Saved successfully."))">Success</FluentButton>

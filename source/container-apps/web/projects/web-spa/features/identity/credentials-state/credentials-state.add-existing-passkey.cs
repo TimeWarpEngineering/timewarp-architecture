@@ -4,9 +4,11 @@
 
 #region Design
 // Same three-step ceremony as AddPasskey, but start/complete are merge-scoped
-// (StartAddExistingPasskey / CompleteAddExistingPasskey). Success sets StatusMessage
-// to "Merged account: N credential(s) moved". Callers sequence FetchCredentials only
-// when CeremonyError is still null.
+// (StartAddExistingPasskey / CompleteAddExistingPasskey). Outcomes go to the shell region:
+// success publishes "Merged account: N credential(s) moved", API Fail publishes
+// ProblemDetailsNotification, a JSException publishes an Error OutcomeNotification.
+// CeremonyFailed is the page-facing flag; callers sequence FetchCredentials only when it is
+// false. Task 230 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -28,22 +30,24 @@ partial class CredentialsState
     {
       private readonly IWebServerApiService ApiService;
       private readonly IJSRuntime JsRuntime;
+      private readonly IPublisher<ClientPipeline> Publisher;
 
       public Handler
       (
         IStore store,
         IWebServerApiService apiService,
-        IJSRuntime jsRuntime
+        IJSRuntime jsRuntime,
+        IPublisher<ClientPipeline> publisher
       ) : base(store)
       {
         ApiService = apiService;
         JsRuntime = jsRuntime;
+        Publisher = publisher;
       }
 
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        CredentialsState.CeremonyError = null;
-        CredentialsState.StatusMessage = null;
+        CredentialsState.CeremonyFailed = false;
 
         try
         {
@@ -54,7 +58,7 @@ partial class CredentialsState
 
           if (!startResult.IsT0)
           {
-            Fail(ToProblem(startResult));
+            await FailAsync(ToProblem(startResult), cancellationToken);
             return;
           }
 
@@ -85,26 +89,37 @@ partial class CredentialsState
 
           if (!completeResult.IsT0)
           {
-            Fail(ToProblem(completeResult));
+            await FailAsync(ToProblem(completeResult), cancellationToken);
             return;
           }
 
           int moved = completeResult.AsT0.CredentialsMoved;
-          CredentialsState.StatusMessage =
+          string title =
             moved == 1
               ? "Merged account: 1 credential moved"
               : $"Merged account: {moved} credential(s) moved";
+          await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, title), cancellationToken);
         }
         catch (JSException jsException)
         {
-          CredentialsState.CeremonyError =
-            $"The browser could not complete the passkey ceremony: {jsException.Message}";
+          CredentialsState.CeremonyFailed = true;
+          await Publisher.Publish
+          (
+            new OutcomeNotification
+            (
+              MessageBarIntent.Error,
+              "The browser could not complete the passkey ceremony",
+              jsException.Message
+            ),
+            cancellationToken
+          );
         }
       }
 
-      private void Fail(SharedProblemDetails problem)
+      private Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
       {
-        CredentialsState.CeremonyError = $"{problem.Title}: {problem.Detail}";
+        CredentialsState.CeremonyFailed = true;
+        return Publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
       }
 
       private static SharedProblemDetails ToProblem<TResponse>(

@@ -138,6 +138,9 @@ public static class Program
 
     serviceCollection.AddScoped<ChatHubConnection>();
     serviceCollection.AddScoped<PasskeyCeremonyClient>();
+    // Clears the shell notification region on route change (task 247 rule 4). Activated by
+    // Routes.razor's @inject; composed into web-server prerender through this same method.
+    serviceCollection.AddScoped<NotificationState.NavigationListener>();
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>

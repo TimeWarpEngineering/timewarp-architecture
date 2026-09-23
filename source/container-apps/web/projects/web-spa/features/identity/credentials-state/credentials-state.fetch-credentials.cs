@@ -55,7 +55,7 @@ partial class CredentialsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         CredentialsState.CredentialsList = [.. response.Credentials];
-        CredentialsState.CeremonyError = null;
+        CredentialsState.CeremonyFailed = false;
         return Task.CompletedTask;
       }
 

@@ -102,6 +102,14 @@
     <ProjectReference Include="..\web-contracts\web-contracts.csproj"/>
   </ItemGroup>
 
+  <!-- Dual-mode global using for platform Attributes (mirrors web-contracts, task 115): the SPA
+       opts components out of TWA0025 with [PageLocalMessageBar(reason)]. The Attributes assembly
+       already flows transitively from web-contracts in both source and package mode. -->
+  <ItemGroup>
+    <Using Include="$(TwArchitectureAttributesNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />
+    <Using Include="$(RootNamespace).Attributes" Condition="'$(UseAnalyzerPackages)' != 'true'" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="web-spa-integration-tests"/>
     <InternalsVisibleTo Include="web-server-integration-tests"/>

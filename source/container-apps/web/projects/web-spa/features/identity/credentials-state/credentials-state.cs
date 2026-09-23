@@ -13,8 +13,11 @@
 // Task 229: CanLinkMicrosoft365 is Offered && no active EntraAccount (one linked account per
 // principal). CanUnlink is ActiveCredentialCount > 1 so Unlink cannot lock the user out; the
 // server LastCredential 409 is the backstop.
-// StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
-// still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
+// Outcomes (created / merged / removed / ceremony failed) are reported to the shell's single
+// notification region: handlers publish OutcomeNotification / ProblemDetailsNotification and
+// NotificationState paints them (task 247). CeremonyFailed is the only page-facing flag — it
+// lets callers skip FetchCredentials after a failed ceremony so Fetch cannot mask the failure.
+// API transport failures still go through DefaultApiHandler → NotificationState.
 // RFC 219 D8: ShouldShowPasskeySoftPrompt is the Type-list predicate (Entra without Passkey),
 // not a TrustTier. PasskeySoftPromptDismissed is session UX only — never a route gate.
 // Task 169 + 219-003.
@@ -63,9 +66,8 @@ public sealed partial class CredentialsState : State<CredentialsState>
 
   public Guid? LastAddedCredentialId { get; private set; }
 
-  public string? StatusMessage { get; private set; }
-
-  public string? CeremonyError { get; private set; }
+  /// <summary>True when the last add/merge ceremony failed; the failure itself is on NotificationState.</summary>
+  public bool CeremonyFailed { get; private set; }
 
   /// <summary>True after the user dismisses the Entra add-passkey banner this SPA session.</summary>
   public bool PasskeySoftPromptDismissed { get; private set; }
@@ -81,8 +83,7 @@ public sealed partial class CredentialsState : State<CredentialsState>
   {
     CredentialsList = null;
     LastAddedCredentialId = null;
-    StatusMessage = null;
-    CeremonyError = null;
+    CeremonyFailed = false;
     PasskeySoftPromptDismissed = false;
   }
 }
