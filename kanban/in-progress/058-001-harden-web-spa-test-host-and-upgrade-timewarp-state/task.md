@@ -165,7 +165,8 @@ the SPA mock-auth types are not present in a no-api generated app. Required fix 
 3. Confirm no other new symbol in this PR is api-only: `git grep -n "MockAuthentication\|MockAccessTokenProvider" tests/container-apps/web/web-spa-integration-tests`.
 4. Gates before pushing: `dev build` 0/0, `dev test`, and **`dev template-smoke` must pass all
    three tiers (SmokeDefault, SmokeNoPostgres, SmokeNoApi)**. Record the smoke result in Results.
-5. Reconcile the file's Design region (why the block is api-gated). Do not rework anything else
+5. **Headless rule:** you run in print mode with no follow-up turn. Run every gate (`dev build`, `dev test`, `dev template-smoke`) in the FOREGROUND and wait for each to finish inside the same command; never background a gate and "wait for the notification" — the oracle exits and the pass is lost. The two files already carry uncommitted `#if(api)` edits from the previous pass: review them, finish, gate, commit, push.
+6. Reconcile the file's Design region (why the block is api-gated). Do not rework anything else
    on the branch; do not squash or rebase; push to the existing PR #394 branch.
 
 ## Session
