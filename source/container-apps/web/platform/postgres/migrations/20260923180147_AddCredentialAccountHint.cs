@@ -34,6 +34,8 @@ namespace TimeWarp.Architecture.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Inverse of the Up data step: the account goes back into Label where one was captured.
+            // Lossy by design — name-claim Labels dropped by Up are not recoverable, so those rows
+            // keep "Microsoft 365" (display-only text; no identity or auth data is lost).
             migrationBuilder.Sql(
                 "UPDATE identity.credentials SET \"Label\" = \"AccountHint\" "
                 + "WHERE \"Type\" = 3 AND \"AccountHint\" IS NOT NULL;");

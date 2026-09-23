@@ -1,4 +1,4 @@
-﻿#region Purpose
+#region Purpose
 // Integration tests for Entra challenge/link/bootstrap/sync-hit without a live tenant.
 #endregion
 

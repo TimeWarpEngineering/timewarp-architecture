@@ -199,16 +199,16 @@ public class Returns_
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
     await SetRolesAsync(principalId, [RoleIds.Member]);
-    const string accountLabel = "Steven.Cramer@TimeWarp.Enterprises";
+    const string accountHint = "Steven.Cramer@TimeWarp.Enterprises";
     await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
-    await AddEntraAccountAsync(principalId, accountLabel);
+    await AddEntraAccountAsync(principalId, accountHint);
 
     HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"Microsoft365Settings\"");
     html.ShouldContain("data-qa=\"Microsoft365AccountLabel\"");
-    html.ShouldContain(accountLabel);
+    html.ShouldContain(accountHint);
     html.ShouldContain(">Microsoft 365<");
     html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
     html.ShouldContain("data-qa=\"Unlink\"");
@@ -221,16 +221,16 @@ public class Returns_
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
     await SetRolesAsync(principalId, [RoleIds.Member]);
-    const string accountLabel = "Steven.Cramer@TimeWarp.Enterprises";
+    const string accountHint = "Steven.Cramer@TimeWarp.Enterprises";
     await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
-    await AddEntraAccountAsync(principalId, accountLabel);
+    await AddEntraAccountAsync(principalId, accountHint);
     await RevokePasskeysAsync(principalId);
 
     HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"Microsoft365Settings\"");
-    html.ShouldContain(accountLabel);
+    html.ShouldContain(accountHint);
     html.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
     html.ShouldContain("data-qa=\"Unlink\"");
     FindTagContaining(html, "data-qa=\"Unlink\"").ShouldContain("disabled");
@@ -419,7 +419,8 @@ public class Returns_
     await roleStore.SetRoleIdsAsync(principalId, roleIds);
   }
 
-  private static async Task AddEntraAccountAsync(PrincipalId principalId, string label)
+  // Task 250 shape: Label is the provider, the linked account is AccountHint (the row's context line).
+  private static async Task AddEntraAccountAsync(PrincipalId principalId, string accountHint)
   {
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
@@ -430,7 +431,8 @@ public class Returns_
         CredentialType.EntraAccount,
         EntraAccountHandle.Encode(tenantId, Guid.NewGuid()),
         EntraIssuerMaterial.FromTenantId(tenantId),
-        label));
+        label: "Microsoft 365",
+        accountHint: accountHint));
   }
 
   private static async Task AddAgentKeyAsync(PrincipalId principalId, string label)

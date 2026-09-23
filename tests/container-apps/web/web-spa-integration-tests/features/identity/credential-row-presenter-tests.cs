@@ -1,7 +1,7 @@
-﻿#region Purpose
+#region Purpose
 // Task 248-001/248-002/250: the CredentialList row text rules — title, context line, fingerprint,
-// inline-rename prefill, last-used text, the revoke confirmation, and the no-repeat dedupe (250) — pinned host-free through
-// CredentialRowPresenter.
+// inline-rename prefill, last-used text, the revoke confirmation, and the no-repeat dedupe (250) —
+// pinned host-free through CredentialRowPresenter.
 #endregion
 
 #region Design

@@ -119,3 +119,15 @@ which boots the AppHost via `Aspire.Hosting.Testing` as part of the standard sui
   and `Sync_Hit_Should_Refresh_Account_Hint_And_Keep_It_When_Claim_Absent`. Manual check (not performed
   here): with a linked Microsoft 365 account, Settings shows "Microsoft 365" once as the card heading,
   once as the row title, and the account email as the context line, with no subtitle.
+
+### Review disposition
+
+- **Effort / roster:** 1 — `general` (1 round)
+- **Final counts:** bug 1 fixed · suggestion 1 fixed · nit 3 fixed · 0 open · 0 wontfix
+- **Disposition:** `clean`
+- **Fixes:** SettingsPage.razor.cs Design region reconciled; Settings Entra deep-link tests seed
+  Label "Microsoft 365" + AccountHint; migration Down documents lossy rollback; BOMs stripped from
+  4 test files; two comment lines re-wrapped. Post-fix gates: `dev build` 0/0,
+  web-server-integration-tests 255/255, web-spa-integration-tests 68/68, web-contracts-tests 44/44.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`

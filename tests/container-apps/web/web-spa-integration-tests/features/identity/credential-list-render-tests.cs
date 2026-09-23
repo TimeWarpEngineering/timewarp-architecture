@@ -1,4 +1,4 @@
-﻿#region Purpose
+#region Purpose
 // Render CredentialList with HtmlRenderer and assert the 248-001 row contract: nickname title,
 // provider/attachment/client context line, created stamp, monospace fingerprint, and the inline
 // rename editor auto-opening (prefilled) only for the pending credential id; plus task 246's

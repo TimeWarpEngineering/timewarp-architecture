@@ -36,8 +36,8 @@
 // exists to prevent.
 //
 // Add-time identity (task 248-001): Label is the PROVIDER name (AAGUID map — "Proton Pass";
-// "Microsoft 365" for Entra since task 250 — the account itself is AccountHint) and is immutable; Nickname is the USER's name for the row, optional, mutable via
-// Rename (1..MaxNicknameLength chars after trim). The two were one field before 248-001 (a
+// "Microsoft 365" for Entra since task 250 — the account itself is AccountHint) and is immutable;
+// Nickname is the USER's name for the row, optional, mutable via Rename (1..MaxNicknameLength chars after trim). The two were one field before 248-001 (a
 // caller-supplied label silently overwrote the provider name), which made same-provider rows
 // indistinguishable once renamed. Rows created before 248-001: the postgres migration moves every
 // agent-key Label into Nickname (agent keys have no provider, so that Label was always a user name);

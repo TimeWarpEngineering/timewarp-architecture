@@ -1,4 +1,4 @@
-﻿#region Purpose
+#region Purpose
 // Round-trip tests for the identity feature contracts (tasks 104-003, 104-004, 104-005) — the shapes
 // where serialization can actually diverge: typed-id (PrincipalId/CredentialId) Responses with a ctor
 // Guard, optional-property Commands, list properties, and enum properties
