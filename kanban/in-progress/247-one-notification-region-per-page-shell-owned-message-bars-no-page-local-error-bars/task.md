@@ -92,3 +92,12 @@ finish anything missing, run gates IN THE FOREGROUND (`dev build` 0/0, `dev test
 rewrote the postgres password. If you need `dev run` for a manual check, stop it before exiting.
 Master has since merged 246, 248-001 and 248-002 (CredentialList Revoke naming, nickname row,
 last-used); `git merge origin/master` before the gates and keep both sides.
+
+## Resume note 2 (2026-09-23, cockpit)
+
+Pass 2 (Sonnet) committed the implementation (`af367b77`) and the master merge (`16907c74`), then hit
+the 80-turn limit before gates/Results, and again left an AppHost running (stopped by cockpit).
+Remaining work only: run gates in the FOREGROUND (`dev build` 0/0, `dev test`,
+`dev template-smoke`), fix anything they surface, write `## Results` (what landed per design rule
+1–8, the new TWA id, skills touched, gate output), commit, push. Do NOT start `dev run`/an AppHost
+in this pass — record the manual page check as not performed instead.
