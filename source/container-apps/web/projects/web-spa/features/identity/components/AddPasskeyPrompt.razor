@@ -10,6 +10,16 @@
   dispatches existing CredentialsState.AddPasskey (StartPasskeyRegistration + AddPasskey)
   then FetchCredentials only when CeremonyError is still null. CeremonyError renders as a
   FluentMessageBar (handler no longer toasts).
+  Task 248-001: after THIS banner's CTA succeeds, a small "Name this passkey" form appears in
+  its place (prefilled with the provider name from CredentialsState.PendingNicknameDefault);
+  Save dispatches RenameCredential (+ FetchCredentials), Skip dispatches ClearPendingNickname.
+  The form is contextual input, not an outcome bar (task 247 rule 1 allows it inline); the
+  rename outcome itself is reported to the shell notification region by the state handler.
+  ShowNicknameForm is component-local so a pending nickname set by another surface (Settings'
+  Create button) does not also open a form here; the reverse is handled by state — after THIS
+  CTA succeeds the component dispatches ClaimPendingNicknameForPrompt BEFORE FetchCredentials, so
+  a CredentialList on the same page (Settings) sees PendingListRenameCredentialId = null and does
+  not open a second editor for the same passkey.
   Soft: Later dismisses for the SPA session and optionally persists in sessionStorage.
   Required (site settings PasskeyPromptMode): Later is hidden; TimeWarpPage hides page body
   until a passkey exists. Never a route policy — this is UX plus a chrome gate.
@@ -18,6 +28,14 @@
 @code {
   private bool IsAddingPasskey =>
     IsAnyActive(typeof(CredentialsState.AddPasskeyActionSet.Action));
+  private bool IsRenaming =>
+    IsAnyActive(typeof(CredentialsState.RenameCredentialActionSet.Action));
+  private bool ShowNicknameForm;
+  private string NicknameDraft = string.Empty;
+  private bool ShouldShowNicknameForm =>
+    ShowNicknameForm && CredentialsState.PendingNicknameOwnedByPrompt && CredentialsState.PendingNicknameCredentialId is not null;
+  private bool CanSaveNickname =>
+    !IsRenaming && NicknameDraft.Trim().Length is >= 1 and <= TimeWarp.Identity.Credential.MaxNicknameLength;
   private bool IsRequired => SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required;
   private bool ShouldShow =>
     PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: IsRequired ? false : CredentialsState.PasskeySoftPromptDismissed);
@@ -45,7 +63,33 @@
       return;
     }
 
+    if (CredentialsState.PendingNicknameCredentialId is not null)
+    {
+      // Claim before the fetch so a list on this page never auto-opens for the same credential.
+      await NoSubCredentialsState.ClaimPendingNicknameForPrompt();
+      NicknameDraft = CredentialsState.PendingNicknameDefault ?? "Passkey";
+      ShowNicknameForm = true;
+    }
+
     await NoSubCredentialsState.FetchCredentials();
+  }
+
+  private async Task SaveNicknameAsync()
+  {
+    if (CredentialsState.PendingNicknameCredentialId is not Guid credentialId || !CanSaveNickname)
+    {
+      return;
+    }
+
+    ShowNicknameForm = false;
+    await NoSubCredentialsState.RenameCredential(credentialId, NicknameDraft.Trim());
+    await NoSubCredentialsState.FetchCredentials();
+  }
+
+  private async Task SkipNicknameAsync()
+  {
+    ShowNicknameForm = false;
+    await NoSubCredentialsState.ClearPendingNickname();
   }
 
   private async Task DismissAsync()
@@ -64,6 +108,36 @@
   <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false" data-qa="AddPasskeyPromptError">
     @CredentialsState.CeremonyError
   </FluentMessageBar>
+}
+
+@if (ShouldShowNicknameForm)
+{
+  <div class="twe-passkey-prompt" data-qa="AddPasskeyNicknamePrompt">
+    <FluentMessageBar Intent="MessageBarIntent.Info"
+                      Title="Name this passkey"
+                      AllowDismiss="false"
+                      Layout="MessageBarLayout.MultiLine">
+      <ChildContent>
+        <FluentTextInput @bind-Value="NicknameDraft"
+                         AriaLabel="Nickname"
+                         Placeholder="Nickname"
+                         Width="100%"
+                         data-qa="AddPasskeyNicknameInput" />
+      </ChildContent>
+      <ActionsTemplate>
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      data-qa="AddPasskeyNicknameSave"
+                      Disabled="@(!CanSaveNickname)"
+                      OnClick="SaveNicknameAsync">
+          Save
+        </FluentButton>
+        <FluentButton data-qa="AddPasskeyNicknameSkip"
+                      OnClick="SkipNicknameAsync">
+          Skip
+        </FluentButton>
+      </ActionsTemplate>
+    </FluentMessageBar>
+  </div>
 }
 
 @if (ShouldShow)

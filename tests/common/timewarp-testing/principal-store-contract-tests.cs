@@ -277,6 +277,46 @@ public abstract class Credentials
     loaded.Id.ShouldBe(credential.Id);
   }
 
+  /// <summary>
+  /// 248-001 (review M5): nickname and the three RegisteredWith scalars survive Add → Get and a
+  /// Rename → Update → Get cycle on every backend (EF binds them through the private constructor).
+  /// </summary>
+  public async Task Nickname_and_registered_with_round_trip_through_update()
+  {
+
+    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    Principal principal = Principal.Create(PrincipalKind.Human);
+    await store.AddPrincipalAsync(principal);
+
+    RegisteredWith registeredWith = new(AuthenticatorAttachment.Platform, browser: "Chrome", os: "Windows");
+    Credential credential = Credential.Create(
+      principal.Id,
+      CredentialType.Passkey,
+      [7, 7],
+      [8, 8],
+      label: "Proton Pass",
+      nickname: "  work laptop ",
+      registeredWith: registeredWith);
+    await store.AddCredentialAsync(credential);
+
+    Credential? loaded = await store.GetCredentialAsync(credential.Id);
+    loaded.ShouldNotBeNull();
+    loaded.Label.ShouldBe("Proton Pass");
+    loaded.Nickname.ShouldBe("work laptop");
+    loaded.RegisteredWith.ShouldBe(registeredWith);
+    loaded.Fingerprint.ShouldBe(credential.Fingerprint);
+
+    loaded.Rename("home desktop");
+    await store.UpdateCredentialAsync(loaded);
+
+    Credential? renamed = await store.GetCredentialAsync(credential.Id);
+    renamed.ShouldNotBeNull();
+    renamed.Nickname.ShouldBe("home desktop");
+    renamed.Label.ShouldBe("Proton Pass");
+    renamed.RegisteredWith.ShouldBe(registeredWith);
+    renamed.Version.ShouldBe(1);
+  }
+
   public async Task Update_missing_credential_fails()
   {
 

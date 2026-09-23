@@ -22,6 +22,20 @@ namespace TimeWarp.Architecture.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PermissionId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("RoleId", "PermissionId");
+
+                    b.ToTable("role_permissions", "identity");
+                });
+
             modelBuilder.Entity("TimeWarp.Architecture.Features.AgentLinks.Domain.AgentHumanLink", b =>
                 {
                     b.Property<Guid>("Id")
@@ -106,20 +120,6 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                     b.ToTable("profiles", "profiles");
                 });
 
-            modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>
-                {
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PermissionId")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.HasKey("RoleId", "PermissionId");
-
-                    b.ToTable("role_permissions", "identity");
-                });
-
             modelBuilder.Entity("TimeWarp.Identity.Credential", b =>
                 {
                     b.Property<Guid>("Id")
@@ -135,12 +135,27 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                     b.Property<string>("Label")
                         .HasColumnType("text");
 
+                    b.Property<string>("Nickname")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<Guid>("PrincipalId")
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("PublicMaterial")
                         .IsRequired()
                         .HasColumnType("bytea");
+
+                    b.Property<int>("RegisteredAttachment")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RegisteredBrowser")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("RegisteredOs")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone");

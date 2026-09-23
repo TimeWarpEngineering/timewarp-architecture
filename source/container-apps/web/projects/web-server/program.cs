@@ -214,6 +214,7 @@ public partial class Program : IAspNetProgram
     serviceCollection.AddScoped<IAgentPermissionScopeSource, AgentCallerPermissionScopeSource>();
     serviceCollection.AddScoped<ICurrentPrincipalAccessor, HttpCurrentPrincipalAccessor>();
     serviceCollection.AddScoped<IRequestHostAccessor, HttpRequestHostAccessor>();
+    serviceCollection.AddScoped<IRequestUserAgentAccessor, HttpRequestUserAgentAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
     // Task 147-004 / 147-006: effective roles + request claims (PrincipalRoleClaimsTransformation

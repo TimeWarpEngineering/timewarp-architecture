@@ -76,7 +76,9 @@ public sealed class PasskeyCeremonyClient
     {
       CredentialId = root.GetProperty("credentialId").GetString()!,
       ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
-      AttestationObject = root.GetProperty("attestationObject").GetString()!
+      AttestationObject = root.GetProperty("attestationObject").GetString()!,
+      AuthenticatorAttachment = ReadOptionalString(root, "authenticatorAttachment"),
+      Transports = ReadOptionalStrings(root, "transports")
     };
 
     OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> completeResult =
@@ -220,4 +222,29 @@ public sealed class PasskeyCeremonyClient
         Title = "Unexpected response",
         Detail = "An unexpected response was received from the identity service."
       };
+
+  // Task 248-001: registration-context hints from web-authn.ts (both optional).
+  private static string? ReadOptionalString(JsonElement root, string propertyName) =>
+    root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String
+      ? element.GetString()
+      : null;
+
+  private static List<string>? ReadOptionalStrings(JsonElement root, string propertyName)
+  {
+    if (!root.TryGetProperty(propertyName, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
+    {
+      return null;
+    }
+
+    List<string> values = [];
+    foreach (JsonElement item in element.EnumerateArray())
+    {
+      if (item.ValueKind == JsonValueKind.String && item.GetString() is { Length: > 0 } value)
+      {
+        values.Add(value);
+      }
+    }
+
+    return values.Count == 0 ? null : values;
+  }
 }

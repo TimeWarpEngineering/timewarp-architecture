@@ -104,10 +104,10 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
   }
 
   public static CredentialSummary Active(CredentialType type, string label) =>
-    new(CredentialId.New(), type, label, DateTimeOffset.UtcNow.AddDays(-1), revokedAt: null, isActive: true);
+    new(CredentialId.New(), type, label, nickname: null, DateTimeOffset.UtcNow.AddDays(-1), revokedAt: null, isActive: true, RegisteredWith.Unknown, fingerprint: "0123abcd");
 
   public static CredentialSummary Revoked(CredentialType type, string label) =>
-    new(CredentialId.New(), type, label, DateTimeOffset.UtcNow.AddDays(-2), revokedAt: DateTimeOffset.UtcNow.AddDays(-1), isActive: false);
+    new(CredentialId.New(), type, label, nickname: null, DateTimeOffset.UtcNow.AddDays(-2), revokedAt: DateTimeOffset.UtcNow.AddDays(-1), isActive: false, RegisteredWith.Unknown, fingerprint: "0123abcd");
 
   public Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
   (
@@ -138,7 +138,7 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
         if (index >= 0)
         {
           CredentialSummary row = Credentials[index];
-          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false);
+          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false, row.RegisteredWith, row.Fingerprint);
         }
 
         if (new RevokeCredential.Response() is TResponse revokeResponse)

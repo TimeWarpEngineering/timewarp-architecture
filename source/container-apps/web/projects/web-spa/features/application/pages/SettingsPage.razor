@@ -79,6 +79,14 @@
     await NoSubCredentialsState.FetchCredentials();
   }
 
+  private async Task RenameAsync(CredentialRename rename)
+  {
+    await NoSubCredentialsState.RenameCredential(rename.CredentialId, rename.Nickname);
+    await NoSubCredentialsState.FetchCredentials();
+  }
+
+  private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
+
   private async Task<bool> LoadEntraOfferedAsync()
   {
     try
@@ -118,7 +126,11 @@
                         RevokeDisabled="@(!CanRevoke)"
                         RevokeDisabledHint="Add another passkey or agent key before revoking this one."
                         RevokeDisabledHintDataQa="RevokePasskeyHint"
-                        OnRevoke="ConfirmRevokeAsync" />
+                        OnRevoke="ConfirmRevokeAsync"
+                        OnRename="RenameAsync"
+                        OnRenameCancel="CancelPendingNicknameAsync"
+                        PendingRenameCredentialId="CredentialsState.PendingListRenameCredentialId"
+                        PendingRenameDefault="CredentialsState.PendingNicknameDefault" />
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
           <FluentButton Appearance="ButtonAppearance.Primary"
                         data-qa="CreatePasskey"
@@ -154,7 +166,8 @@
                           RevokeDisabled="@(!CanRevoke)"
                           RevokeDisabledHint="Add a passkey first"
                           RevokeDisabledHintDataQa="UnlinkMicrosoft365Hint"
-                          OnRevoke="ConfirmRevokeAsync" />
+                          OnRevoke="ConfirmRevokeAsync"
+                          OnRename="RenameAsync" />
           @if (CanLinkMicrosoft365)
           {
             <FluentButton Appearance="ButtonAppearance.Primary"

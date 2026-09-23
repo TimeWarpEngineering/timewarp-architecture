@@ -60,7 +60,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
           PublicKey = AgentSigning.ToBase64Url(key.SpkiPublicKey),
           Challenge = options.Value.Challenge,
           Signature = AgentSigning.ToBase64Url(signature),
-          Label = string.IsNullOrWhiteSpace(command.Label) ? null : command.Label
+          Nickname = string.IsNullOrWhiteSpace(command.Label) ? null : command.Label
         };
 
         Terminal.WriteLine($"POST {server}{AgentHttpClient.RegisterPath} (Register.v1 signature)");

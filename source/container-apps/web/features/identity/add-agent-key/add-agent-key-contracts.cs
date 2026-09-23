@@ -5,8 +5,10 @@
 #endregion
 
 #region Design
-// Shape mirrors CompleteAgentKeyRegistration exactly (same three base64url fields plus Label, same
-// size caps — see that contract's Design region for the byte-size rationale). The key difference is
+// Shape mirrors CompleteAgentKeyRegistration exactly (same three base64url fields plus Nickname —
+// renamed from Label in task 248-001 so the user's name never masquerades as a provider label — same
+// size caps — see that contract's Design region for the byte-size rationale and the `label` →
+// `nickname` wire-break note, which applies here too). The key difference is
 // authentication and audience: CompleteAgentKeyRegistration is anonymous and mints a brand-new
 // Principal (no sponsor required, by design); this command is authenticated ([EndpointAuthorize],
 // PermissionIds.CredentialManageSelf — an agent token needs the credential:manage scope expanded
@@ -42,7 +44,7 @@ public static partial class AddAgentKey
     public string PublicKey { get; set; } = null!;
     public string Challenge { get; set; } = null!;
     public string Signature { get; set; } = null!;
-    public string? Label { get; set; }
+    public string? Nickname { get; set; }
   }
 
   public sealed class Validator : AbstractValidator<Command>
@@ -52,7 +54,7 @@ public static partial class AddAgentKey
       RuleFor(x => x.PublicKey).NotEmpty().MaximumLength(2 * 1024);
       RuleFor(x => x.Challenge).NotEmpty().MaximumLength(256);
       RuleFor(x => x.Signature).NotEmpty().MaximumLength(1024);
-      RuleFor(x => x.Label).MaximumLength(64);
+      RuleFor(x => x.Nickname).MaximumLength(Credential.MaxNicknameLength);
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
