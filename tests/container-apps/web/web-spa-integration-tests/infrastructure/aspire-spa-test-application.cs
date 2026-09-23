@@ -11,9 +11,12 @@
 // client needs no dev cert). SPA actions such as FetchWeatherForecasts reach api-server
 // through YARP. Logging is registered because DefaultApiHandler requires ILogger.
 // TimeWarp.State.Plus is included so [TrackAction] can resolve ActionTrackingState.
-// IAccessTokenProvider is MockAccessTokenProvider, registered only through
-// MockAuthenticationRegistration (Testing + Authentication:UseMock). Message-bar handlers
-// mutate ToastNotificationState and do not need a rendered FluentUI provider.
+// MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
+// IApiServerApiService factory sit in the api conditional. A generated app with the api
+// flag off drops the Services import and the api-server client, so those names do not
+// resolve. The named HttpClient stays outside that conditional: it only names Foundation
+// ServiceNames. Message-bar handlers mutate ToastNotificationState and do not need a
+// rendered FluentUI provider.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -55,6 +58,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
   private static void ConfigureServices(IServiceCollection services, string baseUrl)
   {
+#if(api)
     IConfiguration configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -67,6 +71,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
       throw new InvalidOperationException(
         "SPA integration host requires MockAccessTokenProvider (Testing + Authentication:UseMock).");
     }
+#endif
 
     // API handlers take ILogger. The raw ServiceCollection does not register it.
     services.AddLogging();
