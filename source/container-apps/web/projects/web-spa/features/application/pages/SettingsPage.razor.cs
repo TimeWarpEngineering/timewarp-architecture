@@ -6,13 +6,14 @@
 // Task 167 product Settings UI; task 169 rehomes data through TimeWarp.State (COPIC rule):
 // every backend HTTP call is a CredentialsState ActionSet — never page-local List<> + ceremony
 // client GetResponse. Loading is Section + FetchCredentials; IsBusy = any tracked
-// credentials action. Create/merge sequence FetchCredentials only when CeremonyError is
-// still null — Fetch HandleSuccess clears CeremonyError, so a failed ceremony must not
-// refresh. Revoke still sequences Fetch (DefaultApiHandler toasts on problem details).
+// credentials action. Create/merge sequence FetchCredentials only when CeremonyFailed is
+// false — Fetch HandleSuccess resets the flag, so a failed ceremony must not refresh.
+// Revoke still sequences Fetch (DefaultApiHandler publishes problem details).
 // Credentials is null remains the fetch-once guard (no snapshot yet).
-// Ceremony Fail no longer toasts from the handler (empty allow-list); Settings binds
-// ErrorMessage to CeremonyError. Backend surface remains 104-005 (GetCredentials, AddPasskey,
-// RevokeCredential).
+// Task 247: this page renders NO outcome bars. Ceremony success/failure and revoke outcomes
+// are published by the CredentialsState handlers to NotificationState and painted once by
+// the shell's MessageBars region (TWA0025). Backend surface remains 104-005 (GetCredentials,
+// AddPasskey, RevokeCredential).
 // RFC 219 D10: "Link Microsoft 365" is a full navigation to the BFF challenge (mode=link).
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
 // Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last

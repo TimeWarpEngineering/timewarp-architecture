@@ -18,7 +18,6 @@
   )]
   [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
-  private string? ErrorMessage;
   private bool IsBusy;
   private bool? IsValid;
   private string Destination = "/";
@@ -52,9 +51,11 @@
     IsValid = false;
   }
 
+  // Outcomes go to the shell's MessageBars region (TimeWarpFocusedPage hosts it) via
+  // NotificationState — no page-local error bar (task 247). The "Session expired" Warning
+  // below is static guidance and stays inline.
   private async Task CreateNewAccount()
   {
-    ErrorMessage = null;
     IsBusy = true;
     try
     {
@@ -64,12 +65,10 @@
           CancellationToken.None);
       if (!result.TryPickT0(out CompleteEntraBootstrapCreate.Response response, out OneOf<FileResponse, SharedProblemDetails> rest))
       {
-        ErrorMessage = rest.IsT1 ? PasskeyCeremonyClient.FormatError(rest.AsT1) : "Could not create the account.";
-        if (ErrorMessage.Contains("expired", StringComparison.OrdinalIgnoreCase))
-        {
-          IsValid = false;
-        }
-
+        SharedProblemDetails problem = rest.IsT1
+          ? rest.AsT1
+          : new SharedProblemDetails { Status = 500, Title = "Could not create the account." };
+        await ReportProblemAsync(problem);
         return;
       }
 
@@ -86,9 +85,19 @@
     }
   }
 
+  private Task ReportProblemAsync(SharedProblemDetails problem)
+  {
+    if ((problem.Detail ?? string.Empty).Contains("expired", StringComparison.OrdinalIgnoreCase)
+      || (problem.Title ?? string.Empty).Contains("expired", StringComparison.OrdinalIgnoreCase))
+    {
+      IsValid = false;
+    }
+
+    return NoSubNotificationState.ReportProblem(problem, CancellationToken);
+  }
+
   private async Task AlreadyHaveAccount()
   {
-    ErrorMessage = null;
     IsBusy = true;
     try
     {
@@ -96,12 +105,7 @@
         await Ceremony.CompleteEntraChoiceExistingAsync(CancellationToken.None);
       if (result.IsT1)
       {
-        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
-        if (ErrorMessage.Contains("expired", StringComparison.OrdinalIgnoreCase))
-        {
-          IsValid = false;
-        }
-
+        await ReportProblemAsync(result.AsT1);
         return;
       }
 
@@ -109,7 +113,13 @@
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      await NoSubNotificationState.AddNotification
+      (
+        MessageBarIntent.Error,
+        "The browser could not complete the passkey ceremony",
+        jsException.Message,
+        CancellationToken
+      );
     }
     finally
     {
@@ -157,12 +167,5 @@
         </FluentStack>
       }
     </Card>
-
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
-        @ErrorMessage
-      </FluentMessageBar>
-    }
   </div>
 </TimeWarpFocusedPage>

@@ -1,0 +1,14 @@
+/* The notification region owns its layout (task 247 rule 5): a token-driven gap between bars
+   and a bottom margin before the first card, so bars never touch the breadcrumb, the first
+   card, or each other. Pages add no margins of their own. CSS isolation scopes this to the
+   host's own <div>; the FluentMessageBar children are laid out by the flex gap. */
+.twe-message-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-notify-gap);
+  margin: 0 0 var(--twe-notify-margin-bottom);
+}
+
+.twe-message-bars:empty {
+  display: none;
+}

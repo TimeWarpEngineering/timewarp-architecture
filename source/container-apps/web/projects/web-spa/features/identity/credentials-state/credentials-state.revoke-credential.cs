@@ -3,10 +3,11 @@
 #endregion
 
 #region Design
-// DefaultApiHandler owns transport + toast-on-error. HandleSuccess updates status strings
-// only; callers (Settings, PasskeysPage) sequence RevokeCredential then FetchCredentials
-// so the list stays the single source of truth. Task 169. StatusMessage says "Credential
-// revoked." — the action serves passkeys, agent keys and Entra unlink alike (task 246 vocabulary).
+// DefaultApiHandler owns transport + ProblemDetailsNotification on error. HandleSuccess
+// publishes the "Credential revoked." outcome to the shell region — the action serves
+// passkeys, agent keys and Entra unlink alike (task 246 vocabulary); callers (Settings,
+// PasskeysPage) sequence RevokeCredential then FetchCredentials so the list stays the
+// single source of truth. Task 169 + 246 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -54,10 +55,12 @@ partial class CredentialsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
-        _ = cancellationToken;
-        CredentialsState.StatusMessage = "Credential revoked.";
-        CredentialsState.CeremonyError = null;
-        return Task.CompletedTask;
+        CredentialsState.CeremonyFailed = false;
+        return Publisher.Publish
+        (
+          new OutcomeNotification(MessageBarIntent.Success, "Credential revoked."),
+          cancellationToken
+        );
       }
 
       private async Task<Guid> ResolveUserIdAsync()

@@ -7,8 +7,9 @@
 // demo under Nav → Pages so operators can exercise the raw ceremony without the product copy.
 // Ceremony mapping is shared via PasskeyCeremonyClient — do not reintroduce Passwordless.dev or
 // direct passwordless.* JS interop here.
-// Mock mode: ceremony contracts have no GetMockResponseFactory; mock chain yields 501 and we
-// surface it through ErrorMessage.
+// Mock mode: ceremony contracts have no GetMockResponseFactory; mock chain yields 501 and the
+// page reports it with NotificationState.ReportProblem — the shell region paints it; this page
+// renders no outcome bars (task 247, TWA0025).
 // RP-ID credential scoping (task 104-031): register and authenticate on the SAME host.
 // Task 233: the credential list is the shared CredentialList (same as Settings). This page
 // is still the Developer ceremony playground — not a product Settings replacement.

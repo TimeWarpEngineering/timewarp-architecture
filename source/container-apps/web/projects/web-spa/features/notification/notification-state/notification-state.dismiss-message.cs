@@ -10,7 +10,7 @@
 
 namespace TimeWarp.Architecture.Features;
 
-partial class ToastNotificationState
+partial class NotificationState
 {
   public static class DismissMessageActionSet
   {
@@ -36,7 +36,7 @@ partial class ToastNotificationState
       )
       {
         _ = cancellationToken;
-        ToastNotificationState.RemoveMessage(action.Id);
+        NotificationState.RemoveMessage(action.Id);
         return ValueTask.CompletedTask;
       }
     }

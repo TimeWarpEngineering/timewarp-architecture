@@ -4,12 +4,10 @@
 
 #region Design
 // DefaultApiHandler owns transport + problem-details → shell message bar. HandleSuccess clears
-// the pending "name your new passkey" prompt when it was for this credential and writes the
-// success sentence straight into ToastNotificationState (the shell's single notification region,
-// task 247 rule 1) — no page-local status bar for rename. The handler mutates that state and asks
-// Subscriptions to re-render it, mirroring ProblemDetailsNotificationHandler; it does not Send
-// (TWS0002). Callers sequence FetchCredentials afterwards so the list stays the single source of
-// truth. Task 248-001.
+// the pending "name your new passkey" prompt when it was for this credential and publishes the
+// success sentence to the shell's single notification region (NotificationState, task 247
+// rule 1) — no page-local status bar for rename. Callers sequence FetchCredentials afterwards so
+// the list stays the single source of truth. Task 248-001 + 247.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -37,7 +35,6 @@ partial class CredentialsState
     internal sealed class Handler : DefaultApiHandler<Action, Command, Response>
     {
       private readonly AuthenticationStateProvider AuthenticationStateProvider;
-      private readonly Subscriptions Subscriptions;
       private Guid RenamedCredentialId;
 
       public Handler
@@ -46,12 +43,10 @@ partial class CredentialsState
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
         IPublisher<ClientPipeline> publisher,
-        AuthenticationStateProvider authenticationStateProvider,
-        Subscriptions subscriptions
+        AuthenticationStateProvider authenticationStateProvider
       ) : base(store, webServerApiService, logger, publisher, authenticationStateProvider: authenticationStateProvider)
       {
         AuthenticationStateProvider = authenticationStateProvider;
-        Subscriptions = subscriptions;
       }
 
       protected override async Task<Command?> GetRequest(Action action, CancellationToken cancellationToken)
@@ -64,7 +59,6 @@ partial class CredentialsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
-        _ = cancellationToken;
         if (CredentialsState.PendingNicknameCredentialId == RenamedCredentialId)
         {
           CredentialsState.PendingNicknameCredentialId = null;
@@ -72,10 +66,7 @@ partial class CredentialsState
           CredentialsState.PendingNicknameOwnedByPrompt = false;
         }
 
-        CredentialsState.CeremonyError = null;
-        Store.GetState<ToastNotificationState>().AddMessage(MessageBarIntent.Success, "Nickname saved.", body: null);
-        Subscriptions.ReRenderSubscribers<ToastNotificationState>();
-        return Task.CompletedTask;
+        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Nickname saved."), cancellationToken);
       }
 
       private async Task<Guid> ResolveUserIdAsync()

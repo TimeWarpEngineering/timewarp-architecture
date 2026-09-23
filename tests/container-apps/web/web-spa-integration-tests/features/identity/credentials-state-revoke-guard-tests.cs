@@ -53,15 +53,15 @@ public class Revoke_Should_
     return !CanUnlink(state.ActiveCredentialCount);
   }
 
-  /// <summary>Fetch must have reached the scripted BFF and produced a snapshot; toast bars explain a miss.</summary>
+  /// <summary>Fetch must have reached the scripted BFF and produced a snapshot; notification bars explain a miss.</summary>
   private static CredentialsState LoadedState(SpaTestScope scope)
   {
-    TimeWarp.Architecture.Features.ToastNotificationState toast =
-      scope.Store.GetState<TimeWarp.Architecture.Features.ToastNotificationState>();
-    string bars = string.Join(" | ", toast.Messages.Select(message => $"{message.Intent}:{message.Title}"));
-    Spa!.Scripted.Requests.OfType<GetCredentials.Query>().ShouldNotBeEmpty($"FetchCredentials never called the BFF. Toasts: {bars}");
+    TimeWarp.Architecture.Features.NotificationState notification =
+      scope.Store.GetState<TimeWarp.Architecture.Features.NotificationState>();
+    string bars = string.Join(" | ", notification.Messages.Select(message => $"{message.Intent}:{message.Title}"));
+    Spa!.Scripted.Requests.OfType<GetCredentials.Query>().ShouldNotBeEmpty($"FetchCredentials never called the BFF. Notifications: {bars}");
     CredentialsState state = scope.Store.GetState<CredentialsState>();
-    state.Credentials.ShouldNotBeNull($"No credentials snapshot. Toasts: {bars}");
+    state.Credentials.ShouldNotBeNull($"No credentials snapshot. Notifications: {bars}");
     return state;
   }
 
@@ -127,7 +127,10 @@ public class Revoke_Should_
     await scope.Send(new FetchCredentialsActionSet.Action());
 
     CredentialsState state = LoadedState(scope);
-    state.StatusMessage.ShouldBe("Credential revoked.");
+    TimeWarp.Architecture.Features.NotificationState notification =
+      scope.Store.GetState<TimeWarp.Architecture.Features.NotificationState>();
+    notification.Messages.ShouldContain(message =>
+      message.Intent == MessageBarIntent.Success && message.Title == "Credential revoked.");
     state.ActivePasskeys.Count.ShouldBe(1);
     state.ActivePasskeys[0].Id.ShouldBe(rows.Laptop.Id);
     state.ActiveCredentialCount.ShouldBe(1);

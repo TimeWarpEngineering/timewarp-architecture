@@ -70,4 +70,9 @@
   --twe-space-3: 12px;
   --twe-space-6: 24px;
   --twe-space-12: 48px;
+
+  /* Notification region (shell MessageBars host): gap between bars and the margin that
+     separates the region from the first card. The region owns its spacing; pages do not. */
+  --twe-notify-gap: var(--twe-space-3);
+  --twe-notify-margin-bottom: var(--twe-space-6);
 }

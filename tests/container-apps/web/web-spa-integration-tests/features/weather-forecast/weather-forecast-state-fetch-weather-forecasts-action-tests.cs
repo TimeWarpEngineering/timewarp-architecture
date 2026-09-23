@@ -44,8 +44,8 @@ public class FetchWeatherForecasts_Action_Should
 
     IReadOnlyList<TWeatherForecast>? forecasts =
       scope.Store.GetState<WeatherForecastsState>().WeatherForecasts;
-    TimeWarp.Architecture.Features.ToastNotificationState toast =
-      scope.Store.GetState<TimeWarp.Architecture.Features.ToastNotificationState>();
+    TimeWarp.Architecture.Features.NotificationState toast =
+      scope.Store.GetState<TimeWarp.Architecture.Features.NotificationState>();
     string bars = string.Join(" | ", toast.Messages.Select(message => $"{message.Intent}:{message.Title}"));
     forecasts.ShouldNotBeNull(bars);
     forecasts.Count.ShouldBe(5);

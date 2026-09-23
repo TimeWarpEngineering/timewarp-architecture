@@ -10,13 +10,14 @@
 // In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
 // ActivePasskeys is the Settings filter (passkey + IsActive); ActiveEntraAccounts is the Microsoft 365
 // filter. Full list stays available for follow-ups.
-// Task 229: CanLinkMicrosoft365 is Offered && no active EntraAccount (one linked account per
-// principal). CanUnlink is ActiveCredentialCount > 1 so Unlink cannot lock the user out; the
 // server LastCredential 409 is the backstop. Task 246: the same predicate disables passkey
 // Revoke on Settings and PasskeysPage — the count spans every CredentialType, exactly what
 // RevokeCredential.Handler counts, so the client never offers an action that can only 409.
-// StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
-// still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
+// Outcomes (created / merged / removed / ceremony failed) are reported to the shell's single
+// notification region: handlers publish OutcomeNotification / ProblemDetailsNotification and
+// NotificationState paints them (task 247). CeremonyFailed is the only page-facing flag — it
+// lets callers skip FetchCredentials after a failed ceremony so Fetch cannot mask the failure.
+// API transport failures still go through DefaultApiHandler → NotificationState.
 // RFC 219 D8: ShouldShowPasskeySoftPrompt is the Type-list predicate (Entra without Passkey),
 // not a TrustTier. PasskeySoftPromptDismissed is session UX only — never a route gate.
 // Task 248-001: PendingNicknameCredentialId / PendingNicknameDefault is the "name your new
@@ -28,7 +29,7 @@
 // ClaimPendingNicknameForPrompt when AddPasskeyPrompt started the ceremony, and lists bind
 // PendingListRenameCredentialId (null while the prompt owns it) so Settings/Passkeys never open a
 // second editor for the same credential. Rename outcomes go to the shell notification region
-// (ToastNotificationState), not a page-local bar.
+// (NotificationState), not a page-local bar.
 // Task 169 + 219-003.
 #endregion
 
@@ -75,6 +76,9 @@ public sealed partial class CredentialsState : State<CredentialsState>
 
   public Guid? LastAddedCredentialId { get; private set; }
 
+  /// <summary>True when the last add/merge ceremony failed; the failure itself is on NotificationState.</summary>
+  public bool CeremonyFailed { get; private set; }
+
   /// <summary>Credential awaiting a user nickname (just added); null when nothing is pending.</summary>
   public Guid? PendingNicknameCredentialId { get; private set; }
 
@@ -87,10 +91,6 @@ public sealed partial class CredentialsState : State<CredentialsState>
   /// <summary>Pending credential id for CredentialList auto-open — null while the prompt owns it.</summary>
   public Guid? PendingListRenameCredentialId =>
     PendingNicknameOwnedByPrompt ? null : PendingNicknameCredentialId;
-
-  public string? StatusMessage { get; private set; }
-
-  public string? CeremonyError { get; private set; }
 
   /// <summary>True after the user dismisses the Entra add-passkey banner this SPA session.</summary>
   public bool PasskeySoftPromptDismissed { get; private set; }
@@ -106,11 +106,10 @@ public sealed partial class CredentialsState : State<CredentialsState>
   {
     CredentialsList = null;
     LastAddedCredentialId = null;
+    CeremonyFailed = false;
     PendingNicknameCredentialId = null;
     PendingNicknameDefault = null;
     PendingNicknameOwnedByPrompt = false;
-    StatusMessage = null;
-    CeremonyError = null;
     PasskeySoftPromptDismissed = false;
   }
 }

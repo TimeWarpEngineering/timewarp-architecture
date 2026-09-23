@@ -24,7 +24,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
 - `Section.razor` (composites) — Card + `FluentSpinner` while `ActionTrackingState.IsAnyActive(LoadingActionType)`
 
-**Inline status:** use FluentUI `FluentMessageBar` (not a custom alert). Buttons: `FluentButton`.
+**Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.
 
 #### **Tier 2: Complex Components** 
 **Pattern**: Flat structure with underscore hierarchy  

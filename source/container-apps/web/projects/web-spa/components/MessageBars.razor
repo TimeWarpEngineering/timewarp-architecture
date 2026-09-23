@@ -2,36 +2,130 @@
 @inherits BaseComponent
 
 @code {
-  // Purpose: Shell surface that paints ToastNotificationState as FluentMessageBar rows.
-  // Design: Section and Card have no error slot. Pipeline failures are application-surface
-  // status, so this host sits at the top of TimeWarpPage and TimeWarpFocusedPage.
-  // AllowDismiss is false: FluentMessageBar's built-in dismiss does not notify state.
-  // Dismiss dispatches DismissMessage so the row stays gone across re-renders.
+  // Purpose: The one notification region — paints NotificationState as FluentMessageBar rows.
+  // Design: Section and Card have no error slot. Operation outcomes are application-surface
+  // status, so this host sits at the top of TimeWarpPage and TimeWarpFocusedPage, directly
+  // below the header/breadcrumb and above the first card, and is the ONLY place a
+  // FluentMessageBar with Error/Success intent may render (TWA0025). Pages report through
+  // NotificationState; they never paint their own bars.
+  // Shape: Title + optional Body (Notification layout when there is no body, MultiLine when
+  // there is). AllowDismiss is false: FluentMessageBar's built-in dismiss does not notify
+  // state. Dismiss dispatches DismissMessage so the row stays gone across re-renders.
+  // Cap: NotificationState.VisibleMessages is the newest MaxVisible; "+N more" toggles the
+  // full list (ShowAll is view-only state, reset per page because this host is re-created).
+  // Lifetime: after each render the host schedules ExpireMessages for NotificationState
+  // .NextExpiry (Success auto-dismiss); navigation clearing lives in NavigationListener.
+  // Spacing: MessageBars.razor.css owns the bar gap and bottom margin via tokens.
   // No INotificationService and no FluentMessageBarProvider — headless tests never render this.
 
+  private bool ShowAll;
+  private CancellationTokenSource? ExpiryCts;
+  private DateTimeOffset? ScheduledExpiry;
+
+  private IReadOnlyList<NotificationState.NotificationMessage> Rows =>
+    ShowAll ? NotificationState.Messages : NotificationState.VisibleMessages;
+
+  private int HiddenCount => ShowAll ? 0 : NotificationState.HiddenCount;
+
   private Task DismissAsync(string id) =>
-    ToastNotificationState.DismissMessage(id, CancellationToken);
+    NotificationState.DismissMessage(id, CancellationToken);
+
+  private void ToggleShowAll() => ShowAll = !ShowAll;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    ScheduleExpiry();
+  }
+
+  private void ScheduleExpiry()
+  {
+    DateTimeOffset? nextExpiry = NotificationState.NextExpiry;
+    if (nextExpiry == ScheduledExpiry)
+    {
+      return;
+    }
+
+    ExpiryCts?.Cancel();
+    ExpiryCts?.Dispose();
+    ExpiryCts = null;
+    ScheduledExpiry = nextExpiry;
+    if (nextExpiry is null)
+    {
+      return;
+    }
+
+    ExpiryCts = CancellationTokenSource.CreateLinkedTokenSource(CancellationToken);
+    _ = ExpireAfterAsync(nextExpiry.Value, ExpiryCts.Token);
+  }
+
+  private async Task ExpireAfterAsync(DateTimeOffset expiry, CancellationToken cancellationToken)
+  {
+    TimeSpan delay = expiry - DateTimeOffset.UtcNow;
+    try
+    {
+      if (delay > TimeSpan.Zero)
+      {
+        await Task.Delay(delay, cancellationToken);
+      }
+
+      await InvokeAsync(() => NotificationState.ExpireMessages(DateTimeOffset.UtcNow, cancellationToken));
+    }
+    catch (OperationCanceledException)
+    {
+      // Host disposed or a newer expiry superseded this one.
+    }
+  }
+
+  public override void Dispose()
+  {
+    ExpiryCts?.Cancel();
+    ExpiryCts?.Dispose();
+    ExpiryCts = null;
+    base.Dispose();
+    GC.SuppressFinalize(this);
+  }
 }
 
-@if (ToastNotificationState.Messages.Count > 0)
+@if (NotificationState.Messages.Count > 0)
 {
-  <FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Class="twe-message-bars" data-qa="MessageBars">
-    @foreach (ToastNotificationState.NotificationMessage message in ToastNotificationState.Messages)
+  <div class="twe-message-bars" data-qa="MessageBars">
+    @foreach (NotificationState.NotificationMessage message in Rows)
     {
       <FluentMessageBar @key="message.Id"
                         Intent="@message.Intent"
                         Title="@message.Title"
                         AllowDismiss="false"
-                        Layout="MessageBarLayout.Notification">
+                        Layout="@(message.Body is null ? MessageBarLayout.Notification : MessageBarLayout.MultiLine)">
         <ChildContent>
-          @message.Body
+          @if (message.Body is not null)
+          {
+            <span data-qa="MessageBarBody">@message.Body</span>
+          }
         </ChildContent>
         <ActionsTemplate>
-          <FluentButton Size="ButtonSize.Small" OnClick="@(() => DismissAsync(message.Id))">
+          <FluentButton Size="ButtonSize.Small" data-qa="MessageBarDismiss" OnClick="@(() => DismissAsync(message.Id))">
             Dismiss
           </FluentButton>
         </ActionsTemplate>
       </FluentMessageBar>
     }
-  </FluentStack>
+    @if (HiddenCount > 0)
+    {
+      <FluentButton Appearance="ButtonAppearance.Subtle" Size="ButtonSize.Small" data-qa="MessageBarsShowMore" OnClick="ToggleShowAll">
+        +@HiddenCount more
+      </FluentButton>
+    }
+    else if (ShowAll && NotificationState.HiddenCount > 0)
+    {
+      <FluentButton Appearance="ButtonAppearance.Subtle" Size="ButtonSize.Small" data-qa="MessageBarsShowLess" OnClick="ToggleShowAll">
+        Show fewer
+      </FluentButton>
+    }
+  </div>
 }

@@ -14,7 +14,8 @@
 // Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page
 // share one mapping of browser credential JSON → Complete* commands.
 // Mock mode: ceremony contracts have no GetMockResponseFactory, so the mock chain yields 501 and
-// we surface it through ErrorMessage (same as PasskeysPage).
+// the page reports it with NotificationState.ReportProblem (same as PasskeysPage); the
+// TimeWarpFocusedPage MessageBars region paints it — no page-local error bar (task 247).
 // Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
 // successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
 // (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself.

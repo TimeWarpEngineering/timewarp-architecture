@@ -8,8 +8,10 @@
 
   Design: Shown when GetCredentials has an active EntraAccount and no active Passkey. CTA
   dispatches existing CredentialsState.AddPasskey (StartPasskeyRegistration + AddPasskey)
-  then FetchCredentials only when CeremonyError is still null. CeremonyError renders as a
-  FluentMessageBar (handler no longer toasts).
+  then FetchCredentials only when CeremonyFailed is false. A failed ceremony is painted by
+  the shell's MessageBars region (the handler publishes it) — this component renders no
+  outcome bar. The Info/Warning prompt below is static guidance, the one allowed inline use
+  (task 247 rule 1).
   Task 248-001: after THIS banner's CTA succeeds, a small "Name this passkey" form appears in
   its place (prefilled with the provider name from CredentialsState.PendingNicknameDefault);
   Save dispatches RenameCredential (+ FetchCredentials), Skip dispatches ClearPendingNickname.
@@ -58,7 +60,7 @@
   private async Task AddPasskeyAsync()
   {
     await NoSubCredentialsState.AddPasskey();
-    if (CredentialsState.CeremonyError is not null)
+    if (CredentialsState.CeremonyFailed)
     {
       return;
     }
@@ -101,13 +103,6 @@
 
     await NoSubCredentialsState.DismissPasskeySoftPrompt();
   }
-}
-
-@if (!string.IsNullOrEmpty(CredentialsState.CeremonyError))
-{
-  <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false" data-qa="AddPasskeyPromptError">
-    @CredentialsState.CeremonyError
-  </FluentMessageBar>
 }
 
 @if (ShouldShowNicknameForm)

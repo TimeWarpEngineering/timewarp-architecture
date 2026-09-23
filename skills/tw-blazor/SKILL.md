@@ -47,6 +47,34 @@ Reference: `source/container-apps/web/projects/web-spa/features/style-guide/page
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
 
+# Operation outcomes
+
+No page, card, or feature component renders its own `FluentMessageBar` for an operation outcome
+(success or failure) — the shell's single notification region owns that (`tw-blazor-layout`, "The
+shell owns the notification region"). Components and handlers only *report* outcomes:
+
+- A component reports directly with the generated state methods `AddNotification(intent, title,
+  body)` for a success/info message it composes itself, or `ReportProblem(problem)` when it already
+  holds a `SharedProblemDetails`.
+- A handler never dispatches another action; it publishes `OutcomeNotification(intent, title,
+  body)` or `ProblemDetailsNotification(problem)` instead. `DefaultApiHandler` already publishes
+  `ProblemDetailsNotification` on failure, so most failure paths need no extra code — only the
+  success sentence is yours to add.
+- One shape: `Intent`, `Title`, optional `Body`. For a `SharedProblemDetails`, `Title` is the
+  problem's `Title` and `Body` is its `Detail` — never a generic "Error"/"Success" title, and never
+  `Title: Detail` glued into one string. Success bars carry the operation's own sentence
+  ("Passkey added.").
+- Identical messages (same `Intent`, `Title`, `Body`) replace the existing bar instead of stacking.
+- Field-level validation is a different class — it stays next to the field (`ValidationMessage`
+  via Blazilla), never in the notification region.
+- Static, contextual guidance that isn't an outcome (an inline Info/Warning such as "Add a passkey
+  to continue") may stay inline. The analyzer `TWA0025` flags an `Error`/`Success` `FluentMessageBar`
+  outside the shell's host; opt out with `[PageLocalMessageBar("reason")]` on the component when a
+  case is genuinely local.
+
+Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.razor` (host) and
+`features/notification/notification-state/` (state).
+
 # Actions, navigation, and forms
 
 Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Subtle /

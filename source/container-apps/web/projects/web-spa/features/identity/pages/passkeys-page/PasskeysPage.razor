@@ -7,8 +7,6 @@
 
   [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
 
-  private string? ErrorMessage;
-  private string? StatusMessage;
   private bool IsBusy;
   private bool? IsAuthenticated;
 
@@ -23,10 +21,10 @@
     await NoSubCredentialsState.FetchCredentials();
   }
 
+  // Outcomes go to the shell's MessageBars region via NotificationState (task 247); this
+  // demo page renders no bars of its own.
   private async Task RegisterPasskey()
   {
-    ErrorMessage = null;
-    StatusMessage = null;
     IsBusy = true;
     try
     {
@@ -35,11 +33,17 @@
 
       if (result.IsT1)
       {
-        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
         return;
       }
 
-      StatusMessage = $"Passkey registered. PrincipalId: {result.AsT0.PrincipalId}";
+      await NoSubNotificationState.AddNotification
+      (
+        MessageBarIntent.Success,
+        "Passkey registered.",
+        $"PrincipalId: {result.AsT0.PrincipalId}",
+        CancellationToken
+      );
       await RefreshSessionAsync();
       await NoSubCredentialsState.FetchCredentials();
       // Task 248-001: prompt for a nickname, prefilled with the provider name, on the new row.
@@ -47,7 +51,7 @@
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      await ReportCeremonyFailureAsync(jsException);
     }
     finally
     {
@@ -57,8 +61,6 @@
 
   private async Task AuthenticateWithPasskey()
   {
-    ErrorMessage = null;
-    StatusMessage = null;
     IsBusy = true;
     try
     {
@@ -67,22 +69,37 @@
 
       if (result.IsT1)
       {
-        ErrorMessage = PasskeyCeremonyClient.FormatError(result.AsT1);
+        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
         return;
       }
 
-      StatusMessage = $"Authenticated. PrincipalId: {result.AsT0.PrincipalId}";
+      await NoSubNotificationState.AddNotification
+      (
+        MessageBarIntent.Success,
+        "Authenticated.",
+        $"PrincipalId: {result.AsT0.PrincipalId}",
+        CancellationToken
+      );
       await RefreshSessionAsync();
     }
     catch (JSException jsException)
     {
-      ErrorMessage = $"The browser could not complete the passkey ceremony: {jsException.Message}";
+      await ReportCeremonyFailureAsync(jsException);
     }
     finally
     {
       IsBusy = false;
     }
   }
+
+  private Task ReportCeremonyFailureAsync(JSException jsException) =>
+    NoSubNotificationState.AddNotification
+    (
+      MessageBarIntent.Error,
+      "The browser could not complete the passkey ceremony",
+      jsException.Message,
+      CancellationToken
+    );
 
   private async Task RefreshSessionAsync()
   {
@@ -144,19 +161,5 @@
                       PendingRenameCredentialId="CredentialsState.PendingListRenameCredentialId"
                       PendingRenameDefault="CredentialsState.PendingNicknameDefault" />
     </Section>
-
-    @if (!string.IsNullOrEmpty(StatusMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
-        @StatusMessage
-      </FluentMessageBar>
-    }
-
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-      <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
-        @ErrorMessage
-      </FluentMessageBar>
-    }
   </div>
 </TimeWarpPage>

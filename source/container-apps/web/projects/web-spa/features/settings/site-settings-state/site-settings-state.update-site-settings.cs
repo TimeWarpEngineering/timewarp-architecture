@@ -3,8 +3,10 @@
 #endregion
 
 #region Design
-// Action carries the Command (Version included). 409 surfaces as SaveError so the editor can
-// tell the admin to reload. Other problems toast via DefaultApiHandler.
+// Action carries the Command (Version included). Every problem (409 concurrency included)
+// goes to the shell region via DefaultApiHandler's ProblemDetailsNotification; SaveFailed is
+// the page-facing flag so the editor keeps the draft instead of reloading it. Success
+// publishes "Authentication settings saved." (task 247).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -49,18 +51,17 @@ partial class SiteSettingsState
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
         SiteSettingsState.Version = response.Version;
-        SiteSettingsState.SaveError = null;
-        return Task.CompletedTask;
+        SiteSettingsState.SaveFailed = false;
+        return Publisher.Publish
+        (
+          new OutcomeNotification(MessageBarIntent.Success, "Authentication settings saved."),
+          cancellationToken
+        );
       }
 
       protected override Task HandleError(SharedProblemDetails problem, CancellationToken cancellationToken)
       {
-        if (problem.Status == 409)
-        {
-          SiteSettingsState.SaveError = problem.Detail ?? problem.Title ?? "Concurrency conflict.";
-          return Task.CompletedTask;
-        }
-
+        SiteSettingsState.SaveFailed = true;
         return base.HandleError(problem, cancellationToken);
       }
     }

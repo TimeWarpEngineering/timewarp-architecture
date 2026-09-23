@@ -23,8 +23,10 @@
   Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
   mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
   hosts this prompt. Soft dismiss is not a gate.
-  MessageBars sits above that prompt so ToastNotificationState rows (pipeline failures and
-  AddNotification) paint at the top of every product page without a toast provider.
+  MessageBars sits above that prompt: it is the ONE notification region per page (task 247),
+  painting NotificationState rows (pipeline failures, handler outcomes, AddNotification)
+  directly below the breadcrumb and above the first card, without a toast provider. Pages
+  render no outcome bars of their own (TWA0025).
 *@
 
 @code {
