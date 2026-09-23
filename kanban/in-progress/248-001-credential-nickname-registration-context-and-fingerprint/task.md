@@ -88,6 +88,7 @@ after the push, say so in Results.
 - Implemented: ganda task work, implementer (Claude Fable 5.1), 2026-09-23
 - Reviewed: ganda task work, review oracle (Claude Fable 5.1) + general reviewer subagent (Claude Opus), 2026-09-23 — `review/`
 - Fix loop (merge master / 246 conflicts): ganda task work, implementer (Claude Fable 5.1), 2026-09-23
+- Re-reviewed (round 2, merge delta): ganda task work, review oracle (Claude Fable 5.1) + general reviewer subagent (Claude Sonnet), 2026-09-23 — `review/round-2/`
 
 ## Results
 
@@ -202,11 +203,22 @@ complete the browser ceremony.
 
 ### Review disposition (tw-implementation-review, 2026-09-23)
 
-- **Rounds / roster / effort:** 1 round, `general` only (effort 1).
-- **Final counts:** bug 0 · suggestion 4 fixed · nit 2 fixed + 1 wontfix · **0 open**.
+- **Rounds / roster / effort:** 2 rounds, `general` only (effort 1) in each. Round 1 = full
+  branch diff; round 2 = re-review of the merge-master fix loop (merge commit `3aeed9b1`, task 246
+  conflicts) plus carry-forward of M1–M7.
+- **Final counts:** bug 0 · suggestion 4 fixed · nit 2 fixed + 1 wontfix · **0 open**. Round 2
+  raised no new findings; M1–M6 fixes verified intact after the merge.
 - **Disposition:** `accepted-exceptions` — M7 (interactive click coverage for the inline editor /
   two-step revoke and the rename handler's state effects) deferred: needs bUnit or a Playwright
   flow, neither in the repo; adding a test dependency is a maintainer decision. Non-blocking.
+- **Round-2 verification (reviewer + oracle spot-check):** `RevokeDisabled` gates both the
+  first-step Revoke button and the Confirm button; Confirm raises `OnRevoke`; hint renders under
+  `RevokeDisabledHintDataQa`; no `Delete*` residue or conflict markers; `CanRevoke` bound on
+  Settings and Passkeys; 9-arg `CredentialSummary` construction in the SPA test application
+  matches the contract.
+- **Gates re-run by the review oracle after round 2:** `dev build` 0/0 · `web-spa-integration-tests`
+  55/55. CI on PR #397 head `d7088bf6` was still running at disposition time (template-smoke and
+  detect-paths already passed; `ci` pending); the earlier run on `3aeed9b1` was fully green.
 - **Fixes landed on this task (review commit):** migration data step moving legacy agent-key
   `Label` → `Nickname` (M1); single owner for the pending nickname editor —
   `PendingNicknameOwnedByPrompt` / `PendingListRenameCredentialId` / `ClaimPendingNicknameForPrompt`
@@ -217,5 +229,6 @@ complete the browser ceremony.
 - **Gates after fixes:** `dev build` 0/0 · `ganda repo audit` clean · timewarp-identity 228/228 ·
   web-infrastructure (real Postgres via `Migrate()`, verified not soft-skipped) 57/57 ·
   web-spa-integration 50/50.
-- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+- **Paths:** `review/review-framework.md` (rounds 1–2 scope), `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`,
   `review/disposition.md`.
