@@ -111,6 +111,15 @@ exactly as it is — the disabled button is a courtesy for the honest client, no
   from the prerender HTML facts above, which hit the real web-server host. Human should confirm
   once in the browser (steps below).
 
+### Review disposition
+
+- Review oracle: headless `ganda task work 246` review node (Claude Fable 5.1), 2026-09-23.
+- Rounds: 1 · Effort: 1 · Roster: general (Claude subagent, read-only).
+- Final counts: bug 0 / suggestion 0 / nit 0 — 0 open, 0 fixed, 0 wontfix.
+- **Disposition: clean** (no findings raised; no exceptions, no escalations).
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md` (all under this task folder).
+
 ### How to validate
 
 **Smoke**
