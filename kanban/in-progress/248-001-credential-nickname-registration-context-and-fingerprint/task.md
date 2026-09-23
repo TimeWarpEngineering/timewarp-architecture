@@ -87,6 +87,7 @@ after the push, say so in Results.
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
 - Implemented: ganda task work, implementer (Claude Fable 5.1), 2026-09-23
 - Reviewed: ganda task work, review oracle (Claude Fable 5.1) + general reviewer subagent (Claude Opus), 2026-09-23 — `review/`
+- Fix loop (merge master / 246 conflicts): ganda task work, implementer (Claude Fable 5.1), 2026-09-23
 
 ## Results
 
@@ -156,8 +157,10 @@ complete the browser ceremony.
 - On Settings the new row opens an inline nickname editor prefilled with the provider name
   (e.g. "Proton Pass"); Save shows a shell message bar "Nickname saved." and the row title becomes
   the nickname. The row's second line reads `Provider · Built-in|Roaming · Browser on OS`, followed
-  by "Created …" and an 8-hex monospace fingerprint. Clicking **Delete** shows a confirmation that
-  restates the nickname, provider, created stamp and fingerprint; only **Confirm delete** revokes.
+  by "Created …" and an 8-hex monospace fingerprint. Clicking **Revoke** shows a confirmation that
+  restates the nickname, provider, created stamp and fingerprint; only **Confirm revoke** revokes.
+  With a single active credential both **Revoke** and the confirm step are disabled and the row
+  shows "Add another passkey or agent key before revoking this one." (task 246).
 - `GET /api/identity/credentials` JSON contains `nickname`, `registeredWith`, `fingerprint` and
   never `handle` / `publicMaterial` / a raw User-Agent string.
 
@@ -170,6 +173,29 @@ complete the browser ceremony.
 - Task 247 has not landed; only the NEW outcomes (rename) route to the shell region. The
   pre-existing page-local success/error bars on Settings/Passkeys are 247's scope and untouched.
 - The EF snapshot diff reorders `RolePermissionGrant` (tool output ordering); no schema change there.
+
+### Fix loop results (2026-09-23) — merge origin/master (task 246)
+
+- `git merge origin/master` (no rebase, no squash) — four conflicts resolved by hand:
+  `CredentialList.razor`, `SettingsPage.razor`, `SettingsPage.razor.cs`, `PasskeysPage.razor`.
+- **Both land:** 246's `Revoke*` parameter names (`RevokeLabel`, `RevokeDataQa`, `RevokeDisabled`,
+  `RevokeDisabledHint`, `RevokeDisabledHintDataQa`, `OnRevoke`), default data-qa `RevokePasskey`,
+  the `CanRevoke` binding + last-credential hint on Settings and Passkeys; AND this task's row
+  (nickname title, context line, fingerprint, inline rename, two-step restating confirmation).
+  The final confirm button raises `OnRevoke`; `RevokeDisabled` disables BOTH the first step and
+  the confirm button; the confirm button's data-qa is `{RevokeDataQa}Confirm` and its text is
+  "Confirm revoke" / "Confirm unlink".
+- 246's new `credentials-spa-test-application.cs` constructed `CredentialSummary` with the
+  pre-248 shape — updated to the 9-arg constructor (nickname, RegisteredWith, fingerprint).
+- `credential-list-render-tests.cs`: `DeletePasskey` → `RevokePasskey`; new fact
+  `Revoke_Disabled_Disables_First_Step_And_Shows_Hint` pins the 246 guard on the two-step row.
+- Design regions reconciled (CredentialList, SettingsPage.razor.cs).
+- **Gates (foreground, this worktree, after the merge):** `dev build` 0/0 · `ganda repo audit`
+  clean · `dev test` all 21 suites green (web-server-integration 251 + 1 pre-existing manual
+  skip, web-spa-integration 55 incl. 246's revoke-guard tests and the deep-link `RevokePasskey`
+  + hint facts, web-jaribu 195, timewarp-identity 228) · `dev template-smoke` SmokeDefault,
+  SmokeNoPostgres, SmokeNoApi OK.
+- CI status on the pushed merge commit: see the line under this list (filled after push).
 
 ### Review disposition (tw-implementation-review, 2026-09-23)
 

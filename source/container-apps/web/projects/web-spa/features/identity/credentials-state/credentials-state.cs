@@ -12,7 +12,9 @@
 // filter. Full list stays available for follow-ups.
 // Task 229: CanLinkMicrosoft365 is Offered && no active EntraAccount (one linked account per
 // principal). CanUnlink is ActiveCredentialCount > 1 so Unlink cannot lock the user out; the
-// server LastCredential 409 is the backstop.
+// server LastCredential 409 is the backstop. Task 246: the same predicate disables passkey
+// Revoke on Settings and PasskeysPage — the count spans every CredentialType, exactly what
+// RevokeCredential.Handler counts, so the client never offers an action that can only 409.
 // StatusMessage / CeremonyError are user-facing strings for create/revoke UX; API transport failures
 // still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
 // RFC 219 D8: ShouldShowPasskeySoftPrompt is the Type-list predicate (Entra without Passkey),
@@ -59,7 +61,7 @@ public sealed partial class CredentialsState : State<CredentialsState>
           .Where(c => c.Type == CredentialType.EntraAccount && c.IsActive)
           .OrderByDescending(c => c.CreatedAt)];
 
-  /// <summary>Active credentials of every type — Unlink/Delete last-credential guard.</summary>
+  /// <summary>Active credentials of every type — Unlink/Revoke last-credential guard (mirrors RevokeCredential.Handler).</summary>
   public int ActiveCredentialCount =>
     CredentialsList?.Count(c => c.IsActive) ?? 0;
 

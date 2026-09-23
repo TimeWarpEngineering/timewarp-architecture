@@ -1,7 +1,8 @@
 #region Purpose
 // Render CredentialList with HtmlRenderer and assert the 248-001 row contract: nickname title,
 // provider/attachment/client context line, created stamp, monospace fingerprint, and the inline
-// rename editor auto-opening (prefilled) only for the pending credential id.
+// rename editor auto-opening (prefilled) only for the pending credential id; plus task 246's
+// RevokeDisabled gating the first step of the two-step revoke with its visible hint.
 #endregion
 
 #region Design
@@ -52,7 +53,7 @@ public class CredentialList_Should_
     TextOf(html, "CredentialCreated").ShouldBe("Created " + CredentialRowPresenter.CreatedText(credential));
     TextOf(html, "CredentialFingerprint").ShouldBe("3f9a1c2e");
     CountOf(html, "RenameCredential").ShouldBe(1);
-    CountOf(html, "DeletePasskey").ShouldBe(1);
+    CountOf(html, "RevokePasskey").ShouldBe(1);
     CountOf(html, "CredentialRenameEditor").ShouldBe(0);
     CountOf(html, "RevokeConfirm").ShouldBe(0);
   }
@@ -99,6 +100,25 @@ public class CredentialList_Should_
     TextOf(html, "PasskeyLabel").ShouldBe("Proton Pass");
   }
 
+  public static async Task Revoke_Disabled_Disables_First_Step_And_Shows_Hint()
+  {
+    CredentialSummary credential = Summary(nickname: "Only one", label: "1Password");
+
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Credentials"] = new List<CredentialSummary> { credential },
+      ["FallbackLabel"] = "Passkey",
+      ["RevokeDisabled"] = true,
+      ["RevokeDisabledHint"] = "Add another passkey or agent key before revoking this one.",
+      ["RevokeDisabledHintDataQa"] = "RevokePasskeyHint"
+    });
+
+    // Task 246's last-credential guard gates the FIRST step of the two-step revoke (248-001).
+    TagOf(html, "RevokePasskey").ShouldContain("disabled");
+    TextOf(html, "RevokePasskeyHint").ShouldBe("Add another passkey or agent key before revoking this one.");
+    CountOf(html, "RevokeConfirm").ShouldBe(0);
+  }
+
   public static async Task Empty_List_Renders_Empty_Message()
   {
     string html = await RenderAsync(new Dictionary<string, object?>
@@ -134,6 +154,14 @@ public class CredentialList_Should_
   /// <summary>Number of elements carrying this data-qa marker (CSS-isolation scope attributes follow it, so match the attribute only).</summary>
   private static int CountOf(string html, string dataQa) =>
     Regex.Count(html, $"data-qa=\"{Regex.Escape(dataQa)}\"");
+
+  /// <summary>The opening tag of the single element carrying this data-qa marker.</summary>
+  private static string TagOf(string html, string dataQa)
+  {
+    Match match = Regex.Match(html, $"<[^<>]*data-qa=\"{Regex.Escape(dataQa)}\"[^<>]*>");
+    match.Success.ShouldBeTrue($"no element with data-qa={dataQa}");
+    return match.Value;
+  }
 
   /// <summary>Trimmed inner text of the single element carrying this data-qa marker.</summary>
   private static string TextOf(string html, string dataQa)
