@@ -68,7 +68,7 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 
 ## Checklist
 
-- [ ] PR #394 template-smoke green on all three tiers (SmokeNoApi CS0103 / IDE0005 fixed with `#if api` guards)
+- [x] PR #394 template-smoke green on all three tiers (SmokeNoApi CS0103 / IDE0005 fixed with `#if api` guards) — local `dev template-smoke` SmokeDefault / SmokeNoPostgres / SmokeNoApi OK (2026-09-23)
 
 - [x] Upgrade TimeWarp.State (+ .Plus) past beta.1; migrate web-spa state handlers — done by 237
 - [x] Remove the `<AssemblyName>` override on web-spa-integration-tests; suite still green
@@ -99,6 +99,8 @@ Removed the three web-spa workarounds that task 058 left behind. TimeWarp.State 
 Fix: the AppHost gives the yarp resource `WithHttpHealthCheck(endpointName: "http")` (path `/` -> web catch-all -> SPA shell 200, so it is environment-independent; web-gated because without the catch-all `/` would 404 forever; AppHost health checks execute only in run mode, never in publish). `Healthy` now means "the host proxy is wired and YARP routed a request to a live web-server", so the gate lives in the app model where every waiting suite inherits it — no retry, sleep, or widened timeout in test code. With the probe still instrumented, the first request succeeded on attempt 1 in every run (133-233 ms) and the ingress health wait began taking the real 9-14 s it had been skipping. Design regions reconciled in `program.cs`, `base-test.cs`, and `ingress-smoke-tests.cs` (whose hand-rolled `WaitForIngressReachableAsync` is now a documented backstop that returns on its first attempt). Gates: `dev build` 0/0, web-spa suite 40/40 three consecutive runs, `aspire-tests` 7/7, `ganda repo audit` 29 passed / 0 failed.
 
 `dotnet run tools/dev-cli/dev.cs -- build`: 0 warnings, 0 errors. `dotnet run tools/dev-cli/dev.cs -- test`: exit 0. web-spa suite 40 passed / 0 skipped / 0 failed (the quarantined weather fact is one of the 40). The only remaining skip in `dev test` is web-server `RunForever` (manual, unrelated). Shell message-bar pixels were not checked in a browser; the handler path was proven headless.
+
+**Template-smoke fix loop (2026-09-23).** PR #394 CI failed `template-smoke` on the SmokeNoApi tier: the SPA test host compiled the mock-auth block (`MockAuthenticationDefaults`, `MockAuthenticationRegistration.TryAddSpaMockAuthentication`) and the `IApiServerApiService` factory in every tier, but a generated app with `api` off drops the `TimeWarp.Architecture.Services` import and the api-server client, so those names do not resolve (CS0103), and the `Microsoft.AspNetCore.Components.WebAssembly.Authentication` global using became unused (IDE0005). Fix: both blocks in `aspire-spa-test-application.cs` sit inside `#if(api)` … `#endif` (the test csproj already defines `api`; TWA0010 satisfied); the Authentication and Configuration global usings moved into the existing `#if(api)` block in `global-usings.cs`. `AddLogging()`, the named api-server `HttpClient` (it only names Foundation `ServiceNames`), the mediator/state registration, and the fake `IJSRuntime` stay unconditional. Design region reconciled. `git grep MockAuthentication\|MockAccessTokenProvider` in the suite shows only the guarded file, a comment in the weather runfile, and `api-service-body-casing-tests.cs`, both of which the template already excludes when `api` is off. Gates run serially in the foreground: `dev build` 0 warnings / 0 errors; `dev test` exit 0 (web-spa 40/40, only skip is web-server `RunForever`); `dev template-smoke` SUCCEEDED with SmokeDefault OK, SmokeNoPostgres OK, SmokeNoApi OK (each generated app built 0/0); `ganda repo audit` passes all checks. Note for the next runner: template-smoke tier 3 runs the generated app's co-located tests on the fixed port 7255, so it must not run concurrently with `dev test` (a first overlapped attempt failed SmokeNoPostgres with `Fixed test port 7255 … already in use`; the serial rerun was clean).
 
 ### Review
 
@@ -132,6 +134,7 @@ Style Guide (running app): open the notifications card, click Error, then Throw 
 ```bash
 dotnet run tools/dev-cli/dev.cs -- build
 dotnet run tools/dev-cli/dev.cs -- test
+dotnet run tools/dev-cli/dev.cs -- template-smoke   # serial with dev test: tier 3 uses fixed port 7255
 ganda repo audit
 ```
 
@@ -174,6 +177,7 @@ the SPA mock-auth types are not present in a no-api generated app. Required fix 
 - Implementation: ganda task-work implementer (2026-09-22)
 - Review: grok session `01a0c8ad-9504-7392-896d-5f8b9eff692b` (2026-09-22)
 - Review re-verify: grok session `01a0c8c8-5d89-7543-89ce-9db5ac7c3f37` (2026-09-22)
+- Template-smoke fix loop: ganda task-work implementer, Claude Fable 5.1 headless (2026-09-23)
 
 ## 4. Modernize integration tests to Aspire testing (the bigger one)
 
