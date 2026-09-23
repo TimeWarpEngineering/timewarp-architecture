@@ -68,6 +68,8 @@ Gates: `dev build` 0/0; `dev test` with the web-spa suite green and the skip cou
 
 ## Checklist
 
+- [ ] PR #394 template-smoke green on all three tiers (SmokeNoApi CS0103 / IDE0005 fixed with `#if api` guards)
+
 - [x] Upgrade TimeWarp.State (+ .Plus) past beta.1; migrate web-spa state handlers — done by 237
 - [x] Remove the `<AssemblyName>` override on web-spa-integration-tests; suite still green
 - [x] Exception / problem-details notification handlers on `FluentMessageBar`; test-host handler
@@ -138,6 +140,33 @@ ganda repo audit
 - Aspire migration of the SPA suite (epic 145 two-lane model).
 - Broader FluentUI v5 visual cleanup beyond this notification path.
 - Fixing `ThrowIfNotTestAssembly` inside TimeWarp.State (timewarp-state#607).
+
+## Fix loop (2026-09-23, cockpit) — PR #394 template-smoke is RED
+
+CI job `template-smoke` fails on the **SmokeNoApi** tier (run 35722579522). The PR never ran
+`dev template-smoke` (Results mention build/test only). Errors, all in the generated no-api app:
+
+- `tests/container-apps/web/web-spa-integration-tests/infrastructure/aspire-spa-test-application.cs(61,10)`
+  CS0103 `MockAuthenticationDefaults` does not exist
+- same file `(65,10)` CS0103 `MockAuthenticationRegistration` does not exist
+- `tests/container-apps/web/web-spa-integration-tests/global-usings.cs(6,1)` IDE0005 unnecessary
+  using (`Microsoft.AspNetCore.Components.WebAssembly.Authentication`)
+
+Cause: the mock-auth wiring added for the weather fetch (item 3) is compiled in every tier, but
+the SPA mock-auth types are not present in a no-api generated app. Required fix on THIS branch:
+
+1. Guard the mock-auth block in `aspire-spa-test-application.cs` (the in-memory
+   `Authentication:UseMock` configuration + `TryAddSpaMockAuthentication` call) with `#if api`
+   … `#endif` (the test csproj already defines `api` in DefineConstants; TWA0010 satisfied). Keep
+   the `AddLogging()` and the rest unconditional. If the api-server `HttpClient` wiring is also
+   api-only, gate it in the same region.
+2. Gate the `Microsoft.AspNetCore.Components.WebAssembly.Authentication` global using with
+   `#if api` in `global-usings.cs` (or move the using into the guarded file).
+3. Confirm no other new symbol in this PR is api-only: `git grep -n "MockAuthentication\|MockAccessTokenProvider" tests/container-apps/web/web-spa-integration-tests`.
+4. Gates before pushing: `dev build` 0/0, `dev test`, and **`dev template-smoke` must pass all
+   three tiers (SmokeDefault, SmokeNoPostgres, SmokeNoApi)**. Record the smoke result in Results.
+5. Reconcile the file's Design region (why the block is api-gated). Do not rework anything else
+   on the branch; do not squash or rebase; push to the existing PR #394 branch.
 
 ## Session
 
