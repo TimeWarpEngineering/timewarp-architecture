@@ -19,6 +19,8 @@
 // Concurrency note (104-028): zero Update* calls. AddCredentialAsync's first-credential rule
 // auto-promotes the STORED principal Provisional -> Keyed kind-agnostically; this handler's in-hand
 // `principal` local is deliberately left stale afterward.
+// Task 248-001: Nickname (renamed from Label) is the caller's; Label stays null for agent keys;
+// RegisteredWith is the request User-Agent family when present (attachment Unknown).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -32,11 +34,13 @@ public sealed partial class CompleteAgentKeyRegistration
   {
     private readonly IPrincipalStore PrincipalStore;
     private readonly IAgentKeyChallengeStore ChallengeStore;
+    private readonly IRequestUserAgentAccessor RequestUserAgentAccessor;
 
-    public Handler(IPrincipalStore principalStore, IAgentKeyChallengeStore challengeStore)
+    public Handler(IPrincipalStore principalStore, IAgentKeyChallengeStore challengeStore, IRequestUserAgentAccessor requestUserAgentAccessor)
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
+      RequestUserAgentAccessor = requestUserAgentAccessor;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -59,7 +63,14 @@ public sealed partial class CompleteAgentKeyRegistration
       var principal = Principal.Create(PrincipalKind.Agent);
       await PrincipalStore.AddPrincipalAsync(principal, cancellationToken);
 
-      var credential = Credential.Create(principal.Id, CredentialType.AgentKey, materials.KeyId, materials.PublicKeyBytes, command.Label);
+      var credential = Credential.Create(
+        principal.Id,
+        CredentialType.AgentKey,
+        materials.KeyId,
+        materials.PublicKeyBytes,
+        label: null,
+        command.Nickname,
+        RegistrationContext.ResolveForAgentKey(RequestUserAgentAccessor.GetUserAgent()));
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);

@@ -85,7 +85,7 @@ public class Returns_
       CredentialId = credentialId,
       ClientDataJson = clientDataJson,
       AttestationObject = attestationObject,
-      Label = "second-device"
+      Nickname = "second-device"
     };
 
     HttpResponseMessage addResponse = await testApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
@@ -102,7 +102,60 @@ public class Returns_
     list.ShouldNotBeNull();
     list.Credentials.Count.ShouldBe(2);
     list.Credentials.ShouldAllBe(c => c.IsActive);
-    list.Credentials.ShouldContain(c => c.Label == "second-device");
+    list.Credentials.ShouldContain(c => c.Nickname == "second-device");
+  }
+
+  public static async Task Captures_Registration_Context_And_Fingerprint_Given_Browser_Hints_And_UserAgent()
+  {
+    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
+
+    (string credentialId, string clientDataJson, string attestationObject) =
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+    var addCommand = new AddPasskey.Command
+    {
+      UserId = Guid.NewGuid(),
+      CredentialId = credentialId,
+      ClientDataJson = clientDataJson,
+      AttestationObject = attestationObject,
+      AuthenticatorAttachment = "platform",
+      Transports = ["internal", "hybrid"]
+    };
+
+    HttpResponseMessage addResponse = await testApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);
+    addResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+    AddPasskey.Response? addResult =
+      JsonSerializer.Deserialize<AddPasskey.Response>(await addResponse.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    addResult.ShouldNotBeNull();
+
+    var listQuery = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    HttpResponseMessage listResponse = await client.GetAsync(listQuery.GetRouteWithQueryString());
+    string listJson = await listResponse.Content.ReadAsStringAsync();
+    GetCredentials.Response? list =
+      JsonSerializer.Deserialize<GetCredentials.Response>(listJson, ContractSerializationDefaults.Options);
+    list.ShouldNotBeNull();
+
+    GetCredentials.CredentialSummary added = list.Credentials.Single(c => c.Id == addResult.CredentialId);
+    added.RegisteredWith.Attachment.ShouldBe(AuthenticatorAttachment.Platform);
+    added.RegisteredWith.Browser.ShouldBe("Chrome");
+    added.RegisteredWith.Os.ShouldBe("Windows");
+    added.Nickname.ShouldBeNull();
+    added.Fingerprint.Length.ShouldBe(CredentialFingerprint.Length);
+    added.Fingerprint.ShouldAllBe(c => Uri.IsHexDigit(c) && !char.IsUpper(c));
+
+    // The first credential was registered with no User-Agent and no hints: Unknown, not a guess.
+    GetCredentials.CredentialSummary first = list.Credentials.Single(c => c.Id != addResult.CredentialId);
+    first.RegisteredWith.IsUnknown.ShouldBeTrue();
+    first.Fingerprint.ShouldNotBe(added.Fingerprint);
+
+    // Raw User-Agent must never reach the wire — only the family names.
+    listJson.ShouldNotContain("Mozilla");
+    listJson.ShouldNotContain("AppleWebKit");
   }
 
   public static async Task Conflict_Given_Same_Passkey_Handle_Registered_Twice()
@@ -164,7 +217,7 @@ public class Returns_
       PublicKey = publicKey,
       Challenge = challenge,
       Signature = signature,
-      Label = "rotated-key"
+      Nickname = "rotated-key"
     };
 
     HttpResponseMessage addResponse = await testApiService.GetHttpResponseMessage(addCommand, CancellationToken.None);

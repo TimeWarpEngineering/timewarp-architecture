@@ -17,6 +17,12 @@
 // still go through DefaultApiHandler → ToastNotificationState (shared pipeline).
 // RFC 219 D8: ShouldShowPasskeySoftPrompt is the Type-list predicate (Entra without Passkey),
 // not a TrustTier. PasskeySoftPromptDismissed is session UX only — never a route gate.
+// Task 248-001: PendingNicknameCredentialId / PendingNicknameDefault is the "name your new
+// passkey" prompt — set by AddPasskey's success (or SetPendingNickname after a Passkeys-page
+// register ceremony) with the provider name as the prefill; CredentialList auto-opens its inline
+// rename editor for that row and AddPasskeyPrompt shows a small form when it started the ceremony;
+// RenameCredential success and ClearPendingNickname (skip / cancel) both clear it. Rename
+// outcomes go to the shell notification region (ToastNotificationState), not a page-local bar.
 // Task 169 + 219-003.
 #endregion
 
@@ -63,6 +69,12 @@ public sealed partial class CredentialsState : State<CredentialsState>
 
   public Guid? LastAddedCredentialId { get; private set; }
 
+  /// <summary>Credential awaiting a user nickname (just added); null when nothing is pending.</summary>
+  public Guid? PendingNicknameCredentialId { get; private set; }
+
+  /// <summary>Prefill for the pending nickname prompt — the provider name when known.</summary>
+  public string? PendingNicknameDefault { get; private set; }
+
   public string? StatusMessage { get; private set; }
 
   public string? CeremonyError { get; private set; }
@@ -81,6 +93,8 @@ public sealed partial class CredentialsState : State<CredentialsState>
   {
     CredentialsList = null;
     LastAddedCredentialId = null;
+    PendingNicknameCredentialId = null;
+    PendingNicknameDefault = null;
     StatusMessage = null;
     CeremonyError = null;
     PasskeySoftPromptDismissed = false;

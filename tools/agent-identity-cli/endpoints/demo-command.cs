@@ -82,7 +82,7 @@ internal sealed class DemoCommand : ICommand<Unit>
           PublicKey = AgentSigning.ToBase64Url(key.SpkiPublicKey),
           Challenge = regOptions.Value.Challenge,
           Signature = AgentSigning.ToBase64Url(regSig),
-          Label = "agent-identity-cli-demo"
+          Nickname = "agent-identity-cli-demo"
         };
 
         Terminal.WriteLine($"  POST {AgentHttpClient.RegisterPath}");

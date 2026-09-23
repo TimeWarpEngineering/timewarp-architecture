@@ -12,6 +12,9 @@
 // state (no toast from this handler — pages sequence). Success: LastAddedCredentialId + status.
 // Callers sequence FetchCredentials only when CeremonyError is still null so Fetch cannot
 // wipe the error. Task 169.
+// Task 248-001: the browser JSON also carries authenticatorAttachment + transports (registration
+// context hints, forwarded verbatim); success records PendingNicknameCredentialId with the
+// response's ProviderLabel as the prefill so the UI can prompt "name this passkey".
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -34,12 +37,12 @@ partial class CredentialsState
       {
       }
 
-      public Action(string label)
+      public Action(string nickname)
       {
-        Label = label;
+        Nickname = nickname;
       }
 
-      public string? Label { get; }
+      public string? Nickname { get; }
     }
 
     internal sealed class Handler : BaseHandler<Action>
@@ -96,7 +99,9 @@ partial class CredentialsState
             CredentialId = root.GetProperty("credentialId").GetString()!,
             ClientDataJson = root.GetProperty("clientDataJson").GetString()!,
             AttestationObject = root.GetProperty("attestationObject").GetString()!,
-            Label = action.Label
+            Nickname = action.Nickname,
+            AuthenticatorAttachment = ReadOptionalString(root, "authenticatorAttachment"),
+            Transports = ReadOptionalStrings(root, "transports")
           };
 
           OneOf<AddPasskey.Response, FileResponse, SharedProblemDetails> completeResult =
@@ -109,6 +114,8 @@ partial class CredentialsState
           }
 
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
+          CredentialsState.PendingNicknameCredentialId = completeResult.AsT0.CredentialId.Value;
+          CredentialsState.PendingNicknameDefault = completeResult.AsT0.ProviderLabel;
           CredentialsState.StatusMessage = "Passkey created.";
         }
         catch (JSException jsException)
@@ -116,6 +123,30 @@ partial class CredentialsState
           CredentialsState.CeremonyError =
             $"The browser could not complete the passkey ceremony: {jsException.Message}";
         }
+      }
+
+      private static string? ReadOptionalString(JsonElement root, string propertyName) =>
+        root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String
+          ? element.GetString()
+          : null;
+
+      private static List<string>? ReadOptionalStrings(JsonElement root, string propertyName)
+      {
+        if (!root.TryGetProperty(propertyName, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
+        {
+          return null;
+        }
+
+        List<string> values = [];
+        foreach (JsonElement item in element.EnumerateArray())
+        {
+          if (item.ValueKind == JsonValueKind.String && item.GetString() is { Length: > 0 } value)
+          {
+            values.Add(value);
+          }
+        }
+
+        return values.Count == 0 ? null : values;
       }
 
       private void Fail(SharedProblemDetails problem)

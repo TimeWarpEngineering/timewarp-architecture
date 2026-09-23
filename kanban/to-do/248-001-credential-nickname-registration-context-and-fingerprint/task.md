@@ -41,12 +41,12 @@ distinguishable without touching the sign-in path. Child of 248.
 
 ## Checklist
 
-- [ ] Nickname field + RenameCredential endpoint + validator + tests
-- [ ] Add flows prompt for nickname (pre-filled provider name)
-- [ ] Registration context captured, stored, mapped, migrated
-- [ ] Fingerprint on the summary; no material on the wire
-- [ ] CredentialList row + inline rename + revoke confirmation text
-- [ ] Gates: build 0/0, test, template-smoke
+- [x] Nickname field + RenameCredential endpoint + validator + tests
+- [x] Add flows prompt for nickname (pre-filled provider name)
+- [x] Registration context captured, stored, mapped, migrated
+- [x] Fingerprint on the summary; no material on the wire
+- [x] CredentialList row + inline rename + revoke confirmation text
+- [x] Gates: build 0/0, test, template-smoke
 
 ## Notes
 
@@ -56,3 +56,87 @@ distinguishable without touching the sign-in path. Child of 248.
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
+- Implemented: ganda task work, implementer (Claude Fable 5.1), 2026-09-23
+
+## Results
+
+### What landed
+
+- **Domain (`timewarp-identity`)**: `Credential.Label` is now the immutable provider name only;
+  new mutable `Nickname` (1–64 after trim, `Rename`), new `RegisteredWith` record
+  (`AuthenticatorAttachment` Platform/CrossPlatform/Unknown + `Browser`/`Os` family strings,
+  captured at `Create`), new computed `Fingerprint` (`CredentialFingerprint`: last 8 hex of
+  SHA-256(handle)). `Snapshot` copies the new state; in-memory store parity is by construction.
+- **Contracts**: new `RenameCredential` (`POST api/identity/credentials/{id}/rename`, same
+  policy/schemes as RevokeCredential, validator 1–64 trimmed). `GetCredentials.CredentialSummary`
+  gains `Nickname`, `RegisteredWith`, `Fingerprint`. `AddPasskey` / `AddAgentKey` /
+  `CompleteAgentKeyRegistration` `Label` → `Nickname`; `AddPasskey` and
+  `CompletePasskeyRegistration` accept `AuthenticatorAttachment` + `Transports` hints and return
+  `ProviderLabel` (+ `CredentialId` on Complete) for the nickname prompt.
+- **Application/server**: `RenameCredential.Handler` (ownership → same 404 as revoke, retry loop),
+  `RegistrationContext` (attachment precedence + User-Agent family classifier, raw UA never stored),
+  `IRequestUserAgentAccessor` port + `HttpRequestUserAgentAccessor`; the InteractiveServer
+  forwarding handler now copies User-Agent across the loopback hop.
+- **Infrastructure**: EF mapping for `Nickname` + three private scalar columns
+  (`RegisteredAttachment`/`RegisteredBrowser`/`RegisteredOs`), record + fingerprint ignored;
+  migration `20260923063306_AddCredentialNicknameAndRegisteredWith` (postgres-gated tree).
+- **SPA**: `web-authn.ts` returns `authenticatorAttachment` + `transports`; `CredentialsState`
+  gains `RenameCredential`, `SetPendingNickname`, `ClearPendingNickname` and pending-nickname
+  fields; `CredentialRowPresenter` (pure text rules); `CredentialList` row = nickname title,
+  provider · attachment · browser/OS line, created, monospace fingerprint, inline Rename editor
+  (auto-opens prefilled with the provider name for a just-added passkey), two-step revoke with a
+  restating confirmation. Settings and Passkeys pages wired; `AddPasskeyPrompt` shows a
+  "Name this passkey" form after its own CTA. Rename outcomes go to the shell notification region.
+- **Agent CLI**: wire DTO field renamed to `Nickname`; `--label` option maps onto it.
+- **Tests**: identity lib (`credential-nickname-tests.cs`), co-located
+  `rename-credential-tests.cs` (9) and `registration-context-tests.cs` (9), integration
+  `credential-rename-tests.cs` (cookie + bearer happy path, oversize 400, cross-principal and
+  unknown id return identical 404 bodies), `credential-add-tests.cs` registration-context +
+  fingerprint capture, contracts round-trips for the new shapes (fingerprint on the wire,
+  handle/material still never), EF model mapping assertions, SPA `credential-row-presenter-tests.cs`.
+
+### Gates (run 2026-09-23 in the claim worktree)
+
+- `ganda repo audit` — passes all checks.
+- `dev build` — 0 warnings / 0 errors.
+- `dev test` — every suite green (web-jaribu aggregator 195, web-server-integration 248,
+  web-spa-integration 46, timewarp-identity 227, contracts 44, infrastructure 56, …).
+- `dev template-smoke` — SmokeDefault, SmokeNoPostgres, SmokeNoApi all OK; tiers 1–3 passed.
+- `dev check-version` — source 2.0.0-beta.20 is already ahead of NuGet 2.0.0-beta.19; no bump needed.
+
+### How to validate
+
+**Smoke**
+
+```bash
+./bin/dev build
+dotnet run source/container-apps/web/features/identity/rename-credential/rename-credential-tests.cs
+dotnet run source/container-apps/web/features/identity/registration-context-tests.cs
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Credential
+```
+
+Then `dev run`, sign in with a passkey, open **Settings**, click **Create a passkey** and
+complete the browser ceremony.
+
+**Expect**
+
+- Build 0/0; the two runfiles report 9/9 and 9/9; the filtered integration run reports all
+  `Credential*` classes passed (includes `CredentialRename_` and the new
+  `Captures_Registration_Context_And_Fingerprint…` fact).
+- On Settings the new row opens an inline nickname editor prefilled with the provider name
+  (e.g. "Proton Pass"); Save shows a shell message bar "Nickname saved." and the row title becomes
+  the nickname. The row's second line reads `Provider · Built-in|Roaming · Browser on OS`, followed
+  by "Created …" and an 8-hex monospace fingerprint. Clicking **Delete** shows a confirmation that
+  restates the nickname, provider, created stamp and fingerprint; only **Confirm delete** revokes.
+- `GET /api/identity/credentials` JSON contains `nickname`, `registeredWith`, `fingerprint` and
+  never `handle` / `publicMaterial` / a raw User-Agent string.
+
+### Notes for reviewers
+
+- Nickname prompt timing: the provider name is only known after the ceremony (AAGUID parsed
+  server-side), so the prompt is the inline rename editor opened on the new row, prefilled from
+  `AddPasskey.Response.ProviderLabel` — one mechanism serves add-time naming and later renames.
+- Attachment/transports are client-asserted display hints, never security signals.
+- Task 247 has not landed; only the NEW outcomes (rename) route to the shell region. The
+  pre-existing page-local success/error bars on Settings/Passkeys are 247's scope and untouched.
+- The EF snapshot diff reorders `RolePermissionGrant` (tool output ordering); no schema change there.

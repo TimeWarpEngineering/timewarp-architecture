@@ -19,6 +19,9 @@
 // If a product need for kind/credential affinity emerges, it belongs on Principal/Credential, not
 // bolted onto this handler. Zero Update* calls (Add* only).
 // Round-1 M5: same AgentKeyCeremonyType.Registration as Complete/Start (see ceremony Design).
+// Task 248-001: Label stays null for agent keys (no provider to name); Nickname is the caller's;
+// RegisteredWith records the browser/OS family from the request User-Agent when the client sends
+// one (attachment is always Unknown — there is no authenticator).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -33,17 +36,20 @@ public sealed partial class AddAgentKey
     private readonly IPrincipalStore PrincipalStore;
     private readonly IAgentKeyChallengeStore ChallengeStore;
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
+    private readonly IRequestUserAgentAccessor RequestUserAgentAccessor;
 
     public Handler
     (
       IPrincipalStore principalStore,
       IAgentKeyChallengeStore challengeStore,
-      ICurrentPrincipalAccessor currentPrincipalAccessor
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IRequestUserAgentAccessor requestUserAgentAccessor
     )
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
+      RequestUserAgentAccessor = requestUserAgentAccessor;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -69,7 +75,14 @@ public sealed partial class AddAgentKey
 
       AgentKeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
 
-      var credential = Credential.Create(callerId.Value, CredentialType.AgentKey, materials.KeyId, materials.PublicKeyBytes, command.Label);
+      var credential = Credential.Create(
+        callerId.Value,
+        CredentialType.AgentKey,
+        materials.KeyId,
+        materials.PublicKeyBytes,
+        label: null,
+        command.Nickname,
+        RegistrationContext.ResolveForAgentKey(RequestUserAgentAccessor.GetUserAgent()));
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);

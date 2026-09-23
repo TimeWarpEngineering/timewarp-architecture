@@ -17,6 +17,9 @@
 // Response 409 does not disclose whether a colliding passkey belongs to the caller's principal or
 // someone else's. Zero Update* calls (Add* only) — no concurrency retry loop.
 // Round-1 M5: same WebAuthnCeremonyType.Registration as Complete/Start (see ceremony Design).
+// Task 248-001: Label is ALWAYS the AAGUID provider name (materials.ProviderLabel); the caller's
+// Nickname is stored separately; RegisteredWith is resolved from the command's browser hints plus
+// IRequestUserAgentAccessor (raw UA never stored — see RegistrationContext's Design region).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -31,6 +34,7 @@ public sealed partial class AddPasskey
     private readonly IWebAuthnChallengeStore ChallengeStore;
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IRequestHostAccessor RequestHostAccessor;
+    private readonly IRequestUserAgentAccessor RequestUserAgentAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
 
     public Handler
@@ -39,6 +43,7 @@ public sealed partial class AddPasskey
       IWebAuthnChallengeStore challengeStore,
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IRequestHostAccessor requestHostAccessor,
+      IRequestUserAgentAccessor requestUserAgentAccessor,
       IOptions<WebAuthnOptions> options
     )
     {
@@ -46,6 +51,7 @@ public sealed partial class AddPasskey
       ChallengeStore = challengeStore;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       RequestHostAccessor = requestHostAccessor;
+      RequestUserAgentAccessor = requestUserAgentAccessor;
       Options = options;
     }
 
@@ -85,9 +91,17 @@ public sealed partial class AddPasskey
 
       PasskeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
 
-      // Prefer caller-supplied Label; else AAGUID provider name (task 168).
-      string? label = string.IsNullOrWhiteSpace(command.Label) ? materials.ProviderLabel : command.Label;
-      var credential = Credential.Create(callerId.Value, CredentialType.Passkey, materials.CredentialId, materials.CosePublicKey, label);
+      // Label = AAGUID provider name (task 168); Nickname = caller's own name; both kept (task 248-001).
+      RegisteredWith registeredWith =
+        RegistrationContext.Resolve(command.AuthenticatorAttachment, command.Transports, RequestUserAgentAccessor.GetUserAgent());
+      var credential = Credential.Create(
+        callerId.Value,
+        CredentialType.Passkey,
+        materials.CredentialId,
+        materials.CosePublicKey,
+        materials.ProviderLabel,
+        command.Nickname,
+        registeredWith);
       try
       {
         await PrincipalStore.AddCredentialAsync(credential, cancellationToken);
@@ -100,7 +114,7 @@ public sealed partial class AddPasskey
         return IdentityProblems.CredentialAlreadyRegistered("passkey");
       }
 
-      return new Response(credential.Id);
+      return new Response(credential.Id, materials.ProviderLabel);
     }
   }
 }

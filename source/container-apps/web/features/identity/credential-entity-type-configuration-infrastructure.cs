@@ -13,6 +13,12 @@
 // checks first so callers get InvalidOperationException, not a raw unique-violation.
 // Version store-CAS + .IsConcurrencyToken() same rationale as PrincipalEntityTypeConfiguration
 // (not IAggregateRoot; store owns EntityVersion.Next).
+// Task 248-001: Nickname is a plain nullable text column. RegisteredWith (a record on the entity) is
+// NOT mapped as an owned/complex type — it is Ignored and its three scalars are the entity's
+// PRIVATE properties (RegisteredAttachment / RegisteredBrowser / RegisteredOs) mapped by name; they
+// bind through the private constructor exactly like Handle/PublicMaterial. This keeps the
+// detach-and-attach replacement path (PersistReplacementAsync) a single-row write with no
+// owned-entity state to reconcile. Fingerprint is computed, never stored.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -63,6 +69,14 @@ public sealed class CredentialEntityTypeConfiguration : IEntityTypeConfiguration
     builder.Property(credential => credential.CreatedAt).IsRequired();
     builder.Property(credential => credential.RevokedAt);
     builder.Property(credential => credential.Label);
+    builder.Property(credential => credential.Nickname).HasMaxLength(Credential.MaxNicknameLength);
+
+    // RegisteredWith: three private scalar properties mapped by name (see Design region).
+    builder.Ignore(credential => credential.RegisteredWith);
+    builder.Ignore(credential => credential.Fingerprint);
+    builder.Property<AuthenticatorAttachment>("RegisteredAttachment").IsRequired();
+    builder.Property<string?>("RegisteredBrowser").HasMaxLength(RegisteredWith.MaxFamilyLength);
+    builder.Property<string?>("RegisteredOs").HasMaxLength(RegisteredWith.MaxFamilyLength);
 
     builder.Property(credential => credential.Version)
       .IsConcurrencyToken()

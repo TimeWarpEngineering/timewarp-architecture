@@ -1,5 +1,5 @@
 #region Purpose
-// Copies inbound Cookie, mock-principal, and circuit host onto server HttpClient loopback.
+// Copies inbound Cookie, mock-principal, User-Agent, and circuit host onto server HttpClient loopback.
 #endregion
 
 #region Design
@@ -17,6 +17,9 @@
 // read X-Forwarded-Host — a spoofable client header; the circuit host is taken from
 // HttpContext.Request.Host of the circuit request, same source as Cookie. Does not overwrite
 // X-TimeWarp-Circuit-Host when the outgoing request already set it.
+// Task 248-001: copies User-Agent as sent so HttpRequestUserAgentAccessor on the loopback hop
+// sees the registering browser (credential rows record its browser/OS family), not the
+// server-side HttpClient. Same copy-as-sent / never-invent posture as Cookie.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -26,7 +29,7 @@ using Microsoft.Extensions.Primitives;
 using TimeWarp.Architecture.Services;
 
 /// <summary>
-/// Forwards the browser identity-session cookie, mock principal header, and circuit host on server loopback.
+/// Forwards the browser identity-session cookie, mock principal header, User-Agent, and circuit host on server loopback.
 /// </summary>
 public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
 {
@@ -47,6 +50,9 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
     {
       CopyHeader(httpContext, request, "Cookie");
       CopyHeader(httpContext, request, MockAuthenticationDefaults.MockPrincipalIdHeader);
+      // Task 248-001: the registering browser's User-Agent must survive the loopback hop so the
+      // credential row records the real browser/OS family, not the server's HttpClient.
+      CopyHeader(httpContext, request, "User-Agent");
       CopyCircuitHost(httpContext, request);
     }
 

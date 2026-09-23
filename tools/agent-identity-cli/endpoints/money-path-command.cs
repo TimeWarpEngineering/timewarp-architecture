@@ -72,7 +72,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
           PublicKey = AgentSigning.ToBase64Url(key.SpkiPublicKey),
           Challenge = regOptions.Value.Challenge,
           Signature = AgentSigning.ToBase64Url(regSig),
-          Label = "agent-identity-cli-money-path"
+          Nickname = "agent-identity-cli-money-path"
         };
         HttpResult<RegisterResponse> reg = await Http.PostRegisterAsync(server, regRequest, ct).ConfigureAwait(false);
         if (!reg.Success || reg.Value is null)

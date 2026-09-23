@@ -153,18 +153,18 @@ public class Returns_
       (command, nameof(CompleteAgentKeyRegistration.Command.PublicKey));
   }
 
-  public static async Task ValidationError_Given_Oversized_Label()
+  public static async Task ValidationError_Given_Oversized_Nickname()
   {
     var command = new CompleteAgentKeyRegistration.Command
     {
       PublicKey = "QQ",
       Challenge = "QQ",
       Signature = "QQ",
-      Label = new string('A', 65)
+      Nickname = new string('A', 65)
     };
 
     await Web.ConfirmEndpointValidationError<CompleteAgentKeyRegistration.Response>
-      (command, nameof(CompleteAgentKeyRegistration.Command.Label));
+      (command, nameof(CompleteAgentKeyRegistration.Command.Nickname));
   }
 
   private static async Task<CompleteAgentKeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAgentKey key)

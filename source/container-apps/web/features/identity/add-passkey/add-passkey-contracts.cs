@@ -5,8 +5,13 @@
 
 #region Design
 // Shape mirrors CompletePasskeyRegistration exactly (same three base64url fields, same size caps —
-// see that contract's Design region for the byte-size rationale) plus an optional Label the caller
-// can attach for their own recognition (e.g. "MacBook"); the KEY difference is authentication and
+// see that contract's Design region for the byte-size rationale) plus an optional Nickname the caller
+// can attach for their own recognition (e.g. "MacBook") — task 248-001 renamed this from Label: the
+// provider name (Credential.Label, AAGUID map) and the user's nickname are now separate fields, so a
+// caller-supplied name no longer overwrites the provider — and the two registration-context hints
+// the browser exposes (AuthenticatorAttachment from PublicKeyCredential.authenticatorAttachment,
+// Transports from AuthenticatorAttestationResponse.getTransports()); both optional, display-only,
+// reduced server-side by RegistrationContext. The KEY difference is authentication and
 // audience: CompletePasskeyRegistration is anonymous and mints a brand-new Principal, this command is
 // authenticated ([EndpointAuthorize], credential-management policy) and attaches to the CALLER's
 // EXISTING principal — the handler sources the principal id from ICurrentPrincipalAccessor and never
@@ -24,8 +29,9 @@
 // existing credential ids — a browser could technically be prompted to re-register a passkey it
 // already has bound to this account (the handler's FindCredentialByHandleAsync check catches this as
 // a 409, it just is not prevented client-side with a nicer UX). Follow-up, not blocking.
-// Response returns the new CredentialId so the client can immediately show/select it (e.g. to give it
-// a label in the UI) without an extra GetCredentials round-trip.
+// Response returns the new CredentialId plus the resolved ProviderLabel so the client can immediately
+// open the nickname prompt pre-filled with the provider name (task 248-001) without an extra
+// GetCredentials round-trip.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf dual scheme — see
 // GetCredentials' Design region.
 #endregion
@@ -47,7 +53,11 @@ public static partial class AddPasskey
     public string CredentialId { get; set; } = null!;
     public string ClientDataJson { get; set; } = null!;
     public string AttestationObject { get; set; } = null!;
-    public string? Label { get; set; }
+    public string? Nickname { get; set; }
+    /// <summary>"platform" / "cross-platform" from the browser, or null when not reported.</summary>
+    public string? AuthenticatorAttachment { get; set; }
+    /// <summary>Attestation response transports ("internal", "hybrid", "usb", …), or null.</summary>
+    public IReadOnlyList<string>? Transports { get; set; }
   }
 
   public sealed class Validator : AbstractValidator<Command>
@@ -57,7 +67,11 @@ public static partial class AddPasskey
       RuleFor(x => x.CredentialId).NotEmpty().MaximumLength(2 * 1024);
       RuleFor(x => x.ClientDataJson).NotEmpty().MaximumLength(64 * 1024);
       RuleFor(x => x.AttestationObject).NotEmpty().MaximumLength(64 * 1024);
-      RuleFor(x => x.Label).MaximumLength(64);
+      RuleFor(x => x.Nickname).MaximumLength(Credential.MaxNicknameLength);
+      RuleFor(x => x.AuthenticatorAttachment).MaximumLength(32);
+      RuleFor(x => x.Transports).Must(transports => transports is null || transports.Count <= 8)
+        .WithMessage("Transports cannot list more than 8 entries.");
+      RuleForEach(x => x.Transports).NotEmpty().MaximumLength(32);
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
     }
   }
@@ -65,8 +79,10 @@ public static partial class AddPasskey
   public sealed class Response
   {
     public CredentialId CredentialId { get; }
+    /// <summary>Resolved provider name (AAGUID map), or null when unknown — the nickname prompt's prefill.</summary>
+    public string? ProviderLabel { get; }
 
-    public Response(CredentialId credentialId)
+    public Response(CredentialId credentialId, string? providerLabel = null)
     {
       if (credentialId.IsEmpty)
       {
@@ -74,6 +90,7 @@ public static partial class AddPasskey
       }
 
       CredentialId = credentialId;
+      ProviderLabel = providerLabel;
     }
   }
 
