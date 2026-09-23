@@ -4,17 +4,19 @@ namespace TimeWarp.Architecture.Testing;
 using global::Yarp.ReverseProxy.Configuration;
 
 #region Purpose
-// In-proc host for the standalone YARP gateway (fixed port 8443) used by C-create HostGraphFactory.
+// In-proc host for the standalone YARP gateway used by C-create HostGraphFactory.
 #endregion
 
 #region Design
 // Development ReverseProxy config addresses Web.Server as http://_http.web-server (task 107).
 // Aspire injects that named endpoint; this in-proc host has no DCP, so an IProxyConfigFilter
-// rewrites the Web.Server cluster destination to WebTestServerApplication.WebHttpUrl (http :7001)
-// after LoadFromConfig. Generated LoadFromMemory routes still target the config cluster id
-// "Web.Server" — that cross-provider merge is the path task 120 smokes. AddConfigurationServiceEndpointProvider
-// remains for any remaining service-name destinations (Api.Server / Grpc.Server).
+// rewrites the Web.Server cluster destination to WebTestServerApplication.WebHttpUrl
+// (InProcTestPorts.WebHttpUrl) after LoadFromConfig. Generated LoadFromMemory routes still
+// target the config cluster id "Web.Server" — that cross-provider merge is the path task 120
+// smokes. AddConfigurationServiceEndpointProvider remains for any remaining service-name
+// destinations (Api.Server / Grpc.Server).
 // Api is optional: CreateWebYarpAsync boots Web+Yarp only; CreateWebApiYarpAsync still passes both.
+// Listen URL is InProcTestPorts.YarpHostUrl (TIMEWARP_TEST_PORT_BASE; default :8443).
 #endregion
 
 /// <summary>
@@ -29,7 +31,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
 #if(api)
   private readonly ApiTestServerApplication? ApiTestServerApplication;
 #endif
-  internal const int YarpPort = 8443;
+  internal static readonly int YarpPort = InProcTestPorts.YarpPort;
 
   /// <param name="configureServices">
   /// Optional extras after the built-in test wiring (C-create / <see cref="HostGraphFactory"/>).
@@ -50,7 +52,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     (
       urls:
       [
-        "https://localhost:8443"
+        InProcTestPorts.YarpHostUrl
       ],
       webApplicationOptions:
         new WebApplicationOptions

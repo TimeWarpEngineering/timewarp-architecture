@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- In-proc standalone YARP gateway smoke (task 120): suite-shaped under tests/, Jaribu MTP.
-         C-create HostGraphFactory.CreateWebYarpAsync; fixed ports web=7000, web-http=7001, yarp=8443.
+         C-create HostGraphFactory.CreateWebYarpAsync; InProcTestPorts (defaults web=7000,
+         web-http=7001, yarp=8443; TIMEWARP_TEST_PORT_BASE).
          Closed-box AppHost ingress remains aspire-tests; this suite is the standalone gateway. -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

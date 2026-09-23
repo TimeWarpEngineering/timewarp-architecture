@@ -11,11 +11,12 @@ using System.Net.Sockets;
 // Replaces the implicit Fixie DI graph (AddSingleton hosts + ctor injection) with explicit
 // Create* methods (task 145-002 / findings §3 C-create). Each call constructs NEW hosts —
 // never process-static, never refcounted. Ordering:
-//   Api-only: Api :7255
-//   Web-only: Web :7000 https + :7001 http
-//   Web+Api:  Api first (BFF HttpClient bases point at :7255), then Web :7000/:7001
-//   Web+Yarp: Web, then Yarp :8443 (task 120 standalone gateway smoke; no Api)
-//   Full:     Api, Web, then Yarp :8443 (Yarp depends on the others for DI identity only)
+//   Api-only: Api (InProcTestPorts.ApiPort)
+//   Web-only: Web https + http (InProcTestPorts.WebPort / WebHttpPort)
+//   Web+Api:  Api first (BFF HttpClient bases → ApiHostUrl), then Web
+//   Web+Yarp: Web, then Yarp (task 120 standalone gateway smoke; no Api)
+//   Full:     Api, Web, then Yarp (Yarp depends on the others for DI identity only)
+// Ports come from InProcTestPorts (TIMEWARP_TEST_PORT_BASE; defaults 7000/7001/7255/8443).
 // Port preflight fails with a teaching error so parallel/leaked hosts are obvious.
 // Per-host Action<IServiceCollection> runs after each host's built-in test wiring
 // (Web already registers MockAccessTokenProvider).
@@ -44,7 +45,7 @@ using System.Net.Sockets;
 public static class HostGraphFactory
 {
 #if(api)
-  /// <summary>Api.Server only (fixed port 7255).</summary>
+  /// <summary>Api.Server only (<see cref="InProcTestPorts.ApiPort"/>).</summary>
   public static async Task<HostGraph> CreateApiAsync(Action<IServiceCollection>? configureApi = null)
   {
     EnsurePortIsFree(ApiTestServerApplication.ApiPort, "Api.Server (ApiTestServerApplication)");
@@ -56,8 +57,8 @@ public static class HostGraphFactory
 #if(web)
 
   /// <summary>
-  /// Web.Server only (fixed port 7000). Used when the api family is absent — see
-  /// web-server-integration-tests call sites' api-flag-guarded branch (task 145-004 R2-1:
+  /// Web.Server only (<see cref="InProcTestPorts.WebPort"/>). Used when the api family is absent —
+  /// see web-server-integration-tests call sites' api-flag-guarded branch (task 145-004 R2-1:
   /// SmokeNoApi regression) — and by any class that genuinely doesn't need a live Api host.
   /// </summary>
   public static async Task<HostGraph> CreateWebAsync(Action<IServiceCollection>? configureWeb = null)
@@ -71,8 +72,8 @@ public static class HostGraphFactory
 #if(web && api)
 
   /// <summary>
-  /// Api then Web (ports 7255, 7000/7001). Web's built-in wiring includes MockAccessTokenProvider
-  /// and HttpClient base addresses for BFF → Api.
+  /// Api then Web (<see cref="InProcTestPorts"/>). Web's built-in wiring includes
+  /// MockAccessTokenProvider and HttpClient base addresses for BFF → Api.
   /// </summary>
   public static async Task<HostGraph> CreateWebWithApiAsync
   (
@@ -83,7 +84,7 @@ public static class HostGraphFactory
     EnsurePortIsFree(ApiTestServerApplication.ApiPort, "Api.Server (ApiTestServerApplication)");
     EnsureWebPortsAreFree();
 
-    // Api first: Web BFF clients default to https://localhost:7255.
+    // Api first: Web BFF clients default to InProcTestPorts.ApiHostUrl.
     ApiTestServerApplication api = new(configureApi);
     try
     {
@@ -100,7 +101,7 @@ public static class HostGraphFactory
 #endif
 #if(web && api && yarp)
 
-  /// <summary>Api, Web, then Yarp (ports 7255, 7000/7001, 8443).</summary>
+  /// <summary>Api, Web, then Yarp (<see cref="InProcTestPorts"/>).</summary>
   public static async Task<HostGraph> CreateWebApiYarpAsync
   (
     Action<IServiceCollection>? configureApi = null,
@@ -133,7 +134,7 @@ public static class HostGraphFactory
 #if(web && yarp)
 
   /// <summary>
-  /// Web then Yarp (ports 7000/7001, 8443). No Api host — standalone gateway smoke for
+  /// Web then Yarp (<see cref="InProcTestPorts"/>). No Api host — standalone gateway smoke for
   /// generated Web.Server /api carve-outs (task 120).
   /// </summary>
   public static async Task<HostGraph> CreateWebYarpAsync
@@ -169,8 +170,10 @@ public static class HostGraphFactory
 #endif
 
   /// <summary>
-  /// Fails if a fixed test port is already bound — usually another suite or a leaked host.
-  /// <c>dev test</c> runs projects one at a time for this reason.
+  /// Fails if an in-proc test port is already bound — usually another suite or a leaked host.
+  /// <c>dev test</c> runs projects one at a time because they share one
+  /// <see cref="InProcTestPorts"/> base; override via <c>TIMEWARP_TEST_PORT_BASE</c> to isolate
+  /// a second process (e.g. template-smoke).
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
   {
@@ -183,9 +186,10 @@ public static class HostGraphFactory
     catch (SocketException exception)
     {
       throw new InvalidOperationException(
-        $"Fixed test port {port} for {hostLabel} is already in use. " +
+        $"In-proc test port {port} for {hostLabel} is already in use. " +
         "Stop the other process (or finish its CleanUpOnce/DisposeAsync). " +
         "`dev test` runs test projects serially so ports are not shared across projects; " +
+        "set TIMEWARP_TEST_PORT_BASE to isolate a concurrent process (template-smoke does); " +
         "within a project each Jaribu class must own and dispose its HostGraph (C-create).",
         exception);
     }

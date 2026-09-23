@@ -9,13 +9,14 @@ using TimeWarp.Architecture.Abuse;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public class WebTestServerApplication : TestServerApplication<Web.Server.Program>
 {
-  internal const string WebHostUrl = "https://localhost:7000";
+  // Ports / URLs from InProcTestPorts (TIMEWARP_TEST_PORT_BASE; defaults 7000/7001/7255).
   // In-proc YARP Development cluster forwards Web.Server over http (task 107 https→http;
-  // task 120 standalone smoke). HTTPS stays on 7000 so existing clients are unchanged.
-  internal const string WebHttpUrl = "http://localhost:7001";
-  internal const int WebPort = 7000;
-  internal const int WebHttpPort = 7001;
-  private const string ApiHostUrl = "https://localhost:7255";
+  // task 120 standalone smoke). Field aliases (not properties) avoid CA1056.
+  internal static readonly string WebHostUrl = InProcTestPorts.WebHostUrl;
+  internal static readonly string WebHttpUrl = InProcTestPorts.WebHttpUrl;
+  internal static readonly int WebPort = InProcTestPorts.WebPort;
+  internal static readonly int WebHttpPort = InProcTestPorts.WebHttpPort;
+  private static readonly string ApiHostUrl = InProcTestPorts.ApiHostUrl;
 
   /// <param name="configureServices">
   /// Optional extras after the built-in test wiring (includes <see cref="MockAccessTokenProvider"/>).

@@ -8,7 +8,8 @@ duplicated here. Reference implementations:
 `source/container-apps/web/features/admin/roles/create-role/create-role-tests.cs` (host-free
 contract round-trip) and
 `source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs`
-(real host, fixed port 7255, class-scoped `SetupOnce`/`CleanUpOnce` for host dispose —
+(real host via `HostGraphFactory` / `InProcTestPorts` — defaults api :7255; override
+`TIMEWARP_TEST_PORT_BASE` — class-scoped `SetupOnce`/`CleanUpOnce` for host dispose —
 requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new co-located test.
 
 **C-create host lifetime (epic 145 / task 143 §6):** when a test class needs ASP.NET hosts
@@ -18,7 +19,8 @@ requires `TimeWarp.Jaribu` ≥ 1.0.0-beta.14) — read one before writing a new 
   task **145-002**): `CreateApiAsync` / `CreateWebWithApiAsync` / `CreateWebApiYarpAsync` —
   explicit Api→Web→Yarp order; returns a **`HostGraph`** (`IAsyncDisposable`).
 - `CleanUpOnce` **must** `await graph.DisposeAsync()` (reverse order) and null the static.
-  Never leave fixed-port hosts to process exit.
+  Never leave in-proc hosts (defaults web=7000/7001 api=7255 yarp=8443;
+  `TIMEWARP_TEST_PORT_BASE`) to process exit.
 - **Never share** ASP.NET hosts across classes via process-static / `Lazy` / assembly singletons
   (that was the Fixie mental model; TimeWarp.Fixie actually rebuilt the provider **per class**
   anyway — see task 143). Ad hoc process-static sharing is never the answer — use **C-share**

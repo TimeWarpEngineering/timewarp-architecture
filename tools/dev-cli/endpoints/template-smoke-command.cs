@@ -357,8 +357,9 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
         return false;
 
       // Tier 3 (task 136): family JARIBU_MULTI aggregators — multi-mode compile + MTP bare
-      // `dotnet test` from each project dir. Serial (api fixed port 7255). Not in .slnx.
-      // Flag-off entries assert excluded families' aggregators are absent (review R2-1).
+      // `dotnet test` from each project dir. Not in .slnx. TIMEWARP_TEST_PORT_BASE isolates
+      // generated-app hosts from monorepo `dev test` (task 245). Flag-off entries assert
+      // excluded families' aggregators are absent (review R2-1).
       return await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct);
     }
 

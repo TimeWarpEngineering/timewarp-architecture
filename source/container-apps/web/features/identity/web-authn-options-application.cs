@@ -42,7 +42,8 @@
 // and deliberately not hardened away; do not restate this as "no enumeration."
 //
 // DEFAULT ["localhost"]: the shared host component of both the dev origin (https://localhost:63611)
-// and the fixed integration-test origin (https://localhost:7000), so the template works out of the
+// and the in-proc integration-test origin (https://localhost:7000 by default; port follows
+// TIMEWARP_TEST_PORT_BASE — host stays localhost), so the template works out of the
 // box, zero-config.
 //
 // BINDER APPEND SEMANTICS: AllowedRpIds is initialized to ["localhost"] as a C# default. The

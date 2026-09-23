@@ -20,7 +20,8 @@
 // Task 136 / 226 / 228: AssertJaribuFamilyAggregatorsAsync (tier 3) bare `dotnet test -c Release`
 // from each family aggregator project dir. Gate is exit 0, failed == 0, total > 0, and
 // total == succeeded + skipped. Unparsable MTP summary fails (silent zero-discovery).
-// Serial for fixed port 7255.
+// Tiers 2–3 set TIMEWARP_TEST_PORT_BASE so generated-app in-proc hosts do not collide with
+// monorepo `dev test` on the default ports (task 245).
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
@@ -565,12 +566,11 @@ internal sealed partial class TemplateSmokeHarness
   /// <summary>
   /// Per-family JARIBU_MULTI aggregator projects (task 136), plus (task 145-002 R2-3) the
   /// timewarp-testing-tests suite project, which needs BOTH web and api. Relative to the
-  /// generated app root. Serial — api binds :7255/:7000. RequiredFamilies lets a flag-off
-  /// smoke entry assert the artifacts are ABSENT (task 136 review R2-1) whenever ANY required
-  /// family is excluded: an aggregator orphaned by a family flag would break the generated app,
-  /// so absence is the pass condition. Also (task 145-002 R2-1) the acid test that the
-  /// ContentRootPath fix holds for a MULTI-hosted-server consumer in a GENERATED app, not just
-  /// this monorepo.
+  /// generated app root. RequiredFamilies lets a flag-off smoke entry assert the artifacts are
+  /// ABSENT (task 136 review R2-1) whenever ANY required family is excluded: an aggregator
+  /// orphaned by a family flag would break the generated app, so absence is the pass condition.
+  /// Also (task 145-002 R2-1) the acid test that the ContentRootPath fix holds for a
+  /// MULTI-hosted-server consumer in a GENERATED app, not just this monorepo.
   /// </summary>
   public static readonly (string[] RequiredFamilies, string RelativeProjectDir)[] JaribuFamilyAggregators =
   [
@@ -711,12 +711,17 @@ internal sealed partial class TemplateSmokeHarness
     return ok;
   }
 
+  // In-proc port base for generated-app tier 2/3 hosts (task 245). Distinct from
+  // InProcTestPorts.DefaultBase (7000) so smoke can run beside monorepo `dev test`.
+  private const string InProcTestPortBaseEnvironmentVariable = "TIMEWARP_TEST_PORT_BASE";
+  private const string TemplateSmokeInProcTestPortBase = "17000";
+
   /// <summary>
   /// Tier 2 (authoritative): `dotnet run` each generated co-located runfile standalone and assert
   /// exit 0 with a nonzero, all-passing Jaribu grand total. Proves the file is not just textually
   /// intact but genuinely compiles and runs end to end post-generation (sourceName namespace
-  /// rewrite, contract shape, everything). Runs files serially — the weather-forecast file spins
-  /// a real host on fixed port 7255 (same constraint as the monorepo original).
+  /// rewrite, contract shape, everything). Runs files one at a time (shared smoke port base);
+  /// hosts use TIMEWARP_TEST_PORT_BASE=17000 (see TemplateSmokeInProcTestPortBase).
   /// </summary>
   public async Task<bool> AssertCoLocatedTestFilesRunAsync(
     string outputDir,
@@ -739,6 +744,7 @@ internal sealed partial class TemplateSmokeHarness
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("run", generatedPath)
         .WithWorkingDirectory(outputDir)
+        .WithEnvironmentVariable(InProcTestPortBaseEnvironmentVariable, TemplateSmokeInProcTestPortBase)
         .WithNoValidation()
         .CaptureAsync(ct);
 
@@ -784,7 +790,8 @@ internal sealed partial class TemplateSmokeHarness
   /// and that bare <c>dotnet test -c Release</c> from that project directory exits 0, reports
   /// zero failures, a nonzero total, and total == succeeded + skipped. Aggregators are not in
   /// .slnx (solution build never compiles them); this is the multi-mode / MTP regression gate.
-  /// Serial — api aggregator uses fixed port 7255.
+  /// Uses TIMEWARP_TEST_PORT_BASE=17000 so hosts do not collide with monorepo <c>dev test</c>
+  /// (task 245).
   /// </summary>
   public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
     string outputDir,
@@ -833,6 +840,7 @@ internal sealed partial class TemplateSmokeHarness
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("test", "-c", "Release")
         .WithWorkingDirectory(projectDir)
+        .WithEnvironmentVariable(InProcTestPortBaseEnvironmentVariable, TemplateSmokeInProcTestPortBase)
         .WithNoValidation()
         .CaptureAsync(ct);
 

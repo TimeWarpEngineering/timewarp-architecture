@@ -12,8 +12,8 @@
 // supported"). Always run bare `dotnet test -c Release` with cwd = project directory, which
 // picks up the project-local global.json test.runner. Root global.json must NOT set a runner
 // (co-located runfiles and other tooling still use the default VSTest path when needed).
-// Projects still run ONE AT A TIME: integration suites share fixed ports
-// (web=7000, web-http=7001, api=7255, yarp=8443).
+// Projects still run ONE AT A TIME: integration suites share one InProcTestPorts base
+// (defaults web=7000, web-http=7001, api=7255, yarp=8443; override TIMEWARP_TEST_PORT_BASE).
 #endregion
 
 namespace DevCli.Commands;
@@ -64,9 +64,9 @@ internal sealed class TestCommand : ICommand<Unit>
 
     private async Task<bool> TestAsync()
     {
-      // Run test projects ONE AT A TIME. The integration suites spin up real web/api/yarp hosts on
-      // FIXED ports (web=7000, web-http=7001, api=7255 shared by the web + api suites, yarp=8443), so running the
-      // whole solution at once lets concurrent hosts collide on those ports and fail spuriously.
+      // Run test projects ONE AT A TIME. Integration suites share one InProcTestPorts base
+      // (defaults web=7000, web-http=7001, api=7255, yarp=8443 — override via
+      // TIMEWARP_TEST_PORT_BASE), so concurrent hosts in the same process tree would collide.
       // Globbing the tests/ tree (rather than the .slnx) keeps this correct in a generated app where
       // feature-flagged test projects are physically excluded.
       string testsDirectory = Path.Combine(RepoRoot, "tests");
