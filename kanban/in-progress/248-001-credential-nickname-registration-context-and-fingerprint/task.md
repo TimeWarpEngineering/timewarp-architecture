@@ -195,7 +195,10 @@ complete the browser ceremony.
   skip, web-spa-integration 55 incl. 246's revoke-guard tests and the deep-link `RevokePasskey`
   + hint facts, web-jaribu 195, timewarp-identity 228) · `dev template-smoke` SmokeDefault,
   SmokeNoPostgres, SmokeNoApi OK.
-- CI status on the pushed merge commit: see the line under this list (filled after push).
+- **CI on the pushed merge commit `3aeed9b1`:** workflow run 35833367252 (pull_request trigger)
+  completed **success** — detect-paths, ci, template-smoke all green (Lint skill specs skipped
+  by path filter). PR #397 reports MERGEABLE; the earlier "no workflow runs" state was because
+  the previous pushes never produced a run — this push did.
 
 ### Review disposition (tw-implementation-review, 2026-09-23)
 
