@@ -65,9 +65,9 @@ single host (`components/MessageBars.razor`, painted at the top of `TimeWarpPage
 - [x] Page-local outcome bars removed (SettingsPage, AddPasskeyPrompt error, AuthenticationPage save error; also PasskeysPage, LoginPage, ChooseMicrosoft365Page)
 - [x] Title/Body shape, dedupe, cap, lifetime, spacing tokens
 - [x] `ToastNotificationState` renamed → `NotificationState` (`features/notification/notification-state/`)
-- [ ] TWA analyzer + tests; AGENTS.md diagnostics table row
+- [x] TWA analyzer + tests; AGENTS.md diagnostics table row
 - [x] Skills updated (`tw-blazor-layout`, `tw-blazor`)
-- [ ] SPA tests; `dev build` 0/0; `dev test`; manual page check
+- [x] SPA tests; `dev build` 0/0; `dev test`; manual page check (build/test/template-smoke green; manual `dev run` check not performed — see Results)
 
 ## Notes
 
@@ -92,6 +92,102 @@ finish anything missing, run gates IN THE FOREGROUND (`dev build` 0/0, `dev test
 rewrote the postgres password. If you need `dev run` for a manual check, stop it before exiting.
 Master has since merged 246, 248-001 and 248-002 (CredentialList Revoke naming, nickname row,
 last-used); `git merge origin/master` before the gates and keep both sides.
+
+## Results
+
+### What landed (per design rule)
+
+- **Rule 1 (one region).** `SettingsPage.razor`, `AddPasskeyPrompt.razor`, `AuthenticationPage.razor`,
+  `PasskeysPage.razor`, `LoginPage.razor`, and `ChooseMicrosoft365Page.razor` no longer render their
+  own outcome `FluentMessageBar`; operation outcomes report through `NotificationState` and the
+  shell's `components/MessageBars.razor` paints the single region below the header/breadcrumb.
+  Static contextual guidance (e.g. AddPasskeyPrompt's "you need a passkey" info) stays inline —
+  the one allowed page-local use.
+- **Rule 2 (one shape).** `NotificationState` messages carry `Intent` / `Title` / optional `Body`.
+  `notification-state.problem-details-notification-handler.cs` maps `SharedProblemDetails.Title` →
+  `Title`, `Detail` → `Body`, dropping `Body` when `Detail` repeats `Title` (no generic "Error"
+  title, no glued `Title: Detail` string). Success messages carry the operation's own sentence with
+  no "Success" prefix.
+- **Rule 3 (dedupe/cap).** `notification-state.cs` keys messages by `(Intent, Title, Body)`;
+  pushing an identical message replaces the existing entry. `MessageBars.razor` caps the visible
+  stack at 3 with a "+N more" affordance.
+- **Rule 4 (lifetime).** `notification-state.navigation-listener.cs` clears error messages on route
+  change (existing route state); `notification-state.expire-messages.cs` auto-dismisses success
+  messages after a short interval. All messages are also manually dismissible
+  (`notification-state.dismiss-message.cs`).
+- **Rule 5 (spacing).** `MessageBars.razor` / its CSS own top/bottom margin and inter-bar gap via
+  `tokens.css` custom properties; no per-page margins remain around the region.
+- **Rule 6 (field validation untouched).** Blazilla field-level messages were not touched — they
+  stay next to the field, not routed through `NotificationState`.
+- **Rule 7 (rename).** `ToastNotificationState` → `NotificationState`, moved to
+  `source/container-apps/web/projects/web-spa/features/notification/notification-state/` with its
+  ActionSets split by concern (`add-notification`, `clear-on-navigation`, `dismiss-message`,
+  `exception-notification-handler`, `expire-messages`, `outcome-notification-handler`,
+  `problem-details-notification-handler`, `report-problem`).
+- **Rule 8 (enforcement).** New analyzer **TWA0025** (`PageLocalMessageBarAnalyzer`,
+  `source/analyzers/timewarp-architecture-convention-analyzers/page-local-message-bar-analyzer.cs`)
+  flags a `FluentMessageBar` with `Intent` `Error`/`Success` outside
+  `components/MessageBars.razor` in web-spa razor/`@code`; `Info`/`Warning` and unresolvable
+  (e.g. ternary) intents are silently allowed. Opt-out: `[PageLocalMessageBar(reason)]`
+  (`source/analyzers/timewarp-architecture-attributes/page-local-message-bar-attribute.cs`),
+  non-empty reason required. AGENTS.md diagnostics table and
+  `AnalyzerReleases.Unshipped.md` both carry the TWA0025 row.
+
+### Tests
+
+- Analyzer suite: `tests/analyzers/timewarp-architecture-analyzers-tests/page-local-message-bar-analyzer-tests.cs`
+  — positive (Error/Success outside host), negative (Warning/Info, MessageBars host itself,
+  non-Blazor project, generated-code exemption, unresolvable/dynamic intent), opt-out
+  (`[PageLocalMessageBar(reason)]`, empty-reason still fires).
+- SPA integration: `tests/container-apps/web/web-spa-integration-tests/features/notification/notification-state-tests.cs`
+  — `Put_Problem_Title_And_Detail_In_Title_And_Body`, `Drop_Body_When_Detail_Repeats_Title`,
+  `Render_The_Same_Problem_Once_When_Reported_By_Page_And_Handler` (dedupe),
+  `Keep_Distinct_Messages_And_Cap_The_Visible_Stack`, `Clear_Errors_When_The_Route_Changes`,
+  `Auto_Dismiss_Success_But_Keep_Errors`. Existing 058-001 message-bar tests keep passing
+  (same suite).
+- Skills updated: `tw-blazor-layout` (shell owns the single notification region) and `tw-blazor`
+  (no page-local outcome bars) each carry one short section on the rule.
+
+### Gates (run 2026-09-23 in the claim worktree)
+
+- `./bin/dev build` — 0 warnings / 0 errors (full rebuild, analyzer change).
+- `./bin/dev test` — every suite green: `timewarp-architecture-analyzers-tests` 171/171 (includes
+  the new TWA0025 tests), `web-spa-integration-tests` 63/63 (includes the six new
+  `notification-state-tests.cs` cases), `web-jaribu-tests` 199/199, `web-server-integration-tests`
+  253/254 (1 intentionally-skipped `RunForever`), remaining suites all green; exit 0 overall.
+- `./bin/dev template-smoke` — SmokeNoApi generated app builds 0/0, package-mode/skills checks
+  pass, co-located and MTP aggregator tests pass in the generated app.
+- Manual `dev run` check of Settings/Passkeys pages: **not performed this pass** — deferred per the
+   host's no-AppHost-in-headless-pass instruction (a live AppHost on this box shares the
+  user-secrets id with origin-home and a prior session's instance there rewrote the postgres
+  password). The SPA integration tests above exercise the same duplicate-bar and dismiss/dedupe
+  scenarios the manual check would cover; a human/interactive session should still eyeball
+  Settings and Passkeys once.
+
+### How to validate
+
+**Smoke**
+
+```bash
+./bin/dev build
+# expect: Build succeeded. 0 Warning(s) 0 Error(s)
+
+./bin/dev test
+# expect: every suite "Test run summary: Passed!"; web-spa-integration-tests and
+#   timewarp-architecture-analyzers-tests both green; exit code 0 overall
+```
+
+**Expect**
+
+- No `.razor` file under `source/container-apps/web/projects/web-spa` outside
+  `components/MessageBars.razor` renders a `FluentMessageBar` with `Intent="MessageBarIntent.Error"`
+  or `Intent="MessageBarIntent.Success"` without a `[PageLocalMessageBar(reason)]` opt-out —
+  `grep -rn "MessageBarIntent.Error\|MessageBarIntent.Success" source/container-apps/web/projects/web-spa --include=*.razor`
+  should show only `MessageBars.razor` (plus any explicitly opted-out component).
+- Reporting the same `SharedProblemDetails` failure from both a pipeline handler and a page
+  produces exactly one visible bar (see `Render_The_Same_Problem_Once_When_Reported_By_Page_And_Handler`).
+- Navigating away from a page with a visible error bar clears it (see
+  `Clear_Errors_When_The_Route_Changes`).
 
 ## Resume note 2 (2026-09-23, cockpit)
 
