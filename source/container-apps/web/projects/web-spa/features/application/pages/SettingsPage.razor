@@ -16,7 +16,7 @@
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
-  private bool CanUnlink => CredentialsState.ActiveCredentialCount > 1;
+  private bool CanRevoke => CredentialsState.CanUnlink(CredentialsState.ActiveCredentialCount);
   private string? ErrorMessage => CredentialsState.CeremonyError;
   private string? StatusMessage => CredentialsState.StatusMessage;
   private string Microsoft365CardTitle =>
@@ -113,9 +113,12 @@
                         IsBusy="IsBusy"
                         EmptyMessage="No passkeys on this account yet."
                         FallbackLabel="Passkey"
-                        DeleteLabel="Delete"
-                        DeleteDataQa="DeletePasskey"
-                        OnDelete="ConfirmRevokeAsync" />
+                        RevokeLabel="Revoke"
+                        RevokeDataQa="RevokePasskey"
+                        RevokeDisabled="@(!CanRevoke)"
+                        RevokeDisabledHint="Add another passkey or agent key before revoking this one."
+                        RevokeDisabledHintDataQa="RevokePasskeyHint"
+                        OnRevoke="ConfirmRevokeAsync" />
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
           <FluentButton Appearance="ButtonAppearance.Primary"
                         data-qa="CreatePasskey"
@@ -146,12 +149,12 @@
                           FallbackLabel="Microsoft 365"
                           Subtitle="Microsoft 365"
                           TitleDataQa="Microsoft365AccountLabel"
-                          DeleteLabel="Unlink"
-                          DeleteDataQa="Unlink"
-                          DeleteDisabled="@(!CanUnlink)"
-                          DeleteDisabledHint="Add a passkey first"
-                          DeleteDisabledHintDataQa="UnlinkMicrosoft365Hint"
-                          OnDelete="ConfirmRevokeAsync" />
+                          RevokeLabel="Unlink"
+                          RevokeDataQa="Unlink"
+                          RevokeDisabled="@(!CanRevoke)"
+                          RevokeDisabledHint="Add a passkey first"
+                          RevokeDisabledHintDataQa="UnlinkMicrosoft365Hint"
+                          OnRevoke="ConfirmRevokeAsync" />
           @if (CanLinkMicrosoft365)
           {
             <FluentButton Appearance="ButtonAppearance.Primary"

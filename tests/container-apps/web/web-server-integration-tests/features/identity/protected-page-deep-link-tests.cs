@@ -20,6 +20,10 @@
 // Task 229: Settings prerender fetches credentials so Link is hidden when an EntraAccount is
 // linked, Unlink is disabled (with hint) when it is the last active credential, and Unlink is
 // enabled when a passkey remains.
+// Task 246: the passkey row action is Revoke and it is disabled (with the RevokePasskeyHint text)
+// when the row is the last active credential of ANY kind — an agent key on the same principal
+// re-enables it even though the page lists only passkeys (same count as RevokeCredential.Handler).
+// Pinned on Settings (Member) and on the Developer-gated /Passkeys demo page.
 #endregion
 
 namespace ProtectedPageDeepLink_;
@@ -234,6 +238,69 @@ public class Returns_
     html.ShouldContain("Add a passkey first");
   }
 
+  public static async Task Settings_Single_Passkey_Should_Disable_Revoke_With_Hint()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+
+    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"RevokePasskey\"");
+    html.ShouldNotContain("data-qa=\"DeletePasskey\"");
+    FindTagContaining(html, "data-qa=\"RevokePasskey\"").ShouldContain("disabled");
+    html.ShouldContain("data-qa=\"RevokePasskeyHint\"");
+    html.ShouldContain(LastCredentialHint);
+  }
+
+  public static async Task Settings_Passkey_Plus_Agent_Key_Should_Enable_Revoke()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await AddAgentKeyAsync(principalId, "ganda");
+
+    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"RevokePasskey\"");
+    FindTagContaining(html, "data-qa=\"RevokePasskey\"").ShouldNotContain("disabled");
+    html.ShouldNotContain("data-qa=\"RevokePasskeyHint\"");
+    html.ShouldNotContain(LastCredentialHint);
+  }
+
+  public static async Task Passkeys_Page_Single_Passkey_Should_Disable_Revoke_With_Hint()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Developer]);
+
+    HttpResponseMessage response = await GetPageHtml("/Passkeys", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("data-qa=\"RevokePasskey\"");
+    FindTagContaining(html, "data-qa=\"RevokePasskey\"").ShouldContain("disabled");
+    html.ShouldContain("data-qa=\"RevokePasskeyHint\"");
+    html.ShouldContain(LastCredentialHint);
+  }
+
+  public static async Task Passkeys_Page_Passkey_Plus_Agent_Key_Should_Enable_Revoke()
+  {
+    (PrincipalId principalId, string sessionCookie) =
+      await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    await SetRolesAsync(principalId, [RoleIds.Developer]);
+    await AddAgentKeyAsync(principalId, "ganda");
+
+    HttpResponseMessage response = await GetPageHtml("/Passkeys", sessionCookie);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    FindTagContaining(html, "data-qa=\"RevokePasskey\"").ShouldNotContain("disabled");
+    html.ShouldNotContain("data-qa=\"RevokePasskeyHint\"");
+  }
+
+  private const string LastCredentialHint = "Add another passkey or agent key before revoking this one.";
+
   public static async Task Forbidden_Not_Login_Given_Passkey_Member_Admin_Authentication_Html()
   {
     (PrincipalId principalId, string sessionCookie) =
@@ -364,6 +431,18 @@ public class Returns_
         EntraAccountHandle.Encode(tenantId, Guid.NewGuid()),
         EntraIssuerMaterial.FromTenantId(tenantId),
         label));
+  }
+
+  private static async Task AddAgentKeyAsync(PrincipalId principalId, string label)
+  {
+    // Store-level insert (same shape as AddEntraAccountAsync): the count under test is "active
+    // credentials of any kind", so the material only needs to be a distinct AgentKey row.
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    byte[] keyId = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+    byte[] publicMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+    await principalStore.AddCredentialAsync(
+      Credential.Create(principalId, CredentialType.AgentKey, keyId, publicMaterial, label));
   }
 
   private static async Task RevokePasskeysAsync(PrincipalId principalId)
