@@ -28,6 +28,10 @@
 // computed server-side (CredentialFingerprint). Fingerprint is the ONLY thing derived from the
 // handle that may cross the wire: it is one-way and 32 bits, so it discriminates rows without
 // disclosing material. The reflection + json.ShouldNotContain pins on Handle/PublicMaterial stay.
+// Task 248-002: LastUsedAt (nullable; null = never used) is the server's stamp from
+// Credential.LastUsedAt; the SPA renders it relative ("Last used 3 minutes ago" / "Never used") and
+// restates it in the revoke confirmation. It is the last ctor parameter and defaults to null so the
+// mock factory's second row is honest about a never-used passkey.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf via IPermissionEvaluator.
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
 // agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
@@ -94,6 +98,8 @@ public static partial class GetCredentials
     public RegisteredWith RegisteredWith { get; }
     /// <summary>8 lowercase hex chars derived one-way from the handle; display-only.</summary>
     public string Fingerprint { get; }
+    /// <summary>UTC instant of the most recent successful authentication; null when never used.</summary>
+    public DateTimeOffset? LastUsedAt { get; }
 
     public CredentialSummary
     (
@@ -105,7 +111,8 @@ public static partial class GetCredentials
       DateTimeOffset? revokedAt,
       bool isActive,
       RegisteredWith registeredWith,
-      string fingerprint
+      string fingerprint,
+      DateTimeOffset? lastUsedAt = null
     )
     {
       if (id.IsEmpty)
@@ -122,6 +129,7 @@ public static partial class GetCredentials
       IsActive = isActive;
       RegisteredWith = Guard.Against.Null(registeredWith);
       Fingerprint = Guard.Against.NullOrWhiteSpace(fingerprint);
+      LastUsedAt = lastUsedAt;
     }
   }
 
@@ -140,7 +148,8 @@ public static partial class GetCredentials
           revokedAt: null,
           isActive: true,
           new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
-          "3f9a1c2e"
+          "3f9a1c2e",
+          lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2)
         ),
         new CredentialSummary
         (

@@ -82,6 +82,11 @@ public class Map
     entityType.FindProperty("RegisteredBrowser").ShouldNotBeNull().GetMaxLength().ShouldBe(RegisteredWith.MaxFamilyLength);
     entityType.FindProperty("RegisteredOs").ShouldNotBeNull().GetMaxLength().ShouldBe(RegisteredWith.MaxFamilyLength);
 
+    // Task 248-002: LastUsedAt is a plain nullable column riding the same Version CAS.
+    IProperty lastUsedAt = entityType.FindProperty(nameof(Credential.LastUsedAt)).ShouldNotBeNull();
+    lastUsedAt.ClrType.ShouldBe(typeof(DateTimeOffset?));
+    lastUsedAt.IsNullable.ShouldBeTrue();
+
     // The record and the computed fingerprint are projections, never columns.
     entityType.FindProperty(nameof(Credential.RegisteredWith)).ShouldBeNull();
     entityType.FindProperty(nameof(Credential.Fingerprint)).ShouldBeNull();

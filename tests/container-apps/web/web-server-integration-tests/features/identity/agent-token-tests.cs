@@ -64,6 +64,41 @@ public class Returns_
     result.AsT0.Scopes.ShouldBe([AgentScopes.IdentityRead]);
   }
 
+  public static async Task Stamps_Key_LastUsedAt_On_Issuance_And_Coalesces_Bearer_Validation()
+  {
+    // Task 248-002: issuance is per-ceremony (writes every time); per-request bearer validation is
+    // coalesced to one write per CredentialUsageRecorder.DefaultCoalesceInterval per key — two
+    // authenticated calls right after issuance must not advance the row's Version at all.
+    var key = new IntegrationSoftwareAgentKey();
+    (string keyId, PrincipalId principalId) = await RegisterAgentKeyWithPrincipal(key);
+    IPrincipalStore store = Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Credential registered = (await store.ListCredentialsAsync(principalId)).Single();
+    registered.LastUsedAt.ShouldBeNull();
+
+    CompleteAgentTokenIssuance.Command tokenCommand = await BuildValidTokenCommand(key, keyId, [AgentScopes.CredentialManage]);
+    OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> issued =
+      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+    issued.IsT0.ShouldBeTrue("Token issuance should succeed.");
+
+    Credential afterIssuance = (await store.ListCredentialsAsync(principalId)).Single();
+    afterIssuance.LastUsedAt.ShouldNotBeNull("issuance stamps the key");
+    afterIssuance.Version.ShouldBe(registered.Version + 1);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", issued.AsT0.AccessToken);
+    var query = new GetCredentials.Query { UserId = Guid.NewGuid() };
+    (await client.GetAsync(query.GetRouteWithQueryString())).StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+    (await client.GetAsync(query.GetRouteWithQueryString())).StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+
+    Credential afterRequests = (await store.ListCredentialsAsync(principalId)).Single();
+    afterRequests.Version.ShouldBe(afterIssuance.Version, "bearer validation inside the interval performs no write");
+    afterRequests.LastUsedAt.ShouldBe(afterIssuance.LastUsedAt);
+
+    // And the stamp reaches the list surface.
+    string json = await (await client.GetAsync(query.GetRouteWithQueryString())).Content.ReadAsStringAsync();
+    json.ShouldContain("\"lastUsedAt\":\"");
+  }
+
   public static async Task BadRequest_Given_Unknown_KeyId()
   {
     var key = new IntegrationSoftwareAgentKey();

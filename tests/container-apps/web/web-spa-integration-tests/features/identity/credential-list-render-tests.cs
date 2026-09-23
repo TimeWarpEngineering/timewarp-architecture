@@ -51,6 +51,7 @@ public class CredentialList_Should_
     TextOf(html, "PasskeyLabel").ShouldBe("Work laptop");
     TextOf(html, "CredentialContext").ShouldBe("1Password · Built-in · Chrome on Windows");
     TextOf(html, "CredentialCreated").ShouldBe("Created " + CredentialRowPresenter.CreatedText(credential));
+    TextOf(html, "CredentialLastUsed").ShouldBe("Never used");
     TextOf(html, "CredentialFingerprint").ShouldBe("3f9a1c2e");
     CountOf(html, "RenameCredential").ShouldBe(1);
     CountOf(html, "RevokePasskey").ShouldBe(1);

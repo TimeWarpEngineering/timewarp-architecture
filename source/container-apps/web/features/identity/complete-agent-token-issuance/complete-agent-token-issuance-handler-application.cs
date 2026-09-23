@@ -29,7 +29,12 @@
 // distinguishable 403 is reachable (mirrors CompletePasskeyAuthentication).
 // At bearer VALIDATION time (not issuance), quarantine is a SILENT Fail -> 401 — see
 // AgentTokenAuthenticationHandler's Design region. The two are deliberately different.
-// Concurrency note (104-028): zero Update* calls.
+// Last-used (task 248-002): after Verify AND the quarantine check pass, the handler stamps the
+// agent key's Credential.LastUsedAt via CredentialUsageRecorder.RecordAsync — issuance is
+// per-ceremony, so it writes every time. This is the handler's ONLY Update* call (the 104-028
+// "zero Update* calls" note is superseded). Advisory: a lost version race against a concurrent
+// RevokeCredential is dropped by the recorder, never retried, never fails issuance. The issued
+// grant carries credential.Id so the per-request bearer validator can coalesce its own stamps.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -44,19 +49,22 @@ public sealed partial class CompleteAgentTokenIssuance
     private readonly IAgentKeyChallengeStore ChallengeStore;
     private readonly IAgentTokenStore TokenStore;
     private readonly IOptions<AgentTokenOptions> Options;
+    private readonly CredentialUsageRecorder UsageRecorder;
 
     public Handler
     (
       IPrincipalStore principalStore,
       IAgentKeyChallengeStore challengeStore,
       IAgentTokenStore tokenStore,
-      IOptions<AgentTokenOptions> options
+      IOptions<AgentTokenOptions> options,
+      CredentialUsageRecorder usageRecorder
     )
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
       TokenStore = tokenStore;
       Options = options;
+      UsageRecorder = usageRecorder;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -120,9 +128,12 @@ public sealed partial class CompleteAgentTokenIssuance
         return IdentityProblems.Quarantined();
       }
 
+      // Per-ceremony last-used stamp; a lost race against a concurrent revoke is dropped (Design region).
+      await UsageRecorder.RecordAsync(PrincipalStore, credential, cancellationToken);
+
       AgentTokenOptions agentTokenOptions = Options.Value;
       var lifetime = TimeSpan.FromMinutes(agentTokenOptions.TokenLifetimeMinutes);
-      string accessToken = TokenStore.Issue(principal.Id, scopes, lifetime);
+      string accessToken = TokenStore.Issue(principal.Id, credential.Id, scopes, lifetime);
 
       return new Response(accessToken, (int)lifetime.TotalSeconds, scopes, principal.Id);
     }

@@ -408,7 +408,8 @@ public class GetCredentials_Response_Should
         (
           CredentialId.New(), CredentialType.Passkey, "1Password", "Work laptop",
           DateTimeOffset.UtcNow.AddDays(-10), revokedAt: null, isActive: true,
-          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"), "3f9a1c2e"
+          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"), "3f9a1c2e",
+          lastUsedAt: new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero)
         ),
         new GetCredentials.CredentialSummary
         (
@@ -430,12 +431,14 @@ public class GetCredentials_Response_Should
     parsed.Credentials[0].RevokedAt.ShouldBeNull();
     parsed.Credentials[0].RegisteredWith.ShouldBe(new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"));
     parsed.Credentials[0].Fingerprint.ShouldBe("3f9a1c2e");
+    parsed.Credentials[0].LastUsedAt.ShouldBe(new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero));
     parsed.Credentials[1].Label.ShouldBeNull();
     parsed.Credentials[1].Nickname.ShouldBeNull();
     parsed.Credentials[1].IsActive.ShouldBeFalse();
     parsed.Credentials[1].RevokedAt.ShouldNotBeNull();
     parsed.Credentials[1].RegisteredWith.IsUnknown.ShouldBeTrue();
     parsed.Credentials[1].Fingerprint.ShouldBe("b71e04dd");
+    parsed.Credentials[1].LastUsedAt.ShouldBeNull("never-used rides the wire as an explicit null (task 248-002)");
     return Task.CompletedTask;
   }
 

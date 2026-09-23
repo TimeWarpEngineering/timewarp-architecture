@@ -138,7 +138,7 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
         if (index >= 0)
         {
           CredentialSummary row = Credentials[index];
-          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false, row.RegisteredWith, row.Fingerprint);
+          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
         }
 
         if (new RevokeCredential.Response() is TResponse revokeResponse)

@@ -15,7 +15,7 @@
 // Single-instance semantics only (see IAgentTokenStore's Design region for the multi-instance
 // revisit trigger) — same posture as the challenge stores, not attempted here.
 // Prune-on-Issue + evict-oldest-by-expiry-at-cap mirrors InMemoryChallengeStoreCore exactly (not
-// reusing that generic core: a token entry's shape — PrincipalId + Scopes, no ceremony type — differs
+// reusing that generic core: a token entry's shape — PrincipalId + CredentialId + Scopes, no ceremony type — differs
 // enough, and Validate's non-consuming semantics differ enough from TryConsume, that sharing would
 // need a second generic parameter/behavior flag for no real duplication savings at this size).
 // At-cap eviction consequence (round-1 finding M3): EvictOldest removes the entry with the earliest
@@ -52,7 +52,7 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
   }
 
   /// <inheritdoc />
-  public string Issue(PrincipalId principalId, IReadOnlyCollection<string> scopes, TimeSpan lifetime)
+  public string Issue(PrincipalId principalId, CredentialId credentialId, IReadOnlyCollection<string> scopes, TimeSpan lifetime)
   {
     ArgumentNullException.ThrowIfNull(scopes);
 
@@ -68,7 +68,7 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
       EvictOldest();
     }
 
-    Tokens[key] = new Entry(principalId, [.. scopes], expiresAt);
+    Tokens[key] = new Entry(principalId, credentialId, [.. scopes], expiresAt);
     return token;
   }
 
@@ -92,7 +92,7 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
       return null;
     }
 
-    return new AgentTokenGrant(entry.PrincipalId, entry.Scopes, entry.ExpiresAt);
+    return new AgentTokenGrant(entry.PrincipalId, entry.CredentialId, entry.Scopes, entry.ExpiresAt);
   }
 
   private static string HashToken(string token) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
@@ -129,5 +129,5 @@ public sealed class InMemoryAgentTokenStore : IAgentTokenStore
     }
   }
 
-  private readonly record struct Entry(PrincipalId PrincipalId, IReadOnlyList<string> Scopes, DateTimeOffset ExpiresAt);
+  private readonly record struct Entry(PrincipalId PrincipalId, CredentialId CredentialId, IReadOnlyList<string> Scopes, DateTimeOffset ExpiresAt);
 }

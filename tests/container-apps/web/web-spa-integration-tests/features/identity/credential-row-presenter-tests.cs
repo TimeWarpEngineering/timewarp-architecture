@@ -1,6 +1,7 @@
 #region Purpose
-// Task 248-001: the CredentialList row text rules — title, context line, fingerprint, inline-rename
-// prefill, and the revoke confirmation — pinned host-free through CredentialRowPresenter.
+// Task 248-001/248-002: the CredentialList row text rules — title, context line, fingerprint,
+// inline-rename prefill, last-used text, and the revoke confirmation — pinned host-free through
+// CredentialRowPresenter.
 #endregion
 
 #region Design
@@ -61,15 +62,46 @@ public class Row_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Revoke_Confirmation_Restates_Title_Provider_Created_And_Fingerprint()
+  public static Task Revoke_Confirmation_Restates_Title_Provider_Created_Last_Used_And_Fingerprint()
   {
-    CredentialSummary credential = Summary(nickname: "Work laptop", label: "1Password", fingerprint: "3f9a1c2e");
+    DateTimeOffset now = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
+    CredentialSummary credential = Summary(nickname: "Work laptop", label: "1Password", fingerprint: "3f9a1c2e", lastUsedAt: now.AddHours(-2));
 
-    string text = CredentialRowPresenter.RevokeConfirmation(credential, "Passkey", "Delete");
+    string text = CredentialRowPresenter.RevokeConfirmation(credential, "Passkey", "Delete", now);
 
     text.ShouldStartWith("Delete “Work laptop”? 1Password, created ");
     text.ShouldContain(CredentialRowPresenter.CreatedText(credential));
+    text.ShouldContain(", last used 2 hours ago, fingerprint 3f9a1c2e.");
     text.ShouldEndWith("fingerprint 3f9a1c2e. This cannot be undone.");
+
+    string neverUsed = CredentialRowPresenter.RevokeConfirmation(Summary(fingerprint: "3f9a1c2e"), "Passkey", "Revoke", now);
+    neverUsed.ShouldContain(", never used, fingerprint 3f9a1c2e.");
+    return Task.CompletedTask;
+  }
+
+  public static Task Last_Used_Text_Is_Never_Used_Or_Relative()
+  {
+    DateTimeOffset now = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
+
+    CredentialRowPresenter.LastUsedText(Summary(), now).ShouldBe("Never used");
+    CredentialRowPresenter.LastUsedText(Summary(lastUsedAt: now.AddSeconds(-20)), now).ShouldBe("Last used just now");
+    CredentialRowPresenter.LastUsedText(Summary(lastUsedAt: now.AddMinutes(-3)), now).ShouldBe("Last used 3 minutes ago");
+    CredentialRowPresenter.LastUsedText(Summary(lastUsedAt: now.AddHours(-5)), now).ShouldBe("Last used 5 hours ago");
+    CredentialRowPresenter.LastUsedText(Summary(lastUsedAt: now.AddDays(-1)), now).ShouldBe("Last used yesterday");
+    CredentialRowPresenter.LastUsedText(Summary(lastUsedAt: now.AddDays(-12)), now).ShouldBe("Last used 12 days ago");
+    return Task.CompletedTask;
+  }
+
+  public static Task Relative_Time_Buckets_Singular_Future_And_Absolute_Fallback()
+  {
+    DateTimeOffset now = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
+
+    CredentialRowPresenter.RelativeTime(now.AddMinutes(-1), now).ShouldBe("1 minute ago");
+    CredentialRowPresenter.RelativeTime(now.AddHours(-1), now).ShouldBe("1 hour ago");
+    CredentialRowPresenter.RelativeTime(now.AddMinutes(5), now).ShouldBe("just now", "clock skew never reads as negative age");
+    CredentialRowPresenter.RelativeTime(now.AddDays(-45), now).ShouldStartWith("on ");
+    CredentialRowPresenter.RelativeTime(now.AddDays(-45), now)
+      .ShouldBe("on " + now.AddDays(-45).ToLocalTime().ToString("M/d/yyyy", System.Globalization.CultureInfo.InvariantCulture));
     return Task.CompletedTask;
   }
 
@@ -86,7 +118,8 @@ public class Row_Should_
     string? nickname = null,
     string? label = "1Password",
     RegisteredWith? registeredWith = null,
-    string fingerprint = "0123abcd"
+    string fingerprint = "0123abcd",
+    DateTimeOffset? lastUsedAt = null
   ) =>
     new
     (
@@ -98,6 +131,7 @@ public class Row_Should_
       revokedAt: null,
       isActive: true,
       registeredWith ?? RegisteredWith.Unknown,
-      fingerprint
+      fingerprint,
+      lastUsedAt
     );
 }
