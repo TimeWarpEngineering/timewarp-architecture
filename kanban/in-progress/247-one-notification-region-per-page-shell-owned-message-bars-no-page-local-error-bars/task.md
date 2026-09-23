@@ -189,6 +189,24 @@ last-used); `git merge origin/master` before the gates and keep both sides.
 - Navigating away from a page with a visible error bar clears it (see
   `Clear_Errors_When_The_Route_Changes`).
 
+### Review (2026-09-23, review oracle)
+
+- **Effort:** 1 (general reviewer, single round). Roster: general. Diff scope: branch
+  `task/247-one-notification-region-per-page-shell-owned-messa` vs `origin/master`
+  (merge-base `8a9f4987`).
+- **Method:** independent re-verification, not just reading — reviewer rebuilt
+  `timewarp-architecture-convention-analyzers` and `web-spa` (both 0/0) and re-ran
+  `timewarp-architecture-analyzers-tests` (171/171) and `web-spa-integration-tests` (63/63) itself.
+- **Counts (final):** bug 0/0/0, suggestion 0 open / 0 fixed / 1 wontfix, nit 0/0/0 (open/fixed/wontfix).
+- **Disposition:** `accepted-exceptions` (0 open). One suggestion (M1: `NotificationState.AddMessage`
+  dedupe refreshes an existing entry's expiry in place without moving it to the end of the list, so
+  a recurrence of a message already hidden behind "+N more" doesn't re-surface — only reachable once
+  3+ distinct messages are already in flight) accepted as a documented exception rather than fixed;
+  resolving it is a UX/product call (freeze position vs. treat recurrence as new), not a mechanical
+  bug fix. No bugs found; rules 1–8, the rename, and the TWA0025 analyzer's opt-out all verified.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ## Resume note 2 (2026-09-23, cockpit)
 
 Pass 2 (Sonnet) committed the implementation (`af367b77`) and the master merge (`16907c74`), then hit
