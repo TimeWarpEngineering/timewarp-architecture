@@ -52,11 +52,14 @@ distinguishable without touching the sign-in path. Child of 248.
 
 - Parent: 248. Sibling 248-002 (last used) depends on this landing first.
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
+- Review follow-up (non-blocking, maintainer decision): adopt bUnit or a Playwright identity flow
+  for interactive Blazor component coverage (review M7).
 
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
 - Implemented: ganda task work, implementer (Claude Fable 5.1), 2026-09-23
+- Reviewed: ganda task work, review oracle (Claude Fable 5.1) + general reviewer subagent (Claude Opus), 2026-09-23 — `review/`
 
 ## Results
 
@@ -140,3 +143,23 @@ complete the browser ceremony.
 - Task 247 has not landed; only the NEW outcomes (rename) route to the shell region. The
   pre-existing page-local success/error bars on Settings/Passkeys are 247's scope and untouched.
 - The EF snapshot diff reorders `RolePermissionGrant` (tool output ordering); no schema change there.
+
+### Review disposition (tw-implementation-review, 2026-09-23)
+
+- **Rounds / roster / effort:** 1 round, `general` only (effort 1).
+- **Final counts:** bug 0 · suggestion 4 fixed · nit 2 fixed + 1 wontfix · **0 open**.
+- **Disposition:** `accepted-exceptions` — M7 (interactive click coverage for the inline editor /
+  two-step revoke and the rename handler's state effects) deferred: needs bUnit or a Playwright
+  flow, neither in the repo; adding a test dependency is a maintainer decision. Non-blocking.
+- **Fixes landed on this task (review commit):** migration data step moving legacy agent-key
+  `Label` → `Nickname` (M1); single owner for the pending nickname editor —
+  `PendingNicknameOwnedByPrompt` / `PendingListRenameCredentialId` / `ClaimPendingNicknameForPrompt`
+  so Settings never shows two editors (M2); auto-opened editor keeps its draft on a failed rename
+  (M3); `credential-list-render-tests.cs` (M4); `Nickname_and_registered_with_round_trip_through_update`
+  store-contract case on both fixtures (M5); `label` → `nickname` wire break documented on both
+  agent-key contracts (M6).
+- **Gates after fixes:** `dev build` 0/0 · `ganda repo audit` clean · timewarp-identity 228/228 ·
+  web-infrastructure (real Postgres via `Migrate()`, verified not soft-skipped) 57/57 ·
+  web-spa-integration 50/50.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.

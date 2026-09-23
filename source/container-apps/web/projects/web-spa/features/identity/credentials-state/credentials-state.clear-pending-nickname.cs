@@ -27,6 +27,7 @@ partial class CredentialsState
         _ = cancellationToken;
         CredentialsState.PendingNicknameCredentialId = null;
         CredentialsState.PendingNicknameDefault = null;
+        CredentialsState.PendingNicknameOwnedByPrompt = false;
         return ValueTask.CompletedTask;
       }
     }

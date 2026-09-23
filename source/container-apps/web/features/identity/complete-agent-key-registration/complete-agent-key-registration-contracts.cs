@@ -8,7 +8,10 @@
 // verbatim (see StartAgentKeyRegistration's Design region); Signature is DER (Rfc3279DerSequence)
 // over UTF8("TimeWarp.Identity.AgentKey.Register.v1:") ‖ challenge. Nickname (renamed from Label, task 248-001) is an optional
 // caller-supplied name for the credential (e.g. "prod-worker-3") — cosmetic only, never used for
-// lookup (KeyId, server-computed, is the lookup key).
+// lookup (KeyId, server-computed, is the lookup key). WIRE BREAK (248-001, pre-1.0): the JSON member
+// is now `nickname`; a client still sending `label` gets no error (unknown members are ignored) but
+// its name is dropped. No alias shim — the in-repo agent CLI (tools/agent-identity-cli) moved in the
+// same commit; external clients update the field name.
 // Every field carries a MaximumLength ceiling from day one (104-003's round-1 review — finding M4 —
 // caught the passkey contracts shipping without these; this task starts with them): PublicKey 2KB
 // (SPKI DER for P-256 is ~91 bytes; 2KB is a coarse DoS-shaped ceiling, matching AgentPublicKey's own

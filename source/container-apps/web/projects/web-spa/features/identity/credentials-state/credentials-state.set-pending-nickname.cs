@@ -38,6 +38,7 @@ partial class CredentialsState
         _ = cancellationToken;
         CredentialsState.PendingNicknameCredentialId = action.CredentialId;
         CredentialsState.PendingNicknameDefault = action.ProviderLabel;
+        CredentialsState.PendingNicknameOwnedByPrompt = false; // PasskeysPage's list owns it
         return ValueTask.CompletedTask;
       }
     }

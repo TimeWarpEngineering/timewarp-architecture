@@ -39,7 +39,11 @@
 // display label) and is immutable; Nickname is the USER's name for the row, optional, mutable via
 // Rename (1..MaxNicknameLength chars after trim). The two were one field before 248-001 (a
 // caller-supplied label silently overwrote the provider name), which made same-provider rows
-// indistinguishable once renamed. RegisteredWith is captured once at Create (attachment + browser/OS
+// indistinguishable once renamed. Rows created before 248-001: the postgres migration moves every
+// agent-key Label into Nickname (agent keys have no provider, so that Label was always a user name);
+// pre-existing passkey Labels cannot be told apart (AAGUID name vs user-typed) and stay as Label —
+// such a row shows the old user name as its provider until renamed. In-memory stores start empty.
+// RegisteredWith is captured once at Create (attachment + browser/OS
 // family; see its Design region) and never changes. Fingerprint is computed from HandleField on demand
 // (CredentialFingerprint) — display-safe, never the handle itself. Snapshot copies Nickname and
 // RegisteredWith too — the same "incomplete snapshot silently loses state" reasoning as RevokedAt.

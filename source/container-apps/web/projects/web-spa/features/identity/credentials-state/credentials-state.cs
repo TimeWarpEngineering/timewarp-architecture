@@ -21,8 +21,12 @@
 // passkey" prompt — set by AddPasskey's success (or SetPendingNickname after a Passkeys-page
 // register ceremony) with the provider name as the prefill; CredentialList auto-opens its inline
 // rename editor for that row and AddPasskeyPrompt shows a small form when it started the ceremony;
-// RenameCredential success and ClearPendingNickname (skip / cancel) both clear it. Rename
-// outcomes go to the shell notification region (ToastNotificationState), not a page-local bar.
+// RenameCredential success and ClearPendingNickname (skip / cancel) both clear it. Exactly ONE
+// surface owns a pending nickname (review M1 of 248-001): PendingNicknameOwnedByPrompt is set by
+// ClaimPendingNicknameForPrompt when AddPasskeyPrompt started the ceremony, and lists bind
+// PendingListRenameCredentialId (null while the prompt owns it) so Settings/Passkeys never open a
+// second editor for the same credential. Rename outcomes go to the shell notification region
+// (ToastNotificationState), not a page-local bar.
 // Task 169 + 219-003.
 #endregion
 
@@ -75,6 +79,13 @@ public sealed partial class CredentialsState : State<CredentialsState>
   /// <summary>Prefill for the pending nickname prompt — the provider name when known.</summary>
   public string? PendingNicknameDefault { get; private set; }
 
+  /// <summary>True when AddPasskeyPrompt's own form owns the pending nickname; lists then stay closed.</summary>
+  public bool PendingNicknameOwnedByPrompt { get; private set; }
+
+  /// <summary>Pending credential id for CredentialList auto-open — null while the prompt owns it.</summary>
+  public Guid? PendingListRenameCredentialId =>
+    PendingNicknameOwnedByPrompt ? null : PendingNicknameCredentialId;
+
   public string? StatusMessage { get; private set; }
 
   public string? CeremonyError { get; private set; }
@@ -95,6 +106,7 @@ public sealed partial class CredentialsState : State<CredentialsState>
     LastAddedCredentialId = null;
     PendingNicknameCredentialId = null;
     PendingNicknameDefault = null;
+    PendingNicknameOwnedByPrompt = false;
     StatusMessage = null;
     CeremonyError = null;
     PasskeySoftPromptDismissed = false;

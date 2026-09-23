@@ -14,7 +14,8 @@
 // wipe the error. Task 169.
 // Task 248-001: the browser JSON also carries authenticatorAttachment + transports (registration
 // context hints, forwarded verbatim); success records PendingNicknameCredentialId with the
-// response's ProviderLabel as the prefill so the UI can prompt "name this passkey".
+// response's ProviderLabel as the prefill so the UI can prompt "name this passkey". Ownership defaults
+// to the list (PendingNicknameOwnedByPrompt=false); AddPasskeyPrompt claims it right after success.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -116,6 +117,7 @@ partial class CredentialsState
           CredentialsState.LastAddedCredentialId = completeResult.AsT0.CredentialId.Value;
           CredentialsState.PendingNicknameCredentialId = completeResult.AsT0.CredentialId.Value;
           CredentialsState.PendingNicknameDefault = completeResult.AsT0.ProviderLabel;
+          CredentialsState.PendingNicknameOwnedByPrompt = false; // the list owns it unless the prompt claims it
           CredentialsState.StatusMessage = "Passkey created.";
         }
         catch (JSException jsException)

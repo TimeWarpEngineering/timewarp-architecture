@@ -69,6 +69,7 @@ partial class CredentialsState
         {
           CredentialsState.PendingNicknameCredentialId = null;
           CredentialsState.PendingNicknameDefault = null;
+          CredentialsState.PendingNicknameOwnedByPrompt = false;
         }
 
         CredentialsState.CeremonyError = null;

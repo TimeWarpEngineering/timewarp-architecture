@@ -24,7 +24,8 @@
 // No page-local twe-settings vocabulary; no raw <button>.
 // Task 248-001: CredentialList rows carry nickname/context/fingerprint and an inline Rename that
 // dispatches CredentialsState.RenameCredential then FetchCredentials; the passkey list is handed
-// PendingNicknameCredentialId so a just-created passkey opens its editor prefilled with the
+// PendingListRenameCredentialId (null while AddPasskeyPrompt owns the pending nickname, so the
+// page never shows two editors) so a just-created passkey opens its editor prefilled with the
 // provider name; Cancel there clears the pending state (ClearPendingNickname). Rename outcomes
 // land in the shell notification region, not the page-local bars below.
 #endregion

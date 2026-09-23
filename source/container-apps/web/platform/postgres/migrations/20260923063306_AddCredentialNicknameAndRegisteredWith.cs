@@ -18,6 +18,14 @@ namespace TimeWarp.Architecture.Persistence.Migrations
                 maxLength: 64,
                 nullable: true);
 
+            // Task 248-001 review M1: before this migration a caller-supplied name was written into Label.
+            // Agent keys have no provider, so every existing agent-key Label is by definition a user name —
+            // move it to Nickname (capped at the new column length) and clear Label so it does not render
+            // as the provider. Passkey rows cannot be told apart (AAGUID name vs user name) and are left as-is.
+            migrationBuilder.Sql(
+                "UPDATE identity.credentials SET \"Nickname\" = LEFT(\"Label\", 64), \"Label\" = NULL "
+                + "WHERE \"Type\" = 2 AND \"Label\" IS NOT NULL;");
+
             migrationBuilder.AddColumn<int>(
                 name: "RegisteredAttachment",
                 schema: "identity",
@@ -46,6 +54,11 @@ namespace TimeWarp.Architecture.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Inverse of the Up data step: restore agent-key nicknames into Label before the column goes.
+            migrationBuilder.Sql(
+                "UPDATE identity.credentials SET \"Label\" = COALESCE(\"Label\", \"Nickname\") "
+                + "WHERE \"Type\" = 2 AND \"Nickname\" IS NOT NULL;");
+
             migrationBuilder.DropColumn(
                 name: "Nickname",
                 schema: "identity",
