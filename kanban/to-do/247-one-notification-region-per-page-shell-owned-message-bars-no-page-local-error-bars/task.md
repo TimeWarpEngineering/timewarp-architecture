@@ -14,7 +14,7 @@ Task 058-001 already moved the template off toasts onto `FluentMessageBar` and g
 single host (`components/MessageBars.razor`, painted at the top of `TimeWarpPage` and
 `TimeWarpFocusedPage`). This task finishes that design: one region, one owner, one shape.
 
-## Recommended design (Steve to confirm before implementation)
+## Design (confirmed by Steve, 2026-09-23)
 
 1. **One region.** Every page has exactly one notification region: the shell's `MessageBars`,
    directly below the page header/breadcrumb and above the first card. Pages, cards, and feature
@@ -61,7 +61,7 @@ single host (`components/MessageBars.razor`, painted at the top of `TimeWarpPage
 
 ## Checklist
 
-- [ ] Design confirmed (or amended) by Steve — recorded under Notes
+- [x] Design confirmed by Steve 2026-09-23, as written (rules 1–8, including the analyzer)
 - [ ] Page-local outcome bars removed (SettingsPage, AddPasskeyPrompt error, AuthenticationPage save error)
 - [ ] Title/Body shape, dedupe, cap, lifetime, spacing tokens
 - [ ] `ToastNotificationState` renamed
