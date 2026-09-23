@@ -24,6 +24,13 @@
 // postgres), so pruning grpc is the only cheap win — a small share of boot vs postgres/web;
 // leave full graph for fidelity. Session sharing (145-008) cuts the PER-CLASS repetition of that
 // cost instead (6 boots -> 1).
+// The "ingress" health wait below is a REAL readiness gate only because the AppHost gives the
+// yarp resource WithHttpHealthCheck (task 058-001). Without it, Healthy means "DCP reports the
+// container Running" while the host-side proxy still answers connections with an immediate EOF,
+// so the one fact that sends a live request through the ingress
+// (FetchWeatherForecasts_Action_Should) intermittently saw HttpRequestException / "response
+// ended prematurely" instead of 5 forecasts. Do NOT add a retry/poll here: the gate belongs in
+// the app model, where every waiting suite gets it.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;

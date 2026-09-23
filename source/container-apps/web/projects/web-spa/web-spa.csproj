@@ -104,10 +104,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="web-spa-integration-tests"/>
-    <!-- AssemblyName of web-spa-integration-tests is web-spa-integration-Tests (capital T) so
-         TimeWarp.State's Initialize() assembly-name guard passes. InternalsVisibleTo is the
-         assembly name, not the csproj name. -->
-    <InternalsVisibleTo Include="web-spa-integration-Tests"/>
     <InternalsVisibleTo Include="web-server-integration-tests"/>
     <InternalsVisibleTo Include="api-server-integration-tests"/>
     <InternalsVisibleTo Include="timewarp-testing"/>

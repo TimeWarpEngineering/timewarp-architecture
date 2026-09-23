@@ -1,16 +1,22 @@
 #region Purpose
 // SPA ServiceCollection host for integration tests: TimeWarp.State + generated mediator wired to
-// the Aspire ingress HttpClient (closed-box), with headless fakes (IJSRuntime, IAccessTokenProvider).
-// Toast handlers swallow FluentServiceProviderException when FluentToastProvider is absent.
+// the Aspire ingress HttpClient (closed-box), with headless fakes (IJSRuntime) and mock tokens.
 #endregion
 
 #region Design
 // Not Aspire-constrained beyond the base URL: composition mirrors production SPA registration
 // selectively (AddTimeWarpState + ApiServerApiService) rather than Web.Spa.Program wholesale,
-// so service-discovery conflicts stay out of the test host. Generated Publisher_ClientPipeline
-// resolves ExceptionNotificationHandler by concrete type, so RemoveAll on the interface is a
-// no-op; handlers swallow FluentServiceProviderException for headless hosts. Error-path state
-// tests still exercise rollback via StateTransactionBehavior.
+// so service-discovery conflicts stay out of the test host. The named api-server HttpClient's
+// base address is the Aspire ingress HTTP endpoint (TLS terminates at the edge, so the test
+// client needs no dev cert). SPA actions such as FetchWeatherForecasts reach api-server
+// through YARP. Logging is registered because DefaultApiHandler requires ILogger.
+// TimeWarp.State.Plus is included so [TrackAction] can resolve ActionTrackingState.
+// MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
+// IApiServerApiService factory sit in the api conditional. A generated app with the api
+// flag off drops the Services import and the api-server client, so those names do not
+// resolve. The named HttpClient stays outside that conditional: it only names Foundation
+// ServiceNames. Message-bar handlers mutate ToastNotificationState and do not need a
+// rendered FluentUI provider.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -32,12 +38,17 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
   public AspireSpaTestApplication(DistributedApplication distributedApp)
   {
-    var services = new ServiceCollection();
+    ServiceCollection services = new();
 
     // Get the YARP HTTP client from Aspire - this will proxy to Web and API servers
-    HttpClient yarpHttpClient = distributedApp.CreateHttpClient(YarpResourceName);
-    string baseUrl = yarpHttpClient.BaseAddress?.ToString()
-      ?? throw new InvalidOperationException("YARP base URL not configured");
+    using HttpClient yarpHttpClient = distributedApp.CreateHttpClient(YarpResourceName, "http");
+    string? rawBaseUrl = yarpHttpClient.BaseAddress?.ToString();
+    if (string.IsNullOrWhiteSpace(rawBaseUrl))
+    {
+      throw new InvalidOperationException("YARP HTTP base URL is not configured.");
+    }
+
+    string baseUrl = rawBaseUrl.EndsWith('/') ? rawBaseUrl : rawBaseUrl + "/";
 
     ConfigureServices(services, baseUrl);
 
@@ -47,12 +58,23 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
   private static void ConfigureServices(IServiceCollection services, string baseUrl)
   {
+#if(api)
     IConfiguration configuration = new ConfigurationBuilder()
-      .AddJsonFile("appsettings.json", optional: true)
+      .AddInMemoryCollection(new Dictionary<string, string?>
+      {
+        [MockAuthenticationDefaults.UseMockKey] = "true"
+      })
       .Build();
 
-    // Register FluentUI services (required by toast notifications when still present)
-    services.AddFluentUIComponents();
+    if (!MockAuthenticationRegistration.TryAddSpaMockAuthentication(services, configuration, "Testing"))
+    {
+      throw new InvalidOperationException(
+        "SPA integration host requires MockAccessTokenProvider (Testing + Authentication:UseMock).");
+    }
+#endif
+
+    // API handlers take ILogger. The raw ServiceCollection does not register it.
+    services.AddLogging();
 
     // Add only the core services needed for testing (avoid service discovery conflicts)
     services.AddWebSpaGeneratedMediator();
@@ -62,22 +84,26 @@ public class AspireSpaTestApplication : ISpaTestApplication
       {
         options.Assemblies =
         [
-          typeof(Web.Spa.IAssemblyMarker).Assembly
+          typeof(Web.Spa.IAssemblyMarker).Assembly,
+          typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly
         ];
       }
     );
 
-    // Add HttpClient pointing to the YARP gateway from Aspire
+    // Plus notification handlers (LoadPersistentState) are linked into the generated
+    // mediator and require IPersistenceService when the pipeline resolves them.
+    services.AddScoped<
+      TimeWarp.Features.Persistence.IPersistenceService,
+      TimeWarp.Features.Persistence.PersistenceService>();
+
+    // Named client the SPA uses for api-server. Base address is ingress, which routes
+    // /api/weatherforecast to api-server. MockAccessTokenProvider attaches Bearer dummy-token.
     services.AddHttpClient(
       TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName,
-      c => c.BaseAddress = new Uri(baseUrl));
+      client => client.BaseAddress = new Uri(baseUrl));
 
     // Configure JSON serializer options
     services.Configure<JsonSerializerOptions>(ContractSerializationDefaults.Apply);
-
-    // Register IAccessTokenProvider (required for API service)
-    IAccessTokenProvider fakeAccessTokenProvider = A.Fake<IAccessTokenProvider>();
-    services.AddScoped(_ => fakeAccessTokenProvider);
 
 #if(api)
     // Register IApiServerApiService (required for handlers that call the API)
@@ -93,11 +119,5 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // Replace JSRuntime with a fake for testing
     IJSRuntime fakeJsRuntime = A.Fake<IJSRuntime>();
     services.AddScoped(_ => fakeJsRuntime);
-
-    // Generated Publisher_ClientPipeline GetRequiredService's the concrete
-    // ExceptionNotificationHandler (not INotificationHandler<>), so RemoveAll on the
-    // interface is a no-op. The handler swallows FluentServiceProviderException when
-    // FluentToastProvider is absent (headless). Error-path state tests still exercise
-    // rollback via StateTransactionBehavior.
   }
 }

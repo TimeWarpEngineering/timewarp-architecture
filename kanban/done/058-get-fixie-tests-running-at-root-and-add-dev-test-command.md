@@ -63,7 +63,7 @@ test-framework-agnostic where practical so adding Jaribu later is incremental.
 ### Fix build blockers
 - [x] `PartialClassDeclarationAnalyzer` CS0246 — was a namespace reconcile (Analyzer -> Analyzers); fixed
 - [x] MSB3277 — resolved (root CPM unifies Microsoft.CodeAnalysis* at 5.3.0)
-- [x] Get every migrated project building under the strict root props (SourceGen test reds tracked in [[058-001-fix-fastendpoint-source-generator-tests-stale-assertions-generator-now-opt-in]])
+- [x] Get every migrated project building under the strict root props (SourceGen test reds tracked in [[243-fix-fastendpoint-source-generator-tests-stale-assertions-generator-now-opt-in]])
 
 ### Wire dev test
 - [ ] Update `tools/dev-cli/endpoints/test-command.cs` to run the Fixie suites

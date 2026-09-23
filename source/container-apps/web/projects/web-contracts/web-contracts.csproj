@@ -8,7 +8,7 @@
        Names match actual AssemblyName (web-spa sets Web.Spa; others default to project file name). -->
   <ItemGroup>
     <InternalsVisibleTo Include="Web.Spa" />
-    <InternalsVisibleTo Include="web-spa-integration-Tests" />
+    <InternalsVisibleTo Include="web-spa-integration-tests" />
     <InternalsVisibleTo Include="web-server" />
     <InternalsVisibleTo Include="web-server-integration-tests" />
   </ItemGroup>

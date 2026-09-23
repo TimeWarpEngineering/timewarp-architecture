@@ -1,0 +1,37 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+@code {
+  // Purpose: Shell surface that paints ToastNotificationState as FluentMessageBar rows.
+  // Design: Section and Card have no error slot. Pipeline failures are application-surface
+  // status, so this host sits at the top of TimeWarpPage and TimeWarpFocusedPage.
+  // AllowDismiss is false: FluentMessageBar's built-in dismiss does not notify state.
+  // Dismiss dispatches DismissMessage so the row stays gone across re-renders.
+  // No INotificationService and no FluentMessageBarProvider — headless tests never render this.
+
+  private Task DismissAsync(string id) =>
+    ToastNotificationState.DismissMessage(id, CancellationToken);
+}
+
+@if (ToastNotificationState.Messages.Count > 0)
+{
+  <FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Class="twe-message-bars" data-qa="MessageBars">
+    @foreach (ToastNotificationState.NotificationMessage message in ToastNotificationState.Messages)
+    {
+      <FluentMessageBar @key="message.Id"
+                        Intent="@message.Intent"
+                        Title="@message.Title"
+                        AllowDismiss="false"
+                        Layout="MessageBarLayout.Notification">
+        <ChildContent>
+          @message.Body
+        </ChildContent>
+        <ActionsTemplate>
+          <FluentButton Size="ButtonSize.Small" OnClick="@(() => DismissAsync(message.Id))">
+            Dismiss
+          </FluentButton>
+        </ActionsTemplate>
+      </FluentMessageBar>
+    }
+  </FluentStack>
+}

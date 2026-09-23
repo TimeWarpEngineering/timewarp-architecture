@@ -3,11 +3,11 @@
 #endregion
 
 global using AnyClone;
+global using Microsoft.Extensions.DependencyInjection;
+// Auth, configuration, options, and Services: weather + mock API surfaces excluded when api is off.
+#if(api)
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.Extensions.Configuration;
-global using Microsoft.Extensions.DependencyInjection;
-// Options / Services used by weather + mock API surfaces excluded when api is off.
-#if(api)
 global using Microsoft.Extensions.Options;
 #endif
 global using Microsoft.FluentUI.AspNetCore.Components;

@@ -23,6 +23,8 @@
   Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
   mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
   hosts this prompt. Soft dismiss is not a gate.
+  MessageBars sits above that prompt so ToastNotificationState rows (pipeline failures and
+  AddNotification) paint at the top of every product page without a toast provider.
 *@
 
 @code {
@@ -98,6 +100,7 @@
           </div>
         }
         <div class="twe-page__body">
+          <MessageBars />
           <AddPasskeyPrompt />
           @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
             && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))

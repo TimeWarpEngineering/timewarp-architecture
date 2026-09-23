@@ -1,5 +1,7 @@
 # Fix FastEndpoint source generator tests (stale assertions; generator now opt-in)
 
+> Renumbered 2026-09-22 from duplicate id `058-001` (collided with `058-001-harden-web-spa-test-host-and-upgrade-timewarp-state`; ganda kitchen lookup by id picked this flat file first). Id 243 reserved via `ganda kanban reserve`.
+
 Parent: 058. Surfaced while migrating the test projects to root (slice 1).
 
 ## Problem

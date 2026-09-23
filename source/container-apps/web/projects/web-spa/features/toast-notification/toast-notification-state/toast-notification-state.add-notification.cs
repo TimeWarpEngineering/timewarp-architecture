@@ -1,31 +1,29 @@
 #region Purpose
-// AddNotification action: raises an arbitrary toast with caller-chosen intent and title.
+// AddNotification action: records a shell message bar with caller-chosen intent and title.
 #endregion
 
 #region Design
-// Exists so components raise toasts by dispatching an action instead of injecting FluentUI's
-// INotificationService directly — display stays behind the mediator pipeline and swappable.
-// The handler delegates entirely to the toast service and writes nothing to state; FluentUI
-// owns toast lifetime and rendering (see the root partial's rationale).
+// Components dispatch this action instead of injecting INotificationService. The handler
+// writes ToastNotificationState; RenderSubscriptionsPostProcessor re-renders subscribers.
+// FluentMessageBar in the shell paints the row. No toast provider is required.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
 
 partial class ToastNotificationState
 {
-
   // Named ...ActionSet so the TimeWarp.State ActionSetMethodSourceGenerator emits a strongly-typed
   // dispatcher: `ToastNotificationState.AddNotification(intent, title)`.
   public static class AddNotificationActionSet
   {
     public sealed class Action : IBaseAction
     {
-      public ToastIntent Intent { get; }
-      public string Title { get;  }
+      public MessageBarIntent Intent { get; }
+      public string Title { get; }
 
       public Action
       (
-        ToastIntent intent,
+        MessageBarIntent intent,
         string title
       )
       {
@@ -36,24 +34,19 @@ partial class ToastNotificationState
 
     internal class Handler
     (
-      IStore store,
-      INotificationService ToastService
+      IStore store
     ) : BaseHandler<Action>(store)
     {
-
-      public override async ValueTask Handle
+      public override ValueTask Handle
       (
         Action action,
         CancellationToken cancellationToken
       )
       {
-        await ToastService.ShowToastAsync(options =>
-        {
-          options.Intent = action.Intent;
-          options.Title = action.Title;
-        });
+        _ = cancellationToken;
+        ToastNotificationState.AddMessage(action.Intent, action.Title, body: null);
+        return ValueTask.CompletedTask;
       }
     }
   }
 }
-

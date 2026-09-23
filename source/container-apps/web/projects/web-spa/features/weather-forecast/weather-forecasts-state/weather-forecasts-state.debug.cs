@@ -5,9 +5,9 @@
 #region Design
 // Hydrate rebuilds state from a Redux DevTools JSON snapshot to support time-travel debugging;
 // the camelCase serializer options must match how DevTools serialized the state out.
-// Internal Initialize(list) lets integration tests seed forecasts without hitting the API;
-// ThrowIfNotTestAssembly makes the bypass unusable from production code at runtime, which a
-// visibility modifier alone cannot guarantee (InternalsVisibleTo spans assemblies).
+// Internal Initialize(list) lets integration tests seed forecasts without hitting the API.
+// TestCaller.Ensure blocks production callers. TimeWarp.State's ThrowIfNotTestAssembly is
+// case-sensitive on "Test" and rejects the kebab test assembly (timewarp-state#607).
 #endregion
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
@@ -36,7 +36,7 @@ partial class WeatherForecastsState
 
   internal void Initialize(List<TWeatherForecast> weatherForecastList)
   {
-    ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
+    TimeWarp.Architecture.TestCaller.Ensure(Assembly.GetCallingAssembly());
     WeatherForecastList = Guard.Against.Null(weatherForecastList);
   }
 }

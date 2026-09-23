@@ -62,5 +62,32 @@ public class Should
 
     // State was rolled back and thus Guid didn't change.
     scope.Store.GetState<CounterState>().Guid.ShouldBe(preActionGuid);
+
+    // ExceptionNotificationHandler records a message bar with no FluentUI provider in the tree.
+    TimeWarp.Architecture.Features.ToastNotificationState toast =
+      scope.Store.GetState<TimeWarp.Architecture.Features.ToastNotificationState>();
+    toast.Messages.Count.ShouldBe(1);
+    toast.Messages[0].Title.ShouldBe("Test Rollback of State");
+    toast.Messages[0].Intent.ShouldBe(MessageBarIntent.Error);
+  }
+
+  public static async Task AddNotification_Records_MessageBar_Without_Provider()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+
+    await scope.Send
+    (
+      new TimeWarp.Architecture.Features.ToastNotificationState.AddNotificationActionSet.Action
+      (
+        MessageBarIntent.Success,
+        "Saved"
+      )
+    );
+
+    TimeWarp.Architecture.Features.ToastNotificationState toast =
+      scope.Store.GetState<TimeWarp.Architecture.Features.ToastNotificationState>();
+    toast.Messages.Count.ShouldBe(1);
+    toast.Messages[0].Title.ShouldBe("Saved");
+    toast.Messages[0].Intent.ShouldBe(MessageBarIntent.Success);
   }
 }

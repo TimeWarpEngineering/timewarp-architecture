@@ -80,12 +80,14 @@ public class IngressSmoke_Given_
       $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
     );
 
-    // Healthy != reachable: the ingress reports Healthy when the YARP process starts, but the
-    // Aspire DCP proxy takes a moment more to wire through to the replica. Requests issued in that
-    // window get an immediate connection EOF ("response ended prematurely"), NOT an HTTP error.
-    // Poll until the ingress actually answers so the facts below assert on real responses. Any
-    // HTTP status (even a 5xx) proves the proxy is wired — a genuine regression still surfaces as
-    // a bad status in the facts, never swallowed here.
+    // Backstop only, as of task 058-001: the AppHost now gives the yarp resource an HTTP health
+    // check, so the Healthy wait above already means "the DCP host proxy is wired and YARP
+    // answered a request" and this poll returns on its first attempt. It predates that check —
+    // Healthy used to mean nothing more than "YARP container Running", and requests issued in the
+    // gap got an immediate connection EOF ("response ended prematurely"), NOT an HTTP error. Kept
+    // as a cheap, explicit reachability assertion for this closed-box edge suite. Any HTTP status
+    // (even a 5xx) proves the proxy is wired — a genuine regression still surfaces as a bad
+    // status in the facts, never swallowed here.
     await WaitForIngressReachableAsync(cts.Token);
   }
 
