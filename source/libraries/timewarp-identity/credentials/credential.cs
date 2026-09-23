@@ -53,6 +53,19 @@
 // single-row operation. (EF rejects field-only properties whose name differs from the field, so
 // these are properties, not fields.)
 //
+// Last-used (task 248-002): LastUsedAt is the UTC instant of the most recent successful
+// authentication with this credential — null until the first one. It is set ONLY through MarkUsed
+// (named mutation, no public setter) and is monotonic: MarkUsed ignores an instant at or before the
+// current value, so a late-arriving stale write can never rewind the stamp. MarkUsed takes the
+// instant from the caller (the write points own the clock — CredentialUsageRecorder) instead of
+// reading UtcNow here, so coalescing and tests are deterministic; it is the one domain stamp that
+// is NOT wall-clock-in-the-entity (CreatedAt/RevokedAt still are, D5). MarkUsed does not check
+// IsRevoked: it is advisory display state, and every write point has already rejected a revoked
+// credential before verifying — the guard belongs at the authentication ladder, not here.
+// Persistence and the revoke race are the recorder's concern (see CredentialUsageRecorder's
+// Design region: a last-used write that loses the Version CAS is DROPPED, never retried). Snapshot
+// copies LastUsedAt — same "incomplete snapshot silently loses state" reasoning as RevokedAt.
+//
 // IAggregateRoot: deliberately NOT implemented here, for the same reason as Principal — see
 // principal.cs's Design region. Identity's own guard clauses (Create, Revoke, Restore) are the invariant
 // enforcement; aligning with the nested-Invariants/IAggregateRoot pattern is a later task.
@@ -91,6 +104,7 @@ public sealed class Credential : Entity<CredentialId>
     AuthenticatorAttachment registeredAttachment,
     string? registeredBrowser,
     string? registeredOs,
+    DateTimeOffset? lastUsedAt,
     long version)
     : base(id, version)
   {
@@ -106,6 +120,7 @@ public sealed class Credential : Entity<CredentialId>
     RegisteredAttachment = RegisteredWith.Attachment;
     RegisteredBrowser = RegisteredWith.Browser;
     RegisteredOs = RegisteredWith.Os;
+    LastUsedAt = lastUsedAt;
   }
 
   /// <summary>Owning principal; mutable only via <see cref="ReparentTo"/> during merge.</summary>
@@ -139,6 +154,9 @@ public sealed class Credential : Entity<CredentialId>
 
   /// <summary>Display-safe 8-hex discriminator derived from the handle (never the handle itself).</summary>
   public string Fingerprint => CredentialFingerprint.Compute(HandleField);
+
+  /// <summary>UTC instant of the most recent successful authentication; null until <see cref="MarkUsed"/> runs.</summary>
+  public DateTimeOffset? LastUsedAt { get; private set; }
 
   /// <summary>True when <see cref="RevokedAt"/> is set.</summary>
   public bool IsRevoked => RevokedAt is not null;
@@ -195,6 +213,7 @@ public sealed class Credential : Entity<CredentialId>
       context.Attachment,
       context.Browser,
       context.Os,
+      lastUsedAt: null,
       version: 0);
   }
 
@@ -218,6 +237,7 @@ public sealed class Credential : Entity<CredentialId>
       RegisteredWith.Attachment,
       RegisteredWith.Browser,
       RegisteredWith.Os,
+      LastUsedAt,
       version);
 
   /// <summary>
@@ -235,6 +255,22 @@ public sealed class Credential : Entity<CredentialId>
     }
 
     Nickname = normalized;
+  }
+
+  /// <summary>
+  /// Records a successful authentication at <paramref name="now"/>. Monotonic: an instant at or
+  /// before the current <see cref="LastUsedAt"/> is ignored (returns false) so a stale write never
+  /// rewinds the stamp. Returns true when the stamp advanced.
+  /// </summary>
+  public bool MarkUsed(DateTimeOffset now)
+  {
+    if (LastUsedAt is not null && now <= LastUsedAt.Value)
+    {
+      return false;
+    }
+
+    LastUsedAt = now;
+    return true;
   }
 
   /// <summary>One-shot revoke: sets <see cref="RevokedAt"/>; throws if already revoked.</summary>

@@ -40,6 +40,14 @@
 // ContractSerializationDefaults — the same seam options every other identity response uses — rather
 // than ASP.NET's bare-status-code default, so a bearer failure is machine-readable like every other
 // identity error in this feature (task requirement: "Machine-readable errors").
+// Last-used on the per-request path (task 248-002, decided: YES, coalesced): after Validate AND
+// the principal-liveness check succeed, the handler calls CredentialUsageRecorder.RecordCoalescedAsync
+// with grant.CredentialId. It writes at most once per credential per
+// CredentialUsageRecorder.DefaultCoalesceInterval (5 minutes) per process; every other request in
+// that window is a dictionary lookup, no store round-trip — the hot path stays read-mostly. The
+// stamp is advisory: a lost version race (concurrent revoke) is dropped, never retried, and never
+// turns a valid bearer into a 401. Ordering: after liveness, so a quarantined principal's token
+// never stamps its key as "used".
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -53,6 +61,7 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
 {
   private readonly IAgentTokenStore TokenStore;
   private readonly IPrincipalStore PrincipalStore;
+  private readonly CredentialUsageRecorder UsageRecorder;
   private bool TokenWasPresented;
 
   public AgentTokenAuthenticationHandler
@@ -61,11 +70,13 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
     ILoggerFactory logger,
     UrlEncoder encoder,
     IAgentTokenStore tokenStore,
-    IPrincipalStore principalStore
+    IPrincipalStore principalStore,
+    CredentialUsageRecorder usageRecorder
   ) : base(options, logger, encoder)
   {
     TokenStore = tokenStore;
     PrincipalStore = principalStore;
+    UsageRecorder = usageRecorder;
   }
 
   protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -98,6 +109,9 @@ public sealed class AgentTokenAuthenticationHandler : AuthenticationHandler<Auth
       // Quarantine at validation time is a silent Fail -> 401 — see this class's Design region.
       return AuthenticateResult.Fail("Principal not found or inactive.");
     }
+
+    // Coalesced last-used stamp for the issuing agent key (task 248-002, Design region).
+    await UsageRecorder.RecordCoalescedAsync(PrincipalStore, grant.CredentialId, Context.RequestAborted);
 
     List<Claim> claims = [new Claim(IdentitySessionDefaults.PrincipalIdClaimType, grant.PrincipalId.Value.ToString())];
     claims.AddRange(grant.Scopes.Select(scope => new Claim(AgentTokenDefaults.ScopeClaimType, scope)));

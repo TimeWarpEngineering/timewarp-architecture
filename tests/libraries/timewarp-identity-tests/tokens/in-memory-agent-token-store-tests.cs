@@ -9,17 +9,19 @@ public class Issue_And_Validate
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Issue_And_Validate>();
 
-  public static Task Round_trips_principal_id_and_scopes()
+  public static Task Round_trips_principal_id_credential_id_and_scopes()
   {
     var store = new InMemoryAgentTokenStore();
     PrincipalId principalId = PrincipalId.New();
+    CredentialId credentialId = CredentialId.New();
     string[] scopes = [AgentScopes.IdentityRead];
 
-    string token = store.Issue(principalId, scopes, TimeSpan.FromMinutes(15));
+    string token = store.Issue(principalId, credentialId, scopes, TimeSpan.FromMinutes(15));
     AgentTokenGrant? grant = store.Validate(token);
 
     grant.ShouldNotBeNull();
     grant.PrincipalId.ShouldBe(principalId);
+    grant.CredentialId.ShouldBe(credentialId);
     grant.Scopes.ShouldBe(scopes);
     return Task.CompletedTask;
   }
@@ -29,7 +31,7 @@ public class Issue_And_Validate
     var store = new InMemoryAgentTokenStore();
     List<string> scopes = [AgentScopes.IdentityRead];
 
-    string token = store.Issue(PrincipalId.New(), scopes, TimeSpan.FromMinutes(15));
+    string token = store.Issue(PrincipalId.New(), CredentialId.New(), scopes, TimeSpan.FromMinutes(15));
     scopes.Add(AgentScopes.DemoInvoke); // mutate the caller's own list after Issue
 
     AgentTokenGrant? grant = store.Validate(token);
@@ -66,8 +68,8 @@ public class Issue_And_Validate
   public static Task Distinct_issues_return_distinct_tokens()
   {
     var store = new InMemoryAgentTokenStore();
-    string first = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
-    string second = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string first = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string second = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
 
     first.ShouldNotBe(second);
     return Task.CompletedTask;
@@ -85,7 +87,7 @@ public class Expiry
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider);
 
-    string token = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string token = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
     timeProvider.Advance(TimeSpan.FromMinutes(15) + TimeSpan.FromSeconds(1));
 
     store.Validate(token).ShouldBeNull();
@@ -97,7 +99,7 @@ public class Expiry
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider);
 
-    string token = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string token = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
     timeProvider.Advance(TimeSpan.FromMinutes(14));
 
     store.Validate(token).ShouldNotBeNull();
@@ -109,7 +111,7 @@ public class Expiry
     // Unlike the one-time challenge stores, a token authenticates every request for its whole
     // lifetime — Validate must be repeatable.
     var store = new InMemoryAgentTokenStore();
-    string token = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string token = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
 
     store.Validate(token).ShouldNotBeNull();
     store.Validate(token).ShouldNotBeNull();
@@ -128,12 +130,12 @@ public class CapEviction
     var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
     var store = new InMemoryAgentTokenStore(timeProvider, maxEntries: 2);
 
-    string first = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string first = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
     timeProvider.Advance(TimeSpan.FromSeconds(1));
-    string second = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string second = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
     timeProvider.Advance(TimeSpan.FromSeconds(1));
     // Store is at capacity (2); this Issue evicts the oldest (first) before adding.
-    string third = store.Issue(PrincipalId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
+    string third = store.Issue(PrincipalId.New(), CredentialId.New(), [AgentScopes.IdentityRead], TimeSpan.FromMinutes(15));
 
     store.Validate(first).ShouldBeNull();
     store.Validate(second).ShouldNotBeNull();

@@ -70,6 +70,7 @@ public sealed class CredentialEntityTypeConfiguration : IEntityTypeConfiguration
     builder.Property(credential => credential.RevokedAt);
     builder.Property(credential => credential.Label);
     builder.Property(credential => credential.Nickname).HasMaxLength(Credential.MaxNicknameLength);
+    builder.Property(credential => credential.LastUsedAt);
 
     // RegisteredWith: three private scalar properties mapped by name (see Design region).
     builder.Ignore(credential => credential.RegisteredWith);

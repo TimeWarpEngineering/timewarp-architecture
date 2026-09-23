@@ -63,7 +63,8 @@ public sealed partial class GetCredentials
           credential.RevokedAt,
           isActive: !credential.IsRevoked,
           credential.RegisteredWith,
-          credential.Fingerprint))
+          credential.Fingerprint,
+          credential.LastUsedAt))
         .ToList();
 
       return new Response(summaries);

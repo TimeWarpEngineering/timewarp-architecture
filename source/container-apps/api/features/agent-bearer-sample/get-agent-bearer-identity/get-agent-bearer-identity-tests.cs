@@ -128,7 +128,8 @@ namespace TimeWarp.Architecture.Features.AgentBearerSamples
       principal.RecordCredentialAttached(); // Provisional → Keyed (matches web registration outcome)
       await principalStore.AddPrincipalAsync(principal);
 
-      return tokenStore.Issue(principal.Id, scopes, TimeSpan.FromMinutes(15));
+      // No credential row is seeded on this host — the fresh CredentialId only rides on the grant (248-002).
+      return tokenStore.Issue(principal.Id, CredentialId.New(), scopes, TimeSpan.FromMinutes(15));
     }
 
     private static HttpClient CreateIsolatedClient(string? accessToken)
