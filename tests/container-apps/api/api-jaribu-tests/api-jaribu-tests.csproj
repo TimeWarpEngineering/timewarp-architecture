@@ -4,8 +4,9 @@
     <!-- Family aggregator for co-located Jaribu runfiles under api/features and api/platform
          (task 136). Not in the .slnx — discovered only by `dev test` globs under tests/.
          JARIBU_MULTI suppresses each runfile's top-level `return await TestRunner.RunAllTests()`
-         so many files can share one Microsoft.Testing.Platform host. Fixed-port integration
-         runfiles (api :7255) rely on serialized `dev test` execution + SetupOnce/CleanUpOnce. -->
+         so many files can share one Microsoft.Testing.Platform host. In-proc integration
+         runfiles (InProcTestPorts; default api :7255) rely on serialized `dev test`
+         execution + SetupOnce/CleanUpOnce. -->
     <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
     <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
          (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.

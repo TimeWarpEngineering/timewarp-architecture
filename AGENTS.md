@@ -32,7 +32,7 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 
 - `dev run` — Aspire orchestrator (Development)
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
-- `dev test` — every project under `tests/` (globbed, run one at a time — fixed ports); includes
+- `dev test` — every project under `tests/` (globbed, run one at a time — shared in-proc port base); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
 - one suite: `cd tests/<project> && dotnet test -c Release` (MTP — the csproj-path form of
   `dotnet test` is unsupported on .NET 10). Selection: `-- --filter-class <substring>` /
@@ -100,9 +100,9 @@ Branch naming, commits, and merge policy: **`tw-git`**.
     local dev loop.
   - Playwright e2e is unaffected.
 - **Test host lanes (Aspire vs in-proc):** two lanes, no wholesale Aspire migration —
-  - **In-proc** (`WebApplicationHost` / timewarp-testing, fixed ports web=7000 web-http=7001 api=7255 yarp=8443):
-    DI substitution, mediator/pipeline, BFF mocks — **only place fixed ports live**; `dev test`
-    stays serialized for those projects. Auth: `MockAccessTokenProvider` DI override and real
+  - **In-proc** (`WebApplicationHost` / timewarp-testing; defaults web=7000 web-http=7001 api=7255 yarp=8443, override with `TIMEWARP_TEST_PORT_BASE`):
+    DI substitution, mediator/pipeline, BFF mocks — **only place these ports live**; `dev test`
+    stays serialized for those projects (same base). Auth: `MockAccessTokenProvider` DI override and real
     passkey-ceremony cookies remain first-class.
   - **Closed-box** (`Aspire.Hosting.Testing` / AppHost): topology, ingress, multi-resource, and
     process-isolation cases (e.g. FastEndpoints discovery pollution across AppDomain). No DI

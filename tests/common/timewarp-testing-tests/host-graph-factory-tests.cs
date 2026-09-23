@@ -8,7 +8,7 @@
 
 // C-create HostGraphFactory smoke (task 145-002): Web+Api graph, MockAccessTokenProvider
 // default wiring + a real BFF->Api authenticated round trip, and per-host configureServices
-// override. Binds :7255 and :7000 — serialized.
+// override. Binds InProcTestPorts (default :7255 / :7000); `dev test` serializes projects.
 // Run: dotnet run tests/common/timewarp-testing-tests/host-graph-factory-tests.cs
 
 #region Purpose

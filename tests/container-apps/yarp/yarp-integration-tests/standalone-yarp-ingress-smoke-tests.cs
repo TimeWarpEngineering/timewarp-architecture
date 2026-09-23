@@ -6,9 +6,10 @@
 #endregion
 
 #region Design
-// In-proc HostGraphFactory.CreateWebYarpAsync (C-create): Web :7000/:7001 then Yarp :8443.
+// In-proc HostGraphFactory.CreateWebYarpAsync (C-create): Web then Yarp (InProcTestPorts;
+// defaults :7000/:7001 then :8443).
 // No Aspire, no Api host — the generated prefixes are Web.Server-owned. YarpTestServerApplication
-// rewrites the config Web.Server cluster onto http://localhost:7001 so the hop matches Development
+// rewrites the config Web.Server cluster onto WebHttpUrl so the hop matches Development
 // (http, original Host preserved). Suite-shaped under tests/ per hybrid topology policy.
 #endregion
 
