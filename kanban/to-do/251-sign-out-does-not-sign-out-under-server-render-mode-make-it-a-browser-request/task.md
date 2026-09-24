@@ -141,6 +141,6 @@ The browser does a full load of `/Login`, the identity-session cookie is gone in
 
 - **Rounds:** 1. **Effort:** 1. **Roster:** general.
 - **Final counts:** bug 0, suggestion 0, nit 1. All fixed. 0 open, 0 wontfix.
-- **Disposition:** clean. M1 was a mis-wrapped Design comment in , re-wrapped in the review commit.
-- **Re-verified by the reviewer:** web-server  6/6 and web-spa  2/2.
-- **Artifacts:** , , , .
+- **Disposition:** clean. M1 was a mis-wrapped Design comment in `sign-out-js-module.cs`, re-wrapped in the review commit.
+- **Re-verified by the reviewer:** web-server `SignOut_` 6/6 and web-spa `SignOut_Should_` 2/2.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
