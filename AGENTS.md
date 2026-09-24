@@ -43,6 +43,11 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
   standalone (local dev loop; CI uses family aggregators via `dev test`)
 - More commands: `dev --capabilities` (see the `tw-dev-cli` skill)
+- **Claude Code on the web:** `.claude/hooks/session-start.sh` provisions the SDK, Aspire CLI,
+  dockerd, `dev`, and `ganda` (built from source). `timewarp-ganda` is private — if `ganda` is
+  missing, attach `TimeWarpEngineering/timewarp-ganda` to the session (`add_repo`) and re-run the
+  hook (`CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh`). `ganda kanban create`/`reserve`
+  cannot push `refs/ganda/claims` from a cloud session (git proxy allows only the session branch).
 
 ## Before opening a PR
 
