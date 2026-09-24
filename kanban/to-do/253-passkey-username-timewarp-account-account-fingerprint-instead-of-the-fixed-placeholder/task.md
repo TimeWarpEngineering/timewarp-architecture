@@ -108,6 +108,12 @@ No new required signup field.
 - `TimeWarp.Identity` public API grew (`PrincipalFingerprint`, `Principal.Create(kind, id)`, challenge-store
   overloads); source `<Version>` 2.0.0-beta.20 is already ahead of the latest release (v2.0.0-beta.19), so no bump.
 
+- **Review (task-work review oracle, effort 1, roster: general):** 1 round; final counts bug 0 · suggestion 0 open / 1 wontfix · nit 0.
+  Disposition **accepted-exceptions** — M1 (AddPasskey does not refuse a new-account challenge, so a
+  non-SPA or pre-deploy cached client could store a phantom fingerprint in that passkey's name) is wontfix:
+  cosmetic, attach target is always the caller, enforcing would break cached pre-deploy SPA bundles.
+  Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -133,3 +139,4 @@ with the identical username; a different account shows a different fingerprint.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
 - Implemented (ganda task work implement node, 2026-09-24): see Results.
+- Reviewed (ganda task work review oracle, Claude Opus 5.5, effort 1 / general, 2026-09-24): accepted-exceptions — see `review/`.
