@@ -1,9 +1,14 @@
 #region Purpose
 // Writes Credential.LastUsedAt after a successful authentication: every time for a ceremony
-// (passkey sign-in, agent-token issuance) and coalesced per credential for per-request bearer validation.
+// (passkey sign-in, Entra sign-in/link, agent-token issuance) and coalesced per credential for
+// per-request bearer validation.
 #endregion
 
 #region Design
+// Callers: RecordAsync — CompletePasskeyAuthentication.Handler, CompleteAgentTokenIssuance.Handler,
+// EntraTicketProcessor (sync-hit, already-linked bootstrap, link/attach/mint; task 252 — it applies the
+// AccountHint refresh to the same snapshot first, so hint + stamp persist in this one write).
+// RecordCoalescedAsync — the web and api agent-token bearer authentication handlers.
 // Two write shapes (task 248-002). RecordAsync(store, credential) — the caller already holds the
 // verified snapshot (the ceremony handlers) — stamps and persists on EVERY call: a sign-in is
 // per-ceremony, so one write per ceremony is the correct cost. RecordCoalescedAsync(store,
