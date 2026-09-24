@@ -4,7 +4,8 @@
 
 #region Design
 // Mirrors passkey-registration-tests isolation of Set-Cookie (shared HostGraph HttpClient jar).
-// Task 104-034: SPA sign-out depends on this endpoint clearing the identity-session cookie.
+// Task 104-034: the JSON endpoint clears the identity-session cookie for a cookie-jar client. The
+// SPA's browser sign-out (task 251) reuses the same handler — see sign-out-browser-session-tests.
 #endregion
 
 namespace EndBrowserSession_;

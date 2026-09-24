@@ -70,7 +70,14 @@ Branch naming, commits, and merge policy: **`tw-git`**.
   fail-closed, so a contract with neither marker emits no auth config at all rather than defaulting
   to anonymous; TWA0013/TWA0014 enforce the pairing at build time; TWA0024 enforces that a named
   Policy is registered by the hosting server). No hand-written `BaseEndpoint`
-  shims in the template. Validation stays on the mediator's `FluentValidationBehavior` — do not
+  shims in the template. **Exception — browser-protocol endpoints:** a hand-written
+  `EndpointWithoutRequest` under `features/<slice>/…-endpoint-server.cs` is allowed when the
+  response is not the contract's JSON — an auth challenge, a form POST answered with a redirect, or
+  an antiforgery token fetch (today: `ChallengeEntraEndpoint`, `SignOutBrowserSessionEndpoint`,
+  `SignOutAntiforgeryTokenEndpoint`). Paths live in a shared contracts class; any session/state
+  change dispatches the existing mediator handler (no second implementation); the Design region
+  states why the generator does not fit. Not worth a generator: the bodies share nothing but the
+  route and `AllowAnonymous`. Validation stays on the mediator's `FluentValidationBehavior` — do not
   adopt FastEndpoints' validator integration.
 - Tests — **single-framework Jaribu** (zero Fixie and zero xUnit; epic 145 / decision task 143 §6;
   Fixie retired task **145-007**). Assertions: **Shouldly** only (do not introduce FluentAssertions
