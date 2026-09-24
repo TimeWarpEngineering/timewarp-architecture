@@ -19,6 +19,7 @@
 // shared with InMemoryAgentKeyChallengeStore — this type is a thin, behavior-preserving wrapper.
 // The public surface (this ctor's parameters/defaults, Issue/TryConsume signatures) is UNCHANGED;
 // the existing WebAuthn challenge-store tests re-run unmodified as the regression pin for that claim.
+// Task 253 adds the pending-principal-id Issue/TryConsume overloads (stored on the core's entry).
 #endregion
 
 namespace TimeWarp.Identity;
@@ -42,5 +43,13 @@ public sealed class InMemoryWebAuthnChallengeStore : IWebAuthnChallengeStore
   public byte[] Issue(WebAuthnCeremonyType ceremonyType) => Core.Issue(ceremonyType);
 
   /// <inheritdoc />
+  public byte[] Issue(WebAuthnCeremonyType ceremonyType, PrincipalId? pendingPrincipalId) =>
+    Core.Issue(ceremonyType, pendingPrincipalId);
+
+  /// <inheritdoc />
   public bool TryConsume(WebAuthnCeremonyType ceremonyType, byte[] challenge) => Core.TryConsume(ceremonyType, challenge);
+
+  /// <inheritdoc />
+  public bool TryConsume(WebAuthnCeremonyType ceremonyType, byte[] challenge, out PrincipalId? pendingPrincipalId) =>
+    Core.TryConsume(ceremonyType, challenge, out pendingPrincipalId);
 }

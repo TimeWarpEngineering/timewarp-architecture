@@ -3,7 +3,9 @@
 #endregion
 
 #region Design
-// Hybrid model: PrincipalId is server-minted; credentials attach separately (1:N). Optional
+// Hybrid model: PrincipalId is server-minted; credentials attach separately (1:N). Create(kind, id)
+// accepts an id the SERVER pre-allocated earlier (task 253: passkey registration start keeps it
+// with the challenge) — never a client-supplied value; empty ids are rejected like None kinds. Optional
 // display name lives here; product progressive profile (email, prefs, update API) lives in
 // template Features.Profiles — never a register/session/token gate. Agent principals need no
 // linked human; optional Agent ↔ Human links live in template Features.AgentLinks.
@@ -95,15 +97,27 @@ public sealed class Principal : Entity<PrincipalId>
   /// <summary>
   /// Mints a Provisional, non-quarantined principal at version 0 for a defined non-<see cref="PrincipalKind.None"/> kind.
   /// </summary>
-  public static Principal Create(PrincipalKind kind)
+  public static Principal Create(PrincipalKind kind) => Create(kind, PrincipalId.New());
+
+  /// <summary>
+  /// Mints a Provisional, non-quarantined principal at version 0 with a pre-allocated server-minted
+  /// id (task 253: the passkey registration ceremony allocates the id at start so the WebAuthn
+  /// user name can carry its <see cref="PrincipalFingerprint"/>). Same invariants as <see cref="Create(PrincipalKind)"/>.
+  /// </summary>
+  public static Principal Create(PrincipalKind kind, PrincipalId id)
   {
     if (!Enum.IsDefined(kind) || kind == PrincipalKind.None)
     {
       throw new ArgumentOutOfRangeException(nameof(kind), kind, "PrincipalKind must be a defined non-None value.");
     }
 
+    if (id.IsEmpty)
+    {
+      throw new ArgumentException("PrincipalId cannot be empty.", nameof(id));
+    }
+
     return new Principal(
-      PrincipalId.New(),
+      id,
       kind,
       TrustTier.Provisional,
       isQuarantined: false,

@@ -51,13 +51,77 @@ No new required signup field.
 
 ## Checklist
 
-- [ ] `PrincipalFingerprint` + exposure on the session/profile response
-- [ ] Signed-in add passkey sends the account name
-- [ ] New account: principal id pre-allocated at start, kept with the challenge, used at complete
-- [ ] `PlaceholderUserName` removed; Design regions reconciled
-- [ ] Settings shows the account fingerprint
-- [ ] Tests
-- [ ] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+- [x] `PrincipalFingerprint` + exposure on the session/profile response
+- [x] Signed-in add passkey sends the account name
+- [x] New account: principal id pre-allocated at start, kept with the challenge, used at complete
+- [x] `PlaceholderUserName` removed; Design regions reconciled
+- [x] Settings shows the account fingerprint
+- [x] Tests
+- [x] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+
+## Results
+
+- **Account fingerprint:** `TimeWarp.Identity.PrincipalFingerprint.Compute(PrincipalId)`
+  (`source/libraries/timewarp-identity/principals/principal-fingerprint.cs`) = last 8 lowercase hex
+  of SHA-256 over the id's 16 Guid bytes — same shape as `CredentialFingerprint`, one per principal.
+  Exposed as `GetCurrentSession.Response.AccountFingerprint` (derived in the ctor from `PrincipalId`,
+  null when unauthenticated). **Chosen response: GetCurrentSession** — Settings had no "Signed in"
+  line reading either response; the session read is what the SPA auth state already makes, and
+  GetProfile is a product slice. The SPA `IdentitySessionAuthenticationStateProvider` projects it as
+  claim `timewarp:account_fingerprint`; the hosted prerender provider derives the same claim from the
+  cookie principal's `timewarp:principal_id`.
+- **Name formatter:** `PasskeyAccountName` (identity contracts) → `"TimeWarp account · <fingerprint>"`,
+  shared by server (user.name = user.displayName) and Settings.
+- **Signed-in add passkey:** `StartPasskeyRegistration.Command.ForCurrentAccount` (new optional bool).
+  Settings "Create a passkey" (`CredentialsState.AddPasskey`) sets it; the handler reads the caller from
+  the session cookie (`IBrowserSessionService`) and names the passkey for that account; no session → 401
+  before any challenge is issued. The flag cannot pick another account — the id always comes from the session.
+- **New account:** Start (default, `ForCurrentAccount=false`) pre-allocates `PrincipalId.New()` and keeps it
+  with the challenge — `IWebAuthnChallengeStore.Issue(type, pendingPrincipalId)` / `TryConsume(type,
+  challenge, out pendingPrincipalId)` (the existing entry in `InMemoryChallengeStoreCore` gained the field;
+  no second store). `PasskeyRegistrationCeremony.Materials.PendingPrincipalId` carries it to Complete, which
+  calls the new `Principal.Create(kind, id)` overload (same invariants + empty-id guard). The id is never on
+  the wire. Complete refuses a challenge with no pending id (one started with `ForCurrentAccount`) with the
+  uniform 400 ChallengeInvalid before minting anything, so a new account never carries another account's name.
+  Account resolution (credential handle) unchanged; AddPasskey ignores the pending id.
+- `PlaceholderUserName` removed. Design regions reconciled: start/complete registration handlers, AddPasskey
+  contract + handler, registration ceremony, challenge store port/in-memory/core, Principal, GetCurrentSession,
+  hosted auth-state provider, SPA auth-state provider, CredentialsState.AddPasskey, SettingsPage.
+- **Settings:** heads the page with `Signed in · TimeWarp account · <fingerprint>` (`data-qa="SignedInAccount"`),
+  rendered in prerender too. Mock auth has no claim → line absent.
+- **Existing passkeys keep "TimeWarp user"** — the authenticator stores user.name at creation and the relying
+  party cannot change it. Users who want the new name must create a new passkey (and may revoke the old one).
+- **Tests:** library — `PrincipalFingerprint_` (shape, stability, SHA-256 layout, distinct, no raw id, empty
+  rejected; `Principal.Create(kind, id)` uses the id and keeps invariants) + challenge-store `Pending_Principal_Id`
+  (round trip, null when not recorded, one-time, expired/wrong-type yield no id). Integration
+  `PasskeyAccountName_` (6): new-account name = fingerprint of the principal Complete mints; two new accounts
+  differ; signed-in Start names the caller and a second passkey gets the same name (+ session AccountFingerprint
+  matches); ForCurrentAccount without session 401; current-account challenge used for Complete → 400 and no
+  principal; unused challenges leave no principal. Contracts — GetCurrentSession AccountFingerprint round trip;
+  Start/Complete registration commands carry no PrincipalId/Guid property (no wire field to tamper with);
+  ForCurrentAccount round trip. Settings prerender HTML shows `SignedInAccount` with the fingerprint
+  (`ProtectedPageDeepLink_`).
+- **Gates:** `dev build` 0 warnings / 0 errors; `dev test` 21 projects, 1428 passed / 0 failed / 1 skipped
+  (pre-existing skip); `dev template-smoke` SUCCEEDED; `ganda repo audit` passes. `dev` run via
+  `dotnet run tools/dev-cli/dev.cs --` (worktree had no built `bin/dev`).
+- **No AppHost started.** Manual Proton Pass check **not performed** (needs a browser + running app).
+- `TimeWarp.Identity` public API grew (`PrincipalFingerprint`, `Principal.Create(kind, id)`, challenge-store
+  overloads); source `<Version>` 2.0.0-beta.20 is already ahead of the latest release (v2.0.0-beta.19), so no bump.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class PasskeyAccountName_
+cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter-class PrincipalFingerprint_
+cd tests/container-apps/web/web-contracts-tests && dotnet test -c Release
+```
+
+**Expect:** all pass (6 / 9 / 46). Manual (on a machine where running the app is allowed): sign up with a
+passkey → the password manager saves the username `TimeWarp account · xxxxxxxx`; Settings shows
+`Signed in · TimeWarp account · xxxxxxxx` with the same 8 hex; "Create a passkey" there saves a second entry
+with the identical username; a different account shows a different fingerprint.
 
 ## Notes
 
@@ -68,3 +132,4 @@ No new required signup field.
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
+- Implemented (ganda task work implement node, 2026-09-24): see Results.

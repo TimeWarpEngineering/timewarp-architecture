@@ -19,6 +19,11 @@
 // identity-session scheme — SPA IdentitySessionAuthenticationStateProvider projects each as a
 // PermissionIds.ClaimType claim so AuthorizeView / [Authorize] policies use RequireClaim (WASM
 // has no evaluator). Unauthenticated → empty list (not null).
+// AccountFingerprint (task 253): PrincipalFingerprint of the session principal, derived in the ctor
+// from PrincipalId so it can never disagree with it (null when unauthenticated). It is the value in
+// every new passkey's WebAuthn user name ("TimeWarp account · <fingerprint>", PasskeyAccountName);
+// the SPA projects it as a claim so Settings can show the same text. Chosen over GetProfile because
+// this is the identity read the SPA auth state already makes — profile is a product slice.
 // [EndpointAllowAnonymous] (task 110): reads whatever ambient session exists, if any — this IS the
 // read of unauthenticated-or-authenticated state (IsAuthenticated=false is a valid, expected
 // response), not a protected resource that requires a session to reach.
@@ -39,6 +44,9 @@ public static partial class GetCurrentSession
   {
     public bool IsAuthenticated { get; }
     public PrincipalId? PrincipalId { get; }
+
+    /// <summary>Display-safe account fingerprint (PrincipalFingerprint) of the session principal; null when unauthenticated.</summary>
+    public string? AccountFingerprint { get; }
 
     /// <summary>Effective product role Guids (empty when unauthenticated).</summary>
     public List<Guid> RoleIds { get; }
@@ -66,6 +74,7 @@ public static partial class GetCurrentSession
 
       IsAuthenticated = isAuthenticated;
       PrincipalId = principalId;
+      AccountFingerprint = principalId is { } id ? PrincipalFingerprint.Compute(id) : null;
       RoleIds = roleIds ?? [];
       Permissions = permissions ?? [];
     }

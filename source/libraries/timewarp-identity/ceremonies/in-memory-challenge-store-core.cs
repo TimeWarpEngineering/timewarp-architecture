@@ -20,6 +20,11 @@
 // remove-before-check TryConsume ordering, same prune-on-Issue + evict-oldest-at-cap posture as the
 // original WebAuthn-only implementation — see that type's original Design region (preserved on the
 // WebAuthn wrapper) for the full rationale; not re-derived here to avoid two sources of truth.
+// Ceremony state (task 253): an entry may carry an optional PendingPrincipalId — the principal id
+// a registration ceremony pre-allocated at start and will mint at completion. It lives ONLY here,
+// server-side, keyed by the challenge; TryConsume hands it back on the same one-time consume, so an
+// unused/expired challenge simply takes the id with it (nothing persistent was allocated). Ceremonies
+// that do not need it (agent key, authentication, merge) issue with null and ignore it.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -43,7 +48,7 @@ internal sealed class InMemoryChallengeStoreCore<TCeremonyType>
     MaxEntries = maxEntries;
   }
 
-  public byte[] Issue(TCeremonyType ceremonyType)
+  public byte[] Issue(TCeremonyType ceremonyType, PrincipalId? pendingPrincipalId = null)
   {
     PruneExpired();
 
@@ -56,18 +61,25 @@ internal sealed class InMemoryChallengeStoreCore<TCeremonyType>
       EvictOldest();
     }
 
-    Challenges[key] = new Entry(ceremonyType, expiresAt);
+    Challenges[key] = new Entry(ceremonyType, expiresAt, pendingPrincipalId);
     return challenge;
   }
 
-  public bool TryConsume(TCeremonyType ceremonyType, byte[] challenge)
+  public bool TryConsume(TCeremonyType ceremonyType, byte[] challenge) =>
+    TryConsume(ceremonyType, challenge, out _);
+
+  public bool TryConsume(TCeremonyType ceremonyType, byte[] challenge, out PrincipalId? pendingPrincipalId)
   {
     ArgumentNullException.ThrowIfNull(challenge);
 
+    pendingPrincipalId = null;
     string key = Base64Url.EncodeToString(challenge);
     if (!Challenges.TryRemove(key, out Entry entry)) return false;
     if (!entry.CeremonyType.Equals(ceremonyType)) return false;
-    return entry.ExpiresAt > TimeProvider.GetUtcNow();
+    if (entry.ExpiresAt <= TimeProvider.GetUtcNow()) return false;
+
+    pendingPrincipalId = entry.PendingPrincipalId;
+    return true;
   }
 
   private void PruneExpired()
@@ -102,5 +114,5 @@ internal sealed class InMemoryChallengeStoreCore<TCeremonyType>
     }
   }
 
-  private readonly record struct Entry(TCeremonyType CeremonyType, DateTimeOffset ExpiresAt);
+  private readonly record struct Entry(TCeremonyType CeremonyType, DateTimeOffset ExpiresAt, PrincipalId? PendingPrincipalId);
 }

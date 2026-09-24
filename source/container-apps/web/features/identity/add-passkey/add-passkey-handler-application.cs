@@ -20,6 +20,9 @@
 // Task 248-001: Label is ALWAYS the AAGUID provider name (materials.ProviderLabel); the caller's
 // Nickname is stored separately; RegisteredWith is resolved from the command's browser hints plus
 // IRequestUserAgentAccessor (raw UA never stored — see RegistrationContext's Design region).
+// Task 253: materials.PendingPrincipalId is ignored — the attach target is always the caller. The
+// SPA starts this ceremony with StartPasskeyRegistration.ForCurrentAccount so the stored WebAuthn
+// user name is the caller's own "TimeWarp account · <fingerprint>".
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

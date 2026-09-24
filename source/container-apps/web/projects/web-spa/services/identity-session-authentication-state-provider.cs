@@ -12,6 +12,8 @@
 //   - Response.RoleIds → ClaimTypes.Role (diagnostics / UserClaims display; task 147-004 D4)
 //   - Response.Permissions → PermissionIds.ClaimType claims (task 182-003) so SPA policies
 //     registered via AddPermissionClaimPolicies can AuthorizeView without an evaluator in WASM
+//   - Response.AccountFingerprint → AccountFingerprintClaimType (task 253) so Settings can show
+//     "Signed in · TimeWarp account · <fingerprint>", matching the passkey's stored user name
 // Failures and unauthenticated sessions yield an anonymous principal (no throw).
 // Empty RoleIds falls back to Member so a malformed/legacy payload still gets the product default.
 // NotifySessionChanged lets Login / passkey ceremony refresh Blazor auth state after cookie set.
@@ -38,6 +40,9 @@ using TimeWarp.Foundation.Types;
 public class IdentitySessionAuthenticationStateProvider : AuthenticationStateProvider
 {
   private const string AuthenticationType = "identity-session";
+
+  /// <summary>Claim carrying the session principal's account fingerprint (GetCurrentSession.AccountFingerprint).</summary>
+  public const string AccountFingerprintClaimType = "timewarp:account_fingerprint";
 
   private readonly IWebServerApiService ApiService;
 
@@ -73,6 +78,11 @@ public class IdentitySessionAuthenticationStateProvider : AuthenticationStatePro
         foreach (Guid roleId in roleIds)
         {
           claims.Add(new Claim(ClaimTypes.Role, roleId.ToString()));
+        }
+
+        if (session.AccountFingerprint is { } accountFingerprint)
+        {
+          claims.Add(new Claim(AccountFingerprintClaimType, accountFingerprint));
         }
 
         foreach (string permissionId in session.Permissions)
