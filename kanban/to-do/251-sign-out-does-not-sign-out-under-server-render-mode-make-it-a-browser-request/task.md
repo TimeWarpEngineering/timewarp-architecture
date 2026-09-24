@@ -63,6 +63,7 @@ Same class as tasks 212/213: cookie-mutating identity actions cannot ride the se
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
 - Implement (ganda task work, headless implementer): 2026-09-24
+- Review (ganda task work review oracle, headless Claude; effort 1, general): 2026-09-24
 
 ## Results
 
@@ -136,3 +137,10 @@ in any render mode (footer Server / WebAssembly / Auto): sign in, then Profile m
 The browser does a full load of `/Login`, the identity-session cookie is gone in devtools, and
 `/Settings` redirects to `/Login`.
 
+### Review disposition
+
+- **Rounds:** 1. **Effort:** 1. **Roster:** general.
+- **Final counts:** bug 0, suggestion 0, nit 1. All fixed. 0 open, 0 wontfix.
+- **Disposition:** clean. M1 was a mis-wrapped Design comment in , re-wrapped in the review commit.
+- **Re-verified by the reviewer:** web-server  6/6 and web-spa  2/2.
+- **Artifacts:** , , , .

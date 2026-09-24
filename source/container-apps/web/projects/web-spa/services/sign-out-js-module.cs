@@ -7,8 +7,8 @@
 // The export fetches the antiforgery token and submits the sign-out form in the browser; the
 // resulting full navigation unloads the page (WebAssembly) or the circuit (Server), so callers
 // must not NavigateTo afterwards. Module dispose tolerates JSDisconnectedException: under Server
-// the unload can drop the circuit before the dispose round-trip completes. Paths are SignOutBrowserSession constants — the SSOT shared with
-// the server endpoints.
+// the unload can drop the circuit before the dispose round-trip completes. Paths are
+// SignOutBrowserSession constants — the SSOT shared with the server endpoints.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
