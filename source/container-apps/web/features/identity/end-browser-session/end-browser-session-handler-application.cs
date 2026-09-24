@@ -1,9 +1,11 @@
 #region Purpose
-// Clears the ambient identity-session cookie so SPA sign-out works without Entra/MSAL.
+// Clears the ambient identity-session cookie: the single session-end implementation for sign-out.
 #endregion
 
 #region Design
 // Thin handler: IBrowserSessionService.SignOutAsync only. No principal store access. Idempotent.
+// Reached from the JSON EndBrowserSession endpoint and from the browser-facing
+// SignOutBrowserSessionEndpoint (task 251), which sends this Command via ISender.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

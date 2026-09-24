@@ -5,21 +5,29 @@
 #region Design
 // UX rule: user actions dispatch state actions — they must not call Spa services that side-effect
 // auth/navigation outside the pipeline (task 104-034 follow-up).
-// Flow:
-//   1. POST EndBrowserSession (clear identity-session cookie). Entra is a named BFF scheme,
-//      not a WASM MSAL session (RFC 219 D10) — no NavigateToLogout.
-//   2. Reset ProfileState + AuthorizationState (signed-out chrome: avatar/alias + grants)
-//   3. Notify IdentitySessionAuthenticationStateProvider so AuthorizeView flips to Sign-in
-//   4. Soft-navigate to /Login (no forceLoad — state already cleared in-process)
+// Task 251: sign-out is a BROWSER request, identical in WebAssembly, Server and Auto:
+//   1. Reset ProfileState, AuthorizationState, CredentialsState, AgentLinksState (signed-out
+//      chrome for the instant before the page unloads, and no stale data if the navigation fails)
+//   2. SignOutJsModule: the browser fetches an antiforgery token and form-POSTs
+//      SignOutBrowserSession.Path; the server ends the session (EndBrowserSession.Handler),
+//      returns the expired identity-session Set-Cookie to the browser, and 303s to /Login.
+// Why not the old IWebServerApiService POST + NotifySessionChanged + soft NavigateTo: under
+// InteractiveServer that POST is a server→server loopback (cookie forwarded by
+// IdentitySessionCookieForwardingHandler), so the cookie deletion landed on the HttpClient
+// response, the hosted AuthenticationStateProvider was never re-evaluated, and the soft
+// navigation kept the circuit's signed-in principal. The full navigation supersedes all three:
+// the next page load authenticates from the browser's (now absent) cookie in every mode, so no
+// provider notification is needed.
+// Fallback: if the JS step throws (token fetch failed), forceLoad /Login — a real page load that
+// shows whatever the browser cookie still says rather than a fake signed-out UI.
+// Entra is a named BFF scheme, not a WASM MSAL session (RFC 219 D10) — no NavigateToLogout.
 // AuthorizationState.Initialize is the same body as ClearCurrentUserActionSet — call via Store
-// to avoid nested Action type references under TWA0009. Route string "/Login" avoids Account slice.
-// AuthenticationStateListener (Routes) remains passive path for non-UX auth changes.
+// to avoid nested Action type references under TWA0009.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Features.AgentLinks;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
@@ -39,46 +47,38 @@ partial class ProfileState
     [CrossSliceReference(typeof(AgentLinksState), "Sign-out clears agent-human links with profile chrome.")]
     internal sealed class Handler : BaseHandler<Action>
     {
-      private readonly IWebServerApiService ApiService;
-      private readonly AuthenticationStateProvider AuthenticationStateProvider;
+      private readonly IJSRuntime JsRuntime;
       private readonly NavigationManager NavigationManager;
 
       public Handler(
         IStore store,
-        IWebServerApiService apiService,
-        AuthenticationStateProvider authenticationStateProvider,
+        IJSRuntime jsRuntime,
         NavigationManager navigationManager)
         : base(store)
       {
-        ApiService = apiService;
-        AuthenticationStateProvider = authenticationStateProvider;
+        JsRuntime = jsRuntime;
         NavigationManager = navigationManager;
       }
 
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        try
-        {
-          _ = await ApiService.GetResponse<EndBrowserSession.Response>(
-            new EndBrowserSession.Command(),
-            cancellationToken);
-        }
-        catch
-        {
-          // Still clear client state so the UI is signed-out even if the network call fails.
-        }
-
         ProfileState.Initialize();
         Store.GetState<AuthorizationState>().Initialize();
         Store.GetState<CredentialsState>().Initialize();
         Store.GetState<AgentLinksState>().Initialize();
 
-        if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
+        try
         {
-          identitySession.NotifySessionChanged();
+          await SignOutJsModule.SignOutAsync(JsRuntime, cancellationToken);
         }
-
-        NavigationManager.NavigateTo("/Login");
+        catch (JSDisconnectedException)
+        {
+          // Server: the form submit unloaded the page and dropped the circuit — sign-out proceeds.
+        }
+        catch (JSException)
+        {
+          NavigationManager.NavigateTo(SignOutBrowserSession.RedirectPath, forceLoad: true);
+        }
       }
     }
   }
