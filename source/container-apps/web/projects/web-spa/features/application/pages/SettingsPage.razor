@@ -17,8 +17,6 @@
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
   private bool CanRevoke => CredentialsState.CanUnlink(CredentialsState.ActiveCredentialCount);
-  private string Microsoft365CardTitle =>
-    EntraAccounts.Count == 1 ? DisplayEntraLabel(EntraAccounts[0]) : "Microsoft 365";
 
   protected override async Task OnInitializedAsync()
   {
@@ -45,9 +43,6 @@
       await InvokeAsync(StateHasChanged);
     }
   }
-
-  private static string DisplayEntraLabel(GetCredentials.CredentialSummary credential) =>
-    string.IsNullOrWhiteSpace(credential.Label) ? "Microsoft 365" : credential.Label!;
 
   private async Task CreatePasskeyAsync()
   {
@@ -148,8 +143,7 @@
 
     @if (ShowMicrosoft365)
     {
-      <Section Title="@Microsoft365CardTitle"
-            TitleDataQa="@(EntraAccounts.Count == 1 ? "Microsoft365AccountLabel" : null)"
+      <Section Title="Microsoft 365"
             LoadingActionType="typeof(CredentialsState.FetchCredentialsActionSet.Action)"
             data-qa="Microsoft365Settings">
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
@@ -157,7 +151,6 @@
                           IsBusy="IsBusy"
                           EmptyMessage="No Microsoft 365 account linked."
                           FallbackLabel="Microsoft 365"
-                          Subtitle="Microsoft 365"
                           TitleDataQa="Microsoft365AccountLabel"
                           RevokeLabel="Unlink"
                           RevokeDataQa="Unlink"

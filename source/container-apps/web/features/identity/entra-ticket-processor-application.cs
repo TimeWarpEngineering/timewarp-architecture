@@ -28,8 +28,17 @@
 // already linked before AddCredentialAsync. Switch is Unlink then Link. Concurrent links of two
 // different handles can both pass the list-then-insert check (same TOCTOU class as last-credential
 // revoke); unique (Type, Handle) does not serialize two distinct oids.
-// Credential.Label is EntraIdTokenClaims.CredentialLabel (preferred_username, else name, else
-// "Microsoft 365") on both bootstrap and link Create. Principal.SetDisplayName stays the name claim.
+// Credential.Label is the provider, EntraIdTokenClaims.ProviderLabel ("Microsoft 365"), on both
+// bootstrap and link Create; the account is Credential.AccountHint = the token's preferred_username
+// (task 250 — display-only, never a join key; the join stays tid+oid). Principal.SetDisplayName stays
+// the name claim. Refresh decision (task 250): a sign-in that resolves to an existing active Entra
+// credential (sync-hit, and the already-linked early return of CompleteBootstrapCreateAsync) also
+// refreshes AccountHint when the token carries a different preferred_username — that backfills links
+// made before 250 (which have no hint) and follows UPN renames. A token WITHOUT preferred_username
+// leaves the stored hint alone (absence is not evidence the account changed). The refresh write is
+// advisory like last-used (CredentialUsageRecorder): it only happens when the value changed, and a
+// lost Version race is DROPPED — a concurrent revoke/rename wins and the next sign-in retries. The
+// hint is PII: it is never logged here and reaches the wire only via the caller's own GetCredentials.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -155,7 +164,7 @@ public sealed class EntraTicketProcessor
     }
 
     OneOf<PrincipalId, SharedProblemDetails> attached =
-      await AttachEntraToPrincipalAsync(handle, material, claims.CredentialLabel, caller, cancellationToken);
+      await AttachEntraToPrincipalAsync(handle, material, claims.AccountHint, caller, cancellationToken);
     if (attached.IsT1)
     {
       return attached.AsT1;
@@ -238,6 +247,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
+      await RefreshAccountHintAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -305,6 +315,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
+      await RefreshAccountHintAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -326,7 +337,8 @@ public sealed class EntraTicketProcessor
       CredentialType.EntraAccount,
       handle,
       material,
-      claims.CredentialLabel);
+      EntraIdTokenClaims.ProviderLabel,
+      accountHint: claims.AccountHint);
     try
     {
       await PrincipalStore.AddCredentialAsync(entraCredential, cancellationToken);
@@ -400,7 +412,7 @@ public sealed class EntraTicketProcessor
     return await AttachEntraToPrincipalAsync(
       handle,
       material,
-      claims.CredentialLabel,
+      claims.AccountHint,
       principalId,
       cancellationToken);
   }
@@ -421,10 +433,30 @@ public sealed class EntraTicketProcessor
     return principalId;
   }
 
+  private async Task RefreshAccountHintAsync(
+    Credential existing,
+    EntraIdTokenClaims claims,
+    CancellationToken cancellationToken)
+  {
+    if (claims.AccountHint is null || !existing.SetAccountHint(claims.AccountHint))
+    {
+      return;
+    }
+
+    try
+    {
+      await PrincipalStore.UpdateCredentialAsync(existing, cancellationToken);
+    }
+    catch (ConcurrencyConflictException)
+    {
+      // Advisory display text: a concurrent writer (revoke / rename) wins; the next sign-in retries.
+    }
+  }
+
   private async Task<OneOf<PrincipalId, SharedProblemDetails>> AttachEntraToPrincipalAsync(
     byte[] handle,
     byte[] material,
-    string label,
+    string? accountHint,
     PrincipalId principalId,
     CancellationToken cancellationToken)
   {
@@ -433,7 +465,8 @@ public sealed class EntraTicketProcessor
       CredentialType.EntraAccount,
       handle,
       material,
-      label);
+      EntraIdTokenClaims.ProviderLabel,
+      accountHint: accountHint);
     try
     {
       await PrincipalStore.AddCredentialAsync(credential, cancellationToken);

@@ -340,10 +340,11 @@ public class Challenge_Given_
     found.ShouldNotBeNull();
     found!.PrincipalId.ShouldBe(caller.Id);
     found.IsRevoked.ShouldBeFalse();
-    found.Label.ShouldBe("Test User");
+    found.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    found.AccountHint.ShouldBeNull("the name claim names the person, not the account (task 250)");
   }
 
-  public static async Task Link_Should_Set_Label_From_Preferred_Username()
+  public static async Task Link_Should_Store_Preferred_Username_As_Account_Hint()
   {
     Store.ShouldNotBeNull();
     Guid objectId = Guid.NewGuid();
@@ -362,7 +363,8 @@ public class Challenge_Given_
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     found.ShouldNotBeNull();
-    found!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+    found!.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    found.AccountHint.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
   }
 
   public static async Task Link_Second_Active_Entra_Should_409()

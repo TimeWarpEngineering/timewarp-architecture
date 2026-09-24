@@ -32,6 +32,11 @@
 // Credential.LastUsedAt; the SPA renders it relative ("Last used 3 minutes ago" / "Never used") and
 // restates it in the revoke confirmation. It is the last ctor parameter and defaults to null so the
 // mock factory's second row is honest about a never-used passkey.
+// Task 250: AccountHint (nullable) is Credential.AccountHint — display-only text naming the external
+// account (Entra preferred_username, "steve@contoso.com"); the SPA renders it as the Entra row's
+// context line. It is PII, which is acceptable here only because this endpoint returns the CALLER's
+// own credentials (the IDOR rule above); it is never a key the client can send back. Last ctor
+// parameter, default null, like LastUsedAt.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf via IPermissionEvaluator.
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
 // agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
@@ -87,7 +92,7 @@ public static partial class GetCredentials
   {
     public CredentialId Id { get; }
     public CredentialType Type { get; }
-    /// <summary>Provider label (AAGUID / Entra display); null when unknown.</summary>
+    /// <summary>Provider label (AAGUID / "Microsoft 365"); null when unknown.</summary>
     public string? Label { get; }
     /// <summary>User-chosen nickname; null until renamed.</summary>
     public string? Nickname { get; }
@@ -100,6 +105,8 @@ public static partial class GetCredentials
     public string Fingerprint { get; }
     /// <summary>UTC instant of the most recent successful authentication; null when never used.</summary>
     public DateTimeOffset? LastUsedAt { get; }
+    /// <summary>Display-only external account text (Entra preferred_username); null when not captured.</summary>
+    public string? AccountHint { get; }
 
     public CredentialSummary
     (
@@ -112,7 +119,8 @@ public static partial class GetCredentials
       bool isActive,
       RegisteredWith registeredWith,
       string fingerprint,
-      DateTimeOffset? lastUsedAt = null
+      DateTimeOffset? lastUsedAt = null,
+      string? accountHint = null
     )
     {
       if (id.IsEmpty)
@@ -130,6 +138,7 @@ public static partial class GetCredentials
       RegisteredWith = Guard.Against.Null(registeredWith);
       Fingerprint = Guard.Against.NullOrWhiteSpace(fingerprint);
       LastUsedAt = lastUsedAt;
+      AccountHint = accountHint;
     }
   }
 

@@ -2,7 +2,8 @@
 // Render CredentialList with HtmlRenderer and assert the 248-001 row contract: nickname title,
 // provider/attachment/client context line, created stamp, monospace fingerprint, and the inline
 // rename editor auto-opening (prefilled) only for the pending credential id; plus task 246's
-// RevokeDisabled gating the first step of the two-step revoke with its visible hint.
+// RevokeDisabled gating the first step of the two-step revoke with its visible hint; and task 250's
+// Entra row (provider title, account-hint context line, the label never repeated, empty line hidden).
 #endregion
 
 #region Design
@@ -120,6 +121,45 @@ public class CredentialList_Should_
     CountOf(html, "RevokeConfirm").ShouldBe(0);
   }
 
+  public static async Task Render_Entra_Row_With_Account_Hint_And_No_Repeated_Label()
+  {
+    CredentialSummary entra = new
+    (
+      CredentialId.New(), CredentialType.EntraAccount, "Microsoft 365", nickname: null,
+      new DateTimeOffset(2026, 9, 23, 12, 0, 0, TimeSpan.Zero), revokedAt: null, isActive: true,
+      RegisteredWith.Unknown, "5c7d9e01", accountHint: "steve@contoso.com"
+    );
+
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Credentials"] = new List<CredentialSummary> { entra },
+      ["FallbackLabel"] = "Microsoft 365",
+      ["TitleDataQa"] = "Microsoft365AccountLabel",
+      ["RevokeLabel"] = "Unlink",
+      ["RevokeDataQa"] = "Unlink"
+    });
+
+    TextOf(html, "Microsoft365AccountLabel").ShouldBe("Microsoft 365");
+    TextOf(html, "CredentialContext").ShouldBe("steve@contoso.com");
+    OccurrencesOf(html, "Microsoft 365").ShouldBe(1, "the label renders once — the title only");
+  }
+
+  public static async Task Hide_Context_Line_When_Nothing_Differs_From_Title()
+  {
+    CredentialSummary unrenamed = Summary(nickname: null, label: "Proton Pass");
+
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Credentials"] = new List<CredentialSummary> { unrenamed },
+      ["FallbackLabel"] = "Passkey",
+      ["TitleDataQa"] = "PasskeyLabel"
+    });
+
+    TextOf(html, "PasskeyLabel").ShouldBe("Proton Pass");
+    CountOf(html, "CredentialContext").ShouldBe(0);
+    OccurrencesOf(html, "Proton Pass").ShouldBe(1);
+  }
+
   public static async Task Empty_List_Renders_Empty_Message()
   {
     string html = await RenderAsync(new Dictionary<string, object?>
@@ -155,6 +195,10 @@ public class CredentialList_Should_
   /// <summary>Number of elements carrying this data-qa marker (CSS-isolation scope attributes follow it, so match the attribute only).</summary>
   private static int CountOf(string html, string dataQa) =>
     Regex.Count(html, $"data-qa=\"{Regex.Escape(dataQa)}\"");
+
+  /// <summary>Number of times this literal text appears anywhere in the rendered markup.</summary>
+  private static int OccurrencesOf(string html, string text) =>
+    (html.Length - html.Replace(text, string.Empty, StringComparison.Ordinal).Length) / text.Length;
 
   /// <summary>The opening tag of the single element carrying this data-qa marker.</summary>
   private static string TagOf(string html, string dataQa)

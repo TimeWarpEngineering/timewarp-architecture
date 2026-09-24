@@ -14,7 +14,8 @@
 // already requires an authenticated principal to reach this handler at all (same posture as
 // IAgentCallerContext's Design region).
 // Secret-material omission (load-bearing, security): CredentialSummary's constructor only ever
-// receives Id/Type/Label/Nickname/CreatedAt/RevokedAt/IsActive/RegisteredWith/Fingerprint —
+// receives Id/Type/Label/Nickname/CreatedAt/RevokedAt/IsActive/RegisteredWith/Fingerprint/
+// LastUsedAt/AccountHint (the display-only Entra account text, task 250 — caller-scoped PII) —
 // Credential.Handle and Credential.PublicMaterial are never read here, so there is no code path that
 // could accidentally leak them even under a future refactor that adds a field; the contract's
 // CredentialSummary shape (see get-credentials.cs's Design region) is what makes serializing either
@@ -64,7 +65,8 @@ public sealed partial class GetCredentials
           isActive: !credential.IsRevoked,
           credential.RegisteredWith,
           credential.Fingerprint,
-          credential.LastUsedAt))
+          credential.LastUsedAt,
+          credential.AccountHint))
         .ToList();
 
       return new Response(summaries);

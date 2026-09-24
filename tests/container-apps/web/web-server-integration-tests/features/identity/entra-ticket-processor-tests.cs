@@ -1,5 +1,6 @@
 #region Purpose
-// Host-free coverage for EntraTicketProcessor bootstrap unique-handle race recovery.
+// Host-free coverage for EntraTicketProcessor: bootstrap unique-handle race recovery, link/merge
+// refusals, and the credential's provider Label + preferred_username AccountHint (task 250).
 #endregion
 
 #region Design
@@ -249,7 +250,7 @@ public class Bootstrap_Given_
   private static IOptions<EntraAuthenticationOptions> ConfiguredTenant() =>
     Options.Create(new EntraAuthenticationOptions { TenantId = TrustedTenantId.ToString("D") });
 
-  public static async Task Bootstrap_Should_Set_Label_From_Preferred_Username()
+  public static async Task Bootstrap_Should_Store_Provider_Label_And_Preferred_Username_Hint()
   {
     InMemoryPrincipalStore principalStore = new();
     EntraTicketProcessor processor = await ProcessorAsync(principalStore);
@@ -270,10 +271,11 @@ public class Bootstrap_Given_
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     stored.ShouldNotBeNull();
-    stored!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+    stored!.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    stored.AccountHint.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
   }
 
-  public static async Task Bootstrap_Should_Set_Label_From_Name_When_Preferred_Username_Missing()
+  public static async Task Bootstrap_Without_Preferred_Username_Should_Store_No_Hint()
   {
     InMemoryPrincipalStore principalStore = new();
     EntraTicketProcessor processor = await ProcessorAsync(principalStore);
@@ -289,7 +291,8 @@ public class Bootstrap_Given_
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     stored.ShouldNotBeNull();
-    stored!.Label.ShouldBe("Steven Cramer");
+    stored!.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    stored.AccountHint.ShouldBeNull("the name claim names the person, not the account");
   }
 
   public static async Task Link_Second_Active_Entra_Should_409_Already_Linked()
@@ -327,7 +330,7 @@ public class Bootstrap_Given_
     credentials.Count(c => c.Type == CredentialType.EntraAccount && !c.IsRevoked).ShouldBe(1);
   }
 
-  public static async Task Link_Should_Set_Label_From_Preferred_Username()
+  public static async Task Link_Should_Store_Preferred_Username_As_Account_Hint()
   {
     InMemoryPrincipalStore principalStore = new();
     Principal caller = Principal.Create(PrincipalKind.Human);
@@ -353,7 +356,67 @@ public class Bootstrap_Given_
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     stored.ShouldNotBeNull();
-    stored!.Label.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+    stored!.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    stored.AccountHint.ShouldBe("Steven.Cramer@TimeWarp.Enterprises");
+    stored.Handle.ShouldBe(EntraAccountHandle.Encode(TrustedTenantId, objectId), "the join key stays tid:oid");
+  }
+
+  public static async Task Sync_Hit_Should_Refresh_Account_Hint_And_Keep_It_When_Claim_Absent()
+  {
+    InMemoryPrincipalStore principalStore = new();
+    Principal owner = Principal.Create(PrincipalKind.Human);
+    await principalStore.AddPrincipalAsync(owner);
+    Guid objectId = Guid.NewGuid();
+    byte[] handle = EntraAccountHandle.Encode(TrustedTenantId, objectId);
+    // A link made before task 250: provider label, no hint.
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        owner.Id,
+        CredentialType.EntraAccount,
+        handle,
+        EntraIssuerMaterial.FromTenantId(TrustedTenantId),
+        EntraIdTokenClaims.ProviderLabel));
+    EntraTicketProcessor processor = await ProcessorAsync(principalStore);
+    string issuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(TrustedTenantId));
+
+    OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails> signedIn = await processor.ProcessAsync(
+      new EntraIdTokenClaims(TrustedTenantId, objectId, issuer, "Steven Cramer", "steve@contoso.com"),
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None);
+
+    signedIn.IsT0.ShouldBeTrue();
+    signedIn.AsT0.ShouldBe(owner.Id);
+    Credential? refreshed = await principalStore.FindCredentialByHandleAsync(CredentialType.EntraAccount, handle);
+    refreshed!.AccountHint.ShouldBe("steve@contoso.com", "sign-in backfills a pre-250 link");
+    long versionAfterRefresh = refreshed.Version;
+
+    // Same value again: no write.
+    (await processor.ProcessAsync(
+      new EntraIdTokenClaims(TrustedTenantId, objectId, issuer, "Steven Cramer", "steve@contoso.com"),
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None)).IsT0.ShouldBeTrue();
+    (await principalStore.FindCredentialByHandleAsync(CredentialType.EntraAccount, handle))!
+      .Version.ShouldBe(versionAfterRefresh, "an unchanged hint does not write");
+
+    // Token without preferred_username: the stored hint is kept.
+    (await processor.ProcessAsync(
+      new EntraIdTokenClaims(TrustedTenantId, objectId, issuer, "Steven Cramer"),
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None)).IsT0.ShouldBeTrue();
+    (await principalStore.FindCredentialByHandleAsync(CredentialType.EntraAccount, handle))!
+      .AccountHint.ShouldBe("steve@contoso.com");
+
+    // UPN rename upstream: the next sign-in follows it.
+    (await processor.ProcessAsync(
+      new EntraIdTokenClaims(TrustedTenantId, objectId, issuer, "Steven Cramer", "steven@contoso.com"),
+      EntraTicketProcessor.ModeBootstrap,
+      linkCallerPrincipalId: null,
+      CancellationToken.None)).IsT0.ShouldBeTrue();
+    (await principalStore.FindCredentialByHandleAsync(CredentialType.EntraAccount, handle))!
+      .AccountHint.ShouldBe("steven@contoso.com");
   }
 
   public static async Task Link_Same_Handle_Again_Should_409_Already_On_This_Account()
@@ -384,7 +447,7 @@ public class Bootstrap_Given_
     result.AsT2.Status.ShouldBe(409);
   }
 
-  public static async Task Bootstrap_Should_Fall_Back_Label_When_Claims_Have_No_Name()
+  public static async Task Bootstrap_Should_Store_Provider_Label_When_Claims_Have_No_Name()
   {
     InMemoryPrincipalStore principalStore = new();
     EntraTicketProcessor processor = await ProcessorAsync(principalStore);
@@ -400,7 +463,8 @@ public class Bootstrap_Given_
       CredentialType.EntraAccount,
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     stored.ShouldNotBeNull();
-    stored!.Label.ShouldBe(EntraIdTokenClaims.FallbackCredentialLabel);
+    stored!.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
+    stored.AccountHint.ShouldBeNull();
   }
 
   private static async Task<EntraTicketProcessor> ProcessorAsync(IPrincipalStore? principalStore = null)
