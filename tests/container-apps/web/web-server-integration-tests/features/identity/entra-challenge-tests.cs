@@ -8,6 +8,8 @@
 // from test headers. Unknown-handle bootstrap parks claims and 302s to /Login/Microsoft365/Choose
 // (no principal). Create is exercised via the real CompleteEntraBootstrapCreate handler mapped on
 // this host. Link of a foreign active handle merges; already-on-this-account is 409.
+// CredentialUsageRecorder is registered as the singleton the real host's InMemoryIdentityStoresModule
+// provides; sync-hit and link assert the last-used stamp end-to-end (task 252).
 #endregion
 
 namespace EntraChallenge_;
@@ -74,6 +76,7 @@ public class Challenge_Given_
     builder.Services.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
     builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
+    builder.Services.AddSingleton<CredentialUsageRecorder>();
     builder.Services.AddScoped<EntraTicketProcessor>();
     builder.Services.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
     builder.Services.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
@@ -322,6 +325,7 @@ public class Challenge_Given_
       EntraAccountHandle.Encode(TrustedTenantId, objectId));
     found.ShouldNotBeNull();
     found!.PrincipalId.ShouldBe(existing.Id);
+    found.LastUsedAt.ShouldNotBeNull("a Microsoft 365 sign-in stamps last-used (task 252)");
   }
 
   public static async Task Link_With_Session_Should_Attach_And_Redirect()
@@ -340,6 +344,7 @@ public class Challenge_Given_
     found.ShouldNotBeNull();
     found!.PrincipalId.ShouldBe(caller.Id);
     found.IsRevoked.ShouldBeFalse();
+    found.LastUsedAt.ShouldNotBeNull("linking stamps last-used (task 252)");
     found.Label.ShouldBe(EntraIdTokenClaims.ProviderLabel);
     found.AccountHint.ShouldBeNull("the name claim names the person, not the account (task 250)");
   }

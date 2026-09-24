@@ -35,10 +35,25 @@
 // credential (sync-hit, and the already-linked early return of CompleteBootstrapCreateAsync) also
 // refreshes AccountHint when the token carries a different preferred_username — that backfills links
 // made before 250 (which have no hint) and follows UPN renames. A token WITHOUT preferred_username
-// leaves the stored hint alone (absence is not evidence the account changed). The refresh write is
-// advisory like last-used (CredentialUsageRecorder): it only happens when the value changed, and a
-// lost Version race is DROPPED — a concurrent revoke/rename wins and the next sign-in retries. The
+// leaves the stored hint alone (absence is not evidence the account changed). The refresh is
+// advisory like last-used and is persisted BY the last-used stamp write (task 252, below): a lost
+// Version race is DROPPED — a concurrent revoke/rename wins and the next sign-in retries. The
 // hint is PII: it is never logged here and reaches the wire only via the caller's own GetCredentials.
+// Last-used (task 252): every successful Entra sign-in stamps Credential.LastUsedAt through
+// CredentialUsageRecorder.RecordAsync — the same per-ceremony write as passkey sign-in and agent-token
+// issuance (248-002). Stamp points: sync-hit, the already-linked early return of
+// CompleteBootstrapCreateAsync, the bootstrap-create race winner, and every link that lands a
+// credential (new link, bootstrap mint, already-have attach, and link-merge of a foreign owner — the
+// merged row is re-read first because MergePrincipalAsync re-parented and re-versioned it). Each stamp
+// runs AFTER the principal liveness/quarantine check of its path, so a quarantined principal never
+// stamps. One UPDATE per sign-in: the AccountHint refresh is applied to the same snapshot in memory
+// (SetAccountHint) and persisted by the recorder's stamp write, so hint + stamp land in one Version
+// bump. Consequently every sign-in writes once (the stamp always advances), not only when the hint
+// changed. Races follow the recorder's rule: a lost Version race is dropped, never retried, for both
+// fields — revoke wins; the next sign-in retries. Edge: if the stamp does not advance (the clock
+// regressed below the stored instant) the recorder skips the write and a changed hint waits for the
+// next sign-in — advisory display state, not worth a second write. A new link is INSERT (Add) then
+// the stamp UPDATE: the recorder owns the clock and the race rule, so Create does not pre-stamp.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -63,6 +78,7 @@ public sealed class EntraTicketProcessor
   private readonly IPrincipalStore PrincipalStore;
   private readonly IPrincipalRoleStore PrincipalRoleStore;
   private readonly IEntraSignInPolicy EntraSignInPolicy;
+  private readonly CredentialUsageRecorder UsageRecorder;
   private readonly ILogger<EntraTicketProcessor> Logger;
 
   public EntraTicketProcessor
@@ -70,12 +86,14 @@ public sealed class EntraTicketProcessor
     IPrincipalStore principalStore,
     IPrincipalRoleStore principalRoleStore,
     IEntraSignInPolicy entraSignInPolicy,
+    CredentialUsageRecorder usageRecorder,
     ILogger<EntraTicketProcessor> logger
   )
   {
     PrincipalStore = principalStore;
     PrincipalRoleStore = principalRoleStore;
     EntraSignInPolicy = entraSignInPolicy;
+    UsageRecorder = usageRecorder;
     Logger = logger;
   }
 
@@ -152,7 +170,7 @@ public sealed class EntraTicketProcessor
 
     if (existing is { IsRevoked: false })
     {
-      return await CompleteLinkWhenHandleOwnedAsync(existing, caller, cancellationToken);
+      return await CompleteLinkWhenHandleOwnedAsync(existing, claims, caller, cancellationToken);
     }
 
     OneOf<PrincipalId, SharedProblemDetails> alreadyLinked = await RefuseIfCallerAlreadyHasEntraAsync(
@@ -175,6 +193,7 @@ public sealed class EntraTicketProcessor
 
   private async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> CompleteLinkWhenHandleOwnedAsync(
     Credential existing,
+    EntraIdTokenClaims claims,
     PrincipalId caller,
     CancellationToken cancellationToken)
   {
@@ -215,6 +234,13 @@ public sealed class EntraTicketProcessor
       return IdentityProblems.TooMuchContention();
     }
 
+    // Merge re-parented and re-versioned the row; stamp a fresh snapshot, not the pre-merge one.
+    Credential? merged = await PrincipalStore.GetCredentialAsync(existing.Id, cancellationToken);
+    if (merged is { IsRevoked: false })
+    {
+      await RecordSignInAsync(merged, claims, cancellationToken);
+    }
+
     return caller;
   }
 
@@ -247,7 +273,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
-      await RefreshAccountHintAsync(existing, claims, cancellationToken);
+      await RecordSignInAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -315,7 +341,7 @@ public sealed class EntraTicketProcessor
         return IdentityProblems.Quarantined();
       }
 
-      await RefreshAccountHintAsync(existing, claims, cancellationToken);
+      await RecordSignInAsync(existing, claims, cancellationToken);
       return existing.PrincipalId;
     }
 
@@ -364,12 +390,14 @@ public sealed class EntraTicketProcessor
           return IdentityProblems.Quarantined();
         }
 
+        await RecordSignInAsync(winner, claims, cancellationToken);
         return winner.PrincipalId;
       }
 
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
+    await UsageRecorder.RecordAsync(PrincipalStore, entraCredential, cancellationToken);
     _ = await PrincipalRoleStore.TryClaimFirstAdministratorAsync(created.Id, cancellationToken);
     return created.Id;
   }
@@ -433,24 +461,19 @@ public sealed class EntraTicketProcessor
     return principalId;
   }
 
-  private async Task RefreshAccountHintAsync(
+  private async Task RecordSignInAsync(
     Credential existing,
     EntraIdTokenClaims claims,
     CancellationToken cancellationToken)
   {
-    if (claims.AccountHint is null || !existing.SetAccountHint(claims.AccountHint))
+    // Hint refresh rides the stamp write (one UPDATE); an absent claim keeps the stored hint.
+    if (claims.AccountHint is not null)
     {
-      return;
+      existing.SetAccountHint(claims.AccountHint);
     }
 
-    try
-    {
-      await PrincipalStore.UpdateCredentialAsync(existing, cancellationToken);
-    }
-    catch (ConcurrencyConflictException)
-    {
-      // Advisory display text: a concurrent writer (revoke / rename) wins; the next sign-in retries.
-    }
+    // Advisory: a lost Version race is dropped inside the recorder, never retried (Design region).
+    await UsageRecorder.RecordAsync(PrincipalStore, existing, cancellationToken);
   }
 
   private async Task<OneOf<PrincipalId, SharedProblemDetails>> AttachEntraToPrincipalAsync(
@@ -476,6 +499,7 @@ public sealed class EntraTicketProcessor
       return IdentityProblems.CredentialAlreadyRegistered("Entra account");
     }
 
+    await UsageRecorder.RecordAsync(PrincipalStore, credential, cancellationToken);
     return principalId;
   }
 }

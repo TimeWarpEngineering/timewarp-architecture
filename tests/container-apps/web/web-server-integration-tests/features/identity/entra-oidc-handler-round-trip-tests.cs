@@ -90,6 +90,7 @@ public class Callback_Given_
     builder.Services.AddSingleton<ISiteSettingsStore, InMemorySiteSettingsStore>();
     builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddScoped<IBrowserSessionService, CookieBrowserSessionService>();
+    builder.Services.AddSingleton<CredentialUsageRecorder>();
     builder.Services.AddScoped<EntraTicketProcessor>();
     builder.Services.AddSingleton<IParkedEntraClaimsStore, InMemoryParkedEntraClaimsStore>();
     builder.Services.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
