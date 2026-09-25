@@ -140,3 +140,17 @@ with the identical username; a different account shows a different fingerprint.
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
 - Implemented (ganda task work implement node, 2026-09-24): see Results.
 - Reviewed (ganda task work review oracle, Claude Opus 5.5, effort 1 / general, 2026-09-24): accepted-exceptions — see `review/`.
+
+## Fix loop (2026-09-25, cockpit) — close review M1
+
+Steve reversed the M1 wontfix: this is a template with no deployed pre-change clients, so the
+"cached old SPA bundle" rationale does not apply. Required on this branch:
+
+- `AddPasskey` must refuse a challenge that was issued for a NEW account (one that carries a
+  pending principal id) with the same uniform 400 ChallengeInvalid used by Complete for the
+  mirror case, before any credential is written. After this, a passkey's stored username always
+  names the account it is attached to.
+- Update review M1 to fixed (round-2 merged/disposition), reconcile the AddPasskey Design region,
+  and add an integration test: new-account challenge used for AddPasskey → 400, no credential added.
+- Gates in the FOREGROUND: `dev build` 0/0, `dev test`, `dev template-smoke`. Push to PR #404.
+- Do NOT start an AppHost.
