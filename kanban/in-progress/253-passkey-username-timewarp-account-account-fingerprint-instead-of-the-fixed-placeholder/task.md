@@ -108,11 +108,19 @@ No new required signup field.
 - `TimeWarp.Identity` public API grew (`PrincipalFingerprint`, `Principal.Create(kind, id)`, challenge-store
   overloads); source `<Version>` 2.0.0-beta.20 is already ahead of the latest release (v2.0.0-beta.19), so no bump.
 
-- **Review (task-work review oracle, effort 1, roster: general):** 1 round; final counts bug 0 · suggestion 0 open / 1 wontfix · nit 0.
-  Disposition **accepted-exceptions** — M1 (AddPasskey does not refuse a new-account challenge, so a
-  non-SPA or pre-deploy cached client could store a phantom fingerprint in that passkey's name) is wontfix:
-  cosmetic, attach target is always the caller, enforcing would break cached pre-deploy SPA bundles.
-  Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- **Review (task-work review oracle, effort 1, roster: general):** round 1 found bug 0 · suggestion 1 · nit 0;
+  M1 was first accepted as wontfix, then reversed by Steve (2026-09-25 fix loop) and **fixed in round 2**.
+  Disposition **clean** — final open 0. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
+- **Fix loop (M1):** `AddPasskey` refuses a challenge issued for a NEW account (one carrying a pending
+  principal id) with the uniform 400 ChallengeInvalid Complete uses for the mirror case, before any credential
+  is written. A passkey's stored username now always names the account it is attached to. Design regions
+  reconciled (AddPasskey contract + handler, registration ceremony). Test helper
+  `CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(app, authenticator, sessionCookie)` starts
+  ForCurrentAccount when given the caller's cookie; all AddPasskey test call sites pass it. New integration test
+  `BadRequest_And_No_Credential_Given_New_Account_Challenge_Used_For_AddPasskey` (400, credential count unchanged).
+  Gates re-run: `dev build` 0/0; `dev test` 21 projects, 1430 total / 0 failed / 1 skipped (pre-existing);
+  `dev template-smoke` SUCCEEDED. No AppHost started.
 
 ### How to validate
 
@@ -124,7 +132,7 @@ cd tests/libraries/timewarp-identity-tests && dotnet test -c Release -- --filter
 cd tests/container-apps/web/web-contracts-tests && dotnet test -c Release
 ```
 
-**Expect:** all pass (6 / 9 / 46). Manual (on a machine where running the app is allowed): sign up with a
+**Expect:** all pass (7 / 9 / 46) — `PasskeyAccountName_` includes the AddPasskey new-account-challenge refusal (400). Manual (on a machine where running the app is allowed): sign up with a
 passkey → the password manager saves the username `TimeWarp account · xxxxxxxx`; Settings shows
 `Signed in · TimeWarp account · xxxxxxxx` with the same 8 hex; "Create a passkey" there saves a second entry
 with the identical username; a different account shows a different fingerprint.
@@ -140,6 +148,7 @@ with the identical username; a different account shows a different fingerprint.
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-24)
 - Implemented (ganda task work implement node, 2026-09-24): see Results.
 - Reviewed (ganda task work review oracle, Claude Opus 5.5, effort 1 / general, 2026-09-24): accepted-exceptions — see `review/`.
+- Fix loop implemented (ganda task work implement node, 2026-09-25): M1 fixed; disposition now clean.
 
 ## Fix loop (2026-09-25, cockpit) — close review M1
 
@@ -154,3 +163,7 @@ Steve reversed the M1 wontfix: this is a template with no deployed pre-change cl
   and add an integration test: new-account challenge used for AddPasskey → 400, no credential added.
 - Gates in the FOREGROUND: `dev build` 0/0, `dev test`, `dev template-smoke`. Push to PR #404.
 - Do NOT start an AppHost.
+
+- [x] AddPasskey refuses a new-account challenge (400 ChallengeInvalid, no credential)
+- [x] Review M1 → fixed (round-2 merged + disposition); AddPasskey Design region reconciled
+- [x] Integration test added; gates re-run in the foreground; no AppHost started

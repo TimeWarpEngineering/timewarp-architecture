@@ -12,7 +12,7 @@
 
 ## Issues
 
-### M1 — Severity: suggestion — Status: wontfix
+### M1 — Severity: suggestion — Status: wontfix (superseded — fixed in round 2)
 - File: source/container-apps/web/features/identity/add-passkey/add-passkey-handler-application.cs:82
 - Description: AddPasskey accepts a challenge started for a new account (pending id present), so the
   added passkey can carry a phantom account's fingerprint in its stored name.

@@ -31,7 +31,8 @@
 // Task 253: the consume also returns the challenge's PendingPrincipalId (pre-allocated by
 // StartPasskeyRegistration for a new account; null when the start named the signed-in account) on
 // Materials. The ceremony does not interpret it — Complete mints the principal with it (and
-// refuses null); AddPasskey ignores it (its principal is the authenticated caller).
+// refuses null); AddPasskey refuses non-null (its principal is the authenticated caller, so the
+// stored name must be the caller's). Each caller enforces the kind of start it accepts.
 //
 // Round-1 M5 (AddPasskey): reusing WebAuthnCeremonyType.Registration for "add to existing principal"
 // is intentional and safe — the challenge is an intent-agnostic liveness proof; principal targeting

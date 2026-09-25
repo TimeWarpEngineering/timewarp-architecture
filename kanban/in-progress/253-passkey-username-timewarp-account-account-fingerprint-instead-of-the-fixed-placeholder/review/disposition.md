@@ -1,22 +1,21 @@
 # Disposition — task 253
 
-**Date:** 2026-09-24
-**Outcome:** accepted-exceptions
-**Rounds:** 1
+**Date:** 2026-09-25
+**Outcome:** clean
+**Rounds:** 2
 **Final open count:** 0
 
 ## Summary
 
-Effort-1 general review of commit 188466a1 found no bugs. One suggestion (M1: AddPasskey does not
-refuse new-account challenges) was accepted as wontfix: cosmetic naming only, the attach target is
-always the authenticated caller, and enforcing it would break AddPasskey for SPA bundles cached from
-before the deploy.
+Round 1 (2026-09-24, effort-1 general review of commit 188466a1) found no bugs and one suggestion
+(M1: AddPasskey does not refuse new-account challenges), initially accepted as wontfix. Steve reversed
+that on 2026-09-25 — the template has no deployed pre-change clients, so the cached-bundle rationale
+does not hold. Round 2 fixed M1: AddPasskey refuses a new-account challenge with 400 ChallengeInvalid
+before writing a credential. A passkey's stored username now always names the account it is attached to.
 
 ## Exception log (if accepted-exceptions)
 
-| ID | Severity | Rationale | Decided by |
-|----|----------|-----------|------------|
-| M1 | suggestion | Name-only mislabel for non-SPA/legacy-bundle callers; no security impact; enforcing breaks cached pre-deploy SPA bundles | orchestrator (review oracle) |
+- None (M1 fixed in round 2).
 
 ## Escalations
 

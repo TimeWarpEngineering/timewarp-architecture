@@ -13,6 +13,9 @@
 // fingerprint in the name Start sent equals PrincipalFingerprint of the PrincipalId Complete returns
 // (the pre-allocated id is never on the wire, so there is nothing else to compare against — that
 // absence is itself pinned at contract level by StartPasskeyRegistration_Command_Should).
+// The two refusals mirror each other: a current-account challenge cannot mint a new account
+// (Complete → 400, no principal) and a new-account challenge cannot add to the caller's account
+// (AddPasskey → 400, no credential) — so a stored name always names the account it belongs to.
 // "Unused challenge leaves no principal" counts IPrincipalStore principals around Start calls that
 // are never completed; expiry of the same state is pinned in the library's challenge-store tests.
 #endregion
@@ -139,6 +142,32 @@ public class Returns_
     (await CountPrincipalsAsync()).ShouldBe(before);
   }
 
+  public static async Task BadRequest_And_No_Credential_Given_New_Account_Challenge_Used_For_AddPasskey()
+  {
+    (PrincipalId principalId, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    using HttpClient client = NewClient(sessionCookie);
+    int before = await CountCredentialsAsync(principalId);
+
+    (_, _, byte[] challenge) = await StartAsync(client, forCurrentAccount: false);
+    (string credentialId, string clientDataJson, string attestationObject) =
+      BuildAttestation(challenge, new IntegrationSoftwareAuthenticator());
+    var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
+    HttpResponseMessage response = await testApiService.GetHttpResponseMessage
+    (
+      new AddPasskey.Command
+      {
+        UserId = Guid.NewGuid(),
+        CredentialId = credentialId,
+        ClientDataJson = clientDataJson,
+        AttestationObject = attestationObject
+      },
+      CancellationToken.None
+    );
+
+    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    (await CountCredentialsAsync(principalId)).ShouldBe(before);
+  }
+
   public static async Task Unused_Challenges_Leave_No_Principal()
   {
     using HttpClient client = NewClient(sessionCookie: null);
@@ -261,6 +290,13 @@ public class Returns_
     HttpResponseMessage response = await client.GetAsync(GetCurrentSession.Query.RouteTemplate);
     return JsonSerializer.Deserialize<GetCurrentSession.Response>(await response.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetCurrentSession response deserialized to null.");
+  }
+
+  private static async Task<int> CountCredentialsAsync(PrincipalId principalId)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    return (await principalStore.ListCredentialsAsync(principalId)).Count;
   }
 
   private static async Task<int> CountPrincipalsAsync()

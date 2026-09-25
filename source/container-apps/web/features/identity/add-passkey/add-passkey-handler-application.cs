@@ -20,9 +20,13 @@
 // Task 248-001: Label is ALWAYS the AAGUID provider name (materials.ProviderLabel); the caller's
 // Nickname is stored separately; RegisteredWith is resolved from the command's browser hints plus
 // IRequestUserAgentAccessor (raw UA never stored — see RegistrationContext's Design region).
-// Task 253: materials.PendingPrincipalId is ignored — the attach target is always the caller. The
-// SPA starts this ceremony with StartPasskeyRegistration.ForCurrentAccount so the stored WebAuthn
-// user name is the caller's own "TimeWarp account · <fingerprint>".
+// Task 253: the ceremony must have been started with StartPasskeyRegistration.ForCurrentAccount, so
+// the WebAuthn user name the authenticator stored is the caller's own "TimeWarp account ·
+// <fingerprint>". A challenge carrying a PendingPrincipalId was issued for a NEW account — its name
+// describes a principal that will never exist — so it is refused with the same uniform 400
+// ChallengeInvalid Complete uses for the mirror case, before any credential is written (the
+// challenge is already consumed). The pending id is never used as the attach target: that is always
+// the caller.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -93,6 +97,12 @@ public sealed partial class AddPasskey
       }
 
       PasskeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
+
+      // A new-account challenge named a different (never-minted) account — see Design region.
+      if (materials.PendingPrincipalId is not null)
+      {
+        return IdentityProblems.ChallengeInvalid("registration");
+      }
 
       // Label = AAGUID provider name (task 168); Nickname = caller's own name; both kept (task 248-001).
       RegisteredWith registeredWith =

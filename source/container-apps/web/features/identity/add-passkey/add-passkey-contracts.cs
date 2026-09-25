@@ -23,9 +23,10 @@
 // is side-effect-free (mints options/a challenge, creates nothing), so there is nothing
 // security-sensitive about a signed-in caller using the same minting endpoint an anonymous
 // registration flow uses; the SECURITY-sensitive half (attaching the resulting credential to a
-// principal) only happens in this authenticated command's handler. Task 253: the SPA sets
-// StartPasskeyRegistration.ForCurrentAccount on that start so the WebAuthn user name is the
-// caller's own account name (read from the session there, never from this command's UserId).
+// principal) only happens in this authenticated command's handler. Task 253: the start MUST set
+// StartPasskeyRegistration.ForCurrentAccount so the WebAuthn user name is the caller's own account
+// name (read from the session there, never from this command's UserId); the handler refuses a
+// new-account challenge with 400 ChallengeInvalid.
 // Wave-1 simplification (documented, not an oversight): the reused Start endpoint does not
 // populate WebAuthn's excludeCredentials with the caller's
 // existing credential ids — a browser could technically be prompted to re-register a passkey it
