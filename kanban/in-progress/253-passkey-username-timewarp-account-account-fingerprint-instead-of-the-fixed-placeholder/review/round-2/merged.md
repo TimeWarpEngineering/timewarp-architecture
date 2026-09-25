@@ -28,3 +28,12 @@
 ## Duplicates / conflicts
 
 - None.
+
+## Re-verification (review oracle, effort 1, general, 2026-09-25)
+
+- Re-read the fix delta (commit e0d7fa8a vs bf3fc1e6). The refusal comes after the challenge is consumed and before any
+  credential write. The shipped SPA add-passkey path sends `ForCurrentAccount = true`
+  (`credentials-state.add-passkey.cs`). The sign-up path goes through Complete, not AddPasskey, so it is unaffected.
+  The Design regions match the code.
+- Tests re-run: `PasskeyAccountName` 7/7, `Credential*` 29/29 (web-server-integration-tests, Release).
+- M1 confirmed **fixed**. No new findings. Final open count 0.

@@ -110,6 +110,8 @@ No new required signup field.
 
 - **Review (task-work review oracle, effort 1, roster: general):** round 1 found bug 0 · suggestion 1 · nit 0;
   M1 was first accepted as wontfix, then reversed by Steve (2026-09-25 fix loop) and **fixed in round 2**.
+  Round 2 was re-verified by the review oracle (2026-09-25): M1 fix confirmed, no new findings, and the targeted suites
+  passed (PasskeyAccountName 7/7, Credential* 29/29).
   Disposition **clean** — final open 0. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`,
   `review/round-2/merged.md`, `review/disposition.md`.
 - **Fix loop (M1):** `AddPasskey` refuses a challenge issued for a NEW account (one carrying a pending

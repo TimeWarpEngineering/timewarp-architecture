@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-25
 **Outcome:** clean
-**Rounds:** 2
+**Rounds:** 2 (round 2 re-verified by review oracle, 2026-09-25)
 **Final open count:** 0
 
 ## Summary
