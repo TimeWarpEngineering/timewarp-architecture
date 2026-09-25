@@ -28,6 +28,12 @@
 // Does NOT consume challenges for Authentication — Registration only. Does NOT Issue sessions or
 // create principals; those are handler-specific post-verify actions.
 //
+// Task 253: the consume also returns the challenge's PendingPrincipalId (pre-allocated by
+// StartPasskeyRegistration for a new account; null when the start named the signed-in account) on
+// Materials. The ceremony does not interpret it — Complete mints the principal with it (and
+// refuses null); AddPasskey refuses non-null (its principal is the authenticated caller, so the
+// stored name must be the caller's). Each caller enforces the kind of start it accepts.
+//
 // Round-1 M5 (AddPasskey): reusing WebAuthnCeremonyType.Registration for "add to existing principal"
 // is intentional and safe — the challenge is an intent-agnostic liveness proof; principal targeting
 // is enforced by the caller's auth boundary + ICurrentPrincipalAccessor, never by challenge type.
@@ -43,12 +49,13 @@ internal static class PasskeyRegistrationCeremony
   /// </summary>
   internal sealed class Materials
   {
-    public Materials(byte[] credentialId, byte[] cosePublicKey, byte[]? aaguid, string? providerLabel)
+    public Materials(byte[] credentialId, byte[] cosePublicKey, byte[]? aaguid, string? providerLabel, PrincipalId? pendingPrincipalId)
     {
       CredentialId = credentialId;
       CosePublicKey = cosePublicKey;
       Aaguid = aaguid;
       ProviderLabel = providerLabel;
+      PendingPrincipalId = pendingPrincipalId;
     }
 
     public byte[] CredentialId { get; }
@@ -56,6 +63,8 @@ internal static class PasskeyRegistrationCeremony
     public byte[]? Aaguid { get; }
     /// <summary>Resolved passkey provider name (e.g. Proton Pass), or null when unknown.</summary>
     public string? ProviderLabel { get; }
+    /// <summary>Principal id pre-allocated with the challenge at start (new account), or null.</summary>
+    public PrincipalId? PendingPrincipalId { get; }
   }
 
   public static async Task<OneOf<Materials, SharedProblemDetails>> TryCompleteAsync
@@ -77,7 +86,7 @@ internal static class PasskeyRegistrationCeremony
     }
 
     if (!WebAuthnChallengeReader.TryReadChallenge(clientDataJsonBytes, out byte[] challenge)
-      || !challengeStore.TryConsume(WebAuthnCeremonyType.Registration, challenge))
+      || !challengeStore.TryConsume(WebAuthnCeremonyType.Registration, challenge, out PrincipalId? pendingPrincipalId))
     {
       return IdentityProblems.ChallengeInvalid("registration");
     }
@@ -103,6 +112,7 @@ internal static class PasskeyRegistrationCeremony
       verifyResult.CredentialId,
       verifyResult.CosePublicKey,
       aaguid.Length == 0 ? null : aaguid,
-      providerLabel);
+      providerLabel,
+      pendingPrincipalId);
   }
 }

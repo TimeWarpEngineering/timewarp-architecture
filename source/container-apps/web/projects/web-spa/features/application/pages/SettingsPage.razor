@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.Identity
 @using TimeWarp.Architecture.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
 @code {
   public static string Title => "Settings";
@@ -9,8 +10,10 @@
 
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
   [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
+  [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
   private bool ShowMicrosoft365;
+  private string? AccountFingerprint;
 
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
@@ -27,6 +30,15 @@
     {
       await NoSubSiteSettingsState.FetchSiteSettings();
     }
+  }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    await base.OnParametersSetAsync();
+    AccountFingerprint = AuthenticationStateTask is null
+      ? null
+      : (await AuthenticationStateTask).User
+        .FindFirst(IdentitySessionAuthenticationStateProvider.AccountFingerprintClaimType)?.Value;
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -107,6 +119,11 @@
 
 <TimeWarpPage Title="Settings">
   <div class="twe-stack">
+
+    @if (AccountFingerprint is not null)
+    {
+      <FluentText data-qa="SignedInAccount">Signed in · @PasskeyAccountName.Format(AccountFingerprint)</FluentText>
+    }
 
     <Section Title="Passkeys" LoadingActionType="typeof(CredentialsState.FetchCredentialsActionSet.Action)">
       <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">

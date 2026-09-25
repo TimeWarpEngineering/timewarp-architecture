@@ -115,3 +115,66 @@ public class CapEviction
     return Task.CompletedTask;
   }
 }
+
+// Task 253: a registration start keeps its pre-allocated principal id WITH the challenge.
+public class Pending_Principal_Id
+{
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Pending_Principal_Id>();
+
+  public static Task Consume_returns_the_id_recorded_at_issue()
+  {
+    var store = new InMemoryWebAuthnChallengeStore();
+    PrincipalId pending = PrincipalId.New();
+    byte[] challenge = store.Issue(WebAuthnCeremonyType.Registration, pending);
+
+    store.TryConsume(WebAuthnCeremonyType.Registration, challenge, out PrincipalId? consumed).ShouldBeTrue();
+    consumed.ShouldBe(pending);
+    return Task.CompletedTask;
+  }
+
+  public static Task Issue_without_id_consumes_with_null()
+  {
+    var store = new InMemoryWebAuthnChallengeStore();
+    byte[] challenge = store.Issue(WebAuthnCeremonyType.Registration);
+
+    store.TryConsume(WebAuthnCeremonyType.Registration, challenge, out PrincipalId? consumed).ShouldBeTrue();
+    consumed.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Is_one_time_and_gone_after_consume()
+  {
+    var store = new InMemoryWebAuthnChallengeStore();
+    byte[] challenge = store.Issue(WebAuthnCeremonyType.Registration, PrincipalId.New());
+
+    store.TryConsume(WebAuthnCeremonyType.Registration, challenge, out _).ShouldBeTrue();
+    store.TryConsume(WebAuthnCeremonyType.Registration, challenge, out PrincipalId? replayed).ShouldBeFalse();
+    replayed.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Expired_challenge_yields_no_id()
+  {
+    var timeProvider = new ManualTimeProvider(DateTimeOffset.UtcNow);
+    var store = new InMemoryWebAuthnChallengeStore(timeProvider, TimeSpan.FromMinutes(5));
+    byte[] challenge = store.Issue(WebAuthnCeremonyType.Registration, PrincipalId.New());
+
+    timeProvider.Advance(TimeSpan.FromMinutes(5) + TimeSpan.FromSeconds(1));
+
+    store.TryConsume(WebAuthnCeremonyType.Registration, challenge, out PrincipalId? consumed).ShouldBeFalse();
+    consumed.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Wrong_ceremony_type_yields_no_id()
+  {
+    var store = new InMemoryWebAuthnChallengeStore();
+    byte[] challenge = store.Issue(WebAuthnCeremonyType.Registration, PrincipalId.New());
+
+    store.TryConsume(WebAuthnCeremonyType.Authentication, challenge, out PrincipalId? consumed).ShouldBeFalse();
+    consumed.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+}

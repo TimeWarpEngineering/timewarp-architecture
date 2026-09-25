@@ -17,6 +17,10 @@
 // copies the inbound Cookie onto the named WebService HttpClient so InteractiveServer/Auto
 // [EndpointAuthorize] calls authenticate. Task 212: the same handler copies Host so passkey
 // RP-ID selection matches the browser origin. This type only fixes CascadingAuthenticationState.
+// Task 253: the cookie principal carries timewarp:principal_id but not the account-fingerprint
+// claim the WASM path projects from GetCurrentSession, so the prerender path adds it (a separate
+// unauthenticated ClaimsIdentity on a cloned principal — HttpContext.User itself is not mutated),
+// computed with the same PrincipalFingerprint the session response uses.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -24,6 +28,7 @@ namespace TimeWarp.Architecture.Web.Server;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+using TimeWarp.Architecture.Configuration;
 
 /// <summary>
 /// Hosted override of the SPA identity-session auth state provider for web-server prerender.
@@ -47,9 +52,28 @@ public sealed class HostedIdentitySessionAuthenticationStateProvider
     ClaimsPrincipal? httpUser = HttpContextAccessor.HttpContext?.User;
     if (httpUser?.Identity?.IsAuthenticated == true)
     {
-      return Task.FromResult(new AuthenticationState(httpUser));
+      return Task.FromResult(new AuthenticationState(WithAccountFingerprint(httpUser)));
     }
 
     return base.GetAuthenticationStateAsync();
+  }
+
+  private static ClaimsPrincipal WithAccountFingerprint(ClaimsPrincipal user)
+  {
+    if (user.HasClaim(claim => claim.Type == AccountFingerprintClaimType))
+    {
+      return user;
+    }
+
+    string? principalIdValue = user.FindFirstValue(IdentitySessionDefaults.PrincipalIdClaimType);
+    if (!Guid.TryParse(principalIdValue, out Guid principalGuid) || principalGuid == Guid.Empty)
+    {
+      return user;
+    }
+
+    ClaimsPrincipal projected = user.Clone();
+    projected.AddIdentity(new ClaimsIdentity(
+      [new Claim(AccountFingerprintClaimType, PrincipalFingerprint.Compute(PrincipalId.From(principalGuid)))]));
+    return projected;
   }
 }
