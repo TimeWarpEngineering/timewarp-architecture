@@ -9,7 +9,7 @@
 // allowlist returns 400 "Host not allowed" without consuming (and wasting) the ceremony's challenge.
 // Ceremony preamble (decode → consume → verify → handle-exists) lives in PasskeyRegistrationCeremony;
 // ordering / replay-safety rationale is owned there. This handler's post-verify path:
-//   Principal.Create → AddPrincipalAsync → Credential.Create → AddCredentialAsync (try/catch race)
+//   Principal.Create(Human, pending id) → AddPrincipalAsync → Credential.Create → AddCredentialAsync (try/catch race)
 //   → TryClaimFirstAdministratorAsync (empty deployment: first human passkey becomes admin)
 //   → BrowserSessionService.IssueAsync.
 // First admin: empty store → this Create account claims Administrator+Member (atomic). Later
@@ -27,6 +27,13 @@
 // harmless until 104-005's store lifecycle work can add removal.
 // Account resolution is credential-handle-based, never by the WebAuthn user.id/userHandle minted in
 // StartPasskeyRegistration — that handle is opaque and discarded; the Principal is minted HERE.
+// Task 253: minted with the PrincipalId StartPasskeyRegistration pre-allocated and kept with the
+// challenge (Materials.PendingPrincipalId, read back on the one-time consume — never from the
+// command), so the new principal's PrincipalFingerprint matches the "TimeWarp account · …" name
+// the authenticator stored. A challenge without one (started with ForCurrentAccount — named for
+// the signed-in account) is refused with the uniform ChallengeInvalid 400 before any principal is
+// minted: a new account must never carry another account's name. The challenge is already
+// consumed at that point (one-time, as for every other post-consume failure).
 // Concurrency note (104-028): zero Update* calls. AddCredentialAsync's first-credential rule
 // auto-promotes the STORED principal Provisional -> Keyed; this handler's in-hand `principal` local
 // is deliberately left stale afterward.
@@ -99,7 +106,14 @@ public sealed partial class CompletePasskeyRegistration
 
       PasskeyRegistrationCeremony.Materials materials = ceremonyResult.AsT0;
 
-      var principal = Principal.Create(PrincipalKind.Human);
+      // The name the authenticator stored was derived from this id (task 253) — refuse a challenge
+      // started for the current account rather than mint a principal the name does not describe.
+      if (materials.PendingPrincipalId is not { } pendingPrincipalId)
+      {
+        return IdentityProblems.ChallengeInvalid("registration");
+      }
+
+      var principal = Principal.Create(PrincipalKind.Human, pendingPrincipalId);
       await PrincipalStore.AddPrincipalAsync(principal, cancellationToken);
 
       // Label from AAGUID → provider map (task 168) so Settings shows "Proton Pass" / "1Password"

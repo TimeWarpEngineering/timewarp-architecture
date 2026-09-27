@@ -127,7 +127,7 @@ public class Returns_
 
     // Add a second credential, then revoke it, so this principal has one active + one revoked.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),

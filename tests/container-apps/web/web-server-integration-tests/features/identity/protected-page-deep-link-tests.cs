@@ -24,6 +24,8 @@
 // when the row is the last active credential of ANY kind — an agent key on the same principal
 // re-enables it even though the page lists only passkeys (same count as RevokeCredential.Handler).
 // Pinned on Settings (Member) and on the Developer-gated /Passkeys demo page.
+// Task 253: Settings prerender shows "Signed in · TimeWarp account · <fingerprint>" — the hosted
+// auth-state provider derives the fingerprint claim from the cookie principal (no HTTP loopback).
 #endregion
 
 namespace ProtectedPageDeepLink_;
@@ -145,6 +147,9 @@ public class Returns_
     html.ShouldContain("Passkeys");
     html.ShouldContain("data-qa=\"CreatePasskey\"");
     html.ShouldContain("data-qa=\"AddExistingPasskey\"");
+    // Task 253: the signed-in account line carries the same fingerprint as the passkey user name.
+    html.ShouldContain("data-qa=\"SignedInAccount\"");
+    html.ShouldContain(PrincipalFingerprint.Compute(principalId));
     html.ShouldNotContain("Sign in to continue",
       customMessage: "Prerender rendered RedirectToLogin's fallback — auth state was anonymous despite a valid cookie.");
     html.ShouldNotContain("data-qa=\"AuthenticationSettings\"");

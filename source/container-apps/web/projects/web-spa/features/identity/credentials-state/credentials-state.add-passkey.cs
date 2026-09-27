@@ -4,7 +4,8 @@
 
 #region Design
 // Multi-step ceremony cannot be a single DefaultApiHandler request:
-//   1. HTTP StartPasskeyRegistration (anonymous options mint — same as product Login create path)
+//   1. HTTP StartPasskeyRegistration with ForCurrentAccount=true (task 253: the server names the
+//      passkey for the signed-in account, "TimeWarp account · <fingerprint>", from the session)
 //   2. browser WebAuthnJsModule.CreateCredentialAsync (import of web-authn.js, not window.Spa)
 //   3. HTTP AddPasskey (authenticated attach)
 // Both HTTP legs go through IWebServerApiService inside this ActionSet (not the page, not a
@@ -77,7 +78,7 @@ partial class CredentialsState
         {
           OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> startResult =
             await ApiService.GetResponse<StartPasskeyRegistration.Response>(
-              new StartPasskeyRegistration.Command(),
+              new StartPasskeyRegistration.Command { ForCurrentAccount = true },
               cancellationToken);
 
           if (!startResult.IsT0)

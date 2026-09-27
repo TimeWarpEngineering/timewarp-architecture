@@ -34,6 +34,11 @@
 // provider name; Cancel there clears the pending state (ClearPendingNickname). Revoke/Unlink is
 // two-step inside CredentialList (restating confirmation) and both steps honor 246's disable.
 // Rename outcomes land in the shell notification region, not the page-local bars below.
+// Task 253: "Signed in · TimeWarp account · <fingerprint>" heads the page so the account matches
+// its password-manager entries (every new passkey's WebAuthn user name). The fingerprint is the
+// AccountFingerprint claim the identity-session auth state projects from GetCurrentSession (or the
+// hosted provider derives during prerender); the text is PasskeyAccountName, the same formatter
+// StartPasskeyRegistration uses. Mock auth has no such claim, so the line is simply absent.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -44,5 +49,6 @@ namespace TimeWarp.Architecture.Features.Applications;
 [CrossSliceReference(typeof(CredentialList), "Settings composes the Identity credential list; Applications owns the page chrome.")]
 [CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
 [CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for passkey prompt; Microsoft 365 section is gated on GetEntraSignInOffered.")]
+[CrossSliceReference(typeof(PasskeyAccountName), "Settings shows the signed-in account name with the same Identity formatter that names new passkeys.")]
 [CrossSliceReference(typeof(GetEntraSignInOffered), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
 partial class SettingsPage;

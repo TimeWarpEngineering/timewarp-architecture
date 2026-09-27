@@ -6,8 +6,11 @@
 #endregion
 
 #region Design
+// Task 253 pin (StartPasskeyRegistration_Command_Should): neither passkey registration Command
+// carries a PrincipalId/Guid property — the pre-allocated account id lives only with the challenge,
+// so there is no wire field a client could use to pick the principal Complete mints.
 // StartPasskeyRegistration/StartPasskeyAuthentication/StartAgentKeyRegistration/
-// StartAgentTokenIssuance's empty Command bodies and their Response's single-string-property shape
+// StartAgentTokenIssuance's empty (or single-flag) Command bodies and their Response's single-string-property shape
 // are plain auto-property POCOs — no test here per the skill's "trivial auto-property POCOs are
 // deliberately not written" guidance; the Complete* commands/responses, GetCurrentSession, and
 // GetAgentIdentity are the shapes worth pinning (typed-id ctor Guard, optional property, nullable
@@ -143,6 +146,9 @@ public class GetCurrentSession_Response_Should
     parsed.PrincipalId.ShouldBe(response.PrincipalId);
     parsed.RoleIds.ShouldBe(response.RoleIds);
     parsed.Permissions.ShouldBe(response.Permissions);
+    // Task 253: the account fingerprint travels and matches the principal it was derived from.
+    parsed.AccountFingerprint.ShouldBe(PrincipalFingerprint.Compute(response.PrincipalId!.Value));
+    parsed.AccountFingerprint.ShouldBe(response.AccountFingerprint);
     return Task.CompletedTask;
   }
 
@@ -154,8 +160,41 @@ public class GetCurrentSession_Response_Should
 
     parsed.IsAuthenticated.ShouldBeFalse();
     parsed.PrincipalId.ShouldBeNull();
+    parsed.AccountFingerprint.ShouldBeNull();
     parsed.RoleIds.ShouldBeEmpty();
     parsed.Permissions.ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+}
+
+public class StartPasskeyRegistration_Command_Should
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<StartPasskeyRegistration_Command_Should>();
+
+  public static Task Carry_No_Principal_Id_On_The_Wire()
+  {
+    Type[] commandTypes = [typeof(StartPasskeyRegistration.Command), typeof(CompletePasskeyRegistration.Command)];
+    foreach (Type commandType in commandTypes)
+    {
+      commandType.GetProperties()
+        .Where(property => property.PropertyType == typeof(PrincipalId)
+          || property.PropertyType == typeof(PrincipalId?)
+          || property.PropertyType == typeof(Guid)
+          || property.PropertyType == typeof(Guid?))
+        .ShouldBeEmpty($"{commandType.FullName} must not let a client supply the principal id.");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task SerializeAndDeserialize_ForCurrentAccount()
+  {
+    StartPasskeyRegistration.Command command = new() { ForCurrentAccount = true };
+
+    StartPasskeyRegistration.Command parsed = ContractSerialization.RoundTrip(command);
+
+    parsed.ForCurrentAccount.ShouldBeTrue();
     return Task.CompletedTask;
   }
 }

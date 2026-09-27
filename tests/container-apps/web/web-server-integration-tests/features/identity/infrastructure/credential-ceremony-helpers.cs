@@ -19,9 +19,11 @@
 // test file still owns which endpoint it posts the result to (CompletePasskeyRegistration for a first
 // credential vs. AddPasskey for an additional one) and which auth header (if any) it attaches, so the
 // actual behavior under test stays local to each file, not hidden in this helper.
-// Uses WebTestServerApplication.HttpClient (the shared per-class ambient client) for the ceremony
-// calls themselves — every ceremony endpoint involved here (Start*/Complete*) is anonymous, so
-// nothing about auth headers or the ambient cookie jar affects them; callers extract the returned
+// Uses WebTestServerApplication.HttpClient (the shared per-class ambient client) for the anonymous
+// ceremony calls (new-account Start*/Complete*), where auth headers and the ambient cookie jar do not
+// matter. The one exception is a passkey Start for AddPasskey (task 253): AddPasskey refuses a
+// new-account challenge, so that Start runs ForCurrentAccount on an isolated client carrying only the
+// caller's session cookie. Otherwise callers extract the returned
 // cookie/token and attach it to their OWN isolated HttpClient for the actual authenticated call under
 // test (same isolation posture as Roles_Authorization_Tests.cs's MintIdentitySessionCookie).
 #endregion
@@ -39,12 +41,15 @@ internal static class CredentialCeremonyHelpers
   /// <summary>
   /// Starts a passkey registration ceremony and builds a fresh, valid attestation for it — the raw
   /// material for either CompletePasskeyRegistration.Command (first credential) or AddPasskey.Command
-  /// (additional credential); both share the same three base64url fields.
+  /// (additional credential); both share the same three base64url fields. Pass the caller's
+  /// <paramref name="sessionCookie"/> for AddPasskey: the challenge is then started for the current
+  /// account (task 253), which is the only kind AddPasskey accepts.
   /// </summary>
   public static async Task<(string CredentialId, string ClientDataJson, string AttestationObject)> BuildPasskeyAttestationAsync
   (
     WebTestServerApplication app,
-    IntegrationSoftwareAuthenticator? authenticator = null
+    IntegrationSoftwareAuthenticator? authenticator = null,
+    string? sessionCookie = null
   )
   {
     // Optional caller-supplied authenticator: passing the SAME instance across two calls produces
@@ -53,9 +58,10 @@ internal static class CredentialCeremonyHelpers
     // without literally replaying an already-consumed challenge (which would 400 first).
     authenticator ??= new IntegrationSoftwareAuthenticator();
 
-    OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await app.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
-    byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
+    string optionsJson = sessionCookie is null
+      ? (await app.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None)).AsT0.OptionsJson
+      : await StartForCurrentAccountAsync(app, sessionCookie);
+    byte[] challenge = ReadChallenge(optionsJson);
     string origin = app.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
@@ -174,6 +180,24 @@ internal static class CredentialCeremonyHelpers
     tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
 
     return (registerResult.AsT0.PrincipalId, registerResult.AsT0.KeyId, tokenResult.AsT0.AccessToken);
+  }
+
+  private static async Task<string> StartForCurrentAccountAsync(WebTestServerApplication app, string sessionCookie)
+  {
+    using HttpClient client = new() { BaseAddress = app.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
+    HttpResponseMessage response = await testApiService.GetHttpResponseMessage
+    (
+      new StartPasskeyRegistration.Command { ForCurrentAccount = true },
+      CancellationToken.None
+    );
+    response.EnsureSuccessStatusCode();
+
+    StartPasskeyRegistration.Response? start =
+      JsonSerializer.Deserialize<StartPasskeyRegistration.Response>(await response.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
+    start.ShouldNotBeNull();
+    return start.OptionsJson;
   }
 
   private static byte[] ReadChallenge(string optionsJson)

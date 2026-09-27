@@ -89,7 +89,7 @@ public class Returns_
     // A cookie principal starts with exactly one credential, and the last-active guard forbids
     // revoking it — add a second so the revoke under test is legal.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -220,7 +220,7 @@ public class Returns_
     // Add a second credential so the FIRST revoke of it succeeds (not blocked by the last-credential
     // guard), then attempt to revoke the SAME one again.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),

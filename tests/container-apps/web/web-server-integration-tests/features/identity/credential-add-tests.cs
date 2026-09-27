@@ -78,7 +78,7 @@ public class Returns_
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -116,7 +116,7 @@ public class Returns_
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
 
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sessionCookie: sessionCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -174,7 +174,7 @@ public class Returns_
     var authenticator = new IntegrationSoftwareAuthenticator();
 
     (string firstCredentialId, string firstClientDataJson, string firstAttestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator, sessionCookie);
     var firstCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -186,7 +186,7 @@ public class Returns_
     firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
     (string secondCredentialId, string secondClientDataJson, string secondAttestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, authenticator, sessionCookie);
     var secondCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
@@ -306,7 +306,7 @@ public class Returns_
 
     // Principal B attempts to attach PRINCIPAL A's already-registered handle to itself.
     (string credentialId, string clientDataJson, string attestationObject) =
-      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sharedAuthenticator);
+      await CredentialCeremonyHelpers.BuildPasskeyAttestationAsync(Web, sharedAuthenticator, principalBCookie);
     var addCommand = new AddPasskey.Command
     {
       UserId = Guid.NewGuid(),
