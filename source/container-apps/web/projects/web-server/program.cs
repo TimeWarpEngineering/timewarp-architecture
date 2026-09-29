@@ -192,16 +192,16 @@ public partial class Program : IAspNetProgram
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
     ConfigureSettings(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
-    // Scoped: ISiteSettingsStore is scoped under postgres (EfSiteSettingsStore).
+    // Scoped: ISiteSettingsStore is the scoped SeedOnReadSiteSettingsStore decorator (task 254).
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
-    serviceCollection.AddScoped<SiteSettingsSeeder>();
-    serviceCollection.AddHostedService<SiteSettingsSeedHostedService>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres
     PostgresDbModule.ConfigureServices(serviceCollection, configuration);
 #endif
+    // Task 254: after the store backend is final — wraps it so an empty store seeds on first read.
+    SiteSettingsSeedRegistration.ConfigureServices(serviceCollection);
     serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);

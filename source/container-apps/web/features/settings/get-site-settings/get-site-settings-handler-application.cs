@@ -1,11 +1,12 @@
 #region Purpose
-// Server-side handler for GetSiteSettings: return the singleton snapshot, or 503 if not seeded.
+// Server-side handler for GetSiteSettings: return the singleton snapshot (seeded on first read).
 #endregion
 
 #region Design
-// Application takes ISiteSettingsStore, not PostgresDbContext. Does not insert when empty —
-// only SiteSettingsSeeder writes the first row (from Authentication:Entra at boot via
-// SiteSettingsSeedHostedService.StartingAsync). Empty store returns NotInitialized (503).
+// Application takes ISiteSettingsStore, not PostgresDbContext. The registered store is
+// SeedOnReadSiteSettingsStore (task 254), so an empty store is seeded from Authentication:Entra
+// on this read — no boot-ordering dependency. A null read now means the table is not migrated
+// yet (42P01) and returns Unavailable (503).
 // Configuration* fields come from bound EntraAuthenticationOptions (Identity slice) so
 // Admin/Authentication can show the app-registration tenant without a second endpoint —
 // CrossSliceReference on Handler.
@@ -45,7 +46,7 @@ public sealed class GetSiteSettings
         .ConfigureAwait(false);
       if (settings is null)
       {
-        return SiteSettingsProblems.NotInitialized();
+        return SiteSettingsProblems.Unavailable();
       }
 
       return ToResponse(settings, Options.Value);

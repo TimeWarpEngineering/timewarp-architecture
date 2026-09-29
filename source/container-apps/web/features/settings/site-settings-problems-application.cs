@@ -4,7 +4,9 @@
 
 #region Design
 // Slice-local so other product slices do not take a TWA0009 dependency on Settings.Application.
-// NotInitialized is 503 when the singleton row is missing — only SiteSettingsSeeder inserts it.
+// Unavailable is 503 when the store read returns null — since task 254 the read seeds an empty
+// store, so null only means the schema is not migrated yet (Postgres 42P01; see
+// SeedOnReadSiteSettingsStore), a transient state a retry clears, never a 500.
 // Concurrency conflict is 409 on stale Version.
 #endregion
 
@@ -12,11 +14,11 @@ namespace TimeWarp.Architecture.Features.Settings.Application;
 
 internal static class SiteSettingsProblems
 {
-  public static SharedProblemDetails NotInitialized() => new()
+  public static SharedProblemDetails Unavailable() => new()
   {
-    Title = "Site settings not initialized",
+    Title = "Site settings unavailable",
     Status = 503,
-    Detail = "Site settings have not been seeded yet. Retry after the host finishes starting."
+    Detail = "The site settings table is not migrated yet. Retry after database migrations finish."
   };
 
   public static SharedProblemDetails ConcurrencyConflict() => new()

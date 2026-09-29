@@ -4,8 +4,9 @@
 
 #region Design
 // options.Enabled is the scheme-registration gate; settings.EntraSignInEnabled is the runtime
-// offer. Both must be true or the login button would 404 (no scheme) or 403 (policy). Empty
-// store is not offered (false) — SiteSettingsSeedHostedService copies configuration at boot.
+// offer. Both must be true or the login button would 404 (no scheme) or 403 (policy). The
+// registered store seeds on first read (SeedOnReadSiteSettingsStore, task 254), so an emptied
+// table is re-seeded from configuration here; a null read (table not migrated) is not offered.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

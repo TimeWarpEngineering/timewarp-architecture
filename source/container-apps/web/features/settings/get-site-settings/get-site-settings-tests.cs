@@ -4,6 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:package Microsoft.Extensions.Options
+#:package Microsoft.Extensions.Logging.Abstractions
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
@@ -11,7 +12,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/get-site-settings/get-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: GetSiteSettings round-trip, mock factory, empty-store not-initialized.
+// Jaribu runfile: GetSiteSettings round-trip, mock factory, emptied store re-seeds, unmigrated table 503.
 #endregion
 
 //-:cnd:noEmit
@@ -25,7 +26,9 @@ namespace TimeWarp.Architecture.Features.Settings
 
   using System;
   using System.Text.Json;
+  using System.Threading;
   using System.Threading.Tasks;
+  using Microsoft.Extensions.Logging.Abstractions;
   using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
@@ -91,16 +94,35 @@ namespace TimeWarp.Architecture.Features.Settings
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<GetSiteSettingsHandler_Given_>();
 
-    public static async Task Empty_Store_Should_Return_Not_Initialized_Without_Insert()
+    public static async Task Emptied_Store_Should_Return_Seeded_Values()
     {
-      InMemorySiteSettingsStore store = new();
-      GetHandler handler = CreateHandler(store);
+      EmptiableSiteSettingsStore inner = new();
+      await inner.AddAsync(SiteSettings.Create(false, false, PasskeyPromptMode.Required));
+      EntraAuthenticationOptions configured = new() { Enabled = true, AllowBootstrap = true };
+      GetHandler handler = CreateHandler(SeedOnRead(inner, configured), configured);
+
+      inner.Clear();
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
+
+      result.IsT0.ShouldBeTrue();
+      result.AsT0.EntraSignInEnabled.ShouldBeTrue();
+      result.AsT0.EntraAllowBootstrap.ShouldBeTrue();
+      result.AsT0.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
+      result.AsT0.Version.ShouldBe(0);
+      (await inner.GetAsync()).ShouldNotBeNull();
+    }
+
+    public static async Task Unmigrated_Table_Should_Return_Unavailable()
+    {
+      EmptiableSiteSettingsStore inner = new() { ThrowUndefinedTable = true };
+      EntraAuthenticationOptions configured = new();
+      GetHandler handler = CreateHandler(SeedOnRead(inner, configured), configured);
+
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
+
       result.IsT1.ShouldBeTrue();
       result.AsT1.Status.ShouldBe(503);
-      result.AsT1.Title.ShouldBe("Site settings not initialized");
-      SiteSettings? stored = await store.GetAsync();
-      stored.ShouldBeNull();
+      result.AsT1.Title.ShouldBe("Site settings unavailable");
     }
 
     public static async Task Snapshot_Should_Include_Configuration_Tenant()
@@ -132,5 +154,35 @@ namespace TimeWarp.Architecture.Features.Settings
       ISiteSettingsStore store,
       EntraAuthenticationOptions? options = null) =>
       new(store, Options.Create(options ?? new EntraAuthenticationOptions()));
+
+    private static SeedOnReadSiteSettingsStore SeedOnRead(
+      ISiteSettingsStore inner,
+      EntraAuthenticationOptions configured) =>
+      new(
+        inner,
+        new SiteSettingsSeeder(inner, Options.Create(configured), NullLogger<SiteSettingsSeeder>.Instance),
+        isDevelopment: false,
+        NullLogger<SeedOnReadSiteSettingsStore>.Instance);
+  }
+
+  // In-memory store a test can empty (the `dev db reset` shape) or fail like an unmigrated table.
+  internal sealed class EmptiableSiteSettingsStore : ISiteSettingsStore
+  {
+    private InMemorySiteSettingsStore Current = new();
+
+    public bool ThrowUndefinedTable { get; set; }
+
+    public void Clear() => Current = new InMemorySiteSettingsStore();
+
+    public Task<SiteSettings?> GetAsync(CancellationToken cancellationToken = default) =>
+      ThrowUndefinedTable
+        ? throw new InvalidOperationException("42P01: relation \"identity.site_settings\" does not exist")
+        : Current.GetAsync(cancellationToken);
+
+    public Task AddAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
+      Current.AddAsync(siteSettings, cancellationToken);
+
+    public Task UpdateAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
+      Current.UpdateAsync(siteSettings, cancellationToken);
   }
 }
