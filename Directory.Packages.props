@@ -11,9 +11,9 @@
   <ItemGroup Label="TimeWarp Packages">
     <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.76" />
     <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.76" />
-    <PackageVersion Include="TimeWarp.Amuru" Version="1.0.0" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.1" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="1.1.1" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="1.1.1" />
+    <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
     <!-- Foundation packages (task 051). Used ONLY by an app generated from the template (the repo
@@ -45,26 +45,26 @@
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.9.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
   </ItemGroup>
   <ItemGroup Label="Foundation Packages">
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.37" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.40" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.83.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.83.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.83.0" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
-    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.83.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.84.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.84.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.84.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.84.0" />
+    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.84.0" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.3.14" />
@@ -82,35 +82,31 @@
     <!-- No first-party code calls MessagePack APIs directly; this pin only lifts StreamJsonRpc's
          transitive MessagePack dependency for flag-off graphs (no Yarp) where Aspire.Hosting.Yarp
          isn't present to do the lift itself (see aspire-app-host.csproj). Bumped 2.5.302 -> 3.1.8
-         (task 144): StreamJsonRpc 2.25.29's own nuspec already floors MessagePack at >=2.5.302
+         (task 144), 3.1.10 (task 249): StreamJsonRpc 2.25.29's own nuspec already floors MessagePack at >=2.5.302
          (no upper bound), and aspire-tests (DistributedApplicationTestingBuilder spinning up the
          real AppHost + an HTTP round-trip through api-server) passed 7/7 against MessagePack 3.1.8,
          verifying the DCP/StreamJsonRpc communication path tolerates the v3 major. -->
-    <PackageVersion Include="MessagePack" Version="3.1.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.11" />
+    <PackageVersion Include="MessagePack" Version="3.1.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.14.0" />
-    <!-- Testcontainers 4.13.0 pulled SSH.NET 2025.1.0 (NU1903 / GHSA-q939-rpr3-3284
-         SCP recursive-download path traversal). Patched 2026.0.0. Direct pin on
-         web-infrastructure-tests lifts the graph; Testcontainers 4.14.0 is latest. -->
-    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
 
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.11" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
          to parse attestationObject/authenticatorData COSE keys. timewarp-identity is a plain
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
-    <PackageVersion Include="System.Formats.Cbor" Version="10.0.11" />
-    <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.1" />
-    <PackageVersion Include="TimeWarp.Mediator.Analyzers" Version="14.0.0-beta.1" />
+    <PackageVersion Include="System.Formats.Cbor" Version="10.0.12" />
+    <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
+    <PackageVersion Include="TimeWarp.Mediator.Analyzers" Version="14.0.0-beta.4" />
     <PackageVersion Include="FastEndpoints" Version="8.3.0" />
     <PackageVersion Include="FastEndpoints.OpenApi" Version="8.3.0" />
     <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.x transitively pull
@@ -121,40 +117,42 @@
          10.0.11 now declares Microsoft.OpenApi (>= 2.7.5 && < 3.0.0), so NU1608 is a warning-as-error
          (TreatWarningsAsErrors). There is no product usage to patch; the upper bound is in
          AspNetCore.OpenApi's own nuspec. Stay on 2.12.2 until a .NET version ships an
-         AspNetCore.OpenApi built against the OpenApi 3.x object model (.NET 11). -->
+         AspNetCore.OpenApi built against the OpenApi 3.x object model (.NET 11).
+         Re-checked task 249: Microsoft.AspNetCore.OpenApi 10.0.12 still declares
+         Microsoft.OpenApi [2.12.0, 3.0.0) — 3.x stays deferred to the .NET 11 train. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.17.1" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.17.11" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0-rc.5-26219.1" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.4" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.0" />
     <!-- Task 201: take 7.0.1 (native tsc-go). web-spa.csproj runs SetTscExecutable +
          RunTscCompile before ResolveProjectStaticWebAssets; classic CheckFileSystemCaseSensitive
          is gone (MSB4057 if those v6 target names stay in PrepareForBuildDependsOn). -->
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
     <PackageVersion Include="Blazilla" Version="2.4.1" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.3" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.3" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.5" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.5" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
-    <PackageVersion Include="timewarp-simple-icons" Version="16.27.1" />
+    <PackageVersion Include="timewarp-simple-icons" Version="16.32.0" />
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.19.0" />
   </ItemGroup>
   
   <ItemGroup Label="Code Analyzers">
@@ -165,7 +163,7 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
     <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.0" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="5.0.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
@@ -183,8 +181,8 @@
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.9.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.10.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />

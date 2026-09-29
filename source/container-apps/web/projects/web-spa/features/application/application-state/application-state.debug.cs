@@ -6,8 +6,8 @@
 // Hydrate restores only the fields time-travel needs (Guid, Name) from the camelCased
 // key/value payload Redux DevTools round-trips.
 // The Initialize overload bypasses the action pipeline so tests can seed state directly.
-// TestCaller.Ensure blocks production callers. State's ThrowIfNotTestAssembly rejects
-// kebab *-tests names (timewarp-state#607).
+// State's ThrowIfNotTestAssembly blocks production callers (case-insensitive since
+// 12.0.0-beta.5, so kebab *-tests assemblies pass — timewarp-state#607).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -18,14 +18,14 @@ partial class ApplicationState
   {
     return new ApplicationState
     {
-      Guid = new Guid(keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
-      Name = keyValuePairs[CamelCase.MemberNameToCamelCase(nameof(Name))].ToString() ?? throw new InvalidOperationException(),
+      Guid = new Guid(keyValuePairs[JsonNamingPolicy.CamelCase.ConvertName(nameof(Guid))].ToString() ?? throw new InvalidOperationException()),
+      Name = keyValuePairs[JsonNamingPolicy.CamelCase.ConvertName(nameof(Name))].ToString() ?? throw new InvalidOperationException(),
     };
   }
 
   internal void Initialize(string name, string logo, bool isMenuExpanded)
   {
-    TimeWarp.Architecture.TestCaller.Ensure(Assembly.GetCallingAssembly());
+    ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
     Name = name;
     Logo = logo;
     IsMenuExpanded = isMenuExpanded;

@@ -14,8 +14,6 @@
     <PackageReference Include="TimeWarp.Mediator.Contracts" />
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Testcontainers.PostgreSql" />
-    <!-- Lift transitive SSH.NET 2025.1.0 → 2026.0.0 (NU1903 / GHSA-q939-rpr3-3284). -->
-    <PackageReference Include="SSH.NET" />
   </ItemGroup>
   <ItemGroup>
     <!-- Shared IPrincipalStore contract suite (principal-store-contract-tests.cs) compiles here so
