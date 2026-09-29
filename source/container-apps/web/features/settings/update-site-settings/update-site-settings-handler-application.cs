@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// GetAsync only — does not insert when empty (NotInitialized 503). Seed is SiteSettingsSeeder's
-// job. Compare Command.Version to stored Version, 409 on mismatch. On match, ReplacePolicy then
-// UpdateAsync. Concurrent Update throws ConcurrencyConflictException → same 409. Does not
+// GetAsync through the registered SeedOnReadSiteSettingsStore (task 254) seeds an empty store, so
+// an update after the row was deleted applies against the freshly seeded Version 0; a null read
+// means the table is not migrated yet (Unavailable 503). Compare Command.Version to stored
+// Version, 409 on mismatch. On match, ReplacePolicy then UpdateAsync. Concurrent Update throws ConcurrencyConflictException → same 409. Does not
 // reference Identity.Application (TWA0009).
 #endregion
 
@@ -33,7 +34,7 @@ public sealed class UpdateSiteSettings
         .ConfigureAwait(false);
       if (settings is null)
       {
-        return SiteSettingsProblems.NotInitialized();
+        return SiteSettingsProblems.Unavailable();
       }
 
       if (command.Version != settings.Version)

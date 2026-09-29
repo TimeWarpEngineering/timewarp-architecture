@@ -3,6 +3,8 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
+#:package Microsoft.Extensions.Options
+#:package Microsoft.Extensions.Logging.Abstractions
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
 
@@ -10,7 +12,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator, empty-store 503, 409, successful update.
+// Jaribu runfile: UpdateSiteSettings validator, emptied store re-seeds at Version 0, 409, successful update.
 #endregion
 
 //-:cnd:noEmit
@@ -24,8 +26,11 @@ namespace TimeWarp.Architecture.Features.Settings
 
   using System.Threading.Tasks;
   using FluentValidation.Results;
+  using Microsoft.Extensions.Logging.Abstractions;
+  using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
+  using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -74,10 +79,16 @@ namespace TimeWarp.Architecture.Features.Settings
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<UpdateSiteSettingsHandler_Given_>();
 
-    public static async Task Empty_Store_Should_Return_Not_Initialized_Without_Insert()
+    public static async Task Empty_Store_Should_Seed_Then_Update_At_Version_0()
     {
       InMemorySiteSettingsStore store = new();
-      UpdateHandler handler = new(store);
+      IOptions<EntraAuthenticationOptions> configured = Options.Create(new EntraAuthenticationOptions());
+      UpdateHandler handler = new(
+        new SeedOnReadSiteSettingsStore(
+          store,
+          new SiteSettingsSeeder(store, configured, NullLogger<SiteSettingsSeeder>.Instance),
+          isDevelopment: false,
+          NullLogger<SeedOnReadSiteSettingsStore>.Instance));
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(
         new Command
         {
@@ -88,11 +99,13 @@ namespace TimeWarp.Architecture.Features.Settings
         },
         default);
 
-      result.IsT1.ShouldBeTrue();
-      result.AsT1.Status.ShouldBe(503);
-      result.AsT1.Title.ShouldBe("Site settings not initialized");
+      result.IsT0.ShouldBeTrue();
+      result.AsT0.EntraSignInEnabled.ShouldBeTrue();
+      result.AsT0.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+      result.AsT0.Version.ShouldBe(1);
       SiteSettings? stored = await store.GetAsync();
-      stored.ShouldBeNull();
+      stored.ShouldNotBeNull();
+      stored.Version.ShouldBe(1);
     }
 
     public static async Task Stale_Version_Should_409()

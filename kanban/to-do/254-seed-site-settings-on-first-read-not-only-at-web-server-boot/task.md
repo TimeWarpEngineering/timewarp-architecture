@@ -40,16 +40,79 @@ table, not just the dev command.
 
 ## Checklist
 
-- [ ] Single read seam that seeds on empty; all four readers use it
-- [ ] isDevelopment propagated; concurrent seed safe; 42P01 handled
-- [ ] 503 "until seeded" path removed; Design regions reconciled
-- [ ] Tests
-- [ ] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+- [x] Single read seam that seeds on empty; all four readers use it
+- [x] isDevelopment propagated; concurrent seed safe; 42P01 handled
+- [x] 503 "until seeded" path removed; Design regions reconciled
+- [x] Tests
+- [x] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
 
 ## Notes
 
 - Origin: `dev db reset` on 2026-09-29 left site settings empty until web-server restarted.
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
+
+## Results
+
+**Seam — decorator over `ISiteSettingsStore`** (`features/identity/seed-on-read-site-settings-store-application.cs`,
+`SeedOnReadSiteSettingsStore`). Chosen over "every reader calls `SiteSettingsSeeder`" because a
+new reader taking `ISiteSettingsStore` cannot bypass it, and the Settings handlers keep their
+`ISiteSettingsStore` dependency (no TWA0009 edge into Identity.Application). All four readers
+(Get/Update settings, GetEntraSignInOffered, SiteSettingsEntraSignInPolicy) get it by DI with no
+code change beyond problem naming.
+
+- `GetAsync`: inner read; on null → `SiteSettingsSeeder.GetOrSeedAsync(isDevelopment)` — the
+  same call the boot hosted service makes, so an emptied store is treated like a first boot.
+  `isDevelopment` = `IHostEnvironment.IsDevelopment()` resolved at registration.
+- Concurrency: seeder's Add-race re-Get kept; reseed `UpdateAsync` losing the same race now
+  re-Gets instead of surfacing `ConcurrencyConflictException`.
+- 42P01: read returns null + warning log (no per-request retry). Readers' null path is now
+  "unavailable": Settings Get/Update → 503 **"Site settings unavailable"** (table not migrated;
+  replaces "not initialized / until seeded"); offered → false; policy → fail-closed refuse.
+  Hosted service keeps its bounded boot retry (shared `SiteSettingsSeeder.IsUndefinedTable`).
+- Wiring: `SiteSettingsSeedRegistration.ConfigureServices` (server layer) called in
+  `program.cs` after `PostgresDbModule` — moves the backend registration to keyed
+  `SeedOnReadSiteSettingsStore.InnerStoreKey` (lifetime/shape preserved), registers the seeder
+  over the inner store, the scoped decorator as `ISiteSettingsStore`, and the hosted service.
+- Boot hosted service kept (fast first request, Development reseed once per boot, drift warnings).
+- Design regions reconciled: seeder, hosted service, Get/Update handlers, problems, offered
+  handler, policy.
+
+**Tests**
+- New `features/identity/seed-on-read-site-settings-store-tests.cs` (10): empty read seeds;
+  existing row unchanged; emptied store re-seeds; two concurrent empty reads → one row (Add
+  race forced by a gate); concurrent + Development reseed does not conflict; 42P01 → null +
+  warning; other failures propagate; isDevelopment reaches reseed (and is ignored outside Dev);
+  Update passes through.
+- Get/Update/offered runfiles: empty-store 503 tests replaced — emptied store returns seeded
+  values; unmigrated table → 503 "Site settings unavailable"; update on emptied store seeds then
+  updates; deleted row → offered reads configuration-seeded policy.
+- New in-proc HTTP suite `tests/.../web-server-integration-tests/features/settings/site-settings-seed-on-read-tests.cs`
+  (3): boot logs AllowBootstrap drift warning; store emptied while host runs → `GET api/settings`
+  200 with seeded values (not 503); `GET api/identity/entra/offered` re-seeds the deleted row.
+
+**Gates**: `dev build` 0 warnings / 0 errors · `dev test` all suites passed (0 failed) ·
+`dev template-smoke` SUCCEEDED · `ganda repo audit` passes (after `--fix --checks bin-dev` built
+the gitignored `bin/dev`). **No AppHost started.** Manual `dev db reset` → Settings check: **not
+performed** (would require a running AppHost).
+
+### How to validate
+
+**Smoke**
+
+```bash
+dotnet run source/container-apps/web/features/identity/seed-on-read-site-settings-store-tests.cs
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Given_Emptied_Store_
+```
+
+Manual (with an AppHost running, operator only): `dev db reset`, then open /Admin/Authentication
+(or `GET /api/settings` as an admin) without restarting web-server.
+
+**Expect**
+
+- Runfile: 10/10 passed; integration filter: 3/3 passed.
+- Manual: Settings load with configuration-seeded values (Entra enable/AllowBootstrap from
+  `Authentication:Entra`, PasskeyPromptMode Soft, Version 0) — no 503; the Microsoft 365 sign-in
+  offer follows the seeded policy.
 
 ## Session
 

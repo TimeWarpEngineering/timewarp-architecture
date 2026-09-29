@@ -5,8 +5,10 @@
 #region Design
 // IHostedLifecycleService.StartingAsync runs before Kestrel StartAsync, so the empty-store seed
 // completes before the server accepts requests. Creates a scope because EfSiteSettingsStore is
-// scoped under postgres. Seeder is application-layer; this type is the server adapter. Only
-// SiteSettingsSeeder writes the empty-store row — Settings Get/Update return 503 until seeded.
+// scoped under postgres. Seeder is application-layer; this type is the server adapter. Since task
+// 254 the store read seeds on empty too (SeedOnReadSiteSettingsStore), so this boot pass is no
+// longer what makes Settings work — it keeps the first request fast, applies Development
+// ReseedSiteSettings once per boot, and emits the drift warnings at startup.
 // CI fix (post-review, task 219-006): the AppHost has NO wait edge between web-server and
 // web-migrations (postgres-db-module-server.cs Design region, task 155 — WaitFor deadlocked
 // dashboard restarts, WaitForCompletion broke DCP under Aspire.Hosting.Testing), so on a fresh
@@ -59,7 +61,7 @@ public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
         _ = await seeder.GetOrSeedAsync(isDevelopment, cancellationToken).ConfigureAwait(false);
         return;
       }
-      catch (Exception exception) when (attempt < MaxAttempts && IsUndefinedTable(exception))
+      catch (Exception exception) when (attempt < MaxAttempts && SiteSettingsSeeder.IsUndefinedTable(exception))
       {
         LogUndefinedTableRetry(Logger, attempt, MaxAttempts, exception);
         await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
@@ -76,23 +78,4 @@ public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
   public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
   public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-  // String-based detection (same convention as EfSiteSettingsStore.IsUniqueViolation) so this
-  // server-layer file does not need a direct Npgsql package reference just to catch one SQLSTATE.
-  private static bool IsUndefinedTable(Exception exception)
-  {
-    Exception? current = exception;
-    while (current is not null)
-    {
-      string text = current.GetType().FullName + " " + current.Message;
-      if (text.Contains("42P01", StringComparison.Ordinal))
-      {
-        return true;
-      }
-
-      current = current.InnerException;
-    }
-
-    return false;
-  }
 }

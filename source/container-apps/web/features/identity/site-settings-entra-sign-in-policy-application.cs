@@ -3,8 +3,10 @@
 #endregion
 
 #region Design
-// Empty store is treated as disabled (Sign-in disabled on Challenge; untrusted on ticket modes)
-// so a missed seed cannot fail-open. Challenge checks EntraSignInEnabled only. SyncHit and Link
+// The registered store seeds on first read (SeedOnReadSiteSettingsStore, task 254), so an emptied
+// table evaluates against the configuration-seeded policy. A null read (table not migrated, or a
+// host wired without the decorator) is treated as disabled (Sign-in disabled on Challenge;
+// untrusted on ticket modes) so it cannot fail-open. Challenge checks EntraSignInEnabled only. SyncHit and Link
 // check token tid GUID-equals Authentication:Entra:TenantId. BootstrapCreate checks that pin
 // then AllowBootstrap. Non-GUID TenantId (organizations / common) never matches — Untrusted
 // tenant. Untrusted title stays "Untrusted tenant"; bootstrap title stays "Bootstrap not allowed"

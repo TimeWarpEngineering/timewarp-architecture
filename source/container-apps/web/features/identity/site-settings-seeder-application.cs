@@ -6,13 +6,18 @@
 // When the store is empty, copy Enabled / AllowBootstrap once so existing `dev entra setup`
 // secrets keep working. After that those two are not consulted for policy — Configuration
 // Enabled remains the scheme-registration gate only. PasskeyPromptMode is not in configuration;
-// seed uses Soft. Concurrent first-boot Add races re-Get.
+// seed uses Soft. Concurrent first-seed Add races re-Get (boot, or concurrent reads through
+// SeedOnReadSiteSettingsStore — task 254 seeds on first read too); a reseed Update that loses the
+// same race re-Gets the winner's row instead of surfacing ConcurrencyConflictException.
 // Task 225 / 227: each later boot compares persisted policy with configuration. LoggerMessage.Define
 // Warning when AllowBootstrap differs or when Enabled differs — each line names
 // /Admin/Authentication and `dev entra reseed`. Trust is TenantId, not a persisted list, so
 // there is no tenant-drift warning. ReseedSiteSettings overwrites those two fields from
-// configuration only when isDevelopment is true (hosted service passes
-// IHostEnvironment.IsDevelopment()). PasskeyPromptMode is kept.
+// configuration only when isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore
+// pass IHostEnvironment.IsDevelopment()). PasskeyPromptMode is kept.
+// IsUndefinedTable (Postgres 42P01) lives here so the boot retry and the read path share one
+// string-based check (same convention as EfSiteSettingsStore.IsUniqueViolation) without an
+// Npgsql package reference in application or server layers.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -107,9 +112,17 @@ public sealed class SiteSettingsSeeder
           configured.Enabled,
           configured.AllowBootstrap,
           existing.PasskeyPromptMode);
-        await SiteSettingsStore.UpdateAsync(existing, cancellationToken).ConfigureAwait(false);
+        try
+        {
+          await SiteSettingsStore.UpdateAsync(existing, cancellationToken).ConfigureAwait(false);
+          LogReseedApplied(Logger, null);
+        }
+        catch (ConcurrencyConflictException)
+        {
+          // A concurrent seeder already reseeded this row; its values are the same configuration.
+        }
+
         existing = await SiteSettingsStore.GetAsync(cancellationToken).ConfigureAwait(false) ?? existing;
-        LogReseedApplied(Logger, null);
       }
       else
       {
@@ -119,6 +132,24 @@ public sealed class SiteSettingsSeeder
 
     LogDrift(configured, existing);
     return existing;
+  }
+
+  /// <summary>True when <paramref name="exception"/> (or an inner one) is Postgres 42P01 undefined_table.</summary>
+  public static bool IsUndefinedTable(Exception exception)
+  {
+    Exception? current = exception;
+    while (current is not null)
+    {
+      string text = current.GetType().FullName + " " + current.Message;
+      if (text.Contains("42P01", StringComparison.Ordinal))
+      {
+        return true;
+      }
+
+      current = current.InnerException;
+    }
+
+    return false;
   }
 
   private void LogDrift(EntraAuthenticationOptions configured, SiteSettings existing)
