@@ -40,11 +40,57 @@ reconnecting. The same failure would hit production on any Postgres restart or f
 
 ## Checklist
 
-- [ ] EnableRetryOnFailure with explicit bounds (runtime DbContext)
-- [ ] Explicit transaction in the principal role store wrapped in the execution strategy; others audited
-- [ ] Concurrency exceptions not retried by the strategy (confirmed)
-- [ ] Terminated-connection recovery test + transaction tests
-- [ ] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+- [x] EnableRetryOnFailure with explicit bounds (runtime DbContext)
+- [x] Explicit transaction in the principal role store wrapped in the execution strategy; others audited
+- [x] Concurrency exceptions not retried by the strategy (confirmed)
+- [x] Terminated-connection recovery test + transaction tests
+- [x] `dev build` 0/0 · `dev test` · `dev template-smoke`; no AppHost started
+
+## Results
+
+- **Policy:** new `PostgresRetryPolicy` (`source/container-apps/web/platform/postgres/postgres-retry-policy-infrastructure.cs`)
+  — `EnableRetryOnFailure(maxRetryCount: 4, maxRetryDelay: 2s, errorCodesToAdd: null)`; Npgsql's own
+  transient classification (IO/socket, 57P01, 40001, 40P01) is the retry set. `PostgresDbModule`
+  applies it via `UseNpgsql(connectionString, PostgresRetryPolicy.Configure)`. It lives in
+  infrastructure so the web-infrastructure-tests build contexts with the exact production policy.
+- **Design-time factory:** intentionally unchanged (no retries) — `dotnet ef` / AppHost migration
+  resource are one-shot runs with no stale pool; failures should surface immediately. Recorded in
+  both Design regions.
+- **Transactions audited:** the only explicit transaction (`EfPrincipalRoleStore.TryClaimFirstAdministratorAsync`,
+  Serializable) now runs begin → read → write → commit inside `Database.CreateExecutionStrategy().ExecuteAsync`;
+  the replay re-reads "Administrator exists?" inside its own transaction and clears the change tracker
+  on retry attempts so stale Added/accepted rows cannot collide. No `TransactionScope` anywhere; every
+  other store method is a single `SaveChanges` unit (EF wraps those in the strategy itself). Handlers
+  that call several store methods were already non-atomic (autocommit per call) — semantics unchanged.
+  Known edge (documented in the role-store Design region): a commit whose ack is lost replays into
+  "Administrator exists" and returns false for the actual winner; the grant is durable either way.
+- **Concurrency:** `DbUpdateConcurrencyException` is raised by EF from a rows-affected mismatch and
+  carries no transient `NpgsqlException`, so the strategy does not retry it — the stores' store-CAS
+  translation and the app's optimistic-concurrency loops (RevokeCredential, RenameCredential,
+  CredentialUsageRecorder, SiteSettings seeder) see it on the first attempt. Confirmed by the
+  principal-store contract and site-settings concurrency tests, which now run with the policy enabled
+  and stay green.
+- **Tests:** new `tests/container-apps/web/web-infrastructure-tests/postgres-connection-recovery-tests.cs`
+  (per-test database, real Postgres/Testcontainers):
+  - control — without the policy, `pg_terminate_backend` between two queries makes the second throw;
+  - with the policy, the second query after the terminate succeeds;
+  - claim transaction: an interceptor kills the backend inside the serializable transaction; the
+    claim still returns true and both Administrator + Member rows persist;
+  - four concurrent claims under the policy elect exactly one Administrator (40001 losers replay into `false`).
+  Existing EF store suites (role store, principal-store contract, site settings, profile persistence)
+  now build contexts with `PostgresRetryPolicy.Configure`.
+- **Gates:** `dev build` 0 warnings / 0 errors; `dev test` all suites green (web-infrastructure-tests
+  61/61; web-server-integration-tests 276 + 1 pre-existing skip); `CI=1` run of the new class 4/4 (no
+  soft-skip); `dev template-smoke` SUCCEEDED including SmokeNoPostgres; `ganda repo audit` clean
+  (after `--fix --checks bin-dev` installed the local `bin/dev`, untracked).
+- **Not performed:** the manual `dev db reset` → load site check — no AppHost was started (per brief).
+
+### How to validate
+
+- **Smoke:** `cd tests/container-apps/web/web-infrastructure-tests && CI=1 dotnet test -c Release -- --filter-class Connection_recovery`
+- **Expect:** 4/4 succeeded, 0 skipped (CI=1 fails closed if neither Docker nor a connection string
+  is available). Then `dotnet test -c Release` in the same folder: 61/61. Manual (needs AppHost):
+  `dev run`, load the site, `dev db reset`, reload — the page loads instead of the 57P01 error.
 
 ## Notes
 

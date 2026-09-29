@@ -29,6 +29,11 @@
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
 // Health check (liveness) and environment check (startup gate) intentionally share the same
 // CanConnectAsync probe.
+// Resilience (task 255): UseNpgsql applies PostgresRetryPolicy (EnableRetryOnFailure, 4 retries,
+// 2s max delay) so a pool of connections killed by a Postgres restart / `dev db reset` recovers on
+// the next request instead of surfacing 57P01. Bounds and the concurrency-exception carve-out are
+// recorded on PostgresRetryPolicy; explicit transactions must run inside the execution strategy
+// (EfPrincipalRoleStore.TryClaimFirstAdministratorAsync).
 #endregion
 
 namespace TimeWarp.Architecture.Modules;
@@ -65,7 +70,7 @@ public sealed partial class PostgresDbModule : IModule
 
     _ = serviceCollection.AddDbContext<PostgresDbContext>
     (
-      dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString)
+      dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
     );
 
     // Durable principal + principal→role + profile stores only when EF is registered
