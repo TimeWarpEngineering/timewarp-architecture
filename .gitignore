@@ -360,6 +360,8 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+# Per-user tool state written into the repo root (e.g. GitHub CLI XDG state: .local/state/gh/device-id)
+.local/
 
 # Visual Studio History (VSHistory) files
 .vshistory/
