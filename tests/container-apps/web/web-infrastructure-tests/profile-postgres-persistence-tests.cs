@@ -118,7 +118,7 @@ public class Round_Trip
   {
     PostgresTestAvailability availability = await Availability.Value;
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
-      .UseNpgsql(availability.ConnectionString)
+      .UseNpgsql(availability.ConnectionString, PostgresRetryPolicy.Configure)
       .Options;
     return new PostgresDbContext(options);
   }

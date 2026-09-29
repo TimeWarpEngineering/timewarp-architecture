@@ -55,7 +55,7 @@ file sealed class EfSiteSettingsStoreFactory
     }.ConnectionString;
 
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
-      .UseNpgsql(connectionString)
+      .UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
       .Options;
     PostgresDbContext db = new(options);
     db.Database.Migrate();

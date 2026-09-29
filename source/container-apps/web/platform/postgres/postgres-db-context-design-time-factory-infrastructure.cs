@@ -11,6 +11,8 @@
 //   2. PostgresDbOptions:ConnectionString — non-Aspire hand-wiring path (same key as PostgresDbModule).
 //   3. Dummy Npgsql string — offline `migrations add` scaffolding only (no live DB required).
 // Factory is discovered by EF design-time by type name convention; no DI registration.
+// No retrying execution strategy here (task 255): tooling runs are one-shot with no stale pool to
+// recover from, so failures surface immediately — rationale on PostgresRetryPolicy.
 #endregion
 
 namespace TimeWarp.Architecture.Persistence;

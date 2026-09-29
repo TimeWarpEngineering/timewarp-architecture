@@ -54,7 +54,7 @@ file sealed class EfPrincipalRoleStoreFactory
     }.ConnectionString;
 
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
-      .UseNpgsql(connectionString)
+      .UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
       .Options;
     PostgresDbContext db = new(options);
     db.Database.Migrate();
@@ -67,7 +67,7 @@ file sealed class EfPrincipalRoleStoreFactory
     string connectionString = template.Database.GetConnectionString()
       ?? throw new InvalidOperationException("Template context has no connection string.");
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
-      .UseNpgsql(connectionString)
+      .UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
       .Options;
     return new EfPrincipalRoleStore(new PostgresDbContext(options));
   }
@@ -88,7 +88,7 @@ file sealed class EfPrincipalRoleStoreFactory
     }.ConnectionString;
 
     DbContextOptions<PostgresDbContext> options = new DbContextOptionsBuilder<PostgresDbContext>()
-      .UseNpgsql(connectionString)
+      .UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
       .Options;
     PostgresDbContext db = new(options);
     db.Database.Migrate();
@@ -132,7 +132,7 @@ public class Principal_role_store
     // New context = new DI scope after restart
     string cs = db.Database.GetConnectionString()!;
     await using PostgresDbContext db2 = new(
-      new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(cs).Options);
+      new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(cs, PostgresRetryPolicy.Configure).Options);
     IPrincipalRoleStore read = new EfPrincipalRoleStore(db2);
 
     IReadOnlyList<Guid> roles = await read.GetRoleIdsAsync(id);
@@ -167,7 +167,7 @@ public class Principal_role_store
 
     string cs = db.Database.GetConnectionString()!;
     await using PostgresDbContext db2 = new(
-      new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(cs).Options);
+      new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(cs, PostgresRetryPolicy.Configure).Options);
     IPrincipalRoleStore secondStore = new EfPrincipalRoleStore(db2);
 
     (await secondStore.TryClaimFirstAdministratorAsync(second)).ShouldBeFalse();
