@@ -25,7 +25,8 @@
     "statusBar.debuggingBackground": "#83f8e4",
     "statusBar.debuggingForeground": "#15202b",
     "activityBar.activeBorder": "#15202b",
-    "activityBarTop.activeBorder": "#15202b"
+    "activityBarTop.activeBorder": "#15202b",
+    "statusBar.inactiveBackground": "#83f8e4"
   },
   "peacock.remoteColor": "#83F8E4",
   "timewarp.blurImagePath": "assets/timewarp-architecture-avatar.svg",
