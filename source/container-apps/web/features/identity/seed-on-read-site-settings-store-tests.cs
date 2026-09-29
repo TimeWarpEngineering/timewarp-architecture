@@ -124,6 +124,20 @@ namespace TimeWarp.Architecture.Features.Identity.SeedOnReadSiteSettingsStoreTes
       (await inner.GetAsync()).ShouldNotBeNull();
     }
 
+    public static async Task Development_Reseed_Losing_Update_Race_Should_Reget_Instead_Of_Throwing()
+    {
+      ConflictOnceUpdateSiteSettingsStore inner = new();
+      SeedOnReadSiteSettingsStore store = Create(
+        inner, enabled: true, allowBootstrap: true, reseedSiteSettings: true, isDevelopment: true);
+
+      SiteSettings? read = await store.GetAsync();
+
+      inner.Conflicts.ShouldBe(1);
+      read.ShouldNotBeNull();
+      read.EntraSignInEnabled.ShouldBeTrue();
+      read.EntraAllowBootstrap.ShouldBeTrue();
+    }
+
     public static async Task Undefined_Table_Should_Read_Null_And_Warn()
     {
       ResettableSiteSettingsStore inner = new() { ThrowUndefinedTable = true };
@@ -299,6 +313,33 @@ namespace TimeWarp.Architecture.Features.Identity.SeedOnReadSiteSettingsStoreTes
 
     public Task UpdateAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
       Inner.UpdateAsync(siteSettings, cancellationToken);
+  }
+
+  // First UpdateAsync throws ConcurrencyConflictException — the reseed losing to a concurrent
+  // seeder that already bumped the row — so the seeder's conflict catch runs deterministically.
+  internal sealed class ConflictOnceUpdateSiteSettingsStore : ISiteSettingsStore
+  {
+    private readonly InMemorySiteSettingsStore Inner = new();
+
+    public int Conflicts { get; private set; }
+
+    public Task<SiteSettings?> GetAsync(CancellationToken cancellationToken = default) =>
+      Inner.GetAsync(cancellationToken);
+
+    public Task AddAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
+      Inner.AddAsync(siteSettings, cancellationToken);
+
+    public Task UpdateAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default)
+    {
+      if (Conflicts == 0)
+      {
+        Conflicts++;
+        throw new ConcurrencyConflictException(
+          typeof(SiteSettings), siteSettings.Id.ToString(), siteSettings.Version, siteSettings.Version + 1);
+      }
+
+      return Inner.UpdateAsync(siteSettings, cancellationToken);
+    }
   }
 
   internal sealed class CapturingLogger<T> : ILogger<T>

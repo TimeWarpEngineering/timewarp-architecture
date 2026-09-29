@@ -7,8 +7,8 @@
 // a new reader that takes ISiteSettingsStore cannot bypass it, and the Settings handlers keep their
 // ISiteSettingsStore dependency (no TWA0009 edge into Identity.Application). An empty store is
 // treated exactly like a first boot: SiteSettingsSeeder.GetOrSeedAsync(IsDevelopment) with the
-// same IsDevelopment the hosted service passes (IHostEnvironment.IsDevelopment(), resolved once at
-// registration). That recovers any path that empties the table while the host runs (`dev db reset`
+// same IsDevelopment the hosted service passes (IHostEnvironment.IsDevelopment(), read when the
+// scoped decorator is built). That recovers any path that empties the table while the host runs (`dev db reset`
 // re-migrates, a manual DELETE) without a restart. Concurrent empty reads race on AddAsync; the
 // seeder's re-Get on InvalidOperationException leaves one row. Postgres 42P01 (identity.site_settings
 // not migrated yet) is not retried per request — the read returns null and logs a warning, so

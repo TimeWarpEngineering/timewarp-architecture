@@ -62,7 +62,7 @@ code change beyond problem naming.
 
 - `GetAsync`: inner read; on null → `SiteSettingsSeeder.GetOrSeedAsync(isDevelopment)` — the
   same call the boot hosted service makes, so an emptied store is treated like a first boot.
-  `isDevelopment` = `IHostEnvironment.IsDevelopment()` resolved at registration.
+  `isDevelopment` = `IHostEnvironment.IsDevelopment()`, read when the scoped decorator is built.
 - Concurrency: seeder's Add-race re-Get kept; reseed `UpdateAsync` losing the same race now
   re-Gets instead of surfacing `ConcurrencyConflictException`.
 - 42P01: read returns null + warning log (no per-request retry). Readers' null path is now
@@ -78,9 +78,10 @@ code change beyond problem naming.
   handler, policy.
 
 **Tests**
-- New `features/identity/seed-on-read-site-settings-store-tests.cs` (10): empty read seeds;
+- New `features/identity/seed-on-read-site-settings-store-tests.cs` (11): empty read seeds;
   existing row unchanged; emptied store re-seeds; two concurrent empty reads → one row (Add
-  race forced by a gate); concurrent + Development reseed does not conflict; 42P01 → null +
+  race forced by a gate); concurrent + Development reseed does not conflict; reseed Update losing
+  the race (forced conflict) re-Gets instead of throwing; 42P01 → null +
   warning; other failures propagate; isDevelopment reaches reseed (and is ignored outside Dev);
   Update passes through.
 - Get/Update/offered runfiles: empty-store 503 tests replaced — emptied store returns seeded
@@ -94,6 +95,15 @@ code change beyond problem naming.
 `dev template-smoke` SUCCEEDED · `ganda repo audit` passes (after `--fix --checks bin-dev` built
 the gitignored `bin/dev`). **No AppHost started.** Manual `dev db reset` → Settings check: **not
 performed** (would require a running AppHost).
+
+**Review** (tw-implementation-review, effort 1, roster: general; 1 round):
+- Final counts: bug 0 · suggestion 2 fixed · nit 4 fixed · 0 open · 0 wontfix.
+- Disposition: **clean**. Fixes: IsDevelopment Design wording, deterministic reseed-conflict test,
+  Update handler / program.cs wording, double-registration guard in
+  `SiteSettingsSeedRegistration`, Design-region re-wrap. Post-fix `dev build` 0/0, runfile 11/11,
+  `Given_Emptied_Store_` 3/3.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
@@ -109,11 +119,13 @@ Manual (with an AppHost running, operator only): `dev db reset`, then open /Admi
 
 **Expect**
 
-- Runfile: 10/10 passed; integration filter: 3/3 passed.
+- Runfile: 11/11 passed; integration filter: 3/3 passed.
 - Manual: Settings load with configuration-seeded values (Entra enable/AllowBootstrap from
   `Authentication:Entra`, PasskeyPromptMode Soft, Version 0) — no 503; the Microsoft 365 sign-in
   offer follows the seeded policy.
 
 ## Session
+
+- Review oracle (ganda task work, headless Claude, 2026-09-29): effort 1, general reviewer subagent.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-29)

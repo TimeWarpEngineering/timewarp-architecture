@@ -4,10 +4,10 @@
 
 #region Design
 // GetAsync through the registered SeedOnReadSiteSettingsStore (task 254) seeds an empty store, so
-// an update after the row was deleted applies against the freshly seeded Version 0; a null read
-// means the table is not migrated yet (Unavailable 503). Compare Command.Version to stored
-// Version, 409 on mismatch. On match, ReplacePolicy then UpdateAsync. Concurrent Update throws ConcurrencyConflictException → same 409. Does not
-// reference Identity.Application (TWA0009).
+// an update after the row was deleted applies against the freshly seeded row; a null read means
+// the table is not migrated yet (Unavailable 503). Compare Command.Version to stored Version, 409
+// on mismatch. On match, ReplacePolicy then UpdateAsync. Concurrent Update throws
+// ConcurrencyConflictException → same 409. Does not reference Identity.Application (TWA0009).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
