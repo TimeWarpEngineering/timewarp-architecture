@@ -41,13 +41,86 @@ moved.
 
 ## Checklist
 
-- [ ] Fresh `ganda nuget outdated` snapshot recorded
-- [ ] 29 patch pins updated
-- [ ] 14 minor pins updated; gRPC + OTel notes read; SSH.NET lift re-evaluated
-- [ ] Microsoft.OpenApi 3.x decided (taken with notes, or deferred with reason + follow-up)
-- [ ] Platform release pins untouched
-- [ ] `dev build` 0/0 · `dev test` · `dev template-smoke` · `ganda repo audit`
-- [ ] EF model snapshot unchanged / no pending migration
+- [x] Fresh `ganda nuget outdated` snapshot recorded
+- [x] 29 patch pins updated
+- [x] 14 minor pins updated; gRPC + OTel notes read; SSH.NET lift re-evaluated
+- [x] Microsoft.OpenApi 3.x decided (taken with notes, or deferred with reason + follow-up)
+- [x] Platform release pins untouched
+- [x] `dev build` 0/0 · `dev test` · `dev template-smoke` · `ganda repo audit`
+- [x] EF model snapshot unchanged / no pending migration
+
+## Results
+
+### Snapshot (2026-09-29)
+
+The list had moved since 2026-09-23: **53 outdated** (2 major, 16 minor, 34 patch, 1 rc→stable).
+New since the task was written: FluentUI Components `5.0.0-rc.5-26219.1 → 5.0.0` (GA),
+FluentUI Icons `4.14.4 → 5.0.0` (major), TimeWarp.Amuru / Amuru.Tools `→ 1.1.1`,
+TimeWarp.Mediator.* `14.0.0-beta.1 → beta.4`, TimeWarp.State / State.Plus `12.0.0-beta.3 → beta.5`;
+several patch targets also moved further (MessagePack 3.1.10, Scalar 2.17.11, libphonenumber 9.0.40).
+
+`ganda nuget outdated --update --force` applied all 53 pin edits; the only hand edits were
+reverting `Microsoft.OpenApi` and comments. Platform release pins (`TimeWarp.Foundation.*`,
+`TimeWarp.Modules`, `TimeWarp.Identity`, `TimeWarp.402`, `$(TwArchitecture*PackageId)`) are
+untouched at `2.0.0-beta.20`. No `VersionOverride`. Also bumped the local `dotnet-ef` tool
+10.0.10 → 10.0.12 to match the EF Core train.
+
+Final `ganda nuget outdated`:
+
+```
+[67/114] Microsoft.OpenApi 2.12.2 -> 3.10.2
+1 outdated package(s) (1 major)
+```
+
+### Decisions and release-note findings
+
+- **Microsoft.OpenApi 3.x — deferred.** `Microsoft.AspNetCore.OpenApi` 10.0.12's nuspec still
+  declares `Microsoft.OpenApi [2.12.0, 3.0.0)`; a 3.x pin is NU1608 (warning-as-error). Stays on
+  2.12.2; CPM comment updated. Follow-up: **task 257** (published to to-do, gated on an
+  AspNetCore.OpenApi that allows 3.x).
+- **FluentUI Icons 5.0.0 / Components 5.0.0 GA — taken.** Clean build, web-spa bUnit/integration
+  suites and template smoke green with no source changes.
+- **gRPC 2.84.0** (5 pins): no API changes. Relevant fixes: grpc-web client no longer blocks on
+  `SemaphoreSlim.Wait(0)` on single-threaded browser WASM (grpc-dotnet#2756); corrupted bytes after
+  HTTP/2 GOAWAY fixed (#2766). No wire-format changes.
+- **OpenTelemetry 1.19.x** (5 pins): exporter/hosting 1.19.1 vs instrumentation 1.19.0 is the
+  intended upstream split — the core repo shipped a 1.19.1 patch (net8.0 wildcard source/meter
+  `NotSupportedException`/OOM, #7788); contrib instrumentation's latest is 1.19.0 and floors core
+  at `[1.19.0, 2.0.0)`. Behaviour notes from 1.19.0: OTLP exporter drops (rather than fails on)
+  attributes that throw during serialization; dictionary-shaped attributes serialize as OTLP
+  `kvlist`; exporter disables HttpClientFactory integration on browser WASM; inbound `tracestate`
+  parsing fix; Schema URL added to internal `Resource`s.
+- **SSH.NET lift — removed.** Testcontainers 4.15.0 depends on `SSH.NET 2026.0.0` directly, so the
+  CPM `SSH.NET` pin and both direct references (`timewarp-testing`, `web-infrastructure-tests`) are
+  gone; restore stays clean of NU1903.
+- **TimeWarp.State 12.0.0-beta.5** (first-party, migrate forward):
+  - removed its hand-copied `CamelCase` helper (timewarp-state#594) — the three `Hydrate`
+    overrides (`CounterState`, `ApplicationState`, `WeatherForecastsState`) now use
+    `JsonNamingPolicy.CamelCase.ConvertName`;
+  - made `ThrowIfNotTestAssembly` case-insensitive (timewarp-state#607 fixed, #610) — the local
+    `TestCaller` shim (`web-spa/features/base/test-caller.cs`) is deleted and the four debug
+    seeders call State's `ThrowIfNotTestAssembly` again; Design regions reconciled.
+- **NetAnalyzers 10.0.401:** no new diagnostics fired; no suppressions added.
+- **MessagePack 3.1.10:** CPM comment updated; aspire-tests (StreamJsonRpc/DCP path) green.
+
+### Gates
+
+- `dev build --clean`: **0 warnings / 0 errors** (full rebuild for the analyzer bump).
+- `dev test`: 22 projects, **1450 tests, 0 failed**, 1449 passed, 1 skipped (pre-existing skip in
+  web-server-integration-tests).
+- `dev template-smoke`: **SUCCEEDED** — SmokeDefault, SmokeNoPostgres, SmokeNoApi each 0/0 build,
+  generated Jaribu aggregators and co-located runfiles pass.
+- EF: `dotnet ef migrations has-pending-model-changes --context PostgresDbContext` →
+  "No changes have been made to the model since the last migration." (no AppHost booted).
+- `ganda repo audit`: passes all checks (after `--fix --checks bin-dev` built `bin/dev`).
+
+### How to validate
+
+- **Smoke:** `ganda nuget outdated && ./bin/dev build --clean && ./bin/dev test && ./bin/dev template-smoke`
+- **Expect:** outdated lists only `Microsoft.OpenApi 2.12.2 -> 3.10.2`; build 0 warnings / 0 errors;
+  every test project reports `failed: 0`; template smoke ends `Template smoke SUCCEEDED`;
+  `grep -rn "TestCaller\|MemberNameToCamelCase\|SSH.NET" source tests Directory.Packages.props`
+  returns nothing.
 
 ## Notes
 
@@ -56,3 +129,4 @@ moved.
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-23)
+- Implemented: ganda task work implement oracle (2026-09-29) — pins, State beta.5 migration, gates, follow-up 257
