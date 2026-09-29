@@ -85,6 +85,11 @@ reconnecting. The same failure would hit production on any Postgres restart or f
   (after `--fix --checks bin-dev` installed the local `bin/dev`, untracked).
 - **Not performed:** the manual `dev db reset` → load site check — no AppHost was started (per brief).
 
+- **Review:** 1 round, effort 1 (general). Final: 0 bug · 0 suggestion · 1 nit (wontfix) · 0 open.
+  Disposition **accepted-exceptions** — M1 (full `ChangeTracker.Clear()` on claim replay) kept: the
+  scoped-context stores are single-SaveChanges units, so only the claim's own rows can be tracked.
+  Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 - **Smoke:** `cd tests/container-apps/web/web-infrastructure-tests && CI=1 dotnet test -c Release -- --filter-class Connection_recovery`
@@ -98,5 +103,7 @@ reconnecting. The same failure would hit production on any Postgres restart or f
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
 
 ## Session
+
+- Review oracle (ganda task work, Claude Code headless): effort 1, roster general, 2026-09-29
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-29)
