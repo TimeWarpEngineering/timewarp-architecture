@@ -8,8 +8,9 @@
 // Register / Sign in dispatch SignInState.CreateAccountWithPasskey / SignInWithPasskey with
 // StayOnPage (no navigation; the handler publishes the outcome); after a successful register the page
 // sequences FetchCredentials + SetPendingNickname from SignInState.LastRegistered*. Session line
-// reads SignInState.IsAuthenticated (FetchSession on init). The ceremony mapping stays in
-// PasskeyCeremonyClient — do not reintroduce Passwordless.dev or direct passwordless.* JS interop.
+// reads SignInState.IsAuthenticated (FetchSession on init). The credential list disables while any
+// tracked action runs, ceremonies included, so rename/revoke cannot race a register. The ceremony
+// mapping stays in PasskeyCeremonyClient — do not reintroduce Passwordless.dev or direct passwordless.* JS interop.
 // Mock mode: ceremony contracts have no GetMockResponseFactory; mock chain yields 501 and the
 // handler publishes it — the shell region paints it; this page renders no outcome bars (task 247,
 // TWA0025).

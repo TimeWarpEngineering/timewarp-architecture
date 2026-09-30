@@ -54,14 +54,16 @@ appears in the palette.
 - [x] `[CatalogAction]` on converted user-meaningful actions
 - [x] Analyzer proposal written up as an Open Question (not implemented)
 - [x] Skill updated with the rule
-- [x] Tests: co-located Jaribu or the existing web-spa integration suites. Each converted action
-      is dispatched headless and asserts its effect (navigation target, state change); the
+- [x] Tests: co-located Jaribu or the existing web-spa integration suites. Every new action is
+      dispatched headless and asserts its effect (navigation target, state change); passkey
+      ceremonies are pinned to their failure leg (success needs a browser authenticator); the
       catalog lists Link Microsoft 365 with the right visibility and permission
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke` (the template ships these pages),
       `ganda repo audit`
 - [x] Do **not** start an AppHost (`dev run`, `aspire run`, or `dotnet run` of the AppHost);
       record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: accepted-exceptions)
+- [ ] Host `open-pr`
 
 ## Session
 
@@ -204,11 +206,13 @@ dispatch and read.
   "Link microsoft 365").
 - Skill `tw-blazor`: new "User interactions are actions" section (rule, reasoning, exemptions,
   catalog guidance).
-- Tests: `web-spa-integration-tests/features/identity/sign-in-state-tests.cs` (7 facts, headless:
+- Tests: `web-spa-integration-tests/features/identity/sign-in-state-tests.cs` (11 facts after review, headless:
   Link/bootstrap challenge targets + forceLoad, unsafe return collapsed, offered flag + fail
   closed, Microsoft 365 create success navigation, expired problem → choice invalid + no
   navigation + notification, passkey ceremony failure → CeremonyFailed + no navigation +
-  notification, Later persistence only when asked); `action-catalog-tests` roster +
+  notification, Later persistence only when asked; review round 1 added CreateAccountWithPasskey failed
+  ceremony, UseExistingAccountForMicrosoft365 expired failure, FetchSession true/false/null,
+  FetchMicrosoft365Choice valid/failure); `action-catalog-tests` roster +
   LinkMicrosoft365 visibility/permission; `command-palette-tests` roster + display name.
 - Gates: `dev build` 0 warnings / 0 errors; `dev test` all suites passed (1 pre-existing skip in
   web-server-integration-tests); `dev template-smoke` SUCCEEDED; `ganda repo audit` clean.
@@ -229,7 +233,7 @@ grep -rnE 'NavigationManager|IWebServerApiService|PasskeyCeremonyClient|IJSRunti
 
 **Expect:**
 
-- `SignInActions_Should_`: 7/7 passed; `ActionCatalog_Should` and `CommandPalette_Should_` pass
+- `SignInActions_Should_`: 11/11 passed; `ActionCatalog_Should` and `CommandPalette_Should_` pass
   with `Credentials.LinkMicrosoft365` in the roster (Human, `credential.manage.self`).
 - The grep lists only the exempt/lifecycle uses from the audit table: `LoginPage.razor`
   (`NavigationManager` lifecycle redirect), `RedirectToLogin.razor`, `CounterPage.razor`
@@ -238,3 +242,20 @@ grep -rnE 'NavigationManager|IWebServerApiService|PasskeyCeremonyClient|IJSRunti
 - In a browser (manual, not performed here): Settings → "Link Microsoft 365" and Ctrl-K →
   "Credentials: Link microsoft 365" both leave for the Entra challenge with
   `mode=link&returnUrl=%2FSettings`.
+
+### Review disposition
+
+- **Rounds:** 1. **Roster:** general (effort 3, by-diff budget).
+- **Final counts:** bug 0; suggestion 1 fixed; nit 3 fixed, 1 wontfix. Open: 0.
+- **Disposition:** `accepted-exceptions`. M5 is wontfix: the palette row reads "Link microsoft 365"
+  because of the existing catalog-wide sentence-case rule, and a per-action display-name override is
+  beyond this task.
+- **Fixes:**
+  - 4 new headless facts.
+  - The SettingsPage `SiteSettingsState` CrossSliceReference reason is trimmed.
+  - The PasskeysPage Design region notes that the list is disabled during ceremonies.
+  - `FetchMicrosoft365Choice` resets the verdict to null before fetching.
+- **Post-fix gates:** `dev build` 0/0; web-spa-integration-tests 124/124; `ganda repo audit`
+  clean.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.

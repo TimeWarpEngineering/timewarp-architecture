@@ -5,6 +5,8 @@
 #region Design
 // Parked Entra claims are server-side; this only reads validity (the completion responses carry
 // the destination). Any failure reads as expired — the page then offers "sign in with Microsoft 365 again".
+// The verdict resets to null (unknown) before each fetch so a revisit paints "Checking sign-in…"
+// rather than the previous visit's answer.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -21,6 +23,7 @@ partial class SignInState
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
+        SignInState.Microsoft365ChoiceValid = null;
         try
         {
           OneOf<GetEntraBootstrapChoice.Response, FileResponse, SharedProblemDetails> result =

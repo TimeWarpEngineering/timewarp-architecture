@@ -51,7 +51,7 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(CredentialList), "Settings composes the Identity credential list; Applications owns the page chrome.")]
-[CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for passkey prompt; Microsoft 365 section is gated on GetEntraSignInOffered.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for the passkey prompt.")]
 [CrossSliceReference(typeof(PasskeyAccountName), "Settings shows the signed-in account name with the same Identity formatter that names new passkeys.")]
 [CrossSliceReference(typeof(SignInState), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
 partial class SettingsPage;

@@ -7,10 +7,11 @@
 // C-create in-proc ServiceProvider (same shape as SignOutSpa): a scripted IWebServerApiService
 // answers per request type, NavigationManager records every NavigateTo with its forceLoad flag,
 // and ISessionStorageService / IJSRuntime are FakeItEasy fakes. The passkey ceremony is driven
-// only to its first HTTP leg (StartPasskeyAuthentication answers with a problem): the browser
+// only to its first HTTP leg (Start{Passkey,}Registration / StartPasskeyAuthentication answer with a problem): the browser
 // half needs a real authenticator, and what this suite pins is the action seam — failure marks
 // CeremonyFailed, reaches NotificationState, and does not navigate. States are re-read from the
-// Store after Send (clone-on-dispatch replaces instances).
+// Store after Send (clone-on-dispatch replaces instances). Fetch actions (session, Microsoft 365
+// offered/choice) are covered for their success, problem and throwing reads.
 #endregion
 
 namespace SignInState_;
@@ -127,6 +128,76 @@ public class SignInActions_Should_
     spa.Navigations(scope).ShouldBeEmpty();
     scope.Store.GetState<NotificationState>().Messages
       .ShouldContain(message => message.Title == "Passkey sign-in unavailable");
+  }
+
+  public static async Task CreateAccountWithPasskey_Report_A_Failed_Ceremony_Without_Navigating()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Problem<StartPasskeyRegistration.Command>
+    (
+      new SharedProblemDetails { Status = 501, Title = "Passkey registration unavailable" }
+    );
+
+    await scope.Send(new SignInState.CreateAccountWithPasskeyActionSet.Action("/Settings"));
+
+    scope.Store.GetState<SignInState>().CeremonyFailed.ShouldBeTrue();
+    spa.Navigations(scope).ShouldBeEmpty();
+    scope.Store.GetState<NotificationState>().Messages
+      .ShouldContain(message => message.Title == "Passkey registration unavailable");
+  }
+
+  public static async Task UseExistingAccountForMicrosoft365_Report_A_Failure_Without_Navigating()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<GetEntraBootstrapChoice.Query>(_ => new GetEntraBootstrapChoice.Response(valid: true, destination: "/"));
+    spa.Api.Problem<StartPasskeyAuthentication.Command>
+    (
+      new SharedProblemDetails { Status = 400, Title = "Microsoft 365 sign-in expired" }
+    );
+
+    await scope.Send(new SignInState.FetchMicrosoft365ChoiceActionSet.Action());
+    await scope.Send(new SignInState.UseExistingAccountForMicrosoft365ActionSet.Action());
+
+    SignInState state = scope.Store.GetState<SignInState>();
+    state.CeremonyFailed.ShouldBeTrue();
+    state.Microsoft365ChoiceValid.ShouldBe(false);
+    spa.Navigations(scope).ShouldBeEmpty();
+    scope.Store.GetState<NotificationState>().Messages
+      .ShouldContain(message => message.Title == "Microsoft 365 sign-in expired");
+  }
+
+  public static async Task FetchSession_Read_The_Session_And_Fail_Closed()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    spa.Api.Answer<GetCurrentSession.Query>(_ => new GetCurrentSession.Response(true, PrincipalId.New()));
+    await scope.Send(new SignInState.FetchSessionActionSet.Action());
+    scope.Store.GetState<SignInState>().IsAuthenticated.ShouldBe(true);
+
+    spa.Api.Answer<GetCurrentSession.Query>(_ => new GetCurrentSession.Response(false, null));
+    await scope.Send(new SignInState.FetchSessionActionSet.Action());
+    scope.Store.GetState<SignInState>().IsAuthenticated.ShouldBe(false);
+
+    spa.Api.Problem<GetCurrentSession.Query>(new SharedProblemDetails { Status = 500, Title = "Session unavailable" });
+    await scope.Send(new SignInState.FetchSessionActionSet.Action());
+    scope.Store.GetState<SignInState>().IsAuthenticated.ShouldBeNull();
+  }
+
+  public static async Task FetchMicrosoft365Choice_Read_Expired_On_Failure()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    spa.Api.Answer<GetEntraBootstrapChoice.Query>(_ => new GetEntraBootstrapChoice.Response(valid: true, destination: "/"));
+    await scope.Send(new SignInState.FetchMicrosoft365ChoiceActionSet.Action());
+    scope.Store.GetState<SignInState>().Microsoft365ChoiceValid.ShouldBe(true);
+
+    spa.Api.Answer<GetEntraBootstrapChoice.Query>(_ => throw new HttpRequestException("BFF down"));
+    await scope.Send(new SignInState.FetchMicrosoft365ChoiceActionSet.Action());
+    scope.Store.GetState<SignInState>().Microsoft365ChoiceValid.ShouldBe(false);
   }
 
   public static async Task DismissPasskeySoftPrompt_Persist_Later_Only_When_Asked()
