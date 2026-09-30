@@ -99,3 +99,18 @@ short fields such as City / State / ZIP). Spacing via the `--twe-space-*` tokens
 
 Reference: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
 (Forms card). Applied on ProfilePage, RoleForm, and AuthenticationPage.
+
+# Browser console logs in the Aspire dashboard
+
+In Development and Testing the host page (`App.razor`) loads `js/browser-log-forwarder.js` before
+`_framework/blazor.web.js`. The script forwards console errors and warnings, uncaught errors, and
+unhandled promise rejections to `POST api/browser-logs`; web-server relays them into its
+structured logs under category `Web.Spa.Browser`, so they show in the Aspire dashboard on the
+web-server resource. A plain script is required because boot failures happen before the .NET
+runtime starts, so a WASM `ILoggerProvider` cannot see them. The gate is
+`BrowserLogForwarding.IsEnabled(IHostEnvironment)`: Production never loads the script and the
+endpoint answers 404. Entries are rate limited and bearer tokens / JWTs are redacted.
+
+Symptom: a Mono assertion such as `metadata/assembly.c ... assertion` in the browser console (now
+visible in the dashboard) means stale `_framework` assets. Fix: `dev clean`, rebuild, then clear
+site data (DevTools > Application > Clear site data) or hard refresh.

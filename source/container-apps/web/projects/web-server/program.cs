@@ -203,6 +203,7 @@ public partial class Program : IAspNetProgram
     // Task 254: after the store backend is final — wraps it so an empty store seeds on first read.
     SiteSettingsSeedRegistration.ConfigureServices(serviceCollection);
     serviceCollection.AddSingleton<IChatHubService, ChatHubService>();
+    serviceCollection.AddSingleton<BrowserLogRateLimiter>();
     CorsPolicy.Any.Apply(serviceCollection);
     ConfigureInfrastructure(serviceCollection);
     serviceCollection.AddSignalR();
