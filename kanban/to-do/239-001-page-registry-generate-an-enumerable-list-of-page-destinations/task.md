@@ -33,7 +33,7 @@ hand markup (`TimeWarpNavLink TPage=…`). Nothing aggregates pages.
 - [x] Parameterized routes excluded
 - [x] NavMenu from registry, or a drift check
 - [x] Tests
-- [ ] Gates; no AppHost
+- [x] Gates; no AppHost
 
 ## Notes
 
@@ -72,6 +72,8 @@ AppHost.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-30)
 - Implement oracle (ganda task work, 2026-09-30): generator + registry + drift constraint + tests.
+- Implement oracle resume (2026-09-30): cockpit-note caching fixes (value-equatable `PageModel`,
+  location-free `PageDiagnostic`, cache test); gates run serially; build server shut down.
 
 ## Results
 
@@ -97,6 +99,15 @@ AppHost.
   policy carried, TWE009 + exclusion, parameterized exclusion, non-literal TWE009, no registry
   without pages) and SPA suite `features/application/page-registry-tests.cs` (expected demo pages
   present, parameterized/ceremony pages absent, entries well formed).
+- **Incremental caching (cockpit note):** `PageModel` is now a value-equatable `sealed record`
+  (`Parameters` as `ImmutableArray`, compared by sequence). The two `Diagnostic?` fields became
+  location-free `PageDiagnostic` values (descriptor, path, `TextSpan`, `LinePositionSpan`, args).
+  The `Diagnostic` is built in `RegisterSourceOutput`, so no `SyntaxTree` is pinned in the cache.
+  New test `Should_Cache_Page_And_Registry_Outputs_When_Unrelated_Tree_Is_Added` asserts that every
+  tracked output is `Cached`/`Unchanged` after an unrelated edit and that TWE009 is still reported.
+  It was checked by forcing `Equals` to return false, which made the test fail.
+- **Gates (serial):** `dev build` 0/0 (full rebuild; `PageRegistry.g.cs` has 16 entries);
+  `dev test` exit 0, 21 suites, 0 failed; `dev template-smoke` SUCCEEDED; `ganda repo audit` passes.
 - **Manual browser check: not performed** (no AppHost started, per task rule).
 
 ### How to validate
@@ -108,7 +119,7 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release 
 dotnet run tools/dev-cli/dev.cs -- build
 ```
 
-**Expect:** generator suite 14/14 passed; SPA `All_Should_` 3/3 passed; `dev build` 0 warnings /
+**Expect:** generator suite 15/15 passed (includes the incremental-cache test); SPA `All_Should_` 3/3 passed; `dev build` 0 warnings /
 0 errors, with
 `artifacts/generated/web-spa/timewarp-architecture-analyzers/TimeWarp.Architecture.Analyzers.PageSourceGenerator/PageRegistry.g.cs`
 listing 16 entries (Home `/` first). Adding `<TimeWarpNavLink TPage=LogoutPage />` to

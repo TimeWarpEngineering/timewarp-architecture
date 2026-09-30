@@ -11,6 +11,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
 
-[Page("/Admin/Principals", Policy = PermissionIds.AdminPrincipalsRead)]
+[Page("/Admin/Principals", Policy = PermissionIds.AdminPrincipalsRead, Navigable = true)]
 [Authorize(Policy = PermissionIds.AdminPrincipalsRead)]
 partial class PrincipalsPage;

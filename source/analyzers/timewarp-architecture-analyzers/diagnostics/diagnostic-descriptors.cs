@@ -14,7 +14,9 @@
 // assemblies — empty/typo/unmarked must not silently emit nothing.
 // TWA* convention IDs live in the convention-analyzers package, not here (ingress TWA0017–0019
 // are the historical exception, declared on IngressRoutePrefixGenerator).
-// Severity: generation-contract violations (TWE002/003/007/008, TWE005/006) are Errors so a broken
+// TWE009 is the [Page] Navigable opt-in contract: a registry destination needs a static route and
+// a literal bool (syntax-keyed generator), otherwise the page would silently miss the registry.
+// Severity: generation-contract violations (TWE002/003/007/008/009, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -49,6 +51,15 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Pit of success: product policy constants are the single source of truth for registered policy names. Identifier glue and string literals silently mis-authorize.");
+
+  public static readonly DiagnosticDescriptor PageInvalidNavigable = new(
+    id: "TWE009",
+    title: "Invalid [Page] Navigable opt-in",
+    messageFormat: "[Page] Navigable on '{0}' {1}; the page is not added to PageRegistry",
+    category: "Page",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: a navigation destination must be reachable without arguments (static route, IStaticRoute) and the opt-in must be the literal true or false.");
 
   public static readonly DiagnosticDescriptor TypedIdInvalidShape = new(
     id: "TWE006",

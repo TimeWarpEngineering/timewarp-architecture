@@ -75,6 +75,20 @@ host paints a state store that holds the current bars; it is the single place an
   bar duplicates the region and breaks the one-region-per-page rule; report outcomes through the
   shared state store instead (see the `tw-blazor` skill, "Operation outcomes").
 
+## Navigation destinations come from one registry
+
+The nav menu and any other destination surface (a command palette, a sitemap) read **one**
+generated list of pages — never a second hand-copied route list.
+
+- **Opt in on the page's route declaration.** A page that is a navigation destination says so
+  where its route and policy are declared; the generator lists it (route, URL, title, icon,
+  policy) in a per-assembly registry. Pages that need route arguments are not destinations.
+- **The menu may keep hand markup, but not hand routes.** Grouping, per-group authorization, and
+  feature-flag regions stay authored markup; each link names a page type, and the link component's
+  type constraint accepts only registry members — a link to an unlisted page does not compile.
+- **Reflection-free.** The registry is a generated array of static member reads, so it is
+  AOT/trim safe and needs no assembly scanning at startup.
+
 ## Reference implementation (timewarp-architecture)
 
 Concrete instance of the pattern in this repo:
@@ -94,6 +108,11 @@ Concrete instance of the pattern in this repo:
   one is the *styling* (Tier-2 scope-handle `.twe-shell`).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
   pages and state live in product slice namespaces (`…Features.<Id>`). See skill `tw-slice-isolation`.
+- **Navigation registry:** `[Page("/route", Policy = …, Navigable = true)]` lists a static-route
+  page in the generated `PageRegistry.All` (`PageRegistryEntry`: type, route template, URL, title,
+  icon, policy) and adds `INavigationDestination`; `components/elements/TimeWarpNavLink.razor`
+  constrains `TPage` to it, so every `components/NavMenu.razor` link is a registry entry.
+  `Navigable = true` on a parameterized route (or a non-literal value) is **TWE009**.
 - **Notification region:** `components/MessageBars.razor` + `NotificationState`
   (`features/notification/notification-state/`), painted by both shells; TWA0025 keeps outcome
   bars out of pages.

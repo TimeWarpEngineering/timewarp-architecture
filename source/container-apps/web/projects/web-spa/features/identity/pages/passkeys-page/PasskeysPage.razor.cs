@@ -24,6 +24,6 @@
 namespace TimeWarp.Architecture.Features.Identity;
 
 // Technical ceremony demo — product CTA is /Login. Nav + route gated to Developer (147-001).
-[Page("/Passkeys", Policy = PermissionIds.DeveloperAccess)]
+[Page("/Passkeys", Policy = PermissionIds.DeveloperAccess, Navigable = true)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class PasskeysPage;

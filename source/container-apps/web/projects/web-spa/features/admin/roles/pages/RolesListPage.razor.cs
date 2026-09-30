@@ -12,6 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-[Page("/Admin/Roles", Policy = PermissionIds.AdminRolesRead)]
+[Page("/Admin/Roles", Policy = PermissionIds.AdminRolesRead, Navigable = true)]
 [Authorize(Policy = PermissionIds.AdminRolesRead)]
 partial class RolesListPage;

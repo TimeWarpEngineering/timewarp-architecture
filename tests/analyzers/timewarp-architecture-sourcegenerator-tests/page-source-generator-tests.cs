@@ -9,6 +9,8 @@ using Microsoft.CodeAnalysis.CSharp;
 
 // Verifies PageSourceGenerator: [Page("/route")] routing + Policy pit-of-success (task 094).
 // Policy must be a const field reference (Policies.X); literals and nameof are TWE005 errors.
+// PageRegistry (task 239-001): Navigable = true opt-in, static routes only (TWE009), policy carried,
+// and page/registry outputs stay cached across unrelated edits (value-equatable models).
 public class PageSourceGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -171,6 +173,177 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldContain(d => d.Id == "TWE005");
     generated.ShouldNotContain("partial class SettingsPage");
+    return Task.CompletedTask;
+  }
+
+  private static string RegistryOf(string generated)
+  {
+    int start = generated.IndexOf("public static class PageRegistry", StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0, "PageRegistry was not generated");
+    return generated.Substring(start);
+  }
+
+  public static Task Should_List_Only_Navigable_Pages_In_Registry()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      public static class Policies
+      {
+        public const string SettingsEdit = "settings.edit";
+      }
+      [Page("/Counter", Navigable = true)]
+      public partial class CounterPage { }
+      [Page("/settings", Policy = Policies.SettingsEdit, Navigable = true)]
+      public partial class SettingsPage { }
+      [Page("/Login")]
+      public partial class LoginPage { }
+      [Page("/Logout", Navigable = false)]
+      public partial class LogoutPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("public sealed record PageRegistryEntry(");
+    string registry = RegistryOf(generated);
+    registry.ShouldContain(
+      "new(typeof(global::Test.Pages.CounterPage), \"/Counter\", global::Test.Pages.CounterPage.GetPageUrl(), "
+      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy),");
+    registry.ShouldContain("new(typeof(global::Test.Pages.SettingsPage), \"/settings\"");
+    registry.ShouldNotContain("LoginPage");
+    registry.ShouldNotContain("LogoutPage");
+    // Ordinal route sort: "/Counter" before "/settings".
+    registry.IndexOf("CounterPage", StringComparison.Ordinal)
+      .ShouldBeLessThan(registry.IndexOf("SettingsPage", StringComparison.Ordinal));
+
+    generated.ShouldContain("partial class CounterPage : INavigableComponent, IStaticRoute, INavigationDestination");
+    generated.ShouldContain("partial class LoginPage : INavigableComponent, IStaticRoute\n");
+    generated.ShouldContain("partial class LogoutPage : INavigableComponent, IStaticRoute\n");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Carry_Policy_Through_Registry_Entry()
+  {
+    (string generated, _) = Run("""
+      namespace Test.Pages;
+      public static class Policies
+      {
+        public const string SettingsEdit = "settings.edit";
+      }
+      [Page("/settings", Policy = Policies.SettingsEdit, Navigable = true)]
+      public partial class SettingsPage { }
+      """);
+
+    // The entry reads the page's generated Policy member, which is the const expression.
+    generated.ShouldContain("public static string Policy { get; } = Policies.SettingsEdit;");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy)");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE009_And_Exclude_Navigable_Parameterized_Route()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/todoitems/{TodoItemId:Guid}", Navigable = true)]
+      public partial class TodoItemPage { }
+      [Page("/todoitems", Navigable = true)]
+      public partial class TodoItemsPage { }
+      """);
+
+    // Run() concatenates driver + per-generator diagnostics, so the one report appears twice.
+    Diagnostic twe009 = diagnostics.First(d => d.Id == "TWE009");
+    twe009.Severity.ShouldBe(DiagnosticSeverity.Error);
+    twe009.GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("TodoItemPage");
+    RegistryOf(generated).ShouldNotContain("TodoItemPage)");
+    RegistryOf(generated).ShouldContain("typeof(global::Test.Pages.TodoItemsPage)");
+    // The page surface itself still generates (only registry membership is refused).
+    generated.ShouldContain("public static string GetPageUrl(Guid TodoItemId)");
+    generated.ShouldNotContain("partial class TodoItemPage : INavigableComponent, INavigationDestination");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Exclude_Parameterized_Routes_Without_Opt_In()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/todoitems/{TodoItemId:Guid}")]
+      public partial class TodoItemPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    RegistryOf(generated).ShouldNotContain("TodoItemPage");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE009_For_Non_Literal_Navigable()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      public static class Flags
+      {
+        public const bool On = true;
+      }
+      [Page("/Counter", Navigable = Flags.On)]
+      public partial class CounterPage { }
+      """);
+
+    diagnostics.ShouldContain(d => d.Id == "TWE009");
+    RegistryOf(generated).ShouldNotContain("CounterPage");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Not_Emit_Registry_Without_Pages()
+  {
+    (string generated, _) = Run("""
+      namespace Test.Pages;
+      public partial class NotAPage { }
+      """);
+
+    generated.ShouldNotContain("class PageRegistry");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Cache_Page_And_Registry_Outputs_When_Unrelated_Tree_Is_Added()
+  {
+    var compilation = CSharpCompilation.Create(
+      "Test.WebSpa",
+      new[]
+      {
+        CSharpSyntaxTree.ParseText("""
+          namespace Test.Pages;
+          [Page("/Counter", Navigable = true)]
+          public partial class CounterPage { }
+          [Page("/todoitems/{TodoItemId:Guid}", Navigable = true)]
+          public partial class TodoItemPage { }
+          """),
+      },
+      new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+      new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+    GeneratorDriver driver = CSharpGeneratorDriver.Create(
+      generators: ImmutableArray.Create(new PageSourceGenerator().AsSourceGenerator()),
+      optionsProvider: new TestAnalyzerConfigOptionsProvider(
+        new Dictionary<string, string> { ["build_property.RootNamespace"] = RootNamespace }),
+      driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true));
+    driver = driver.RunGenerators(compilation);
+
+    compilation = compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText("""
+      namespace Unrelated;
+      [System.Obsolete]
+      public sealed class Other { }
+      """));
+    driver = driver.RunGenerators(compilation);
+
+    GeneratorRunResult run = driver.GetRunResult().Results.Single();
+    IncrementalStepRunReason[] reasons =
+    [
+      .. run.TrackedOutputSteps
+        .SelectMany(static pair => pair.Value)
+        .SelectMany(static step => step.Outputs)
+        .Select(static output => output.Reason),
+    ];
+
+    reasons.ShouldNotBeEmpty();
+    reasons.ShouldAllBe(static r => r == IncrementalStepRunReason.Cached || r == IncrementalStepRunReason.Unchanged);
+    run.Diagnostics.ShouldContain(static d => d.Id == "TWE009");
     return Task.CompletedTask;
   }
 }

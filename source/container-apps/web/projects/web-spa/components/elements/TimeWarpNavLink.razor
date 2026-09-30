@@ -1,5 +1,5 @@
 @namespace TimeWarp.Architecture.Components
-@typeparam TPage where TPage : INavigableComponent, IStaticRoute
+@typeparam TPage where TPage : INavigableComponent, IStaticRoute, INavigationDestination
 
 <AuthorizeView Policy=@TPage.Policy>
   <Authorized>

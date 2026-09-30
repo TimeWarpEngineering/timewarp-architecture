@@ -4,6 +4,6 @@
 
 namespace TimeWarp.Architecture.Features.Counters;
 
-[Page("/Counter", Policy = PermissionIds.DeveloperAccess)]
+[Page("/Counter", Policy = PermissionIds.DeveloperAccess, Navigable = true)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class CounterPage;
