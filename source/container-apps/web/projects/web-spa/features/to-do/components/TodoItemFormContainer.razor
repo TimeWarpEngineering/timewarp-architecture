@@ -2,9 +2,7 @@
 @inherits BaseComponent
 
 @code {
-  [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-
-  private void Back() => NavigationManager.NavigateTo("/");
+  private Task Back() => NoSubRouteState.ChangeRoute(newRoute: "/");
 }
 
 <FormContainer>

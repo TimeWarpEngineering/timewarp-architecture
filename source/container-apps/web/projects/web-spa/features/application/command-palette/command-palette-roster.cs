@@ -13,7 +13,8 @@
 // Anonymous policy (Home), which always succeeds; an empty policy string is treated the same. A command needs every one of its Permissions; a command with none still needs a
 // signed-in principal, because every cataloged command acts on the user's own session (sign-out,
 // passkeys) and must not be offered to an anonymous visitor.
-// Command display name is the catalog name made readable ("Profile.SignOut" → "Profile: Sign out")
+// Command display name is the catalog name made readable ("Profile.SignOut" → "Profile: Sign out",
+// a digit run starts a word: "Credentials.LinkMicrosoft365" → "Credentials: Link microsoft 365")
 // so typing words from it ranks; the stable catalog name stays the row Target.
 // Sign in (task 259): an explicit, typed signed-out entry built from LoginPage.Title and
 // LoginPage.GetPageUrl() — not a registry concept. Login stays out of PageRegistry.All (NavMenu
@@ -114,6 +115,10 @@ public static class CommandPaletteRoster
       if (index > 0 && char.IsUpper(character))
       {
         words.Append(' ').Append(char.ToLowerInvariant(character));
+      }
+      else if (index > 0 && char.IsDigit(character) && !char.IsDigit(action[index - 1]))
+      {
+        words.Append(' ').Append(character);
       }
       else
       {

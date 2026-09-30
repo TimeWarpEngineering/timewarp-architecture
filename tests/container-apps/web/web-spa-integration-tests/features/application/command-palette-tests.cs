@@ -57,7 +57,10 @@ public class CommandPalette_Should_
 
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Command).Select(static row => row.Target)
       .OrderBy(static name => name, StringComparer.Ordinal)
-      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Profile.SignOut"]);
+      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Profile.SignOut"]);
+
+    // Task 260: the Settings "Link Microsoft 365" button is a palette command too.
+    palette.Roster.Single(static row => row.Target == "Credentials.LinkMicrosoft365").Name.ShouldBe("Credentials: Link microsoft 365");
 
     CommandPaletteRow signOut = palette.Roster.Single(static row => row.Target == "Profile.SignOut");
     signOut.Name.ShouldBe("Profile: Sign out");
@@ -112,7 +115,7 @@ public class CommandPalette_Should_
     foreach (string denied in new[]
     {
       "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Authentication",
-      "/AgentLinks", "Credentials.AddPasskey", "Credentials.AddExistingPasskey",
+      "/AgentLinks", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
     {
       targets.ShouldNotContain(denied);

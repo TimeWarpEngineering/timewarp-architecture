@@ -5,10 +5,12 @@
   public static string Title => "Passkeys";
   public static Icon? NavIcon => new Icons.Regular.Size20.Key();
 
-  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
-
-  private bool IsBusy;
-  private bool? IsAuthenticated;
+  private bool IsBusy => IsAnyActive
+  (
+    typeof(SignInState.SignInWithPasskeyActionSet.Action),
+    typeof(SignInState.CreateAccountWithPasskeyActionSet.Action)
+  );
+  private bool? IsAuthenticated => SignInState.IsAuthenticated;
 
   private bool IsListBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
@@ -17,94 +19,26 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    await RefreshSessionAsync();
+    await NoSubSignInState.FetchSession();
     await NoSubCredentialsState.FetchCredentials();
   }
 
-  // Outcomes go to the shell's MessageBars region via NotificationState (task 247); this
-  // demo page renders no bars of its own.
+  // Ceremonies are SignInState actions (StayOnPage: no navigation and publish the outcome to the
+  // shell region, task 247). The page only sequences the follow-ups after a success.
   private async Task RegisterPasskey()
   {
-    IsBusy = true;
-    try
+    await NoSubSignInState.CreateAccountWithPasskey(SignInState.StayOnPage);
+    if (SignInState.CeremonyFailed || SignInState.LastRegisteredCredentialId is not Guid credentialId)
     {
-      OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails> result =
-        await Ceremony.RegisterAsync(CancellationToken.None);
+      return;
+    }
 
-      if (result.IsT1)
-      {
-        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
-        return;
-      }
-
-      await NoSubNotificationState.AddNotification
-      (
-        MessageBarIntent.Success,
-        "Passkey registered.",
-        $"PrincipalId: {result.AsT0.PrincipalId}",
-        CancellationToken
-      );
-      await RefreshSessionAsync();
-      await NoSubCredentialsState.FetchCredentials();
-      // Task 248-001: prompt for a nickname, prefilled with the provider name, on the new row.
-      await NoSubCredentialsState.SetPendingNickname(result.AsT0.CredentialId.Value, result.AsT0.ProviderLabel ?? string.Empty);
-    }
-    catch (JSException jsException)
-    {
-      await ReportCeremonyFailureAsync(jsException);
-    }
-    finally
-    {
-      IsBusy = false;
-    }
+    await NoSubCredentialsState.FetchCredentials();
+    // Task 248-001: prompt for a nickname, prefilled with the provider name, on the new row.
+    await NoSubCredentialsState.SetPendingNickname(credentialId, SignInState.LastRegisteredProviderLabel ?? string.Empty);
   }
 
-  private async Task AuthenticateWithPasskey()
-  {
-    IsBusy = true;
-    try
-    {
-      OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
-        await Ceremony.AuthenticateAsync(CancellationToken.None);
-
-      if (result.IsT1)
-      {
-        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
-        return;
-      }
-
-      await NoSubNotificationState.AddNotification
-      (
-        MessageBarIntent.Success,
-        "Authenticated.",
-        $"PrincipalId: {result.AsT0.PrincipalId}",
-        CancellationToken
-      );
-      await RefreshSessionAsync();
-    }
-    catch (JSException jsException)
-    {
-      await ReportCeremonyFailureAsync(jsException);
-    }
-    finally
-    {
-      IsBusy = false;
-    }
-  }
-
-  private Task ReportCeremonyFailureAsync(JSException jsException) =>
-    NoSubNotificationState.AddNotification
-    (
-      MessageBarIntent.Error,
-      "The browser could not complete the passkey ceremony",
-      jsException.Message,
-      CancellationToken
-    );
-
-  private async Task RefreshSessionAsync()
-  {
-    IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
-  }
+  private Task AuthenticateWithPasskey() => NoSubSignInState.SignInWithPasskey(SignInState.StayOnPage);
 
   private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
   {

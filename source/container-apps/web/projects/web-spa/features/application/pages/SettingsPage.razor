@@ -8,23 +8,21 @@
   public static string Title => "Settings";
   public static Icon? NavIcon => new Icons.Regular.Size20.Settings();
 
-  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
-  private bool ShowMicrosoft365;
   private string? AccountFingerprint;
 
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
-  private bool CanLinkMicrosoft365 => ShowMicrosoft365 && EntraAccounts.Count == 0;
+  private bool ShowMicrosoft365 => SignInState.Microsoft365Offered;
+  private bool CanLinkMicrosoft365 => CredentialsState.CanLinkMicrosoft365(ShowMicrosoft365, EntraAccounts.Count);
   private bool CanRevoke => CredentialsState.CanUnlink(CredentialsState.ActiveCredentialCount);
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    ShowMicrosoft365 = await LoadEntraOfferedAsync();
+    await NoSubSignInState.FetchMicrosoft365Offered();
     await NoSubCredentialsState.FetchCredentials();
     if (RendererInfo.IsInteractive)
     {
@@ -92,29 +90,7 @@
 
   private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
 
-  private async Task<bool> LoadEntraOfferedAsync()
-  {
-    try
-    {
-      OneOf<GetEntraSignInOffered.Response, FileResponse, SharedProblemDetails> result =
-        await WebServerApiService.GetResponse<GetEntraSignInOffered.Response>(
-          new GetEntraSignInOffered.Query(),
-          CancellationToken.None);
-      return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
-        && response.Offered;
-    }
-    catch (Exception)
-    {
-      return false;
-    }
-  }
-
-  private void LinkMicrosoft365()
-  {
-    NavigationManager.NavigateTo(
-      ChallengeEntra.GetRoute("link", "/Settings"),
-      forceLoad: true);
-  }
+  private Task LinkMicrosoft365Async() => NoSubCredentialsState.LinkMicrosoft365();
 }
 
 <TimeWarpPage Title="Settings">
@@ -181,7 +157,7 @@
             <FluentButton Appearance="ButtonAppearance.Primary"
                           data-qa="LinkMicrosoft365"
                           Disabled="@IsBusy"
-                          OnClick="LinkMicrosoft365">
+                          OnClick="LinkMicrosoft365Async">
               Link Microsoft 365
             </FluentButton>
           }

@@ -22,7 +22,8 @@
   CTA succeeds the component dispatches ClaimPendingNicknameForPrompt BEFORE FetchCredentials, so
   a CredentialList on the same page (Settings) sees PendingListRenameCredentialId = null and does
   not open a second editor for the same passkey.
-  Soft: Later dismisses for the SPA session and optionally persists in sessionStorage.
+  Soft: Later dispatches DismissPasskeySoftPrompt(rememberForSession: true) — the handler writes
+  the sessionStorage key; first interactive render only reads it back to restore the dismissal.
   Required (site settings PasskeyPromptMode): Later is hidden; TimeWarpPage hides page body
   until a passkey exists. Never a route policy — this is UX plus a chrome gate.
 *@
@@ -94,15 +95,7 @@
     await NoSubCredentialsState.ClearPendingNickname();
   }
 
-  private async Task DismissAsync()
-  {
-    if (RendererInfo.IsInteractive)
-    {
-      await SessionStorage.SetItemAsync(PasskeySoftPrompt.LaterStorageKey, true);
-    }
-
-    await NoSubCredentialsState.DismissPasskeySoftPrompt();
-  }
+  private Task DismissAsync() => NoSubCredentialsState.DismissPasskeySoftPrompt(rememberForSession: true);
 }
 
 @if (ShouldShowNicknameForm)
