@@ -314,6 +314,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWE006 | `[TypedId]` target must be a `readonly partial record struct` |
 | TWE007 | unresolvable route or `HttpVerb` (missing/empty `[ApiRoute]`, unknown verb) — fail-closed; no emission |
 | TWE008 | `EnableApiEndpointGeneration` requires `ApiEndpointContractAssemblies` as AssemblyName allow-list (`web-contracts`, `api-contracts`); empty/typo/unmarked is fail-closed — no silent empty generation |
+| TWE009 | `[Page] Navigable = true` requires a static route (no `{token}`) and a literal `true`/`false` — otherwise the page would silently miss `PageRegistry` |
 | SG001 | shared source-generator log (resilience backstop) |
 | SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
 | SG010 | TypedId BCL surface generation failed (resilience) |

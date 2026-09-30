@@ -1,7 +1,8 @@
 #region Purpose
 // For a Blazor page class marked [Page("/route"[, Policy = Policies.X])] generates [Route],
 // INavigableComponent/IStaticRoute, GetPageUrl(...), Policy accessor, and [Parameter] props for
-// route tokens. Origin: web-spa Page Moxy template, replaced in task 053.
+// route tokens; plus one per-assembly PageRegistry of the pages that opt in as navigation
+// destinations (task 239-001). Origin: web-spa Page Moxy template, replaced in task 053.
 #endregion
 
 #region Design
@@ -14,10 +15,29 @@
 // Route stays a string literal (routes are inherently literal templates).
 // Attribute Policy property remains string so const string fields are valid attribute args;
 // generation keys off syntax, not the attribute's compile-time string value.
+// PageRegistry (task 239-001) is the single source of navigation destinations for the NavMenu
+// and the Ctrl-K palette (239-003) — no second hand-copied route list:
+// - Opt-in is a [Page] property, `Navigable = true` (default false), not a separate attribute:
+//   one attribute already owns route + policy, and a second marker could drift from it. Literal
+//   true/false only (syntax-keyed like Policy); anything else is TWE009.
+// - Only static routes qualify: a parameterized route needs arguments, so Navigable on one is
+//   TWE009 (fail-closed, never a silent omission). v1 has no parameterized destinations.
+// - An opt-in page also gets INavigationDestination. TimeWarpNavLink constrains TPage to it, so
+//   a NavMenu link to a page outside the registry is a compile error — the menu keeps its hand
+//   markup (categories, AuthorizeView groups, template-flag regions) and still cannot drift.
+// - Entries are a generated array of static member reads (typeof + GetPageUrl/Title/NavIcon/
+//   Policy): reflection-free, AOT/trim safe. Sorted by route (ordinal) for stable output.
+// - The registry is emitted only when the assembly declares at least one [Page], so assemblies
+//   that merely carry the generator never need INavigableComponent's Icon type.
+// Incremental caching: PageModel is a value-equatable record (Parameters by sequence) holding
+// location-free PageDiagnostic values; the Diagnostic is built in RegisterSourceOutput. A held
+// Diagnostic/Location pins old SyntaxTrees and never compares equal, which made every edit re-run
+// every step — and pages.Collect() would keep all of them alive in one cached array.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
 
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -46,54 +66,90 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
       transform: static (ctx, _) => GetPage((ClassDeclarationSyntax)ctx.Node))
       .Where(static p => p is not null)
-      .Select(static (p, _) => p!.Value);
+      .Select(static (p, _) => p!);
 
     context.RegisterSourceOutput(pages.Combine(rootNamespace), static (spc, pair) =>
     {
       PageModel page = pair.Left;
       if (page.PolicyDiagnostic is not null)
       {
-        spc.ReportDiagnostic(page.PolicyDiagnostic);
+        spc.ReportDiagnostic(page.PolicyDiagnostic.ToDiagnostic());
         return;
       }
 
+      if (page.NavigableDiagnostic is not null)
+        spc.ReportDiagnostic(page.NavigableDiagnostic.ToDiagnostic());
+
       spc.AddSource($"{page.HintName}.Page.g.cs", SourceText.From(Emit(page, pair.Right), Encoding.UTF8));
+    });
+
+    context.RegisterSourceOutput(pages.Collect().Combine(rootNamespace), static (spc, pair) =>
+    {
+      if (pair.Left.IsDefaultOrEmpty) return;
+      spc.AddSource("PageRegistry.g.cs", SourceText.From(EmitRegistry(pair.Left, pair.Right), Encoding.UTF8));
     });
   }
 
-  private readonly struct PageModel
+  // Value-equatable (incremental caching): Parameters compare by sequence, and diagnostics are
+  // location-free PageDiagnostic values — a Diagnostic/Location would pin old SyntaxTrees in the
+  // cache and never compare equal, so every edit would re-run every step and PageRegistry.
+  private sealed record PageModel(
+    string Namespace,
+    string ClassName,
+    string HintName,
+    string RouteAttribute,
+    string Signature,
+    string Format,
+    ImmutableArray<(string Type, string Name)> Parameters,
+    string PolicyExpression,
+    PageDiagnostic? PolicyDiagnostic,
+    string RouteTemplate = "",
+    bool Navigable = false, // valid opt-in only (static route): INavigationDestination + registry membership
+    PageDiagnostic? NavigableDiagnostic = null)
   {
-    public PageModel(
-      string ns,
-      string className,
-      string hintName,
-      string routeAttribute,
-      string signature,
-      string format,
-      IReadOnlyList<(string Type, string Name)> parameters,
-      string policyExpression,
-      Diagnostic? policyDiagnostic)
+    public bool Equals(PageModel? other) =>
+      other is not null
+      && Namespace == other.Namespace
+      && ClassName == other.ClassName
+      && HintName == other.HintName
+      && RouteAttribute == other.RouteAttribute
+      && Signature == other.Signature
+      && Format == other.Format
+      && Parameters.SequenceEqual(other.Parameters)
+      && PolicyExpression == other.PolicyExpression
+      && Equals(PolicyDiagnostic, other.PolicyDiagnostic)
+      && RouteTemplate == other.RouteTemplate
+      && Navigable == other.Navigable
+      && Equals(NavigableDiagnostic, other.NavigableDiagnostic);
+
+    public override int GetHashCode()
     {
-      Namespace = ns;
-      ClassName = className;
-      HintName = hintName;
-      RouteAttribute = routeAttribute;
-      Signature = signature;
-      Format = format;
-      Parameters = parameters;
-      PolicyExpression = policyExpression;
-      PolicyDiagnostic = policyDiagnostic;
+      unchecked
+      {
+        int hash = (StringComparer.Ordinal.GetHashCode(HintName) * 397) ^ StringComparer.Ordinal.GetHashCode(RouteAttribute);
+        hash = (hash * 397) ^ Parameters.Length;
+        return (hash * 397) ^ Navigable.GetHashCode();
+      }
+    }
+  }
+
+  /// <summary>Location-free diagnostic payload; the Diagnostic is built in RegisterSourceOutput.</summary>
+  private sealed record PageDiagnostic(
+    DiagnosticDescriptor Descriptor,
+    string FilePath,
+    TextSpan Span,
+    LinePositionSpan LineSpan,
+    string Arg0 = "",
+    string Arg1 = "")
+  {
+    public static PageDiagnostic From(DiagnosticDescriptor descriptor, SyntaxNode node, string arg0 = "", string arg1 = "")
+    {
+      FileLinePositionSpan line = node.GetLocation().GetLineSpan();
+      return new PageDiagnostic(descriptor, line.Path, node.Span, line.Span, arg0, arg1);
     }
 
-    public string Namespace { get; }
-    public string ClassName { get; }
-    public string HintName { get; }
-    public string RouteAttribute { get; }
-    public string Signature { get; }
-    public string Format { get; }
-    public IReadOnlyList<(string Type, string Name)> Parameters { get; }
-    public string PolicyExpression { get; }
-    public Diagnostic? PolicyDiagnostic { get; }
+    public Diagnostic ToDiagnostic() =>
+      Diagnostic.Create(Descriptor, Location.Create(FilePath, Span, LineSpan), Arg0, Arg1);
   }
 
   private static PageModel? GetPage(ClassDeclarationSyntax cls)
@@ -106,8 +162,10 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
     string? route = null;
     string? policyExpression = null;
-    Diagnostic? policyDiagnostic = null;
+    PageDiagnostic? policyDiagnostic = null;
     bool policyArgumentPresent = false;
+    bool navigableRequested = false;
+    ExpressionSyntax? invalidNavigable = null;
 
     foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
     {
@@ -122,9 +180,16 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         }
         else
         {
-          policyDiagnostic = Diagnostic.Create(DiagnosticDescriptors.PageInvalidPolicy, arg.Expression.GetLocation());
+          policyDiagnostic = PageDiagnostic.From(DiagnosticDescriptors.PageInvalidPolicy, arg.Expression);
         }
 
+        continue;
+      }
+
+      if (argName == "Navigable")
+      {
+        if (arg.Expression.IsKind(SyntaxKind.TrueLiteralExpression)) navigableRequested = true;
+        else if (!arg.Expression.IsKind(SyntaxKind.FalseLiteralExpression)) invalidNavigable = arg.Expression;
         continue;
       }
 
@@ -142,15 +207,15 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     if (policyDiagnostic is not null)
     {
       return new PageModel(
-        ns: cls.Identifier.Text,
-        className: cls.Identifier.Text,
-        hintName: cls.Identifier.Text,
-        routeAttribute: route,
-        signature: "",
-        format: "",
-        parameters: [],
-        policyExpression: "",
-        policyDiagnostic: policyDiagnostic);
+        Namespace: cls.Identifier.Text,
+        ClassName: cls.Identifier.Text,
+        HintName: cls.Identifier.Text,
+        RouteAttribute: route,
+        Signature: "",
+        Format: "",
+        Parameters: [],
+        PolicyExpression: "",
+        PolicyDiagnostic: policyDiagnostic);
     }
 
     string? ns = null;
@@ -193,7 +258,23 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       ? policyExpression!
       : "Policies.Anonymous";
 
-    return new PageModel(ns, cls.Identifier.Text, hint, routeAttribute, signature, format, parameters, policy, policyDiagnostic: null);
+    PageDiagnostic? navigableDiagnostic = null;
+    if (invalidNavigable is not null)
+    {
+      navigableDiagnostic = PageDiagnostic.From(
+        DiagnosticDescriptors.PageInvalidNavigable, invalidNavigable, cls.Identifier.Text, "must be the literal true or false");
+    }
+    else if (navigableRequested && parameters.Count > 0)
+    {
+      navigableDiagnostic = PageDiagnostic.From(
+        DiagnosticDescriptors.PageInvalidNavigable, attr, cls.Identifier.Text, $"requires a static route, but '{route}' has parameters");
+    }
+
+    bool navigable = navigableRequested && navigableDiagnostic is null;
+
+    return new PageModel(
+      ns, cls.Identifier.Text, hint, routeAttribute, signature, format, [.. parameters], policy, PolicyDiagnostic: null,
+      RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic);
   }
 
   /// <summary>
@@ -234,7 +315,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
   private static string Emit(PageModel page, string rootNamespace)
   {
-    bool hasParameters = page.Parameters.Count > 0;
+    bool hasParameters = page.Parameters.Length > 0;
 
     var sb = new StringBuilder();
     sb.Append("// <auto-generated/>\n");
@@ -245,6 +326,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("  [Route(\"").Append(page.RouteAttribute).Append("\")]\n");
     sb.Append("  partial class ").Append(page.ClassName).Append(" : INavigableComponent");
     if (!hasParameters) sb.Append(", IStaticRoute");
+    if (page.Navigable) sb.Append(", INavigationDestination");
     sb.Append('\n').Append("  {\n");
 
     sb.Append("    public static string GetPageUrl(").Append(page.Signature)
@@ -258,6 +340,42 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     return sb.ToString();
   }
 
+  private static string EmitRegistry(ImmutableArray<PageModel> pages, string rootNamespace)
+  {
+    var sb = new StringBuilder();
+    sb.Append("// <auto-generated/>\n");
+    sb.Append("#nullable enable\n");
+    sb.Append("namespace ").Append(rootNamespace).Append("\n{\n");
+    sb.Append("  /// <summary>One navigation destination: a [Page(Navigable = true)] page with a static route.</summary>\n");
+    sb.Append("  public sealed record PageRegistryEntry(\n");
+    sb.Append("    global::System.Type PageType,\n");
+    sb.Append("    string RouteTemplate,\n");
+    sb.Append("    string Url,\n");
+    sb.Append("    string Title,\n");
+    sb.Append("    Icon? NavIcon,\n");
+    sb.Append("    string Policy);\n\n");
+    sb.Append("  /// <summary>Every navigation destination in this assembly, generated from [Page(Navigable = true)] (sorted by route).</summary>\n");
+    sb.Append("  public static class PageRegistry\n  {\n");
+    sb.Append("    public static global::System.Collections.Generic.IReadOnlyList<PageRegistryEntry> All { get; } =\n");
+    sb.Append("    [\n");
+
+    foreach (PageModel page in pages
+      .Where(static p => p.PolicyDiagnostic is null && p.Navigable)
+      .OrderBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
+      .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
+    {
+      string type = "global::" + page.Namespace + "." + page.ClassName;
+      sb.Append("      new(typeof(").Append(type).Append("), \"").Append(page.RouteTemplate).Append("\", ")
+        .Append(type).Append(".GetPageUrl(), ")
+        .Append(type).Append(".Title, ")
+        .Append(type).Append(".NavIcon, ")
+        .Append(type).Append(".Policy),\n");
+    }
+
+    sb.Append("    ];\n  }\n}\n");
+    return sb.ToString();
+  }
+
   private static string BuildAttribute(string ns)
   {
     var sb = new StringBuilder();
@@ -268,6 +386,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("        public string RouteTemplate { get; set; }\n");
     sb.Append("        /// <summary>Const policy field reference only (e.g. Policies.SettingsEdit). Omit Policy for the anonymous default.</summary>\n");
     sb.Append("        public string Policy { get; set; }\n");
+    sb.Append("        /// <summary>Literal true lists this static-route page in PageRegistry (NavMenu + palette destinations). Default false.</summary>\n");
+    sb.Append("        public bool Navigable { get; set; }\n");
     sb.Append("        public PageAttribute(string RouteTemplate) { this.RouteTemplate = RouteTemplate; }\n");
     sb.Append("    }\n}\n");
     return sb.ToString();

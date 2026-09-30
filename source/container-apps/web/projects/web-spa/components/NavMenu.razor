@@ -2,6 +2,9 @@
 @*
   Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
   Uses FluentUI v5 FluentNav. Page links go through TimeWarpNavLink<TPage>.
+  TimeWarpNavLink requires INavigationDestination, i.e. [Page(..., Navigable = true)], so every link
+  here is a generated PageRegistry entry (the Ctrl-K palette's source) — the menu cannot drift from it.
+  Grouping and AuthorizeView gates stay hand markup; a new nav page opts in on its [Page] first.
 
   Demo / developer tooling is nav-gated by developer.access (task 147-001 / 182-003).
   Admin section requires admin.access (Roles, Principals, Authentication). Product entry points: Home, Settings; Login is profile-menu.

@@ -14,6 +14,6 @@
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
-[Page("/Profile", Policy = PermissionIds.ProfileRead)]
+[Page("/Profile", Policy = PermissionIds.ProfileRead, Navigable = true)]
 [Authorize(Policy = PermissionIds.ProfileRead)]
 partial class ProfilePage;
