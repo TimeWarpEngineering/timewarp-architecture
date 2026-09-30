@@ -74,6 +74,7 @@ AppHost.
 - Implement oracle (ganda task work, 2026-09-30): generator + registry + drift constraint + tests.
 - Implement oracle resume (2026-09-30): cockpit-note caching fixes (value-equatable `PageModel`,
   location-free `PageDiagnostic`, cache test); gates run serially; build server shut down.
+- Review oracle (ganda task work, 2026-09-30): effort 1 general reviewer (subagent); disposition clean.
 
 ## Results
 
@@ -109,6 +110,11 @@ AppHost.
 - **Gates (serial):** `dev build` 0/0 (full rebuild; `PageRegistry.g.cs` has 16 entries);
   `dev test` exit 0, 21 suites, 0 failed; `dev template-smoke` SUCCEEDED; `ganda repo audit` passes.
 - **Manual browser check: not performed** (no AppHost started, per task rule).
+- **Implementation review (2026-09-30):** effort 1, roster `general`, 1 round. Final counts:
+  bug 0, suggestion 0, nit 1 fixed, 0 open. Disposition **clean**. M1 (hand-implemented
+  `INavigationDestination` could bypass the registry) fixed with SPA test
+  `Include_Every_Navigation_Destination` (web-spa `All_Should_` now 4/4). Artifacts:
+  `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -119,7 +125,7 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release 
 dotnet run tools/dev-cli/dev.cs -- build
 ```
 
-**Expect:** generator suite 15/15 passed (includes the incremental-cache test); SPA `All_Should_` 3/3 passed; `dev build` 0 warnings /
+**Expect:** generator suite 15/15 passed (includes the incremental-cache test); SPA `All_Should_` 4/4 passed; `dev build` 0 warnings /
 0 errors, with
 `artifacts/generated/web-spa/timewarp-architecture-analyzers/TimeWarp.Architecture.Analyzers.PageSourceGenerator/PageRegistry.g.cs`
 listing 16 entries (Home `/` first). Adding `<TimeWarpNavLink TPage=LogoutPage />` to

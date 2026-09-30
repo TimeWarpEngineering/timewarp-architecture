@@ -5,7 +5,8 @@
 #region Design
 // Task 239-001: PageRegistry is the single destination source for NavMenu and the Ctrl-K palette.
 // NavMenu drift is a compile error (TimeWarpNavLink requires INavigationDestination), so this
-// suite pins the registry contents themselves: the unconditional demo/product pages are present,
+// suite pins the registry contents themselves (including that every INavigationDestination type
+// is registered, closing the hand-implemented-marker gap): the unconditional demo/product pages are present,
 // parameterized and auth-ceremony pages are absent, and every entry is a well-formed static
 // destination. Names are compared as strings so the test needs no per-slice usings.
 #endregion
@@ -70,6 +71,20 @@ public class All_Should_
     }
 
     PageRegistry.All.Single(static e => e.PageType.Name == "SettingsPage").Policy.ShouldBe(PermissionIds.SettingsRead);
+    return Task.CompletedTask;
+  }
+
+  public static Task Include_Every_Navigation_Destination()
+  {
+    // Reverse direction: a hand-written INavigationDestination without Navigable = true would
+    // satisfy TimeWarpNavLink yet be missing from the registry.
+    Type[] registered = [.. PageRegistry.All.Select(static e => e.PageType)];
+    foreach (Type destination in typeof(PageRegistry).Assembly.GetTypes()
+      .Where(static t => t is { IsClass: true, IsAbstract: false } && typeof(INavigationDestination).IsAssignableFrom(t)))
+    {
+      registered.ShouldContain(destination, destination.Name);
+    }
+
     return Task.CompletedTask;
   }
 }
