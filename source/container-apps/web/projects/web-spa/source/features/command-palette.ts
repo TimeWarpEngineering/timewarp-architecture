@@ -7,9 +7,13 @@
 // trigger listeners for the element matching triggerSelector (the appbar search field), and asks
 // .NET to open the palette (OpenCommandPalette). Ctrl-K is preventDefault-ed so the browser does
 // not focus its own address/search bar. The element focused when the palette opened is kept so
-// RestoreFocus can hand focus back on close; while restoring, the trigger's own focusin is ignored
-// so returning focus to the search field does not reopen the palette. Register returns a handle
-// (IJSObjectReference in C#) whose Dispose removes every listener — one handle per TimeWarpPage.
+// RestoreFocus can hand focus back on close; it is captured once per open, so a repeat Ctrl-K
+// while the palette is open does not replace it with the palette's own input. While restoring,
+// the trigger's own focusin is ignored so returning focus to the search field does not reopen the
+// palette. The same keydown listener suppresses ArrowUp/ArrowDown caret movement on the palette
+// input (inputSelector); .NET still receives the key and moves the highlight. ScrollIntoView keeps
+// the highlighted row visible. Register returns a handle (IJSObjectReference in C#) whose Dispose
+// removes every listener — one handle per TimeWarpPage.
 // Imported on demand (CommandPaletteJsModule), not via window.Spa.
 // #endregion
 
@@ -19,24 +23,35 @@ interface CommandPaletteHost {
 
 export interface CommandPaletteHandle {
   RestoreFocus(): void;
+  ScrollIntoView(id: string): void;
   Dispose(): void;
 }
 
-export function Register(host: CommandPaletteHost, triggerSelector: string): CommandPaletteHandle {
+export function Register(host: CommandPaletteHost, triggerSelector: string, inputSelector: string): CommandPaletteHandle {
   let returnFocusTo: HTMLElement | null = null;
   let restoring = false;
   const trigger = document.querySelector<HTMLElement>(triggerSelector);
 
   const open = (): void => {
-    const active = document.activeElement;
-    returnFocusTo = active instanceof HTMLElement && active !== document.body ? active : null;
-    void host.invokeMethodAsync("OpenCommandPalette");
+    if (returnFocusTo === null || !returnFocusTo.isConnected) {
+      const active = document.activeElement;
+      returnFocusTo = active instanceof HTMLElement && active !== document.body ? active : null;
+    }
+
+    // The .NET side may already be disposed (page navigated away before Dispose ran).
+    host.invokeMethodAsync("OpenCommandPalette").catch(() => undefined);
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
     if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "k") {
       event.preventDefault();
       open();
+      return;
+    }
+
+    if ((event.key === "ArrowUp" || event.key === "ArrowDown")
+      && event.target instanceof Element && event.target.matches(inputSelector)) {
+      event.preventDefault();
     }
   };
 
@@ -64,6 +79,9 @@ export function Register(host: CommandPaletteHost, triggerSelector: string): Com
       } finally {
         restoring = false;
       }
+    },
+    ScrollIntoView(id: string): void {
+      document.getElementById(id)?.scrollIntoView({ block: "nearest" });
     },
     Dispose(): void {
       document.removeEventListener("keydown", onKeyDown);

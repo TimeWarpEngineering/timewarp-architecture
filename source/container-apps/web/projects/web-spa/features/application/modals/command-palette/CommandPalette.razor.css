@@ -27,3 +27,8 @@
 }
 .twe-palette__empty { margin: 0; color: var(--twe-muted); }
 .twe-palette__hint { margin-right: auto; color: var(--twe-muted); font-size: var(--twe-text-helper); }
+/* Accessible name for the dialog (ModalContainer's aria-labelledby="modal-title"); not shown. */
+.twe-palette__title {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

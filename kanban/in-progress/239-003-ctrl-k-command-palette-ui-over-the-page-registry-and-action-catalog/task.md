@@ -143,6 +143,40 @@ started yourself): Ctrl-K or Cmd-K on any shell page, or a click on the appbar s
 the palette with the input focused. Typing "coun" highlights Counter, and Enter goes to /Counter.
 Esc or a backdrop click closes it and returns focus to where it was.
 
+Manual browser checklist (not automated; no bUnit):
+- Press Ctrl-K twice while the palette is open, then Esc. Focus returns to the element that
+  had it before the first press (review M1).
+- Navigate quickly between shell pages right after load, then press Ctrl-K once. The palette
+  opens once and there are no console errors from a disposed page (review M2).
+- With a full roster, hold ArrowDown past the visible rows and wrap. The highlighted row stays
+  scrolled into view and the caret does not jump (review M3, M6).
+- Click the list gutter or the hint, then press Esc. The palette still closes (review M4).
+
+### Review disposition
+
+- **Outcome:** accepted-exceptions. 2 rounds, effort 3, roster: general (Budget.ByDiff 1481 lines).
+- **Final counts:**
+  - bug: 2 fixed
+  - suggestion: 3 fixed, 1 wontfix
+  - nit: 2 fixed
+  - open: 0
+- **Fixed:**
+  - M1: focus-return target captured once per open
+  - M2: a late registration is disposed and no listener leaks
+  - M3: highlighted row scrolls into view
+  - M4: panel clicks keep focus in the query box
+  - M5: Enter re-filters a stale query first
+  - M6: ARIA expanded/controls, dialog name, arrow keys no longer move the caret
+  - M7: manual checklist above
+- **Wontfix:** M8. The focus trap and the panel-padding focus loss belong to the shared
+  `ModalContainer`, so fixing them is cross-modal a11y. Follow-up candidate under 239.
+- **Artifacts:**
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`
+
 ## Notes
 
 - Parent 239.
@@ -152,3 +186,4 @@ Esc or a backdrop click closes it and returns focus to where it was.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-30)
 - 2026-09-30: implement oracle (ganda task work): palette, triggers, roster/ranking/permissions, tests, gates.
+- 2026-09-30: review oracle (ganda task work, Claude Opus 5.5): effort 3 general review; 7 findings fixed, 1 wontfix; disposition accepted-exceptions.

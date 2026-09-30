@@ -6,8 +6,9 @@
 // Task 239-003: same import-a-named-export shape as SignOutJsModule / WebAuthnJsModule (no
 // window.Spa dependency). Register returns the JS handle as an IJSObjectReference; the caller
 // keeps it for RestoreFocus and disposes it (Dispose export, then the reference) when its
-// TimeWarpPage goes away. The trigger selector is TriggerAttribute, the one attribute the shell
-// puts on the appbar search field, so the TS holds no markup knowledge.
+// TimeWarpPage goes away. The selectors are TriggerAttribute (the one attribute the shell puts on
+// the appbar search field) and InputAttribute (the palette query box), so the TS holds no markup
+// knowledge.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -17,10 +18,14 @@ internal static class CommandPaletteJsModule
   internal const string Specifier = "./js/features/command-palette.js";
   internal const string RegisterExport = "Register";
   internal const string RestoreFocusExport = "RestoreFocus";
+  internal const string ScrollIntoViewExport = "ScrollIntoView";
   internal const string DisposeExport = "Dispose";
 
   /// <summary>Marks the element whose focus or click opens the palette.</summary>
   internal const string TriggerAttribute = "data-command-palette-trigger";
+
+  /// <summary>Marks the palette query input (ArrowUp/ArrowDown caret movement is suppressed on it).</summary>
+  internal const string InputAttribute = "data-command-palette-input";
 
   internal static async Task<IJSObjectReference> RegisterAsync<THost>
   (
@@ -32,7 +37,7 @@ internal static class CommandPaletteJsModule
     IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", cancellationToken, Specifier);
     try
     {
-      return await module.InvokeAsync<IJSObjectReference>(RegisterExport, cancellationToken, host, $"[{TriggerAttribute}]");
+      return await module.InvokeAsync<IJSObjectReference>(RegisterExport, cancellationToken, host, $"[{TriggerAttribute}]", $"[{InputAttribute}]");
     }
     finally
     {
