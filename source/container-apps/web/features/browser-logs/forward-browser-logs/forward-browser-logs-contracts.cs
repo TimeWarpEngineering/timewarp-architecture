@@ -12,6 +12,10 @@
 // Nullability agrees with the validator (TWA0002/0003): Entries/Level/Source/Message are required
 // (non-null, NotEmpty); PagePath is optional (null allowed, max length only).
 // Levels/Sources are plain strings so the JS hook needs no enum wire format.
+// Entries uses a stop cascade so a null list fails as 400, never an NRE (500) in the count rule.
+// Production posture: the generated endpoint stays mapped (the generator has no environment gate),
+// so binding + validation run before the handler's 404. Accepted: the 400 shape exposes only this
+// public template contract, the 404 body is generic, and validation is bounded by the stop cascade.
 #endregion
 
 namespace TimeWarp.Architecture.Features.BrowserLogs;
@@ -50,11 +54,13 @@ public static partial class ForwardBrowserLogs
     public Validator()
     {
       RuleFor(command => command.Entries)
+        .Cascade(CascadeMode.Stop)
         .NotEmpty()
         .Must(entries => entries.Count <= MaxEntriesPerBatch)
         .WithMessage($"A batch carries at most {MaxEntriesPerBatch} entries.");
 
       RuleForEach(command => command.Entries)
+        .NotNull()
         .ChildRules(entry =>
         {
           entry.RuleFor(item => item.Level).NotEmpty().Must(level => AllowedLevels.Contains(level));

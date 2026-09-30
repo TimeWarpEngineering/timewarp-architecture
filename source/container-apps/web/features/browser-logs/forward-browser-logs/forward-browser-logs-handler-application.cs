@@ -7,6 +7,8 @@
 // The shared SharedProblemDetails Status drives the HTTP status in the generated endpoint.
 // Entries are logged with a structured template (source / page path / message as separate
 // attributes) via the LoggerMessage generator; level is mapped from the browser level string.
+// The 404 body is generic (no hint the feature exists). PagePath is single-line: CR/LF become spaces
+// so it cannot forge console-sink lines; Message keeps newlines (stack traces) and is redacted.
 #endregion
 
 namespace TimeWarp.Architecture.Features.BrowserLogs.Application;
@@ -37,8 +39,7 @@ public sealed partial class ForwardBrowserLogs
         return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new SharedProblemDetails
         {
           Title = "Not found",
-          Status = 404,
-          Detail = "Browser log forwarding is only available in Development and Testing."
+          Status = 404
         });
       }
 
@@ -52,7 +53,9 @@ public sealed partial class ForwardBrowserLogs
         });
       }
 
-      string pagePath = command.PagePath ?? string.Empty;
+      string pagePath = BrowserLogRedactor.Redact(command.PagePath ?? string.Empty)
+        .Replace('\r', ' ')
+        .Replace('\n', ' ');
 
       foreach (Entry entry in command.Entries)
       {

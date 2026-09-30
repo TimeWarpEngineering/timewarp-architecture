@@ -62,12 +62,15 @@ the Aspire MCP tools already look.
       AppHost): it shares the maintainer's user secrets. Closed-box Aspire.Hosting.Testing
       suites that `dev test` already runs are fine. Record the manual dashboard check as not
       performed.
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: accepted-exceptions, see `review/disposition.md`)
+- [ ] Host `open-pr`
 
 ## Session
 
 - Created: 571175 (2026-10-01)
 - Implemented: ganda task work implement oracle (2026-10-01). Fallback path; AppHost never started.
+- Reviewed: ganda task work review oracle (2026-10-01), effort 2, general reviewer (Claude Opus
+  subagent a62c6400b2388d870); fixes applied on this id.
 
 ## Notes
 
@@ -124,10 +127,36 @@ the Aspire MCP tools already look.
   smoke on the fixed port base 17000; the re-run was clean.
 - Manual dashboard check: **not performed**, because the AppHost may not be started by workers.
 
+### Review disposition
+
+- Rounds: 2. Round 1 was the general reviewer; round 2 was the oracle re-verifying the fixes.
+  Effort 2, roster: general.
+- Final counts:
+  - bug: 3 fixed
+  - suggestion: 3 fixed, 1 wontfix
+  - nit: 3 fixed
+  - open: 0
+- Outcome: **accepted-exceptions**. The one exception is M4: the generated endpoint stays mapped
+  in Production, so binding and validation run before the 404. The 404 body is now generic.
+  The rationale is in the contract's Design region.
+- Fixes:
+  - keepalive only for the pagehide flush, with a byte cap
+  - blank messages become `(empty)`
+  - stop cascade for a null `entries`
+  - URL secret parameter redaction, which PagePath also goes through
+  - PagePath CR/LF replaced with spaces
+  - surrogate-safe truncation
+  - the unload flush ignores an in-flight send and the 429 backoff
+  - the limiter's Design region explains why it is separate from the abuse module
+  - 6 new tests; the runfile now passes 15/15
+- Post-fix gates: `dev build` 0/0; web-jaribu-tests 227/227; `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke: `dotnet run source/container-apps/web/features/browser-logs/forward-browser-logs/forward-browser-logs-tests.cs`
-Expect: 9/9 pass. That covers POST `api/browser-logs` → Accepted, validation rejections, a 429
+Expect: 15/15 pass. That covers POST `api/browser-logs` → Accepted, validation rejections, a 429
 after the bucket drains, `IsEnabled` false in Production, the handler returning 404 in
 Production, and bearer/JWT redaction.
 

@@ -12,6 +12,10 @@
 // log loops; credentials are omitted (anonymous endpoint); only location.pathname is sent (never the
 // query string or hash). Buffer caps at 200 entries; batches are at most 50 and flush every 1s or as
 // soon as 50 are buffered. 429 backs the forwarder off; 404 disables it permanently.
+// keepalive only on the pagehide flush: browsers reject keepalive bodies over 64 KiB, so that flush
+// also trims its batch to KEEPALIVE_BYTES; it ignores an in-flight send or 429 backoff (last chance).
+// Messages that are blank after trim become '(empty)' (server NotEmpty rejects whitespace), and
+// truncation never splits a UTF-16 surrogate pair (a lone surrogate fails server JSON binding).
 // Wire shape mirrors ForwardBrowserLogs.Command (web-contracts).
 // #endregion
 (function (): void {
@@ -24,6 +28,7 @@
   const MAX_BATCH = 50;
   const FLUSH_MS = 1000;
   const BACKOFF_MS = 10000;
+  const KEEPALIVE_BYTES = 60000;
 
   const buffer: LogEntry[] = [];
   let forwarding = false;
@@ -47,13 +52,44 @@
     try { push(level, source, message); } finally { inHook = false; }
   }
 
+  function truncate(message: string): string {
+    if (message.trim() === '') return '(empty)';
+    if (message.length <= MAX_MESSAGE) return message;
+    const code = message.charCodeAt(MAX_MESSAGE - 1);
+    return message.substring(0, code >= 0xD800 && code <= 0xDBFF ? MAX_MESSAGE - 1 : MAX_MESSAGE);
+  }
+
   function push(level: string, source: string, message: string): void {
-    buffer.push({ level, source, message: message.length > MAX_MESSAGE ? message.substring(0, MAX_MESSAGE) : message || '(empty)' });
+    buffer.push({ level, source, message: truncate(message) });
     if (buffer.length >= MAX_BATCH) {
       void flush();
     } else if (timer === undefined) {
       timer = window.setTimeout(() => { void flush(); }, FLUSH_MS);
     }
+  }
+
+  function unloadBody(): string {
+    let count = Math.min(buffer.length, MAX_BATCH);
+    let body = JSON.stringify({ entries: buffer.slice(0, count), pagePath: location.pathname });
+    while (count > 1 && body.length * 3 > KEEPALIVE_BYTES) {
+      count = Math.max(1, Math.floor(count / 2));
+      body = JSON.stringify({ entries: buffer.slice(0, count), pagePath: location.pathname });
+    }
+    buffer.splice(0, count);
+    return body;
+  }
+
+  function flushOnUnload(): void {
+    if (disabled || buffer.length === 0) return;
+    try {
+      void fetch(new URL('api/browser-logs', document.baseURI).toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: unloadBody(),
+        credentials: 'omit',
+        keepalive: true
+      }).catch(() => { /* swallow: logging here would feed back into the console hook */ });
+    } catch { /* never throw from the unload handler */ }
   }
 
   async function flush(): Promise<void> {
@@ -71,8 +107,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entries: batch, pagePath: location.pathname }),
-        credentials: 'omit',
-        keepalive: true
+        credentials: 'omit'
       });
       if (response.status === 404) {
         disabled = true;
@@ -110,5 +145,5 @@
     enqueue('error', 'unhandledrejection', stringify(event.reason));
   });
 
-  window.addEventListener('pagehide', () => { void flush(); });
+  window.addEventListener('pagehide', flushOnUnload);
 })();

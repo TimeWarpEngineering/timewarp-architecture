@@ -13,7 +13,8 @@
 // Run standalone: dotnet run source/container-apps/web/features/browser-logs/forward-browser-logs/forward-browser-logs-tests.cs
 
 #region Purpose
-// Jaribu runfile proving browser log forwarding: happy path, validation, rate limit, the
+// Jaribu runfile proving browser log forwarding: happy path, validation (empty/null entries,
+// batch cap, level/source allow-lists, message and page-path caps), rate limit, the
 // Development/Testing gate, redaction and the fail-closed Production handler.
 #endregion
 
@@ -121,6 +122,44 @@ namespace TimeWarp.Architecture.Features.BrowserLogs
       await Web.ConfirmEndpointValidationError<Response>(command, nameof(Entry.Message));
     }
 
+    public static async Task ValidationError_Given_Null_Entries()
+    {
+      Command command = new() { Entries = null! };
+
+      await Web.ConfirmEndpointValidationError<Response>(command, nameof(Command.Entries));
+    }
+
+    public static async Task ValidationError_Given_Over_Size_Batch()
+    {
+      Command command = BrowserLogBatches.Create(MaxEntriesPerBatch + 1);
+
+      await Web.ConfirmEndpointValidationError<Response>(command, nameof(Command.Entries));
+    }
+
+    public static async Task ValidationError_Given_Unknown_Level()
+    {
+      Command command = BrowserLogBatches.Create(1);
+      command.Entries[0].Level = "fatal";
+
+      await Web.ConfirmEndpointValidationError<Response>(command, nameof(Entry.Level));
+    }
+
+    public static async Task ValidationError_Given_Unknown_Source()
+    {
+      Command command = BrowserLogBatches.Create(1);
+      command.Entries[0].Source = "network";
+
+      await Web.ConfirmEndpointValidationError<Response>(command, nameof(Entry.Source));
+    }
+
+    public static async Task ValidationError_Given_Over_Length_Page_Path()
+    {
+      Command command = BrowserLogBatches.Create(1);
+      command.PagePath = "/" + new string('p', MaxPagePathLength);
+
+      await Web.ConfirmEndpointValidationError<Response>(command, nameof(Command.PagePath));
+    }
+
     public static async Task TooManyRequests_Given_Sustained_Batches()
     {
       int status = 0;
@@ -197,6 +236,19 @@ namespace TimeWarp.Architecture.Features.BrowserLogs
 
       redacted.ShouldNotContain("eyJ");
       redacted.ShouldBe("token=[redacted]; done");
+      await Task.CompletedTask;
+    }
+
+    public static async Task Redacts_Secret_Query_Parameters()
+    {
+      string redacted = BrowserLogRedactor.Redact(
+        "GET https://host/signin-oidc?code=abc123&state=xyz#access_token=s3cr3t&id_token=t0k failed");
+
+      redacted.ShouldNotContain("abc123");
+      redacted.ShouldNotContain("s3cr3t");
+      redacted.ShouldNotContain("t0k");
+      redacted.ShouldContain("state=xyz");
+      redacted.ShouldContain("code=[redacted]");
       await Task.CompletedTask;
     }
   }
