@@ -5,7 +5,8 @@
 #region Design
 // Authorization runs here (IAuthorizationService over the current AuthenticationState) rather
 // than in the component so the permission filter is testable headless. Showing the overlay is
-// the caller's next step (ApplicationState.SetActiveModal) — no nested dispatch.
+// the caller's next step (ApplicationState.SetActiveModal) — no nested dispatch. The current
+// base-relative path is read here too, so the signed-out Sign in row can return the visitor to it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -21,7 +22,8 @@ partial class CommandPaletteState
       IStore store,
       AuthenticationStateProvider authenticationStateProvider,
       IAuthorizationService authorizationService,
-      IActionCatalog actionCatalog
+      IActionCatalog actionCatalog,
+      NavigationManager navigationManager
     ) : BaseHandler<Action>(store)
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
@@ -32,7 +34,8 @@ partial class CommandPaletteState
           authenticationState.User,
           authorizationService,
           PageRegistry.All,
-          actionCatalog.Entries
+          actionCatalog.Entries,
+          "/" + navigationManager.ToBaseRelativePath(navigationManager.Uri)
         );
         CommandPaletteState.Apply("");
       }

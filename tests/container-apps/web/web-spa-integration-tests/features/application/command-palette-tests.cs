@@ -1,6 +1,7 @@
 #region Purpose
 // Ctrl-K command palette (task 239-003): roster from PageRegistry + IActionCatalog, permission
-// filter, ranking order, keyboard highlight, Enter navigating / executing, and the overlay open/close render.
+// filter, ranking order, keyboard highlight, Enter navigating / executing, and the overlay open/close render;
+// plus the signed-out Sign in row (task 259).
 #endregion
 
 #region Design
@@ -32,6 +33,7 @@ using Microsoft.JSInterop;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Spa;
 
 [TestTag("Unit")]
@@ -60,6 +62,10 @@ public class CommandPalette_Should_
     CommandPaletteRow signOut = palette.Roster.Single(static row => row.Target == "Profile.SignOut");
     signOut.Name.ShouldBe("Profile: Sign out");
     signOut.Description.ShouldBe("Sign the current user out of this browser session.");
+
+    // Signed in: no Sign in row, and Login is still not a registry destination (NavMenu must not list it).
+    palette.Roster.ShouldNotContain(static row => row.Target.StartsWith(LoginPage.GetPageUrl(), StringComparison.OrdinalIgnoreCase));
+    PageRegistry.All.ShouldNotContain(static page => page.Url == LoginPage.GetPageUrl());
 
     // Empty query: every row, pages first, highlight on the first.
     palette.Matches.Count.ShouldBe(palette.Roster.Count);
@@ -124,9 +130,52 @@ public class CommandPalette_Should_
     palette.Roster.ShouldAllBe(static row => row.Kind == CommandPaletteRowKind.Page);
     palette.Roster.Select(static row => row.Target)
       .ShouldBe(
-        PageRegistry.All.Where(static page => page.Policy == AuthorizationConstants.Policies.Anonymous).Select(static page => page.Url),
+        [
+          .. PageRegistry.All.Where(static page => page.Policy == AuthorizationConstants.Policies.Anonymous).Select(static page => page.Url),
+          LoginPage.GetPageUrl(),
+        ],
         ignoreOrder: true);
     palette.Roster.Select(static row => row.Target).ShouldContain("/");
+
+    CommandPaletteRow signIn = palette.Roster.Single(static row => row.Target == LoginPage.GetPageUrl());
+    signIn.Name.ShouldBe("Sign in");
+    signIn.Description.ShouldBe("Log in: go to /Login");
+  }
+
+  [Input("sign")]
+  [Input("Sign in")]
+  [Input("login")]
+  [Input("log in")]
+  public static async Task Rank_The_Sign_In_Row_First_For_Sign_In_Wording(string query)
+  {
+    using PaletteSpa spa = new(permissions: null);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action(query));
+
+    scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull().Name.ShouldBe("Sign in");
+  }
+
+  public static async Task Enter_On_Sign_In_Navigates_To_Login_With_The_Current_Path_As_Return_Url()
+  {
+    using PaletteSpa spa = new(permissions: null);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    NavigationManager navigationManager = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigationManager.NavigateTo("/Counter");
+
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action("login"));
+    CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
+    highlighted.Kind.ShouldBe(CommandPaletteRowKind.Page);
+
+    await CommandPaletteRunner.RunAsync(
+      highlighted,
+      scope.Store,
+      scope.ServiceProvider.GetRequiredService<IActionCatalog>(),
+      CancellationToken.None);
+
+    navigationManager.Uri.ShouldBe("http://localhost/Login?returnUrl=%2FCounter");
   }
 
   public static Task Rank_Prefix_Then_Word_Start_Then_Substring_Then_Description_Then_Subsequence()
@@ -242,7 +291,7 @@ public class CommandPalette_Should_
     ActionCatalog catalog = new([new ActionCatalogSource([probe])]);
 
     IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync(
-      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], catalog.Entries);
+      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], catalog.Entries, "/");
     CommandPaletteRow row = CommandPaletteRanker.Rank(roster, "probe")[0];
     row.Kind.ShouldBe(CommandPaletteRowKind.Command);
 
