@@ -36,14 +36,33 @@ TypeSafe / OpenRouter on this id.
 - [ ] WebMCP `registerTool` and filling 104-019 `tools[]` are **not**
       this id — mint a child if the same catalog should feed agents
 
+## Rescope (2026-09-30, cockpit + Steve)
+
+Review found the spec's two data sources did not exist: 238's `catalog.json` is kitchen-only (a
+hand-typed 20-entry list), and nothing enumerates pages (`[Page]` emits per-class members only;
+NavMenu is hand markup). Actions carried no permission metadata. Resolved:
+
+- **timewarp-state 092** shipped the opt-in action catalog in **TimeWarp.State 12.0.0-beta.6**
+  (`[CatalogAction(Description, Name, Permissions, Visibility)]`, generated per-assembly registry,
+  reflection-free `Execute(IStore, args, ct)`, `services.AddActionCatalog(...)`, analyzers TWS0004–0007).
+  This replaces the `catalog.json` stand-in.
+- Work splits into three children (this task is the parent; it closes when all three merge and the
+  Results below are written):
+  - **239-001** `[Page]` registry — generator emits an enumerable page registry with an opt-in for
+    palette/nav visibility; NavMenu can render from it.
+  - **239-002** Adopt the action catalog — pin TimeWarp.State / State.Plus to 12.0.0-beta.6, register
+    `AddActionCatalog`, tag the user-facing actions with `[CatalogAction]` (permissions from
+    `PermissionIds`).
+  - **239-003** Palette UI — Ctrl-K/Cmd-K overlay + search field, ranking, keyboard, permission filter,
+    consuming 239-001 and 239-002; closes GitHub #102.
+
 ## Checklist
 
 - [ ] Overlay + hotkey on `TimeWarpPage` (desktop and a mobile
       viewport check)
 - [ ] Nav destinations indexed from the live menu, not a second
       hand-copied route list
-- [ ] Opt-in command list (238 `catalog.json` as the stand-in until a
-      timewarp-state catalog child exists)
+- [ ] Opt-in command list from the TimeWarp.State action catalog (239-002)
 - [ ] Tests: open/close, filter, Enter navigates, excluded internals
       (Fetch*, Clear*, template FiveSecondTask) stay out
 - [ ] Implementation review; host `open-pr`
