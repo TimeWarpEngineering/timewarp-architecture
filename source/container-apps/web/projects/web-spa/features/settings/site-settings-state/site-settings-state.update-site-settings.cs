@@ -17,6 +17,12 @@ partial class SiteSettingsState
 {
   public static class UpdateSiteSettingsActionSet
   {
+    [CatalogAction
+    (
+      Description = "Save the site authentication policy settings.",
+      Permissions = [PermissionIds.SettingsWrite],
+      Visibility = ActionVisibility.Agent
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {

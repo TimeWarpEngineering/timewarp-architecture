@@ -19,6 +19,12 @@ partial class CredentialsState
 {
   public static class RevokeCredentialActionSet
   {
+    [CatalogAction
+    (
+      Description = "Revoke one of the signed-in account's credentials by id.",
+      Permissions = [PermissionIds.CredentialManageSelf],
+      Visibility = ActionVisibility.Agent
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {

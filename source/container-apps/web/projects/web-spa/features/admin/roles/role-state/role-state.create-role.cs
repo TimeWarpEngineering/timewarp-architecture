@@ -19,6 +19,12 @@ partial class RoleState
 {
   public static class CreateRoleActionSet
   {
+    [CatalogAction
+    (
+      Description = "Create a new authorization role.",
+      Permissions = [PermissionIds.AdminRolesManage],
+      Visibility = ActionVisibility.Agent
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {

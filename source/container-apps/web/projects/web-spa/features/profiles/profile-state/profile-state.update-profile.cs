@@ -20,6 +20,12 @@ partial class ProfileState
 {
   public static class UpdateProfileActionSet
   {
+    [CatalogAction
+    (
+      Description = "Save the signed-in user's profile fields.",
+      Permissions = [PermissionIds.ProfileWrite],
+      Visibility = ActionVisibility.Agent
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {
