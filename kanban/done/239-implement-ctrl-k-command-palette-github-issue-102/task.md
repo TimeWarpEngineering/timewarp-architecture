@@ -15,25 +15,25 @@ TypeSafe / OpenRouter on this id.
 
 ## Requirements
 
-- [ ] Ctrl-K and Cmd-K open a palette overlay from `TimeWarpPage`
+- [x] Ctrl-K and Cmd-K open a palette overlay from `TimeWarpPage`
       (interactive shell only). Esc / click-outside close. Login /
       `TimeWarpFocusedPage` stay without search chrome (147-005)
-- [ ] Appbar search field is a real affordance: focus or click also
+- [x] Appbar search field is a real affordance: focus or click also
       opens the same overlay (not a dead `FluentTextInput`)
-- [ ] Results include **navigation** (NavMenu destinations) and
+- [x] Results include **navigation** (NavMenu destinations) and
       **opt-in commands** from the 238 catalog contract. One roster
       shape: `name`, `description`, execute (navigate or dispatch)
-- [ ] Ranking is C# shortlist / fuzzy filter on name + description.
+- [x] Ranking is C# shortlist / fuzzy filter on name + description.
       No Jev. No `[TrackAction]` as the opt-in (busy-indicator)
-- [ ] Keyboard: type to filter, arrows, Enter runs the highlighted
+- [x] Keyboard: type to filter, arrows, Enter runs the highlighted
       row, Esc closes. Do not auto-dispatch on a low-confidence
       near-miss — show the list
-- [ ] Permissions stay in code: do not list commands the current
+- [x] Permissions stay in code: do not list commands the current
       principal cannot run
-- [ ] Close GitHub **#102** from Results when the palette ships (or
+- [x] Close GitHub **#102** from Results when the palette ships (or
       comment why it stays open). Do not close it from this kitchen
       create
-- [ ] WebMCP `registerTool` and filling 104-019 `tools[]` are **not**
+- [x] (out of scope, unchanged) WebMCP `registerTool` and filling 104-019 `tools[]` are **not**
       this id — mint a child if the same catalog should feed agents
 
 ## Rescope (2026-09-30, cockpit + Steve)
@@ -58,14 +58,14 @@ NavMenu is hand markup). Actions carried no permission metadata. Resolved:
 
 ## Checklist
 
-- [ ] Overlay + hotkey on `TimeWarpPage` (desktop and a mobile
+- [x] Overlay + hotkey on `TimeWarpPage` (desktop and a mobile
       viewport check)
-- [ ] Nav destinations indexed from the live menu, not a second
+- [x] Nav destinations indexed from the live menu, not a second
       hand-copied route list
-- [ ] Opt-in command list from the TimeWarp.State action catalog (239-002)
-- [ ] Tests: open/close, filter, Enter navigates, excluded internals
+- [x] Opt-in command list from the TimeWarp.State action catalog (239-002)
+- [x] Tests: open/close, filter, Enter navigates, excluded internals
       (Fetch*, Clear*, template FiveSecondTask) stay out
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review; host `open-pr`
 
 ## Session
 
@@ -108,8 +108,30 @@ actions, Debug, template `FiveSecondTask` / `TwoSecondTask`,
 
 ## Results
 
-*(fill when the palette ships)*
+The palette shipped in three children, all merged on 2026-09-30:
+
+- **239-001 (PR #411):** `[Page(Navigable = true)]` feeds a generated, reflection-free
+  `PageRegistry.All` (16 destinations, static routes only, TWE009 guards misuse). NavMenu links
+  are constrained to registered pages. The generator model is value-equatable, and a test
+  covers incremental caching.
+- **239-002 (PR #410):** TimeWarp.State 12.0.0-beta.6 action catalog adopted in web-spa;
+  9 actions carry `[CatalogAction]` with visibility and permissions.
+- **239-003 (PR #412):** Ctrl-K / Cmd-K and the appbar search field open the palette overlay.
+  Its rows come from PageRegistry plus Human/Both catalog commands that take no arguments,
+  filtered through `IAuthorizationService`. Ranking is deterministic string matching: name
+  prefix, then word start, then substring, then a description match, then a name
+  subsequence. There is no semantic search.
+
+Closes GitHub #102.
 
 ### How to validate
 
-*(required before done)*
+Done 2026-09-30 by Steve against master (AppHost, signed in as Administrator):
+
+- Ctrl-K opens the palette.
+- The empty query lists every permitted page (the admin pages plus Home, Profile and Settings)
+  followed by the commands.
+- Signed out, the list shows only Home, which is correct: every other destination needs a
+  permission.
+
+Follow-up: a "Sign in" row for signed-out visitors (filed separately).
