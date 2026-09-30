@@ -1,0 +1,257 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using TimeWarp.Architecture.Components
+@using TimeWarp.Architecture.Services
+
+@*
+  Purpose: The Ctrl-K / Cmd-K command palette overlay — search pages and commands, run the highlighted row.
+
+  Design: Overlay shell is the store-driven modal (ModalContainer under TimeWarpPage's
+  ModalController, ApplicationState.ActiveModalId == ModalId), not FluentDialog: it already
+  gives one-modal-at-a-time, backdrop click-to-close and store-visible open state, and needs no
+  FluentDialogProvider in the tree (headless hosts have none). List state lives in
+  CommandPaletteState (roster, query, ranked matches, highlight); running a row is sequenced
+  here — CloseModal, then CommandPaletteRunner — because handlers do not nest dispatch.
+  Hosted by TimeWarpPage only (interactive shell); TimeWarpFocusedPage (Login) has no palette.
+  This component owns the JS side too: after the first interactive render it registers the
+  global Ctrl-K / Cmd-K keydown and the appbar search-field trigger (CommandPaletteJsModule),
+  and hands focus back to the trigger when the palette closes without navigating away.
+  Registration can finish after the page is disposed (fast navigation); that late handle is
+  disposed at once so no document listener outlives its page. The highlighted row is scrolled
+  into view on change; clicks on the list, empty text and hint keep focus in the query box
+  (mousedown preventDefault) so Esc/arrows keep working. Enter re-filters first when the typed
+  text is ahead of the last completed Filter, so a stale highlight never runs.
+  The dialog's accessible name is the visually hidden "modal-title" heading ModalContainer points at.
+  The query box is a native input (combobox + listbox with aria-activedescendant) rather than
+  FluentTextInput: the palette needs @onkeydown on the focused element and ElementReference
+  FocusAsync on open, which the web-component input does not give directly.
+  Mobile: the modal panel is width 100% up to its max, so the palette fills a narrow viewport
+  (16px gutters); the list scrolls inside min(60vh, 420px) and the input uses 16px text so
+  mobile browsers do not zoom on focus.
+*@
+
+@code {
+  public const string ModalId = nameof(CommandPalette);
+
+  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+  // TimeWarpStateComponent keeps its Store private; the runner needs the circuit/tab store.
+  [Inject] private IStore ScopedStore { get; set; } = null!;
+
+  private ElementReference SearchInput;
+  private DotNetObjectReference<CommandPalette>? HostReference;
+  private IJSObjectReference? Handle;
+  private string QueryText = "";
+  private bool FocusPending;
+  private bool Opening;
+  private bool WasActive;
+  private int ScrolledIndex = -1;
+  private bool Disposed;
+
+  // The attribute command-palette.js looks for on the query box; the name is CommandPaletteJsModule's constant.
+  private static readonly Dictionary<string, object> InputMarker =
+    new() { [CommandPaletteJsModule.InputAttribute] = true };
+
+  private bool IsActive => ApplicationState.ActiveModalId == ModalId;
+  private IReadOnlyList<CommandPaletteRow> Matches => CommandPaletteState.Matches;
+  private int HighlightedIndex => CommandPaletteState.HighlightedIndex;
+  private string? ActiveDescendant => HighlightedIndex >= 0 ? RowId(HighlightedIndex) : null;
+
+  private static string RowId(int index) => $"twe-palette-row-{index}";
+
+  /// <summary>Called from command-palette.js (Ctrl-K / Cmd-K, or the appbar search field).</summary>
+  [JSInvokable]
+  public async Task OpenCommandPalette()
+  {
+    if (IsActive)
+    {
+      FocusPending = true;
+      StateHasChanged();
+      return;
+    }
+
+    if (Opening)
+    {
+      return;
+    }
+
+    Opening = true;
+    try
+    {
+      QueryText = "";
+      await CommandPaletteState.Open();
+      await ApplicationState.SetActiveModal(ModalId);
+    }
+    finally
+    {
+      Opening = false;
+    }
+  }
+
+  private Task Activate()
+  {
+    FocusPending = true;
+    return Task.CompletedTask;
+  }
+
+  private Task FilterAsync() => CommandPaletteState.Filter(QueryText);
+
+  private async Task OnKeyDownAsync(KeyboardEventArgs keyboardEvent)
+  {
+    switch (keyboardEvent.Key)
+    {
+      case "ArrowDown":
+        await CommandPaletteState.MoveHighlight(1);
+        break;
+      case "ArrowUp":
+        await CommandPaletteState.MoveHighlight(-1);
+        break;
+      case "Enter":
+        if (CommandPaletteState.Query != QueryText)
+        {
+          await FilterAsync();
+        }
+
+        await RunAsync(CommandPaletteState.Highlighted);
+        break;
+      case "Escape":
+        await ApplicationState.CloseModal();
+        break;
+    }
+  }
+
+  private Task HighlightAsync(int index) =>
+    index == HighlightedIndex ? Task.CompletedTask : CommandPaletteState.Highlight(index);
+
+  private Task RunIndexAsync(int index) =>
+    RunAsync(index >= 0 && index < Matches.Count ? Matches[index] : null);
+
+  private async Task RunAsync(CommandPaletteRow? row)
+  {
+    // Enter with nothing highlighted (no match) does nothing — never run a near-miss.
+    if (row is null)
+    {
+      return;
+    }
+
+    await ApplicationState.CloseModal();
+    await CommandPaletteRunner.RunAsync(row, ScopedStore, ActionCatalog, CancellationToken);
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+
+    if (firstRender && RendererInfo.IsInteractive)
+    {
+      HostReference = DotNetObjectReference.Create(this);
+      IJSObjectReference handle;
+      try
+      {
+        handle = await CommandPaletteJsModule.RegisterAsync(JsRuntime, HostReference, CancellationToken);
+      }
+      catch (Exception exception) when (Disposed && exception is OperationCanceledException or JSDisconnectedException)
+      {
+        return;
+      }
+
+      if (Disposed)
+      {
+        await CommandPaletteJsModule.DisposeAsync(handle);
+        return;
+      }
+
+      Handle = handle;
+    }
+
+    if (IsActive && FocusPending)
+    {
+      FocusPending = false;
+      await SearchInput.FocusAsync();
+    }
+
+    if (WasActive && !IsActive && Handle is not null)
+    {
+      await Handle.InvokeVoidAsync(CommandPaletteJsModule.RestoreFocusExport);
+    }
+
+    if (IsActive && HighlightedIndex >= 0 && HighlightedIndex != ScrolledIndex && Handle is not null)
+    {
+      await Handle.InvokeVoidAsync(CommandPaletteJsModule.ScrollIntoViewExport, RowId(HighlightedIndex));
+    }
+
+    ScrolledIndex = IsActive ? HighlightedIndex : -1;
+    WasActive = IsActive;
+  }
+
+  public override void Dispose()
+  {
+    Disposed = true;
+    if (Handle is not null)
+    {
+      _ = CommandPaletteJsModule.DisposeAsync(Handle);
+      Handle = null;
+    }
+
+    HostReference?.Dispose();
+    HostReference = null;
+    base.Dispose();
+    GC.SuppressFinalize(this);
+  }
+}
+
+<ModalContainer ModalId=@ModalId OnActivate=Activate>
+  <MainContent>
+    <div class="twe-palette" data-qa="CommandPalette">
+      <h2 id="modal-title" class="twe-palette__title">Command palette</h2>
+      <input @ref=SearchInput
+             class="twe-palette__input"
+             type="text"
+             role="combobox"
+             aria-label="Search pages and commands"
+             aria-expanded=@(Matches.Count > 0 ? "true" : "false")
+             aria-controls=@(Matches.Count > 0 ? "twe-palette-list" : null)
+             aria-autocomplete="list"
+             aria-activedescendant=@ActiveDescendant
+             placeholder="Search pages and commands"
+             autocomplete="off"
+             spellcheck="false"
+             data-qa="CommandPaletteInput"
+             @attributes=InputMarker
+             @bind=QueryText
+             @bind:event="oninput"
+             @bind:after=FilterAsync
+             @onkeydown=OnKeyDownAsync />
+      @if (Matches.Count == 0)
+      {
+        <p class="twe-palette__empty" data-qa="CommandPaletteEmpty" @onmousedown:preventDefault>No pages or commands match.</p>
+      }
+      else
+      {
+        <ul id="twe-palette-list" class="twe-palette__list" role="listbox" aria-label="Pages and commands"
+            @onmousedown:preventDefault>
+          @for (int index = 0; index < Matches.Count; index++)
+          {
+            int rowIndex = index;
+            CommandPaletteRow row = Matches[rowIndex];
+            <li @key=@($"{row.Kind}:{row.Target}")
+                id=@RowId(rowIndex)
+                class=@(rowIndex == HighlightedIndex ? "twe-palette__row twe-palette__row--active" : "twe-palette__row")
+                role="option"
+                aria-selected=@(rowIndex == HighlightedIndex ? "true" : "false")
+                data-qa="CommandPaletteRow"
+                @onmouseenter=@(() => HighlightAsync(rowIndex))
+                @onclick=@(() => RunIndexAsync(rowIndex))>
+              <span class="twe-palette__name">@row.Name</span>
+              <span class="twe-palette__kind">@(row.Kind == CommandPaletteRowKind.Page ? "Page" : "Command")</span>
+              <span class="twe-palette__description">@row.Description</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </MainContent>
+  <ActionContent>
+    <span class="twe-palette__hint" @onmousedown:preventDefault>↑ ↓ to move · Enter to run · Esc to close</span>
+  </ActionContent>
+</ModalContainer>
