@@ -29,10 +29,10 @@ hand markup (`TimeWarpNavLink TPage=…`). Nothing aggregates pages.
 
 ## Checklist
 
-- [ ] Registry generated with title/icon/policy/url and opt-in
-- [ ] Parameterized routes excluded
-- [ ] NavMenu from registry, or a drift check
-- [ ] Tests
+- [x] Registry generated with title/icon/policy/url and opt-in
+- [x] Parameterized routes excluded
+- [x] NavMenu from registry, or a drift check
+- [x] Tests
 - [ ] Gates; no AppHost
 
 ## Notes
@@ -40,6 +40,77 @@ hand markup (`TimeWarpNavLink TPage=…`). Nothing aggregates pages.
 - Parent 239. Consumed by 239-003.
 - Cockpit session: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED
 
+### Cockpit note (2026-09-30): compiler-server memory
+
+Two walks of this task died with VBCSCompiler at ~31 GB. The uncommitted diff in this worktree
+(25 files, not yet committed) was reviewed. It does NOT capture `Compilation`, `SemanticModel` or
+`ISymbol`, and it has no `CompilationProvider` combine. It is not a whole-compilation leak.
+It does keep a caching defect that already existed and that the new `pages.Collect()` makes wider:
+
+- `PageModel` is a `readonly struct` with an `IReadOnlyList<(string, string)>` field and two
+  `Diagnostic?` fields. Default struct equality compares the list by reference, so no model is
+  ever equal to the previous one, and every generator step re-runs on every edit.
+- A `Diagnostic` holds a `Location`, and the `Location` holds a `SyntaxTree`. That keeps old trees
+  alive in the incremental cache. The `Collect()` registry output now keeps every page's model
+  (and its trees) in one cached array.
+
+Fix as part of this task (boyscout welcome):
+
+1. Make `PageModel` value-equatable: a `record` with an equatable array for the parameters, or
+   an explicit `IEquatable<PageModel>`.
+2. Replace the two `Diagnostic?` fields with a location-free diagnostic info (descriptor id,
+   file path, `TextSpan`/`LinePositionSpan`, message args). Build the `Diagnostic` inside
+   `RegisterSourceOutput`.
+3. Add a generator test that asserts the steps are cached: run twice with
+   `trackIncrementalGeneratorSteps: true` after an unrelated edit, and expect `Cached`/`Unchanged`.
+
+Memory discipline for the worker: run builds and tests one after another, never in parallel.
+Run `dotnet build-server shutdown` after the gate runs and before finishing. Do not start an
+AppHost.
+
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-30)
+- Implement oracle (ganda task work, 2026-09-30): generator + registry + drift constraint + tests.
+
+## Results
+
+- **Opt-in:** `[Page("/route", Policy = …, Navigable = true)]` — a `[Page]` property (default
+  false), not a separate attribute; literal `true`/`false` only. Recorded in the
+  `PageSourceGenerator` Design region.
+- **Registry:** the generator emits one per-assembly `PageRegistry.All`
+  (`IReadOnlyList<PageRegistryEntry>`, root namespace) with `PageType`, `RouteTemplate`, `Url`
+  (`GetPageUrl()`), `Title`, `NavIcon`, `Policy` — a generated array of static member reads
+  (reflection-free, AOT/trim safe), sorted by route. Emitted only when the assembly has a `[Page]`.
+- **Parameterized routes:** never in the registry; `Navigable = true` on one (or a non-literal
+  value) is new error **TWE009** (descriptor SSOT, AnalyzerReleases.Unshipped, AGENTS.md table).
+- **NavMenu drift:** NavMenu keeps hand markup (categories, AuthorizeView groups, `#if (api)` /
+  `#if (grpc)` regions). Opt-in pages also get `INavigationDestination`
+  (`web-spa/components/interfaces/i-navigation-destination.cs`) and `TimeWarpNavLink` constrains
+  `TPage` to it — a NavMenu link to an unregistered page is a compile error (verified: adding
+  `<TimeWarpNavLink TPage=LogoutPage />` → CS0311; reverted).
+- **Opted in (16):** every NavMenu target plus Profile (profile-menu destination). Excluded:
+  Login, Logout, ChooseMicrosoft365, TodoItems, RoleNew, and all parameterized pages.
+- **Docs:** `tw-blazor-layout` gains "Navigation destinations come from one registry" + a
+  reference-implementation bullet; NavMenu comment updated.
+- **Tests:** 6 new generator tests (`page-source-generator-tests.cs`: contents/opt-in/order,
+  policy carried, TWE009 + exclusion, parameterized exclusion, non-literal TWE009, no registry
+  without pages) and SPA suite `features/application/page-registry-tests.cs` (expected demo pages
+  present, parameterized/ceremony pages absent, entries well formed).
+- **Manual browser check: not performed** (no AppHost started, per task rule).
+
+### How to validate
+
+**Smoke:**
+```bash
+cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release -- --filter-class PageSourceGenerator
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class All_Should_
+dotnet run tools/dev-cli/dev.cs -- build
+```
+
+**Expect:** generator suite 14/14 passed; SPA `All_Should_` 3/3 passed; `dev build` 0 warnings /
+0 errors, with
+`artifacts/generated/web-spa/timewarp-architecture-analyzers/TimeWarp.Architecture.Analyzers.PageSourceGenerator/PageRegistry.g.cs`
+listing 16 entries (Home `/` first). Adding `<TimeWarpNavLink TPage=LogoutPage />` to
+`NavMenu.razor` fails the web-spa build with CS0311 (INavigationDestination).
+
