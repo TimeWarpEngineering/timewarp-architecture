@@ -19,6 +19,12 @@ partial class CredentialsState
 {
   public static class RenameCredentialActionSet
   {
+    [CatalogAction
+    (
+      Description = "Set the nickname of one of the signed-in account's credentials.",
+      Permissions = [PermissionIds.CredentialManageSelf],
+      Visibility = ActionVisibility.Agent
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {

@@ -23,6 +23,12 @@ partial class CredentialsState
 {
   public static class AddExistingPasskeyActionSet
   {
+    [CatalogAction
+    (
+      Description = "Sign in with a passkey from another account and merge that account into this one.",
+      Permissions = [PermissionIds.CredentialManageSelf],
+      Visibility = ActionVisibility.Human
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction;
 

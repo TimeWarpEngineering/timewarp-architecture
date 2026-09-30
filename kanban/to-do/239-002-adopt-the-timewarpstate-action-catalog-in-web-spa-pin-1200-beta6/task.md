@@ -31,11 +31,50 @@ reflection-free `ActionCatalogEntry.Execute(IStore, args, ct)`, `services.AddAct
 
 ## Checklist
 
-- [ ] Pins → 12.0.0-beta.6; new analyzer findings fixed
-- [ ] `AddActionCatalog` registered
-- [ ] User-facing actions tagged; per-action decisions listed
-- [ ] Tests
-- [ ] Gates; no AppHost
+- [x] Pins → 12.0.0-beta.6; new analyzer findings fixed
+- [x] `AddActionCatalog` registered
+- [x] User-facing actions tagged; per-action decisions listed
+- [x] Tests
+- [x] Gates; no AppHost
+
+## Results
+
+- `TimeWarp.State` + `TimeWarp.State.Plus` pinned to `12.0.0-beta.6` (the only TimeWarp.State.* pins).
+  TWS0004–0007 raised nothing after tagging; no suppressions added.
+- `services.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).Assembly)` in `web-spa/program.cs`;
+  mirrored in `AspireSpaTestApplication` so tests see the production roster. Only web-spa declares
+  cataloged actions (Plus declares none).
+- Per-action decisions:
+
+| Action | Visibility | Permissions | Why |
+|--------|------------|-------------|-----|
+| Counter.IncrementCounter | Both | DeveloperAccess | demo; `int amount` is palette/agent-suppliable; Counter page is DeveloperAccess |
+| Profile.SignOut | Human | — | parameterless; browser-session action, not an agent tool |
+| Credentials.AddPasskey | Human | CredentialManageSelf | WebAuthn ceremony needs a human gesture |
+| Credentials.AddExistingPasskey | Human | CredentialManageSelf | WebAuthn ceremony + account merge |
+| Credentials.RenameCredential | Agent | CredentialManageSelf | needs credential id + nickname |
+| Credentials.RevokeCredential | Agent | CredentialManageSelf | needs credential id |
+| Profile.UpdateProfile | Agent | ProfileWrite | complex profile fields |
+| Role.CreateRole | Agent | AdminRolesManage | complex command |
+| SiteSettings.UpdateSiteSettings | Agent | SettingsWrite | complex settings command |
+| Theme.Update | not cataloged | — | declared in the TimeWarp.State.Plus package — cannot be tagged here; needs a `[CatalogAction]` upstream in timewarp-state (239-003 can surface theme toggle directly or follow up upstream) |
+| Credentials.DismissPasskeySoftPrompt | not cataloged | — | banner-local UI dismissal, not a command |
+| Fetch*/Clear*/Debug/inbound hub/FiveSecondTask/TwoSecondTask/ThrowException | not cataloged | — | excluded per brief |
+
+- Tests: `tests/container-apps/web/web-spa-integration-tests/features/application/action-catalog-tests.cs`
+  (SpaSessionFixture) — full roster, permissions/visibility, `Counter.IncrementCounter` executes via
+  `ActionCatalogEntry.Execute` through the store (10 → 15), excluded names absent (11/11).
+- Gates: `dev build` 0 warnings / 0 errors; `dev test` 21 suite runs, 0 failed; `dev template-smoke` SUCCEEDED
+  (generated app restores beta.6; web-jaribu 212/212).
+- No AppHost started. Manual browser check **not performed**.
+
+### How to validate
+
+**Smoke:** `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class ActionCatalog`
+
+**Expect:** 11/11 pass — `IActionCatalog.Entries` names equal the 9-name roster above; `Counter.IncrementCounter`
+with `["5"]` moves Count 10 → 15; `Theme.Update`, Fetch*/Clear*/template actions resolve `Find(...) == null`.
+Then `dev build` reports 0 warnings / 0 errors.
 
 ## Notes
 
@@ -45,3 +84,4 @@ reflection-free `ActionCatalogEntry.Execute(IStore, args, ct)`, `services.AddAct
 ## Session
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-30)
+- 2026-09-30: implement oracle (ganda task work) — tagged actions, registered catalog, tests, gates green.

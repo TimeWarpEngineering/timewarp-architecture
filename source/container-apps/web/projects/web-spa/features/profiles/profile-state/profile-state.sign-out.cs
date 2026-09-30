@@ -37,6 +37,11 @@ partial class ProfileState
 {
   public static class SignOutActionSet
   {
+    [CatalogAction
+    (
+      Description = "Sign the current user out of this browser session.",
+      Visibility = ActionVisibility.Human
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction;
 

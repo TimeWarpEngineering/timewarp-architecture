@@ -11,6 +11,8 @@
 // increment — the one action the template opts in, rather than tracking every action
 // by default. [TrackEvent] is Features substrate, so IncrementCounter opts in without
 // a product→product edge.
+// Also the canonical [CatalogAction] exemplar: Description is one plain sentence, Permissions
+// reuse PermissionIds (the SPA policy names), and the int amount is palette/agent-suppliable.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Counters;
@@ -19,6 +21,12 @@ partial class CounterState
 {
   public static class IncrementCounterActionSet
   {
+    [CatalogAction
+    (
+      Description = "Add an amount to the demo counter; a negative amount decrements it.",
+      Permissions = [PermissionIds.DeveloperAccess],
+      Visibility = ActionVisibility.Both
+    )]
     [TrackEvent]
     public class Action : IBaseAction
     {

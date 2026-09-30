@@ -33,6 +33,12 @@ partial class CredentialsState
 {
   public static class AddPasskeyActionSet
   {
+    [CatalogAction
+    (
+      Description = "Create a passkey on this device and attach it to the signed-in account.",
+      Permissions = [PermissionIds.CredentialManageSelf],
+      Visibility = ActionVisibility.Human
+    )]
     [TrackAction]
     public sealed class Action : IBaseAction
     {
