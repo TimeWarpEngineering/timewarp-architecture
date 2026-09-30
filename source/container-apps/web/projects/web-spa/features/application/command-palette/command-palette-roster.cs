@@ -1,5 +1,6 @@
 #region Purpose
-// Builds the Ctrl-K palette rows the current principal may run: PageRegistry pages + human, parameterless catalog actions.
+// Builds the Ctrl-K palette rows the current principal may run: PageRegistry pages + human, parameterless catalog actions,
+// plus a Sign in row while the principal is signed out.
 #endregion
 
 #region Design
@@ -14,12 +15,23 @@
 // passkeys) and must not be offered to an anonymous visitor.
 // Command display name is the catalog name made readable ("Profile.SignOut" → "Profile: Sign out")
 // so typing words from it ranks; the stable catalog name stays the row Target.
+// Sign in (task 259): an explicit, typed signed-out entry built from LoginPage.Title and
+// LoginPage.GetPageUrl() — not a registry concept. Login stays out of PageRegistry.All (NavMenu
+// must not list it) and Navigable keeps its meaning; one signed-out destination does not earn a
+// new [Page] opt-in and generator surface. It is a Page-kind row, so running it takes the same
+// CloseModal-then-RouteState path as every page row. Shown only when
+// user.Identity?.IsAuthenticated != true; the target carries the current path as ?returnUrl
+// (LoginPage validates it with GetSafeReturnUrl), omitted on "/" as RedirectToLogin does. The
+// description says "Log in" and names the route so "login" and "log in" rank it as well as "sign".
+// Applications is the platform tier, which must not reach a product slice; LoginPage is the one
+// edge, opted out below like HomePage's first-run CTA.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
 using System.Text;
 
+[CrossSliceReference(typeof(LoginPage), "Signed-out palette row navigates to Identity login (task 259).")]
 public static class CommandPaletteRoster
 {
   public static async Task<IReadOnlyList<CommandPaletteRow>> BuildAsync
@@ -27,10 +39,17 @@ public static class CommandPaletteRoster
     ClaimsPrincipal user,
     IAuthorizationService authorizationService,
     IEnumerable<PageRegistryEntry> pages,
-    IEnumerable<ActionCatalogEntry> actions
+    IEnumerable<ActionCatalogEntry> actions,
+    string currentPath
   )
   {
     List<CommandPaletteRow> rows = [];
+    bool isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+    if (!isAuthenticated)
+    {
+      rows.Add(SignInRow(currentPath));
+    }
 
     foreach (PageRegistryEntry page in pages)
     {
@@ -40,7 +59,6 @@ public static class CommandPaletteRoster
       }
     }
 
-    bool isAuthenticated = user.Identity?.IsAuthenticated ?? false;
     foreach (ActionCatalogEntry action in actions)
     {
       if (!IsPaletteCommand(action) || !isAuthenticated)
@@ -65,6 +83,16 @@ public static class CommandPaletteRoster
     }
 
     return rows;
+  }
+
+  /// <summary>The signed-out Sign in row; <paramref name="currentPath"/> becomes the login ?returnUrl.</summary>
+  public static CommandPaletteRow SignInRow(string currentPath)
+  {
+    string loginUrl = LoginPage.GetPageUrl();
+    string target = currentPath is "/" or ""
+      ? loginUrl
+      : $"{loginUrl}?returnUrl={Uri.EscapeDataString(currentPath)}";
+    return new CommandPaletteRow(LoginPage.Title, $"Log in: go to {loginUrl}", CommandPaletteRowKind.Page, target);
   }
 
   /// <summary>Human-visible and runnable without arguments.</summary>

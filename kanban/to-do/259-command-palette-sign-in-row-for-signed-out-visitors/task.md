@@ -34,20 +34,22 @@ shows for authenticated users.
 
 ## Checklist
 
-- [ ] Signed-out Sign in row (typed source, not a string literal route)
-- [ ] Hidden when authenticated; Login still absent from `PageRegistry.All` and NavMenu
-- [ ] Ranking: "sign", "login" and "log in" each match the row
-- [ ] Tests (co-located Jaribu or the existing `command-palette-tests.cs` suite): signed-out
+- [x] Signed-out Sign in row (typed source, not a string literal route)
+- [x] Hidden when authenticated; Login still absent from `PageRegistry.All` and NavMenu
+- [x] Ranking: "sign", "login" and "log in" each match the row
+- [x] Tests (co-located Jaribu or the existing `command-palette-tests.cs` suite): signed-out
       roster contains Sign in; signed-in roster does not; running it navigates to the login URL
-- [ ] Purpose/Design regions reconciled on touched files
-- [ ] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
-- [ ] Do **not** start an AppHost (`dev run`, `aspire run`, or `dotnet run` of the AppHost); record
+- [x] Purpose/Design regions reconciled on touched files
+- [x] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Do **not** start an AppHost (`dev run`, `aspire run`, or `dotnet run` of the AppHost); record
       the browser check as not performed
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 284163 (2026-09-30)
+- 2026-09-30 implement (ganda task work): typed signed-out entry in `CommandPaletteRoster`;
+  tests + gates green. No AppHost started; browser check not performed.
 
 ## Notes
 
@@ -59,8 +61,44 @@ shows for authenticated users.
 
 ## Results
 
-*(fill when done)*
+- **Choice: explicit typed signed-out entry** (not a registry concept), recorded in the Design
+  region of `command-palette-roster.cs`. `CommandPaletteRoster.SignInRow` builds the row from
+  `LoginPage.Title` ("Sign in") and `LoginPage.GetPageUrl()` — no hand-kept route string. Login
+  stays out of `PageRegistry.All`; `Navigable` semantics are unchanged; no generator change.
+- The row is added only when `user.Identity?.IsAuthenticated != true`. It is a `Page`-kind row, so
+  running it takes the same CloseModal → `CommandPaletteRunner` → `RouteState.ChangeRoute` path as
+  every page row.
+- Return URL: `OpenActionSet` passes the current base-relative path; the target becomes
+  `/Login?returnUrl=<escaped path>` (plain `/Login` on `/`), matching `RedirectToLogin`. LoginPage
+  already validates it with `GetSafeReturnUrl`.
+- Description `Log in: go to /Login`, so "sign" (name prefix), "login" (description word start)
+  and "log in" (description prefix) all rank it first.
+- TWA0009: Applications is the platform tier and may not reach the Identity slice, so the roster
+  carries `[CrossSliceReference(typeof(LoginPage), …)]`, the same opt-out HomePage uses.
+- Tests (`command-palette-tests.cs`): the signed-out roster = anonymous pages + Sign in (name and
+  description pinned); the signed-in roster has no `/Login` row and `PageRegistry.All` has no
+  `/Login`; `sign` / `Sign in` / `login` / `log in` each highlight Sign in; Enter from `/Counter`
+  navigates to `/Login?returnUrl=%2FCounter`.
+- Gates: `dev build` 0 warnings / 0 errors; `dev test` all suites passed; `ganda repo audit`
+  passes (`bin/dev` was self-installed in this worktree first; it is untracked).
+- **Browser check not performed.** No AppHost was started (task rule).
 
 ### How to validate
 
-*(required before done)*
+**Smoke:**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests
+dotnet test -c Release -- --filter-class CommandPalette
+```
+
+Manual, with an AppHost running: sign out, open any `TimeWarpPage`, press Ctrl-K, type `login`.
+
+**Expect:**
+
+- The filtered run reports 28 passed, 0 failed. That includes
+  `Rank_The_Sign_In_Row_First_For_Sign_In_Wording` (4 inputs) and
+  `Enter_On_Sign_In_Navigates_To_Login_With_The_Current_Path_As_Return_Url`.
+- Manual: while signed out, the palette shows **Sign in** ("Log in: go to /Login") next to Home.
+  Enter closes the palette and opens `/Login?returnUrl=<current page>`. After sign-in you land
+  back on that page, and the palette no longer shows Sign in. NavMenu never lists Login.
