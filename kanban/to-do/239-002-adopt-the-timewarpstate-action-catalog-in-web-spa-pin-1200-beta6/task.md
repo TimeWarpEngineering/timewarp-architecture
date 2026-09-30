@@ -68,6 +68,10 @@ reflection-free `ActionCatalogEntry.Execute(IStore, args, ct)`, `services.AddAct
   (generated app restores beta.6; web-jaribu 212/212).
 - No AppHost started. Manual browser check **not performed**.
 
+- Review: 1 round, effort 1 (general). Final counts 0 bug / 0 suggestion / 0 nit (0 open, 0 fixed,
+  0 wontfix). Disposition **clean**. Artifacts: `review/review-framework.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:** `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class ActionCatalog`
@@ -85,3 +89,4 @@ Then `dev build` reports 0 warnings / 0 errors.
 
 - Created: https://claude.ai/code/session_01QYpqCSgnvvLRpXrMKxu5ED (2026-09-30)
 - 2026-09-30: implement oracle (ganda task work) — tagged actions, registered catalog, tests, gates green.
+- 2026-09-30: review oracle (ganda task work) — effort 1 general review, disposition clean.
