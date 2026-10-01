@@ -5,7 +5,8 @@
 // Extended for task 107: proves the GENERATED Web.Server /api carve-outs
 // (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
 // /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
-// hand-maintained list had dropped).
+// hand-maintained list had dropped). Task 270: also proves a first run against an empty
+// database logs no Error from web-server.
 // Framework: Jaribu MTP (task 145-003) — SetupOnce replaces xUnit IClassFixture/IAsyncLifetime.
 #endregion
 
@@ -15,6 +16,10 @@
 // Health-gate web→api→ingress, then wait for web-migrations to reach a terminal state (task
 // 155 — the AppHost carries no wait edge there, and this suite's ephemeral Postgres means
 // migrations always have real work to do), then poll ingress reachability (DCP proxy race).
+// Task 270: because Postgres is ephemeral, every run is a first run against an empty database.
+// SetupOnce watches web-server's console from creation (the logger service is keyed by the DCP
+// instance id, known only from the first resource notification; the backlog replays to a late
+// watcher) so a fact can assert that first boot logged no Error.
 // Suite-shaped under tests/ per hybrid topology policy — not co-located under features/.
 #endregion
 
@@ -24,9 +29,12 @@ namespace Aspire.Tests;
 /// Ingress request smoke through the running AppHost (closed-box).
 /// </summary>
 [TestTag("Integration")]
-public class IngressSmoke_Given_
+public partial class IngressSmoke_Given_
 {
   private static DistributedApplication? App;
+  private static readonly ConcurrentQueue<string> WebServerLogLines = new();
+  private static CancellationTokenSource? WebServerLogWatch;
+  private static Task? WebServerLogWatchTask;
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<IngressSmoke_Given_>();
@@ -44,6 +52,12 @@ public class IngressSmoke_Given_
       );
 
     App = await appHost.BuildAsync();
+
+    // Task 270: capture web-server's console from its very first line, so the first-run fact
+    // below sees the boot seed's output against the ephemeral (empty) database.
+    WebServerLogWatch = new CancellationTokenSource();
+    WebServerLogWatchTask = WatchWebServerLogsAsync(App, WebServerLogWatch.Token);
+
     await App.StartAsync();
 
     // Requests flow only once the backends AND the ingress are healthy; one 2-minute budget
@@ -56,7 +70,7 @@ public class IngressSmoke_Given_
 
     // Task 155: the AppHost deliberately carries NO wait edge between web-server and
     // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
-    // breaks DCP service-producer endpoint creation for the same-project web-server resource —
+    // breaks DCP endpoint wiring for web-server, still so on Aspire 13.6 per task 270 —
     // see AppHost program.cs Design region). That means web-server's own Healthy state above says
     // nothing about migration progress. This suite always boots an EPHEMERAL Postgres
     // (--Postgres:UseDataVolume=false), so RunDatabaseUpdateOnStart has real work to do on every
@@ -93,10 +107,55 @@ public class IngressSmoke_Given_
 
   public static async Task CleanUpOnce()
   {
+    if (WebServerLogWatch is not null)
+    {
+      await WebServerLogWatch.CancelAsync();
+      try
+      {
+        await WebServerLogWatchTask!;
+      }
+      catch (OperationCanceledException)
+      {
+        // Expected: the watch only ends by cancellation.
+      }
+
+      WebServerLogWatch.Dispose();
+      WebServerLogWatch = null;
+    }
+
     if (App is not null)
     {
       await App.DisposeAsync();
       App = null;
+    }
+  }
+
+  [GeneratedRegex(@"\x1B\[[0-9;]*m")]
+  private static partial Regex AnsiEscape();
+
+  private static async Task WatchWebServerLogsAsync(DistributedApplication app, CancellationToken cancellationToken)
+  {
+    // DCP keys console logs by instance id (web-server-<suffix>), which exists only once the
+    // orchestrator creates the resource; the first web-server notification carries it. The logger
+    // service replays its backlog to a new watcher, so subscribing after creation loses nothing.
+    string? webServerResourceId = null;
+    await foreach (ResourceEvent resourceEvent in app.ResourceNotifications.WatchAsync(cancellationToken))
+    {
+      if (resourceEvent.Resource.Name == "web-server" && resourceEvent.ResourceId != resourceEvent.Resource.Name)
+      {
+        webServerResourceId = resourceEvent.ResourceId;
+        break;
+      }
+    }
+
+    ResourceLoggerService resourceLoggerService = app.Services.GetRequiredService<ResourceLoggerService>();
+    await foreach (IReadOnlyList<LogLine> batch in resourceLoggerService.WatchAsync(webServerResourceId!).WithCancellation(cancellationToken))
+    {
+      foreach (LogLine line in batch)
+      {
+        // Strip ANSI colour codes: the console formatter colours the level ("fail") apart from its colon.
+        WebServerLogLines.Enqueue(AnsiEscape().Replace(line.Content, string.Empty));
+      }
     }
   }
 
@@ -129,6 +188,45 @@ public class IngressSmoke_Given_
         await Task.Delay(TimeSpan.FromMilliseconds(500), CancellationToken.None);
       }
     }
+  }
+
+  public static async Task FirstRunOnEmptyDatabase_Should_LogNoErrorFromWebServer()
+  {
+    // Task 270: this suite's Postgres is ephemeral, so every run is a first run against an empty
+    // database, and web-server boots with no wait edge on web-migrations (AppHost Design region).
+    // Before the boot seed probed the table, EF logged two Error entries here ("Failed executing
+    // DbCommand", "An exception occurred while iterating over the results of a query") for
+    // 42P01 on identity.site_settings. Wait until web-server reports it started, so its whole
+    // boot (the seed runs before Kestrel) is in the captured console.
+    using CancellationTokenSource cts = new(TimeSpan.FromSeconds(30));
+    while (!WebServerLogLines.Any(line => line.Contains("Application started", StringComparison.Ordinal)))
+    {
+      if (WebServerLogWatchTask!.IsCompleted)
+      {
+        // A faulted or ended watch would otherwise surface only as a bare timeout.
+        await WebServerLogWatchTask;
+        throw new InvalidOperationException(
+          $"web-server log watch ended after {WebServerLogLines.Count} lines without 'Application started'.");
+      }
+
+      if (cts.IsCancellationRequested)
+      {
+        throw new TimeoutException(
+          $"web-server log watch saw {WebServerLogLines.Count} lines but no 'Application started':{Environment.NewLine}"
+          + string.Join(Environment.NewLine, WebServerLogLines.Take(40)));
+      }
+
+      await Task.Delay(TimeSpan.FromMilliseconds(200), CancellationToken.None);
+    }
+
+    string[] errorLines =
+    [
+      .. WebServerLogLines.Where(line =>
+        line.Contains("fail:", StringComparison.Ordinal)
+        || line.Contains("crit:", StringComparison.Ordinal)
+        || line.Contains("42P01", StringComparison.Ordinal))
+    ];
+    errorLines.ShouldBeEmpty(string.Join(Environment.NewLine, errorLines));
   }
 
   public static async Task RootThroughIngress_Should_ReturnSpaShell()

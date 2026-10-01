@@ -9,14 +9,20 @@
 // 254 the store read seeds on empty too (SeedOnReadSiteSettingsStore), so this boot pass is no
 // longer what makes Settings work — it keeps the first request fast, applies Development
 // ReseedSiteSettings once per boot, and emits the drift warnings at startup.
-// CI fix (post-review, task 219-006): the AppHost has NO wait edge between web-server and
-// web-migrations (postgres-db-module-server.cs Design region, task 155 — WaitFor deadlocked
-// dashboard restarts, WaitForCompletion broke DCP under Aspire.Hosting.Testing), so on a fresh
-// Postgres volume this seed can run before web-migrations has created identity.site_settings
-// (Npgsql 42P01, "relation does not exist"). Bounded retry (1s backoff, up to MaxAttempts) rides
-// out that same accepted first-boot race instead of crashing the host. In-memory builds never
-// throw 42P01, so the loop is a harmless single pass there — the seed still completes
-// synchronously before Kestrel starts, unchanged from before this fix.
+// The AppHost has NO wait edge between web-server and web-migrations (AppHost program.cs Design
+// region: WaitFor deadlocks dashboard restarts; WaitForCompletion breaks DCP endpoint wiring,
+// re-confirmed on Aspire 13.6 in task 270), so on a fresh Postgres volume this seed can run before
+// web-migrations has created identity.site_settings. Bounded wait (1s backoff, up to MaxAttempts)
+// rides out that first-boot race instead of crashing the host.
+// Task 270: each attempt first asks ISiteSettingsTableProbe (a catalog lookup that cannot fail on
+// a missing table) and only queries through EF once the table exists — a failing EF query logs
+// two Error entries inside EF before any catch here runs, and a clean first run must log none.
+// A missing table is expected on a first run, so early attempts log Information; from attempt
+// QuietAttempts + 1 the wait logs Warning, because migrations should have finished by then. The
+// last attempt skips the probe and runs the seed anyway, so an exhausted budget still fails the
+// host with the real 42P01 rather than a silent skip. The 42P01 catch stays for the narrow race
+// where the table disappears between probe and query (`dev db reset` during a restart). With no
+// probe registered (in-memory builds) the loop is a single seed pass before Kestrel starts.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -28,6 +34,7 @@ using TimeWarp.Architecture.Features.Identity.Application;
 public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
 {
   private const int MaxAttempts = 30;
+  private const int QuietAttempts = 5;
   private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
 
   private static readonly Action<ILogger, int, int, Exception?> LogUndefinedTableRetry =
@@ -36,6 +43,22 @@ public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
       LogLevel.Warning,
       new EventId(1, nameof(LogUndefinedTableRetry)),
       "Site settings seed found identity.site_settings undefined (attempt {Attempt}/{MaxAttempts}); retrying — web-migrations has not applied yet."
+    );
+
+  private static readonly Action<ILogger, int, int, Exception?> LogTableNotMigratedYet =
+    LoggerMessage.Define<int, int>
+    (
+      LogLevel.Information,
+      new EventId(2, nameof(LogTableNotMigratedYet)),
+      "Site settings seed is waiting for web-migrations to create identity.site_settings (attempt {Attempt}/{MaxAttempts})."
+    );
+
+  private static readonly Action<ILogger, int, int, Exception?> LogTableStillNotMigrated =
+    LoggerMessage.Define<int, int>
+    (
+      LogLevel.Warning,
+      new EventId(3, nameof(LogTableStillNotMigrated)),
+      "Site settings seed is still waiting for identity.site_settings (attempt {Attempt}/{MaxAttempts}); check that web-migrations ran."
     );
 
   private readonly IServiceScopeFactory ServiceScopeFactory;
@@ -53,9 +76,27 @@ public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
     SiteSettingsSeeder seeder = scope.ServiceProvider.GetRequiredService<SiteSettingsSeeder>();
     IHostEnvironment hostEnvironment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
     bool isDevelopment = hostEnvironment.IsDevelopment();
+    ISiteSettingsTableProbe? tableProbe = scope.ServiceProvider.GetService<ISiteSettingsTableProbe>();
 
     for (int attempt = 1; attempt <= MaxAttempts; attempt++)
     {
+      if (tableProbe is not null
+        && attempt < MaxAttempts
+        && !await tableProbe.ExistsAsync(cancellationToken).ConfigureAwait(false))
+      {
+        if (attempt <= QuietAttempts)
+        {
+          LogTableNotMigratedYet(Logger, attempt, MaxAttempts, null);
+        }
+        else
+        {
+          LogTableStillNotMigrated(Logger, attempt, MaxAttempts, null);
+        }
+
+        await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
+        continue;
+      }
+
       try
       {
         _ = await seeder.GetOrSeedAsync(isDevelopment, cancellationToken).ConfigureAwait(false);

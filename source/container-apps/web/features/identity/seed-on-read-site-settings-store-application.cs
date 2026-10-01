@@ -14,6 +14,9 @@
 // not migrated yet) is not retried per request — the read returns null and logs a warning, so
 // readers take their fail-closed path (Settings 503 "unavailable", sign-in not offered/refused)
 // instead of a 500; the boot-time hosted service keeps its bounded retry. Add/Update pass through.
+// No table probe here (task 270): the boot seed probes and waits for the table before Kestrel
+// starts, so on a first run no request reaches this read before migrations have applied. The
+// 42P01 catch only covers a table removed while the host runs, and there EF's Error is fair.
 // Registered by SiteSettingsSeedRegistration over the keyed InnerStoreKey store.
 #endregion
 
