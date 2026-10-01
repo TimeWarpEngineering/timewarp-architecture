@@ -83,3 +83,4 @@ Expect:
 - Created: 2026-10-01
 - 2026-10-01: implemented via ganda task work (baseline applied, audit clean, smoke recorded).
 - 2026-10-01: review oracle (claude, effort 1, general) — disposition clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-01T07:17:31Z
