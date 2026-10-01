@@ -63,12 +63,13 @@ Adopt the two Aspire 13.6 items that task 262 had marked skip / later. Steve dec
       `ganda repo audit`. Gate on a fresh `bin/dev`
 - [x] Do **not** start an AppHost and do **not** run `dev db nuke` for real: it would destroy the
       maintainer's data. Record the manual check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean); host `open-pr`
 
 ## Session
 
 - Created: 22224 (2026-10-01)
 - 2026-10-01: implemented (ganda task work implement oracle, Claude Opus 5.5)
+- 2026-10-01: implementation review (review oracle, Claude Opus 5.5; effort 2, roster general)
 
 ## Notes
 
@@ -177,3 +178,19 @@ Expect:
 4. The first `dev run` keeps existing data. Nuke without `--yes` lists the volume. `--yes` stops
    the AppHost and removes the volume (by the Docker sweep if Aspire treats it as adopted). The
    next `dev run` starts empty: web-migrations applies every migration and seeds re-run.
+
+### Review disposition
+
+- **Rounds:** 1. **Roster:** general. **Effort:** 2 (by-diff budget, 757 lines).
+- **Final counts:** bug 0; suggestion 1 fixed; nit 1 fixed; 0 open; 0 wontfix.
+- **Disposition:** **clean**.
+  - M1: the nuke sweep now removes only the volumes resolved before acting, and the `--yes` path
+    prints them before the stop.
+  - M2: Sanitize now accepts ASCII digits only, matching Aspire.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
+- **Re-gated after fixes:**
+  - dev-cli-tests: 93/93.
+  - aspire-tests PostgresVolumeModel: 4/4.
+  - `dev build`: 0/0 on a fresh `bin/dev`.
+  - `ganda repo audit`: passes.

@@ -17,8 +17,8 @@
 // Why a Docker sweep follows `aspire stop --force --volumes`: Aspire removes only volumes it
 // recorded as Aspire-owned. A volume that existed before the AppHost started (any dev volume
 // created before Aspire 13.6 ownership records) is adopted, not owned, and Aspire leaves it
-// intact. The sweep removes whatever still carries this AppHost's prefix, which is exactly the
-// list printed without --yes, so the operator has seen every name before anything is removed.
+// intact. The sweep removes only the prefixed volumes resolved before acting (printed without
+// --yes, and again by the --yes path before the stop), so every removed name was shown first.
 #endregion
 
 namespace DevCli.Services;
@@ -86,7 +86,7 @@ internal static class DbNuke
       for (int i = 0; i < text.Length; i++)
       {
         char c = text[i];
-        bool valid = char.IsAsciiLetter(c) || char.IsNumber(c) || (i > 0 && c is '_' or '.' or '-');
+        bool valid = char.IsAsciiLetterOrDigit(c) || (i > 0 && c is '_' or '.' or '-');
         span[i] = valid ? c : '_';
       }
     });

@@ -17,8 +17,9 @@
 //      a pre-13.6 CLI has no --volumes and is refused with the update command.
 //   4. aspire stop --force --volumes, then a Docker sweep of whatever still carries the prefix:
 //      Aspire only removes volumes it recorded as owned, and a volume that predates 13.6
-//      ownership records is adopted and left intact (see db-nuke.cs Design). The sweep never
-//      reaches beyond the list step 2 printed.
+//      ownership records is adopted and left intact (see db-nuke.cs Design). The sweep is the
+//      intersection with the list resolved in step 1 — the same names step 2 prints, and that the
+//      --yes path prints before stopping — so it never reaches a volume the operator was not shown.
 // Pure argument/listing/refusal logic lives in services/db-nuke.cs (dev-cli-tests gate it without
 // Aspire or Docker).
 #endregion
@@ -40,6 +41,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
     private string RepoRoot = null!;
     private string AppHostProject = null!;
     private string VolumePrefix = null!;
+    private string[] Volumes = [];
 
     public Handler(ITerminal terminal)
     {
@@ -53,10 +55,11 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
 
       string[]? volumes = await ListVolumesAsync();
       if (volumes is null) return Value;
+      Volumes = volumes;
 
       if (!command.Yes)
       {
-        foreach (string line in DbNuke.BuildRefusalLines(AppHostProject, volumes))
+        foreach (string line in DbNuke.BuildRefusalLines(AppHostProject, Volumes))
         {
           Terminal.WriteLine(line);
         }
@@ -121,6 +124,11 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
     private async Task<bool> StopAppHostAsync()
     {
       Terminal.WriteLine($"Stopping AppHost {AppHostProject} and removing its Aspire-owned volumes...");
+      foreach (string volume in Volumes)
+      {
+        Terminal.WriteLine($"  will delete: {volume}");
+      }
+
       CommandOutput stop = await Shell.Builder("aspire")
         .WithArguments(DbNuke.BuildStopArguments(AppHostProject))
         .WithWorkingDirectory(RepoRoot)
@@ -139,8 +147,11 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
 
     private async Task<bool> SweepRemainingVolumesAsync()
     {
-      string[]? remaining = await ListVolumesAsync();
-      if (remaining is null) return false;
+      string[]? listed = await ListVolumesAsync();
+      if (listed is null) return false;
+
+      // Only volumes resolved (and printed) before acting; anything that appeared since is left alone.
+      string[] remaining = [.. listed.Intersect(Volumes, StringComparer.Ordinal)];
       if (remaining.Length == 0) return true;
 
       Terminal.WriteLine($"Removing {remaining.Length} volume(s) Aspire adopted but does not own: {string.Join(", ", remaining)}");
