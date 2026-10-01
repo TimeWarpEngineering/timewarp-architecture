@@ -6,7 +6,8 @@
 // Pattern from TimeWarp.Nuru samples / crunchit ccc group: [NuruRouteGroup] on abstract base,
 // single-literal [NuruRoute] on each command class. Flat alias `db-update` stays outside the group.
 // Live AppHost verbs: update / drop / reset / status. Scaffolding: add-migration (design-time
-// `dotnet ef`, no running AppHost).
+// `dotnet ef`, no running AppHost). Teardown: nuke (stops the AppHost and deletes its volumes;
+// reset keeps the volume and wipes inside the running server).
 #endregion
 
 namespace DevCli.Commands;
@@ -14,5 +15,5 @@ namespace DevCli.Commands;
 using TimeWarp.Nuru;
 
 /// <summary>Base for <c>dev db …</c> commands.</summary>
-[NuruRouteGroup("db", Description = "Database: scaffold migrations, apply/drop/reset/status via the running AppHost")]
+[NuruRouteGroup("db", Description = "Database: scaffold migrations, apply/drop/reset/status via the running AppHost, nuke volumes")]
 public abstract class DbGroup;

@@ -11,6 +11,12 @@
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
+// The Postgres data volume uses Aspire 13.6 WithVolume(env:) (task 266): same volume name and mount as
+// WithDataVolume, plus POSTGRES_DATA_VOLUME (the mount path) on the container. What env: buys is small but
+// real: the mount path is declared once in the model, visible in the dashboard and in published manifests,
+// and follows the same convention the AppHost uses for projects/executables. It deliberately does NOT
+// override PGDATA (the image's PGDATA lives under the mount; rebinding it to the mount root would
+// re-initdb and orphan existing data). aspire-tests' postgres-volume-model-tests guard name/target parity.
 // Postgres carries WithRepl (Aspire 13.6, task 262) only when the AppHost environment is Development: the
 // dashboard psql REPL runs with the server's credentials, so it must never appear on a shared dashboard.
 // Schema evolution (task 147-007, amended task 155): committed EF migrations under
@@ -136,9 +142,17 @@ internal class Program
 
     IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres(PostgresResourceName);
 
+    // Task 266 (Aspire 13.6): WithVolume(env:) replaces WithDataVolume() with the SAME volume
+    // identity — the name WithDataVolume generates ({app}-{apphost-path hash}-postgres-data) and the
+    // mount it picks for the default postgres 18.x image — so an existing dev volume is reused.
+    // The env var carries the mount path, NOT PGDATA: postgres 18 images keep PGDATA in a
+    // version subdirectory of the mount (see the constants.cs Design note).
     if (usePostgresDataVolume)
     {
-      postgres = postgres.WithDataVolume();
+      postgres = postgres.WithVolume(
+        VolumeNameGenerator.Generate(postgres, "data"),
+        PostgresDataVolumeTarget,
+        env: PostgresDataVolumeEnvironmentVariable);
     }
 
     // Task 262 (Aspire 13.6): dashboard "REPL" command opens an authenticated psql shell in the

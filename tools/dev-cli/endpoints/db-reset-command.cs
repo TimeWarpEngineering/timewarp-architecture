@@ -5,11 +5,13 @@
 #region Design
 // Maps to Aspire web-migrations ef-database-reset. Requires --yes. Empty store after reset —
 // next Create account claims Administrator. Not a product migration path for old principals.
+// The Docker volume survives; `dev db nuke --yes` (task 266) is the verb that stops the AppHost
+// and deletes the volume itself.
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("reset", Description = "Drop and recreate the database with all migrations (requires --yes)")]
+[NuruRoute("reset", Description = "Drop and recreate the database with all migrations inside the running AppHost; keeps the volume (requires --yes). Use `db nuke` to delete the volume")]
 internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
 {
   [Option("yes", "y", Description = "Confirm destructive reset (required)")]
