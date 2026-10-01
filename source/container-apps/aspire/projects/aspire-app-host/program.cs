@@ -11,6 +11,8 @@
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
 // excluded it would otherwise be an unreferenced orphan container in the postgres-without-web combination.
+// Postgres carries WithRepl (Aspire 13.6, task 262) only when the AppHost environment is Development: the
+// dashboard psql REPL runs with the server's credentials, so it must never appear on a shared dashboard.
 // Schema evolution (task 147-007, amended task 155): committed EF migrations under
 // platform/postgres/migrations/. Migrations are explicit/on-demand in every environment: production
 // applies them from the published PublishAsMigrationScript/PublishAsMigrationBundle pipeline
@@ -137,6 +139,15 @@ internal class Program
     if (usePostgresDataVolume)
     {
       postgres = postgres.WithDataVolume();
+    }
+
+    // Task 262 (Aspire 13.6): dashboard "REPL" command opens an authenticated psql shell in the
+    // dashboard terminal dock. Anyone who can run dashboard commands gets the server credentials,
+    // so it is Development-only (a tunnelled/shared dashboard in any other environment never
+    // exposes it). WithRepl itself is run-mode only, so publish output is unaffected.
+    if (builder.Environment.IsDevelopment())
+    {
+      postgres = postgres.WithRepl();
     }
 
     IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);

@@ -6,7 +6,12 @@
 #if(api)
 global using Aspire.Customization.AppHost;
 #endif
+#if(web)
 #if(postgres)
+// IsDevelopment gates the Postgres WithRepl dashboard command; Postgres is declared only inside the
+// web block (program.cs), so the using is nested the same way to stay IDE0005-clean in every combination.
+global using Microsoft.Extensions.Hosting;
+#endif
 #endif
 #if(yarp)
 global using Aspire.Hosting.Yarp;
