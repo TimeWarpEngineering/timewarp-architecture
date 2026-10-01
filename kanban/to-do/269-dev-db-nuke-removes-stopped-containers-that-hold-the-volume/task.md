@@ -45,20 +45,21 @@ The command should handle this itself, safely.
 
 ## Checklist
 
-- [ ] Stopped containers referencing the volume are removed (listed), then the volume
-- [ ] Any running container → refuse with a clear message; nothing removed; never `rm -f`
-- [ ] Dry listing (no `--yes`) shows the containers too
-- [ ] Scope limited to this checkout's volumes; Docker-unreachable still stops without acting
-- [ ] Tests for the decision helpers (no real Docker)
-- [ ] Design regions reconciled; AGENTS.md line updated if wording changes
-- [ ] Gates: `dev build` 0/0, dev-cli tests, `ganda repo audit`; fresh `bin/dev`
-- [ ] Do **not** run `dev db nuke --yes` for real, and do not start an AppHost (both affect the
+- [x] Stopped containers referencing the volume are removed (listed), then the volume
+- [x] Any running container → refuse with a clear message; nothing removed; never `rm -f`
+- [x] Dry listing (no `--yes`) shows the containers too
+- [x] Scope limited to this checkout's volumes; Docker-unreachable still stops without acting
+- [x] Tests for the decision helpers (no real Docker)
+- [x] Design regions reconciled; AGENTS.md line updated if wording changes
+- [x] Gates: `dev build` 0/0, dev-cli tests, `ganda repo audit`; fresh `bin/dev`
+- [x] Do **not** run `dev db nuke --yes` for real, and do not start an AppHost (both affect the
       maintainer's data)
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 145993 (2026-10-01)
+- 2026-10-01 implement (ganda task work): helpers + command + tests + AGENTS.md line; gates green.
 
 ## Notes
 
@@ -68,14 +69,40 @@ The command should handle this itself, safely.
 
 ## Results
 
-*(fill when done)*
+- `tools/dev-cli/services/db-nuke.cs`: new pure helpers — `BuildContainerListArguments`
+  (`docker ps --all --filter volume=<name> --format id\tname\tstate\tstatus`),
+  `BuildContainerRemoveArguments` (plain `docker rm`, never `-f`), `ParseContainers`,
+  `PlanContainerCleanup` (dedup by id; exited/created/dead → remove; anything else → block),
+  `BuildRunningContainerRefusalLines`, `Describe`; records `VolumeContainer` /
+  `ContainerCleanupPlan`. `BuildRefusalLines` now lists each volume's containers under it
+  ("remove stopped container …" / "in use by …; must be stopped by the AppHost stop, else nuke refuses").
+- `tools/dev-cli/endpoints/db-nuke-command.cs`: dry path lists containers per volume (Docker
+  unreachable → stop). `--yes` path: after `aspire stop`, for the remaining (pre-listed) volumes,
+  list containers; any running → print refusal naming them, exit 1, remove nothing; else
+  `docker rm` the stopped ones (each printed), then `docker volume rm`. Containers are found per
+  volume, so only containers mounting this checkout's prefixed volumes are considered.
+- Tests (`tests/tools/dev-cli-tests/db-nuke-tests.cs`): parse, stopped-only, any-running refuses,
+  paused/restarting block, no-containers, dedup, dry listing shows containers, rm never forces.
+  dev-cli-tests 102/102.
+- Design regions reconciled in both files; AGENTS.md `dev db nuke` line updated.
+- Gates: `dev build` 0 warnings / 0 errors (fresh `bin/dev` via `self-install`), aspire-tests
+  build (compile-includes db-nuke.cs), `ganda repo audit`. Fresh `bin/dev db nuke` dry run checked
+  (no volumes in this worktree); real `docker ps` format output verified tab-separated.
+  `dev db nuke --yes` was not run, and no AppHost was started.
 
 ### How to validate
 
-*(required before done)*
+Smoke (safe, no data loss): `dev self-install && dev db nuke` → exit 1, lists the AppHost stop,
+each volume, and under each volume any containers (stopped: "remove stopped container <id> <name>
+(<status>)"; running: "in use by …"). Expect: nothing is stopped or removed.
+`cd tests/tools/dev-cli-tests && dotnet test -c Release` → Expect all pass, including
+`ContainerCleanup_Given_`.
 
 Maintainer, after merge (only when happy to lose dev data):
 1. Leave a stopped postgres container behind, for example by killing an AppHost.
 2. `dev db nuke` lists the volume and the container to remove.
 3. `dev db nuke --yes` removes both.
-4. With the AppHost running, `dev db nuke --yes` refuses and names the running container.
+4. With a container still running on the volume after the AppHost stop (for example a persistent
+   container, or one started by hand with `docker start <id>`), `dev db nuke --yes` refuses, names
+   the running container, and removes nothing. (A normal running AppHost is stopped first by
+   `aspire stop`, so its own containers do not block.)
