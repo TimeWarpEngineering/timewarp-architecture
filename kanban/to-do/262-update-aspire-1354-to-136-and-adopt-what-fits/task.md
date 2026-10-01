@@ -74,6 +74,7 @@ Also check the CLI version, the dashboard SDK and the service-defaults packages.
 - 2026-10-01 implement (ganda task work, Claude Opus 5.5): pins → 13.6.0, WithRepl, skill notes,
   evaluations recorded; permission-evaluator single-flight test made deterministic (template-smoke
   flake). Gates green. AppHost not started (dashboard/REPL check not performed).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-01T02:42:06Z
 
 ## Notes
 
