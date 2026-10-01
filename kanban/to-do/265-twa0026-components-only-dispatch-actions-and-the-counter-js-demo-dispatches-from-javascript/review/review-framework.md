@@ -15,7 +15,7 @@
 **Diff scope:** branch `task/265-twa0026-components-only-dispatch-actions-and-the-c` vs `master` (commit 219fe923; 26 files, +1346/−43)
 **Plan / brief:** task.md Requirements A (TWA0026/TWA0027 analyzer, attributes, registration, tests) and B (apply to web-spa: Counter JS dispatch, LoginPage/RedirectToLogin/AuthenticationStateListener converted to actions, CommandPalette opt-out)
 **Effort:** 3 (by-diff budget)
-**Reviewer roster:** general, tests, plan_alignment (parallel, read-only)
+**Reviewer roster:** general, tests, plan-alignment (parallel, read-only)
 **Session IDs:** review oracle (Claude Opus 5.5, headless ganda task work)
 
 ## Ground rules

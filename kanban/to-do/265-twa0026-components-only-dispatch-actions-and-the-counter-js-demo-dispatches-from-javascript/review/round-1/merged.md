@@ -1,6 +1,6 @@
 # Round 1 — merged findings
 **Date:** 2026-10-01
-**Sources:** general, tests, plan_alignment
+**Sources:** general, tests, plan-alignment
 
 ## Counts
 
@@ -37,7 +37,7 @@
 - File: source/container-apps/web/projects/web-spa/source/spa.ts:6-9; web.spa.lib.module.ts:12
 - Description: Design regions still described C# IJSRuntime interop as the Spa.Counter caller; the caller is now the JavaScript onclick.
 - Suggestion: Reword; keep the plain-object rule.
-- Source: plan_alignment
+- Source: plan-alignment
 - Disposition notes: Fixed — both regions name the Counter page's JS onclick as the caller and keep the plain-object rule for any C# interop caller.
 
 ### M5 — Severity: nit — Status: fixed

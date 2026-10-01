@@ -95,7 +95,7 @@ interaction is a TimeWarp.State action, and components only dispatch.** Steve de
 
 - Created: 20701 (2026-10-01)
 - 2026-10-01: implement oracle — verified prior session's work; full `--no-incremental` rebuild 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version` all green; TWA0026 confirmed firing in the real web-spa build (temporary NavigateTo injected, reverted).
-- 2026-10-01: review oracle (Claude Opus 5.5, headless) — effort 3, reviewers general / tests / plan_alignment (Sonnet subagents); 2 rounds; fixes committed on this task.
+- 2026-10-01: review oracle (Claude Opus 5.5, headless) — effort 3, reviewers general / tests / plan-alignment (Sonnet subagents); 2 rounds; fixes committed on this task.
 
 ## Notes
 
@@ -149,7 +149,7 @@ store state to dispatch."
 
 ### Review disposition
 
-- **Effort / roster:** 3 — general, tests, plan_alignment; **rounds:** 2.
+- **Effort / roster:** 3 — general, tests, plan-alignment; **rounds:** 2.
 - **Final counts:** bug 0; suggestion 2 fixed; nit 3 fixed, 3 wontfix; **0 open**.
 - **Disposition:** `accepted-exceptions`. Wontfix: M6 (no field-target opt-out; class-level covers
   it), M7 (subtype-declared IApiService member hits the same branch), M8 (Counter agreement test

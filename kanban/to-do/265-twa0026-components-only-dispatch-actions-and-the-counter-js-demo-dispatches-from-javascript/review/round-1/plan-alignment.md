@@ -1,4 +1,4 @@
-# Round 1 — plan_alignment
+# Round 1 — plan-alignment
 **Date:** 2026-10-01
 **Scope reviewed:** `git diff master...HEAD` (26 files) against task 265 Requirements A1–A6 and B7–B9: analyzer, attributes, registration sites, skill text, web-spa application, tests, Purpose/Design regions. Grepped TWA0020/22/24/25 for every analogous listing, and web-spa .razor/.razor.cs for direct side effects.
 
