@@ -82,6 +82,8 @@ Npgsql stays host-only.
   edge** from web-server to the migration resource (both `WaitFor` and `WaitForCompletion`
   break restart or testing). On a fresh volume the app can briefly serve before migrate
   finishes; re-run on demand with the `ef-database-update` dashboard command.
+- **Inspect data locally:** in Development the Postgres resource carries `WithRepl()`, so the
+  dashboard offers an authenticated psql shell (terminal dock) on the running server.
 - **Publish / deploy:** `PublishAsMigrationScript` / `PublishAsMigrationBundle`.
 - **Tests:** ephemeral DBs call `Database.Migrate()` / `MigrateAsync()`. Do not reuse AppHost
   `WithDataVolume` state across runs.

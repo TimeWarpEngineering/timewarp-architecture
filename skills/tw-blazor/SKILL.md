@@ -148,3 +148,10 @@ endpoint answers 404. Entries are rate limited and bearer tokens / JWTs are reda
 Symptom: a Mono assertion such as `metadata/assembly.c ... assertion` in the browser console (now
 visible in the dashboard) means stale `_framework` assets. Fix: `dev clean`, rebuild, then clear
 site data (DevTools > Application > Clear site data) or hard refresh.
+
+Dashboard history outlives the AppHost. The AppHost-launched dashboard (Aspire 13.6+) keeps
+resource snapshots and telemetry for the last 10 runs on disk (SQLite) by default
+(`Aspire:Dashboard:PersistenceMode` = `Run`, set by Aspire.Hosting when unset). After stopping
+the AppHost, reopen the dashboard and pick the earlier run to read its browser errors and logs;
+pin a run to keep it past the 10-run window. Aspire.Hosting.Testing suites start no dashboard, so
+test runs never consume that history.

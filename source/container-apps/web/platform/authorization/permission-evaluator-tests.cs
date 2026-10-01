@@ -406,6 +406,9 @@ namespace TimeWarp.Architecture.Authorization
         evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.SettingsRead),
         evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.ProfileRead),
       ];
+      // Every check is issued before any store query may finish, so the first flight cannot
+      // complete (and be evicted) before the later checks join it — deterministic under load.
+      countingStore.ReleaseGets();
       bool[] results = await Task.WhenAll(checks);
 
       results.ShouldAllBe(static granted => granted);
@@ -441,12 +444,16 @@ namespace TimeWarp.Architecture.Authorization
     private sealed class CountingRolePermissionStore : IRolePermissionStore
     {
       private readonly InMemoryRolePermissionStore Inner;
+      private readonly TaskCompletionSource Gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
       private int InFlight;
 
       public CountingRolePermissionStore(InMemoryRolePermissionStore inner) => Inner = inner;
 
       public int TotalGets;
       public int MaxConcurrentGets;
+
+      // Holds every store query open until the test has issued all of its concurrent checks.
+      public void ReleaseGets() => Gate.TrySetResult();
 
       public async Task<IReadOnlyList<string>> GetPermissionIdsForRoleAsync(
         Guid roleId,
@@ -457,7 +464,7 @@ namespace TimeWarp.Architecture.Authorization
         InterlockedExtensions.Max(ref MaxConcurrentGets, concurrent);
         try
         {
-          await Task.Delay(25, cancellationToken); // widen the race window
+          await Gate.Task.WaitAsync(cancellationToken);
           return await Inner.GetPermissionIdsForRoleAsync(roleId, cancellationToken);
         }
         finally

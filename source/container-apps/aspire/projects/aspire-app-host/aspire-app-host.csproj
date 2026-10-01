@@ -1,10 +1,10 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.4">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
-    <!-- Aspire 13.5 ASPIRE010: default AspireUseCliBundle is false (NuGet-restored DCP/dashboard).
+    <!-- Aspire 13.5+ ASPIRE010 (still emitted by the 13.6 SDK): default AspireUseCliBundle is false (NuGet-restored DCP/dashboard).
          Template hosts launch via `dotnet run` / Aspire.Hosting.Testing, not the Aspire CLI bundle.
          Keep NuGet orchestration; suppress the opt-in-or-silence warning. -->
     <AspireUseCliBundle>false</AspireUseCliBundle>
