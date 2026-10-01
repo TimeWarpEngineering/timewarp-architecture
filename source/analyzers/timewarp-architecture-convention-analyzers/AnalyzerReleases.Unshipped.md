@@ -25,3 +25,5 @@ TWA0022 | Design | Warning | SpaMediatorSendAnalyzer: direct mediator Send in SP
 TWA0023 | Naming | Disabled | DisabledByDefault: TypeStemIdentifierAnalyzer — identifier must end with the type stem (interface I-strip)
 TWA0024 | Design | Warning | EndpointAuthorizePolicyAgreementAnalyzer: [EndpointAuthorize] Policy is not registered by this server
 TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with Error/Success intent outside the shell MessageBars host
+TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
+TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason

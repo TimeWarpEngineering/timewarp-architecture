@@ -18,7 +18,8 @@
 // the handler publishes it; the TimeWarpFocusedPage MessageBars region paints it — no page-local
 // error bar (task 247). IsBusy is ActionTrackingState (the ceremony actions are [TrackAction]).
 // Task 153 redirect flow: an already-authenticated visitor is redirected away immediately (a
-// lifecycle redirect after FetchSession, the one NavigationManager use left here), and a
+// lifecycle RouteState.ChangeRoute dispatch after FetchSession — task 265: no NavigationManager
+// in the component, TWA0026), and a
 // successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
 // (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself.
 // The page passes GetSafeReturnUrl(ReturnUrl); the handlers collapse it again before navigating.

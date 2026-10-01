@@ -77,22 +77,23 @@ interaction is a TimeWarp.State action, and components only dispatch.** Steve de
 
 ## Checklist
 
-- [ ] TWA0026 analyzer + `[DirectComponentSideEffect(reason)]` + empty-reason diagnostic
-- [ ] Registered: descriptor SSOT, AnalyzerReleases.Unshipped, AGENTS.md table and package row,
+- [x] TWA0026 analyzer + `[DirectComponentSideEffect(reason)]` + empty-reason diagnostic
+- [x] Registered: descriptor SSOT, AnalyzerReleases.Unshipped, AGENTS.md table and package row,
       `tw-blazor` skill
-- [ ] Analyzer tests (categories × handler/lifecycle, exemptions, opt-out, gate)
-- [ ] Counter demo dispatches from JS (timewarp-state shape); no C#→JS handler; test proves the
+- [x] Analyzer tests (categories × handler/lifecycle, exemptions, opt-out, gate)
+- [x] Counter demo dispatches from JS (timewarp-state shape); no C#→JS handler; test proves the
       count changes
-- [ ] web-spa builds with 0 TWA0026; every opt-out carries a real reason (list in Results)
-- [ ] Gates: `dev build` 0/0 (analyzer registry change ⇒ full rebuild), `dev test`,
+- [x] web-spa builds with 0 TWA0026; every opt-out carries a real reason (list in Results)
+- [x] Gates: `dev build` 0/0 (analyzer registry change ⇒ full rebuild), `dev test`,
       `dev template-smoke`, `ganda repo audit`. If the Analyzers package ships, check
       `dev check-version`, and bump the version and pins in the same commit if required
-- [ ] Do **not** start an AppHost; record the browser check as not performed
+- [x] Do **not** start an AppHost; record the browser check as not performed
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 20701 (2026-10-01)
+- 2026-10-01: implement oracle — verified prior session's work; full `--no-incremental` rebuild 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version` all green; TWA0026 confirmed firing in the real web-spa build (temporary NavigateTo injected, reverted).
 
 ## Notes
 
@@ -102,8 +103,60 @@ interaction is a TimeWarp.State action, and components only dispatch.** Steve de
 
 ## Results
 
-*(fill when done)*
+**Analyzer.** `ComponentSideEffectAnalyzer` (`source/analyzers/timewarp-architecture-convention-analyzers/component-side-effect-analyzer.cs`)
+reports **TWA0026** for any member of a `ComponentBase` type (lifecycle included; invocations and
+method groups) calling `NavigationManager.NavigateTo/NavigateToLogin/Refresh`, `IJSRuntime` /
+`IJSObjectReference` invokes (extensions included), `IApiService` + subtypes, `HttpClient`
+Send/Get/Post/Put/Delete/Patch, Blazored session/local storage writes, or a `[SideEffectService]`
+type. **TWA0027**: `[DirectComponentSideEffect]` with an empty/whitespace reason (does not opt out).
+Gate copies TWA0022/0025 (WASM SDK only; razor-generated trees analyzed, other `.g.cs` exempt).
+Descriptors live in the analyzer (same SSOT pattern as TWA0025).
+
+**First-party services: marker attribute** `[SideEffectService]` (Attributes package), applied to
+`PasskeyCeremonyClient`, `WebAuthnJsModule`, `SignOutJsModule`, `CommandPaletteJsModule`. Choice
+recorded in the analyzer Design region (more JS modules/ceremony clients expected; framework types
+stay a closed list in the analyzer). Opt-out attribute `[DirectComponentSideEffect(reason)]` in the
+Attributes package.
+
+**Registered:** AnalyzerReleases.Unshipped.md (TWA0026, TWA0027), AGENTS.md table + Analyzers row
+(TWA0020–0027), `tw-blazor` skill "User interactions are actions" (now compiler-checked; JS dispatch).
+
+**Tests:** 14 analyzer tests (`Should_Ban_Direct_Side_Effects_In_Components`) — each category in
+handler and lifecycle, method group/lambda, handler/service/nested non-component not flagged,
+class/member opt-out, empty reason, razor-generated tree, other generated tree, gate absent/false.
+
+**web-spa applied (0 TWA0026):**
+- Counter: `fluent-button` with JS `onclick="Spa.Counter.DispatchIncrementCountAction()"` →
+  `timeWarpState.DispatchRequest`; `IJSRuntime` + C# handler removed. `counter-js-dispatch-tests.cs`
+  pins onclick↔export agreement and feeds counter.ts's action name/payload to `JsonRequestHandler`
+  → count 3 → 10.
+- LoginPage already-signed-in redirect → `RouteState.ChangeRoute` (converted, no opt-out).
+- RedirectToLogin → new `SignInState.RedirectToLogin` action (forceLoad in handler; `LoginPage.GetLoginUrl`
+  shared by link and handler). Test `RedirectToLogin_ForceLoad_Login_With_A_Safe_Return`.
+- AuthenticationStateListener sessionStorage removal → new `CredentialsState.ForgetPasskeySoftPromptLater`
+  action. Test `ForgetPasskeySoftPromptLater_Remove_The_Session_Key`.
+
+**Final opt-out list (1):** `CommandPalette.razor` — "Hotkey registration, focus restore and
+scroll-into-view are presentational JS bound to this component's DOM and lifetime; there is no
+store state to dispatch."
+
+**Gates:** full `dotnet build timewarp-architecture.slnx -c Release --no-incremental` 0/0; `dev build`
+0/0; `dev test` all suites pass; `dev template-smoke` SUCCEEDED; `ganda repo audit` pass;
+`dev check-version` beta.20 > NuGet beta.19 (no bump needed). Browser check **not performed**
+(no AppHost in workers).
 
 ### How to validate
 
-*(required before done)*
+**Smoke:**
+```bash
+dotnet build timewarp-architecture.slnx -c Release --no-incremental
+cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release -- --filter-class Direct_Side_Effects
+cd ../../container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class JsDispatch
+```
+Optional: add `@inject NavigationManager Nav` + `private void Bad() => Nav.NavigateTo("/");` to
+`CounterPage.razor` and build web-spa.
+
+**Expect:** build 0 warnings / 0 errors; 14/14 analyzer tests and 2/2 JsDispatch tests pass; the
+optional edit fails the web-spa build with `TWA0026: Component calls NavigationManager.NavigateTo
+directly; dispatch a TimeWarp.State action whose handler does it`. In a browser (not run here), the
+Counter "Increment Count by 7 via JavaScript" button adds 7 to the count.

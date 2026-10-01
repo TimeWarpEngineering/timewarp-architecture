@@ -103,7 +103,8 @@
   </ItemGroup>
 
   <!-- Dual-mode global using for platform Attributes (mirrors web-contracts, task 115): the SPA
-       opts components out of TWA0025 with [PageLocalMessageBar(reason)]. The Attributes assembly
+       opts components out of TWA0025 with [PageLocalMessageBar(reason)] and TWA0026 with
+       [DirectComponentSideEffect(reason)], and marks services [SideEffectService]. The Attributes assembly
        already flows transitively from web-contracts in both source and package mode. -->
   <ItemGroup>
     <Using Include="$(TwArchitectureAttributesNamespace)" Condition="'$(UseAnalyzerPackages)' == 'true'" />

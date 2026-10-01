@@ -57,7 +57,24 @@ renderer. A button whose handler does the work itself is a feature nobody else c
 Exempt — purely presentational, component-local UI state: hover, focus, scroll-into-view,
 whether a local panel or editor is open, and the text bound to an input (including resetting a
 form draft from state). Lifecycle work (`OnInitializedAsync` loads, a render-time redirect) is
-not an interaction; prefer an action there too, since it keeps the page free of services.
+held to the same rule: dispatch an action (`RouteState.ChangeRoute` for an already-signed-in
+redirect, a handler with `forceLoad: true` for an auth-gate redirect).
+
+**Compiler-checked — TWA0026.** In SPA client code (Blazor WASM SDK), any member of a
+`ComponentBase` type — event handlers and lifecycle overrides alike — that calls one of these is
+reported: `NavigationManager.NavigateTo` / `NavigateToLogin` / `Refresh`; `IJSRuntime` /
+`IJSObjectReference` invokes; `IApiService` and its subtypes; `HttpClient` send/get/post/put/
+delete/patch; session/local storage writes (`SetItem*`, `RemoveItem*`, `Clear*` — reads are
+fine); and any first-party type marked `[SideEffectService]` (ceremony clients, `*JsModule`
+helpers — mark new ones the same way). Handlers, services and static helpers are never flagged;
+that is where the work goes. A genuinely presentational JS call (focus, scroll, hotkey
+registration) opts out with `[DirectComponentSideEffect("reason")]` on the component (`@attribute`
+in the `.razor`) or member; an empty reason does not opt out and is reported as TWA0027.
+
+JavaScript can dispatch too: a plain-markup button whose JavaScript `onclick` calls
+`timeWarpState.DispatchRequest("<action assembly-qualified name>", { … })` reaches the store with
+no C# handler (see the Counter demo, `source/features/counter.ts`). Use the `fluent-button` web
+component for that, not `FluentButton`, whose `OnClick` parameter claims the `onclick` attribute.
 
 When an action is something a person or agent would meaningfully run on its own, tag it
 `[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers it,

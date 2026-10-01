@@ -8,8 +8,9 @@
 // cache (task 169). CredentialsState is same-slice (no opt-out). Documented via CrossSliceReference
 // so TWA0009 sees the remaining coupling (razor @code alone is not analyzed).
 // RFC 219 D8: sign-in also FetchCredentials so the Entra add-passkey soft prompt has a snapshot
-// without visiting Settings. Sign-out clears the later sessionStorage key so the next principal
-// on the same tab is not suppressed.
+// without visiting Settings. Sign-out dispatches ForgetPasskeySoftPromptLater (interactive only)
+// so the next principal on the same tab is not suppressed; the sessionStorage write lives in that
+// handler — the listener only dispatches (task 265, TWA0026).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

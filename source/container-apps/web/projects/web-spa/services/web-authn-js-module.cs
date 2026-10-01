@@ -10,12 +10,15 @@
 // GetCredential) without the global. Specifier "./js/features/web-authn.js" resolves via
 // <base href="/" /> to /js/features/web-authn.js on every route; MapStaticAssets serves
 // the unfingerprinted path (and a fingerprinted twin). No <ImportMap /> in App.razor.
-// Counter JS interop (Spa.Counter.*) still uses the initializer; this helper is passkey-only.
+// The Counter demo's JS button (onclick → Spa.Counter.*) still uses the initializer; this helper
+// is passkey-only.
 // Dispose the module reference after each call — the ES module stays cached in the browser.
+// [SideEffectService] (task 265): components never call this directly — TWA0026; action handlers do.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
+[SideEffectService]
 internal static class WebAuthnJsModule
 {
   internal const string Specifier = "./js/features/web-authn.js";

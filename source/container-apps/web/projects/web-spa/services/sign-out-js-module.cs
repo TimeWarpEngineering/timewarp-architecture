@@ -9,12 +9,14 @@
 // must not NavigateTo afterwards. Module dispose tolerates JSDisconnectedException: under Server
 // the unload can drop the circuit before the dispose round-trip completes. Paths are
 // SignOutBrowserSession constants — the SSOT shared with the server endpoints.
+// [SideEffectService] (task 265): components never call this directly — TWA0026; action handlers do.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
 using TimeWarp.Architecture.Features.Identity;
 
+[SideEffectService]
 internal static class SignOutJsModule
 {
   internal const string Specifier = "./js/features/sign-out.js";

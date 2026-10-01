@@ -9,10 +9,14 @@
 // TimeWarpPage goes away. The selectors are TriggerAttribute (the one attribute the shell puts on
 // the appbar search field) and InputAttribute (the palette query box), so the TS holds no markup
 // knowledge.
+// [SideEffectService] (task 265): TWA0026 reports component calls. CommandPalette is the one
+// caller and opts out with [DirectComponentSideEffect] — focus, scroll and hotkey wiring are
+// presentational JS with no store state to dispatch.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
+[SideEffectService]
 internal static class CommandPaletteJsModule
 {
   internal const string Specifier = "./js/features/command-palette.js";

@@ -1,15 +1,15 @@
 @namespace TimeWarp.Architecture.Features.Counters
 @inherits BaseComponent
-@inject IJSRuntime JsRuntime
+
+@* JS dispatch demo (task 265, timewarp-state test-app shape): the "via JavaScript" button is
+   plain markup whose JavaScript onclick calls Spa.Counter.DispatchIncrementCountAction, which
+   dispatches IncrementCount through timeWarpState.DispatchRequest. No C# handler calls IJSRuntime
+   (TWA0026). It is the fluent-button web component, not FluentButton: the Razor component's
+   OnClick parameter would claim the onclick attribute. *@
 
 @code {
   public static string Title => "Counter";
   public static Icon? NavIcon => new Icons.Regular.Size20.Question();
-
-  private async Task IncrementCountViaJsInterop()
-  {
-    await JsRuntime.InvokeVoidAsync("Spa.Counter.DispatchIncrementCountAction");
-  }
 
   private async Task ButtonClick() =>
     await NoSubRouteState.ChangeRoute(newRoute: HomePage.GetPageUrl(), CancellationToken.None);
@@ -36,8 +36,8 @@
           <FluentButton Appearance=ButtonAppearance.Primary data-qa="ChangeRoute" OnClick=ButtonClick>Change Route to Home</FluentButton>
         </div>
         <div>
-          <p>Send an IncrementCount action via JavaScript interop.</p>
-          <FluentButton Appearance=ButtonAppearance.Primary data-qa="JsInterop" OnClick=IncrementCountViaJsInterop>Increment Count by 7 via JavaScript Interop</FluentButton>
+          <p>JavaScript dispatches an IncrementCount action straight into the store.</p>
+          <fluent-button appearance="primary" data-qa="JsInterop" onclick="Spa.Counter.DispatchIncrementCountAction()">Increment Count by 7 via JavaScript</fluent-button>
         </div>
       </FluentStack>
     </Card>

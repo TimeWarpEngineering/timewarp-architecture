@@ -1,6 +1,5 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
-@inject ISessionStorageService SessionStorage
 
 @code {
   protected override bool ShouldRender()
@@ -47,7 +46,7 @@
       return;
     }
 
-    await SessionStorage.RemoveItemAsync(PasskeySoftPrompt.LaterStorageKey);
+    await NoSubCredentialsState.ForgetPasskeySoftPromptLater();
   }
 
   public override void Dispose()
