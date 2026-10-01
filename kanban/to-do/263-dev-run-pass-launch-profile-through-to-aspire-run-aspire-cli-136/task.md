@@ -37,23 +37,25 @@ The maintainer has now installed CLI 13.6.0 (2026-10-01) and wants it.
 
 ## Checklist
 
-- [ ] `--launch-profile` / `-lp` option on `dev run`, forwarded to `aspire run`
-- [ ] Profile name validated against `launchSettings.json` (fail fast, list valid names)
-- [ ] CLI < 13.6 + option → clear error with the update command; no option → unchanged
-- [ ] Environment and profile precedence recorded in the Design region
-- [ ] Purpose/Design regions reconciled in `run-command.cs`
-- [ ] Tests for argument building (with and without the option), unknown-profile rejection and
+- [x] `--launch-profile` / `-lp` option on `dev run`, forwarded to `aspire run`
+- [x] Profile name validated against `launchSettings.json` (fail fast, list valid names)
+- [x] CLI < 13.6 + option → clear error with the update command; no option → unchanged
+- [x] Environment and profile precedence recorded in the Design region
+- [x] Purpose/Design regions reconciled in `run-command.cs`
+- [x] Tests for argument building (with and without the option), unknown-profile rejection and
       the version guard, without launching Aspire. Extract the argument and validation logic so
       it is testable; use a Jaribu runfile or the existing dev-cli test location if there is one
-- [ ] Skill / capabilities text updated if it lists `dev run` options
-- [ ] Gates: `dev build` 0/0, the dev-cli tests, `ganda repo audit`. Gate on a fresh `bin/dev`
-- [ ] Do **not** start an AppHost (`dev run`, `aspire run`); it shares the maintainer's user
+- [x] Skill / capabilities text updated if it lists `dev run` options
+- [x] Gates: `dev build` 0/0, the dev-cli tests, `ganda repo audit`. Gate on a fresh `bin/dev`
+- [x] Do **not** start an AppHost (`dev run`, `aspire run`); it shares the maintainer's user
       secrets. Verify argument construction through tests, not by launching
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 83286 (2026-10-01)
+- 2026-10-01 implementer (claude-opus-5-5, headless task-work): option, validation, version guard,
+  tests, AGENTS.md line; gates green on fresh `bin/dev`. Implementation review + open-pr pending (host).
 
 ## Notes
 
@@ -64,11 +66,38 @@ The maintainer has now installed CLI 13.6.0 (2026-10-01) and wants it.
 
 ## Results
 
-*(fill when done)*
+- `dev run --launch-profile <name>` / `-lp <name>` (`tools/dev-cli/endpoints/run-command.cs`) forwards
+  `--launch-profile <name>` to `aspire run`. Without it the arguments are exactly
+  `run --apphost <csproj>` (unchanged) and no version probe runs.
+- New pure helper `tools/dev-cli/services/aspire-run.cs` (`AspireRun`): `BuildRunArguments`,
+  `ReadLaunchProfileNames` (reads the AppHost `Properties/launchSettings.json` via `JsonDocument`,
+  AOT-safe, no hard-coded list), `ValidateLaunchProfile` (ordinal match; error lists valid names),
+  `ParseCliVersion` / `ValidateCliVersionForLaunchProfile` (< 13.6 or unparseable → error naming
+  `aspire update --self` / `dotnet tool update -g Aspire.Cli`).
+- **Env precedence (verified, not guessed):** with Aspire CLI 13.6.0 against a throwaway `/tmp`
+  AppHost (own UserSecretsId, not this repo's), parent `ASPNETCORE_ENVIRONMENT=Development` +
+  `-lp staging` (profile sets `Staging`) → AppHost saw `Staging`; with no `-lp` the first profile's
+  value also overrode the parent. So the profile's `environmentVariables` win; `dev run`'s forced
+  `Development` only applies when the profile doesn't set it. Recorded in the run-command Design region.
+- Tests: `tests/tools/dev-cli-tests/aspire-run-tests.cs` (12 tests: args with/without option,
+  profile parsing incl. the real repo launchSettings → `https, http`, unknown/case-mismatched profile
+  rejection, version guard). Suite 80/80.
+- End-to-end with a fake `aspire` shim on PATH (no AppHost launched): 13.5.4 + `-lp http` → guard
+  error, exit 1; 13.6.0 + `-lp http` → `run --apphost … --launch-profile http`; no option →
+  `run --apphost …`. Fresh AOT `bin/dev run -lp nope` → lists `https, http`, exit 1.
+- `dev --capabilities` shows the option (generated from the Nuru route). AGENTS.md `dev run` line
+  updated; no repo skill lists `dev run` options.
+- Gates: `dev build` (fresh `bin/dev` via self-install) succeeded (warnings are errors), dev-cli-tests 80/80,
+  `ganda repo audit` passes.
 
 ### How to validate
 
-*(required before done)*
+Smoke (no AppHost launch):
+1. `dev run -lp nope` → `Unknown launch profile 'nope'. Valid profiles in …launchSettings.json: https, http`, exit 1.
+2. `cd tests/tools/dev-cli-tests && dotnet test -c Release -- --filter-class AspireRun` → 12/12 pass.
+3. `dev --capabilities` → `run` lists option `launch-profile` alias `lp`.
+
+Expect: all three as stated; `dev run` with no option still runs `aspire run --apphost <csproj>`.
 
 Maintainer, after merge:
 1. `dev run -lp http` starts the AppHost on the http profile.
