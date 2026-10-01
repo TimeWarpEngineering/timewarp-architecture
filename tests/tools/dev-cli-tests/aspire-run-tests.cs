@@ -105,15 +105,16 @@ public class CliVersionGuard_Given_
 
   public static Task Cli136OrLater_Should_AllowLaunchProfile()
   {
-    AspireRun.ValidateCliVersionForLaunchProfile("13.6.0+56f3e9c0").ShouldBeNull();
-    AspireRun.ValidateCliVersionForLaunchProfile("14.0.0").ShouldBeNull();
+    AspireRun.ValidateCliVersion("13.6.0+56f3e9c0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile").ShouldBeNull();
+    AspireRun.ValidateCliVersion("14.0.0", AspireRun.MinimumLaunchProfileVersion, "--launch-profile").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task CliOlderThan136_Should_FailWithUpdateCommand()
   {
-    string? error = AspireRun.ValidateCliVersionForLaunchProfile("13.5.4+deadbeef");
+    string? error = AspireRun.ValidateCliVersion("13.5.4+deadbeef", AspireRun.MinimumLaunchProfileVersion, "--launch-profile");
     error.ShouldNotBeNull();
+    error.ShouldStartWith("--launch-profile requires Aspire CLI 13.6 or later");
     error.ShouldContain("13.5.4");
     error.ShouldContain("aspire update --self");
     error.ShouldContain("dotnet tool update -g Aspire.Cli");
@@ -122,7 +123,7 @@ public class CliVersionGuard_Given_
 
   public static Task UnparseableVersion_Should_FailWithUpdateCommand()
   {
-    string? error = AspireRun.ValidateCliVersionForLaunchProfile("garbage");
+    string? error = AspireRun.ValidateCliVersion("garbage", AspireRun.MinimumLaunchProfileVersion, "--launch-profile");
     error.ShouldNotBeNull();
     error.ShouldContain("aspire update --self");
     return Task.CompletedTask;

@@ -9,7 +9,8 @@
 // fields so private methods are zero-parameter.
 //
 // --launch-profile / -lp forwards to `aspire run --launch-profile` (Aspire CLI 13.6+). Argument
-// building, profile validation and the version guard live in services/aspire-run.cs so
+// building, profile validation and the version guard live in services/aspire-run.cs (the
+// `aspire --version` probe in services/aspire-cli.cs, shared with dev db nuke) so
 // dev-cli-tests gate them without launching Aspire. With the option, dev run reads the
 // AppHost's launchSettings.json and rejects an unknown name with the declared list, then checks
 // `aspire --version` and refuses a pre-13.6 CLI with the update command (never drops the
@@ -90,18 +91,8 @@ internal sealed class RunCommand : ICommand<Unit>
 
     private async Task<bool> ValidateCliVersionAsync()
     {
-      CommandOutput version = await Shell.Builder("aspire")
-        .WithArguments("--version")
-        .WithWorkingDirectory(RepoRoot)
-        .WithNoValidation()
-        .CaptureAsync(Ct);
-
-      if (!version.Success)
-      {
-        return Fail($"Error: `aspire --version` failed (exit {version.ExitCode}). {AspireRun.UpdateHint}");
-      }
-
-      string? error = AspireRun.ValidateCliVersionForLaunchProfile(version.Stdout);
+      string? error = await AspireCli.ValidateVersionAsync(
+        RepoRoot, AspireRun.MinimumLaunchProfileVersion, "--launch-profile", Ct);
       return error is null || Fail($"Error: {error}");
     }
 

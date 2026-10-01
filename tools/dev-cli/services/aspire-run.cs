@@ -1,10 +1,12 @@
 #region Purpose
-// Argument builder, launch-profile validation and CLI version guard for `dev run`.
+// Argument builder and launch-profile validation for `dev run`, plus the shared Aspire CLI version guard.
 #endregion
 
 #region Design
 // Pure helpers (no Amuru/Terminal) so tests/tools/dev-cli-tests can Compile-include them and
-// gate argument construction without launching an AppHost. Profile names come from the
+// gate argument construction without launching an AppHost. ValidateCliVersion is the one Aspire
+// CLI version guard: dev run -lp and dev db nuke (task 266) both call it with their own minimum;
+// AspireCli.ValidateVersionAsync runs the `aspire --version` probe that feeds it. Profile names come from the
 // AppHost's Properties/launchSettings.json at run time — never a hard-coded list. The version
 // guard only applies when --launch-profile is given: Aspire CLI 13.6 added -lp to `aspire run`;
 // older CLIs would reject it with an opaque parse error, so `dev run` fails first with the update
@@ -71,19 +73,23 @@ internal static class AspireRun
     return Version.TryParse(core, out Version? version) ? version : null;
   }
 
-  /// <summary>Error message when the installed CLI cannot take --launch-profile; null when it can.</summary>
-  internal static string? ValidateCliVersionForLaunchProfile(string versionOutput)
+  /// <summary>
+  /// Error message when the installed CLI (from <c>aspire --version</c> output) is older than
+  /// <paramref name="minimum"/> or unparseable; null when <paramref name="requirement"/> can run.
+  /// Shared by every dev verb that needs a newer Aspire CLI (dev run -lp, dev db nuke).
+  /// </summary>
+  internal static string? ValidateCliVersion(string versionOutput, Version minimum, string requirement)
   {
     Version? version = ParseCliVersion(versionOutput);
     if (version is null)
     {
       return $"Could not determine the Aspire CLI version from `aspire --version` output '{versionOutput.Trim()}'. "
-        + $"--launch-profile requires Aspire CLI {MinimumLaunchProfileVersion} or later. {UpdateHint}";
+        + $"{requirement} requires Aspire CLI {minimum} or later. {UpdateHint}";
     }
 
-    if (version < MinimumLaunchProfileVersion)
+    if (version < minimum)
     {
-      return $"--launch-profile requires Aspire CLI {MinimumLaunchProfileVersion} or later (installed: {version}). "
+      return $"{requirement} requires Aspire CLI {minimum} or later (installed: {version}). "
         + UpdateHint;
     }
 

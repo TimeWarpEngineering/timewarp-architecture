@@ -29,6 +29,14 @@ internal class Constants
   public const string PostgresResourceName = "postgres";
   public const string PostgresDatabaseResourceName = "postgres-db";
 
+  // Task 266: data volume mount for the default postgres image (18.x). Aspire's WithDataVolume
+  // picks /var/lib/postgresql for 18+ (docker-library/postgres#1259 moved the volume up a level so
+  // pg_upgrade --link works); the image's own PGDATA is /var/lib/postgresql/18/docker, INSIDE this
+  // mount — so the env var below names the mount, never PGDATA. Pinning an image <= 17 would need
+  // /var/lib/postgresql/data here; aspire-tests compares this against WithDataVolume's choice.
+  public const string PostgresDataVolumeTarget = "/var/lib/postgresql";
+  public const string PostgresDataVolumeEnvironmentVariable = "POSTGRES_DATA_VOLUME";
+
   // Task 147-007: Aspire AddEFMigrations resource name (not an AddProject — TWA0007 N/A; keep const
   // alongside Postgres names so AppHost wiring cannot drift from docs/scripts).
   public const string WebMigrationsResourceName = "web-migrations";
