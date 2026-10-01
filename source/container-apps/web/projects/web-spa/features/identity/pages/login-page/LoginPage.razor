@@ -1,15 +1,12 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
 @using Microsoft.Extensions.Configuration
-@using TimeWarp.Architecture.Services
 
 @code {
   public static string Title => "Sign in";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
 
-  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
 
   [SuppressMessage
   (
@@ -19,19 +16,19 @@
   )]
   [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
-  private bool IsBusy;
-  private bool? IsAuthenticated;
-  private bool ShowMicrosoft365;
+  private bool IsBusy => ActionTrackingState.IsActive;
+  private bool ShowMicrosoft365 => SignInState.Microsoft365Offered;
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    await RefreshSessionAsync();
-    ShowMicrosoft365 = await LoadEntraOfferedAsync();
+    await NoSubSignInState.FetchSession();
+    await NoSubSignInState.FetchMicrosoft365Offered();
 
-    if (IsAuthenticated is true)
+    // Lifecycle redirect, not an interaction: an already-signed-in visitor never sees this page.
+    if (SignInState.IsAuthenticated is true)
     {
-      NavigateOnward();
+      NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
     }
   }
 
@@ -54,109 +51,13 @@
     return path.Equals(GetPageUrl(), StringComparison.OrdinalIgnoreCase) ? "/" : returnUrl;
   }
 
-  private void NavigateOnward() => NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
+  // Each button is one dispatch; the SignInState handlers run the ceremony / challenge and
+  // navigate. Failures reach the shell's MessageBars region (TimeWarpFocusedPage hosts it).
+  private Task ContinueWithPasskey() => NoSubSignInState.SignInWithPasskey(GetSafeReturnUrl(ReturnUrl));
 
-  /// <summary>
-  /// After Create account: deep-link returnUrl if present, else /Settings (passkeys.io-style
-  /// post-create: see your new passkey listed). Literal path avoids TWA0009 cross-slice type refs.
-  /// </summary>
-  private void NavigateAfterCreateAccount()
-  {
-    string destination = GetSafeReturnUrl(ReturnUrl);
-    NavigationManager.NavigateTo(destination is "/" or "" ? "/Settings" : destination);
-  }
+  private Task CreatePasskey() => NoSubSignInState.CreateAccountWithPasskey(GetSafeReturnUrl(ReturnUrl));
 
-  // Ceremony failures go to the shell's MessageBars region (TimeWarpFocusedPage hosts it)
-  // via NotificationState — no page-local error bar (task 247).
-  private async Task ContinueWithPasskey()
-  {
-    IsBusy = true;
-    try
-    {
-      OneOf<CompletePasskeyAuthentication.Response, SharedProblemDetails> result =
-        await Ceremony.AuthenticateAsync(CancellationToken.None);
-
-      if (result.IsT1)
-      {
-        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
-        return;
-      }
-
-      NavigateOnward();
-    }
-    catch (JSException jsException)
-    {
-      await ReportCeremonyFailureAsync(jsException);
-    }
-    finally
-    {
-      IsBusy = false;
-    }
-  }
-
-  private async Task CreatePasskey()
-  {
-    IsBusy = true;
-    try
-    {
-      OneOf<CompletePasskeyRegistration.Response, SharedProblemDetails> result =
-        await Ceremony.RegisterAsync(CancellationToken.None);
-
-      if (result.IsT1)
-      {
-        await NoSubNotificationState.ReportProblem(result.AsT1, CancellationToken);
-        return;
-      }
-
-      NavigateAfterCreateAccount();
-    }
-    catch (JSException jsException)
-    {
-      await ReportCeremonyFailureAsync(jsException);
-    }
-    finally
-    {
-      IsBusy = false;
-    }
-  }
-
-  private Task ReportCeremonyFailureAsync(JSException jsException) =>
-    NoSubNotificationState.AddNotification
-    (
-      MessageBarIntent.Error,
-      "The browser could not complete the passkey ceremony",
-      jsException.Message,
-      CancellationToken
-    );
-
-  private async Task RefreshSessionAsync()
-  {
-    IsAuthenticated = await Ceremony.GetIsAuthenticatedAsync(CancellationToken.None);
-  }
-
-  private async Task<bool> LoadEntraOfferedAsync()
-  {
-    try
-    {
-      OneOf<GetEntraSignInOffered.Response, FileResponse, SharedProblemDetails> result =
-        await WebServerApiService.GetResponse<GetEntraSignInOffered.Response>(
-          new GetEntraSignInOffered.Query(),
-          CancellationToken.None);
-      return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
-        && response.Offered;
-    }
-    catch (Exception)
-    {
-      return false;
-    }
-  }
-
-  private void ContinueWithMicrosoft365()
-  {
-    NavigationManager.NavigateTo(
-      ChallengeEntra.GetRoute("bootstrap", GetSafeReturnUrl(ReturnUrl)),
-      forceLoad: true);
-  }
+  private Task ContinueWithMicrosoft365() => NoSubSignInState.SignInWithMicrosoft365(GetSafeReturnUrl(ReturnUrl));
 }
 
 <PageTitle>Sign in</PageTitle>

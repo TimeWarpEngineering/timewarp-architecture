@@ -1,6 +1,6 @@
 ---
 name: tw-blazor
-description: "Razor file authoring — one @code at the top, markup, optional <style> last. Use when creating or editing .razor files, @code blocks, or in-file <style> tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout."
+description: "Razor file authoring — one @code at the top, markup, optional <style> last. Use when creating or editing .razor files, @code blocks, component event handlers (they only dispatch TimeWarp.State actions), or in-file <style> tags. CSS placement: tw-blazor-css-strategy. App shell: tw-blazor-layout."
 ---
 
 # `.razor` file order
@@ -33,6 +33,40 @@ generators and class-level analyzers must see (`[Page]`, `[Authorize]`, `[CrossS
   ")
 </style>
 ```
+
+# User interactions are actions
+
+Every user interaction in the SPA is a TimeWarp.State action. A component event handler
+(`OnClick`, `OnValidSubmit`, `@onkeydown`, `ValueChanged`, …) only dispatches generated ActionSet
+methods, and at most sequences several of them (`await CredentialsState.RevokeCredential(id);
+await CredentialsState.FetchCredentials();`), reading state between dispatches to decide the next.
+The work lives in the action's handler:
+
+- navigation — `RouteState.ChangeRoute(...)` for an in-app route; a handler that injects
+  `NavigationManager` for a full-page load (`forceLoad: true`, e.g. a BFF challenge) or a
+  destination only known after the work (post-sign-in return URL)
+- JS interop (`IJSRuntime`, JS modules, browser storage)
+- API calls (`IWebServerApiService` / `IApiServerApiService`, ceremony clients)
+- state changes
+
+Why: an action is the one seam that the action catalog (`[CatalogAction]` — the Ctrl-K palette
+and agent tools), Redux DevTools, and headless tests all see. A method on a page is invisible to
+all of them: it cannot be run from the palette, replayed, or dispatched in a test without a
+renderer. A button whose handler does the work itself is a feature nobody else can reach.
+
+Exempt — purely presentational, component-local UI state: hover, focus, scroll-into-view,
+whether a local panel or editor is open, and the text bound to an input (including resetting a
+form draft from state). Lifecycle work (`OnInitializedAsync` loads, a render-time redirect) is
+not an interaction; prefer an action there too, since it keeps the page free of services.
+
+When an action is something a person or agent would meaningfully run on its own, tag it
+`[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers it,
+and `Visibility` (`Human`, `Agent`, `Both`). An action that takes a URL or path re-validates it in
+the handler (for example `LoginPage.GetSafeReturnUrl`): the page is not the only caller.
+
+Reference: `features/identity/sign-in-state/` (ceremonies, challenge navigation, post-sign-in
+navigation) and `features/identity/credentials-state/credentials-state.link-microsoft-365.cs`
+(a cataloged full-page navigation) under `source/container-apps/web/projects/web-spa/`.
 
 # Action handlers and loading
 

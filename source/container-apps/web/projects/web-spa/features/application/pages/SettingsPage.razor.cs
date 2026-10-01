@@ -14,7 +14,11 @@
 // are published by the CredentialsState handlers to NotificationState and painted once by
 // the shell's MessageBars region (TWA0025). Backend surface remains 104-005 (GetCredentials,
 // AddPasskey, RevokeCredential).
-// RFC 219 D10: "Link Microsoft 365" is a full navigation to the BFF challenge (mode=link).
+// RFC 219 D10: "Link Microsoft 365" dispatches CredentialsState.LinkMicrosoft365, whose handler does
+// the full navigation to the BFF challenge (mode=link) — the same action the Ctrl-K palette runs.
+// The Microsoft 365 section is gated on SignInState.Microsoft365Offered (FetchMicrosoft365Offered,
+// the same GetEntraSignInOffered flag Login reads). The page injects no NavigationManager or API
+// service: every interaction here is a dispatch.
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
 // Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last
 // active credential (hint: Add a passkey first). FetchCredentials runs during prerender so first
@@ -47,8 +51,7 @@ namespace TimeWarp.Architecture.Features.Applications;
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(CredentialList), "Settings composes the Identity credential list; Applications owns the page chrome.")]
-[CrossSliceReference(typeof(ChallengeEntra), "Settings link CTA navigates to the Identity BFF Entra challenge; no WASM MSAL.")]
-[CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for passkey prompt; Microsoft 365 section is gated on GetEntraSignInOffered.")]
+[CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for the passkey prompt.")]
 [CrossSliceReference(typeof(PasskeyAccountName), "Settings shows the signed-in account name with the same Identity formatter that names new passkeys.")]
-[CrossSliceReference(typeof(GetEntraSignInOffered), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
+[CrossSliceReference(typeof(SignInState), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
 partial class SettingsPage;

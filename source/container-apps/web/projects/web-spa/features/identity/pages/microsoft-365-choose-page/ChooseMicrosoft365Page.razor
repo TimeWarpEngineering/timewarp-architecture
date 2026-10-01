@@ -1,131 +1,28 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
-@using TimeWarp.Architecture.Services
 
 @code {
   public static string Title => "Microsoft 365 account";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
 
-  [Inject] private PasskeyCeremonyClient Ceremony { get; set; } = null!;
-  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-  [Inject] private IWebServerApiService WebServerApiService { get; set; } = null!;
-
-  [SuppressMessage
-  (
-    "Design",
-    "CA1056:URI-like properties should not be strings",
-    Justification = "SupplyParameterFromQuery binds strings; the raw value is validated by LoginPage.GetSafeReturnUrl."
-  )]
-  [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
-
-  private bool IsBusy;
-  private bool? IsValid;
-  private string Destination = "/";
+  private bool IsBusy => ActionTrackingState.IsActive;
+  private bool? IsValid => SignInState.Microsoft365ChoiceValid;
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    await LoadChoiceAsync();
+    await NoSubSignInState.FetchMicrosoft365Choice();
   }
 
-  private async Task LoadChoiceAsync()
-  {
-    try
-    {
-      OneOf<GetEntraBootstrapChoice.Response, FileResponse, SharedProblemDetails> result =
-        await WebServerApiService.GetResponse<GetEntraBootstrapChoice.Response>(
-          new GetEntraBootstrapChoice.Query(),
-          CancellationToken.None);
-      if (result.TryPickT0(out GetEntraBootstrapChoice.Response response, out _))
-      {
-        IsValid = response.Valid;
-        Destination = LoginPage.GetSafeReturnUrl(string.IsNullOrEmpty(response.Destination) ? ReturnUrl : response.Destination);
-        return;
-      }
-    }
-    catch (Exception)
-    {
-      // Fall through to expired.
-    }
+  // Each button is one dispatch. The SignInState handlers complete the parked sign-in, navigate
+  // on success, and publish failures to the shell's MessageBars region (TimeWarpFocusedPage hosts
+  // it); an "expired" failure flips Microsoft365ChoiceValid so the Warning below replaces the
+  // choice. The Warning is static guidance and stays inline.
+  private Task CreateNewAccount() => NoSubSignInState.CreateAccountFromMicrosoft365();
 
-    IsValid = false;
-  }
+  private Task AlreadyHaveAccount() => NoSubSignInState.UseExistingAccountForMicrosoft365();
 
-  // Outcomes go to the shell's MessageBars region (TimeWarpFocusedPage hosts it) via
-  // NotificationState — no page-local error bar (task 247). The "Session expired" Warning
-  // below is static guidance and stays inline.
-  private async Task CreateNewAccount()
-  {
-    IsBusy = true;
-    try
-    {
-      OneOf<CompleteEntraBootstrapCreate.Response, FileResponse, SharedProblemDetails> result =
-        await WebServerApiService.GetResponse<CompleteEntraBootstrapCreate.Response>(
-          new CompleteEntraBootstrapCreate.Command(),
-          CancellationToken.None);
-      if (!result.TryPickT0(out CompleteEntraBootstrapCreate.Response response, out OneOf<FileResponse, SharedProblemDetails> rest))
-      {
-        SharedProblemDetails problem = rest.IsT1
-          ? rest.AsT1
-          : new SharedProblemDetails { Status = 500, Title = "Could not create the account." };
-        await ReportProblemAsync(problem);
-        return;
-      }
-
-      if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
-      {
-        identitySession.NotifySessionChanged();
-      }
-
-      NavigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(response.Destination));
-    }
-    finally
-    {
-      IsBusy = false;
-    }
-  }
-
-  private Task ReportProblemAsync(SharedProblemDetails problem)
-  {
-    if ((problem.Detail ?? string.Empty).Contains("expired", StringComparison.OrdinalIgnoreCase)
-      || (problem.Title ?? string.Empty).Contains("expired", StringComparison.OrdinalIgnoreCase))
-    {
-      IsValid = false;
-    }
-
-    return NoSubNotificationState.ReportProblem(problem, CancellationToken);
-  }
-
-  private async Task AlreadyHaveAccount()
-  {
-    IsBusy = true;
-    try
-    {
-      OneOf<CompleteEntraBootstrapExisting.Response, SharedProblemDetails> result =
-        await Ceremony.CompleteEntraChoiceExistingAsync(CancellationToken.None);
-      if (result.IsT1)
-      {
-        await ReportProblemAsync(result.AsT1);
-        return;
-      }
-
-      NavigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(result.AsT0.Destination));
-    }
-    catch (JSException jsException)
-    {
-      await NoSubNotificationState.AddNotification
-      (
-        MessageBarIntent.Error,
-        "The browser could not complete the passkey ceremony",
-        jsException.Message,
-        CancellationToken
-      );
-    }
-    finally
-    {
-      IsBusy = false;
-    }
-  }
+  private Task SignInAgain() => NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
 }
 
 <PageTitle>Microsoft 365 account</PageTitle>
@@ -144,7 +41,7 @@
         </FluentMessageBar>
         <FluentButton Appearance="ButtonAppearance.Primary"
                       data-qa="SignInWithMicrosoft365Again"
-                      OnClick="@(() => NavigationManager.NavigateTo(LoginPage.GetPageUrl()))">
+                      OnClick="SignInAgain">
           Sign in with Microsoft 365 again
         </FluentButton>
       }

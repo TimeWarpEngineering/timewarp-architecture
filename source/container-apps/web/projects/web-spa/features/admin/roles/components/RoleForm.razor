@@ -1,6 +1,5 @@
 @namespace TimeWarp.Architecture.Features.Admin.Roles
 @inherits BaseComponent
-@inject NavigationManager NavigationManager
 
 @*
   Purpose: create-role form — bind IRoleDetails, dispatch RoleState.CreateRole.
@@ -10,7 +9,8 @@
   RoleDetailsValidator so only Name/Description are validated (no UserId noise).
   COPIC UX — Action ctor takes Command; submit is RoleState.CreateRole(Command).
   UserId is stamped in the handler GetRequest, not here.
-  After create, navigate to RoleDetailPage so membership can be assigned (task 206).
+  After create, sequence RouteState.ChangeRoute to RoleDetailPage so membership can be
+  assigned (task 206) — navigation is an action, never a component-side NavigateTo.
   LastCreatedRoleId is only written on HandleSuccess and is sticky across attempts, so
   compare to the pre-dispatch value: navigate only when it changed. A failed create
   (DefaultApiHandler toasts, does not throw) stays on this form.
@@ -30,7 +30,7 @@
     await RoleState.CreateRole(Command);
     if (RoleState.LastCreatedRoleId is Guid roleId && roleId != previousCreatedRoleId)
     {
-      NavigationManager.NavigateTo(RoleDetailPage.GetPageUrl(roleId));
+      await NoSubRouteState.ChangeRoute(newRoute: RoleDetailPage.GetPageUrl(roleId));
     }
   }
 }

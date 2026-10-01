@@ -11,14 +11,17 @@
 // site settings EntraSignInEnabled). Passkey stays the primary CTA (lock #10). No WASM MSAL.
 // Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
 // "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
-// Ceremony plumbing lives in PasskeyCeremonyClient so the technical Passkeys demo and this page
-// share one mapping of browser credential JSON → Complete* commands.
+// Every button is one SignInState dispatch (SignInWithPasskey, CreateAccountWithPasskey,
+// SignInWithMicrosoft365): the handlers run the ceremony through PasskeyCeremonyClient (shared
+// with the Passkeys demo), do the challenge / post-sign-in navigation, and publish failures.
 // Mock mode: ceremony contracts have no GetMockResponseFactory, so the mock chain yields 501 and
-// the page reports it with NotificationState.ReportProblem (same as PasskeysPage); the
-// TimeWarpFocusedPage MessageBars region paints it — no page-local error bar (task 247).
-// Task 153 redirect flow: an already-authenticated visitor is redirected away immediately, and a
+// the handler publishes it; the TimeWarpFocusedPage MessageBars region paints it — no page-local
+// error bar (task 247). IsBusy is ActionTrackingState (the ceremony actions are [TrackAction]).
+// Task 153 redirect flow: an already-authenticated visitor is redirected away immediately (a
+// lifecycle redirect after FetchSession, the one NavigationManager use left here), and a
 // successful ceremony navigates to ?returnUrl (or home). returnUrl is honored only when local
 // (GetSafeReturnUrl — open-redirect guard) and never points back at /Login itself.
+// The page passes GetSafeReturnUrl(ReturnUrl); the handlers collapse it again before navigating.
 // Create account mints a NEW Principal; after success (no returnUrl) navigate to /Settings so
 // the user lands on the passkey list (passkeys.io post-create UX, task 167). Sign-in still
 // uses returnUrl/home. Credential management is Settings, never this page.

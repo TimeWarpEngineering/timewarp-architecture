@@ -25,6 +25,7 @@ public class ActionCatalog_Should
     "Counter.IncrementCounter",
     "Credentials.AddExistingPasskey",
     "Credentials.AddPasskey",
+    "Credentials.LinkMicrosoft365",
     "Credentials.RenameCredential",
     "Credentials.RevokeCredential",
     "Profile.SignOut",
@@ -72,6 +73,12 @@ public class ActionCatalog_Should
     ActionCatalogEntry signOut = actionCatalog.Find("Profile.SignOut").ShouldNotBeNull();
     signOut.Permissions.ShouldBeEmpty();
     signOut.Visibility.ShouldBe(ActionVisibility.Human);
+
+    // Task 260: the Settings "Link Microsoft 365" button is this action; same gate as the page CTA.
+    ActionCatalogEntry linkMicrosoft365 = actionCatalog.Find("Credentials.LinkMicrosoft365").ShouldNotBeNull();
+    linkMicrosoft365.Permissions.ShouldBe([PermissionIds.CredentialManageSelf]);
+    linkMicrosoft365.Visibility.ShouldBe(ActionVisibility.Human);
+    linkMicrosoft365.Description.ShouldNotBeNullOrWhiteSpace();
     return Task.CompletedTask;
   }
 
