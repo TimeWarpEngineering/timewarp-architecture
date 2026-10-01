@@ -61,21 +61,23 @@ The accepted trade-off was a brief first-boot window. That window is what produc
 
 ## Checklist
 
-- [ ] `WaitForCompletion` re-tested on Aspire 13.6 against (a), (b) and (c); kept, or rejected
+- [x] `WaitForCompletion` re-tested on Aspire 13.6 against (a), (b) and (c); kept, or rejected
       with evidence
-- [ ] If rejected: the seeder probes the table quietly, so no EF Error on first run; other startup
+- [x] If rejected: the seeder probes the table quietly, so no EF Error on first run; other startup
       readers checked
-- [ ] A test that proves a first run against an empty database logs no Error from the seeder path
-- [ ] AppHost Design region reconciled with the 13.6 outcome
-- [ ] Gates: `dev build` 0/0, `dev test` (including aspire-tests and the closed-box suites),
+- [x] A test that proves a first run against an empty database logs no Error from the seeder path
+- [x] AppHost Design region reconciled with the 13.6 outcome
+- [x] Gates: `dev build` 0/0, `dev test` (including aspire-tests and the closed-box suites),
       `dev template-smoke`, `ganda repo audit`
-- [ ] Do **not** start the maintainer's AppHost or run `dev db nuke --yes`. Closed-box test suites
+- [x] Do **not** start the maintainer's AppHost or run `dev db nuke --yes`. Closed-box test suites
       are fine
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 252821 (2026-10-01)
+- 2026-10-02 implementer (Claude Opus 5.5, ganda task work): re-tested WaitForCompletion on 13.6
+  and rejected it, then implemented the quiet-probe fallback, the tests and the region updates. All gates green.
 
 ## Notes
 
@@ -87,12 +89,84 @@ The accepted trade-off was a brief first-boot window. That window is what produc
 
 ## Results
 
-*(fill when done)*
+**WaitForCompletion on Aspire 13.6: rejected.** Re-tested with Aspire 13.6.0 and
+Aspire.Hosting.EntityFrameworkCore 13.6.0-preview.1.26479.8 by adding
+`webServer.WaitForCompletion(webMigrations)`.
+
+- The wait itself worked. web-server logged "Waiting for resource 'web-migrations' to complete",
+  then started after "Successfully executed command 'ef-database-update'".
+- **(a) failed.** The dotnet-ef tool resource inherits web-server's environment, and DCP rejected
+  its substitution: `Could not perform substitution for environment variable ASPNETCORE_URLS ...
+  service '/web-server-https' referenced by Executable '/ef-tool-web-migrations-…' specification
+  is not produced by this Executable`. web-server then listened on the Kestrel default
+  `http://localhost:5000` instead of its allocated port, and the ingress health check timed out.
+- aspire-tests failed 6 of 11 with the edge ("Resource 'ingress' failed to become healthy").
+  The same suite passed 11 of 11 without it.
+- (b) and (c) are moot: the AppHost keeps no wait edge, so a restart has nothing to deadlock on.
+
+**Fallback: quiet seeder probe.**
+
+- New port `ISiteSettingsTableProbe` in Identity.Application, with Postgres implementation
+  `EfSiteSettingsTableProbe` in Identity.Infrastructure. It runs
+  `SELECT to_regclass("identity"."site_settings") IS NOT NULL`, and takes the schema and table
+  names from the EF model. `PostgresDbModule` registers it. The file is postgres-gated in
+  template.json, so in-memory builds have no probe and seed in a single pass.
+- `SiteSettingsSeedHostedService` asks the probe before each EF read and waits (1s, same
+  30-attempt budget) while the table is missing. Attempts 1–5 log Information ("waiting for
+  web-migrations…"); later attempts log Warning. The last attempt skips the probe, so an exhausted
+  budget still fails the host with the real 42P01. The 42P01 catch and its Warning stay for a
+  table removed between probe and query.
+- Other startup readers: the seed hosted service is the only boot-time reader of a migrated
+  table. `EntraSchemeRegistrationLogHostedService` reads options only, and the environment check
+  only calls CanConnect. The task-254 read decorator is left unchanged and its Design region says
+  why: the seed runs before Kestrel starts, so no request reads before migrations on a first run.
+- Design regions reconciled: AppHost `program.cs` (13.6 error text and evidence, plus the inline
+  comment), `postgres-db-module-server.cs`, `site-settings-seed-hosted-service-server.cs`,
+  `seed-on-read-site-settings-store-application.cs`, and the ingress-smoke Design region.
+  Skill `tw-aggregate-pattern` now has the startup-reader probe rule.
+
+**Tests.**
+
+- aspire-tests `FirstRunOnEmptyDatabase_Should_LogNoErrorFromWebServer` watches web-server's
+  console from creation, against the suite's ephemeral Postgres. It asserts that the boot logged
+  no `fail:`, `crit:` or `42P01` lines.
+  - Red before the fix: six 42P01 lines.
+  - Green after.
+  - A diagnostic run confirmed the race happened: "Site settings seed is waiting for
+    web-migrations… (attempt 1/30)" at Information, then no Error.
+- web-infrastructure-tests `ef-site-settings-table-probe-tests.cs`, against real Postgres:
+  - The probe reports false on an unmigrated database and EF logs nothing at Error.
+  - It reports true after Migrate.
+  - A control case proves that the plain store read does log Error in the same state.
+
+**Gates:**
+
+- `dev build` 0/0.
+- `dev test`: every suite passed, including aspire-tests 12/12 and web-infrastructure-tests
+  63/63; one existing skip in web-server-integration-tests.
+- `dev template-smoke` SUCCEEDED, after adding the probe file to the `!postgres` exclude.
+- `ganda repo audit` passes.
+- The maintainer's AppHost was not started, and `dev db nuke` was not run.
+
+**No regressions:** `dev db reset`, the `ef-database-update` command, the production script and
+bundle path, and `dev db nuke` are untouched. The AppHost graph is unchanged; only comments were
+edited.
 
 ### How to validate
 
-*(required before done)*
+**Smoke:**
+
+```bash
+cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release -- --filter-method FirstRunOnEmptyDatabase
+cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release -- --filter-class Unmigrated_Database
+```
+
+**Expect:** both pass: 1/1, then 2/2. To see the race the first test guards, set the
+`--Postgres:UseDataVolume=false` AppHost aside and use the maintainer steps below.
 
 Maintainer, after merge:
-1. Run `dev db nuke --yes`, then `dev run`. The web-server structured logs show no Error.
-2. Restart web-server from the dashboard. It comes back, with no deadlock.
+1. Run `dev db nuke --yes`, then `dev run`. The web-server structured logs show no Error. At most
+   one or more Information entries read "Site settings seed is waiting for web-migrations to
+   create identity.site_settings (attempt n/30)".
+2. Restart web-server from the dashboard. It comes back with no deadlock, because there is still
+   no wait edge.
