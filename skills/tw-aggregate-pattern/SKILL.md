@@ -81,7 +81,10 @@ Npgsql stays host-only.
 - **Local / Aspire:** AppHost `AddEFMigrations` + `RunDatabaseUpdateOnStart` with **no wait
   edge** from web-server to the migration resource (both `WaitFor` and `WaitForCompletion`
   break restart or testing). On a fresh volume the app can briefly serve before migrate
-  finishes; re-run on demand with the `ef-database-update` dashboard command.
+  finishes; re-run on demand with the `ef-database-update` dashboard command. A **startup
+  reader** of a migrated table probes it first with a catalog query (`to_regclass`, see
+  `EfSiteSettingsTableProbe`) and waits while it is missing — a failing EF query logs Error
+  inside EF before any catch runs, and a first run must log none.
 - **Inspect data locally:** in Development the Postgres resource carries `WithRepl()`, so the
   dashboard offers an authenticated psql shell (terminal dock) on the running server.
 - **Publish / deploy:** `PublishAsMigrationScript` / `PublishAsMigrationBundle`.

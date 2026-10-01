@@ -22,8 +22,10 @@
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
-// DCP under Aspire.Hosting.Testing), so on a truly fresh volume web-server may briefly serve
-// before the initial migration completes. This module never EnsureCreated / Migrate at startup.
+// DCP under Aspire.Hosting.Testing; re-confirmed on Aspire 13.6 by task 270). On a fresh volume
+// the boot seed waits instead: this module registers EfSiteSettingsTableProbe, which
+// SiteSettingsSeedHostedService asks before its first EF read, and that seed runs before Kestrel
+// starts. This module never EnsureCreated / Migrate at startup.
 // Tests call Database.Migrate() against ephemeral DBs.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
@@ -42,6 +44,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
+using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Features.AgentLinks.Application;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
@@ -96,6 +99,8 @@ public sealed partial class PostgresDbModule : IModule
     // Task 219-006: durable site settings (same connection gate).
     serviceCollection.RemoveAll<ISiteSettingsStore>();
     serviceCollection.AddScoped<ISiteSettingsStore, EfSiteSettingsStore>();
+    // Task 270: lets the boot seed wait for web-migrations without a failing (Error-logging) query.
+    serviceCollection.AddScoped<ISiteSettingsTableProbe, EfSiteSettingsTableProbe>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>
