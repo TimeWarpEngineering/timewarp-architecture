@@ -49,13 +49,14 @@ The maintainer has now installed CLI 13.6.0 (2026-10-01) and wants it.
 - [x] Gates: `dev build` 0/0, the dev-cli tests, `ganda repo audit`. Gate on a fresh `bin/dev`
 - [x] Do **not** start an AppHost (`dev run`, `aspire run`); it shares the maintainer's user
       secrets. Verify argument construction through tests, not by launching
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: accepted-exceptions); host `open-pr` pending
 
 ## Session
 
 - Created: 83286 (2026-10-01)
 - 2026-10-01 implementer (claude-opus-5-5, headless task-work): option, validation, version guard,
   tests, AGENTS.md line; gates green on fresh `bin/dev`. Implementation review + open-pr pending (host).
+- 2026-10-01 review oracle (claude-opus-5-5, headless task-work): tw-implementation-review effort 2, roster general; 1 round; disposition accepted-exceptions.
 
 ## Notes
 
@@ -89,6 +90,14 @@ The maintainer has now installed CLI 13.6.0 (2026-10-01) and wants it.
   updated; no repo skill lists `dev run` options.
 - Gates: `dev build` (fresh `bin/dev` via self-install) succeeded (warnings are errors), dev-cli-tests 80/80,
   `ganda repo audit` passes.
+
+### Review disposition
+
+- Rounds: 1; effort 2; roster: general (claude-opus-5-5 review oracle)
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix); 0 open
+- Disposition: **accepted-exceptions** — M1 nit (route description says "Development environment"
+  though a profile's env wins) wontfix: all declared profiles set Development and precedence is in the Design region
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
