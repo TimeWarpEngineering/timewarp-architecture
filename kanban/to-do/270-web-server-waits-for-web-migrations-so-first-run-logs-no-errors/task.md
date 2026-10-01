@@ -161,8 +161,9 @@ cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release -- --filte
 cd tests/container-apps/web/web-infrastructure-tests && dotnet test -c Release -- --filter-class Unmigrated_Database
 ```
 
-**Expect:** both pass: 1/1, then 2/2. To see the race the first test guards, set the
-`--Postgres:UseDataVolume=false` AppHost aside and use the maintainer steps below.
+**Expect:** both pass: 1/1, then 2/2. The first test boots the full AppHost with an ephemeral
+Postgres, so it is a real first run against an empty database. To check the same thing on a dev
+volume, use the maintainer steps below.
 
 Maintainer, after merge:
 1. Run `dev db nuke --yes`, then `dev run`. The web-server structured logs show no Error. At most
