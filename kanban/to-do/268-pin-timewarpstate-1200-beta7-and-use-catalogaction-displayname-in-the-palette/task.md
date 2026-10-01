@@ -38,17 +38,18 @@ written deliberately, through `DisplayName`.
 
 ## Checklist
 
-- [ ] All `TimeWarp.State.*` pins on 12.0.0-beta.7
-- [ ] Palette prefers `DisplayName`, falls back to the generated label; Design region updated
-- [ ] "Link Microsoft 365" set; other palette-visible actions reviewed (list in Results)
-- [ ] Tests (authored label shown and ranked; fallback still works)
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
-- [ ] Do **not** start an AppHost; record the browser check as not performed
+- [x] All `TimeWarp.State.*` pins on 12.0.0-beta.7
+- [x] Palette prefers `DisplayName`, falls back to the generated label; Design region updated
+- [x] "Link Microsoft 365" set; other palette-visible actions reviewed (list in Results)
+- [x] Tests (authored label shown and ranked; fallback still works)
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Do **not** start an AppHost; record the browser check as not performed
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 104771 (2026-10-01)
+- Implement (2026-10-01, ganda task work implement oracle, Claude): pins, roster precedence, label, tests, gates.
 
 ## Notes
 
@@ -58,13 +59,62 @@ written deliberately, through `DisplayName`.
 
 ## Results
 
-*(fill when done)*
+**Pins.** `Directory.Packages.props`: `TimeWarp.State` and `TimeWarp.State.Plus` 12.0.0-beta.6 → 12.0.0-beta.7
+(the only `TimeWarp.State.*` pins present). The beta.6 mention in the `program.cs` catalog comment moved too.
+
+**Palette** (`command-palette-roster.cs`). New `CommandPaletteRoster.Label(ActionCatalogEntry)` shows
+`action.DisplayName` when it is set, and falls back to the generated `DisplayName(action.Name)` only when it is null.
+The ranker is unchanged: it still matches the row `Name` (the shown label) and the description. The Design region records
+the precedence.
+
+**Prefix decision.** The palette keeps "Owner: Action" for **every** command, authored or generated. The owner is the catalog
+name's prefix, and `DisplayName` supplies only the action part. So `DisplayName = "Link Microsoft 365"` renders as
+"Credentials: Link Microsoft 365", and rows still group by state no matter how their label was written.
+
+**Labels reviewed** (palette-visible means Human or Both, plus no required argument):
+
+| Action | Generated label | Decision |
+|--------|-----------------|----------|
+| `Credentials.LinkMicrosoft365` | Credentials: Link microsoft 365 | **Set** `DisplayName = "Link Microsoft 365"` (brand casing) |
+| `Profile.SignOut` | Profile: Sign out | Leave unset (reads right) |
+| `Credentials.AddPasskey` | Credentials: Add passkey | Leave unset |
+| `Credentials.AddExistingPasskey` | Credentials: Add existing passkey | Leave unset |
+| `Counter.IncrementCounter` (Both) | Counter: Increment counter | Leave unset. It needs `int amount`, so the palette hides it anyway |
+
+No other Human/Both `[CatalogAction]` exists. The rest are Agent-only: RenameCredential, RevokeCredential, UpdateProfile,
+CreateRole, UpdateSiteSettings.
+
+**Tests.**
+- `command-palette-tests.cs`: the roster pins "Credentials: Link Microsoft 365".
+- `Rank_Link_Microsoft_365_First_For_Its_Authored_Label` covers `microsoft`, `Microsoft 365`, and `link microsoft`, and
+  checks that the highlighted row is the link command.
+- `Rank_Link_Microsoft_365_On_Its_Label_For_Link` checks that `link` ranks the row ahead of every row without "link" in its
+  name. The "Agent Links" page can tie on word-start, and wins because its name is shorter.
+- `Label_Commands_With_DisplayName_Else_The_Generated_Name` uses probe entries to show an authored label wins and a null
+  `DisplayName` gets the generated label.
+- `action-catalog-tests.cs`: `LinkMicrosoft365.DisplayName == "Link Microsoft 365"`, and `SignOut.DisplayName` is null.
+
+**Gates** (run in this worktree):
+- `dev build`: 0 warnings, 0 errors.
+- `dev test`: exit 0. web-spa-integration-tests 129/129.
+- `dev template-smoke`: SUCCEEDED. web-jaribu-tests 227/227.
+- `ganda repo audit`: passes all checks. `--fix --checks bin-dev` built the local, gitignored `bin/dev`, and nothing was committed from it.
+
+**Browser check not performed.** Per the brief, no AppHost was started.
+
+**Stale assets.** A package bump can leave stale WASM `_framework` files behind. After merging, the maintainer should run
+`dev clean` and clear the site data before testing in the browser.
 
 ### How to validate
 
-*(required before done)*
+Smoke:
+1. `cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class CommandPalette`
+2. `dotnet test -c Release -- --filter-class ActionCatalog`
+
+Expect: both pass, 0 failures. The CommandPalette run includes the `Rank_Link_Microsoft_365_*` and
+`Label_Commands_With_DisplayName_Else_The_Generated_Name` cases.
 
 Maintainer, after merge:
 1. Run `dev clean`, then `dev run`, and clear site data.
-2. Press Ctrl-K and type `link`. "Credentials: Link Microsoft 365" (or the chosen format) shows
-   with correct casing.
+2. Press Ctrl-K and type `link`. "Credentials: Link Microsoft 365" shows with correct casing. Typing `microsoft`
+   highlights it.

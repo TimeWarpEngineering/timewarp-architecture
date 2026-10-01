@@ -128,7 +128,7 @@ public static class Program
       }
     );
 
-    // Opt-in [CatalogAction] registry (TimeWarp.State 12.0.0-beta.6) for the Ctrl-K palette and
+    // Opt-in [CatalogAction] registry (TimeWarp.State 12.0.0-beta.7) for the Ctrl-K palette and
     // agent tools. Only web-spa declares cataloged actions; Plus declares none, so it is not named.
     serviceCollection.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly);
 
