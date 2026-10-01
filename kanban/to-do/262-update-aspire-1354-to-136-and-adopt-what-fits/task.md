@@ -160,6 +160,13 @@ Also check the CLI version, the dashboard SDK and the service-defaults packages.
 - Not performed: starting the AppHost (`dev run`), the dashboard REPL check, and the
   persistence check, because the AppHost shares the maintainer's user secrets.
 
+### Review disposition
+
+- Rounds: 1; effort 1; roster: general (review oracle, claude-opus-5-5).
+- Final counts: bug 0 / suggestion 0 / nit 0 (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**. The reviewer re-ran the AppHost build (0/0) and the permission-evaluator runfile (19/19).
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:** `dev build && dev test` (aspire-tests drives the real 13.6 AppHost through
