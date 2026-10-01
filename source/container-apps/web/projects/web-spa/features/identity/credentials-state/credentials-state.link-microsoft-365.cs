@@ -12,6 +12,8 @@
 // callback's own already-linked handling). A catalog "available now" predicate (Microsoft 365
 // offered AND no active EntraAccount — CanLinkMicrosoft365) would hide it instead; the catalog has
 // no such hook today.
+// DisplayName is authored (task 268): the generated label split "Microsoft365" into
+// "microsoft 365"; the palette shows "Credentials: Link Microsoft 365".
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -24,6 +26,7 @@ partial class CredentialsState
   {
     [CatalogAction
     (
+      DisplayName = "Link Microsoft 365",
       Description = "Link a Microsoft 365 account to the signed-in account so it can sign in with Microsoft 365.",
       Permissions = [PermissionIds.CredentialManageSelf],
       Visibility = ActionVisibility.Human

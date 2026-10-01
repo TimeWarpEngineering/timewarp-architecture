@@ -141,8 +141,8 @@
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
     <PackageVersion Include="Blazilla" Version="2.4.1" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.6" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.7" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.7" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
     <PackageVersion Include="timewarp-simple-icons" Version="16.32.0" />
   </ItemGroup>

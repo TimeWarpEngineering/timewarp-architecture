@@ -1,7 +1,7 @@
 #region Purpose
 // Ctrl-K command palette (task 239-003): roster from PageRegistry + IActionCatalog, permission
 // filter, ranking order, keyboard highlight, Enter navigating / executing, and the overlay open/close render;
-// plus the signed-out Sign in row (task 259).
+// plus the signed-out Sign in row (task 259) and authored [CatalogAction(DisplayName)] labels with the generated fallback (task 268).
 #endregion
 
 #region Design
@@ -59,8 +59,9 @@ public class CommandPalette_Should_
       .OrderBy(static name => name, StringComparer.Ordinal)
       .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Profile.SignOut"]);
 
-    // Task 260: the Settings "Link Microsoft 365" button is a palette command too.
-    palette.Roster.Single(static row => row.Target == "Credentials.LinkMicrosoft365").Name.ShouldBe("Credentials: Link microsoft 365");
+    // Task 260: the Settings "Link Microsoft 365" button is a palette command too; task 268: its
+    // label is the authored [CatalogAction(DisplayName)], so the brand casing survives.
+    palette.Roster.Single(static row => row.Target == "Credentials.LinkMicrosoft365").Name.ShouldBe("Credentials: Link Microsoft 365");
 
     CommandPaletteRow signOut = palette.Roster.Single(static row => row.Target == "Profile.SignOut");
     signOut.Name.ShouldBe("Profile: Sign out");
@@ -158,6 +159,50 @@ public class CommandPalette_Should_
     await scope.Send(new CommandPaletteState.FilterActionSet.Action(query));
 
     scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull().Name.ShouldBe("Sign in");
+  }
+
+  [Input("microsoft")]
+  [Input("Microsoft 365")]
+  [Input("link microsoft")]
+  public static async Task Rank_Link_Microsoft_365_First_For_Its_Authored_Label(string query)
+  {
+    using PaletteSpa spa = new(Everything);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action(query));
+
+    CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
+    highlighted.Target.ShouldBe("Credentials.LinkMicrosoft365");
+    highlighted.Name.ShouldBe("Credentials: Link Microsoft 365");
+  }
+
+  public static async Task Rank_Link_Microsoft_365_On_Its_Label_For_Link()
+  {
+    using PaletteSpa spa = new(Everything);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action("link"));
+
+    // "link" is a word start in the label, so it ranks with the other "…link…" names, ahead of
+    // every row that matches on its description alone.
+    IReadOnlyList<CommandPaletteRow> matches = scope.Store.GetState<CommandPaletteState>().Matches;
+    int index = matches.ToList().FindIndex(static row => row.Target == "Credentials.LinkMicrosoft365");
+    index.ShouldBeGreaterThanOrEqualTo(0);
+    matches.Take(index).ShouldAllBe(static row => row.Name.Contains("link", StringComparison.OrdinalIgnoreCase));
+  }
+
+  public static async Task Label_Commands_With_DisplayName_Else_The_Generated_Name()
+  {
+    using PaletteSpa spa = new(Everything);
+    ActionCatalog catalog = new([new ActionCatalogSource([Probe("Probe.RunTwice", displayName: null), Probe("Probe.RunOnce", "Run once now")])]);
+
+    IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync(
+      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], catalog.Entries, "/");
+
+    roster.Single(static row => row.Target == "Probe.RunTwice").Name.ShouldBe("Probe: Run twice");
+    roster.Single(static row => row.Target == "Probe.RunOnce").Name.ShouldBe("Probe: Run once now");
   }
 
   public static async Task Enter_On_Sign_In_Navigates_To_Login_With_The_Current_Path_As_Return_Url()
@@ -357,6 +402,21 @@ public class CommandPalette_Should_
       return (await renderer.RenderComponentAsync<ModalController>(parameters)).ToHtmlString();
     });
   }
+
+  private static ActionCatalogEntry Probe(string name, string? displayName) =>
+    new
+    (
+      name,
+      "Run the probe.",
+      [],
+      ActionVisibility.Human,
+      typeof(CounterState),
+      typeof(CounterState),
+      [],
+      "{}",
+      static (_, _, _) => Task.CompletedTask,
+      displayName
+    );
 
   private static CommandPaletteRow Row(string name, string description) =>
     new(name, description, CommandPaletteRowKind.Page, "/" + name);

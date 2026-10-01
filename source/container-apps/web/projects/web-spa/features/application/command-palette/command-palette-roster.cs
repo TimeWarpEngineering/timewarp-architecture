@@ -13,9 +13,13 @@
 // Anonymous policy (Home), which always succeeds; an empty policy string is treated the same. A command needs every one of its Permissions; a command with none still needs a
 // signed-in principal, because every cataloged command acts on the user's own session (sign-out,
 // passkeys) and must not be offered to an anonymous visitor.
-// Command display name is the catalog name made readable ("Profile.SignOut" → "Profile: Sign out",
-// a digit run starts a word: "Credentials.LinkMicrosoft365" → "Credentials: Link microsoft 365")
-// so typing words from it ranks; the stable catalog name stays the row Target.
+// Command label (task 268): "Owner: Action" for every command, authored or generated — the owner is
+// the catalog name's prefix, so rows group by state whichever way their action part was written.
+// The action part is ActionCatalogEntry.DisplayName ([CatalogAction(DisplayName = …)]) when set —
+// labels are written deliberately ("Credentials: Link Microsoft 365"); only a null DisplayName falls
+// back to the catalog name made readable ("Profile.SignOut" → "Profile: Sign out", a digit run
+// starts a word). Set DisplayName wherever the generated split reads poorly (brand casing, acronyms).
+// The ranker matches the shown label and the description; the stable catalog name stays the Target.
 // Sign in (task 259): an explicit, typed signed-out entry built from LoginPage.Title and
 // LoginPage.GetPageUrl() — not a registry concept. Login stays out of PageRegistry.All (NavMenu
 // must not list it) and Navigable keeps its meaning; one signed-out destination does not earn a
@@ -79,7 +83,7 @@ public static class CommandPaletteRoster
 
       if (permitted)
       {
-        rows.Add(new CommandPaletteRow(DisplayName(action.Name), action.Description, CommandPaletteRowKind.Command, action.Name));
+        rows.Add(new CommandPaletteRow(Label(action), action.Description, CommandPaletteRowKind.Command, action.Name));
       }
     }
 
@@ -101,11 +105,16 @@ public static class CommandPaletteRoster
     action.Visibility is ActionVisibility.Human or ActionVisibility.Both
     && action.Parameters.All(static parameter => !parameter.IsRequired);
 
+  /// <summary>"Owner: " + the authored <see cref="ActionCatalogEntry.DisplayName"/>, else the generated label.</summary>
+  public static string Label(ActionCatalogEntry action) =>
+    action.DisplayName is { } displayName
+      ? WithOwner(action.Name, displayName)
+      : DisplayName(action.Name);
+
   /// <summary>"Profile.SignOut" → "Profile: Sign out".</summary>
   public static string DisplayName(string catalogName)
   {
     int dot = catalogName.IndexOf('.', StringComparison.Ordinal);
-    string owner = dot < 0 ? "" : catalogName[..dot];
     string action = dot < 0 ? catalogName : catalogName[(dot + 1)..];
 
     StringBuilder words = new();
@@ -126,7 +135,13 @@ public static class CommandPaletteRoster
       }
     }
 
-    return owner.Length == 0 ? words.ToString() : $"{owner}: {words}";
+    return WithOwner(catalogName, words.ToString());
+  }
+
+  private static string WithOwner(string catalogName, string label)
+  {
+    int dot = catalogName.IndexOf('.', StringComparison.Ordinal);
+    return dot < 0 ? label : $"{catalogName[..dot]}: {label}";
   }
 
   private static async Task<bool> IsAuthorizedAsync(ClaimsPrincipal user, IAuthorizationService authorizationService, string policy)
