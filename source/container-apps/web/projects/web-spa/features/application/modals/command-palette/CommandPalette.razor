@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Components
 @using TimeWarp.Architecture.Services
+@attribute [DirectComponentSideEffect("Hotkey registration, focus restore and scroll-into-view are presentational JS bound to this component's DOM and lifetime; there is no store state to dispatch.")]
 
 @*
   Purpose: The Ctrl-K / Cmd-K command palette overlay — search pages and commands, run the highlighted row.
@@ -16,6 +17,8 @@
   This component owns the JS side too: after the first interactive render it registers the
   global Ctrl-K / Cmd-K keydown and the appbar search-field trigger (CommandPaletteJsModule),
   and hands focus back to the trigger when the palette closes without navigating away.
+  Those JS calls are the one TWA0026 opt-out here ([DirectComponentSideEffect] above): they are
+  presentational, owned by this component's DOM and lifetime. Running a row stays dispatch-only.
   Registration can finish after the page is disposed (fast navigation); that late handle is
   disposed at once so no document listener outlives its page. The highlighted row is scrolled
   into view on change; clicks on the list, empty text and hint keep focus in the query box

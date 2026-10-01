@@ -229,7 +229,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0025) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0027) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
@@ -306,6 +306,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0023 | type-stem identifiers: named type that already names the role **is** the identifier (strip leading `I` on interfaces; two of the same type qualify with the type as head). **Default off** — enable with `dotnet_diagnostic.TWA0023.severity = warning`. Opt-out: `[TypeStemIdentifier(reason)]`. Rule prose: flow skill `tw-csharp`. |
 | TWA0024 | hosted `[EndpointAuthorize] Policy` must equal a policy this server registers (`AuthorizationOptions`/`AuthorizationBuilder.AddPolicy`, or `PermissionIds` when `AddPermissionPolicies` is called). Contracts cannot reference server-layer constants; the server compilation is the agreement check (task 111) |
 | TWA0025 | `FluentMessageBar` with `Intent` `Error`/`Success` in web-spa razor outside `components/MessageBars.razor` — operation outcomes go through `NotificationState` (`AddNotification` / `ReportProblem`, or `OutcomeNotification` / `ProblemDetailsNotification` published from a handler) and the shell paints the single region; static `Info`/`Warning` guidance stays inline. Opt-out: `[PageLocalMessageBar(reason)]` on the component. Gated on the Blazor WASM SDK like TWA0022 (task 247) |
+| TWA0026 | a web-spa component (any member of a `ComponentBase` type, lifecycle overrides included) calls a side effect directly — `NavigationManager.NavigateTo`/`NavigateToLogin`/`Refresh`, `IJSRuntime`/`IJSObjectReference` invoke, `IApiService` (and `IWebServerApiService`/`IApiServerApiService`), `HttpClient` send/get/post/put/delete/patch, Blazored session/local storage writes, or a first-party `[SideEffectService]` type (`PasskeyCeremonyClient`, the `*JsModule` helpers). Components only dispatch; the action's handler does the work. Handlers, services and static helpers are never flagged. Opt-out: `[DirectComponentSideEffect(reason)]` on the component or member. Gated on the Blazor WASM SDK like TWA0022 (task 265) |
+| TWA0027 | `[DirectComponentSideEffect]` with an empty or whitespace reason — it does not opt out of TWA0026 (task 265) |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`

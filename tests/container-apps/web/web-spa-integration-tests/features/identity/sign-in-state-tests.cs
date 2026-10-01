@@ -1,5 +1,6 @@
 #region Purpose
-// Task 260: the sign-in / Microsoft 365 interactions are TimeWarp.State actions — each one
+// Task 260/265: the sign-in / Microsoft 365 interactions (and the RedirectToLogin auth-gate
+// navigation) are TimeWarp.State actions — each one
 // dispatched headless here asserts its effect (navigation target, state change, outcome).
 #endregion
 
@@ -56,6 +57,25 @@ public class SignInActions_Should_
     ([
       ("/api/identity/entra/challenge?mode=bootstrap&returnUrl=%2FAdmin%2FRoles", true),
       ("/api/identity/entra/challenge?mode=bootstrap&returnUrl=%2F", true)
+    ]);
+  }
+
+  public static async Task RedirectToLogin_ForceLoad_Login_With_A_Safe_Return()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new SignInState.RedirectToLoginActionSet.Action("/Admin/Roles?tab=2"));
+    await scope.Send(new SignInState.RedirectToLoginActionSet.Action("/"));
+    await scope.Send(new SignInState.RedirectToLoginActionSet.Action("//evil.example"));
+    await scope.Send(new SignInState.RedirectToLoginActionSet.Action("/Login"));
+
+    spa.Navigations(scope).ShouldBe
+    ([
+      ("/Login?returnUrl=%2FAdmin%2FRoles%3Ftab%3D2", true),
+      ("/Login", true),
+      ("/Login", true),
+      ("/Login", true)
     ]);
   }
 
@@ -198,6 +218,17 @@ public class SignInActions_Should_
     spa.Api.Answer<GetEntraBootstrapChoice.Query>(_ => throw new HttpRequestException("BFF down"));
     await scope.Send(new SignInState.FetchMicrosoft365ChoiceActionSet.Action());
     scope.Store.GetState<SignInState>().Microsoft365ChoiceValid.ShouldBe(false);
+  }
+
+  public static async Task ForgetPasskeySoftPromptLater_Remove_The_Session_Key()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new CredentialsState.ForgetPasskeySoftPromptLaterActionSet.Action());
+
+    A.CallTo(() => spa.SessionStorage.RemoveItemAsync(PasskeySoftPrompt.LaterStorageKey, A<CancellationToken>._))
+      .MustHaveHappenedOnceExactly();
   }
 
   public static async Task DismissPasskeySoftPrompt_Persist_Later_Only_When_Asked()

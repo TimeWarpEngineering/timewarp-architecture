@@ -22,6 +22,7 @@
 // include client-device+hybrid soft hints for the default path).
 // Task 169: credential management HTTP (GetCredentials / AddPasskey / RevokeCredential) lives on
 // CredentialsState ActionSets — not this client. Settings must not call ApiService via ceremony.
+// [SideEffectService] (task 265): components never call this directly — TWA0026; action handlers do.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -30,6 +31,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Types;
 
+[SideEffectService]
 public sealed class PasskeyCeremonyClient
 {
   private readonly IWebServerApiService ApiService;

@@ -6,8 +6,9 @@
 // The flag is in memory; RememberForSession also writes the "later" key to sessionStorage (the
 // user's Later click) — browser storage is a side effect, so it lives in the handler, not the
 // prompt. AddPasskeyPrompt's restore on first interactive render dispatches without it (the key
-// is already there). Logout Initialize() resets the flag; AuthenticationStateListener removes the
-// later key so a following principal on the same tab is not suppressed.
+// is already there). Logout Initialize() resets the flag; AuthenticationStateListener dispatches
+// ForgetPasskeySoftPromptLater, whose handler removes the later key so a following principal on
+// the same tab is not suppressed.
 // RFC 219 D8: dismiss is UX, never a route or session gate.
 #endregion
 

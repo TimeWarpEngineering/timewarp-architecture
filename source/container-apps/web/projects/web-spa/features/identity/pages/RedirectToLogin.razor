@@ -1,4 +1,5 @@
 @namespace TimeWarp.Architecture.Features.Identity
+@inherits BaseComponent
 @inject NavigationManager NavigationManager
 
 @* RFC 219 D10: unauthorized UI goes to passkey Login, not MSAL RemoteAuthenticatorView.
@@ -6,24 +7,27 @@
    user back where they were headed. LoginPage validates it (local-only, never /Login).
    Task 183: never NavigationManager.NavigateTo during static SSR — that nested the interactive
    root and stack-overflowed web-server (exit 134) when AuthorizeRouteView hit NotAuthorized.
-   Navigate only once interactive; static HTML keeps a plain link fallback. *@
+   Navigate only once interactive; static HTML keeps a plain link fallback.
+   Task 265: the navigation is the SignInState.RedirectToLogin action (forceLoad in its handler);
+   this component only dispatches (TWA0026). NavigationManager is read-only here (the current Uri)
+   and LoginPage.GetLoginUrl builds both the link and the handler's target. *@
 
 @code {
-  private string Target { get; set; } = LoginPage.GetPageUrl();
+  private string ReturnPath { get; set; } = "/";
+  private string Target => LoginPage.GetLoginUrl(ReturnPath);
 
   protected override void OnInitialized()
   {
-    string returnUrl = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-    Target = returnUrl is "/" or ""
-      ? LoginPage.GetPageUrl()
-      : $"{LoginPage.GetPageUrl()}?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    base.OnInitialized();
+    ReturnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
   }
 
-  protected override void OnAfterRender(bool firstRender)
+  protected override async Task OnAfterRenderAsync(bool firstRender)
   {
+    await base.OnAfterRenderAsync(firstRender);
     if (firstRender && RendererInfo.IsInteractive)
     {
-      NavigationManager.NavigateTo(Target, forceLoad: true);
+      await NoSubSignInState.RedirectToLogin(ReturnPath);
     }
   }
 }

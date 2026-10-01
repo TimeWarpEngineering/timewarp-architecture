@@ -6,8 +6,6 @@
   public static string Title => "Sign in";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
 
-  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-
   [SuppressMessage
   (
     "Design",
@@ -25,10 +23,11 @@
     await NoSubSignInState.FetchSession();
     await NoSubSignInState.FetchMicrosoft365Offered();
 
-    // Lifecycle redirect, not an interaction: an already-signed-in visitor never sees this page.
+    // Lifecycle redirect: an already-signed-in visitor never sees this page. Still an action
+    // (RouteState.ChangeRoute) — components only dispatch (TWA0026).
     if (SignInState.IsAuthenticated is true)
     {
-      NavigationManager.NavigateTo(GetSafeReturnUrl(ReturnUrl));
+      await NoSubRouteState.ChangeRoute(GetSafeReturnUrl(ReturnUrl));
     }
   }
 
@@ -49,6 +48,18 @@
 
     string path = returnUrl.Split('?', '#')[0].TrimEnd('/');
     return path.Equals(GetPageUrl(), StringComparison.OrdinalIgnoreCase) ? "/" : returnUrl;
+  }
+
+  /// <summary>
+  /// /Login carrying <paramref name="returnPath"/> as ?returnUrl once it passes
+  /// <see cref="GetSafeReturnUrl"/>; plain /Login when that collapses to home.
+  /// </summary>
+  internal static string GetLoginUrl(string? returnPath)
+  {
+    string safeReturnUrl = GetSafeReturnUrl(returnPath);
+    return safeReturnUrl == "/"
+      ? GetPageUrl()
+      : $"{GetPageUrl()}?returnUrl={Uri.EscapeDataString(safeReturnUrl)}";
   }
 
   // Each button is one dispatch; the SignInState handlers run the ceremony / challenge and
