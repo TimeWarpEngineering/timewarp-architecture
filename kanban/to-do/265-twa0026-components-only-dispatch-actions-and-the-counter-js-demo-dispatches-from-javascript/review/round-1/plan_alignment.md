@@ -1,0 +1,13 @@
+# Round 1 — plan_alignment
+**Date:** 2026-10-01
+**Scope reviewed:** `git diff master...HEAD` (26 files) against task 265 Requirements A1–A6 and B7–B9: analyzer, attributes, registration sites, skill text, web-spa application, tests, Purpose/Design regions. Grepped TWA0020/22/24/25 for every analogous listing, and web-spa .razor/.razor.cs for direct side effects.
+
+## Summary
+All requirements are met and the Results claims check out against the diff. TWA0026/TWA0027 appear in every place TWA0025 is registered: AGENTS.md (table, plus the Analyzers row, now TWA0020–0027), AnalyzerReleases.Unshipped.md, and the tw-blazor skill. The descriptors live in the analyzer, the same SSOT pattern as TWA0025. `skills/tw-blazor-layout/SKILL.md` and `components/overview.md` mention only TWA0025 in prose, so nothing is owed there. There are no template-packaging copies. The `CompilerVisibleProperty` entries in the Directory.Build.props files are keyed to the WASM SDK property and already cover the new gate. Both attributes sit in the Attributes package with the PageLocalMessageBar pattern (simple-name matching, with the Design region saying so). The marker-attribute choice is recorded in the analyzer Design region and in the attribute Design regions. Remaining component side effects: the only direct JS call left is `CommandPalette` (opt-out with a real reason). Login and RedirectToLogin were converted to actions, and the sessionStorage removal moved to a new action. `RedirectToLogin` keeps `NavigationManager` only to read `Uri`/`ToBaseRelativePath`, which is not flagged. The remaining `InvokeAsync` hits are `EventCallback`/`ComponentBase.InvokeAsync`, not side effects. The skill text is present tense with no history or client names, and nothing carries a time estimate. Zero bugs; one nit.
+
+## Issues
+### Issue 1 — Severity: nit
+- File: source/container-apps/web/projects/web-spa/source/spa.ts:6-9
+- Description: The Design region says `Spa` and `Counter` must be plain objects because "Spa.Counter.DispatchIncrementCountAction" is resolved by Blazor's string-identifier interop. After this task no C# `InvokeVoidAsync` calls it; the Counter button's JavaScript `onclick` reaches it by plain property access. The rule is still worth keeping (the brief says to keep it, and `counter.ts` now says "for any future caller"). The Design text no longer describes the actual current caller, and `web.spa.lib.module.ts:12` still says "Counter still does (Spa.Counter.*)" without saying that it is now the JavaScript onclick.
+- Suggestion: Reword both regions to say that window.Spa is the global the Counter page's JS onclick reads, and that the plain-object constraint is retained for any C# interop caller.
+- Status: open

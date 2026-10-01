@@ -27,7 +27,10 @@
 //   - Blazored ISessionStorageService / ILocalStorageService (async and sync): SetItem*,
 //     RemoveItem*, Clear* — reads stay legal (a component may read to render).
 //   - First-party services carrying [SideEffectService] (by simple name, on the declaring type,
-//     the receiver type, or any base/interface of the receiver).
+//     the receiver type, or any base/interface of the receiver). Known gaps, accepted while every
+//     marked service declares its own members: a member inherited from an UNMARKED base and called
+//     through a marked derived type is not flagged (the receiver is the declaring type), and an
+//     unreduced extension whose `this` parameter is a type parameter has no receiver to check.
 // Framework types are a closed list in this analyzer because they cannot carry our attribute.
 // First-party ceremony / JS-module services use the marker attribute instead of a list here: more
 // are expected (every new JS module or ceremony client), and the marker keeps the rule's knowledge
@@ -37,6 +40,11 @@
 // Both Invocation and MethodReference operations are analyzed (a method group like
 // `OnClick=NavigationManager.Refresh` produces no Invocation at the reference site) — same reason
 // as TWA0022.
+//
+// Analyze() checks "inside a component" before the side-effect match: the component walk is a
+// symbol-equality loop, while the target match compares display names, so almost every operation
+// in the compilation exits on the cheap check. Targets stay matched by full name (not resolved
+// symbols) because most are optional references in any given compilation.
 //
 // Gating and generated-code handling copy TWA0022 / TWA0025: SPA client code only
 // (build_property.UsingMicrosoftNETSdkBlazorWebAssembly), razor/cshtml-generated trees ARE
@@ -172,10 +180,11 @@ public sealed class ComponentSideEffectAnalyzer : DiagnosticAnalyzer
 
   private static void Analyze(OperationAnalysisContext context, IMethodSymbol method, INamedTypeSymbol componentBase)
   {
+    // Cheapest filter first: most operations in the compilation are not inside a component.
+    if (!IsInComponent(context.ContainingSymbol, componentBase)) return;
     INamedTypeSymbol? receiverType = GetReceiverType(method);
     if (receiverType is null) return;
     if (!IsSideEffect(method, receiverType)) return;
-    if (!IsInComponent(context.ContainingSymbol, componentBase)) return;
     if (IsExemptGeneratedCode(context)) return;
     if (HasOptOut(context.ContainingSymbol)) return;
 

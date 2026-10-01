@@ -88,12 +88,14 @@ interaction is a TimeWarp.State action, and components only dispatch.** Steve de
       `dev template-smoke`, `ganda repo audit`. If the Analyzers package ships, check
       `dev check-version`, and bump the version and pins in the same commit if required
 - [x] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: accepted-exceptions)
+- [ ] Host `open-pr`
 
 ## Session
 
 - Created: 20701 (2026-10-01)
 - 2026-10-01: implement oracle — verified prior session's work; full `--no-incremental` rebuild 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version` all green; TWA0026 confirmed firing in the real web-spa build (temporary NavigateTo injected, reverted).
+- 2026-10-01: review oracle (Claude Opus 5.5, headless) — effort 3, reviewers general / tests / plan_alignment (Sonnet subagents); 2 rounds; fixes committed on this task.
 
 ## Notes
 
@@ -144,6 +146,19 @@ store state to dispatch."
 0/0; `dev test` all suites pass; `dev template-smoke` SUCCEEDED; `ganda repo audit` pass;
 `dev check-version` beta.20 > NuGet beta.19 (no bump needed). Browser check **not performed**
 (no AppHost in workers).
+
+### Review disposition
+
+- **Effort / roster:** 3 — general, tests, plan_alignment; **rounds:** 2.
+- **Final counts:** bug 0; suggestion 2 fixed; nit 3 fixed, 3 wontfix; **0 open**.
+- **Disposition:** `accepted-exceptions`. Wontfix: M6 (no field-target opt-out; class-level covers
+  it), M7 (subtype-declared IApiService member hits the same branch), M8 (Counter agreement test
+  stays host-free regex; initializer wiring is a build gate).
+- **Fixes:** analyzer checks component membership first and documents its marker gaps; HttpClient
+  Post/Put/Patch/Send and local-storage lifecycle Remove tests; spa.ts / web.spa.lib.module.ts
+  Design regions name the JS onclick caller.
+- **Artifacts:** `review/review-framework.md`, `review/round-2/merged.md` (ledger in
+  `review/round-1/merged.md`), `review/disposition.md`.
 
 ### How to validate
 

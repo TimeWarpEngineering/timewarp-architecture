@@ -8,8 +8,9 @@
 // wwwroot/js is gitignored TypeScript emit; task 116 compiles TS before web-spa SWA discovery.
 // Task 200: web-spa re-globs emit into Content in that same target so the first host build of a
 // clean tree still tags this initializer; web-server fails the build if the host list omits it.
-// Passkey C# does not use window.Spa (on-demand import of web-authn.js). Counter still does
-// (Spa.Counter.*), so a missed initializer remains a failed build rather than a silent skip.
+// Passkey C# does not use window.Spa (on-demand import of web-authn.js). The Counter page's
+// JavaScript onclick still does (Spa.Counter.*), so a missed initializer remains a failed build
+// rather than a silent skip.
 // Task 240: static `_content` specifiers must match the kebab-case files shipped by
 // TimeWarp.State / TimeWarp.State.Plus 12.0.0-beta.3 (a PascalCase miss 404s the whole module).
 // https://learn.microsoft.com/aspnet/core/blazor/fundamentals/startup

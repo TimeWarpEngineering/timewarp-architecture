@@ -111,6 +111,7 @@ public class Should_Ban_Direct_Side_Effects_In_Components
       public interface ILocalStorageService
       {
         ValueTask SetItemAsStringAsync(string key, string data, CancellationToken cancellationToken = default);
+        ValueTask RemoveItemAsync(string key, CancellationToken cancellationToken = default);
         ValueTask<string> GetItemAsStringAsync(string key, CancellationToken cancellationToken = default);
       }
     }
@@ -286,6 +287,10 @@ public class Should_Ban_Direct_Side_Effects_In_Components
         private async Task OnDelete()
         {
           _ = await {|#1:Http.DeleteAsync("api/weather/1")|};
+          _ = await {|#2:Http.PostAsync("api/weather", null)|};
+          _ = await {|#3:Http.PutAsync("api/weather/1", null)|};
+          _ = await {|#4:Http.PatchAsync("api/weather/1", null)|};
+          _ = await {|#5:Http.SendAsync(new HttpRequestMessage(HttpMethod.Get, "api/weather"))|};
           _ = Http.BaseAddress;
         }
       }
@@ -294,6 +299,10 @@ public class Should_Ban_Direct_Side_Effects_In_Components
     CSharpAnalyzerTest<ComponentSideEffectAnalyzer, RoslynTestVerifier> test = Test(source);
     test.ExpectedDiagnostics.Add(Flag(0, "HttpClient.GetStringAsync"));
     test.ExpectedDiagnostics.Add(Flag(1, "HttpClient.DeleteAsync"));
+    test.ExpectedDiagnostics.Add(Flag(2, "HttpClient.PostAsync"));
+    test.ExpectedDiagnostics.Add(Flag(3, "HttpClient.PutAsync"));
+    test.ExpectedDiagnostics.Add(Flag(4, "HttpClient.PatchAsync"));
+    test.ExpectedDiagnostics.Add(Flag(5, "HttpClient.SendAsync"));
     await test.RunAsync();
   }
 
@@ -316,6 +325,7 @@ public class Should_Ban_Direct_Side_Effects_In_Components
           _ = await Session.ContainKeyAsync("later");
           _ = await Session.GetItemAsync<bool>("later");
           await {|#0:Session.RemoveItemAsync("later")|};
+          await {|#4:Local.RemoveItemAsync("k")|};
         }
 
         private async Task OnLater()
@@ -333,6 +343,7 @@ public class Should_Ban_Direct_Side_Effects_In_Components
     test.ExpectedDiagnostics.Add(Flag(1, "ISessionStorageService.SetItemAsync"));
     test.ExpectedDiagnostics.Add(Flag(2, "ISessionStorageService.ClearAsync"));
     test.ExpectedDiagnostics.Add(Flag(3, "ILocalStorageService.SetItemAsStringAsync"));
+    test.ExpectedDiagnostics.Add(Flag(4, "ILocalStorageService.RemoveItemAsync"));
     await test.RunAsync();
   }
 
