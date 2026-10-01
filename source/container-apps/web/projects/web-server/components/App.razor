@@ -5,6 +5,8 @@
 {
   [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
 
+  [Inject] private IHostEnvironment HostEnvironment { get; set; } = null!;
+
   private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
 
   private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
@@ -53,6 +55,11 @@
   <a class="dismiss">🗙</a>
 </div>
 
+@* Development/Testing only: classic script BEFORE blazor.web.js so pre-runtime boot failures are captured *@
+@if (BrowserLogForwarding.IsEnabled(HostEnvironment))
+{
+  <script src="js/browser-log-forwarder.js"></script>
+}
 <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

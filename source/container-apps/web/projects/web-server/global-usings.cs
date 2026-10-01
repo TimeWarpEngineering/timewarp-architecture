@@ -34,6 +34,7 @@ global using TimeWarp.Foundation.Configuration;
 global using TimeWarp.Foundation.CorsPolicies;
 global using TimeWarp.Foundation.Extensions;
 global using TimeWarp.Architecture.Features.Chat;
+global using TimeWarp.Architecture.Features.BrowserLogs.Application;
 global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Features.Identity.Application;
 global using TimeWarp.Architecture.Features.Identity.Infrastructure;
