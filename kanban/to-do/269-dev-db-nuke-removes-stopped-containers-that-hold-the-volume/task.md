@@ -54,12 +54,14 @@ The command should handle this itself, safely.
 - [x] Gates: `dev build` 0/0, dev-cli tests, `ganda repo audit`; fresh `bin/dev`
 - [x] Do **not** run `dev db nuke --yes` for real, and do not start an AppHost (both affect the
       maintainer's data)
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean)
+- [ ] Host `open-pr`
 
 ## Session
 
 - Created: 145993 (2026-10-01)
 - 2026-10-01 implement (ganda task work): helpers + command + tests + AGENTS.md line; gates green.
+- 2026-10-01 review (ganda task work, effort 2, roster: general): 1 round, 4 findings fixed, disposition clean.
 
 ## Notes
 
@@ -89,6 +91,17 @@ The command should handle this itself, safely.
   build (compile-includes db-nuke.cs), `ganda repo audit`. Fresh `bin/dev db nuke` dry run checked
   (no volumes in this worktree); real `docker ps` format output verified tab-separated.
   `dev db nuke --yes` was not run, and no AppHost was started.
+
+### Review disposition
+
+- Rounds: 1. Effort 2. Roster: general.
+- Final counts: bug 0. Suggestion 2 fixed. Nit 2 fixed. 0 open, 0 wontfix.
+- Disposition: **clean**. Fixes:
+  - M1/M2: the refusal and `docker rm`-failure messages no longer say "nothing removed" after `aspire stop --volumes` has already run. They now say "No container or remaining volume was removed" / "The remaining volume(s) were not removed".
+  - M3: the sweep message changed to "volume(s) `aspire stop` left behind".
+  - M4: rewrapped the Design comment.
+- Re-gated after the fixes: dev-cli-tests 102/102, `dev build` 0/0 on a fresh `bin/dev`, `ganda repo audit`.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

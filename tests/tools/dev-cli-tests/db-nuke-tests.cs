@@ -92,7 +92,7 @@ public class ContainerCleanup_Given_
     plan.Running.Single().Name.ShouldBe("postgres-running");
 
     string text = string.Join('\n', DbNuke.BuildRunningContainerRefusalLines(plan.Running));
-    text.ShouldContain("Nothing was removed");
+    text.ShouldContain("No container or remaining volume was removed");
     text.ShouldContain("aa11bb22cc33 postgres-running (Up 4 minutes)");
     text.ShouldContain("Stop the AppHost");
     text.ShouldNotContain("postgres-abcdefgh");

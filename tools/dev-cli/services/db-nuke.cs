@@ -86,7 +86,7 @@ internal static class DbNuke
   {
     List<string> lines =
     [
-      $"Error: {running.Count} container(s) still using this AppHost's volumes are not stopped. Nothing was removed:",
+      $"Error: {running.Count} container(s) still using this AppHost's volumes are not stopped. No container or remaining volume was removed:",
     ];
     lines.AddRange(running.Select(container => $"  {Describe(container)}"));
     lines.Add("Stop the AppHost (or `docker stop` the container) first, then re-run `dev db nuke --yes`.");

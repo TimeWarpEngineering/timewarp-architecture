@@ -26,8 +26,8 @@
 //      leftovers are `docker rm`'d and printed; if any is still running, nuke refuses, names it,
 //      and removes nothing. Never `docker rm -f`. Containers are found per volume, so only
 //      containers holding this checkout's volumes are ever touched.
-// Pure argument/listing/parsing/cleanup-decision/refusal logic lives in services/db-nuke.cs (dev-cli-tests gate it without
-// Aspire or Docker).
+// Pure argument/listing/parsing/cleanup-decision/refusal logic lives in services/db-nuke.cs
+// (dev-cli-tests gate it without Aspire or Docker).
 #endregion
 
 namespace DevCli.Commands;
@@ -165,7 +165,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
 
       if (!await RemoveStoppedContainersAsync(remaining)) return false;
 
-      Terminal.WriteLine($"Removing {remaining.Length} volume(s) Aspire adopted but does not own: {string.Join(", ", remaining)}");
+      Terminal.WriteLine($"Removing {remaining.Length} volume(s) `aspire stop` left behind: {string.Join(", ", remaining)}");
       CommandOutput remove = await Shell.Builder("docker")
         .WithArguments(DbNuke.BuildVolumeRemoveArguments(remaining))
         .WithWorkingDirectory(RepoRoot)
@@ -216,7 +216,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
       if (!remove.Success)
       {
         Terminal.WriteErrorLine(remove.Combined);
-        return Fail("Error: `docker rm` failed. No volume was removed; re-run `dev db nuke --yes`.");
+        return Fail("Error: `docker rm` failed. The remaining volume(s) were not removed; re-run `dev db nuke --yes`.");
       }
 
       return true;
