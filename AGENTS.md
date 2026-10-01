@@ -30,7 +30,8 @@ model choice, and available context/tokens are unknown to the estimator and chan
 
 Run from the repo root (the `dev` CLI resolves the root via git):
 
-- `dev run` — Aspire orchestrator (Development)
+- `dev run` — Aspire orchestrator (Development); `-lp <profile>` picks an AppHost launch profile
+  (e.g. `http`; default: first profile in launchSettings.json; needs Aspire CLI 13.6+)
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
 - `dev test` — every project under `tests/` (globbed, run one at a time — shared in-proc port base); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
