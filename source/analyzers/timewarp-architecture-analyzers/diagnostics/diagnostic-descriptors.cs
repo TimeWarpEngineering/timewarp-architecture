@@ -16,7 +16,11 @@
 // are the historical exception, declared on IngressRoutePrefixGenerator).
 // TWE009 is the [Page] Navigable opt-in contract: a registry destination needs a static route and
 // a literal bool (syntax-keyed generator), otherwise the page would silently miss the registry.
-// Severity: generation-contract violations (TWE002/003/007/008/009, TWE005/006) are Errors so a broken
+// TWE010/TWE011 are the [Page] multi-route contract (task 096): two route templates on one page
+// that Blazor would treat as the same route (TWE010), and route declarations the generator cannot
+// emit faithfully — stacked [Page], a non-literal additional route, or a token whose type disagrees
+// with an earlier route of the page (TWE011). Both are fail-closed: the page surface is not generated.
+// Severity: generation-contract violations (TWE002/003/007/008/009/010/011, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -60,6 +64,24 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Fail-closed: a navigation destination must be reachable without arguments (static route, IStaticRoute) and the opt-in must be the literal true or false.");
+
+  public static readonly DiagnosticDescriptor PageDuplicateRoute = new(
+    id: "TWE010",
+    title: "Duplicate [Page] route",
+    messageFormat: "Route '{1}' on '{0}' duplicates another route of the same page; no page surface is generated",
+    category: "Page",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: two routes of one page that differ only by case or token names are the same Blazor route (ambiguous match at runtime). Applies to the primary route, [Page] additional routes, and hand-written [Route] attributes on the same declaration.");
+
+  public static readonly DiagnosticDescriptor PageConflictingRouteDeclaration = new(
+    id: "TWE011",
+    title: "Conflicting [Page] route declaration",
+    messageFormat: "[Page] on '{0}' {1}; no page surface is generated",
+    category: "Page",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: one [Page] per page, with the primary route first and additional routes as further string-literal arguments; a route token shared with an earlier route keeps that route's type.");
 
   public static readonly DiagnosticDescriptor TypedIdInvalidShape = new(
     id: "TWE006",

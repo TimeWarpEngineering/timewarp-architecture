@@ -323,6 +323,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWE007 | unresolvable route or `HttpVerb` (missing/empty `[ApiRoute]`, unknown verb) — fail-closed; no emission |
 | TWE008 | `EnableApiEndpointGeneration` requires `ApiEndpointContractAssemblies` as AssemblyName allow-list (`web-contracts`, `api-contracts`); empty/typo/unmarked is fail-closed — no silent empty generation |
 | TWE009 | `[Page] Navigable = true` requires a static route (no `{token}`) and a literal `true`/`false` — otherwise the page would silently miss `PageRegistry` |
+| TWE010 | two routes of one `[Page]` page are the same Blazor route (case-insensitive, token names ignored) — primary, additional, or a hand-written `[Route]` repeating one; no page surface generated |
+| TWE011 | conflicting `[Page]` route declaration — stacked `[Page]` (put aliases on one: `[Page("/primary", "/alias")]`), a non-literal additional route, or an alias token typed differently from the primary route |
 | SG001 | shared source-generator log (resilience backstop) |
 | SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
 | SG010 | TypedId BCL surface generation failed (resilience) |

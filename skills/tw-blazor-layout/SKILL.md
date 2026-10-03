@@ -113,6 +113,15 @@ Concrete instance of the pattern in this repo:
   icon, policy) and adds `INavigationDestination`; `components/elements/TimeWarpNavLink.razor`
   constrains `TPage` to it, so every `components/NavMenu.razor` link is a registry entry.
   `Navigable = true` on a parameterized route (or a non-literal value) is **TWE009**.
+- **Multi-route (multi-tab) pages:** one `[Page]` takes the primary route first and alias routes
+  after it — `[Page("/clients", "/clients/revenue", "/clients/me-close", Policy = …)]`. The
+  generator emits one `[Route]` per path. The **primary** route owns `GetPageUrl`, `IStaticRoute`,
+  the `PageRegistry` row, and the `Navigable` (TWE009) judgment; aliases are `[Route]`-only, so a
+  parameterized alias on a static navigable page is fine. `Policy` covers every route of the page.
+  An untyped alias token reuses the type an earlier route gave that name (`/clients/{ClientId:string}` +
+  `/clients/{ClientId}/revenue`). Stacked `[Page]`, a non-literal alias, or an alias token typed
+  differently from an earlier route is **TWE011**. A route that repeats another route of the same page
+  (including a hand-written `[Route]`) is **TWE010**.
 - **Notification region:** `components/MessageBars.razor` + `NotificationState`
   (`features/notification/notification-state/`), painted by both shells; TWA0025 keeps outcome
   bars out of pages.

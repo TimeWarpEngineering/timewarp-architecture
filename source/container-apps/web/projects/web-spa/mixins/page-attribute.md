@@ -15,6 +15,27 @@ public partial class TodoItemPage : BaseComponent;
 public partial class SettingsPage : BaseComponent;
 ```
 
+**Multiple routes (multi-tab pages):** one `[Page]`, primary route first, aliases after it.
+
+```csharp
+[Page("/clients", "/clients/revenue", "/clients/me-close", Policy = Policies.ClientsRead, Navigable = true)]
+public partial class ClientsPage : BaseComponent;
+
+[Page("/clients/{ClientId:string}", "/clients/{ClientId}/revenue")]
+public partial class ClientDetailPage : BaseComponent;
+```
+
+| Concern | Uses |
+|---------|------|
+| `GetPageUrl`, `IStaticRoute`, `PageRegistry` row, `Navigable` / TWE009 | primary route only |
+| `[Route]` | one per route (primary + every alias) |
+| `Policy` | once per page (all routes) |
+| alias token without a type | inherits the type an earlier route gave that name |
+
+Errors (no page surface generated): **TWE010** — two routes of the page are the same Blazor route
+(case or token name only differ; includes a hand-written `[Route]` that repeats one). **TWE011** —
+stacked `[Page]`, a non-literal alias, or an alias token typed differently from an earlier route of the page.
+
 **Policy rules (TWE005):**
 
 | Form | Result |
