@@ -15,8 +15,8 @@ Steve's goal (2026-10-03): with Aspire support, the dev loop should not need Doc
 There is a concrete payoff on this machine: Docker Desktop repeatedly wipes the WSLInterop binfmt
 registration, which breaks `code .`. A watchdog timer works around it today.
 
-**This task is in backlog because its spec depends on answers we don't have yet.** Start with
-the spike, then elaborate the task and move it to to-do.
+**Blocked until Aspire supports wslc as a container runtime.** Start with
+the spike, then elaborate the implementation checklist from its answers.
 
 ## Known blockers (2026-10-03)
 
@@ -43,7 +43,7 @@ CI (GitHub ubuntu runners with Docker) is unaffected either way.
       it, or is there a provider?
 - [ ] Volumes and networking parity: named volumes (the postgres data volume identity from task
       266), the container network the YARP ingress uses, and the dashboard REPL (`WithRepl`).
-- [ ] Record the findings in Notes, then elaborate this task (or split it) and move it to to-do.
+- [ ] Record the findings in Notes, then elaborate the implementation checklist (or split into children).
 
 ## Likely work after the spike
 
