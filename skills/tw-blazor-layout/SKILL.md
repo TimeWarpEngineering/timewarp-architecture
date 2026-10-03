@@ -118,9 +118,9 @@ Concrete instance of the pattern in this repo:
   generator emits one `[Route]` per path. The **primary** route owns `GetPageUrl`, `IStaticRoute`,
   the `PageRegistry` row, and the `Navigable` (TWE009) judgment; aliases are `[Route]`-only, so a
   parameterized alias on a static navigable page is fine. `Policy` covers every route of the page.
-  An untyped alias token reuses the primary's type (`/clients/{ClientId:string}` +
+  An untyped alias token reuses the type an earlier route gave that name (`/clients/{ClientId:string}` +
   `/clients/{ClientId}/revenue`). Stacked `[Page]`, a non-literal alias, or an alias token typed
-  differently from the primary is **TWE011**. A route that repeats another route of the same page
+  differently from an earlier route is **TWE011**. A route that repeats another route of the same page
   (including a hand-written `[Route]`) is **TWE010**.
 - **Notification region:** `components/MessageBars.razor` + `NotificationState`
   (`features/notification/notification-state/`), painted by both shells; TWA0025 keeps outcome

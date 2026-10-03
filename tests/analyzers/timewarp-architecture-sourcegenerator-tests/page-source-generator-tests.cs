@@ -40,6 +40,7 @@ public class PageSourceGenerator_Tests
       result.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString()));
     ImmutableArray<Diagnostic> diagnostics = result.Diagnostics
       .Concat(result.Results.SelectMany(r => r.Diagnostics))
+      .Distinct()
       .ToImmutableArray();
     return (generated, diagnostics);
   }
@@ -409,11 +410,16 @@ public class PageSourceGenerator_Tests
       public partial class AliasDuplicatePage { }
       """);
 
-    diagnostics.Where(d => d.Id == "TWE010")
-      .Select(d => d.GetMessage(System.Globalization.CultureInfo.InvariantCulture))
-      .ShouldContain(m => m.Contains("CaseDuplicatePage"));
-    diagnostics.ShouldContain(d => d.Id == "TWE010" && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("TokenDuplicatePage"));
-    diagnostics.ShouldContain(d => d.Id == "TWE010" && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("AliasDuplicatePage"));
+    string[] messages =
+    [
+      .. diagnostics.Where(d => d.Id == "TWE010")
+        .Select(d => d.GetMessage(System.Globalization.CultureInfo.InvariantCulture)),
+    ];
+    // Exactly one report per offending page, naming the offending route text.
+    messages.Length.ShouldBe(3);
+    messages.Count(m => m.Contains("CaseDuplicatePage", StringComparison.Ordinal) && m.Contains("'/Clients'", StringComparison.Ordinal)).ShouldBe(1);
+    messages.Count(m => m.Contains("TokenDuplicatePage", StringComparison.Ordinal) && m.Contains("'/clients/{Id}'", StringComparison.Ordinal)).ShouldBe(1);
+    messages.Count(m => m.Contains("AliasDuplicatePage", StringComparison.Ordinal) && m.Contains("'/b'", StringComparison.Ordinal)).ShouldBe(1);
     generated.ShouldNotContain("partial class CaseDuplicatePage");
     generated.ShouldNotContain("partial class TokenDuplicatePage");
     generated.ShouldNotContain("partial class AliasDuplicatePage");
@@ -438,6 +444,70 @@ public class PageSourceGenerator_Tests
     // Pre-096 workaround (hand-written distinct alias) still generates.
     diagnostics.ShouldNotContain(d => d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("LegacyWorkaroundPage"));
     generated.ShouldContain("partial class LegacyWorkaroundPage : INavigableComponent, IStaticRoute");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Not_Report_TWE010_For_Routes_Differing_Only_By_Constraint_Type()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/a/{x:int}", "/a/{y:guid}")]
+      public partial class TypedShapePage { }
+      """);
+
+    diagnostics.Where(d => d.Id == "TWE010").ShouldBeEmpty();
+    generated.ShouldContain("[Route(\"/a/{x:int}\")]");
+    generated.ShouldContain("[Route(\"/a/{y:guid}\")]");
+    generated.ShouldContain("partial class TypedShapePage");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_Typed_Alias_Only_Token_As_Parameter_Without_Changing_GetPageUrl()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/orders", "/orders/{OrderId:Guid}")]
+      public partial class OrdersPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("[Route(\"/orders/{OrderId:guid}\")]");
+    generated.ShouldContain("[Parameter] public Guid OrderId { get; set; }");
+    generated.ShouldContain("public static string GetPageUrl() => global::System.FormattableString.Invariant($\"/orders\");");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE011_When_Two_Aliases_Type_One_Alias_Only_Token_Differently()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/p", "/a/{x:int}", "/b/{x:Guid}")]
+      public partial class AliasTypeConflictPage { }
+      """);
+
+    string[] messages =
+    [
+      .. diagnostics.Where(d => d.Id == "TWE011")
+        .Select(d => d.GetMessage(System.Globalization.CultureInfo.InvariantCulture)),
+    ];
+    messages.Length.ShouldBe(1);
+    messages[0].ShouldContain("AliasTypeConflictPage");
+    messages[0].ShouldContain("x");
+    messages[0].ShouldContain("an earlier route declares it as");
+    generated.ShouldNotContain("partial class AliasTypeConflictPage");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE005_Once_For_Multi_Route_Page()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/settings", "/prefs", "/preferences", Policy = "SettingsEdit")]
+      public partial class MultiPolicyPage { }
+      """);
+
+    diagnostics.Count(d => d.Id == "TWE005").ShouldBe(1);
+    generated.ShouldNotContain("partial class MultiPolicyPage");
     return Task.CompletedTask;
   }
 
@@ -488,6 +558,8 @@ public class PageSourceGenerator_Tests
           public partial class ClientsPage { }
           [Page("/a", "/A")]
           public partial class DuplicatePage { }
+          [Page("/tabs", "/tabs/one")]
+          public partial class TabsPage { }
           """),
       },
       new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
@@ -520,6 +592,25 @@ public class PageSourceGenerator_Tests
     reasons.ShouldAllBe(static r => r == IncrementalStepRunReason.Cached || r == IncrementalStepRunReason.Unchanged);
     run.Diagnostics.ShouldContain(static d => d.Id == "TWE009");
     run.Diagnostics.ShouldContain(static d => d.Id == "TWE010");
+
+    // Editing a multi-route page's alias string must invalidate its model and emit the new route.
+    SyntaxTree original = compilation.SyntaxTrees.ToList()[0];
+    SyntaxTree edited = original.WithChangedText(
+      Microsoft.CodeAnalysis.Text.SourceText.From(original.ToString().Replace("\"/tabs/one\"", "\"/tabs/two\"", StringComparison.Ordinal)));
+    compilation = compilation.ReplaceSyntaxTree(original, edited);
+    driver = driver.RunGenerators(compilation);
+
+    GeneratorRunResult editedRun = driver.GetRunResult().Results.Single();
+    string editedOutput = string.Join(
+      Environment.NewLine,
+      editedRun.GeneratedSources.Select(static s => s.SourceText.ToString()));
+    editedOutput.ShouldContain("[Route(\"/tabs/two\")]");
+    editedOutput.ShouldNotContain("/tabs/one");
+    editedRun.TrackedOutputSteps
+      .SelectMany(static pair => pair.Value)
+      .SelectMany(static step => step.Outputs)
+      .Select(static output => output.Reason)
+      .ShouldContain(static r => r != IncrementalStepRunReason.Cached && r != IncrementalStepRunReason.Unchanged);
     return Task.CompletedTask;
   }
 }

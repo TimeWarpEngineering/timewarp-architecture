@@ -30,11 +30,11 @@ public partial class ClientDetailPage : BaseComponent;
 | `GetPageUrl`, `IStaticRoute`, `PageRegistry` row, `Navigable` / TWE009 | primary route only |
 | `[Route]` | one per route (primary + every alias) |
 | `Policy` | once per page (all routes) |
-| alias token without a type | inherits the primary route's type for that name |
+| alias token without a type | inherits the type an earlier route gave that name |
 
 Errors (no page surface generated): **TWE010** — two routes of the page are the same Blazor route
 (case or token name only differ; includes a hand-written `[Route]` that repeats one). **TWE011** —
-stacked `[Page]`, a non-literal alias, or an alias token typed differently from the primary.
+stacked `[Page]`, a non-literal alias, or an alias token typed differently from an earlier route of the page.
 
 **Policy rules (TWE005):**
 

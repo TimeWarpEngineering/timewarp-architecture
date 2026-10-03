@@ -39,12 +39,16 @@
 //   TWE009 Navigable judgment. Additional routes are emitted as [Route] aliases only — never registry
 //   rows, never URL helpers — so a parameterized alias on a static navigable page is fine.
 // - Policy (TWE005) is per page, not per route: every route of the page is the same component.
-// - An alias token named like a primary token inherits its type when untyped ({ClientId} after
-//   {ClientId:string}) and must agree when typed (else TWE011). An alias-only token still gets a
-//   [Parameter] property, since Blazor fails to bind a route value with no matching property.
+// - An alias token named like an earlier route's token inherits its type when untyped ({ClientId}
+//   after {ClientId:string}) and must agree when typed (else TWE011) — also between two aliases,
+//   since the token gets one [Parameter] property. An alias-only token still gets that property,
+//   since Blazor fails to bind a route value with no matching property.
 // - TWE010: two routes of one page that Blazor treats as the same route (case-insensitive,
 //   token-name-free shape), including a hand-written [Route] repeating a [Page] route. Distinct
-//   hand-written [Route] aliases stay legal (the pre-096 workaround still compiles).
+//   hand-written [Route] aliases stay legal (the pre-096 workaround still compiles). Shape
+//   normalization covers the {name} / {name:type} tokens RouteParam recognizes; catch-all ({*x}),
+//   optional ({id?}) and parameterized-constraint tokens are not [Page] route grammar (no
+//   [Parameter] is generated for them) and compare as literal text.
 // - Errors (TWE005/010/011) are fail-closed: reported, and no page surface is emitted.
 // Incremental caching: PageModel is a value-equatable record (arrays by sequence) holding
 // location-free PageDiagnostic values; the Diagnostic is built in RegisterSourceOutput. A held
@@ -287,14 +291,16 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
     if (ns is null && errors.Count == 0) return null;
 
-    ParsedRoute primary = ParseRoute(route, primaryParameters: null, out _);
+    ParsedRoute primary = ParseRoute(route, knownParameters: null, out _);
     var seen = new Dictionary<string, string>(StringComparer.Ordinal) { [primary.ShapeKey] = route };
     var additionalAttributes = new List<string>();
     var parameters = new List<(string Type, string Name)>(primary.Parameters);
 
     foreach ((string additional, SyntaxNode node) in additionalRoutes)
     {
-      ParsedRoute parsed = ParseRoute(additional, primary.Parameters, out string? conflict);
+      // Agreement is checked against every token seen so far, so two aliases cannot give one
+      // alias-only token different types (the [Parameter] property has exactly one).
+      ParsedRoute parsed = ParseRoute(additional, parameters, out string? conflict);
       if (conflict is not null)
       {
         errors.Add(PageDiagnostic.From(DiagnosticDescriptors.PageConflictingRouteDeclaration, node, className, conflict));
@@ -360,10 +366,10 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Renders one route template. For an additional route (<paramref name="primaryParameters"/> set),
-  /// a token named like a primary token inherits its type when untyped and must agree when typed.
+  /// Renders one route template. For an additional route (<paramref name="knownParameters"/> set),
+  /// a token named like an earlier route's token inherits its type when untyped and must agree when typed.
   /// </summary>
-  private static ParsedRoute ParseRoute(string route, List<(string Type, string Name)>? primaryParameters, out string? conflict)
+  private static ParsedRoute ParseRoute(string route, List<(string Type, string Name)>? knownParameters, out string? conflict)
   {
     conflict = null;
     var result = new ParsedRoute();
@@ -386,14 +392,14 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       string? declared = m.Groups[2].Success ? m.Groups[2].Value : null;
       string type = declared ?? "string";
 
-      if (primaryParameters is not null)
+      if (knownParameters is not null)
       {
-        (string Type, string Name) match = primaryParameters
+        (string Type, string Name) match = knownParameters
           .FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         if (match.Name is not null)
         {
           if (declared is not null && !string.Equals(declared, match.Type, StringComparison.OrdinalIgnoreCase))
-            conflict ??= $"route '{route}' declares token '{name}' as {declared} but the primary route declares it as {match.Type}";
+            conflict ??= $"route '{route}' declares token '{name}' as {declared} but an earlier route declares it as {match.Type}";
           name = match.Name;
           type = match.Type;
         }

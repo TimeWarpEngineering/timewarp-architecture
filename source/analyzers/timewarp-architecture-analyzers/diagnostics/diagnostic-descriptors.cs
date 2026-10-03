@@ -19,7 +19,7 @@
 // TWE010/TWE011 are the [Page] multi-route contract (task 096): two route templates on one page
 // that Blazor would treat as the same route (TWE010), and route declarations the generator cannot
 // emit faithfully — stacked [Page], a non-literal additional route, or a token whose type disagrees
-// with the primary route (TWE011). Both are fail-closed: the page surface is not generated.
+// with an earlier route of the page (TWE011). Both are fail-closed: the page surface is not generated.
 // Severity: generation-contract violations (TWE002/003/007/008/009/010/011, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
@@ -81,7 +81,7 @@ internal static class DiagnosticDescriptors
     category: "Page",
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Fail-closed: one [Page] per page, with the primary route first and additional routes as further string-literal arguments; a route token shared with the primary route keeps the primary route's type.");
+    description: "Fail-closed: one [Page] per page, with the primary route first and additional routes as further string-literal arguments; a route token shared with an earlier route keeps that route's type.");
 
   public static readonly DiagnosticDescriptor TypedIdInvalidShape = new(
     id: "TWE006",

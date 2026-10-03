@@ -91,12 +91,13 @@ rule; one attribute keeps route + policy + opt-in together. Reason recorded in t
 - **New diagnostics** (SSOT `diagnostic-descriptors.cs`, `AnalyzerReleases.Unshipped.md`,
   AGENTS.md table): **TWE010** — two routes of one page are the same Blazor route (case-insensitive,
   token-name-free), including a hand-written `[Route]` repeating a `[Page]` route. **TWE011** —
-  stacked `[Page]`, non-literal alias, or alias token typed differently from the primary. Both
+  stacked `[Page]`, non-literal alias, or alias token typed differently from an earlier route
+  (primary or alias). Both
   fail-closed (no page surface emitted). Distinct hand-written `[Route]` aliases (the pre-096
   Crunchit workaround) still compile.
 - **Crunchit parity:** the Clients, Dashboard, and ClientDetail shapes are covered by tests.
 - **Docs:** `skills/tw-blazor-layout/SKILL.md` (navigation section), `web-spa/mixins/page-attribute.md`.
-- **Gates:** `page-source-generator-tests` + whole sourcegenerator suite 99/99 passing; `dev build` 0 warnings / 0 errors.
+- **Gates:** `page-source-generator-tests` + whole sourcegenerator suite 103/103 passing (after review fixes); `dev build` 0 warnings / 0 errors.
 
 ### How to validate
 
@@ -112,3 +113,21 @@ cd ../../.. && dotnet run tools/dev-cli/dev.cs -- build
 TWE009 primary-only behavior, TWE010/TWE011, and the incremental test, where every output is
 `Cached`/`Unchanged` with multi-route and TWE010 pages present. The full build reports 0 warnings and
 0 errors, and the existing web-spa `[Page]` usages are unchanged.
+
+### Review disposition
+
+- **Effort / roster:** 2. Reviewers were general and tests (sonnet subagents), orchestrated by the review oracle (claude-opus-5-5). There were 2 rounds: round 2 re-verified the fix delta.
+- **Final counts:** bug 0; suggestion 3 fixed; nit 2 fixed and 2 wontfix; 0 open.
+- **Disposition:** `accepted-exceptions`. M3 (TWE009 is suppressed while a fail-closed error is present) and M4 (CS0579 appears next to TWE011 for a stacked `[Page]`, which is intentional) are wontfix.
+- **Fixes:**
+  - TWE011 type agreement now runs alias vs alias, not just alias vs primary.
+  - The Design region states the TWE010 token-form scope.
+  - TWE010 assertions are tighter and now pin route text and report count.
+  - New tests cover:
+    - the constraint-distinct shape;
+    - a typed alias-only token;
+    - alias-vs-alias TWE011;
+    - TWE005 reported once on a multi-route page;
+    - cache invalidation when an alias is edited.
+  - The test helper's doubled diagnostics are fixed.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,tests,merged}.md`, `review/round-2/merged.md`, `review/disposition.md`
