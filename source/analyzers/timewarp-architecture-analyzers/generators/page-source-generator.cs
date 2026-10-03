@@ -1,5 +1,5 @@
 #region Purpose
-// For a Blazor page class marked [Page("/route"[, Policy = Policies.X])] generates [Route],
+// For a Blazor page class marked [Page("/route"[, "/alias", …][, Policy = Policies.X])] generates [Route]s,
 // INavigableComponent/IStaticRoute, GetPageUrl(...), Policy accessor, and [Parameter] props for
 // route tokens; plus one per-assembly PageRegistry of the pages that opt in as navigation
 // destinations (task 239-001). Origin: web-spa Page Moxy template, replaced in task 053.
@@ -29,7 +29,24 @@
 //   Policy): reflection-free, AOT/trim safe. Sorted by route (ordinal) for stable output.
 // - The registry is emitted only when the assembly declares at least one [Page], so assemblies
 //   that merely carry the generator never need INavigableComponent's Icon type.
-// Incremental caching: PageModel is a value-equatable record (Parameters by sequence) holding
+// Multi-route pages (task 096) — one [Page] with params additional routes, not stacked [Page]:
+// - [Page("/clients", "/clients/revenue", "/clients/me-close")]. The first argument is the
+//   PRIMARY route; the rest are ADDITIONAL routes. Stacked [Page] was rejected because each copy
+//   could carry its own Policy/Navigable, so "which declaration owns the page" would need a rule;
+//   one attribute keeps route + policy + opt-in in one place (same reason Navigable is a property).
+//   AllowMultiple = false makes the language enforce it; TWE011 adds the teaching message.
+// - Primary owns the page surface: GetPageUrl, IStaticRoute, RouteTemplate, PageRegistry, and the
+//   TWE009 Navigable judgment. Additional routes are emitted as [Route] aliases only — never registry
+//   rows, never URL helpers — so a parameterized alias on a static navigable page is fine.
+// - Policy (TWE005) is per page, not per route: every route of the page is the same component.
+// - An alias token named like a primary token inherits its type when untyped ({ClientId} after
+//   {ClientId:string}) and must agree when typed (else TWE011). An alias-only token still gets a
+//   [Parameter] property, since Blazor fails to bind a route value with no matching property.
+// - TWE010: two routes of one page that Blazor treats as the same route (case-insensitive,
+//   token-name-free shape), including a hand-written [Route] repeating a [Page] route. Distinct
+//   hand-written [Route] aliases stay legal (the pre-096 workaround still compiles).
+// - Errors (TWE005/010/011) are fail-closed: reported, and no page surface is emitted.
+// Incremental caching: PageModel is a value-equatable record (arrays by sequence) holding
 // location-free PageDiagnostic values; the Diagnostic is built in RegisterSourceOutput. A held
 // Diagnostic/Location pins old SyntaxTrees and never compares equal, which made every edit re-run
 // every step — and pages.Collect() would keep all of them alive in one cached array.
@@ -48,7 +65,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
   private const string AttributeName = "Page";
 
   // {name:type}? — page route tokens carry real C# type names (Guid, int, …), used directly.
-  [GeneratedRegex(@"\{(\w+)\s*:?(\w+)\}?")]
+  // An untyped token ({name}) is a string; the previous greedy pattern split its name instead.
+  [GeneratedRegex(@"\{(\w+)\s*(?::\s*(\w+))?\}")]
   private static partial Regex RouteParam();
 
   /// <summary>Registers incremental generator steps for [Page] surface emission.</summary>
@@ -71,9 +89,10 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     context.RegisterSourceOutput(pages.Combine(rootNamespace), static (spc, pair) =>
     {
       PageModel page = pair.Left;
-      if (page.PolicyDiagnostic is not null)
+      if (!page.Errors.IsEmpty)
       {
-        spc.ReportDiagnostic(page.PolicyDiagnostic.ToDiagnostic());
+        foreach (PageDiagnostic error in page.Errors)
+          spc.ReportDiagnostic(error.ToDiagnostic());
         return;
       }
 
@@ -90,22 +109,24 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     });
   }
 
-  // Value-equatable (incremental caching): Parameters compare by sequence, and diagnostics are
+  // Value-equatable (incremental caching): arrays compare by sequence, and diagnostics are
   // location-free PageDiagnostic values — a Diagnostic/Location would pin old SyntaxTrees in the
   // cache and never compare equal, so every edit would re-run every step and PageRegistry.
+  // Errors are fail-closed (TWE005/010/011): reported, and the page surface is not emitted.
   private sealed record PageModel(
     string Namespace,
     string ClassName,
     string HintName,
     string RouteAttribute,
+    ImmutableArray<string> AdditionalRouteAttributes,
     string Signature,
     string Format,
     ImmutableArray<(string Type, string Name)> Parameters,
     string PolicyExpression,
-    PageDiagnostic? PolicyDiagnostic,
-    string RouteTemplate = "",
-    bool Navigable = false, // valid opt-in only (static route): INavigationDestination + registry membership
-    PageDiagnostic? NavigableDiagnostic = null)
+    ImmutableArray<PageDiagnostic> Errors,
+    string RouteTemplate,
+    bool Navigable, // valid opt-in only (static primary route): INavigationDestination + registry membership
+    PageDiagnostic? NavigableDiagnostic)
   {
     public bool Equals(PageModel? other) =>
       other is not null
@@ -113,11 +134,12 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       && ClassName == other.ClassName
       && HintName == other.HintName
       && RouteAttribute == other.RouteAttribute
+      && AdditionalRouteAttributes.SequenceEqual(other.AdditionalRouteAttributes)
       && Signature == other.Signature
       && Format == other.Format
       && Parameters.SequenceEqual(other.Parameters)
       && PolicyExpression == other.PolicyExpression
-      && Equals(PolicyDiagnostic, other.PolicyDiagnostic)
+      && Errors.SequenceEqual(other.Errors)
       && RouteTemplate == other.RouteTemplate
       && Navigable == other.Navigable
       && Equals(NavigableDiagnostic, other.NavigableDiagnostic);
@@ -127,10 +149,28 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       unchecked
       {
         int hash = (StringComparer.Ordinal.GetHashCode(HintName) * 397) ^ StringComparer.Ordinal.GetHashCode(RouteAttribute);
+        hash = (hash * 397) ^ AdditionalRouteAttributes.Length;
         hash = (hash * 397) ^ Parameters.Length;
+        hash = (hash * 397) ^ Errors.Length;
         return (hash * 397) ^ Navigable.GetHashCode();
       }
     }
+
+    public static PageModel Failed(ClassDeclarationSyntax cls, string route, IEnumerable<PageDiagnostic> errors) =>
+      new(
+        Namespace: cls.Identifier.Text,
+        ClassName: cls.Identifier.Text,
+        HintName: cls.Identifier.Text,
+        RouteAttribute: route,
+        AdditionalRouteAttributes: [],
+        Signature: "",
+        Format: "",
+        Parameters: [],
+        PolicyExpression: "",
+        Errors: [.. errors],
+        RouteTemplate: route,
+        Navigable: false,
+        NavigableDiagnostic: null);
   }
 
   /// <summary>Location-free diagnostic payload; the Diagnostic is built in RegisterSourceOutput.</summary>
@@ -152,17 +192,32 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       Diagnostic.Create(Descriptor, Location.Create(FilePath, Span, LineSpan), Arg0, Arg1);
   }
 
+  /// <summary>One route template rendered for emission.</summary>
+  private sealed class ParsedRoute
+  {
+    public string RouteAttribute { get; set; } = "";
+    public string Format { get; set; } = "";
+    public string ShapeKey { get; set; } = ""; // case-insensitive, token-name-free: what Blazor treats as "the same route"
+    public List<(string Type, string Name)> Parameters { get; } = [];
+  }
+
   private static PageModel? GetPage(ClassDeclarationSyntax cls)
   {
-    AttributeSyntax? attr = cls.AttributeLists
-      .SelectMany(static l => l.Attributes)
-      .FirstOrDefault(static a => StripAttribute(a.Name.ToString()) == AttributeName);
+    AttributeSyntax[] pageAttributes =
+    [
+      .. cls.AttributeLists
+        .SelectMany(static l => l.Attributes)
+        .Where(static a => StripAttribute(a.Name.ToString()) == AttributeName),
+    ];
 
+    AttributeSyntax? attr = pageAttributes.FirstOrDefault();
     if (attr?.ArgumentList is null) return null;
 
+    string className = cls.Identifier.Text;
     string? route = null;
+    var additionalRoutes = new List<(string Route, SyntaxNode Node)>();
+    var errors = new List<PageDiagnostic>();
     string? policyExpression = null;
-    PageDiagnostic? policyDiagnostic = null;
     bool policyArgumentPresent = false;
     bool navigableRequested = false;
     ExpressionSyntax? invalidNavigable = null;
@@ -175,13 +230,9 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       {
         policyArgumentPresent = true;
         if (TryGetConstPolicyExpression(arg.Expression, out string expression))
-        {
           policyExpression = expression;
-        }
         else
-        {
-          policyDiagnostic = PageDiagnostic.From(DiagnosticDescriptors.PageInvalidPolicy, arg.Expression);
-        }
+          errors.Add(PageDiagnostic.From(DiagnosticDescriptors.PageInvalidPolicy, arg.Expression));
 
         continue;
       }
@@ -193,29 +244,39 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         continue;
       }
 
-      // Route: constructor positional or named RouteTemplate — string literal only.
-      if (arg.Expression is LiteralExpressionSyntax lit && lit.Token.Value is string value)
+      string? literal = arg.Expression is LiteralExpressionSyntax lit && lit.Token.Value is string value ? value : null;
+
+      // Primary route: first positional argument (or named RouteTemplate) — string literal only.
+      if (route is null && (argName is null || argName == "RouteTemplate"))
       {
-        if (argName is null || argName == "RouteTemplate")
-          route ??= value;
+        if (literal is null) return null;
+        route = literal;
+        continue;
+      }
+
+      // Additional routes: every further positional argument (params string[]).
+      if (argName is null)
+      {
+        if (literal is null)
+        {
+          errors.Add(PageDiagnostic.From(
+            DiagnosticDescriptors.PageConflictingRouteDeclaration, arg.Expression, className,
+            $"has a non-literal additional route '{arg.Expression}' (additional routes must be string literals)"));
+        }
+        else
+        {
+          additionalRoutes.Add((literal, arg.Expression));
+        }
       }
     }
 
     if (route is null) return null;
 
-    // Invalid Policy: still return a model so RegisterSourceOutput can report TWE005.
-    if (policyDiagnostic is not null)
+    foreach (AttributeSyntax extra in pageAttributes.Skip(1))
     {
-      return new PageModel(
-        Namespace: cls.Identifier.Text,
-        ClassName: cls.Identifier.Text,
-        HintName: cls.Identifier.Text,
-        RouteAttribute: route,
-        Signature: "",
-        Format: "",
-        Parameters: [],
-        PolicyExpression: "",
-        PolicyDiagnostic: policyDiagnostic);
+      errors.Add(PageDiagnostic.From(
+        DiagnosticDescriptors.PageConflictingRouteDeclaration, extra, className,
+        "is declared more than once (pass additional routes as further arguments of the one [Page]: [Page(\"/primary\", \"/alias\")])"));
     }
 
     string? ns = null;
@@ -224,11 +285,91 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       if (p is BaseNamespaceDeclarationSyntax n) { ns = n.Name.ToString(); break; }
     }
 
-    if (ns is null) return null;
+    if (ns is null && errors.Count == 0) return null;
 
+    ParsedRoute primary = ParseRoute(route, primaryParameters: null, out _);
+    var seen = new Dictionary<string, string>(StringComparer.Ordinal) { [primary.ShapeKey] = route };
+    var additionalAttributes = new List<string>();
+    var parameters = new List<(string Type, string Name)>(primary.Parameters);
+
+    foreach ((string additional, SyntaxNode node) in additionalRoutes)
+    {
+      ParsedRoute parsed = ParseRoute(additional, primary.Parameters, out string? conflict);
+      if (conflict is not null)
+      {
+        errors.Add(PageDiagnostic.From(DiagnosticDescriptors.PageConflictingRouteDeclaration, node, className, conflict));
+        continue;
+      }
+
+      if (seen.ContainsKey(parsed.ShapeKey))
+      {
+        errors.Add(PageDiagnostic.From(DiagnosticDescriptors.PageDuplicateRoute, node, className, additional));
+        continue;
+      }
+
+      seen[parsed.ShapeKey] = additional;
+      additionalAttributes.Add(parsed.RouteAttribute);
+
+      // Tokens only an additional route declares still need a [Parameter] for Blazor to bind.
+      foreach ((string Type, string Name) p in parsed.Parameters)
+      {
+        if (!parameters.Any(existing => string.Equals(existing.Name, p.Name, StringComparison.OrdinalIgnoreCase)))
+          parameters.Add(p);
+      }
+    }
+
+    // A hand-written [Route] on the same declaration that repeats a [Page] route is the same
+    // ambiguous-route bug; distinct hand-written aliases stay legal (the pre-096 workaround).
+    foreach (AttributeSyntax routeAttr in cls.AttributeLists
+      .SelectMany(static l => l.Attributes)
+      .Where(static a => StripAttribute(a.Name.ToString()) == "Route"))
+    {
+      if (routeAttr.ArgumentList?.Arguments.FirstOrDefault()?.Expression is LiteralExpressionSyntax { Token.Value: string handWritten }
+        && seen.ContainsKey(ParseRoute(handWritten, primary.Parameters, out _).ShapeKey))
+      {
+        errors.Add(PageDiagnostic.From(DiagnosticDescriptors.PageDuplicateRoute, routeAttr, className, handWritten));
+      }
+    }
+
+    if (errors.Count > 0 || ns is null) return PageModel.Failed(cls, route, errors);
+
+    string signature = string.Join(", ", primary.Parameters.Select(static p => p.Type + " " + p.Name));
+    string hint = ns + "." + className;
+    string policy = policyArgumentPresent
+      ? policyExpression!
+      : "Policies.Anonymous";
+
+    // Navigable judges the primary route only; parameterized additional routes are plain aliases.
+    PageDiagnostic? navigableDiagnostic = null;
+    if (invalidNavigable is not null)
+    {
+      navigableDiagnostic = PageDiagnostic.From(
+        DiagnosticDescriptors.PageInvalidNavigable, invalidNavigable, className, "must be the literal true or false");
+    }
+    else if (navigableRequested && primary.Parameters.Count > 0)
+    {
+      navigableDiagnostic = PageDiagnostic.From(
+        DiagnosticDescriptors.PageInvalidNavigable, attr, className, $"requires a static route, but '{route}' has parameters");
+    }
+
+    bool navigable = navigableRequested && navigableDiagnostic is null;
+
+    return new PageModel(
+      ns, className, hint, primary.RouteAttribute, [.. additionalAttributes], signature, primary.Format, [.. parameters], policy,
+      Errors: [], RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic);
+  }
+
+  /// <summary>
+  /// Renders one route template. For an additional route (<paramref name="primaryParameters"/> set),
+  /// a token named like a primary token inherits its type when untyped and must agree when typed.
+  /// </summary>
+  private static ParsedRoute ParseRoute(string route, List<(string Type, string Name)>? primaryParameters, out string? conflict)
+  {
+    conflict = null;
+    var result = new ParsedRoute();
     var urlSegments = new List<string>();
     var formatParts = new List<string>();
-    var parameters = new List<(string Type, string Name)>();
+    var keyParts = new List<string>();
 
     foreach (string segment in route.Split('/'))
     {
@@ -237,44 +378,40 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       {
         urlSegments.Add(segment);
         formatParts.Add(segment);
+        keyParts.Add(segment.ToLowerInvariant());
         continue;
       }
 
       string name = m.Groups[1].Value;
-      string type = m.Groups[2].Value;
+      string? declared = m.Groups[2].Success ? m.Groups[2].Value : null;
+      string type = declared ?? "string";
+
+      if (primaryParameters is not null)
+      {
+        (string Type, string Name) match = primaryParameters
+          .FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (match.Name is not null)
+        {
+          if (declared is not null && !string.Equals(declared, match.Type, StringComparison.OrdinalIgnoreCase))
+            conflict ??= $"route '{route}' declares token '{name}' as {declared} but the primary route declares it as {match.Type}";
+          name = match.Name;
+          type = match.Type;
+        }
+      }
+
       string lower = type.ToLowerInvariant();
       string fmt = lower == "datetime" ? ":yyyy-MM-dd" : string.Empty;
 
       formatParts.Add("{" + name + fmt + "}");
-      parameters.Add((type, name));
+      result.Parameters.Add((type, name));
       urlSegments.Add(lower != "string" ? "{" + name + ":" + lower + "}" : "{" + name + "}");
+      keyParts.Add("{" + (lower != "string" ? lower : "") + "}");
     }
 
-    string routeAttribute = string.Join("/", urlSegments);
-    string signature = string.Join(", ", parameters.Select(static p => p.Type + " " + p.Name));
-    string format = string.Join("/", formatParts);
-    string hint = ns + "." + cls.Identifier.Text;
-    string policy = policyArgumentPresent
-      ? policyExpression!
-      : "Policies.Anonymous";
-
-    PageDiagnostic? navigableDiagnostic = null;
-    if (invalidNavigable is not null)
-    {
-      navigableDiagnostic = PageDiagnostic.From(
-        DiagnosticDescriptors.PageInvalidNavigable, invalidNavigable, cls.Identifier.Text, "must be the literal true or false");
-    }
-    else if (navigableRequested && parameters.Count > 0)
-    {
-      navigableDiagnostic = PageDiagnostic.From(
-        DiagnosticDescriptors.PageInvalidNavigable, attr, cls.Identifier.Text, $"requires a static route, but '{route}' has parameters");
-    }
-
-    bool navigable = navigableRequested && navigableDiagnostic is null;
-
-    return new PageModel(
-      ns, cls.Identifier.Text, hint, routeAttribute, signature, format, [.. parameters], policy, PolicyDiagnostic: null,
-      RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic);
+    result.RouteAttribute = string.Join("/", urlSegments);
+    result.Format = string.Join("/", formatParts);
+    result.ShapeKey = string.Join("/", keyParts).TrimEnd('/');
+    return result;
   }
 
   /// <summary>
@@ -315,7 +452,9 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
   private static string Emit(PageModel page, string rootNamespace)
   {
-    bool hasParameters = page.Parameters.Length > 0;
+    // IStaticRoute follows the primary route (GetPageUrl's signature); Parameters also holds
+    // alias-only tokens, which need [Parameter] props but never URL arguments.
+    bool hasParameters = page.Signature.Length > 0;
 
     var sb = new StringBuilder();
     sb.Append("// <auto-generated/>\n");
@@ -324,6 +463,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("  using ").Append(rootNamespace).Append(";\n\n");
 
     sb.Append("  [Route(\"").Append(page.RouteAttribute).Append("\")]\n");
+    foreach (string additional in page.AdditionalRouteAttributes)
+      sb.Append("  [Route(\"").Append(additional).Append("\")]\n");
     sb.Append("  partial class ").Append(page.ClassName).Append(" : INavigableComponent");
     if (!hasParameters) sb.Append(", IStaticRoute");
     if (page.Navigable) sb.Append(", INavigationDestination");
@@ -360,7 +501,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    [\n");
 
     foreach (PageModel page in pages
-      .Where(static p => p.PolicyDiagnostic is null && p.Navigable)
+      .Where(static p => p.Errors.IsEmpty && p.Navigable)
       .OrderBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
       .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
     {
@@ -381,14 +522,16 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     var sb = new StringBuilder();
     sb.Append("// <auto-generated/>\n");
     sb.Append("namespace ").Append(ns).Append("\n{\n");
-    sb.Append("    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = true)]\n");
+    sb.Append("    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false)]\n");
     sb.Append("    internal sealed class PageAttribute : System.Attribute\n    {\n");
     sb.Append("        public string RouteTemplate { get; set; }\n");
     sb.Append("        /// <summary>Const policy field reference only (e.g. Policies.SettingsEdit). Omit Policy for the anonymous default.</summary>\n");
     sb.Append("        public string Policy { get; set; }\n");
     sb.Append("        /// <summary>Literal true lists this static-route page in PageRegistry (NavMenu + palette destinations). Default false.</summary>\n");
     sb.Append("        public bool Navigable { get; set; }\n");
-    sb.Append("        public PageAttribute(string RouteTemplate) { this.RouteTemplate = RouteTemplate; }\n");
+    sb.Append("        /// <summary>Extra routes emitted as [Route] aliases; GetPageUrl and PageRegistry use RouteTemplate (the primary route) only.</summary>\n");
+    sb.Append("        public string[] AdditionalRoutes { get; }\n");
+    sb.Append("        public PageAttribute(string RouteTemplate, params string[] AdditionalRoutes) { this.RouteTemplate = RouteTemplate; this.AdditionalRoutes = AdditionalRoutes; }\n");
     sb.Append("    }\n}\n");
     return sb.ToString();
   }

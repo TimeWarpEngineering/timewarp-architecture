@@ -26,10 +26,10 @@ Same pattern: `DashboardPage` (`[Page("/dashboard")]` + `[Route("/")]`),
 
 ## Checklist
 
-- [ ] Design multi-route API (stacked `[Page]` vs `[Page(routes: ...)]`)
-- [ ] Implement generator emission for N routes
-- [ ] Tests in architecture generators package
-- [ ] Document in page-attribute / INavigablePage guidance
+- [x] Design multi-route API (stacked `[Page]` vs `[Page(routes: ...)]`)
+- [x] Implement generator emission for N routes
+- [x] Tests in architecture generators package
+- [x] Document in page-attribute / INavigablePage guidance
 
 ### Cockpit note (2026-10-03): this spec predates PageRegistry
 
@@ -71,3 +71,44 @@ or wherever the `[Page]` guidance lives. Do not start an AppHost.
 - **Owner:** TimeWarp.Architecture.Generators.
 - **Consumer:** Crunchit Clients / Client detail / Dashboard (033-002…005).
 - **Catalogued:** Crunchit 033-007.
+
+## Results
+
+**API shape: one `[Page]` with params aliases** — `[Page("/primary", "/alias", …, Policy = …, Navigable = …)]`
+(`PageAttribute(string RouteTemplate, params string[] AdditionalRoutes)`, `AllowMultiple = false`).
+Stacked `[Page]` was rejected: each copy could carry its own Policy/Navigable, needing an ownership
+rule; one attribute keeps route + policy + opt-in together. Reason recorded in the
+`PageSourceGenerator` Design region.
+
+- **Primary vs additional:** the first argument is primary — it alone drives `GetPageUrl`,
+  `IStaticRoute`, `RouteTemplate`, the `PageRegistry` row, and the TWE009 judgment. Aliases are
+  emitted as `[Route]` only (never registry rows), so a parameterized alias on a static navigable
+  page is legal and still emitted.
+- **Policy / TWE005:** once per page.
+- **Alias tokens:** an untyped alias token inherits the primary's type (`{ClientId}` after
+  `{ClientId:string}`; `{OrderId}` after `{OrderId:Guid}` emits `:guid`); alias-only tokens get a
+  `[Parameter]` prop. Fixed the route-token regex, which mis-split untyped `{Name}` tokens.
+- **New diagnostics** (SSOT `diagnostic-descriptors.cs`, `AnalyzerReleases.Unshipped.md`,
+  AGENTS.md table): **TWE010** — two routes of one page are the same Blazor route (case-insensitive,
+  token-name-free), including a hand-written `[Route]` repeating a `[Page]` route. **TWE011** —
+  stacked `[Page]`, non-literal alias, or alias token typed differently from the primary. Both
+  fail-closed (no page surface emitted). Distinct hand-written `[Route]` aliases (the pre-096
+  Crunchit workaround) still compile.
+- **Crunchit parity:** the Clients, Dashboard, and ClientDetail shapes are covered by tests.
+- **Docs:** `skills/tw-blazor-layout/SKILL.md` (navigation section), `web-spa/mixins/page-attribute.md`.
+- **Gates:** `page-source-generator-tests` + whole sourcegenerator suite 99/99 passing; `dev build` 0 warnings / 0 errors.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+cd tests/analyzers/timewarp-architecture-sourcegenerator-tests
+dotnet test -c Release -- --filter-class PageSourceGenerator
+cd ../../.. && dotnet run tools/dev-cli/dev.cs -- build
+```
+
+**Expect:** all PageSourceGenerator tests pass. That includes the three Crunchit parity tests, the
+TWE009 primary-only behavior, TWE010/TWE011, and the incremental test, where every output is
+`Cached`/`Unchanged` with multi-route and TWE010 pages present. The full build reports 0 warnings and
+0 errors, and the existing web-spa `[Page]` usages are unchanged.

@@ -16,6 +16,8 @@ TWE006 | TypedId | Error | [TypedId] target must be a readonly partial record st
 TWE007 | ApiEndpoint | Error | Unknown or unresolvable HttpVerb (fail-closed; never defaults to Get)
 TWE008 | ApiEndpoint | Error | FastEndpointSourceGenerator: ApiEndpointContractAssemblies empty, mistyped, or unmarked (silent-empty endpoint generation)
 TWE009 | Page | Error | [Page] Navigable = true requires a static route and a literal bool (else silently missing from PageRegistry)
+TWE010 | Page | Error | [Page] routes of one page that are the same Blazor route (primary, additional, or hand-written [Route]); no page surface generated
+TWE011 | Page | Error | Conflicting [Page] route declaration: stacked [Page], non-literal additional route, or token type disagreeing with the primary route
 SG001 | SourceGenerator | Warning | Shared source-generator log (resilience backstop)
 SG002 | SourceGenerator | Warning | EnableApiEndpointGeneration true but FastEndpoints / BaseFastEndpoint missing
 SG010 | SourceGenerator | Warning | TypedId BCL surface generation failed (resilience backstop, names the type)

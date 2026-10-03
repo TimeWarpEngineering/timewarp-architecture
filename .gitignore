@@ -487,3 +487,7 @@ oracle-*.log
 
 # Task-work host progress lines beside kitchens (local; not product)
 task-work.progress.log
+
+# Routine journals, mission briefs, and progress logs beside kitchens (local; not product)
+*.next.md
+*.progress.log
