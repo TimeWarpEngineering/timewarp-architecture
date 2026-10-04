@@ -20,8 +20,6 @@
 
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..\..</DockerfileContext>
     <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
     <!-- Only generate from web-contracts — web-spa transitively references api-contracts. -->
     <ApiEndpointContractAssemblies>web-contracts</ApiEndpointContractAssemblies>

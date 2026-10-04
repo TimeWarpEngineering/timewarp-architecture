@@ -7,8 +7,6 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..\..</DockerfileContext>
     <EnableApiEndpointGeneration>true</EnableApiEndpointGeneration>
     <ApiEndpointContractAssemblies>api-contracts</ApiEndpointContractAssemblies>
   </PropertyGroup>

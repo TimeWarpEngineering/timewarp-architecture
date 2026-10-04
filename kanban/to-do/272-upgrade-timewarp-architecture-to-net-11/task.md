@@ -17,7 +17,7 @@ Related existing tasks (do not duplicate blindly):
 2. Mirror root `global.json` SDK pin into **all 21** project-local `tests/**/global.json` files (Jaribu MTP / timewarp-jaribu#20).
 3. Central TFM lives in root `Directory.Build.props` (`net10.0` today). Also fix outliers: template pack csproj still `net9.0`; evals fixture `net10.0`.
 4. Move Microsoft.* / ASP.NET / EF / Extensions / NetAnalyzers CPM pins from the **10.0.x** train to **11.x**; bump `dotnet-ef` local tool; keep TimeWarp first-party pins forward-only (fix upstream if needed).
-5. Update CI `actions/setup-dotnet` (`10.0.x` → `11.0.x`), grpc Dockerfile `ARG dotnet_version=10.0`, Aspire skill docs that hardcode .NET 10.
+5. Update CI `actions/setup-dotnet` (`10.0.x` → `11.0.x`) and Aspire skill docs that hardcode .NET 10. (No Dockerfiles remain — task 070-002; SDK container build follows the TFM.)
 6. Revisit in-repo .NET 11 trackers: Microsoft.OpenApi 3.x (task 257), web-spa TypeScript/StaticWebAssets workaround (tracked for .NET 11), Aspire `AddDotnetProject()` (step 13, from 267).
 7. Gates before done (implementation phase only): `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version` (version + pins same commit, policy 124).
 
@@ -31,7 +31,7 @@ Related existing tasks (do not duplicate blindly):
 - [ ] 1. Root `global.json` SDK pin (`10.0.400` → `11.0.100-rc.1` or GA) + `rollForward`
 - [ ] 2. Mirror SDK pin in all **21** `tests/**/global.json` (keep `test.runner: Microsoft.Testing.Platform`)
 - [ ] 3. CI: `.github/workflows/workflow.yml` `dotnet-version: '10.0.x'` → `11.0.x` (both `ci` and `template-smoke` jobs)
-- [ ] 4. Docker: `source/container-apps/grpc/.../Dockerfile` `ARG dotnet_version=10.0` → `11.0` (mcr sdk/aspnet jammy tags)
+- [ ] 4. Container images: no Dockerfiles remain (deleted by task 070-002) — `aspire publish` uses the .NET SDK container build, whose aspnet base image follows the TFM. Only confirm no `ContainerBaseImage`/`ContainerFamily` pin was added to a server csproj since; if one was, bump it to the 11.0 tag
 - [ ] 5. TFM: root `Directory.Build.props` `net10.0` → `net11.0`; `evals/contracts/fixtures/web-contracts.csproj`; template pack `timewarp-architecture-template.csproj` (`net9.0` → `net11.0`)
 - [ ] 6. Local tools: `.config/dotnet-tools.json` `dotnet-ef` `10.0.12` → 11.x; consider `microsoft.dotnet-httprepl` (still 8.0.0)
 - [ ] 7. CPM `Directory.Packages.props`: all `Microsoft.AspNetCore.*` / `Microsoft.EntityFrameworkCore*` / `Microsoft.Extensions.*` / `System.*` on 10.0.12 → 11.x; `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.401 → 11-aligned; Aspire.Hosting.* / AppHost Sdk 13.6.0 as needed for net11
@@ -75,7 +75,7 @@ Related existing tasks (do not duplicate blindly):
 | Template pack csproj | **net9.0** (stale outlier) | net11.0 |
 | Evals fixture | net10.0 | net11.0 |
 | CI setup-dotnet | 10.0.x (ci + template-smoke) | 11.0.x |
-| grpc Dockerfile | ARG 10.0 → mcr sdk/aspnet jammy | 11.0 |
+| Container base image | SDK container build (no Dockerfiles, task 070-002) — follows TFM | no edit unless a `ContainerBaseImage` pin exists |
 | `dotnet-ef` tool | 10.0.12 | 11.x |
 | httprepl tool | 8.0.0 | review |
 | Microsoft.* CPM | mostly 10.0.12 / 10.10.0 | 11.x |
@@ -88,7 +88,7 @@ Related existing tasks (do not duplicate blindly):
 1. **global.json / SDK roll-forward** (root) — nothing builds without the SDK
 2. **Project-local global.json mirrors** (21 under tests/) — Jaribu aggregators break if mismatched
 3. **CI setup-dotnet + runner** (`.github/workflows/workflow.yml` 10.0.x → 11.0.x) — gates must restore SDK before merge
-4. **Docker base images** (grpc Dockerfile `dotnet_version`) — container builds lag TFM otherwise
+4. **Container base images** — none pinned (SDK container build follows the TFM, task 070-002); check only for a later `ContainerBaseImage` pin
 5. **Directory.Build.props TFM** (+ template pack net9.0 outlier + evals fixture)
 6. **Microsoft.* / ASP.NET / EF / Extensions / System.* CPM** aligned to 11
 7. **dotnet-tools.json** (dotnet-ef; httprepl)

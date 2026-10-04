@@ -6,8 +6,6 @@
 
   <PropertyGroup>
     <Nullable>enable</Nullable>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..</DockerfileContext>
   </PropertyGroup>
 
   <!--#if (web) -->

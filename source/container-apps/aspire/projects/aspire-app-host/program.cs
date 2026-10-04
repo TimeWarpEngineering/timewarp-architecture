@@ -88,6 +88,13 @@
 // Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so
 // "Healthy" means "answers HTTP through the DCP host proxy", not merely "container Running".
 // AddYarp registers no health check of its own; see the inline note at the call site.
+// Container images (task 070-002): there are no hand-written Dockerfiles. `aspire publish` builds each
+// AddProject resource's image with the .NET SDK container build (Microsoft.NET.Sdk.Web enables it by
+// default), and the ingress is the AddYarp container image, not the yarp project. No ContainerRepository /
+// ContainerFamily / ContainerBaseImage properties are set: Aspire supplies the repository and tag per
+// resource, and the SDK picks the aspnet base image matching the project's TFM, so a .NET bump needs no
+// image edit. Add those properties to a server csproj only when a deployment target actually needs a
+// different base image (e.g. chiseled/alpine).
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
