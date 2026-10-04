@@ -194,8 +194,29 @@ cd ../../analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Relea
 - Manual check: in `CorsPolicy`, change `public static readonly CorsPolicy Any` to
   `public static CorsPolicy Any { get; } = …`. `dev build` should fail with TWA0028.
 
+### Review disposition
+
+- **Rounds:** 1, effort 3 (by-diff budget). Roster: `general`.
+- **Final counts:**
+  - bug: 0
+  - suggestion: 0
+  - nit: 2, both wontfix
+  - open: 0
+- **Disposition:** `accepted-exceptions`
+  - M1: a permanently-null member field defeats the cache. It costs performance only; results stay correct.
+  - M2: cross-subclass CompareTo vs Equals. Value-only comparison is documented and predates this change.
+- **Gates re-verified by the reviewer:**
+  - `dev build`: 0/0
+  - foundation-domain-tests: 62/62
+  - foundation-contracts-tests: 25/25
+  - analyzers: 192/192
+  - `ganda repo audit`: pass
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`
+
 ## Session
 
 - Created: 2026-07-19
 - 2026-10-04 (implementer, ganda task work): implemented all hardening items. Extraction left as an
   open question with analysis. Gates green (build 0/0, test, template-smoke, audit).
+- 2026-10-04 (review oracle, ganda task work): tw-implementation-review round 1 (general, effort 3) → accepted-exceptions (0 open; 2 nits wontfix). Gates re-verified.
