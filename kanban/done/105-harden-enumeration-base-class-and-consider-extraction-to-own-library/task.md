@@ -39,7 +39,7 @@ Improvements identified in review (2026-07-19):
 - [x] STJ JsonConverter (fail closed on unknown values) + round-trip tests
 - [x] Analyzer: enumeration members must be public static readonly fields
 - [x] Reconcile `#region Design` in enumeration.cs with the changes
-- [ ] Decide: extract to standalone library (`timewarp-enumeration` or similar)? — **open question for Steve**; analysis below under *Extract vs keep*
+- [x] Decide: extract to standalone library (`timewarp-enumeration` or similar)? — **decided 2026-10-04: keep in TimeWarp.Foundation.Domain until the trigger (see Decision note)**; analysis below under *Extract vs keep*
 
 ## Notes
 
@@ -129,7 +129,7 @@ equality**, so the semantic change breaks nothing.
   little, but contracts now depend on a domain package. A standalone enumeration package would turn
   that edge into contracts → enumeration only. This is the strongest concrete argument for
   extraction.
-- **Open question for Steve:** keep Enumeration in `TimeWarp.Foundation.Domain` (status quo after
+- **Decided (2026-10-04, see Decision note):** was an open question — keep Enumeration in `TimeWarp.Foundation.Domain` (status quo after
   this task), split it into a monorepo `TimeWarp.Enumeration` package, or move it to its own repo?
   Recommendation: keep it until a non-foundation consumer exists. If the contracts → domain edge is
   unwanted, choose the monorepo-package middle path, not a new repo.
@@ -213,6 +213,16 @@ cd ../../analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Relea
   - `ganda repo audit`: pass
 - **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
   `review/round-1/merged.md`, `review/disposition.md`
+
+### Decision (2026-10-04, Steve)
+
+Option 2 chosen: no contracts -> domain reference; `EnumerationJsonConverterFactory` is unregistered
+by default (the converter, factory, tests and TWA0028 stay in foundation-domain; apps opt in on their
+own `JsonSerializerOptions`). Extraction is deferred with this trigger: the first contract that
+genuinely needs an Enumeration (per-member behavior a plain enum cannot carry) triggers extracting
+Enumeration + its converter into a small standalone package that both contracts and domain
+reference, then registering the converter in `ContractSerializationDefaults`. Until then it stays in
+`TimeWarp.Foundation.Domain`. The extraction open question is closed.
 
 ## Session
 

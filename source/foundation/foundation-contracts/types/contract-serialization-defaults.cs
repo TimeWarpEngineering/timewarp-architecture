@@ -11,11 +11,14 @@
 // null so member names write as declared; allowIntegerValues: false so integers and unknown
 // strings fail closed with JsonException rather than mapping to 0/None). Read is case-insensitive
 // (STJ default) — not a silent None map. Pure discriminators with no per-member behavior stay
-// PLAIN C# enums. A foundation-domain Enumeration (Bogard) that does appear in a contract
-// round-trips by member Name through EnumerationJsonConverterFactory (ordinal read; unknown names
-// and non-string tokens throw JsonException). That registration is why foundation-contracts
-// references foundation-domain (which is itself dependency-free); see task 105's extraction
-// question for the standalone-package alternative.
+// PLAIN C# enums: contract discriminators are plain C# enums. foundation-domain Enumeration is
+// kept out of contracts so contracts carry no domain dependency (EnumerationJsonConverterFactory
+// exists in foundation-domain but is NOT registered here; an app that needs it adds it to its own
+// JsonSerializerOptions).
+// Trigger: the first contract that genuinely needs an Enumeration - per-member behavior a plain
+// enum cannot carry - triggers extracting Enumeration + its converter into a small standalone
+// package that both contracts and domain reference, then registering the converter here (see
+// task 105's extraction analysis).
 //
 // Declaring options once here removes copies that previously agreed only by convention. Options is
 // a shared instance (System.Text.Json freezes options on first use; no seam participant mutates
@@ -30,7 +33,7 @@ namespace TimeWarp.Foundation.Types;
 /// </summary>
 public static class ContractSerializationDefaults
 {
-  /// <summary>The canonical contract-seam serializer options (camelCase properties; PascalCase string enums; Enumeration members by name).</summary>
+  /// <summary>The canonical contract-seam serializer options (camelCase properties; PascalCase string enums).</summary>
   public static JsonSerializerOptions Options { get; } = CreateOptions();
 
   /// <summary>Applies the canonical settings to an existing instance (DI <c>Configure</c> pattern).</summary>
@@ -41,11 +44,6 @@ public static class ContractSerializationDefaults
     {
       options.Converters.Add(
         new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false));
-    }
-
-    if (!options.Converters.OfType<EnumerationJsonConverterFactory>().Any())
-    {
-      options.Converters.Add(new EnumerationJsonConverterFactory());
     }
   }
 

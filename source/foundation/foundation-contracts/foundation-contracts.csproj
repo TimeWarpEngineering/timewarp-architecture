@@ -15,12 +15,6 @@
     <PackageReference Include="OneOf" />
   </ItemGroup>
 
-  <!-- Domain primitives (dependency-free): ContractSerializationDefaults registers the Enumeration
-       JSON converter (task 105). -->
-  <ItemGroup>
-    <ProjectReference Include="..\foundation-domain\foundation-domain.csproj" />
-  </ItemGroup>
-
   <!-- The contracts generator (task 053) ships as an analyzer asset of this package. foundation-contracts
        only DEFINES the markers (it doesn't apply them), so we build the generator (for ordering) but
        do NOT run it here; we BUNDLE its dll as an analyzer asset (same pattern as timewarp-nuru) so

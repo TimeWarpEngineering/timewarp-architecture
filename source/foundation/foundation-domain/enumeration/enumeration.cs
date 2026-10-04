@@ -28,8 +28,10 @@
 // returning null so callers cannot ignore an unknown code; TryFrom* are the non-throwing forms.
 //
 // JSON: EnumerationJsonConverterFactory writes the Name and reads it back via TryFromName,
-// failing closed (JsonException) on an unknown name or a non-string token.
-// ContractSerializationDefaults registers it for the contract seam.
+// failing closed (JsonException) on an unknown name or a non-string token. The converter is NOT
+// registered on the contract seam by default (contracts use plain enums and carry no domain
+// dependency; see the trigger in ContractSerializationDefaults). Apps register it themselves on
+// their own JsonSerializerOptions where needed.
 #endregion
 
 namespace TimeWarp.Foundation.Enumerations;
