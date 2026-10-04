@@ -32,7 +32,7 @@ RevokeCredential, UpdateProfile, UpdateSiteSettings) have had no caller until no
 
 ## Depends on
 
-- 267
+- 272
 
 ## Phase 1: design (stop for Steve before building)
 
@@ -80,7 +80,7 @@ it there and release it first.
 
 ## Checklist
 
-- [ ] Depends on task 267 (.NET 11 + `AddDotnetProject`); do not start before 267 merges
+- [ ] Depends on task 272 (.NET 11 + `AddDotnetProject`, merged from 267); do not start before 272 merges
 - [ ] Phase 1 `design.md` (items 1–7, recommendation plus alternatives each); hand back to Steve
 - [ ] Steve's decisions recorded in this task
 - [ ] Phase 2 implementation per the approved design, with tests (mapping, permissions, approval,

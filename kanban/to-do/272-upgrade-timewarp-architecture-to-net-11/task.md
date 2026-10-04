@@ -7,7 +7,7 @@ Bump **timewarp-architecture** from **.NET 10 / net10.0** to **.NET 11 / net11.0
 **This task is analysis + ordered upgrade planning only until picked up for implementation.** Do **not** implement product code, open a product PR, or start the TFM bump until an agent claims implementation work (prefer GA; RC1 is go-live if Steve authorizes early).
 
 Related existing tasks (do not duplicate blindly):
-- **267** — full upgrade + Aspire `AddDotnetProject()` adoption (already in to-do; blocked on SDK). Prefer consolidating implementation under 267 **or** steal/depend this id — keep one owner.
+- **267** — merged into this task 2026-10-04 (cockpit, per Steve). This task is the single .NET 11 owner, including Aspire `AddDotnetProject()` (step 13).
 - **257** — Microsoft.OpenApi 3.x (gated on AspNetCore.OpenApi .NET 11 train).
 - **271** — net11 agentic UI over TimeWarp.State action catalog (depends on net11 landing).
 
@@ -18,14 +18,14 @@ Related existing tasks (do not duplicate blindly):
 3. Central TFM lives in root `Directory.Build.props` (`net10.0` today). Also fix outliers: template pack csproj still `net9.0`; evals fixture `net10.0`.
 4. Move Microsoft.* / ASP.NET / EF / Extensions / NetAnalyzers CPM pins from the **10.0.x** train to **11.x**; bump `dotnet-ef` local tool; keep TimeWarp first-party pins forward-only (fix upstream if needed).
 5. Update CI `actions/setup-dotnet` (`10.0.x` → `11.0.x`) and Aspire skill docs that hardcode .NET 10. (No Dockerfiles remain — task 070-002; SDK container build follows the TFM.)
-6. Revisit in-repo .NET 11 trackers: Microsoft.OpenApi 3.x (task 257), web-spa TypeScript/StaticWebAssets workaround (tracked for .NET 11), Aspire `AddDotnetProject()` (task 267).
+6. Revisit in-repo .NET 11 trackers: Microsoft.OpenApi 3.x (task 257), web-spa TypeScript/StaticWebAssets workaround (tracked for .NET 11), Aspire `AddDotnetProject()` (step 13, from 267).
 7. Gates before done (implementation phase only): `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version` (version + pins same commit, policy 124).
 
 ## Checklist
 
 ### Preflight (before any code)
 - [ ] Confirm SDK available on TWE-001 / CI (prefer GA 11.0.x; else RC1 go-live with Steve OK)
-- [ ] Decide ownership vs task **267** (depend / steal / merge checklist) so AddDotnetProject is not forked
+- [x] Ownership vs task **267** decided: 267 merged into 272 (2026-10-04); 272 owns AddDotnetProject
 
 ### Ordered upgrade steps (implement in this order)
 - [ ] 1. Root `global.json` SDK pin (`10.0.400` → `11.0.100-rc.1` or GA) + `rollForward`
@@ -40,18 +40,28 @@ Related existing tasks (do not duplicate blindly):
 - [ ] 10. Docs/skills/samples: AGENTS.md ".NET 10", Aspire skill SDK tables, web-spa `index.md`, safety-guardrail `bin/Debug/net10.0` examples
 - [ ] 11. Unblock / coordinate **257** (OpenApi 3.x) once AspNetCore.OpenApi 11 declares OpenApi >=3
 - [ ] 12. Revisit web-spa TypeScript early-compile workaround vs `Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets` (.NET 11 tracker in web-spa.csproj)
-- [ ] 13. (If not done under 267) Aspire `AddDotnetProject()` + TWA0007 reconciliation
+- [ ] 13. Aspire `AddDotnetProject()` (`Aspire.Hosting.Dotnet`), folded in from 267. Adopt it once it is
+      out of prerelease; if it is still prerelease, record that and ask Steve. Rewrite the
+      `AddProject<Projects.*>` calls, adjust the `Projects.*` typed `ProjectReference` wiring, and
+      reconcile TWA0007 (resource names = `ServiceNames`) with the new API. The CLI skill
+      `aspire-project-v2-migration` may help, but review its output. The point is coordinated
+      restore and multi-threaded MSBuild on the .NET 11 SDK.
 - [ ] 14. Fix all new net11 warnings-as-errors; no blanket suppressions
 - [ ] 15. Version bump + CPM first-party pins same commit; `dev template-smoke` + publish path
 
-### Explicit non-goals for *this* claim session
-- [x] Do **not** implement until this task is picked up for coding
-- [x] Analysis-only task creation (2026-10-02 Architecture agent)
+### Start condition
+- Prefer .NET 11 **GA** (~2026-11-10). Start on RC1 only if Steve authorizes it, and record it as
+  prerelease.
+- Land task **070-002** (Dockerfile removal) first if it is still open. Step 4 then has nothing
+  to bump.
+- Do **not** start an AppHost. A full-solution TFM bump is a heavy build: run serially and call
+  `dotnet build-server shutdown` before finishing.
 
 ## Session
 
 - Created: 501620 (2026-10-02)
 - Analysis inventory: Architecture / Grok executor on TWE-001 master worktree
+- 2026-10-04: task 267 merged in (AddDotnetProject → step 13); 271 now depends on 272 (cockpit, per Steve)
 
 ## Notes
 
@@ -83,7 +93,7 @@ Related existing tasks (do not duplicate blindly):
 6. **Microsoft.* / ASP.NET / EF / Extensions / System.* CPM** aligned to 11
 7. **dotnet-tools.json** (dotnet-ef; httprepl)
 8. **Analyzers / NetAnalyzers / Roslynator / CodeAnalysis.***
-9. **Aspire SDK + Hosting packages** (and AddDotnetProject when ready — see 267)
+9. **Aspire SDK + Hosting packages** (and AddDotnetProject when ready — step 13, from 267)
 10. **TimeWarp sibling package pins** (forward-only; upstream TFM support first)
 11. **OpenApi 3.x** (task 257 — blocked until AspNetCore.OpenApi 11 allows it)
 12. **web-spa TypeScript/StaticWebAssets** cleanup if SDK ships the tracked targets
@@ -104,7 +114,7 @@ Related existing tasks (do not duplicate blindly):
 ### Blockers
 
 - Machine/CI must have SDK 11 installed or setup-dotnet must resolve `11.0.x` (incl. preview quality if RC).
-- Overlap with task **267** — coordinate before dual implementation.
+- Task **267** merged in (2026-10-04); no overlap remains.
 - First-party TimeWarp packages without net11 TFM support must be fixed upstream first.
 
 ## Results
