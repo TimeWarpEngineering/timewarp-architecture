@@ -108,3 +108,4 @@ template-smoke ends with `Template smoke SUCCEEDED`.
 - Created: 2026-10-03 (rewrite of 070)
 - 2026-10-04: implemented (headless implementer); gates green
 - 2026-10-04: implementation review (headless review oracle, Claude Opus 5.5, effort 1) — clean
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-04T15:16:07Z
