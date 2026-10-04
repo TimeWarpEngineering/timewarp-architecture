@@ -10,9 +10,15 @@
 // Enums on the wire are PascalCase member-name strings (JsonStringEnumConverter with namingPolicy
 // null so member names write as declared; allowIntegerValues: false so integers and unknown
 // strings fail closed with JsonException rather than mapping to 0/None). Read is case-insensitive
-// (STJ default) — not a silent None map. These stay PLAIN C# enums —
-// not foundation-domain Enumeration (Bogard): pure discriminators with no per-member behavior;
-// Enumeration would pull a domain dependency into public contracts and still needs a STJ converter.
+// (STJ default) — not a silent None map. Pure discriminators with no per-member behavior stay
+// PLAIN C# enums: contract discriminators are plain C# enums. foundation-domain Enumeration is
+// kept out of contracts so contracts carry no domain dependency (EnumerationJsonConverterFactory
+// exists in foundation-domain but is NOT registered here; an app that needs it adds it to its own
+// JsonSerializerOptions).
+// Trigger: the first contract that genuinely needs an Enumeration - per-member behavior a plain
+// enum cannot carry - triggers extracting Enumeration + its converter into a small standalone
+// package that both contracts and domain reference, then registering the converter here (see
+// task 105's extraction analysis).
 //
 // Declaring options once here removes copies that previously agreed only by convention. Options is
 // a shared instance (System.Text.Json freezes options on first use; no seam participant mutates
