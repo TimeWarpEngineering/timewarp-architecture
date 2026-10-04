@@ -55,6 +55,33 @@ Improvements identified in review (2026-07-19):
   discriminators and the identity library is deliberately runtime-dependency-free. This task is
   about the Enumeration class itself, not migrating identity.
 
+### Cockpit note (2026-10-04)
+
+- **Extraction is Steve's decision.** Implement the hardening items in place, under
+  `source/foundation/foundation-domain/enumeration/`. For the last checklist item, write a short
+  extract-vs-keep analysis in Notes:
+  - who would consume it outside foundation;
+  - the package and repo cost;
+  - versioning against `TimeWarp.Foundation.*`;
+  - what SmartEnum already covers.
+
+  Then leave the decision as an open question for Steve. Do **not** create a new repo or package.
+- The `==`/`!=` and `IEquatable` change alters semantics, from reference to Value plus exact
+  type. Find every `==` on an Enumeration across the repo (`dotnet` search or Roslyn) and confirm
+  that none relied on reference equality. Record the result.
+- **Analyzer:** use the next free TWA id. Register it in the descriptor SSOT,
+  `AnalyzerReleases.Unshipped.md`, the AGENTS.md enforcement table, and the Analyzers package row.
+  An analyzer registry change means a full rebuild.
+- **JSON converter:** contract serialization goes through `ContractSerializationDefaults`. Wire the
+  converter so contract round-trips work, add round-trip tests (co-located Jaribu or
+  `web-contracts-tests`), and fail closed on unknown values.
+- `TimeWarp.Foundation.*` is a published package: public surface needs real XML docs, and
+  `dev check-version` applies. Bump the version and pins in the same commit if required.
+- The identity library now ships as the `TimeWarp.Identity` package, so the Notes path
+  `source/libraries/timewarp-identity` may be stale. This task does not touch identity.
+- Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`. Do not start an
+  AppHost.
+
 ## Session
 
 - Created: 2026-07-19
