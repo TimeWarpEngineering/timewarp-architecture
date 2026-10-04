@@ -5,8 +5,6 @@
     <NoWarn>$(NoWarn);CA1051</NoWarn>   <!-- Visible fields on demo SuperheroService DTO-shaped members -->
     <NoWarn>$(NoWarn);CA1848</NoWarn>   <!-- LoggerMessage delegates — hosted proto generator uses LogInformation -->
     <NoWarn>$(NoWarn);CA1849</NoWarn>   <!-- Sync File.WriteAllText in proto generation hosted service -->
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>

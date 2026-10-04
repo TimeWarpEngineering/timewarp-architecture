@@ -36,14 +36,67 @@ grpc Dockerfile.
 
 ## Checklist
 
-- [ ] Evidence that nothing uses the Dockerfiles (recorded in Notes)
-- [ ] Dockerfile(s), `<DockerfileContext>` and VS container remnants removed
-- [ ] Any needed SDK container properties added, with the reason in the Design region
-- [ ] 272's Dockerfile step updated
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
-- [ ] Do **not** start an AppHost
+- [x] Evidence that nothing uses the Dockerfiles (recorded in Notes)
+- [x] Dockerfile(s), `<DockerfileContext>` and VS container remnants removed
+- [x] Any needed SDK container properties added, with the reason in the Design region (none needed; reason recorded)
+- [x] 272's Dockerfile step updated
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Do **not** start an AppHost
 - [ ] Implementation review; host `open-pr`
+
+## Notes
+
+Evidence that nothing used the Dockerfile (searched with `git ls-files` and `grep -rni` for
+`Dockerfile`, `DockerfileContext`, `DockerDefaultTargetOS`, `Containers.Tools`, `docker`):
+
+- **Only one Dockerfile was tracked:** `source/container-apps/grpc/projects/grpc-server/Dockerfile`.
+  There was no `.dockerignore`, no launchSettings `Docker` profile, and no
+  `Microsoft.VisualStudio.Azure.Containers.Tools.Targets` reference.
+- **`aspire publish`:** the AppHost uses `AddProject<…>` for api/grpc/web. Nothing calls
+  `WithDockerfile`, `AddDockerfile` or `PublishAsDockerFile`. Aspire builds project images through
+  the .NET SDK container build, so it never reads a Dockerfile. No script, CI step or `dev` command
+  runs `aspire publish` or `aspire deploy`.
+- **CI:** nothing in `.github/` mentions docker or a Dockerfile.
+- **`dev` commands:** the only docker use is the `docker` CLI in `db nuke`/`db reset`, for volume
+  and container cleanup. They do no image builds.
+- **Template config:** `.template.config/` and `timewarp-templates/` never mention docker.
+- **yarp:** the AppHost ingress is `AddYarp(...)`, the `mcr.microsoft.com/dotnet/nightly/yarp`
+  container image. `yarp.csproj` is not an Aspire resource, but it is **not** dead weight. It is
+  the standalone gateway (an alternative ingress mode, as the AppHost Design region describes),
+  and `tests/common/timewarp-testing` references it for the in-proc YARP host
+  (`yarp-integration-tests`). Only its `DockerfileContext` and `DockerDefaultTargetOS` were
+  dead, so the project stays.
+- **SDK container properties:** none were added. `Microsoft.NET.Sdk.Web` enables SDK container
+  support by default, Aspire supplies the repository and tag for each resource, and the base
+  image follows the TFM. The reason is recorded in the AppHost `program.cs` Design region.
+
+## Results
+
+- Deleted the grpc-server `Dockerfile`.
+- Removed `<DockerDefaultTargetOS>` and `<DockerfileContext>` from `api-server.csproj`,
+  `grpc-server.csproj`, `web-server.csproj` and `yarp.csproj`. These were not inside any template
+  flag region.
+- The AppHost `program.cs` Design region now records the container-image decision.
+- Task 272's step 4, its Notes table row and its dependency-order item no longer mention a
+  Dockerfile. They now say to check only for a `ContainerBaseImage` pin added later.
+- Gates (all in this worktree): `dev build` 0 warnings / 0 errors; `dev test` passed;
+  `dev template-smoke` succeeded; `ganda repo audit` passes all checks.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+git ls-files | grep -iE 'dockerfile|dockerignore' | grep -v '^kanban/'
+grep -rnE 'DockerfileContext|DockerDefaultTargetOS' source tests
+./bin/dev build
+./bin/dev template-smoke
+```
+
+**Expect:** both greps print nothing; `dev build` reports 0 warnings / 0 errors;
+template-smoke ends with `Template smoke SUCCEEDED`.
 
 ## Session
 
 - Created: 2026-10-03 (rewrite of 070)
+- 2026-10-04: implemented (headless implementer); gates green
