@@ -60,3 +60,7 @@ _Pending._
 ## Disposition
 
 - 2026-09-16: shelved to backlog by decision (Steve). `dev entra setup` now persists the tenant name, so the secrets-only status path only misses on hand-set or env-set secrets. Not worth an extra Graph call per status run. Revisit only if that case shows up.
+- 2026-10-04: closed as won't-do (Steve). Since 223, `dev entra setup` persists the tenant name,
+  so the gap only appears with hand-set or env-set secrets, and that case has not come up. Closed
+  rather than left in backlog so it stops reading as open work. The spec above is complete; if
+  the case ever appears, reopen it with a new task that references this one.
