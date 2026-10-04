@@ -69,3 +69,11 @@ record that it is prerelease.
 ### How to validate
 
 *(required before done)*
+
+## Disposition (2026-10-04)
+
+Merged into **272** (Upgrade timewarp-architecture to .NET 11), per Steve. 272 has the fuller
+ordered plan: 21 test `global.json` mirrors, CI `setup-dotnet`, the template pack `net9.0`
+outlier, `dotnet-ef`, and the analyzer and CPM trains. 272 now also owns this task's Aspire
+`AddDotnetProject()` adoption as step 13. Task 271 now depends on 272. Closed with no
+implementation.
