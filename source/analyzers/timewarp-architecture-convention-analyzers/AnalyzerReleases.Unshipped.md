@@ -27,3 +27,4 @@ TWA0024 | Design | Warning | EndpointAuthorizePolicyAgreementAnalyzer: [Endpoint
 TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with Error/Success intent outside the shell MessageBars host
 TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
 TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason
+TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclass member is not a public static readonly field
