@@ -86,7 +86,7 @@ task 275's "B vs C comparison" (in `kanban/done/275-hypermedia/task.md`) first.
       - the M4 check refuses hidden or unpermitted entries
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 - [x] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: accepted-exceptions); host `open-pr`
 
 ## Notes
 
@@ -138,7 +138,10 @@ task 275's "B vs C comparison" (in `kanban/done/275-hypermedia/task.md`) first.
 - **Microsoft 365 coverage gap (from 275).**
   - Closed host-free: `CredentialOffers_For_` covers the "offered" side, including the
     revoked-Entra case.
-  - End to end, only "not offered" is reachable, because the in-proc host runs with Entra off.
+  - Closed end to end: the in-proc host starts with Entra off, and `GetCredentialsOffers_Returns_`
+    turns it on per test (toggle-and-restore, as in protected-page-deep-link-tests) to cover
+    "offered, not linked" (Link offered) and "offered, active account linked" (no Link), besides
+    "not offered".
   - SPA: the offered Link row runs the real `LinkMicrosoft365` navigation.
 
 ## Session
@@ -151,6 +154,10 @@ task 275's "B vs C comparison" (in `kanban/done/275-hypermedia/task.md`) first.
   - Added the skill section.
   - First `dev test` caught a regression of mine: `EntraSignInOffer` short-circuited before the store
     read, which skipped seed-on-read. Fixed; all suites green.
+
+- 2026-10-05: review oracle (headless, Claude Opus 5.5).
+  - Effort 3: general, tests and security reviewers in round 1; round 2 was a re-verification.
+  - Fixed 9 findings on this id. Disposition is accepted-exceptions.
 
 ## Results
 
@@ -229,3 +236,31 @@ Expect:
 Optional manual check (not performed here): run `dev run` and sign in with two passkeys. On
 `/Settings`, revoke one and watch Revoke disable with its hint. Press Ctrl-K on `/Settings`: there
 are "Credentials: Revoke · …" rows and no Rename rows.
+
+### Implementation review
+
+- **Rounds:** 2. **Roster:** general, tests and security in round 1, at effort 3 (by-diff budget). Round 2 was a general re-verification.
+- **Final counts:**
+  - bug: 0
+  - suggestion: 5 fixed
+  - nit: 4 fixed and 2 wontfix
+  - open: 0
+- **Disposition:** `accepted-exceptions`. Two nits are wontfix:
+  - M3: the Link follow-up fetch is harmless;
+  - M11: the SPA accepts any permitted catalog action a server offer names, which is the recorded M4 decision.
+- **Fixes:**
+  - Design-region accuracy (Ctrl-K Link row on /Settings; the AddPasskeyPrompt exemption from the offer runner);
+  - the SPA scripted BFF calls the real `CredentialOffers.For`;
+  - new tests: API-level Link Microsoft 365 offered/linked, server offers contradicting the count, and the unauthenticated M4 refusal;
+  - stronger cross-page refusal and mock round-trip assertions.
+- **Re-run after the fixes:**
+  - `dev build`: 0 errors;
+  - web-spa-integration: 146/146;
+  - web-server-integration: 287 passed, plus the 1 always-skipped test;
+  - web-contracts: 47/47;
+  - `ganda repo audit`: passes.
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/{general,tests,security,merged}.md`
+  - `review/round-2/merged.md`
+  - `review/disposition.md`

@@ -516,10 +516,17 @@ public class GetCredentials_Response_Should
     parsed.Offers.Count.ShouldBe(response.Offers.Count);
     for (int index = 0; index < response.Offers.Count; index++)
     {
-      parsed.Offers[index].Name.ShouldBe(response.Offers[index].Name);
-      parsed.Offers[index].Subject.ShouldBe(response.Offers[index].Subject);
-      parsed.Offers[index].Arguments[OfferedActionNames.CredentialIdArgument].GetString()
-        .ShouldBe(response.Offers[index].Arguments[OfferedActionNames.CredentialIdArgument].GetString());
+      OfferedAction expected = response.Offers[index];
+      OfferedAction actual = parsed.Offers[index];
+      actual.Name.ShouldBe(expected.Name);
+      actual.Label.ShouldBe(expected.Label);
+      actual.Subject.ShouldBe(expected.Subject);
+      // Every argument, keyed — a page-level offer has none, a credential-bound one has credentialId.
+      actual.Arguments.Keys.Order().ShouldBe(expected.Arguments.Keys.Order());
+      foreach ((string key, JsonElement value) in expected.Arguments)
+      {
+        actual.Arguments[key].GetRawText().ShouldBe(value.GetRawText(), $"offer {index} argument '{key}'");
+      }
     }
 
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);

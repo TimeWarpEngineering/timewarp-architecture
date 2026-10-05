@@ -8,8 +8,8 @@
 // nickname), Revoke only while CredentialRules.CanRevoke holds over the count of EVERY active
 // credential type — what RevokeCredential.Handler counts. Page-level: Link Microsoft 365 while
 // CredentialRules.CanLinkMicrosoft365 holds. Pure over summaries + the offered flag, so the rule
-// table is testable without a host (including the Microsoft 365 "offered" side the in-proc host
-// cannot reach, because it runs with Entra off). Revoked rows never get an offer.
+// table is testable without a host, and the SPA's scripted BFF calls it directly so client tests
+// cannot drift from it. Revoked rows never get an offer.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

@@ -2,16 +2,19 @@
 // Hypermedia approach B on the real Credentials pages (task 279): the SPA runs only what the server's
 // GetCredentials offers name — through the catalog, with the real Credentials actions — refreshes to
 // the follow-up set, refuses unknown names, bad arguments, stale or forged rows and hidden or
-// unpermitted catalog entries (275 review M4), and contributes Ctrl-K rows only on Settings and Passkeys.
+// unpermitted catalog entries and anonymous callers (275 review M4), and contributes Ctrl-K rows only on Settings and Passkeys.
 #endregion
 
 #region Design
 // C-create in-proc SPA ServiceProvider per test (AGENTS.md default): real TimeWarp.State pipeline,
 // real IActionCatalog, real CommandPaletteContext + CredentialsContextSource, a TestNavigationManager
 // for the current path, and the shared ScriptedCredentialsApiService standing in for the BFF. The
-// script applies the server's offer rule and the real effects (revoke/rename), so "the follow-up
-// payload changes the set" is observed end to end on the client; the rule itself, against the real
-// handler, is pinned in web-server-integration-tests (credential-offers-tests). This file proves the
+// script calls the server's real offer rule (CredentialOffers.For) and applies the real effects
+// (revoke/rename), so "the follow-up payload changes the set" is observed end to end on the client;
+// the rule against the real handler is pinned in web-server-integration-tests
+// (credential-offers-tests). SuppressOffer / ExtraOffers make the server's offers contradict the
+// credential count, so "follows the server" is distinguishable from "counts on the client". The
+// principal is switchable (SignOut) for the M4 "sign in first" case. This file proves the
 // client runs what it is given and nothing else, through the entry points the pages and the palette
 // use: CredentialOfferRows.RunAsync (page buttons, with input) and CommandPaletteRunner.RunAsync
 // (palette). Permissions are a constructor argument so the M4 "unpermitted" case uses a real
@@ -88,6 +91,44 @@ public class CredentialOffers_Should_
     spa.Api.Credentials.RemoveAll(static credential => credential.Type == CredentialType.AgentKey);
     await scope.Send(new CredentialsState.FetchCredentialsActionSet.Action());
     scope.Store.GetState<CredentialsState>().Offers.Count(static offer => offer.Name == OfferedActionNames.RevokeCredential).ShouldBe(2);
+  }
+
+  public static async Task Follow_The_Server_When_Its_Offers_Contradict_The_Count()
+  {
+    using OffersSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    CredentialSummary first = spa.Api.AddPasskey("Work laptop", "aaaa1111");
+    CredentialSummary second = spa.Api.AddPasskey("Phone", "bbbb2222");
+    // Two active passkeys — a client count would allow Revoke — but the server offers none.
+    spa.Api.Scripted.SuppressOffer = static offer => offer.Name == OfferedActionNames.RevokeCredential;
+    await OpenAsync(scope, SettingsPath);
+
+    CredentialsState state = scope.Store.GetState<CredentialsState>();
+    state.IsOffered(OfferedActionNames.RevokeCredential, first.Id.Value).ShouldBeFalse();
+    state.IsOffered(OfferedActionNames.RevokeCredential, second.Id.Value).ShouldBeFalse();
+    state.IsOffered(OfferedActionNames.RenameCredential, first.Id.Value).ShouldBeTrue("the rest of the server's set is untouched");
+    Context(scope).Rows().ShouldNotContain(static row => row.Target == OfferedActionNames.RevokeCredential);
+    (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == OfferedActionNames.RevokeCredential);
+    int before = spa.Api.Requests.Count;
+
+    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+
+    spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
+    Warnings(scope).ShouldContain(static title => title.EndsWith("is not offered here now.", StringComparison.Ordinal));
+
+    // The reverse: one active passkey — a client count would forbid Revoke — but the server offers it.
+    spa.Api.Scripted.SuppressOffer = null;
+    spa.Api.Credentials.Remove(second);
+    spa.Api.ExtraOffers.Add(OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", first.Id));
+    await scope.Send(new CredentialsState.FetchCredentialsActionSet.Action());
+
+    scope.Store.GetState<CredentialsState>().IsOffered(OfferedActionNames.RevokeCredential, first.Id.Value).ShouldBeTrue();
+    Context(scope).Rows().Count(static row => row.Target == OfferedActionNames.RevokeCredential).ShouldBe(1);
+
+    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+
+    spa.Api.Requests.OfType<RevokeCredential.Command>().Single().CredentialId.ShouldBe(first.Id.Value);
+    Messages(scope).ShouldContain("Credential revoked.");
   }
 
   public static async Task Run_The_Offered_Revoke_And_Refresh_To_The_Follow_Up_Set()
@@ -279,8 +320,32 @@ public class CredentialOffers_Should_
     Context(scope).Rows().ShouldBeEmpty();
 
     // A row copied on Settings cannot be run from another page.
-    await RunAsync(scope, onSettings.First(static row => row.Target == OfferedActionNames.RevokeCredential));
-    spa.Api.Requests.OfType<RevokeCredential.Command>().ShouldBeEmpty();
+    CommandPaletteRow copied = onSettings.First(static row => row.Target == OfferedActionNames.RevokeCredential);
+    int before = spa.Api.Requests.Count;
+    await RunAsync(scope, copied);
+    spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
+    Warnings(scope).ShouldContain($"{copied.Name} is not offered here now.");
+  }
+
+  public static async Task Refuse_An_Offered_Row_When_Nobody_Is_Signed_In()
+  {
+    using OffersSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    CredentialSummary first = spa.Api.AddPasskey("Work laptop", "aaaa1111");
+    spa.Api.AddPasskey(nickname: null, "bbbb2222");
+    await OpenAsync(scope, SettingsPath);
+    CommandPaletteRow revoke = (await PaletteRows(scope)).First(static row => row.Target == OfferedActionNames.RevokeCredential);
+
+    // The session ends while the offered rows are still on screen.
+    spa.SignOut();
+    int before = spa.Api.Requests.Count;
+    await RunAsync(scope, revoke);
+    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+
+    spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
+    // Both entry points (the palette row, the page's RunAsync) hit the same refusal for the same row.
+    Warnings(scope).ShouldContain($"{revoke.Name} was refused: sign in first.");
+    Warnings(scope).ShouldAllBe(static title => title.EndsWith("was refused: sign in first.", StringComparison.Ordinal));
   }
 
   public static async Task Offer_Link_Microsoft365_On_Settings_Once_And_Run_The_Real_Action()
@@ -348,6 +413,7 @@ public class CredentialOffers_Should_
   {
     public IServiceProvider ServiceProvider { get; }
     public OffersApi Api { get; } = new();
+    private readonly SwitchableAuthenticationStateProvider Authentication;
 
     public OffersSpa() : this(PermissionIds.All) { }
 
@@ -382,13 +448,17 @@ public class CredentialOffers_Should_
         TimeWarp.Features.Persistence.IPersistenceService,
         TimeWarp.Features.Persistence.PersistenceService>();
       services.AddAuthorizationCore(PolicyRegistration.AddPolicies);
-      services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
+      Authentication = new SwitchableAuthenticationStateProvider(user);
+      services.AddScoped<AuthenticationStateProvider>(_ => Authentication);
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api.Scripted);
       services.AddScoped(_ => A.Fake<IJSRuntime>());
       services.AddScoped<NavigationManager, TestNavigationManager>();
 
       ServiceProvider = services.BuildServiceProvider();
     }
+
+    /// <summary>From now on the principal is anonymous (an ended session).</summary>
+    public void SignOut() => Authentication.User = new ClaimsPrincipal(new ClaimsIdentity());
 
     public void Dispose()
     {
@@ -423,9 +493,11 @@ public class CredentialOffers_Should_
       Add(new CredentialSummary(CredentialId.New(), CredentialType.Passkey, "1Password", nickname, DateTimeOffset.UtcNow.AddDays(-1), revokedAt: null, isActive: true, RegisteredWith.Unknown, fingerprint));
   }
 
-  private sealed class FixedAuthenticationStateProvider(ClaimsPrincipal user) : AuthenticationStateProvider
+  private sealed class SwitchableAuthenticationStateProvider(ClaimsPrincipal user) : AuthenticationStateProvider
   {
+    public ClaimsPrincipal User { get; set; } = user;
+
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
-      Task.FromResult(new AuthenticationState(user));
+      Task.FromResult(new AuthenticationState(User));
   }
 }

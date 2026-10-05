@@ -89,10 +89,11 @@ internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisp
 
 /// <summary>
 /// Scripted BFF client: GetCredentials answers with the current <see cref="Credentials"/> list and
-/// the offers the server would make for it (task 279: Rename per active row, Revoke while more than
-/// one is active, Link Microsoft 365 while <see cref="Microsoft365Offered"/> and none is linked —
-/// the real rule table is pinned in web-server-integration-tests credential-offers-tests), plus any
-/// <see cref="ExtraOffers"/> a test injects. RevokeCredential marks the named row revoked
+/// the offers the real server rule makes for it (task 279: Identity's
+/// <c>CredentialOffers.For</c> over the list and <see cref="Microsoft365Offered"/>, so this script
+/// cannot drift from the server), minus any offer <see cref="SuppressOffer"/> matches, plus any
+/// <see cref="ExtraOffers"/> a test injects — the two overrides let a test make the server's offers
+/// contradict anything the client could count. RevokeCredential marks the named row revoked
 /// (IsActive=false) and RenameCredential sets its nickname, so the next GetCredentials reflects
 /// them — the same sequence the real server produces for an action → Fetch.
 /// </summary>
@@ -101,6 +102,8 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
   public List<CredentialSummary> Credentials { get; } = [];
   public List<IApiRequest> Requests { get; } = [];
   public List<OfferedAction> ExtraOffers { get; } = [];
+  /// <summary>Drops matching offers from the server rule's set (ExtraOffers are not filtered).</summary>
+  public Predicate<OfferedAction>? SuppressOffer { get; set; }
   public bool Microsoft365Offered { get; set; }
 
   public void Reset()
@@ -108,28 +111,19 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
     Credentials.Clear();
     Requests.Clear();
     ExtraOffers.Clear();
+    SuppressOffer = null;
     Microsoft365Offered = false;
   }
 
   /// <summary>The offers the scripted server makes for the current credentials.</summary>
   public List<OfferedAction> Offers()
   {
-    CredentialSummary[] active = [.. Credentials.Where(static credential => credential.IsActive)];
-    List<OfferedAction> offers = [];
-    foreach (CredentialSummary credential in active)
-    {
-      offers.Add(OfferedAction.ForCredential(OfferedActionNames.RenameCredential, "Rename", credential.Id));
-      if (active.Length > 1)
-      {
-        offers.Add(OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", credential.Id));
-      }
-    }
-
-    if (Microsoft365Offered && !active.Any(static credential => credential.Type == CredentialType.EntraAccount))
-    {
-      offers.Add(OfferedAction.ForPage(OfferedActionNames.LinkMicrosoft365, "Link Microsoft 365"));
-    }
-
+    Predicate<OfferedAction>? suppress = SuppressOffer;
+    List<OfferedAction> offers =
+    [
+      .. TimeWarp.Architecture.Features.Identity.Application.CredentialOffers.For(Credentials, Microsoft365Offered)
+        .Where(offer => suppress?.Invoke(offer) != true),
+    ];
     offers.AddRange(ExtraOffers);
     return offers;
   }

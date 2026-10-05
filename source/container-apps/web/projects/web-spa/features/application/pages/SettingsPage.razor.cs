@@ -22,8 +22,9 @@
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
 // Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last
 // active credential (hint: Add a passkey first). Since task 279 both are the server's offers, not
-// client predicates. FetchCredentials runs during prerender so first HTML matches them. Task 250: the card has no subtitle; the Entra row's title is its
-// Label (the provider, "Microsoft 365") and its context line is the linked account (AccountHint).
+// client predicates. FetchCredentials runs during prerender so first HTML matches them.
+// Task 250: the card has no subtitle; the Entra row's title is its Label (the provider,
+// "Microsoft 365") and its context line is the linked account (AccountHint).
 // Task 230: "Add an existing passkey" next to Create runs the merge ceremony
 // (CredentialsState.AddExistingPasskey). 229 card rules apply to the merged credential set.
 // Task 233: markup is Section + CredentialList + FluentButton (Primary / Outline / danger Outline).

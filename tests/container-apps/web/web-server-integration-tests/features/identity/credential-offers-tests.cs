@@ -6,19 +6,23 @@
 
 #region Design
 // Two halves. CredentialOffers_For_ is host-free: CredentialOffers.For over hand-built summaries pins
-// the whole rule table, including the Microsoft 365 "offered" side the in-proc host cannot reach (it
-// runs with Entra off, so GetEntraSignInOffered answers false and Link is never offered end to end).
+// the whole rule table, including the revoked-Entra case.
 // GetCredentialsOffers_Returns_ is real HTTP with isolated HttpClients, same posture as
 // credential-revoke-tests.cs: only a round trip exercises [EndpointAuthorize], the handler's wiring of
 // EntraSignInOffer, and the real RevokeCredential operation changing the follow-up set. Each principal
 // is minted fresh (RegisterPasskeyAndMintSessionAsync starts with one active credential; AddPasskey
-// adds more) so tests never share credential counts.
+// adds more) so tests never share credential counts. The in-proc host starts with Entra off; the
+// Microsoft 365 "offered" cases turn it on in-proc for the one test (EntraAuthenticationOptions.Enabled
+// + SiteSettings.ReplacePolicy) and restore it afterwards — the toggle-and-restore pattern of
+// protected-page-deep-link-tests.cs — so Link is covered end to end both offered and linked.
 #endregion
 
 namespace CredentialOffers_;
 
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
@@ -177,8 +181,7 @@ public class GetCredentialsOffers_Returns_
 
   public static async Task No_Link_Microsoft365_Given_Entra_Not_Offered()
   {
-    // The in-proc host has Entra disabled, so only the "not offered" side is reachable here; the
-    // "offered" side is CredentialOffers_For_.Offer_Link_Microsoft365_Only_When_Offered_And_Not_Linked.
+    // The in-proc host starts with Entra disabled: GetEntraSignInOffered answers false.
     using HttpClient client = await PrincipalWithCredentialsAsync(1);
 
     GetCredentials.Response response = await ListAsync(client);
@@ -186,13 +189,42 @@ public class GetCredentialsOffers_Returns_
     response.Offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.LinkMicrosoft365);
   }
 
+  public static async Task Link_Microsoft365_Given_Entra_Offered_And_Not_Linked()
+  {
+    using HttpClient client = await PrincipalWithCredentialsAsync(1);
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
+
+    GetCredentials.Response response = await ListAsync(client);
+
+    OfferedAction link = response.Offers.Single(static offer => offer.Name == OfferedActionNames.LinkMicrosoft365);
+    link.Subject.ShouldBeNull("Link is a page-level offer");
+    link.Arguments.ShouldBeEmpty();
+  }
+
+  public static async Task No_Link_Microsoft365_Given_Entra_Offered_And_An_Active_Account_Linked()
+  {
+    (PrincipalId principalId, HttpClient client) = await PrincipalAsync(1);
+    using HttpClient _ = client;
+    await AddEntraAccountAsync(principalId);
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
+
+    GetCredentials.Response response = await ListAsync(client);
+
+    response.Credentials.ShouldContain(static credential => credential.Type == CredentialType.EntraAccount && credential.IsActive);
+    response.Offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.LinkMicrosoft365);
+  }
+
   private static string[] Subjects(GetCredentials.Response response, string name) =>
     [.. response.Offers.Where(offer => offer.Name == name).Select(static offer => offer.Subject!).Order()];
 
   /// <summary>A fresh principal holding <paramref name="credentialCount"/> passkeys, as a client carrying its session cookie.</summary>
-  private static async Task<HttpClient> PrincipalWithCredentialsAsync(int credentialCount)
+  private static async Task<HttpClient> PrincipalWithCredentialsAsync(int credentialCount) =>
+    (await PrincipalAsync(credentialCount)).Client;
+
+  /// <summary>As <see cref="PrincipalWithCredentialsAsync"/>, also returning the principal's id.</summary>
+  private static async Task<(PrincipalId PrincipalId, HttpClient Client)> PrincipalAsync(int credentialCount)
   {
-    (PrincipalId _, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
+    (PrincipalId principalId, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
     HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
@@ -211,7 +243,57 @@ public class GetCredentialsOffers_Returns_
       addResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    return client;
+    return (principalId, client);
+  }
+
+  // Store-level insert, same shape as protected-page-deep-link-tests.cs: linking needs a real Entra
+  // round trip, but the offer rule only needs an active EntraAccount row.
+  private static async Task AddEntraAccountAsync(PrincipalId principalId)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
+    Guid tenantId = Guid.NewGuid();
+    await principalStore.AddCredentialAsync(
+      Credential.Create(
+        principalId,
+        CredentialType.EntraAccount,
+        EntraAccountHandle.Encode(tenantId, Guid.NewGuid()),
+        EntraIssuerMaterial.FromTenantId(tenantId),
+        label: "Microsoft 365",
+        accountHint: "linked@example.test"));
+  }
+
+  /// <summary>Turns Microsoft 365 sign-in on in-proc (scheme enabled + site policy on); disposing restores both.</summary>
+  private static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync()
+  {
+    AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    EntraAuthenticationOptions options =
+      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings settings = (await store.GetAsync()).ShouldNotBeNull();
+    bool previousEnabled = options.Enabled;
+    bool previousSignIn = settings.EntraSignInEnabled;
+    bool previousBootstrap = settings.EntraAllowBootstrap;
+    PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
+    options.Enabled = true;
+    settings.ReplacePolicy(true, previousBootstrap, previousMode);
+    await store.UpdateAsync(settings);
+    return new Restore
+    (
+      async () =>
+      {
+        options.Enabled = previousEnabled;
+        SiteSettings restore = (await store.GetAsync()).ShouldNotBeNull();
+        restore.ReplacePolicy(previousSignIn, previousBootstrap, previousMode);
+        await store.UpdateAsync(restore);
+        await scope.DisposeAsync();
+      }
+    );
+  }
+
+  private sealed class Restore(Func<Task> restore) : IAsyncDisposable
+  {
+    public async ValueTask DisposeAsync() => await restore();
   }
 
   private static async Task<GetCredentials.Response> ListAsync(HttpClient client)

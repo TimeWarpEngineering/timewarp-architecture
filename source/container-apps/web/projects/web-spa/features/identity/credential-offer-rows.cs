@@ -18,7 +18,9 @@
 // rows it shows (Passkeys never offers to unlink a Microsoft 365 account it does not display).
 // RunAsync is the pages' one entry point: it finds the current offer and runs its row; with no offer
 // it still goes through the runner with a bare row, which the runner refuses ("not offered here now")
-// — a page has no second path that could run an action the server did not offer.
+// — the Settings / Passkeys list buttons and their Ctrl-K rows have no second path that could run
+// an action the server did not offer. (AddPasskeyPrompt's "Name this passkey" Save is the one
+// RenameCredential dispatch outside this runner; its Design region records why.)
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

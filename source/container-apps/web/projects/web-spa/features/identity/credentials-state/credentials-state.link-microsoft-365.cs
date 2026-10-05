@@ -9,8 +9,10 @@
 // Cataloged for humans with the Settings page's credential permission. Whether it applies NOW is the
 // server's call (task 279): GetCredentials offers it page-level while CredentialRules.CanLinkMicrosoft365
 // holds, and the Settings button and its contextual Ctrl-K row exist only for that offer. The static
-// palette roster still lists it on every other page (the catalog has no "available now" hook); there,
-// when it does not apply, the challenge flow reports it (404 scheme not registered, 403 site policy
+// palette roster lists it on every page (the catalog has no "available now" hook). On /Settings the
+// offered contextual row replaces the static row when Link is offered; when it is not offered the
+// static row stays, on /Settings as everywhere else. Running the static row when Link does not
+// apply falls back to the challenge flow's own handling (404 scheme not registered, 403 site policy
 // off, and the link callback's own already-linked handling).
 // DisplayName is authored (task 268): the generated label split "Microsoft365" into
 // "microsoft 365"; the palette shows "Credentials: Link Microsoft 365".
