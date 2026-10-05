@@ -21,14 +21,9 @@ cross-endpoint breakage). Share structure and validation through `I*Details` int
 composed into per-endpoint validators — that is what lets Blazor bind `EditForm` to one
 shape without a parallel view model.
 
-**Why generate FastEndpoints on both hosts:** both web-server and api-server host endpoints
-generated from contracts. Route, verb, and auth live on the contract (`[ApiRoute]`,
-`[ApiEndpoint]`, exactly one of `[EndpointAuthorize]` / `[EndpointAllowAnonymous(reason)]`).
-There are no hand-written MVC `BaseEndpoint` shims. Validation stays on the mediator's
-`FluentValidationBehavior`; do not wire FastEndpoints' own validator integration. Hosts set
-`EnableApiEndpointGeneration` and an `ApiEndpointContractAssemblies` AssemblyName allow-list
-(`web-contracts`, `api-contracts`) so transitively referenced contract assemblies do not
-emit foreign endpoints (TWE008).
+**Why generate FastEndpoints on both hosts:** route, verb, and auth live on the contract, so there are no
+hand-written MVC `BaseEndpoint` shims. Validation stays on the mediator's `FluentValidationBehavior`. Hosts set
+`EnableApiEndpointGeneration` plus an `ApiEndpointContractAssemblies` AssemblyName allow-list (TWE008).
 
 ## Detection — find the pattern in the current repo
 
@@ -76,28 +71,14 @@ become hosted FastEndpoints.
 | `[AuthApiRequest]` | `Guid UserId { get; set; }`; private `GetAuthQueryParameters()` only when the same type is `IQueryStringRouteProvider` or also has `[OpenDataQueryParameters]` | List/GET queries that carry user identity in the query string |
 | `[OpenDataQueryParameters]` | `Top`/`Skip`/`Filter`/`OrderBy`/`ReturnTotalCount` + private `GetOpenDataQueryParameters()` | Pageable/sortable list queries |
 
-The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully
-qualified metadata name. The contracts generator emits that public type via post-initialization
-output, so it does not follow the generated app's RootNamespace (task 115 sourceName rewrite
-leaves `TimeWarp.Foundation.*` intact; contracts already `global using TimeWarp.Foundation.Features`).
+The FastEndpoint generator matches `TimeWarp.Foundation.Features.ApiRouteAttribute` by fully qualified metadata
+name; the contracts generator emits that public type, so it ignores the generated app's RootNamespace.
 
 #### `[ApiRoute]` parameter constraint grammar
 
-Tokens are `{Name}` or `{Name:constraint}`. A type/constraint starts **only** after a colon —
-bare names such as `{Date}`, `{LocationId}`, `{ClientId}`, `{StaffId}`, and `{UserId}` keep the
-full identifier and default to `string` (task 053-003). `{Name:string}` remains valid.
-
-| Constraint token | Generated C# type |
-|------------------|-------------------|
-| *(omitted)* / `string` / `alpha` / `required` / `minlength(n)` / `maxlength(n)` / `length(n)` / `range…` / `regex…` | `string` |
-| `guid` | `Guid` |
-| `datetime` | `DateTime` (`GetRoute` formats `yyyy-MM-dd`) |
-| `min(n)` / `max(n)` | `int` |
-| any other token (`int`, `long`, `bool`, …) | the token as written |
-
-Constraint arguments are the parenthesized-digits form only (`{RoleId:min(1)}`). Multiple
-constraints, comma-separated args, catch-alls, and `{name=default}` are not parsed. `:string` is
-stripped from the emitted `RouteTemplate`; other tokens are kept (`{RoleId:guid}`).
+Tokens are `{Name}` or `{Name:constraint}`; a type starts **only** after a colon, so bare `{Date}`/`{LocationId}` stay
+full identifiers typed `string`. `guid` → `Guid`, `datetime` → `DateTime`, `min(n)`/`max(n)` → `int`, other tokens as
+written. Full constraint table and unsupported forms: [route-grammar.md](references/route-grammar.md).
 
 ### FastEndpoint generation (on the outer operation class)
 
@@ -131,30 +112,12 @@ public static partial class GetAgentIdentity
 }
 ```
 
-**Policy names (task 111 / TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the
-hosting server actually registers. Web product policies are `PermissionIds.*` const references
-(registered by `AddPermissionPolicies`; policy name == permission id). Named non-permission
-policies (api-server `AgentTokenDefaults.IdentityReadPolicy`, web
-`IdentitySessionDefaults.AuthenticatedPolicy`) are constant-evaluated `AddPolicy` first
-arguments. Contracts cannot reference server-layer constants, so agreement is a **server-build**
-check — a drifted literal 403s at runtime; **TWA0024** flags it at compile time.
-Prefer a contracts-visible const (`PermissionIds`, or a family-local const the server
-`AddPolicy` also uses) over a comment-coordinated string literal.
+**Policy names (TWA0024):** `[EndpointAuthorize] Policy` must equal a policy the hosting server registers (web: `PermissionIds.*`;
+named policies via `AddPolicy`). Prefer a contracts-visible const over a literal.
 
-**Scheme lists (task 161):** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` using
-`AuthenticationSchemeNames` (web) or the matching server scheme string (api). PermissionIds
-policies registered via `AddPermissionPolicies` have **no** `AddAuthenticationSchemes`; ASP.NET
-Core 10's `PolicyEvaluator` then authenticates only the host default scheme (`identity-session`
-on web). `agent-token` and `mock-identity-session` never run unless the generated FastEndpoint
-emits `AuthSchemes(...)`. Named-policy scheme lists still Combine when present (api-server
-agent-scope policies) — still declare them on the contract so a policy-registration change
-cannot drop them. Do **not** put scheme lists back on permission policies (see `IPermissionEvaluator` Design region in `source/container-apps/web/platform/authorization/i-permission-evaluator-application.cs`).
-
-| Surface | `AuthenticationSchemes` |
-|---------|-------------------------|
-| Admin BFF (closed-box mock) | `IdentitySession + "," + MockIdentitySession` |
-| Credential management (human or agent) | `IdentitySession + "," + AgentToken` |
-| Agent-token-only | `AgentToken` |
+**Scheme lists:** hosted `[EndpointAuthorize]` must set `AuthenticationSchemes` (`AuthenticationSchemeNames` on web); permission
+policies carry no scheme list, so omitting it authenticates only the host default scheme. Details and per-surface table:
+[endpoint-auth.md](references/endpoint-auth.md).
 
 **Validation stays on the mediator** (`FluentValidationBehavior`). Do not re-validate in handlers
 and do not wire FastEndpoints' own FluentValidation integration (`IncludeAbstractValidators =
@@ -459,8 +422,7 @@ error. See the `tw-mock-response-factory` skill.
       `[EndpointAllowAnonymous(reason)]`, always (TWA0013/TWA0014 enforce this)
 - [ ] Hosted `[EndpointAuthorize] Policy` is a registered server policy (`PermissionIds.*` or an
       `AddPolicy` name) — TWA0024 flags drift at the server build
-- [ ] Hosted `[EndpointAuthorize]` sets `AuthenticationSchemes` (task 161 — permission policies
-      have no scheme list; `Policies(...)` alone authenticates only the host default scheme)
+- [ ] Hosted `[EndpointAuthorize]` sets `AuthenticationSchemes`
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
 - [ ] `IRequest<OneOf<Response, SharedProblemDetails>>` (TimeWarp.Mediator)
 - [ ] Folder plural + repo's casing; namespace plural
@@ -489,10 +451,8 @@ error. See the `tw-mock-response-factory` skill.
 | Entity-centric shared DTO per endpoint | Endpoint-centric types; share only validation interfaces or read-only display interfaces |
 | `sealed record` request/response | Classes + `partial` + source generation |
 | Hand-declared route params | Trust `[ApiRoute]` source generation |
-| `{Date}` / `{LocationId}` generating mangled types (`Dat`/`e`, `LocationI`/`d`) | Fixed in `TimeWarp.Foundation.Contracts` 2.0.0-beta.17 (task 053-003). Colon is required for constraints; bare `{Name}` is `string`. `{Name:string}` remains valid. |
-| Hand-written MVC `BaseEndpoint` shim for a hosted contract | Annotate `[ApiEndpoint]` (+ `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`); generation is the template convention |
 | `[ApiEndpoint]` with no auth marker, assuming the generator defaults to anonymous | It doesn't (task 110, fail-closed) — no marker emits nothing, so FastEndpoints' own default (auth required) applies; TWA0013 also catches it at build time |
-| `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies (task 161). Set `AuthenticationSchemes` from `AuthenticationSchemeNames`. |
+| `[EndpointAuthorize(Policy=…)]` without `AuthenticationSchemes` | Non-default schemes never run against PermissionIds policies. Set `AuthenticationSchemes`. |
 | `[EndpointAuthorize(Policy = "…")]` literal that does not match a server `AddPolicy` / `PermissionIds` name | TWA0024 at the server build (task 111). Use `PermissionIds.*` on web; keep api literals byte-identical to `AgentTokenDefaults` policy constants |
 | Treating `IAuthApiRequest` as if it secures the route | It's a client/mock-mode identity signal only — `[EndpointAuthorize]` is the sole server-auth marker; TWA0014 flags pairing `IAuthApiRequest` with `[EndpointAllowAnonymous]` |
 | Re-validating in the handler or enabling FE FluentValidation | Validation is `FluentValidationBehavior` on the mediator only |
