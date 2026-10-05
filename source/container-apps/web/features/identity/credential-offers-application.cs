@@ -4,9 +4,10 @@
 
 #region Design
 // Hypermedia approach B (task 279): the server decides what is valid now and spells it in the SPA's
-// catalog vocabulary (OfferedActionNames). Per active credential: Rename always (the user supplies the
-// nickname), Revoke only while CredentialRules.CanRevoke holds over the count of EVERY active
-// credential type — what RevokeCredential.Handler counts. Page-level: Link Microsoft 365 while
+// catalog vocabulary through the typed offer records (credential-action-offer-contracts.cs, task
+// 280). Per active credential: Rename always (the user supplies the nickname), Revoke only while
+// CredentialRules.CanRevoke holds over the count of EVERY active credential type — what
+// RevokeCredential.Handler counts. Page-level: Link Microsoft 365 while
 // CredentialRules.CanLinkMicrosoft365 holds. Pure over summaries + the offered flag, so the rule
 // table is testable without a host, and the SPA's scripted BFF calls it directly so client tests
 // cannot drift from it. Revoked rows never get an offer.
@@ -27,16 +28,16 @@ public static class CredentialOffers
     List<OfferedAction> offers = [];
     foreach (CredentialSummary credential in active)
     {
-      offers.Add(OfferedAction.ForCredential(OfferedActionNames.RenameCredential, "Rename", credential.Id));
+      offers.Add(OfferedAction.ForCredential(new RenameCredentialOffer(credential.Id.Value), "Rename"));
       if (canRevoke)
       {
-        offers.Add(OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", credential.Id));
+        offers.Add(OfferedAction.ForCredential(new RevokeCredentialOffer(credential.Id.Value), "Revoke"));
       }
     }
 
     if (CredentialRules.CanLinkMicrosoft365(microsoft365Offered, active.Select(static credential => credential.Type)))
     {
-      offers.Add(OfferedAction.ForPage(OfferedActionNames.LinkMicrosoft365, "Link Microsoft 365"));
+      offers.Add(OfferedAction.ForPage(new LinkMicrosoft365Offer(), "Link Microsoft 365"));
     }
 
     return offers;

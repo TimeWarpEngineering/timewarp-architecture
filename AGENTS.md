@@ -230,7 +230,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0028) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0030) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
@@ -310,6 +310,8 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0026 | a web-spa component (any member of a `ComponentBase` type, lifecycle overrides included) calls a side effect directly — `NavigationManager.NavigateTo`/`NavigateToLogin`/`Refresh`, `IJSRuntime`/`IJSObjectReference` invoke, `IApiService` (and `IWebServerApiService`/`IApiServerApiService`), `HttpClient` send/get/post/put/delete/patch, Blazored session/local storage writes, or a first-party `[SideEffectService]` type (`PasskeyCeremonyClient`, the `*JsModule` helpers). Components only dispatch; the action's handler does the work. Handlers, services and static helpers are never flagged. Opt-out: `[DirectComponentSideEffect(reason)]` on the component or member. Gated on the Blazor WASM SDK like TWA0022 (task 265) |
 | TWA0027 | `[DirectComponentSideEffect]` with an empty or whitespace reason — it does not opt out of TWA0026 (task 265) |
 | TWA0028 | an `Enumeration` (Bogard) subclass member — a static field or property typed as the subclass — must be a `public static readonly` field; any other shape is invisible to (or mutable behind) `Enumeration.GetAll` and every `From*`/`TryFrom*`/JSON lookup (task 105) |
+| TWA0029 | an `[ActionOffer(name)]` record (shared contracts: the typed arguments of a server offer) names no `[CatalogAction(Name = name)]` class in the SPA compilation (TimeWarp.State catalogs classes only), or one that more than one action declares — the derived default name does not count, so renaming an action set cannot silently change what the server offers. Blazor WASM SDK gated like TWA0022 (task 280) |
+| TWA0030 | an `[ActionOffer]` record does not match its action's first declared constructor (the one TimeWarp.State catalogs): a property whose camelCase (or `[JsonPropertyName]`) name is no parameter or whose type differs, a nullable property bound to a required parameter, a required parameter neither bound nor listed in `UserInput`, a `UserInput` entry that is not an unbound required parameter, or an argument after an optional parameter that is omitted or nullable-bound (task 280) |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`

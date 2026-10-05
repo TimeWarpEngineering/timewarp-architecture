@@ -23,6 +23,8 @@
 
 namespace CredentialOffers_;
 
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
@@ -45,26 +47,38 @@ public class CredentialOffers_Should_
 
   // --- vocabulary ---------------------------------------------------------------------------
 
+  // Integration check beside TWA0029/TWA0030 (task 280): the analyzers prove each [ActionOffer]
+  // record matches its action's first declared constructor at build time; this proves the GENERATED
+  // runtime catalog agrees with that model (same names, same parameters) and adds what the analyzers
+  // do not check — an offered entry must be human-visible to pass the runner's M4 gate.
   public static Task Name_Only_Catalog_Entries_A_Person_May_Run()
   {
     using OffersSpa spa = new();
     IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
+    Type[] offerTypes =
+    [
+      .. typeof(OfferedAction).Assembly.GetTypes()
+        .Where(static type => type.GetCustomAttribute<ActionOfferAttribute>() is not null)
+    ];
+    string[] offeredNames = [.. offerTypes.Select(static type => type.GetCustomAttribute<ActionOfferAttribute>()!.CatalogName)];
+    offeredNames.ShouldBe(OfferedActionNames.All, ignoreOrder: true); // one offer record per offerable name
 
-    foreach (string name in OfferedActionNames.All)
+    foreach (Type offerType in offerTypes)
     {
-      ActionCatalogEntry entry = catalog.Find(name).ShouldNotBeNull($"the server may offer {name}");
-      entry.Visibility.ShouldBeOneOf([ActionVisibility.Human, ActionVisibility.Both], $"{name} must pass the M4 visibility gate");
+      ActionOfferAttribute offer = offerType.GetCustomAttribute<ActionOfferAttribute>()!;
+      ActionCatalogEntry entry = catalog.Find(offer.CatalogName).ShouldNotBeNull($"the server may offer {offer.CatalogName}");
+      entry.Visibility.ShouldBeOneOf([ActionVisibility.Human, ActionVisibility.Both], $"{offer.CatalogName} must pass the M4 visibility gate");
+
+      // The keys the server actually sends: a default instance through the real OfferedAction.Create
+      // (contract-seam options honor [JsonPropertyName] / [JsonIgnore] exactly as the wire does).
+      object sample = RuntimeHelpers.GetUninitializedObject(offerType);
+      string[] bound = [.. OfferedAction.Create(sample, "sample", subject: null).Arguments.Keys];
+      bound.ShouldAllBe(name => entry.Parameters.Any(parameter => parameter.Name == name), offerType.Name);
+      entry.Parameters.Where(parameter => parameter.IsRequired && !bound.Contains(parameter.Name))
+        .Select(static parameter => parameter.Name)
+        .ShouldBe(offer.UserInput, $"{offerType.Name} leaves only its UserInput to the user");
     }
 
-    foreach (string name in new[] { OfferedActionNames.RevokeCredential, OfferedActionNames.RenameCredential })
-    {
-      catalog.Find(name)!.Parameters.Select(static parameter => parameter.Name).ShouldContain(OfferedActionNames.CredentialIdArgument);
-    }
-
-    catalog.Find(OfferedActionNames.RenameCredential)!.Parameters
-      .Where(static parameter => parameter.IsRequired && parameter.Name != OfferedActionNames.CredentialIdArgument)
-      .Select(static parameter => parameter.Name)
-      .ShouldBe([CredentialOfferRows.NicknameParameter]);
     catalog.Find(CredentialsState.FetchCredentialsActionSet.CatalogName).ShouldNotBeNull()
       .Parameters.ShouldAllBe(static parameter => !parameter.IsRequired);
     return Task.CompletedTask;
@@ -119,7 +133,7 @@ public class CredentialOffers_Should_
     // The reverse: one active passkey — a client count would forbid Revoke — but the server offers it.
     spa.Api.Scripted.SuppressOffer = null;
     spa.Api.Credentials.Remove(second);
-    spa.Api.ExtraOffers.Add(OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", first.Id));
+    spa.Api.ExtraOffers.Add(OfferedAction.ForCredential(new RevokeCredentialOffer(first.Id.Value), "Revoke"));
     await scope.Send(new CredentialsState.FetchCredentialsActionSet.Action());
 
     scope.Store.GetState<CredentialsState>().IsOffered(OfferedActionNames.RevokeCredential, first.Id.Value).ShouldBeTrue();
@@ -163,7 +177,7 @@ public class CredentialOffers_Should_
     CredentialsState state = scope.Store.GetState<CredentialsState>();
     CredentialOffer rename = state.FindOffer(OfferedActionNames.RenameCredential, only.Id.Value).ShouldNotBeNull();
 
-    CredentialOfferRows.UnboundParameters(catalog.Find(rename.Name), rename).ShouldBe([CredentialOfferRows.NicknameParameter]);
+    CredentialOfferRows.UnboundParameters(catalog.Find(rename.Name), rename).ShouldBe([RenameCredentialOffer.NicknameInput]);
     CredentialOfferRows.Row(rename, state.Credentials!, catalog).RequiresInput.ShouldBeTrue();
     (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == OfferedActionNames.RenameCredential, "the palette has no argument UI");
 
@@ -183,8 +197,8 @@ public class CredentialOffers_Should_
     await OpenAsync(scope, SettingsPath);
     Dictionary<string, JsonElement> input = new()
     {
-      [CredentialOfferRows.NicknameParameter] = JsonSerializer.SerializeToElement("x"),
-      [OfferedActionNames.CredentialIdArgument] = JsonSerializer.SerializeToElement(second.Id.Value),
+      [RenameCredentialOffer.NicknameInput] = JsonSerializer.SerializeToElement("x"),
+      ["credentialId"] = JsonSerializer.SerializeToElement(second.Id.Value),
     };
 
     await RunOfferAsync(scope, OfferedActionNames.RenameCredential, first.Id.Value, input);
@@ -227,7 +241,7 @@ public class CredentialOffers_Should_
     using OffersSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
     spa.Api.AddPasskey("Work laptop", "aaaa1111");
-    spa.Api.ExtraOffers.Add(OfferedAction.ForPage("Credentials.DeleteEverything", "Delete everything"));
+    spa.Api.ExtraOffers.Add(PageOffer("Credentials.DeleteEverything", "Delete everything"));
     await OpenAsync(scope, SettingsPath);
 
     CommandPaletteRow unknown = (await PaletteRows(scope)).Single(static row => row.Target == "Credentials.DeleteEverything");
@@ -268,7 +282,7 @@ public class CredentialOffers_Should_
     using SpaTestScope scope = SpaTestScope.Create(spa);
     spa.Api.AddPasskey("Work laptop", "aaaa1111");
     // A real catalog entry, but Visibility Agent: a server offer must not reach it.
-    spa.Api.ExtraOffers.Add(OfferedAction.ForPage(CredentialsState.FetchCredentialsActionSet.CatalogName, "Refresh"));
+    spa.Api.ExtraOffers.Add(PageOffer(CredentialsState.FetchCredentialsActionSet.CatalogName, "Refresh"));
     await OpenAsync(scope, SettingsPath);
     CommandPaletteRow hidden = (await PaletteRows(scope)).Single(static row => row.Target == CredentialsState.FetchCredentialsActionSet.CatalogName);
     int before = spa.Api.Requests.Count;
@@ -396,6 +410,10 @@ public class CredentialOffers_Should_
 
   private static Task RunOfferAsync(SpaTestScope scope, string name, Guid? credentialId, IReadOnlyDictionary<string, JsonElement>? input) =>
     CredentialOfferRows.RunAsync(name, credentialId, input, scope.Store, scope.ServiceProvider.GetRequiredService<IActionCatalog>(), Context(scope), CancellationToken.None);
+
+  // A forged page-level offer: no [ActionOffer] record exists for it, so build the wire shape directly.
+  private static OfferedAction PageOffer(string name, string label) =>
+    new(name, label, subject: null, new Dictionary<string, JsonElement>());
 
   private static IActionCatalog Catalog(OffersSpa spa) => spa.ServiceProvider.GetRequiredService<IActionCatalog>();
 

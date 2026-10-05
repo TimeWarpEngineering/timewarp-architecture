@@ -16,6 +16,8 @@
 // off, and the link callback's own already-linked handling).
 // DisplayName is authored (task 268): the generated label split "Microsoft365" into
 // "microsoft 365"; the palette shows "Credentials: Link Microsoft 365".
+// Task 280: Name = OfferedActionNames constant shared with the server's LinkMicrosoft365Offer record, so a
+// rename of this action set cannot change the offered name; TWA0029/TWA0030 check the pairing.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -28,6 +30,7 @@ partial class CredentialsState
   {
     [CatalogAction
     (
+      Name = OfferedActionNames.LinkMicrosoft365,
       DisplayName = "Link Microsoft 365",
       Description = "Link a Microsoft 365 account to the signed-in account so it can sign in with Microsoft 365.",
       Permissions = [PermissionIds.CredentialManageSelf],
