@@ -25,7 +25,7 @@
 // that is not an offerable Command property — names none, repeats an entry, or names the auth-filled
 // UserId — (TWE012, the reason is the third message argument), [Offerable] on a contract with no
 // nested Command (TWE013), and [Offerable] on a type the generated members cannot merge into — not a
-// partial class, in the global namespace, or nested in a non-partial-class type (TWE014). All are
+// non-generic partial class, in the global namespace, or nested in such a type (TWE014). All are
 // fail-closed: no Offer record or OfferName is generated, and the type is never silently skipped.
 // Severity: generation-contract violations (TWE002/003/007/008/009/010/011/012/013/014, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
@@ -137,11 +137,11 @@ internal static class DiagnosticDescriptors
   public static readonly DiagnosticDescriptor OfferableUnsupportedDeclaration = new(
     id: "TWE014",
     title: "[Offerable] type cannot carry the generated Offer",
-    messageFormat: "[Offerable] on '{0}' requires a partial class declared in a namespace, nested (if at all) only in partial classes; no Offer record is generated",
+    messageFormat: "[Offerable] on '{0}' requires a non-generic partial class declared in a namespace, nested (if at all) only in non-generic partial classes; no Offer record is generated",
     category: "Offerable",
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Fail-closed: OfferName and the Offer record are emitted as members of a partial class, so a record, struct, non-partial class, global-namespace type, or one nested in a non-partial-class type would otherwise be skipped with no offer and no error.");
+    description: "Fail-closed: OfferName and the Offer record are emitted as members of a partial class, so a record, struct, generic or non-partial class, global-namespace type, or one nested in such a type would otherwise be skipped with no offer and no error.");
 
   // ── SG: generator logs / resilience ──────────────────────────────────────
 

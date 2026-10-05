@@ -20,7 +20,7 @@ TWE010 | Page | Error | [Page] routes of one page that are the same Blazor route
 TWE011 | Page | Error | Conflicting [Page] route declaration: stacked [Page], non-literal additional route, or token type disagreeing with the primary route
 TWE012 | Offerable | Error | ContractsGenerator: [Offerable] UserInput entry is not an offerable Command property — names none, duplicated, or the auth-filled UserId (no Offer generated)
 TWE013 | Offerable | Error | ContractsGenerator: [Offerable] on a contract with no nested Command (no Offer generated)
-TWE014 | Offerable | Error | ContractsGenerator: [Offerable] on a type that is not a partial class in a namespace (record, struct, non-partial, global namespace, or non-partial container; no Offer generated)
+TWE014 | Offerable | Error | ContractsGenerator: [Offerable] on a type that is not a non-generic partial class in a namespace (record, struct, generic, non-partial, global namespace, or such a container; no Offer generated)
 SG001 | SourceGenerator | Warning | Shared source-generator log (resilience backstop)
 SG002 | SourceGenerator | Warning | EnableApiEndpointGeneration true but FastEndpoints / BaseFastEndpoint missing
 SG010 | SourceGenerator | Warning | TypedId BCL surface generation failed (resilience backstop, names the type)

@@ -85,7 +85,8 @@ rather than maintain parallel records, per the prefer-source-generators directiv
       `dev template-smoke`, `ganda repo audit`, `dev check-version` if the generator or analyzer
       packages ship
 - [x] Do **not** start an AppHost
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean)
+- [ ] Host `open-pr`
 
 ## Notes
 
@@ -101,6 +102,8 @@ rather than maintain parallel records, per the prefer-source-generators directiv
 - 2026-10-06 implementer (claude, headless `ganda task work`): implemented all requirements; gates
   green (see Results). No AppHost started (`dev run` not used; `dev test` ran its existing
   closed-box suites as usual).
+- 2026-10-06 review oracle (claude, headless `ganda task work`): tw-implementation-review, effort 3,
+  roster general (Claude subagents); 2 rounds; disposition clean.
 
 ## Results
 
@@ -151,6 +154,21 @@ rather than maintain parallel records, per the prefer-source-generators directiv
   trivia-only caching); 5 TWA0031 analyzer tests; serialization/offers/catalog/palette tests updated
   for the generated records and new names (pins `"Identity.RenameCredential"`).
 
+**Implementation review**
+
+- Effort 3 (by-diff, 1452 lines), roster: general; 2 rounds.
+- Final counts: bug 0, suggestion 2 fixed, nit 4 fixed; 0 open, 0 wontfix.
+- Disposition: **clean**.
+- Fixes: round 1 in a9f2a03cd (TWE014 fail-closed `[Offerable]` declaration shape; TWE012 reason argument;
+  `Credentials.LinkMicrosoft365` → `Identity.LinkMicrosoft365` and `<Slice>.<Operation>` documented for
+  hand-written offers; 9 new generator tests). Round 2 in the disposition commit: TWE014 also rejects generic
+  contracts and containers, and the palette roster Design wording is updated. The palette label for Link is now
+  "Identity: Link Microsoft 365".
+- Post-fix gates: `./bin/dev build --clean` 0/0; sourcegenerator suite 119/119; analyzers suite 225/225;
+  full `./bin/dev test` (round-1 fix) exit 0, 21 suites, 0 failed; `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
 **Gates (2026-10-06, this worktree)**
 
 - `./bin/dev build --clean` → 0 Warning(s), 0 Error(s)
@@ -178,7 +196,7 @@ git checkout -- source/container-apps/web/projects/web-spa/features/identity/cre
 
 - Build 0/0; `RenameCredential.Offer(Guid CredentialId)` / `RevokeCredential.Offer(Guid CredentialId)`
   exist only as generated code (no hand-written `RenameCredentialOffer` / `RevokeCredentialOffer`).
-- Generator suite 6/6, analyzer offer suite 33/33, web-contracts-tests 50/50.
+- Generator suite 119/119 (Offerable class 16), analyzer offer suite 33/33, web-contracts-tests 50/50.
 - The negative check fails with `TWA0031 … sets Name = "Identity.Wrong"; set Name = RenameCredential.OfferName`
   on the `[CatalogAction]`, plus `TWA0029` for `RenameCredential.Offer`; restoring the file builds clean.
 - In the running app (optional, not done here): Settings / Passkeys Rename and Revoke buttons still

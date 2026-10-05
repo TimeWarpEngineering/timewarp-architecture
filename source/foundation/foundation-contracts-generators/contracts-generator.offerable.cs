@@ -29,8 +29,8 @@
 // The record is partial so the contract can add interfaces in its own declaration
 // (`partial record Offer : ICredentialActionOffer;`).
 // Fail-closed: TWE014 when the [Offerable] type cannot carry the emitted `partial class` members
-// (not a partial class — a record, struct or non-partial class —, declared in the global namespace,
-// or nested in a type that is not a partial class); TWE013 when there is no nested Command class;
+// (not a non-generic partial class — a record, struct, generic or non-partial class —, declared in
+// the global namespace, or nested in a type that is not a non-generic partial class); TWE013 when there is no nested Command class;
 // TWE012 for each UserInput entry that is not an offerable Command property (names no property,
 // repeats an entry, or names the auth-filled UserId). In every case nothing is emitted for that
 // contract. Descriptors live in the TWE SSOT (diagnostic-descriptors.cs, linked into this project).
@@ -243,8 +243,8 @@ public sealed partial class ContractsGenerator
   }
 
   /// <summary>
-  /// The emitted `partial class` members merge only into a partial class (not a record or struct) declared
-  /// in a namespace, whose every containing type is a partial class too (TWE014 otherwise).
+  /// The emitted `partial class` members merge only into a non-generic partial class (not a record or struct)
+  /// declared in a namespace, whose every containing type is a non-generic partial class too (TWE014 otherwise).
   /// </summary>
   private static bool CanCarryOffer(INamedTypeSymbol contract)
   {
@@ -253,7 +253,7 @@ public sealed partial class ContractsGenerator
 
     for (INamedTypeSymbol? type = contract; type is not null; type = type.ContainingType)
     {
-      if (type.TypeKind != TypeKind.Class || type.IsRecord)
+      if (type.TypeKind != TypeKind.Class || type.IsRecord || type.IsGenericType)
         return false;
       if (!type.DeclaringSyntaxReferences.All(static r => r.GetSyntax() is ClassDeclarationSyntax declaration && declaration.Modifiers.Any(SyntaxKind.PartialKeyword)))
         return false;

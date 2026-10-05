@@ -193,7 +193,7 @@ Rules:
   generated one.
 - `[Offerable]` goes on the contract's `static partial class`, declared in a namespace and nested (if
   at all) only in partial classes — the generated members are emitted into it. A record, struct,
-  non-partial class, or global-namespace type is **TWE014**, never a silently missing offer.
+  generic or non-partial class, or global-namespace type is **TWE014**, never a silently missing offer.
 - `UserId` from `IAuthApiRequest` is never part of the offer: it is a client/mock-mode identity
   signal the server never trusts, so the server never sends it either.
 - The generated record is `partial`; add interfaces in the contract with

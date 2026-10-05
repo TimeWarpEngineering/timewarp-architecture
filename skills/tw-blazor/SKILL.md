@@ -161,8 +161,8 @@ second place to look without removing any drift.
    `UserInput` and the auth-filled `UserId` (`IAuthApiRequest` — the server takes the caller from the
    session and never trusts a client-sent id, so it is never an offered argument). A `UserInput` entry
    that names no Command property, repeats an entry, or names that `UserId` is **TWE012**;
-   `[Offerable]` on a contract with no Command is **TWE013**; `[Offerable]` on anything but a partial
-   class declared in a namespace (nested only in partial classes) is **TWE014** — the generated
+   `[Offerable]` on a contract with no Command is **TWE013**; `[Offerable]` on anything but a non-generic
+   partial class declared in a namespace (nested only in such classes) is **TWE014** — the generated
    members could not merge into it.
 2. Set `[CatalogAction(Name = <Contract>.OfferName)]` on the client action whose handler requests that
    Command. **TWA0031** fails the SPA build when an offerable contract has no such action, or the

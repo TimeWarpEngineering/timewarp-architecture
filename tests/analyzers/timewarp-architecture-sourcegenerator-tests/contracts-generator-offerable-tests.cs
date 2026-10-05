@@ -295,6 +295,7 @@ public class ContractsGeneratorOfferable_Tests
   [Input("non-partial")]
   [Input("global-namespace")]
   [Input("non-partial-container")]
+  [Input("generic")]
   public static Task Should_Report_TWE014_For_A_Type_That_Cannot_Carry_The_Offer(string shape)
   {
     string source = shape switch
@@ -321,6 +322,15 @@ public class ContractsGeneratorOfferable_Tests
         using Stub.Attributes;
         [Offerable]
         public static partial class RenameCredential
+        {
+            public sealed partial class Command { public string Nickname { get; set; } = ""; }
+        }
+        """,
+      "generic" => """
+        using Stub.Attributes;
+        namespace Test.Features.Identity;
+        [Offerable]
+        public static partial class RenameCredential<T>
         {
             public sealed partial class Command { public string Nickname { get; set; } = ""; }
         }

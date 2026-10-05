@@ -331,7 +331,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWE011 | conflicting `[Page]` route declaration — stacked `[Page]` (put aliases on one: `[Page("/primary", "/alias")]`), a non-literal additional route, or an alias token typed differently from the primary route |
 | TWE012 | `[Offerable]` `UserInput` entry is not an offerable property of the contract's `Command` — names none, repeats an entry, or names the auth-filled `UserId` — no `Offer` / `OfferName` generated (contracts generator, task 281) |
 | TWE013 | `[Offerable]` on a contract with no nested `Command` — no `Offer` / `OfferName` generated; non-contract actions keep a hand-written `[ActionOffer]` record |
-| TWE014 | `[Offerable]` on a type the generated members cannot merge into — a record, struct, non-partial class, global-namespace type, or one nested in a non-partial-class type — no `Offer` / `OfferName` generated (never silently skipped) |
+| TWE014 | `[Offerable]` on a type the generated members cannot merge into — a record, struct, generic or non-partial class, global-namespace type, or one nested in such a type — no `Offer` / `OfferName` generated (never silently skipped) |
 | SG001 | shared source-generator log (resilience backstop) |
 | SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
 | SG010 | TypedId BCL surface generation failed (resilience) |
