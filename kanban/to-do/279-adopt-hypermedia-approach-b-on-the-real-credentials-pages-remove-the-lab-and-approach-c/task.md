@@ -158,6 +158,7 @@ task 275's "B vs C comparison" (in `kanban/done/275-hypermedia/task.md`) first.
 - 2026-10-05: review oracle (headless, Claude Opus 5.5).
   - Effort 3: general, tests and security reviewers in round 1; round 2 was a re-verification.
   - Fixed 9 findings on this id. Disposition is accepted-exceptions.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-05T07:01:05Z
 
 ## Results
 
