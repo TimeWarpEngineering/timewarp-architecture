@@ -8,7 +8,7 @@
 // parameter's ClrType with the contract-seam options (ContractSerializationDefaults), so the value
 // handed to Execute is already that type and ActionCatalogArguments.Get passes it through untouched
 // (Guid from "…", string, bool, records and dictionaries alike). Fail closed on anything off-shape:
-// a missing required parameter, an argument name the entry does not declare, a value that does not
+// a missing required parameter (an explicit JSON null counts as missing), an argument name the entry does not declare, a value that does not
 // deserialize, or an optional parameter skipped before a later one that is present (positional
 // arrays cannot leave holes). A trailing run of absent optional parameters is simply not passed.
 // Lives beside the palette (Applications) while the evaluation runs; it moves into TimeWarp.State
@@ -67,7 +67,7 @@ public static class ContextualActionArguments
     int skippedOptional = 0;
     foreach (ActionCatalogParameter parameter in entry.Parameters)
     {
-      if (!arguments.TryGetValue(parameter.Name, out JsonElement value))
+      if (!arguments.TryGetValue(parameter.Name, out JsonElement value) || value.ValueKind == JsonValueKind.Null)
       {
         if (parameter.IsRequired)
         {

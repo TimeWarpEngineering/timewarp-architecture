@@ -156,6 +156,7 @@ public class HypermediaLab_Should_
     Warnings(scope).ShouldContain(static title => title.Contains("is not an action this app knows", StringComparison.Ordinal));
   }
 
+  [Input("{\"credentialId\":null}")]
   [Input("{\"credentialId\":\"not-a-guid\"}")]
   [Input("{\"credentialId\":\"6f1c1f43-3f4e-4f43-9f43-5f1c1f433f4e\",\"extra\":1}")]
   [Input("{}")]

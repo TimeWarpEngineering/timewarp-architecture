@@ -239,7 +239,7 @@
           {
             int rowIndex = index;
             CommandPaletteRow row = Matches[rowIndex];
-            <li @key=@($"{row.Kind}:{row.Target}")
+            <li @key=row
                 id=@RowId(rowIndex)
                 class=@(rowIndex == HighlightedIndex ? "twe-palette__row twe-palette__row--active" : "twe-palette__row")
                 role="option"

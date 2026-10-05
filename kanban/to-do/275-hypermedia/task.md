@@ -131,7 +131,8 @@ tracked separately in timewarp-state task 096.
 - [x] Comparison write-up in Notes, ending in an open question for Steve
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 - [x] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (effort 3, disposition accepted-exceptions)
+- [ ] Host `open-pr`
 
 ## Notes
 
@@ -211,7 +212,10 @@ C are the same decisions written two ways.
   - the server re-enforces permissions and rules on the real endpoint (for example the 409
     LastCredential backstop).
 - **B** adds a second allow-list, the client's catalog: the server can only ask for something the
-  client already ships.
+  client already ships. In the lab, contextual rows do not check the catalog entry's `Visibility` or
+  `Permissions` (the server decided and re-enforces). So *any* shipped catalog entry is offerable.
+  If B is adopted, check Visibility/Permissions, or an offerable-names list, before `Execute`
+  (review M4).
 - **C's allow-list is "same origin"** (`AppRelativeHref`: rejects absolute, `//`, `/\`, backslash,
   whitespace and control characters, and `javascript:`). After that, any app endpoint the bearer
   token can reach is a candidate. A compromised or buggy payload can aim the user's token at any
@@ -252,6 +256,10 @@ C are the same decisions written two ways.
   today's agent-only `GetHumanUx` `Actions`. It is usable by a generic HTTP agent but has no
   catalog-level schema or permission metadata.
 
+**Lab artefact, not a finding against either approach:** B and C refresh independently. After a B
+revoke, the C tab and its Ctrl-K rows stay stale until C refetches; the server's 409 still holds
+(review M2). Adoption keeps one approach, which removes this.
+
 **Not performed:** a browser check. No AppHost was started, as this task required. All behaviour
 was validated headless (see Results).
 
@@ -276,6 +284,8 @@ should not. "Neither" stays reasonable if the duplicated client-side `CanUnlink`
   run's uncommitted work, then fixed: `HypermediaLabState.Clone` must give a new Guid (InvalidCloneException);
   `FollowedLinkRequest` needs a private `[JsonConstructor]` (extension data cannot bind to a ctor
   parameter); test usings. Added web-server endpoint tests and contract round-trips. All gates green.
+- 2026-10-05: review oracle (Claude Opus 5.5, headless). Effort 3; reviewers general, security and
+  tests (Sonnet subagents). Fixed M1 (palette `@key` collision), M3 and M5. Disposition accepted-exceptions.
 
 ## Results
 
@@ -316,3 +326,27 @@ app-relative. Contracts 57/57, including the lab round-trips.
 
 Optional manual check (not performed here): `dev run`, sign in, open `/HypermediaLab`, revoke down
 to one credential on each tab and watch Revoke disappear; press Ctrl-K on the lab page and elsewhere.
+
+### Implementation review
+
+- **Effort and rounds:** effort 3, 2 rounds. Round 1 had three reviewers (general, security,
+  tests). Round 2 was the orchestrator re-verifying the fixes.
+- **Final counts:**
+  - bug: 1 fixed;
+  - suggestion: 3 wontfix;
+  - nit: 2 fixed, 2 wontfix;
+  - **0 open.**
+- **Disposition:** `accepted-exceptions`.
+- **Fixed:**
+  - M1: the Ctrl-K row `@key` collided for contextual rows sharing a catalog Target, so the palette
+    would throw when rendering on the lab page. The key is now the whole row.
+  - M3: the ranker's Design region now matches the sort order.
+  - M5: a JSON `null` for a required parameter is refused (new test input; lab suite 24/24, palette
+    35/35, `dev build` 0/0).
+- **Wontfix (lab scope):**
+  - M2 and M4 are recorded in the comparison above.
+  - M6, M7 and M8: rationale is in the disposition.
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-2/merged.md` (ledger in `review/round-1/merged.md`)
+  - `review/disposition.md`
