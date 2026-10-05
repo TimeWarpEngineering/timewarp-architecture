@@ -159,8 +159,11 @@ second place to look without removing any drift.
    e.g. `"Identity.RenameCredential"`) and a nested `[ActionOffer(OfferName, UserInput = …)] record
    Offer(…)` whose properties are the route parameters plus the Command's settable properties, minus
    `UserInput` and the auth-filled `UserId` (`IAuthApiRequest` — the server takes the caller from the
-   session and never trusts a client-sent id, so it is never an offered argument). `UserInput` naming
-   no Command property is **TWE012**; `[Offerable]` on a contract with no Command is **TWE013**.
+   session and never trusts a client-sent id, so it is never an offered argument). A `UserInput` entry
+   that names no Command property, repeats an entry, or names that `UserId` is **TWE012**;
+   `[Offerable]` on a contract with no Command is **TWE013**; `[Offerable]` on anything but a partial
+   class declared in a namespace (nested only in partial classes) is **TWE014** — the generated
+   members could not merge into it.
 2. Set `[CatalogAction(Name = <Contract>.OfferName)]` on the client action whose handler requests that
    Command. **TWA0031** fails the SPA build when an offerable contract has no such action, or the
    action declares a different name.
@@ -175,7 +178,10 @@ runs, and an agent sees the same typed shape as the button.
 to a hand-written endpoint (an auth challenge), or a client-only action, has no Command to generate
 from:
 
-1. Add the catalog name constant to the slice's offered-names class in the shared contracts.
+1. Add the catalog name constant to the slice's offered-names class in the shared contracts. Name it
+   `"<Slice>.<Operation>"`, the same scheme the generator uses (`"Identity.LinkMicrosoft365"` beside
+   the generated `"Identity.RenameCredential"`), so every offer a slice makes reads as one vocabulary
+   whether its record is generated or hand-written.
 2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`.
 3. Set `[CatalogAction(Name = <constant>)]` on the client action, so renaming the action set cannot
    change the offered name.

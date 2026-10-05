@@ -16,7 +16,7 @@
 // Command label (task 268): "Owner: Action" for every command, authored or generated — the owner is
 // the catalog name's prefix, so rows group by state whichever way their action part was written.
 // The action part is ActionCatalogEntry.DisplayName ([CatalogAction(DisplayName = …)]) when set —
-// labels are written deliberately ("Credentials: Link Microsoft 365"); only a null DisplayName falls
+// labels are written deliberately ("Identity: Link Microsoft 365"); only a null DisplayName falls
 // back to the catalog name made readable ("Profile.SignOut" → "Profile: Sign out", a digit run
 // starts a word). Set DisplayName wherever the generated split reads poorly (brand casing, acronyms).
 // The ranker matches the shown label and the description; the stable catalog name stays the Target.

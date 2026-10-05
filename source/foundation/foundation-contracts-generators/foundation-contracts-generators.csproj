@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- TWE SSOT (task 281): the [Offerable] diagnostics TWE012/TWE013 are declared in the
+    <!-- TWE SSOT (task 281): the [Offerable] diagnostics TWE012/TWE013/TWE014 are declared in the
          Generators package's descriptor registry and linked here, so IDs stay unique across both
          generator assemblies. Release tracking for them lives beside the SSOT
          (timewarp-architecture-analyzers/AnalyzerReleases.Unshipped.md), so RS2008 is off here. -->

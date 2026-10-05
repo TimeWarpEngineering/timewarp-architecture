@@ -54,7 +54,7 @@
 // action must declare Name equal to the contract's generated OfferName constant (reported on its
 // [CatalogAction]); a contract with no such action is reported too (Location.None — the contract is
 // metadata here), because then nothing the SPA ships can run the offer. A contract with no Command or
-// OfferName is skipped: the generator already failed it (TWE012/TWE013). Handlers are collected from
+// OfferName is skipped: the generator already failed it (TWE012/TWE013/TWE014). Handlers are collected from
 // this compilation's source only (handlers live in the SPA).
 #endregion
 

@@ -32,7 +32,10 @@
 // credential an offer applies to (Guid "D"; null = page-level) — a display hint so a page can put the
 // button on the right row without reading Arguments.
 // OfferedActionNames.All is the server's whole vocabulary: the generated OfferName of each
-// [Offerable] contract plus one constant per hand-written record.
+// [Offerable] contract plus one constant per hand-written record. A hand-written name follows the
+// generator's "<Slice>.<Operation>" scheme ("Identity.LinkMicrosoft365" beside the generated
+// "Identity.RenameCredential"), so a slice's offers read as one vocabulary whichever way the record
+// is produced.
 // Lives in Identity because Identity is the only slice that offers actions today; the day a second
 // slice offers actions, OfferedAction moves to a shared contracts tier (TWA0009 keeps slices apart)
 // and each slice keeps its own <Slice>OfferedActionNames + records. ActionOfferAttribute,
@@ -94,7 +97,7 @@ public sealed class OfferedAction
 public static class OfferedActionNames
 {
   /// <summary>Hand-written <see cref="LinkMicrosoft365Offer"/> (no contract Command to generate from).</summary>
-  public const string LinkMicrosoft365 = "Credentials.LinkMicrosoft365";
+  public const string LinkMicrosoft365 = "Identity.LinkMicrosoft365";
 
   /// <summary>Generated <c>[Offerable]</c> names plus the hand-written ones (one offer record each).</summary>
   public static IReadOnlyList<string> All { get; } = [RevokeCredential.OfferName, RenameCredential.OfferName, LinkMicrosoft365];

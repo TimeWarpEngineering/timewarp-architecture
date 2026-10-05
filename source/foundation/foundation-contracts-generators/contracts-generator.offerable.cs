@@ -1,5 +1,5 @@
 #region Purpose
-// Emits the nested Offer record and OfferName constant onto every [Offerable] contract (task 281), or TWE012/TWE013 when the contract cannot be offered.
+// Emits the nested Offer record and OfferName constant onto every [Offerable] contract (task 281), or TWE012/TWE013/TWE014 when the contract cannot be offered.
 #endregion
 
 #region Design
@@ -28,11 +28,14 @@
 // Attributes namespace; [Offerable] is matched by simple name like the convention analyzers.
 // The record is partial so the contract can add interfaces in its own declaration
 // (`partial record Offer : ICredentialActionOffer;`).
-// Fail-closed: TWE013 when there is no nested Command class, TWE012 for each UserInput entry that
-// names no Command property; either way nothing is emitted for that contract. Descriptors live in
-// the TWE SSOT (diagnostic-descriptors.cs, linked into this project).
-// Incremental: a syntax predicate on partial classes with an Offerable-named attribute, then a
-// transform to the equatable OfferTarget (strings, ImmutableArrays compared by sequence,
+// Fail-closed: TWE014 when the [Offerable] type cannot carry the emitted `partial class` members
+// (not a partial class — a record, struct or non-partial class —, declared in the global namespace,
+// or nested in a type that is not a partial class); TWE013 when there is no nested Command class;
+// TWE012 for each UserInput entry that is not an offerable Command property (names no property,
+// repeats an entry, or names the auth-filled UserId). In every case nothing is emitted for that
+// contract. Descriptors live in the TWE SSOT (diagnostic-descriptors.cs, linked into this project).
+// Incremental: a syntax predicate on ANY type declaration with an Offerable-named attribute (so the
+// shapes TWE014 rejects are seen rather than skipped), then a transform to the equatable OfferTarget (strings, ImmutableArrays compared by sequence,
 // DiagnosticInfo instead of Location), so trivia-only edits do not re-emit (239-001 lesson).
 #endregion
 
@@ -57,14 +60,17 @@ public sealed partial class ContractsGenerator
 
   private readonly record struct OfferProperty(string Type, string Name);
 
-  private readonly record struct DiagnosticInfo(string Id, string FilePath, TextSpan Span, LinePositionSpan LineSpan, string Arg0, string Arg1)
+  private readonly record struct DiagnosticInfo(string Id, string FilePath, TextSpan Span, LinePositionSpan LineSpan, string Arg0, string Arg1, string Arg2)
   {
     public Diagnostic ToDiagnostic()
     {
-      DiagnosticDescriptor descriptor = Id == DiagnosticDescriptors.OfferableUnknownUserInput.Id
-        ? DiagnosticDescriptors.OfferableUnknownUserInput
-        : DiagnosticDescriptors.OfferableMissingCommand;
-      return Diagnostic.Create(descriptor, Location.Create(FilePath, Span, LineSpan), Arg0, Arg1);
+      DiagnosticDescriptor descriptor = Id switch
+      {
+        "TWE012" => DiagnosticDescriptors.OfferableUnknownUserInput,
+        "TWE013" => DiagnosticDescriptors.OfferableMissingCommand,
+        _ => DiagnosticDescriptors.OfferableUnsupportedDeclaration
+      };
+      return Diagnostic.Create(descriptor, Location.Create(FilePath, Span, LineSpan), Arg0, Arg1, Arg2);
     }
   }
 
@@ -109,7 +115,7 @@ public sealed partial class ContractsGenerator
   {
     IncrementalValuesProvider<OfferTarget> offers = context.SyntaxProvider
       .CreateSyntaxProvider(
-        predicate: static (node, _) => IsPartialClass(node) && HasOfferableAttributeSyntax((ClassDeclarationSyntax)node),
+        predicate: static (node, _) => node is TypeDeclarationSyntax declaration && HasOfferableAttributeSyntax(declaration),
         transform: static (ctx, cancellationToken) => TransformOffer(ctx, cancellationToken))
       .Where(static t => t is not null)
       .Select(static (t, _) => t!.Value);
@@ -127,7 +133,7 @@ public sealed partial class ContractsGenerator
     });
   }
 
-  private static bool HasOfferableAttributeSyntax(ClassDeclarationSyntax declaration)
+  private static bool HasOfferableAttributeSyntax(TypeDeclarationSyntax declaration)
   {
     foreach (AttributeListSyntax list in declaration.AttributeLists)
     {
@@ -162,10 +168,14 @@ public sealed partial class ContractsGenerator
       return null;
     }
 
-    if (ToTarget(contract, ImmutableArray<Part>.Empty) is not { } identity)
-      return null;
-
     Location attributeLocation = reference.GetSyntax(cancellationToken).GetLocation();
+    if (!CanCarryOffer(contract) || ToTarget(contract, ImmutableArray<Part>.Empty) is not { } identity)
+    {
+      string name = contract.ToDisplayString();
+      return new OfferTarget("", [], contract.Name, name, "", "", [], [],
+        [Info(DiagnosticDescriptors.OfferableUnsupportedDeclaration, attributeLocation, name, "", "")]);
+    }
+
     string offerName = OfferName(identity.Namespace, contract.Name);
     string actionOfferAttribute = "global::" + offerable.AttributeClass!.ContainingNamespace.ToDisplayString() + ".ActionOfferAttribute";
     OfferTarget Empty(ImmutableArray<DiagnosticInfo> diagnostics) =>
@@ -173,7 +183,7 @@ public sealed partial class ContractsGenerator
 
     INamedTypeSymbol? command = contract.GetTypeMembers("Command").FirstOrDefault(static t => t.TypeKind == TypeKind.Class);
     if (command is null)
-      return Empty([Info(DiagnosticDescriptors.OfferableMissingCommand, attributeLocation, contract.ToDisplayString(), "")]);
+      return Empty([Info(DiagnosticDescriptors.OfferableMissingCommand, attributeLocation, contract.ToDisplayString(), "", "")]);
 
     List<OfferProperty> candidates = [.. RouteProperties(command)];
     foreach (IPropertySymbol property in CommandProperties(command))
@@ -183,21 +193,28 @@ public sealed partial class ContractsGenerator
       candidates.Add(new OfferProperty(property.Type.ToDisplayString(PropertyTypeFormat), property.Name));
     }
 
-    if (IsAuthFilled(command))
+    bool authFilled = IsAuthFilled(command);
+    if (authFilled)
       candidates.RemoveAll(static candidate => candidate.Name == AuthFilledUserId);
 
     ImmutableArray<DiagnosticInfo>.Builder diagnostics = ImmutableArray.CreateBuilder<DiagnosticInfo>();
     List<string> userInput = [];
+    HashSet<string> listed = new(StringComparer.Ordinal);
+    string contractName = contract.ToDisplayString();
     foreach (string input in UserInputNames(offerable))
     {
-      int index = candidates.FindIndex(candidate => candidate.Name == input);
-      if (index < 0)
+      string? reason =
+        !listed.Add(input) ? "is listed more than once"
+        : authFilled && input == AuthFilledUserId ? "is the auth-filled UserId (IAuthApiRequest), which the client fills from the caller's identity and an offer never carries"
+        : !candidates.Any(candidate => candidate.Name == input) ? "names no property of " + contractName + ".Command"
+        : null;
+      if (reason is not null)
       {
-        diagnostics.Add(Info(DiagnosticDescriptors.OfferableUnknownUserInput, attributeLocation, contract.ToDisplayString(), input));
+        diagnostics.Add(Info(DiagnosticDescriptors.OfferableUnknownUserInput, attributeLocation, contractName, input, reason));
         continue;
       }
 
-      candidates.RemoveAt(index);
+      candidates.RemoveAt(candidates.FindIndex(candidate => candidate.Name == input));
       userInput.Add(CamelCase(input));
     }
 
@@ -219,10 +236,30 @@ public sealed partial class ContractsGenerator
   private static readonly SymbolDisplayFormat PropertyTypeFormat =
     SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
-  private static DiagnosticInfo Info(DiagnosticDescriptor descriptor, Location location, string arg0, string arg1)
+  private static DiagnosticInfo Info(DiagnosticDescriptor descriptor, Location location, string arg0, string arg1, string arg2)
   {
     FileLinePositionSpan lineSpan = location.GetLineSpan();
-    return new DiagnosticInfo(descriptor.Id, lineSpan.Path, location.SourceSpan, lineSpan.Span, arg0, arg1);
+    return new DiagnosticInfo(descriptor.Id, lineSpan.Path, location.SourceSpan, lineSpan.Span, arg0, arg1, arg2);
+  }
+
+  /// <summary>
+  /// The emitted `partial class` members merge only into a partial class (not a record or struct) declared
+  /// in a namespace, whose every containing type is a partial class too (TWE014 otherwise).
+  /// </summary>
+  private static bool CanCarryOffer(INamedTypeSymbol contract)
+  {
+    if (contract.ContainingNamespace is not { IsGlobalNamespace: false })
+      return false;
+
+    for (INamedTypeSymbol? type = contract; type is not null; type = type.ContainingType)
+    {
+      if (type.TypeKind != TypeKind.Class || type.IsRecord)
+        return false;
+      if (!type.DeclaringSyntaxReferences.All(static r => r.GetSyntax() is ClassDeclarationSyntax declaration && declaration.Modifiers.Any(SyntaxKind.PartialKeyword)))
+        return false;
+    }
+
+    return true;
   }
 
   /// <summary>Route parameters of the Command's first [ApiRoute], typed like the generated route members.</summary>

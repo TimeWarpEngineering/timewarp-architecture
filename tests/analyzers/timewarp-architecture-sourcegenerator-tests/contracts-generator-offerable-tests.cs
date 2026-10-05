@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for the contracts generator's [Offerable] output (task 281): Offer record + OfferName shape, auth-field exclusion, TWE012/TWE013, and incremental caching.
+// Tests for the contracts generator's [Offerable] output (task 281): Offer record + OfferName shape (nested contracts, inherited Command properties, route-parameter UserInput), auth-field exclusion, TWE012/TWE013/TWE014, and incremental caching.
 #endregion
 
 #region Design
@@ -14,6 +14,7 @@ namespace TimeWarp.Architecture.SourceGenerator.Tests;
 using System;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
 using TimeWarp.Foundation.Contracts.Generators;
 
 public class ContractsGeneratorOfferable_Tests
@@ -203,6 +204,250 @@ public class ContractsGeneratorOfferable_Tests
     diagnostic.Severity.ShouldBe(DiagnosticSeverity.Error);
     OfferSource(result).ShouldBeNull();
     return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE012_For_Duplicate_And_Auth_Filled_UserInput()
+  {
+    const string duplicate = """
+      using Stub.Attributes;
+
+      namespace Test.Features.Identity;
+
+      [Offerable(UserInput = ["Nickname", "Nickname"])]
+      public static partial class RenameCredential
+      {
+          public sealed partial class Command
+          {
+              public string Nickname { get; set; } = "";
+          }
+      }
+      """;
+    GeneratorDriverRunResult duplicateResult = RunResult(duplicate);
+    Diagnostic duplicateDiagnostic = duplicateResult.Diagnostics.ShouldHaveSingleItem();
+    duplicateDiagnostic.Id.ShouldBe("TWE012");
+    duplicateDiagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("'Nickname', which is listed more than once");
+    OfferSource(duplicateResult).ShouldBeNull();
+
+    const string userId = """
+      using Stub.Attributes;
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Identity;
+
+      [Offerable(UserInput = ["UserId"])]
+      public static partial class RenameCredential
+      {
+          public sealed partial class Command : IAuthApiRequest
+          {
+              public System.Guid UserId { get; set; }
+              public string Nickname { get; set; } = "";
+          }
+      }
+      """;
+    GeneratorDriverRunResult userIdResult = RunResult(userId);
+    Diagnostic userIdDiagnostic = userIdResult.Diagnostics.ShouldHaveSingleItem();
+    userIdDiagnostic.Id.ShouldBe("TWE012");
+    string message = userIdDiagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture);
+    message.ShouldContain("'UserId', which is the auth-filled UserId");
+    message.ShouldNotContain("names no property");
+    OfferSource(userIdResult).ShouldBeNull();
+
+    // An entry that names nothing says so (the third message argument is the reason).
+    const string unknown = """
+      using Stub.Attributes;
+
+      namespace Test.Features.Identity;
+
+      [Offerable(UserInput = ["Colour"])]
+      public static partial class RenameCredential
+      {
+          public sealed partial class Command { }
+      }
+      """;
+    RunResult(unknown).Diagnostics.ShouldHaveSingleItem().GetMessage(System.Globalization.CultureInfo.InvariantCulture)
+      .ShouldContain("'Colour', which names no property of Test.Features.Identity.RenameCredential.Command");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Report_TWE013_On_The_Offerable_Attribute()
+  {
+    const string source = """
+      using Stub.Attributes;
+
+      namespace Test.Features.Identity;
+
+      [Offerable]
+      public static partial class GetCredentials
+      {
+          public sealed partial class Query { }
+      }
+      """;
+
+    Diagnostic diagnostic = RunResult(source).Diagnostics.ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWE013");
+    LinePositionSpan span = diagnostic.Location.GetLineSpan().Span;
+    span.Start.ShouldBe(new LinePosition(4, 1));
+    span.End.ShouldBe(new LinePosition(4, "[Offerable".Length));
+    return Task.CompletedTask;
+  }
+
+  [Input("record")]
+  [Input("non-partial")]
+  [Input("global-namespace")]
+  [Input("non-partial-container")]
+  public static Task Should_Report_TWE014_For_A_Type_That_Cannot_Carry_The_Offer(string shape)
+  {
+    string source = shape switch
+    {
+      "record" => """
+        using Stub.Attributes;
+        namespace Test.Features.Identity;
+        [Offerable]
+        public sealed partial record RenameCredential
+        {
+            public sealed partial class Command { public string Nickname { get; set; } = ""; }
+        }
+        """,
+      "non-partial" => """
+        using Stub.Attributes;
+        namespace Test.Features.Identity;
+        [Offerable]
+        public static class RenameCredential
+        {
+            public sealed class Command { public string Nickname { get; set; } = ""; }
+        }
+        """,
+      "global-namespace" => """
+        using Stub.Attributes;
+        [Offerable]
+        public static partial class RenameCredential
+        {
+            public sealed partial class Command { public string Nickname { get; set; } = ""; }
+        }
+        """,
+      _ => """
+        using Stub.Attributes;
+        namespace Test.Features.Identity;
+        public static class CredentialOperations
+        {
+            [Offerable]
+            public static partial class RenameCredential
+            {
+                public sealed partial class Command { public string Nickname { get; set; } = ""; }
+            }
+        }
+        """
+    };
+
+    GeneratorDriverRunResult result = RunResult(source);
+    Diagnostic diagnostic = result.Diagnostics.ShouldHaveSingleItem();
+    diagnostic.Id.ShouldBe("TWE014");
+    diagnostic.Severity.ShouldBe(DiagnosticSeverity.Error);
+    diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).ShouldContain("RenameCredential");
+    OfferSource(result).ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_Offer_For_Contract_Nested_In_A_Container()
+  {
+    const string source = """
+      using Stub.Attributes;
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Identity;
+
+      public static partial class CredentialOperations
+      {
+          [Offerable]
+          public static partial class RevokeCredential
+          {
+              [ApiRoute("api/identity/credentials/{CredentialId:guid}/revoke", HttpVerb.Post)]
+              public sealed partial class Command { }
+          }
+      }
+      """;
+
+    GeneratorDriverRunResult result = RunResult(source);
+    result.Diagnostics.ShouldBeEmpty();
+    result.Results.SelectMany(static r => r.GeneratedSources).Select(static s => s.HintName)
+      .ShouldContain("Test.Features.Identity.CredentialOperations.RevokeCredential.Offer.g.cs");
+    string generated = OfferSource(result).ShouldNotBeNull();
+    generated.ShouldContain("partial class CredentialOperations");
+    generated.ShouldContain("public const string OfferName = \"Identity.RevokeCredential\";");
+    generated.ShouldContain("public sealed partial record Offer(global::System.Guid CredentialId);");
+
+    _ = CreateDriver().RunGeneratorsAndUpdateCompilation(CreateCompilation(source), out Compilation updated, out _);
+    ShouldHaveNoErrors(updated);
+    updated.GetTypeByMetadataName("Test.Features.Identity.CredentialOperations+RevokeCredential+Offer").ShouldNotBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Bind_Inherited_Command_Properties_Once()
+  {
+    const string source = """
+      using Stub.Attributes;
+
+      namespace Test.Features.Admin;
+
+      public abstract class TallyCommandBase
+      {
+          public string Name { get; set; } = "";
+          public int Count { get; set; }
+          public string ReadOnly => Name;
+      }
+
+      [Offerable]
+      public static partial class Tally
+      {
+          public sealed partial class Command : TallyCommandBase
+          {
+              public new int Count { get; set; }
+              public bool Flag { get; set; }
+          }
+      }
+      """;
+
+    GeneratorDriverRunResult result = RunResult(source);
+    result.Diagnostics.ShouldBeEmpty();
+    // Most-derived first; the hiding Count wins over the base one (bound once); getter-only skipped.
+    OfferSource(result).ShouldNotBeNull().ShouldContain("public sealed partial record Offer(int Count, bool Flag, string Name);");
+
+    _ = CreateDriver().RunGeneratorsAndUpdateCompilation(CreateCompilation(source), out Compilation updated, out _);
+    ShouldHaveNoErrors(updated);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Accept_UserInput_Naming_A_Route_Parameter()
+  {
+    const string source = """
+      using Stub.Attributes;
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Identity;
+
+      [Offerable(UserInput = ["CredentialId"])]
+      public static partial class RenameCredential
+      {
+          [ApiRoute("api/identity/credentials/{CredentialId:guid}/rename", HttpVerb.Post)]
+          public sealed partial class Command
+          {
+              public string Nickname { get; set; } = "";
+          }
+      }
+      """;
+
+    GeneratorDriverRunResult result = RunResult(source);
+    result.Diagnostics.ShouldBeEmpty();
+    string generated = OfferSource(result).ShouldNotBeNull();
+    generated.ShouldContain("[global::Stub.Attributes.ActionOfferAttribute(OfferName, UserInput = [\"credentialId\"])]");
+    generated.ShouldContain("public sealed partial record Offer(string Nickname);");
+    return Task.CompletedTask;
+  }
+
+  private static void ShouldHaveNoErrors(Compilation compilation)
+  {
+    ImmutableArray<Diagnostic> errors = [.. compilation.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error)];
+    errors.ShouldBeEmpty(string.Join(Environment.NewLine, errors.Select(static d => d.ToString())));
   }
 
   public static Task Should_Compile_Generated_Offer_With_Partial_Interface()

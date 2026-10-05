@@ -186,9 +186,14 @@ public static partial class RenameCredential { … }
 Rules:
 
 - `UserInput` names **Command properties** with `nameof(Command.X)`, so renaming a property is a
-  compile error, not a silently-bound argument. An entry that names no property is **TWE012**.
+  compile error, not a silently-bound argument. An entry that names no property, repeats an entry,
+  or names the auth-filled `UserId` is **TWE012**.
 - `[Offerable]` needs a nested `Command` (**TWE013**). A read is never offered, and an action with no
-  contract Command keeps a hand-written `[ActionOffer]` record.
+  contract Command keeps a hand-written `[ActionOffer]` record, named `"<Slice>.<Operation>"` like a
+  generated one.
+- `[Offerable]` goes on the contract's `static partial class`, declared in a namespace and nested (if
+  at all) only in partial classes — the generated members are emitted into it. A record, struct,
+  non-partial class, or global-namespace type is **TWE014**, never a silently missing offer.
 - `UserId` from `IAuthApiRequest` is never part of the offer: it is a client/mock-mode identity
   signal the server never trusts, so the server never sends it either.
 - The generated record is `partial`; add interfaces in the contract with

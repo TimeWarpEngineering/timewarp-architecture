@@ -20,11 +20,14 @@
 // that Blazor would treat as the same route (TWE010), and route declarations the generator cannot
 // emit faithfully — stacked [Page], a non-literal additional route, or a token whose type disagrees
 // with an earlier route of the page (TWE011). Both are fail-closed: the page surface is not generated.
-// TWE012/TWE013 are the [Offerable] contract (task 281), reported by the contracts generator in
-// TimeWarp.Foundation.Contracts (which links this file so the SSOT stays here): a UserInput entry
-// that names no Command property (TWE012), and [Offerable] on a contract with no nested Command
-// (TWE013). Both are fail-closed: no Offer record or OfferName is generated.
-// Severity: generation-contract violations (TWE002/003/007/008/009/010/011/012/013, TWE005/006) are Errors so a broken
+// TWE012/TWE013/TWE014 are the [Offerable] contract (task 281), reported by the contracts generator
+// in TimeWarp.Foundation.Contracts (which links this file so the SSOT stays here): a UserInput entry
+// that is not an offerable Command property — names none, repeats an entry, or names the auth-filled
+// UserId — (TWE012, the reason is the third message argument), [Offerable] on a contract with no
+// nested Command (TWE013), and [Offerable] on a type the generated members cannot merge into — not a
+// partial class, in the global namespace, or nested in a non-partial-class type (TWE014). All are
+// fail-closed: no Offer record or OfferName is generated, and the type is never silently skipped.
+// Severity: generation-contract violations (TWE002/003/007/008/009/010/011/012/013/014, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -115,12 +118,12 @@ internal static class DiagnosticDescriptors
 
   public static readonly DiagnosticDescriptor OfferableUnknownUserInput = new(
     id: "TWE012",
-    title: "[Offerable] UserInput names no Command property",
-    messageFormat: "[Offerable] on '{0}' lists UserInput '{1}', which is not a property of {0}.Command; no Offer record is generated",
+    title: "[Offerable] UserInput entry is not an offerable Command property",
+    messageFormat: "[Offerable] on '{0}' lists UserInput '{1}', which {2}; no Offer record is generated",
     category: "Offerable",
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
-    description: "Fail-closed: UserInput names the Command properties the user supplies (use nameof(Command.X)); an entry that names nothing would silently bind every property on the server.");
+    description: "Fail-closed: UserInput names, once each, the Command properties the user supplies (use nameof(Command.X)). An entry that names nothing would silently bind every property on the server; the auth-filled UserId is never part of an offer.");
 
   public static readonly DiagnosticDescriptor OfferableMissingCommand = new(
     id: "TWE013",
@@ -130,6 +133,15 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "An offer is the contract's Command minus server-filled fields. A contract with no Command (a query, or an action with no contract) keeps a hand-written [ActionOffer] record instead.");
+
+  public static readonly DiagnosticDescriptor OfferableUnsupportedDeclaration = new(
+    id: "TWE014",
+    title: "[Offerable] type cannot carry the generated Offer",
+    messageFormat: "[Offerable] on '{0}' requires a partial class declared in a namespace, nested (if at all) only in partial classes; no Offer record is generated",
+    category: "Offerable",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: OfferName and the Offer record are emitted as members of a partial class, so a record, struct, non-partial class, global-namespace type, or one nested in a non-partial-class type would otherwise be skipped with no offer and no error.");
 
   // ── SG: generator logs / resilience ──────────────────────────────────────
 
