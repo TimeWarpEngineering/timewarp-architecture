@@ -466,8 +466,8 @@ public class GetCredentials_Response_Should
         )
       ],
       [
-        OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", firstId),
-        OfferedAction.ForPage(OfferedActionNames.LinkMicrosoft365, "Link Microsoft 365")
+        OfferedAction.ForCredential(new RevokeCredentialOffer(firstId.Value), "Revoke"),
+        OfferedAction.ForPage(new LinkMicrosoft365Offer(), "Link Microsoft 365")
       ]
     );
 
@@ -499,7 +499,9 @@ public class GetCredentials_Response_Should
     parsed.Offers[0].Name.ShouldBe(OfferedActionNames.RevokeCredential);
     parsed.Offers[0].Label.ShouldBe("Revoke");
     parsed.Offers[0].Subject.ShouldBe(firstId.Value.ToString("D"));
-    parsed.Offers[0].Arguments[OfferedActionNames.CredentialIdArgument].GetString().ShouldBe(firstId.Value.ToString("D"));
+    // Task 280: the typed RevokeCredentialOffer record keeps the wire shape — camelCase "credentialId", Guid "D".
+    parsed.Offers[0].Arguments.Keys.ShouldBe(["credentialId"]);
+    parsed.Offers[0].Arguments["credentialId"].GetString().ShouldBe(firstId.Value.ToString("D"));
     parsed.Offers[1].Name.ShouldBe(OfferedActionNames.LinkMicrosoft365);
     parsed.Offers[1].Subject.ShouldBeNull();
     parsed.Offers[1].Arguments.ShouldBeEmpty();

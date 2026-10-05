@@ -28,3 +28,5 @@ TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with 
 TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
 TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason
 TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclass member is not a public static readonly field
+TWA0029 | Design | Warning | ActionOfferAgreementAnalyzer: [ActionOffer] record names no [CatalogAction(Name = …)] in the SPA compilation
+TWA0030 | Design | Warning | ActionOfferAgreementAnalyzer: [ActionOffer] record properties / UserInput do not match the offered action's constructor parameters

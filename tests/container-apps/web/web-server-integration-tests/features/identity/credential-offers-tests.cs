@@ -54,7 +54,7 @@ public class CredentialOffers_For_
 
     Subjects(offers, OfferedActionNames.RevokeCredential).ShouldBe([.. new[] { Id(passkey), Id(agentKey) }.Order()]);
     offers.Where(static offer => offer.Subject is not null)
-      .ShouldAllBe(offer => offer.Arguments[OfferedActionNames.CredentialIdArgument].GetString() == offer.Subject);
+      .ShouldAllBe(offer => offer.Arguments["credentialId"].GetString() == offer.Subject);
     return Task.CompletedTask;
   }
 
@@ -168,7 +168,7 @@ public class GetCredentialsOffers_Returns_
     var revoke = new RevokeCredential.Command
     {
       UserId = Guid.NewGuid(),
-      CredentialId = Guid.Parse(revokeOffer.Arguments[OfferedActionNames.CredentialIdArgument].GetString()!)
+      CredentialId = Guid.Parse(revokeOffer.Arguments["credentialId"].GetString()!)
     };
     HttpResponseMessage revokeResponse = await testApiService.GetHttpResponseMessage(revoke, CancellationToken.None);
     revokeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);

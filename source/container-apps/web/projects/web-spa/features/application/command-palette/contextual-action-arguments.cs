@@ -14,8 +14,9 @@
 // parameters is simply not passed.
 // Approach B is adopted (task 279); the binder still lives beside the palette (Applications) because
 // it is the only consumer here. Moving it into TimeWarp.State, beside ActionCatalogArguments, is a
-// follow-up so an agent surface can reuse it; so is a compile-time check that the server's argument
-// names match the target action's constructor parameters (today a web-spa test pins them at run time).
+// follow-up so an agent surface can reuse it. The server's argument names are checked against the
+// target action's constructor parameters at build time (typed [ActionOffer] records, TWA0030, task
+// 280); this binder stays fail-closed for anything that did not come from such a record.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

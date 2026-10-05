@@ -34,9 +34,6 @@ public static class CredentialOfferRows
 {
   private const string Owner = "Credentials";
 
-  /// <summary>RenameCredential's user-supplied parameter (the offer binds credentialId only).</summary>
-  public const string NicknameParameter = "nickname";
-
   /// <summary>Runs the current offer <paramref name="name"/> for <paramref name="credentialId"/> (null = page-level) through the catalog; refused when not offered.</summary>
   public static Task RunAsync
   (
@@ -59,7 +56,7 @@ public static class CredentialOfferRows
 
   /// <summary>Input for RenameCredential's unbound nickname.</summary>
   public static IReadOnlyDictionary<string, JsonElement> NicknameInput(string nickname) =>
-    new Dictionary<string, JsonElement> { [NicknameParameter] = JsonSerializer.SerializeToElement(nickname) };
+    new Dictionary<string, JsonElement> { [RenameCredentialOffer.NicknameInput] = JsonSerializer.SerializeToElement(nickname) };
 
   /// <summary>Rows for every offer whose credential has one of <paramref name="types"/>, plus page-level offers when <paramref name="includePageLevel"/>.</summary>
   public static IReadOnlyList<CommandPaletteRow> ForPage

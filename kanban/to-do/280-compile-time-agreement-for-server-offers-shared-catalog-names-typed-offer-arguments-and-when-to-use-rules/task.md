@@ -68,16 +68,16 @@ agreement-by-memory").
 
 ## Checklist
 
-- [ ] Offerable `[CatalogAction]`s use `Name = <shared constant>`; constant location/shape recorded
-- [ ] Typed offer records in contracts; server builds offers from them; client binder still fail-closed
-- [ ] Analyzer: unknown name, and offer-record ↔ action-parameter mismatch, are build errors (id registered)
-- [ ] Analyzer tests (positive + each failure); existing offers tests still green
-- [ ] Redundant name-resolution test removed or kept as integration (decision recorded)
-- [ ] `tw-blazor` "Server-offered actions": when-to-use rules + how-to-add
-- [ ] Purpose/Design regions reconciled
-- [ ] Gates: `dev build` 0/0 (an analyzer registry change means a full rebuild), `dev test`,
+- [x] Offerable `[CatalogAction]`s use `Name = <shared constant>`; constant location/shape recorded
+- [x] Typed offer records in contracts; server builds offers from them; client binder still fail-closed
+- [x] Analyzer: unknown name, and offer-record ↔ action-parameter mismatch, are build errors (id registered)
+- [x] Analyzer tests (positive + each failure); existing offers tests still green
+- [x] Redundant name-resolution test removed or kept as integration (decision recorded)
+- [x] `tw-blazor` "Server-offered actions": when-to-use rules + how-to-add
+- [x] Purpose/Design regions reconciled
+- [x] Gates: `dev build` 0/0 (an analyzer registry change means a full rebuild), `dev test`,
       `dev template-smoke`, `ganda repo audit`, `dev check-version` if the analyzers package ships
-- [ ] Do **not** start an AppHost
+- [x] Do **not** start an AppHost
 - [ ] Implementation review; host `open-pr`
 
 ## Notes
@@ -91,11 +91,76 @@ agreement-by-memory").
 ## Session
 
 - Created: 2026-10-05 (cockpit, per Steve)
+- 2026-10-05 implement (ganda task work, headless): attribute + records + analyzer + skill; all gates green.
 
 ## Results
 
-*(fill when done)*
+**Shape (recorded in the Design regions of `offered-action-contracts.cs`, `action-offer-attribute.cs`
+and `action-offer-agreement-analyzer.cs`):**
+
+- **One name source.** `OfferedActionNames` (web contracts, Identity) stays the server's whole
+  vocabulary. Revoke / Rename / Link Microsoft 365 `[CatalogAction]`s now set
+  `Name = OfferedActionNames.<X>`. Location kept in Identity, which is still the only slice that
+  makes offers. `ActionOfferAttribute` and the analyzer are slice-agnostic, so a second slice adds
+  its own names class and records, and `OfferedAction` moves to a shared contracts tier at that
+  point.
+- **Typed offer records** (`credential-action-offer-contracts.cs`): `RevokeCredentialOffer(Guid CredentialId)`,
+  `RenameCredentialOffer(Guid CredentialId)` with `UserInput = ["nickname"]`, and the parameterless
+  `LinkMicrosoft365Offer`, each tagged `[ActionOffer(OfferedActionNames.X)]`. The new attribute
+  lives in the TimeWarp.Architecture.Attributes package. The server builds offers only from records:
+  `OfferedAction.Create<T>` / `ForCredential<T : ICredentialActionOffer>` / `ForPage<T>`.
+  `OfferedActionNames.CredentialIdArgument` is deleted.
+  **Wire shape is unchanged:** the record serializes with `ContractSerializationDefaults` into the
+  Arguments map (`{"credentialId":"<guid D>"}`), so the client binder (`ContextualActionArguments`)
+  is untouched and still fail-closed. A contracts round-trip test pins the shape.
+- **Analyzer — TWA0029 / TWA0030** (`ActionOfferAgreementAnalyzer`, convention analyzers):
+  TWA0029 fires when an `[ActionOffer]` name matches no **explicit** `[CatalogAction(Name = …)]`
+  in the SPA compilation. The derived default name doesn't count, so this also enforces
+  requirement 1. TWA0030 fires when a record property, by camelCase or `[JsonPropertyName]` name,
+  is not a parameter of the action's first explicit constructor or has a different type, when a
+  required parameter is neither bound nor listed in `UserInput`, or when a `UserInput` entry is not
+  an unbound required parameter. It is gated on the Blazor WASM SDK, like TWA0022.
+  **Why TWA rather than TWS:** "offer" belongs to this template's hypermedia contract
+  (`OfferedAction`, the binder and the palette runner); TimeWarp.State only supplies the catalog.
+  The ids are registered in `AnalyzerReleases.Unshipped.md`, the AGENTS.md table, the Analyzers
+  package row, the csproj description and `source/Directory.Build.props`. Version
+  2.0.0-beta.20 is unreleased, so no bump was needed.
+- **Redundant test: kept, reframed as an integration check.**
+  `CredentialOffers_Should_.Name_Only_Catalog_Entries_A_Person_May_Run` now uses reflection to
+  enumerate the `[ActionOffer]` records. It asserts:
+  - there is one record per `OfferedActionNames.All`;
+  - the **generated runtime** catalog agrees with the analyzer's model (same names, parameters and
+    UserInput);
+  - each offered entry is Human/Both-visible. The analyzers do not check visibility.
+- **Skill:** `tw-blazor` → "Server-offered actions" gains "When to offer" (an offer is not a
+  different kind of action; use an offer for server-owned rules; use plain actions for local/UI
+  actions, static permissions and reads; agents) and "How to add an offerable action".
+- Boyscout: `ganda repo audit --fix --checks memsearch-scaffold` refreshed `.githooks/*.cs`.
+
+**Gates:**
+
+- `dev build`: 0 warnings, 0 errors (full).
+- `dev test`: every suite passed (0 failed).
+- Analyzer suite `Should_Check_Offer_Agreement`: 11/11.
+- `dev template-smoke`: passed.
+- `ganda repo audit`: passes all checks.
+- `dev check-version`: 2.0.0-beta.20 is new.
+- Negative check in the real SPA build: removing `Name =` from Revoke → `CSC : error TWA0029`;
+  emptying Rename's `UserInput` → `TWA0030` at `credentials-state.rename-credential.cs(28,6)`.
+- No AppHost was started.
 
 ### How to validate
 
-*(required before done)*
+**Smoke** (each line from the repo root):
+
+```bash
+cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release -- --filter-class Should_Check_Offer_Agreement
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class CredentialOffers_Should_
+# Negative: delete `Name = OfferedActionNames.RevokeCredential,` from
+# web-spa/features/identity/credentials-state/credentials-state.revoke-credential.cs, then:
+cd source/container-apps/web/projects/web-spa && dotnet build
+```
+
+**Expect:** 11/11 analyzer tests and 17/17 offers tests pass. The negative build fails with
+`error TWA0029: Offer '…RevokeCredentialOffer' names catalog action 'Credentials.RevokeCredential',
+but no [CatalogAction] in this compilation sets Name = …`. Restore the line and the build is 0/0.
