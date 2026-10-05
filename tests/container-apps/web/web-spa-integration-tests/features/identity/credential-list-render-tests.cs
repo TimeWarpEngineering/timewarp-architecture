@@ -2,7 +2,7 @@
 // Render CredentialList with HtmlRenderer and assert the 248-001 row contract: nickname title,
 // provider/attachment/client context line, created stamp, monospace fingerprint, and the inline
 // rename editor auto-opening (prefilled) only for the pending credential id; plus task 246's
-// RevokeDisabled gating the first step of the two-step revoke with its visible hint; and task 250's
+// Revoke offer (task 279; was RevokeDisabled) gating the first step of the two-step revoke with its visible hint; and task 250's
 // Entra row (provider title, account-hint context line, the label never repeated, empty line hidden).
 #endregion
 
@@ -102,7 +102,7 @@ public class CredentialList_Should_
     TextOf(html, "PasskeyLabel").ShouldBe("Proton Pass");
   }
 
-  public static async Task Revoke_Disabled_Disables_First_Step_And_Shows_Hint()
+  public static async Task Revoke_Not_Offered_Disables_First_Step_And_Shows_Hint()
   {
     CredentialSummary credential = Summary(nickname: "Only one", label: "1Password");
 
@@ -110,13 +110,15 @@ public class CredentialList_Should_
     {
       ["Credentials"] = new List<CredentialSummary> { credential },
       ["FallbackLabel"] = "Passkey",
-      ["RevokeDisabled"] = true,
+      ["IsRevokeOffered"] = (Func<CredentialSummary, bool>)(static _ => false),
+      ["IsRenameOffered"] = (Func<CredentialSummary, bool>)(static _ => true),
       ["RevokeDisabledHint"] = "Add another passkey or agent key before revoking this one.",
       ["RevokeDisabledHintDataQa"] = "RevokePasskeyHint"
     });
 
-    // Task 246's last-credential guard gates the FIRST step of the two-step revoke (248-001).
+    // Task 246's last-credential guard (a server offer since 279) gates the FIRST step of the two-step revoke (248-001).
     TagOf(html, "RevokePasskey").ShouldContain("disabled");
+    TagOf(html, "RenameCredential").ShouldNotContain("disabled");
     TextOf(html, "RevokePasskeyHint").ShouldBe("Add another passkey or agent key before revoking this one.");
     CountOf(html, "RevokeConfirm").ShouldBe(0);
   }

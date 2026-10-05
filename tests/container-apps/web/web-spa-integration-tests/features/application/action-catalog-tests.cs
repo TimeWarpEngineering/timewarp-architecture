@@ -25,12 +25,11 @@ public class ActionCatalog_Should
     "Counter.IncrementCounter",
     "Credentials.AddExistingPasskey",
     "Credentials.AddPasskey",
+    // Task 279: the follow-up refresh of every server-offered credential action (Agent, parameterless).
+    "Credentials.FetchCredentials",
     "Credentials.LinkMicrosoft365",
     "Credentials.RenameCredential",
     "Credentials.RevokeCredential",
-    // Task 275 evaluation lab: the B follow-up refresh (Agent) and C's generic link follower (Human, parameterized).
-    "HypermediaLab.FetchCredentialOffers",
-    "HypermediaLab.FollowCommand",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",
@@ -102,7 +101,6 @@ public class ActionCatalog_Should
   }
 
   [Input("Superhero.FetchSuperhero")]
-  [Input("Credentials.FetchCredentials")]
   [Input("Profile.ClearProfileData")]
   [Input("Application.FiveSecondTask")]
   [Input("Application.TwoSecondTask")]

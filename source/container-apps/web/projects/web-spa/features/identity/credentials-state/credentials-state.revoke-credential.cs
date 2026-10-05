@@ -5,9 +5,12 @@
 #region Design
 // DefaultApiHandler owns transport + ProblemDetailsNotification on error. HandleSuccess
 // publishes the "Credential revoked." outcome to the shell region — the action serves
-// passkeys, agent keys and Entra unlink alike (task 246 vocabulary); callers (Settings,
-// PasskeysPage) sequence RevokeCredential then FetchCredentials so the list stays the
-// single source of truth. Task 169 + 246 + 247.
+// passkeys, agent keys and Entra unlink alike (task 246 vocabulary). Task 169 + 246 + 247.
+// Task 279: Visibility Both — the server offers this action (GetCredentials.Offers) and Settings /
+// Passkeys run the offer through the catalog (CommandPaletteRunner.RunContextualAsync), which refuses
+// any entry that is not human-visible; agents still call it directly. The runner then runs
+// FetchCredentials (the offer row's follow-up), so the list and its offers stay the single source
+// of truth.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -23,7 +26,7 @@ partial class CredentialsState
     (
       Description = "Revoke one of the signed-in account's credentials by id.",
       Permissions = [PermissionIds.CredentialManageSelf],
-      Visibility = ActionVisibility.Agent
+      Visibility = ActionVisibility.Both
     )]
     [TrackAction]
     public sealed class Action : IBaseAction

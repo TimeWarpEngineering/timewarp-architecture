@@ -41,6 +41,17 @@
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
 // agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
 // remains client/mock identity signal only.
+// Task 279 (hypermedia approach B adopted): Response.Offers lists the catalog actions valid NOW —
+// per active credential Rename always and Revoke while CredentialRules.CanRevoke holds; page-level
+// Link Microsoft 365 while CredentialRules.CanLinkMicrosoft365 holds — computed on the server by
+// CredentialOffers from the same rules RevokeCredential.Handler and EntraTicketProcessor enforce, so
+// the SPA renders and runs offers and keeps no copy of the rules. Offers ride on this read (not a
+// sibling) because Settings and Passkeys already load it and the offer is a fact about exactly these
+// rows: one round trip, and the list and its actions can never come from different snapshots.
+// Add passkey is not offered: no server rule gates it (any signed-in human may add one), so an offer
+// would carry no information; its buttons stay static. Offers are computed from active credentials
+// whatever IncludeRevoked asks for, and are the same for an agent caller (agents run them through
+// their own catalog visibility — Link Microsoft 365 is a human-only ceremony there).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -81,10 +92,13 @@ public static partial class GetCredentials
   public sealed class Response
   {
     public IReadOnlyList<CredentialSummary> Credentials { get; }
+    /// <summary>Catalog actions the caller may run now (see <see cref="OfferedActionNames"/>).</summary>
+    public IReadOnlyList<OfferedAction> Offers { get; }
 
-    public Response(IReadOnlyList<CredentialSummary> credentials)
+    public Response(IReadOnlyList<CredentialSummary> credentials, IReadOnlyList<OfferedAction> offers)
     {
       Credentials = Guard.Against.Null(credentials);
+      Offers = Guard.Against.Null(offers);
     }
   }
 
@@ -144,35 +158,46 @@ public static partial class GetCredentials
 
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
-    return _ => new Response
-    (
-      [
-        new CredentialSummary
-        (
-          CredentialId.New(),
-          CredentialType.Passkey,
-          "1Password",
-          "Work laptop",
-          DateTimeOffset.UtcNow.AddDays(-30),
-          revokedAt: null,
-          isActive: true,
-          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
-          "3f9a1c2e",
-          lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2)
-        ),
-        new CredentialSummary
-        (
-          CredentialId.New(),
-          CredentialType.Passkey,
-          "1Password",
-          nickname: null,
-          DateTimeOffset.UtcNow.AddDays(-7),
-          revokedAt: null,
-          isActive: true,
-          new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
-          "b71e04dd"
-        )
-      ]
-    );
+    return _ =>
+    {
+      var first = CredentialId.New();
+      var second = CredentialId.New();
+      return new Response
+      (
+        [
+          new CredentialSummary
+          (
+            first,
+            CredentialType.Passkey,
+            "1Password",
+            "Work laptop",
+            DateTimeOffset.UtcNow.AddDays(-30),
+            revokedAt: null,
+            isActive: true,
+            new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
+            "3f9a1c2e",
+            lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2)
+          ),
+          new CredentialSummary
+          (
+            second,
+            CredentialType.Passkey,
+            "1Password",
+            nickname: null,
+            DateTimeOffset.UtcNow.AddDays(-7),
+            revokedAt: null,
+            isActive: true,
+            new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
+            "b71e04dd"
+          )
+        ],
+        [
+          OfferedAction.ForCredential(OfferedActionNames.RenameCredential, "Rename", first),
+          OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", first),
+          OfferedAction.ForCredential(OfferedActionNames.RenameCredential, "Rename", second),
+          OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", second)
+        ]
+      );
+    };
   }
 }

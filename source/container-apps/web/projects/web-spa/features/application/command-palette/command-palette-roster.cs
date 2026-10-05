@@ -71,17 +71,7 @@ public static class CommandPaletteRoster
         continue;
       }
 
-      bool permitted = true;
-      foreach (string permission in action.Permissions)
-      {
-        if (!await IsAuthorizedAsync(user, authorizationService, permission))
-        {
-          permitted = false;
-          break;
-        }
-      }
-
-      if (permitted)
+      if (await IsPermittedAsync(user, authorizationService, action))
       {
         rows.Add(new CommandPaletteRow(Label(action), action.Description, CommandPaletteRowKind.Command, action.Name));
       }
@@ -142,6 +132,20 @@ public static class CommandPaletteRoster
   {
     int dot = catalogName.IndexOf('.', StringComparison.Ordinal);
     return dot < 0 ? label : $"{catalogName[..dot]}: {label}";
+  }
+
+  /// <summary>True when <paramref name="user"/> passes every one of the action's Permissions (policy name == permission id).</summary>
+  public static async Task<bool> IsPermittedAsync(ClaimsPrincipal user, IAuthorizationService authorizationService, ActionCatalogEntry action)
+  {
+    foreach (string permission in action.Permissions)
+    {
+      if (!await IsAuthorizedAsync(user, authorizationService, permission))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static async Task<bool> IsAuthorizedAsync(ClaimsPrincipal user, IAuthorizationService authorizationService, string policy)

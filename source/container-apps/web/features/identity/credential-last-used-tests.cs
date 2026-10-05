@@ -176,7 +176,13 @@ namespace TimeWarp.Architecture.Features.Identity
       var recorder = new CredentialUsageRecorder(new ManualClock(stamp));
       (await recorder.RecordAsync(store, (await store.GetCredentialAsync(used.Id))!)).ShouldBeTrue();
 
-      GetCredentialsHandler handler = new(store, new StubCurrentPrincipalAccessor(principal.Id));
+      GetCredentialsHandler handler = new
+      (
+        store,
+        new StubCurrentPrincipalAccessor(principal.Id),
+        Microsoft.Extensions.Options.Options.Create(new Application.EntraAuthenticationOptions()),
+        new InMemorySiteSettingsStore()
+      );
       OneOf.OneOf<GetCredentials.Response, SharedProblemDetails> result =
         await handler.Handle(new GetCredentials.Query { UserId = Guid.NewGuid() }, CancellationToken.None);
 

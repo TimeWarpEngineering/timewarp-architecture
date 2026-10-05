@@ -90,8 +90,6 @@ public class CommandPalette_Should_
   [Input("Profile.ClearProfileData")]
   [Input("Credentials.FetchCredentials")]
   [Input("Theme.Update")]
-  [Input("HypermediaLab.FetchCredentialOffers")]
-  [Input("HypermediaLab.FollowCommand")]
   public static async Task Exclude_Agent_Parameterized_And_Internal_Actions(string name)
   {
     using PaletteSpa spa = new(Everything);

@@ -9,7 +9,12 @@
 // base-relative path is read here too, so the signed-out Sign in row can return the visitor to it.
 // Contextual rows (task 275) are appended from CommandPaletteContext — whatever the current page
 // contributes right now, minus rows that need input the palette cannot collect; every other page
-// contributes none, so their roster is unchanged.
+// contributes none, so their roster is unchanged. A static Command row whose catalog Target the page
+// also contributes as a contextual row is dropped (task 279: Settings' offered Link Microsoft 365
+// would otherwise appear twice) — the page's offered row is the one that knows it applies now.
+// Only a contributed row drops the static one: when Settings does not offer Link, the static
+// "Credentials: Link Microsoft 365" row stays, and running it falls back to the challenge flow's
+// own handling.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -41,7 +46,13 @@ partial class CommandPaletteState
           actionCatalog.Entries,
           "/" + navigationManager.ToBaseRelativePath(navigationManager.Uri)
         );
-        CommandPaletteState.Roster = [.. commandPaletteContext.Rows().Where(static row => !row.RequiresInput), .. roster];
+        IReadOnlyList<CommandPaletteRow> contextual = commandPaletteContext.Rows();
+        HashSet<string> contextualTargets = [.. contextual.Select(static row => row.Target)];
+        CommandPaletteState.Roster =
+        [
+          .. contextual.Where(static row => !row.RequiresInput),
+          .. roster.Where(row => row.Kind != CommandPaletteRowKind.Command || !contextualTargets.Contains(row.Target))
+        ];
         CommandPaletteState.Apply("");
       }
     }

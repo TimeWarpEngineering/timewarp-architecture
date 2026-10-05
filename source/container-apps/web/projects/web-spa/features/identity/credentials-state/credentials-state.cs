@@ -10,9 +10,13 @@
 // In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
 // ActivePasskeys is the Settings filter (passkey + IsActive); ActiveEntraAccounts is the Microsoft 365
 // filter. Full list stays available for follow-ups.
-// server LastCredential 409 is the backstop. Task 246: the same predicate disables passkey
-// Revoke on Settings and PasskeysPage — the count spans every CredentialType, exactly what
-// RevokeCredential.Handler counts, so the client never offers an action that can only 409.
+// Task 279 (hypermedia approach B): Offers is the server's list of catalog actions valid now
+// (GetCredentials.Response.Offers, computed from Identity's CredentialRules). The SPA keeps NO copy of
+// those rules — no last-credential count, no "can link" predicate: a Revoke/Rename/Link button exists
+// only for an offer here, and runs through the catalog (CredentialOfferRows + CommandPaletteRunner).
+// Offers are stored as CredentialOffer records (arguments as JSON text) rather than the contract's
+// JsonElement map, so the state's clone-on-dispatch copies plain strings. Fetch replaces Credentials
+// and Offers together, so the list and its actions always come from one server snapshot.
 // Outcomes (created / merged / removed / ceremony failed) are reported to the shell's single
 // notification region: handlers publish OutcomeNotification / ProblemDetailsNotification and
 // NotificationState paints them (task 247). CeremonyFailed is the only page-facing flag — it
@@ -62,17 +66,21 @@ public sealed partial class CredentialsState : State<CredentialsState>
           .Where(c => c.Type == CredentialType.EntraAccount && c.IsActive)
           .OrderByDescending(c => c.CreatedAt)];
 
-  /// <summary>Active credentials of every type — Unlink/Revoke last-credential guard (mirrors RevokeCredential.Handler).</summary>
-  public int ActiveCredentialCount =>
-    CredentialsList?.Count(c => c.IsActive) ?? 0;
+  private List<CredentialOffer>? OffersList { get; set; }
 
-  /// <summary>True when Microsoft 365 is offered and no active EntraAccount is linked.</summary>
-  public static bool CanLinkMicrosoft365(bool offered, int activeEntraAccountCount) =>
-    offered && activeEntraAccountCount == 0;
+  /// <summary>Catalog actions the server offers now (empty until the first fetch).</summary>
+  public IReadOnlyList<CredentialOffer> Offers => OffersList?.AsReadOnly() ?? (IReadOnlyList<CredentialOffer>)[];
 
-  /// <summary>True when revoking this credential would leave at least one other active credential.</summary>
-  public static bool CanUnlink(int activeCredentialCount) =>
-    activeCredentialCount > 1;
+  /// <summary>The offer named <paramref name="name"/> for <paramref name="credentialId"/> (null = page-level); null when not offered.</summary>
+  public CredentialOffer? FindOffer(string name, Guid? credentialId)
+  {
+    string? subject = credentialId?.ToString("D");
+    return OffersList?.FirstOrDefault(offer => offer.Name == name && offer.Subject == subject);
+  }
+
+  /// <summary>True when the server offers <paramref name="name"/> for <paramref name="credentialId"/> (null = page-level).</summary>
+  public bool IsOffered(string name, Guid? credentialId) =>
+    FindOffer(name, credentialId) is not null;
 
   public Guid? LastAddedCredentialId { get; private set; }
 
@@ -105,6 +113,7 @@ public sealed partial class CredentialsState : State<CredentialsState>
   public override void Initialize()
   {
     CredentialsList = null;
+    OffersList = null;
     LastAddedCredentialId = null;
     CeremonyFailed = false;
     PendingNicknameCredentialId = null;
