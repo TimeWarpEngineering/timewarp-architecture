@@ -21,7 +21,6 @@ namespace HypermediaLab_;
 
 using System.Security.Claims;
 using FakeItEasy;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
@@ -31,6 +30,7 @@ using TimeWarp.Architecture.Features.HypermediaLab;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
+using TimeWarp.Architecture.Web.Spa;
 using static TimeWarp.Architecture.Features.HypermediaLab.GetCredentialCommands;
 using static TimeWarp.Architecture.Features.HypermediaLab.GetCredentialOffers;
 using CredentialSummary = TimeWarp.Architecture.Features.Identity.GetCredentials.CredentialSummary;

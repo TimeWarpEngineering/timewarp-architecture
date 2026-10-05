@@ -9,8 +9,8 @@
 // anything the server did not offer has no button, no row and no other way to run. Null = not
 // loaded yet. Each fetch replaces its payload wholesale; nothing is merged or computed client-side.
 // ICloneable: the payloads are immutable contract objects (they hold JsonElement arguments, which a
-// generic deep clone should not walk), so a clone shares them — the same reasoning as the
-// string-only palette rows.
+// generic deep clone should not walk), so a clone is a new instance (new Guid, as the transaction
+// behavior requires) sharing them — the same reasoning as the string-only palette rows.
 #endregion
 
 namespace TimeWarp.Architecture.Features.HypermediaLab;
@@ -39,5 +39,13 @@ public sealed partial class HypermediaLabState : State<HypermediaLabState>, IClo
     SelectedTab = ApproachB;
   }
 
-  public object Clone() => MemberwiseClone();
+  // A fresh instance, not MemberwiseClone: StateTransactionBehavior rejects a clone that keeps the
+  // original's Guid, and the Guid is init-only.
+  public object Clone() =>
+    new HypermediaLabState
+    {
+      Offers = Offers,
+      Commands = Commands,
+      SelectedTab = SelectedTab,
+    };
 }
