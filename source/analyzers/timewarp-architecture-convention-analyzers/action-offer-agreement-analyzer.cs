@@ -13,15 +13,25 @@
 // hypermedia contract (OfferedAction, ContextualActionArguments, the palette runner), not a library
 // concept — TimeWarp.State only provides the catalog. If offers become a TimeWarp.State concept the
 // rule moves with them.
-// TWA0029: an offer's name must equal an EXPLICIT [CatalogAction] Name declared in this compilation.
-// The derived default (<State>.<ActionSet>) deliberately does not count, so renaming an action set
-// can never silently change what the server offers (task 280 requirement 1).
-// TWA0030: the action's catalog parameters come from its first explicit constructor (TimeWarp.State
-// ActionCatalogParameter rule; none = parameterless). Each public instance property of the record
-// (JsonIgnore skipped) binds the parameter named by its wire name — [JsonPropertyName] or the
-// System.Text.Json camelCase policy the contract seam uses — with the same type. Every required
-// parameter must be bound or listed in UserInput; every UserInput entry must be a required
-// parameter no property binds. Optional parameters may stay unbound.
+// TWA0029: an offer's name must equal an EXPLICIT [CatalogAction] Name declared by exactly ONE action
+// in this compilation. The derived default (<State>.<ActionSet>) deliberately does not count, so
+// renaming an action set can never silently change what the server offers (task 280 requirement 1).
+// A name two actions declare is reported too (message lists them, ordered), never resolved by
+// whichever action the concurrent symbol pass saw first; TimeWarp.State's TWS0006 also rejects the
+// duplicate itself. Zero catalog actions is no special case: every offer then reports TWA0029.
+// TWA0030: the action's catalog parameters come from the first ConstructorDeclarationSyntax among
+// the DescendantNodes() of the class declaration carrying [CatalogAction] — exactly TimeWarp.State's
+// ActionSetConstructorParser (one partial declaration; a static or nested-type constructor counts
+// when it comes first; none = parameterless). The constructor symbol is matched by syntax reference,
+// not a semantic model (RS1030). Each public instance property of the record (JsonIgnore skipped,
+// inherited ones included) binds the parameter named by its wire name — [JsonPropertyName] or the
+// System.Text.Json camelCase policy the contract seam uses — with the same type; a nullable
+// reference property against a non-nullable reference parameter is a mismatch too (the binder
+// treats null as missing). Every required parameter must be bound or listed in UserInput; every
+// UserInput entry must be a required parameter no property binds. Optional parameters may stay
+// unbound, but only as a trailing run: the palette merges UserInput into the offered arguments and
+// ContextualActionArguments.Bind refuses any present argument after an omitted optional parameter
+// (positional arrays cannot leave holes), so TWA0030 reports that ordering.
 // Offer discovery: this compilation's source plus referenced assemblies that define
 // ActionOfferAttribute or reference one that does (IAssemblySymbol.TypeNames is a cheap name set),
 // so framework assemblies are never walked. Reported at CompilationEnd: TWA0029 on the record (or
@@ -34,6 +44,7 @@ namespace TimeWarp.Architecture.Analyzers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 /// <summary>Roslyn analyzer for TWA0029/TWA0030: server offer records must agree with the SPA's catalog actions.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -56,12 +67,12 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
     new
     (
       UnknownNameDiagnosticId,
-      title: "Offer names no catalog action",
-      messageFormat: "Offer '{0}' names catalog action '{1}', but no [CatalogAction] in this compilation sets Name = \"{1}\"; set [CatalogAction(Name = <shared constant>)] on the offered action",
+      title: "Offer names no single catalog action",
+      messageFormat: "Offer '{0}' names catalog action '{1}', but {2}",
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "An [ActionOffer] record names the client catalog action the server offers. The action must declare the same name explicitly with [CatalogAction(Name = …)] from the shared contracts constant; the derived default name does not count, so renaming an action set cannot silently change what the server offers.",
+      description: "An [ActionOffer] record names the client catalog action the server offers. Exactly one action must declare the same name explicitly with [CatalogAction(Name = …)] from the shared contracts constant; the derived default name does not count, so renaming an action set cannot silently change what the server offers.",
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
@@ -74,7 +85,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "An [ActionOffer] record's public properties are the arguments the server binds, keyed by camelCase name. Each must name a constructor parameter of the offered action with the same type; every required parameter must have a property or be listed in UserInput, and every UserInput entry must be a required parameter no property binds.",
+      description: "An [ActionOffer] record's public properties are the arguments the server binds, keyed by camelCase name. Each must name a constructor parameter of the offered action with the same type; every required parameter must have a property or be listed in UserInput, every UserInput entry must be a required parameter no property binds, and no argument may follow an omitted optional parameter.",
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
@@ -121,15 +132,16 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
 
     context.RegisterCompilationEndAction(endContext =>
     {
-      if (catalogActions.IsEmpty) return;
-
-      Dictionary<string, (INamedTypeSymbol Action, AttributeData Attribute)> byName = new(StringComparer.Ordinal);
+      Dictionary<string, List<(INamedTypeSymbol Action, AttributeData Attribute)>> byName = new(StringComparer.Ordinal);
       foreach ((INamedTypeSymbol action, AttributeData attribute) in catalogActions)
       {
-        if (ExplicitName(attribute) is { } name && !byName.ContainsKey(name))
+        if (ExplicitName(attribute) is not { } name) continue;
+        if (!byName.TryGetValue(name, out List<(INamedTypeSymbol Action, AttributeData Attribute)>? declarers))
         {
-          byName[name] = (action, attribute);
+          byName[name] = declarers = [];
         }
+
+        declarers.Add((action, attribute));
       }
 
       IEnumerable<INamedTypeSymbol> offers = sourceOffers.Concat(
@@ -142,21 +154,26 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
         AttributeData offerAttribute = OfferAttribute(offer)!;
         if (offerAttribute.ConstructorArguments.FirstOrDefault().Value is not string catalogName) continue;
 
-        if (!byName.TryGetValue(catalogName, out (INamedTypeSymbol Action, AttributeData Attribute) target))
+        byName.TryGetValue(catalogName, out List<(INamedTypeSymbol Action, AttributeData Attribute)>? declarers);
+        if (declarers is not [var target])
         {
+          string problem = declarers is null
+            ? $"no [CatalogAction] in this compilation sets Name = \"{catalogName}\"; set [CatalogAction(Name = <shared constant>)] on the offered action"
+            : $"more than one [CatalogAction] sets that Name ({string.Join(", ", declarers.Select(static declarer => declarer.Action.ToDisplayString()).OrderBy(static name => name, StringComparer.Ordinal))}); catalog names must be unique";
           endContext.ReportDiagnostic(Diagnostic.Create(
             UnknownName,
             offer.Locations.FirstOrDefault(location => location.SourceTree is { } tree && endContext.Compilation.ContainsSyntaxTree(tree))
               ?? Location.None,
             offer.ToDisplayString(),
-            catalogName));
+            catalogName,
+            problem));
           continue;
         }
 
         Location location = target.Attribute.ApplicationSyntaxReference?.GetSyntax(endContext.CancellationToken).GetLocation()
           ?? target.Action.Locations.FirstOrDefault()
           ?? Location.None;
-        foreach (string problem in Mismatches(offer, offerAttribute, target.Action))
+        foreach (string problem in Mismatches(offer, offerAttribute, target.Action, target.Attribute, endContext.CancellationToken))
         {
           endContext.ReportDiagnostic(Diagnostic.Create(
             ArgumentMismatch,
@@ -208,9 +225,16 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
     return null;
   }
 
-  private static IEnumerable<string> Mismatches(INamedTypeSymbol offer, AttributeData offerAttribute, INamedTypeSymbol action)
+  private static IEnumerable<string> Mismatches
+  (
+    INamedTypeSymbol offer,
+    AttributeData offerAttribute,
+    INamedTypeSymbol action,
+    AttributeData catalogAction,
+    CancellationToken cancellationToken
+  )
   {
-    IParameterSymbol[] parameters = CatalogParameters(action);
+    IParameterSymbol[] parameters = CatalogParameters(action, catalogAction, cancellationToken);
     HashSet<string> bound = new(StringComparer.Ordinal);
 
     foreach (IPropertySymbol property in ArgumentProperties(offer))
@@ -228,6 +252,12 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       {
         yield return $"property '{property.Name}' is {property.Type.ToDisplayString()} but parameter '{wireName}' is {parameter.Type.ToDisplayString()}";
       }
+      else if (property.Type.IsReferenceType
+        && property.NullableAnnotation == NullableAnnotation.Annotated
+        && parameter.NullableAnnotation == NullableAnnotation.NotAnnotated)
+      {
+        yield return $"property '{property.Name}' is nullable but parameter '{wireName}' is not; the client binder treats null as missing";
+      }
     }
 
     string[] userInput = UserInput(offerAttribute);
@@ -244,24 +274,51 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       }
     }
 
+    string? omittedOptional = null;
     foreach (IParameterSymbol parameter in parameters)
     {
-      if (!parameter.HasExplicitDefaultValue && !bound.Contains(parameter.Name) && !userInput.Contains(parameter.Name))
+      bool present = bound.Contains(parameter.Name) || (!parameter.HasExplicitDefaultValue && userInput.Contains(parameter.Name));
+      if (!present)
       {
-        yield return $"required parameter '{parameter.Name}' has no property and is not listed in UserInput";
+        if (!parameter.HasExplicitDefaultValue)
+        {
+          yield return $"required parameter '{parameter.Name}' has no property and is not listed in UserInput";
+        }
+        else
+        {
+          omittedOptional ??= parameter.Name;
+        }
+      }
+      else if (omittedOptional is not null)
+      {
+        yield return $"parameter '{parameter.Name}' is bound after the omitted optional parameter '{omittedOptional}'; the client binder cannot leave a positional hole";
       }
     }
   }
 
-  /// <summary>First explicit constructor's parameters (TimeWarp.State's ActionCatalogParameter rule); none when the action declares no constructor.</summary>
-  private static IParameterSymbol[] CatalogParameters(INamedTypeSymbol action)
+  /// <summary>
+  /// Parameters of the first constructor declared anywhere inside the class declaration carrying
+  /// [CatalogAction] (TimeWarp.State's ActionSetConstructorParser); none when there is no such constructor.
+  /// </summary>
+  private static IParameterSymbol[] CatalogParameters(INamedTypeSymbol action, AttributeData catalogAction, CancellationToken cancellationToken)
   {
-    IMethodSymbol? constructor = action.InstanceConstructors
-      .Where(static candidate => !candidate.IsImplicitlyDeclared)
-      .OrderBy(static candidate => candidate.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue)
-      .FirstOrDefault();
-    return constructor is null ? [] : [.. constructor.Parameters];
+    if (catalogAction.ApplicationSyntaxReference?.GetSyntax(cancellationToken).FirstAncestorOrSelf<ClassDeclarationSyntax>()
+        is not { } declaration)
+    {
+      return [];
+    }
+
+    ConstructorDeclarationSyntax? constructor = declaration.DescendantNodes().OfType<ConstructorDeclarationSyntax>().FirstOrDefault();
+    if (constructor is null) return [];
+
+    IMethodSymbol? symbol = ConstructorsWithin(action).FirstOrDefault(candidate =>
+      candidate.DeclaringSyntaxReferences.Any(reference =>
+        reference.SyntaxTree == constructor.SyntaxTree && reference.Span == constructor.Span));
+    return symbol is null ? [] : [.. symbol.Parameters];
   }
+
+  private static IEnumerable<IMethodSymbol> ConstructorsWithin(INamedTypeSymbol type) =>
+    type.Constructors.Concat(type.GetTypeMembers().SelectMany(ConstructorsWithin));
 
   private static IEnumerable<IPropertySymbol> ArgumentProperties(INamedTypeSymbol offer)
   {

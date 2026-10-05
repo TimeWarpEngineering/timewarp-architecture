@@ -24,6 +24,7 @@
 namespace CredentialOffers_;
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
@@ -47,7 +48,7 @@ public class CredentialOffers_Should_
   // --- vocabulary ---------------------------------------------------------------------------
 
   // Integration check beside TWA0029/TWA0030 (task 280): the analyzers prove each [ActionOffer]
-  // record matches its action's first explicit constructor at build time; this proves the GENERATED
+  // record matches its action's first declared constructor at build time; this proves the GENERATED
   // runtime catalog agrees with that model (same names, same parameters) and adds what the analyzers
   // do not check — an offered entry must be human-visible to pass the runner's M4 gate.
   public static Task Name_Only_Catalog_Entries_A_Person_May_Run()
@@ -68,11 +69,10 @@ public class CredentialOffers_Should_
       ActionCatalogEntry entry = catalog.Find(offer.CatalogName).ShouldNotBeNull($"the server may offer {offer.CatalogName}");
       entry.Visibility.ShouldBeOneOf([ActionVisibility.Human, ActionVisibility.Both], $"{offer.CatalogName} must pass the M4 visibility gate");
 
-      string[] bound =
-      [
-        .. offerType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-          .Select(static property => JsonNamingPolicy.CamelCase.ConvertName(property.Name))
-      ];
+      // The keys the server actually sends: a default instance through the real OfferedAction.Create
+      // (contract-seam options honor [JsonPropertyName] / [JsonIgnore] exactly as the wire does).
+      object sample = RuntimeHelpers.GetUninitializedObject(offerType);
+      string[] bound = [.. OfferedAction.Create(sample, "sample", subject: null).Arguments.Keys];
       bound.ShouldAllBe(name => entry.Parameters.Any(parameter => parameter.Name == name), offerType.Name);
       entry.Parameters.Where(parameter => parameter.IsRequired && !bound.Contains(parameter.Name))
         .Select(static parameter => parameter.Name)

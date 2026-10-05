@@ -17,7 +17,13 @@
 // TWA0029 (no action carries that Name) and TWA0030 (record properties vs constructor parameters by
 // camelCase name and type; UserInput covers what the user supplies). Wire shape is unchanged: the
 // record serializes with the contract-seam options into the Arguments map, so the client binder keeps
-// binding by parameter name and stays fail-closed for anything a record did not produce.
+// binding by parameter name and stays fail-closed for anything a record did not produce. Create reads
+// the attribute and serializes by the RUNTIME type (offer.GetType()), so an interface- or base-typed
+// argument still yields the concrete record's name and every property.
+// "Built only from records" is a convention, not a build check: the public constructor stays public
+// because System.Text.Json deserializes offers through it and the fail-closed tests forge off-shape
+// offers with it. Server code calls Create / ForCredential / ForPage; the client binder refuses
+// anything a hand-spelled offer gets wrong.
 // Arguments are JsonElement so an offer can bind any JSON-shaped parameter. Subject names the
 // credential an offer applies to (Guid "D"; null = page-level) — a display hint so a page can put the
 // button on the right row without reading Arguments.
@@ -57,12 +63,13 @@ public sealed class OfferedAction
   public static OfferedAction Create<TOffer>(TOffer offer, string label, string? subject) where TOffer : notnull
   {
     Dictionary<string, JsonElement> arguments = [];
-    foreach (JsonProperty property in JsonSerializer.SerializeToElement(offer, ContractSerializationDefaults.Options).EnumerateObject())
+    Type offerType = offer.GetType();
+    foreach (JsonProperty property in JsonSerializer.SerializeToElement(offer, offerType, ContractSerializationDefaults.Options).EnumerateObject())
     {
       arguments[property.Name] = property.Value.Clone();
     }
 
-    return new OfferedAction(OfferName(typeof(TOffer)), label, subject, arguments);
+    return new OfferedAction(OfferName(offerType), label, subject, arguments);
   }
 
   /// <summary>An offer bound to one credential (Subject = its id): <c>{ "credentialId": "…" }</c> plus any other record properties.</summary>

@@ -139,16 +139,17 @@ second place to look without removing any drift.
 
 1. Add the catalog name constant to the slice's offered-names class in the shared contracts.
 2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`. Its public properties
-   are the arguments the server binds and must match the action's constructor parameters by
-   camelCase name and type. List any required parameter the user supplies (a nickname, a comment)
-   in `UserInput`.
+   are the arguments the server binds and must match the action's first constructor's parameters
+   by camelCase name and type (a nullable property cannot feed a non-nullable parameter). List any
+   required parameter the user supplies (a nickname, a comment) in `UserInput`. Optional parameters
+   may be left out only at the end: binding one after an omitted optional parameter is refused.
 3. Set `[CatalogAction(Name = <constant>)]` on the client action, so renaming the action set cannot
    change the offered name.
 4. Have the server build offers only from the record (`OfferedAction.ForCredential` / `ForPage` /
    `Create`).
 
-The SPA build checks the pairing: TWA0029 when no action declares that `Name`, TWA0030 when the
-record's properties or `UserInput` do not match the action's parameters. Why: the server cannot
+The SPA build checks the pairing: TWA0029 when no action, or more than one, declares that `Name`;
+TWA0030 when the record's properties or `UserInput` do not match the action's parameters. Why: the server cannot
 reference client action types, so the shared contracts are the one place both sides can agree, and
 a build error replaces a run-time refusal the user would see.
 

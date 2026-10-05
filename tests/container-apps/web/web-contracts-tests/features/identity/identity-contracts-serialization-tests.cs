@@ -752,3 +752,47 @@ public class AddAgentKey_Response_Should
     return Task.CompletedTask;
   }
 }
+
+// Task 280 review M3/M12/M13: OfferedAction.Create builds offers from the RUNTIME [ActionOffer]
+// record, pins the Rename wire shape exactly, and refuses a type that is no offer record.
+public class OfferedAction_Should
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<OfferedAction_Should>();
+
+  private sealed record NotAnOffer(Guid CredentialId);
+
+  public static Task Bind_Only_CredentialId_For_Rename()
+  {
+    Guid credentialId = Guid.NewGuid();
+
+    OfferedAction parsed = ContractSerialization.RoundTrip(OfferedAction.ForCredential(new RenameCredentialOffer(credentialId), "Rename"));
+
+    parsed.Name.ShouldBe(OfferedActionNames.RenameCredential);
+    parsed.Subject.ShouldBe(credentialId.ToString("D"));
+    parsed.Arguments.Keys.ShouldBe(["credentialId"], "the nickname is UserInput and the const is no argument");
+    parsed.Arguments["credentialId"].GetString().ShouldBe(credentialId.ToString("D"));
+    return Task.CompletedTask;
+  }
+
+  public static Task Use_The_Runtime_Record_For_An_Interface_Typed_Offer()
+  {
+    Guid credentialId = Guid.NewGuid();
+    ICredentialActionOffer offer = new RevokeCredentialOffer(credentialId);
+
+    OfferedAction offered = OfferedAction.ForCredential(offer, "Revoke");
+
+    offered.Name.ShouldBe(OfferedActionNames.RevokeCredential);
+    offered.Arguments.Keys.ShouldBe(["credentialId"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Refuse_A_Type_Without_ActionOffer()
+  {
+    InvalidOperationException exception = Should.Throw<InvalidOperationException>(
+      () => OfferedAction.Create(new NotAnOffer(Guid.NewGuid()), "Nothing", subject: null));
+
+    exception.Message.ShouldContain(nameof(NotAnOffer));
+    return Task.CompletedTask;
+  }
+}

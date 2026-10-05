@@ -11,8 +11,9 @@
 // same constant. The SPA compilation sees both sides, so TWA0029 (no action with that Name) and
 // TWA0030 (record properties vs constructor parameters) check the agreement at build time.
 // UserInput lists the required action parameters the offer deliberately leaves for the user to supply
-// (Rename's nickname); TWA0030 verifies each one is a required parameter no property binds, and that
-// every other required parameter has a property.
+// (Rename's nickname); TWA0030 verifies each one is a required parameter no property binds, that
+// every other required parameter has a property, and that nothing is bound after an omitted optional
+// parameter (the client binder fills a positional array).
 // Matched by simple name, like every convention-analyzer attribute.
 #endregion
 
