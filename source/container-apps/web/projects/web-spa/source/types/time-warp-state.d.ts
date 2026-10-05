@@ -8,7 +8,7 @@ declare module "/_content/TimeWarp.State/js/timewarp-state.*" {
 
     /**
      * Dispatches a JSON request to the .NET backend.
-     * @param {string} requestTypeFullName - The full name of the request type.
+     * @param {string} requestTypeFullName - An allowed action's alias, full name, or assembly-qualified name (AddJavaScriptDispatch).
      * @param {any} request - The request payload.
      */
     DispatchRequest(requestTypeFullName: string, request: unknown): Promise<void>;

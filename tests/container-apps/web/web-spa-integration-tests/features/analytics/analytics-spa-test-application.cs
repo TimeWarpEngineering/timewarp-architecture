@@ -8,6 +8,8 @@
 // which the closed-box AspireSpaTestApplication cannot do. TrackEventBehavior is compile-time
 // on ClientPipeline. Recording is a singleton so SpaTestScope sees the same instance the
 // TrackEvent handler resolves. Message-bar handlers record state and do not need a provider.
+// JavaScript dispatch registers Web.Spa.Program.AllowJavaScriptDispatch (the production allow-list,
+// task 278) so the Counter JS-dispatch facts resolve exactly what the browser would.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Features.Analytics;
@@ -36,6 +38,7 @@ internal sealed class AnalyticsSpaTestApplication : ISpaTestApplication, IDispos
         ];
       }
     );
+    services.AddJavaScriptDispatch(TimeWarp.Architecture.Web.Spa.Program.AllowJavaScriptDispatch);
 
     // Fully qualified: TimeWarp.Architecture.Services is a global using only when the api
     // template flag is on; IWebServerApiService is the BFF client and exists without api.

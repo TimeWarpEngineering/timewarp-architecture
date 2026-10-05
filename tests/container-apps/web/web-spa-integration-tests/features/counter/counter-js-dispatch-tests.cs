@@ -6,12 +6,15 @@
 #region Design
 // Task 265: CounterPage no longer round-trips through a C# handler and IJSRuntime (TWA0026); the
 // button's JavaScript onclick calls Spa.Counter.DispatchIncrementCountAction (counter.ts), which
-// dispatches by assembly-qualified type name through TimeWarp.State's JsonRequestHandler.Handle —
-// the [JSInvokable] that timeWarpState.DispatchRequest calls. No browser here (workers never start
-// an AppHost), so the test pins the two agreements a browser run would exercise:
+// dispatches by wire name through TimeWarp.State's JsonRequestHandler.Handle — the [JSInvokable]
+// that timeWarpState.DispatchRequest calls. JavaScript dispatch is opt-in since State 12.0.0-beta.8
+// (task 278): the name is the IncrementCounterActionSet.JavaScriptAlias that
+// Web.Spa.Program.AllowJavaScriptDispatch allows. No browser here (workers never start an AppHost),
+// so the test pins the agreements a browser run would exercise:
 //   1. CounterPage.razor's onclick names a function counter.ts exports;
 //   2. the action name and payload in counter.ts, fed to JsonRequestHandler.Handle exactly as the
-//      JS sends them, resolve to IncrementCounterActionSet.Action and add 7 to CounterState.Count.
+//      JS sends them, resolve through the production allow-list and add 7 to CounterState.Count;
+//   3. a name the allow-list does not hold is rejected and the count is unchanged.
 // Sources are read from the repo so renaming the action, the export or the payload field fails here.
 // C-create AnalyticsSpaTestApplication (host-free ServiceProvider, fake IJSRuntime) — JsonRequestHandler
 // resolves from DI exactly as in the browser, and no AppHost or HostGraph boots.
@@ -73,8 +76,22 @@ public partial class JsDispatch_Should
     // JSON.stringify({ amount: 7 }) — the body DispatchRequest hands to the [JSInvokable].
     await jsonRequestHandler.Handle(actionName.Groups["name"].Value, $"{{\"amount\":{dispatch.Groups["amount"].Value}}}");
 
-    Type.GetType(actionName.Groups["name"].Value).ShouldBe(typeof(IncrementCounterActionSet.Action));
+    actionName.Groups["name"].Value.ShouldBe(IncrementCounterActionSet.JavaScriptAlias);
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
+  }
+
+  [Input("System.Object, System.Private.CoreLib")]
+  [Input("Counter.Decrement")]
+  [Input("TimeWarp.Architecture.Features.Counters.CounterState+ThrowExceptionActionSet+Action, Web.Spa")]
+  public static async Task Reject_A_Name_Not_Allowed_And_Leave_The_Count_Unchanged(string requestTypeName)
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    scope.Store.GetState<CounterState>().Initialize(count: 3);
+    JsonRequestHandler jsonRequestHandler = scope.ServiceProvider.GetRequiredService<JsonRequestHandler>();
+
+    await Should.ThrowAsync<InvalidRequestTypeException>(() => jsonRequestHandler.Handle(requestTypeName, "{\"amount\":7}"));
+
+    scope.Store.GetState<CounterState>().Count.ShouldBe(3);
   }
 
   private static string WebSpaDirectory()
