@@ -45,7 +45,8 @@
 // contention) in this handler. Revisit if a real client workflow wants revoke-is-idempotent semantics.
 //
 // Cannot revoke the last ACTIVE credential -> 409 (task 104-005 requirement: prevent self-lockout;
-// account recovery is explicitly out of scope — see the task's scope boundaries). Counted via
+// account recovery is explicitly out of scope — see the task's scope boundaries). The predicate is
+// CredentialRules.CanRevoke, shared with the reads that offer Revoke (task 275). Counted via
 // ListCredentialsAsync(callerId, includeRevoked:false) INSIDE the retry loop (re-checked every
 // attempt, not just once up front) so a credential that was the second-to-last active one at loop
 // start but became the LAST active one due to a concurrent revoke of a sibling credential is caught
@@ -127,7 +128,7 @@ public sealed partial class RevokeCredential
 
         IReadOnlyList<Credential> active =
           await PrincipalStore.ListCredentialsAsync(callerId.Value, includeRevoked: false, cancellationToken);
-        if (active.Count <= 1)
+        if (!CredentialRules.CanRevoke(active.Count))
         {
           return IdentityProblems.LastCredential();
         }

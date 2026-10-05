@@ -7,7 +7,8 @@
 @*
   Purpose: The Ctrl-K / Cmd-K command palette overlay — search pages and commands, run the highlighted row.
 
-  Design: Overlay shell is the store-driven modal (ModalContainer under TimeWarpPage's
+  Design: Contextual rows (task 275) come from the current page via CommandPaletteContext; the
+  runner re-checks them against it before running. Overlay shell is the store-driven modal (ModalContainer under TimeWarpPage's
   ModalController, ApplicationState.ActiveModalId == ModalId), not FluentDialog: it already
   gives one-modal-at-a-time, backdrop click-to-close and store-visible open state, and needs no
   FluentDialogProvider in the tree (headless hosts have none). List state lives in
@@ -37,6 +38,7 @@
   public const string ModalId = nameof(CommandPalette);
 
   [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
+  [Inject] private CommandPaletteContext PaletteContext { get; set; } = null!;
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
   // TimeWarpStateComponent keeps its Store private; the runner needs the circuit/tab store.
   [Inject] private IStore ScopedStore { get; set; } = null!;
@@ -138,7 +140,7 @@
     }
 
     await ApplicationState.CloseModal();
-    await CommandPaletteRunner.RunAsync(row, ScopedStore, ActionCatalog, CancellationToken);
+    await CommandPaletteRunner.RunAsync(row, ScopedStore, ActionCatalog, CancellationToken, PaletteContext);
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)

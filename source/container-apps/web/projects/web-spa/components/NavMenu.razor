@@ -14,6 +14,15 @@
   <TimeWarpNavLink TPage=SettingsPage />
   <TimeWarpNavLink TPage=AgentLinksPage />
 
+  @* Task 275 evaluation lab — removed with the lab once B / C / neither is decided. *@
+  <AuthorizeView Policy=@PermissionIds.CredentialManageSelf>
+    <Authorized>
+      <FluentNavCategory Title="Labs">
+        <TimeWarpNavLink TPage=HypermediaLabPage />
+      </FluentNavCategory>
+    </Authorized>
+  </AuthorizeView>
+
   <AuthorizeView Policy=@PermissionIds.AdminAccess>
     <Authorized>
       <FluentNavCategory Title="Admin">

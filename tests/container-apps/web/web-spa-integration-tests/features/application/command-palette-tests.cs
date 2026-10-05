@@ -90,6 +90,8 @@ public class CommandPalette_Should_
   [Input("Profile.ClearProfileData")]
   [Input("Credentials.FetchCredentials")]
   [Input("Theme.Update")]
+  [Input("HypermediaLab.FetchCredentialOffers")]
+  [Input("HypermediaLab.FollowCommand")]
   public static async Task Exclude_Agent_Parameterized_And_Internal_Actions(string name)
   {
     using PaletteSpa spa = new(Everything);
@@ -454,6 +456,8 @@ public class CommandPalette_Should_
         }
       );
       services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
+      // Task 275: Open appends the current page's contextual rows; no page contributes here.
+      services.AddScoped<CommandPaletteContext>();
       services.AddScoped<
         TimeWarp.Features.Persistence.IPersistenceService,
         TimeWarp.Features.Persistence.PersistenceService>();

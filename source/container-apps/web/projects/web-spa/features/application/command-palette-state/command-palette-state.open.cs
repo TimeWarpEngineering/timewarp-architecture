@@ -7,6 +7,9 @@
 // than in the component so the permission filter is testable headless. Showing the overlay is
 // the caller's next step (ApplicationState.SetActiveModal) — no nested dispatch. The current
 // base-relative path is read here too, so the signed-out Sign in row can return the visitor to it.
+// Contextual rows (task 275) are appended from CommandPaletteContext — whatever the current page
+// contributes right now, minus rows that need input the palette cannot collect; every other page
+// contributes none, so their roster is unchanged.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -23,13 +26,14 @@ partial class CommandPaletteState
       AuthenticationStateProvider authenticationStateProvider,
       IAuthorizationService authorizationService,
       IActionCatalog actionCatalog,
-      NavigationManager navigationManager
+      NavigationManager navigationManager,
+      CommandPaletteContext commandPaletteContext
     ) : BaseHandler<Action>(store)
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        CommandPaletteState.Roster = await CommandPaletteRoster.BuildAsync
+        IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync
         (
           authenticationState.User,
           authorizationService,
@@ -37,6 +41,7 @@ partial class CommandPaletteState
           actionCatalog.Entries,
           "/" + navigationManager.ToBaseRelativePath(navigationManager.Uri)
         );
+        CommandPaletteState.Roster = [.. commandPaletteContext.Rows().Where(static row => !row.RequiresInput), .. roster];
         CommandPaletteState.Apply("");
       }
     }
