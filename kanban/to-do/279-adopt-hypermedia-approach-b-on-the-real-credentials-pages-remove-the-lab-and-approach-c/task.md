@@ -200,7 +200,7 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release 
 cd ../web-server-integration-tests && dotnet test -c Release -- --filter-class Offers
 cd ../web-server-integration-tests && dotnet test -c Release -- --filter-class ProtectedPageDeepLink
 cd ../web-contracts-tests && dotnet test -c Release
-git grep -n -i "hypermedialab\|CanUnlink\|ActiveCredentialCount" -- source tests
+git grep -n "HypermediaLab\|CanUnlink\|ActiveCredentialCount" -- source tests
 ```
 
 Expect:
