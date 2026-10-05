@@ -78,7 +78,7 @@ agreement-by-memory").
 - [x] Gates: `dev build` 0/0 (an analyzer registry change means a full rebuild), `dev test`,
       `dev template-smoke`, `ganda repo audit`, `dev check-version` if the analyzers package ships
 - [x] Do **not** start an AppHost
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean); host `open-pr`
 
 ## Notes
 
@@ -92,6 +92,7 @@ agreement-by-memory").
 
 - Created: 2026-10-05 (cockpit, per Steve)
 - 2026-10-05 implement (ganda task work, headless): attribute + records + analyzer + skill; all gates green.
+- 2026-10-05 review oracle (ganda task work, headless, claude-opus-5-5): effort 3, roster general + tests; 2 rounds; fixes 3f9df71a8, 778426f35.
 
 ## Results
 
@@ -164,3 +165,23 @@ cd source/container-apps/web/projects/web-spa && dotnet build
 **Expect:** 11/11 analyzer tests and 17/17 offers tests pass. The negative build fails with
 `error TWA0029: Offer '…RevokeCredentialOffer' names catalog action 'Credentials.RevokeCredential',
 but no [CatalogAction] in this compilation sets Name = …`. Restore the line and the build is 0/0.
+
+### Review disposition
+
+- **Effort and roster:** effort 3; reviewers general and tests. Round 1 had both. Round 2 was a general re-review, and the orchestrator then checked the round-2 fixes.
+- **Final counts:** bug 0; suggestion 10 fixed; nit 6 fixed; 0 open; 0 wontfix.
+- **Disposition:** `clean`.
+- **Fixes:**
+  - The analyzer picks the same constructor as TimeWarp.State's parser and only counts class targets.
+  - It reports a bound parameter after an omitted or nullable optional one.
+  - It reports a nullable property bound to a required parameter.
+  - It honors `JsonIgnore` conditions.
+  - It reports duplicate explicit names deterministically (TWA0029).
+  - It no longer skips its checks when there are zero catalog actions.
+  - `OfferedAction.Create` uses the runtime type.
+  - The SPA reflection check reads argument names from the real wire.
+  - Analyzer suite: 11 → 28 tests.
+  - Commits: 3f9df71a8, 778426f35.
+- **Gates after the fixes:** `dev build --clean` 0/0; analyzer suite 28/28; web-contracts-tests 50/50; `CredentialOffers_Should_` 17/17; `ganda repo audit` passed.
+- **Paths:** `review/review-framework.md`, `review/round-1/{general,tests,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
