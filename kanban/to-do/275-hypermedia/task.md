@@ -122,15 +122,15 @@ tracked separately in timewarp-state task 096.
 
 ## Checklist
 
-- [ ] Lab slice + page (two tabs) on real credentials data; real Settings and Passkeys pages untouched
-- [ ] Server lab endpoints compute offered actions/commands from the real rules (no second implementation)
-- [ ] B: catalog-named actions, JSON → args binder, generic run action, fail-closed
-- [ ] C: link commands, generic `FollowCommand`, same-origin only, same auth pipeline, fail-closed
-- [ ] Ctrl-K contextual-rows hook (TWA0009-clean), cleared on navigation; other pages unchanged
-- [ ] Tests per approach + Ctrl-K hook
-- [ ] Comparison write-up in Notes, ending in an open question for Steve
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
-- [ ] Do **not** start an AppHost; record the browser check as not performed
+- [x] Lab slice + page (two tabs) on real credentials data; real Settings and Passkeys pages untouched
+- [x] Server lab endpoints compute offered actions/commands from the real rules (no second implementation)
+- [x] B: catalog-named actions, JSON → args binder, generic run action, fail-closed
+- [x] C: link commands, generic `FollowCommand`, same-origin only, same auth pipeline, fail-closed
+- [x] Ctrl-K contextual-rows hook (TWA0009-clean), cleared on navigation; other pages unchanged
+- [x] Tests per approach + Ctrl-K hook
+- [x] Comparison write-up in Notes, ending in an open question for Steve
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Do **not** start an AppHost; record the browser check as not performed
 - [ ] Implementation review; host `open-pr`
 
 ## Notes
@@ -146,15 +146,173 @@ tracked separately in timewarp-state task 096.
   Financial app, ledgers and actor runtimes. Do not add hypermedia to existing JSON endpoints.
 - Memory discipline: run builds serially; `dotnet build-server shutdown` before finishing.
 
+### B vs C comparison (evaluation deliverable)
+
+Both approaches run on `/HypermediaLab` (two tabs) against the real credentials. The server
+decides what is offered from one place: `LabCredentialSnapshot` sends the real `GetCredentials` and
+`GetEntraSignInOffered` requests through `ISender`, and the decision comes from Identity's new
+`CredentialRules` (`CanRevoke`, `HoldsMicrosoft365`, `CanLinkMicrosoft365`). `RevokeCredential.Handler`
+and `EntraTicketProcessor` now call the same predicates, so there is no second implementation. B and
+C are the same decisions written two ways.
+
+**Shared plumbing (needed by either approach):**
+
+| File | Lines |
+|------|-------|
+| `credential-rules-application.cs` | 30 |
+| `lab-credential-snapshot-application.cs` | 81 |
+| Ctrl-K hook: `i-command-palette-context-source.cs` + `command-palette-context.cs` | 21 + 47 |
+| Ctrl-K hook: Contextual row kind / `RequiresInput` | +30 |
+| Ctrl-K hook: `Open` append | +9 |
+| Lab state, tab, page, context source, row mapper | ~51 + 34 + 279 + 28 + 111 |
+
+**1. New plumbing.**
+- **B** adds about 450 lines. The contract and handler are 152 + 61. The JSON → `object?[]`
+  binder, `ContextualActionArguments`, is 98. The runner's contextual path and the follow-up refresh
+  are about 90. `FetchCredentialOffers` is 53.
+- **C** adds about 545 lines. The contract and handler are 209 + 65. `FollowCommand` is 160.
+  `FollowedLinkRequest`, the untyped `IApiRequest`, is 44. `AppRelativeHref` is 24.
+  `FetchCredentialCommands` is 42.
+- **C's Ctrl-K rows also need B's machinery.** A palette row can only run a catalog entry, so a C
+  row is the catalog entry `HypermediaLab.FollowCommand` with arguments `{method, href, fields}`.
+  Those arguments are bound by B's binder. C therefore costs C's plumbing *plus* most of B's.
+
+**2. Fit with TimeWarp.State, the catalog and the typed contracts.**
+- **B fits naturally.** An offer is just "run this cataloged action with these arguments". The
+  real `Credentials.RevokeCredential` / `RenameCredential` actions and their handlers, notifications
+  and `TrackAction` run unchanged. After the action, the runner dispatches the parameterless
+  `FetchCredentialOffers` to refresh, so no handler dispatches another action (TWS0002).
+- **C sits beside the store rather than in it.** One generic handler sends whatever the payload
+  says and then GETs `Self`. The real Credentials actions never run, so their outcomes and state
+  updates (for example `CredentialsState`) are bypassed.
+- **C needed workarounds:**
+  - an untyped request type, `FollowedLinkRequest`, which uses `[JsonExtensionData]` as the body;
+  - a private `[JsonConstructor]` so the store can round-trip it;
+  - a placeholder response type, `Ignored`;
+  - a workaround for a TimeWarp.State beta.8 ActionSet generator gap with nullable generic
+    parameters (recorded in the `FollowCommand` Design region).
+
+**3. Type safety and compile-time checking.**
+- **B:** offered names are `OfferedActionNames` constants. A test pins that every name the server
+  can emit resolves in the SPA catalog. Arguments are type-checked at *run time* against
+  `ActionCatalogParameter.ClrType` (unknown name, missing required argument, wrong type → refused).
+  Nothing ties the server's argument names to the action's constructor at compile time; a generator
+  could close that gap if B is adopted.
+- **C:** hrefs are strings built from the generated routes on the server (good), but the client
+  checks nothing about them except "same-origin and in the current payload". A body/field mismatch
+  shows up only as the target endpoint's 400.
+
+**4. Security model.**
+- **Both** are fail-closed allow-lists over the *current* payload:
+  - a contextual row runs only if the current page still contributes exactly that row
+    (`CommandPaletteContext.IsOffered`, record equality including arguments);
+  - user input may only fill parameters the offer left unbound, and can never override an argument
+    the server set;
+  - the server re-enforces permissions and rules on the real endpoint (for example the 409
+    LastCredential backstop).
+- **B** adds a second allow-list, the client's catalog: the server can only ask for something the
+  client already ships.
+- **C's allow-list is "same origin"** (`AppRelativeHref`: rejects absolute, `//`, `/\`, backslash,
+  whitespace and control characters, and `javascript:`). After that, any app endpoint the bearer
+  token can reach is a candidate. A compromised or buggy payload can aim the user's token at any
+  same-origin route. B cannot.
+- **C has a `NAVIGATE` method** (full-page redirect, used for the Entra link challenge). It widens
+  the surface further.
+- **Both** send requests through `IWebServerApiService`, so they use the same bearer-token pipeline;
+  neither has a second HTTP path.
+
+**5. Server/client coupling.**
+- **B** couples the server to client *action names and parameter names*. That is a new contract
+  surface, which the catalog test pins today.
+- **C** couples the client to nothing domain-specific. It is the classic hypermedia decoupling, but
+  it is paid for in items 2, 3 and 4. The server must also know its own routes, which it already does
+  through the generated `[ApiRoute]` members.
+
+**6. Ctrl-K integration cost.**
+- The hook is the same for both: a pull-based `ICommandPaletteContextSource` port in Applications
+  (TWA0009-clean, no lab types).
+- Rows are "cleared on navigation" by construction, because a source returns nothing for another
+  path. There is no `SetContextualRows` action and no navigation listener.
+- Rows that need user input (Rename's nickname, C commands with `Fields`) stay as page buttons but
+  are left out of the palette, which has no argument UI.
+- For C, the rows go through the B binder, as noted in item 1.
+
+**7. Testability.**
+- **B** tests through the real catalog and real actions with a scripted BFF. Assertions are simple:
+  "this action ran with these arguments".
+- **C** needs the BFF script to understand raw POST hrefs and bodies, and its success path skips
+  the real Credentials handlers. Tests show the HTTP happened, not the domain action.
+- Both have web-server endpoint tests that pin the offered set against the real handlers.
+
+**8. Reuse by an agent or WebMCP surface (task 271).**
+- **B** reuses directly. The catalog already has `Visibility`, `Permissions` and JSON schema per
+  parameter. An agent could take a server offer as `{name, args}`, validate it with the same binder,
+  and execute it. Offer = tool call.
+- **C** gives an agent raw HTTP affordances (`rel`/`href`/`method`/`fields`), which is closer to
+  today's agent-only `GetHumanUx` `Actions`. It is usable by a generic HTTP agent but has no
+  catalog-level schema or permission metadata.
+
+**Not performed:** a browser check. No AppHost was started, as this task required. All behaviour
+was validated headless (see Results).
+
+**Open question for Steve — adopt B, adopt C, or neither?**
+
+The evidence above leans B:
+- it reuses the catalog as the allow-list and runs the real actions;
+- C's palette integration ends up depending on B's binder anyway;
+- C widens the token's reach to any same-origin route.
+
+C's argument is server-side evolvability without client releases. That only matters if the client
+should be able to run actions it was not built with, and the catalog design deliberately says it
+should not. "Neither" stays reasonable if the duplicated client-side `CanUnlink` /
+`CanLinkMicrosoft365` mirrors are cheaper to keep than a new server↔client name contract.
+**Not decided here.**
+
 ## Session
 
 - Created: 2026-10-04 (original framing)
 - 2026-10-05: rewritten for a B-versus-C evaluation on a lab page (cockpit, per Steve)
+- 2026-10-05: implement oracle (headless, resumed after an earlier failed run). Committed the prior
+  run's uncommitted work, then fixed: `HypermediaLabState.Clone` must give a new Guid (InvalidCloneException);
+  `FollowedLinkRequest` needs a private `[JsonConstructor]` (extension data cannot bind to a ctor
+  parameter); test usings. Added web-server endpoint tests and contract round-trips. All gates green.
 
 ## Results
 
-*(fill when done)*
+Delivered: lab slice `features/hypermedia-lab/` (server: `GetCredentialOffers` (B) +
+`GetCredentialCommands` (C) endpoints over `LabCredentialSnapshot` / Identity `CredentialRules`,
+reused by `RevokeCredential.Handler` and `EntraTicketProcessor`), SPA `HypermediaLabState` + page
+`/HypermediaLab` (two tabs, `[Page(Policy = CredentialManageSelf, Navigable = true)]`, NavMenu "Labs"),
+B binder `ContextualActionArguments`, C `FollowCommand` + `FollowedLinkRequest` + `AppRelativeHref`,
+Ctrl-K contextual-rows hook (`ICommandPaletteContextSource` / `CommandPaletteContext`, runner
+`RunContextualAsync`). Real Settings / Passkeys pages and `CanUnlink` / `CanLinkMicrosoft365` untouched.
+Comparison write-up: Notes → "B vs C comparison", ending in an open question for Steve.
+
+Gates (2026-10-05, this worktree): `dev build` 0 warnings / 0 errors; `dev test` all suites passed
+(0 failed); `dev template-smoke` SUCCEEDED; `ganda repo audit` passes all checks. Browser check
+**not performed** (no AppHost, by requirement).
 
 ### How to validate
 
-*(required before done)*
+Smoke:
+
+```bash
+./bin/dev build
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class HypermediaLab
+cd ../web-server-integration-tests && dotnet test -c Release -- --filter-class HypermediaLab
+cd ../web-contracts-tests && dotnet test -c Release
+```
+
+Expect: build 0/0. SPA lab suite 23/23. It covers:
+- B: offered Revoke runs and refreshes to the follow-up set; Rename with input; unknown catalog name
+  and bad args fail closed; a non-offered row is refused.
+- C: the offered link is followed and the payload refreshes from `Self`; cross-origin, `//`, `/\`,
+  `javascript:` and relative hrefs are refused; a non-offered command is refused.
+- Ctrl-K rows appear only on `/HypermediaLab`.
+
+Server lab suite 11/11: offered sets match the real rule (Revoke only above one active credential),
+a real revoke changes the follow-up set, unauthenticated requests get 401, and C hrefs are
+app-relative. Contracts 57/57, including the lab round-trips.
+
+Optional manual check (not performed here): `dev run`, sign in, open `/HypermediaLab`, revoke down
+to one credential on each tab and watch Revoke disappear; press Ctrl-K on the lab page and elsewhere.
