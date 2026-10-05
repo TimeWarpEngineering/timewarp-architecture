@@ -173,7 +173,7 @@ task 275's "B vs C comparison" (in `kanban/done/275-hypermedia/task.md`) first.
   - `CredentialsState.CanUnlink` / `ActiveCredentialCount` / `CanLinkMicrosoft365` and their tests
     (`credentials-state-revoke-guard-tests.cs`, and the Settings formula tests).
   - The whole hypermedia lab: B and C, `FollowCommand`, `FollowedLinkRequest`, `AppRelativeHref`,
-    `Ignored`, the lab tests and the NavMenu "Labs" entry. `git grep -i hypermedialab` over
+    `Ignored`, the lab tests and the NavMenu "Labs" entry. `git grep HypermediaLab` over
     source/tests is empty, apart from this decision trail.
 - **Docs.**
   - New section in the `tw-blazor` skill: "Server-offered actions".
@@ -224,7 +224,7 @@ Expect:
     → no Link.
 - `ProtectedPageDeepLink` passes: the prerendered Revoke/Unlink hints come from the server's offers.
 - Contracts 47/47, including the `GetCredentials` offers round-trip.
-- `git grep` returns nothing.
+- `git grep` returns nothing. It is case-sensitive on purpose: the server rule's `activeCredentialCount` parameter is expected and is not matched.
 
 Optional manual check (not performed here): run `dev run` and sign in with two passkeys. On
 `/Settings`, revoke one and watch Revoke disable with its hint. Press Ctrl-K on `/Settings`: there
