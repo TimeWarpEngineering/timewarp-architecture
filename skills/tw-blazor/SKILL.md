@@ -140,9 +140,10 @@ second place to look without removing any drift.
 1. Add the catalog name constant to the slice's offered-names class in the shared contracts.
 2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`. Its public properties
    are the arguments the server binds and must match the action's first constructor's parameters
-   by camelCase name and type (a nullable property cannot feed a non-nullable parameter). List any
-   required parameter the user supplies (a nickname, a comment) in `UserInput`. Optional parameters
-   may be left out only at the end: binding one after an omitted optional parameter is refused.
+   by camelCase name and type. A nullable property cannot feed a required parameter (the client
+   treats null as missing). List any required parameter the user supplies (a nickname, a comment)
+   in `UserInput`. Optional parameters may be left out only at the end: binding one after an
+   optional parameter that is omitted, or fed by a nullable property, is refused.
 3. Set `[CatalogAction(Name = <constant>)]` on the client action, so renaming the action set cannot
    change the offered name.
 4. Have the server build offers only from the record (`OfferedAction.ForCredential` / `ForPage` /

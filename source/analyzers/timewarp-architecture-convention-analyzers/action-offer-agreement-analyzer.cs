@@ -19,19 +19,28 @@
 // A name two actions declare is reported too (message lists them, ordered), never resolved by
 // whichever action the concurrent symbol pass saw first; TimeWarp.State's TWS0006 also rejects the
 // duplicate itself. Zero catalog actions is no special case: every offer then reports TWA0029.
+// Only a [CatalogAction] whose OWN declaration (attribute list's parent) is a ClassDeclarationSyntax
+// counts: TimeWarp.State's generator takes ClassDeclarationSyntax targets only, so a record (or
+// struct) Action is never cataloged and an offer naming it gets TWA0029.
 // TWA0030: the action's catalog parameters come from the first ConstructorDeclarationSyntax among
-// the DescendantNodes() of the class declaration carrying [CatalogAction] — exactly TimeWarp.State's
+// the DescendantNodes() of that class declaration — exactly TimeWarp.State's
 // ActionSetConstructorParser (one partial declaration; a static or nested-type constructor counts
 // when it comes first; none = parameterless). The constructor symbol is matched by syntax reference,
-// not a semantic model (RS1030). Each public instance property of the record (JsonIgnore skipped,
-// inherited ones included) binds the parameter named by its wire name — [JsonPropertyName] or the
-// System.Text.Json camelCase policy the contract seam uses — with the same type; a nullable
-// reference property against a non-nullable reference parameter is a mismatch too (the binder
-// treats null as missing). Every required parameter must be bound or listed in UserInput; every
-// UserInput entry must be a required parameter no property binds. Optional parameters may stay
-// unbound, but only as a trailing run: the palette merges UserInput into the offered arguments and
-// ContextualActionArguments.Bind refuses any present argument after an omitted optional parameter
-// (positional arrays cannot leave holes), so TWA0030 reports that ordering.
+// not a semantic model (RS1030). Each public instance property of the record (inherited ones
+// included; [JsonIgnore] skips one only when its Condition is absent or Always — any other condition
+// still writes it) binds the parameter named by its wire name — [JsonPropertyName] or the
+// System.Text.Json camelCase policy the contract seam uses — with the same type.
+// Nullable properties (an annotated reference type or Nullable<T>): ContextualActionArguments.Bind
+// treats a JSON null as missing whatever the parameter's own annotation, so a nullable property
+// bound to a REQUIRED parameter (no default value) is a mismatch, and one bound to an optional
+// parameter counts as possibly omitted in the ordering pass below. Every required parameter must
+// be bound or listed in UserInput; every UserInput entry must be a required parameter no property
+// binds. Optional parameters may stay unbound, but only as a trailing run: the palette merges
+// UserInput into the offered arguments and Bind refuses any present argument after an omitted
+// optional parameter (positional arrays cannot leave holes), so TWA0030 reports a bound parameter
+// after an unbound or nullable-bound optional one. Not modelled: [JsonIgnore(Condition =
+// WhenWritingNull / WhenWritingDefault)] on a non-nullable property (omitted only for a default
+// value the server would not offer).
 // Offer discovery: this compilation's source plus referenced assemblies that define
 // ActionOfferAttribute or reference one that does (IAssemblySymbol.TypeNames is a cheap name set),
 // so framework assemblies are never walked. Reported at CompilationEnd: TWA0029 on the record (or
@@ -62,6 +71,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
   private const string ActionOfferAttributeSimpleName = "ActionOfferAttribute";
   private const string JsonIgnoreAttributeSimpleName = "JsonIgnoreAttribute";
   private const string JsonPropertyNameAttributeSimpleName = "JsonPropertyNameAttribute";
+  private const int JsonIgnoreConditionAlways = 1; // System.Text.Json.Serialization.JsonIgnoreCondition.Always
 
   private static readonly DiagnosticDescriptor UnknownName =
     new
@@ -85,7 +95,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "An [ActionOffer] record's public properties are the arguments the server binds, keyed by camelCase name. Each must name a constructor parameter of the offered action with the same type; every required parameter must have a property or be listed in UserInput, every UserInput entry must be a required parameter no property binds, and no argument may follow an omitted optional parameter.",
+      description: "An [ActionOffer] record's public properties are the arguments the server binds, keyed by camelCase name. Each must name a constructor parameter of the offered action with the same type; every required parameter must have a property or be listed in UserInput, every UserInput entry must be a required parameter no property binds, a nullable property cannot bind a required parameter, and no argument may follow an optional parameter that is omitted or may be null.",
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
@@ -136,6 +146,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       foreach ((INamedTypeSymbol action, AttributeData attribute) in catalogActions)
       {
         if (ExplicitName(attribute) is not { } name) continue;
+        if (CatalogDeclaration(attribute, endContext.CancellationToken) is null) continue;
         if (!byName.TryGetValue(name, out List<(INamedTypeSymbol Action, AttributeData Attribute)>? declarers))
         {
           byName[name] = declarers = [];
@@ -236,6 +247,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
   {
     IParameterSymbol[] parameters = CatalogParameters(action, catalogAction, cancellationToken);
     HashSet<string> bound = new(StringComparer.Ordinal);
+    HashSet<string> nullableBound = new(StringComparer.Ordinal);
 
     foreach (IPropertySymbol property in ArgumentProperties(offer))
     {
@@ -252,11 +264,13 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       {
         yield return $"property '{property.Name}' is {property.Type.ToDisplayString()} but parameter '{wireName}' is {parameter.Type.ToDisplayString()}";
       }
-      else if (property.Type.IsReferenceType
-        && property.NullableAnnotation == NullableAnnotation.Annotated
-        && parameter.NullableAnnotation == NullableAnnotation.NotAnnotated)
+      else if (IsNullable(property))
       {
-        yield return $"property '{property.Name}' is nullable but parameter '{wireName}' is not; the client binder treats null as missing";
+        nullableBound.Add(wireName);
+        if (!parameter.HasExplicitDefaultValue)
+        {
+          yield return $"property '{property.Name}' is nullable but parameter '{wireName}' is required; the client binder treats null as missing";
+        }
       }
     }
 
@@ -278,23 +292,42 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
     foreach (IParameterSymbol parameter in parameters)
     {
       bool present = bound.Contains(parameter.Name) || (!parameter.HasExplicitDefaultValue && userInput.Contains(parameter.Name));
-      if (!present)
+      if (!present && !parameter.HasExplicitDefaultValue)
       {
-        if (!parameter.HasExplicitDefaultValue)
-        {
-          yield return $"required parameter '{parameter.Name}' has no property and is not listed in UserInput";
-        }
-        else
-        {
-          omittedOptional ??= parameter.Name;
-        }
+        yield return $"required parameter '{parameter.Name}' has no property and is not listed in UserInput";
+        continue;
       }
-      else if (omittedOptional is not null)
+
+      if (present && omittedOptional is not null)
       {
-        yield return $"parameter '{parameter.Name}' is bound after the omitted optional parameter '{omittedOptional}'; the client binder cannot leave a positional hole";
+        yield return $"parameter '{parameter.Name}' is bound after {omittedOptional}; the client binder cannot leave a positional hole";
+      }
+
+      if (parameter.HasExplicitDefaultValue && omittedOptional is null)
+      {
+        if (!present)
+        {
+          omittedOptional = $"the omitted optional parameter '{parameter.Name}'";
+        }
+        else if (nullableBound.Contains(parameter.Name))
+        {
+          omittedOptional = $"the optional parameter '{parameter.Name}', which a null (nullable property) omits";
+        }
       }
     }
   }
+
+  /// <summary>A null value is possible: an annotated reference type or Nullable&lt;T&gt;.</summary>
+  private static bool IsNullable(IPropertySymbol property) =>
+    property.Type.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+    || (property.Type.IsReferenceType && property.NullableAnnotation == NullableAnnotation.Annotated);
+
+  /// <summary>
+  /// The class declaration the [CatalogAction] attribute list belongs to — what TimeWarp.State's
+  /// generator targets; null for any other declaration kind (record, struct), which is never cataloged.
+  /// </summary>
+  private static ClassDeclarationSyntax? CatalogDeclaration(AttributeData catalogAction, CancellationToken cancellationToken) =>
+    catalogAction.ApplicationSyntaxReference?.GetSyntax(cancellationToken).Parent?.Parent as ClassDeclarationSyntax;
 
   /// <summary>
   /// Parameters of the first constructor declared anywhere inside the class declaration carrying
@@ -302,11 +335,7 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
   /// </summary>
   private static IParameterSymbol[] CatalogParameters(INamedTypeSymbol action, AttributeData catalogAction, CancellationToken cancellationToken)
   {
-    if (catalogAction.ApplicationSyntaxReference?.GetSyntax(cancellationToken).FirstAncestorOrSelf<ClassDeclarationSyntax>()
-        is not { } declaration)
-    {
-      return [];
-    }
+    if (CatalogDeclaration(catalogAction, cancellationToken) is not { } declaration) return [];
 
     ConstructorDeclarationSyntax? constructor = declaration.DescendantNodes().OfType<ConstructorDeclarationSyntax>().FirstOrDefault();
     if (constructor is null) return [];
@@ -329,11 +358,27 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       {
         if (property.IsStatic || property.IsIndexer || property.GetMethod is null) continue;
         if (property.DeclaredAccessibility != Accessibility.Public) continue;
-        if (property.GetAttributes().Any(static attribute => attribute.AttributeClass?.Name == JsonIgnoreAttributeSimpleName)) continue;
+        if (property.GetAttributes().Any(IgnoredAlways)) continue;
         if (!seen.Add(property.Name)) continue;
         yield return property;
       }
     }
+  }
+
+  /// <summary>[JsonIgnore] with no Condition or Condition = Always; any other condition still writes the property.</summary>
+  private static bool IgnoredAlways(AttributeData attribute)
+  {
+    if (attribute.AttributeClass?.Name != JsonIgnoreAttributeSimpleName) return false;
+
+    foreach (KeyValuePair<string, TypedConstant> argument in attribute.NamedArguments)
+    {
+      if (argument.Key == "Condition")
+      {
+        return argument.Value.Value is int condition && condition == JsonIgnoreConditionAlways;
+      }
+    }
+
+    return true;
   }
 
   private static string[] UserInput(AttributeData offerAttribute)

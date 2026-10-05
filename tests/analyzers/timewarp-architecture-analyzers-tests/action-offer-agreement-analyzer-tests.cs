@@ -496,7 +496,7 @@ public class Should_Check_Offer_Agreement
 
     CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = Test(offers, actions);
     test.ExpectedDiagnostics.Add(MismatchAt(1, "App.RenameCredentialOffer", "Credentials.RenameCredential",
-      "property 'Nickname' is nullable but parameter 'nickname' is not; the client binder treats null as missing"));
+      "property 'Nickname' is nullable but parameter 'nickname' is required; the client binder treats null as missing"));
     await test.RunAsync();
   }
 
@@ -566,6 +566,165 @@ public class Should_Check_Offer_Agreement
       "property 'CredentialId' binds 'credential', which is not a constructor parameter of App.CredentialsState.RevokeCredentialActionSet.Action"));
     test.ExpectedDiagnostics.Add(Mismatch(16, "App.RevokeCredentialOffer", "Credentials.RevokeCredential",
       "required parameter 'credentialId' has no property and is not listed in UserInput"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Catalog_Action_On_A_Record_Reports_TWA0029()
+  {
+    // TimeWarp.State catalogs class declarations only; the enclosing class's Handler constructor must
+    // not stand in for the record's parameters.
+    const string actions =
+      """
+      namespace App
+      {
+        public static class RevokeCredentialActionSet
+        {
+          [TimeWarp.State.CatalogAction(Name = "Credentials.RevokeCredential")]
+          public sealed record Action(System.Guid CredentialId);
+
+          public sealed class Handler
+          {
+            public Handler(System.Guid credentialId) { }
+          }
+        }
+      }
+      """;
+    const string offers =
+      """
+      namespace App
+      {
+        [TimeWarp.Architecture.Attributes.ActionOffer("Credentials.RevokeCredential")]
+        public sealed record {|#0:RevokeCredentialOffer|}(System.Guid CredentialId);
+      }
+      """;
+
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = Test(offers, actions);
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0029", DiagnosticSeverity.Warning)
+      .WithLocation(0)
+      .WithArguments("App.RevokeCredentialOffer", "Credentials.RevokeCredential", NoAction("Credentials.RevokeCredential")));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Nullable_Property_For_Nullable_Required_Parameter_Reports_TWA0030()
+  {
+    // The binder treats null as missing for any required parameter, whatever its annotation.
+    const string actions =
+      """
+      #nullable enable
+      namespace App
+      {
+        public static class RenameCredentialActionSet
+        {
+          [{|#1:TimeWarp.State.CatalogAction(Name = "Credentials.RenameCredential")|}]
+          public sealed class Action
+          {
+            public Action(System.Guid? credentialId, string? nickname) { }
+          }
+        }
+      }
+      """;
+    const string offers =
+      """
+      #nullable enable
+      namespace App
+      {
+        [TimeWarp.Architecture.Attributes.ActionOffer("Credentials.RenameCredential")]
+        public sealed record RenameCredentialOffer(System.Guid? CredentialId, string? Nickname);
+      }
+      """;
+
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = Test(offers, actions);
+    test.ExpectedDiagnostics.Add(MismatchAt(1, "App.RenameCredentialOffer", "Credentials.RenameCredential",
+      "property 'CredentialId' is nullable but parameter 'credentialId' is required; the client binder treats null as missing"));
+    test.ExpectedDiagnostics.Add(MismatchAt(1, "App.RenameCredentialOffer", "Credentials.RenameCredential",
+      "property 'Nickname' is nullable but parameter 'nickname' is required; the client binder treats null as missing"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Bound_Parameter_After_Nullable_Optional_Reports_TWA0030()
+  {
+    // A null Tag is omitted on the client, which would leave a hole before notify.
+    const string actions =
+      """
+      #nullable enable
+      namespace App
+      {
+        public static class RevokeCredentialActionSet
+        {
+          [{|#1:TimeWarp.State.CatalogAction(Name = "Credentials.RevokeCredential")|}]
+          public sealed class Action
+          {
+            public Action(System.Guid credentialId, string? tag = null, bool notify = false) { }
+          }
+        }
+      }
+      """;
+    const string offers =
+      """
+      #nullable enable
+      namespace App
+      {
+        [TimeWarp.Architecture.Attributes.ActionOffer("Credentials.RevokeCredential")]
+        public sealed record RevokeCredentialOffer(System.Guid CredentialId, string? Tag, bool Notify);
+      }
+      """;
+
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = Test(offers, actions);
+    test.ExpectedDiagnostics.Add(MismatchAt(1, "App.RevokeCredentialOffer", "Credentials.RevokeCredential",
+      "parameter 'notify' is bound after the optional parameter 'tag', which a null (nullable property) omits; the client binder cannot leave a positional hole"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Trailing_Nullable_Optional_Reports_Nothing()
+  {
+    const string actions =
+      """
+      #nullable enable
+      namespace App
+      {
+        public static class RevokeCredentialActionSet
+        {
+          [TimeWarp.State.CatalogAction(Name = "Credentials.RevokeCredential")]
+          public sealed class Action
+          {
+            public Action(System.Guid credentialId, string? tag = null) { }
+          }
+        }
+      }
+      """;
+    const string offers =
+      """
+      #nullable enable
+      namespace App
+      {
+        [TimeWarp.Architecture.Attributes.ActionOffer("Credentials.RevokeCredential")]
+        public sealed record RevokeCredentialOffer(System.Guid CredentialId, string? Tag);
+      }
+      """;
+
+    await Test(offers, actions).RunAsync();
+  }
+
+  public static async Task Given_Conditional_JsonIgnore_Still_Checks_The_Property()
+  {
+    // Condition = WhenWritingNull still writes a non-null value; Condition = Always never does.
+    const string offers =
+      """
+      namespace App
+      {
+        using System.Text.Json.Serialization;
+
+        [TimeWarp.Architecture.Attributes.ActionOffer(OfferedActionNames.Revoke)]
+        public sealed record RevokeCredentialOffer(
+          System.Guid CredentialId,
+          [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string Note,
+          [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] string Hidden);
+      }
+      """;
+
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = Test(offers);
+    test.ExpectedDiagnostics.Add(Mismatch(16, "App.RevokeCredentialOffer", "Credentials.RevokeCredential",
+      "property 'Note' binds 'note', which is not a constructor parameter of App.CredentialsState.RevokeCredentialActionSet.Action"));
     await test.RunAsync();
   }
 
