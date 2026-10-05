@@ -28,6 +28,9 @@ public class ActionCatalog_Should
     "Credentials.LinkMicrosoft365",
     "Credentials.RenameCredential",
     "Credentials.RevokeCredential",
+    // Task 275 evaluation lab: the B follow-up refresh (Agent) and C's generic link follower (Human, parameterized).
+    "HypermediaLab.FetchCredentialOffers",
+    "HypermediaLab.FollowCommand",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",

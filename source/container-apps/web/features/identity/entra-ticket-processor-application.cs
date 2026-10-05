@@ -25,7 +25,8 @@
 // Issuer mismatch logs Warning with expected vs token issuer URIs (not secrets) and returns a
 // 400 whose detail names that check.
 // One active EntraAccount per principal (task 229): link of a second handle is 409 Microsoft 365
-// already linked before AddCredentialAsync. Switch is Unlink then Link. Concurrent links of two
+// already linked before AddCredentialAsync (CredentialRules.HoldsMicrosoft365, shared with the reads that
+// offer Link, task 275). Switch is Unlink then Link. Concurrent links of two
 // different handles can both pass the list-then-insert check (same TOCTOU class as last-credential
 // revoke); unique (Type, Handle) does not serialize two distinct oids.
 // Credential.Label is the provider, EntraIdTokenClaims.ProviderLabel ("Microsoft 365"), on both
@@ -453,7 +454,7 @@ public sealed class EntraTicketProcessor
       principalId,
       includeRevoked: false,
       cancellationToken);
-    if (callerCredentials.Any(credential => credential.Type == CredentialType.EntraAccount))
+    if (CredentialRules.HoldsMicrosoft365(callerCredentials.Select(static credential => credential.Type)))
     {
       return IdentityProblems.Microsoft365AlreadyLinked();
     }

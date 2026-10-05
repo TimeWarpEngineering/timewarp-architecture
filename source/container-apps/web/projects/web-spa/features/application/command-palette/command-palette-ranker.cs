@@ -8,7 +8,7 @@
 // substring, description prefix / word-start / substring, then name subsequence ("stg" →
 // Settings) as the loose fuzzy tail. A row takes its best tier; rows matching nothing drop out.
 // Ties break on shorter name, then name, then kind — total order, so tests can pin it.
-// An empty query keeps every row (pages first, then commands, each by name) so the palette
+// An empty query keeps every row (contextual rows first, then pages, then commands, each by name) so the palette
 // opens as a browsable list. The ranker never picks a row to run: Enter runs the highlighted
 // row, and a query with no match leaves nothing highlighted.
 #endregion

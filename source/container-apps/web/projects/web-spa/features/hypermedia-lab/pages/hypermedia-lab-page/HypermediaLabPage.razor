@@ -1,0 +1,258 @@
+@namespace TimeWarp.Architecture.Features.HypermediaLab
+@inherits BaseComponent
+@using static TimeWarp.Architecture.Features.HypermediaLab.GetCredentialOffers
+@using static TimeWarp.Architecture.Features.HypermediaLab.GetCredentialCommands
+
+@*
+  Purpose: Hypermedia lab (task 275) — the caller's real credentials with server-offered actions,
+  approach B (catalog actions) and approach C (link commands) side by side on two tabs.
+
+  Design: Renders only from HypermediaLabState: a button exists only for an offer/command in the
+  latest payload — there is no client rule here (no CanUnlink, no CanLinkMicrosoft365). Both tabs'
+  buttons build the same contextual row Ctrl-K shows (HypermediaLabRows) and run it through
+  CommandPaletteRunner.RunContextualAsync, so a button and its palette row pass one fail-closed gate
+  (still offered → known catalog entry → arguments bind). B's runner refreshes the offers through
+  the row's follow-up; C's FollowCommand refreshes from Self. Parameters an offer leaves to the user
+  (B: required catalog parameters not in Arguments; C: Fields) get a text input; the typed draft is
+  component-local form text until the click dispatches. Outcomes and refusals land in the shell
+  notification region (TWA0025); this page renders no outcome bars. Revoke here is one click (no
+  restating confirmation): the lab compares plumbing, not the Settings UX. Tab choice is
+  HypermediaLabState.SelectTab. Both payloads load on init so Ctrl-K offers both approaches' rows.
+*@
+
+@code {
+  public static string Title => "Hypermedia lab";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Beaker();
+
+  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
+  [Inject] private CommandPaletteContext PaletteContext { get; set; } = null!;
+  // TimeWarpStateComponent keeps its Store private; the runner needs the circuit/tab store.
+  [Inject] private IStore ScopedStore { get; set; } = null!;
+
+  private readonly Dictionary<string, string> Drafts = new(StringComparer.Ordinal);
+
+  private bool IsBusy => ActionTrackingState.IsActive;
+  private string SelectedTab => HypermediaLabState.SelectedTab;
+  private GetCredentialOffers.Response? Offers => HypermediaLabState.Offers;
+  private GetCredentialCommands.Response? Commands => HypermediaLabState.Commands;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    await NoSubHypermediaLabState.FetchCredentialOffers();
+    await NoSubHypermediaLabState.FetchCredentialCommands();
+  }
+
+  private Task SelectTabAsync(string tab) => NoSubHypermediaLabState.SelectTab(tab);
+
+  private static string CredentialTitle(GetCredentials.CredentialSummary credential) =>
+    credential.Nickname ?? credential.Label ?? credential.Type.ToString();
+
+  private static string Subject(GetCredentials.CredentialSummary credential) => credential.Id.Value.ToString("D");
+
+  private static string OfferDraftKey(OfferedAction offer, string parameter) => $"B|{offer.Name}|{offer.Subject}|{parameter}";
+
+  private static string CommandDraftKey(LinkCommand command, string field) => $"C|{command.Href}|{field}";
+
+  private string Draft(string key) => Drafts.GetValueOrDefault(key, "");
+
+  private void SetDraft(string key, string? value) => Drafts[key] = value ?? "";
+
+  private IReadOnlyList<string> UnboundParameters(OfferedAction offer) =>
+    HypermediaLabRows.UnboundParameters(ActionCatalog.Find(offer.Name), offer);
+
+  private Task RunOfferAsync(OfferedAction offer)
+  {
+    Dictionary<string, JsonElement> input = UnboundParameters(offer)
+      .ToDictionary(parameter => parameter, parameter => JsonSerializer.SerializeToElement(Draft(OfferDraftKey(offer, parameter))));
+    return CommandPaletteRunner.RunContextualAsync
+    (
+      HypermediaLabRows.OfferRow(Offers!, offer, ActionCatalog),
+      input,
+      ScopedStore,
+      ActionCatalog,
+      PaletteContext,
+      CancellationToken
+    );
+  }
+
+  private Task FollowAsync(LinkCommand command)
+  {
+    Dictionary<string, JsonElement> input = [];
+    if (command.Fields.Count > 0)
+    {
+      Dictionary<string, string> fields = command.Fields.ToDictionary(field => field, field => Draft(CommandDraftKey(command, field)));
+      input[HypermediaLabRows.FollowCommandFieldsArgument] = JsonSerializer.SerializeToElement(fields);
+    }
+
+    return CommandPaletteRunner.RunContextualAsync
+    (
+      HypermediaLabRows.CommandRow(Commands!, command),
+      input,
+      ScopedStore,
+      ActionCatalog,
+      PaletteContext,
+      CancellationToken
+    );
+  }
+}
+
+<TimeWarpPage Title="Hypermedia lab">
+  <div class="twe-stack">
+    <Card Title="What this is">
+      <p>
+        Evaluation for task 275. The server decides which actions are valid now; this page only renders what it offers.
+        Tab B: responses name client catalog actions. Tab C: responses carry links the client follows.
+        The same actions appear in Ctrl-K while this page is open.
+      </p>
+    </Card>
+
+    <div class="twe-lab-tabs" role="tablist" aria-label="Approach">
+      <FluentButton Appearance="@(SelectedTab == HypermediaLabState.ApproachB ? ButtonAppearance.Primary : ButtonAppearance.Outline)"
+                    role="tab"
+                    aria-selected="@(SelectedTab == HypermediaLabState.ApproachB ? "true" : "false")"
+                    data-qa="LabTabB"
+                    OnClick="@(() => SelectTabAsync(HypermediaLabState.ApproachB))">
+        B: catalog actions
+      </FluentButton>
+      <FluentButton Appearance="@(SelectedTab == HypermediaLabState.ApproachC ? ButtonAppearance.Primary : ButtonAppearance.Outline)"
+                    role="tab"
+                    aria-selected="@(SelectedTab == HypermediaLabState.ApproachC ? "true" : "false")"
+                    data-qa="LabTabC"
+                    OnClick="@(() => SelectTabAsync(HypermediaLabState.ApproachC))">
+        C: link commands
+      </FluentButton>
+    </div>
+
+    @if (SelectedTab == HypermediaLabState.ApproachB)
+    {
+      <Section Title="B — server names catalog actions" LoadingActionType="typeof(HypermediaLabState.FetchCredentialOffersActionSet.Action)">
+        @if (Offers is { } offers)
+        {
+          <div role="tabpanel" data-qa="LabPanelB">
+            @foreach (GetCredentials.CredentialSummary credential in offers.Credentials)
+            {
+              <div class="twe-lab-row" @key="credential.Id.Value" data-qa="LabCredentialRow">
+                <span class="twe-lab-row__title">@CredentialTitle(credential)</span>
+                <span class="twe-lab-row__fingerprint">@credential.Fingerprint</span>
+                <div class="twe-lab-row__actions">
+                  @foreach (OfferedAction offer in offers.Offers.Where(candidate => candidate.Subject == Subject(credential)))
+                  {
+                    @foreach (string parameter in UnboundParameters(offer))
+                    {
+                      string key = OfferDraftKey(offer, parameter);
+                      <FluentTextInput Value="@Draft(key)"
+                                       ValueChanged="@((string? value) => SetDraft(key, value))"
+                                       AriaLabel="@parameter"
+                                       Placeholder="@parameter"
+                                       data-qa="LabOfferInput" />
+                    }
+                    <FluentButton Appearance="ButtonAppearance.Outline"
+                                  data-qa="LabOffer"
+                                  data-offer="@offer.Name"
+                                  Disabled="IsBusy"
+                                  OnClick="@(() => RunOfferAsync(offer))">
+                      @offer.Label
+                    </FluentButton>
+                  }
+                </div>
+              </div>
+            }
+            <div class="twe-lab-row__actions">
+              @foreach (OfferedAction offer in offers.Offers.Where(static candidate => candidate.Subject is null))
+              {
+                <FluentButton Appearance="ButtonAppearance.Outline"
+                              data-qa="LabOffer"
+                              data-offer="@offer.Name"
+                              Disabled="IsBusy"
+                              OnClick="@(() => RunOfferAsync(offer))">
+                  @offer.Label
+                </FluentButton>
+              }
+            </div>
+          </div>
+        }
+      </Section>
+    }
+    else
+    {
+      <Section Title="C — server sends link commands" LoadingActionType="typeof(HypermediaLabState.FetchCredentialCommandsActionSet.Action)">
+        @if (Commands is { } commands)
+        {
+          <div role="tabpanel" data-qa="LabPanelC">
+            @foreach (GetCredentials.CredentialSummary credential in commands.Credentials)
+            {
+              <div class="twe-lab-row" @key="credential.Id.Value" data-qa="LabCredentialRow">
+                <span class="twe-lab-row__title">@CredentialTitle(credential)</span>
+                <span class="twe-lab-row__fingerprint">@credential.Fingerprint</span>
+                <div class="twe-lab-row__actions">
+                  @foreach (LinkCommand command in commands.Commands.Where(candidate => candidate.Subject == Subject(credential)))
+                  {
+                    @foreach (string field in command.Fields)
+                    {
+                      string key = CommandDraftKey(command, field);
+                      <FluentTextInput Value="@Draft(key)"
+                                       ValueChanged="@((string? value) => SetDraft(key, value))"
+                                       AriaLabel="@field"
+                                       Placeholder="@field"
+                                       data-qa="LabCommandInput" />
+                    }
+                    <FluentButton Appearance="ButtonAppearance.Outline"
+                                  data-qa="LabCommand"
+                                  data-rel="@command.Rel"
+                                  Disabled="IsBusy"
+                                  OnClick="@(() => FollowAsync(command))">
+                      @command.Label
+                    </FluentButton>
+                  }
+                </div>
+              </div>
+            }
+            <div class="twe-lab-row__actions">
+              @foreach (LinkCommand command in commands.Commands.Where(static candidate => candidate.Subject is null))
+              {
+                <FluentButton Appearance="ButtonAppearance.Outline"
+                              data-qa="LabCommand"
+                              data-rel="@command.Rel"
+                              Disabled="IsBusy"
+                              OnClick="@(() => FollowAsync(command))">
+                  @command.Label
+                </FluentButton>
+              }
+            </div>
+          </div>
+        }
+      </Section>
+    }
+  </div>
+</TimeWarpPage>
+
+<style>
+  @(@"
+    .twe-lab-tabs {
+      display: flex;
+      gap: var(--twe-space-2);
+    }
+    .twe-lab-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--twe-space-2);
+      padding-block: var(--twe-space-2);
+      border-bottom: 1px solid var(--twe-rule);
+    }
+    .twe-lab-row__title {
+      font-weight: 600;
+    }
+    .twe-lab-row__fingerprint {
+      font-family: var(--twe-font-mono);
+    }
+    .twe-lab-row__actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--twe-space-2);
+      margin-inline-start: auto;
+    }
+  ")
+</style>
