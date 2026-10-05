@@ -8,7 +8,8 @@
 // gate; settings.EntraSignInEnabled is the runtime offer. Both must be true or the challenge would 404
 // (no scheme) or 403 (policy). The registered store seeds on first read (SeedOnReadSiteSettingsStore,
 // task 254), so an emptied table is re-seeded from configuration; a null read (table not migrated) is
-// not offered. A disabled scheme short-circuits before the store is read.
+// not offered. The store is read even when the scheme is off — the read is what re-seeds an emptied
+// table (site-settings-seed-on-read-tests pins it), so do not short-circuit on Enabled.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -25,12 +26,7 @@ public static class EntraSignInOffer
     CancellationToken cancellationToken
   )
   {
-    if (!options.Enabled)
-    {
-      return false;
-    }
-
     SiteSettings? settings = await siteSettingsStore.GetAsync(cancellationToken).ConfigureAwait(false);
-    return settings is { EntraSignInEnabled: true };
+    return options.Enabled && settings is { EntraSignInEnabled: true };
   }
 }
