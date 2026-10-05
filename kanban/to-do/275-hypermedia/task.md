@@ -286,6 +286,7 @@ should not. "Neither" stays reasonable if the duplicated client-side `CanUnlink`
   parameter); test usings. Added web-server endpoint tests and contract round-trips. All gates green.
 - 2026-10-05: review oracle (Claude Opus 5.5, headless). Effort 3; reviewers general, security and
   tests (Sonnet subagents). Fixed M1 (palette `@key` collision), M3 and M5. Disposition accepted-exceptions.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-05T04:00:08Z
 
 ## Results
 
