@@ -49,13 +49,15 @@ is opted in.**
 - [x] No other JS dispatchers (recorded)
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`, `dev check-version`
 - [x] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition clean); host `open-pr`
 
 ## Session
 
 - Created: 2026-10-05 (cockpit; follow-up to timewarp-state 096 / beta.8)
 - 2026-10-05 implementer (ganda task work, headless): pins bumped, allow-list + alias wired, tests
   extended, skill/d.ts docs reconciled; all gates green. No AppHost started.
+- 2026-10-05 review oracle (ganda task work, headless Claude Opus 5.5): effort 1, roster general;
+  round 1 clean.
 
 ## Results
 
@@ -90,6 +92,10 @@ is opted in.**
 - **Browser check: not performed** (workers do not start an AppHost).
 - **Maintainer reminder:** a package bump can leave stale `_framework` WASM files — after merging,
   run `dev clean` and clear the site data before trying the Counter page.
+
+- **Review disposition: clean.** 1 round, effort 1, reviewer `general`. Final counts: 0 bug /
+  0 suggestion / 0 nit (0 open, 0 fixed, 0 wontfix). JsDispatch suite re-run independently: 5/5 passed.
+  Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
