@@ -5,11 +5,11 @@
 #region Design
 // One copy of each rule (task 275): RevokeCredential.Handler enforces CanRevoke (409 LastCredential
 // otherwise) and EntraTicketProcessor enforces HoldsMicrosoft365 (409 Microsoft365AlreadyLinked).
-// The hypermedia lab reads call the same predicates to decide which actions to offer, so an offer
-// and the enforcement cannot drift. Inputs are counts and types rather than Credential instances,
-// so a read that only holds GetCredentials summaries applies the rule without reloading entities.
-// The SPA still carries its own mirrors (CredentialsState.CanUnlink / CanLinkMicrosoft365); removing
-// them is the adoption follow-up of task 275, not this file's concern.
+// GetCredentials calls the same predicates (through CredentialOffers) to decide which actions to
+// offer, so an offer and the enforcement cannot drift. Inputs are counts and types rather than
+// Credential instances, so a read that only holds GetCredentials summaries applies the rule without
+// reloading entities. The SPA keeps no copy of these rules (task 279): it renders and runs the
+// server's offers.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

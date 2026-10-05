@@ -3,10 +3,8 @@
 #endregion
 
 #region Design
-// options.Enabled is the scheme-registration gate; settings.EntraSignInEnabled is the runtime
-// offer. Both must be true or the login button would 404 (no scheme) or 403 (policy). The
-// registered store seeds on first read (SeedOnReadSiteSettingsStore, task 254), so an emptied
-// table is re-seeded from configuration here; a null read (table not migrated) is not offered.
+// The rule (scheme registered AND site policy on) is EntraSignInOffer, shared with GetCredentials,
+// which offers Link Microsoft 365 from the same answer (task 279).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -35,9 +33,7 @@ public sealed class GetEntraSignInOffered
       CancellationToken cancellationToken)
     {
       _ = request;
-      SiteSettings? settings = await SiteSettingsStore.GetAsync(cancellationToken).ConfigureAwait(false);
-      bool offered = Options.Value.Enabled && settings is { EntraSignInEnabled: true };
-      return new Response(offered);
+      return new Response(await EntraSignInOffer.IsOfferedAsync(Options.Value, SiteSettingsStore, cancellationToken).ConfigureAwait(false));
     }
   }
 }

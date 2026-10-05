@@ -24,6 +24,8 @@
 // when the row is the last active credential of ANY kind — an agent key on the same principal
 // re-enables it even though the page lists only passkeys (same count as RevokeCredential.Handler).
 // Pinned on Settings (Member) and on the Developer-gated /Passkeys demo page.
+// Task 279: Link, Unlink and Revoke are now the server's GetCredentials offers (no client predicate),
+// so these prerender facts prove the real handler's offers reach the rendered buttons end to end.
 // Task 253: Settings prerender shows "Signed in · TimeWarp account · <fingerprint>" — the hosted
 // auth-state provider derives the fingerprint claim from the cookie principal (no HTTP loopback).
 #endregion

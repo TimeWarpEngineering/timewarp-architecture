@@ -38,7 +38,7 @@ generators and class-level analyzers must see (`[Page]`, `[Authorize]`, `[CrossS
 
 Every user interaction in the SPA is a TimeWarp.State action. A component event handler
 (`OnClick`, `OnValidSubmit`, `@onkeydown`, `ValueChanged`, …) only dispatches generated ActionSet
-methods, and at most sequences several of them (`await CredentialsState.RevokeCredential(id);
+methods, and at most sequences several of them (`await CredentialsState.AddPasskey();
 await CredentialsState.FetchCredentials();`), reading state between dispatches to decide the next.
 The work lives in the action's handler:
 
@@ -87,6 +87,37 @@ the handler (for example `LoginPage.GetSafeReturnUrl`): the page is not the only
 Reference: `features/identity/sign-in-state/` (ceremonies, challenge navigation, post-sign-in
 navigation) and `features/identity/credentials-state/credentials-state.link-microsoft-365.cs`
 (a cataloged full-page navigation) under `source/container-apps/web/projects/web-spa/`.
+
+# Server-offered actions
+
+When whether an action is valid right now depends on a server rule (last credential, already
+linked, state of a record), the server says so: never compute validity on the client when the
+server can offer it. The read the page already loads returns the actions valid now as
+`{ name, label, subject, arguments }`, where `name` is a client `[CatalogAction]` name and
+`arguments` are keyed by that action's constructor parameter names. The server computes the
+offers from the same rule code its handlers enforce, and lists every name it may emit as constants
+that a client test resolves in the real `IActionCatalog`.
+
+The client stores the offers in the feature state with the data they describe, renders a button
+only for an offer, and runs it through the catalog: `Find` the name, check the entry is
+human-visible (`Human` / `Both`) and its `Permissions` pass `IAuthorizationService`, bind
+`arguments` (plus user input for parameters the offer left unbound — input can never replace a
+bound argument), then `Execute`. The page then refreshes the read the offer came from as a
+separate, parameterless cataloged action run by the caller, never by the handler. An unknown name,
+a failed check or a failed binding is refused with a notification, and nothing runs. The same rows
+are the page's contextual Ctrl-K rows, except those that need input.
+
+Why: a client copy of a server rule drifts and races (the button shows, the server answers 409),
+and every surface that wants the rule needs its own copy. An offer is the server's answer for this
+caller and this snapshot. The catalog stays the allow-list: the server can only ask for an action
+the client already ships, and the endpoint still enforces the rule. Offers name actions rather than
+URLs so the real action runs, with its state updates and notifications, and so a response can never
+aim the user's token at an arbitrary route.
+
+Reference: `features/identity/get-credentials/` and `credential-offers-application.cs` (server),
+`credential-offer-rows.cs` and `credentials-context-source.cs` (client) under
+`source/container-apps/web/`; the runner is
+`web-spa/features/application/command-palette/command-palette-runner.cs`.
 
 # Action handlers and loading
 

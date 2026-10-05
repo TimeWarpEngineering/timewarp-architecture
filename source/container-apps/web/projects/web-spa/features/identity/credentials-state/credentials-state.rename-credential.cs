@@ -6,8 +6,12 @@
 // DefaultApiHandler owns transport + problem-details → shell message bar. HandleSuccess clears
 // the pending "name your new passkey" prompt when it was for this credential and publishes the
 // success sentence to the shell's single notification region (NotificationState, task 247
-// rule 1) — no page-local status bar for rename. Callers sequence FetchCredentials afterwards so
-// the list stays the single source of truth. Task 248-001 + 247.
+// rule 1) — no page-local status bar for rename. Task 248-001 + 247.
+// Task 279: Visibility Both — the server offers this action (GetCredentials.Offers) and Settings /
+// Passkeys run the offer through the catalog (CommandPaletteRunner.RunContextualAsync), which refuses
+// any entry that is not human-visible; agents still call it directly. The runner then runs
+// FetchCredentials (the offer row's follow-up), so the list and its offers stay the single source
+// of truth.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -23,7 +27,7 @@ partial class CredentialsState
     (
       Description = "Set the nickname of one of the signed-in account's credentials.",
       Permissions = [PermissionIds.CredentialManageSelf],
-      Visibility = ActionVisibility.Agent
+      Visibility = ActionVisibility.Both
     )]
     [TrackAction]
     public sealed class Action : IBaseAction

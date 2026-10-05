@@ -24,10 +24,15 @@
 // the handle bytes to produce it.
 // A pure read — no IPrincipalStore Update* call, so no concurrency note applies (matches
 // GetCurrentSession.Handler's Design region reasoning).
+// Offers (task 279): CredentialOffers over the caller's credentials plus EntraSignInOffer (the same
+// answer GetEntraSignInOffered gives the login page). With IncludeRevoked=false the listed rows are
+// exactly the active set the rules count; with IncludeRevoked=true CredentialOffers ignores revoked rows.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
+using Microsoft.Extensions.Options;
+using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.Identity.GetCredentials;
 
 public sealed partial class GetCredentials
@@ -36,11 +41,21 @@ public sealed partial class GetCredentials
   {
     private readonly IPrincipalStore PrincipalStore;
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
+    private readonly IOptions<EntraAuthenticationOptions> EntraOptions;
+    private readonly ISiteSettingsStore SiteSettingsStore;
 
-    public Handler(IPrincipalStore principalStore, ICurrentPrincipalAccessor currentPrincipalAccessor)
+    public Handler
+    (
+      IPrincipalStore principalStore,
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IOptions<EntraAuthenticationOptions> entraOptions,
+      ISiteSettingsStore siteSettingsStore
+    )
     {
       PrincipalStore = principalStore;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
+      EntraOptions = entraOptions;
+      SiteSettingsStore = siteSettingsStore;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
@@ -69,7 +84,8 @@ public sealed partial class GetCredentials
           credential.AccountHint))
         .ToList();
 
-      return new Response(summaries);
+      bool microsoft365Offered = await EntraSignInOffer.IsOfferedAsync(EntraOptions.Value, SiteSettingsStore, cancellationToken);
+      return new Response(summaries, CredentialOffers.For(summaries, microsoft365Offered));
     }
   }
 }

@@ -10,16 +10,18 @@
 // dispatcher, which runs the action through the normal pipeline. Outcomes therefore land where
 // that action already reports them — the shell NotificationState region (TWA0025) — and a
 // command the catalog no longer knows is reported there too, never in a palette-local bar.
-// Contextual rows (task 275) run through RunContextualAsync, which the lab page's buttons call too,
-// so a button and its palette row share one fail-closed path: the row must still be contributed by
-// the current page (CommandPaletteContext.IsOffered — record equality, arguments included), its
-// Target must be a catalog entry, and its arguments plus the caller's input must bind
-// (ContextualActionArguments). Input only fills parameters the row left unbound; it can never
-// override an argument the server bound. Every refusal is a Warning in the shell region. After the
-// action, the row's FollowUpTarget (a parameterless catalog action) runs — that is how the page's
-// payload refreshes, because this helper, not a handler, sequences the two dispatches (handlers do
-// not dispatch, TWS0002). Catalog Permissions/Visibility are not consulted for contextual rows: the
-// server already decided the offer for this caller and enforces it again on the real endpoint.
+// Contextual rows (hypermedia approach B: task 275, adopted 279) run through RunContextualAsync,
+// which the Settings / Passkeys buttons call too, so a button and its palette row share one
+// fail-closed path: the row must still be contributed by the current page
+// (CommandPaletteContext.IsOffered — record equality, arguments included), its Target must be a
+// catalog entry, that entry must be human-visible and permitted for the signed-in principal
+// (CommandPaletteContext.RefusalAsync — review M4 of 275), and its arguments plus the caller's input
+// must bind (ContextualActionArguments). Input only fills parameters the row left unbound; it can
+// never override an argument the server bound. Every refusal is a Warning in the shell region and
+// nothing is dispatched. After the action, the row's FollowUpTarget (a parameterless catalog action)
+// runs — that is how the page's server payload refreshes, because this helper, not a handler,
+// sequences the two dispatches (handlers do not dispatch, TWS0002). The follow-up is chosen by the
+// client (the page's row mapper), never by the server, so it is not M4-checked.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -84,6 +86,12 @@ public static class CommandPaletteRunner
     if (entry is null)
     {
       await WarnAsync(store, $"{row.Name}: '{row.Target}' is not an action this app knows.", cancellationToken);
+      return;
+    }
+
+    if (await context.RefusalAsync(entry) is { } refusal)
+    {
+      await WarnAsync(store, $"{row.Name} was refused: {refusal}.", cancellationToken);
       return;
     }
 

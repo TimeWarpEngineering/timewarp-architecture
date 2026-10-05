@@ -440,12 +440,13 @@ public class GetCredentials_Response_Should
 
   public static Task SerializeAndDeserialize_Via_Constructor()
   {
+    var firstId = CredentialId.New();
     GetCredentials.Response response = new
     (
       [
         new GetCredentials.CredentialSummary
         (
-          CredentialId.New(), CredentialType.Passkey, "1Password", "Work laptop",
+          firstId, CredentialType.Passkey, "1Password", "Work laptop",
           DateTimeOffset.UtcNow.AddDays(-10), revokedAt: null, isActive: true,
           new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"), "3f9a1c2e",
           lastUsedAt: new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero)
@@ -463,6 +464,10 @@ public class GetCredentials_Response_Should
           RegisteredWith.Unknown, "5c7d9e01",
           accountHint: "steve@contoso.com"
         )
+      ],
+      [
+        OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", firstId),
+        OfferedAction.ForPage(OfferedActionNames.LinkMicrosoft365, "Link Microsoft 365")
       ]
     );
 
@@ -489,6 +494,36 @@ public class GetCredentials_Response_Should
     parsed.Credentials[2].Type.ShouldBe(CredentialType.EntraAccount);
     parsed.Credentials[2].Label.ShouldBe("Microsoft 365");
     parsed.Credentials[2].AccountHint.ShouldBe("steve@contoso.com");
+    // Task 279: offers ride the same read — a credential-bound offer and a page-level one.
+    parsed.Offers.Count.ShouldBe(2);
+    parsed.Offers[0].Name.ShouldBe(OfferedActionNames.RevokeCredential);
+    parsed.Offers[0].Label.ShouldBe("Revoke");
+    parsed.Offers[0].Subject.ShouldBe(firstId.Value.ToString("D"));
+    parsed.Offers[0].Arguments[OfferedActionNames.CredentialIdArgument].GetString().ShouldBe(firstId.Value.ToString("D"));
+    parsed.Offers[1].Name.ShouldBe(OfferedActionNames.LinkMicrosoft365);
+    parsed.Offers[1].Subject.ShouldBeNull();
+    parsed.Offers[1].Arguments.ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task SerializeAndDeserialize_Mock_Response_With_Offers()
+  {
+    GetCredentials.Response response = GetCredentials.GetMockResponseFactory()(new GetCredentials.Query());
+
+    GetCredentials.Response parsed = ContractSerialization.RoundTrip(response);
+
+    parsed.Credentials.Count.ShouldBe(response.Credentials.Count);
+    parsed.Offers.Count.ShouldBe(response.Offers.Count);
+    for (int index = 0; index < response.Offers.Count; index++)
+    {
+      parsed.Offers[index].Name.ShouldBe(response.Offers[index].Name);
+      parsed.Offers[index].Subject.ShouldBe(response.Offers[index].Subject);
+      parsed.Offers[index].Arguments[OfferedActionNames.CredentialIdArgument].GetString()
+        .ShouldBe(response.Offers[index].Arguments[OfferedActionNames.CredentialIdArgument].GetString());
+    }
+
+    string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
+    json.ShouldContain($"\"arguments\":{{\"credentialId\":\"{response.Credentials[0].Id.Value:D}\"}}");
     return Task.CompletedTask;
   }
 
@@ -511,7 +546,8 @@ public class GetCredentials_Response_Should
           CredentialId.New(), CredentialType.Passkey, "laptop", nickname: null, DateTimeOffset.UtcNow,
           revokedAt: null, isActive: true, RegisteredWith.Unknown, "0123abcd"
         )
-      ]
+      ],
+      []
     );
 
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);

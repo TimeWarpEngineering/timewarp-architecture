@@ -88,19 +88,50 @@ internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisp
 }
 
 /// <summary>
-/// Scripted BFF client: GetCredentials answers with the current <see cref="Credentials"/> list;
-/// RevokeCredential marks the named row revoked (IsActive=false) so the next GetCredentials
-/// reflects it — the same sequence the real server produces for Revoke → Fetch.
+/// Scripted BFF client: GetCredentials answers with the current <see cref="Credentials"/> list and
+/// the offers the server would make for it (task 279: Rename per active row, Revoke while more than
+/// one is active, Link Microsoft 365 while <see cref="Microsoft365Offered"/> and none is linked —
+/// the real rule table is pinned in web-server-integration-tests credential-offers-tests), plus any
+/// <see cref="ExtraOffers"/> a test injects. RevokeCredential marks the named row revoked
+/// (IsActive=false) and RenameCredential sets its nickname, so the next GetCredentials reflects
+/// them — the same sequence the real server produces for an action → Fetch.
 /// </summary>
 internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Services.IWebServerApiService
 {
   public List<CredentialSummary> Credentials { get; } = [];
   public List<IApiRequest> Requests { get; } = [];
+  public List<OfferedAction> ExtraOffers { get; } = [];
+  public bool Microsoft365Offered { get; set; }
 
   public void Reset()
   {
     Credentials.Clear();
     Requests.Clear();
+    ExtraOffers.Clear();
+    Microsoft365Offered = false;
+  }
+
+  /// <summary>The offers the scripted server makes for the current credentials.</summary>
+  public List<OfferedAction> Offers()
+  {
+    CredentialSummary[] active = [.. Credentials.Where(static credential => credential.IsActive)];
+    List<OfferedAction> offers = [];
+    foreach (CredentialSummary credential in active)
+    {
+      offers.Add(OfferedAction.ForCredential(OfferedActionNames.RenameCredential, "Rename", credential.Id));
+      if (active.Length > 1)
+      {
+        offers.Add(OfferedAction.ForCredential(OfferedActionNames.RevokeCredential, "Revoke", credential.Id));
+      }
+    }
+
+    if (Microsoft365Offered && !active.Any(static credential => credential.Type == CredentialType.EntraAccount))
+    {
+      offers.Add(OfferedAction.ForPage(OfferedActionNames.LinkMicrosoft365, "Link Microsoft 365"));
+    }
+
+    offers.AddRange(ExtraOffers);
+    return offers;
   }
 
   public static CredentialSummary Active(CredentialType type, string label) =>
@@ -124,7 +155,7 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
       {
         IReadOnlyList<CredentialSummary> visible =
           query.IncludeRevoked ? [.. Credentials] : [.. Credentials.Where(c => c.IsActive)];
-        if (new Response(visible) is TResponse listResponse)
+        if (new Response(visible, Offers()) is TResponse listResponse)
         {
           return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(listResponse);
         }
@@ -144,6 +175,23 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
         if (new RevokeCredential.Response() is TResponse revokeResponse)
         {
           return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(revokeResponse);
+        }
+
+        break;
+      }
+
+      case RenameCredential.Command command:
+      {
+        int index = Credentials.FindIndex(c => c.Id.Value == command.CredentialId);
+        if (index >= 0)
+        {
+          CredentialSummary row = Credentials[index];
+          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, command.Nickname.Trim(), row.CreatedAt, row.RevokedAt, row.IsActive, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
+        }
+
+        if (new RenameCredential.Response() is TResponse renameResponse)
+        {
+          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(renameResponse);
         }
 
         break;

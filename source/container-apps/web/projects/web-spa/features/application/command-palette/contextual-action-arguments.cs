@@ -1,5 +1,5 @@
 #region Purpose
-// Binds a JSON object of named arguments to a catalog entry's positional object?[] (approach B of task 275).
+// Binds a JSON object of named arguments to a catalog entry's positional object?[] (hypermedia approach B, tasks 275 and 279).
 #endregion
 
 #region Design
@@ -8,11 +8,14 @@
 // parameter's ClrType with the contract-seam options (ContractSerializationDefaults), so the value
 // handed to Execute is already that type and ActionCatalogArguments.Get passes it through untouched
 // (Guid from "…", string, bool, records and dictionaries alike). Fail closed on anything off-shape:
-// a missing required parameter (an explicit JSON null counts as missing), an argument name the entry does not declare, a value that does not
-// deserialize, or an optional parameter skipped before a later one that is present (positional
-// arrays cannot leave holes). A trailing run of absent optional parameters is simply not passed.
-// Lives beside the palette (Applications) while the evaluation runs; it moves into TimeWarp.State
-// only if approach B is adopted.
+// a missing required parameter (an explicit JSON null counts as missing), an argument name the entry
+// does not declare, a value that does not deserialize, or an optional parameter skipped before a later
+// one that is present (positional arrays cannot leave holes). A trailing run of absent optional
+// parameters is simply not passed.
+// Approach B is adopted (task 279); the binder still lives beside the palette (Applications) because
+// it is the only consumer here. Moving it into TimeWarp.State, beside ActionCatalogArguments, is a
+// follow-up so an agent surface can reuse it; so is a compile-time check that the server's argument
+// names match the target action's constructor parameters (today a web-spa test pins them at run time).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
