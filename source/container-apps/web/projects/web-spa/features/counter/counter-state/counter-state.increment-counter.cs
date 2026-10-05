@@ -13,6 +13,9 @@
 // a product→product edge.
 // Also the canonical [CatalogAction] exemplar: Description is one plain sentence, Permissions
 // reuse PermissionIds (the SPA policy names), and the int amount is palette/agent-suppliable.
+// Also the only JavaScript-dispatchable action (TimeWarp.State 12.0.0-beta.8 opt-in):
+// Program.AllowJavaScriptDispatch allows it under JavaScriptAlias, the stable wire name
+// counter.ts sends instead of the CLR type name, so renaming the type does not break the JS.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Counters;
@@ -21,6 +24,9 @@ partial class CounterState
 {
   public static class IncrementCounterActionSet
   {
+    /// <summary>Wire name counter.ts passes to timeWarpState.DispatchRequest.</summary>
+    public const string JavaScriptAlias = "Counter.Increment";
+
     [CatalogAction
     (
       Description = "Add an amount to the demo counter; a negative amount decrements it.",

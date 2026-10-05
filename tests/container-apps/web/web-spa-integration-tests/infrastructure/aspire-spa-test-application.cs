@@ -11,7 +11,8 @@
 // client needs no dev cert). SPA actions such as FetchWeatherForecasts reach api-server
 // through YARP. Logging is registered because DefaultApiHandler requires ILogger.
 // TimeWarp.State.Plus is included so [TrackAction] can resolve ActionTrackingState.
-// AddActionCatalog mirrors Web.Spa.Program so IActionCatalog tests see the production roster.
+// AddActionCatalog mirrors Web.Spa.Program so IActionCatalog tests see the production roster;
+// AddJavaScriptDispatch reuses Web.Spa.Program.AllowJavaScriptDispatch for the same reason (task 278).
 // MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
 // IApiServerApiService factory sit in the api conditional. A generated app with the api
 // flag off drops the Services import and the api-server client, so those names do not
@@ -96,6 +97,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
     // Same catalog registration as Web.Spa.Program (task 239-002).
     services.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).Assembly);
+    services.AddJavaScriptDispatch(Web.Spa.Program.AllowJavaScriptDispatch);
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.

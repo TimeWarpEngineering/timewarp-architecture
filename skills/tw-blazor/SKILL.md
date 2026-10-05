@@ -72,9 +72,12 @@ registration) opts out with `[DirectComponentSideEffect("reason")]` on the compo
 in the `.razor`) or member; an empty reason does not opt out and is reported as TWA0027.
 
 JavaScript can dispatch too: a plain-markup button whose JavaScript `onclick` calls
-`timeWarpState.DispatchRequest("<action assembly-qualified name>", { … })` reaches the store with
-no C# handler (see the Counter demo, `source/features/counter.ts`). Use the `fluent-button` web
-component for that, not `FluentButton`, whose `OnClick` parameter claims the `onclick` attribute.
+`timeWarpState.DispatchRequest("<alias>", { … })` reaches the store with no C# handler (see the
+Counter demo, `source/features/counter.ts`). JavaScript dispatch is opt-in: allow the action in
+`Program.AllowJavaScriptDispatch` with `Allow<TAction>(alias)`, where the alias is a `const` on the
+ActionSet (`IncrementCounterActionSet.JavaScriptAlias`), so the script never spells a CLR type name.
+Anything not allowed is rejected and nothing is sent. Use the `fluent-button` web component for
+that, not `FluentButton`, whose `OnClick` parameter claims the `onclick` attribute.
 
 When an action is something a person or agent would meaningfully run on its own, tag it
 `[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers it,

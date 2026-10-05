@@ -29,11 +29,18 @@
 //
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
+//
+// Task 278: JavaScript dispatch is opt-in since TimeWarp.State 12.0.0-beta.8. AllowJavaScriptDispatch
+// is the allow-list (today only the Counter demo's IncrementCounter, under the
+// IncrementCounterActionSet.JavaScriptAlias wire name so counter.ts never spells the CLR type name);
+// it is public so SPA test hosts register the same list instead of copying it. Redux DevTools needs
+// no entry: TimeWarp.State allows its own messages when DevTools is enabled.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
 
 using System.Globalization;
+using TimeWarp.Features.JavaScriptInterop;
 
 public static class Program
 {
@@ -72,6 +79,12 @@ public static class Program
     CultureInfo.DefaultThreadCurrentCulture = isoCulture;
     CultureInfo.DefaultThreadCurrentUICulture = isoCulture;
   }
+
+  /// <summary>
+  /// The actions JavaScript may dispatch through timeWarpState.DispatchRequest.
+  /// </summary>
+  public static void AllowJavaScriptDispatch(JavaScriptDispatchBuilder javaScriptDispatchBuilder) =>
+    javaScriptDispatchBuilder.Allow<CounterState.IncrementCounterActionSet.Action>(CounterState.IncrementCounterActionSet.JavaScriptAlias);
 
   /// <summary>
   /// Compose SPA services. <paramref name="environmentName"/> drives the fail-closed mock-auth
@@ -131,6 +144,7 @@ public static class Program
     // Opt-in [CatalogAction] registry (TimeWarp.State 12.0.0-beta.7) for the Ctrl-K palette and
     // agent tools. Only web-spa declares cataloged actions; Plus declares none, so it is not named.
     serviceCollection.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly);
+    serviceCollection.AddJavaScriptDispatch(AllowJavaScriptDispatch);
 
     // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and
     // StateInitializedNotificationHandler, which require IPersistenceService.
