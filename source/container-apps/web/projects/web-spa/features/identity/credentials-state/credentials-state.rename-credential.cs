@@ -12,8 +12,9 @@
 // any entry that is not human-visible; agents still call it directly. The runner then runs
 // FetchCredentials (the offer row's follow-up), so the list and its offers stay the single source
 // of truth.
-// Task 280: Name = OfferedActionNames constant shared with the server's RenameCredentialOffer record, so a
-// rename of this action set cannot change the offered name; TWA0029/TWA0030 check the pairing.
+// Task 280/281: Name = RenameCredential.OfferName, generated from [Offerable] on the contract this handler
+// requests, so a rename of this action set cannot change the offered name; TWA0029/TWA0030 check the
+// generated Offer record against the constructor and TWA0031 checks this action carries that Name.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -27,7 +28,7 @@ partial class CredentialsState
   {
     [CatalogAction
     (
-      Name = OfferedActionNames.RenameCredential,
+      Name = OfferName, // RenameCredential.OfferName via the using static (CredentialsState has a RenameCredential method)
       Description = "Set the nickname of one of the signed-in account's credentials.",
       Permissions = [PermissionIds.CredentialManageSelf],
       Visibility = ActionVisibility.Both

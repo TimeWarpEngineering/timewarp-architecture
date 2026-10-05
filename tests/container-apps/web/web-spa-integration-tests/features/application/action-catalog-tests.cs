@@ -28,8 +28,9 @@ public class ActionCatalog_Should
     // Task 279: the follow-up refresh of every server-offered credential action (Agent, parameterless).
     "Credentials.FetchCredentials",
     "Credentials.LinkMicrosoft365",
-    "Credentials.RenameCredential",
-    "Credentials.RevokeCredential",
+    // Task 281: offered under the [Offerable] contracts' generated OfferName (<Slice>.<Operation>).
+    "Identity.RenameCredential",
+    "Identity.RevokeCredential",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",

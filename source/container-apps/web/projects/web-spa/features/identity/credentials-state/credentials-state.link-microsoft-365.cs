@@ -17,7 +17,9 @@
 // DisplayName is authored (task 268): the generated label split "Microsoft365" into
 // "microsoft 365"; the palette shows "Credentials: Link Microsoft 365".
 // Task 280: Name = OfferedActionNames constant shared with the server's LinkMicrosoft365Offer record, so a
-// rename of this action set cannot change the offered name; TWA0029/TWA0030 check the pairing.
+// rename of this action set cannot change the offered name; TWA0029/TWA0030 check the pairing. The
+// record stays hand-written (task 281 escape hatch): linking is a redirect to a hand-written challenge
+// endpoint, so there is no contract Command for [Offerable] to generate the offer from.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

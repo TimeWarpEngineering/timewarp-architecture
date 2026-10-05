@@ -47,8 +47,8 @@ public class CredentialOffers_Should_
 
   // --- vocabulary ---------------------------------------------------------------------------
 
-  // Integration check beside TWA0029/TWA0030 (task 280): the analyzers prove each [ActionOffer]
-  // record matches its action's first declared constructor at build time; this proves the GENERATED
+  // Integration check beside TWA0029/TWA0030/TWA0031 (tasks 280, 281): the analyzers prove each
+  // [ActionOffer] record — generated from [Offerable] or hand-written — matches its action's first declared constructor at build time; this proves the GENERATED
   // runtime catalog agrees with that model (same names, same parameters) and adds what the analyzers
   // do not check — an offered entry must be human-visible to pass the runner's M4 gate.
   public static Task Name_Only_Catalog_Entries_A_Person_May_Run()
@@ -96,15 +96,15 @@ public class CredentialOffers_Should_
     await OpenAsync(scope, SettingsPath);
 
     CredentialsState state = scope.Store.GetState<CredentialsState>();
-    state.IsOffered(OfferedActionNames.RevokeCredential, passkey.Id.Value).ShouldBeTrue("the server counts the agent key too");
-    state.IsOffered(OfferedActionNames.RevokeCredential, agentKey.Id.Value).ShouldBeTrue();
+    state.IsOffered(RevokeCredential.OfferName, passkey.Id.Value).ShouldBeTrue("the server counts the agent key too");
+    state.IsOffered(RevokeCredential.OfferName, agentKey.Id.Value).ShouldBeTrue();
     state.IsOffered(OfferedActionNames.LinkMicrosoft365, credentialId: null).ShouldBeFalse();
 
     // Whatever the client could count, it shows only what the server offers.
     spa.Api.Credentials.Add(ScriptedCredentialsApiService.Active(CredentialType.Passkey, "phone"));
     spa.Api.Credentials.RemoveAll(static credential => credential.Type == CredentialType.AgentKey);
     await scope.Send(new CredentialsState.FetchCredentialsActionSet.Action());
-    scope.Store.GetState<CredentialsState>().Offers.Count(static offer => offer.Name == OfferedActionNames.RevokeCredential).ShouldBe(2);
+    scope.Store.GetState<CredentialsState>().Offers.Count(static offer => offer.Name == RevokeCredential.OfferName).ShouldBe(2);
   }
 
   public static async Task Follow_The_Server_When_Its_Offers_Contradict_The_Count()
@@ -114,18 +114,18 @@ public class CredentialOffers_Should_
     CredentialSummary first = spa.Api.AddPasskey("Work laptop", "aaaa1111");
     CredentialSummary second = spa.Api.AddPasskey("Phone", "bbbb2222");
     // Two active passkeys — a client count would allow Revoke — but the server offers none.
-    spa.Api.Scripted.SuppressOffer = static offer => offer.Name == OfferedActionNames.RevokeCredential;
+    spa.Api.Scripted.SuppressOffer = static offer => offer.Name == RevokeCredential.OfferName;
     await OpenAsync(scope, SettingsPath);
 
     CredentialsState state = scope.Store.GetState<CredentialsState>();
-    state.IsOffered(OfferedActionNames.RevokeCredential, first.Id.Value).ShouldBeFalse();
-    state.IsOffered(OfferedActionNames.RevokeCredential, second.Id.Value).ShouldBeFalse();
-    state.IsOffered(OfferedActionNames.RenameCredential, first.Id.Value).ShouldBeTrue("the rest of the server's set is untouched");
-    Context(scope).Rows().ShouldNotContain(static row => row.Target == OfferedActionNames.RevokeCredential);
-    (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == OfferedActionNames.RevokeCredential);
+    state.IsOffered(RevokeCredential.OfferName, first.Id.Value).ShouldBeFalse();
+    state.IsOffered(RevokeCredential.OfferName, second.Id.Value).ShouldBeFalse();
+    state.IsOffered(RenameCredential.OfferName, first.Id.Value).ShouldBeTrue("the rest of the server's set is untouched");
+    Context(scope).Rows().ShouldNotContain(static row => row.Target == RevokeCredential.OfferName);
+    (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == RevokeCredential.OfferName);
     int before = spa.Api.Requests.Count;
 
-    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+    await RunOfferAsync(scope, RevokeCredential.OfferName, first.Id.Value, input: null);
 
     spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
     Warnings(scope).ShouldContain(static title => title.EndsWith("is not offered here now.", StringComparison.Ordinal));
@@ -133,13 +133,13 @@ public class CredentialOffers_Should_
     // The reverse: one active passkey — a client count would forbid Revoke — but the server offers it.
     spa.Api.Scripted.SuppressOffer = null;
     spa.Api.Credentials.Remove(second);
-    spa.Api.ExtraOffers.Add(OfferedAction.ForCredential(new RevokeCredentialOffer(first.Id.Value), "Revoke"));
+    spa.Api.ExtraOffers.Add(OfferedAction.ForCredential(new RevokeCredential.Offer(first.Id.Value), "Revoke"));
     await scope.Send(new CredentialsState.FetchCredentialsActionSet.Action());
 
-    scope.Store.GetState<CredentialsState>().IsOffered(OfferedActionNames.RevokeCredential, first.Id.Value).ShouldBeTrue();
-    Context(scope).Rows().Count(static row => row.Target == OfferedActionNames.RevokeCredential).ShouldBe(1);
+    scope.Store.GetState<CredentialsState>().IsOffered(RevokeCredential.OfferName, first.Id.Value).ShouldBeTrue();
+    Context(scope).Rows().Count(static row => row.Target == RevokeCredential.OfferName).ShouldBe(1);
 
-    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+    await RunOfferAsync(scope, RevokeCredential.OfferName, first.Id.Value, input: null);
 
     spa.Api.Requests.OfType<RevokeCredential.Command>().Single().CredentialId.ShouldBe(first.Id.Value);
     Messages(scope).ShouldContain("Credential revoked.");
@@ -163,7 +163,7 @@ public class CredentialOffers_Should_
     spa.Api.Requests.OfType<GetCredentials.Query>().Count().ShouldBe(2);
     CredentialsState state = scope.Store.GetState<CredentialsState>();
     state.ActivePasskeys.Count.ShouldBe(1);
-    state.Offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.RevokeCredential);
+    state.Offers.ShouldNotContain(static offer => offer.Name == RevokeCredential.OfferName);
     (await PaletteRows(scope)).ShouldNotContain(static row => row.Name.StartsWith("Credentials: Revoke", StringComparison.Ordinal));
   }
 
@@ -175,13 +175,13 @@ public class CredentialOffers_Should_
     await OpenAsync(scope, PasskeysPath);
     IActionCatalog catalog = Catalog(spa);
     CredentialsState state = scope.Store.GetState<CredentialsState>();
-    CredentialOffer rename = state.FindOffer(OfferedActionNames.RenameCredential, only.Id.Value).ShouldNotBeNull();
+    CredentialOffer rename = state.FindOffer(RenameCredential.OfferName, only.Id.Value).ShouldNotBeNull();
 
-    CredentialOfferRows.UnboundParameters(catalog.Find(rename.Name), rename).ShouldBe([RenameCredentialOffer.NicknameInput]);
+    CredentialOfferRows.UnboundParameters(catalog.Find(rename.Name), rename).ShouldBe([CredentialOfferRows.NicknameParameter]);
     CredentialOfferRows.Row(rename, state.Credentials!, catalog).RequiresInput.ShouldBeTrue();
-    (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == OfferedActionNames.RenameCredential, "the palette has no argument UI");
+    (await PaletteRows(scope)).ShouldNotContain(static row => row.Target == RenameCredential.OfferName, "the palette has no argument UI");
 
-    await RunOfferAsync(scope, OfferedActionNames.RenameCredential, only.Id.Value, CredentialOfferRows.NicknameInput("Desk key"));
+    await RunOfferAsync(scope, RenameCredential.OfferName, only.Id.Value, CredentialOfferRows.NicknameInput("Desk key"));
 
     spa.Api.Requests.OfType<RenameCredential.Command>().Single().Nickname.ShouldBe("Desk key");
     Messages(scope).ShouldContain("Nickname saved.");
@@ -197,11 +197,11 @@ public class CredentialOffers_Should_
     await OpenAsync(scope, SettingsPath);
     Dictionary<string, JsonElement> input = new()
     {
-      [RenameCredentialOffer.NicknameInput] = JsonSerializer.SerializeToElement("x"),
+      [CredentialOfferRows.NicknameParameter] = JsonSerializer.SerializeToElement("x"),
       ["credentialId"] = JsonSerializer.SerializeToElement(second.Id.Value),
     };
 
-    await RunOfferAsync(scope, OfferedActionNames.RenameCredential, first.Id.Value, input);
+    await RunOfferAsync(scope, RenameCredential.OfferName, first.Id.Value, input);
 
     spa.Api.Requests.OfType<RenameCredential.Command>().ShouldBeEmpty();
     Warnings(scope).ShouldContain(static title => title.Contains("cannot replace the offered 'credentialId'", StringComparison.Ordinal));
@@ -218,14 +218,14 @@ public class CredentialOffers_Should_
     int before = spa.Api.Requests.Count;
 
     // The page's own entry point: no Revoke offer for the last credential, so nothing runs.
-    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, only.Id.Value, input: null);
+    await RunOfferAsync(scope, RevokeCredential.OfferName, only.Id.Value, input: null);
     // A hand-built row naming it is refused by the same gate.
     CommandPaletteRow forged = new
     (
       "Credentials: Revoke",
       "",
       CommandPaletteRowKind.Contextual,
-      OfferedActionNames.RevokeCredential,
+      RevokeCredential.OfferName,
       $"{{\"credentialId\":\"{only.Id.Value:D}\"}}",
       CredentialsState.FetchCredentialsActionSet.CatalogName
     );
@@ -233,7 +233,7 @@ public class CredentialOffers_Should_
 
     spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
     Warnings(scope).Count(static title => title == "Credentials: Revoke is not offered here now.").ShouldBe(1);
-    Warnings(scope).ShouldContain(static title => title.EndsWith("is not offered here now.", StringComparison.Ordinal) && title.Contains(OfferedActionNames.RevokeCredential, StringComparison.Ordinal));
+    Warnings(scope).ShouldContain(static title => title.EndsWith("is not offered here now.", StringComparison.Ordinal) && title.Contains(RevokeCredential.OfferName, StringComparison.Ordinal));
   }
 
   public static async Task Refuse_An_Unknown_Catalog_Name()
@@ -262,7 +262,7 @@ public class CredentialOffers_Should_
     using SpaTestScope scope = SpaTestScope.Create(spa);
     spa.Api.AddPasskey("Work laptop", "aaaa1111");
     spa.Api.AddPasskey(nickname: null, "bbbb2222");
-    spa.Api.ExtraOffers.Add(new OfferedAction(OfferedActionNames.RevokeCredential, "Bad revoke", subject: null,
+    spa.Api.ExtraOffers.Add(new OfferedAction(RevokeCredential.OfferName, "Bad revoke", subject: null,
       JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(argumentsJson)!));
     await OpenAsync(scope, SettingsPath);
 
@@ -302,10 +302,10 @@ public class CredentialOffers_Should_
     spa.Api.AddPasskey(nickname: null, "bbbb2222");
     await OpenAsync(scope, SettingsPath);
 
-    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+    await RunOfferAsync(scope, RevokeCredential.OfferName, first.Id.Value, input: null);
 
     spa.Api.Requests.OfType<RevokeCredential.Command>().ShouldBeEmpty();
-    Warnings(scope).ShouldContain(static title => title.Contains("you are not permitted to run 'Credentials.RevokeCredential'", StringComparison.Ordinal));
+    Warnings(scope).ShouldContain(static title => title.Contains("you are not permitted to run 'Identity.RevokeCredential'", StringComparison.Ordinal));
   }
 
   // --- Ctrl-K contextual rows ---------------------------------------------------------------
@@ -320,21 +320,21 @@ public class CredentialOffers_Should_
     await OpenAsync(scope, SettingsPath);
 
     IReadOnlyList<CommandPaletteRow> onSettings = await PaletteRows(scope);
-    onSettings.Count(static row => row.Target == OfferedActionNames.RevokeCredential).ShouldBe(3, "two passkeys and the Microsoft 365 account");
+    onSettings.Count(static row => row.Target == RevokeCredential.OfferName).ShouldBe(3, "two passkeys and the Microsoft 365 account");
     onSettings.ShouldNotContain(static row => row.RequiresInput);
     CommandPaletteState palette = scope.Store.GetState<CommandPaletteState>();
     palette.Matches[0].Kind.ShouldBe(CommandPaletteRowKind.Contextual, "a page's own actions head the empty-query list");
     palette.Roster.ShouldContain(static row => row.Kind == CommandPaletteRowKind.Page, "the static roster is still there");
 
     scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo(PasskeysPath);
-    (await PaletteRows(scope)).Count(static row => row.Target == OfferedActionNames.RevokeCredential).ShouldBe(2, "Passkeys lists passkeys only");
+    (await PaletteRows(scope)).Count(static row => row.Target == RevokeCredential.OfferName).ShouldBe(2, "Passkeys lists passkeys only");
 
     scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo("/Counter");
     (await PaletteRows(scope)).ShouldBeEmpty();
     Context(scope).Rows().ShouldBeEmpty();
 
     // A row copied on Settings cannot be run from another page.
-    CommandPaletteRow copied = onSettings.First(static row => row.Target == OfferedActionNames.RevokeCredential);
+    CommandPaletteRow copied = onSettings.First(static row => row.Target == RevokeCredential.OfferName);
     int before = spa.Api.Requests.Count;
     await RunAsync(scope, copied);
     spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
@@ -348,13 +348,13 @@ public class CredentialOffers_Should_
     CredentialSummary first = spa.Api.AddPasskey("Work laptop", "aaaa1111");
     spa.Api.AddPasskey(nickname: null, "bbbb2222");
     await OpenAsync(scope, SettingsPath);
-    CommandPaletteRow revoke = (await PaletteRows(scope)).First(static row => row.Target == OfferedActionNames.RevokeCredential);
+    CommandPaletteRow revoke = (await PaletteRows(scope)).First(static row => row.Target == RevokeCredential.OfferName);
 
     // The session ends while the offered rows are still on screen.
     spa.SignOut();
     int before = spa.Api.Requests.Count;
     await RunAsync(scope, revoke);
-    await RunOfferAsync(scope, OfferedActionNames.RevokeCredential, first.Id.Value, input: null);
+    await RunOfferAsync(scope, RevokeCredential.OfferName, first.Id.Value, input: null);
 
     spa.Api.Requests.Count.ShouldBe(before, "nothing is sent, not even the follow-up");
     // Both entry points (the palette row, the page's RunAsync) hit the same refusal for the same row.

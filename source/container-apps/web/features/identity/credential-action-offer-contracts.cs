@@ -1,15 +1,19 @@
 #region Purpose
-// Typed arguments of every credential action the server may offer — one [ActionOffer] record per offerable catalog action.
+// Hand-written typed offer arguments for credential actions with no contract Command (Link Microsoft 365), and the interface credential-bound offers share.
 #endregion
 
 #region Design
-// Task 280: a record's public properties ARE the offer's arguments (camelCase on the wire, the target
-// action's constructor parameter names), so the server cannot spell an argument key by hand and the
-// SPA build checks each record against its [CatalogAction(Name = …)] action (TWA0029 / TWA0030).
-// Revoke and Rename bind the credential (ICredentialActionOffer, so OfferedAction.ForCredential sets
-// Subject from the same id); Rename leaves the nickname to the user (UserInput — the page collects it,
-// the palette skips the row). Link Microsoft 365 is page-level and binds nothing. Guid, not
-// CredentialId: the property type must equal the action parameter type.
+// Task 281: offers of contract Commands are GENERATED — [Offerable] on RevokeCredential /
+// RenameCredential makes the contracts generator emit their nested Offer record and OfferName, so the
+// offer cannot drift from the Command. This file keeps the escape hatch: a hand-written
+// [ActionOffer] record for an action that has no contract Command to generate from. Link Microsoft
+// 365 is a browser redirect to a hand-written challenge endpoint (ChallengeEntraEndpoint), so its
+// record stays here and binds nothing. TWA0029 / TWA0030 check hand-written and generated records
+// alike (task 280).
+// ICredentialActionOffer is how OfferedAction.ForCredential reads the credential id for Subject; the
+// generated records opt in through a partial declaration in their contract
+// (`partial record Offer : ICredentialActionOffer;`). Guid, not CredentialId: the property type must
+// equal the action parameter type.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -18,18 +22,6 @@ namespace TimeWarp.Architecture.Features.Identity;
 public interface ICredentialActionOffer
 {
   Guid CredentialId { get; }
-}
-
-/// <summary>Offer to revoke one credential.</summary>
-[ActionOffer(OfferedActionNames.RevokeCredential)]
-public sealed record RevokeCredentialOffer(Guid CredentialId) : ICredentialActionOffer;
-
-/// <summary>Offer to rename one credential; the user supplies the nickname.</summary>
-[ActionOffer(OfferedActionNames.RenameCredential, UserInput = [NicknameInput])]
-public sealed record RenameCredentialOffer(Guid CredentialId) : ICredentialActionOffer
-{
-  /// <summary>RenameCredential's parameter the user supplies (the offer binds credentialId only).</summary>
-  public const string NicknameInput = "nickname";
 }
 
 /// <summary>Offer to link a Microsoft 365 account (page-level, no arguments).</summary>

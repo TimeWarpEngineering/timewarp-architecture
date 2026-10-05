@@ -17,6 +17,10 @@
 // Renaming a REVOKED credential is allowed (the row stays visible under IncludeRevoked and a nickname
 // is display-only) — no 409 branch, unlike revoke. Response is empty; the client re-fetches
 // GetCredentials so the list stays the single source of truth (Settings' existing sequencing rule).
+// [Offerable] (task 281): the server offers this as a client catalog action; the contracts generator
+// emits Offer(CredentialId) with Nickname as user input (the page collects it; the palette skips the
+// row) and UserId excluded as auth-filled, plus OfferName ("Identity.RenameCredential"). The partial
+// Offer adds ICredentialActionOffer so OfferedAction.ForCredential uses the credential as Subject.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -27,8 +31,11 @@ namespace TimeWarp.Architecture.Features.Identity;
   Policy = PermissionIds.CredentialManageSelf,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
+[Offerable(UserInput = [nameof(Command.Nickname)])]
 public static partial class RenameCredential
 {
+  partial record Offer : ICredentialActionOffer;
+
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/rename", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {

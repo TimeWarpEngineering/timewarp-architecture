@@ -18,6 +18,8 @@ TWE008 | ApiEndpoint | Error | FastEndpointSourceGenerator: ApiEndpointContractA
 TWE009 | Page | Error | [Page] Navigable = true requires a static route and a literal bool (else silently missing from PageRegistry)
 TWE010 | Page | Error | [Page] routes of one page that are the same Blazor route (primary, additional, or hand-written [Route]); no page surface generated
 TWE011 | Page | Error | Conflicting [Page] route declaration: stacked [Page], non-literal additional route, or token type disagreeing with the primary route
+TWE012 | Offerable | Error | ContractsGenerator: [Offerable] UserInput entry names no Command property (no Offer generated)
+TWE013 | Offerable | Error | ContractsGenerator: [Offerable] on a contract with no nested Command (no Offer generated)
 SG001 | SourceGenerator | Warning | Shared source-generator log (resilience backstop)
 SG002 | SourceGenerator | Warning | EnableApiEndpointGeneration true but FastEndpoints / BaseFastEndpoint missing
 SG010 | SourceGenerator | Warning | TypedId BCL surface generation failed (resilience backstop, names the type)

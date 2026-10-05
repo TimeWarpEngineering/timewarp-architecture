@@ -1,5 +1,5 @@
 #region Purpose
-// Tests for TWA0029/TWA0030: [ActionOffer] records must name an explicit [CatalogAction] Name and match its constructor parameters.
+// Tests for TWA0029/TWA0030/TWA0031: [ActionOffer] records must name an explicit [CatalogAction] Name and match its constructor parameters; [Offerable] contracts link to their client action.
 #endregion
 
 #region Design
@@ -9,6 +9,9 @@
 // TWA0029 has no source location and reports at Location.None; another adds the production split
 // where ActionOfferAttribute lives in a third assembly the contracts reference. Actions declared
 // per-test mark their [CatalogAction] with markup so TWA0030 anchors without line arithmetic.
+// TWA0031 cases put an [Offerable] contract in a referenced Contracts project shaped like the
+// contracts generator's output (OfferName const + nested [ActionOffer] Offer record — the analyzer
+// test does not run the generator) and a DefaultApiHandler<TAction, TRequest, TResponse> stub in the SPA.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -861,6 +864,134 @@ public class Should_Check_Offer_Agreement
     }
 
     return Task.CompletedTask;
+  }
+
+  private const string OfferableContracts =
+    """
+    namespace Attributes
+    {
+      public sealed class ActionOfferAttribute : System.Attribute
+      {
+        public ActionOfferAttribute(string catalogName) { }
+        public string[] UserInput { get; set; } = new string[0];
+      }
+
+      public sealed class OfferableAttribute : System.Attribute
+      {
+        public string[] UserInput { get; set; } = new string[0];
+      }
+    }
+    namespace Contracts
+    {
+      [Attributes.Offerable(UserInput = new[] { "Nickname" })]
+      public static partial class RenameCredential
+      {
+        public sealed class Command
+        {
+          public System.Guid CredentialId { get; set; }
+          public string Nickname { get; set; } = "";
+        }
+
+        public sealed class Response;
+
+        public const string OfferName = "Identity.RenameCredential";
+
+        [Attributes.ActionOffer(OfferName, UserInput = new[] { "nickname" })]
+        public sealed partial record Offer(System.Guid CredentialId);
+      }
+    }
+    """;
+
+  private static string OfferableSpa(string catalogName, string handler = "internal sealed class Handler : DefaultApiHandler<Action, Contracts.RenameCredential.Command, Contracts.RenameCredential.Response>;") =>
+    $$"""
+    namespace TimeWarp.State
+    {
+      public sealed class CatalogActionAttribute : System.Attribute
+      {
+        public string? Name { get; set; }
+      }
+    }
+    namespace App
+    {
+      public abstract class DefaultApiHandler<TAction, TRequest, TResponse>;
+
+      public static class RenameCredentialActionSet
+      {
+        [{|#0:TimeWarp.State.CatalogAction{{catalogName}}|}]
+        public sealed class Action
+        {
+          public Action(System.Guid credentialId, string nickname) { }
+        }
+
+        {{handler}}
+      }
+    }
+    """;
+
+  private static CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> OfferableTest(string spa)
+  {
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = new()
+    {
+      ReferenceAssemblies = ReferenceAssemblies.Net.Net80
+    };
+    test.TestState.AnalyzerConfigFiles.Add(("/.globalconfig", SpaGlobalConfig));
+    test.TestState.Sources.Add(("Spa.cs", spa));
+    test.TestState.AdditionalProjects["Contracts"].Sources.Add(("Contracts.cs", OfferableContracts));
+    test.TestState.AdditionalProjects["Contracts"].ReferenceAssemblies = ReferenceAssemblies.Net.Net80;
+    test.TestState.AdditionalProjectReferences.Add("Contracts");
+    return test;
+  }
+
+  public static async Task Given_Offerable_Action_Carrying_OfferName_Reports_Nothing() =>
+    await OfferableTest(OfferableSpa("(Name = Contracts.RenameCredential.OfferName)")).RunAsync();
+
+  public static async Task Given_Offerable_Action_With_Another_Name_Reports_TWA0031()
+  {
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test =
+      OfferableTest(OfferableSpa("(Name = \"Credentials.RenameCredential\")"));
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0031", DiagnosticSeverity.Warning)
+      .WithLocation(0)
+      .WithArguments(
+        "Contracts.RenameCredential",
+        "is offered as \"Identity.RenameCredential\", but its client action App.RenameCredentialActionSet.Action sets Name = \"Credentials.RenameCredential\"; set Name = RenameCredential.OfferName"));
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0029", DiagnosticSeverity.Warning)
+      .WithNoLocation()
+      .WithArguments("Contracts.RenameCredential.Offer", "Identity.RenameCredential", NoAction("Identity.RenameCredential")));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Offerable_Action_Without_Explicit_Name_Reports_TWA0031()
+  {
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = OfferableTest(OfferableSpa(""));
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0031", DiagnosticSeverity.Warning)
+      .WithLocation(0)
+      .WithArguments(
+        "Contracts.RenameCredential",
+        "is offered as \"Identity.RenameCredential\", but its client action App.RenameCredentialActionSet.Action sets no explicit [CatalogAction] Name; set Name = RenameCredential.OfferName"));
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0029", DiagnosticSeverity.Warning)
+      .WithNoLocation()
+      .WithArguments("Contracts.RenameCredential.Offer", "Identity.RenameCredential", NoAction("Identity.RenameCredential")));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Offerable_Contract_With_No_Requesting_Handler_Reports_TWA0031()
+  {
+    // The action carries the right name (TWA0029 is satisfied) but no handler requests the Command.
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test =
+      OfferableTest(OfferableSpa("(Name = Contracts.RenameCredential.OfferName)", handler: ""));
+    test.ExpectedDiagnostics.Add(new DiagnosticResult("TWA0031", DiagnosticSeverity.Warning)
+      .WithNoLocation()
+      .WithArguments(
+        "Contracts.RenameCredential",
+        "has no client action in this compilation: no [CatalogAction] action's handler requests Contracts.RenameCredential.Command; add one with [CatalogAction(Name = RenameCredential.OfferName)]"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Offerable_In_Non_Spa_Compilation_Reports_Nothing()
+  {
+    CSharpAnalyzerTest<ActionOfferAgreementAnalyzer, RoslynTestVerifier> test = OfferableTest(OfferableSpa("", handler: ""));
+    test.TestState.AnalyzerConfigFiles.Clear();
+    await test.RunAsync();
   }
 
   private static string NoAction(string catalogName) =>

@@ -20,7 +20,11 @@
 // that Blazor would treat as the same route (TWE010), and route declarations the generator cannot
 // emit faithfully — stacked [Page], a non-literal additional route, or a token whose type disagrees
 // with an earlier route of the page (TWE011). Both are fail-closed: the page surface is not generated.
-// Severity: generation-contract violations (TWE002/003/007/008/009/010/011, TWE005/006) are Errors so a broken
+// TWE012/TWE013 are the [Offerable] contract (task 281), reported by the contracts generator in
+// TimeWarp.Foundation.Contracts (which links this file so the SSOT stays here): a UserInput entry
+// that names no Command property (TWE012), and [Offerable] on a contract with no nested Command
+// (TWE013). Both are fail-closed: no Offer record or OfferName is generated.
+// Severity: generation-contract violations (TWE002/003/007/008/009/010/011/012/013, TWE005/006) are Errors so a broken
 // endpoint/page/id fails the build; SG* are Warnings (resilience / missing deps / log).
 #endregion
 
@@ -108,6 +112,24 @@ internal static class DiagnosticDescriptors
     DiagnosticSeverity.Error,
     isEnabledByDefault: true,
     description: "Fail-closed: an empty, mistyped, or unmarked allow-list must not silently emit no endpoints. Use the AssemblyName (web-contracts, api-contracts), not the namespace.");
+
+  public static readonly DiagnosticDescriptor OfferableUnknownUserInput = new(
+    id: "TWE012",
+    title: "[Offerable] UserInput names no Command property",
+    messageFormat: "[Offerable] on '{0}' lists UserInput '{1}', which is not a property of {0}.Command; no Offer record is generated",
+    category: "Offerable",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "Fail-closed: UserInput names the Command properties the user supplies (use nameof(Command.X)); an entry that names nothing would silently bind every property on the server.");
+
+  public static readonly DiagnosticDescriptor OfferableMissingCommand = new(
+    id: "TWE013",
+    title: "[Offerable] contract has no Command",
+    messageFormat: "[Offerable] on '{0}' requires a nested Command class; no Offer record is generated",
+    category: "Offerable",
+    DiagnosticSeverity.Error,
+    isEnabledByDefault: true,
+    description: "An offer is the contract's Command minus server-filled fields. A contract with no Command (a query, or an action with no contract) keeps a hand-written [ActionOffer] record instead.");
 
   // ── SG: generator logs / resilience ──────────────────────────────────────
 

@@ -14,6 +14,9 @@
 // (Rename's nickname); TWA0030 verifies each one is a required parameter no property binds, that
 // every other required parameter has a property, and that nothing is bound after an omitted optional
 // parameter (the client binder fills a positional array).
+// Task 281: for an operation with a contract Command, the contracts generator emits this attribute
+// on the contract's nested Offer record from [Offerable] (OfferableAttribute); hand-writing a record
+// is the escape hatch for actions with no contract Command.
 // Matched by simple name, like every convention-analyzer attribute.
 #endregion
 

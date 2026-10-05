@@ -39,8 +39,8 @@ public class CredentialOffers_For_
 
     IReadOnlyList<OfferedAction> offers = CredentialOffers.For([only], microsoft365Offered: false);
 
-    offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.RevokeCredential);
-    Subjects(offers, OfferedActionNames.RenameCredential).ShouldBe([Id(only)]);
+    offers.ShouldNotContain(static offer => offer.Name == RevokeCredential.OfferName);
+    Subjects(offers, RenameCredential.OfferName).ShouldBe([Id(only)]);
     return Task.CompletedTask;
   }
 
@@ -52,7 +52,7 @@ public class CredentialOffers_For_
 
     IReadOnlyList<OfferedAction> offers = CredentialOffers.For([passkey, agentKey], microsoft365Offered: false);
 
-    Subjects(offers, OfferedActionNames.RevokeCredential).ShouldBe([.. new[] { Id(passkey), Id(agentKey) }.Order()]);
+    Subjects(offers, RevokeCredential.OfferName).ShouldBe([.. new[] { Id(passkey), Id(agentKey) }.Order()]);
     offers.Where(static offer => offer.Subject is not null)
       .ShouldAllBe(offer => offer.Arguments["credentialId"].GetString() == offer.Subject);
     return Task.CompletedTask;
@@ -65,7 +65,7 @@ public class CredentialOffers_For_
 
     IReadOnlyList<OfferedAction> offers = CredentialOffers.For([active, revoked], microsoft365Offered: false);
 
-    offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.RevokeCredential);
+    offers.ShouldNotContain(static offer => offer.Name == RevokeCredential.OfferName);
     offers.ShouldNotContain(offer => offer.Subject == Id(revoked));
     return Task.CompletedTask;
   }
@@ -142,8 +142,8 @@ public class GetCredentialsOffers_Returns_
 
     string[] ids = [.. response.Credentials.Select(static credential => credential.Id.Value.ToString("D")).Order()];
     ids.Length.ShouldBe(2);
-    Subjects(response, OfferedActionNames.RevokeCredential).ShouldBe(ids);
-    Subjects(response, OfferedActionNames.RenameCredential).ShouldBe(ids);
+    Subjects(response, RevokeCredential.OfferName).ShouldBe(ids);
+    Subjects(response, RenameCredential.OfferName).ShouldBe(ids);
   }
 
   public static async Task No_Revoke_Given_Exactly_One_Active_Credential()
@@ -153,8 +153,8 @@ public class GetCredentialsOffers_Returns_
     GetCredentials.Response response = await ListAsync(client);
 
     response.Credentials.Count.ShouldBe(1);
-    response.Offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.RevokeCredential);
-    Subjects(response, OfferedActionNames.RenameCredential).ShouldBe([response.Credentials[0].Id.Value.ToString("D")]);
+    response.Offers.ShouldNotContain(static offer => offer.Name == RevokeCredential.OfferName);
+    Subjects(response, RenameCredential.OfferName).ShouldBe([response.Credentials[0].Id.Value.ToString("D")]);
   }
 
   public static async Task Drop_Revoke_After_The_Offered_Revoke_Leaves_One_Credential()
@@ -162,7 +162,7 @@ public class GetCredentialsOffers_Returns_
     using HttpClient client = await PrincipalWithCredentialsAsync(2);
     var testApiService = new TestApiService(client, ContractSerializationDefaults.Options, bearerToken: null);
     GetCredentials.Response before = await ListAsync(client);
-    OfferedAction revokeOffer = before.Offers.First(static offer => offer.Name == OfferedActionNames.RevokeCredential);
+    OfferedAction revokeOffer = before.Offers.First(static offer => offer.Name == RevokeCredential.OfferName);
 
     // Run exactly what the offer names: its credentialId argument against the real endpoint.
     var revoke = new RevokeCredential.Command
@@ -175,8 +175,8 @@ public class GetCredentialsOffers_Returns_
 
     GetCredentials.Response after = await ListAsync(client);
     after.Credentials.Count.ShouldBe(1);
-    after.Offers.ShouldNotContain(static offer => offer.Name == OfferedActionNames.RevokeCredential);
-    after.Offers.ShouldContain(static offer => offer.Name == OfferedActionNames.RenameCredential);
+    after.Offers.ShouldNotContain(static offer => offer.Name == RevokeCredential.OfferName);
+    after.Offers.ShouldContain(static offer => offer.Name == RenameCredential.OfferName);
   }
 
   public static async Task No_Link_Microsoft365_Given_Entra_Not_Offered()

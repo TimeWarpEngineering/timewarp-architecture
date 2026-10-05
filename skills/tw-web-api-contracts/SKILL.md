@@ -166,6 +166,41 @@ Server projects set `<EnableApiEndpointGeneration>true</EnableApiEndpointGenerat
 mistyped, or unmarked names are **TWE008**. Hosted contracts assemblies apply
 `[assembly: ApiEndpointsEmbedded]`; host generators walk only marked refs.
 
+### Server offers (`[Offerable]` on the outer operation class)
+
+When the server may offer this operation as a client action (it decides whether the action is valid
+now — see `tw-blazor` "Server-offered actions"), flag the contract:
+
+```csharp
+[ApiEndpoint]
+[EndpointAuthorize(Policy = PermissionIds.CredentialManageSelf, AuthenticationSchemes = …)]
+[Offerable(UserInput = [nameof(Command.Nickname)])]
+public static partial class RenameCredential { … }
+```
+
+| Generated member | Shape |
+|------------------|-------|
+| `OfferName` | `const string` `"<Slice>.<Operation>"` — the namespace segment after `Features` plus the contract name |
+| `Offer` | `[ActionOffer(OfferName, UserInput = […])] sealed partial record Offer(…)` — route parameters plus the Command's public settable properties, minus `UserInput` and the auth-filled `UserId` |
+
+Rules:
+
+- `UserInput` names **Command properties** with `nameof(Command.X)`, so renaming a property is a
+  compile error, not a silently-bound argument. An entry that names no property is **TWE012**.
+- `[Offerable]` needs a nested `Command` (**TWE013**). A read is never offered, and an action with no
+  contract Command keeps a hand-written `[ActionOffer]` record.
+- `UserId` from `IAuthApiRequest` is never part of the offer: it is a client/mock-mode identity
+  signal the server never trusts, so the server never sends it either.
+- The generated record is `partial`; add interfaces in the contract with
+  `partial record Offer : IMyOffer;`.
+- The client action whose handler requests the Command must set
+  `[CatalogAction(Name = <Contract>.OfferName)]` — **TWA0031** checks it, TWA0029/TWA0030 check the
+  record against the action's constructor.
+
+Why: an offer is the Command minus server-filled fields. Declaring it on the contract makes the
+generator derive it from the one shape both the endpoint and the client already share, instead of a
+parallel record that can drift.
+
 ### HTTP verbs
 
 | Operation | Verb |
@@ -433,6 +468,8 @@ error. See the `tw-mock-response-factory` skill.
 - [ ] Mutability matches binding intent (`set` vs `init`/get-only)
 - [ ] Serialization round-trip test in the contracts test project (prioritize non-trivial shapes)
 - [ ] `GetMockResponseFactory()` registered if SPA mock mode exercises this endpoint
+- [ ] Server-offered operation: `[Offerable(UserInput = [nameof(Command.X)])]`, and the client action
+      sets `[CatalogAction(Name = <Contract>.OfferName)]` (TWA0031)
 
 ## Common pitfalls
 

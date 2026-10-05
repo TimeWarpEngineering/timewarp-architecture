@@ -79,8 +79,8 @@ public class CommandPalette_Should_
   }
 
   [Input("Counter.IncrementCounter")]
-  [Input("Credentials.RenameCredential")]
-  [Input("Credentials.RevokeCredential")]
+  [Input("Identity.RenameCredential")]
+  [Input("Identity.RevokeCredential")]
   [Input("Profile.UpdateProfile")]
   [Input("Role.CreateRole")]
   [Input("SiteSettings.UpdateSiteSettings")]
