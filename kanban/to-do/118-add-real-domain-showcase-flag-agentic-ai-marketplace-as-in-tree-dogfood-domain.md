@@ -96,3 +96,147 @@ golden path with **Orleans** for aggregates that earn actor hosting; the fleet l
   `generic-pipeline-behavior.cs` (live wired placeholder, console writes) is replaced when real
   cross-cutting concerns land — x402 metering is a pipeline behavior; same
   replace-the-sample-with-real pattern as the web-server sample-options note above.
+
+## Bamboo micro-factory reference data (Steve, 2026-10-05)
+
+Real-world reference for the showcase domain: product families, machine capabilities and
+pricing logic for quotes and machine time. The showcase's machines stay simulated or mocked per
+the Description. These numbers make the simulated shop and its quotes believable; they are not a
+purchase plan for the template.
+
+### Small-scale parts list by stage
+
+**Stage 1: Splitting** (entry point, ~$400–2,600)
+- Electric bamboo splitter, single-blade, motor-driven
+- Manual pole splitter (3–24 blades) as backup and for odd sizes
+- Spare blades for the splitter
+- Safety guards and feed table
+
+**Stage 2: Sizing and planing** (~$1,000–3,000)
+- Cross-cut saw, fine-tooth carbide (24+ TPI)
+- Four-side planer (small workshop model)
+- Node removal / flattening jig
+- Thickness gauge / calipers
+
+**Stage 3: Treatment and drying**
+- Carbonizing boiler or treatment tank (borate solution)
+- Kiln or solar dryer
+- Moisture meter
+
+**Stage 4: Pressing and finishing** (~$8,000–15,000)
+- Flattening press line
+- Glue coater
+- Hot press (750–800 ton range for panels)
+- Sanding machine
+- Dust extraction system
+
+**Stage 5: Precision** (optional, $20,000+)
+- CNC router for cut parts
+- Blade sharpening equipment
+
+**Thai-built reference machines**
+- Srinakharinwirot University splitting/slicing machine: ~90 THB/hour operating cost, 2.5-year
+  payback.
+- RMUTSB semi-automatic strip machine: 30,000 THB, 15-day payback, 1 mm minimum thickness.
+
+### Break-even math
+
+The figures come from two Thai university machine papers, not a factory quote. Treat them as
+order-of-magnitude until a real machine is timed. Currency is THB. The labor rate is a
+placeholder.
+
+**Published anchors**
+
+- Srinakharinwirot splitting/slicing machine (2021 paper):
+  - Operating cost 90.1 THB/hour; break-even 156 hours/year.
+  - Payback 2.5 years at 300 hours/year.
+  - Throughput 7.12 sticks/min split, 5.65 slices/min, about 2.6–2.7× hand work.
+- RMUTSB semi-automatic strip machine (2021 paper):
+  - Capital 30,000 THB; power 356 THB/month.
+  - Claimed payback 15 days.
+  - Claimed throughput 117 strips/min at 60 cm × 7 mm (7,020/hour); the paper's hand baseline
+    is 1,003/hour.
+  - The 15-day payback only holds if those strips already have a buyer at a margin that covers
+    30,000 THB in half a month. Do not plan on it.
+
+**Model**
+
+```
+Fixed:
+  C = machine cost (THB)
+  H = hours/year actually run
+
+Variable, per hour:
+  P = kWh × THB/kWh
+  L = operator THB/hour (loaded, not the posted wage)
+  M = blades, belts, glue, borate, allocated per hour
+  v = P + L + M
+
+Revenue, per hour:
+  Q = good strips/hour (after rejects)
+  S = sale price per strip (THB)
+  r = Q × S
+
+Contribution:
+  c = r − v
+  Break-even hours/year = C / c          # only if c > 0
+  Payback years         = C / (c × H)
+```
+
+**Worked example (replace every input)**
+
+30,000 THB strip machine, run 4 hours/day for 250 days (H = 1,000). Power 1.5 kW at
+4.5 THB/kWh. One operator at 150 THB/hour loaded. Consumables 20 THB/hour.
+
+```
+P = 1.5 × 4.5 = 6.75
+L = 150
+M = 20
+v = 176.75 THB/hour
+```
+
+With a buyer: a 60 cm strip sells for 2 THB, at 200 good strips/hour (well under the paper's
+claim):
+
+```
+r = 400
+c = 400 − 176.75 = 223.25 THB/hour
+Break-even hours = 30,000 / 223.25 ≈ 134 hours
+Payback at 1,000 h/year ≈ 0.13 year
+```
+
+Same machine with no offtake: strips worth 0.5 THB, 80 good/hour:
+
+```
+r = 40
+c = 40 − 176.75 < 0   → never pays back; throughput does not matter
+```
+
+**What actually sets payback**
+
+1. **Offtake price, not machine speed.** China sets the ceiling on commodity strips. A 2 THB
+   strip only exists when the shop is not competing with Anji on the same SKU.
+2. **Reject rate.** Silica and nodes eat strips. Measure good output, not feed rate.
+3. **Hours the machine can be fed.** A 15-day payback assumes the pole pile and the buyer are
+   both already there.
+4. **Labor dominates v.** The machine is the cheap line; an idle operator is the expensive one.
+
+**Gate before buying stage 4**
+
+Do not buy the press until stages 1–2 have 90 days of:
+- logged good strips/hour;
+- a named buyer and a price;
+- c > 0 at that price.
+
+A press at 8,000–15,000 USD only changes the product. It does not create the buyer.
+
+### How this informs the showcase (when 118 is designed)
+
+- **Product families and capabilities:** the stages map to the simulated shop's machines and the
+  quote options an external agent can ask for (split, size/plane, treat/dry, press/finish,
+  CNC cut).
+- **Quote pricing:** the per-hour model (`v`, `Q`, reject rate) is a credible basis for
+  machine-time quotes paid via x402.
+- **V1 scope guard (unchanged):** one product family. Strips (stages 1–2) are the natural first
+  family, which matches the "gate before stage 4" rule above.
+- 118 still needs Steve's decision on the flag-rule amendment before any implementation.
