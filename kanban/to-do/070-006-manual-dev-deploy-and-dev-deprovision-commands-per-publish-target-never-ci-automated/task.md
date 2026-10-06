@@ -138,8 +138,21 @@ Gates run: `dev build` 0 warnings / 0 errors. dev-cli-tests 129/129. `dev templa
 succeeded (SmokeDefault, SmokeNoPostgres, SmokeNoApi). `ganda repo audit` is clean (see the
 commit).
 
+### Review disposition
+
+- **Rounds:** 2, at effort 3. Round 1 had three read-only reviewers (general, tests and plan_alignment). Round 2 was the oracle re-checking the fixes.
+- **Final counts:** bug 0. Suggestions: 1 fixed and 3 wontfix. Nits: 2 fixed and 2 wontfix. **0 open.**
+- **Disposition:** `accepted-exceptions`. The wontfix items are M1 (kubectl context not in Aspire's record), M2 (handler `--yes` gate not unit-tested), M3 (Nuru option binding), M7 (`.git` root marker) and M8 (preflight before no-record). The rationale for each is in `review/disposition.md`.
+- **Fixed:**
+  - The never-CI guard now scans `.github/**/*.yml|yaml` and has a positive-control test.
+  - Answering "n" at the deploy prompt gets its own message (`DeployDeclined`).
+  - One vacuous assertion was made specific.
+  - dev-cli-tests 130/130.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,tests,plan-alignment,merged}.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 2026-10-07 (cockpit, from the 070-005 Azure decision)
 - 2026-10-07: implemented (headless implementer, ganda task work). Merged the 070-005 branch for
   `skills/tw-deploy`.
+- 2026-10-07: implementation review (review oracle, effort 3), disposition accepted-exceptions.

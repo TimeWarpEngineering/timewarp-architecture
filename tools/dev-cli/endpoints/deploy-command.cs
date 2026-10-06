@@ -16,7 +16,8 @@
 // Confirmation: --yes deploys with `--non-interactive` (every deploy parameter must then already be
 // set, e.g. in user secrets or Parameters__* env vars). Without --yes the plan is printed and the
 // operator is asked; when stdin is not a terminal there is nobody to ask, so it refuses instead of
-// assuming yes. Without --yes Aspire also prompts for any missing parameter.
+// assuming yes; any answer but y/yes cancels with nothing run. Without --yes Aspire also prompts for
+// any missing parameter.
 // Pure targets/arguments/parsing/text live in services/aspire-deploy.cs (dev-cli-tests).
 #endregion
 
@@ -55,11 +56,21 @@ internal sealed class DeployCommand : ICommand<Unit>
         Terminal.WriteLine(line);
       }
 
-      if (!command.Yes && !Confirm())
+      if (!command.Yes)
       {
-        Terminal.WriteErrorLine(AspireDeploy.DeployConfirmationRefusal.Red());
-        Environment.ExitCode = 1;
-        return Unit.Value;
+        if (Terminal.IsInputRedirected)
+        {
+          Terminal.WriteErrorLine(AspireDeploy.DeployConfirmationRefusal.Red());
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        }
+
+        if (!Confirm())
+        {
+          Terminal.WriteErrorLine(AspireDeploy.DeployDeclined.Red());
+          Environment.ExitCode = 1;
+          return Unit.Value;
+        }
       }
 
       CommandOutput deploy = await Shell.Builder("aspire")
@@ -81,8 +92,6 @@ internal sealed class DeployCommand : ICommand<Unit>
 
     private bool Confirm()
     {
-      if (Terminal.IsInputRedirected) return false;
-
       Terminal.Write("Deploy? [y/N] ");
       string? answer = Terminal.ReadLine();
       return string.Equals(answer?.Trim(), "y", StringComparison.OrdinalIgnoreCase)

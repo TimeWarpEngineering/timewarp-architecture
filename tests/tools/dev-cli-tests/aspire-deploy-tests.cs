@@ -242,7 +242,7 @@ public class OperatorText_Given_
     text.ShouldContain("/state/production.json");
     text.ShouldContain("ReleaseName: app");
     text.ShouldContain("Namespace: apps");
-    text.ShouldContain("data");
+    text.ShouldContain("data volume and its data are deleted");
     text.ShouldContain("--yes");
     text.ShouldContain("Nothing was run");
     return Task.CompletedTask;
@@ -267,6 +267,7 @@ public class OperatorText_Given_
     text.ShouldContain("Publish:Target=kubernetes");
     text.ShouldContain("kubectl context: kind-local");
     AspireDeploy.DeployConfirmationRefusal.ShouldContain("--yes");
+    AspireDeploy.DeployDeclined.ShouldContain("Nothing was run");
     return Task.CompletedTask;
   }
 }
@@ -282,12 +283,34 @@ public partial class NeverAutomated_Given_
     System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
   private static partial System.Text.RegularExpressions.Regex DeployInvocation();
 
+  public static Task Pattern_Should_MatchEveryDeployInvocationShape()
+  {
+    string[] invocations =
+    [
+      "run: dev deploy --target compose --yes",
+      "run: ./bin/dev deprovision --yes",
+      "dotnet run tools/dev-cli/dev.cs -- deploy",
+      "aspire deploy --apphost app.csproj",
+      "aspire destroy --non-interactive --yes",
+    ];
+
+    foreach (string invocation in invocations)
+    {
+      DeployInvocation().IsMatch(invocation).ShouldBeTrue(invocation);
+    }
+
+    DeployInvocation().IsMatch("run: dev publish --target compose").ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
   public static Task CiWorkflowsAndDevWorkflow_Should_NeverDeploy()
   {
     string root = RepoRoot();
+    string github = Path.Combine(root, ".github");
     string[] files =
     [
-      .. Directory.GetFiles(Path.Combine(root, ".github", "workflows"), "*.yml"),
+      .. Directory.EnumerateFiles(github, "*.yml", SearchOption.AllDirectories),
+      .. Directory.EnumerateFiles(github, "*.yaml", SearchOption.AllDirectories),
       Path.Combine(root, "tools", "dev-cli", "endpoints", "workflow-command.cs"),
     ];
     files.Length.ShouldBeGreaterThan(1);

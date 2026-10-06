@@ -246,6 +246,9 @@ internal static class AspireDeploy
   internal const string DeployConfirmationRefusal =
     "Not deploying: no confirmation. Re-run with --yes to deploy non-interactively, or from a terminal to answer the prompt.";
 
+  /// <summary>Printed when the operator answers anything but yes at the deploy prompt.</summary>
+  internal const string DeployDeclined = "Not deploying: declined at the prompt. Nothing was run.";
+
   /// <summary>Printed when `aspire deploy` left no record for <paramref name="target"/> on this machine.</summary>
   internal static string[] BuildNoRecordLines(DeployTarget target, string statePath, string appHostPath, string containerRuntime) =>
   [
