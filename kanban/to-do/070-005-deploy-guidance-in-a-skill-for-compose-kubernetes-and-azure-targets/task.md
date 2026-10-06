@@ -120,8 +120,14 @@ safety suite and a skill update.
 - **Ripple from the new shipped skill:** the `dev template-smoke` `AssertSkillsShipped` list now
   includes `tw-deploy/SKILL.md`, and the "eight" → "nine" wording changed in that harness and in
   `AGENTS.md`.
-- **Azure:** the comparison and recommendation (A: existing AKS through the Kubernetes target) are
-  above, **awaiting Steve's decision**. No Azure AppHost wiring was added.
+- **Azure:** Steve decided **A** (existing AKS through the Kubernetes target). No Azure AppHost
+  wiring was added. Decision follow-through in `skills/tw-deploy`:
+  - Publishing and deploying: deploying is a deliberate, operator-run action, never automated in
+    CI; CI only publishes and runs the safety suites. `aspire deploy` is used directly (no
+    `dev deploy` until 070-006 ships).
+  - Azure: ACA is named as the planned option for small or idle apps, with no commands documented;
+    `AddAzureKubernetesEnvironment` (B) is ruled out with its reasons; Postgres on ACA volumes is
+    ruled out. 070-006 / 070-007 extend the skill when they land.
 
 **Gates:**
 - `vally lint skills`: 9/9 passed.
@@ -142,6 +148,8 @@ grep -n "skills/tw-deploy" source/container-apps/aspire/projects/aspire-app-host
 ```
 
 **Expect:**
+- `skills/tw-deploy/SKILL.md` states deploys are operator-run and never automated in CI, names
+  ACA as planned with no commands, and does not mention `dev deploy`.
 - `vally lint` reports "9 skill(s) linted, 9 passed".
 - template-smoke reports "Generated app contains skills/ (nine SKILL.md files; analysis/ excluded)."
 - The AppHost Design region names `skills/tw-deploy/SKILL.md`.
@@ -151,9 +159,10 @@ grep -n "skills/tw-deploy" source/container-apps/aspire/projects/aspire-app-host
 
 ## Session
 - 2026-10-07: Steve decided A; C filed as 070-007, manual dev deploy as 070-006. Resume: finish skill follow-through, review, open PR.
+- 2026-10-07: skill follow-through for decision A done (operator-run deploys, ACA planned, B ruled out).
 
 - Created: 2026-10-03 (rewrite of 070)
 
-## Blocked
+## Blocked (resolved 2026-10-07 — Steve decided A)
 
 2026-10-06: Steve's Azure target decision (A: existing AKS via the Kubernetes target, recommended; B: AddAzureKubernetesEnvironment; C: Azure Container Apps) — comparison in 070-005 task.md "Azure decision" section

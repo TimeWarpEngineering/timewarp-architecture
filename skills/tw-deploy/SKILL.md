@@ -59,6 +59,10 @@ aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=kubernetes   # hel
   CI uploads the output as a workflow artifact. Regenerate, do not hand-edit.
 - **`dev publish <target>` is the gate.** It runs the target's production-safety suite in
   aspire-tests against the generated files. Run it after any change to publish-mode wiring.
+- **Deploying is a deliberate, operator-run action — never automated in CI.** CI publishes and
+  runs the production-safety suites only; it never runs `aspire deploy`, `helm upgrade` or
+  `docker compose up` against a real environment. A deploy is run by an operator who has chosen
+  the target, the context and the parameter values. Use `aspire deploy` directly.
 
 ## Production-safety rules
 
@@ -150,11 +154,19 @@ cluster's registry (for example an Azure Container Registry) as `registry-endpoi
 controller's class as `ingress-class`, and run the Kubernetes commands above. Nothing in the
 AppHost is Azure-specific, so the same chart runs on any cluster.
 
-Aspire's Azure-provisioning environments (`AddAzureKubernetesEnvironment`,
-`AddAzureContainerAppEnvironment`) are separate compute environments with their own artifacts
-(Bicep plus provisioning). Adding one is a new `Publish:Target` value with its own
-production-safety suite — follow the same pattern as the existing targets, never a second
-environment beside them.
+**Azure Container Apps — planned, not yet a target.** For small or mostly idle apps, where a
+cluster's always-on node cost dominates, Azure Container Apps (consumption billing, built-in HTTPS
+ingress) with a managed Postgres server is the intended Azure option. It is not wired into the
+AppHost yet; until it is, there are no ACA commands to run — use AKS above.
+
+- **Do not use `AddAzureKubernetesEnvironment`.** It provisions and owns the cluster
+  (`aspire destroy` deletes it), ties cluster lifecycle to one app, and its documented ingress
+  path depends on preview features. Share an existing cluster instead.
+- **Do not host Postgres data on ACA container volumes.** They are Azure Files (SMB) shares; a
+  database belongs on a managed Postgres service there.
+- Adding any Azure-provisioning environment is a new `Publish:Target` value with its own
+  production-safety suite — follow the same pattern as the existing targets, never a second
+  environment beside them.
 
 ## Container-runtime neutrality
 
