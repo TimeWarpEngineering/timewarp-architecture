@@ -37,6 +37,8 @@
   <ItemGroup>
     <!-- Task 070-003: `aspire publish` emits a Docker Compose deployment (publish-only; run mode unchanged). -->
     <PackageReference Include="Aspire.Hosting.Docker" />
+    <!-- Task 070-004: `aspire publish` also emits a Helm chart (publish-only). -->
+    <PackageReference Include="Aspire.Hosting.Kubernetes" />
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->

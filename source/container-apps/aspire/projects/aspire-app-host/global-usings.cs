@@ -17,6 +17,8 @@ global using Microsoft.Extensions.Hosting;
 global using Aspire.Hosting.Yarp;
 global using Aspire.Hosting.Yarp.Transforms;
 #endif
+// Task 070-004: KubernetesEnvironmentResource (the Helm publish target) is referenced in every flag combination.
+global using Aspire.Hosting.Kubernetes;
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using System.Diagnostics;
 global using static TimeWarp.Architecture.Aspire.Constants;

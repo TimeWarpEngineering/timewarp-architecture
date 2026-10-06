@@ -3,10 +3,11 @@
 #endregion
 #region Design
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
-//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish compose (tests are the gate)
+//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish compose -> publish kubernetes (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
 // publish compose (task 070-003) runs `aspire publish` for the Docker Compose target and gates the
-// output with aspire-tests' production-safety suite; workflow.yml uploads that output.
+// output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
+// for the Helm chart and helm-lints it (Helm ships on the runner). workflow.yml uploads both outputs.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
@@ -121,13 +122,14 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // PR / merge: tests gate here.
     private async Task RunPrAsync()
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test -> publish compose\n");
+      Terminal.WriteLine("Pipeline: clean -> build -> test -> publish compose -> publish kubernetes\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand(), Ct))) return;
       if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return;
+      if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
     }

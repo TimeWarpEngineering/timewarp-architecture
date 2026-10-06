@@ -78,6 +78,8 @@
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.0" />
     <!-- Task 070-003: Docker Compose publish environment (AddDockerComposeEnvironment). Publish-only. -->
     <PackageVersion Include="Aspire.Hosting.Docker" Version="13.6.0" />
+    <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only. Same train as stable 13.6.0 hosting pins (no stable 13.6 release). -->
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.0-preview.1.26479.8" />
     <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.6.0 hosting pins. -->
     <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.0-preview.1.26479.8" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />

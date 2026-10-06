@@ -155,7 +155,7 @@ jobs:
         if: github.event_name != 'release'
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow` (PR/merge) runs `dev publish compose`, which needs the Aspire CLI. Pinned to the
+      # `dev workflow` (PR/merge) runs `dev publish compose` and `dev publish kubernetes`, which need the Aspire CLI. Pinned to the
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
         if: github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.mode != 'probe')
@@ -196,6 +196,18 @@ jobs:
             artifacts/aspire-output/compose/.env
             artifacts/aspire-output/compose/efmigrations/*.sql
           include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 1
+
+      # Task 070-004: the Helm chart (`dev publish kubernetes`, safety-checked and helm-linted — Helm
+      # ships on ubuntu runners). CI-only, never committed; the chart directory carries the migration
+      # SQL script and no bundle, so the whole directory is the artifact.
+      - name: Upload Helm chart
+        if: always() && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspire-helm-${{ github.run_number }}
+          path: artifacts/aspire-output/kubernetes/
           if-no-files-found: ignore
           retention-days: 1
 
