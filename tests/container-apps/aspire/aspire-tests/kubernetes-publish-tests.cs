@@ -181,13 +181,13 @@ public partial class KubernetesPublish_Given_
     // operator supplies it at deploy), never under `config:` or `parameters:`.
     foreach (string section in new[] { "config", "parameters" })
     {
-      foreach ((string path, string value) in Leaves(Mapping(Values, section), section))
+      foreach ((string path, string value) in Leaves(OptionalMapping(Values, section), section))
       {
         IsSecretShaped(path, value).ShouldBeFalse($"values.yaml {path} is not under secrets");
       }
     }
 
-    foreach ((string path, string value) in Leaves(Mapping(Values, "secrets"), "secrets"))
+    foreach ((string path, string value) in Leaves(OptionalMapping(Values, "secrets"), "secrets"))
     {
       value.ShouldBeEmpty($"values.yaml {path} ships a literal secret");
     }
@@ -247,13 +247,14 @@ public partial class KubernetesPublish_Given_
 
   public static async Task Publish_Should_RejectAnUnknownTarget()
   {
-    await Should.ThrowAsync<InvalidOperationException>(async () =>
+    InvalidOperationException exception = await Should.ThrowAsync<InvalidOperationException>(async () =>
     {
       await using IDistributedApplicationTestingBuilder appHost =
         await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
           ["--operation", "publish", "--Publish:Target=swarm"],
           (_, settings) => settings.EnvironmentName = "Production");
     });
+    exception.Message.ShouldContain("Publish:Target");
   }
 
   private static async Task PublishInProcAsync(string outputDirectory)
@@ -415,6 +416,10 @@ public partial class KubernetesPublish_Given_
 
   private static YamlMappingNode Mapping(YamlMappingNode node, string key) =>
     (YamlMappingNode)node.Children[new YamlScalarNode(key)];
+
+  // A values.yaml section a flag combination may not emit (no secret parameters → no `secrets:`).
+  private static YamlMappingNode? OptionalMapping(YamlMappingNode node, string key) =>
+    node.Children.TryGetValue(new YamlScalarNode(key), out YamlNode? value) ? value as YamlMappingNode : null;
 
   private static IEnumerable<YamlMappingNode> Items(YamlMappingNode node, string key) =>
     node.Children.TryGetValue(new YamlScalarNode(key), out YamlNode? value)

@@ -146,7 +146,14 @@
 // in, and without the yarp flag the chart has no Ingress at all; secrets (postgres password, Entra
 // client secret, the derived connection strings) land in <resource>-secrets Secret objects backed by
 // values.yaml `secrets.<resource>` with empty defaults, never in ConfigMaps; mock auth, browser-log
-// forwarding and the REPL are absent for the same reasons as Compose. aspire-tests'
+// forwarding and the REPL are absent for the same reasons as Compose. The postgres password appears
+// under TWO values.yaml keys — secrets.postgres.postgres_password (postgres-secrets) and
+// secrets.web_server.postgres_password (web-server-secrets: its connection strings) — which
+// `aspire deploy` fills from the one parameter; a plain `helm install` must set both to the same
+// value. ingress-class, postgres-storage-capacity and chart-version are publish/deploy-time
+// parameters baked into the chart as literals (not .Values), so changing them means re-publishing
+// or deploying with the parameter, not `helm --set`. `aspire deploy` takes the same switch:
+// `aspire deploy -- --Publish:Target=kubernetes`. aspire-tests'
 // kubernetes-publish-tests guard all of this against the generated chart.
 // Postgres in Kubernetes: the published postgres-data volume binds by name to a Kubernetes persistent
 // volume (PersistentVolumeClaim postgres-data, ReadWriteOnce, postgres-storage-capacity parameter,
@@ -330,7 +337,8 @@ internal class Program
     }
 
     // Task 070-004: in the Helm chart the published postgres-data volume binds (by name) to a
-    // PersistentVolumeClaim, which renders postgres as a StatefulSet with a volumeClaimTemplate.
+    // PersistentVolumeClaim postgres-data, which renders postgres as a single-replica StatefulSet
+    // mounting that claim.
     if (kubernetes is not null)
     {
       postgres = postgres.WithPersistentVolume(

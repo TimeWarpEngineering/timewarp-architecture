@@ -46,7 +46,8 @@ kubectl context (Helm ≥ 4.2). Reference: aspire.dev `deploy-to-kubernetes-clus
 - [x] CI publish check covers the Helm chart (+ `helm lint` if available)
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 - [x] Do **not** start an AppHost or deploy to any cluster
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean)
+- [ ] Host `open-pr`
 
 ## Notes
 
@@ -59,6 +60,8 @@ kubectl context (Helm ≥ 4.2). Reference: aspire.dev `deploy-to-kubernetes-clus
 - Created: 2026-10-03 (rewrite of 070)
 - 2026-10-06 implement (ganda task work, claude): Kubernetes target, chart safety suite, `dev publish
   kubernetes`, CI step. Found and fixed the EF bundle-in-chart defect (Helm 5 MiB file limit).
+- 2026-10-06 review (ganda task work, claude review oracle; effort 3, roster: general subagent):
+  2 rounds, disposition clean.
 
 ## Results
 
@@ -124,3 +127,19 @@ only `web-migrations.sql`. `dev publish compose` still passes 7/7.
 **Maintainer follow-up (not done here):** run `aspire deploy -- --Publish:Target=kubernetes` against
 a local kind cluster with a local registry and an ingress controller installed. Then confirm the
 app is reachable through `cluster-ingress` and apply the migration script.
+
+### Review disposition
+
+- **Rounds:** 2 (round 1 general review; round 2 re-verification of the fixes). Effort 3, roster:
+  general.
+- **Final counts:** bug 0 · suggestion 2 fixed · nit 3 fixed · 0 open · 0 wontfix.
+- **Disposition: clean.** Fixes:
+  - M1: stale StatefulSet/volumeClaimTemplate comment.
+  - M2: an `OptionalMapping` helper for values.yaml sections that a flag combination may not emit.
+  - M3: the Design region documents the two postgres password keys that must match under plain helm.
+  - M4: the Design region says the parameters are baked in at publish time and shows the
+    `aspire deploy` switch.
+  - M5: the unknown-target test asserts on the exception message.
+- **Gates after the fixes:** `dev build` 0/0; `KubernetesPublish_Given_` 9/9.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
