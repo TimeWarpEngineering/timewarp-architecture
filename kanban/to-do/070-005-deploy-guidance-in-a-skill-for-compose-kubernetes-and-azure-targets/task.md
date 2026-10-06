@@ -32,7 +32,8 @@ public, so write rules and reasoning only, with no history or client names. Also
 - [x] Skill section(s) written (public-safe)
 - [x] AppHost Design region points to the skill
 - [x] Gates: `ganda repo audit`, plus the skill-spec lint (CI)
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (disposition: clean)
+- [ ] Host `open-pr`
 
 ## Azure decision — DECIDED: A (Steve, 2026-10-07)
 
@@ -91,9 +92,8 @@ workloads (agent or code sandboxes), not a stateful multi-service app.
   driver. If it is taken up, it brings in Azure Postgres Flexible Server and a separate safety
   suite. It is a second, Azure-only deploy story, not a replacement.
 
-**Decided A (2026-10-07).** If he picks A, no AppHost wiring follows; the skill
-already says so. If he picks B or C, a new child under 070 adds the `Publish:Target` value, its
-safety suite and a skill update.
+**Decided A (2026-10-07).** No AppHost wiring follows; the skill already says so. B and C
+would each need a new child under 070 (C is filed as 070-007).
 
 ## Notes
 
@@ -137,6 +137,12 @@ safety suite and a skill update.
 - No `dev run` or deploy was done, and `dev template-smoke` was not run locally. The harness edit
   only adds one filename to a list; CI template-smoke covers it.
 
+**Implementation review:**
+- 1 round at effort 2. Reviewers: general (a subagent that fact-checked against the repo) and plan_alignment.
+- Final counts: bug 0, suggestion 0, nit 1 fixed, 0 open, 0 wontfix.
+- Disposition: **clean**. M1, the stale "If he picks…" wording in task.md, is fixed.
+- Paths: `review/review-framework.md`, `review/round-1/{general,plan_alignment,merged}.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -160,6 +166,7 @@ grep -n "skills/tw-deploy" source/container-apps/aspire/projects/aspire-app-host
 ## Session
 - 2026-10-07: Steve decided A; C filed as 070-007, manual dev deploy as 070-006. Resume: finish skill follow-through, review, open PR.
 - 2026-10-07: skill follow-through for decision A done (operator-run deploys, ACA planned, B ruled out).
+- 2026-10-07: implementation review round 1 (effort 2: general + plan_alignment), disposition clean; general subagent af0742154f2eab428.
 
 - Created: 2026-10-03 (rewrite of 070)
 
