@@ -4,8 +4,7 @@
 #:property NoWarn=CA2007
 #:property RunAnalyzers=false
 
-// Dispatcher: ganda repo attest. No memsearch indexing (task 339): run
-// `ganda memsearch index-repo` by hand when a repo index is wanted.
+// Dispatcher: ganda repo attest.
 // Exit 0 always — commit already landed.
 using TimeWarp.Amuru;
 

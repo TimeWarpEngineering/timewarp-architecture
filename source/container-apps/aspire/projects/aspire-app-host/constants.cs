@@ -40,4 +40,15 @@ internal class Constants
   // Task 147-007: Aspire AddEFMigrations resource name (not an AddProject — TWA0007 N/A; keep const
   // alongside Postgres names so AppHost wiring cannot drift from docs/scripts).
   public const string WebMigrationsResourceName = "web-migrations";
+
+  // Task 070-003: Docker Compose publish environment (also the `aspire do prepare-<name>` step name),
+  // its fixed data volume name, and the publish-only parameters that land in the generated .env.
+  public const string ComposeEnvironmentResourceName = "compose";
+  public const string PostgresPublishedDataVolumeName = "postgres-data";
+  public const string IngressPortParameterName = "ingress-port";
+  public const string EntraEnabledParameterName = "entra-enabled";
+  public const string EntraTenantIdParameterName = "entra-tenant-id";
+  public const string EntraClientIdParameterName = "entra-client-id";
+  public const string EntraClientSecretParameterName = "entra-client-secret";
+  public const string EntraPublicOriginParameterName = "entra-public-origin";
 }

@@ -4,8 +4,7 @@
 #:property NoWarn=CA2007
 #:property RunAnalyzers=false
 
-// Dispatcher for branch checkouts only ($3 == 1): ganda repo attest. No memsearch
-// indexing (task 339): run `ganda memsearch index-repo` by hand when a repo index is wanted.
+// Dispatcher for branch checkouts only ($3 == 1): ganda repo attest.
 // Exit 0 always.
 using TimeWarp.Amuru;
 

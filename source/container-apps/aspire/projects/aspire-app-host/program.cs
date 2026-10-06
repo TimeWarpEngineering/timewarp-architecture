@@ -95,6 +95,30 @@
 // resource, and the SDK picks the aspnet base image matching the project's TFM, so a .NET bump needs no
 // image edit. Add those properties to a server csproj only when a deployment target actually needs a
 // different base image (e.g. chiseled/alpine).
+// Docker Compose publish target (task 070-003): AddDockerComposeEnvironment makes `aspire publish` emit
+// docker-compose.yaml + .env (unfilled parameters) for standalone hardware; `aspire do prepare-compose`
+// or `aspire deploy` fill the .env and build images through whichever container runtime Aspire detects
+// (ASPIRE_CONTAINER_RUNTIME overrides). A compute environment only shapes publish/deploy, so run mode
+// is unchanged; every publish-only branch below is IsPublishMode/IsRunMode-gated, never flag-gated, so
+// every template flag combination publishes. Production-safety posture of the output:
+//   - only the ingress has a host port (ingress-port parameter); web-server is external in run mode
+//     only, and the compose dashboard is disabled (it would publish an unauthenticated second port —
+//     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
+//   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
+//     settings (entra-client-secret is a secret parameter; Entra defaults to off);
+//   - mock auth, browser-log forwarding and the Postgres REPL are never emitted: the UseMock forward
+//     needs explicit AppHost config, and the other two are Development-only while publish runs as
+//     Production.
+// aspire-tests' compose-publish-tests guard all of the above against the generated files.
+// Postgres in Compose: fixed named volume postgres-data (the run-mode name hashes the AppHost path and
+// would differ per checkout) and POSTGRES_DB creates the database on first initdb (run mode creates it
+// through the AppHost, which a Compose stack does not have). Migrations run BY HAND from the published
+// idempotent script — `docker compose exec -T postgres psql -U postgres -d postgres-db -v
+// ON_ERROR_STOP=1 < efmigrations/web-migrations.sql` — not a one-shot service: the bundle is a
+// self-contained host binary with no image to run it in, and postgres has no host port for it to
+// reach. Re-running the script is a no-op; web-server tolerates the not-yet-migrated window (above).
+// Artifacts are CI-only, never committed: `dev publish compose` writes artifacts/aspire-output/compose
+// (git-ignored) and workflow.yml uploads compose, .env and the SQL script (not the ~100 MB bundle).
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -104,6 +128,11 @@ internal class Program
   private static void Main(string[] args)
   {
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
+
+    // Task 070-003: `aspire publish` target for standalone hardware (compose.yaml + .env). A compute
+    // environment only shapes publish/deploy output; run mode (`dev run`) ignores it. No compose
+    // dashboard: it would publish a second, unauthenticated host port beside the ingress.
+    builder.AddDockerComposeEnvironment(ComposeEnvironmentResourceName).WithDashboard(enabled: false);
 
     // Declare project resources based on template flags
 #if api
@@ -118,8 +147,27 @@ internal class Program
 #endif
 #if web
     // Web Server is included in the template
-    IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server")
-      .WithExternalHttpEndpoints();
+    IResourceBuilder<ProjectResource> webServer = builder.AddProject<Projects.web_server>(WebServerProjectResourceName, options => options.LaunchProfileName = "Web.Server");
+
+    // External in run mode only (dashboard links straight to Web.Server). Published, the ingress is
+    // the single host-exposed service; an external web-server would publish its own host port.
+    if (builder.ExecutionContext.IsRunMode)
+    {
+      webServer = webServer.WithExternalHttpEndpoints();
+    }
+
+    // Task 070-003: published Entra settings are .env parameters, never literals. Defaults keep
+    // Entra off (appsettings.json posture); the client secret is a secret parameter with an empty
+    // value so `aspire deploy` does not demand one for a passkey-only deployment.
+    if (builder.ExecutionContext.IsPublishMode)
+    {
+      webServer = webServer
+        .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
+        .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))
+        .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true))
+        .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, "", secret: true))
+        .WithEnvironment("Authentication__Entra__PublicOrigin", builder.AddParameter(EntraPublicOriginParameterName, "", publishValueAsDefault: true));
+    }
 
     // Task 145-009 / dogfood: mock auth is OPT-IN only. Do not force Authentication:UseMock=true
     // for every Development AppHost run — that overrode appsettings (false) and turned on SPA/BFF
@@ -164,7 +212,17 @@ internal class Program
     // mount it picks for the default postgres 18.x image — so an existing dev volume is reused.
     // The env var carries the mount path, NOT PGDATA: postgres 18 images keep PGDATA in a
     // version subdirectory of the mount (see the constants.cs Design note).
-    if (usePostgresDataVolume)
+    // Published (task 070-003) the volume is always on and gets a FIXED name: the generated name
+    // hashes the AppHost path, so every checkout would emit a different compose.yaml. Compose
+    // prefixes it with the project name, so it never collides with the dev-loop volume.
+    if (builder.ExecutionContext.IsPublishMode)
+    {
+      postgres = postgres.WithVolume(
+        PostgresPublishedDataVolumeName,
+        PostgresDataVolumeTarget,
+        env: PostgresDataVolumeEnvironmentVariable);
+    }
+    else if (usePostgresDataVolume)
     {
       postgres = postgres.WithVolume(
         VolumeNameGenerator.Generate(postgres, "data"),
@@ -179,6 +237,13 @@ internal class Program
     if (builder.Environment.IsDevelopment())
     {
       postgres = postgres.WithRepl();
+    }
+
+    // Run mode creates the database through the AppHost; a published Compose stack has no AppHost,
+    // so the postgres image's own POSTGRES_DB creates it on first initdb.
+    if (builder.ExecutionContext.IsPublishMode)
+    {
+      postgres = postgres.WithEnvironment("POSTGRES_DB", PostgresDatabaseResourceName);
     }
 
     IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
@@ -217,6 +282,17 @@ internal class Program
 
     // Create the YARP resource
     IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
+
+    // Task 070-003: published, the ingress is the ONLY service with a host port, pinned to the
+    // ingress-port .env parameter (Compose would otherwise pick a random host port).
+    if (builder.ExecutionContext.IsPublishMode)
+    {
+      IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, "8080", publishValueAsDefault: true);
+      yarp = yarp
+        .WithExternalHttpEndpoints()
+        .PublishAsDockerComposeService((composeService, service) =>
+          service.Ports = [.. service.Ports.Select(containerPort => $"{ingressPort.AsEnvironmentPlaceholder(composeService)}:{containerPort}")]);
+    }
 
     if (ingressHttpsPort is not null)
     {

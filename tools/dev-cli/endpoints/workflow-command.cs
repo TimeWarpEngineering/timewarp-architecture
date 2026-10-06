@@ -3,8 +3,10 @@
 #endregion
 #region Design
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
-//   pull_request / push  -> Pr/Merge:  clean -> build -> test        (tests are the gate)
+//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish compose (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
+// publish compose (task 070-003) runs `aspire publish` for the Docker Compose target and gates the
+// output with aspire-tests' production-safety suite; workflow.yml uploads that output.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
@@ -119,12 +121,13 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     // PR / merge: tests gate here.
     private async Task RunPrAsync()
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test\n");
+      Terminal.WriteLine("Pipeline: clean -> build -> test -> publish compose\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand(), Ct))) return;
+      if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
     }
