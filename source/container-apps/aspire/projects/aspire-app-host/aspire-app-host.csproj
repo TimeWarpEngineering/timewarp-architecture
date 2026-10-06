@@ -35,6 +35,8 @@
 
 
   <ItemGroup>
+    <!-- Task 070-003: `aspire publish` emits a Docker Compose deployment (publish-only; run mode unchanged). -->
+    <PackageReference Include="Aspire.Hosting.Docker" />
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->

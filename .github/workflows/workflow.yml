@@ -155,6 +155,12 @@ jobs:
         if: github.event_name != 'release'
         run: dotnet dev-certs https --trust || true
 
+      # `dev workflow` (PR/merge) runs `dev publish compose`, which needs the Aspire CLI. Pinned to the
+      # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
+      - name: Install Aspire CLI
+        if: github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.mode != 'probe')
+        run: dotnet tool install --global Aspire.Cli --version 13.6.0
+
       - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
         id: nuget-login
@@ -176,6 +182,22 @@ jobs:
           else
             dotnet run tools/dev-cli/dev.cs -- workflow
           fi
+
+      # Task 070-003: generated Compose output is CI-only (never committed). The migration bundle is
+      # a ~100 MB self-contained binary and is left out; the idempotent SQL script is the
+      # documented migration path for Compose (see the AppHost Design region).
+      - name: Upload Compose publish output
+        if: always() && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspire-compose-${{ github.run_number }}
+          path: |
+            artifacts/aspire-output/compose/docker-compose.yaml
+            artifacts/aspire-output/compose/.env
+            artifacts/aspire-output/compose/efmigrations/*.sql
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Upload Artifacts
         if: always()
