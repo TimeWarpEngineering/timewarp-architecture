@@ -16,6 +16,10 @@ Reference implementation: the crunchit repo AppHost (`AddAzureContainerAppEnviro
 simpler**: it has one public `web-server` and no YARP, api or grpc. This template must keep its
 multi-service topology.
 
+## Depends on
+
+- 070-006
+
 ## Requirements
 
 - `Publish:Target=aca` (publish mode only; run mode unchanged). Add the `Aspire.Hosting.Azure.*`
