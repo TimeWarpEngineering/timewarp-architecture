@@ -10,7 +10,7 @@
 //      here. The output directory is wiped first so a stale file can never pass the check.
 //   2. aspire-tests' ComposePublish_Given_ class with TIMEWARP_COMPOSE_OUTPUT pointing at that
 //      directory, so the facts inspect exactly the files CI uploads instead of their own in-proc
-//      publish. The rules live in the test suite (it ships in generated apps; tools/ does not).
+//      publish. The rules live once, in the test suite; this command only points it at the CLI output.
 // Runtime neutrality (task 277): `aspire publish` only writes files — no image build, no compose
 // up — and nothing here calls a container CLI. Building/running the stack is the operator's
 // `aspire deploy` / `aspire do prepare-compose`, which honour ASPIRE_CONTAINER_RUNTIME.

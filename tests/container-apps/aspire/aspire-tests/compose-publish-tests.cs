@@ -27,7 +27,7 @@ namespace Aspire.Tests;
 using YamlDotNet.RepresentationModel;
 
 [TestTag("Integration")]
-public class ComposePublish_Given_
+public partial class ComposePublish_Given_
 {
   internal const string OutputEnvironmentVariable = "TIMEWARP_COMPOSE_OUTPUT";
   private const string IngressService = "ingress";
@@ -161,6 +161,12 @@ public class ComposePublish_Given_
         {
           value.ShouldContain("Password=${", Case.Insensitive, $"{service}:{key} embeds a literal password");
         }
+
+        // URI-shaped credentials (scheme://user:password@host) must carry a placeholder password.
+        foreach (Match credential in UriCredential().Matches(value))
+        {
+          credential.Groups[1].Value.ShouldMatch(@"^\$\{[A-Z0-9_]+\}$", $"{service}:{key} embeds a literal URI password");
+        }
       }
     }
 
@@ -174,15 +180,6 @@ public class ComposePublish_Given_
     {
       ServiceEnvironment(WebServerService)["Authentication__Entra__ClientSecret"].ShouldBe("${ENTRA_CLIENT_SECRET}");
       EnvFile.ShouldContainKey("ENTRA_CLIENT_SECRET");
-    }
-
-    // aspire publish leaves .env unfilled: a value on a secret key would ship a literal secret.
-    foreach ((string key, string value) in EnvFile)
-    {
-      if (key.Contains("PASSWORD", StringComparison.Ordinal) || key.Contains("SECRET", StringComparison.Ordinal))
-      {
-        value.ShouldBeEmpty($".env {key} carries a value");
-      }
     }
 
     await Task.CompletedTask;
@@ -262,6 +259,10 @@ public class ComposePublish_Given_
     node.Children.TryGetValue(new YamlScalarNode(key), out YamlNode? value)
       ? [.. ((YamlSequenceNode)value).Children.Select(item => ((YamlScalarNode)item).Value ?? "")]
       : [];
+
+  // scheme://user:password@host — group 1 is the password.
+  [GeneratedRegex(@"://[^/:@\s]+:([^@\s]+)@")]
+  private static partial Regex UriCredential();
 
   private static string? Scalar(YamlMappingNode node, string key) =>
     node.Children.TryGetValue(new YamlScalarNode(key), out YamlNode? value) ? ((YamlScalarNode)value).Value : null;

@@ -77,7 +77,7 @@ and inspects the output.
   - `POSTGRES_DB=postgres-db` creates the database on first initdb.
   - Password comes from the generated `postgres-password` secret parameter.
   - **Migration path (decision):** run the published idempotent SQL script **by hand**:
-    `docker compose exec -T postgres psql -U postgres -d postgres-db -v ON_ERROR_STOP=1 < efmigrations/web-migrations.sql`.
+    `docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql`.
     A one-shot service is out because the bundle is a host binary with no image to run in, and
     postgres has no host port. This is recorded in the AppHost Design region.
 - **Artifacts (decision): CI-only, never committed.**
@@ -147,7 +147,21 @@ cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release -- --filte
   3. Apply the SQL script with the `docker compose exec … psql` line above.
   4. Browse `http://localhost:${INGRESS_PORT}`.
 
+### Review disposition
+
+- Effort 2, roster: general (subagent a060f10106a6b303a); 2 rounds (round 2 = fix re-verification).
+- Final counts: bug 1 fixed; suggestion 2 fixed / 1 wontfix; nit 2 fixed; 0 open.
+- Disposition: **accepted-exceptions** — M4 (no host port when the yarp flag is off) is by design:
+  only the ingress is host-published; documented in the AppHost Design region.
+- Fixes: migration command passes `PGPASSWORD`; ingress port pins and UseMock forward are run-mode
+  only; dev-cli Design region corrected; compose tests drop a tautological `.env` loop and add a
+  URI-credential placeholder check.
+- Post-fix gates: `dev build` 0/0; ComposePublish 7/7; `dev publish compose` (runfile) passed.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/disposition.md`.
+
 ## Session
 
 - Created: 2026-10-03 (rewrite of 070)
 - 2026-10-06: implemented (implement oracle) — Compose environment, safety guard, `dev publish compose`, CI wiring.
+- 2026-10-06: review oracle — effort-2 general review, 5 fixed / 1 wontfix, disposition accepted-exceptions.

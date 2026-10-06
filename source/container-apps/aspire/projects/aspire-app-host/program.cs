@@ -101,20 +101,21 @@
 // (ASPIRE_CONTAINER_RUNTIME overrides). A compute environment only shapes publish/deploy, so run mode
 // is unchanged; every publish-only branch below is IsPublishMode/IsRunMode-gated, never flag-gated, so
 // every template flag combination publishes. Production-safety posture of the output:
-//   - only the ingress has a host port (ingress-port parameter); web-server is external in run mode
-//     only, and the compose dashboard is disabled (it would publish an unauthenticated second port —
+//   - only the ingress has a host port (ingress-port parameter; the Ingress:Port/HttpPort pins are
+//     run-mode only); web-server is external in run mode only, so a combination without the yarp
+//     flag publishes no host port at all — the operator adds one for their own edge proxy, and the compose dashboard is disabled (it would publish an unauthenticated second port —
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
 //     settings (entra-client-secret is a secret parameter; Entra defaults to off);
 //   - mock auth, browser-log forwarding and the Postgres REPL are never emitted: the UseMock forward
-//     needs explicit AppHost config, and the other two are Development-only while publish runs as
-//     Production.
+//     is run-mode only, and the other two are Development-only while publish runs as Production.
 // aspire-tests' compose-publish-tests guard all of the above against the generated files.
 // Postgres in Compose: fixed named volume postgres-data (the run-mode name hashes the AppHost path and
 // would differ per checkout) and POSTGRES_DB creates the database on first initdb (run mode creates it
 // through the AppHost, which a Compose stack does not have). Migrations run BY HAND from the published
-// idempotent script — `docker compose exec -T postgres psql -U postgres -d postgres-db -v
-// ON_ERROR_STOP=1 < efmigrations/web-migrations.sql` — not a one-shot service: the bundle is a
+// idempotent script — `docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U
+// postgres -d postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql` (the image enforces
+// scram auth even on the in-container socket, and -T cannot prompt) — not a one-shot service: the bundle is a
 // self-contained host binary with no image to run it in, and postgres has no host port for it to
 // reach. Re-running the script is a no-op; web-server tolerates the not-yet-migrated window (above).
 // Artifacts are CI-only, never committed: `dev publish compose` writes artifacts/aspire-output/compose
@@ -174,10 +175,12 @@ internal class Program
     // mock auth for local passkey dogfood. Forward the flag only when AppHost configuration
     // explicitly sets Authentication:UseMock (e.g. aspire-tests: --Authentication:UseMock=true).
     // Production never needs this injection; env vars still cannot enable mock outside
-    // Development/Testing (handler/registration fail-closed gates).
+    // Development/Testing (handler/registration fail-closed gates). Run mode only (task 070-003):
+    // published output must never carry the flag, whatever configuration the publish ran with.
     string? useMock = builder.Configuration["Authentication:UseMock"];
-    if (string.Equals(useMock, "true", StringComparison.OrdinalIgnoreCase)
-      || string.Equals(useMock, "1", StringComparison.OrdinalIgnoreCase))
+    if (builder.ExecutionContext.IsRunMode
+      && (string.Equals(useMock, "true", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(useMock, "1", StringComparison.OrdinalIgnoreCase)))
     {
       webServer = webServer.WithEnvironment("Authentication__UseMock", "true");
     }
@@ -277,8 +280,11 @@ internal class Program
 #if yarp
     // YARP Reverse Proxy
     // YARP is included in the template
-    int? ingressHttpsPort = int.TryParse(builder.Configuration["Ingress:Port"], out int httpsPort) ? httpsPort : null;
-    int? ingressHttpPort = int.TryParse(builder.Configuration["Ingress:HttpPort"], out int httpPort) ? httpPort : null;
+    // Host-port pins are run-mode only: published, the ingress-port parameter owns the host port and
+    // a pinned endpoint port would emit an invalid host:host:container mapping (task 070-003).
+    bool isRunMode = builder.ExecutionContext.IsRunMode;
+    int? ingressHttpsPort = isRunMode && int.TryParse(builder.Configuration["Ingress:Port"], out int httpsPort) ? httpsPort : null;
+    int? ingressHttpPort = isRunMode && int.TryParse(builder.Configuration["Ingress:HttpPort"], out int httpPort) ? httpPort : null;
 
     // Create the YARP resource
     IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
