@@ -28,7 +28,7 @@ internal sealed class KeygenCommand : ICommand<Unit>
       Paths = paths;
     }
 
-    public ValueTask<Unit> Handle(KeygenCommand command, CancellationToken ct)
+    public Task<Unit> Handle(KeygenCommand command, CancellationToken ct)
     {
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
 
@@ -49,7 +49,7 @@ internal sealed class KeygenCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return ValueTask.FromResult(Value);
+      return Task.FromResult(Unit.Value);
     }
   }
 }

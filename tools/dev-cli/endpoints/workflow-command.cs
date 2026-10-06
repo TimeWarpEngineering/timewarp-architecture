@@ -61,11 +61,11 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       RepoCleanService = repoCleanService;
     }
 
-    public async ValueTask<Unit> Handle(WorkflowCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WorkflowCommand command, CancellationToken ct)
     {
       Ct = ct;
 
-      if (!FindRepoRoot()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
 
       CiMode mode = DetermineMode(command.Mode);
       Terminal.WriteLine($"\nCI/CD Pipeline — Mode: {mode}\n".Cyan());
@@ -75,7 +75,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       else
         await RunPrAsync();
 
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()
@@ -211,7 +211,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       return true;
     }
 
-    private async Task<bool> RunStepAsync(string stepName, ValueTask<Unit> step)
+    private async Task<bool> RunStepAsync(string stepName, Task<Unit> step)
     {
       await step;
 

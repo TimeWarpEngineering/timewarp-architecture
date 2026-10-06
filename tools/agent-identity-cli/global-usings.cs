@@ -20,6 +20,6 @@ global using Microsoft.Extensions.DependencyInjection;
 global using TimeWarp.Identity;
 global using TimeWarp.Nuru;
 global using TimeWarp.Terminal;
-global using static TimeWarp.Nuru.Unit;
+global using TimeWarp.Mediator;
 
 global using AgentIdentityCli.Services;

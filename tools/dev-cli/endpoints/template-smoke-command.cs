@@ -123,11 +123,11 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
     {
       Ct = ct;
 
-      if (!FindRepoRoot()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
 
       SmokeRoot = Path.Combine(RepoRoot, "artifacts", "template-smoke");
       PackagesDir = Path.Combine(SmokeRoot, "packages");
@@ -136,11 +136,11 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 
       Terminal.WriteLine($"\nTemplate smoke — work root: {SmokeRoot}\n".Cyan());
 
-      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Value;
-      if (!AssertRemovedPackageSymbolsGoneFromTemplateConfig()) return Value;
-      if (!await PackPlatformPackagesAsync()) return Value;
-      if (!await PackTemplateAsync()) return Value;
-      if (!await InstallTemplateAsync()) return Value;
+      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Unit.Value;
+      if (!AssertRemovedPackageSymbolsGoneFromTemplateConfig()) return Unit.Value;
+      if (!await PackPlatformPackagesAsync()) return Unit.Value;
+      if (!await PackTemplateAsync()) return Unit.Value;
+      if (!await InstallTemplateAsync()) return Unit.Value;
 
       foreach ((string name, string[] extraArgs, string[] excludedFamilies) in SmokeMatrix)
       {
@@ -148,12 +148,12 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
         {
           Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {name}".Red());
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
       }
 
       Terminal.WriteLine("\nTemplate smoke SUCCEEDED".Green());
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()

@@ -69,7 +69,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(EntraSetupCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(EntraSetupCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
@@ -78,19 +78,19 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Cli = new EntraCli(Terminal, repoRoot, Command.DryRun, Ct);
 
       if (!PreflightAz())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await SelectAndValidateTenantAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       DisplayName = string.IsNullOrWhiteSpace(Command.Name)
@@ -99,31 +99,31 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 
       if (!await FindOrCreateAppAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await MergeRedirectUrisAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await EnsureServicePrincipalAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await MaybeMintSecretAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       if (!await WriteUserSecretsAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       PrintSummary();
-      return Value;
+      return Unit.Value;
     }
 
     private bool PreflightAz()

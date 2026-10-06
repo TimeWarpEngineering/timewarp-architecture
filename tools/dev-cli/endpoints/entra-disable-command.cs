@@ -23,12 +23,12 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(EntraDisableCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(EntraDisableCommand command, CancellationToken ct)
     {
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Cli = new EntraCli(Terminal, repoRoot, dryRun: false, ct);
@@ -39,12 +39,12 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
       {
         Cli.WriteFailure(output, "Failed to set Authentication:Entra:Enabled=false.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("Authentication:Entra:Enabled=false written to Web.Server user secrets.".Green());
       Terminal.WriteLine("Azure app registration was not changed. Re-enable with `dev entra setup`.");
-      return Value;
+      return Unit.Value;
     }
   }
 }

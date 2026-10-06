@@ -23,7 +23,7 @@ internal sealed class DbDropCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbDropCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbDropCommand command, CancellationToken ct)
     {
       if (!command.Yes)
       {
@@ -31,7 +31,7 @@ internal sealed class DbDropCommand : DbGroup, ICommand<Unit>
         Terminal.WriteLine("Usage: dev db drop --yes");
         Terminal.WriteLine("Prefer `dev db reset --yes` to drop and re-apply migrations in one step.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       int exit = await DbAppHost.RunMigrationsCommandAsync(
@@ -43,12 +43,12 @@ internal sealed class DbDropCommand : DbGroup, ICommand<Unit>
       if (exit != 0)
       {
         Environment.ExitCode = exit;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("Database dropped.".Green());
       Terminal.WriteLine("Run `dev db update` (or restart AppHost) to recreate schema.");
-      return Value;
+      return Unit.Value;
     }
   }
 }

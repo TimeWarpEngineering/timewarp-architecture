@@ -20,7 +20,7 @@ internal sealed class DbStatusCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbStatusCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbStatusCommand command, CancellationToken ct)
     {
       int exit = await DbAppHost.RunMigrationsCommandAsync(
         Terminal,
@@ -33,7 +33,7 @@ internal sealed class DbStatusCommand : DbGroup, ICommand<Unit>
         Environment.ExitCode = exit;
       }
 
-      return Value;
+      return Unit.Value;
     }
   }
 }

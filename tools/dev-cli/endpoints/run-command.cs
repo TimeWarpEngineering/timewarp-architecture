@@ -45,21 +45,21 @@ internal sealed class RunCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(RunCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(RunCommand command, CancellationToken ct)
     {
       Ct = ct;
       LaunchProfile = command.LaunchProfile;
 
-      if (!FindRepoRoot()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
       if (LaunchProfile is not null)
       {
-        if (!ValidateLaunchProfile()) return Value;
-        if (!await ValidateCliVersionAsync()) return Value;
+        if (!ValidateLaunchProfile()) return Unit.Value;
+        if (!await ValidateCliVersionAsync()) return Unit.Value;
       }
 
       await RunAsync();
 
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()
