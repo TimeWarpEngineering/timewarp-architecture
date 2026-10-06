@@ -1,4 +1,4 @@
-# Round 1 — plan_alignment
+# Round 1 — plan-alignment
 **Date:** 2026-10-07
 **Scope reviewed:** task.md Requirements vs the diff
 

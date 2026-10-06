@@ -141,7 +141,7 @@ would each need a new child under 070 (C is filed as 070-007).
 - 1 round at effort 2. Reviewers: general (a subagent that fact-checked against the repo) and plan_alignment.
 - Final counts: bug 0, suggestion 0, nit 1 fixed, 0 open, 0 wontfix.
 - Disposition: **clean**. M1, the stale "If he picks…" wording in task.md, is fixed.
-- Paths: `review/review-framework.md`, `review/round-1/{general,plan_alignment,merged}.md`, `review/disposition.md`.
+- Paths: `review/review-framework.md`, `review/round-1/{general,plan-alignment,merged}.md`, `review/disposition.md`.
 
 ### How to validate
 
