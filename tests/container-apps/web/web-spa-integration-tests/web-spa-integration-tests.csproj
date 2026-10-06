@@ -41,8 +41,5 @@
     <Using Include="Shouldly" />
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
-    <!-- Platform Attributes namespace ([ActionOffer], task 280) via the composed property: a literal
-         would be rewritten by the template sourceName. -->
-    <Using Include="$(TwArchitectureAttributesNamespace)" />
   </ItemGroup>
 </Project>

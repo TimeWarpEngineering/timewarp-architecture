@@ -1,6 +1,5 @@
 #region Purpose
-// Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types
-// (and, in contracts-generator.offerable.cs, the Offer record + OfferName of [Offerable] contracts).
+// Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types.
 // Marker attributes are public types in TimeWarp.Foundation.Features (same namespace as
 // IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovered with
 // ForAttributeWithMetadataName. FastEndpoint/ingress match the same FQN — not per-consumer
@@ -43,6 +42,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -84,8 +84,6 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
 
     context.RegisterSourceOutput(merged, static (spc, t) =>
       spc.AddSource($"{t.HintBase}.g.cs", SourceText.From(Wrap(t), Encoding.UTF8)));
-
-    InitializeOffers(context);
   }
 
   private static IncrementalValuesProvider<Target> CreateAttributeProvider(

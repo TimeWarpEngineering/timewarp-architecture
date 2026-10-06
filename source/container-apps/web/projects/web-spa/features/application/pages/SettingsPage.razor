@@ -9,10 +9,6 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Settings();
 
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
-  [Inject] private CommandPaletteContext PaletteContext { get; set; } = null!;
-  // TimeWarpStateComponent keeps its Store private; the offer runner needs the circuit/tab store.
-  [Inject] private IStore ScopedStore { get; set; } = null!;
 
   private string? AccountFingerprint;
 
@@ -20,13 +16,7 @@
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
   private bool ShowMicrosoft365 => SignInState.Microsoft365Offered;
-  private bool IsLinkMicrosoft365Offered => CredentialsState.IsOffered(OfferedActionNames.LinkMicrosoft365, credentialId: null);
-
-  private bool IsRevokeOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(RevokeCredential.OfferName, credential.Id.Value);
-
-  private bool IsRenameOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(RenameCredential.OfferName, credential.Id.Value);
+  private bool CanLinkMicrosoft365 => CredentialsState.CanLinkMicrosoft365;
 
   protected override async Task OnInitializedAsync()
   {
@@ -85,20 +75,21 @@
     await NoSubCredentialsState.FetchCredentials();
   }
 
-  // Offered actions run through the catalog; the runner refreshes FetchCredentials afterwards.
-  private Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
-    RunOfferAsync(RevokeCredential.OfferName, credential.Id.Value, input: null);
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
+  {
+    await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
-  private Task RenameAsync(CredentialRename rename) =>
-    RunOfferAsync(RenameCredential.OfferName, rename.CredentialId, CredentialOfferRows.NicknameInput(rename.Nickname));
+  private async Task RenameAsync(CredentialRename rename)
+  {
+    await NoSubCredentialsState.RenameCredential(rename.CredentialId, rename.Nickname);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
   private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
 
-  private Task LinkMicrosoft365Async() =>
-    RunOfferAsync(OfferedActionNames.LinkMicrosoft365, credentialId: null, input: null);
-
-  private Task RunOfferAsync(string name, Guid? credentialId, IReadOnlyDictionary<string, System.Text.Json.JsonElement>? input) =>
-    CredentialOfferRows.RunAsync(name, credentialId, input, ScopedStore, ActionCatalog, PaletteContext, CancellationToken);
+  private Task LinkMicrosoft365Async() => NoSubCredentialsState.LinkMicrosoft365();
 }
 
 <TimeWarpPage Title="Settings">
@@ -117,8 +108,6 @@
                         FallbackLabel="Passkey"
                         RevokeLabel="Revoke"
                         RevokeDataQa="RevokePasskey"
-                        IsRevokeOffered="IsRevokeOffered"
-                        IsRenameOffered="IsRenameOffered"
                         RevokeDisabledHint="Add another passkey or agent key before revoking this one."
                         RevokeDisabledHintDataQa="RevokePasskeyHint"
                         OnRevoke="ConfirmRevokeAsync"
@@ -156,13 +145,11 @@
                           TitleDataQa="Microsoft365AccountLabel"
                           RevokeLabel="Unlink"
                           RevokeDataQa="Unlink"
-                          IsRevokeOffered="IsRevokeOffered"
-                          IsRenameOffered="IsRenameOffered"
                           RevokeDisabledHint="Add a passkey first"
                           RevokeDisabledHintDataQa="UnlinkMicrosoft365Hint"
                           OnRevoke="ConfirmRevokeAsync"
                           OnRename="RenameAsync" />
-          @if (IsLinkMicrosoft365Offered)
+          @if (CanLinkMicrosoft365)
           {
             <FluentButton Appearance="ButtonAppearance.Primary"
                           data-qa="LinkMicrosoft365"

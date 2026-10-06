@@ -24,9 +24,11 @@
 // the handle bytes to produce it.
 // A pure read — no IPrincipalStore Update* call, so no concurrency note applies (matches
 // GetCurrentSession.Handler's Design region reasoning).
-// Offers (task 279): CredentialOffers over the caller's credentials plus EntraSignInOffer (the same
-// answer GetEntraSignInOffered gives the login page). With IncludeRevoked=false the listed rows are
-// exactly the active set the rules count; with IncludeRevoked=true CredentialOffers ignores revoked rows.
+// Availability flags (task 282): CanRevoke / CanRename per row and CanLinkMicrosoft365 for the page
+// come from CredentialRules over the caller's ACTIVE credentials — the count RevokeCredential.Handler
+// checks and the types EntraTicketProcessor checks — plus EntraSignInOffer (the same answer
+// GetEntraSignInOffered gives the login page). With IncludeRevoked=true the revoked rows are listed
+// but never counted, and get both flags false.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -69,6 +71,9 @@ public sealed partial class GetCredentials
       IReadOnlyList<Credential> credentials =
         await PrincipalStore.ListCredentialsAsync(callerId.Value, query.IncludeRevoked, cancellationToken);
 
+      Credential[] active = [.. credentials.Where(static credential => !credential.IsRevoked)];
+      bool canRevoke = CredentialRules.CanRevoke(active.Length);
+
       var summaries = credentials
         .Select(credential => new CredentialSummary(
           credential.Id,
@@ -81,11 +86,15 @@ public sealed partial class GetCredentials
           credential.RegisteredWith,
           credential.Fingerprint,
           credential.LastUsedAt,
-          credential.AccountHint))
+          credential.AccountHint,
+          canRevoke: canRevoke && !credential.IsRevoked,
+          canRename: !credential.IsRevoked))
         .ToList();
 
       bool microsoft365Offered = await EntraSignInOffer.IsOfferedAsync(EntraOptions.Value, SiteSettingsStore, cancellationToken);
-      return new Response(summaries, CredentialOffers.For(summaries, microsoft365Offered));
+      bool canLinkMicrosoft365 =
+        CredentialRules.CanLinkMicrosoft365(microsoft365Offered, active.Select(static credential => credential.Type));
+      return new Response(summaries, canLinkMicrosoft365);
     }
   }
 }

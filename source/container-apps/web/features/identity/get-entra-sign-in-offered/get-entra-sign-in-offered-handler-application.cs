@@ -4,7 +4,7 @@
 
 #region Design
 // The rule (scheme registered AND site policy on) is EntraSignInOffer, shared with GetCredentials,
-// which offers Link Microsoft 365 from the same answer (task 279).
+// which sets its CanLinkMicrosoft365 flag from the same answer (task 282).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

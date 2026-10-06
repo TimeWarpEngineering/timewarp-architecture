@@ -1,8 +1,9 @@
 #region Purpose
 // Render CredentialList with HtmlRenderer and assert the 248-001 row contract: nickname title,
 // provider/attachment/client context line, created stamp, monospace fingerprint, and the inline
-// rename editor auto-opening (prefilled) only for the pending credential id; plus task 246's
-// Revoke offer (task 279; was RevokeDisabled) gating the first step of the two-step revoke with its visible hint; and task 250's
+// rename editor auto-opening (prefilled) only for the pending credential id; plus the server's
+// per-row CanRevoke / CanRename flags (task 282) gating Rename and the first step of the two-step
+// revoke with its visible hint (task 246); and task 250's
 // Entra row (provider title, account-hint context line, the label never repeated, empty line hidden).
 #endregion
 
@@ -102,25 +103,52 @@ public class CredentialList_Should_
     TextOf(html, "PasskeyLabel").ShouldBe("Proton Pass");
   }
 
-  public static async Task Revoke_Not_Offered_Disables_First_Step_And_Shows_Hint()
+  public static async Task CanRevoke_False_Disables_First_Step_And_Shows_Hint()
   {
-    CredentialSummary credential = Summary(nickname: "Only one", label: "1Password");
+    CredentialSummary credential = Summary(nickname: "Only one", label: "1Password", canRevoke: false);
 
     string html = await RenderAsync(new Dictionary<string, object?>
     {
       ["Credentials"] = new List<CredentialSummary> { credential },
       ["FallbackLabel"] = "Passkey",
-      ["IsRevokeOffered"] = (Func<CredentialSummary, bool>)(static _ => false),
-      ["IsRenameOffered"] = (Func<CredentialSummary, bool>)(static _ => true),
       ["RevokeDisabledHint"] = "Add another passkey or agent key before revoking this one.",
       ["RevokeDisabledHintDataQa"] = "RevokePasskeyHint"
     });
 
-    // Task 246's last-credential guard (a server offer since 279) gates the FIRST step of the two-step revoke (248-001).
+    // Task 246's last-credential guard (the server's CanRevoke flag, task 282) gates the FIRST step of the two-step revoke (248-001).
     TagOf(html, "RevokePasskey").ShouldContain("disabled");
     TagOf(html, "RenameCredential").ShouldNotContain("disabled");
     TextOf(html, "RevokePasskeyHint").ShouldBe("Add another passkey or agent key before revoking this one.");
     CountOf(html, "RevokeConfirm").ShouldBe(0);
+  }
+
+  public static async Task CanRevoke_True_Enables_Revoke_Without_Hint()
+  {
+    CredentialSummary credential = Summary(nickname: "Laptop", label: "1Password");
+
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Credentials"] = new List<CredentialSummary> { credential },
+      ["FallbackLabel"] = "Passkey",
+      ["RevokeDisabledHint"] = "Add another passkey or agent key before revoking this one.",
+      ["RevokeDisabledHintDataQa"] = "RevokePasskeyHint"
+    });
+
+    TagOf(html, "RevokePasskey").ShouldNotContain("disabled");
+    CountOf(html, "RevokePasskeyHint").ShouldBe(0);
+  }
+
+  public static async Task CanRename_False_Disables_Rename()
+  {
+    CredentialSummary credential = Summary(nickname: "Laptop", label: "1Password", canRename: false);
+
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Credentials"] = new List<CredentialSummary> { credential },
+      ["FallbackLabel"] = "Passkey"
+    });
+
+    TagOf(html, "RenameCredential").ShouldContain("disabled");
   }
 
   public static async Task Render_Entra_Row_With_Account_Hint_And_No_Repeated_Label()
@@ -223,7 +251,9 @@ public class CredentialList_Should_
     string? nickname,
     string? label,
     RegisteredWith? registeredWith = null,
-    string fingerprint = "0123abcd"
+    string fingerprint = "0123abcd",
+    bool canRevoke = true,
+    bool canRename = true
   ) =>
     new
     (
@@ -235,6 +265,8 @@ public class CredentialList_Should_
       revokedAt: null,
       isActive: true,
       registeredWith ?? RegisteredWith.Unknown,
-      fingerprint
+      fingerprint,
+      canRevoke: canRevoke,
+      canRename: canRename
     );
 }

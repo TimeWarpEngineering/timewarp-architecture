@@ -10,13 +10,11 @@
 // In-flight fetch is [TrackAction] on FetchCredentials — Settings uses IsAnyActive, not null.
 // ActivePasskeys is the Settings filter (passkey + IsActive); ActiveEntraAccounts is the Microsoft 365
 // filter. Full list stays available for follow-ups.
-// Task 279 (hypermedia approach B): Offers is the server's list of catalog actions valid now
-// (GetCredentials.Response.Offers, computed from Identity's CredentialRules). The SPA keeps NO copy of
-// those rules — no last-credential count, no "can link" predicate: a Revoke/Rename/Link button exists
-// only for an offer here, and runs through the catalog (CredentialOfferRows + CommandPaletteRunner).
-// Offers are stored as CredentialOffer records (arguments as JSON text) rather than the contract's
-// JsonElement map, so the state's clone-on-dispatch copies plain strings. Fetch replaces Credentials
-// and Offers together, so the list and its actions always come from one server snapshot.
+// Task 282 (server-owned availability): which actions apply NOW is the server's answer, carried on
+// the snapshot itself — CredentialSummary.CanRevoke / CanRename per row and CanLinkMicrosoft365 from
+// GetCredentials.Response, all computed from Identity's CredentialRules. The SPA keeps NO copy of
+// those rules (no last-credential count, no "can link" predicate). Fetch replaces Credentials and
+// CanLinkMicrosoft365 together, so the list and its availability come from one server snapshot.
 // Outcomes (created / merged / removed / ceremony failed) are reported to the shell's single
 // notification region: handlers publish OutcomeNotification / ProblemDetailsNotification and
 // NotificationState paints them (task 247). CeremonyFailed is the only page-facing flag — it
@@ -66,21 +64,8 @@ public sealed partial class CredentialsState : State<CredentialsState>
           .Where(c => c.Type == CredentialType.EntraAccount && c.IsActive)
           .OrderByDescending(c => c.CreatedAt)];
 
-  private List<CredentialOffer>? OffersList { get; set; }
-
-  /// <summary>Catalog actions the server offers now (empty until the first fetch).</summary>
-  public IReadOnlyList<CredentialOffer> Offers => OffersList?.AsReadOnly() ?? (IReadOnlyList<CredentialOffer>)[];
-
-  /// <summary>The offer named <paramref name="name"/> for <paramref name="credentialId"/> (null = page-level); null when not offered.</summary>
-  public CredentialOffer? FindOffer(string name, Guid? credentialId)
-  {
-    string? subject = credentialId?.ToString("D");
-    return OffersList?.FirstOrDefault(offer => offer.Name == name && offer.Subject == subject);
-  }
-
-  /// <summary>True when the server offers <paramref name="name"/> for <paramref name="credentialId"/> (null = page-level).</summary>
-  public bool IsOffered(string name, Guid? credentialId) =>
-    FindOffer(name, credentialId) is not null;
+  /// <summary>Server flag from the last fetch: Microsoft 365 is offered and no account is linked yet (false until fetched).</summary>
+  public bool CanLinkMicrosoft365 { get; private set; }
 
   public Guid? LastAddedCredentialId { get; private set; }
 
@@ -113,7 +98,7 @@ public sealed partial class CredentialsState : State<CredentialsState>
   public override void Initialize()
   {
     CredentialsList = null;
-    OffersList = null;
+    CanLinkMicrosoft365 = false;
     LastAddedCredentialId = null;
     CeremonyFailed = false;
     PendingNicknameCredentialId = null;
