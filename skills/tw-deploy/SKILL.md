@@ -1,7 +1,7 @@
 ---
 name: tw-deploy
-description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost: the target matrix (Docker Compose, Kubernetes/Helm, Azure), `aspire publish` / `aspire deploy` per target, production-safety rules, secrets and parameters, Postgres migrations per target, the ingress topology, and container-runtime neutrality. Invoke before deploying, before adding a publish target, or before touching publish-mode wiring in the AppHost. WHEN: deploy the app, aspire publish, aspire deploy, docker compose, Helm chart, Kubernetes, AKS, Azure, production secrets, run migrations in production, ingress controller, Podman."
-when-to-use: deploy, deployment, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME
+description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost: the target matrix (Docker Compose, Kubernetes/Helm, Azure), `aspire publish` / `aspire deploy` per target, operator-run `dev deploy` / `dev deprovision` (never CI), a local kind recipe, production-safety rules, secrets and parameters, Postgres migrations per target, the ingress topology, and container-runtime neutrality. Invoke before deploying, before adding a publish target, or before touching publish-mode wiring in the AppHost. WHEN: deploy the app, dev deploy, dev deprovision, tear down a deployment, kind cluster, aspire publish, aspire deploy, docker compose, Helm chart, Kubernetes, AKS, Azure, production secrets, run migrations in production, ingress controller, Podman."
+when-to-use: deploy, deployment, dev deploy, dev deprovision, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME
 ---
 
 # Deploy (Aspire publish targets)
@@ -62,7 +62,98 @@ aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=kubernetes   # hel
 - **Deploying is a deliberate, operator-run action — never automated in CI.** CI publishes and
   runs the production-safety suites only; it never runs `aspire deploy`, `helm upgrade` or
   `docker compose up` against a real environment. A deploy is run by an operator who has chosen
-  the target, the context and the parameter values. Use `aspire deploy` directly.
+  the target, the context and the parameter values, with `dev deploy` (below).
+
+## Deploying: `dev deploy` and `dev deprovision`
+
+Both verbs are thin, operator-run wrappers over `aspire deploy` / `aspire destroy` for one
+`Publish:Target`. **No CI job, workflow step or `dev workflow` mode calls them, and none may.** A
+merge never deploys.
+
+```bash
+dev deploy                                  # compose (the Publish:Target default): preflight, plan, prompt
+dev deploy --target kubernetes              # Helm chart to the CURRENT kubectl context
+dev deploy --target compose --yes           # no prompt: aspire deploy --non-interactive
+
+dev deprovision --target kubernetes         # show the recorded deployment that would be destroyed
+dev deprovision --target kubernetes --yes   # aspire destroy — deletes the deployment and its data
+```
+
+- **`dev deploy`** runs `aspire deploy --apphost <csproj> --environment Production --
+  --Publish:Target=<target>`. Preflight: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2 on PATH and
+  a current kubectl context, which is printed before anything happens — check it. It then asks for
+  confirmation; `--yes` skips the prompt and adds `--non-interactive`, so every parameter must
+  already have a value (interactive runs prompt for missing ones, and Aspire remembers them in
+  the deployment state). Without a terminal and without `--yes` it refuses.
+- **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
+  never creates a cluster, installs an ingress controller or switches context.
+- **`dev deprovision`** runs `aspire destroy` for the same target, and only with `--yes`, because it
+  deletes the deployment's data (Compose volumes, the Kubernetes postgres claim). Without `--yes` it
+  prints the recorded deployment and stops.
+- **The deployment record is local.** `aspire destroy` only knows deployments that `aspire deploy`
+  recorded under `~/.aspire/deployments` (or `$ASPIRE_HOME/deployments`) on the machine — and from
+  the checkout — that deployed. When there is no record, `dev deprovision` says so, runs nothing,
+  and prints the manual removal for the target: `<runtime> compose --project-name <name> down
+  --volumes`, or `helm uninstall <release> --namespace <namespace>` plus deleting the
+  `postgres-data` PersistentVolumeClaim. It never falls back to a destructive command on its own.
+- **Runtime:** Compose deploy and teardown go through Aspire, so `ASPIRE_CONTAINER_RUNTIME` picks
+  the runtime; the verbs call no container CLI themselves.
+- **Without the `dev` CLI** (it lives in the template's source repository), run the same commands
+  the verbs wrap, and do the preflight yourself (`helm version`, `kubectl config current-context`):
+
+  ```bash
+  aspire deploy  --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
+  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
+  ```
+
+  When `aspire destroy` reports no deployment state ("Nothing to destroy"), nothing was removed;
+  use the manual removal above.
+
+### Local Kubernetes with kind
+
+A kind cluster is just another kubectl context. Give it a local registry the nodes can pull from,
+install ingress-nginx once as cluster infrastructure, then deploy. (kind also runs on Podman with
+`KIND_EXPERIMENTAL_PROVIDER=podman`; substitute `podman` for `docker` below.)
+
+```bash
+# 1. Local registry, reachable from the host as localhost:5001
+docker run -d --restart=always -p 127.0.0.1:5001:5000 --network bridge --name kind-registry registry:2
+
+# 2. Cluster whose containerd reads per-registry config
+cat <<'YAML' | kind create cluster --name app --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry]
+    config_path = "/etc/containerd/certs.d"
+YAML
+
+# 3. Map localhost:5001 inside every node to the registry container, and join the networks
+for node in $(kind get nodes --name app); do
+  docker exec "$node" mkdir -p /etc/containerd/certs.d/localhost:5001
+  printf '[host."http://kind-registry:5000"]\n' | docker exec -i "$node" cp /dev/stdin /etc/containerd/certs.d/localhost:5001/hosts.toml
+done
+docker network connect kind kind-registry
+
+# 4. Ingress controller — cluster infrastructure, installed once, never by the app chart
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+kubectl wait --namespace ingress-nginx --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller --timeout=180s
+
+# 5. Deploy (kubectl context is now kind-app); answer the parameter prompts:
+#    registry-endpoint=localhost:5001, registry-repository=<app>, k8s-namespace, helm-release-name,
+#    ingress-class=nginx
+dev deploy --target kubernetes
+
+# 6. Migrate (see Postgres and migrations), then reach the ingress
+kubectl port-forward --namespace ingress-nginx service/ingress-nginx-controller 8080:80
+
+# Tear down the app (data included), then the cluster and registry when done
+dev deprovision --target kubernetes --yes
+kind delete cluster --name app && docker rm -f kind-registry
+```
 
 ## Production-safety rules
 
@@ -98,8 +189,8 @@ Every value that differs per deployment is an `AddParameter`, never a literal. S
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
 
 - Supply values non-interactively with `Parameters__<name>` environment variables or AppHost
-  configuration/user secrets; interactive `aspire deploy` prompts for the rest. CI must supply all
-  of them.
+  configuration/user secrets; interactive `aspire deploy` prompts for the rest. A non-interactive
+  run (`dev deploy --yes`) must supply all of them.
 - Parameters such as `ingress-class`, `postgres-storage-capacity` and `helm-chart-version` are
   baked into the chart at publish time; change them by re-publishing, not `helm --set`.
 - Under a plain `helm install` (no `aspire deploy`), the Postgres password appears under two keys
@@ -182,4 +273,6 @@ AppHost yet; until it is, there are no ACA commands to run — use AKS above.
 ## Related
 
 - AppHost `program.cs` Design region — per-decision reasoning behind every rule above.
+- `tools/dev-cli/endpoints/deploy-command.cs` / `deprovision-command.cs` — `dev deploy` /
+  `dev deprovision`; their Design regions record the preflight and the deployment-record lookup.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` — the production-safety suites.

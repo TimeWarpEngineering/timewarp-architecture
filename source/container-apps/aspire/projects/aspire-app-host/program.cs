@@ -5,7 +5,9 @@
 #region Design
 // Deploy guidance (operator map: target matrix, publish/deploy commands, production-safety rules, secrets,
 // migrations per target, ingress topology, runtime neutrality) lives in skills/tw-deploy/SKILL.md; the
-// reasoning below is its record. Keep the two in sync when publish-mode wiring changes.
+// reasoning below is its record. Keep the two in sync when publish-mode wiring changes. Deploying is
+// operator-run with `dev deploy` / `dev deprovision` (aspire deploy / destroy per Publish:Target, plus
+// the skill's kind recipe) — never a CI step.
 // Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
 // Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.

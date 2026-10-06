@@ -1,6 +1,7 @@
 #region Purpose
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
-// preflight refusals, the deployment-record lookup and the no-record guidance, without deploying.
+// preflight refusals, the deployment-record lookup and the no-record guidance, without deploying —
+// and that no CI workflow or `dev workflow` mode ever invokes a deploy.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -267,5 +268,50 @@ public class OperatorText_Given_
     text.ShouldContain("kubectl context: kind-local");
     AspireDeploy.DeployConfirmationRefusal.ShouldContain("--yes");
     return Task.CompletedTask;
+  }
+}
+
+public partial class NeverAutomated_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<NeverAutomated_Given_>();
+
+  // A dev deploy/deprovision verb (bin/dev or the dev.cs runfile) or a raw aspire deploy/destroy.
+  [System.Text.RegularExpressions.GeneratedRegex(
+    @"(\bdev(\.cs)?\s+(--\s+)?(deploy|deprovision)\b)|(\baspire\s+(deploy|destroy)\b)",
+    System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+  private static partial System.Text.RegularExpressions.Regex DeployInvocation();
+
+  public static Task CiWorkflowsAndDevWorkflow_Should_NeverDeploy()
+  {
+    string root = RepoRoot();
+    string[] files =
+    [
+      .. Directory.GetFiles(Path.Combine(root, ".github", "workflows"), "*.yml"),
+      Path.Combine(root, "tools", "dev-cli", "endpoints", "workflow-command.cs"),
+    ];
+    files.Length.ShouldBeGreaterThan(1);
+
+    string[] offenders =
+    [
+      .. files.SelectMany(file => File.ReadLines(file)
+        .Select((line, index) => (line, index))
+        .Where(entry => DeployInvocation().IsMatch(entry.line))
+        .Select(entry => $"{Path.GetRelativePath(root, file)}:{entry.index + 1}: {entry.line.Trim()}")),
+    ];
+
+    offenders.ShouldBeEmpty("Deploying is operator-run (`dev deploy`), never a CI step or `dev workflow` mode.");
+    return Task.CompletedTask;
+  }
+
+  private static string RepoRoot()
+  {
+    DirectoryInfo? directory = new(AppContext.BaseDirectory);
+    while (directory is not null && !Path.Exists(Path.Combine(directory.FullName, ".git")))
+    {
+      directory = directory.Parent;
+    }
+
+    return directory.ShouldNotBeNull().FullName;
   }
 }
