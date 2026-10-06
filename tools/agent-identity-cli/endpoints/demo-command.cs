@@ -35,7 +35,7 @@ internal sealed class DemoCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async ValueTask<Unit> Handle(DemoCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DemoCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
@@ -166,7 +166,7 @@ internal sealed class DemoCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Value;
+      return Unit.Value;
     }
 
     private void NarrateHeader(string server, string keyFile)
@@ -191,7 +191,7 @@ internal sealed class DemoCommand : ICommand<Unit>
       Terminal.WriteErrorLine($"HTTP {status}".Red());
       Terminal.WriteErrorLine(body);
       Environment.ExitCode = 1;
-      return Value;
+      return Unit.Value;
     }
   }
 }

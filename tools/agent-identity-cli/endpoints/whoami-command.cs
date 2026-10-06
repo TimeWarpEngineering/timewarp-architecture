@@ -32,7 +32,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async ValueTask<Unit> Handle(WhoamiCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(WhoamiCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
@@ -44,7 +44,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
         {
           Terminal.WriteErrorLine($"No access token in store {PathDefaults.ResolveStorePath(keyFile)}. Run `token` first.".Red());
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
 
         Terminal.WriteLine($"GET {server}{AgentHttpClient.MePath}");
@@ -54,7 +54,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
           Terminal.WriteErrorLine($"HTTP {result.StatusCode}".Red());
           Terminal.WriteErrorLine(result.RawBody);
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
 
         WhoAmIResponse me = result.Value;
@@ -70,7 +70,7 @@ internal sealed class WhoamiCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Value;
+      return Unit.Value;
     }
   }
 }

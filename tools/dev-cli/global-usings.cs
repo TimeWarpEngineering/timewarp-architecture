@@ -12,7 +12,7 @@ global using System.Text.RegularExpressions;
 global using System.Xml.Linq;
 
 global using TimeWarp.Nuru;
-global using static TimeWarp.Nuru.Unit;
+global using TimeWarp.Mediator;
 global using TimeWarp.Amuru;
 global using TimeWarp.Terminal;
 global using DevCli;

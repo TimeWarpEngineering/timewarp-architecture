@@ -26,7 +26,7 @@ internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbResetCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbResetCommand command, CancellationToken ct)
     {
       if (!command.Yes)
       {
@@ -34,7 +34,7 @@ internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
         Terminal.WriteLine("Usage: dev db reset --yes");
         Terminal.WriteLine("Requires a running AppHost (`dev run`). After reset, Create account claims Administrator.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       int exit = await DbAppHost.RunMigrationsCommandAsync(
@@ -46,12 +46,12 @@ internal sealed class DbResetCommand : DbGroup, ICommand<Unit>
       if (exit != 0)
       {
         Environment.ExitCode = exit;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("Database reset complete.".Green());
       Terminal.WriteLine("Empty store — next Create account claims Administrator.");
-      return Value;
+      return Unit.Value;
     }
   }
 }

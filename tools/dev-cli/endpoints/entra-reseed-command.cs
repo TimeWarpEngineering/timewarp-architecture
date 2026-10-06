@@ -31,14 +31,14 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(EntraReseedCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(EntraReseedCommand command, CancellationToken ct)
     {
       Command = command;
 
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       EntraCli cli = new(Terminal, repoRoot, dryRun: false, ct);
@@ -50,7 +50,7 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
       {
         cli.WriteFailure(output, $"Failed to set {EntraSetup.ReseedSiteSettingsKey}={value}.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"{EntraSetup.ReseedSiteSettingsKey}={value} written to Web.Server user secrets.".Green());
@@ -66,7 +66,7 @@ internal sealed class EntraReseedCommand : EntraGroup, ICommand<Unit>
       }
 
       Terminal.WriteLine("Blunt fallback that drops principals and passkeys: `dev db reset --yes`");
-      return Value;
+      return Unit.Value;
     }
   }
 }

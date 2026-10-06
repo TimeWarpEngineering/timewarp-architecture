@@ -35,7 +35,7 @@ internal sealed class TokenCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async ValueTask<Unit> Handle(TokenCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TokenCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
@@ -58,7 +58,7 @@ internal sealed class TokenCommand : ICommand<Unit>
         if (!options.Success || options.Value is null)
         {
           WriteHttpError(options.StatusCode, options.RawBody);
-          return Value;
+          return Unit.Value;
         }
 
         byte[] challengeBytes = AgentSigning.FromBase64Url(options.Value.Challenge);
@@ -77,7 +77,7 @@ internal sealed class TokenCommand : ICommand<Unit>
         if (!complete.Success || complete.Value is null)
         {
           WriteHttpError(complete.StatusCode, complete.RawBody);
-          return Value;
+          return Unit.Value;
         }
 
         TokenResponse token = complete.Value;
@@ -108,7 +108,7 @@ internal sealed class TokenCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Value;
+      return Unit.Value;
     }
 
     private static List<string> ParseScopes(string? scopesOption)

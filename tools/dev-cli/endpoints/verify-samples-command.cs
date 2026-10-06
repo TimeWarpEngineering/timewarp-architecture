@@ -25,14 +25,14 @@ internal sealed class VerifySamplesCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(VerifySamplesCommand command, CancellationToken ct)
     {
       Ct = ct;
 
-      if (!FindRepoRoot()) return Value;
-      if (!await VerifyAsync()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
+      if (!await VerifyAsync()) return Unit.Value;
 
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()

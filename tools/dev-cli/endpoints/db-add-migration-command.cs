@@ -31,7 +31,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbAddMigrationCommand command, CancellationToken ct)
     {
       if (!DbEf.IsValidMigrationName(command.Name))
       {
@@ -39,7 +39,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
           "Migration name must be a C# identifier (letter or underscore, then letters, digits, underscore).".Red());
         Terminal.WriteLine("Usage: dev db add-migration AddOrders");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string? root = Git.FindRoot();
@@ -47,7 +47,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: could not find repository root.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string infrastructureProject = Path.Combine(root, DbEf.InfrastructureProject);
@@ -57,14 +57,14 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
         Terminal.WriteErrorLine(
           "web-infrastructure or web-server project not found. `dev db add-migration` requires the postgres template flag.".Red());
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string[] arguments = DbEf.BuildAddMigrationArguments(command.Name);
       if (command.DryRun)
       {
         Terminal.WriteLine($"dotnet {string.Join(" ", arguments)}");
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine("Restoring local tools (dotnet-ef)...");
@@ -80,7 +80,7 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
         Terminal.WriteErrorLine(restore.Combined);
         Terminal.WriteErrorLine("dotnet tool restore failed.".Red());
         Environment.ExitCode = restore.ExitCode == 0 ? 1 : restore.ExitCode;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Scaffolding migration '{command.Name}'...");
@@ -95,12 +95,12 @@ internal sealed class DbAddMigrationCommand : DbGroup, ICommand<Unit>
       {
         Terminal.WriteErrorLine("dotnet ef migrations add failed.".Red());
         Environment.ExitCode = exitCode;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Migration '{command.Name}' added under source/container-apps/web/platform/postgres/migrations/.".Green());
       Terminal.WriteLine("Apply with `dev db update` against a running AppHost (`dev run`).");
-      return Value;
+      return Unit.Value;
     }
   }
 }

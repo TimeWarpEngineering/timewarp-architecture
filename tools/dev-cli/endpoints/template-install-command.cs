@@ -39,7 +39,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(TemplateInstallCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TemplateInstallCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
@@ -49,7 +49,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Error: could not find repository root.");
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       RepoRoot = root;
@@ -60,7 +60,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"Template project not found: {TemplateProject}".Red());
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       if (Command.DryRun)
@@ -69,7 +69,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
         Terminal.WriteLine($"  output: {PackagesDir}");
         Terminal.WriteLine($"Would uninstall {TemplatePackageId} (ignore if not installed)");
         Terminal.WriteLine($"Would install the newest {TemplatePackageId}.{{version}}.nupkg from that output");
-        return Value;
+        return Unit.Value;
       }
 
       if (Directory.Exists(PackagesDir))
@@ -91,7 +91,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("Template pack failed.".Red());
         Environment.ExitCode = packExit;
-        return Value;
+        return Unit.Value;
       }
 
       string? nupkg = TemplateNupkg.FindArchitectureTemplateNupkg(PackagesDir);
@@ -99,7 +99,7 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine($"No {TemplatePackageId}.{{version}}.nupkg found in {PackagesDir}.".Red());
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Installing template from {nupkg}...");
@@ -122,11 +122,11 @@ internal sealed class TemplateInstallCommand : ICommand<Unit>
       {
         Terminal.WriteErrorLine("dotnet new install failed.".Red());
         Environment.ExitCode = installExit;
-        return Value;
+        return Unit.Value;
       }
 
       Terminal.WriteLine($"Installed {Path.GetFileName(nupkg)} for `dotnet new timewarp-architecture`.".Green());
-      return Value;
+      return Unit.Value;
     }
   }
 }

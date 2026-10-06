@@ -39,23 +39,74 @@ verified: it never built or ran tests.
 
 ## Checklist
 
-- [ ] Nuru beta.79 → Amuru 2 requirement confirmed
-- [ ] All pins aligned (CPM, runfiles, template)
-- [ ] API breaks fixed (dev-cli, agent-identity-cli, others); regions reconciled
-- [ ] `bin/dev` rebuilt and smoke-tested
-- [ ] Gates: `dev build` 0/0, dev-cli tests, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Nuru beta.79 → Amuru 2 requirement checked. It is **not** required: the beta.79 nuspec
+      depends on `TimeWarp.Amuru` ≥ 1.1.1. Amuru 2.0.0-beta.1 is the forward pin that
+      `ganda repo audit --fix --checks nuru` writes, so it stays (move forward only, no `VersionOverride`)
+- [x] All pins aligned. CPM is the only place versions live: runfile `#:package` directives
+      (`.githooks/*.cs`) are unversioned, and the template tree has no Nuru or Amuru pins
+- [x] API breaks fixed (dev-cli, agent-identity-cli); regions reconciled (none described the old API)
+- [x] `bin/dev` rebuilt and smoke-tested
+- [x] Gates: `dev build` 0/0, dev-cli tests, `dev test`, `dev template-smoke`, `ganda repo audit`
       (no blocking failures)
-- [ ] Do **not** start an AppHost, and do not run `dev db nuke --yes`
+- [x] Do **not** start an AppHost, and do not run `dev db nuke --yes`
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 2026-10-06 (cockpit; split out of 282's merge per Steve)
+- 2026-10-06 implementer (headless): applied the 282 WIP patch, verified every hunk, fixed the
+  remaining break, and ran all gates.
 
 ## Results
 
-*(fill when done)*
+**Pins** (`Directory.Packages.props`): `TimeWarp.Nuru` / `TimeWarp.Nuru.DevCli` 3.0.0-beta.76 →
+3.0.0-beta.79; `TimeWarp.Amuru` / `TimeWarp.Amuru.Tools` 1.1.1 → 2.0.0-beta.1.
+
+**Nuru beta.79 breaks** (Nuru now uses `TimeWarp.Mediator.Contracts` 14.0.0-beta.4):
+- Handlers return `Task<Unit>` instead of `ValueTask<Unit>` (all dev-cli and agent-identity-cli
+  endpoints, plus `WorkflowCommand.RunStepAsync`).
+- `Unit` moved from `TimeWarp.Nuru` to `TimeWarp.Mediator`. Mediator's `Unit` also has a static
+  `Task` member, so `global using static …Unit` made every `Task.Delay` / `Task.FromResult` in
+  the dev CLI ambiguous (CS0229). The WIP patch never built, so it missed this. The fix drops the
+  static using and writes `return Unit.Value;`.
+
+**Amuru 2 breaks/behavior:** I checked our code against the 2.0 release notes' upgrade guide.
+None of the changed surfaces is used in `tools/` or `.githooks/`:
+- no `WithStandardInput`, `TtyPassthroughAsync`, `Git.*` helpers, fzf, `WithCollect`,
+  `WithTerminalLogger`, or `WithProject`+`WithFile`.
+- `PassthroughAsync` without stdin keeps its old behavior.
+
+So requirement 5 (add a test) does not apply: no `dev` command depends on a changed behavior. The
+`.githooks` runfiles and agent-identity-cli build clean on Amuru 2.
+
+**Gates:**
+- `dev build` 0 warnings / 0 errors.
+- dev-cli-tests 102/102; agent-identity-cli-tests 11/11.
+- `dev test` exit 0, all suites passed.
+- `dev template-smoke` SUCCEEDED.
+- `ganda repo audit` passes. The nuru check is clean. One advisory warning is left:
+  `memsearch-scaffold` reports the three post-* hooks as outdated. Its `--fix` would add back the
+  `ganda memsearch index-repo` calls that ganda task 339 removed on purpose, so I did not apply
+  it. This looks like the installed ganda (1.0.0-beta.37) being older than task 339. The warning
+  does not block.
 
 ### How to validate
 
-*(required before done)*
+Smoke:
+```bash
+dotnet run tools/dev-cli/dev.cs -- self-install
+./bin/dev --capabilities | head
+./bin/dev check-version
+./bin/dev db nuke            # no --yes: lists only, exits 1
+./bin/dev build
+(cd tests/tools/dev-cli-tests && dotnet test -c Release)
+ganda repo audit
+```
+
+Expect:
+- self-install succeeds, and `--capabilities` prints the JSON endpoint list.
+- check-version prints "Version in source is new".
+- `db nuke` prints "Refusing to nuke without --yes" and the volume list.
+- `dev build` reports 0 Warning(s) / 0 Error(s).
+- dev-cli-tests show 102/102 passed.
+- The audit passes with no `nuru` failure. The only remaining item is the advisory `memsearch-scaffold` warning.

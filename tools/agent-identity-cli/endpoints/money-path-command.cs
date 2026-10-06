@@ -40,7 +40,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async ValueTask<Unit> Handle(MoneyPathCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(MoneyPathCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
@@ -138,7 +138,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
           }
 
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
 
         Terminal.WriteLine("  HTTP 402 Payment Required".Green());
@@ -178,7 +178,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
             Terminal.WriteErrorLine($"Paid retry HTTP {paid.StatusCode}".Red());
             Terminal.WriteErrorLine(paid.RawBody);
             Environment.ExitCode = 1;
-            return Value;
+            return Unit.Value;
           }
 
           Terminal.WriteLine("  HTTP 200 — capability delivered".Green());
@@ -222,7 +222,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Value;
+      return Unit.Value;
     }
 
     private void NarrateHeader(string server, string keyFile)
@@ -247,7 +247,7 @@ internal sealed class MoneyPathCommand : ICommand<Unit>
       Terminal.WriteErrorLine($"HTTP {status}".Red());
       Terminal.WriteErrorLine(body);
       Environment.ExitCode = 1;
-      return Value;
+      return Unit.Value;
     }
 
     private static string? TryDecodeBase64Utf8(string headerValue)

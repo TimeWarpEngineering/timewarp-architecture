@@ -35,7 +35,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
       Store = store;
     }
 
-    public async ValueTask<Unit> Handle(RegisterCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(RegisterCommand command, CancellationToken ct)
     {
       string server = string.IsNullOrWhiteSpace(command.Server) ? PathDefaults.DefaultServer : command.Server;
       string keyFile = string.IsNullOrWhiteSpace(command.KeyFile) ? Paths.DefaultKeyFilePath : command.KeyFile;
@@ -49,7 +49,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
         if (!options.Success || options.Value is null)
         {
           WriteHttpError(options.StatusCode, options.RawBody);
-          return Value;
+          return Unit.Value;
         }
 
         byte[] challengeBytes = AgentSigning.FromBase64Url(options.Value.Challenge);
@@ -68,7 +68,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
         if (!complete.Success || complete.Value is null)
         {
           WriteHttpError(complete.StatusCode, complete.RawBody);
-          return Value;
+          return Unit.Value;
         }
 
         Store.UpdateRegistration(keyFile, complete.Value.PrincipalId, complete.Value.KeyId);
@@ -84,7 +84,7 @@ internal sealed class RegisterCommand : ICommand<Unit>
         Environment.ExitCode = 1;
       }
 
-      return Value;
+      return Unit.Value;
     }
 
     private void WriteHttpError(int status, string body)

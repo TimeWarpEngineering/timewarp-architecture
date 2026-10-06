@@ -33,7 +33,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(EntraStatusCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(EntraStatusCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
@@ -41,24 +41,24 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       if (!EntraCli.TryFindRepoRoot(Terminal, out string repoRoot))
       {
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Cli = new EntraCli(Terminal, repoRoot, dryRun: false, Ct);
 
       if (!await ReadSecretsAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       PrintSecrets();
       if (!await PrintTenantLineAsync())
       {
-        return Value;
+        return Unit.Value;
       }
 
       await PrintAppRegistrationAsync().ConfigureAwait(false);
-      return Value;
+      return Unit.Value;
     }
 
     private async Task<bool> ReadSecretsAsync()

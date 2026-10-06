@@ -30,17 +30,17 @@ internal sealed class BuildCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(BuildCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(BuildCommand command, CancellationToken ct)
     {
       Command = command;
       Ct = ct;
 
-      if (!FindRepoRoot()) return Value;
-      if (!await CleanAsync()) return Value;
-      if (!await BuildAsync()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
+      if (!await CleanAsync()) return Unit.Value;
+      if (!await BuildAsync()) return Unit.Value;
 
       Terminal.WriteLine("\nBuild completed successfully!".Green());
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()

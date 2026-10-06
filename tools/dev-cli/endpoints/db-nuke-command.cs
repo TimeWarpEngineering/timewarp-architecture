@@ -54,19 +54,19 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbNukeCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbNukeCommand command, CancellationToken ct)
     {
       Ct = ct;
-      if (!FindAppHost()) return Value;
+      if (!FindAppHost()) return Unit.Value;
 
       string[]? volumes = await ListVolumesAsync();
-      if (volumes is null) return Value;
+      if (volumes is null) return Unit.Value;
       Volumes = volumes;
 
       if (!command.Yes)
       {
         Dictionary<string, VolumeContainer[]>? containersByVolume = await ListContainersAsync(Volumes);
-        if (containersByVolume is null) return Value;
+        if (containersByVolume is null) return Unit.Value;
 
         foreach (string line in DbNuke.BuildRefusalLines(AppHostProject, Volumes, containersByVolume))
         {
@@ -74,7 +74,7 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
         }
 
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       string? versionError = await AspireCli.ValidateVersionAsync(
@@ -82,15 +82,15 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
       if (versionError is not null)
       {
         Fail($"Error: {versionError}");
-        return Value;
+        return Unit.Value;
       }
 
-      if (!await StopAppHostAsync()) return Value;
-      if (!await SweepRemainingVolumesAsync()) return Value;
+      if (!await StopAppHostAsync()) return Unit.Value;
+      if (!await SweepRemainingVolumesAsync()) return Unit.Value;
 
       Terminal.WriteLine("AppHost stopped and its volumes removed.".Green());
       Terminal.WriteLine("Next `dev run` starts empty: migrations re-apply and seeds re-run.");
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindAppHost()

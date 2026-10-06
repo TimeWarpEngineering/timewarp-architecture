@@ -21,10 +21,10 @@ internal sealed class DbUpdateCommand : DbGroup, ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbUpdateCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbUpdateCommand command, CancellationToken ct)
     {
       Environment.ExitCode = await DbAppHost.RunUpdateAsync(Terminal, ct).ConfigureAwait(false);
-      return Value;
+      return Unit.Value;
     }
   }
 }
@@ -42,10 +42,10 @@ internal sealed class DbUpdateAliasCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(DbUpdateAliasCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(DbUpdateAliasCommand command, CancellationToken ct)
     {
       Environment.ExitCode = await DbAppHost.RunUpdateAsync(Terminal, ct).ConfigureAwait(false);
-      return Value;
+      return Unit.Value;
     }
   }
 }

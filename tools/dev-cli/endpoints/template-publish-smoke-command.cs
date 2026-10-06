@@ -89,18 +89,18 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal = terminal;
     }
 
-    public async ValueTask<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
+    public async Task<Unit> Handle(TemplatePublishSmokeCommand command, CancellationToken ct)
     {
       Ct = ct;
 
-      if (!FindRepoRoot()) return Value;
+      if (!FindRepoRoot()) return Unit.Value;
 
       string? version = command.Version ?? ReadReleaseVersion();
       if (string.IsNullOrWhiteSpace(version))
       {
         Terminal.WriteErrorLine("Error: could not resolve version (pass --version or set source/Directory.Build.props <Version>).".Red());
         Environment.ExitCode = 1;
-        return Value;
+        return Unit.Value;
       }
 
       Version = version.Trim();
@@ -119,22 +119,22 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal.WriteLine($"Work root: {SmokeRoot}\n");
 
       // Same monorepo pre-scan as template-smoke — before network wait so local failures fail fast.
-      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Value;
+      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Unit.Value;
 
       PrepareArtifactDirs();
 
-      if (!AssertPinLogicSelfCheck()) return Value;
+      if (!AssertPinLogicSelfCheck()) return Unit.Value;
 
       if (!command.SkipWait)
       {
-        if (!await WaitForFlatcontainerAsync()) return Value;
+        if (!await WaitForFlatcontainerAsync()) return Unit.Value;
       }
       else
       {
         Terminal.WriteLine("Skipping flatcontainer wait (--skip-wait).".Yellow());
       }
 
-      if (!await InstallPublishedTemplateAsync()) return Value;
+      if (!await InstallPublishedTemplateAsync()) return Unit.Value;
 
       foreach ((string name, string[] extraArgs) in SmokeMatrix)
       {
@@ -142,12 +142,12 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         {
           Terminal.WriteErrorLine($"\nTemplate publish smoke FAILED — {name}".Red());
           Environment.ExitCode = 1;
-          return Value;
+          return Unit.Value;
         }
       }
 
       Terminal.WriteLine("\nTemplate publish smoke SUCCEEDED".Green());
-      return Value;
+      return Unit.Value;
     }
 
     private bool FindRepoRoot()
