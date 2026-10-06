@@ -23,7 +23,7 @@
 // Tiers 2–3 set TIMEWARP_TEST_PORT_BASE so generated-app in-proc hosts do not collide with
 // monorepo `dev test` on the default ports (task 245).
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
-// AssertSkillsShipped: generated apps must contain the eight skills/*/SKILL.md files and must
+// AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
 // Task 240: AssertInitializerImportGraphResolves (partial in template-smoke-initializer-assets.cs)
 // after the generated solution build — host-free `_content` → NuGet staticwebassets file check.
@@ -681,6 +681,7 @@ internal sealed partial class TemplateSmokeHarness
       "tw-blazor-css-strategy/SKILL.md",
       "tw-blazor-layout/SKILL.md",
       "tw-blazor/SKILL.md",
+      "tw-deploy/SKILL.md",
       "tw-feature-placement/SKILL.md",
       "tw-mock-response-factory/SKILL.md",
       "tw-slice-isolation/SKILL.md",
@@ -706,7 +707,7 @@ internal sealed partial class TemplateSmokeHarness
     }
 
     if (ok)
-      Terminal.WriteLine("Generated app contains skills/ (eight SKILL.md files; analysis/ excluded).");
+      Terminal.WriteLine("Generated app contains skills/ (nine SKILL.md files; analysis/ excluded).");
 
     return ok;
   }
