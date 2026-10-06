@@ -5,11 +5,6 @@
   public static string Title => "Passkeys";
   public static Icon? NavIcon => new Icons.Regular.Size20.Key();
 
-  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
-  [Inject] private CommandPaletteContext PaletteContext { get; set; } = null!;
-  // TimeWarpStateComponent keeps its Store private; the offer runner needs the circuit/tab store.
-  [Inject] private IStore ScopedStore { get; set; } = null!;
-
   private bool IsBusy => IsAnyActive
   (
     typeof(SignInState.SignInWithPasskeyActionSet.Action),
@@ -19,12 +14,6 @@
 
   private bool IsListBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
-
-  private bool IsRevokeOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(RevokeCredential.OfferName, credential.Id.Value);
-
-  private bool IsRenameOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(RenameCredential.OfferName, credential.Id.Value);
 
   protected override async Task OnInitializedAsync()
   {
@@ -50,21 +39,17 @@
 
   private Task AuthenticateWithPasskey() => NoSubSignInState.SignInWithPasskey(SignInState.StayOnPage);
 
-  // Offered actions run through the catalog; the runner refreshes FetchCredentials afterwards.
-  private Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
-    CredentialOfferRows.RunAsync(RevokeCredential.OfferName, credential.Id.Value, input: null, ScopedStore, ActionCatalog, PaletteContext, CancellationToken);
+  private async Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential)
+  {
+    await NoSubCredentialsState.RevokeCredential(credential.Id.Value);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
-  private Task RenameAsync(CredentialRename rename) =>
-    CredentialOfferRows.RunAsync
-    (
-      RenameCredential.OfferName,
-      rename.CredentialId,
-      CredentialOfferRows.NicknameInput(rename.Nickname),
-      ScopedStore,
-      ActionCatalog,
-      PaletteContext,
-      CancellationToken
-    );
+  private async Task RenameAsync(CredentialRename rename)
+  {
+    await NoSubCredentialsState.RenameCredential(rename.CredentialId, rename.Nickname);
+    await NoSubCredentialsState.FetchCredentials();
+  }
 
   private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
 }
@@ -100,8 +85,6 @@
                       FallbackLabel="Passkey"
                       RevokeLabel="Revoke"
                       RevokeDataQa="RevokePasskey"
-                      IsRevokeOffered="IsRevokeOffered"
-                      IsRenameOffered="IsRenameOffered"
                       RevokeDisabledHint="Add another passkey or agent key before revoking this one."
                       RevokeDisabledHintDataQa="RevokePasskeyHint"
                       OnRevoke="ConfirmRevokeAsync"

@@ -17,10 +17,6 @@
   Save dispatches RenameCredential (+ FetchCredentials), Skip dispatches ClearPendingNickname.
   The form is contextual input, not an outcome bar (task 247 rule 1 allows it inline); the
   rename outcome itself is reported to the shell notification region by the state handler.
-  Save dispatches RenameCredential directly, not through CredentialOfferRows.RunAsync (task 279):
-  this prompt renders on every TimeWarpPage, including pages that contribute no Credentials rows,
-  so the page-scoped offer runner would refuse it ("not offered here now"). The server's
-  RenameCredential handler is the enforcing boundary (it renames only the caller's own credential).
   ShowNicknameForm is component-local so a pending nickname set by another surface (Settings'
   Create button) does not also open a form here; the reverse is handled by state — after THIS
   CTA succeeds the component dispatches ClaimPendingNicknameForPrompt BEFORE FetchCredentials, so

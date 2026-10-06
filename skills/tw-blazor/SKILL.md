@@ -88,124 +88,46 @@ Reference: `features/identity/sign-in-state/` (ceremonies, challenge navigation,
 navigation) and `features/identity/credentials-state/credentials-state.link-microsoft-365.cs`
 (a cataloged full-page navigation) under `source/container-apps/web/projects/web-spa/`.
 
-# Server-offered actions
+# Server-owned availability
 
-When whether an action is valid right now depends on a server rule (last credential, already
-linked, state of a record), the server says so: never compute validity on the client when the
-server can offer it. The read the page already loads returns the actions valid now as
-`{ name, label, subject, arguments }`, where `name` is a client `[CatalogAction]` name and
-`arguments` are keyed by that action's constructor parameter names. The server computes the
-offers from the same rule code its handlers enforce, and builds each one from a typed offer record
-in the shared contracts (generated from `[Offerable]` on the operation's contract), so it never
-spells a name or an argument key by hand.
+When whether an action applies right now depends on a server rule (last credential, already
+linked, state of a record), the server decides and the client reads the answer. Never copy a
+server rule into the client.
 
-The client stores the offers in the feature state with the data they describe, renders a button
-only for an offer, and runs it through the catalog: `Find` the name, check the entry is
-human-visible (`Human` / `Both`) and its `Permissions` pass `IAuthorizationService`, bind
-`arguments` (plus user input for parameters the offer left unbound — input can never replace a
-bound argument), then `Execute`. The page then refreshes the read the offer came from as a
-separate, parameterless cataloged action run by the caller, never by the handler. An unknown name,
-a failed check or a failed binding is refused with a notification, and nothing runs. The same rows
-are the page's contextual Ctrl-K rows, except those that need input.
+1. **The server owns availability through typed flags.** Each item in a list carries a typed flag
+   per action (`CredentialSummary.CanRevoke`, `CanRename`); a page-level action gets a flag on the
+   page's response (`GetCredentials.Response.CanLinkMicrosoft365`). The read handler sets them from
+   the same rule code the action's handler enforces. Use typed flags, not a list of allowed action
+   names: the compiler checks every read, and there is no string vocabulary to keep in agreement.
+   Flags default to `false`, so a missing flag shows no action.
+2. **Item actions live on the page.** A row button dispatches its action directly with the row's
+   item (`RevokeCredential(id)`), shown or enabled from the row's flag, and the page then refreshes
+   the read. The endpoint still enforces the rule (for example a 409 for a stale click), so the
+   flag is guidance for an honest client, not the security boundary.
+3. **Parameters the user types get a form on the page,** next to the button (Rename's nickname
+   field). There is no generic form system.
+4. **Ctrl-K and other global entry points get navigation and parameter-free actions only.** An item
+   action is reached by going to its page ("revoke a passkey" means opening Passkeys). A
+   parameter-free action whose rule may not hold (Link Microsoft 365) can stay a general command:
+   its own flow reports when it does not apply. Actions that need an item are cataloged with
+   `Visibility = Agent`.
+5. **Agents get tools scoped to the current page,** the same actions the page's buttons dispatch,
+   not a server-enumerated list of every action on every item.
 
 Why: a client copy of a server rule drifts and races (the button shows, the server answers 409),
-and every surface that wants the rule needs its own copy. An offer is the server's answer for this
-caller and this snapshot. The catalog stays the allow-list: the server can only ask for an action
-the client already ships, and the endpoint still enforces the rule. Offers name actions rather than
-URLs so the real action runs, with its state updates and notifications, and so a response can never
-aim the user's token at an arbitrary route.
+and every surface that wants the rule needs its own copy. A flag is the server's answer for this
+caller and this snapshot, on the data it describes, so the list and its availability never come
+from different snapshots. Enumerating every action for every item instead (actions × items) floods
+global surfaces like Ctrl-K and needs string agreement between server and client for no benefit
+the page does not already have.
 
-## When to offer
+Use a flag only where availability needs a server-owned rule. Purely local actions (counter,
+theme, toggles, navigation, modals) need none, and static permission checks use
+`[CatalogAction(Permissions = …)]` plus `AuthorizeView` or the catalog's permission filter.
 
-- An offer is not a different kind of action. It is the server saying "you may run this action
-  now, with these arguments"; the action stays a normal TimeWarp.State action that pages, the
-  palette and agents can also run directly, and its endpoint still enforces the rule.
-- Offer an action when deciding whether it is available needs a server-owned rule: server data,
-  other users' actions, or a business invariant. Examples: revoking a credential that is not the
-  last one, linking Microsoft 365 when the site allows it and the account is not linked yet,
-  approve / refund / cancel depending on a record's state, editing only what the caller owns. The
-  test: if the client would have to copy a server rule to decide whether to show the button, use an
-  offer.
-- Use a plain action for purely local or UI actions (counter, theme, toggles, navigation, modals);
-  for static permission checks, where `[CatalogAction(Permissions = …)]` plus `AuthorizeView` or the
-  catalog's permission filter is enough; and for reads — a fetch is never offered.
-- Anything an agent should run only when the server allows it should be an offer, so the agent's
-  tool calls are server-checked the same way the buttons are.
-
-Why: offers cost a server rule, a record and a refresh round-trip. They pay off only where the
-client cannot know the answer; for local or statically-permitted actions they add latency and a
-second place to look without removing any drift.
-
-## How to add an offerable action
-
-**Primary path — the action runs a contract Command: flag the contract.**
-
-1. Add `[Offerable]` to the contract's static partial class. List the Command properties the user
-   supplies with `UserInput = [nameof(Command.X)]` (a nickname, a comment); the user, not the
-   server, fills those.
-
-   ```csharp
-   [ApiEndpoint]
-   [EndpointAuthorize(Policy = PermissionIds.CredentialManageSelf, AuthenticationSchemes = …)]
-   [Offerable(UserInput = [nameof(Command.Nickname)])]
-   public static partial class RenameCredential
-   {
-     partial record Offer : ICredentialActionOffer; // optional: add interfaces to the generated record
-     …
-   }
-   ```
-
-   The contracts generator emits, onto the contract, `const string OfferName` (`"<Slice>.<Operation>"`,
-   e.g. `"Identity.RenameCredential"`) and a nested `[ActionOffer(OfferName, UserInput = …)] record
-   Offer(…)` whose properties are the route parameters plus the Command's settable properties, minus
-   `UserInput` and the auth-filled `UserId` (`IAuthApiRequest` — the server takes the caller from the
-   session and never trusts a client-sent id, so it is never an offered argument). A `UserInput` entry
-   that names no Command property, repeats an entry, or names that `UserId` is **TWE012**;
-   `[Offerable]` on a contract with no Command is **TWE013**; `[Offerable]` on anything but a non-generic
-   partial class declared in a namespace (nested only in such classes) is **TWE014** — the generated
-   members could not merge into it.
-2. Set `[CatalogAction(Name = <Contract>.OfferName)]` on the client action whose handler requests that
-   Command. **TWA0031** fails the SPA build when an offerable contract has no such action, or the
-   action declares a different name.
-3. Have the server build offers from the generated record:
-   `OfferedAction.ForCredential(new RenameCredential.Offer(id), "Rename")` (or `ForPage` / `Create`).
-
-Why: an offer is the Command minus what the server fills, split into what the server binds and what
-the user types. Generating it from the contract means the offer cannot drift from the operation it
-runs, and an agent sees the same typed shape as the button.
-
-**Escape hatch — the action has no contract Command: hand-write the record.** A browser redirect
-to a hand-written endpoint (an auth challenge), or a client-only action, has no Command to generate
-from:
-
-1. Add the catalog name constant to the slice's offered-names class in the shared contracts. Name it
-   `"<Slice>.<Operation>"`, the same scheme the generator uses (`"Identity.LinkMicrosoft365"` beside
-   the generated `"Identity.RenameCredential"`), so every offer a slice makes reads as one vocabulary
-   whether its record is generated or hand-written.
-2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`.
-3. Set `[CatalogAction(Name = <constant>)]` on the client action, so renaming the action set cannot
-   change the offered name.
-4. Build offers only from the record.
-
-Either way the record's public properties are the arguments the server binds and must match the
-action's first constructor's parameters by camelCase name and type. A nullable property cannot feed
-a required parameter (the client treats null as missing). Every required parameter the offer does
-not bind must be listed in `UserInput`. Optional parameters may be left out only at the end:
-binding one after an optional parameter that is omitted, or fed by a nullable property, is refused.
-
-The SPA build checks the pairing: TWA0029 when no action, or more than one, declares the offer's
-`Name`; TWA0030 when the record's properties or `UserInput` do not match the action's parameters;
-TWA0031 when an `[Offerable]` contract's client action does not carry its `OfferName`. Why: the
-server cannot reference client action types, so the shared contracts are the one place both sides
-can agree, and a build error replaces a run-time refusal the user would see.
-
-Reference: `features/identity/get-credentials/` and `credential-offers-application.cs` (server),
-`rename-credential/rename-credential-contracts.cs` and `revoke-credential/revoke-credential-contracts.cs`
-(`[Offerable]` contracts), `credential-action-offer-contracts.cs` (the hand-written Link Microsoft 365
-record),
-`credential-offer-rows.cs` and `credentials-context-source.cs` (client) under
-`source/container-apps/web/`; the runner is
-`web-spa/features/application/command-palette/command-palette-runner.cs`.
+Reference: `features/identity/get-credentials/` and `credential-rules-application.cs` (server)
+under `source/container-apps/web/`; `features/application/pages/SettingsPage.razor` and
+`features/identity/components/CredentialList.razor` (client) under `web-spa/`.
 
 # Action handlers and loading
 

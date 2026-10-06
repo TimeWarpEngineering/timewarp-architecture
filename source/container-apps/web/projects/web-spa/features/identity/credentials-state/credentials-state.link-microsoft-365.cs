@@ -6,20 +6,15 @@
 // RFC 219 D10: Entra is a named BFF scheme, not a WASM MSAL session, so linking is a forceLoad
 // navigation the server answers with the challenge redirect; the callback returns to /Settings
 // (literal path: Settings is another slice) where the linked account is listed.
-// Cataloged for humans with the Settings page's credential permission. Whether it applies NOW is the
-// server's call (task 279): GetCredentials offers it page-level while CredentialRules.CanLinkMicrosoft365
-// holds, and the Settings button and its contextual Ctrl-K row exist only for that offer. The static
-// palette roster lists it on every page (the catalog has no "available now" hook). On /Settings the
-// offered contextual row replaces the static row when Link is offered; when it is not offered the
-// static row stays, on /Settings as everywhere else. Running the static row when Link does not
-// apply falls back to the challenge flow's own handling (404 scheme not registered, 403 site policy
-// off, and the link callback's own already-linked handling).
+// Cataloged for humans with the Settings page's credential permission, under its default derived
+// name: a general Ctrl-K command listed on every page (the palette has no "available now" hook, by
+// design — task 282). Whether it applies NOW is the server's call: Settings shows its button only
+// while GetCredentials.Response.CanLinkMicrosoft365 holds (CredentialRules.CanLinkMicrosoft365).
+// Running the palette command when Link does not apply falls back to the challenge flow's own
+// handling (404 scheme not registered, 403 site policy off, and the link callback's own
+// already-linked handling) — the server reports it, the client copies no rule.
 // DisplayName is authored (task 268): the generated label split "Microsoft365" into
-// "microsoft 365"; the palette shows "Identity: Link Microsoft 365".
-// Task 280: Name = OfferedActionNames constant shared with the server's LinkMicrosoft365Offer record, so a
-// rename of this action set cannot change the offered name; TWA0029/TWA0030 check the pairing. The
-// record stays hand-written (task 281 escape hatch): linking is a redirect to a hand-written challenge
-// endpoint, so there is no contract Command for [Offerable] to generate the offer from.
+// "microsoft 365"; the palette shows "Credentials: Link Microsoft 365".
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -32,7 +27,6 @@ partial class CredentialsState
   {
     [CatalogAction
     (
-      Name = OfferedActionNames.LinkMicrosoft365,
       DisplayName = "Link Microsoft 365",
       Description = "Link a Microsoft 365 account to the signed-in account so it can sign in with Microsoft 365.",
       Permissions = [PermissionIds.CredentialManageSelf],

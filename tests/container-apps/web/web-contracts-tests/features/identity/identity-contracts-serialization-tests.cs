@@ -27,6 +27,7 @@
 // ReSharper disable InconsistentNaming
 namespace IdentityContracts_;
 
+using System.Text.Json.Nodes;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Contracts.Tests;
@@ -449,7 +450,9 @@ public class GetCredentials_Response_Should
           firstId, CredentialType.Passkey, "1Password", "Work laptop",
           DateTimeOffset.UtcNow.AddDays(-10), revokedAt: null, isActive: true,
           new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"), "3f9a1c2e",
-          lastUsedAt: new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero)
+          lastUsedAt: new DateTimeOffset(2026, 9, 23, 8, 30, 0, TimeSpan.Zero),
+          canRevoke: true,
+          canRename: true
         ),
         new GetCredentials.CredentialSummary
         (
@@ -462,13 +465,12 @@ public class GetCredentials_Response_Should
           CredentialId.New(), CredentialType.EntraAccount, "Microsoft 365", nickname: null,
           DateTimeOffset.UtcNow.AddDays(-2), revokedAt: null, isActive: true,
           RegisteredWith.Unknown, "5c7d9e01",
-          accountHint: "steve@contoso.com"
+          accountHint: "steve@contoso.com",
+          canRevoke: false,
+          canRename: true
         )
       ],
-      [
-        OfferedAction.ForCredential(new RevokeCredential.Offer(firstId.Value), "Revoke"),
-        OfferedAction.ForPage(new LinkMicrosoft365Offer(), "Link Microsoft 365")
-      ]
+      canLinkMicrosoft365: true
     );
 
     GetCredentials.Response parsed = ContractSerialization.RoundTrip(response);
@@ -494,45 +496,60 @@ public class GetCredentials_Response_Should
     parsed.Credentials[2].Type.ShouldBe(CredentialType.EntraAccount);
     parsed.Credentials[2].Label.ShouldBe("Microsoft 365");
     parsed.Credentials[2].AccountHint.ShouldBe("steve@contoso.com");
-    // Task 279: offers ride the same read — a credential-bound offer and a page-level one.
-    parsed.Offers.Count.ShouldBe(2);
-    parsed.Offers[0].Name.ShouldBe(RevokeCredential.OfferName);
-    parsed.Offers[0].Label.ShouldBe("Revoke");
-    parsed.Offers[0].Subject.ShouldBe(firstId.Value.ToString("D"));
-    // Task 280: the generated RevokeCredential.Offer record (task 281) keeps the wire shape — camelCase "credentialId", Guid "D".
-    parsed.Offers[0].Arguments.Keys.ShouldBe(["credentialId"]);
-    parsed.Offers[0].Arguments["credentialId"].GetString().ShouldBe(firstId.Value.ToString("D"));
-    parsed.Offers[1].Name.ShouldBe(OfferedActionNames.LinkMicrosoft365);
-    parsed.Offers[1].Subject.ShouldBeNull();
-    parsed.Offers[1].Arguments.ShouldBeEmpty();
+    // Task 282: the server's availability flags ride the same read — per row and page-level.
+    parsed.Credentials[0].CanRevoke.ShouldBeTrue();
+    parsed.Credentials[0].CanRename.ShouldBeTrue();
+    parsed.Credentials[1].CanRevoke.ShouldBeFalse("a revoked row gets no flags");
+    parsed.Credentials[1].CanRename.ShouldBeFalse();
+    parsed.Credentials[2].CanRevoke.ShouldBeFalse();
+    parsed.Credentials[2].CanRename.ShouldBeTrue();
+    parsed.CanLinkMicrosoft365.ShouldBeTrue();
     return Task.CompletedTask;
   }
 
-  public static Task SerializeAndDeserialize_Mock_Response_With_Offers()
+  public static Task SerializeAndDeserialize_Mock_Response_With_Flags()
   {
     GetCredentials.Response response = GetCredentials.GetMockResponseFactory()(new GetCredentials.Query());
 
     GetCredentials.Response parsed = ContractSerialization.RoundTrip(response);
 
     parsed.Credentials.Count.ShouldBe(response.Credentials.Count);
-    parsed.Offers.Count.ShouldBe(response.Offers.Count);
-    for (int index = 0; index < response.Offers.Count; index++)
+    for (int index = 0; index < response.Credentials.Count; index++)
     {
-      OfferedAction expected = response.Offers[index];
-      OfferedAction actual = parsed.Offers[index];
-      actual.Name.ShouldBe(expected.Name);
-      actual.Label.ShouldBe(expected.Label);
-      actual.Subject.ShouldBe(expected.Subject);
-      // Every argument, keyed — a page-level offer has none, a credential-bound one has credentialId.
-      actual.Arguments.Keys.Order().ShouldBe(expected.Arguments.Keys.Order());
-      foreach ((string key, JsonElement value) in expected.Arguments)
-      {
-        actual.Arguments[key].GetRawText().ShouldBe(value.GetRawText(), $"offer {index} argument '{key}'");
-      }
+      parsed.Credentials[index].CanRevoke.ShouldBe(response.Credentials[index].CanRevoke, $"row {index} CanRevoke");
+      parsed.Credentials[index].CanRename.ShouldBe(response.Credentials[index].CanRename, $"row {index} CanRename");
     }
 
+    parsed.CanLinkMicrosoft365.ShouldBe(response.CanLinkMicrosoft365);
+
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
-    json.ShouldContain($"\"arguments\":{{\"credentialId\":\"{response.Credentials[0].Id.Value:D}\"}}");
+    json.ShouldContain("\"canRevoke\":true");
+    json.ShouldContain("\"canRename\":true");
+    json.ShouldContain("\"canLinkMicrosoft365\":false");
+    return Task.CompletedTask;
+  }
+
+  public static Task Default_Missing_Flags_To_False()
+  {
+    // A payload without the flags (an older server) shows no action: every flag defaults to false.
+    GetCredentials.Response full = GetCredentials.GetMockResponseFactory()(new GetCredentials.Query());
+    JsonObject root = JsonSerializer.SerializeToNode(full, ContractSerialization.Options)!.AsObject();
+    root.Remove("canLinkMicrosoft365");
+    foreach (JsonNode? row in root["credentials"]!.AsArray())
+    {
+      row!.AsObject().Remove("canRevoke");
+      row.AsObject().Remove("canRename");
+    }
+
+    string json = root.ToJsonString();
+    json.ShouldNotContain("canRevoke");
+
+    GetCredentials.Response parsed =
+      JsonSerializer.Deserialize<GetCredentials.Response>(json, ContractSerialization.Options).ShouldNotBeNull();
+
+    parsed.Credentials.Count.ShouldBe(full.Credentials.Count);
+    parsed.Credentials.ShouldAllBe(static credential => !credential.CanRevoke && !credential.CanRename);
+    parsed.CanLinkMicrosoft365.ShouldBeFalse();
     return Task.CompletedTask;
   }
 
@@ -555,8 +572,7 @@ public class GetCredentials_Response_Should
           CredentialId.New(), CredentialType.Passkey, "laptop", nickname: null, DateTimeOffset.UtcNow,
           revokedAt: null, isActive: true, RegisteredWith.Unknown, "0123abcd"
         )
-      ],
-      []
+      ]
     );
 
     string json = JsonSerializer.Serialize(response, ContractSerialization.Options);
@@ -749,51 +765,6 @@ public class AddAgentKey_Response_Should
 
     Should.Throw<Exception>(() =>
       JsonSerializer.Deserialize<AddAgentKey.Response>(json, ContractSerialization.Options));
-    return Task.CompletedTask;
-  }
-}
-
-// Task 280 review M3/M12/M13: OfferedAction.Create builds offers from the RUNTIME [ActionOffer]
-// record, pins the Rename wire shape exactly, and refuses a type that is no offer record.
-public class OfferedAction_Should
-{
-  [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<OfferedAction_Should>();
-
-  private sealed record NotAnOffer(Guid CredentialId);
-
-  public static Task Bind_Only_CredentialId_For_Rename()
-  {
-    Guid credentialId = Guid.NewGuid();
-
-    OfferedAction parsed = ContractSerialization.RoundTrip(OfferedAction.ForCredential(new RenameCredential.Offer(credentialId), "Rename"));
-
-    parsed.Name.ShouldBe(RenameCredential.OfferName);
-    parsed.Name.ShouldBe("Identity.RenameCredential", "task 281 naming scheme: <Slice>.<Operation> from [Offerable]");
-    parsed.Subject.ShouldBe(credentialId.ToString("D"));
-    parsed.Arguments.Keys.ShouldBe(["credentialId"], "the nickname is UserInput and the const is no argument");
-    parsed.Arguments["credentialId"].GetString().ShouldBe(credentialId.ToString("D"));
-    return Task.CompletedTask;
-  }
-
-  public static Task Use_The_Runtime_Record_For_An_Interface_Typed_Offer()
-  {
-    Guid credentialId = Guid.NewGuid();
-    ICredentialActionOffer offer = new RevokeCredential.Offer(credentialId);
-
-    OfferedAction offered = OfferedAction.ForCredential(offer, "Revoke");
-
-    offered.Name.ShouldBe(RevokeCredential.OfferName);
-    offered.Arguments.Keys.ShouldBe(["credentialId"]);
-    return Task.CompletedTask;
-  }
-
-  public static Task Refuse_A_Type_Without_ActionOffer()
-  {
-    InvalidOperationException exception = Should.Throw<InvalidOperationException>(
-      () => OfferedAction.Create(new NotAnOffer(Guid.NewGuid()), "Nothing", subject: null));
-
-    exception.Message.ShouldContain(nameof(NotAnOffer));
     return Task.CompletedTask;
   }
 }

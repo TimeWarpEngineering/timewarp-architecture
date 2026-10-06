@@ -118,20 +118,20 @@ Revoke and Rename `[CatalogAction]` **Visibility goes back to `Agent`**. 279 cha
 
 ## Checklist
 
-- [ ] Typed flags on `CredentialSummary` and `GetCredentials.Response`, from `CredentialRules`
-- [ ] Pages and `CredentialList` use the flags and dispatch actions directly
-- [ ] Revoke/Rename `[CatalogAction]`: default names, `Visibility = Agent`; Link M365 default name
-- [ ] Ctrl-K context hook removed entirely (context, sources, row kind, runner path, Open merge, DI)
-- [ ] Offers machinery removed (OfferedAction, offer records, `[ActionOffer]`, `[Offerable]`, generator part, binder)
-- [ ] TWE012–014 and TWA0029–0031 retired/reserved; release notes, AGENTS.md and the package row updated
-- [ ] Generator project's RS2008 suppression and its linked include removed
-- [ ] Skills: `tw-blazor` "Server-owned availability" replaces "Server-offered actions"; the `tw-web-api-contracts` offers section is removed
-- [ ] Tests replaced per Requirement 2
-- [ ] Gates: `dev build` 0/0 (analyzer/generator change means a full rebuild), `dev test`,
+- [x] Typed flags on `CredentialSummary` and `GetCredentials.Response`, from `CredentialRules`
+- [x] Pages and `CredentialList` use the flags and dispatch actions directly
+- [x] Revoke/Rename `[CatalogAction]`: default names, `Visibility = Agent`; Link M365 default name
+- [x] Ctrl-K context hook removed entirely (context, sources, row kind, runner path, Open merge, DI)
+- [x] Offers machinery removed (OfferedAction, offer records, `[ActionOffer]`, `[Offerable]`, generator part, binder)
+- [x] TWE012–014 and TWA0029–0031 retired/reserved; release notes, AGENTS.md and the package row updated
+- [x] Generator project's RS2008 suppression and its linked include removed
+- [x] Skills: `tw-blazor` "Server-owned availability" replaces "Server-offered actions"; the `tw-web-api-contracts` offers section is removed
+- [x] Tests replaced per Requirement 2
+- [x] Gates: `dev build` 0/0 (analyzer/generator change means a full rebuild), `dev test`,
       `dev template-smoke`, `ganda repo audit`, `dev check-version` (analyzers/generators/attributes
       packages change)
-- [ ] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Do **not** start an AppHost; record the browser check as not performed
+- [x] Implementation review (clean, 1 round); host `open-pr`
 
 ## Notes
 
@@ -147,17 +147,110 @@ Revoke and Rename `[CatalogAction]` **Visibility goes back to `Agent`**. 279 cha
 ## Session
 
 - Created: 2026-10-06 (cockpit, per Steve)
+- 2026-10-06 implement oracle (implementer-claude, headless): Change table + Remove list done, tests
+  replaced, gates green (see Results). No AppHost started.
+- 2026-10-06 review oracle (claude-opus-5-5, headless): tw-implementation-review, effort 3, roster
+  general (Claude subagent). Disposition clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-06T04:02:08Z
 
 ## Results
 
-*(fill when done)*
+**Model now:** the server owns availability through typed flags on `GetCredentials`:
+`CredentialSummary.CanRevoke` / `CanRename` (per row, default `false`) and
+`Response.CanLinkMicrosoft365`. The handler sets them from `CredentialRules` over the caller's
+**active** credentials, whatever `IncludeRevoked` asks for. Revoked rows get both flags `false`.
+Settings, Passkeys and `CredentialList` read the flags. The buttons dispatch
+`RevokeCredential(id)` / `RenameCredential(id, nickname)` directly and then `FetchCredentials`,
+which is the pre-279 sequencing. Ctrl-K is back to the plain roster.
+
+**Removed:** `OfferedAction` / `OfferedActionNames`, `ICredentialActionOffer` /
+`LinkMicrosoft365Offer`, `CredentialOffers`, `[Offerable]` + the partial `Offer` records,
+`ActionOfferAttribute` / `OfferableAttribute`, `contracts-generator.offerable.cs` (generator csproj
+and `contracts-generator.cs` restored to their pre-281 shape, including the RS2008 NoWarn and the
+linked descriptor include), `ActionOfferAgreementAnalyzer`, and the SPA Ctrl-K context hook
+(`CommandPaletteContext`, `ICommandPaletteContextSource`, `ContextualActionArguments`, the
+`Contextual` row kind / `RequiresInput`, the runner's contextual path, the Open merge, the
+`CommandPalette` injection, `CredentialsContextSource`, `CredentialOfferRows`, `CredentialOffer`,
+and both DI lines). `command-palette-row/runner/open` and `-ranker` comments match pre-275 again.
+
+**Catalog:** Revoke / Rename use default names (`Credentials.RevokeCredential` /
+`Credentials.RenameCredential`) with `Visibility = Agent`. Link Microsoft 365 uses its default name
+`Credentials.LinkMicrosoft365` and keeps `DisplayName` and Visibility Human. `FetchCredentials` stays
+cataloged as Agent, so an agent can read the list and its flags.
+
+**Retired IDs:** TWE012/013/014 (SSOT comment in `diagnostic-descriptors.cs` plus the AGENTS.md
+retired line) and TWA0029/0030/0031 (one retired row in the AGENTS.md table). The package row,
+`Directory.Build.props` comment and analyzers csproj description now read TWA0020–0028. None of
+these IDs was ever in a release (v2.0.0-beta.19 has no offers code), so per Roslyn release tracking
+their `AnalyzerReleases.Unshipped.md` lines were deleted, not moved to a Removed section.
+
+**Skills:** `tw-blazor` "Server-offered actions" became a short "Server-owned availability"
+section with rules 1–5 and their reasons. The `tw-web-api-contracts` `[Offerable]` section and its
+checklist line are gone.
+
+**Tests:**
+- `web-server-integration-tests/.../credential-availability-tests.cs` (renamed from
+  credential-offers): the host-free `CredentialRules_` table, plus real HTTP flags. One credential
+  gives `CanRevoke` false and `CanRename` true; two give both true; revoked rows get no flags and the
+  remaining row drops `CanRevoke`; `CanLinkMicrosoft365` is true only when Entra is offered and not
+  linked. `Refuse_A_Stale_Revoke_With_409` acts twice on an old snapshot where both rows said
+  `CanRevoke`.
+- `web-spa-integration-tests/.../credential-availability-tests.cs` (replaces credential-offers):
+  the state holds the server's flags and follows them when they contradict the count; Revoke and
+  Rename dispatch the real actions and refresh the flags; Ctrl-K on /Settings and /Passkeys returns
+  exactly the /Counter roster (no per-credential rows, Link listed once). The scripted BFF sets its
+  flags with the real `CredentialRules`; the `ExtraOffers` / `SuppressOffer` hooks were replaced by
+  `CanRevokeOverride`.
+- `credential-list-render-tests`: `CanRevoke` false disables the button and shows the hint;
+  `CanRevoke` true shows no hint; `CanRename` false disables Rename. The prerender facts in
+  `protected-page-deep-link-tests` (Settings and Passkeys, Revoke/Unlink/Link) already prove the
+  handler's flags reach the rendered buttons; only their comment changed.
+- Contracts round-trips: flags per row and page-level, the mock factory's flags on the wire, and
+  missing flags deserialize to `false`. The `OfferedAction_Should` class was removed.
+- `action-catalog-tests` / `command-palette-tests` are back to the `Credentials.*` names. The
+  catalog test also pins Revoke and Rename as Agent-only. The `[ActionOffer]` `Using` was removed
+  from the SPA test csproj.
+- Task 271 got a note pointing agent work at page-scoped tools. It never referred to offers.
+
+**Gates (2026-10-06, this worktree):**
+- `dev clean` and full `dev build`: 0 warnings, 0 errors.
+- `dev test`: 21/21 suites passed (web-server-integration 287, web-spa-integration 137, web-jaribu
+  227, contracts 48, …).
+- `dev template-smoke`: SUCCEEDED.
+- `dev check-version`: 2.0.0-beta.20 is new against 2.0.0-beta.19.
+- `ganda repo audit`: passes all checks.
+
+**Not performed:** browser check (no AppHost started, per the checklist).
 
 ### How to validate
 
-*(required before done)*
+**Smoke** (no AppHost):
+
+```bash
+dev build                       # expect 0 warnings / 0 errors
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class CredentialAvailability
+cd ../web-spa-integration-tests && dotnet test -c Release -- --filter-class CredentialAvailability
+cd ../web-contracts-tests && dotnet test -c Release -- --filter-class GetCredentials_Response
+git grep -nw "OfferedAction\|ActionOffer\|Offerable\|CommandPaletteContext\|RunContextualAsync" -- source tests skills
+```
+
+**Expect:** the build is 0/0. The suites pass: server 10/10 (3 rule-table plus 7 HTTP, including
+`Refuse_A_Stale_Revoke_With_409`), SPA 6/6, contracts 4/4. The final `git grep` matches only the
+retired-ID comment in `diagnostic-descriptors.cs` (`[Offerable]` contract of the server-offers
+model…).
 
 Maintainer, after merge (`dev clean`, `dev run`, clear site data):
-1. With one credential, Settings shows no Revoke.
-2. Add a passkey and Revoke appears; revoke it and Revoke disappears.
+1. With one credential, Settings shows Revoke disabled with its hint ("Add another passkey or agent
+   key before revoking this one.").
+2. Add a passkey and Revoke becomes enabled; revoke one and it is disabled again.
 3. Rename works through its nickname field.
-4. Ctrl-K on Settings shows only pages and general commands, with no per-credential rows.
+4. Ctrl-K on Settings shows only pages and general commands ("Credentials: Link Microsoft 365"
+   included when signed in), with no per-credential rows.
+
+### Implementation review
+
+- **Rounds:** 1 · **Effort:** 3 (by-diff, 5724 lines) · **Roster:** general
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Disposition:** clean, with no exceptions and no escalations
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`

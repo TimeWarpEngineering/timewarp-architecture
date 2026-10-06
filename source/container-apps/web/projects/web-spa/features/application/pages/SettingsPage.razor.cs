@@ -8,7 +8,7 @@
 // client GetResponse. Loading is Section + FetchCredentials; IsBusy = any tracked
 // credentials action. Create/merge sequence FetchCredentials only when CeremonyFailed is
 // false — Fetch HandleSuccess resets the flag, so a failed ceremony must not refresh.
-// Revoke / Rename refresh through the offer runner's FetchCredentials follow-up (task 279).
+// Revoke / Rename sequence FetchCredentials (DefaultApiHandler publishes problem details).
 // Credentials is null remains the fetch-once guard (no snapshot yet).
 // Task 247: this page renders NO outcome bars. Ceremony success/failure and revoke outcomes
 // are published by the CredentialsState handlers to NotificationState and painted once by
@@ -21,8 +21,9 @@
 // service: every interaction here is a dispatch.
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.
 // Task 229: hide Link when an active EntraAccount exists; disable Unlink when it is the last
-// active credential (hint: Add a passkey first). Since task 279 both are the server's offers, not
-// client predicates. FetchCredentials runs during prerender so first HTML matches them.
+// active credential (hint: Add a passkey first). Both are the server's flags (task 282:
+// GetCredentials.Response.CanLinkMicrosoft365, CredentialSummary.CanRevoke), not client
+// predicates. FetchCredentials runs during prerender so first HTML matches them.
 // Task 250: the card has no subtitle; the Entra row's title is its Label (the provider,
 // "Microsoft 365") and its context line is the linked account (AccountHint).
 // Task 230: "Add an existing passkey" next to Create runs the merge ceremony
@@ -30,18 +31,15 @@
 // Task 233: markup is Section + CredentialList + FluentButton (Primary / Outline / danger Outline).
 // No page-local twe-settings vocabulary; no raw <button>.
 // Task 246: the passkey row action is Revoke (not Delete) and is disabled with a visible hint
-// when the server does not offer it (the last active credential of any kind).
-// Task 279 (hypermedia approach B): Revoke / Unlink, Rename and Link Microsoft 365 exist only for
-// the server's offers in CredentialsState.Offers (GetCredentials computes them from Identity's
-// CredentialRules) — this page computes no rule. Clicking runs the offer through the catalog
-// (CredentialOfferRows.RunAsync → CommandPaletteRunner.RunContextualAsync: still offered, known
-// entry, human-visible and permitted, arguments bind), and the runner runs FetchCredentials as the
-// row's follow-up, so the list and its offers refresh without this page or a handler sequencing it.
-// The same rows are this page's Ctrl-K contextual rows (CredentialsContextSource); Rename needs a
-// nickname, so it stays a page button only. Create / Add existing passkey are not offers (no server
-// rule gates them) and keep dispatching directly.
+// when the row's CanRevoke flag is false (the last active credential of any kind).
+// Task 282 (server-owned availability): Revoke / Unlink, Rename and Link Microsoft 365 show from
+// the server's typed flags (CredentialSummary.CanRevoke / CanRename, Response.CanLinkMicrosoft365,
+// all from Identity's CredentialRules) — this page computes no rule. The buttons dispatch the real
+// actions directly with the row's item (RevokeCredential(id), RenameCredential(id, nickname)), then
+// FetchCredentials so the list and its flags refresh; the endpoint still refuses a stale action
+// (409). Ctrl-K adds nothing on this page: item actions live here, not in the palette.
 // Task 248-001: CredentialList rows carry nickname/context/fingerprint and an inline Rename that
-// runs the Rename offer with the typed nickname; the passkey list is handed
+// dispatches CredentialsState.RenameCredential then FetchCredentials; the passkey list is handed
 // PendingListRenameCredentialId (null while AddPasskeyPrompt owns the pending nickname, so the
 // page never shows two editors) so a just-created passkey opens its editor prefilled with the
 // provider name; Cancel there clears the pending state (ClearPendingNickname). Revoke/Unlink is
@@ -63,5 +61,4 @@ namespace TimeWarp.Architecture.Features.Applications;
 [CrossSliceReference(typeof(SiteSettingsState), "Settings reads site settings for the passkey prompt.")]
 [CrossSliceReference(typeof(PasskeyAccountName), "Settings shows the signed-in account name with the same Identity formatter that names new passkeys.")]
 [CrossSliceReference(typeof(SignInState), "Settings shows the Microsoft 365 section when the server offers sign-in, same flag as Login.")]
-[CrossSliceReference(typeof(CredentialOfferRows), "Settings runs the server's credential offers through Identity's offer rows (task 279).")]
 partial class SettingsPage;

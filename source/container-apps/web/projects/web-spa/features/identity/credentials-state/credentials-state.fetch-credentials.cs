@@ -8,11 +8,9 @@
 // matches RoleState when claim resolution fails (AuthApiRequestValidator needs non-empty UserId).
 // AuthenticationStateListener fetches on sign-in so RFC 219 D8 AddPasskeyPrompt has a snapshot
 // without visiting Settings. Task 169 + 219-003.
-// Task 279: HandleSuccess stores the server's Offers beside the credentials (one snapshot). Cataloged
-// (Visibility Agent, parameterless) because it is the follow-up of every offered credential action:
-// the runner that executed an offer refreshes through the catalog, so no handler dispatches another
-// action (TWS0002). Agent visibility keeps it out of the static Ctrl-K roster; an agent may call it to
-// read the same list and offers.
+// HandleSuccess stores GetCredentials.Response.CanLinkMicrosoft365 beside the credentials (one
+// snapshot, task 282); the per-row flags ride on the summaries. Cataloged with Visibility Agent:
+// parameter-free, so an agent may read the same list and flags; humans load it with their page.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -28,7 +26,7 @@ partial class CredentialsState
 
     [CatalogAction
     (
-      Description = "Refresh the signed-in account's credentials and the actions the server offers for them.",
+      Description = "Refresh the signed-in account's credentials and which credential actions apply now.",
       Permissions = [PermissionIds.CredentialManageSelf],
       Visibility = ActionVisibility.Agent
     )]
@@ -68,7 +66,7 @@ partial class CredentialsState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         CredentialsState.CredentialsList = [.. response.Credentials];
-        CredentialsState.OffersList = [.. response.Offers.Select(CredentialOffer.From)];
+        CredentialsState.CanLinkMicrosoft365 = response.CanLinkMicrosoft365;
         CredentialsState.CeremonyFailed = false;
         return Task.CompletedTask;
       }

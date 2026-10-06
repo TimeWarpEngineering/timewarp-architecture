@@ -6,14 +6,10 @@
 // DefaultApiHandler owns transport + ProblemDetailsNotification on error. HandleSuccess
 // publishes the "Credential revoked." outcome to the shell region — the action serves
 // passkeys, agent keys and Entra unlink alike (task 246 vocabulary). Task 169 + 246 + 247.
-// Task 279: Visibility Both — the server offers this action (GetCredentials.Offers) and Settings /
-// Passkeys run the offer through the catalog (CommandPaletteRunner.RunContextualAsync), which refuses
-// any entry that is not human-visible; agents still call it directly. The runner then runs
-// FetchCredentials (the offer row's follow-up), so the list and its offers stay the single source
-// of truth.
-// Task 280/281: Name = RevokeCredential.OfferName, generated from [Offerable] on the contract this handler
-// requests, so a rename of this action set cannot change the offered name; TWA0029/TWA0030 check the
-// generated Offer record against the constructor and TWA0031 checks this action carries that Name.
+// Visibility Agent (task 282): this action needs a credential id, so humans reach it from the row
+// button on Settings / Passkeys (shown while CredentialSummary.CanRevoke holds), which dispatches it
+// directly; Ctrl-K lists only navigation and parameter-free commands. Agents call it through the
+// catalog. Default derived catalog name — no other side spells it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -27,10 +23,9 @@ partial class CredentialsState
   {
     [CatalogAction
     (
-      Name = OfferName, // RevokeCredential.OfferName via the using static (CredentialsState has a RevokeCredential method)
       Description = "Revoke one of the signed-in account's credentials by id.",
       Permissions = [PermissionIds.CredentialManageSelf],
-      Visibility = ActionVisibility.Both
+      Visibility = ActionVisibility.Agent
     )]
     [TrackAction]
     public sealed class Action : IBaseAction

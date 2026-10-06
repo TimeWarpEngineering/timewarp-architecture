@@ -25,13 +25,11 @@ public class ActionCatalog_Should
     "Counter.IncrementCounter",
     "Credentials.AddExistingPasskey",
     "Credentials.AddPasskey",
-    // Task 279: the follow-up refresh of every server-offered credential action (Agent, parameterless).
+    // Agent, parameterless: an agent reads the credential list and its availability flags.
     "Credentials.FetchCredentials",
-    // Server-offered actions are named "<Slice>.<Operation>": generated OfferName for the [Offerable]
-    // contracts, and the same scheme for the hand-written Link Microsoft 365 offer.
-    "Identity.LinkMicrosoft365",
-    "Identity.RenameCredential",
-    "Identity.RevokeCredential",
+    "Credentials.LinkMicrosoft365",
+    "Credentials.RenameCredential",
+    "Credentials.RevokeCredential",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",
@@ -80,11 +78,21 @@ public class ActionCatalog_Should
     signOut.DisplayName.ShouldBeNull("The generated \"Profile: Sign out\" reads right; no authored label.");
 
     // Task 260: the Settings "Link Microsoft 365" button is this action; same gate as the page CTA.
-    ActionCatalogEntry linkMicrosoft365 = actionCatalog.Find("Identity.LinkMicrosoft365").ShouldNotBeNull();
+    ActionCatalogEntry linkMicrosoft365 = actionCatalog.Find("Credentials.LinkMicrosoft365").ShouldNotBeNull();
     linkMicrosoft365.Permissions.ShouldBe([PermissionIds.CredentialManageSelf]);
     linkMicrosoft365.Visibility.ShouldBe(ActionVisibility.Human);
     linkMicrosoft365.Description.ShouldNotBeNullOrWhiteSpace();
     linkMicrosoft365.DisplayName.ShouldBe("Link Microsoft 365");
+
+    // Task 282: item actions need a credential id, so people reach them from the page's row buttons;
+    // the catalog exposes them to agents only (Ctrl-K lists navigation and parameter-free commands).
+    foreach (string itemAction in new[] { "Credentials.RevokeCredential", "Credentials.RenameCredential" })
+    {
+      ActionCatalogEntry entry = actionCatalog.Find(itemAction).ShouldNotBeNull();
+      entry.Visibility.ShouldBe(ActionVisibility.Agent, itemAction);
+      entry.Permissions.ShouldBe([PermissionIds.CredentialManageSelf], itemAction);
+    }
+
     return Task.CompletedTask;
   }
 

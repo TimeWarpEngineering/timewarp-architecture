@@ -14,8 +14,8 @@
 // signed-in principal, because every cataloged command acts on the user's own session (sign-out,
 // passkeys) and must not be offered to an anonymous visitor.
 // Command label (task 268): "Owner: Action" for every command, authored or generated — the owner is
-// the catalog name's prefix (the owning state, or the slice for offer names such as "Identity.LinkMicrosoft365"),
-// so rows group by that prefix whichever way their action part was written.
+// the catalog name's prefix (the owning state), so rows group by state whichever way their action
+// part was written.
 // The action part is ActionCatalogEntry.DisplayName ([CatalogAction(DisplayName = …)]) when set —
 // labels are written deliberately ("Identity: Link Microsoft 365"); only a null DisplayName falls
 // back to the catalog name made readable ("Profile.SignOut" → "Profile: Sign out", a digit run

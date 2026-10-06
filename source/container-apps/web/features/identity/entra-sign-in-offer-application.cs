@@ -4,7 +4,7 @@
 
 #region Design
 // One copy of the "offered" rule, read by GetEntraSignInOffered (the login page's public boolean) and
-// GetCredentials (which offers Link Microsoft 365, task 279). options.Enabled is the scheme-registration
+// GetCredentials (whose CanLinkMicrosoft365 flag uses it, task 282). options.Enabled is the scheme-registration
 // gate; settings.EntraSignInEnabled is the runtime offer. Both must be true or the challenge would 404
 // (no scheme) or 403 (policy). The registered store seeds on first read (SeedOnReadSiteSettingsStore,
 // task 254), so an emptied table is re-seeded from configuration; a null read (table not migrated) is

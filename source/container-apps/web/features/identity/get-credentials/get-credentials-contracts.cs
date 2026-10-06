@@ -41,17 +41,17 @@
 // Dual schemes (identity-session + agent-token): humans get the grant from SelfServicePermissions;
 // agents need scope credential:manage → AgentScopePermissionSeed. [AuthApiRequest] on the Query
 // remains client/mock identity signal only.
-// Task 279 (hypermedia approach B adopted): Response.Offers lists the catalog actions valid NOW —
-// per active credential Rename always and Revoke while CredentialRules.CanRevoke holds; page-level
-// Link Microsoft 365 while CredentialRules.CanLinkMicrosoft365 holds — computed on the server by
-// CredentialOffers from the same rules RevokeCredential.Handler and EntraTicketProcessor enforce, so
-// the SPA renders and runs offers and keeps no copy of the rules. Offers ride on this read (not a
-// sibling) because Settings and Passkeys already load it and the offer is a fact about exactly these
-// rows: one round trip, and the list and its actions can never come from different snapshots.
-// Add passkey is not offered: no server rule gates it (any signed-in human may add one), so an offer
-// would carry no information; its buttons stay static. Offers are computed from active credentials
-// whatever IncludeRevoked asks for, and are the same for an agent caller (agents run them through
-// their own catalog visibility — Link Microsoft 365 is a human-only ceremony there).
+// Server-owned availability (task 282): the server decides which actions are valid now and ships
+// the answer as typed flags — CredentialSummary.CanRevoke / CanRename per row and
+// Response.CanLinkMicrosoft365 for the page — all computed from Identity's CredentialRules, the same
+// predicates RevokeCredential.Handler and EntraTicketProcessor enforce. The SPA reads the flags to
+// show or hide its buttons and keeps no copy of the rules; the endpoints still refuse a stale action
+// (409). Typed flags, not an allowed-names list: the compiler checks every read, and there is no
+// string vocabulary for the two sides to agree on. The flags ride on this read because Settings and
+// Passkeys already load it, so the list and its availability always come from one snapshot. They
+// are computed over the ACTIVE credentials whatever IncludeRevoked asks for (a revoked row is never
+// revocable or renameable), and default to false so an old or partial payload shows no action.
+// Add passkey has no flag: no server rule gates it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -92,13 +92,13 @@ public static partial class GetCredentials
   public sealed class Response
   {
     public IReadOnlyList<CredentialSummary> Credentials { get; }
-    /// <summary>Catalog actions the caller may run now (see <see cref="OfferedActionNames"/>).</summary>
-    public IReadOnlyList<OfferedAction> Offers { get; }
+    /// <summary>True when Microsoft 365 sign-in is offered and the caller has not linked an account yet.</summary>
+    public bool CanLinkMicrosoft365 { get; }
 
-    public Response(IReadOnlyList<CredentialSummary> credentials, IReadOnlyList<OfferedAction> offers)
+    public Response(IReadOnlyList<CredentialSummary> credentials, bool canLinkMicrosoft365 = false)
     {
       Credentials = Guard.Against.Null(credentials);
-      Offers = Guard.Against.Null(offers);
+      CanLinkMicrosoft365 = canLinkMicrosoft365;
     }
   }
 
@@ -121,6 +121,10 @@ public static partial class GetCredentials
     public DateTimeOffset? LastUsedAt { get; }
     /// <summary>Display-only external account text (Entra preferred_username); null when not captured.</summary>
     public string? AccountHint { get; }
+    /// <summary>True when the server would revoke this credential now (active, and not the last active one).</summary>
+    public bool CanRevoke { get; }
+    /// <summary>True when renaming this credential applies (active).</summary>
+    public bool CanRename { get; }
 
     public CredentialSummary
     (
@@ -134,7 +138,9 @@ public static partial class GetCredentials
       RegisteredWith registeredWith,
       string fingerprint,
       DateTimeOffset? lastUsedAt = null,
-      string? accountHint = null
+      string? accountHint = null,
+      bool canRevoke = false,
+      bool canRename = false
     )
     {
       if (id.IsEmpty)
@@ -153,6 +159,8 @@ public static partial class GetCredentials
       Fingerprint = Guard.Against.NullOrWhiteSpace(fingerprint);
       LastUsedAt = lastUsedAt;
       AccountHint = accountHint;
+      CanRevoke = canRevoke;
+      CanRename = canRename;
     }
   }
 
@@ -160,14 +168,12 @@ public static partial class GetCredentials
   {
     return _ =>
     {
-      var first = CredentialId.New();
-      var second = CredentialId.New();
       return new Response
       (
         [
           new CredentialSummary
           (
-            first,
+            CredentialId.New(),
             CredentialType.Passkey,
             "1Password",
             "Work laptop",
@@ -176,11 +182,13 @@ public static partial class GetCredentials
             isActive: true,
             new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
             "3f9a1c2e",
-            lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2)
+            lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2),
+            canRevoke: true,
+            canRename: true
           ),
           new CredentialSummary
           (
-            second,
+            CredentialId.New(),
             CredentialType.Passkey,
             "1Password",
             nickname: null,
@@ -188,15 +196,12 @@ public static partial class GetCredentials
             revokedAt: null,
             isActive: true,
             new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
-            "b71e04dd"
+            "b71e04dd",
+            canRevoke: true,
+            canRename: true
           )
         ],
-        [
-          OfferedAction.ForCredential(new RenameCredential.Offer(first.Value), "Rename"),
-          OfferedAction.ForCredential(new RevokeCredential.Offer(first.Value), "Revoke"),
-          OfferedAction.ForCredential(new RenameCredential.Offer(second.Value), "Rename"),
-          OfferedAction.ForCredential(new RevokeCredential.Offer(second.Value), "Revoke")
-        ]
+        canLinkMicrosoft365: false
       );
     };
   }

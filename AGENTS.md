@@ -230,7 +230,7 @@ unconditionally excluded from template output). This monorepo dogfoods all three
 | PackageId | Contents |
 |-----------|----------|
 | `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0031) — safe repo-wide |
+| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0028) — safe repo-wide |
 | `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
 | `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
 | `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
@@ -310,9 +310,7 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWA0026 | a web-spa component (any member of a `ComponentBase` type, lifecycle overrides included) calls a side effect directly — `NavigationManager.NavigateTo`/`NavigateToLogin`/`Refresh`, `IJSRuntime`/`IJSObjectReference` invoke, `IApiService` (and `IWebServerApiService`/`IApiServerApiService`), `HttpClient` send/get/post/put/delete/patch, Blazored session/local storage writes, or a first-party `[SideEffectService]` type (`PasskeyCeremonyClient`, the `*JsModule` helpers). Components only dispatch; the action's handler does the work. Handlers, services and static helpers are never flagged. Opt-out: `[DirectComponentSideEffect(reason)]` on the component or member. Gated on the Blazor WASM SDK like TWA0022 (task 265) |
 | TWA0027 | `[DirectComponentSideEffect]` with an empty or whitespace reason — it does not opt out of TWA0026 (task 265) |
 | TWA0028 | an `Enumeration` (Bogard) subclass member — a static field or property typed as the subclass — must be a `public static readonly` field; any other shape is invisible to (or mutable behind) `Enumeration.GetAll` and every `From*`/`TryFrom*`/JSON lookup (task 105) |
-| TWA0029 | an `[ActionOffer(name)]` record (shared contracts: the typed arguments of a server offer) names no `[CatalogAction(Name = name)]` class in the SPA compilation (TimeWarp.State catalogs classes only), or one that more than one action declares — the derived default name does not count, so renaming an action set cannot silently change what the server offers. Blazor WASM SDK gated like TWA0022 (task 280) |
-| TWA0030 | an `[ActionOffer]` record does not match its action's first declared constructor (the one TimeWarp.State catalogs): a property whose camelCase (or `[JsonPropertyName]`) name is no parameter or whose type differs, a nullable property bound to a required parameter, a required parameter neither bound nor listed in `UserInput`, a `UserInput` entry that is not an unbound required parameter, or an argument after an optional parameter that is omitted or nullable-bound (task 280) |
-| TWA0031 | an `[Offerable]` contract (offer generated from its Command) has no SPA client action whose handler requests that Command (`DefaultApiHandler<TAction, Contract.Command, …>` or any generic base with the Command as a type argument), or that action's `[CatalogAction]` Name is not the contract's generated `OfferName`. Blazor WASM SDK gated like TWA0022 (task 281) |
+| TWA0029/0030/0031 | **retired** (task 282) — were the server-offers agreement checks (`[ActionOffer]` / `[Offerable]` vs `[CatalogAction]`); offers were replaced by typed availability flags and page-scoped actions. IDs reserved, do not reuse |
 
 **Generator diagnostics (TWE / SG)** live in
 `source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`
@@ -329,16 +327,15 @@ Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not t
 | TWE009 | `[Page] Navigable = true` requires a static route (no `{token}`) and a literal `true`/`false` — otherwise the page would silently miss `PageRegistry` |
 | TWE010 | two routes of one `[Page]` page are the same Blazor route (case-insensitive, token names ignored) — primary, additional, or a hand-written `[Route]` repeating one; no page surface generated |
 | TWE011 | conflicting `[Page]` route declaration — stacked `[Page]` (put aliases on one: `[Page("/primary", "/alias")]`), a non-literal additional route, or an alias token typed differently from the primary route |
-| TWE012 | `[Offerable]` `UserInput` entry is not an offerable property of the contract's `Command` — names none, repeats an entry, or names the auth-filled `UserId` — no `Offer` / `OfferName` generated (contracts generator, task 281) |
-| TWE013 | `[Offerable]` on a contract with no nested `Command` — no `Offer` / `OfferName` generated; non-contract actions keep a hand-written `[ActionOffer]` record |
-| TWE014 | `[Offerable]` on a type the generated members cannot merge into — a record, struct, generic or non-partial class, global-namespace type, or one nested in such a type — no `Offer` / `OfferName` generated (never silently skipped) |
 | SG001 | shared source-generator log (resilience backstop) |
 | SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
 | SG010 | TypedId BCL surface generation failed (resilience) |
 | SG011 | TypedId EF converter generation failed (resilience) |
 
 Retired / reserved generator IDs (do not reuse without deliberate new meaning): **TWE001**,
-**TWE004** (declared historically, never reported; deleted task 131-001 F-014).
+**TWE004** (declared historically, never reported; deleted task 131-001 F-014); **TWE012**,
+**TWE013**, **TWE014** (the `[Offerable]` server-offers generator, retired task 282 — never
+shipped; offers replaced by typed availability flags).
 
 **Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
 slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:

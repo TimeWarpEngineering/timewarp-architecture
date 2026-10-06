@@ -105,6 +105,11 @@ it there and release it first.
   also out, because it conflicts with dropping the npm toolchain.
 - Related: task 239 (Ctrl-K palette), task 260/265 (interactions are actions, TWA0026),
   timewarp-state 092/094 (action catalog, DisplayName).
+- Task 282 (2026-10-06): availability is server-owned through typed flags on the read contracts
+  (`CredentialSummary.CanRevoke` / `CanRename`, `GetCredentials.Response.CanLinkMicrosoft365`),
+  not server-enumerated offers. Agents should get **tools scoped to the current page**: the same
+  actions the page's buttons dispatch, with the page's items and flags as context. Fold this into
+  design items 1 and 7.
 
 ## Results
 

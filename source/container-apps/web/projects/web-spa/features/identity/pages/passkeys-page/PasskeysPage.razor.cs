@@ -17,14 +17,14 @@
 // RP-ID credential scoping (task 104-031): register and authenticate on the SAME host.
 // Task 233: the credential list is the shared CredentialList (same as Settings). This page
 // is still the Developer ceremony playground — not a product Settings replacement.
-// Task 246: Revoke is disabled with a visible hint when it is not offered (the last active
-// credential of ANY kind — passkeys + agent keys + Entra, the set RevokeCredential.Handler counts).
-// Task 279 (hypermedia approach B): Revoke and Rename exist only for the server's offers in
-// CredentialsState.Offers — this page computes no rule (no client copy of the last-credential count).
-// Clicking runs the offer through the catalog (CredentialOfferRows.RunAsync) and the runner runs
-// FetchCredentials as its follow-up, so the last remaining row flips to disabled without a reload.
-// The same offers are this page's Ctrl-K contextual rows (passkey rows only, CredentialsContextSource);
-// Rename needs a nickname, so it stays a page button.
+// Task 246: Revoke is disabled with a visible hint when the row's CanRevoke flag is false (the
+// last active credential of ANY kind — passkeys + agent keys + Entra, the set
+// RevokeCredential.Handler counts).
+// Task 282 (server-owned availability): Revoke and Rename show from the server's per-row flags
+// (CredentialSummary.CanRevoke / CanRename, from Identity's CredentialRules) — this page computes no
+// rule. The buttons dispatch RevokeCredential(id) / RenameCredential(id, nickname) directly, then
+// FetchCredentials, so the last remaining row flips to disabled without a reload. Ctrl-K adds no
+// per-credential rows here.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

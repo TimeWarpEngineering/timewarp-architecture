@@ -159,10 +159,6 @@ public static class Program
     // Clears the shell notification region on route change (task 247 rule 4). Activated by
     // Routes.razor's @inject; composed into web-server prerender through this same method.
     serviceCollection.AddScoped<NotificationState.NavigationListener>();
-    // Ctrl-K contextual rows (task 275): the palette pulls them from the current page's sources.
-    // Settings and Passkeys contribute the server's credential offers (task 279).
-    serviceCollection.AddScoped<CommandPaletteContext>();
-    serviceCollection.AddScoped<ICommandPaletteContextSource, CredentialsContextSource>();
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
     serviceCollection.AddScoped<IWebServerApiService>

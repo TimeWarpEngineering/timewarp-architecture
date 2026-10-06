@@ -24,6 +24,7 @@ using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.Identity.GetCredentials;
+using CredentialRules = TimeWarp.Architecture.Features.Identity.Application.CredentialRules;
 
 internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisposable
 {
@@ -89,44 +90,45 @@ internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisp
 
 /// <summary>
 /// Scripted BFF client: GetCredentials answers with the current <see cref="Credentials"/> list and
-/// the offers the real server rule makes for it (task 279: Identity's
-/// <c>CredentialOffers.For</c> over the list and <see cref="Microsoft365Offered"/>, so this script
-/// cannot drift from the server), minus any offer <see cref="SuppressOffer"/> matches, plus any
-/// <see cref="ExtraOffers"/> a test injects — the two overrides let a test make the server's offers
-/// contradict anything the client could count. RevokeCredential marks the named row revoked
-/// (IsActive=false) and RenameCredential sets its nickname, so the next GetCredentials reflects
-/// them — the same sequence the real server produces for an action → Fetch.
+/// the availability flags the real server rule sets for it (task 282: Identity's
+/// <c>CredentialRules</c> over the active rows and <see cref="Microsoft365Offered"/>, so this script
+/// cannot drift from the server), unless <see cref="CanRevokeOverride"/> replaces the per-row
+/// CanRevoke answer — that lets a test make the server's flags contradict anything the client could
+/// count. RevokeCredential marks the named row revoked (IsActive=false) and RenameCredential sets its
+/// nickname, so the next GetCredentials reflects them — the same sequence the real server produces
+/// for an action → Fetch.
 /// </summary>
 internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Services.IWebServerApiService
 {
   public List<CredentialSummary> Credentials { get; } = [];
   public List<IApiRequest> Requests { get; } = [];
-  public List<OfferedAction> ExtraOffers { get; } = [];
-  /// <summary>Drops matching offers from the server rule's set (ExtraOffers are not filtered).</summary>
-  public Predicate<OfferedAction>? SuppressOffer { get; set; }
+  /// <summary>Replaces the server rule's CanRevoke answer for every active row when set.</summary>
+  public bool? CanRevokeOverride { get; set; }
   public bool Microsoft365Offered { get; set; }
 
   public void Reset()
   {
     Credentials.Clear();
     Requests.Clear();
-    ExtraOffers.Clear();
-    SuppressOffer = null;
+    CanRevokeOverride = null;
     Microsoft365Offered = false;
   }
 
-  /// <summary>The offers the scripted server makes for the current credentials.</summary>
-  public List<OfferedAction> Offers()
+  /// <summary>The GetCredentials response the scripted server makes for the current credentials.</summary>
+  public Response List(bool includeRevoked)
   {
-    Predicate<OfferedAction>? suppress = SuppressOffer;
-    List<OfferedAction> offers =
-    [
-      .. TimeWarp.Architecture.Features.Identity.Application.CredentialOffers.For(Credentials, Microsoft365Offered)
-        .Where(offer => suppress?.Invoke(offer) != true),
-    ];
-    offers.AddRange(ExtraOffers);
-    return offers;
+    CredentialSummary[] active = [.. Credentials.Where(static credential => credential.IsActive)];
+    bool canRevoke = CanRevokeOverride ?? CredentialRules.CanRevoke(active.Length);
+    IEnumerable<CredentialSummary> visible = includeRevoked ? Credentials : active;
+    return new Response
+    (
+      [.. visible.Select(row => WithFlags(row, canRevoke: canRevoke && row.IsActive, canRename: row.IsActive))],
+      CredentialRules.CanLinkMicrosoft365(Microsoft365Offered, active.Select(static credential => credential.Type))
+    );
   }
+
+  private static CredentialSummary WithFlags(CredentialSummary row, bool canRevoke, bool canRename) =>
+    new(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, row.RevokedAt, row.IsActive, row.RegisteredWith, row.Fingerprint, row.LastUsedAt, row.AccountHint, canRevoke, canRename);
 
   public static CredentialSummary Active(CredentialType type, string label) =>
     new(CredentialId.New(), type, label, nickname: null, DateTimeOffset.UtcNow.AddDays(-1), revokedAt: null, isActive: true, RegisteredWith.Unknown, fingerprint: "0123abcd");
@@ -147,9 +149,7 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
     {
       case Query query:
       {
-        IReadOnlyList<CredentialSummary> visible =
-          query.IncludeRevoked ? [.. Credentials] : [.. Credentials.Where(c => c.IsActive)];
-        if (new Response(visible, Offers()) is TResponse listResponse)
+        if (List(query.IncludeRevoked) is TResponse listResponse)
         {
           return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(listResponse);
         }
