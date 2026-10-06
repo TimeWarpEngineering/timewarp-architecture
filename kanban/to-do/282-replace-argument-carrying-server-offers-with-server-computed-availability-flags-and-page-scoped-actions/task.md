@@ -131,7 +131,7 @@ Revoke and Rename `[CatalogAction]` **Visibility goes back to `Agent`**. 279 cha
       `dev template-smoke`, `ganda repo audit`, `dev check-version` (analyzers/generators/attributes
       packages change)
 - [x] Do **not** start an AppHost; record the browser check as not performed
-- [ ] Implementation review; host `open-pr`
+- [x] Implementation review (clean, 1 round); host `open-pr`
 
 ## Notes
 
@@ -149,6 +149,8 @@ Revoke and Rename `[CatalogAction]` **Visibility goes back to `Agent`**. 279 cha
 - Created: 2026-10-06 (cockpit, per Steve)
 - 2026-10-06 implement oracle (implementer-claude, headless): Change table + Remove list done, tests
   replaced, gates green (see Results). No AppHost started.
+- 2026-10-06 review oracle (claude-opus-5-5, headless): tw-implementation-review, effort 3, roster
+  general (Claude subagent). Disposition clean.
 
 ## Results
 
@@ -243,3 +245,11 @@ Maintainer, after merge (`dev clean`, `dev run`, clear site data):
 3. Rename works through its nickname field.
 4. Ctrl-K on Settings shows only pages and general commands ("Credentials: Link Microsoft 365"
    included when signed in), with no per-credential rows.
+
+### Implementation review
+
+- **Rounds:** 1 · **Effort:** 3 (by-diff, 5724 lines) · **Roster:** general
+- **Final counts:** bug 0 / suggestion 0 / nit 0 (0 open, 0 fixed, 0 wontfix)
+- **Disposition:** clean, with no exceptions and no escalations
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`
