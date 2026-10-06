@@ -54,9 +54,12 @@ public static class CredentialOfferRows
     return CommandPaletteRunner.RunContextualAsync(row, input, store, actionCatalog, context, cancellationToken);
   }
 
+  /// <summary>RenameCredential's parameter the user supplies ([Offerable] UserInput), camelCased like the generated offer's UserInput.</summary>
+  public static string NicknameParameter { get; } = JsonNamingPolicy.CamelCase.ConvertName(nameof(RenameCredential.Command.Nickname));
+
   /// <summary>Input for RenameCredential's unbound nickname.</summary>
   public static IReadOnlyDictionary<string, JsonElement> NicknameInput(string nickname) =>
-    new Dictionary<string, JsonElement> { [RenameCredentialOffer.NicknameInput] = JsonSerializer.SerializeToElement(nickname) };
+    new Dictionary<string, JsonElement> { [NicknameParameter] = JsonSerializer.SerializeToElement(nickname) };
 
   /// <summary>Rows for every offer whose credential has one of <paramref name="types"/>, plus page-level offers when <paramref name="includePageLevel"/>.</summary>
   public static IReadOnlyList<CommandPaletteRow> ForPage

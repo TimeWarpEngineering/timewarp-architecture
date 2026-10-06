@@ -23,10 +23,10 @@
   private bool IsLinkMicrosoft365Offered => CredentialsState.IsOffered(OfferedActionNames.LinkMicrosoft365, credentialId: null);
 
   private bool IsRevokeOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(OfferedActionNames.RevokeCredential, credential.Id.Value);
+    CredentialsState.IsOffered(RevokeCredential.OfferName, credential.Id.Value);
 
   private bool IsRenameOffered(GetCredentials.CredentialSummary credential) =>
-    CredentialsState.IsOffered(OfferedActionNames.RenameCredential, credential.Id.Value);
+    CredentialsState.IsOffered(RenameCredential.OfferName, credential.Id.Value);
 
   protected override async Task OnInitializedAsync()
   {
@@ -87,10 +87,10 @@
 
   // Offered actions run through the catalog; the runner refreshes FetchCredentials afterwards.
   private Task ConfirmRevokeAsync(GetCredentials.CredentialSummary credential) =>
-    RunOfferAsync(OfferedActionNames.RevokeCredential, credential.Id.Value, input: null);
+    RunOfferAsync(RevokeCredential.OfferName, credential.Id.Value, input: null);
 
   private Task RenameAsync(CredentialRename rename) =>
-    RunOfferAsync(OfferedActionNames.RenameCredential, rename.CredentialId, CredentialOfferRows.NicknameInput(rename.Nickname));
+    RunOfferAsync(RenameCredential.OfferName, rename.CredentialId, CredentialOfferRows.NicknameInput(rename.Nickname));
 
   private Task CancelPendingNicknameAsync() => NoSubCredentialsState.ClearPendingNickname();
 

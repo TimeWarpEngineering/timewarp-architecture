@@ -1,5 +1,5 @@
 #region Purpose
-// Enforces TWA0029/TWA0030: every [ActionOffer] record names a [CatalogAction(Name = …)] in the SPA, and its properties match that action's constructor parameters.
+// Enforces TWA0029/TWA0030/TWA0031: every [ActionOffer] record names a [CatalogAction(Name = …)] in the SPA, its properties match that action's constructor parameters, and every [Offerable] contract's client action carries its OfferName.
 #endregion
 
 #region Design
@@ -46,6 +46,16 @@
 // so framework assemblies are never walked. Reported at CompilationEnd: TWA0029 on the record (or
 // Location.None when the record comes from metadata — contracts are a referenced assembly), TWA0030
 // on the action's [CatalogAction] attribute.
+// TWA0031 (task 281): an [Offerable] contract's generated Offer record is an [ActionOffer] like any
+// other (TWA0029/TWA0030 check it unchanged); TWA0031 adds the contract -> client action link. The
+// client action of a contract is the first type argument of a generic base type (DefaultApiHandler<
+// TAction, TRequest, TResponse> or any equivalent typed-request handler) whose type arguments also
+// include the contract's nested Command, when that first argument carries [CatalogAction]. Every such
+// action must declare Name equal to the contract's generated OfferName constant (reported on its
+// [CatalogAction]); a contract with no such action is reported too (Location.None — the contract is
+// metadata here), because then nothing the SPA ships can run the offer. A contract with no Command or
+// OfferName is skipped: the generator already failed it (TWE012/TWE013/TWE014). Handlers are collected from
+// this compilation's source only (handlers live in the SPA).
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -65,10 +75,16 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
   /// <summary>Diagnostic identifier TWA0030 (offer record does not match the action's parameters).</summary>
   public const string ArgumentMismatchDiagnosticId = "TWA0030";
 
+  /// <summary>Diagnostic identifier TWA0031 (an [Offerable] contract's client action does not carry its OfferName).</summary>
+  public const string OfferableActionDiagnosticId = "TWA0031";
+
   private const string Category = "Design";
   private const string BlazorWasmSdkProperty = "build_property.UsingMicrosoftNETSdkBlazorWebAssembly";
   private const string CatalogActionAttributeFullName = "TimeWarp.State.CatalogActionAttribute";
   private const string ActionOfferAttributeSimpleName = "ActionOfferAttribute";
+  private const string OfferableAttributeSimpleName = "OfferableAttribute";
+  private const string OfferNameField = "OfferName";
+  private const string CommandTypeName = "Command";
   private const string JsonIgnoreAttributeSimpleName = "JsonIgnoreAttribute";
   private const string JsonPropertyNameAttributeSimpleName = "JsonPropertyNameAttribute";
   private const int JsonIgnoreConditionAlways = 1; // System.Text.Json.Serialization.JsonIgnoreCondition.Always
@@ -99,11 +115,24 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       customTags: WellKnownDiagnosticTags.CompilationEnd
     );
 
+  private static readonly DiagnosticDescriptor OfferableAction =
+    new
+    (
+      OfferableActionDiagnosticId,
+      title: "Offerable contract's client action does not carry its OfferName",
+      messageFormat: "Offerable contract '{0}' {1}",
+      Category,
+      DiagnosticSeverity.Warning,
+      isEnabledByDefault: true,
+      description: "An [Offerable] contract's server offer runs the client catalog action whose handler requests the contract's Command. That action must exist in the SPA and declare [CatalogAction(Name = <Contract>.OfferName)], so the generated offer name and the client catalog cannot drift apart.",
+      customTags: WellKnownDiagnosticTags.CompilationEnd
+    );
+
   /// <summary>Diagnostics this analyzer reports.</summary>
   public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-    ImmutableArray.Create(UnknownName, ArgumentMismatch);
+    ImmutableArray.Create(UnknownName, ArgumentMismatch, OfferableAction);
 
-  /// <summary>Registers symbol/compilation actions that report TWA0029 and TWA0030.</summary>
+  /// <summary>Registers symbol/compilation actions that report TWA0029, TWA0030 and TWA0031.</summary>
   public override void Initialize(AnalysisContext context)
   {
     context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -123,10 +152,17 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
 
     ConcurrentBag<(INamedTypeSymbol Action, AttributeData Attribute)> catalogActions = [];
     ConcurrentBag<INamedTypeSymbol> sourceOffers = [];
+    ConcurrentBag<INamedTypeSymbol> sourceOfferables = [];
+    ConcurrentBag<INamedTypeSymbol> typedRequestHandlers = [];
 
     context.RegisterSymbolAction(symbolContext =>
     {
       var type = (INamedTypeSymbol)symbolContext.Symbol;
+      if (HasGenericBase(type))
+      {
+        typedRequestHandlers.Add(type);
+      }
+
       foreach (AttributeData attribute in type.GetAttributes())
       {
         if (SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, catalogActionAttribute))
@@ -136,6 +172,10 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
         else if (attribute.AttributeClass?.Name == ActionOfferAttributeSimpleName)
         {
           sourceOffers.Add(type);
+        }
+        else if (attribute.AttributeClass?.Name == OfferableAttributeSimpleName)
+        {
+          sourceOfferables.Add(type);
         }
       }
     }, SymbolKind.NamedType);
@@ -155,10 +195,17 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
         declarers.Add((action, attribute));
       }
 
-      IEnumerable<INamedTypeSymbol> offers = sourceOffers.Concat(
-        offerAssemblies
-          .SelectMany(static assembly => HostedRouteDiscovery.GetAllTypes(assembly.GlobalNamespace))
-          .Where(static type => OfferAttribute(type) is not null));
+      INamedTypeSymbol[] referencedTypes =
+      [
+        .. offerAssemblies.SelectMany(static assembly => HostedRouteDiscovery.GetAllTypes(assembly.GlobalNamespace))
+      ];
+      IEnumerable<INamedTypeSymbol> offers = sourceOffers.Concat(referencedTypes.Where(static type => OfferAttribute(type) is not null));
+
+      ReportOfferableActions(
+        endContext,
+        sourceOfferables.Concat(referencedTypes.Where(static type => HasOfferableAttribute(type))),
+        typedRequestHandlers,
+        catalogActionAttribute);
 
       foreach (INamedTypeSymbol offer in offers)
       {
@@ -196,6 +243,96 @@ public sealed class ActionOfferAgreementAnalyzer : DiagnosticAnalyzer
       }
     });
   }
+
+  /// <summary>TWA0031: each [Offerable] contract's client action(s) must exist and carry Name = the contract's OfferName.</summary>
+  private static void ReportOfferableActions
+  (
+    CompilationAnalysisContext context,
+    IEnumerable<INamedTypeSymbol> offerables,
+    IEnumerable<INamedTypeSymbol> handlers,
+    INamedTypeSymbol catalogActionAttribute
+  )
+  {
+    INamedTypeSymbol[] handlerTypes = [.. handlers];
+    foreach (INamedTypeSymbol contract in offerables.Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default))
+    {
+      INamedTypeSymbol? command = contract.GetTypeMembers(CommandTypeName).FirstOrDefault();
+      string? offerName = contract.GetMembers(OfferNameField).OfType<IFieldSymbol>()
+        .FirstOrDefault(static field => field.IsConst)?.ConstantValue as string;
+      if (command is null || offerName is null) continue;
+
+      Dictionary<INamedTypeSymbol, AttributeData> actions = new(SymbolEqualityComparer.Default);
+      foreach (INamedTypeSymbol handler in handlerTypes)
+      {
+        if (RequestedAction(handler, command, catalogActionAttribute) is ({ } action, { } attribute))
+        {
+          actions[action] = attribute;
+        }
+      }
+
+      if (actions.Count == 0)
+      {
+        context.ReportDiagnostic(Diagnostic.Create(
+          OfferableAction,
+          contract.Locations.FirstOrDefault(location => location.SourceTree is { } tree && context.Compilation.ContainsSyntaxTree(tree))
+            ?? Location.None,
+          contract.ToDisplayString(),
+          $"has no client action in this compilation: no [CatalogAction] action's handler requests {command.ToDisplayString()}; add one with [CatalogAction(Name = {contract.Name}.{OfferNameField})]"));
+        continue;
+      }
+
+      foreach (KeyValuePair<INamedTypeSymbol, AttributeData> pair in actions.OrderBy(static pair => pair.Key.ToDisplayString(), StringComparer.Ordinal))
+      {
+        string? name = ExplicitName(pair.Value);
+        if (name == offerName) continue;
+
+        context.ReportDiagnostic(Diagnostic.Create(
+          OfferableAction,
+          pair.Value.ApplicationSyntaxReference?.GetSyntax(context.CancellationToken).GetLocation()
+            ?? pair.Key.Locations.FirstOrDefault()
+            ?? Location.None,
+          contract.ToDisplayString(),
+          name is null
+            ? $"is offered as \"{offerName}\", but its client action {pair.Key.ToDisplayString()} sets no explicit [CatalogAction] Name; set Name = {contract.Name}.{OfferNameField}"
+            : $"is offered as \"{offerName}\", but its client action {pair.Key.ToDisplayString()} sets Name = \"{name}\"; set Name = {contract.Name}.{OfferNameField}"));
+      }
+    }
+  }
+
+  /// <summary>The [CatalogAction] action a handler requests <paramref name="command"/> for: the first type argument of a generic base whose type arguments include the Command.</summary>
+  private static (INamedTypeSymbol Action, AttributeData Attribute)? RequestedAction
+  (
+    INamedTypeSymbol handler,
+    INamedTypeSymbol command,
+    INamedTypeSymbol catalogActionAttribute
+  )
+  {
+    for (INamedTypeSymbol? type = handler.BaseType; type is not null; type = type.BaseType)
+    {
+      if (!type.IsGenericType || type.TypeArguments.Length < 2) continue;
+      if (!type.TypeArguments.Skip(1).Any(argument => SymbolEqualityComparer.Default.Equals(argument, command))) continue;
+      if (type.TypeArguments[0] is not INamedTypeSymbol action) continue;
+
+      AttributeData? attribute = action.GetAttributes()
+        .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.AttributeClass, catalogActionAttribute));
+      if (attribute is not null) return (action, attribute);
+    }
+
+    return null;
+  }
+
+  private static bool HasGenericBase(INamedTypeSymbol type)
+  {
+    for (INamedTypeSymbol? baseType = type.BaseType; baseType is not null; baseType = baseType.BaseType)
+    {
+      if (baseType.IsGenericType) return true;
+    }
+
+    return false;
+  }
+
+  private static bool HasOfferableAttribute(INamedTypeSymbol type) =>
+    type.GetAttributes().Any(static attribute => attribute.AttributeClass?.Name == OfferableAttributeSimpleName);
 
   private static bool IsBlazorWebAssemblyCompilation(AnalyzerOptions options) =>
     options.AnalyzerConfigOptionsProvider.GlobalOptions

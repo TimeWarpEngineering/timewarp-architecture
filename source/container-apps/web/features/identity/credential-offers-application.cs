@@ -4,8 +4,9 @@
 
 #region Design
 // Hypermedia approach B (task 279): the server decides what is valid now and spells it in the SPA's
-// catalog vocabulary through the typed offer records (credential-action-offer-contracts.cs, task
-// 280). Per active credential: Rename always (the user supplies the nickname), Revoke only while
+// catalog vocabulary through typed offer records (task 280): the generated RenameCredential.Offer /
+// RevokeCredential.Offer of the [Offerable] contracts (task 281) and the hand-written
+// LinkMicrosoft365Offer (credential-action-offer-contracts.cs). Per active credential: Rename always (the user supplies the nickname), Revoke only while
 // CredentialRules.CanRevoke holds over the count of EVERY active credential type — what
 // RevokeCredential.Handler counts. Page-level: Link Microsoft 365 while
 // CredentialRules.CanLinkMicrosoft365 holds. Pure over summaries + the offered flag, so the rule
@@ -28,10 +29,10 @@ public static class CredentialOffers
     List<OfferedAction> offers = [];
     foreach (CredentialSummary credential in active)
     {
-      offers.Add(OfferedAction.ForCredential(new RenameCredentialOffer(credential.Id.Value), "Rename"));
+      offers.Add(OfferedAction.ForCredential(new Identity.RenameCredential.Offer(credential.Id.Value), "Rename"));
       if (canRevoke)
       {
-        offers.Add(OfferedAction.ForCredential(new RevokeCredentialOffer(credential.Id.Value), "Revoke"));
+        offers.Add(OfferedAction.ForCredential(new Identity.RevokeCredential.Offer(credential.Id.Value), "Revoke"));
       }
     }
 

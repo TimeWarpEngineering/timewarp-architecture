@@ -57,11 +57,11 @@ public class CommandPalette_Should_
 
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Command).Select(static row => row.Target)
       .OrderBy(static name => name, StringComparer.Ordinal)
-      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Profile.SignOut"]);
+      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Identity.LinkMicrosoft365", "Profile.SignOut"]);
 
     // Task 260: the Settings "Link Microsoft 365" button is a palette command too; task 268: its
     // label is the authored [CatalogAction(DisplayName)], so the brand casing survives.
-    palette.Roster.Single(static row => row.Target == "Credentials.LinkMicrosoft365").Name.ShouldBe("Credentials: Link Microsoft 365");
+    palette.Roster.Single(static row => row.Target == "Identity.LinkMicrosoft365").Name.ShouldBe("Identity: Link Microsoft 365");
 
     CommandPaletteRow signOut = palette.Roster.Single(static row => row.Target == "Profile.SignOut");
     signOut.Name.ShouldBe("Profile: Sign out");
@@ -79,8 +79,8 @@ public class CommandPalette_Should_
   }
 
   [Input("Counter.IncrementCounter")]
-  [Input("Credentials.RenameCredential")]
-  [Input("Credentials.RevokeCredential")]
+  [Input("Identity.RenameCredential")]
+  [Input("Identity.RevokeCredential")]
   [Input("Profile.UpdateProfile")]
   [Input("Role.CreateRole")]
   [Input("SiteSettings.UpdateSiteSettings")]
@@ -116,7 +116,7 @@ public class CommandPalette_Should_
     foreach (string denied in new[]
     {
       "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Authentication",
-      "/AgentLinks", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
+      "/AgentLinks", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Identity.LinkMicrosoft365",
     })
     {
       targets.ShouldNotContain(denied);
@@ -173,8 +173,8 @@ public class CommandPalette_Should_
     await scope.Send(new CommandPaletteState.FilterActionSet.Action(query));
 
     CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
-    highlighted.Target.ShouldBe("Credentials.LinkMicrosoft365");
-    highlighted.Name.ShouldBe("Credentials: Link Microsoft 365");
+    highlighted.Target.ShouldBe("Identity.LinkMicrosoft365");
+    highlighted.Name.ShouldBe("Identity: Link Microsoft 365");
   }
 
   public static async Task Rank_Link_Microsoft_365_On_Its_Label_For_Link()
@@ -188,7 +188,7 @@ public class CommandPalette_Should_
     // "link" is a word start in the label, so it ranks with the other "…link…" names, ahead of
     // every row that matches on its description alone.
     IReadOnlyList<CommandPaletteRow> matches = scope.Store.GetState<CommandPaletteState>().Matches;
-    int index = matches.ToList().FindIndex(static row => row.Target == "Credentials.LinkMicrosoft365");
+    int index = matches.ToList().FindIndex(static row => row.Target == "Identity.LinkMicrosoft365");
     index.ShouldBeGreaterThanOrEqualTo(0);
     matches.Take(index).ShouldAllBe(static row => row.Name.Contains("link", StringComparison.OrdinalIgnoreCase));
   }

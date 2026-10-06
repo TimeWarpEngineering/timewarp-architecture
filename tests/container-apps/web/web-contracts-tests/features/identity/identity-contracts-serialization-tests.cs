@@ -466,7 +466,7 @@ public class GetCredentials_Response_Should
         )
       ],
       [
-        OfferedAction.ForCredential(new RevokeCredentialOffer(firstId.Value), "Revoke"),
+        OfferedAction.ForCredential(new RevokeCredential.Offer(firstId.Value), "Revoke"),
         OfferedAction.ForPage(new LinkMicrosoft365Offer(), "Link Microsoft 365")
       ]
     );
@@ -496,10 +496,10 @@ public class GetCredentials_Response_Should
     parsed.Credentials[2].AccountHint.ShouldBe("steve@contoso.com");
     // Task 279: offers ride the same read — a credential-bound offer and a page-level one.
     parsed.Offers.Count.ShouldBe(2);
-    parsed.Offers[0].Name.ShouldBe(OfferedActionNames.RevokeCredential);
+    parsed.Offers[0].Name.ShouldBe(RevokeCredential.OfferName);
     parsed.Offers[0].Label.ShouldBe("Revoke");
     parsed.Offers[0].Subject.ShouldBe(firstId.Value.ToString("D"));
-    // Task 280: the typed RevokeCredentialOffer record keeps the wire shape — camelCase "credentialId", Guid "D".
+    // Task 280: the generated RevokeCredential.Offer record (task 281) keeps the wire shape — camelCase "credentialId", Guid "D".
     parsed.Offers[0].Arguments.Keys.ShouldBe(["credentialId"]);
     parsed.Offers[0].Arguments["credentialId"].GetString().ShouldBe(firstId.Value.ToString("D"));
     parsed.Offers[1].Name.ShouldBe(OfferedActionNames.LinkMicrosoft365);
@@ -766,9 +766,10 @@ public class OfferedAction_Should
   {
     Guid credentialId = Guid.NewGuid();
 
-    OfferedAction parsed = ContractSerialization.RoundTrip(OfferedAction.ForCredential(new RenameCredentialOffer(credentialId), "Rename"));
+    OfferedAction parsed = ContractSerialization.RoundTrip(OfferedAction.ForCredential(new RenameCredential.Offer(credentialId), "Rename"));
 
-    parsed.Name.ShouldBe(OfferedActionNames.RenameCredential);
+    parsed.Name.ShouldBe(RenameCredential.OfferName);
+    parsed.Name.ShouldBe("Identity.RenameCredential", "task 281 naming scheme: <Slice>.<Operation> from [Offerable]");
     parsed.Subject.ShouldBe(credentialId.ToString("D"));
     parsed.Arguments.Keys.ShouldBe(["credentialId"], "the nickname is UserInput and the const is no argument");
     parsed.Arguments["credentialId"].GetString().ShouldBe(credentialId.ToString("D"));
@@ -778,11 +779,11 @@ public class OfferedAction_Should
   public static Task Use_The_Runtime_Record_For_An_Interface_Typed_Offer()
   {
     Guid credentialId = Guid.NewGuid();
-    ICredentialActionOffer offer = new RevokeCredentialOffer(credentialId);
+    ICredentialActionOffer offer = new RevokeCredential.Offer(credentialId);
 
     OfferedAction offered = OfferedAction.ForCredential(offer, "Revoke");
 
-    offered.Name.ShouldBe(OfferedActionNames.RevokeCredential);
+    offered.Name.ShouldBe(RevokeCredential.OfferName);
     offered.Arguments.Keys.ShouldBe(["credentialId"]);
     return Task.CompletedTask;
   }

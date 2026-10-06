@@ -192,10 +192,10 @@ public static partial class GetCredentials
           )
         ],
         [
-          OfferedAction.ForCredential(new RenameCredentialOffer(first.Value), "Rename"),
-          OfferedAction.ForCredential(new RevokeCredentialOffer(first.Value), "Revoke"),
-          OfferedAction.ForCredential(new RenameCredentialOffer(second.Value), "Rename"),
-          OfferedAction.ForCredential(new RevokeCredentialOffer(second.Value), "Revoke")
+          OfferedAction.ForCredential(new RenameCredential.Offer(first.Value), "Rename"),
+          OfferedAction.ForCredential(new RevokeCredential.Offer(first.Value), "Revoke"),
+          OfferedAction.ForCredential(new RenameCredential.Offer(second.Value), "Rename"),
+          OfferedAction.ForCredential(new RevokeCredential.Offer(second.Value), "Revoke")
         ]
       );
     };

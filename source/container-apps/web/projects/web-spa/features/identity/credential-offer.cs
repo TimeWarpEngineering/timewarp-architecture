@@ -13,7 +13,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 using System.Text.Json;
 
-/// <param name="Name">Catalog name (<see cref="OfferedActionNames"/>).</param>
+/// <param name="Name">Catalog name (one of <see cref="OfferedActionNames.All"/>).</param>
 /// <param name="Label">Button / row label the server chose.</param>
 /// <param name="Subject">Credential id (Guid "D") the offer applies to; null for a page-level offer.</param>
 /// <param name="ArgumentsJson">JSON object of catalog arguments keyed by parameter name.</param>

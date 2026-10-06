@@ -13,7 +13,7 @@
 // also contributes as a contextual row is dropped (task 279: Settings' offered Link Microsoft 365
 // would otherwise appear twice) — the page's offered row is the one that knows it applies now.
 // Only a contributed row drops the static one: when Settings does not offer Link, the static
-// "Credentials: Link Microsoft 365" row stays, and running it falls back to the challenge flow's
+// "Identity: Link Microsoft 365" row stays, and running it falls back to the challenge flow's
 // own handling.
 #endregion
 

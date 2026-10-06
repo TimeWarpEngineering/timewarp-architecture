@@ -22,6 +22,10 @@
 // return for a revoke.
 // [EndpointAuthorize] (task 182-006): PermissionIds.CredentialManageSelf dual scheme — see
 // GetCredentials' Design region for the same policy/IAuthApiRequest rationale.
+// [Offerable] (task 281): the server offers this as a client catalog action; the contracts generator
+// emits Offer(CredentialId) — UserId is auth-filled, so never offered — and OfferName
+// ("Identity.RevokeCredential"). The partial Offer adds ICredentialActionOffer so
+// OfferedAction.ForCredential uses the credential as the offer's Subject.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -32,8 +36,11 @@ namespace TimeWarp.Architecture.Features.Identity;
   Policy = PermissionIds.CredentialManageSelf,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
+[Offerable]
 public static partial class RevokeCredential
 {
+  partial record Offer : ICredentialActionOffer;
+
   [ApiRoute("api/identity/credentials/{CredentialId:guid}/revoke", HttpVerb.Post)]
   public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
   {

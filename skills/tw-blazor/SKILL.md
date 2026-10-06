@@ -96,7 +96,8 @@ server can offer it. The read the page already loads returns the actions valid n
 `{ name, label, subject, arguments }`, where `name` is a client `[CatalogAction]` name and
 `arguments` are keyed by that action's constructor parameter names. The server computes the
 offers from the same rule code its handlers enforce, and builds each one from a typed offer record
-in the shared contracts, so it never spells a name or an argument key by hand.
+in the shared contracts (generated from `[Offerable]` on the operation's contract), so it never
+spells a name or an argument key by hand.
 
 The client stores the offers in the feature state with the data they describe, renders a button
 only for an offer, and runs it through the catalog: `Find` the name, check the entry is
@@ -137,25 +138,71 @@ second place to look without removing any drift.
 
 ## How to add an offerable action
 
-1. Add the catalog name constant to the slice's offered-names class in the shared contracts.
-2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`. Its public properties
-   are the arguments the server binds and must match the action's first constructor's parameters
-   by camelCase name and type. A nullable property cannot feed a required parameter (the client
-   treats null as missing). List any required parameter the user supplies (a nickname, a comment)
-   in `UserInput`. Optional parameters may be left out only at the end: binding one after an
-   optional parameter that is omitted, or fed by a nullable property, is refused.
+**Primary path — the action runs a contract Command: flag the contract.**
+
+1. Add `[Offerable]` to the contract's static partial class. List the Command properties the user
+   supplies with `UserInput = [nameof(Command.X)]` (a nickname, a comment); the user, not the
+   server, fills those.
+
+   ```csharp
+   [ApiEndpoint]
+   [EndpointAuthorize(Policy = PermissionIds.CredentialManageSelf, AuthenticationSchemes = …)]
+   [Offerable(UserInput = [nameof(Command.Nickname)])]
+   public static partial class RenameCredential
+   {
+     partial record Offer : ICredentialActionOffer; // optional: add interfaces to the generated record
+     …
+   }
+   ```
+
+   The contracts generator emits, onto the contract, `const string OfferName` (`"<Slice>.<Operation>"`,
+   e.g. `"Identity.RenameCredential"`) and a nested `[ActionOffer(OfferName, UserInput = …)] record
+   Offer(…)` whose properties are the route parameters plus the Command's settable properties, minus
+   `UserInput` and the auth-filled `UserId` (`IAuthApiRequest` — the server takes the caller from the
+   session and never trusts a client-sent id, so it is never an offered argument). A `UserInput` entry
+   that names no Command property, repeats an entry, or names that `UserId` is **TWE012**;
+   `[Offerable]` on a contract with no Command is **TWE013**; `[Offerable]` on anything but a non-generic
+   partial class declared in a namespace (nested only in such classes) is **TWE014** — the generated
+   members could not merge into it.
+2. Set `[CatalogAction(Name = <Contract>.OfferName)]` on the client action whose handler requests that
+   Command. **TWA0031** fails the SPA build when an offerable contract has no such action, or the
+   action declares a different name.
+3. Have the server build offers from the generated record:
+   `OfferedAction.ForCredential(new RenameCredential.Offer(id), "Rename")` (or `ForPage` / `Create`).
+
+Why: an offer is the Command minus what the server fills, split into what the server binds and what
+the user types. Generating it from the contract means the offer cannot drift from the operation it
+runs, and an agent sees the same typed shape as the button.
+
+**Escape hatch — the action has no contract Command: hand-write the record.** A browser redirect
+to a hand-written endpoint (an auth challenge), or a client-only action, has no Command to generate
+from:
+
+1. Add the catalog name constant to the slice's offered-names class in the shared contracts. Name it
+   `"<Slice>.<Operation>"`, the same scheme the generator uses (`"Identity.LinkMicrosoft365"` beside
+   the generated `"Identity.RenameCredential"`), so every offer a slice makes reads as one vocabulary
+   whether its record is generated or hand-written.
+2. Add a typed offer record beside it, tagged `[ActionOffer(<constant>)]`.
 3. Set `[CatalogAction(Name = <constant>)]` on the client action, so renaming the action set cannot
    change the offered name.
-4. Have the server build offers only from the record (`OfferedAction.ForCredential` / `ForPage` /
-   `Create`).
+4. Build offers only from the record.
 
-The SPA build checks the pairing: TWA0029 when no action, or more than one, declares that `Name`;
-TWA0030 when the record's properties or `UserInput` do not match the action's parameters. Why: the server cannot
-reference client action types, so the shared contracts are the one place both sides can agree, and
-a build error replaces a run-time refusal the user would see.
+Either way the record's public properties are the arguments the server binds and must match the
+action's first constructor's parameters by camelCase name and type. A nullable property cannot feed
+a required parameter (the client treats null as missing). Every required parameter the offer does
+not bind must be listed in `UserInput`. Optional parameters may be left out only at the end:
+binding one after an optional parameter that is omitted, or fed by a nullable property, is refused.
+
+The SPA build checks the pairing: TWA0029 when no action, or more than one, declares the offer's
+`Name`; TWA0030 when the record's properties or `UserInput` do not match the action's parameters;
+TWA0031 when an `[Offerable]` contract's client action does not carry its `OfferName`. Why: the
+server cannot reference client action types, so the shared contracts are the one place both sides
+can agree, and a build error replaces a run-time refusal the user would see.
 
 Reference: `features/identity/get-credentials/` and `credential-offers-application.cs` (server),
-`credential-action-offer-contracts.cs` (offer records),
+`rename-credential/rename-credential-contracts.cs` and `revoke-credential/revoke-credential-contracts.cs`
+(`[Offerable]` contracts), `credential-action-offer-contracts.cs` (the hand-written Link Microsoft 365
+record),
 `credential-offer-rows.cs` and `credentials-context-source.cs` (client) under
 `source/container-apps/web/`; the runner is
 `web-spa/features/application/command-palette/command-palette-runner.cs`.
