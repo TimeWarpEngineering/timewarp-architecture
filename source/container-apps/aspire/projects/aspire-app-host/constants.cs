@@ -51,4 +51,24 @@ internal class Constants
   public const string EntraClientIdParameterName = "entra-client-id";
   public const string EntraClientSecretParameterName = "entra-client-secret";
   public const string EntraPublicOriginParameterName = "entra-public-origin";
+
+  // Task 070-004: publish target switch. Aspire assigns each compute resource to exactly ONE compute
+  // environment, so Compose and Kubernetes cannot both publish one model; `aspire publish -- --Publish:Target=kubernetes`
+  // selects the Helm chart (default: compose).
+  public const string PublishTargetConfigurationKey = "Publish:Target";
+  public const string ComposePublishTarget = "compose";
+  public const string KubernetesPublishTarget = "kubernetes";
+
+  // Task 070-004: Kubernetes publish environment (Helm chart), its cluster Ingress, container registry,
+  // and the publish-only parameters for Helm placement, registry and storage.
+  public const string KubernetesEnvironmentResourceName = "k8s";
+  public const string KubernetesIngressResourceName = "cluster-ingress";
+  public const string ContainerRegistryResourceName = "registry";
+  public const string KubernetesNamespaceParameterName = "k8s-namespace";
+  public const string HelmReleaseNameParameterName = "helm-release-name";
+  public const string HelmChartVersionParameterName = "helm-chart-version";
+  public const string IngressClassParameterName = "ingress-class";
+  public const string RegistryEndpointParameterName = "registry-endpoint";
+  public const string RegistryRepositoryParameterName = "registry-repository";
+  public const string PostgresStorageCapacityParameterName = "postgres-storage-capacity";
 }

@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// One subcommand per Aspire publish target the AppHost declares (compose today; the Kubernetes/Helm
-// environment, task 070-004, adds its own). Same group pattern as db-group.cs.
+// One subcommand per Aspire publish target the AppHost declares (compose, task 070-003; kubernetes /
+// Helm, task 070-004), sharing services/aspire-publish.cs. Same group pattern as db-group.cs.
 #endregion
 
 namespace DevCli.Commands;

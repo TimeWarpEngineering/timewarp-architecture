@@ -120,6 +120,54 @@
 // reach. Re-running the script is a no-op; web-server tolerates the not-yet-migrated window (above).
 // Artifacts are CI-only, never committed: `dev publish compose` writes artifacts/aspire-output/compose
 // (git-ignored) and workflow.yml uploads compose, .env and the SQL script (not the ~100 MB bundle).
+// Kubernetes publish target (task 070-004): AddKubernetesEnvironment makes `aspire publish` emit a Helm
+// chart; `aspire deploy` runs helm upgrade --install against the current kubectl context (Helm >= 4.2).
+// Aspire assigns every compute resource to exactly ONE compute environment (a second environment
+// without WithComputeEnvironment on every resource fails validation), so Compose and Kubernetes are
+// alternatives selected by configuration: `aspire publish -- --Publish:Target=kubernetes` (default
+// compose; any other value throws). The switch is read in publish mode only — run mode always
+// declares the Compose environment, as before, and never sees Kubernetes resources or parameters.
+// WithHelm takes the namespace and release name as parameters (supplied at deploy) and the chart
+// version as a parameter defaulting to 1.0.0. Images go to the registry from AddContainerRegistry
+// (registry-endpoint + registry-repository parameters) attached with WithContainerRegistry —
+// preview in Aspire 13.6, so ASPIRECOMPUTE003 is suppressed around those two calls only. No
+// Kubernetes dashboard (a second workload with an unauthenticated UI).
+// Ingress decision (carried from retired 070-001) — option (a): the cluster's ingress controller
+// forwards ALL traffic to the YARP ingress, which keeps the per-service routing above. Chosen over
+// (b), per-service controller routes from WebServerApiRoutePrefixes, because (b) would fork the
+// routing table into a second implementation per target and lose YARP's original-Host forwarding
+// and /grpc prefix strip, which controller annotations express differently per vendor; with (a) the
+// routes are identical in run mode, Compose and Kubernetes. The chart carries one networking.k8s.io
+// Ingress (cluster-ingress) whose default backend is YARP's http endpoint (TLS terminates at the
+// controller) and whose class is the ingress-class parameter (default nginx). The controller itself
+// is cluster infrastructure and is NOT installed by this chart (an app chart that installs a
+// cluster-scoped controller collides with every other release); install one per cluster.
+// Production-safety posture of the chart: every Service is ClusterIP — the Ingress is the only way
+// in, and without the yarp flag the chart has no Ingress at all; secrets (postgres password, Entra
+// client secret, the derived connection strings) land in <resource>-secrets Secret objects backed by
+// values.yaml `secrets.<resource>` with empty defaults, never in ConfigMaps; mock auth, browser-log
+// forwarding and the REPL are absent for the same reasons as Compose. The postgres password appears
+// under TWO values.yaml keys — secrets.postgres.postgres_password (postgres-secrets) and
+// secrets.web_server.postgres_password (web-server-secrets: its connection strings) — which
+// `aspire deploy` fills from the one parameter; a plain `helm install` must set both to the same
+// value. ingress-class, postgres-storage-capacity and chart-version are publish/deploy-time
+// parameters baked into the chart as literals (not .Values), so changing them means re-publishing
+// or deploying with the parameter, not `helm --set`. `aspire deploy` takes the same switch:
+// `aspire deploy -- --Publish:Target=kubernetes`. aspire-tests'
+// kubernetes-publish-tests guard all of this against the generated chart.
+// Postgres in Kubernetes: the published postgres-data volume binds by name to a Kubernetes persistent
+// volume (PersistentVolumeClaim postgres-data, ReadWriteOnce, postgres-storage-capacity parameter,
+// default 10Gi), which renders postgres as a single-replica StatefulSet with fsGroup set by Aspire.
+// The password is AddPostgres' generated secret parameter. PublishAsKubernetesService is not used:
+// the defaults (one replica, Aspire's fsGroup) are already right, and no probe is added.
+// Migrations for Kubernetes: the published idempotent SQL script, run BY HAND once the StatefulSet is
+// ready — `kubectl exec -i -n <namespace> statefulset/postgres-statefulset -- sh -c
+// 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' <
+// efmigrations/web-migrations.sql`. No migration Job: the bundle is a self-contained host binary
+// with no image to run it in, and the bundle is not published for this target at all — publish
+// output IS the chart directory, and Helm rejects any chart file over 5 MiB.
+// `dev publish kubernetes` writes artifacts/aspire-output/kubernetes, gates it with the same suite and
+// helm lint (when helm is on PATH); workflow.yml uploads the chart directory.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -130,10 +178,49 @@ internal class Program
   {
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-    // Task 070-003: `aspire publish` target for standalone hardware (compose.yaml + .env). A compute
-    // environment only shapes publish/deploy output; run mode (`dev run`) ignores it. No compose
-    // dashboard: it would publish a second, unauthenticated host port beside the ingress.
-    builder.AddDockerComposeEnvironment(ComposeEnvironmentResourceName).WithDashboard(enabled: false);
+    // Task 070-004: Aspire assigns each compute resource to exactly one compute environment, so the
+    // publish target is a configuration switch (Publish:Target = compose | kubernetes), read in publish
+    // mode only. Run mode always declares the Compose environment, exactly as before, and ignores it.
+    string publishTarget = builder.ExecutionContext.IsPublishMode
+      ? builder.Configuration[PublishTargetConfigurationKey] ?? ComposePublishTarget
+      : ComposePublishTarget;
+    IResourceBuilder<KubernetesEnvironmentResource>? kubernetes = null;
+
+    if (string.Equals(publishTarget, KubernetesPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      // Task 070-004: `aspire publish` emits a Helm chart; `aspire deploy` runs helm upgrade --install
+      // against the current kubectl context. Namespace, release name and chart version are parameters
+      // (values the operator supplies at deploy). No dashboard: it would be a second workload with an
+      // unauthenticated UI beside the app.
+      kubernetes = builder.AddKubernetesEnvironment(KubernetesEnvironmentResourceName)
+        .WithHelm(helm => helm
+          .WithNamespace(builder.AddParameter(KubernetesNamespaceParameterName))
+          .WithReleaseName(builder.AddParameter(HelmReleaseNameParameterName))
+          .WithChartVersion(builder.AddParameter(HelmChartVersionParameterName, "1.0.0", publishValueAsDefault: true)))
+        .WithDashboard(enabled: false);
+
+      // Images are pushed to the operator's registry (endpoint + repository parameters). Container
+      // registries are preview in Aspire 13.6; suppressed here only, where the registry is attached.
+#pragma warning disable ASPIRECOMPUTE003 // Preview API: AddContainerRegistry / WithContainerRegistry (Aspire 13.6).
+      IResourceBuilder<ContainerRegistryResource> registry = builder.AddContainerRegistry(
+        ContainerRegistryResourceName,
+        builder.AddParameter(RegistryEndpointParameterName),
+        builder.AddParameter(RegistryRepositoryParameterName));
+      kubernetes = kubernetes.WithContainerRegistry(registry);
+#pragma warning restore ASPIRECOMPUTE003
+    }
+    else if (string.Equals(publishTarget, ComposePublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      // Task 070-003: `aspire publish` target for standalone hardware (compose.yaml + .env). A compute
+      // environment only shapes publish/deploy output; run mode (`dev run`) ignores it. No compose
+      // dashboard: it would publish a second, unauthenticated host port beside the ingress.
+      builder.AddDockerComposeEnvironment(ComposeEnvironmentResourceName).WithDashboard(enabled: false);
+    }
+    else
+    {
+      throw new InvalidOperationException(
+        $"{PublishTargetConfigurationKey} '{publishTarget}' is not a publish target; use '{ComposePublishTarget}' or '{KubernetesPublishTarget}'.");
+    }
 
     // Declare project resources based on template flags
 #if api
@@ -249,6 +336,16 @@ internal class Program
       postgres = postgres.WithEnvironment("POSTGRES_DB", PostgresDatabaseResourceName);
     }
 
+    // Task 070-004: in the Helm chart the published postgres-data volume binds (by name) to a
+    // PersistentVolumeClaim postgres-data, which renders postgres as a single-replica StatefulSet
+    // mounting that claim.
+    if (kubernetes is not null)
+    {
+      postgres = postgres.WithPersistentVolume(
+        kubernetes.AddPersistentVolume(PostgresPublishedDataVolumeName)
+          .WithCapacity(builder.AddParameter(PostgresStorageCapacityParameterName, "10Gi", publishValueAsDefault: true)));
+    }
+
     IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
 
@@ -257,7 +354,7 @@ internal class Program
     // Projects.* is only generated for Aspire project resources).
     string webInfrastructureProject = Path.GetFullPath(
       Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
-    webServer
+    IResourceBuilder<global::Aspire.Hosting.EntityFrameworkCore.EFMigrationResource> webMigrations = webServer
       .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
       .WithMigrationsProject(webInfrastructureProject)
       .WithMigrationOutputDirectory("../../platform/postgres/migrations")
@@ -265,8 +362,15 @@ internal class Program
       .WithReference(postgresDb)
       .WaitFor(postgresDb)
       .RunDatabaseUpdateOnStart()
-      .PublishAsMigrationScript()
-      .PublishAsMigrationBundle();
+      .PublishAsMigrationScript();
+
+    // Task 070-004: no bundle in the Helm chart. Publish output IS the chart directory, and Helm
+    // refuses to load a chart holding the ~100 MB self-contained bundle (5 MiB per-file limit), so
+    // helm lint and `aspire deploy` would both fail. Kubernetes migrates from the SQL script.
+    if (kubernetes is null)
+    {
+      webMigrations.PublishAsMigrationBundle();
+    }
     // Task 155 / 270: no wait edge between web-server and web-migrations. Without a wait edge, a
     // dashboard restart/rebuild of web-server can never deadlock on the migration resource's
     // terminal Finished snapshot. WaitForCompletion still breaks DCP endpoint wiring on Aspire
@@ -291,7 +395,18 @@ internal class Program
 
     // Task 070-003: published, the ingress is the ONLY service with a host port, pinned to the
     // ingress-port .env parameter (Compose would otherwise pick a random host port).
-    if (builder.ExecutionContext.IsPublishMode)
+    if (kubernetes is not null)
+    {
+      // Task 070-004 ingress decision (a): the cluster's ingress controller forwards everything to the
+      // YARP ingress, which keeps doing the per-service routing below. The Ingress resource's default
+      // backend is YARP's http endpoint (TLS terminates at the controller); the class is a parameter
+      // because the controller belongs to the cluster, not to this chart.
+      yarp = yarp.WithExternalHttpEndpoints();
+      kubernetes.AddIngress(KubernetesIngressResourceName)
+        .WithIngressClass(builder.AddParameter(IngressClassParameterName, "nginx", publishValueAsDefault: true))
+        .WithDefaultBackend(yarp.GetEndpoint("http"));
+    }
+    else if (builder.ExecutionContext.IsPublishMode)
     {
       IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, "8080", publishValueAsDefault: true);
       yarp = yarp
