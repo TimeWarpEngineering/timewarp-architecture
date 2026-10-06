@@ -28,13 +28,27 @@ public, so write rules and reasoning only, with no history or client names. Also
 
 ## Checklist
 
-- [x] Azure AKS-vs-ACA comparison + recommendation written; **stop for Steve's decision** (pending)
+- [x] Azure AKS-vs-ACA comparison + recommendation written; Steve decided **A** (2026-10-07)
 - [x] Skill section(s) written (public-safe)
 - [x] AppHost Design region points to the skill
 - [x] Gates: `ganda repo audit`, plus the skill-spec lint (CI)
 - [ ] Implementation review; host `open-pr`
 
-## Azure decision — comparison and recommendation (awaiting Steve)
+## Azure decision — DECIDED: A (Steve, 2026-10-07)
+
+**Decision:** A — an existing AKS cluster is the template's Azure target, through the Kubernetes
+target. No Azure-specific AppHost wiring in this task. B is rejected.
+C (Azure Container Apps + Flexible Server) is filed as child **070-007**, with the crunchit repo as
+its reference implementation. Manual `dev deploy` / `dev deprovision` is filed as **070-006**.
+
+**Skill follow-through for this task:**
+- In `skills/tw-deploy`, state that deploying is a deliberate, operator-run action and is never
+  automated in CI. CI only publishes and runs the safety checks.
+- Name ACA as the Azure option for small or idle apps, "planned", without documenting commands that
+  do not exist yet. 070-006 and 070-007 extend the skill when they land.
+- Do not document `dev deploy` until 070-006 ships. Use `aspire deploy` directly for now.
+
+### Comparison (kept for the record)
 
 Sources: aspire.dev `deploy-to-azure-kubernetes-service-aks`, `azure-kubernetes-service-aks-integration`,
 `configure-ingress-on-aks`, `deploy-to-azure-container-apps`, `configure-azure-container-apps-environments`,
@@ -77,7 +91,7 @@ workloads (agent or code sandboxes), not a stateful multi-service app.
   driver. If it is taken up, it brings in Azure Postgres Flexible Server and a separate safety
   suite. It is a second, Azure-only deploy story, not a replacement.
 
-**Stopped here for Steve's decision.** If he picks A, no AppHost wiring follows; the skill
+**Decided A (2026-10-07).** If he picks A, no AppHost wiring follows; the skill
 already says so. If he picks B or C, a new child under 070 adds the `Publish:Target` value, its
 safety suite and a skill update.
 
@@ -136,5 +150,10 @@ grep -n "skills/tw-deploy" source/container-apps/aspire/projects/aspire-app-host
   region.
 
 ## Session
+- 2026-10-07: Steve decided A; C filed as 070-007, manual dev deploy as 070-006. Resume: finish skill follow-through, review, open PR.
 
 - Created: 2026-10-03 (rewrite of 070)
+
+## Blocked
+
+2026-10-06: Steve's Azure target decision (A: existing AKS via the Kubernetes target, recommended; B: AddAzureKubernetesEnvironment; C: Azure Container Apps) — comparison in 070-005 task.md "Azure decision" section
