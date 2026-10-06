@@ -28,15 +28,112 @@ public, so write rules and reasoning only, with no history or client names. Also
 
 ## Checklist
 
-- [ ] Azure AKS-vs-ACA comparison + recommendation written; **stop for Steve's decision**
-- [ ] Skill section(s) written (public-safe)
-- [ ] AppHost Design region points to the skill
-- [ ] Gates: `ganda repo audit`, plus the skill-spec lint (CI)
+- [x] Azure AKS-vs-ACA comparison + recommendation written; **stop for Steve's decision** (pending)
+- [x] Skill section(s) written (public-safe)
+- [x] AppHost Design region points to the skill
+- [x] Gates: `ganda repo audit`, plus the skill-spec lint (CI)
 - [ ] Implementation review; host `open-pr`
+
+## Azure decision — comparison and recommendation (awaiting Steve)
+
+Sources: aspire.dev `deploy-to-azure-kubernetes-service-aks`, `azure-kubernetes-service-aks-integration`,
+`configure-ingress-on-aks`, `deploy-to-azure-container-apps`, `configure-azure-container-apps-environments`,
+`deploy-to-azure-container-apps-sandboxes`, `persistent-volumes-on-kubernetes`, `external-parameters`.
+
+There are three Azure options:
+
+- **A. Existing AKS cluster as a plain Kubernetes target.** This needs no AppHost change.
+  - Point `aspire deploy -- --Publish:Target=kubernetes` at the AKS kubectl context.
+  - ACR serves as `registry-endpoint`.
+  - `ingress-class` is set to the cluster's controller.
+- **B. `AddAzureKubernetesEnvironment`** (`Aspire.Hosting.Azure.Kubernetes`). `aspire deploy`
+  provisions the AKS cluster, ACR and pull identity, then installs the generated Helm chart. The
+  docs give no `AsExisting` for AKS, so this option owns the cluster: `aspire destroy` deletes it.
+- **C. `AddAzureContainerAppEnvironment`** (`Aspire.Hosting.Azure.AppContainers`). Aspire emits
+  ACA Bicep and provisions it.
+
+| | A. AKS, existing cluster | B. AKS, provisioned by Aspire | C. Azure Container Apps |
+|---|---|---|---|
+| **Lock-in** | None. It is the same Helm chart as on-prem, and the only Azure-specific values are the context, registry and ingress class. | Medium. The chart stays portable, but cluster provisioning (Bicep, node pools, subnets) lives in the app's AppHost. | High. The output is ACA Bicep, there is no Kubernetes artifact, and leaving Azure means a different target. |
+| **AppHost change** | none | a new `Publish:Target` value, its own environment and safety suite | a new `Publish:Target` value, its own environment and safety suite |
+| **Cost model** | You pay for the cluster's node VMs whether or not it is busy. The cost can be shared across many apps on one cluster. | A dedicated cluster per app costs a node-VM floor for each app. This is the worst fit for small apps. | Consumption profile, billed per use. Express mode can scale to zero. This is the cheapest for small or idle apps. The docs give no cost figures. |
+| **Ingress** | Our decision (a) holds as-is: the cluster controller sends traffic to YARP. The controller can be nginx, or AGC with cert-manager via the Ingress API. | The documented path is AGC with Gateway API. It needs subscription preview features (`ManagedGatewayAPIPreview`, `ApplicationLoadBalancerPreview`) and dedicated subnets of /24 or larger. YARP can be the single route target. | Built-in Envoy HTTPS ingress, so no controller to run. `WithExternalHttpEndpoints` on YARP only keeps "only the ingress is external". There is a managed custom-domain certificate. YARP's http hop to web-server stays internal. |
+| **Secrets** | Same as on-prem: `values.yaml` `secrets.*` become K8s Secrets. Key Vault needs the CSI driver, set up as cluster infrastructure. | K8s Secrets via the chart. The docs do not say secret parameters go to Key Vault. | ACA secrets, with the managed identity created by Aspire. The docs are silent on mapping secret parameters to Key Vault. |
+| **Postgres** | A PVC on the cluster's default storage class (Azure managed disk). The same StatefulSet and same manual `kubectl exec` migration as on-prem. | Same as A. | Container volumes become **Azure Files (SMB) shares**, which are a poor and risky home for Postgres data. The docs recommend managed services for production. That means an Azure Postgres Flexible Server resource: a second Azure-specific resource and a different migration path. |
+| **Maturity** | Uses only what already ships and is tested (`kubernetes-publish-tests`). | The AKS environment is new. AGC features are preview, and `AddPersistentVolume` on AKS is `ASPIRECOMPUTE002`. | The core API is stable. Express mode is experimental (`ASPIREACAEXPRESS001`). |
+
+**ACA Sandboxes are out of scope** for hosting this template. They are prerelease, with no
+volumes, no TCP and no private service discovery, and they are built for isolated, auto-suspending
+workloads (agent or code sandboxes), not a stateful multi-service app.
+
+**Recommendation: A** — AKS is the Kubernetes target, with no Azure-specific AppHost wiring.
+
+- It keeps the parent goal of "no Azure lock-in" literally true: one chart, one production-safety
+  suite, one migration story.
+- The skill already documents it (`skills/tw-deploy` → Azure).
+- **Do not add B.** It ties cluster lifecycle to the app (`aspire destroy` deletes the cluster),
+  and its ingress path depends on preview features.
+- **Revisit C only as a separate child**, and only when a small or idle tenant is the real cost
+  driver. If it is taken up, it brings in Azure Postgres Flexible Server and a separate safety
+  suite. It is a second, Azure-only deploy story, not a replacement.
+
+**Stopped here for Steve's decision.** If he picks A, no AppHost wiring follows; the skill
+already says so. If he picks B or C, a new child under 070 adds the `Publish:Target` value, its
+safety suite and a skill update.
 
 ## Notes
 
 - Lands after 070-003 and 070-004, so the guidance describes what exists.
+
+## Results
+
+- **Owning skill: new `skills/tw-deploy/SKILL.md`.** None of the eight existing skills covers
+  deployment: they cover domain, slice, contracts and Blazor topics. It is public-safe, with
+  rules and reasoning only, and no history, task numbers or client names. It ships in generated
+  apps through the existing `skills/**` pack glob. It covers:
+  - the target matrix;
+  - `dev publish` / `aspire publish` / `aspire deploy` for each target, plus Kubernetes
+    prerequisites;
+  - the production-safety table and the rules for new publish-mode code;
+  - secrets and parameters (`.env` and `values.yaml`, the two-key Postgres password under plain
+    helm);
+  - Postgres storage and the exact migration commands for each target;
+  - the ingress topology (YARP stays the router, the chart installs no controller);
+  - Azure (an existing AKS cluster is a Kubernetes target);
+  - container-runtime neutrality (`ASPIRE_CONTAINER_RUNTIME`, never hard-code `docker`).
+- **AppHost Design region:** it now points to the skill as the operator map, and says the two are
+  kept in sync.
+- **Ripple from the new shipped skill:** the `dev template-smoke` `AssertSkillsShipped` list now
+  includes `tw-deploy/SKILL.md`, and the "eight" → "nine" wording changed in that harness and in
+  `AGENTS.md`.
+- **Azure:** the comparison and recommendation (A: existing AKS through the Kubernetes target) are
+  above, **awaiting Steve's decision**. No Azure AppHost wiring was added.
+
+**Gates:**
+- `vally lint skills`: 9/9 passed.
+- dev-cli runfile build: clean.
+- aspire-app-host build (Release): 0 warnings, 0 errors.
+- `ganda repo audit`: passed.
+- No `dev run` or deploy was done, and `dev template-smoke` was not run locally. The harness edit
+  only adds one filename to a list; CI template-smoke covers it.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+vally lint skills
+dev template-smoke              # generated app must contain skills/tw-deploy/SKILL.md
+grep -n "skills/tw-deploy" source/container-apps/aspire/projects/aspire-app-host/program.cs
+```
+
+**Expect:**
+- `vally lint` reports "9 skill(s) linted, 9 passed".
+- template-smoke reports "Generated app contains skills/ (nine SKILL.md files; analysis/ excluded)."
+- The AppHost Design region names `skills/tw-deploy/SKILL.md`.
+- Reading the skill, its commands match the AppHost: parameter names from `constants.cs`,
+  `Publish:Target` values `compose`/`kubernetes`, and migration commands identical to the Design
+  region.
 
 ## Session
 
