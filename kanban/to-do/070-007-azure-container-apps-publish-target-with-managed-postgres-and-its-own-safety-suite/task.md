@@ -202,3 +202,4 @@ cd tests/tools/dev-cli-tests && dotnet test -c Release -- --filter-class Targets
 - 2026-10-07 implementer: review round 1 fixes (M1 docs-only — routing unchanged pending the maintainer's
   aca web-route host decision; M2–M7). Suite 9/9, dev-cli-tests 118/118.
 - 2026-10-07 review oracle (ganda task work, effort 3): ran 2 rounds with a general reviewer. Disposition is accepted-exceptions: M1 is escalated to the maintainer (ACA web-route Host strategy), and M2–M7 and N1 are fixed.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-07T14:07:02Z
