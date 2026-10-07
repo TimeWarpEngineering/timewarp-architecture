@@ -138,6 +138,27 @@ multi-service topology.
     aca`); dev-cli-tests 118/118; `ganda repo audit` passed. The full aspire-tests suite was not
     re-run (it boots AppHosts); only the aca suite changed.
 
+### Review disposition
+
+- **Rounds and roster:** 2 rounds at effort 3, with one `general` reviewer. Fixes landed in `5e759c6b7`, and the review oracle fixed N1.
+- **Final counts:**
+  - bug: 0 open, 0 fixed, 1 wontfix (M1)
+  - suggestion: 0 open, 5 fixed (M2–M6)
+  - nit: 0 open, 2 fixed (M7, N1)
+- **Disposition:** `accepted-exceptions`.
+- **M1 (wontfix, escalated to the maintainer):** web routes are expected to fail through the ACA ingress, because the web hop is HTTPS to `web-server.internal.<domain>` carrying the public Host.
+  - Only the docs were fixed: the inline comment, the Open Question, the skill and these Results all say so now.
+  - The routing fix is a security-design decision about the passkey RP-ID host strategy, and checking it needs a real deploy.
+- **Suite rigor:**
+  - New facts: the Postgres secrets are pinned, the Flexible Server firewall is pinned, and `external` is read from the sliced ingress block.
+  - Each new fact was checked against deliberately broken copies of the Bicep and caught its regression.
+  - **Final gates:** `AcaPublish_Given_` 9/9, dev-cli-tests 118/118, `dev build` 0/0, `ganda repo audit` passes.
+- **Review files:**
+  - `review/review-framework.md`
+  - `review/round-1/{general,merged}.md`
+  - `review/round-2/{general,merged}.md`
+  - `review/disposition.md`
+
 ### How to validate
 
 **Smoke:**
@@ -180,3 +201,4 @@ cd tests/tools/dev-cli-tests && dotnet test -c Release -- --filter-class Targets
   through ACA internal ingress) for the first maintainer deploy.
 - 2026-10-07 implementer: review round 1 fixes (M1 docs-only — routing unchanged pending the maintainer's
   aca web-route host decision; M2–M7). Suite 9/9, dev-cli-tests 118/118.
+- 2026-10-07 review oracle (ganda task work, effort 3): ran 2 rounds with a general reviewer. Disposition is accepted-exceptions: M1 is escalated to the maintainer (ACA web-route Host strategy), and M2–M7 and N1 are fixed.

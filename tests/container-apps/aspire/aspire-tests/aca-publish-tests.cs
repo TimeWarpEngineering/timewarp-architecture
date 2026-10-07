@@ -32,7 +32,8 @@
 //     the password is then a deliberate edit here, not a silent widening;
 //   - the Flexible Server firewall is PINNED to Aspire's single AllowAllAzureIps rule (0.0.0.0–0.0.0.0:
 //     any Azure-hosted IP, any tenant — the password is the barrier). Any other or wider rule in the
-//     published Bicep fails; the operator's migration rule is created and deleted by hand, never in code.
+//     published Bicep fails — including one declared in a loop or nested (a raw occurrence count of
+//     firewallRules / startIpAddress backs up the parsed declaration); the operator's migration rule is created and deleted by hand, never in code.
 // Ingress: each container app's `ingress: { … }` block is sliced and its `external` field read; an
 // ingress block without `external` fails rather than defaulting to internal.
 // Every rule is conditional on what the template flags emitted (no web/postgres → their rules skip).
@@ -284,6 +285,12 @@ public partial class AcaPublish_Given_
         string block = Block(module.Value, module.Value.IndexOf('{', match.Index));
         return (module.Key, Unquote(Field(block, "name")), Field(block, "startIpAddress"), Field(block, "endIpAddress"));
       }))];
+
+    // Shape-independent backstop: a rule declared any other way (a `[for …]` loop, nested under its
+    // server, a module output) still names the firewallRules type or carries an IP range, so exactly
+    // one occurrence of each may exist across all modules — the declaration parsed above.
+    Modules.Values.Sum(text => text.Split("firewallRules").Length - 1).ShouldBe(1, "firewall rules declared outside the parsed top-level shape");
+    Modules.Values.Sum(text => text.Split("startIpAddress").Length - 1).ShouldBe(1, "IP ranges declared outside the parsed top-level shape");
 
     rules.ShouldHaveSingleItem($"firewall rules: {string.Join("; ", rules)}");
     (string module, string name, string? start, string? end) = rules[0];
