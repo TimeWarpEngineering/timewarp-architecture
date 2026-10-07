@@ -5,19 +5,21 @@
 #region Design
 // Kept apart from aspire-deploy.cs so that file stays pure for dev-cli-tests (same split as
 // aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version`, `helm version --short`,
-// `kubectl config current-context`, `az account show`. Nothing here deploys, contacts a cluster API,
-// creates a cluster or calls a container CLI. The kubernetes target needs Helm 4.2+ (Aspire's helm
-// upgrade --install) and a current kubectl context, which is printed so the operator sees where the
-// deploy goes; aca needs `az login` and prints the subscription (Azure__SubscriptionId, else the az
-// CLI's, which the verbs then pass to Aspire — task 070-007); compose needs none of these and reports
-// the container runtime Aspire will use (ASPIRE_CONTAINER_RUNTIME).
+// `kubectl config current-context`, `az account show`, `dotnet user-secrets list --project <apphost>`.
+// Nothing here deploys, contacts a cluster API, creates a cluster or calls a container CLI. The
+// kubernetes target needs Helm 4.2+ (Aspire's helm upgrade --install) and a current kubectl context,
+// which is printed so the operator sees where the deploy goes; aca needs `az login` and prints the
+// subscription and its source (Azure__SubscriptionId, else the AppHost user secret
+// Azure:SubscriptionId, else the az CLI's — only that last one is passed to Aspire, task 070-007);
+// compose needs none of these and reports the container runtime Aspire will use
+// (ASPIRE_CONTAINER_RUNTIME).
 #endregion
 
 namespace DevCli.Services;
 
 /// <summary>
 /// Resolved preflight for one deploy target: the AppHost, the detail line printed before acting, and the environment
-/// variables the aspire process needs (aca: Azure__SubscriptionId when the az CLI chose the subscription).
+/// variables the aspire process needs (aca: Azure__SubscriptionId when only the az CLI chose the subscription).
 /// </summary>
 internal sealed record DeployPreflight(string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment);
 
@@ -62,8 +64,16 @@ internal static class AspireDeployPreflight
         return Fail(terminal, $"Error: {AspireDeploy.NoAzureLoginMessage}");
       }
 
-      AzureSubscriptionChoice subscription = AspireDeploy.ChooseAzureSubscription(
-        Environment.GetEnvironmentVariable(AspireDeploy.AzureSubscriptionIdVariable), account);
+      string? environmentSubscription = Environment.GetEnvironmentVariable(AspireDeploy.AzureSubscriptionIdVariable);
+      string? userSecretSubscription = null;
+      if (string.IsNullOrWhiteSpace(environmentSubscription))
+      {
+        CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+        userSecretSubscription = AspireDeploy.ParseUserSecret(
+          secrets?.Success == true, secrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
+      }
+
+      AzureSubscriptionChoice subscription = AspireDeploy.ChooseAzureSubscription(environmentSubscription, userSecretSubscription, account);
       if (subscription.PassToAspire)
       {
         aspireEnvironment[AspireDeploy.AzureSubscriptionIdVariable] = subscription.SubscriptionId;

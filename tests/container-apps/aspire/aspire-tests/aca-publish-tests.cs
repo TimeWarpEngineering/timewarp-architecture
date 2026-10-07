@@ -25,7 +25,16 @@
 //     parameter is @secure() with no default;
 //   - Postgres is an Azure Database for PostgreSQL Flexible Server with password auth whose
 //     connection string web-server reads from Key Vault — never a postgres container app, and no
-//     Azure Files share (managedEnvironments/storages) anywhere.
+//     Azure Files share (managedEnvironments/storages) anywhere;
+//   - the postgres-derived secrets are PINNED: web-server carries exactly the Key Vault-backed
+//     connection string plus the two copies Aspire's WithReference emits from the @secure() password
+//     parameter (postgres-db-password, postgres-db-uri), and no other app carries any. A new copy of
+//     the password is then a deliberate edit here, not a silent widening;
+//   - the Flexible Server firewall is PINNED to Aspire's single AllowAllAzureIps rule (0.0.0.0–0.0.0.0:
+//     any Azure-hosted IP, any tenant — the password is the barrier). Any other or wider rule in the
+//     published Bicep fails; the operator's migration rule is created and deleted by hand, never in code.
+// Ingress: each container app's `ingress: { … }` block is sliced and its `external` field read; an
+// ingress block without `external` fails rather than defaulting to internal.
 // Every rule is conditional on what the template flags emitted (no web/postgres → their rules skip).
 #endregion
 
@@ -84,7 +93,17 @@ public partial class AcaPublish_Given_
     foreach (ContainerApp app in ContainerApps)
     {
       bool expected = hasIngress && app.Name == IngressApp;
-      app.External.ShouldBe(expected, $"container app '{app.Name}' external ingress is {app.External}; only the YARP ingress may be external");
+      if (app.Ingress is { } ingress)
+      {
+        string external = Field(ingress, "external").ShouldNotBeNull($"container app '{app.Name}' has an ingress block without an `external` field");
+        external.ShouldBeOneOf(["true", "false"], $"container app '{app.Name}' ingress external is '{external}', not a literal");
+        (external == "true").ShouldBe(expected, $"container app '{app.Name}' external ingress is {external}; only the YARP ingress may be external");
+      }
+      else
+      {
+        expected.ShouldBeFalse($"container app '{app.Name}' has no ingress block; the YARP ingress must be external");
+      }
+
       app.Text.ShouldNotContain("additionalPortMappings", Case.Sensitive, $"container app '{app.Name}' opens extra ports");
     }
 
@@ -217,6 +236,65 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_PinThePostgresSecrets()
+  {
+    // Key Vault holds the connection string, but Aspire's WithReference also hands web-server the
+    // password as two container-app secrets built from the @secure() parameter. Pin that set: a new
+    // copy (or a copy on another app) must be a deliberate change, not a side effect of a refactor.
+    if (!Modules.ContainsKey($"{PostgresModule}/{PostgresModule}.bicep"))
+    {
+      return;
+    }
+
+    foreach (ContainerApp app in ContainerApps.Where(app => app.Name != WebServerApp))
+    {
+      PostgresSecrets(app).ShouldBeEmpty($"container app '{app.Name}' carries postgres-derived secrets");
+    }
+
+    ContainerApp webServer = ContainerApps.Single(app => app.Name == WebServerApp);
+    Dictionary<string, string> secrets = PostgresSecrets(webServer);
+    string.Join(", ", secrets.Keys.Order(StringComparer.Ordinal)).ShouldBe(
+      "connectionstrings--postgres-db, postgres-db-password, postgres-db-uri",
+      "web-server's postgres-derived secrets changed");
+    secrets["connectionstrings--postgres-db"].ShouldContain("keyVaultUrl:");
+    foreach (string name in new[] { "postgres-db-password", "postgres-db-uri" })
+    {
+      string value = Field(secrets[name], "value").ShouldNotBeNull($"web-server secret '{name}' has no value");
+      ParameterNames(value).ShouldContain("postgres_password_value", $"web-server secret '{name}' is not built from the password parameter");
+      SecureParameters(Modules[webServer.Module]).ShouldContain("postgres_password_value");
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_PinTheFlexibleServerFirewall()
+  {
+    string postgresModule = $"{PostgresModule}/{PostgresModule}.bicep";
+    if (!Modules.ContainsKey(postgresModule))
+    {
+      return;
+    }
+
+    // Every firewall rule in every module: exactly Aspire's AllowAllAzureIps (0.0.0.0–0.0.0.0, which
+    // Azure reads as "any Azure-hosted IP"). Anything else — an operator range left in code, or
+    // 0.0.0.0–255.255.255.255 — opens the server wider than the password-only posture the skill documents.
+    List<(string Module, string Name, string? Start, string? End)> rules = [.. Modules.SelectMany(module =>
+      FirewallRuleDeclaration().Matches(module.Value).Select(match =>
+      {
+        string block = Block(module.Value, module.Value.IndexOf('{', match.Index));
+        return (module.Key, Unquote(Field(block, "name")), Field(block, "startIpAddress"), Field(block, "endIpAddress"));
+      }))];
+
+    rules.ShouldHaveSingleItem($"firewall rules: {string.Join("; ", rules)}");
+    (string module, string name, string? start, string? end) = rules[0];
+    module.ShouldBe(postgresModule);
+    name.ShouldBe("AllowAllAzureIps");
+    start.ShouldBe("'0.0.0.0'", $"firewall rule '{name}' starts at {start}");
+    end.ShouldBe("'0.0.0.0'", $"firewall rule '{name}' ends at {end}");
+
+    await Task.CompletedTask;
+  }
+
   public static async Task RunMode_Should_CarryNoAzureWiring()
   {
     // Publish-only: the dev loop's model has no Azure resource at all — postgres stays the container
@@ -255,10 +333,18 @@ public partial class AcaPublish_Given_
         Field(item, "secretRef") is { } secretRef
           ? new EnvironmentEntry(Unquote(Field(item, "name")), secretRef, IsSecretRef: true)
           : new EnvironmentEntry(Unquote(Field(item, "name")), Field(item, "value") ?? "", IsSecretRef: false))];
-      bool external = ExternalIngress().Match(body) is { Success: true } ingress && ingress.Groups[1].Value == "true";
-      yield return new ContainerApp(match.Groups["name"].Value, module, body, external, environment);
+      Match ingress = IngressDeclaration().Match(body);
+      string? ingressBlock = ingress.Success ? Block(body, ingress.Index + ingress.Length - 1) : null;
+      yield return new ContainerApp(match.Groups["name"].Value, module, body, ingressBlock, environment);
     }
   }
+
+  // Secrets whose name or value mentions postgres (the Key Vault reference, the password parameter,
+  // the server host output), keyed by secret name.
+  private static Dictionary<string, string> PostgresSecrets(ContainerApp app) =>
+    ArrayItems(app.Text, "secrets")
+      .Where(secret => secret.Contains("postgres", StringComparison.OrdinalIgnoreCase))
+      .ToDictionary(secret => Unquote(Field(secret, "name")));
 
   private static EnvironmentEntry Entry(ContainerApp app, string name) =>
     app.Environment.Single(entry => entry.Name == name);
@@ -353,15 +439,19 @@ public partial class AcaPublish_Given_
     return -1;
   }
 
-  private sealed record ContainerApp(string Name, string Module, string Text, bool External, List<EnvironmentEntry> Environment);
+  // Ingress: the app's `ingress: { … }` block, or null when it declares none.
+  private sealed record ContainerApp(string Name, string Module, string Text, string? Ingress, List<EnvironmentEntry> Environment);
 
   private sealed record EnvironmentEntry(string Name, string Expression, bool IsSecretRef);
 
   [GeneratedRegex(@"^resource\s+\w+\s+'Microsoft\.App/containerApps@[^']+'\s*=\s*\{\s*name:\s*'(?<name>[^']+)'", RegexOptions.Multiline)]
   private static partial Regex ContainerAppDeclaration();
 
-  [GeneratedRegex(@"\bingress:\s*\{\s*external:\s*(true|false)")]
-  private static partial Regex ExternalIngress();
+  [GeneratedRegex(@"\bingress:\s*\{")]
+  private static partial Regex IngressDeclaration();
+
+  [GeneratedRegex(@"^resource\s+\w+\s+'Microsoft\.DBforPostgreSQL/flexibleServers/firewallRules@[^']+'\s*=\s*\{", RegexOptions.Multiline)]
+  private static partial Regex FirewallRuleDeclaration();
 
   [GeneratedRegex(@"(?<secure>@secure\(\)\s*)?^param\s+(?<name>\w+)\s+\w+(?<default>\s*=)?", RegexOptions.Multiline)]
   private static partial Regex ParameterDeclaration();

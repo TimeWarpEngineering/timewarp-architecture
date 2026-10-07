@@ -1,6 +1,6 @@
 #region Purpose
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
-// preflight refusals and the manual-cleanup guidance, without deploying —
+// preflight refusals, the aca subscription source selection and the manual-cleanup guidance, without deploying —
 // and that no CI workflow or `dev workflow` mode ever invokes a deploy.
 #endregion
 
@@ -144,24 +144,61 @@ public class Preflight_Given_
     return Task.CompletedTask;
   }
 
-  public static Task UnsetSubscription_Should_ComeFromTheAzCliAndBePassedToAspire()
+  private static readonly AzureAccount CliAccount = new("00000000-1111-2222-3333-444444444444", "Contoso Dev");
+
+  public static Task NoConfiguredSubscription_Should_FallBackToTheAzCliAndPassItToAspire()
   {
-    AzureAccount account = new("00000000-1111-2222-3333-444444444444", "Contoso Dev");
-    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, account);
-    choice.SubscriptionId.ShouldBe(account.Id);
+    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, " ", CliAccount);
+    choice.SubscriptionId.ShouldBe(CliAccount.Id);
     choice.PassToAspire.ShouldBeTrue();
     choice.Detail.ShouldContain("az account show");
     choice.Detail.ShouldContain("Contoso Dev");
     return Task.CompletedTask;
   }
 
-  public static Task ConfiguredSubscription_Should_WinAndNotBeOverridden()
+  public static Task EnvironmentSubscription_Should_WinAndNotBeOverridden()
   {
-    AzureAccount account = new("00000000-1111-2222-3333-444444444444", "Contoso Dev");
-    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(" 99999999-1111-2222-3333-444444444444 ", account);
+    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(
+      " 99999999-1111-2222-3333-444444444444 ", "88888888-1111-2222-3333-444444444444", CliAccount);
     choice.SubscriptionId.ShouldBe("99999999-1111-2222-3333-444444444444");
     choice.PassToAspire.ShouldBeFalse();
-    choice.Detail.ShouldContain("Azure__SubscriptionId");
+    choice.Detail.ShouldContain("Azure__SubscriptionId environment variable");
+    return Task.CompletedTask;
+  }
+
+  public static Task UserSecretSubscription_Should_BeatTheAzCliAndNotBeOverridden()
+  {
+    // An injected Azure__SubscriptionId env var would beat the AppHost's user secret, so the az CLI
+    // value must not be passed when the operator pinned one there.
+    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, "88888888-1111-2222-3333-444444444444", CliAccount);
+    choice.SubscriptionId.ShouldBe("88888888-1111-2222-3333-444444444444");
+    choice.PassToAspire.ShouldBeFalse();
+    choice.Detail.ShouldContain("user secret Azure:SubscriptionId");
+    choice.Detail.ShouldNotContain("az account show");
+    return Task.CompletedTask;
+  }
+
+  public static Task UserSecretsList_Should_WrapTheDotnetTool()
+  {
+    AspireDeploy.BuildUserSecretsListArguments("/repo/app-host.csproj")
+      .ShouldBe(["user-secrets", "list", "--project", "/repo/app-host.csproj"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task UserSecretsOutput_Should_YieldTheKeyCaseInsensitively()
+  {
+    const string output = "Parameters:postgres-password = p=a ss\nazure:subscriptionid = 88888888-1111-2222-3333-444444444444\nIngress:PublicUrl = https://x\n";
+    AspireDeploy.ParseUserSecret(true, output, "Azure:SubscriptionId").ShouldBe("88888888-1111-2222-3333-444444444444");
+    AspireDeploy.ParseUserSecret(true, output, "Parameters:postgres-password").ShouldBe("p=a ss");
+    return Task.CompletedTask;
+  }
+
+  public static Task MissingOrFailedUserSecrets_Should_YieldNull()
+  {
+    AspireDeploy.ParseUserSecret(true, "No secrets configured for this application.\n", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeploy.ParseUserSecret(false, "Azure:SubscriptionId = 88888888-1111-2222-3333-444444444444", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeploy.ParseUserSecret(true, "Azure:SubscriptionId = ", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeploy.ParseUserSecret(true, "Azure:SubscriptionIdOld = 1", "Azure:SubscriptionId").ShouldBeNull();
     return Task.CompletedTask;
   }
 

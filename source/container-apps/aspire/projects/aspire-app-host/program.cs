@@ -11,7 +11,8 @@
 // Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
 // Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
-// Postgres is a container resource, not a project: its connection string is injected into Web.Server keyed by the
+// Postgres is not a project: a container resource in run mode, Compose and Kubernetes, an Azure Database for
+// PostgreSQL Flexible Server for aca. Its connection string is injected into Web.Server keyed by the
 // DATABASE resource name (constants.cs PostgresDatabaseResourceName), and PostgresDbModule reads it by that same key.
 // Only Web.Server references Postgres; Api.Server intentionally does not — so Postgres is declared INSIDE the web
 // preprocessor block (the postgres directive nested within the web one), not gated on postgres alone: with web
@@ -184,10 +185,17 @@
 //     web-server is external in run mode only, so web, api and grpc get internal ingress;
 //   - Postgres is Azure Database for PostgreSQL Flexible Server (AddAzurePostgresFlexibleServer +
 //     WithPasswordAuthentication), never a container app on an Azure Files share. Password auth (not
-//     Entra auth) keeps PostgresDbModule's plain Npgsql connection string unchanged; Aspire stores the
-//     connection string in a Key Vault (postgres-kv) and web-server reads it through a Key
-//     Vault-backed container-app secret with its own managed identity. The admin password is the
-//     generated postgres-password secure parameter;
+//     Entra auth) keeps PostgresDbModule's plain Npgsql connection string unchanged. The admin
+//     password is the generated postgres-password @secure() parameter. Aspire stores the connection
+//     string in a Key Vault (postgres-kv) and web-server reads it through a Key Vault-backed
+//     container-app secret with its own managed identity — but Key Vault is NOT the only home of the
+//     password: WithReference also gives web-server two plain container-app secrets built from that
+//     parameter, postgres-db-password (POSTGRES_DB_PASSWORD) and postgres-db-uri (POSTGRES_DB_URI),
+//     which web-server does not read. aca-publish-tests pins exactly that set;
+//   - the server firewall is Aspire's AllowAllAzureIps rule (0.0.0.0–0.0.0.0) with public network
+//     access on: it admits any Azure-hosted IP in ANY tenant, not just this environment's apps, so
+//     the admin password is the barrier. VNet integration (private access) is the hardening step;
+//     aca-publish-tests pins the rule set so a wider rule cannot land in code;
 //   - Entra settings are the same parameters as Compose/Kubernetes (the client secret a secure
 //     parameter → container-app secret); mock auth, browser-log forwarding and the REPL are absent
 //     for the same reasons as Compose.
@@ -195,7 +203,7 @@
 // keeps the AddPostgres container with its volume and REPL exactly as before (RunAsContainer would
 // change the run-mode resource type and drop that wiring). Migrations for ACA: the published bundle,
 // run BY HAND from the operator's machine with --connection through a temporary firewall rule for
-// the operator's IP (the server admits Azure services only). The bundle needs no psql and no image;
+// the operator's IP (the server admits Azure-hosted IPs only). The bundle needs no psql and no image;
 // an ACA job would need one. The idempotent SQL script stays the psql alternative. Never EnsureCreated.
 // HTTPS upgrade stays on (Aspire's default): with WithHttpsUpgrade(false) the internal endpoints
 // become plain http, which ACA's internal ingress redirects to https (allowInsecure is false) — and
@@ -206,14 +214,18 @@
 #endregion
 
 #region Open Questions
-// Q: Does original-Host forwarding survive ACA's internal ingress? Web routes forward the client's
-// public Host (WithTransformUseOriginalHostHeader, task 104-031) to
-// https://web-server.internal.<env domain>. ACA's internal ingress selects the app by host name, and
-// .NET validates the TLS certificate against the Host header — the same mismatch the http web hop
-// above avoids in Compose/Kubernetes. The publish output cannot answer this; the first maintainer
-// deploy (`dev deploy --target aca`) must check pages and passkey sign-in through the ingress FQDN.
-// If it fails, the candidates are an aca-only route transform or giving web-server the public
-// hostname directly; that choice belongs to the maintainer.
+// Q: What is the aca web-route host strategy? Under Publish:Target=aca the http web hop does NOT
+// hold: Aspire upgrades the internal endpoints to https, so services__web-server__http__0 (the
+// http://_http.web-server cluster) resolves to https://web-server.internal.<env domain>, and the web
+// routes forward the client's public Host (WithTransformUseOriginalHostHeader, task 104-031) on that
+// hop. ACA's internal ingress selects the app by Host/SNI and .NET validates the TLS certificate
+// against the Host header, so EVERY web route (SPA catch-all, generated /api/<web> prefixes, /api)
+// is expected to fail through the ACA ingress (wrong app or 404, or a certificate-name mismatch) —
+// not only passkeys. The aca target is not usable for the web surface until this is decided.
+// Candidate (needs maintainer sign-off — it changes the security design): aca-only web routes
+// without the original-Host transform, so YARP's default X-Forwarded-Host carries the public host,
+// with web-server's RP-ID host accessor reading X-Forwarded-Host (trusting it only from the ingress).
+// The other candidate is giving web-server the public hostname directly.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -351,10 +363,12 @@ internal class Program
     if (containerApps is not null)
     {
       // Task 070-007: Azure Database for PostgreSQL Flexible Server, not a postgres container on Azure
-      // Files (no volume to lose, Azure-managed backups/patching). Password authentication: the
-      // generated postgres-username / postgres-password parameters (the password a secret) and the
-      // connection string land in a Key Vault Aspire provisions beside the server; web-server reads the
-      // connection string from it through a container-app secret. Publish-only, like every target
+      // Files (no volume to lose, Azure-managed backups/patching). Password authentication with the
+      // generated postgres-username / postgres-password parameters (the password @secure()). The
+      // connection string lands in a Key Vault Aspire provisions beside the server, and web-server
+      // reads it through a Key Vault-backed container-app secret; WithReference ALSO gives web-server
+      // the password as container-app secrets postgres-db-password / postgres-db-uri (see the Design
+      // region). Firewall: AllowAllAzureIps (any Azure IP, any tenant). Publish-only, like every target
       // switch: run mode never reaches this branch and keeps the container below.
       postgresDb = builder.AddAzurePostgresFlexibleServer(PostgresResourceName)
         .WithPasswordAuthentication()
@@ -517,7 +531,12 @@ internal class Program
     // ingress would then validate Web.Server's localhost dev cert against the PUBLIC hostname
     // (Headers.Host overrides .NET's certificate-name validation target) and 502 with
     // RemoteCertificateNameMismatch. So the ingress forwards web routes over the HTTP endpoint —
-    // TLS terminates at the ingress edge (and at Caddy on the public chain), not on this hop.
+    // in run mode, Compose and Kubernetes TLS terminates at the ingress edge (and at Caddy on the
+    // public chain), not on this hop.
+    // NOT under Publish:Target=aca: ACA upgrades internal ingress to https, so this hop goes to
+    // https://web-server.internal.<env domain> carrying the public Host, and ACA's host routing / TLS
+    // name validation is expected to fail for every web route. Unresolved by design decision — see
+    // the Open Questions region; do not treat the aca web surface as working.
     // api/grpc routes do not preserve host and stay on their default (https) endpoints.
     // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
     // "https+http://web-server", which service discovery resolves https-first — reintroducing the

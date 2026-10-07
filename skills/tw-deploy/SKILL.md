@@ -93,10 +93,13 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   confirmation; `--yes` skips the prompt and adds `--non-interactive`, so every parameter must
   already have a value (interactive runs prompt for missing ones, and Aspire remembers them in
   the deployment state). Without a terminal and without `--yes` it refuses. For aca the preflight
-  requires `az login` and prints the subscription: `Azure__SubscriptionId` when set, otherwise the
-  one `az account show` reports, which the verb passes to `aspire deploy` as
-  `Azure__SubscriptionId`. Location and resource group come from `Azure__Location` /
-  `Azure__ResourceGroup`, or Aspire's prompt.
+  requires `az login` and prints the subscription and where it came from, in this order: the
+  `Azure__SubscriptionId` environment variable, then the AppHost user secret `Azure:SubscriptionId`
+  (read with `dotnet user-secrets list --project <apphost>`), then the one `az account show`
+  reports. Only that last fallback is passed to `aspire deploy` as `Azure__SubscriptionId`, so the
+  az CLI never overrides a subscription you pinned. A subscription Aspire remembered in its own
+  deployment state is not checked; pin it in user secrets if `az account` may point elsewhere.
+  Location and resource group come from `Azure__Location` / `Azure__ResourceGroup`, or Aspire's prompt.
 - **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
   never creates a cluster, installs an ingress controller or switches context.
 - **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight (for
@@ -202,7 +205,7 @@ Every value that differs per deployment is an `AddParameter`, never a literal. S
 |--------|-----------------------------|
 | Compose | `.env` beside `docker-compose.yaml`; `aspire deploy` / `aspire do prepare-compose` fill it |
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
-| Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`; the Postgres password and connection string live in a Key Vault Aspire provisions, which web-server reads with its managed identity |
+| Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`. The Postgres connection string lives in a Key Vault Aspire provisions, which web-server reads with its managed identity; the Postgres password is also on web-server as the container-app secrets `postgres-db-password` and `postgres-db-uri`, built from the `@secure()` parameter |
 
 - Supply values non-interactively with `Parameters__<name>` environment variables or AppHost
   configuration/user secrets; interactive `aspire deploy` prompts for the rest. A non-interactive
@@ -300,8 +303,15 @@ Azure, while the Helm chart runs on any cluster.
   external**.
 - **Azure Database for PostgreSQL Flexible Server** with password authentication. The admin user
   and password are the `postgres-username` / `postgres-password` parameters (the password is a
-  secret); the connection string is stored in a Key Vault (`postgres-kv`) and web-server reads it
-  through a Key Vault-backed container-app secret. Server firewall: Azure services only.
+  secret). The connection string is stored in a Key Vault (`postgres-kv`) and web-server reads it
+  through a Key Vault-backed container-app secret. Key Vault is not the only copy of the password:
+  web-server also gets it as two plain container-app secrets, `postgres-db-password` and
+  `postgres-db-uri`, built from the `@secure()` parameter (Aspire's `WithReference` emits them;
+  web-server does not read them). `aca-publish-tests` pins that set.
+- **Server firewall: `AllowAllAzureIps` (0.0.0.0–0.0.0.0) with public network access on.** That
+  admits any Azure-hosted IP in any tenant, not only this deployment's container apps; the admin
+  password is the barrier. VNet integration (private access) is the hardening step.
+  `aca-publish-tests` fails on any other or wider rule in the Bicep.
 - Entra settings are the same parameters as the other targets; the client secret is a secure
   parameter that becomes a container-app secret.
 
@@ -314,7 +324,7 @@ dev deploy --target aca                     # prompts for location, resource gro
 ```
 
 **Migrations (Flexible Server).** Run the published migration bundle from the operator's machine.
-The server only admits Azure services, so open a firewall rule for your own IP for the duration.
+The firewall only admits Azure-hosted IPs, so open a rule for your own IP for the duration.
 The bundle is idempotent (applies only pending migrations) and needs no `psql`; never rely on
 `EnsureCreated`.
 
@@ -328,6 +338,28 @@ artifacts/aspire-output/aca/efmigrations/web-migrations \
   --connection "Host=$HOST;Database=postgres-db;Username=<postgres-username>;Password=<postgres-password>;SSL Mode=Require"
 az postgres flexible-server firewall-rule delete --resource-group <rg> --name "$SERVER" --rule-name operator-migrate --yes
 ```
+
+**Where the Postgres username and password are.** They are generated parameters, so you need the
+values the deploy actually used:
+
+- On the machine (and checkout) that ran `aspire deploy`: Aspire's deployment state,
+  `~/.aspire/deployments/<apphost-hash>/production.json`, keys `Parameters:postgres-username` and
+  `Parameters:postgres-password` — or the AppHost user secrets if you set them there
+  (`dotnet user-secrets list --project <apphost.csproj>`).
+- From anywhere: the Key Vault secret `connectionstrings--postgres-db` holds the full connection
+  string. The vault uses RBAC and the Bicep grants you no role, so grant yourself
+  `Key Vault Secrets User` on `postgres-kv` first:
+
+  ```bash
+  VAULT=$(az keyvault list --resource-group <rg> --query "[?tags.\"aspire-resource-name\"=='postgres-kv'].name" --output tsv)
+  az role assignment create --assignee "$(az ad signed-in-user show --query id --output tsv)" \
+    --role "Key Vault Secrets User" --scope "$(az keyvault show --name "$VAULT" --query id --output tsv)"
+  az keyvault secret show --vault-name "$VAULT" --name connectionstrings--postgres-db --query value --output tsv
+  ```
+
+- Not from the published `main.bicep`: its `postgres_username` default is whatever the publishing
+  machine's deployment state held (a fresh value on CI or another checkout), so it is not a record
+  of the deployed login.
 
 The idempotent SQL script (`efmigrations/web-migrations.sql`) is the alternative when `psql` is at
 hand: `psql "host=$HOST dbname=postgres-db user=<postgres-username> sslmode=require" -v
@@ -352,10 +384,15 @@ ON_ERROR_STOP=1 -f efmigrations/web-migrations.sql`, through the same firewall r
   az keyvault purge --name <vault>
   ```
 
-- **Check the web routes and passkeys on the first deploy.** The ingress forwards web routes with
-  the client's original `Host` header (passkey RP-ID selection depends on it), and ACA's internal
-  ingress routes and serves TLS by host name. Confirm that pages and sign-in work through the
-  ingress's public URL before relying on the deployment.
+- **Web routes are expected to fail through the ACA ingress.** This is an open design decision,
+  not a deploy hiccup. The ingress forwards every web route (the SPA, the web `/api` prefixes,
+  `/api`) with the client's original `Host` header, which passkey RP-ID selection depends on. On
+  ACA that hop is upgraded to `https://web-server.internal.<domain>`, and ACA's internal ingress
+  routes and serves TLS by host name, so the public `Host` most likely reaches the wrong app, a 404
+  or a certificate-name mismatch. api and grpc routes keep YARP's default host rewrite and are not
+  affected. Until the maintainer decides the aca web-route host strategy (candidate: aca-only web
+  routes without the original-Host transform, with web-server's RP-ID host accessor reading
+  `X-Forwarded-Host` — a security-design change), do not rely on the aca target for the web surface.
 
 **Deprovision.** `dev deprovision --target aca` runs `aspire destroy`, then prints the Key Vault
 purge. When `aspire destroy` has no record of the deployment (another machine or checkout deployed

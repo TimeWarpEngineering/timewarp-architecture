@@ -10,9 +10,14 @@
 //
 // Azure Container Apps (task 070-007): `aspire deploy` provisions with the Azure CLI credential, so
 // the preflight requires `az login` (`az account show` succeeds). Aspire reads the subscription from
-// Azure__SubscriptionId; when that is unset, the subscription `az account show` reports is passed to
-// the aspire process as Azure__SubscriptionId — the deploy goes where the operator's az CLI points,
-// and the plan prints which subscription that is. Location and resource group stay Aspire's
+// the AppHost's configuration key Azure:SubscriptionId — the Azure__SubscriptionId environment
+// variable, or the AppHost's user secrets. The az CLI subscription is a FALLBACK, never an override:
+// the verb passes it to the aspire process as Azure__SubscriptionId only when neither of those is set
+// (an injected env var would beat the user secret), and the plan prints which source chose the
+// subscription. The user secret is read by wrapping the tool — `dotnet user-secrets list --project
+// <apphost csproj>` — never by locating the secret store; the selection itself (ChooseAzureSubscription)
+// is pure. A subscription Aspire remembered in its own deployment state is not consulted (the dev CLI
+// never inspects that state; see below). Location and resource group stay Aspire's
 // (Azure__Location / Azure__ResourceGroup, or its prompt). When `aspire destroy` has no record, the
 // manual removal is `az group delete` (az asks for confirmation) plus purging the soft-deleted Key
 // Vault: a deleted vault keeps its name reserved, and the Bicep derives the name from the resource
@@ -56,6 +61,7 @@ internal static class AspireDeploy
   internal const string HelmReleaseNameParameter = "helm-release-name";
   internal const string KubernetesNamespaceParameter = "k8s-namespace";
   internal const string AzureSubscriptionIdVariable = "Azure__SubscriptionId";
+  internal const string AzureSubscriptionIdConfigurationKey = "Azure:SubscriptionId";
   internal const string AzureResourceGroupVariable = "Azure__ResourceGroup";
   internal const string PostgresKeyVaultTag = "postgres-kv";
 
@@ -109,14 +115,53 @@ internal static class AspireDeploy
     "Not logged in to Azure (az is not on PATH or `az account show` failed). Run `az login` (and `az account set --subscription <id>` "
     + "to pick the subscription) first; `aspire deploy` provisions with the Azure CLI credential.";
 
+  /// <summary><c>dotnet user-secrets list</c> for the AppHost: where an operator pins <c>Azure:SubscriptionId</c>.</summary>
+  internal static string[] BuildUserSecretsListArguments(string appHostProject) =>
+    ["user-secrets", "list", "--project", appHostProject];
+
   /// <summary>
-  /// Subscription for the aca deploy: <c>Azure__SubscriptionId</c> when set (passed through untouched), else the
-  /// <c>az account show</c> one, which the verb hands to <c>aspire deploy</c> as <c>Azure__SubscriptionId</c>.
+  /// The value of <paramref name="key"/> (case-insensitive, like .NET configuration) in <c>dotnet user-secrets list</c>
+  /// output (<c>Key = Value</c> lines), or null when the probe failed, the key is absent or its value is blank.
   /// </summary>
-  internal static AzureSubscriptionChoice ChooseAzureSubscription(string? configured, AzureAccount account) =>
-    string.IsNullOrWhiteSpace(configured)
-      ? new AzureSubscriptionChoice(account.Id, $"Azure subscription: {account.Name} ({account.Id}) from `az account show` — set {AzureSubscriptionIdVariable} to choose another", PassToAspire: true)
-      : new AzureSubscriptionChoice(configured.Trim(), $"Azure subscription: {configured.Trim()} from {AzureSubscriptionIdVariable} (az CLI is logged in to {account.Name})", PassToAspire: false);
+  internal static string? ParseUserSecret(bool probeSucceeded, string output, string key)
+  {
+    if (!probeSucceeded)
+    {
+      return null;
+    }
+
+    foreach (string line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+      int separator = line.IndexOf(" = ", StringComparison.Ordinal);
+      if (separator > 0 && string.Equals(line[..separator].Trim(), key, StringComparison.OrdinalIgnoreCase))
+      {
+        string value = line[(separator + 3)..].Trim();
+        return value.Length > 0 ? value : null;
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>
+  /// Subscription for the aca deploy, in the AppHost's own precedence: <c>Azure__SubscriptionId</c> when set, else the
+  /// AppHost user secret <c>Azure:SubscriptionId</c> (both passed through untouched — Aspire reads them itself), else
+  /// the <c>az account show</c> one, which only then is handed to <c>aspire deploy</c> as <c>Azure__SubscriptionId</c>.
+  /// </summary>
+  internal static AzureSubscriptionChoice ChooseAzureSubscription(string? environmentValue, string? userSecretValue, AzureAccount account)
+  {
+    if (!string.IsNullOrWhiteSpace(environmentValue))
+    {
+      return new AzureSubscriptionChoice(environmentValue.Trim(), $"Azure subscription: {environmentValue.Trim()} from the {AzureSubscriptionIdVariable} environment variable (az CLI is logged in to {account.Name})", PassToAspire: false);
+    }
+
+    if (!string.IsNullOrWhiteSpace(userSecretValue))
+    {
+      return new AzureSubscriptionChoice(userSecretValue.Trim(), $"Azure subscription: {userSecretValue.Trim()} from the AppHost user secret {AzureSubscriptionIdConfigurationKey} (az CLI is logged in to {account.Name})", PassToAspire: false);
+    }
+
+    return new AzureSubscriptionChoice(account.Id, $"Azure subscription: {account.Name} ({account.Id}) from `az account show` — neither {AzureSubscriptionIdVariable} nor the AppHost user secret {AzureSubscriptionIdConfigurationKey} is set", PassToAspire: true);
+  }
 
   /// <summary>Parses <c>helm version --short</c> output (e.g. <c>v4.2.0+g1a2b3c4</c>).</summary>
   internal static Version? ParseHelmVersion(string versionOutput)
