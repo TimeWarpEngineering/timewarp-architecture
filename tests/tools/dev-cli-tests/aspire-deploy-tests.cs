@@ -1,6 +1,6 @@
 #region Purpose
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
-// preflight refusals, the deployment-record lookup and the no-record guidance, without deploying —
+// preflight refusals and the manual-cleanup guidance, without deploying —
 // and that no CI workflow or `dev workflow` mode ever invokes a deploy.
 #endregion
 
@@ -55,10 +55,17 @@ public class Arguments_Given_
     return Task.CompletedTask;
   }
 
-  public static Task Destroy_Should_TargetTheSameAppHostAndEnvironment()
+  public static Task Destroy_Should_LetAspireAskWithoutYes()
   {
-    AspireDeploy.BuildDestroyArguments("/repo/app-host.csproj", AspireDeploy.Compose)
-      .ShouldBe(["destroy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--non-interactive", "--yes", "--", "--Publish:Target=compose"]);
+    AspireDeploy.BuildDestroyArguments("/repo/app-host.csproj", AspireDeploy.Compose, yes: false)
+      .ShouldBe(["destroy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=compose"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task DestroyWithYes_Should_BeNonInteractive()
+  {
+    AspireDeploy.BuildDestroyArguments("/repo/app-host.csproj", AspireDeploy.Kubernetes, yes: true)
+      .ShouldBe(["destroy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--yes", "--non-interactive", "--", "--Publish:Target=kubernetes"]);
     return Task.CompletedTask;
   }
 
@@ -120,141 +127,38 @@ public class Preflight_Given_
   }
 }
 
-public class DeploymentRecord_Given_
-{
-  [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<DeploymentRecord_Given_>();
-
-  private const string StatePath = "/home/op/.aspire/deployments/ABC/production.json";
-
-  // Shape of a real 13.6 state file: flattened Section:Key entries.
-  private const string FlatState = """
-    {
-      "Parameters:postgres-password": "secret",
-      "DockerCompose:compose:ComposeFilePath": "/out/docker-compose.yaml",
-      "DockerCompose:compose:ProjectName": "aspire-compose-0123abcd",
-      "Helm:k8s:ReleaseName": "app",
-      "Helm:k8s:Namespace": "apps"
-    }
-    """;
-
-  public static Task NoStateFile_Should_HaveNoRecord()
-  {
-    AspireDeploy.FindRecord(StatePath, null, null, AspireDeploy.Compose).ShouldBeNull();
-    return Task.CompletedTask;
-  }
-
-  public static Task ParametersOnly_Should_HaveNoRecord()
-  {
-    const string state = """{ "Parameters:postgres-password": "secret" }""";
-    AspireDeploy.FindRecord(StatePath, state, null, AspireDeploy.Kubernetes).ShouldBeNull();
-    return Task.CompletedTask;
-  }
-
-  public static Task FlatState_Should_FindEachTargetsOwnSection()
-  {
-    DeploymentRecord compose = AspireDeploy.FindRecord(StatePath, FlatState, null, AspireDeploy.Compose).ShouldNotBeNull();
-    compose.Values["ProjectName"].ShouldBe("aspire-compose-0123abcd");
-    compose.Values.ShouldNotContainKey("ReleaseName");
-
-    DeploymentRecord helm = AspireDeploy.FindRecord(StatePath, FlatState, null, AspireDeploy.Kubernetes).ShouldNotBeNull();
-    helm.Values["Namespace"].ShouldBe("apps");
-    helm.Values.Keys.ShouldNotContain(key => key.Contains("password", StringComparison.OrdinalIgnoreCase));
-    return Task.CompletedTask;
-  }
-
-  public static Task NestedState_Should_AlsoBeFound()
-  {
-    const string state = """{ "Helm": { "k8s": { "ReleaseName": "app", "Namespace": "apps" } } }""";
-    AspireDeploy.FindRecord(StatePath, state, null, AspireDeploy.Kubernetes).ShouldNotBeNull();
-    return Task.CompletedTask;
-  }
-
-  public static Task MigrationCurrentState_Should_WinOverTheFile()
-  {
-    const string migration = """{ "CurrentState": "{\"Helm\":{\"k8s\":{\"ReleaseName\":\"migrated\"}}}", "LegacyFallbackDisabled": false }""";
-    AspireDeploy.FindRecord(StatePath, FlatState, migration, AspireDeploy.Kubernetes)
-      .ShouldNotBeNull().Values["ReleaseName"].ShouldBe("migrated");
-    return Task.CompletedTask;
-  }
-
-  public static Task CorruptState_Should_HaveNoRecord()
-  {
-    AspireDeploy.FindRecord(StatePath, "{ not json", "also not json", AspireDeploy.Compose).ShouldBeNull();
-    return Task.CompletedTask;
-  }
-
-  public static Task StatePath_Should_MirrorAspireLayout()
-  {
-    const string appHostPath = "/work/app/aspire-app-host/aspire-app-host.csproj";
-    string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(appHostPath)));
-
-    AspireDeploy.AppHostPath("/work/app/aspire-app-host/aspire-app-host.csproj").ShouldBe(appHostPath);
-    AspireDeploy.DeploymentStatePath("/home/op/.aspire", appHostPath)
-      .ShouldBe(Path.Combine("/home/op/.aspire", "deployments", hash, "production.json"));
-    AspireDeploy.DeploymentStateHash("/Work/App/aspire-app-host/aspire-app-host.csproj").ShouldBe(hash);
-    AspireDeploy.ComposeProjectName(appHostPath).ShouldBe($"aspire-compose-{hash[..8].ToLowerInvariant()}");
-    return Task.CompletedTask;
-  }
-
-  public static Task AspireHome_Should_OverrideTheProfileDefault()
-  {
-    AspireDeploy.AspireHome(null, "/home/op").ShouldBe(Path.Combine("/home/op", ".aspire"));
-    AspireDeploy.AspireHome("/srv/aspire", "/home/op").ShouldBe("/srv/aspire");
-    return Task.CompletedTask;
-  }
-}
-
 public class OperatorText_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<OperatorText_Given_>();
 
-  public static Task ComposeNoRecord_Should_PrintTheManualDownWithTheConfiguredRuntime()
+  public static Task ComposeCleanup_Should_PrintTheManualDownWithTheConfiguredRuntime()
   {
-    string text = string.Join('\n', AspireDeploy.BuildNoRecordLines(
-      AspireDeploy.Compose, "/state/production.json", "/work/app/aspire-app-host", "podman"));
+    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.Compose, "podman"));
 
-    text.ShouldContain("No compose deployment is recorded");
-    text.ShouldContain("/state/production.json");
-    text.ShouldContain("nothing was run and nothing was removed");
-    text.ShouldContain($"podman compose --project-name {AspireDeploy.ComposeProjectName("/work/app/aspire-app-host")} down --volumes");
+    text.ShouldContain("only knows deployments recorded on the machine");
+    text.ShouldContain("podman compose ls");
+    text.ShouldContain("podman compose --project-name <project> down --volumes");
     text.ShouldNotContain("docker");
     return Task.CompletedTask;
   }
 
-  public static Task KubernetesNoRecord_Should_PrintHelmUninstallAndTheClaim()
+  public static Task KubernetesCleanup_Should_PrintHelmUninstallAndTheClaim()
   {
-    string text = string.Join('\n', AspireDeploy.BuildNoRecordLines(
-      AspireDeploy.Kubernetes, "/state/production.json", "/work/app/aspire-app-host", "docker"));
+    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.Kubernetes, "docker"));
 
-    text.ShouldContain("No kubernetes deployment is recorded");
     text.ShouldContain("helm uninstall <release> --namespace <namespace>");
+    text.ShouldContain("helm-release-name");
+    text.ShouldContain("k8s-namespace");
     text.ShouldContain("kubectl delete pvc postgres-data --namespace <namespace>");
     return Task.CompletedTask;
   }
 
-  public static Task DeprovisionWithoutYes_Should_ShowTheRecordAndRequireYes()
+  public static Task KubernetesDestroy_Should_PointAtTheClaim()
   {
-    DeploymentRecord record = new("/state/production.json", new Dictionary<string, string> { ["ReleaseName"] = "app", ["Namespace"] = "apps" });
-    string text = string.Join('\n', AspireDeploy.BuildDeprovisionRefusalLines(AspireDeploy.Kubernetes, record));
-
-    text.ShouldContain("/state/production.json");
-    text.ShouldContain("ReleaseName: app");
-    text.ShouldContain("Namespace: apps");
-    text.ShouldContain("data volume and its data are deleted");
-    text.ShouldContain("--yes");
-    text.ShouldContain("Nothing was run");
-    return Task.CompletedTask;
-  }
-
-  public static Task KubernetesDestroy_Should_PointAtTheRecordedNamespaceClaim()
-  {
-    DeploymentRecord record = new("/state/production.json", new Dictionary<string, string> { ["ReleaseName"] = "app", ["Namespace"] = "apps" });
-
-    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.Kubernetes, record))
-      .ShouldContain("kubectl delete pvc postgres-data --namespace apps");
-    AspireDeploy.BuildPostDestroyLines(AspireDeploy.Compose, record).ShouldBeEmpty();
+    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.Kubernetes))
+      .ShouldContain("kubectl delete pvc postgres-data --namespace <namespace>");
+    AspireDeploy.BuildPostDestroyLines(AspireDeploy.Compose).ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
@@ -268,6 +172,7 @@ public class OperatorText_Given_
     text.ShouldContain("kubectl context: kind-local");
     AspireDeploy.DeployConfirmationRefusal.ShouldContain("--yes");
     AspireDeploy.DeployDeclined.ShouldContain("Nothing was run");
+    AspireDeploy.DestroyConfirmationRefusal.ShouldContain("--yes");
     return Task.CompletedTask;
   }
 }

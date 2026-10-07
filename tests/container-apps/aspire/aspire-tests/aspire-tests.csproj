@@ -18,15 +18,13 @@
     <PackageReference Include="Shouldly" />
   </ItemGroup>
   <!-- Task 266: dev db nuke resolves this AppHost's volumes by name prefix; the model test proves
-       that prefix equals what Aspire actually generates (pure helper, no Amuru/Terminal). Task 070-006:
-       dev deploy / dev deprovision's environment names and deployment-state hash, likewise. Only
+       that prefix equals what Aspire actually generates (pure helper, no Amuru/Terminal). Only
        where the dev CLI source exists (template smoke output carries no tools/ tree). -->
   <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\tools\dev-cli\services\db-nuke.cs')">
     <DefineConstants>$(DefineConstants);DEV_CLI_SOURCE</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\tools\dev-cli\services\db-nuke.cs')">
     <Compile Include="..\..\..\..\tools\dev-cli\services\db-nuke.cs" Link="dev-cli\db-nuke.cs" />
-    <Compile Include="..\..\..\..\tools\dev-cli\services\aspire-deploy.cs" Link="dev-cli\aspire-deploy.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\aspire\projects\aspire-app-host\aspire-app-host.csproj" />

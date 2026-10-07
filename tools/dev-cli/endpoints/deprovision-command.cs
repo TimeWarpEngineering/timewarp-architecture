@@ -1,38 +1,36 @@
 #region Purpose
-// `dev deprovision [--target compose|kubernetes] --yes`: the operator's manual `aspire destroy` of a
-// deployment `dev deploy` recorded on this machine. Deletes the deployment's data. Never run by CI.
+// `dev deprovision [--target compose|kubernetes] [--yes]`: the operator's manual `aspire destroy` of a
+// deployment `dev deploy` made. Deletes the deployment's data. Never run by CI.
 #endregion
 
 #region Design
 // Thin wrapper over
-//   aspire destroy --apphost <csproj> --environment Production --non-interactive --yes -- --Publish:Target=<t>
+//   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t>
 // (task 070-006), in this order:
 //   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+ and the printed
-//      kubectl context).
-//   2. The deployment record. `aspire destroy` only knows deployments recorded under
-//      ~/.aspire/deployments by `aspire deploy` on THIS machine from THIS checkout; without one it
-//      reports "nothing to destroy" and exits 0 while the stack keeps running. So with no record the
-//      verb runs nothing, says so, prints the manual removal for the target (`<runtime> compose
-//      down --volumes`, or `helm uninstall` plus deleting the postgres claim) and exits 1. It never
-//      falls back to a destructive command itself.
-//   3. Without --yes: print the recorded deployment and what destroying it deletes, exit 1.
-//   4. aspire destroy. For kubernetes, print how to check the postgres claim is gone afterwards.
+//      kubectl context, so the operator sees what they are about to hit).
+//   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself; with no terminal and no
+//      --yes there is nobody to ask, so the verb refuses (as `dev deploy` does) instead of assuming yes.
+//   3. aspire destroy. On failure print the manual removal for the target and exit with Aspire's exit
+//      code: `aspire destroy` only knows deployments recorded on the machine that deployed. The verb
+//      never runs a destructive fallback itself and never inspects Aspire's deployment state.
+//   4. On success for kubernetes, print how to check the postgres claim is gone.
 // Runtime neutrality: Compose teardown is Aspire's (honours ASPIRE_CONTAINER_RUNTIME); the runtime
 // name only appears in the printed manual commands.
-// Pure record lookup and text live in services/aspire-deploy.cs (dev-cli-tests).
+// Pure argument and text helpers live in services/aspire-deploy.cs (dev-cli-tests).
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("deprovision", Description = "Destroy a deployment `dev deploy` recorded on this machine with `aspire destroy` (deletes its data; requires --yes; operator-run, never CI)")]
-[NuruRouteExample("deprovision", Description = "Show the recorded compose deployment that would be destroyed, without acting")]
-[NuruRouteExample("deprovision --target kubernetes --yes", Description = "Uninstall the recorded Helm release")]
+[NuruRoute("deprovision", Description = "Destroy a deployment with `aspire destroy` (deletes its data; Aspire asks unless --yes; operator-run, never CI)")]
+[NuruRouteExample("deprovision", Description = "Preflight, then aspire destroy the compose deployment (Aspire asks for confirmation)")]
+[NuruRouteExample("deprovision --target kubernetes --yes", Description = "Uninstall the Helm release without prompting")]
 internal sealed class DeprovisionCommand : ICommand<Unit>
 {
   [Option("target", "t", Description = "Publish target: compose | kubernetes (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
-  [Option("yes", "y", Description = "Confirm: destroy the deployment and permanently delete its data (required)")]
+  [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
   public bool Yes { get; set; }
 
   internal sealed class Handler : ICommandHandler<DeprovisionCommand, Unit>
@@ -52,33 +50,15 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       if (preflight is null) return Unit.Value;
       Terminal.WriteLine(preflight.Detail);
 
-      string statePath = AspireDeployPreflight.StatePath(preflight.AppHostProject);
-      DeploymentRecord? record = await AspireDeployPreflight.ReadRecordAsync(statePath, preflight.Target, ct);
-      if (record is null)
+      if (!command.Yes && Terminal.IsInputRedirected)
       {
-        string runtime = AspireDeploy.ContainerRuntime(Environment.GetEnvironmentVariable(AspireDeploy.ContainerRuntimeVariable));
-        foreach (string line in AspireDeploy.BuildNoRecordLines(preflight.Target, statePath, AspireDeploy.AppHostPath(preflight.AppHostProject), runtime))
-        {
-          Terminal.WriteLine(line);
-        }
-
-        Environment.ExitCode = 1;
-        return Unit.Value;
-      }
-
-      if (!command.Yes)
-      {
-        foreach (string line in AspireDeploy.BuildDeprovisionRefusalLines(preflight.Target, record))
-        {
-          Terminal.WriteLine(line);
-        }
-
+        Terminal.WriteErrorLine(AspireDeploy.DestroyConfirmationRefusal.Red());
         Environment.ExitCode = 1;
         return Unit.Value;
       }
 
       CommandOutput destroy = await Shell.Builder("aspire")
-        .WithArguments(AspireDeploy.BuildDestroyArguments(preflight.AppHostProject, preflight.Target))
+        .WithArguments(AspireDeploy.BuildDestroyArguments(preflight.AppHostProject, preflight.Target, command.Yes))
         .WithWorkingDirectory(preflight.RepoRoot)
         .WithNoValidation()
         .PassthroughAsync(ct);
@@ -86,11 +66,17 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       if (!destroy.Success)
       {
         Terminal.WriteErrorLine($"aspire destroy failed (exit {destroy.ExitCode}).".Red());
+        string runtime = AspireDeploy.ContainerRuntime(Environment.GetEnvironmentVariable(AspireDeploy.ContainerRuntimeVariable));
+        foreach (string line in AspireDeploy.BuildManualCleanupLines(preflight.Target, runtime))
+        {
+          Terminal.WriteLine(line);
+        }
+
         Environment.ExitCode = destroy.ExitCode == 0 ? 1 : destroy.ExitCode;
         return Unit.Value;
       }
 
-      foreach (string line in AspireDeploy.BuildPostDestroyLines(preflight.Target, record))
+      foreach (string line in AspireDeploy.BuildPostDestroyLines(preflight.Target))
       {
         Terminal.WriteLine(line);
       }

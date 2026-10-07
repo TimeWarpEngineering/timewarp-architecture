@@ -75,8 +75,8 @@ dev deploy                                  # compose (the Publish:Target defaul
 dev deploy --target kubernetes              # Helm chart to the CURRENT kubectl context
 dev deploy --target compose --yes           # no prompt: aspire deploy --non-interactive
 
-dev deprovision --target kubernetes         # show the recorded deployment that would be destroyed
-dev deprovision --target kubernetes --yes   # aspire destroy — deletes the deployment and its data
+dev deprovision --target kubernetes         # preflight, then aspire destroy asks before deleting
+dev deprovision --target kubernetes --yes   # aspire destroy --yes --non-interactive — deletes the deployment and its data
 ```
 
 - **`dev deploy`** runs `aspire deploy --apphost <csproj> --environment Production --
@@ -87,14 +87,15 @@ dev deprovision --target kubernetes --yes   # aspire destroy — deletes the dep
   the deployment state). Without a terminal and without `--yes` it refuses.
 - **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
   never creates a cluster, installs an ingress controller or switches context.
-- **`dev deprovision`** runs `aspire destroy` for the same target, and only with `--yes`, because it
-  deletes the deployment's data (Compose volumes, the Kubernetes postgres claim). Without `--yes` it
-  prints the recorded deployment and stops.
-- **The deployment record is local.** `aspire destroy` only knows deployments that `aspire deploy`
-  recorded under `~/.aspire/deployments` (or `$ASPIRE_HOME/deployments`) on the machine — and from
-  the checkout — that deployed. When there is no record, `dev deprovision` says so, runs nothing,
-  and prints the manual removal for the target: `<runtime> compose --project-name <name> down
-  --volumes`, or `helm uninstall <release> --namespace <namespace>` plus deleting the
+- **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight (for
+  kubernetes it prints the kubectl context first). It deletes the deployment's data (Compose volumes,
+  the Kubernetes postgres claim), so Aspire asks for confirmation; `--yes` skips the prompt. Without
+  a terminal and without `--yes` it refuses.
+- **`aspire destroy` is local.** It only knows deployments that `aspire deploy` recorded on the
+  machine — and from the checkout — that deployed. When it fails, `dev deprovision` prints the manual
+  removal for the target and exits with Aspire's exit code: `<runtime> compose down --volumes` for
+  the Compose project (`<runtime> compose ls` finds it), or `helm uninstall <release> --namespace
+  <namespace>` (the AppHost's `helm-release-name` and `k8s-namespace` parameters) plus deleting the
   `postgres-data` PersistentVolumeClaim. It never falls back to a destructive command on its own.
 - **Runtime:** Compose deploy and teardown go through Aspire, so `ASPIRE_CONTAINER_RUNTIME` picks
   the runtime; the verbs call no container CLI themselves.
@@ -106,8 +107,8 @@ dev deprovision --target kubernetes --yes   # aspire destroy — deletes the dep
   aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
   ```
 
-  When `aspire destroy` reports no deployment state ("Nothing to destroy"), nothing was removed;
-  use the manual removal above.
+  When `aspire destroy` fails or reports nothing to destroy, nothing was removed; use the manual
+  removal above.
 
 ### Local Kubernetes with kind
 
@@ -274,5 +275,5 @@ AppHost yet; until it is, there are no ACA commands to run — use AKS above.
 
 - AppHost `program.cs` Design region — per-decision reasoning behind every rule above.
 - `tools/dev-cli/endpoints/deploy-command.cs` / `deprovision-command.cs` — `dev deploy` /
-  `dev deprovision`; their Design regions record the preflight and the deployment-record lookup.
+  `dev deprovision`; their Design regions record the preflight and the `aspire destroy` hand-off.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` — the production-safety suites.

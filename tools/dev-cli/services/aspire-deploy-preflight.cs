@@ -1,6 +1,5 @@
 #region Purpose
-// Process half of `dev deploy` / `dev deprovision` preflight: the aspire, helm and kubectl probes,
-// and reading this AppHost's deployment record from disk.
+// Process half of `dev deploy` / `dev deprovision` preflight: the aspire, helm and kubectl probes.
 #endregion
 
 #region Design
@@ -73,23 +72,6 @@ internal static class AspireDeployPreflight
     }
 
     return new DeployPreflight(repoRoot, appHostProject, target, detail);
-  }
-
-  /// <summary>Path of this AppHost's Production deployment-state file.</summary>
-  internal static string StatePath(string appHostProject) =>
-    AspireDeploy.DeploymentStatePath(
-      AspireDeploy.AspireHome(
-        Environment.GetEnvironmentVariable(AspireDeploy.AspireHomeVariable),
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
-      AspireDeploy.AppHostPath(appHostProject));
-
-  /// <summary>What <c>aspire deploy</c> recorded for <paramref name="target"/> on this machine, or null.</summary>
-  internal static async Task<DeploymentRecord?> ReadRecordAsync(string statePath, DeployTarget target, CancellationToken cancellationToken)
-  {
-    string? state = File.Exists(statePath) ? await File.ReadAllTextAsync(statePath, cancellationToken) : null;
-    string migrationPath = AspireDeploy.MigrationStatePath(statePath);
-    string? migration = File.Exists(migrationPath) ? await File.ReadAllTextAsync(migrationPath, cancellationToken) : null;
-    return AspireDeploy.FindRecord(statePath, state, migration, target);
   }
 
   /// <summary>Runs a read-only probe; null when <paramref name="executable"/> is not on PATH.</summary>
