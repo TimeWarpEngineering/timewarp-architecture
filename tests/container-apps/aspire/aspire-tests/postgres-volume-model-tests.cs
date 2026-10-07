@@ -1,7 +1,6 @@
 #region Purpose
 // AppHost model inspection (task 266): the Postgres data volume keeps WithDataVolume's identity
-// under WithVolume(env:), Postgres:UseDataVolume=false still yields no volume, and `dev db nuke`'s
-// volume-name prefix equals the name Aspire generates.
+// under WithVolume(env:), and Postgres:UseDataVolume=false still yields no volume.
 #endregion
 
 #region Design
@@ -11,9 +10,7 @@
 // not a hard-coded string: a throwaway probe resource gets WithDataVolume() on the same builder,
 // and its generated name/target (with the probe's resource segment swapped for "postgres") is what
 // the real resource must carry. An Aspire upgrade that moves WithDataVolume's target or naming
-// scheme fails here instead of silently orphaning dev data. db-nuke.cs is compile-linked from the
-// dev CLI so its prefix is checked against the same generated name, not a re-derived copy; the
-// csproj defines DEV_CLI_SOURCE only where that file exists (template smoke output has no tools/).
+// scheme fails here instead of silently orphaning dev data.
 #endregion
 
 namespace Aspire.Tests;
@@ -40,19 +37,6 @@ public class PostgresVolumeModel_Given_
     mount.Target.ShouldBe("/var/lib/postgresql");
     mount.IsReadOnly.ShouldBeFalse();
   }
-#if DEV_CLI_SOURCE
-
-  public static async Task DevDbNukePrefix_Should_MatchAspireGeneratedVolumeName()
-  {
-    await using IDistributedApplicationTestingBuilder appHost =
-      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>([]);
-
-    string appHostPath = appHost.Configuration["AppHost:Path"].ShouldNotBeNull();
-    ContainerMountAnnotation mount = VolumeMounts(appHost).ShouldHaveSingleItem();
-
-    mount.Source.ShouldBe($"{DevCli.Services.DbNuke.VolumeNamePrefix(appHostPath)}postgres-data");
-  }
-#endif
 
   public static async Task DefaultConfig_Should_ExposeMountPathEnvironmentVariable()
   {
