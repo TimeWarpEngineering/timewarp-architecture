@@ -5,8 +5,18 @@
 
 #region Design
 // Pure helpers (no Amuru/Terminal) so tests/tools/dev-cli-tests can Compile-include them and gate
-// both verbs without deploying anything. The process half (the aspire/helm/kubectl probes) lives in
+// both verbs without deploying anything. The process half (the aspire/helm/kubectl/az probes) lives in
 // services/aspire-deploy-preflight.cs.
+//
+// Azure Container Apps (task 070-007): `aspire deploy` provisions with the Azure CLI credential, so
+// the preflight requires `az login` (`az account show` succeeds). Aspire reads the subscription from
+// Azure__SubscriptionId; when that is unset, the subscription `az account show` reports is passed to
+// the aspire process as Azure__SubscriptionId — the deploy goes where the operator's az CLI points,
+// and the plan prints which subscription that is. Location and resource group stay Aspire's
+// (Azure__Location / Azure__ResourceGroup, or its prompt). When `aspire destroy` has no record, the
+// manual removal is `az group delete` (az asks for confirmation) plus purging the soft-deleted Key
+// Vault: a deleted vault keeps its name reserved, and the Bicep derives the name from the resource
+// group, so a redeploy into a same-named group fails until it is purged.
 //
 // Deploying is an operator action, never CI (task 070-006): no workflow step or `dev workflow` mode
 // calls these verbs. The target is the AppHost's Publish:Target switch (program.cs), passed through
@@ -27,6 +37,12 @@ namespace DevCli.Services;
 /// <summary>One deploy target: the AppHost's Publish:Target value.</summary>
 internal sealed record DeployTarget(string Name);
 
+/// <summary>The subscription the Azure CLI is logged in to (<c>az account show</c>).</summary>
+internal sealed record AzureAccount(string Id, string Name);
+
+/// <summary>The subscription an aca deploy targets, the line that says why, and whether the verb must pass it to Aspire.</summary>
+internal sealed record AzureSubscriptionChoice(string SubscriptionId, string Detail, bool PassToAspire);
+
 /// <summary>Builds and checks the <c>aspire deploy</c> / <c>aspire destroy</c> invocations for <c>dev deploy</c> / <c>dev deprovision</c>.</summary>
 internal static class AspireDeploy
 {
@@ -39,11 +55,15 @@ internal static class AspireDeploy
   internal const string PostgresClaimName = "postgres-data";
   internal const string HelmReleaseNameParameter = "helm-release-name";
   internal const string KubernetesNamespaceParameter = "k8s-namespace";
+  internal const string AzureSubscriptionIdVariable = "Azure__SubscriptionId";
+  internal const string AzureResourceGroupVariable = "Azure__ResourceGroup";
+  internal const string PostgresKeyVaultTag = "postgres-kv";
 
   internal static readonly DeployTarget Compose = new("compose");
   internal static readonly DeployTarget Kubernetes = new("kubernetes");
+  internal static readonly DeployTarget ContainerApps = new("aca");
 
-  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes];
+  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes, ContainerApps];
 
   /// <summary>The AppHost's Publish:Target default.</summary>
   internal static DeployTarget DefaultTarget => Compose;
@@ -72,6 +92,31 @@ internal static class AspireDeploy
   internal static string[] BuildHelmVersionArguments() => ["version", "--short"];
 
   internal static string[] BuildKubectlContextArguments() => ["config", "current-context"];
+
+  /// <summary><c>az account show</c>: the logged-in subscription id and name, one per line.</summary>
+  internal static string[] BuildAzureAccountArguments() => ["account", "show", "--query", "[id, name]", "--output", "tsv"];
+
+  /// <summary>The subscription from <c>az account show</c> output, or null when az failed (not logged in) or printed no id.</summary>
+  internal static AzureAccount? ParseAzureAccount(bool probeSucceeded, string output)
+  {
+    string[] lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    return probeSucceeded && lines.Length > 0 && Guid.TryParse(lines[0], out _)
+      ? new AzureAccount(lines[0], lines.Length > 1 ? lines[1] : "")
+      : null;
+  }
+
+  internal const string NoAzureLoginMessage =
+    "Not logged in to Azure (az is not on PATH or `az account show` failed). Run `az login` (and `az account set --subscription <id>` "
+    + "to pick the subscription) first; `aspire deploy` provisions with the Azure CLI credential.";
+
+  /// <summary>
+  /// Subscription for the aca deploy: <c>Azure__SubscriptionId</c> when set (passed through untouched), else the
+  /// <c>az account show</c> one, which the verb hands to <c>aspire deploy</c> as <c>Azure__SubscriptionId</c>.
+  /// </summary>
+  internal static AzureSubscriptionChoice ChooseAzureSubscription(string? configured, AzureAccount account) =>
+    string.IsNullOrWhiteSpace(configured)
+      ? new AzureSubscriptionChoice(account.Id, $"Azure subscription: {account.Name} ({account.Id}) from `az account show` — set {AzureSubscriptionIdVariable} to choose another", PassToAspire: true)
+      : new AzureSubscriptionChoice(configured.Trim(), $"Azure subscription: {configured.Trim()} from {AzureSubscriptionIdVariable} (az CLI is logged in to {account.Name})", PassToAspire: false);
 
   /// <summary>Parses <c>helm version --short</c> output (e.g. <c>v4.2.0+g1a2b3c4</c>).</summary>
   internal static Version? ParseHelmVersion(string versionOutput)
@@ -144,7 +189,14 @@ internal static class AspireDeploy
   ];
 
   private static string[] ManualRemovalLines(DeployTarget target, string containerRuntime) =>
-    target == Kubernetes
+    target == ContainerApps
+      ?
+      [
+        $"  az group list --query \"[].name\" --output tsv                # find the resource group ({AzureResourceGroupVariable}, or the name aspire deploy asked for)",
+        "  az group delete --name <resource-group>                      # az asks for confirmation; deletes every resource in the group",
+        .. KeyVaultPurgeLines,
+      ]
+      : target == Kubernetes
       ?
       [
         "  helm list --all-namespaces                                  # find the release and namespace",
@@ -157,9 +209,19 @@ internal static class AspireDeploy
         $"  {containerRuntime} compose --project-name <project> down --volumes",
       ];
 
-  /// <summary>Kubernetes only: the claim can outlive `helm uninstall`; tell the operator how to check.</summary>
+  // A deleted Key Vault is soft-deleted and keeps its name; the Bicep names it from the resource group.
+  private static readonly string[] KeyVaultPurgeLines =
+  [
+    "Then purge the soft-deleted Key Vault, or a redeploy into a same-named resource group fails on the reserved vault name:",
+    $"  az keyvault list-deleted --query \"[?properties.tags.\\\"aspire-resource-name\\\"=='{PostgresKeyVaultTag}'].name\" --output tsv",
+    "  az keyvault purge --name <vault>",
+  ];
+
+  /// <summary>Kubernetes: the claim can outlive `helm uninstall`; aca: the Key Vault outlives the group. Tell the operator how to check.</summary>
   internal static string[] BuildPostDestroyLines(DeployTarget target) =>
-    target == Kubernetes
+    target == ContainerApps
+      ? KeyVaultPurgeLines
+      : target == Kubernetes
       ?
       [
         "Check that the postgres claim is gone: kubectl get pvc --namespace <namespace>",

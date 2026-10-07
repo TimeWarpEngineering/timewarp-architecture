@@ -23,6 +23,7 @@ public class Targets_Given_
   {
     AspireDeploy.ResolveTarget("compose").ShouldBe(AspireDeploy.Compose);
     AspireDeploy.ResolveTarget("Kubernetes").ShouldBe(AspireDeploy.Kubernetes);
+    AspireDeploy.ResolveTarget("ACA").ShouldBe(AspireDeploy.ContainerApps);
     return Task.CompletedTask;
   }
 
@@ -31,7 +32,7 @@ public class Targets_Given_
     AspireDeploy.ResolveTarget("swarm").ShouldBeNull();
     string message = AspireDeploy.UnknownTargetMessage("swarm");
     message.ShouldContain("'swarm'");
-    message.ShouldContain("compose, kubernetes");
+    message.ShouldContain("compose, kubernetes, aca");
     return Task.CompletedTask;
   }
 }
@@ -73,6 +74,14 @@ public class Arguments_Given_
   {
     AspireDeploy.BuildHelmVersionArguments().ShouldBe(["version", "--short"]);
     AspireDeploy.BuildKubectlContextArguments().ShouldBe(["config", "current-context"]);
+    AspireDeploy.BuildAzureAccountArguments().ShouldBe(["account", "show", "--query", "[id, name]", "--output", "tsv"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaDeploy_Should_PassTheAcaTarget()
+  {
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerApps, nonInteractive: false)
+      .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=aca"]);
     return Task.CompletedTask;
   }
 }
@@ -119,6 +128,43 @@ public class Preflight_Given_
     return Task.CompletedTask;
   }
 
+  public static Task AzureAccount_Should_ParseIdAndName()
+  {
+    AzureAccount account = AspireDeploy.ParseAzureAccount(true, "00000000-1111-2222-3333-444444444444\nContoso Dev\n").ShouldNotBeNull();
+    account.Id.ShouldBe("00000000-1111-2222-3333-444444444444");
+    account.Name.ShouldBe("Contoso Dev");
+    return Task.CompletedTask;
+  }
+
+  public static Task NoAzureLogin_Should_BeRefused()
+  {
+    AspireDeploy.ParseAzureAccount(false, "").ShouldBeNull();
+    AspireDeploy.ParseAzureAccount(true, "Please run 'az login' to setup account.").ShouldBeNull();
+    AspireDeploy.NoAzureLoginMessage.ShouldContain("az login");
+    return Task.CompletedTask;
+  }
+
+  public static Task UnsetSubscription_Should_ComeFromTheAzCliAndBePassedToAspire()
+  {
+    AzureAccount account = new("00000000-1111-2222-3333-444444444444", "Contoso Dev");
+    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, account);
+    choice.SubscriptionId.ShouldBe(account.Id);
+    choice.PassToAspire.ShouldBeTrue();
+    choice.Detail.ShouldContain("az account show");
+    choice.Detail.ShouldContain("Contoso Dev");
+    return Task.CompletedTask;
+  }
+
+  public static Task ConfiguredSubscription_Should_WinAndNotBeOverridden()
+  {
+    AzureAccount account = new("00000000-1111-2222-3333-444444444444", "Contoso Dev");
+    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(" 99999999-1111-2222-3333-444444444444 ", account);
+    choice.SubscriptionId.ShouldBe("99999999-1111-2222-3333-444444444444");
+    choice.PassToAspire.ShouldBeFalse();
+    choice.Detail.ShouldContain("Azure__SubscriptionId");
+    return Task.CompletedTask;
+  }
+
   public static Task ContainerRuntime_Should_HonourAspireContainerRuntime()
   {
     AspireDeploy.ContainerRuntime(null).ShouldBe("docker");
@@ -151,6 +197,27 @@ public class OperatorText_Given_
     text.ShouldContain("helm-release-name");
     text.ShouldContain("k8s-namespace");
     text.ShouldContain("kubectl delete pvc postgres-data --namespace <namespace>");
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaCleanup_Should_PrintGroupDeleteAndTheKeyVaultPurge()
+  {
+    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.ContainerApps, "docker"));
+
+    text.ShouldContain("only knows deployments recorded on the machine");
+    text.ShouldContain("az group delete --name <resource-group>");
+    text.ShouldNotContain("--yes");
+    text.ShouldContain("az keyvault list-deleted");
+    text.ShouldContain("postgres-kv");
+    text.ShouldContain("az keyvault purge --name <vault>");
+    text.ShouldNotContain("docker");
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaDestroy_Should_PointAtTheSoftDeletedKeyVault()
+  {
+    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerApps))
+      .ShouldContain("az keyvault purge --name <vault>");
     return Task.CompletedTask;
   }
 

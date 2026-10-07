@@ -173,6 +173,47 @@
 // output IS the chart directory, and Helm rejects any chart file over 5 MiB.
 // `dev publish kubernetes` writes artifacts/aspire-output/kubernetes, gates it with the same suite and
 // helm lint (when helm is on PATH); workflow.yml uploads the chart directory.
+// Azure Container Apps publish target (task 070-007): `Publish:Target=aca` declares
+// AddAzureContainerAppEnvironment("aca-env") and `aspire publish` emits Bicep (main.bicep plus one module
+// per resource); `aspire deploy -- --Publish:Target=aca` provisions it with the Azure CLI credential. It
+// is the Azure-only option beside AKS-through-Kubernetes (the portable default). Production-safety
+// posture of the Bicep:
+//   - WithDashboard(enable: false): otherwise Aspire adds an AspireDashboard dotNetComponents resource
+//     on a public URL;
+//   - only the YARP ingress container app is external (WithExternalHttpEndpoints in the aca branch);
+//     web-server is external in run mode only, so web, api and grpc get internal ingress;
+//   - Postgres is Azure Database for PostgreSQL Flexible Server (AddAzurePostgresFlexibleServer +
+//     WithPasswordAuthentication), never a container app on an Azure Files share. Password auth (not
+//     Entra auth) keeps PostgresDbModule's plain Npgsql connection string unchanged; Aspire stores the
+//     connection string in a Key Vault (postgres-kv) and web-server reads it through a Key
+//     Vault-backed container-app secret with its own managed identity. The admin password is the
+//     generated postgres-password secure parameter;
+//   - Entra settings are the same parameters as Compose/Kubernetes (the client secret a secure
+//     parameter → container-app secret); mock auth, browser-log forwarding and the REPL are absent
+//     for the same reasons as Compose.
+// Flexible Server is declared in the aca branch only, so run mode — which never reads Publish:Target —
+// keeps the AddPostgres container with its volume and REPL exactly as before (RunAsContainer would
+// change the run-mode resource type and drop that wiring). Migrations for ACA: the published bundle,
+// run BY HAND from the operator's machine with --connection through a temporary firewall rule for
+// the operator's IP (the server admits Azure services only). The bundle needs no psql and no image;
+// an ACA job would need one. The idempotent SQL script stays the psql alternative. Never EnsureCreated.
+// HTTPS upgrade stays on (Aspire's default): with WithHttpsUpgrade(false) the internal endpoints
+// become plain http, which ACA's internal ingress redirects to https (allowInsecure is false) — and
+// YARP returns that redirect to the browser instead of following it.
+// `dev publish aca` writes artifacts/aspire-output/aca and gates it with aspire-tests'
+// aca-publish-tests (AcaPublish_Given_); publishing needs no Azure credentials, so CI runs it on every
+// PR and uploads the Bicep and SQL script. Deploying is `dev deploy --target aca` (operator-run).
+#endregion
+
+#region Open Questions
+// Q: Does original-Host forwarding survive ACA's internal ingress? Web routes forward the client's
+// public Host (WithTransformUseOriginalHostHeader, task 104-031) to
+// https://web-server.internal.<env domain>. ACA's internal ingress selects the app by host name, and
+// .NET validates the TLS certificate against the Host header — the same mismatch the http web hop
+// above avoids in Compose/Kubernetes. The publish output cannot answer this; the first maintainer
+// deploy (`dev deploy --target aca`) must check pages and passkey sign-in through the ingress FQDN.
+// If it fails, the candidates are an aca-only route transform or giving web-server the public
+// hostname directly; that choice belongs to the maintainer.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -184,12 +225,13 @@ internal class Program
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
     // Task 070-004: Aspire assigns each compute resource to exactly one compute environment, so the
-    // publish target is a configuration switch (Publish:Target = compose | kubernetes), read in publish
-    // mode only. Run mode always declares the Compose environment, exactly as before, and ignores it.
+    // publish target is a configuration switch (Publish:Target = compose | kubernetes | aca), read in
+    // publish mode only. Run mode always declares the Compose environment, exactly as before, and ignores it.
     string publishTarget = builder.ExecutionContext.IsPublishMode
       ? builder.Configuration[PublishTargetConfigurationKey] ?? ComposePublishTarget
       : ComposePublishTarget;
     IResourceBuilder<KubernetesEnvironmentResource>? kubernetes = null;
+    IResourceBuilder<AzureContainerAppEnvironmentResource>? containerApps = null;
 
     if (string.Equals(publishTarget, KubernetesPublishTarget, StringComparison.OrdinalIgnoreCase))
     {
@@ -214,6 +256,14 @@ internal class Program
       kubernetes = kubernetes.WithContainerRegistry(registry);
 #pragma warning restore ASPIRECOMPUTE003
     }
+    else if (string.Equals(publishTarget, ContainerAppsPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      // Task 070-007: `aspire publish` emits Bicep for an Azure Container Apps environment (with its own
+      // container registry and Log Analytics workspace); `aspire deploy` provisions it in the operator's
+      // subscription. No dashboard: Aspire deploys it as a public container app by default, an
+      // unauthenticated-by-design second front door beside the ingress.
+      containerApps = builder.AddAzureContainerAppEnvironment(ContainerAppsEnvironmentResourceName).WithDashboard(enable: false);
+    }
     else if (string.Equals(publishTarget, ComposePublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       // Task 070-003: `aspire publish` target for standalone hardware (compose.yaml + .env). A compute
@@ -224,7 +274,7 @@ internal class Program
     else
     {
       throw new InvalidOperationException(
-        $"{PublishTargetConfigurationKey} '{publishTarget}' is not a publish target; use '{ComposePublishTarget}' or '{KubernetesPublishTarget}'.");
+        $"{PublishTargetConfigurationKey} '{publishTarget}' is not a publish target; use '{ComposePublishTarget}', '{KubernetesPublishTarget}' or '{ContainerAppsPublishTarget}'.");
     }
 
     // Declare project resources based on template flags
@@ -297,61 +347,78 @@ internal class Program
     // WaitFor blocks forever. Found the hard way: PR 286 CI hang in web-spa-integration-tests.
     // The database resource name doubles as the ConnectionStrings key Aspire injects into
     // Web.Server (see constants.cs).
-    bool usePostgresDataVolume = !string.Equals(
-      builder.Configuration["Postgres:UseDataVolume"], "false", StringComparison.OrdinalIgnoreCase);
-
-    IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres(PostgresResourceName);
-
-    // Task 266 (Aspire 13.6): WithVolume(env:) replaces WithDataVolume() with the SAME volume
-    // identity — the name WithDataVolume generates ({app}-{apphost-path hash}-postgres-data) and the
-    // mount it picks for the default postgres 18.x image — so an existing dev volume is reused.
-    // The env var carries the mount path, NOT PGDATA: postgres 18 images keep PGDATA in a
-    // version subdirectory of the mount (see the constants.cs Design note).
-    // Published (task 070-003) the volume is always on and gets a FIXED name: the generated name
-    // hashes the AppHost path, so every checkout would emit a different compose.yaml. Compose
-    // prefixes it with the project name, so it never collides with the dev-loop volume.
-    if (builder.ExecutionContext.IsPublishMode)
+    IResourceBuilder<IResourceWithConnectionString> postgresDb;
+    if (containerApps is not null)
     {
-      postgres = postgres.WithVolume(
-        PostgresPublishedDataVolumeName,
-        PostgresDataVolumeTarget,
-        env: PostgresDataVolumeEnvironmentVariable);
+      // Task 070-007: Azure Database for PostgreSQL Flexible Server, not a postgres container on Azure
+      // Files (no volume to lose, Azure-managed backups/patching). Password authentication: the
+      // generated postgres-username / postgres-password parameters (the password a secret) and the
+      // connection string land in a Key Vault Aspire provisions beside the server; web-server reads the
+      // connection string from it through a container-app secret. Publish-only, like every target
+      // switch: run mode never reaches this branch and keeps the container below.
+      postgresDb = builder.AddAzurePostgresFlexibleServer(PostgresResourceName)
+        .WithPasswordAuthentication()
+        .AddDatabase(PostgresDatabaseResourceName);
     }
-    else if (usePostgresDataVolume)
+    else
     {
-      postgres = postgres.WithVolume(
-        VolumeNameGenerator.Generate(postgres, "data"),
-        PostgresDataVolumeTarget,
-        env: PostgresDataVolumeEnvironmentVariable);
+      bool usePostgresDataVolume = !string.Equals(
+        builder.Configuration["Postgres:UseDataVolume"], "false", StringComparison.OrdinalIgnoreCase);
+
+      IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres(PostgresResourceName);
+
+      // Task 266 (Aspire 13.6): WithVolume(env:) replaces WithDataVolume() with the SAME volume
+      // identity — the name WithDataVolume generates ({app}-{apphost-path hash}-postgres-data) and the
+      // mount it picks for the default postgres 18.x image — so an existing dev volume is reused.
+      // The env var carries the mount path, NOT PGDATA: postgres 18 images keep PGDATA in a
+      // version subdirectory of the mount (see the constants.cs Design note).
+      // Published (task 070-003) the volume is always on and gets a FIXED name: the generated name
+      // hashes the AppHost path, so every checkout would emit a different compose.yaml. Compose
+      // prefixes it with the project name, so it never collides with the dev-loop volume.
+      if (builder.ExecutionContext.IsPublishMode)
+      {
+        postgres = postgres.WithVolume(
+          PostgresPublishedDataVolumeName,
+          PostgresDataVolumeTarget,
+          env: PostgresDataVolumeEnvironmentVariable);
+      }
+      else if (usePostgresDataVolume)
+      {
+        postgres = postgres.WithVolume(
+          VolumeNameGenerator.Generate(postgres, "data"),
+          PostgresDataVolumeTarget,
+          env: PostgresDataVolumeEnvironmentVariable);
+      }
+
+      // Task 262 (Aspire 13.6): dashboard "REPL" command opens an authenticated psql shell in the
+      // dashboard terminal dock. Anyone who can run dashboard commands gets the server credentials,
+      // so it is Development-only (a tunnelled/shared dashboard in any other environment never
+      // exposes it). WithRepl itself is run-mode only, so publish output is unaffected.
+      if (builder.Environment.IsDevelopment())
+      {
+        postgres = postgres.WithRepl();
+      }
+
+      // Run mode creates the database through the AppHost; a published Compose stack has no AppHost,
+      // so the postgres image's own POSTGRES_DB creates it on first initdb.
+      if (builder.ExecutionContext.IsPublishMode)
+      {
+        postgres = postgres.WithEnvironment("POSTGRES_DB", PostgresDatabaseResourceName);
+      }
+
+      // Task 070-004: in the Helm chart the published postgres-data volume binds (by name) to a
+      // PersistentVolumeClaim postgres-data, which renders postgres as a single-replica StatefulSet
+      // mounting that claim.
+      if (kubernetes is not null)
+      {
+        postgres = postgres.WithPersistentVolume(
+          kubernetes.AddPersistentVolume(PostgresPublishedDataVolumeName)
+            .WithCapacity(builder.AddParameter(PostgresStorageCapacityParameterName, "10Gi", publishValueAsDefault: true)));
+      }
+
+      postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     }
 
-    // Task 262 (Aspire 13.6): dashboard "REPL" command opens an authenticated psql shell in the
-    // dashboard terminal dock. Anyone who can run dashboard commands gets the server credentials,
-    // so it is Development-only (a tunnelled/shared dashboard in any other environment never
-    // exposes it). WithRepl itself is run-mode only, so publish output is unaffected.
-    if (builder.Environment.IsDevelopment())
-    {
-      postgres = postgres.WithRepl();
-    }
-
-    // Run mode creates the database through the AppHost; a published Compose stack has no AppHost,
-    // so the postgres image's own POSTGRES_DB creates it on first initdb.
-    if (builder.ExecutionContext.IsPublishMode)
-    {
-      postgres = postgres.WithEnvironment("POSTGRES_DB", PostgresDatabaseResourceName);
-    }
-
-    // Task 070-004: in the Helm chart the published postgres-data volume binds (by name) to a
-    // PersistentVolumeClaim postgres-data, which renders postgres as a single-replica StatefulSet
-    // mounting that claim.
-    if (kubernetes is not null)
-    {
-      postgres = postgres.WithPersistentVolume(
-        kubernetes.AddPersistentVolume(PostgresPublishedDataVolumeName)
-          .WithCapacity(builder.AddParameter(PostgresStorageCapacityParameterName, "10Gi", publishValueAsDefault: true)));
-    }
-
-    IResourceBuilder<PostgresDatabaseResource> postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
 
     // Task 147-007: first-class EF migrations resource (aspire.dev AddEFMigrations).
@@ -410,6 +477,12 @@ internal class Program
       kubernetes.AddIngress(KubernetesIngressResourceName)
         .WithIngressClass(builder.AddParameter(IngressClassParameterName, "nginx", publishValueAsDefault: true))
         .WithDefaultBackend(yarp.GetEndpoint("http"));
+    }
+    else if (containerApps is not null)
+    {
+      // Task 070-007: the ingress is the ONLY external container app (ACA's managed HTTPS ingress
+      // with a public FQDN); web-server, api-server and grpc-server keep internal-only ingress.
+      yarp = yarp.WithExternalHttpEndpoints();
     }
     else if (builder.ExecutionContext.IsPublishMode)
     {

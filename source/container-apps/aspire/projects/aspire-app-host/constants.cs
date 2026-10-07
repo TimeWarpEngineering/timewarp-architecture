@@ -58,6 +58,7 @@ internal class Constants
   public const string PublishTargetConfigurationKey = "Publish:Target";
   public const string ComposePublishTarget = "compose";
   public const string KubernetesPublishTarget = "kubernetes";
+  public const string ContainerAppsPublishTarget = "aca";
 
   // Task 070-004: Kubernetes publish environment (Helm chart), its cluster Ingress, container registry,
   // and the publish-only parameters for Helm placement, registry and storage.
@@ -71,4 +72,8 @@ internal class Constants
   public const string RegistryEndpointParameterName = "registry-endpoint";
   public const string RegistryRepositoryParameterName = "registry-repository";
   public const string PostgresStorageCapacityParameterName = "postgres-storage-capacity";
+
+  // Task 070-007: Azure Container Apps publish environment (Bicep). Its registry, Log Analytics workspace
+  // and the Flexible Server's Key Vault are named by Aspire from this and the postgres resource name.
+  public const string ContainerAppsEnvironmentResourceName = "aca-env";
 }

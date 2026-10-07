@@ -155,7 +155,7 @@ jobs:
         if: github.event_name != 'release'
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow` (PR/merge) runs `dev publish compose` and `dev publish kubernetes`, which need the Aspire CLI. Pinned to the
+      # `dev workflow` (PR/merge) runs `dev publish compose`, `dev publish kubernetes` and `dev publish aca`, which need the Aspire CLI. Pinned to the
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
         if: github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.mode != 'probe')
@@ -208,6 +208,20 @@ jobs:
         with:
           name: aspire-helm-${{ github.run_number }}
           path: artifacts/aspire-output/kubernetes/
+          if-no-files-found: ignore
+          retention-days: 1
+
+      # Task 070-007: the Azure Container Apps Bicep (`dev publish aca`, safety-checked). Publish only —
+      # CI has no Azure credentials and never deploys. The ~100 MB migration bundle is left out; the
+      # Bicep modules and the idempotent SQL script are the reviewable output.
+      - name: Upload Azure Container Apps publish output
+        if: always() && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspire-aca-${{ github.run_number }}
+          path: |
+            artifacts/aspire-output/aca/**/*.bicep
+            artifacts/aspire-output/aca/efmigrations/*.sql
           if-no-files-found: ignore
           retention-days: 1
 

@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deploy [--target compose|kubernetes]`: the operator's manual `aspire deploy` of one publish
+// `dev deploy [--target compose|kubernetes|aca]`: the operator's manual `aspire deploy` of one publish
 // target, after a preflight and a confirmation. Never run by CI.
 #endregion
 
@@ -11,7 +11,8 @@
 // with the target defaulting to the AppHost's Publish:Target default (compose).
 // Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+ and a
 // current kubectl context, which is printed — any context works, a local kind cluster included; this
-// verb never creates a cluster. Compose prints the container runtime Aspire will use
+// verb never creates a cluster. For aca (task 070-007), `az login` and the subscription, printed:
+// Azure__SubscriptionId when set, else the az CLI's, passed to `aspire deploy` as Azure__SubscriptionId. Compose prints the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI.
 // Confirmation: --yes deploys with `--non-interactive` (every deploy parameter must then already be
 // set, e.g. in user secrets or Parameters__* env vars). Without --yes the plan is printed and the
@@ -26,10 +27,11 @@ namespace DevCli.Commands;
 [NuruRoute("deploy", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
 [NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+)")]
+[NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server in the az CLI's subscription (az login first)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : ICommand<Unit>
 {
-  [Option("target", "t", Description = "Publish target: compose | kubernetes (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire deploy --non-interactive")]
@@ -73,11 +75,16 @@ internal sealed class DeployCommand : ICommand<Unit>
         }
       }
 
-      CommandOutput deploy = await Shell.Builder("aspire")
+      ShellBuilder aspire = Shell.Builder("aspire")
         .WithArguments(AspireDeploy.BuildDeployArguments(preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes))
         .WithWorkingDirectory(preflight.RepoRoot)
-        .WithNoValidation()
-        .PassthroughAsync(ct);
+        .WithNoValidation();
+      foreach ((string name, string value) in preflight.AspireEnvironment)
+      {
+        aspire = aspire.WithEnvironmentVariable(name, value);
+      }
+
+      CommandOutput deploy = await aspire.PassthroughAsync(ct);
 
       if (!deploy.Success)
       {

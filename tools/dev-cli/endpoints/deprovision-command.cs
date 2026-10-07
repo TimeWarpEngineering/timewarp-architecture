@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deprovision [--target compose|kubernetes] [--yes]`: the operator's manual `aspire destroy` of a
+// `dev deprovision [--target compose|kubernetes|aca] [--yes]`: the operator's manual `aspire destroy` of a
 // deployment `dev deploy` made. Deletes the deployment's data. Never run by CI.
 #endregion
 
@@ -8,13 +8,16 @@
 //   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t>
 // (task 070-006), in this order:
 //   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+ and the printed
-//      kubectl context, so the operator sees what they are about to hit).
+//      kubectl context; aca: `az login` and the printed subscription, so the operator sees what they
+//      are about to hit).
 //   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself; with no terminal and no
 //      --yes there is nobody to ask, so the verb refuses (as `dev deploy` does) instead of assuming yes.
 //   3. aspire destroy. On failure print the manual removal for the target and exit with Aspire's exit
 //      code: `aspire destroy` only knows deployments recorded on the machine that deployed. The verb
 //      never runs a destructive fallback itself and never inspects Aspire's deployment state.
-//   4. On success for kubernetes, print how to check the postgres claim is gone.
+//   4. On success for kubernetes, print how to check the postgres claim is gone; for aca, how to purge
+//      the soft-deleted Key Vault (it keeps its name reserved, blocking a redeploy into the same group).
+//      On failure for aca the manual removal is `az group delete` (az asks) plus that purge — task 070-007.
 // Runtime neutrality: Compose teardown is Aspire's (honours ASPIRE_CONTAINER_RUNTIME); the runtime
 // name only appears in the printed manual commands.
 // Pure argument and text helpers live in services/aspire-deploy.cs (dev-cli-tests).
@@ -24,10 +27,11 @@ namespace DevCli.Commands;
 
 [NuruRoute("deprovision", Description = "Destroy a deployment with `aspire destroy` (deletes its data; Aspire asks unless --yes; operator-run, never CI)")]
 [NuruRouteExample("deprovision", Description = "Preflight, then aspire destroy the compose deployment (Aspire asks for confirmation)")]
+[NuruRouteExample("deprovision --target aca", Description = "aspire destroy the Azure deployment, then print the Key Vault purge")]
 [NuruRouteExample("deprovision --target kubernetes --yes", Description = "Uninstall the Helm release without prompting")]
 internal sealed class DeprovisionCommand : ICommand<Unit>
 {
-  [Option("target", "t", Description = "Publish target: compose | kubernetes (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
@@ -57,11 +61,16 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      CommandOutput destroy = await Shell.Builder("aspire")
+      ShellBuilder aspire = Shell.Builder("aspire")
         .WithArguments(AspireDeploy.BuildDestroyArguments(preflight.AppHostProject, preflight.Target, command.Yes))
         .WithWorkingDirectory(preflight.RepoRoot)
-        .WithNoValidation()
-        .PassthroughAsync(ct);
+        .WithNoValidation();
+      foreach ((string name, string value) in preflight.AspireEnvironment)
+      {
+        aspire = aspire.WithEnvironmentVariable(name, value);
+      }
+
+      CommandOutput destroy = await aspire.PassthroughAsync(ct);
 
       if (!destroy.Success)
       {

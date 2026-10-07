@@ -39,11 +39,15 @@
     <PackageReference Include="Aspire.Hosting.Docker" />
     <!-- Task 070-004: `aspire publish` also emits a Helm chart (publish-only). -->
     <PackageReference Include="Aspire.Hosting.Kubernetes" />
+    <!-- Task 070-007: `aspire publish` also emits Azure Container Apps Bicep (publish-only). -->
+    <PackageReference Include="Aspire.Hosting.Azure.AppContainers" />
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->
     <!--#if (postgres) -->
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <!-- Task 070-007: Azure Database for PostgreSQL Flexible Server for the aca publish target. -->
+    <PackageReference Include="Aspire.Hosting.Azure.PostgreSQL" />
     <!-- Task 147-007: AppHost AddEFMigrations (RunDatabaseUpdateOnStart + publish artifacts). -->
     <PackageReference Include="Aspire.Hosting.EntityFrameworkCore" />
     <!--#endif -->
