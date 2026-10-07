@@ -33,10 +33,11 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dev run` — Aspire orchestrator (Development); `-lp <profile>` picks an AppHost launch profile
   (e.g. `http`; default: first profile in launchSettings.json; needs Aspire CLI 13.6+)
 - `dev db reset --yes` — drop + re-migrate the database **inside the running AppHost**; the Docker
-  volume survives. `dev db nuke --yes` — **stops the AppHost** and deletes its Docker volumes
-  (`aspire stop --force --volumes`, Aspire CLI 13.6+, plus any adopted pre-13.6 volume, after
-  `docker rm` of stopped containers still holding it; a still-running one makes nuke refuse); the
-  next `dev run` starts empty. Without `--yes`, nuke only lists the volumes and containers it would delete
+  volume survives. `dev db nuke --yes` — **stops the AppHost** and deletes its Aspire-owned volumes
+  (`aspire stop --force --volumes`, Aspire CLI 13.6+; exits with its code); the next `dev run`
+  starts empty. A volume created before Aspire 13.6 is adopted, not owned, and may survive — nuke
+  prints a hint to remove it by hand (`docker volume ls` / `docker volume rm <name>`, or the
+  `ASPIRE_CONTAINER_RUNTIME` CLI). Without `--yes`, nuke only describes what it would do
 - `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
 - `dev test` — every project under `tests/` (globbed, run one at a time — shared in-proc port base); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles

@@ -42,11 +42,11 @@ mirror a tool's private state.
 
 ## Checklist
 
-- [ ] `dev db nuke` = preflight + `aspire stop --force --volumes` + manual hint
-- [ ] Hash/prefix/sweep/container-cleanup code and tests deleted
-- [ ] `postgres-volume-model-tests.cs` triaged
-- [ ] Regions + AGENTS.md reconciled
-- [ ] Gates: `dev build` 0/0, dev-cli-tests, aspire-tests build, `ganda repo audit`;
+- [x] `dev db nuke` = preflight + `aspire stop --force --volumes` + manual hint
+- [x] Hash/prefix/sweep/container-cleanup code and tests deleted
+- [x] `postgres-volume-model-tests.cs` triaged
+- [x] Regions + AGENTS.md reconciled
+- [x] Gates: `dev build` 0/0, dev-cli-tests, aspire-tests build, `ganda repo audit`;
       `grep -rn "VolumeNameGenerator\|SHA256" tools/dev-cli` returns nothing
 
 ## Notes
@@ -59,3 +59,41 @@ mirror a tool's private state.
 ## Session
 
 - Created: 2026-10-07 (cockpit; found while simplifying 070-006 `dev deprovision`)
+- 2026-10-07 implementer (ganda task work): nuke rewritten as preflight + `aspire stop` + hint.
+
+## Results
+
+- `tools/dev-cli/services/db-nuke.cs` now holds only `BuildStopArguments`, `BuildRefusalLines`,
+  `BuildAdoptedVolumeHintLines` and `ContainerRuntimeCli` (from `ASPIRE_CONTAINER_RUNTIME`, default
+  `docker`). Gone: the `VolumeNamePrefix` hash and sanitizer, the volume list/filter/rm builders,
+  `VolumeContainer`, `ContainerCleanupPlan`, `PlanContainerCleanup` and the container rm/refusal text.
+- `db-nuke-command.cs`: repo root + AppHost → Aspire CLI ≥ 13.6 guard (unchanged text) → without
+  `--yes`, prints the `aspire stop …` it would run and exits 1 → with `--yes`, runs
+  `aspire stop --apphost <csproj> --force --volumes` and exits with its code, then prints the
+  pre-13.6 adopted-volume hint. The command never calls a container CLI.
+- `db-nuke-tests.cs`: kept the stop-argument and CLI-version tests. The `--yes` refusal test was
+  rewritten for the new text. Added hint tests (default, `podman`, blank). Removed the
+  prefix/filter/container tests.
+- `postgres-volume-model-tests.cs` triaged: dropped only `DevDbNukePrefix_Should_MatchAspireGeneratedVolumeName`.
+  The WithDataVolume identity, env-var and UseDataVolume=false tests guard the real AppHost model
+  and stay. `aspire-tests.csproj` no longer compile-includes `db-nuke.cs` or defines `DEV_CLI_SOURCE`.
+- Purpose/Design regions reconciled in all edited files. The `AGENTS.md` `dev db nuke` line was
+  updated. No `tw-dev-cli` text in this repo mentions nuke, and `db-group.cs` was still accurate.
+- Gates: `dev build` 0 warnings / 0 errors. dev-cli-tests 87/87. aspire-tests builds with 0/0.
+  `ganda repo audit` passes. `grep -rn "VolumeNameGenerator\|SHA256" tools/dev-cli` finds nothing.
+  `dev db nuke` without `--yes` was checked after `dev self-install`. `--yes` was not run.
+
+### How to validate
+
+Smoke (safe, no data loss):
+```bash
+dev self-install && dev db nuke; echo $?
+```
+Expect: exit 1. It prints "Refusing to nuke without --yes", the exact
+`aspire stop --apphost …/aspire-app-host.csproj --force --volumes …` line, and the
+`dev db reset --yes` alternative. Nothing is stopped or removed. An Aspire CLI older than 13.6 is
+refused first, with `aspire update --self`.
+
+Maintainer only (destroys dev data): `dev db nuke --yes`. Expect the `aspire stop` output, then the
+"created before Aspire 13.6 … `docker volume ls`, then `docker volume rm <name>`" hint. The exit
+code equals aspire's. With `ASPIRE_CONTAINER_RUNTIME=podman`, the hint names `podman`.
