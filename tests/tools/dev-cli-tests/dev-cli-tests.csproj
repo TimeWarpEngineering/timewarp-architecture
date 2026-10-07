@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of aspire-run.cs / db-nuke.cs / entra-setup.cs / entra-tenants.cs / jaribu-aggregator-summary-gate.cs
+    <!-- Compile-include of aspire-run.cs / aspire-deploy.cs / db-nuke.cs / entra-setup.cs / entra-tenants.cs / jaribu-aggregator-summary-gate.cs
          (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
          false condition so generated apps do not list a project the template strips. -->
@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-run.cs" Link="services\aspire-run.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\aspire-deploy.cs" Link="services\aspire-deploy.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\db-ef.cs" Link="services\db-ef.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\db-nuke.cs" Link="services\db-nuke.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\template-nupkg.cs" Link="services\template-nupkg.cs" />

@@ -1,0 +1,169 @@
+#region Purpose
+// Targets, argument builders, preflight parsing and the operator text for `dev deploy` /
+// `dev deprovision` (manual `aspire deploy` / `aspire destroy` per publish target).
+#endregion
+
+#region Design
+// Pure helpers (no Amuru/Terminal) so tests/tools/dev-cli-tests can Compile-include them and gate
+// both verbs without deploying anything. The process half (the aspire/helm/kubectl probes) lives in
+// services/aspire-deploy-preflight.cs.
+//
+// Deploying is an operator action, never CI (task 070-006): no workflow step or `dev workflow` mode
+// calls these verbs. The target is the AppHost's Publish:Target switch (program.cs), passed through
+// as `-- --Publish:Target=<name>` exactly like `dev publish`; the default is the AppHost's default
+// (compose).
+//
+// Destroying is Aspire's: `dev deprovision` runs `aspire destroy` and trusts it. `aspire destroy`
+// only knows deployments `aspire deploy` recorded on THIS machine, so on failure the verb prints the
+// manual removal for the target (BuildManualCleanupLines) and exits with Aspire's exit code. The dev
+// CLI never inspects Aspire's own deployment state and never runs the manual removal itself.
+//
+// Runtime neutrality (task 277): nothing here calls a container CLI. Compose deploy and destroy are
+// Aspire's, which honour ASPIRE_CONTAINER_RUNTIME; the runtime name only appears in printed text.
+#endregion
+
+namespace DevCli.Services;
+
+/// <summary>One deploy target: the AppHost's Publish:Target value.</summary>
+internal sealed record DeployTarget(string Name);
+
+/// <summary>Builds and checks the <c>aspire deploy</c> / <c>aspire destroy</c> invocations for <c>dev deploy</c> / <c>dev deprovision</c>.</summary>
+internal static class AspireDeploy
+{
+  internal static readonly Version MinimumCliVersion = new(13, 6);
+  internal static readonly Version MinimumHelmVersion = new(4, 2);
+
+  internal const string DeployEnvironment = "Production";
+  internal const string ContainerRuntimeVariable = "ASPIRE_CONTAINER_RUNTIME";
+  internal const string DefaultContainerRuntime = "docker";
+  internal const string PostgresClaimName = "postgres-data";
+  internal const string HelmReleaseNameParameter = "helm-release-name";
+  internal const string KubernetesNamespaceParameter = "k8s-namespace";
+
+  internal static readonly DeployTarget Compose = new("compose");
+  internal static readonly DeployTarget Kubernetes = new("kubernetes");
+
+  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes];
+
+  /// <summary>The AppHost's Publish:Target default.</summary>
+  internal static DeployTarget DefaultTarget => Compose;
+
+  /// <summary>Resolves <paramref name="name"/> (null = the default); null when it is not a target.</summary>
+  internal static DeployTarget? ResolveTarget(string? name) =>
+    string.IsNullOrWhiteSpace(name)
+      ? DefaultTarget
+      : Targets.FirstOrDefault(target => string.Equals(target.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+
+  internal static string UnknownTargetMessage(string name) =>
+    $"Unknown deploy target '{name}'. Valid targets: {string.Join(", ", Targets.Select(target => target.Name))} (default: {DefaultTarget.Name}).";
+
+  /// <summary><c>aspire deploy</c>; <c>--non-interactive</c> only when the operator passed <c>--yes</c>.</summary>
+  internal static string[] BuildDeployArguments(string appHostProject, DeployTarget target, bool nonInteractive) =>
+    nonInteractive
+      ? ["deploy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--non-interactive", "--", $"--Publish:Target={target.Name}"]
+      : ["deploy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--", $"--Publish:Target={target.Name}"];
+
+  /// <summary><c>aspire destroy</c>; <c>--yes --non-interactive</c> only when the operator passed <c>--yes</c>, else Aspire asks.</summary>
+  internal static string[] BuildDestroyArguments(string appHostProject, DeployTarget target, bool yes) =>
+    yes
+      ? ["destroy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--yes", "--non-interactive", "--", $"--Publish:Target={target.Name}"]
+      : ["destroy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--", $"--Publish:Target={target.Name}"];
+
+  internal static string[] BuildHelmVersionArguments() => ["version", "--short"];
+
+  internal static string[] BuildKubectlContextArguments() => ["config", "current-context"];
+
+  /// <summary>Parses <c>helm version --short</c> output (e.g. <c>v4.2.0+g1a2b3c4</c>).</summary>
+  internal static Version? ParseHelmVersion(string versionOutput)
+  {
+    string text = versionOutput.Trim().TrimStart('v', 'V');
+    int end = text.IndexOfAny(['+', '-', ' ', '\n', '\r']);
+    string core = end < 0 ? text : text[..end];
+    return Version.TryParse(core, out Version? version) ? version : null;
+  }
+
+  /// <summary>Error when Helm (from <c>helm version --short</c>) is missing, unparseable or older than 4.2; null when usable.</summary>
+  internal static string? ValidateHelm(bool probeSucceeded, string versionOutput)
+  {
+    if (!probeSucceeded)
+    {
+      return $"helm was not found on PATH or `helm version` failed. The kubernetes target needs Helm {MinimumHelmVersion} or later on PATH.";
+    }
+
+    Version? version = ParseHelmVersion(versionOutput);
+    if (version is null)
+    {
+      return $"Could not determine the Helm version from `helm version --short` output '{versionOutput.Trim()}'. "
+        + $"The kubernetes target needs Helm {MinimumHelmVersion} or later.";
+    }
+
+    return version < MinimumHelmVersion
+      ? $"The kubernetes target needs Helm {MinimumHelmVersion} or later (installed: {version})."
+      : null;
+  }
+
+  /// <summary>The current kubectl context, or null when kubectl failed or no context is set.</summary>
+  internal static string? ParseKubectlContext(bool probeSucceeded, string output)
+  {
+    string context = output.Trim();
+    return probeSucceeded && context.Length > 0 && !context.Contains('\n', StringComparison.Ordinal) ? context : null;
+  }
+
+  internal const string NoKubectlContextMessage =
+    "No current kubectl context (kubectl is not on PATH or `kubectl config current-context` failed). Point kubectl at the target "
+    + "cluster first, e.g. `kubectl config use-context <name>` (a local kind cluster is just a context).";
+
+  /// <summary>Container runtime Aspire uses for Compose: ASPIRE_CONTAINER_RUNTIME, else docker.</summary>
+  internal static string ContainerRuntime(string? configured) =>
+    string.IsNullOrWhiteSpace(configured) ? DefaultContainerRuntime : configured.Trim();
+
+  /// <summary>What `dev deploy` is about to do, printed before the confirmation.</summary>
+  internal static string[] BuildDeployPlanLines(string appHostProject, DeployTarget target, string preflightDetail) =>
+  [
+    $"dev deploy → aspire deploy ({target.Name})",
+    $"  AppHost:     {appHostProject}",
+    $"  Environment: {DeployEnvironment}",
+    $"  Target:      Publish:Target={target.Name}",
+    $"  {preflightDetail}",
+  ];
+
+  internal const string DeployConfirmationRefusal =
+    "Not deploying: no confirmation. Re-run with --yes to deploy non-interactively, or from a terminal to answer the prompt.";
+
+  /// <summary>Printed when the operator answers anything but yes at the deploy prompt.</summary>
+  internal const string DeployDeclined = "Not deploying: declined at the prompt. Nothing was run.";
+
+  internal const string DestroyConfirmationRefusal =
+    "Not destroying: no confirmation. Re-run with --yes to destroy non-interactively, or from a terminal to answer Aspire's prompt.";
+
+  /// <summary>Printed after a failed <c>aspire destroy</c>: how to remove the deployment by hand.</summary>
+  internal static string[] BuildManualCleanupLines(DeployTarget target, string containerRuntime) =>
+  [
+    "`aspire destroy` only knows deployments recorded on the machine (and checkout) that ran `aspire deploy`. If the stack is still running, remove it by hand — this deletes its data:",
+    .. ManualRemovalLines(target, containerRuntime),
+  ];
+
+  private static string[] ManualRemovalLines(DeployTarget target, string containerRuntime) =>
+    target == Kubernetes
+      ?
+      [
+        "  helm list --all-namespaces                                  # find the release and namespace",
+        $"  helm uninstall <release> --namespace <namespace>            # AppHost parameters {HelmReleaseNameParameter} and {KubernetesNamespaceParameter}",
+        $"  kubectl delete pvc {PostgresClaimName} --namespace <namespace>",
+      ]
+      :
+      [
+        $"  {containerRuntime} compose ls                                     # find the project",
+        $"  {containerRuntime} compose --project-name <project> down --volumes",
+      ];
+
+  /// <summary>Kubernetes only: the claim can outlive `helm uninstall`; tell the operator how to check.</summary>
+  internal static string[] BuildPostDestroyLines(DeployTarget target) =>
+    target == Kubernetes
+      ?
+      [
+        "Check that the postgres claim is gone: kubectl get pvc --namespace <namespace>",
+        $"If {PostgresClaimName} remains, delete it: kubectl delete pvc {PostgresClaimName} --namespace <namespace>",
+      ]
+      : [];
+}
