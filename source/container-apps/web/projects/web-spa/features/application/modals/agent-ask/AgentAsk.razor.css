@@ -1,0 +1,23 @@
+.twe-agent-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-3);
+  min-height: 24rem;
+}
+
+.twe-agent-ask__title {
+  margin: 0;
+}
+
+.twe-agent-ask__approval {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  align-items: center;
+}
+
+.twe-agent-ask__approval pre {
+  flex-basis: 100%;
+  margin: 0;
+  white-space: pre-wrap;
+}

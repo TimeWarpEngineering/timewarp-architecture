@@ -40,6 +40,7 @@
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
   // TimeWarpStateComponent keeps its Store private; the runner needs the circuit/tab store.
   [Inject] private IStore ScopedStore { get; set; } = null!;
+  [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
 
   private ElementReference SearchInput;
   private DotNetObjectReference<CommandPalette>? HostReference;
@@ -56,6 +57,9 @@
     new() { [CommandPaletteJsModule.InputAttribute] = true };
 
   private bool IsActive => ApplicationState.ActiveModalId == ModalId;
+  private bool AskConfigured => CatalogAgentAvailability.IsConfigured(ServiceProvider);
+
+  private Task OpenAskAsync() => ApplicationState.SetActiveModal(AgentAsk.ModalId);
   private IReadOnlyList<CommandPaletteRow> Matches => CommandPaletteState.Matches;
   private int HighlightedIndex => CommandPaletteState.HighlightedIndex;
   private string? ActiveDescendant => HighlightedIndex >= 0 ? RowId(HighlightedIndex) : null;
@@ -270,5 +274,9 @@
   </MainContent>
   <ActionContent>
     <span class="twe-palette__hint" @onmousedown:preventDefault>↑ ↓ to move · Enter to run · Esc to close</span>
+    @if (AskConfigured)
+    {
+      <FluentButton Appearance="ButtonAppearance.Outline" data-qa="CommandPaletteAsk" OnClick="OpenAskAsync">Ask</FluentButton>
+    }
   </ActionContent>
 </ModalContainer>

@@ -13,6 +13,12 @@
 // TimeWarp.State.Plus is included so [TrackAction] can resolve ActionTrackingState.
 // AddActionCatalog mirrors Web.Spa.Program so IActionCatalog tests see the production roster;
 // AddJavaScriptDispatch reuses Web.Spa.Program.AllowJavaScriptDispatch for the same reason (task 278).
+// Authorization policies and the WebMCP services mirror the same program so page-scoped tool
+// tests resolve IAuthorizationService and WebMcpDispatcher from the per-test scope (task 271).
+// JsWebMcpModelContext is fully qualified: TimeWarp.Architecture.Services is a global using
+// only when the api flag is on. Without api, a signed-in principal with every permission
+// stands in for the mock session so the dispatcher can be constructed. The host still
+// registers no IChatClient.
 // MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
 // IApiServerApiService factory sit in the api conditional. A generated app with the api
 // flag off drops the Services import and the api-server client, so those names do not
@@ -98,6 +104,17 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // Same catalog registration as Web.Spa.Program (task 239-002).
     services.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).Assembly);
     services.AddJavaScriptDispatch(Web.Spa.Program.AllowJavaScriptDispatch);
+    services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
+    services.AddScoped<WebMcpApprovalGate>();
+    services.AddScoped<WebMcpDispatcher>();
+    services.AddScoped<TimeWarp.Architecture.Services.JsWebMcpModelContext>();
+    services.AddScoped<WebMcpPublisher>();
+#if(!api)
+    // The api flag's mock session is absent. WebMcpDispatcher still requires a provider,
+    // and catalog tools are filtered by permission claims.
+    services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
+      _ => new PermittedAuthenticationStateProvider());
+#endif
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.
@@ -134,4 +151,39 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddScoped<NavigationManager, TestNavigationManager>();
     services.AddScoped<TimeWarp.Architecture.Features.NotificationState.NavigationListener>();
   }
+
+#if(!api)
+  /// <summary>
+  /// Signed-in principal with every product permission. Generated apps without the api flag
+  /// have no mock session; WebMCP tests need the same grants that provider carries.
+  /// </summary>
+  private sealed class PermittedAuthenticationStateProvider
+    : Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider
+  {
+    public override Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> GetAuthenticationStateAsync()
+    {
+      List<System.Security.Claims.Claim> claims = [];
+      foreach (string permission in TimeWarp.Architecture.Features.PermissionIds.All)
+      {
+        claims.Add
+        (
+          new System.Security.Claims.Claim
+          (
+            TimeWarp.Architecture.Features.PermissionIds.ClaimType,
+            permission
+          )
+        );
+      }
+
+      System.Security.Claims.ClaimsIdentity identity = new(claims, authenticationType: "Test");
+      return Task.FromResult
+      (
+        new Microsoft.AspNetCore.Components.Authorization.AuthenticationState
+        (
+          new System.Security.Claims.ClaimsPrincipal(identity)
+        )
+      );
+    }
+  }
+#endif
 }

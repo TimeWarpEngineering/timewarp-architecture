@@ -1,0 +1,75 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Applications
+
+@*
+  Purpose: Confirms a WebMCP tool call and republishes page tools when the route changes.
+
+  Design: The component only dispatches. SyncWebMcp publishes tools through the store handler.
+  ResolveApproval answers the gate the dispatcher is waiting on, with the call id this render
+  showed, so a click can only release the call the person saw. The banner is the in-app
+  confirmation for mutating tools and shows the bound values the dispatcher will execute.
+  Navigation cancels a pending call in the dispatcher, not here. An absent browser model context
+  makes the publish a no-op.
+  Known double publish: navigating between two TimeWarpPage routes publishes twice (the old
+  instance's LocationChanged handler, then the new instance's first render). It is harmless (the
+  second replacement aborts the first) and kept: the first-render trigger covers page swaps, and
+  the LocationChanged trigger covers same-instance route changes and the hop onto a focused page,
+  which hosts no surface of its own.
+  Limit: the banner is ordinary DOM. A browser agent that can also click the page can press
+  Approve itself, so this is a confirmation for a person, not a barrier against a DOM-actuating
+  agent. The follow-up is a trusted user gesture (isTrusted) or WebMCP requestUserInteraction.
+*@
+
+@code {
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  private bool Listening;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || Listening)
+    {
+      return;
+    }
+
+    Listening = true;
+    NavigationManager.LocationChanged += OnLocationChanged;
+    await AgentSurfaceState.SyncWebMcp();
+  }
+
+  private void OnLocationChanged(object? sender, LocationChangedEventArgs arguments)
+  {
+    _ = SyncAsync();
+  }
+
+  private async Task SyncAsync()
+  {
+    try
+    {
+      await AgentSurfaceState.SyncWebMcp();
+    }
+    catch (ObjectDisposedException)
+    {
+      // The circuit closed during navigation.
+    }
+  }
+
+  private Task ResolveAsync(Guid callId, bool approved) => AgentSurfaceState.ResolveApproval(callId, approved);
+
+  public override void Dispose()
+  {
+    NavigationManager.LocationChanged -= OnLocationChanged;
+    base.Dispose();
+  }
+}
+
+@if (AgentSurfaceState.PendingCallId is Guid callId)
+{
+  <div class="twe-webmcp-approval" data-qa="WebMcpApproval" role="region" aria-label="Confirm action">
+    <p>Allow <strong data-qa="WebMcpApprovalTool">@AgentSurfaceState.PendingToolName</strong>?</p>
+    <pre data-qa="WebMcpApprovalArguments">@AgentSurfaceState.PendingArgumentsJson</pre>
+    <FluentButton Appearance="ButtonAppearance.Primary" data-qa="WebMcpApprove" OnClick="@(() => ResolveAsync(callId, approved: true))">Approve</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Outline" data-qa="WebMcpReject" OnClick="@(() => ResolveAsync(callId, approved: false))">Reject</FluentButton>
+  </div>
+}

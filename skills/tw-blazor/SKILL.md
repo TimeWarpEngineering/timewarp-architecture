@@ -129,6 +129,33 @@ Reference: `features/identity/get-credentials/` and `credential-rules-applicatio
 under `source/container-apps/web/`; `features/application/pages/SettingsPage.razor` and
 `features/identity/components/CredentialList.razor` (client) under `web-spa/`.
 
+# Agentic UI and WebMCP
+
+One catalog-to-tools mapping drives both the in-app model and an external browser agent.
+
+- `CatalogAgentToolSet.SelectAsync` keeps entries whose visibility includes Agent, whose name is on
+  the current page (`PageAgentScope`), and whose permissions the principal passes
+  (`CommandPaletteRoster.IsPermittedAsync`). Human-only actions are never tools. An anonymous
+  principal gets no catalog tools.
+- Read-only tools are an explicit allow-list of catalog names in `CatalogAgentApproval` (never a
+  name-prefix rule). Every other tool is wrapped in `ApprovalRequiredAIFunction`. WebMCP uses the
+  same split: the shell's confirmation bar (`AgentSurfaceState`) gates dispatch, one call at a time,
+  correlated by call id; navigation cancels the pending call. Both drivers re-select tools for the
+  current principal and route when a tool runs, and refuse one that is no longer offered. Approval
+  does not grant a permission the principal lacks.
+- The ask UI is the Ctrl-K **Ask** button, shown only when the host registered an `IChatClient`.
+  It opens the `AgentAsk` modal (`UIAgent` over a `FunctionInvokingChatClient`). The template
+  registers no client and no secret. WebMCP does not need a client.
+- WebMCP registers the same tools, plus `page_context`, through `document.modelContext.registerTool`
+  (falling back to `navigator.modelContext`, then `provideContext`). A missing API registers nothing.
+  Both paths execute with `ActionCatalogEntry.Execute`. Endpoints keep `[EndpointAuthorize]`.
+- Page facts live in `PageAgentContext`: credential ids and flags for Settings and Passkeys, and
+  the current record for pages whose command replaces a whole record (including the Version
+  concurrency token where the command carries one, as site settings does).
+  Components dispatch `SyncWebMcp` and `ResolveApproval`. They do not call the JS module.
+
+Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.
+
 # Action handlers and loading
 
 1. A handler does one thing. It never sends/dispatches another action (no `await XState.Y()`
