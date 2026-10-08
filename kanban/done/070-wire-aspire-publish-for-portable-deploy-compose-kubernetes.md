@@ -47,14 +47,17 @@ the platform moved:
 
 ## Children
 
-- [ ] **070-002** Delete the per-service Dockerfiles and `<DockerfileContext>`; Aspire builds
-      images via the .NET SDK. **Cleanup round: run before task 272**, which would otherwise bump
-      the grpc Dockerfile's `dotnet_version`.
-- [ ] **070-003** Docker Compose publish environment, plus an `aspire publish` regression check
-      in CI.
-- [ ] **070-004** Kubernetes/Helm publish environment with production-safe outputs.
-- [ ] **070-005** Deploy guidance in a skill (Compose / Kubernetes / Azure), including the Azure
-      target decision.
+- [x] **070-002** Delete the per-service Dockerfiles and `<DockerfileContext>`; Aspire builds
+      images via the .NET SDK.
+- [x] **070-003** Docker Compose publish environment, plus an `aspire publish` regression check
+      in CI (PR #436).
+- [x] **070-004** Kubernetes/Helm publish environment with production-safe outputs (PR #437).
+- [x] **070-005** Deploy guidance in the `tw-deploy` skill. Azure decision: an existing AKS cluster
+      through the Kubernetes target (PR #438).
+- [x] **070-006** Manual `dev deploy` / `dev deprovision`, never CI-automated (PR #439).
+- [x] **070-007** Azure Container Apps target with Flexible Server and its own safety suite
+      (PR #441).
+- [x] **070-008** YARP forwards the public host as `X-Forwarded-Host` on every target (PR #442).
 - [x] ~~070-001~~ Expose a kind deploy publicly. Retired on 2026-09-21 (operator infrastructure).
 - [x] ~~Relocate `Ports.md`~~ Deleted: stale ports, and Aspire owns port assignment.
 
@@ -87,3 +90,4 @@ Parent stays in progress until every child is done.
 
 - Created: 2026-06-26 (build-out spun off from 063)
 - 2026-10-03: rewritten for Aspire 13.6 and split into children 070-002…005 (cockpit, per Steve).
+- 2026-10-08: all children merged (070-002…008); family closed. Maintainer follow-ups: real deploys to kind / AKS / ACA; first-visit passkey + Entra sign-in check behind the ingress (070-008).
