@@ -118,6 +118,7 @@ it there and release it first.
 - Created: 494460 (2026-10-02)
 - Implemented: 2026-10-09. In-process catalog agent and WebMCP on the overnight choices in `design.md`. Gates green. Maintainer AppHost was not started.
 - Reviewed: 2026-10-09. Review oracle (Claude Opus 5.5, headless `ganda task work`), effort 3. Reviewer subagents: general, security, tests (round 1), then general re-review (round 2) and orchestrator verification (round 3).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-08T23:09:37Z
 
 ## Notes
 
