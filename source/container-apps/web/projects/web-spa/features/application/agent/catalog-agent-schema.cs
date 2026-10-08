@@ -7,6 +7,8 @@
 // generator emitted one (primitives). A complex parameter is one object level of public
 // properties, camelCase, because v1 of the catalog stores only the CLR type name. UserId is
 // left out: handlers stamp that mock-mode auth signal and it is not a tool argument.
+// Enums, top-level or one level down, are strings with an `enum` list of member names: the
+// binder uses the contract seam's string-enum converter, which refuses integers.
 // Follow-up is a timewarp-state schema for complex parameters (design.md item 1).
 #endregion
 
@@ -62,16 +64,21 @@ public static class CatalogAgentSchema
 
     if (type.IsEnum)
     {
-      JsonArray names = [];
-      foreach (string name in Enum.GetNames(type))
-      {
-        names.Add(name);
-      }
-
-      return new JsonObject { ["type"] = "string", ["enum"] = names };
+      return EnumSchema(type);
     }
 
     return ComplexSchema(type);
+  }
+
+  private static JsonObject EnumSchema(Type type)
+  {
+    JsonArray names = [];
+    foreach (string name in Enum.GetNames(type))
+    {
+      names.Add(name);
+    }
+
+    return new JsonObject { ["type"] = "string", ["enum"] = names };
   }
 
   private static JsonObject ComplexSchema(Type type)
@@ -95,7 +102,9 @@ public static class CatalogAgentSchema
       Type propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
       JsonObject node = TryPrimitiveType(propertyType, out string? jsonType)
         ? new JsonObject { ["type"] = jsonType }
-        : new JsonObject { ["type"] = "string", ["description"] = propertyType.Name };
+        : propertyType.IsEnum
+          ? EnumSchema(propertyType)
+          : new JsonObject { ["type"] = "string", ["description"] = propertyType.Name };
 
       properties[JsonNamingPolicy.CamelCase.ConvertName(property.Name)] = node;
 

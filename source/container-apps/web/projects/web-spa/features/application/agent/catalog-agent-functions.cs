@@ -5,8 +5,13 @@
 #region Design
 // Mutating tools are ApprovalRequiredAIFunction. That type records the requirement; it does not
 // enforce it. FunctionInvokingChatClient turns the call into a tool-approval request and waits
-// for a matching response before InvokeCoreAsync runs. The function reads IStore from the
-// arguments' service provider, which the invoking client sets from the circuit scope.
+// for a matching response before InvokeCoreAsync runs. The function reads IStore,
+// AuthenticationStateProvider, IAuthorizationService, NavigationManager, and IActionCatalog from
+// the arguments' service provider, which the invoking client sets from the circuit scope.
+// Selection happened when the modal opened; by invocation the person may have navigated, signed
+// out, or lost a permission while the approval waited. InvokeCoreAsync therefore re-selects for
+// the current principal and route and returns a failed result (not an exception, so the model
+// sees why) when the tool is no longer offered. It executes the re-selected entry.
 // The model never calls an HTTP endpoint itself. Store handlers keep [EndpointAuthorize].
 #endregion
 
@@ -74,13 +79,38 @@ public sealed class CatalogAgentFunctions : IDisposable
       CancellationToken cancellationToken
     )
     {
-      IStore store = arguments.Services?.GetService<IStore>()
-        ?? throw new InvalidOperationException($"Tool '{Tool.Name}' needs an IStore on the function arguments.");
-      object?[] bound = CatalogAgentArguments.Bind(Tool.Entry, arguments);
-      await Tool.Entry.Execute(store, bound, cancellationToken);
-      return new CatalogAgentCallResult(Tool.Name, Completed: true);
+      IServiceProvider services = arguments.Services
+        ?? throw new InvalidOperationException($"Tool '{Tool.Name}' needs a service provider on the function arguments.");
+      IStore store = services.GetRequiredService<IStore>();
+      AuthenticationStateProvider authenticationStateProvider =
+        services.GetRequiredService<AuthenticationStateProvider>();
+      IAuthorizationService authorizationService = services.GetRequiredService<IAuthorizationService>();
+      NavigationManager navigation = services.GetRequiredService<NavigationManager>();
+      IActionCatalog catalog = services.GetRequiredService<IActionCatalog>();
+
+      // Re-read on every invocation. The function does not cache an AuthenticationState.
+#pragma warning disable BL0013
+      AuthenticationState authentication = await authenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+      CatalogAgentTool? current = await CatalogAgentToolSet.FindOfferedAsync
+      (
+        authentication.User,
+        authorizationService,
+        catalog.Entries,
+        PageAgentScope.FromNavigation(navigation),
+        Tool.Name,
+        cancellationToken
+      );
+      if (current is null)
+      {
+        return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+      }
+
+      object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);
+      await current.Entry.Execute(store, bound, cancellationToken);
+      return new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null);
     }
   }
 
-  private sealed record CatalogAgentCallResult(string Action, bool Completed);
+  private sealed record CatalogAgentCallResult(string Action, bool Completed, string? Error);
 }

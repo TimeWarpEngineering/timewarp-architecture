@@ -4,7 +4,9 @@
 
 #region Design
 // The shell dispatches this on the first interactive render and on location changes.
-// The publisher performs the JS call. A component does not.
+// The publisher performs the JS call. A component does not. Cancelling a pending WebMCP call on
+// navigation is not done here: the dispatcher listens to LocationChanged for the life of its own
+// wait, which also covers focused pages that do not host the shell surface.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

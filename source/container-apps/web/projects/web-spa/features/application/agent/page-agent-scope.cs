@@ -8,6 +8,9 @@
 // settings). Human-only entries stay in the list so the visibility filter, not a second copy of
 // the page, is what drops them. Paths match [Page] routes, ordinal and case-insensitive, with
 // the query and hash removed. A route with no entry offers no catalog tools.
+// Profile.UpdateProfile and SiteSettings.UpdateSiteSettings replace whole records (the latter
+// with a Version token), so page_context on those routes carries the current values the agent
+// must echo (PageAgentContext); there is no separate read tool on those pages.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

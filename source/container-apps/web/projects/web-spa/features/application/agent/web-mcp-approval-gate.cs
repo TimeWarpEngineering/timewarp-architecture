@@ -1,39 +1,63 @@
 #region Purpose
-// Holds a WebMCP tool call until the person approves or rejects it in the shell.
+// Holds one WebMCP tool call until the person approves or rejects that exact call in the shell.
 #endregion
 
 #region Design
-// The browser calls InvokeTool and waits. The dispatcher arms this gate, dispatches
-// ShowApproval, and awaits the result. ResolveApproval completes the gate.
-// Continuations run asynchronously so Execute is not nested inside the resolve handler.
+// One slot, correlated by id. TryBegin hands the dispatcher a fresh call id and its own decision
+// task; a second call while the slot is taken is refused (the dispatcher returns a "waiting for
+// confirmation" error) so it can never overwrite the call the person is looking at. Complete
+// resolves only the call with the matching id and frees the slot; a stale id is a no-op, so a
+// late click cannot release a different call. Navigation cancels by completing the id with false.
+// Continuations run asynchronously so Execute is not nested inside the resolve handler. The lock
+// matters only for the multi-threaded test host; the browser is single-threaded.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-/// <summary>One in-flight WebMCP confirmation.</summary>
+/// <summary>The single in-flight WebMCP confirmation, correlated by call id.</summary>
 public sealed class WebMcpApprovalGate
 {
-  private TaskCompletionSource<bool>? Pending;
+  private readonly Lock Sync = new();
+  private Guid? PendingId;
+  private TaskCompletionSource<bool>? PendingDecision;
 
-  public void Arm()
+  /// <summary>Claims the slot for a new call. False when another call is already waiting.</summary>
+  public bool TryBegin(out Guid callId, out Task<bool> decision)
   {
-    Pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    lock (Sync)
+    {
+      if (PendingId is not null)
+      {
+        callId = Guid.Empty;
+        decision = Task.FromResult(false);
+        return false;
+      }
+
+      callId = Guid.NewGuid();
+      PendingId = callId;
+      PendingDecision = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+      decision = PendingDecision.Task;
+      return true;
+    }
   }
 
-  public Task<bool> WaitAsync(CancellationToken cancellationToken)
+  /// <summary>Resolves the call with this id and frees the slot. False for a stale or unknown id.</summary>
+  public bool Complete(Guid callId, bool approved)
   {
-    TaskCompletionSource<bool>? pending = Pending;
-    if (pending is null)
+    TaskCompletionSource<bool>? decision;
+    lock (Sync)
     {
-      return Task.FromResult(false);
+      if (PendingId != callId)
+      {
+        return false;
+      }
+
+      decision = PendingDecision;
+      PendingId = null;
+      PendingDecision = null;
     }
 
-    return pending.Task.WaitAsync(cancellationToken);
-  }
-
-  public void Complete(bool approved)
-  {
-    Pending?.TrySetResult(approved);
-    Pending = null;
+    decision?.TrySetResult(approved);
+    return true;
   }
 }

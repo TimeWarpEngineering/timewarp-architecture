@@ -16,7 +16,7 @@ Tools are page-scoped. `PageAgentScope` lists the catalog actions each page's bu
 
 ## 2. Approval
 
-**Recommendation.** Every tool whose action segment does not start with `Fetch`, `Get`, `List`, or `Search` is wrapped in `ApprovalRequiredAIFunction`. `FunctionInvokingChatClient` turns that into a `ToolApprovalRequestContent`, and the ask UI renders `FunctionApprovalBlock` (Approve / Reject) before the tool runs. WebMCP uses the same classification: the dispatcher waits on an in-app confirm bar (`AgentSurfaceState`) and only then calls `ActionCatalogEntry.Execute`. Read-only tools run without a prompt. Approval is not a substitute for permissions; a tool that fails the permission check is not registered and is rejected again at WebMCP invoke time.
+**Recommendation.** Every tool not on the explicit read-only allow-list in `CatalogAgentApproval` (today only `Credentials.FetchCredentials`) is wrapped in `ApprovalRequiredAIFunction`. A name-prefix rule (`Fetch`/`Get`/`List`/`Search`) was dropped in review: a mutating action using one of those prefixes would skip approval. `FunctionInvokingChatClient` turns that into a `ToolApprovalRequestContent`, and the ask UI renders `FunctionApprovalBlock` (Approve / Reject) before the tool runs. WebMCP uses the same classification: the dispatcher binds the arguments first, shows the bound values on an in-app confirm bar (`AgentSurfaceState`), and only then calls `ActionCatalogEntry.Execute` with exactly those values. One call waits at a time, correlated by id; a second mutating call is refused, navigation cancels the waiting call, and after approval the dispatcher refuses unless the path is unchanged and a fresh selection still offers the tool. The chat driver re-selects the same way when a tool is invoked. Read-only tools run without a prompt. Approval is not a substitute for permissions; a tool that fails the permission check is not registered and is rejected again at WebMCP invoke time.
 
 **Alternatives.**
 
@@ -73,5 +73,6 @@ Tools are page-scoped. `PageAgentScope` lists the catalog actions each page's bu
 
 ## Follow-ups (not this task)
 
-- timewarp-state: full JSON schema for complex action parameters, and an explicit read-only (or approval) flag so the template can drop the name prefix rule.
+- timewarp-state: full JSON schema for complex action parameters, and an explicit read-only (or approval) flag so the template can drop its allow-list.
+- WebMCP approval against a DOM-actuating agent: the confirm bar is ordinary DOM, so a browser agent that can also click the page can press Approve itself. Gate approval on a trusted user gesture (`isTrusted`) or WebMCP `requestUserInteraction` once browsers ship it.
 - Optional AG-UI endpoint so a host can keep the model key on the server while tools still execute in the browser store.
