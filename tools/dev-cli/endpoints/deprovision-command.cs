@@ -56,7 +56,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, requireParameters: false, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, PreflightScope.Deprovision, ct);
       if (preflight is null) return Unit.Value;
       Terminal.WriteLine(preflight.Detail);
       foreach (string line in AspireDeploy.BuildParameterLines(preflight.Parameters))

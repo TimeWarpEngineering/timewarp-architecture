@@ -1,5 +1,6 @@
 #region Purpose
-// Process half of `dev deploy` / `dev deprovision` preflight: the aspire, helm, kubectl and az probes.
+// Process half of the `dev deploy` / `dev deprovision` / `dev open` / `dev deploy migrate` preflight: the aspire, helm,
+// kubectl and az probes.
 #endregion
 
 #region Design
@@ -20,7 +21,11 @@
 // subscription and its source (Azure__SubscriptionId, else the AppHost user secret
 // Azure:SubscriptionId, else the az CLI's — only that last one is passed to Aspire, task 070-007);
 // compose needs none of these and reports the container runtime Aspire will use
-// (ASPIRE_CONTAINER_RUNTIME).
+// (ASPIRE_CONTAINER_RUNTIME). Which probes run is the verb's PreflightScope (task 287): dev open and
+// dev deploy migrate skip the aspire and helm checks (they run neither) and the registry probe, and keep
+// the cluster checks (the context answers, the kind cluster exists) and az login; they also read
+// single parameters / user secrets here (ResolveParameterAsync, ReadUserSecretAsync) with the same
+// precedence as dev deploy.
 #endregion
 
 namespace DevCli.Services;
@@ -31,18 +36,19 @@ namespace DevCli.Services;
 /// </summary>
 internal sealed record DeployPreflight(
   string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment,
-  IReadOnlyList<ResolvedDeployParameter> Parameters);
+  IReadOnlyList<ResolvedDeployParameter> Parameters, string? KubectlContext = null, string? AzureSubscriptionId = null);
 
 /// <summary>Runs the read-only probes both deploy verbs share.</summary>
 internal static class AspireDeployPreflight
 {
   /// <summary>
-  /// Resolves the AppHost and target and runs the probes; null after printing the refusal. Both verbs resolve the target's
-  /// deploy parameters; <paramref name="requireParameters"/> (dev deploy) refuses when any is unset and probes the kind
-  /// registry, while dev deprovision only forwards the ones that are set.
+  /// Resolves the AppHost and target and runs the probes <paramref name="scope"/> asks for; null after printing the refusal.
+  /// Every verb resolves the target's deploy parameters; RequireParameters (dev deploy, dev deploy migrate) refuses when any
+  /// is unset, while dev deprovision and dev open only use the ones that are set. Only dev deploy probes the kind registry.
   /// </summary>
-  internal static async Task<DeployPreflight?> RunAsync(ITerminal terminal, string verb, string? targetName, bool requireParameters, CancellationToken cancellationToken)
+  internal static async Task<DeployPreflight?> RunAsync(ITerminal terminal, string verb, string? targetName, PreflightScope scope, CancellationToken cancellationToken)
   {
+    bool requireParameters = scope.RequireParameters;
     string? repoRoot = Git.FindRoot();
     if (repoRoot is null)
     {
@@ -61,13 +67,17 @@ internal static class AspireDeployPreflight
       return Fail(terminal, $"Error: AppHost project not found at {appHostProject}.");
     }
 
-    string? versionError = await AspireCli.ValidateVersionAsync(repoRoot, AspireDeploy.MinimumCliVersion, $"`{verb}`", cancellationToken);
+    string? versionError = scope.RequireAspire
+      ? await AspireCli.ValidateVersionAsync(repoRoot, AspireDeploy.MinimumCliVersion, $"`{verb}`", cancellationToken)
+      : null;
     if (versionError is not null)
     {
       return Fail(terminal, $"Error: {versionError}");
     }
 
     string detail;
+    string? kubectlContext = null;
+    string? azureSubscriptionId = null;
     Dictionary<string, string> aspireEnvironment = [];
     string[] parameterProblems = [];
     DeployParameterResolution parameters = new([], []);
@@ -117,12 +127,13 @@ internal static class AspireDeployPreflight
       }
 
       detail = subscription.Detail;
+      azureSubscriptionId = subscription.SubscriptionId;
     }
     else if (target == AspireDeploy.Kubernetes)
     {
       string[] helmArguments = AspireDeploy.BuildHelmVersionArguments();
-      CommandOutput? helm = await ProbeAsync("helm", helmArguments, cancellationToken);
-      string? helmError = helm?.TimedOut == true
+      CommandOutput? helm = scope.RequireHelm ? await ProbeAsync("helm", helmArguments, cancellationToken) : null;
+      string? helmError = !scope.RequireHelm ? null : helm?.TimedOut == true
         ? AspireDeploy.ProbeTimedOutMessage("helm", helmArguments)
         : AspireDeploy.ValidateHelm(helm?.Success == true, helm?.Stdout ?? "");
 
@@ -133,7 +144,7 @@ internal static class AspireDeployPreflight
 
       string[] clusterProblems = context is null
         ? []
-        : AspireDeploy.CollectClusterProblems(await ProbeClusterAsync(context, parameters, requireParameters, cancellationToken), appHostProject);
+        : AspireDeploy.CollectClusterProblems(await ProbeClusterAsync(context, parameters, scope.ProbeRegistry, cancellationToken), appHostProject);
 
       string[] problems = AspireDeploy.CollectKubernetesProblems(parameterProblems, helmError, contextError, context, clusterProblems);
       if (problems.Length > 0)
@@ -141,7 +152,8 @@ internal static class AspireDeployPreflight
         return FailReport(terminal, verb, problems);
       }
 
-      detail = $"kubectl context: {context} (helm {helm!.Stdout.Trim()})";
+      detail = scope.RequireHelm ? $"kubectl context: {context} (helm {helm!.Stdout.Trim()})" : $"kubectl context: {context}";
+      kubectlContext = context;
     }
     else
     {
@@ -154,7 +166,7 @@ internal static class AspireDeployPreflight
       return FailReport(terminal, verb, parameterProblems);
     }
 
-    return new DeployPreflight(repoRoot, appHostProject, target, detail, aspireEnvironment, parameters.Resolved);
+    return new DeployPreflight(repoRoot, appHostProject, target, detail, aspireEnvironment, parameters.Resolved, kubectlContext, azureSubscriptionId);
   }
 
   /// <summary>Gathers the cluster probe results; which refusals they produce is AspireDeploy.CollectClusterProblems'.</summary>
@@ -212,6 +224,23 @@ internal static class AspireDeployPreflight
     }
   }
 
+  /// <summary>One AppHost user secret (<c>dotnet user-secrets list</c>), or null when unset or the list failed.</summary>
+  internal static async Task<string?> ReadUserSecretAsync(string appHostProject, string key, CancellationToken cancellationToken)
+  {
+    CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+    return AspireDeploy.ParseUserSecret(secrets?.Success == true, secrets?.Stdout ?? "", key);
+  }
+
+  /// <summary>Resolves one AppHost parameter exactly as `dev deploy` resolves its required ones; null when nobody set it.</summary>
+  internal static async Task<ResolvedDeployParameter?> ResolveParameterAsync(string appHostProject, string name, CancellationToken cancellationToken)
+  {
+    CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(
+      [name], AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()), secrets?.Success == true, secrets?.Stdout ?? "",
+      ReadAppSettings(appHostProject));
+    return resolution.Resolved.Count > 0 ? resolution.Resolved[0] : null;
+  }
+
   /// <summary>The process environment as a dictionary, for the case-insensitive Parameters__&lt;name&gt; lookup.</summary>
   private static Dictionary<string, string> EnvironmentVariables()
   {
@@ -242,7 +271,7 @@ internal static class AspireDeployPreflight
   /// Runs a read-only probe bounded by <see cref="AspireDeploy.ProbeTimeout"/> (a timed-out probe reports TimedOut and fails);
   /// null when <paramref name="executable"/> is not on PATH.
   /// </summary>
-  private static async Task<CommandOutput?> ProbeAsync(string executable, string[] arguments, CancellationToken cancellationToken) =>
+  internal static async Task<CommandOutput?> ProbeAsync(string executable, string[] arguments, CancellationToken cancellationToken) =>
     PathResolver.ResolveExecutable(executable) is null
       ? null
       : await Shell.Builder(executable)
