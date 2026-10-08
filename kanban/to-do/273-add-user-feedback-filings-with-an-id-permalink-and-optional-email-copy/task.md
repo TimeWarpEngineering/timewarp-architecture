@@ -8,6 +8,24 @@ The failure this closes: someone complains, they are told it will be filed, and 
 
 This task is the filing and the receipt. Do not implement an assistant that files on the user's behalf.
 
+## Steve's direction (2026-10-09 ~02:00 ICT, overnight run)
+
+Steve asked for this task to be **implemented and merged tonight** (serial 272 → 271 → 273; 271's agentic UI / WebMCP catalog-to-tools mapping is on master before this starts), and added:
+
+> "WebMCP should allow an agent to drive the functionality and the AI integration should be able to also."
+
+This **supersedes** the 2026-10-03 lines "Do not implement an assistant that files on the user's behalf" and "Not in scope: An assistant, Grok, or other agent filing on the user's behalf" — for the mechanism only:
+
+- Expose **submit feedback**, **list my feedback**, and **open feedback by id** as TimeWarp.State `[CatalogAction]`s visible to agents (Visibility `Both`), so both the in-app AI integration (task 271) and WebMCP browser agents can drive them through the same catalog-to-tools mapping 271 built.
+- Agent-driven calls run **as the signed-in user**, with the same server authorization (owner-only reads; unsigned cannot submit). Submit is consequential, so it is approval-gated per 271's approval rule. The agent gets the id and permalink back in the result.
+- Do not build a new assistant or a separate filing bot; this is just the actions being agent-callable.
+- Still out of scope: admin inbox, assignment/status workflow, public board, attachments, voting, comments, new profile/email field.
+
+**Email:** the repo has no email-sending infrastructure yet. Add a minimal sender abstraction with a development implementation (log / pickup-directory) and no real credentials or required secrets; the "email me a copy" behavior and tests run against a fake. Note in Results what a real provider would need.
+
+**Proof in the PR body (Steve's standing rule for UI work):** test output (Requirements item 7 plus agent/WebMCP tool coverage), build log summary, and a screenshot or captured log of a filing showing the id and permalink.
+
+
 ## Requirements
 
 1. A signed-in user submits one item: kind, title, and body. Unsigned users cannot submit.
