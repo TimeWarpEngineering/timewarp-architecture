@@ -111,6 +111,19 @@ internal sealed record ClusterProbeResults(
   bool RegistryAnswered = false,
   string? RegistryFailure = null);
 
+/// <summary>
+/// What a verb's preflight checks: deploy parameters (required, or resolved best-effort), the kind registry probe, the Aspire
+/// CLI version and Helm. <c>dev open</c> / <c>dev deploy migrate</c> need neither aspire nor helm, only the target's
+/// cluster or az login (task 287).
+/// </summary>
+internal sealed record PreflightScope(bool RequireParameters, bool ProbeRegistry, bool RequireAspire, bool RequireHelm)
+{
+  internal static readonly PreflightScope Deploy = new(RequireParameters: true, ProbeRegistry: true, RequireAspire: true, RequireHelm: true);
+  internal static readonly PreflightScope Deprovision = new(RequireParameters: false, ProbeRegistry: false, RequireAspire: true, RequireHelm: true);
+  internal static readonly PreflightScope Open = new(RequireParameters: false, ProbeRegistry: false, RequireAspire: false, RequireHelm: false);
+  internal static readonly PreflightScope Migrate = new(RequireParameters: true, ProbeRegistry: false, RequireAspire: false, RequireHelm: false);
+}
+
 /// <summary>Builds and checks the <c>aspire deploy</c> / <c>aspire destroy</c> invocations for <c>dev deploy</c> / <c>dev deprovision</c>.</summary>
 internal static class AspireDeploy
 {
@@ -253,11 +266,20 @@ internal static class AspireDeploy
     Func<string, string?> environment,
     bool userSecretsProbeSucceeded,
     string userSecretsOutput,
+    IReadOnlyList<AppSettingsFile>? appSettings = null) =>
+    ResolveParameters(RequiredParameters(target), environment, userSecretsProbeSucceeded, userSecretsOutput, appSettings);
+
+  /// <summary>Resolves the named AppHost parameters in the same order as the target overload (used by `dev open` for ingress-port).</summary>
+  internal static DeployParameterResolution ResolveParameters(
+    IReadOnlyList<string> names,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
     IReadOnlyList<AppSettingsFile>? appSettings = null)
   {
     List<ResolvedDeployParameter> resolved = [];
     List<string> missing = [];
-    foreach (string name in RequiredParameters(target))
+    foreach (string name in names)
     {
       string? fromEnvironment = environment(ParameterEnvironmentVariable(name));
       string? fromSecret = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, ParameterConfigurationKey(name));

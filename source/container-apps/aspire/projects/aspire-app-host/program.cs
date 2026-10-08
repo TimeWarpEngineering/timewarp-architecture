@@ -7,7 +7,9 @@
 // migrations per target, ingress topology, runtime neutrality) lives in skills/tw-deploy/SKILL.md; the
 // reasoning below is its record. Keep the two in sync when publish-mode wiring changes. Deploying is
 // operator-run with `dev deploy` / `dev deprovision` (aspire deploy / destroy per Publish:Target, plus
-// the skill's kind recipe) — never a CI step.
+// the skill's kind recipe) — never a CI step. After a deploy the operator applies the migrations below
+// with `dev deploy migrate --target <t>` and reaches the ingress with `dev open --target <t>` (kind:
+// a kubectl port-forward of the ingress controller); both wrap the by-hand commands recorded here.
 // Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
 // Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
@@ -124,9 +126,10 @@
 // Postgres in Compose: fixed named volume postgres-data (the run-mode name hashes the AppHost path and
 // would differ per checkout) and POSTGRES_DB creates the database on first initdb (run mode creates it
 // through the AppHost, which a Compose stack does not have). Migrations run BY HAND from the published
-// idempotent script — `docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U
-// postgres -d postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql` (the image enforces
-// scram auth even on the in-container socket, and -T cannot prompt) — not a one-shot service: the bundle is a
+// idempotent script (`dev deploy migrate` wraps it) — `docker compose exec -T postgres sh -c
+// 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' <
+// efmigrations/web-migrations.sql` (the image enforces scram auth even on the in-container socket,
+// and -T cannot prompt) — not a one-shot service: the bundle is a
 // self-contained host binary with no image to run it in, and postgres has no host port for it to
 // reach. Re-running the script is a no-op; web-server tolerates the not-yet-migrated window (above).
 // Artifacts are CI-only, never committed: `dev publish compose` writes artifacts/aspire-output/compose
@@ -178,11 +181,12 @@
 // The password is AddPostgres' generated secret parameter. PublishAsKubernetesService is not used:
 // the defaults (one replica, Aspire's fsGroup) are already right, and no probe is added.
 // Migrations for Kubernetes: the published idempotent SQL script, run BY HAND once the StatefulSet is
-// ready — `kubectl exec -i -n <namespace> statefulset/postgres-statefulset -- sh -c
-// 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' <
-// efmigrations/web-migrations.sql`. No migration Job: the bundle is a self-contained host binary
-// with no image to run it in, and the bundle is not published for this target at all — publish
-// output IS the chart directory, and Helm rejects any chart file over 5 MiB.
+// ready (`dev deploy migrate --target kubernetes` wraps it) — `kubectl exec -i -n <namespace>
+// statefulset/postgres-statefulset -- sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d
+// postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql`. No migration Job: the bundle
+// is a self-contained host binary with no image to run it in, and the bundle is not published for
+// this target at all — publish output IS the chart directory, and Helm rejects any chart file over
+// 5 MiB.
 // `dev publish kubernetes` writes artifacts/aspire-output/kubernetes, gates it with the same suite and
 // helm lint (when helm is on PATH); workflow.yml uploads the chart directory.
 // Azure Container Apps publish target (task 070-007): `Publish:Target=aca` declares
@@ -213,9 +217,10 @@
 // Flexible Server is declared in the aca branch only, so run mode — which never reads Publish:Target —
 // keeps the AddPostgres container with its volume and REPL exactly as before (RunAsContainer would
 // change the run-mode resource type and drop that wiring). Migrations for ACA: the published bundle,
-// run BY HAND from the operator's machine with --connection through a temporary firewall rule for
-// the operator's IP (the server admits Azure-hosted IPs only). The bundle needs no psql and no image;
-// an ACA job would need one. The idempotent SQL script stays the psql alternative. Never EnsureCreated.
+// run BY HAND from the operator's machine (`dev deploy migrate --target aca`) with --connection through
+// a temporary firewall rule for the operator's IP (the server admits Azure-hosted IPs only). The
+// bundle needs no psql and no image; an ACA job would need one. The idempotent SQL script stays the
+// psql alternative. Never EnsureCreated.
 // HTTPS upgrade stays on (Aspire's default): with WithHttpsUpgrade(false) the internal endpoints
 // become plain http, which ACA's internal ingress redirects to https (allowInsecure is false) — and
 // YARP returns that redirect to the browser instead of following it.

@@ -88,11 +88,11 @@ Tests never touch a real cluster, Docker or Azure.
 
 ## Checklist
 
-- [ ] `dev open` (kubernetes forward/LB, compose, aca) + browser opening incl. WSL
-- [ ] `dev deploy migrate` (compose, kubernetes, aca with guaranteed firewall cleanup)
-- [ ] Tests + NeverAutomated guard extended
-- [ ] `tw-deploy` updated (new verbs, kind recipe in pwsh)
-- [ ] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`, `dev template-smoke`
+- [x] `dev open` (kubernetes forward/LB, compose, aca) + browser opening incl. WSL
+- [x] `dev deploy migrate` (compose, kubernetes, aca with guaranteed firewall cleanup)
+- [x] Tests + NeverAutomated guard extended
+- [x] `tw-deploy` updated (new verbs, kind recipe in pwsh)
+- [x] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`, `dev template-smoke`
 
 ## Notes
 
@@ -103,6 +103,80 @@ Tests never touch a real cluster, Docker or Azure.
 - **Live state on 2026-10-08:** the app is deployed to kind (`timewarp-architecture` namespace) and
   the database has **not** been migrated yet.
 
+## Results
+
+- **`dev open`** (`tools/dev-cli/endpoints/open-command.cs`): kubernetes reads the ingress
+  controller Service (`ingress-nginx` / `ingress-nginx-controller`, overridable with
+  `--controller-namespace` / `--controller-service`). With a LoadBalancer address it opens that;
+  otherwise it checks the port is free (default 8080, `--port`), runs `kubectl --context <ctx>
+  port-forward` on a real TTY, opens the browser once the port listens, and Ctrl+C stops the forward.
+  Compose takes the port from `--port`, then `INGRESS_PORT` in the published `.env`, then the
+  `ingress-port` parameter, then the AppHost default 8080. Aca opens `https://<fqdn>` from
+  `az containerapp show --name ingress`. The browser opener is explorer.exe / open / wslview →
+  explorer.exe → xdg-open, and falls back to printing the URL (also `--no-browser`).
+- **`dev deploy migrate`** (`endpoints/deploy-migrate-command.cs`, under the new `DeployGroup`;
+  `dev deploy` itself still routes to DeployCommand, checked by hand). **Decision:** if the
+  published output is missing it *refuses* with the exact `dev publish <target>` command and never
+  publishes itself (reason recorded in the `services/deploy-operate.cs` Design region). Per target:
+  - compose: `<runtime> compose ls --format json` (runtime = `ASPIRE_CONTAINER_RUNTIME`) picks the
+    running project. Order: `--project-name`, then the project from this checkout, then the only one.
+    It then runs `compose --project-name … --file … exec -T postgres sh -c 'PGPASSWORD=… psql …'`
+    with the script on stdin.
+  - kubernetes: `kubectl --context <ctx> exec -i --namespace <k8s-namespace>
+    statefulset/postgres-statefulset -- sh -c '…psql…'`.
+  - aca: the resource group comes from `--resource-group`, then `Azure__ResourceGroup`, then the user
+    secret `Azure:ResourceGroup`. It needs exactly one Flexible Server, and reads the connection
+    string from the `postgres-kv` Key Vault secret. That value is never printed; without the role it
+    refuses with the pwsh grant command. The IP comes from `--client-ip`, else api.ipify.org.
+    `RunAcaBundleAsync` creates `operator-migrate` inside `try`, runs the bundle on a TTY, and deletes
+    the rule in `finally` with an uncancellable token. A failed delete prints the delete command.
+  - A confirmation is required unless `--yes` (redirected stdin is refused). One summary line; exits
+    with the tool's exit code.
+- **Shared preflight** gained a `PreflightScope` (Deploy / Deprovision / Open / Migrate). Open and
+  migrate skip the aspire, helm and registry checks and keep the context/kind and az-login checks;
+  `DeployPreflight` now carries `KubectlContext` / `AzureSubscriptionId`.
+- **Tests:** `tests/tools/dev-cli-tests/deploy-operate-tests.cs` covers options/port parsing, scopes,
+  each target's commands, LoadBalancer vs forward, compose project choice, the firewall cleanup on a
+  failed create, a failed bundle, an exception, cancellation and a failed delete, the refusal texts,
+  the browser order and WSL detection, and agreement with AppHost `constants.cs` and the ingress-port
+  default. `NeverAutomated_Given_` now also covers `dev deploy migrate` and `dev open`.
+- **Docs:** `skills/tw-deploy` adds the new verbs, keeps the raw commands as "what it runs", and
+  shows the kind recipe in pwsh next to bash. The AppHost Design region points at the new verbs.
+  The `dev deploy` success line names the next steps.
+- **Gates (2026-10-09):** `./bin/dev build` 0 warnings / 0 errors; dev.cs runfile build clean;
+  dev-cli-tests 192/192; `ganda repo audit` passes; `dev template-smoke` SUCCEEDED; `dev check-version`
+  is new (no bump needed). No cluster, container or Azure resource was touched. The only aspire
+  runs were file-only `aspire publish` runs to `/tmp`, used to confirm the output layout (since
+  removed).
+
+### How to validate
+
+**Smoke**
+
+```pwsh
+cd tests/tools/dev-cli-tests; dotnet test -c Release; cd ../../..
+dotnet run tools/dev-cli/dev.cs -- deploy migrate --help
+dotnet run tools/dev-cli/dev.cs -- open --help
+dotnet run tools/dev-cli/dev.cs -- deploy migrate   # compose, without artifacts/aspire-output/compose
+dotnet run tools/dev-cli/dev.cs -- open --port abc --no-browser
+# Maintainer, against the live kind deployment after merge:
+dev publish kubernetes; dev deploy migrate --target kubernetes; dev open --target kubernetes
+```
+
+**Expect**
+
+- dev-cli-tests: `total: 192 … failed: 0`.
+- Both `--help` outputs list the options above (`--project-name`, `--resource-group`, `--client-ip`;
+  `--port`, `--no-browser`, `--controller-namespace`, `--controller-service`).
+- Migrate without published output refuses with `No published migrations for compose:
+  …/artifacts/aspire-output/compose/efmigrations/web-migrations.sql does not exist … dev publish
+  compose`, exit 1 (kubernetes and aca give the same refusal after their preflight).
+- `--port abc`: `--port 'abc' is not a TCP port (1-65535).`, exit 1.
+- On kind: migrate prints the plan, asks `Migrate? [y/N]`, psql output, then `dev deploy migrate:
+  applied web-migrations.sql with psql to kubernetes (context kind-…, namespace timewarp-architecture).`;
+  open forwards `localhost:8080`, the browser shows the app, and Ctrl+C ends the forward.
+
 ## Session
 
 - Created: 2026-10-08 (cockpit, per Steve)
+- 2026-10-09: implemented under `ganda task work` (implement oracle); gates above.

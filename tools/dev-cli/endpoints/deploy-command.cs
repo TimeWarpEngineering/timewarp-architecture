@@ -29,6 +29,8 @@
 // runs with TTY passthrough (it inherits the terminal), so any prompt Aspire still shows — e.g. an
 // optional parameter, or aca's location and resource group — works interactively; a piped stdin
 // would make Aspire fail "non-interactive mode" instead of asking.
+// The follow-up steps are their own verbs (task 287): `dev deploy migrate` (DeployGroup subcommand —
+// this route stays `deploy`) and `dev open`; the success line names both.
 // Pure targets/arguments/parsing/text live in services/aspire-deploy.cs (dev-cli-tests).
 #endregion
 
@@ -60,7 +62,7 @@ internal sealed class DeployCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, requireParameters: true, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, PreflightScope.Deploy, ct);
       if (preflight is null) return Unit.Value;
 
       foreach (string line in AspireDeploy.BuildDeployPlanLines(preflight.AppHostProject, preflight.Target, preflight.Detail, preflight.Parameters))
@@ -103,7 +105,8 @@ internal sealed class DeployCommand : ICommand<Unit>
         return Unit.Value;
       }
 
-      Terminal.WriteLine($"\n{preflight.Target.Name} deploy complete. Remove it with `dev deprovision --target {preflight.Target.Name}`.".Green());
+      Terminal.WriteLine($"\n{preflight.Target.Name} deploy complete. Next: `dev deploy migrate --target {preflight.Target.Name}`, then "
+        + $"`dev open --target {preflight.Target.Name}`. Remove it with `dev deprovision --target {preflight.Target.Name}`.".Green());
       return Unit.Value;
     }
 

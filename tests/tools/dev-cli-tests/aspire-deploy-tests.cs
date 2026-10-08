@@ -2,7 +2,7 @@
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
 // preflight refusals, deploy-parameter resolution (env var → user secret → appsettings) and `--Parameters:*` forwarding, the cluster / kind /
 // registry refusals and their precedence, agreement with the AppHost's value-less parameters and its committed appsettings.json Parameters, the aca subscription source selection and the manual-cleanup guidance, without deploying —
-// and that no CI workflow or `dev workflow` mode ever invokes a deploy.
+// and that no CI workflow or `dev workflow` mode ever invokes a deploy, `dev deploy migrate` or `dev open`.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -712,9 +712,10 @@ public partial class NeverAutomated_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<NeverAutomated_Given_>();
 
-  // A dev deploy/deprovision verb (bin/dev or the dev.cs runfile) or a raw aspire deploy/destroy.
+  // A dev deploy/deprovision/open verb — `dev deploy` also covers `dev deploy migrate` (task 287) — (bin/dev or the dev.cs
+  // runfile) or a raw aspire deploy/destroy.
   [System.Text.RegularExpressions.GeneratedRegex(
-    @"(\bdev(\.cs)?\s+(--\s+)?(deploy|deprovision)\b)|(\baspire\s+(deploy|destroy)\b)",
+    @"(\bdev(\.cs)?\s+(--\s+)?(deploy|deprovision|open)\b)|(\baspire\s+(deploy|destroy)\b)",
     System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
   private static partial System.Text.RegularExpressions.Regex DeployInvocation();
 
@@ -727,6 +728,10 @@ public partial class NeverAutomated_Given_
       "dotnet run tools/dev-cli/dev.cs -- deploy",
       "aspire deploy --apphost app.csproj",
       "aspire destroy --non-interactive --yes",
+      "run: dev deploy migrate --target kubernetes --yes",
+      "run: ./bin/dev deploy migrate",
+      "dotnet run tools/dev-cli/dev.cs -- deploy migrate --target aca --yes",
+      "run: dev open --target kubernetes --no-browser",
     ];
 
     foreach (string invocation in invocations)
@@ -735,6 +740,7 @@ public partial class NeverAutomated_Given_
     }
 
     DeployInvocation().IsMatch("run: dev publish --target compose").ShouldBeFalse();
+    DeployInvocation().IsMatch("run: dev db update").ShouldBeFalse();
     return Task.CompletedTask;
   }
 
@@ -758,7 +764,7 @@ public partial class NeverAutomated_Given_
         .Select(entry => $"{Path.GetRelativePath(root, file)}:{entry.index + 1}: {entry.line.Trim()}")),
     ];
 
-    offenders.ShouldBeEmpty("Deploying is operator-run (`dev deploy`), never a CI step or `dev workflow` mode.");
+    offenders.ShouldBeEmpty("Deploying and migrating a deployment are operator-run (`dev deploy`, `dev deploy migrate`), never a CI step or `dev workflow` mode.");
     return Task.CompletedTask;
   }
 
