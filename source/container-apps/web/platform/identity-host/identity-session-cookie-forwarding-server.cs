@@ -9,14 +9,15 @@
 // IHttpContextAccessor is AsyncLocal-safe on a pooled DelegatingHandler. Copies Cookie as
 // sent and X-TimeWarp-Mock-Principal-Id so mock-identity-session still authenticates when
 // that header is in play. Does not invent cookies — missing inbound Cookie stays anonymous.
-// Task 213: copies the circuit/page host (port stripped via HostString.Host) onto
-// X-TimeWarp-Circuit-Host so HttpRequestHostAccessor / WebAuthn RP-ID selection sees the
-// YARP-preserved browser host rather than the loopback URI host (localhost). Does not set
-// HTTP Host on the outgoing HTTPS request — HttpClient uses Host for TLS SNI / certificate
-// name validation, and the loopback cert is the ASP.NET dev cert for localhost. Does not
-// read X-Forwarded-Host — a spoofable client header; the circuit host is taken from
-// HttpContext.Request.Host of the circuit request, same source as Cookie. Does not overwrite
-// X-TimeWarp-Circuit-Host when the outgoing request already set it.
+// Task 213: copies the circuit/page host (port stripped) onto X-TimeWarp-Circuit-Host so
+// HttpRequestHostAccessor / WebAuthn RP-ID selection sees the browser's public host rather than
+// the loopback URI host (localhost). Does not set HTTP Host on the outgoing HTTPS request —
+// HttpClient uses Host for TLS SNI / certificate name validation, and the loopback cert is the
+// ASP.NET dev cert for localhost. The circuit host comes from HttpRequestHostAccessor.GetPublicHost
+// (task 070-008): the ingress-set X-Forwarded-Host, else Request.Host — the same rule and the same
+// selection-only argument as the accessor's Design region (behind YARP, Request.Host is the
+// destination host, not the browser's). Does not overwrite X-TimeWarp-Circuit-Host when the
+// outgoing request already set it.
 // Task 248-001: copies User-Agent as sent so HttpRequestUserAgentAccessor on the loopback hop
 // sees the registering browser (credential rows record its browser/OS family), not the
 // server-side HttpClient. Same copy-as-sent / never-invent posture as Cookie.
@@ -82,7 +83,7 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
       return;
     }
 
-    string? host = httpContext.Request.Host.Host;
+    string? host = HttpRequestHostAccessor.GetPublicHost(httpContext.Request);
     if (string.IsNullOrEmpty(host))
     {
       return;

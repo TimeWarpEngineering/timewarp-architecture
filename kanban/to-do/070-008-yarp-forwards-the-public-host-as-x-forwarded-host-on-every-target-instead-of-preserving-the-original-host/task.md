@@ -78,11 +78,11 @@ security argument that replaces it must hold, and it must be written into the De
 
 ## Checklist
 
-- [ ] YARP (AppHost + standalone) sets `X-Forwarded-Host`, no original-Host transform on web routes
-- [ ] `HttpRequestHostAccessor` reads it; selection-only, fail-closed
-- [ ] Forged-header ingress test + accessor tests; ingress smoke updated
-- [ ] Design regions + skills reconciled (104-031 stance replaced with the argument above)
-- [ ] Gates: `dev build` 0/0, `dev test` (incl. aspire-tests ingress smoke, identity/passkey suites),
+- [x] YARP (AppHost + standalone) sets `X-Forwarded-Host`, no original-Host transform on web routes
+- [x] `HttpRequestHostAccessor` reads it; selection-only, fail-closed
+- [x] Forged-header ingress test + accessor tests; ingress smoke updated
+- [x] Design regions + skills reconciled (104-031 stance replaced with the argument above)
+- [x] Gates: `dev build` 0/0, `dev test` (incl. aspire-tests ingress smoke, identity/passkey suites),
       `dev template-smoke`, `ganda repo audit`
 
 ## Notes
@@ -95,3 +95,68 @@ security argument that replaces it must hold, and it must be written into the De
 ## Session
 
 - Created: 2026-10-08 (cockpit, from the 070-007 open question; Steve chose option 2)
+- 2026-10-08 implementer (ganda task work): implemented; gates green (see Results)
+
+## Results
+
+- **AppHost YARP** (`aspire-app-host/program.cs`): every Web.Server route (generated `/api` prefixes,
+  `/api`, `/api/`, catch-all) drops `WithTransformUseOriginalHostHeader(true)` and goes through a local
+  `ForwardPublicHost` → `WithTransformXForwarded(xHost: ForwardedTransformActions.Set)`. Host is the
+  destination (YARP default). api/grpc routes unchanged; the web hop stays plain HTTP.
+- **Standalone yarp**: `RequestHeaderOriginalHost` replaced by `"X-Forwarded": "Set"` on the config
+  `WebRoute`/`WebSwaggerRoute` and the generated in-memory routes (`program.cs`).
+- **`HttpRequestHostAccessor`**: new `public static GetPublicHost(HttpRequest)` — first
+  `X-Forwarded-Host` value (first header value, first comma entry, trimmed, port stripped via
+  `HostString.Host`), else `Request.Host.Host`. The `X-TimeWarp-Circuit-Host` loopback rule is unchanged
+  and still checked first. An unapproved forwarded host is passed through unchanged, so selection
+  fails closed (no fallback to `Request.Host`). No `UseForwardedHeaders`.
+- **`IdentitySessionCookieForwardingHandler`**: the circuit host copied onto the loopback is now
+  `GetPublicHost` (behind YARP, `Request.Host` is the destination, so the old copy would have carried
+  `web-server`). This is the one other host reader, reconciled per Decision point 3.
+- **Design regions reconciled**: AppHost (104-031 block, K8s ingress note, web-hop scheme note, route
+  comments), yarp `program.cs` + `appsettings.Development.json`, `http-request-host-accessor-server.cs`
+  (full four-point security argument), `i-request-host-accessor-application.cs`,
+  `identity-session-cookie-forwarding-server.cs`, `web-authn-options-application.cs`,
+  `entra-authentication-options-application.cs`, `entra-authentication-registration-server.cs`,
+  `mock-authentication-defaults.cs`, `web-server/program.cs` (task 213 note), and `skills/tw-deploy`
+  (ingress topology gets a "public host travels in X-Forwarded-Host" bullet).
+- **Tests**:
+  - `http-request-host-accessor-tests.cs`: forwarded wins over Host, port stripped, forged and
+    unapproved value passed through unchanged, comma-separated and repeated values (first wins),
+    empty value falls back, loopback circuit header still wins over XFH. The old `Ignore_X_Forwarded_Host`
+    case is replaced.
+  - `identity-session-cookie-forwarding-tests.cs`: circuit host comes from XFH behind the ingress.
+  - `passkey-host-selection-tests.cs`: the spoofed-XFH-ignored case is replaced by "allowed XFH selects
+    rp.id" and "unlisted XFH → 400 Host not allowed even with an allowlisted Host".
+  - `aspire-tests/ingress-smoke-tests.cs` + `yarp-integration-tests` (standalone): a forged unapproved
+    XFH with the real Host → 200, rp.id `localhost` (proves overwrite), and a foreign Host + forged
+    *allowed* XFH (`localhost`) → 400 "Host not allowed" (proves the forged value never reaches
+    selection). Foreign-Host Hello smoke kept, comments updated.
+- **Gates**: `dev build` 0 warnings / 0 errors; `dev test` exit 0 (21 suites passed, incl. web-server
+  integration 295, aspire-tests, yarp-integration 6); `dev template-smoke` SUCCEEDED; `ganda repo audit`
+  clean.
+- **Note for reviewers**: with no `Authentication:Entra:PublicOrigin`, an Entra redirect_uri derived
+  behind YARP now names the destination host instead of the public host. The existing guidance already
+  requires `PublicOrigin` for any proxied Entra deployment; the Entra Design regions now say so
+  explicitly. Request-derived absolute URLs (e.g. prerender `NavigationManager.BaseUri`) also see the
+  destination host behind the ingress; nothing security-relevant reads them.
+- **Follow-up for 070-007 (#441)**: rebase onto this and delete its AppHost Open Question about the
+  ACA web-route host strategy.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class GetRequestHost_Should
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class Returns_
+cd tests/container-apps/yarp/yarp-integration-tests && dotnet test -c Release
+cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release -- --filter-class IngressSmoke
+grep -rn "WithTransformUseOriginalHostHeader\|RequestHeaderOriginalHost" source   # no matches
+```
+
+**Expect:** all suites pass (yarp-integration 6/6 incl. the two forged-XFH cases; aspire IngressSmoke
+9/9 incl. `ForgedForwardedHostThroughIngress_Should_BeOverwrittenWithPublicHost` and
+`ForeignHostWithForgedAllowedForwardedHostThroughIngress_Should_BeHostNotAllowed`); the grep prints
+nothing. Live: through the ingress, passkey sign-in on the shared public hostname still selects that
+host's RP ID.

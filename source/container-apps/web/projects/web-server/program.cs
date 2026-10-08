@@ -46,8 +46,9 @@
 // present the inbound identity-session cookie instead of challenging 401.
 // Task 213: that handler also forwards the circuit host on X-TimeWarp-Circuit-Host (not HTTP
 // Host — HTTPS loopback TLS must still validate localhost) so passkey RP-ID selection sees the
-// YARP-preserved browser host, not the loopback URI host. HttpRequestHostAccessor honors that
-// header only when Request.Host is loopback; the public path ignores a client-supplied copy.
+// browser's public host (ingress-set X-Forwarded-Host, task 070-008), not the loopback URI host.
+// HttpRequestHostAccessor honors that header only when Request.Host is loopback; the public path
+// ignores a client-supplied copy.
 // Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
 // merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
 // cleared once instead of re-validated on every request.

@@ -17,23 +17,26 @@
 //
 // PER-REQUEST RP-ID SELECTION (task 104-031): there is no single static RpId. AllowedRpIds is an
 // allowlist of RP IDs this application may serve passkeys under; the effective RP ID for a given
-// ceremony is chosen PER REQUEST from the request's Host header, matched (case-insensitively)
+// ceremony is chosen PER REQUEST from the request's public host, matched (case-insensitively)
 // against this list — see WebAuthnRelyingPartySelection.Select. A single running server can thus
 // serve both its localhost dev origin and a public share hostname (e.g. arch.timewarp.work) without
 // restart. The old single-value RpId property was REMOVED outright (not deprecated): keeping it
 // would let a stale RpId secret bind to a property nothing reads.
 //
-// FAIL-CLOSED: a request whose Host is not in AllowedRpIds gets a 400 problem-details, never a
-// fallback to some default RP ID (the browser would reject a mismatched RP ID opaquely, and
-// deriving the RP ID from an arbitrary attacker-controlled Host would let a forged Host mint
-// credentials for an arbitrary RP ID). The allowlist is the whole security boundary here: a forged
-// Host can only ever SELECT among already-approved RP IDs, never expand them.
-// X-Forwarded-Host is never consulted. HttpRequestHostAccessor honors X-TimeWarp-Circuit-Host
-// only when Request.Host is loopback (IdentitySessionCookieForwardingHandler sets it on
-// InteractiveServer HTTPS loopback); on the public path Request.Host wins even if a client
-// supplied the header. That loopback does not rewrite HTTP Host (TLS must keep validating
-// localhost). The circuit host is copied from the circuit request, not from a client-supplied
-// forwarded header.
+// The public host is X-Forwarded-Host, else Request.Host (task 070-008): the YARP ingress sends the
+// destination as Host on every target and SETS (overwrites) X-Forwarded-Host to the browser's host.
+// FAIL-CLOSED: a request whose public host is not in AllowedRpIds gets a 400 problem-details, never
+// a fallback to some default RP ID or to Request.Host (the browser would reject a mismatched RP ID
+// opaquely, and deriving the RP ID from an arbitrary attacker-controlled host would let a forged
+// value mint credentials for an arbitrary RP ID). The allowlist is the whole security boundary here:
+// a forged Host or X-Forwarded-Host can only ever SELECT among already-approved RP IDs, never expand
+// them — which is why reading the forwarded header is safe even where web-server is directly
+// reachable (full argument: HttpRequestHostAccessor's Design region).
+// HttpRequestHostAccessor honors X-TimeWarp-Circuit-Host only when Request.Host is loopback
+// (IdentitySessionCookieForwardingHandler sets it on InteractiveServer HTTPS loopback); on the
+// public path the public host wins even if a client supplied the header. That loopback does not
+// rewrite HTTP Host (TLS must keep validating localhost). The circuit host is the circuit
+// request's public host, by the same rule.
 // MEMBERSHIP ORACLE (round-1 security S2, accepted): the precise fail-closed claim is that the
 // selected/requested host is never REFLECTED in the response body (the 400 Detail is a fixed string),
 // NOT that there is no enumeration whatsoever — the 200-vs-400 status on the anonymous Start endpoints

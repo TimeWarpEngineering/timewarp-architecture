@@ -1,5 +1,5 @@
 #region Purpose
-// Port for reading the current request's host name (the Host header, port stripped) so the identity
+// Port for reading the current request's public host name (port stripped) so the identity
 // handlers can select a WebAuthn RP ID per request without web-application depending on ASP.NET Core.
 #endregion
 
@@ -10,15 +10,16 @@
 // ICurrentPrincipalAccessor (impl in web-server via IHttpContextAccessor). This port is that same
 // pattern: a scheme-agnostic host read that web-application declares and web-server implements
 // (HttpRequestHostAccessor). The server implementation honors X-TimeWarp-Circuit-Host only when
-// Request.Host.Host is loopback (the InteractiveServer HTTPS hop); otherwise Request.Host.Host
-// wins even if a client supplied the header. Callers still receive a bare host string (no port);
-// they never see which source was used.
+// Request.Host.Host is loopback (the InteractiveServer HTTPS hop); otherwise the public host —
+// the ingress-set X-Forwarded-Host, else Request.Host.Host (task 070-008) — wins even if a client
+// supplied the circuit header. Callers still receive a bare host string (no port); they never see
+// which source was used, and the value only SELECTS among AllowedRpIds.
 // Returns the HOST ONLY (no port): an RP ID is a bare domain, and WebAuthnRelyingPartySelection
 // matches it against AllowedRpIds entries which are validated as bare DNS names. Returns null (never
 // throws) when there is no active HTTP request or no Host — callers treat null as "host not allowed"
 // and fail closed, exactly as they treat an unlisted host (same defense-in-depth posture as
 // ICurrentPrincipalAccessor returning null for no authenticated caller).
-// Synchronous (unlike ICurrentPrincipalAccessor's Task-returning shape): reading Request.Host is a
+// Synchronous (unlike ICurrentPrincipalAccessor's Task-returning shape): reading request headers is a
 // pure property access with no I/O and no per-scheme authenticate call to mirror, so a plain string?
 // return is the honest signature rather than async-for-uniformity.
 #endregion
