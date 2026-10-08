@@ -201,3 +201,4 @@ dev deploy --target kubernetes
   (`dev build` 0/0, dev-cli-tests 152/152, `dev publish kubernetes`, `dev template-smoke`, `ganda repo audit`).
 - 2026-10-08 review oracle (Claude Opus 5.5, general reviewer subagent ae1c94e3f85ac4543):
   round 1, disposition accepted-exceptions (0 open).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-08T16:07:12Z
