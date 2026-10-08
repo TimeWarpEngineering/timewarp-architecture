@@ -12,7 +12,8 @@
 // defaults :7000/:7001 then :8443).
 // No Aspire, no Api host — the generated prefixes are Web.Server-owned. YarpTestServerApplication
 // rewrites the config Web.Server cluster onto WebHttpUrl so the hop matches Development
-// (http; Host is the destination, the public host travels in X-Forwarded-Host — task 070-008). Suite-shaped under tests/ per hybrid topology policy.
+// (http; Host is the destination, the public host travels in X-Forwarded-Host — task 070-008).
+// Suite-shaped under tests/ per hybrid topology policy.
 #endregion
 
 namespace StandaloneYarpIngress_;

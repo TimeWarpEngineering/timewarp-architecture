@@ -96,6 +96,7 @@ security argument that replaces it must hold, and it must be written into the De
 
 - Created: 2026-10-08 (cockpit, from the 070-007 open question; Steve chose option 2)
 - 2026-10-08 implementer (ganda task work): implemented; gates green (see Results)
+- 2026-10-08 review oracle (ganda task work, Claude Opus 5.5): 1 round, general, disposition clean
 
 ## Results
 
@@ -142,6 +143,15 @@ security argument that replaces it must hold, and it must be written into the De
   destination host behind the ingress; nothing security-relevant reads them.
 - **Follow-up for 070-007 (#441)**: rebase onto this and delete its AppHost Open Question about the
   ACA web-route host strategy.
+
+### Review disposition
+
+- Rounds: 1; effort 2; roster: general (review oracle, ganda task work).
+- Final counts: bug 0, suggestion 0, nit 1 (fixed: comment re-wrap) — 0 open.
+- Disposition: **clean**. Reviewer independently re-ran yarp-integration (6/6), web-server-integration
+  `GetRequestHost_Should` / `Returns_` / `Copies_` (13 / 136 / 7) and aspire-tests IngressSmoke (9/9).
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
