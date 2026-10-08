@@ -32,6 +32,9 @@
 // solution build is blind to multi-mode compile + MTP discovery.
 // Task 240: after the generated solution build, AssertInitializerImportGraphResolves walks
 // web.spa.lib.module.js static `_content` imports against the NuGet cache (no server).
+// Task 288: every matrix entry asserts the AppHost's committed deploy parameters carry the app's
+// kebab name, and a generate-only Contoso.Shop proves the dotted-name → contoso-shop derivation
+// without paying for another restore/build.
 #endregion
 
 namespace DevCli.Commands;
@@ -81,6 +84,11 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     ("SmokeNoPostgres", ["--postgres", "false"], []),
     ("SmokeNoApi", ["--api", "false"], ["api"]),
   ];
+
+  // Task 288: generate-only (no build) — a dotted name must reach the AppHost deploy parameters as a
+  // DNS-1123 kebab name through the appNameKebab derived symbol.
+  private const string DottedSmokeName = "Contoso.Shop";
+  private const string DottedSmokeKebabName = "contoso-shop";
 
   private static readonly string[] RemovedTemplateSymbols =
   [
@@ -141,6 +149,7 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       if (!await PackPlatformPackagesAsync()) return Unit.Value;
       if (!await PackTemplateAsync()) return Unit.Value;
       if (!await InstallTemplateAsync()) return Unit.Value;
+      if (!await AssertDottedNameKebabsAsync()) return Unit.Value;
 
       foreach ((string name, string[] extraArgs, string[] excludedFamilies) in SmokeMatrix)
       {
@@ -299,6 +308,17 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       return true;
     }
 
+    private async Task<bool> AssertDottedNameKebabsAsync()
+    {
+      string? outputDir = await Harness.GenerateAsync(DottedSmokeName, WorkDir, [], TemplateShortName, Ct);
+      if (outputDir is not null && Harness.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName))
+        return true;
+
+      Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {DottedSmokeName}".Red());
+      Environment.ExitCode = 1;
+      return false;
+    }
+
     private async Task<bool> SmokeOneAsync(string name, string[] extraArgs, string[] excludedFamilies)
     {
       string? outputDirForTier2 = null;
@@ -317,6 +337,10 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
             return Task.FromResult(false);
 
           if (!Harness.AssertSkillsShipped(outputDir))
+            return Task.FromResult(false);
+
+          // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.
+          if (!Harness.AssertDeployParametersUseAppKebabName(outputDir, name.ToLowerInvariant()))
             return Task.FromResult(false);
 
           // Task 145-009: Production appsettings must not enable mock auth; mock registration

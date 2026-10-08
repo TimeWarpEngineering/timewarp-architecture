@@ -136,6 +136,42 @@
       "description": "Add Postgres Features",
       "datatype": "bool",
       "defaultValue": "true"
+    },
+    "appNameKebab": {
+      "type": "derived",
+      "description": "The app name as a DNS-1123 label (Contoso.Shop -> contoso-shop): the committed AppHost Parameters k8s-namespace, helm-release-name and registry-repository. Replaces the monorepo's own kebab name only where it is one of those three values (onlyIf), never in repository URLs or project names.",
+      "valueSource": "name",
+      "valueTransform": "dnsLabel",
+      "replaces": "timewarp-architecture",
+      "onlyIf": [
+        { "after": "\"k8s-namespace\": \"" },
+        { "after": "\"helm-release-name\": \"" },
+        { "after": "\"registry-repository\": \"" }
+      ]
+    }
+  },
+  "forms": {
+    "dnsLabelLowerCase": {
+      "identifier": "lowerCase"
+    },
+    "dnsLabelSeparators": {
+      "identifier": "replace",
+      "pattern": "[^a-z0-9]+",
+      "replacement": "-"
+    },
+    "dnsLabelTrim": {
+      "identifier": "replace",
+      "pattern": "^-+|-+$",
+      "replacement": ""
+    },
+    "dnsLabelTruncate": {
+      "identifier": "replace",
+      "pattern": "^(.{63}).+$",
+      "replacement": "$1"
+    },
+    "dnsLabel": {
+      "identifier": "chain",
+      "steps": [ "dnsLabelLowerCase", "dnsLabelSeparators", "dnsLabelTrim", "dnsLabelTruncate", "dnsLabelTrim" ]
     }
   },
   "tags": {

@@ -12,9 +12,10 @@
 // Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+, a
 // current kubectl context whose API answers, which is printed — any context works, a local kind cluster
 // included; for a kind context the kind cluster exists and the registry at registry-endpoint answers;
-// this verb never creates a cluster. Deploy parameters (task 286): every value-less AppHost parameter of
+// this verb never creates a cluster. Deploy parameters (tasks 286, 288): every value-less AppHost parameter of
 // the target (kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository) must
-// be set — AppHost user secret Parameters:<name>, or a Parameters__<name> env var — and is forwarded as
+// resolve — a Parameters__<name> env var, else the AppHost user secret Parameters:<name>, else the
+// AppHost appsettings Parameters section, where the template commits all four — and is forwarded as
 // `--Parameters:<name>=<value>` after `--`; missing ones are refused with the command to set each
 // (forwarded values are printed and appear in argv, so they are never secrets). Compose prints the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI. For aca (task
@@ -35,7 +36,7 @@ namespace DevCli.Commands;
 
 [NuruRoute("deploy", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
-[NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* in the AppHost user secrets)")]
+[NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* from the AppHost appsettings.json, user secrets or env)")]
 [NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : ICommand<Unit>

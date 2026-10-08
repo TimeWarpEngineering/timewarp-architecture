@@ -27,9 +27,16 @@
 // not contain any analysis/ directory under skills/ (pack exclude).
 // Task 240: AssertInitializerImportGraphResolves (partial in template-smoke-initializer-assets.cs)
 // after the generated solution build — host-free `_content` → NuGet staticwebassets file check.
+// Task 288: AssertDeployParametersUseAppKebabName — the appNameKebab derived symbol (template.json)
+// rewrites the AppHost's committed k8s-namespace / helm-release-name / registry-repository to the
+// app's DNS-1123 kebab name. The template engine cannot fail generation on an invalid label, so this
+// assert is the loud failure. GenerateAsync is the generate-only half of SmokeOneAsync, for names
+// that only need that cheap assert (template-smoke's Contoso.Shop).
 #endregion
 
 namespace DevCli.Services;
+
+using System.Text.Json;
 
 /// <summary>
 /// Path helpers for smoke tree walks.
@@ -712,6 +719,118 @@ internal sealed partial class TemplateSmokeHarness
     return ok;
   }
 
+  /// <summary>AppHost appsettings.json path, relative to a generated app root.</summary>
+  public const string AppHostAppSettingsRelativePath = "source/container-apps/aspire/projects/aspire-app-host/appsettings.json";
+
+  /// <summary>The committed AppHost Parameters the appNameKebab template symbol sets to the app's kebab name (task 288).</summary>
+  public static readonly string[] AppNameKebabParameters = ["k8s-namespace", "helm-release-name", "registry-repository"];
+
+  [GeneratedRegex("^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$")]
+  private static partial Regex DnsLabel();
+
+  /// <summary>True when <paramref name="value"/> is a Kubernetes DNS-1123 label (≤ 63 chars, [a-z0-9-], alphanumeric ends).</summary>
+  public static bool IsDnsLabel(string value) => DnsLabel().IsMatch(value);
+
+  /// <summary>
+  /// Task 288: the generated AppHost appsettings.json commits k8s-namespace, helm-release-name and registry-repository as
+  /// <paramref name="expectedKebabName"/> (the appNameKebab derived symbol), each a DNS-1123 label — never the monorepo's own
+  /// timewarp-architecture.
+  /// </summary>
+  public bool AssertDeployParametersUseAppKebabName(string outputDir, string expectedKebabName)
+  {
+    string path = Path.Combine(outputDir, AppHostAppSettingsRelativePath.Replace('/', Path.DirectorySeparatorChar));
+    if (!File.Exists(path))
+    {
+      Terminal.WriteErrorLine($"Generated app is missing {AppHostAppSettingsRelativePath}.".Red());
+      return false;
+    }
+
+    JsonElement? parameters = null;
+    try
+    {
+      using var document = JsonDocument.Parse(File.ReadAllText(path));
+      if (document.RootElement.TryGetProperty("Parameters", out JsonElement section) && section.ValueKind == JsonValueKind.Object)
+        parameters = section.Clone();
+    }
+    catch (JsonException exception)
+    {
+      Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} is not valid JSON: {exception.Message}".Red());
+      return false;
+    }
+
+    if (parameters is not { } values)
+    {
+      Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} has no Parameters section.".Red());
+      return false;
+    }
+
+    bool ok = true;
+    foreach (string name in AppNameKebabParameters)
+    {
+      string? value = values.TryGetProperty(name, out JsonElement element) && element.ValueKind == JsonValueKind.String
+        ? element.GetString()
+        : null;
+      if (value != expectedKebabName)
+      {
+        Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} Parameters:{name} is '{value}', expected '{expectedKebabName}' (appNameKebab template symbol).".Red());
+        ok = false;
+      }
+      else if (!IsDnsLabel(value))
+      {
+        Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} Parameters:{name} '{value}' is not a DNS-1123 label (≤ 63 chars, [a-z0-9-], alphanumeric ends).".Red());
+        ok = false;
+      }
+    }
+
+    if (ok)
+      Terminal.WriteLine($"AppHost deploy parameters use the app's kebab name ({expectedKebabName}).");
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Generate only (no restore/build): `dotnet new` into <paramref name="workDir"/>/<paramref name="name"/>. Returns the output
+  /// directory, or null after printing the failure.
+  /// </summary>
+  public async Task<string?> GenerateAsync(
+    string name,
+    string workDir,
+    string[] extraArgs,
+    string templateShortName,
+    CancellationToken ct,
+    IReadOnlyDictionary<string, string>? environment = null)
+  {
+    string outputDir = Path.Combine(workDir, name);
+    Terminal.WriteLine($"\n── Generate {name} ──".Cyan());
+
+    List<string> args =
+    [
+      "new", templateShortName,
+      "-n", name,
+      "-o", outputDir,
+      "--force",
+    ];
+    args.AddRange(extraArgs);
+
+    ShellBuilder generateBuilder = Shell.Builder("dotnet")
+      .WithArguments([.. args])
+      .WithWorkingDirectory(RepoRoot)
+      .WithNoValidation();
+    generateBuilder = ApplyShellEnvironment(generateBuilder, environment);
+
+    CommandOutput generate = await generateBuilder.CaptureAsync(ct);
+
+    if (!generate.Success)
+    {
+      Terminal.WriteErrorLine(generate.Combined);
+      Terminal.WriteErrorLine($"dotnet new failed for {name}!".Red());
+      return null;
+    }
+
+    Terminal.WriteLine(generate.Combined);
+    return outputDir;
+  }
+
   // In-proc port base for generated-app tier 2/3 hosts (task 245). Distinct from
   // InProcTestPorts.DefaultBase (7000) so smoke can run beside monorepo `dev test`.
   private const string InProcTestPortBaseEnvironmentVariable = "TIMEWARP_TEST_PORT_BASE";
@@ -899,34 +1018,9 @@ internal sealed partial class TemplateSmokeHarness
     string? restoreNarration = null,
     IReadOnlyDictionary<string, string>? environment = null)
   {
-    string outputDir = Path.Combine(workDir, name);
-    Terminal.WriteLine($"\n── Generate {name} ──".Cyan());
-
-    List<string> args =
-    [
-      "new", templateShortName,
-      "-n", name,
-      "-o", outputDir,
-      "--force",
-    ];
-    args.AddRange(extraArgs);
-
-    ShellBuilder generateBuilder = Shell.Builder("dotnet")
-      .WithArguments([.. args])
-      .WithWorkingDirectory(RepoRoot)
-      .WithNoValidation();
-    generateBuilder = ApplyShellEnvironment(generateBuilder, environment);
-
-    CommandOutput generate = await generateBuilder.CaptureAsync(ct);
-
-    if (!generate.Success)
-    {
-      Terminal.WriteErrorLine(generate.Combined);
-      Terminal.WriteErrorLine($"dotnet new failed for {name}!".Red());
+    string? outputDir = await GenerateAsync(name, workDir, extraArgs, templateShortName, ct, environment);
+    if (outputDir is null)
       return false;
-    }
-
-    Terminal.WriteLine(generate.Combined);
 
     if (!AssertPackageIdsNotRewritten(name, outputDir))
       return false;

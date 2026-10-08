@@ -1,7 +1,7 @@
 #region Purpose
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
-// preflight refusals, deploy-parameter resolution and `--Parameters:*` forwarding, the cluster / kind /
-// registry refusals and their precedence, agreement with the AppHost's value-less parameters, the aca subscription source selection and the manual-cleanup guidance, without deploying —
+// preflight refusals, deploy-parameter resolution (env var → user secret → appsettings) and `--Parameters:*` forwarding, the cluster / kind /
+// registry refusals and their precedence, agreement with the AppHost's value-less parameters and its committed appsettings.json Parameters, the aca subscription source selection and the manual-cleanup guidance, without deploying —
 // and that no CI workflow or `dev workflow` mode ever invokes a deploy.
 #endregion
 
@@ -310,6 +310,7 @@ public partial class DeployParameters_Given_
     string text = string.Join('\n', AspireDeploy.BuildMissingParameterLines(AppHost, AspireDeploy.Kubernetes, ["k8s-namespace", "registry-endpoint"]));
 
     text.ShouldContain("Missing deploy parameters for kubernetes: k8s-namespace, registry-endpoint.");
+    text.ShouldContain("Parameters section of the AppHost appsettings.json");
     text.ShouldContain("dotnet user-secrets set 'Parameters:k8s-namespace' '<value>' --project '/repo/app-host.csproj'");
     text.ShouldContain("dotnet user-secrets set 'Parameters:registry-endpoint' '<value>' --project '/repo/app-host.csproj'");
     text.ShouldContain("${env:Parameters__k8s-namespace} = '<value>'");
@@ -392,6 +393,84 @@ public partial class DeployParameters_Given_
     }
 
     throw new DirectoryNotFoundException("aspire-app-host not found above the test output directory.");
+  }
+
+  private static AppSettingsFile AppSettings(string fileName, string parameters) =>
+    new(fileName, $"{{ \"Logging\": {{}}, \"Parameters\": {{ {parameters} }} }}");
+
+  public static Task AppSettings_Should_ResolveWhatNoSecretOrVariableSets()
+  {
+    AppSettingsFile appSettings = AppSettings(
+      "appsettings.json",
+      "\"k8s-namespace\": \"my-app\", \"helm-release-name\": \"my-app\", \"registry-endpoint\": \"localhost:5001\", \"registry-repository\": \"my-app\"");
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]);
+
+    resolution.Missing.ShouldBeEmpty();
+    resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
+      ["k8s-namespace=my-app", "helm-release-name=my-app", "registry-endpoint=localhost:5001", "registry-repository=my-app"]);
+    resolution.Resolved.ShouldAllBe(parameter => parameter.Source == "AppHost appsettings.json");
+    string.Join('\n', AspireDeploy.BuildParameterLines(resolution.Resolved))
+      .ShouldContain("Parameter:   k8s-namespace=my-app (from the AppHost appsettings.json)");
+    return Task.CompletedTask;
+  }
+
+  public static Task ResolutionOrder_Should_BeVariableThenSecretThenEnvironmentFileThenAppSettings()
+  {
+    AppSettingsFile production = AppSettings("appsettings.Production.json", "\"helm-release-name\": \"from-production\", \"registry-endpoint\": \"from-production\"");
+    AppSettingsFile appSettings = AppSettings(
+      "appsettings.json",
+      "\"k8s-namespace\": \"from-appsettings\", \"helm-release-name\": \"from-appsettings\", \"registry-endpoint\": \"from-appsettings\", \"registry-repository\": \"from-appsettings\"");
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(
+      AspireDeploy.Kubernetes,
+      name => name == "Parameters__k8s-namespace" ? "from-env" : null,
+      true,
+      "Parameters:k8s-namespace = from-secret\nParameters:helm-release-name = from-secret\n",
+      [production, appSettings]);
+
+    resolution.Missing.ShouldBeEmpty();
+    resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value} ({parameter.Source})").ShouldBe(
+    [
+      "k8s-namespace=from-env (Parameters__k8s-namespace environment variable)",
+      "helm-release-name=from-secret (AppHost user secret)",
+      "registry-endpoint=from-production (AppHost appsettings.Production.json)",
+      "registry-repository=from-appsettings (AppHost appsettings.json)",
+    ]);
+    AspireDeploy.AppSettingsFileNames().ShouldBe(["appsettings.Production.json", "appsettings.json"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task AppSettingsParameter_Should_ReadLikeJsonConfiguration()
+  {
+    AspireDeploy.ParseAppSettingsParameter("{ \"parameters\": { \"K8S-NAMESPACE\": \" my-app \" } }", "k8s-namespace").ShouldBe("my-app");
+    AspireDeploy.ParseAppSettingsParameter("{ // comment\n \"Parameters\": { \"k8s-namespace\": \"a\", \"k8s-namespace\": \"b\", } }", "k8s-namespace").ShouldBe("b");
+    AspireDeploy.ParseAppSettingsParameter("{ \"Parameters\": { \"k8s-namespace\": \" \" } }", "k8s-namespace").ShouldBeNull();
+    AspireDeploy.ParseAppSettingsParameter("{ \"Parameters\": { \"other\": \"x\" } }", "k8s-namespace").ShouldBeNull();
+    AspireDeploy.ParseAppSettingsParameter("{ \"Logging\": {} }", "k8s-namespace").ShouldBeNull();
+    AspireDeploy.ParseAppSettingsParameter("{ not json", "k8s-namespace").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task BlankAppSettingsValue_Should_StillBeReportedMissing()
+  {
+    AppSettingsFile appSettings = AppSettings("appsettings.json", "\"registry-endpoint\": \"\"");
+    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]).Missing
+      .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task AppHostAppSettings_Should_CommitEveryKubernetesRequiredParameter()
+  {
+    // Task 288: none of the kubernetes parameters is a secret; the AppHost appsettings.json commits them all, so a fresh
+    // checkout's `dev deploy kubernetes` reports nothing missing (registry-endpoint defaults to the kind recipe's registry).
+    string appHostDirectory = AppHostDirectory();
+    AppSettingsFile appSettings = new("appsettings.json", File.ReadAllText(Path.Combine(appHostDirectory, "appsettings.json")));
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "", [appSettings]);
+
+    resolution.Missing.ShouldBeEmpty();
+    resolution.Resolved.Single(parameter => parameter.Name == "registry-endpoint").Value.ShouldBe("localhost:5001");
+    resolution.Resolved.Where(parameter => parameter.Name != "registry-endpoint")
+      .ShouldAllBe(parameter => parameter.Value == "timewarp-architecture");
+    return Task.CompletedTask;
   }
 
   public static Task PreflightReport_Should_CollectEveryProblemOnce()

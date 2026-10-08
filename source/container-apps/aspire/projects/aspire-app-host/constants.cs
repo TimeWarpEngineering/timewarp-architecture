@@ -61,7 +61,9 @@ internal class Constants
   public const string ContainerAppsPublishTarget = "aca";
 
   // Task 070-004: Kubernetes publish environment (Helm chart), its cluster Ingress, container registry,
-  // and the publish-only parameters for Helm placement, registry and storage.
+  // and the publish-only parameters for Helm placement, registry and storage. Task 288: the four
+  // value-less ones (namespace, release name, registry endpoint and repository) get their values from
+  // the Parameters section of appsettings.json under these same names.
   public const string KubernetesEnvironmentResourceName = "k8s";
   public const string KubernetesIngressResourceName = "cluster-ingress";
   public const string ContainerRegistryResourceName = "registry";

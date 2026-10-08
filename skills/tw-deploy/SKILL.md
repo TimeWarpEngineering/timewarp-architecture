@@ -100,24 +100,39 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   az CLI never overrides a subscription you pinned. A subscription Aspire remembered in its own
   deployment state is not checked; pin it in user secrets if `az account` may point elsewhere.
   Location and resource group come from `Azure__Location` / `Azure__ResourceGroup`, or Aspire's prompt.
-- **Deploy configuration lives in the AppHost user secrets** as `Parameters:<name>` — the same
-  per-machine store as `postgres-password` and `Azure:SubscriptionId`, never committed and never a
-  literal in the template. The kubernetes target needs `k8s-namespace`, `helm-release-name`,
-  `registry-endpoint` and `registry-repository` (the AppHost parameters without a default); compose
-  and aca need none. Set each once (pwsh):
+- **Deploy configuration is committed in the AppHost `appsettings.json`** `Parameters` section.
+  The kubernetes target needs `k8s-namespace`, `helm-release-name`, `registry-endpoint` and
+  `registry-repository` (the AppHost parameters without a default in code); compose and aca need
+  none. None of them is a secret. The template sets the three that identify the app —
+  `k8s-namespace`, `helm-release-name`, `registry-repository` — to the app's kebab name (a DNS-1123
+  label: `Contoso.Shop` → `contoso-shop`), and `registry-endpoint` to `localhost:5001`, the kind
+  recipe's registry, so a kind deploy needs no configuration:
 
-  ```powershell
-  dotnet user-secrets set 'Parameters:k8s-namespace' 'my-app' --project <apphost.csproj>
-  dotnet user-secrets set 'Parameters:helm-release-name' 'my-app' --project <apphost.csproj>
-  dotnet user-secrets set 'Parameters:registry-endpoint' 'localhost:5001' --project <apphost.csproj>
-  dotnet user-secrets set 'Parameters:registry-repository' 'my-app' --project <apphost.csproj>
+  ```json
+  "Parameters": {
+    "k8s-namespace": "contoso-shop",
+    "helm-release-name": "contoso-shop",
+    "registry-endpoint": "localhost:5001",
+    "registry-repository": "contoso-shop"
+  }
   ```
 
-  A `Parameters__<name>` environment variable overrides the secret for one session
-  (`${env:Parameters__k8s-namespace} = 'my-app'`; the name is matched case-insensitively). The plan
-  prints each value and its source, and the values appear in the `aspire` command line, so a
-  forwarded parameter is never a secret — secrets stay in user secrets or env vars, where Aspire
-  reads them itself.
+  A value that differs per machine or target overrides the committed one in the AppHost user
+  secrets — typically `registry-endpoint` for AKS, an Azure Container Registry login server (pwsh):
+
+  ```powershell
+  dotnet user-secrets set 'Parameters:registry-endpoint' 'myregistry.azurecr.io' --project <apphost.csproj>
+  ```
+
+  or for one session with a `Parameters__<name>` environment variable
+  (`${env:Parameters__registry-endpoint} = 'myregistry.azurecr.io'`; the name is matched
+  case-insensitively). `dev deploy` resolves each in the order Aspire's configuration does —
+  environment variable, then user secret, then `appsettings.Production.json` (none ships), then
+  `appsettings.json` — and the plan prints each value and that source. A user secret left over for
+  a committed value keeps winning; remove it with `dotnet user-secrets remove
+  'Parameters:<name>' --project <apphost.csproj>`. The values appear in the `aspire` command line,
+  so a forwarded parameter is never a secret — secrets (`postgres-password`, the Entra client
+  secret) stay in user secrets or env vars, never in `appsettings.json`.
 - **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
   nothing run: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
@@ -189,16 +204,12 @@ helm upgrade --install ingress-nginx ingress-nginx \
 kubectl wait --namespace ingress-nginx --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller --timeout=180s
 
-# 5. Deploy configuration, once per machine (kubectl context is now kind-app)
-dotnet user-secrets set 'Parameters:k8s-namespace' '<app>' --project <apphost.csproj>
-dotnet user-secrets set 'Parameters:helm-release-name' '<app>' --project <apphost.csproj>
-dotnet user-secrets set 'Parameters:registry-endpoint' 'localhost:5001' --project <apphost.csproj>
-dotnet user-secrets set 'Parameters:registry-repository' '<app>' --project <apphost.csproj>
-
-# 6. Deploy; preflight checks the cluster answers, kind lists it and localhost:5001 is up
+# 5. Deploy (kubectl context is now kind-app); the committed AppHost appsettings.json already
+#    names the namespace, release and repository after the app and points at localhost:5001.
+#    Preflight checks the cluster answers, kind lists it and localhost:5001 is up
 dev deploy --target kubernetes
 
-# 7. Migrate (see Postgres and migrations), then reach the ingress
+# 6. Migrate (see Postgres and migrations), then reach the ingress
 kubectl port-forward --namespace ingress-nginx service/ingress-nginx-controller 8080:80
 
 # Tear down the app (data included), then the cluster and registry when done
@@ -231,7 +242,9 @@ Rules for new code:
 
 ## Secrets and parameters
 
-Every value that differs per deployment is an `AddParameter`, never a literal. Secrets are
+Every value that differs per deployment is an `AddParameter`, never a literal in code; a
+non-secret default every machine shares (the app's identity) is committed in the AppHost
+`appsettings.json` `Parameters` section, not in the `AddParameter` call. Secrets are
 `AddParameter(name, secret: true)` (or a generated secret such as Postgres' password).
 
 | Target | Where parameter values live |
@@ -240,9 +253,11 @@ Every value that differs per deployment is an `AddParameter`, never a literal. S
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
 | Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`. The Postgres connection string lives in a Key Vault Aspire provisions, which web-server reads with its managed identity; the Postgres password is also on web-server as the container-app secrets `postgres-db-password` and `postgres-db-uri`, built from the `@secure()` parameter |
 
-- Supply values with AppHost user secrets `Parameters:<name>` or `Parameters__<name>` environment
-  variables. `dev deploy` refuses until the target's required ones are set and forwards them to
-  Aspire; interactive `aspire deploy` prompts for any other unset parameter.
+- Non-secret deploy configuration that names the app is committed in the AppHost `appsettings.json`
+  `Parameters` section (see Deploying). Per-machine values and secrets go in AppHost user secrets
+  `Parameters:<name>` or `Parameters__<name>` environment variables, which override the committed
+  value. `dev deploy` refuses until the target's required ones resolve and forwards them to Aspire;
+  interactive `aspire deploy` prompts for any other unset parameter.
 - Parameters such as `ingress-class`, `postgres-storage-capacity` and `helm-chart-version` are
   baked into the chart at publish time; change them by re-publishing, not `helm --set`.
 - Under a plain `helm install` (no `aspire deploy`), the Postgres password appears under two keys
