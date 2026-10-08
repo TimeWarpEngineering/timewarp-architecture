@@ -1,7 +1,7 @@
 #region Purpose
 // Host-free coverage that IdentitySessionCookieForwardingHandler copies Cookie, mock
-// principal, and circuit host from HttpContext onto the outgoing loopback request without
-// rewriting HTTP Host (HTTPS TLS must keep validating the URI host).
+// principal, and circuit host (X-Forwarded-Host, else Request.Host) from HttpContext onto the
+// outgoing loopback request without rewriting HTTP Host (HTTPS TLS must keep validating the URI host).
 #endregion
 
 namespace IdentitySessionCookieForwarding_;
@@ -96,6 +96,29 @@ public class Copies_
       .ShouldContain("arch.timewarp.work");
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
     inner.LastRequest.Headers.Contains("Cookie").ShouldBeFalse();
+  }
+
+  public static async Task Circuit_Host_From_X_Forwarded_Host_When_Behind_Ingress()
+  {
+    // Behind YARP the circuit request's Host is the destination (web-server); the public host
+    // arrives in the ingress-set X-Forwarded-Host (task 070-008).
+    CapturingHandler inner = new();
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Host = new HostString("web-server", 8080);
+    httpContext.Request.Headers["X-Forwarded-Host"] = "arch.timewarp.work:443";
+
+    IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
+    {
+      InnerHandler = inner
+    };
+
+    using HttpClient client = new(handler);
+    await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
+
+    inner.LastRequest.ShouldNotBeNull();
+    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+      .ShouldBe(["arch.timewarp.work"]);
+    string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }
 
   public static async Task Http_Host_Already_Set_Is_Left_Alone_And_Circuit_Host_Is_Copied()

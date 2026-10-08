@@ -15,7 +15,10 @@
 // over http (YARP http://_http.web-server, ACA ingress). Unset keeps request-derived redirect_uri
 // (direct https://localhost:63611). Do not default from Ingress:PublicUrl — that is a dashboard
 // display URL and can differ from the origin in use (63610 vs shared host). Do not consume
-// X-Forwarded-* (task 104-031).
+// X-Forwarded-* here: since task 070-008 the ingress sends the destination as Host, so a
+// request-derived redirect_uri behind YARP names web-server, not the browser origin — PublicOrigin
+// is required for any proxied Entra deployment. X-Forwarded-Host is read only by
+// HttpRequestHostAccessor for passkey RP-ID selection, where it can only select an approved RP ID.
 // TenantDisplayName / TenantDomain are informational (boot/status display from `dev entra setup`);
 // they are not used for OIDC authority and stay optional with no validator rules.
 // ReseedSiteSettings (task 225) is a Development-only boot overwrite of Enabled / AllowBootstrap;

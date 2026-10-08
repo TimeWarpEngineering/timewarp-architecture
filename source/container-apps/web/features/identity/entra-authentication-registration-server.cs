@@ -12,7 +12,9 @@
 // a {tenantid} placeholder; single-tenant GUID authorities use the same tid pin). ValidateIssuer
 // stays true — do not disable it.
 // YARP and ACA terminate TLS and forward to Web.Server over http without UseForwardedHeaders
-// (104-031). OpenIdConnectHandler would then emit an http redirect_uri. Pin CorrelationCookie
+// (104-031, kept by 070-008: X-Forwarded-Host is read only for passkey RP-ID selection, never to
+// rewrite scheme/host). OpenIdConnectHandler would then emit an http redirect_uri naming the
+// destination host (YARP sends the destination as Host since 070-008). Pin CorrelationCookie
 // and NonceCookie SecurePolicy.Always so SameSite=None cookies stay Secure behind http (do not
 // rely on framework defaults). PublicOrigin (when set) overrides ProtocolMessage.RedirectUri on
 // challenge and on authorization-code redemption so Entra sees the browser origin.
