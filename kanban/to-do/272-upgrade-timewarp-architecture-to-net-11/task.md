@@ -149,6 +149,17 @@ Implemented on **.NET 11 RC1** (prerelease). Steve authorized the RC1 go-live on
 - **Step 13 follow-up for Steve:** `Aspire.Hosting.Dotnet` latest on NuGet is `13.6.1-preview.1.26506.6` (preview only, back through the 13.5 previews; no stable). `AddDotnetProject()` was not adopted. `AddProject<Projects.*>` stays.
 - **Task 257 stays open.** `Microsoft.AspNetCore.OpenApi` 11 declares `Microsoft.OpenApi` `[3.10.0, 4.0.0)`. FastEndpoints.OpenApi 8.3.0 (latest stable) and 8.4.0-beta.22 still depend on AspNetCore.OpenApi 10.0.11, whose nuspec keeps OpenApi `[2.7.5, 3.0.0)`. The pin stays `2.12.2`. Taking 3.x is not a clean restore.
 
+### Review disposition
+
+- **Rounds:** 1. **Effort:** 3. **Roster:** general (Claude subagent), review oracle orchestrated by Claude Opus 5.5.
+- **Final counts:** bug 0. Suggestion 2 (both wontfix). Nit 2 (1 fixed, 1 wontfix). Open 0.
+- **Disposition:** `accepted-exceptions`.
+  - M1: the dev-cli NoWarn is project-scoped, and the ids fire only in Nuru package content.
+  - M2: the 180s seed budget is still bounded and fails loudly. It is required by EF 11 `--verbose`.
+  - M4: the CRLF→LF change matches `.gitattributes`.
+  - M3 (fixed): removed the stale NU1107 comment in `web-server-integration-tests.csproj`.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
 ### How to validate
 
 **Smoke:**

@@ -21,9 +21,6 @@
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
-    <!-- Direct reference pins Microsoft.Extensions.Hosting 10.0.9 at a nearer graph level than
-         web-server's transitive Oakton (< 10.0.0) bound, resolving the NU1107 version conflict
-         (same approach as web-spa-integration-tests). -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
