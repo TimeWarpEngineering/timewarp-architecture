@@ -1,7 +1,8 @@
 #region Purpose
-// Request-level smoke THROUGH the YARP ingress (task 117): guards the host-preserving
-// http-endpoint forwarding to Web.Server that the 2026-07-22 RemoteCertificateNameMismatch 502
-// shipped around — backend health checks alone proved 'backends up', not 'requests flow'.
+// Request-level smoke THROUGH the YARP ingress (task 117): guards the http-endpoint forwarding to
+// Web.Server that the 2026-07-22 RemoteCertificateNameMismatch 502 shipped around — backend health
+// checks alone proved 'backends up', not 'requests flow'. Task 070-008: proves the ingress SETS
+// X-Forwarded-Host (a forged client value never reaches web-server's passkey RP-ID selection).
 // Extended for task 107: proves the GENERATED Web.Server /api carve-outs
 // (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
 // /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
@@ -247,10 +248,10 @@ public partial class IngressSmoke_Given_
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
     // This exact request 502'd (RemoteCertificateNameMismatch) when the ingress forwarded web
-    // routes over https — the foreign Host moved the cert-name validation target to "smoke.test"
-    // and .NET rejected Web.Server's localhost dev cert. Guards the http-endpoint forwarding plus
-    // WithTransformUseOriginalHostHeader (task 104-031). Hello is [EndpointAllowAnonymous], so no
-    // allowlist/auth setup is needed to reach it.
+    // routes over https with the original Host (task 104-031). Since task 070-008 the ingress sends
+    // the destination as Host and the foreign host travels in X-Forwarded-Host; a foreign Host must
+    // still answer on a web route. Hello is [EndpointAllowAnonymous], so no allowlist/auth setup
+    // is needed to reach it.
     using HttpRequestMessage request = new(HttpMethod.Get, "/api/Hello?Name=Smoke");
     request.Headers.Host = "smoke.test";
 
@@ -263,12 +264,64 @@ public partial class IngressSmoke_Given_
     body.ShouldContain("Hello, Smoke!");
   }
 
+  public static async Task ForgedForwardedHostThroughIngress_Should_BeOverwrittenWithPublicHost()
+  {
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+
+    // Task 070-008: the client's real Host is localhost (allowlisted by default); it also forges
+    // X-Forwarded-Host. The ingress must SET (overwrite) X-Forwarded-Host with the Host it received,
+    // so web-server selects rp.id "localhost". Had the forged value survived (append, or no
+    // transform), selection would see "not-allowed.example" and answer 400 "Host not allowed".
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(httpClient, host: null, forwardedHost: "not-allowed.example");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await ReadRpId(response)).ShouldBe("localhost");
+  }
+
+  public static async Task ForeignHostWithForgedAllowedForwardedHostThroughIngress_Should_BeHostNotAllowed()
+  {
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+
+    // Task 070-008, the other direction: a foreign Host plus a forged X-Forwarded-Host naming an
+    // ALLOWED RP ID. The ingress overwrites the forged value with the foreign host, so selection is
+    // fail-closed — the forged header never selects (or expands) an RP ID.
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(httpClient, host: "smoke.test", forwardedHost: "localhost");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    (await response.Content.ReadAsStringAsync()).ShouldContain("Host not allowed");
+  }
+
+  private static async Task<HttpResponseMessage> PostStartPasskeyAuthentication(HttpClient httpClient, string? host, string forwardedHost)
+  {
+    // StartPasskeyAuthentication is [EndpointAllowAnonymous]: its first step is RP-ID selection.
+    using HttpRequestMessage request = new(HttpMethod.Post, "/api/identity/passkey/authenticate/options")
+    {
+      Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
+    };
+    if (host is not null)
+    {
+      request.Headers.Host = host;
+    }
+
+    request.Headers.Add("X-Forwarded-Host", forwardedHost);
+
+    return await httpClient.SendAsync(request);
+  }
+
+  private static async Task<string> ReadRpId(HttpResponseMessage response)
+  {
+    using System.Text.Json.JsonDocument body = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    string optionsJson = body.RootElement.GetProperty("optionsJson").GetString()!;
+    using System.Text.Json.JsonDocument options = System.Text.Json.JsonDocument.Parse(optionsJson);
+    return options.RootElement.GetProperty("rpId").GetString()!;
+  }
+
   public static async Task ApiRouteThroughIngress_Should_ReturnOk()
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
-    // Api.Server catch-all over the default https hop — deliberately exercises the internal
-    // https forwarding the web routes had to avoid (no original-Host preservation on api routes).
+    // Api.Server catch-all over the default https hop — the api routes keep YARP's defaults (no
+    // X-Forwarded transform of their own), unlike the plain-HTTP web routes.
     HttpResponseMessage response = await httpClient.GetAsync("/api/weatherforecast?Days=10");
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);

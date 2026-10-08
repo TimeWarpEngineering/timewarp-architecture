@@ -1,8 +1,9 @@
 #region Purpose
 // End-to-end tests for per-request WebAuthn RP-ID selection (task 104-031): the same running host
-// serves passkeys under a second allowlisted host, rejects an unlisted host, and ignores spoofed
-// X-Forwarded-Host / client-supplied X-TimeWarp-Circuit-Host on non-loopback Host — the RP ID is
-// chosen from the real request Host against WebAuthnOptions.AllowedRpIds.
+// serves passkeys under a second allowlisted host, rejects an unlisted host (by Host or by
+// X-Forwarded-Host), selects from X-Forwarded-Host when the ingress sets it (task 070-008), and
+// ignores a client-supplied X-TimeWarp-Circuit-Host on non-loopback Host — the RP ID is chosen
+// from the public host against WebAuthnOptions.AllowedRpIds.
 #endregion
 
 #region Design
@@ -15,11 +16,12 @@
 // webauthn-second.test means authenticatorData hashes "webauthn-second.test" and clientDataJSON's
 // origin is https://webauthn-second.test — the empty-AllowedOrigins fallback then accepts it because
 // its host equals the selected RP ID.
-// X-Forwarded-Host is asserted to have NO effect: selection reads HttpContext.Request.Host (the
-// ingress preserves the ORIGINAL Host; no UseForwardedHeaders consumes a spoofable forwarded
-// header), so a forged X-Forwarded-Host can never move selection off the real Host — see the
-// AppHost's Design region. A client-supplied X-TimeWarp-Circuit-Host is ignored unless Host is
-// loopback (the trusted InteractiveServer HTTPS hop); on the public path Request.Host wins.
+// X-Forwarded-Host is the public host (the ingress SETS it and sends the destination as Host —
+// HttpRequestHostAccessor's Design region). It only SELECTS: an allowlisted forwarded host moves
+// rp.id to it, and an unlisted one is "Host not allowed" even when the real Host is allowlisted —
+// the forged value is never replaced by Host and never expands AllowedRpIds. A client-supplied
+// X-TimeWarp-Circuit-Host is ignored unless Host is loopback (the InteractiveServer HTTPS hop); on
+// the public path the public host wins.
 #endregion
 
 namespace PasskeyHostSelection_;
@@ -117,10 +119,10 @@ public class Returns_
     await ShouldBeHostNotAllowed(response);
   }
 
-  public static async Task Selection_Stays_Localhost_Given_Spoofed_XForwardedHost()
+  public static async Task Selection_Follows_Allowed_XForwardedHost()
   {
-    // Real Host is localhost; an attacker sets X-Forwarded-Host to another allowlisted host. Selection
-    // must read the real Host only, so the minted options' rp.id stays "localhost".
+    // Behind the ingress Host is the destination and X-Forwarded-Host carries the public host, so the
+    // minted options' rp.id is the forwarded (allowlisted) host.
     HttpResponseMessage response = await Post
     (
       StartPasskeyRegistration.Command.RouteTemplate,
@@ -131,14 +133,22 @@ public class Returns_
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-    StartPasskeyRegistration.Response? startResponse =
-      JsonSerializer.Deserialize<StartPasskeyRegistration.Response>(await response.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
-    startResponse.ShouldNotBeNull();
+    (await ReadRpId(response)).ShouldBe(SecondHost);
+  }
 
-    using JsonDocument optionsDocument = JsonDocument.Parse(startResponse.OptionsJson);
-    string rpId = optionsDocument.RootElement.GetProperty("rp").GetProperty("id").GetString()!;
+  public static async Task BadRequest_StartRegistration_Given_Unlisted_XForwardedHost()
+  {
+    // A forged, unapproved forwarded host never falls back to the (allowlisted) real Host and never
+    // expands the allowlist: fail-closed "Host not allowed".
+    HttpResponseMessage response = await Post
+    (
+      StartPasskeyRegistration.Command.RouteTemplate,
+      new StartPasskeyRegistration.Command(),
+      host: "localhost",
+      forwardedHost: UnlistedHost
+    );
 
-    rpId.ShouldBe("localhost");
+    await ShouldBeHostNotAllowed(response);
   }
 
   public static async Task Selection_Stays_On_Request_Host_Given_Spoofed_CircuitHost_On_NonLoopback()
@@ -155,14 +165,17 @@ public class Returns_
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
+    (await ReadRpId(response)).ShouldBe(SecondHost);
+  }
+
+  private static async Task<string> ReadRpId(HttpResponseMessage response)
+  {
     StartPasskeyRegistration.Response? startResponse =
       JsonSerializer.Deserialize<StartPasskeyRegistration.Response>(await response.Content.ReadAsStringAsync(), ContractSerializationDefaults.Options);
     startResponse.ShouldNotBeNull();
 
     using JsonDocument optionsDocument = JsonDocument.Parse(startResponse.OptionsJson);
-    string rpId = optionsDocument.RootElement.GetProperty("rp").GetProperty("id").GetString()!;
-
-    rpId.ShouldBe(SecondHost);
+    return optionsDocument.RootElement.GetProperty("rp").GetProperty("id").GetString()!;
   }
 
   private static async Task<byte[]> StartCeremony<TCommand>(string routeTemplate, TCommand command, string host)

@@ -11,9 +11,11 @@
 // the pre-existing gap where the standalone config did not carve /api/identity/** etc. out of the
 // Api.Server catch-all (the 104-003 drift class). YARP merges config and in-memory providers, so the
 // memory routes reference the config-defined "Web.Server" cluster directly (verified: a memory route
-// resolves a cross-provider cluster). Each generated route preserves the client's original Host
-// (RequestHeaderOriginalHost) for Web.Server's per-request passkey RP-ID selection (task 104-031),
-// matching the config WebRoute.
+// resolves a cross-provider cluster). Each generated route SETS X-Forwarded-Host to the browser's
+// public host ("X-Forwarded": "Set" — a client-supplied value is overwritten, never appended) and
+// leaves Host as the destination, matching the config WebRoute and the AppHost ingress (task
+// 070-008). Web.Server's per-request passkey RP-ID selection reads it in HttpRequestHostAccessor,
+// where it only selects among the approved AllowedRpIds (see that file's Design region).
 // Task 104-020: exact /api and /api/ also pin to Web.Server so the tip discovery alias (bare API
 // root → /api/tip rewrite on web-server) is reachable through ingress; without this, bare /api
 // would hit Api.Server's /api/{**catch-all}. Not a generated prefix (TWA0018 forbids bare `api`).
@@ -73,11 +75,11 @@ public class Program : IAspNetProgram
 #if web
     // Task 107: add the generated Web.Server /api carve-outs as in-memory routes (see Design region).
     // Each prefix becomes /{prefix}/{**catch-all} on the config-defined "Web.Server" cluster, with the
-    // original-Host transform so passkey RP-ID selection sees the public host (task 104-031). Their
+    // X-Forwarded Set transform so passkey RP-ID selection sees the public host (task 070-008). Their
     // literal segments outrank the config "/api/{**catch-all}" -> Api.Server by route precedence.
-    var originalHostTransform = new List<IReadOnlyDictionary<string, string>>
+    var forwardPublicHostTransform = new List<IReadOnlyDictionary<string, string>>
     {
-      new Dictionary<string, string> { ["RequestHeaderOriginalHost"] = "true" },
+      new Dictionary<string, string> { ["X-Forwarded"] = "Set" },
     };
 
     var generatedWebRoutes = global::WebServerApiRoutePrefixes.All
@@ -86,7 +88,7 @@ public class Program : IAspNetProgram
         RouteId = $"GeneratedWeb-{apiPrefix.Replace('/', '-')}",
         ClusterId = "Web.Server",
         Match = new RouteMatch { Path = $"/{apiPrefix}/{{**catch-all}}" },
-        Transforms = originalHostTransform,
+        Transforms = forwardPublicHostTransform,
       })
       .ToList();
 
@@ -96,14 +98,14 @@ public class Program : IAspNetProgram
       RouteId = "TipDiscoveryAlias-api",
       ClusterId = "Web.Server",
       Match = new RouteMatch { Path = "/api" },
-      Transforms = originalHostTransform,
+      Transforms = forwardPublicHostTransform,
     });
     generatedWebRoutes.Add(new RouteConfig
     {
       RouteId = "TipDiscoveryAlias-api-slash",
       ClusterId = "Web.Server",
       Match = new RouteMatch { Path = "/api/" },
-      Transforms = originalHostTransform,
+      Transforms = forwardPublicHostTransform,
     });
 
     reverseProxy.LoadFromMemory(generatedWebRoutes, Array.Empty<ClusterConfig>());

@@ -80,17 +80,22 @@
 // The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
 // the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
 // on Web.Server for any proxied Entra deployment.
-// Original-Host forwarding (task 104-031): the Web.Server routes chain
-// WithTransformUseOriginalHostHeader(true) so the client's original Host header reaches Web.Server
-// instead of being rewritten to the destination host — Web.Server's per-request WebAuthn RP-ID
-// selection needs the PUBLIC host to match it against the allowlist. This is NOT UseForwardedHeaders
-// and consumes no spoofable X-Forwarded-* header: the Host only SELECTS among pre-approved RP IDs
-// (WebAuthnOptions.AllowedRpIds), so a forged Host can never mint a credential for an RP ID the
-// operator did not approve. Applied to Web.Server routes only; the api/grpc backends do no host-based
-// selection and keep YARP's default host rewrite.
-// Guarded by aspire-tests/ingress-smoke-tests.cs (task 117): a request-level smoke through the
-// ingress with a foreign Host header on a web route — the exact shape that 502'd when this hop
-// ran over https — so a regression to the https cluster fails CI instead of shipping green.
+// Public-host forwarding (task 070-008, replacing 104-031's original-Host forwarding): YARP sends the
+// DESTINATION host as Host on every route (its default) and the Web.Server routes chain
+// WithTransformXForwarded(xHost: Set), which OVERWRITES X-Forwarded-Host with the browser's public
+// host — a client-supplied X-Forwarded-Host never survives the ingress. One rule on every target:
+// a public Host on the web hop breaks Azure Container Apps, whose internal ingress routes
+// app-to-app traffic by Host. Web.Server's per-request WebAuthn RP-ID selection reads the public
+// host from X-Forwarded-Host (HttpRequestHostAccessor only — no UseForwardedHeaders, which would also
+// rewrite scheme and remote IP). The forwarded host only SELECTS among pre-approved RP IDs
+// (WebAuthnOptions.AllowedRpIds), so a forged value can never mint a credential for an RP ID the
+// operator did not approve; where web-server is directly reachable (run mode) a client can send its
+// own X-Forwarded-Host exactly as it can send its own Host, and selection-only is what makes both
+// safe — full argument in HttpRequestHostAccessor's Design region. Applied to Web.Server routes
+// only; the api/grpc backends do no host-based selection and keep YARP's defaults.
+// Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008): request-level smokes through
+// the ingress with a foreign Host on a web route, and a forged X-Forwarded-Host that must not reach
+// web-server's RP-ID selection.
 // Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so
 // "Healthy" means "answers HTTP through the DCP host proxy", not merely "container Running".
 // AddYarp registers no health check of its own; see the inline note at the call site.
@@ -141,7 +146,7 @@
 // Ingress decision (carried from retired 070-001) — option (a): the cluster's ingress controller
 // forwards ALL traffic to the YARP ingress, which keeps the per-service routing above. Chosen over
 // (b), per-service controller routes from WebServerApiRoutePrefixes, because (b) would fork the
-// routing table into a second implementation per target and lose YARP's original-Host forwarding
+// routing table into a second implementation per target and lose YARP's X-Forwarded-Host overwrite
 // and /grpc prefix strip, which controller annotations express differently per vendor; with (a) the
 // routes are identical in run mode, Compose and Kubernetes. The chart carries one networking.k8s.io
 // Ingress (cluster-ingress) whose default backend is YARP's http endpoint (TLS terminates at the
@@ -211,21 +216,6 @@
 // `dev publish aca` writes artifacts/aspire-output/aca and gates it with aspire-tests'
 // aca-publish-tests (AcaPublish_Given_); publishing needs no Azure credentials, so CI runs it on every
 // PR and uploads the Bicep and SQL script. Deploying is `dev deploy --target aca` (operator-run).
-#endregion
-
-#region Open Questions
-// Q: What is the aca web-route host strategy? Under Publish:Target=aca the http web hop does NOT
-// hold: Aspire upgrades the internal endpoints to https, so services__web-server__http__0 (the
-// http://_http.web-server cluster) resolves to https://web-server.internal.<env domain>, and the web
-// routes forward the client's public Host (WithTransformUseOriginalHostHeader, task 104-031) on that
-// hop. ACA's internal ingress selects the app by Host/SNI and .NET validates the TLS certificate
-// against the Host header, so EVERY web route (SPA catch-all, generated /api/<web> prefixes, /api)
-// is expected to fail through the ACA ingress (wrong app or 404, or a certificate-name mismatch) —
-// not only passkeys. The aca target is not usable for the web surface until this is decided.
-// Candidate (needs maintainer sign-off — it changes the security design): aca-only web routes
-// without the original-Host transform, so YARP's default X-Forwarded-Host carries the public host,
-// with web-server's RP-ID host accessor reading X-Forwarded-Host (trusting it only from the ingress).
-// The other candidate is giving web-server the public hostname directly.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -527,17 +517,14 @@ internal class Program
     }
 
 #if web
-    // Web routes preserve the ORIGINAL Host (per-request RP-ID selection). Outbound TLS from the
-    // ingress would then validate Web.Server's localhost dev cert against the PUBLIC hostname
-    // (Headers.Host overrides .NET's certificate-name validation target) and 502 with
-    // RemoteCertificateNameMismatch. So the ingress forwards web routes over the HTTP endpoint —
-    // in run mode, Compose and Kubernetes TLS terminates at the ingress edge (and at Caddy on the
-    // public chain), not on this hop.
-    // NOT under Publish:Target=aca: ACA upgrades internal ingress to https, so this hop goes to
-    // https://web-server.internal.<env domain> carrying the public Host, and ACA's host routing / TLS
-    // name validation is expected to fail for every web route. Unresolved by design decision — see
-    // the Open Questions region; do not treat the aca web surface as working.
-    // api/grpc routes do not preserve host and stay on their default (https) endpoints.
+    // The ingress forwards web routes over the HTTP endpoint — TLS terminates at the ingress edge
+    // (and at Caddy on the public chain), not on this hop. This dates from 104-031's original-Host
+    // forwarding (an https hop validated Web.Server's localhost dev cert against the PUBLIC
+    // hostname and 502'd); task 070-008 sends the destination host instead but keeps the plain
+    // HTTP hop on run, Compose and Kubernetes. api/grpc routes stay on their default (https) endpoints.
+    // Under Publish:Target=aca the same named-endpoint address resolves to the https internal ingress
+    // (Aspire's https upgrade), which works: Host is the destination (ACA routes and validates TLS by
+    // it) and the public host travels in X-Forwarded-Host (task 070-008). No aca-specific web route.
     // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
     // "https+http://web-server", which service discovery resolves https-first — reintroducing the
     // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
@@ -574,20 +561,23 @@ internal class Program
       // Web.Server owns these top-level /api prefixes (generated: WebServerApiRoutePrefixes.All from
       // the web-contracts ApiRoute templates — see the Design region). Each literal segment outranks
       // the Api.Server catch-all above, so they win regardless of order.
-      // WithTransformUseOriginalHostHeader (task 104-031): forward the CLIENT's original Host header
-      // to Web.Server instead of YARP rewriting it to the destination host, so HttpRequestHostAccessor
-      // sees the public share hostname and the passkey RP-ID selection can match it against the
-      // allowlist. Web.Server routes ONLY — the api/grpc backends keep YARP's default host rewrite.
+      // ForwardPublicHost (task 070-008): Host stays the destination; X-Forwarded-Host is SET
+      // (client value dropped) to the browser's public host, which HttpRequestHostAccessor reads for
+      // passkey RP-ID selection against the allowlist. Web.Server routes ONLY — the api/grpc
+      // backends keep YARP's defaults.
+      static global::Aspire.Hosting.Yarp.YarpRoute ForwardPublicHost(global::Aspire.Hosting.Yarp.YarpRoute route) =>
+        route.WithTransformXForwarded(xHost: global::Yarp.ReverseProxy.Transforms.ForwardedTransformActions.Set);
+
       foreach (string apiPrefix in global::WebServerApiRoutePrefixes.All)
       {
-        yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp).WithTransformUseOriginalHostHeader(true);
+        ForwardPublicHost(yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp));
       }
 
       // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
       // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
       // (TWA0018 forbids bare `api` as a contracts prefix).
-      yarpConfiguration.AddRoute("/api", webServerHttp).WithTransformUseOriginalHostHeader(true);
-      yarpConfiguration.AddRoute("/api/", webServerHttp).WithTransformUseOriginalHostHeader(true);
+      ForwardPublicHost(yarpConfiguration.AddRoute("/api", webServerHttp));
+      ForwardPublicHost(yarpConfiguration.AddRoute("/api/", webServerHttp));
 
 #endif
 #if grpc
@@ -595,9 +585,9 @@ internal class Program
         .WithTransformPathRemovePrefix("/grpc");
 #endif
 #if web
-      // Catch-all to Web.Server (SPA + everything not owned above): same original-Host forwarding as
-      // the literal /api routes so RP-ID selection sees the public host (task 104-031).
-      yarpConfiguration.AddRoute(webServerHttp).WithTransformUseOriginalHostHeader(true);
+      // Catch-all to Web.Server (SPA + everything not owned above): same public-host forwarding as
+      // the literal /api routes so RP-ID selection sees the public host (task 070-008).
+      ForwardPublicHost(yarpConfiguration.AddRoute(webServerHttp));
 #endif
     });
 #endif

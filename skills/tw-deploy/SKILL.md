@@ -241,8 +241,16 @@ The published idempotent SQL script (`efmigrations/web-migrations.sql`) is safe 
 ## Ingress topology
 
 All public traffic enters through the **YARP ingress**, which owns the routing table (generated
-web `/api` prefixes, the api catch-all, `/grpc` prefix strip, original-Host forwarding for web
-routes). The routing is therefore identical in run mode, Compose and Kubernetes.
+web `/api` prefixes, the api catch-all, `/grpc` prefix strip, and the public-host forwarding for
+web routes). The routing is therefore identical in run mode, Compose and Kubernetes.
+
+- **Public host travels in `X-Forwarded-Host`.** YARP sends the destination host as `Host` on
+  every route and *sets* `X-Forwarded-Host` to the browser's host on web-server routes,
+  overwriting any value the client sent. web-server reads it only to select the passkey RP ID
+  from `WebAuthn:AllowedRpIds`; a value outside that list is rejected. Nothing else consumes
+  forwarded headers (no `UseForwardedHeaders`). If you put another proxy in front of the ingress,
+  it may set `X-Forwarded-Host` too; YARP still overwrites it with the `Host` it received, so make
+  that proxy preserve the public `Host`.
 
 - **Compose:** the ingress is the only service with a host port. Put TLS in front of it (your
   reverse proxy or load balancer).
@@ -255,7 +263,7 @@ routes). The routing is therefore identical in run mode, Compose and Kubernetes.
   infrastructure; an app chart that installs one collides with every other release. Install one
   per cluster.
 - **Do not replace YARP with per-service controller routes.** That forks the routing table into a
-  second implementation per target and loses original-Host forwarding and the `/grpc` prefix strip,
+  second implementation per target and loses the `X-Forwarded-Host` overwrite and the `/grpc` prefix strip,
   which every controller vendor expresses differently.
 - Behind any proxy that terminates TLS, set `Authentication:Entra:PublicOrigin` on web-server
   explicitly when Entra is on; it is not derived from the ingress URL.
@@ -384,15 +392,11 @@ ON_ERROR_STOP=1 -f efmigrations/web-migrations.sql`, through the same firewall r
   az keyvault purge --name <vault>
   ```
 
-- **Web routes are expected to fail through the ACA ingress.** This is an open design decision,
-  not a deploy hiccup. The ingress forwards every web route (the SPA, the web `/api` prefixes,
-  `/api`) with the client's original `Host` header, which passkey RP-ID selection depends on. On
-  ACA that hop is upgraded to `https://web-server.internal.<domain>`, and ACA's internal ingress
-  routes and serves TLS by host name, so the public `Host` most likely reaches the wrong app, a 404
-  or a certificate-name mismatch. api and grpc routes keep YARP's default host rewrite and are not
-  affected. Until the maintainer decides the aca web-route host strategy (candidate: aca-only web
-  routes without the original-Host transform, with web-server's RP-ID host accessor reading
-  `X-Forwarded-Host` — a security-design change), do not rely on the aca target for the web surface.
+- **Web hop host.** The ingress reaches web-server over ACA's internal https ingress
+  (`https://web-server.internal.<domain>`; Aspire's https upgrade stays on). That works because
+  `Host` is the destination host (ACA routes and validates TLS by it) and the browser's public host
+  travels in `X-Forwarded-Host`, which web-server reads for passkey RP-ID selection (task 070-008,
+  the same on every target). There is no aca-specific web route.
 
 **Deprovision.** `dev deprovision --target aca` runs `aspire destroy`, then prints the Key Vault
 purge. When `aspire destroy` has no record of the deployment (another machine or checkout deployed

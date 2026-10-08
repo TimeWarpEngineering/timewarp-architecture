@@ -11,10 +11,10 @@
 // DefaultScheme. Obsolete Authentication:UseEntra maps to Enabled for one version and MUST
 // never restore default-scheme Entra. SPA session is always identity-session when not mock
 // (no WASM MSAL). Callers pass raw config strings so this type has no IConfiguration dependency.
-// X-TimeWarp-Circuit-Host is set only by IdentitySessionCookieForwardingHandler from the circuit
-// request Host (port stripped). Same trust as the mock principal header: never copied from a
-// client-supplied X-Forwarded-Host. HttpRequestHostAccessor honors it only when Request.Host is
-// loopback; on the public path a client-supplied copy is ignored.
+// X-TimeWarp-Circuit-Host is set by IdentitySessionCookieForwardingHandler from the circuit
+// request's public host (ingress-set X-Forwarded-Host, else Request.Host; port stripped — task
+// 070-008). HttpRequestHostAccessor honors it only when Request.Host is loopback; on the public
+// path a client-supplied copy is ignored. Either way the value only selects among AllowedRpIds.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -52,8 +52,8 @@ public static class MockAuthenticationDefaults
   /// Internal header set only by IdentitySessionCookieForwardingHandler so HTTPS loopback
   /// can carry the circuit/page host for WebAuthn RP-ID selection without rewriting HTTP Host
   /// (which HttpClient uses for TLS SNI / certificate name validation against localhost).
-  /// HttpRequestHostAccessor honors it only when Request.Host is loopback.
-  /// Never read a client-supplied X-Forwarded-Host in its place.
+  /// HttpRequestHostAccessor honors it only when Request.Host is loopback; the value is the
+  /// circuit request's public host and only selects among the approved RP IDs.
   /// </summary>
   public const string CircuitHostHeader = "X-TimeWarp-Circuit-Host";
 
