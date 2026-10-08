@@ -172,7 +172,7 @@ public partial class AcaPublish_Given_
         string value = Field(secret, "value").ShouldNotBeNull($"{app.Name} secret '{name}' has neither keyVaultUrl nor value");
         IsStringLiteral(value).ShouldBeFalse($"{app.Name} secret '{name}' is a literal");
         ParameterNames(value).ShouldNotBeEmpty($"{app.Name} secret '{name}' does not come from a parameter");
-        foreach (string parameter in ParameterNames(value).Where(parameter => IsSecretShaped(parameter)))
+        foreach (string parameter in ParameterNames(value).Where(IsSecretShaped))
         {
           SecureParameters(Modules[app.Module]).ShouldContain(parameter, $"{app.Name} secret '{name}' reads non-@secure() parameter '{parameter}'");
         }
@@ -282,7 +282,7 @@ public partial class AcaPublish_Given_
     List<(string Module, string Name, string? Start, string? End)> rules = [.. Modules.SelectMany(module =>
       FirewallRuleDeclaration().Matches(module.Value).Select(match =>
       {
-        string block = Block(module.Value, module.Value.IndexOf('{', match.Index));
+        string block = Block(module.Value, module.Value.IndexOf('{', match.Index, StringComparison.Ordinal));
         return (module.Key, Unquote(Field(block, "name")), Field(block, "startIpAddress"), Field(block, "endIpAddress"));
       }))];
 
@@ -335,7 +335,7 @@ public partial class AcaPublish_Given_
   {
     foreach (Match match in ContainerAppDeclaration().Matches(text))
     {
-      string body = Block(text, text.IndexOf('{', match.Index));
+      string body = Block(text, text.IndexOf('{', match.Index, StringComparison.Ordinal));
       List<EnvironmentEntry> environment = [.. ArrayItems(body, "env").Select(item =>
         Field(item, "secretRef") is { } secretRef
           ? new EnvironmentEntry(Unquote(Field(item, "name")), secretRef, IsSecretRef: true)
@@ -363,13 +363,13 @@ public partial class AcaPublish_Given_
     || name.EndsWith("_URI", StringComparison.OrdinalIgnoreCase);
 
   private static bool IsStringLiteral(string expression) =>
-    expression.StartsWith('\'') && !expression.Contains("${", StringComparison.Ordinal);
+    expression.StartsWith('\'', StringComparison.Ordinal) && !expression.Contains("${", StringComparison.Ordinal);
 
   // Identifiers an expression reads: inside each `${…}` of a string, or the bare expression. Function
   // names (followed by '(') are not identifiers.
   private static List<string> ParameterNames(string expression)
   {
-    IEnumerable<string> code = expression.StartsWith('\'')
+    IEnumerable<string> code = expression.StartsWith('\'', StringComparison.Ordinal)
       ? Interpolation().Matches(expression).Select(match => match.Groups[1].Value)
       : [expression];
     return [.. code.SelectMany(part => Identifier().Matches(part).Select(match => match.Value))];

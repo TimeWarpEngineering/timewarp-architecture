@@ -4,7 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0005;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 
 // Co-located Jaribu: RenameCredential validator + handler (happy path, rejection, IDOR 404 shape).
 // Run standalone:  dotnet run source/container-apps/web/features/identity/rename-credential/rename-credential-tests.cs

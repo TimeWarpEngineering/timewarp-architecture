@@ -213,7 +213,7 @@ internal static class DeployOperate
     foreach (string raw in envText.Split('\n'))
     {
       string line = raw.Trim();
-      if (line.StartsWith('#'))
+      if (line.StartsWith('#', StringComparison.Ordinal))
       {
         continue;
       }
@@ -271,7 +271,7 @@ internal static class DeployOperate
 
     static string Text(JsonElement entry, string name) =>
       entry.EnumerateObject().FirstOrDefault(property => string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)).Value is
-        { ValueKind: JsonValueKind.String } value
+      { ValueKind: JsonValueKind.String } value
         ? value.GetString() ?? ""
         : "";
   }

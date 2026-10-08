@@ -5,7 +5,7 @@
 #:package Microsoft.Extensions.Logging.Abstractions
 #:package Microsoft.Extensions.Options
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Host-free SeedOnReadSiteSettingsStore coverage (task 254).
 // Run standalone:  dotnet run source/container-apps/web/features/identity/seed-on-read-site-settings-store-tests.cs

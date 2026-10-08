@@ -186,7 +186,7 @@ public class ContractNullabilityValidatorAnalyzer : DiagnosticAnalyzer
       // = string.Empty / = String.Empty
       MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Empty", Expression: var receiver } =>
         receiver is PredefinedTypeSyntax { Keyword.RawKind: (int)SyntaxKind.StringKeyword }
-          || receiver is IdentifierNameSyntax { Identifier.ValueText: "String" or "string" },
+          or IdentifierNameSyntax { Identifier.ValueText: "String" or "string" },
       _ => false
     };
 }

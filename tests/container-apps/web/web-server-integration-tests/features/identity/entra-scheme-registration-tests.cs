@@ -12,8 +12,6 @@
 
 namespace EntraSchemeRegistration_;
 
-using System.Reflection;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +25,8 @@ using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
+using System.Text;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Services;
@@ -51,7 +51,7 @@ public class ConfigureAuthentication_Given_
         }
       );
 
-    IList<IConfigurationSource> configurationSources = ((IConfigurationBuilder)builder.Configuration).Sources;
+    IList<IConfigurationSource> configurationSources = builder.Configuration.Sources;
     for (int index = configurationSources.Count - 1; index >= 0; index--)
     {
       if (configurationSources[index] is JsonConfigurationSource jsonSource && jsonSource.Path == "secrets.json")

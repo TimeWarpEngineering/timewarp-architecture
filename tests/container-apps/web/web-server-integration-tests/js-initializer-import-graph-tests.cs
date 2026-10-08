@@ -248,7 +248,7 @@ public class Serve_Given_
       $"{requestPath} expected a JS content type, got {mediaType}");
 
     body.Length.ShouldBeGreaterThan(0, $"{requestPath} was empty");
-    (!body.TrimStart().StartsWith('<')).ShouldBeTrue(
+    (!body.TrimStart().StartsWith('<', StringComparison.Ordinal)).ShouldBeTrue(
       $"{requestPath} looks like HTML, not JavaScript");
     fetchedBodies[requestPath] = body;
     return body;
@@ -293,7 +293,7 @@ internal static partial class JsInitializerImportGraph
       return false;
     }
 
-    if (specifier.StartsWith('/'))
+    if (specifier.StartsWith('/', StringComparison.Ordinal))
     {
       resolved = specifier;
       return true;
@@ -312,7 +312,7 @@ internal static partial class JsInitializerImportGraph
       return uri.AbsolutePath;
     }
 
-    return trimmed.StartsWith('/') ? trimmed : "/" + trimmed.TrimStart('~', '/');
+    return trimmed.StartsWith('/', StringComparison.Ordinal) ? trimmed : "/" + trimmed.TrimStart('~', '/');
   }
 
   public static string FindRepoRoot()

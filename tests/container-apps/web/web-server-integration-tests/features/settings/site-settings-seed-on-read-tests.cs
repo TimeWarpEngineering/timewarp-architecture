@@ -12,10 +12,10 @@
 
 namespace SiteSettingsSeedOnRead_;
 
-using System.Net;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Text.Json;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Settings;

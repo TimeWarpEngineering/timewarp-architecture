@@ -18,7 +18,7 @@ using static ListPrincipals;
 public sealed partial class PrincipalState : State<PrincipalState>
 {
   private List<PrincipalSummaryDto>? PrincipalsList { get; set; }
-  private Dictionary<Guid, HashSet<Guid>> DraftRoleIds { get; set; } = new();
+  private Dictionary<Guid, HashSet<Guid>> DraftRoleIds { get; set; } = [];
 
   public IReadOnlyList<PrincipalSummaryDto>? Principals => PrincipalsList?.AsReadOnly();
 
@@ -27,7 +27,7 @@ public sealed partial class PrincipalState : State<PrincipalState>
   public override void Initialize()
   {
     PrincipalsList = null;
-    DraftRoleIds = new();
+    DraftRoleIds = [];
     LastSetPrincipalRolesSucceeded = false;
   }
 

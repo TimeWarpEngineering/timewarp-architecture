@@ -45,16 +45,18 @@
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <!-- Configuration.Abstractions, DependencyInjection.Abstractions, and Hosting.Abstractions
+         are in the net11 shared framework. Direct PackageReferences to them are NU1510, so those
+         pins are gone. Logging.Abstractions and Options stay pinned: co-located runfiles take them
+         with a versionless #:package directive, which Central Package Management resolves from here.
+         A csproj must not PackageReference them (NU1510). -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0-rc.1.26425.128" />
   </ItemGroup>
   <ItemGroup Label="Foundation Packages">
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
@@ -97,23 +99,23 @@
          real AppHost + an HTTP round-trip through api-server) passed 7/7 against MessagePack 3.1.8,
          verifying the DCP/StreamJsonRpc communication path tolerates the v3 major. -->
     <PackageVersion Include="MessagePack" Version="3.1.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.1.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
 
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0-rc.1.26425.128" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
          to parse attestationObject/authenticatorData COSE keys. timewarp-identity is a plain
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
-    <PackageVersion Include="System.Formats.Cbor" Version="10.0.12" />
+    <PackageVersion Include="System.Formats.Cbor" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Mediator.Analyzers" Version="14.0.0-beta.4" />
@@ -129,18 +131,27 @@
          AspNetCore.OpenApi's own nuspec. Stay on 2.12.2 until a .NET version ships an
          AspNetCore.OpenApi built against the OpenApi 3.x object model (.NET 11).
          Re-checked task 249: Microsoft.AspNetCore.OpenApi 10.0.12 still declares
-         Microsoft.OpenApi [2.12.0, 3.0.0) — 3.x stays deferred to the .NET 11 train. -->
+         Microsoft.OpenApi [2.12.0, 3.0.0).
+         Re-checked task 272 on .NET 11 RC1 (11.0.0-rc.1.26425.128): Microsoft.AspNetCore.OpenApi
+         11 declares Microsoft.OpenApi [3.10.0, 4.0.0). FastEndpoints.OpenApi 8.3.0 (latest stable)
+         and 8.4.0-beta.22 still depend on Microsoft.AspNetCore.OpenApi 10.0.11, whose nuspec
+         keeps Microsoft.OpenApi [2.7.5, 3.0.0). Taking 3.10.2 is not a clean restore — task 257
+         stays open. Pin stays 2.12.2.
+         Shared-framework Microsoft.* / System.* pins on this train are 11.0.0-rc.1.26425.128,
+         matching SDK 11.0.100-rc.1.26425.128 (Steve authorized RC1, 2026-10-09). Extensions
+         monthly packages (Http.Resilience, ServiceDiscovery, Telemetry) have no 11.x yet and
+         stay on 10.10.0. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.11" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0-rc.1.26425.128" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.0" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.0" />
     <!-- Task 201: take 7.0.1 (native tsc-go). web-spa.csproj runs SetTscExecutable +
@@ -173,7 +184,7 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
     <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.0" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="5.0.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
@@ -191,7 +202,7 @@
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.10.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />

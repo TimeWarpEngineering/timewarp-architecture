@@ -185,7 +185,7 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
     string body = await response.Content.ReadAsStringAsync();
-    string optionsJson = JsonDocument.Parse(body).RootElement.GetProperty("optionsJson").GetString()!;
+    string optionsJson = JsonElement.Parse(body).GetProperty("optionsJson").GetString()!;
     return ReadChallenge(optionsJson);
   }
 

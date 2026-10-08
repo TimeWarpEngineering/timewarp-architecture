@@ -1,9 +1,9 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.IO;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
 
 // Verifies TypedIdSourceGenerator: internal [TypedId] attribute injection, BCL surface
 // (New/From/Json/Parse), TWE006 on invalid shapes, the [assembly: TypedIdsEmbedded] marker, and EF

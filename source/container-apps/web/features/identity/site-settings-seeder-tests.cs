@@ -5,7 +5,7 @@
 #:package Microsoft.Extensions.Logging.Abstractions
 #:package Microsoft.Extensions.Options
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Host-free SiteSettingsSeeder coverage (task 219-006 / 225 / 227).
 // Run standalone:  dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs

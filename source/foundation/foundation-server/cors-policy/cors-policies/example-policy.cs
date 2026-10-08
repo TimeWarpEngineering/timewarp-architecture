@@ -11,6 +11,7 @@
 #endregion
 
 namespace TimeWarp.Foundation.CorsPolicies;
+
 public partial class CorsPolicy
 {
   private class ExamplePolicy : CorsPolicy

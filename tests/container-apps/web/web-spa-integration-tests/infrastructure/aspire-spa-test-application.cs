@@ -53,7 +53,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
       throw new InvalidOperationException("YARP HTTP base URL is not configured.");
     }
 
-    string baseUrl = rawBaseUrl.EndsWith('/') ? rawBaseUrl : rawBaseUrl + "/";
+    string baseUrl = rawBaseUrl.EndsWith('/', StringComparison.Ordinal) ? rawBaseUrl : rawBaseUrl + "/";
 
     ConfigureServices(services, baseUrl);
 

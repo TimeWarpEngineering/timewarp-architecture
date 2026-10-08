@@ -75,7 +75,7 @@ public sealed class EntraAuthenticationOptions
 
     string origin = PublicOrigin.Trim().TrimEnd('/');
     string callback = string.IsNullOrWhiteSpace(CallbackPath) ? "/signin-oidc" : CallbackPath.Trim();
-    if (!callback.StartsWith('/'))
+    if (!callback.StartsWith('/', StringComparison.Ordinal))
     {
       callback = "/" + callback;
     }

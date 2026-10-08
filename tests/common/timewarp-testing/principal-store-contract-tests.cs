@@ -24,7 +24,7 @@ public abstract class Principals
   public async Task Add_and_get_round_trips()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
 
     await store.AddPrincipalAsync(principal);
@@ -39,7 +39,7 @@ public abstract class Principals
   public async Task Duplicate_principal_id_fails()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -49,7 +49,7 @@ public abstract class Principals
   public async Task Update_persists_display_name_and_tier()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Agent);
     await store.AddPrincipalAsync(principal);
 
@@ -68,7 +68,7 @@ public abstract class Principals
   public async Task Update_missing_principal_fails()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Service);
     await Should.ThrowAsync<InvalidOperationException>(() => store.UpdatePrincipalAsync(principal));
   }
@@ -117,7 +117,7 @@ public abstract class Credentials
   public async Task First_credential_promotes_provisional_to_keyed()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
     principal.TrustTier.ShouldBe(TrustTier.Provisional);
@@ -133,7 +133,7 @@ public abstract class Credentials
   public async Task First_credential_promotes_to_keyed_even_when_quarantined()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Quarantine();
     await store.AddPrincipalAsync(principal);
@@ -150,7 +150,7 @@ public abstract class Credentials
   public async Task Multi_credential_per_principal_is_allowed()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -172,7 +172,7 @@ public abstract class Credentials
   public async Task Find_by_handle_returns_match()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Agent);
     await store.AddPrincipalAsync(principal);
 
@@ -188,7 +188,7 @@ public abstract class Credentials
   public async Task Find_by_handle_returns_revoked_credential()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -206,7 +206,7 @@ public abstract class Credentials
   public async Task Duplicate_type_and_handle_fails()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -220,7 +220,7 @@ public abstract class Credentials
   public async Task Same_handle_different_type_is_allowed()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -234,7 +234,7 @@ public abstract class Credentials
   public async Task Missing_principal_fails_credential_add()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
     await Should.ThrowAsync<InvalidOperationException>(() => store.AddCredentialAsync(credential));
   }
@@ -242,7 +242,7 @@ public abstract class Credentials
   public async Task List_excludes_revoked_by_default()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -264,7 +264,7 @@ public abstract class Credentials
   public async Task Get_credential_by_id()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Service);
     await store.AddPrincipalAsync(principal);
 
@@ -284,7 +284,7 @@ public abstract class Credentials
   public async Task Nickname_and_registered_with_round_trip_through_update()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -320,7 +320,7 @@ public abstract class Credentials
   public async Task Update_missing_credential_fails()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Credential credential = Credential.Create(PrincipalId.New(), CredentialType.Passkey, [1], [2]);
     await Should.ThrowAsync<InvalidOperationException>(() => store.UpdateCredentialAsync(credential));
   }
@@ -351,7 +351,7 @@ public abstract class Credentials
   public async Task Lists_in_ascending_CreatedAt_order()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -384,7 +384,7 @@ public abstract class SnapshotSemantics
   public async Task Get_twice_returns_distinct_but_equal_instances()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -400,7 +400,7 @@ public abstract class SnapshotSemantics
   public async Task Mutating_a_snapshot_is_invisible_until_update()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -416,7 +416,7 @@ public abstract class SnapshotSemantics
   public async Task Credential_byte_arrays_are_independent_across_snapshots()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -437,7 +437,7 @@ public abstract class SnapshotSemantics
   public async Task Version_is_zero_after_create_and_one_after_update()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     principal.Version.ShouldBe(0);
     await store.AddPrincipalAsync(principal);
@@ -465,7 +465,7 @@ public abstract class AddPersistsVersionAsIs
   public async Task Add_of_nonzero_version_snapshot_persists_that_version()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore sourceStore = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore sourceStore = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await sourceStore.AddPrincipalAsync(principal);
 
@@ -497,7 +497,7 @@ public abstract class StalePrincipalUpdate
   public async Task Conflicting_update_throws_with_expected_and_actual_versions()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -522,7 +522,7 @@ public abstract class StalePrincipalUpdate
   public async Task Retry_after_reGet_succeeds()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -559,7 +559,7 @@ public abstract class CallerAheadConflict
   public async Task Ahead_of_store_throws_with_expected_greater_than_actual()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore storeA = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore storeA = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await storeA.AddPrincipalAsync(principal);
 
@@ -594,7 +594,7 @@ public abstract class RevokeResurrectionRace
   public async Task Stale_update_after_revoke_throws_and_store_stays_revoked()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -627,7 +627,7 @@ public abstract class QuarantineLossRace
   public async Task Stale_update_throws_and_store_stays_quarantined()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -658,7 +658,7 @@ public abstract class TierDemotionRace
   public async Task Stale_update_throws_and_store_stays_at_promoted_tier()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -689,7 +689,7 @@ public abstract class AttachBumpsPrincipalVersion
   public async Task Pre_attach_snapshot_update_conflicts_after_first_credential()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -706,7 +706,7 @@ public abstract class AttachBumpsPrincipalVersion
   public async Task Second_credential_add_does_not_bump_version_again()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -733,7 +733,7 @@ public abstract class CallerInstanceNotAdvanced
   public async Task Version_unchanged_on_callers_instance_after_successful_update()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 
@@ -746,7 +746,7 @@ public abstract class CallerInstanceNotAdvanced
   public async Task Second_update_with_same_instance_throws()
   {
 
-    if (ShouldSkip()) return;    IPrincipalStore store = Factory.CreateStore();
+    if (ShouldSkip()) return; IPrincipalStore store = Factory.CreateStore();
     Principal principal = Principal.Create(PrincipalKind.Human);
     await store.AddPrincipalAsync(principal);
 

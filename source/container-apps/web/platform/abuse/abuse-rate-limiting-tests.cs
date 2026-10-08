@@ -3,7 +3,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211
 #:property DefineConstants=$(DefineConstants);api
 
 // Co-located Jaribu tests for app-level abuse rate limits (task 104-015).
@@ -133,12 +133,12 @@ namespace TimeWarp.Architecture.Abuse
     private static async Task AssertStructured429(HttpResponseMessage response, string expectedPolicy)
     {
       response.Content.Headers.ContentType.ShouldNotBeNull();
-      response.Content.Headers.ContentType!.MediaType.ShouldBe("application/problem+json");
+      response.Content.Headers.ContentType.MediaType.ShouldBe("application/problem+json");
 
       SharedProblemDetails? problem =
         await response.Content.ReadFromJsonAsync<SharedProblemDetails>(ContractSerializationDefaults.Options);
       problem.ShouldNotBeNull();
-      problem!.Status.ShouldBe(429);
+      problem.Status.ShouldBe(429);
       problem.Title.ShouldBe("Too Many Requests");
       problem.Detail.ShouldNotBeNullOrWhiteSpace();
 

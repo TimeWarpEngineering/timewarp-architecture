@@ -41,7 +41,7 @@ public class CommonServerModule : IAspNetModule
   /// </summary>
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    IConfigurationRoot configurationRoot = webApplication!.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
+    IConfigurationRoot configurationRoot = webApplication.Configuration as IConfigurationRoot ?? throw new InvalidOperationException();
 
     if (webApplication.Environment.IsDevelopment())
     {

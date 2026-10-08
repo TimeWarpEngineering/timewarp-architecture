@@ -112,8 +112,11 @@ partial class PrincipalState
         PrincipalState.LastSetPrincipalRolesSucceeded = true;
         if (AuthenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
         {
+          // One read to see whether the edited principal is the signed-in user.
+#pragma warning disable BL0013
           AuthenticationState authState =
             await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
           string? currentId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? authState.User.FindFirst("timewarp:principal_id")?.Value;
           if (Guid.TryParse(currentId, out Guid currentPrincipal)

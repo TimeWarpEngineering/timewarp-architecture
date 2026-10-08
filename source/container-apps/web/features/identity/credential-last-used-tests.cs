@@ -4,7 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0005;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
 
 // Co-located Jaribu: task 248-002 — last-used stamp vs RevokeCredential's retry loop (revoke wins in
 // both orderings, no exception reaches either caller) and GetCredentials surfacing LastUsedAt.

@@ -99,10 +99,12 @@ public sealed class Credential : Entity<CredentialId>
 
   // Private scalar projections of RegisteredWith so the EF mapping (private properties mapped by
   // name, see CredentialEntityTypeConfiguration) can persist three columns without an owned/complex
-  // type. Never read by domain code — RegisteredWith is the public surface.
+  // type. Never read by domain code — RegisteredWith is the public surface. IDE0052 cannot see EF.
+#pragma warning disable IDE0052
   private AuthenticatorAttachment RegisteredAttachment { get; }
   private string? RegisteredBrowser { get; }
   private string? RegisteredOs { get; }
+#pragma warning restore IDE0052
 
   private Credential(
     CredentialId id,

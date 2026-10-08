@@ -61,10 +61,12 @@ public partial class IngressSmoke_Given_
 
     await App.StartAsync();
 
-    // Requests flow only once the backends AND the ingress are healthy; one 2-minute budget
+    // Requests flow only once the backends AND the ingress are healthy; one 4-minute budget
     // covers all the gates below (three health waits, the web-migrations terminal-state wait,
     // and the ingress-reachability poll) so a slow backend doesn't false-fail the ingress wait.
-    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
+    // EF Core 11 `dotnet ef --verbose` (Aspire always passes it) streams the MSBuild item graph
+    // for about 90s before it migrates; the boot seed waits up to 180s for the table.
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(4));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
@@ -199,7 +201,7 @@ public partial class IngressSmoke_Given_
     // DbCommand", "An exception occurred while iterating over the results of a query") for
     // 42P01 on identity.site_settings. Wait until web-server reports it started, so its whole
     // boot (the seed runs before Kestrel) is in the captured console.
-    using CancellationTokenSource cts = new(TimeSpan.FromSeconds(30));
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(3));
     while (!WebServerLogLines.Any(line => line.Contains("Application started", StringComparison.Ordinal)))
     {
       if (WebServerLogWatchTask!.IsCompleted)

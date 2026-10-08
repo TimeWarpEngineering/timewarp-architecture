@@ -18,8 +18,13 @@
 // a missing table) and only queries through EF once the table exists — a failing EF query logs
 // two Error entries inside EF before any catch here runs, and a clean first run must log none.
 // A missing table is expected on a first run, so early attempts log Information; from attempt
-// QuietAttempts + 1 the wait logs Warning, because migrations should have finished by then. The
-// last attempt skips the probe and runs the seed anyway, so an exhausted budget still fails the
+// QuietAttempts + 1 the wait logs Warning, because migrations should have finished by then.
+// EF Core 11 tools always run under Aspire's `--verbose`. That flag prints the full
+// `dotnet build -getProperty` item graph (thousands of lines) before it opens a connection.
+// On RC1 that stream took about 90s through the AppHost log pipe, so the old 30s budget
+// expired, the host died on 42P01, and ingress never became healthy. 180s covers that
+// startup plus applying the migrations; warnings begin only after two minutes.
+// The last attempt skips the probe and runs the seed anyway, so an exhausted budget still fails the
 // host with the real 42P01 rather than a silent skip. The 42P01 catch stays for the narrow race
 // where the table disappears between probe and query (`dev db reset` during a restart). With no
 // probe registered (in-memory builds) the loop is a single seed pass before Kestrel starts.
@@ -33,8 +38,8 @@ using TimeWarp.Architecture.Features.Identity.Application;
 
 public sealed class SiteSettingsSeedHostedService : IHostedLifecycleService
 {
-  private const int MaxAttempts = 30;
-  private const int QuietAttempts = 5;
+  private const int MaxAttempts = 180;
+  private const int QuietAttempts = 120;
   private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
 
   private static readonly Action<ILogger, int, int, Exception?> LogUndefinedTableRetry =

@@ -18,7 +18,7 @@ partial class ApplicationState
 
     internal class Handler : BaseHandler<Action>
     {
-      public Handler(IStore store) : base(store) {}
+      public Handler(IStore store) : base(store) { }
       public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         _ = action;

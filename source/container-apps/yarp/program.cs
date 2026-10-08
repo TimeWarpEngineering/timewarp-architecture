@@ -55,8 +55,8 @@ public class Program : IAspNetProgram
 
     return webApplication.RunAsync();
   }
-  public static void ConfigureConfiguration(ConfigurationManager configurationManager) {}
-  public static void ConfigureEndpoints(WebApplication webApplication) {}
+  public static void ConfigureConfiguration(ConfigurationManager configurationManager) { }
+  public static void ConfigureEndpoints(WebApplication webApplication) { }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
   {

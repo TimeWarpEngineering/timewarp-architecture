@@ -64,7 +64,7 @@ public class ConfigureServices_Given_
     // Hermeticity (mirrors WebApplicationHost, task 104-031): this builder shares Web.Server's
     // ApplicationName/ContentRootPath, so strip any secrets.json source before it can pull in a
     // developer's own user secrets.
-    IList<IConfigurationSource> configurationSources = ((IConfigurationBuilder)builder.Configuration).Sources;
+    IList<IConfigurationSource> configurationSources = builder.Configuration.Sources;
     for (int index = configurationSources.Count - 1; index >= 0; index--)
     {
       if (configurationSources[index] is JsonConfigurationSource jsonSource && jsonSource.Path == "secrets.json")

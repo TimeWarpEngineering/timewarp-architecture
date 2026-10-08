@@ -7,8 +7,6 @@
     <Description>Lightweight IModule composition abstraction used by the TimeWarp foundation layer.</Description>
     <PackageTags>timewarp;modules;dependency-injection</PackageTags>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-  </ItemGroup>
+  <!-- Configuration.Abstractions and DependencyInjection.Abstractions ship in the net11
+       shared framework (NU1510). A direct PackageReference is a restore error. -->
 </Project>

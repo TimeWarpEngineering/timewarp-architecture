@@ -21,7 +21,7 @@ public static class ServiceUriHelper
   /// HTTP base URI for an Aspire resource, or null when the discovery variable is absent.
   /// </summary>
   public static Uri? GetServiceHttpUri(string resourceName, int index = 0) =>
-    GetServiceUri(resourceName,endpointName: "http", index);
+    GetServiceUri(resourceName, endpointName: "http", index);
 
   /// <summary>
   /// HTTPS base URI for an Aspire resource, or null when the discovery variable is absent.

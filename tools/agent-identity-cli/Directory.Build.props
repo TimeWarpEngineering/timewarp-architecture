@@ -2,11 +2,13 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
-    <!-- Only the two rules this tool genuinely trips (audited 2026-07-20, not copied wholesale from
+    <!-- Only the rules this tool genuinely trips (audited 2026-07-20, not copied wholesale from
          tools/dev-cli): CA1849 — narration writes to ITerminal are intentionally synchronous in a
          short-lived CLI; CA1031 — top-level command handlers catch Exception to render HTTP/crypto
-         failures as friendly one-line errors. Everything else was fixed rather than suppressed. -->
-    <NoWarn>$(NoWarn);CA1031;CA1849</NoWarn>
+         failures as friendly one-line errors. IDE0211 is a .NET 11 file-based-app false positive:
+         agent.cs stays top-level so `dotnet run tools/agent-identity-cli/agent.cs` keeps working.
+         Everything else was fixed rather than suppressed. -->
+    <NoWarn>$(NoWarn);CA1031;CA1849;IDE0211</NoWarn>
 
     <!-- Enable interceptors for TimeWarp.Nuru source generator -->
     <InterceptorsNamespaces>$(InterceptorsNamespaces);TimeWarp.Nuru.Generated</InterceptorsNamespaces>

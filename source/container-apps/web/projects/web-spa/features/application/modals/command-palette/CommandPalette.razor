@@ -175,12 +175,26 @@
 
     if (WasActive && !IsActive && Handle is not null)
     {
-      await Handle.InvokeVoidAsync(CommandPaletteJsModule.RestoreFocusExport);
+      try
+      {
+        await Handle.InvokeVoidAsync(CommandPaletteJsModule.RestoreFocusExport);
+      }
+      catch (JSDisconnectedException)
+      {
+        // The circuit dropped while the palette was closing.
+      }
     }
 
     if (IsActive && HighlightedIndex >= 0 && HighlightedIndex != ScrolledIndex && Handle is not null)
     {
-      await Handle.InvokeVoidAsync(CommandPaletteJsModule.ScrollIntoViewExport, RowId(HighlightedIndex));
+      try
+      {
+        await Handle.InvokeVoidAsync(CommandPaletteJsModule.ScrollIntoViewExport, RowId(HighlightedIndex));
+      }
+      catch (JSDisconnectedException)
+      {
+        // The circuit dropped while the highlighted row was scrolling into view.
+      }
     }
 
     ScrolledIndex = IsActive ? HighlightedIndex : -1;

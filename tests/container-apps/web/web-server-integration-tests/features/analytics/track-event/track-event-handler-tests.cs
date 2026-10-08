@@ -4,8 +4,8 @@ using Microsoft.Extensions.Diagnostics.Metrics.Testing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using TimeWarp.Foundation.Configuration;
-using TrackEventApplication = TimeWarp.Architecture.Features.Analytics.Application.TrackEvent;
 using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
+using TrackEventApplication = TimeWarp.Architecture.Features.Analytics.Application.TrackEvent;
 
 public class Handle_Returns
 {

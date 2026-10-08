@@ -9,7 +9,7 @@
     <!-- Convention-enforcement DiagnosticAnalyzers only (no source generators), so this assembly is
          safe to reference from every project — including contracts — without triggering the
          FastEndpoint generator. Wired repo-wide via source/Directory.Build.props. -->
-    <!-- Suppress RS1041: Analyzer intentionally targets net10.0 for CLI usage -->
+    <!-- Suppress RS1041: Analyzer intentionally targets net11.0 for CLI usage -->
     <!-- Suppress CA1031: Analyzers must be resilient and catch general exceptions -->
     <!-- Suppress CA1062: Roslyn framework guarantees non-null analysis-context parameters -->
     <NoWarn>$(NoWarn);RS1041;CA1031;CA1062</NoWarn>

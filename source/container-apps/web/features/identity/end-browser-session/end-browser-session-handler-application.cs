@@ -9,6 +9,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
+
 using TimeWarp.Architecture.Abstractions;
 using static TimeWarp.Architecture.Features.Identity.EndBrowserSession;
 

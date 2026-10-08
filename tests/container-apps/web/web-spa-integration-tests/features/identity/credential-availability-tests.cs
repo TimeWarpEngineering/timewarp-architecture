@@ -19,11 +19,11 @@
 
 namespace CredentialAvailability_;
 
-using System.Security.Claims;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;

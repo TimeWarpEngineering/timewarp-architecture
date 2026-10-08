@@ -4,7 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
 // C-create HostGraphFactory smoke (task 145-002): Web+Api graph, MockAccessTokenProvider
 // default wiring + a real BFF->Api authenticated round trip, and per-host configureServices
@@ -153,16 +153,16 @@ namespace TimeWarp.Architecture.Testing.HostGraphFactoryTests
     public static async Task Should_Attach_MockAccessTokenProvider_Bearer_On_Real_ApiServerApiService_Call()
     {
       Graph.ShouldNotBeNull();
-      Graph!.Web.ShouldNotBeNull();
-      Graph!.Api.ShouldNotBeNull();
+      Graph.Web.ShouldNotBeNull();
+      Graph.Api.ShouldNotBeNull();
 
       IAccessTokenProvider accessTokenProvider =
-        Graph.Web!.WebApplicationHost.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
+        Graph.Web.WebApplicationHost.ServiceProvider.GetRequiredService<IAccessTokenProvider>();
 
       CapturingHandler capturingHandler = new();
       using HttpClient httpClient = new(capturingHandler)
       {
-        BaseAddress = Graph.Api!.HttpClient.BaseAddress
+        BaseAddress = Graph.Api.HttpClient.BaseAddress
       };
 
       ApiServerApiService apiServerApiService =

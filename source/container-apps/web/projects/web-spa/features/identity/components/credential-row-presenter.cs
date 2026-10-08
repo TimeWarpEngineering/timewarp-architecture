@@ -52,6 +52,7 @@ public static class CredentialRowPresenter
     {
       AuthenticatorAttachment.Platform => PlatformAttachmentWord,
       AuthenticatorAttachment.CrossPlatform => CrossPlatformAttachmentWord,
+      AuthenticatorAttachment.Unknown => null,
       _ => null
     };
 

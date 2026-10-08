@@ -56,17 +56,17 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.Identity;
-using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
@@ -186,8 +186,12 @@ public partial class Program : IAspNetProgram
     // [EndpointAuthorize(AuthenticationSchemes)]. Agent scope→permission expansion is in
     // PermissionEvaluator (IAgentPermissionScopeSource → IAgentCallerContext). SPA uses
     // AddPermissionClaimPolicies separately.
+    // IDE0200 wants a method group. TWA0024 only sees the call
+    // PermissionPolicyRegistration.AddPermissionPolicies(options), so the lambda stays.
+#pragma warning disable IDE0200
     serviceCollection.AddAuthorization(options =>
       PermissionPolicyRegistration.AddPermissionPolicies(options));
+#pragma warning restore IDE0200
     ConfigureAuthentication(serviceCollection, configuration);
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
@@ -427,7 +431,8 @@ public partial class Program : IAspNetProgram
     {
       webApplication.UseCors(CorsPolicy.Any.Name);
       webApplication.UseDeveloperExceptionPage();
-      webApplication.UseWebAssemblyDebugging();
+      // .NET 11 retired UseWebAssemblyDebugging (ASPDEPR011). Visual Studio and VS Code
+      // launch Blazor WebAssembly debugging directly; no inspectUri proxy remains.
     }
 
     webApplication.UseResponseCompression();

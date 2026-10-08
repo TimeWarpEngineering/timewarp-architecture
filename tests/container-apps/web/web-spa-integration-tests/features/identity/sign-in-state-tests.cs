@@ -17,12 +17,12 @@
 
 namespace SignInState_;
 
-using System.Security.Claims;
 using Blazored.SessionStorage;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Spa;
@@ -322,7 +322,8 @@ public class SignInActions_Should_
       {
         SharedProblemDetails problem => Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(problem),
         TResponse response => Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(response),
-        object other => throw new InvalidOperationException($"Scripted {other.GetType()} is not {typeof(TResponse)}.")
+        object other => throw new InvalidOperationException($"Scripted {other.GetType()} is not {typeof(TResponse)}."),
+        _ => throw new InvalidOperationException("Scripted response was null.")
       };
     }
   }

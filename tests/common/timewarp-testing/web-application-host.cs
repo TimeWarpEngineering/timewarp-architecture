@@ -59,7 +59,7 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
 
     // Hermeticity (task 104-031): remove developer user secrets so machine-local values cannot alter
     // test outcomes — see this class's Design region. Iterate backwards because we mutate in place.
-    IList<IConfigurationSource> configurationSources = ((IConfigurationBuilder)builder.Configuration).Sources;
+    IList<IConfigurationSource> configurationSources = builder.Configuration.Sources;
     for (int index = configurationSources.Count - 1; index >= 0; index--)
     {
       if (configurationSources[index] is JsonConfigurationSource jsonSource && jsonSource.Path == "secrets.json")

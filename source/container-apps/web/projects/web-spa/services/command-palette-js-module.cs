@@ -38,14 +38,29 @@ internal static class CommandPaletteJsModule
     CancellationToken cancellationToken
   ) where THost : class
   {
-    IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", cancellationToken, Specifier);
+    IJSObjectReference? module = null;
     try
     {
+      module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", cancellationToken, Specifier);
       return await module.InvokeAsync<IJSObjectReference>(RegisterExport, cancellationToken, host, $"[{TriggerAttribute}]", $"[{InputAttribute}]");
+    }
+    catch (JSDisconnectedException exception)
+    {
+      throw new InvalidOperationException("The browser circuit disconnected before the command palette could register.", exception);
     }
     finally
     {
-      await module.DisposeAsync();
+      if (module is not null)
+      {
+        try
+        {
+          await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+          // The circuit is already gone.
+        }
+      }
     }
   }
 

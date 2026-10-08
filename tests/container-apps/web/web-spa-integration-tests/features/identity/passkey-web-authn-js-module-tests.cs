@@ -95,8 +95,11 @@ public class Import_Given_
     public string? ImportedSpecifier { get; private set; }
     public RecordingModule Module { get; } = new();
 
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
       InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
 
     public ValueTask<TValue> InvokeAsync<TValue>(
       string identifier,
@@ -118,8 +121,11 @@ public class Import_Given_
   {
     public List<string> ExportNames { get; } = [];
 
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
       InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
 
     public ValueTask<TValue> InvokeAsync<TValue>(
       string identifier,

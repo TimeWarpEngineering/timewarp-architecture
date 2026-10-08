@@ -32,10 +32,10 @@
 
 namespace ProtectedPageDeepLink_;
 
-using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Net.Http.Headers;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
@@ -374,7 +374,7 @@ public class Returns_
         break;
       }
 
-      int end = html.IndexOf('>', start);
+      int end = html.IndexOf('>', start, StringComparison.Ordinal);
       if (end < 0)
       {
         break;
@@ -475,7 +475,7 @@ public class Returns_
     SiteSettings? settings = await store.GetAsync();
     settings.ShouldNotBeNull();
     bool previousEnabled = options.Enabled;
-    bool previousSignIn = settings!.EntraSignInEnabled;
+    bool previousSignIn = settings.EntraSignInEnabled;
     bool previousBootstrap = settings.EntraAllowBootstrap;
     PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
     options.Enabled = true;
@@ -517,7 +517,7 @@ public class Returns_
       Options.Enabled = PreviousEnabled;
       SiteSettings? restore = await Store.GetAsync();
       restore.ShouldNotBeNull();
-      restore!.ReplacePolicy(PreviousSignIn, PreviousBootstrap, PreviousMode);
+      restore.ReplacePolicy(PreviousSignIn, PreviousBootstrap, PreviousMode);
       await Store.UpdateAsync(restore);
       await Scope.DisposeAsync();
     }
@@ -538,7 +538,7 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
     response.Headers.Location.ShouldNotBeNull();
 
-    string location = response.Headers.Location!.IsAbsoluteUri
+    string location = response.Headers.Location.IsAbsoluteUri
       ? response.Headers.Location.PathAndQuery
       : response.Headers.Location.OriginalString;
 

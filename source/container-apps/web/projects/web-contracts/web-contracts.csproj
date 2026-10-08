@@ -19,11 +19,10 @@
     <PackageReference Include="TimeWarp.Mediator.Contracts"/>
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization"/>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    <!-- DependencyInjection.Abstractions, Configuration.Abstractions, and Options are in the
+         net11 shared framework (NU1510). Options.ConfigurationExtensions is not. -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
-    <PackageReference Include="Microsoft.Extensions.Options"/>
     <PackageReference Include="protobuf-net.Grpc"/>
   </ItemGroup>
 

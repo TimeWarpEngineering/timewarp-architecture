@@ -4,7 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Co-located Jaribu tests for GetProfile (tasks 148/149): contract round-trip, mock factory,
 // in-memory store, create-if-missing, and deterministic local Multiavatar.

@@ -22,9 +22,6 @@
 
 namespace FastEndpointAuthSchemes_;
 
-using System.Net;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
 using FastEndpoints;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -33,6 +30,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 
 public class ProbeScheme_Given_
 {

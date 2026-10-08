@@ -25,9 +25,9 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using TimeWarp.Architecture.Configuration;
 
 /// <summary>
@@ -55,7 +55,10 @@ public sealed class HostedIdentitySessionAuthenticationStateProvider
       return Task.FromResult(new AuthenticationState(WithAccountFingerprint(httpUser)));
     }
 
+    // Falls through to the base provider, which reads the session. This type does not cache it.
+#pragma warning disable BL0013
     return base.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
   }
 
   private static ClaimsPrincipal WithAccountFingerprint(ClaimsPrincipal user)

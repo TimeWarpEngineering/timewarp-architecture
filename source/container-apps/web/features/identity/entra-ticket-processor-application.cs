@@ -59,8 +59,8 @@
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
-using System.Text;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using TimeWarp.Architecture.Features;
 
 public sealed class EntraTicketProcessor

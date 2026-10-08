@@ -131,8 +131,8 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       }
 
       // Hosted web routes (source assemblies) and the collision set (other contracts assemblies).
-      List<HostedRoute> webRoutes = new();
-      List<HostedRoute> foreignRoutes = new();
+      List<HostedRoute> webRoutes = [];
+      List<HostedRoute> foreignRoutes = [];
 
       foreach (IAssemblySymbol assembly in HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation))
       {

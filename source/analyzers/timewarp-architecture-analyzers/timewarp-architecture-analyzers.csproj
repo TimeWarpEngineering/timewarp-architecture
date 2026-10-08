@@ -6,7 +6,7 @@
     <Description>Roslyn source generators and diagnostics for TimeWarp Architecture (FastEndpoint, Page, StateAccess, mock-factory registry, TypedId, ingress route prefixes) — TWA0001 and TWA0017/0018/0019. Analyzer-only; attach only where generators should run — not repo-wide.</Description>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IsRoslynComponent>true</IsRoslynComponent>
-    <!-- Suppress RS1041: Analyzer intentionally targets net10.0 for CLI usage -->
+    <!-- Suppress RS1041: Analyzer intentionally targets net11.0 for CLI usage -->
     <!-- Suppress CA1031: Source generators must be resilient and catch general exceptions -->
     <!-- Suppress CA1062: Roslyn framework guarantees non-null AnalysisContext/CompilationStartAnalysisContext parameters -->
     <NoWarn>$(NoWarn);RS1041;CA1031;CA1062</NoWarn>

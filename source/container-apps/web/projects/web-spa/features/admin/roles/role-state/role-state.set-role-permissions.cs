@@ -38,7 +38,7 @@ partial class RoleState
       {
         if (!RoleState.DraftPermissionIds.TryGetValue(action.RoleId, out HashSet<string>? set))
         {
-          set = new HashSet<string>(StringComparer.Ordinal);
+          set = [with(StringComparer.Ordinal)];
           RoleState.DraftPermissionIds[action.RoleId] = set;
         }
 

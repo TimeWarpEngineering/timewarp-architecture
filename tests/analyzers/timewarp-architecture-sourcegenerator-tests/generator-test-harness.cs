@@ -1,9 +1,9 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.IO;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
 
 /// <summary>
 /// <para>Shared harness for exercising the <see cref="FastEndpointSourceGenerator"/>.</para>
@@ -170,7 +170,7 @@ internal static class GeneratorTestHarness
       references: references,
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-    Dictionary<string, string> options = new();
+    Dictionary<string, string> options = [];
     if (enabled)
     {
       options["build_property.EnableApiEndpointGeneration"] = "true";

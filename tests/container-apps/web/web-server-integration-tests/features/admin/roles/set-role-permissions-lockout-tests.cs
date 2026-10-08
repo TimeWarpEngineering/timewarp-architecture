@@ -10,11 +10,11 @@
 
 namespace SetRolePermissionsLockout_;
 
+using Microsoft.Extensions.DependencyInjection;
 using System.Buffers.Text;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;

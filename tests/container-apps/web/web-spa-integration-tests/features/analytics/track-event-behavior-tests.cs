@@ -16,9 +16,9 @@ namespace TrackEventBehavior_;
 
 using TimeWarp.Architecture.Features.Analytics;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Features.Analytics;
+using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 using static TimeWarp.Architecture.Features.Applications.ApplicationState;
 using static TimeWarp.Architecture.Features.Counters.CounterState;
-using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 
 [TestTag("Integration")]
 public class Handle_Should

@@ -36,30 +36,30 @@ Steve asked for this task to be **implemented and merged tonight** (overnight ru
 ## Checklist
 
 ### Preflight (before any code)
-- [ ] Confirm SDK available on TWE-001 / CI (prefer GA 11.0.x; else RC1 go-live with Steve OK)
+- [x] Confirm SDK available on TWE-001 / CI (prefer GA 11.0.x; else RC1 go-live with Steve OK)
 - [x] Ownership vs task **267** decided: 267 merged into 272 (2026-10-04); 272 owns AddDotnetProject
 
 ### Ordered upgrade steps (implement in this order)
-- [ ] 1. Root `global.json` SDK pin (`10.0.400` → `11.0.100-rc.1` or GA) + `rollForward`
-- [ ] 2. Mirror SDK pin in all **21** `tests/**/global.json` (keep `test.runner: Microsoft.Testing.Platform`)
-- [ ] 3. CI: `.github/workflows/workflow.yml` `dotnet-version: '10.0.x'` → `11.0.x` (both `ci` and `template-smoke` jobs)
-- [ ] 4. Container images: no Dockerfiles remain (deleted by task 070-002) — `aspire publish` uses the .NET SDK container build, whose aspnet base image follows the TFM. Only confirm no `ContainerBaseImage`/`ContainerFamily` pin was added to a server csproj since; if one was, bump it to the 11.0 tag
-- [ ] 5. TFM: root `Directory.Build.props` `net10.0` → `net11.0`; `evals/contracts/fixtures/web-contracts.csproj`; template pack `timewarp-architecture-template.csproj` (`net9.0` → `net11.0`)
-- [ ] 6. Local tools: `.config/dotnet-tools.json` `dotnet-ef` `10.0.12` → 11.x; consider `microsoft.dotnet-httprepl` (still 8.0.0)
-- [ ] 7. CPM `Directory.Packages.props`: all `Microsoft.AspNetCore.*` / `Microsoft.EntityFrameworkCore*` / `Microsoft.Extensions.*` / `System.*` on 10.0.12 → 11.x; `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.401 → 11-aligned; Aspire.Hosting.* / AppHost Sdk 13.6.0 as needed for net11
-- [ ] 8. Sibling TimeWarp packages (Nuru, Amuru, State, Mediator, Jaribu, SourceGenerators, Components, …): confirm net11 support; bump pins forward only — never pin backward
-- [ ] 9. Analyzers / Roslynator / BannedApi / CodeStyle — verify RS1041 and analyzer TFM comments (convention-analyzers intentionally target TFM for CLI)
-- [ ] 10. Docs/skills/samples: AGENTS.md ".NET 10", Aspire skill SDK tables, web-spa `index.md`, safety-guardrail `bin/Debug/net10.0` examples
-- [ ] 11. Unblock / coordinate **257** (OpenApi 3.x) once AspNetCore.OpenApi 11 declares OpenApi >=3
-- [ ] 12. Revisit web-spa TypeScript early-compile workaround vs `Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets` (.NET 11 tracker in web-spa.csproj)
-- [ ] 13. Aspire `AddDotnetProject()` (`Aspire.Hosting.Dotnet`), folded in from 267. Adopt it once it is
+- [x] 1. Root `global.json` SDK pin (`10.0.400` → `11.0.100-rc.1` or GA) + `rollForward`
+- [x] 2. Mirror SDK pin in all **21** `tests/**/global.json` (keep `test.runner: Microsoft.Testing.Platform`)
+- [x] 3. CI: `.github/workflows/workflow.yml` `dotnet-version: '10.0.x'` → `11.0.x` (both `ci` and `template-smoke` jobs)
+- [x] 4. Container images: no Dockerfiles remain (deleted by task 070-002) — `aspire publish` uses the .NET SDK container build, whose aspnet base image follows the TFM. Only confirm no `ContainerBaseImage`/`ContainerFamily` pin was added to a server csproj since; if one was, bump it to the 11.0 tag
+- [x] 5. TFM: root `Directory.Build.props` `net10.0` → `net11.0`; `evals/contracts/fixtures/web-contracts.csproj`; template pack `timewarp-architecture-template.csproj` (`net9.0` → `net11.0`)
+- [x] 6. Local tools: `.config/dotnet-tools.json` `dotnet-ef` `10.0.12` → 11.x; consider `microsoft.dotnet-httprepl` (still 8.0.0)
+- [x] 7. CPM `Directory.Packages.props`: all `Microsoft.AspNetCore.*` / `Microsoft.EntityFrameworkCore*` / `Microsoft.Extensions.*` / `System.*` on 10.0.12 → 11.x; `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.401 → 11-aligned; Aspire.Hosting.* / AppHost Sdk 13.6.0 as needed for net11
+- [x] 8. Sibling TimeWarp packages (Nuru, Amuru, State, Mediator, Jaribu, SourceGenerators, Components, …): confirm net11 support; bump pins forward only — never pin backward
+- [x] 9. Analyzers / Roslynator / BannedApi / CodeStyle — verify RS1041 and analyzer TFM comments (convention-analyzers intentionally target TFM for CLI)
+- [x] 10. Docs/skills/samples: AGENTS.md ".NET 10", Aspire skill SDK tables, web-spa `index.md`, safety-guardrail `bin/Debug/net10.0` examples
+- [x] 11. Unblock / coordinate **257** (OpenApi 3.x) once AspNetCore.OpenApi 11 declares OpenApi >=3
+- [x] 12. Revisit web-spa TypeScript early-compile workaround vs `Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets` (.NET 11 tracker in web-spa.csproj)
+- [x] 13. Aspire `AddDotnetProject()` (`Aspire.Hosting.Dotnet`), folded in from 267. Adopt it once it is
       out of prerelease; if it is still prerelease, record that and ask Steve. Rewrite the
       `AddProject<Projects.*>` calls, adjust the `Projects.*` typed `ProjectReference` wiring, and
       reconcile TWA0007 (resource names = `ServiceNames`) with the new API. The CLI skill
       `aspire-project-v2-migration` may help, but review its output. The point is coordinated
       restore and multi-threaded MSBuild on the .NET 11 SDK.
-- [ ] 14. Fix all new net11 warnings-as-errors; no blanket suppressions
-- [ ] 15. Version bump + CPM first-party pins same commit; `dev template-smoke` + publish path
+- [x] 14. Fix all new net11 warnings-as-errors; no blanket suppressions
+- [x] 15. Version bump + CPM first-party pins same commit; `dev template-smoke` + publish path
 
 ### Start condition
 - Prefer .NET 11 **GA** (~2026-11-10). Start on RC1 only if Steve authorizes it, and record it as
@@ -74,6 +74,7 @@ Steve asked for this task to be **implemented and merged tonight** (overnight ru
 - Created: 501620 (2026-10-02)
 - Analysis inventory: Architecture / Grok executor on TWE-001 master worktree
 - 2026-10-04: task 267 merged in (AddDotnetProject → step 13); 271 now depends on 272 (cockpit, per Steve)
+- 2026-10-09: implemented on RC1 `11.0.100-rc.1.26425.128` (Steve authorized). AddDotnetProject not adopted (still preview). Task 257 left open.
 
 ## Notes
 
@@ -131,19 +132,41 @@ Steve asked for this task to be **implemented and merged tonight** (overnight ru
 
 ## Results
 
-*(fill when implementation is done)*
+Implemented on **.NET 11 RC1** (prerelease). Steve authorized the RC1 go-live on 2026-10-09; GA (~2026-11-10) was not waited for. SDK pin is `11.0.100-rc.1.26425.128` with `rollForward: latestFeature`.
+
+- Root `global.json` and all 21 `tests/**/global.json` files pin that SDK. Test copies keep `test.runner: Microsoft.Testing.Platform`.
+- TFM is `net11.0` in root `Directory.Build.props`, `evals/contracts/fixtures/web-contracts.csproj`, and the template pack (`timewarp-architecture-template.csproj` was `net9.0`).
+- CI `actions/setup-dotnet@v4` on both the `ci` and `template-smoke` jobs uses `dotnet-version: 11.0.x` and `dotnet-quality: preview` so the RC resolves.
+- No Dockerfiles and no `ContainerBaseImage` / `ContainerFamily` pins. The SDK container build follows the TFM.
+- Framework CPM (`Microsoft.AspNetCore.*`, EF Core, Extensions, `System.*`) is `11.0.0-rc.1.26425.128`. `Microsoft.CodeAnalysis.NetAnalyzers` is `11.0.100-rc.1.26425.128`. Monthly Extensions with no 11.x (`Http.Resilience`, `ServiceDiscovery`, `ServiceDiscovery.Yarp`, `Telemetry.Abstractions`, `Diagnostics.Testing`) stay `10.10.0`. `System.ServiceModel.Primitives` stays `10.0.652802`.
+- `dotnet-ef` is `11.0.0-rc.1.26425.128`. `microsoft.dotnet-httprepl` stays `8.0.0` (no 11.x package).
+- `Aspire.AppHost.Sdk` is `13.6.1`. `Aspire.Hosting.EntityFrameworkCore` and `Aspire.Hosting.Kubernetes` are `13.6.1-preview.1.26506.6` (the net11-capable train).
+- TimeWarp sibling pins were not moved backward. Product version stays `2.0.0-beta.20` (one prerelease ahead of NuGet `2.0.0-beta.19`). Policy 124 holds: pins equal Version, and Version is ahead of the last release.
+- NU1510: dropped direct PackageReferences to shared-framework assemblies. CPM pins for `Microsoft.Extensions.Logging.Abstractions` and `Microsoft.Extensions.Options` stay, because co-located runfiles take them with a versionless `#:package` directive. A csproj must not PackageReference them.
+- IDE0211 ("convert to Program.Main") is suppressed on co-located Jaribu runfiles and on `tools/dev-cli` / `tools/agent-identity-cli`. Those programs are top-level so `dotnet run file.cs` keeps working (CI template-smoke and workflow use that path). `tools/dev-cli` also suppresses IDE0005, IDE0022, IDE0046, IDE0055, IDE0058, IDE0065, IDE0066, IDE0078, IDE0160, and IDE0290: they fire only in TimeWarp.Nuru.DevCli content files compiled into the runfile. Those sources live in the NuGet package, outside this repo.
+- EF 11 verbose `dotnet ef` prints a full MSBuild item graph (~90s) before the database accepts queries. The site-settings seed budget is 180 attempts × 1s, quiet for the first 120. Aspire ingress health waits and the SPA integration host wait are 4 minutes; the first-run "Application started" watch is 3 minutes. No WaitFor / WaitForCompletion edge was added (task 270: that edge makes DCP fail `ASPNETCORE_URLS` substitution).
+- web-spa TypeScript workaround stays. The SDK ships `Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets` only when `EnableTypeScriptNuGetTarget` is true, and `Microsoft.TypeScript.MSBuild` 7.0.1 does not set that property.
+- **Step 13 follow-up for Steve:** `Aspire.Hosting.Dotnet` latest on NuGet is `13.6.1-preview.1.26506.6` (preview only, back through the 13.5 previews; no stable). `AddDotnetProject()` was not adopted. `AddProject<Projects.*>` stays.
+- **Task 257 stays open.** `Microsoft.AspNetCore.OpenApi` 11 declares `Microsoft.OpenApi` `[3.10.0, 4.0.0)`. FastEndpoints.OpenApi 8.3.0 (latest stable) and 8.4.0-beta.22 still depend on AspNetCore.OpenApi 10.0.11, whose nuspec keeps OpenApi `[2.7.5, 3.0.0)`. The pin stays `2.12.2`. Taking 3.x is not a clean restore.
 
 ### How to validate
-
-*(required before done — implementation phase)*
 
 **Smoke:**
 
 ```bash
-dotnet --version   # expect 11.0.x
+dotnet --version   # 11.0.100-rc.1.26425.128
 ./bin/dev build
 ./bin/dev test
-./bin/dev template-smoke
+dotnet run tools/dev-cli/dev.cs -- template-smoke
+ganda repo audit
+./bin/dev check-version
 ```
 
-**Expect:** 0/0 build warnings/errors on net11.0; Jaribu suites green; template pack installs and builds generated app on net11.0.
+**Expect:**
+
+- `dotnet --version` prints `11.0.100-rc.1.26425.128`.
+- `./bin/dev build`: Build succeeded, 0 Warning(s), 0 Error(s), Time Elapsed 00:00:25.87, on `net11.0`.
+- `./bin/dev test`: Tests completed successfully (exit 0). 21 projects, 1780 total, 0 failed, 1779 succeeded, 1 skipped (`web-server-integration-tests`). `aspire-tests` 38/38 in 2m 24s. `web-spa-integration-tests` 137/137 in 1m 40s.
+- `dotnet run tools/dev-cli/dev.cs -- template-smoke` (the CI command): `Template smoke SUCCEEDED`, exit 0, about 228s. SmokeDefault, SmokeNoPostgres, and SmokeNoApi each built 0/0 on `net11.0`. Standalone co-located runfiles passed: create-role 5/5, hello 2/2, and get-weather-forecasts 5/5 on the api-on cells.
+- `ganda repo audit`: Passed 31, Failed 0.
+- `./bin/dev check-version`: source `2.0.0-beta.20` is 1 prerelease increment ahead of NuGet `2.0.0-beta.19`. "Version in source is new — safe to release." No version bump.

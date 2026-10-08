@@ -381,13 +381,13 @@ public class FirewallCleanup_Given_
   public static async Task ThrowingBundle_Should_StillDeleteTheRule()
   {
     List<string> log = [];
-    Func<ProcessStep, CancellationToken, Task<int>> run = (step, _) =>
+    Task<int> Run(ProcessStep step, CancellationToken _)
     {
       log.Add(step.Arguments[0]);
       return step == Bundle ? throw new OperationCanceledException("Ctrl+C") : Task.FromResult(0);
-    };
+    }
 
-    await Should.ThrowAsync<OperationCanceledException>(() => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, CancellationToken.None));
+    await Should.ThrowAsync<OperationCanceledException>(() => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Run, NoReport, CancellationToken.None));
     log.ShouldBe(["create", "--connection", "delete"]);
   }
 
@@ -396,7 +396,7 @@ public class FirewallCleanup_Given_
     using CancellationTokenSource cancelled = new();
     await cancelled.CancelAsync();
     CancellationToken deleteToken = default;
-    Func<ProcessStep, CancellationToken, Task<int>> run = (step, token) =>
+    Task<int> Run(ProcessStep step, CancellationToken token)
     {
       if (step == Delete)
       {
@@ -404,9 +404,9 @@ public class FirewallCleanup_Given_
       }
 
       return Task.FromResult(step == Bundle ? 130 : 0);
-    };
+    }
 
-    await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, cancelled.Token);
+    await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Run, NoReport, cancelled.Token);
     deleteToken.IsCancellationRequested.ShouldBeFalse();
   }
 
@@ -427,19 +427,24 @@ public class FirewallCleanup_Given_
   public static async Task ThrowingBundleAndFailedDelete_Should_StillReportTheCleanupFailure()
   {
     List<string> reported = [];
-    Func<ProcessStep, CancellationToken, Task<int>> run = (step, _) =>
-      step == Bundle ? throw new OperationCanceledException("Ctrl+C") : Task.FromResult(step == Delete ? 1 : 0);
+    static Task<int> Run(ProcessStep step, CancellationToken _)
+    {
+      return step == Bundle ? throw new OperationCanceledException("Ctrl+C") : Task.FromResult(step == Delete ? 1 : 0);
+    }
 
     await Should.ThrowAsync<OperationCanceledException>(
-      () => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, reported.Add, CancellationToken.None));
+      () => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Run, reported.Add, CancellationToken.None));
     reported.ShouldBe(["exit 1"]);
   }
 
   public static async Task ThrowingDelete_Should_BeReportedNotSwallowed()
   {
-    Func<ProcessStep, CancellationToken, Task<int>> run = (step, _) =>
-      step == Delete ? throw new InvalidOperationException("az vanished") : Task.FromResult(0);
-    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, CancellationToken.None);
+    static Task<int> Run(ProcessStep step, CancellationToken _)
+    {
+      return step == Delete ? throw new InvalidOperationException("az vanished") : Task.FromResult(0);
+    }
+
+    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Run, NoReport, CancellationToken.None);
     result.ExitCode.ShouldBe(1);
     result.CleanupFailure.ShouldBe("az vanished");
   }

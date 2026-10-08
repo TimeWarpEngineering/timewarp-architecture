@@ -32,7 +32,7 @@ partial class ProfileState
       IPublisher<ClientPipeline> publisher,
         IValidator<Query>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null
-      ) : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider) {}
+      ) : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider) { }
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

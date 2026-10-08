@@ -11,7 +11,7 @@
 
 namespace TimeWarp.Architecture.Features;
 
-public abstract class BaseCacheableState<TState>:TimeWarpCacheableState<TState>
+public abstract class BaseCacheableState<TState> : TimeWarpCacheableState<TState>
 where TState : IState
 {
   protected BaseCacheableState(TimeSpan? cacheDuration = null)

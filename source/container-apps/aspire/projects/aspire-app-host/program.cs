@@ -463,7 +463,9 @@ internal class Program
     // dashboard restart/rebuild of web-server can never deadlock on the migration resource's
     // terminal Finished snapshot. WaitForCompletion still breaks DCP endpoint wiring on Aspire
     // 13.6 (see the Design region). On a fresh volume web-server's boot seed waits for the
-    // site-settings table itself (EfSiteSettingsTableProbe), so the first run logs no Error.
+    // site-settings table itself (EfSiteSettingsTableProbe, up to 180s — EF Core 11's verbose
+    // tool startup streams the MSBuild item graph for about 90s before it migrates), so the
+    // first run logs no Error.
     // Re-run on demand via the ef-database-update dashboard command on the web-migrations resource.
 #endif
     // Self-reference for the web server

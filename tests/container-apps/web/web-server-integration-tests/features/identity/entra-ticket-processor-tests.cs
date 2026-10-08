@@ -15,11 +15,11 @@
 
 namespace EntraTicketProcessor_;
 
-using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Options;
+using System.Text;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Foundation.Types;

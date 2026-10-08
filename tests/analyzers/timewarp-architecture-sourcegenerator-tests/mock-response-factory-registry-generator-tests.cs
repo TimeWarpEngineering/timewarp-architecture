@@ -5,9 +5,9 @@
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
 
 public class MockResponseFactoryRegistryGenerator_Tests
 {

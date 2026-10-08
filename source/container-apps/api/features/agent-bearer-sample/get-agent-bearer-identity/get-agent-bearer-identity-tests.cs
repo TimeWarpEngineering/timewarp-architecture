@@ -5,7 +5,7 @@
 #:package Shouldly
 #:package FluentValidation
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0007;IDE0008;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0007;IDE0008;IDE0161;IDE0021;IDE0058;IDE0211
 
 // Co-located Jaribu in-proc Api tests (task 104-030): agent bearer validation + PascalCase
 // string-enum wire through FastEndpoints on api-server.

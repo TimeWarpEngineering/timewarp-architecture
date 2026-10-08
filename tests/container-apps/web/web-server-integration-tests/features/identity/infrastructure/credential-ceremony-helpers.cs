@@ -102,7 +102,7 @@ internal static class CredentialCeremonyHelpers
     var testApiService = new TestApiService(app.HttpClient, ContractSerializationDefaults.Options);
     HttpResponseMessage registerResponse = await testApiService.GetHttpResponseMessage(registerCommand, CancellationToken.None);
     registerResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
-    string? sessionCookie = setCookieValues!.FirstOrDefault(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+    string? sessionCookie = setCookieValues.FirstOrDefault(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     sessionCookie.ShouldNotBeNull("Expected passkey registration to issue an identity-session cookie.");
 
     string json = await registerResponse.Content.ReadAsStringAsync();

@@ -199,7 +199,7 @@ public class EnsureValid_Many
 
   public static Task Rejects_null_collection()
   {
-    Should.Throw<ArgumentNullException>(() => DomainInvariantsGuard.EnsureValid((IEnumerable<object>)null!));
+    Should.Throw<ArgumentNullException>(() => DomainInvariantsGuard.EnsureValid(null!));
     return Task.CompletedTask;
   }
 }

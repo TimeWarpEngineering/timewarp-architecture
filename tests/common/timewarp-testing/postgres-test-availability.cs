@@ -13,8 +13,8 @@
 
 namespace TimeWarp.Architecture.Testing;
 
-using System.Data.Common;
 using Docker.DotNet;
+using System.Data.Common;
 using Testcontainers.PostgreSql;
 
 /// <summary>

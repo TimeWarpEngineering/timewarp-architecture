@@ -13,8 +13,8 @@
 
 namespace TimeWarp.Architecture.Testing;
 
-using System.Net.Http.Headers;
 using OneOf;
+using System.Net.Http.Headers;
 
 public sealed class TestApiService : IApiService
 {

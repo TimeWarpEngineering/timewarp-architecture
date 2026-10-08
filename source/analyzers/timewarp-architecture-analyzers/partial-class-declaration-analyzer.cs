@@ -158,7 +158,7 @@ public class PartialClassDeclarationAnalyzer : DiagnosticAnalyzer
       return false;
 
     return baseTypeDeclarationSyntax.BaseList.Types.Any(t =>
-      (t.Type is IdentifierNameSyntax identifierName && !identifierName.Identifier.Text.StartsWith('I')) ||
-      (t.Type is QualifiedNameSyntax qualifiedName && !qualifiedName.Right.Identifier.Text.StartsWith('I')));
+      (t.Type is IdentifierNameSyntax identifierName && !identifierName.Identifier.Text.StartsWith('I', StringComparison.Ordinal)) ||
+      (t.Type is QualifiedNameSyntax qualifiedName && !qualifiedName.Right.Identifier.Text.StartsWith('I', StringComparison.Ordinal)));
   }
 }

@@ -15,10 +15,10 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity.Application;

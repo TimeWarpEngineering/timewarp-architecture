@@ -63,7 +63,7 @@ public static partial class GetRoles
 
   public sealed class Response : ListResponse<RoleDto>
   {
-    public Response(int totalCount, RoleDto[] items) : base(totalCount, items) {}
+    public Response(int totalCount, RoleDto[] items) : base(totalCount, items) { }
   }
 
   public sealed class RoleDto

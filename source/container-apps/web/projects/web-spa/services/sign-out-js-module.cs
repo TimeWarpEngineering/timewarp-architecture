@@ -24,28 +24,35 @@ internal static class SignOutJsModule
 
   internal static async Task SignOutAsync(IJSRuntime jsRuntime, CancellationToken cancellationToken)
   {
-    IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-      "import",
-      cancellationToken,
-      Specifier);
     try
     {
-      await module.InvokeVoidAsync(
-        ExportName,
+      IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>(
+        "import",
         cancellationToken,
-        SignOutBrowserSession.AntiforgeryTokenPath,
-        SignOutBrowserSession.Path);
-    }
-    finally
-    {
+        Specifier);
       try
       {
-        await module.DisposeAsync();
+        await module.InvokeVoidAsync(
+          ExportName,
+          cancellationToken,
+          SignOutBrowserSession.AntiforgeryTokenPath,
+          SignOutBrowserSession.Path);
       }
-      catch (JSDisconnectedException)
+      finally
       {
-        // The form submit already unloaded the page / dropped the Server circuit.
+        try
+        {
+          await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+          // The form submit already unloaded the page / dropped the Server circuit.
+        }
       }
+    }
+    catch (JSDisconnectedException)
+    {
+      // The circuit dropped before the browser form POST could be started.
     }
   }
 }

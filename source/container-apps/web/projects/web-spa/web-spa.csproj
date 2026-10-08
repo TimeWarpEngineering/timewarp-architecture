@@ -145,8 +145,11 @@
        GetTypeScriptOutputForPublishing chain (MSB4057 on 7.0.0/7.0.1 if those names stay
        in PrepareForBuildDependsOn). v7 does not re-add GeneratedJavascript, so the
        RemoveDuplicateTypeScriptOutputs de-dupe is gone. Do not commit wwwroot/js
-       (gitignored). Local workaround can drop when SDK ships
-       Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets (tracked for .NET 11).
+       (gitignored). .NET 11 RC1 ships Microsoft.NET.Sdk.StaticWebAssets.TypeScript.targets,
+       but that file imports only when EnableTypeScriptNuGetTarget is true and calls
+       CompileTypeScriptWithTSConfig / GetTypeScriptOutputForPublishing.
+       Microsoft.TypeScript.MSBuild 7.0.1 defines SetTscExecutable + RunTscCompile instead
+       and does not set EnableTypeScriptNuGetTarget, so this target stays.
        TypeScriptCompileBlocked after the early run skips the same targets on CoreCompile. -->
   <Target Name="CompileTypeScriptBeforeStaticWebAssets"
           BeforeTargets="ResolveProjectStaticWebAssets"

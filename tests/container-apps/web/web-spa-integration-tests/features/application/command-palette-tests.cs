@@ -22,7 +22,6 @@
 
 namespace CommandPalette_;
 
-using System.Security.Claims;
 using FakeItEasy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -30,6 +29,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;

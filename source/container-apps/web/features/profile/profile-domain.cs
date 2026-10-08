@@ -35,8 +35,8 @@
 
 namespace TimeWarp.Architecture.Features.Profiles.Domain;
 
-using System.Globalization;
 using FluentValidation;
+using System.Globalization;
 
 public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 {
@@ -120,7 +120,7 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 
     string trimmed = email.Trim();
     ArgumentOutOfRangeException.ThrowIfGreaterThan(trimmed.Length, MaxEmailLength, nameof(email));
-    if (!trimmed.Contains('@', StringComparison.Ordinal) || trimmed.StartsWith('@') || trimmed.EndsWith('@'))
+    if (!trimmed.Contains('@', StringComparison.Ordinal) || trimmed.StartsWith('@', StringComparison.Ordinal) || trimmed.EndsWith('@', StringComparison.Ordinal))
     {
       throw new ArgumentException("Email must be a valid address.", nameof(email));
     }
@@ -189,7 +189,7 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 
   private static HashSet<string> BuildIso3166Alpha2()
   {
-    HashSet<string> codes = new(StringComparer.OrdinalIgnoreCase);
+    HashSet<string> codes = [with(StringComparer.OrdinalIgnoreCase)];
     foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
     {
       try
@@ -233,7 +233,7 @@ public sealed class Profile : Entity<ProfileId>, IAggregateRoot
 
     private static bool BePlausibleEmail(string? email) =>
       email?.Contains('@', StringComparison.Ordinal) == true
-      && !email.StartsWith('@')
-      && !email.EndsWith('@');
+      && !email.StartsWith('@', StringComparison.Ordinal)
+      && !email.EndsWith('@', StringComparison.Ordinal);
   }
 }

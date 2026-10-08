@@ -94,6 +94,8 @@ internal static class HostedRouteDiscovery
           }
 
           break;
+        default:
+          break;
       }
     }
   }
@@ -150,7 +152,7 @@ internal static class HostedRouteDiscovery
     info = new HostedOperationInfo(
       OperationType: type,
       RequestType: requestClass,
-      RouteTemplate: template!,
+      RouteTemplate: template,
       HttpVerbName: verb,
       ApiRouteAttribute: apiRoute);
     return true;
@@ -272,7 +274,7 @@ internal static class HostedRouteDiscovery
     return compilation.SourceModule.ReferencedAssemblySymbols
       .Where(assembly => assembly.Name.Contains("contracts", StringComparison.OrdinalIgnoreCase)
         && string.Equals(FirstSegment(assembly.Name), sourcePrefix, StringComparison.OrdinalIgnoreCase))
-      .Concat([(IAssemblySymbol)compilation.Assembly]);
+      .Concat([compilation.Assembly]);
   }
 
   /// <summary>"web-server" → "web"; "Web.Contracts" → "Web".</summary>

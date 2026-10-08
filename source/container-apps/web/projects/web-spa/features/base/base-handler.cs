@@ -20,6 +20,6 @@ internal abstract partial class BaseHandler<TAction> : StateActionHandler<TActio
   /// <summary>
   /// Base Handler that makes it easy to access state
   /// </summary>
-  protected BaseHandler(IStore store) : base(store) {}
+  protected BaseHandler(IStore store) : base(store) { }
   protected RouteState RouteState => Store.GetState<RouteState>();
 }

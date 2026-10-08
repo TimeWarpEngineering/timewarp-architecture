@@ -14,10 +14,6 @@
 
 namespace EntraChallenge_;
 
-using System.Net;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Encodings.Web;
 using FastEndpoints;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -27,6 +23,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Encodings.Web;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
@@ -543,7 +543,7 @@ public class Challenge_Given_
     HttpResponseMessage response = await Client.PostAsync($"/test/signin/{principalId.Value:D}", content: null);
     response.EnsureSuccessStatusCode();
     response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
-    string setCookie = setCookieValues!.First(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
+    string setCookie = setCookieValues.First(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));
     return setCookie.Split(';', 2)[0];
   }
 

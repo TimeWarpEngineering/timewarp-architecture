@@ -28,13 +28,13 @@ metadata:
 
 | Requirement | Install |
 |-------------|---------|
-| .NET 10.0 SDK | https://dotnet.microsoft.com/download |
+| .NET 11.0 SDK | https://dotnet.microsoft.com/download |
 | Aspire CLI (curl installer) | `curl -sSL https://aspire.dev/install.sh \| bash` |
-| Aspire CLI (NativeAOT global tool) | `dotnet tool install -g Aspire.Cli` (.NET 10 required) |
+| Aspire CLI (NativeAOT global tool) | `dotnet tool install -g Aspire.Cli` (.NET 11 required) |
 | Diagnose missing prerequisites | `aspire doctor` |
 
 > Aspire ships the CLI as a NativeAOT .NET global tool — instant startup, no JIT warmup.
-> The curl/PowerShell installer remains supported for environments without .NET 10.
+> The curl/PowerShell installer remains supported for environments without .NET 11.
 
 ## Detection
 
@@ -134,8 +134,8 @@ copy and warn.
 | `aspire init` reports AppHost already exists | Repo already has an AppHost | Stop. Route to `aspireify` (re-wire) or `aspire-orchestration` (lifecycle) |
 | `aspire init` fails in non-interactive mode without `--language` | Multiple language paths available | Re-run with `--language csharp` or `--language typescript` |
 | `aspire new` rejects `--output` path | Path exists and is non-empty | Use a different `--output` or empty the directory |
-| `aspire` command not found | CLI not installed | `dotnet tool install -g Aspire.Cli` (.NET 10) or `curl -sSL https://aspire.dev/install.sh \| bash` |
-| `aspire doctor` reports missing .NET 10 | SDK missing | Install .NET 10 SDK before retrying |
+| `aspire` command not found | CLI not installed | `dotnet tool install -g Aspire.Cli` (.NET 11) or `curl -sSL https://aspire.dev/install.sh \| bash` |
+| `aspire doctor` reports missing .NET 11 | SDK missing | Install .NET 11 SDK before retrying |
 | `aspire init` succeeded but no `aspireify` skill installed | Agent skill directory not detected | Run `aspire agent init` to install `aspireify`, then continue wiring |
 | Skeleton dropped but resources not wired | Expected — `aspire init` does not wire | Hand off to `aspireify` |
 

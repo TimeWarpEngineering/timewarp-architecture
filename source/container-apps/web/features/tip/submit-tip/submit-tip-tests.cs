@@ -5,7 +5,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211
 #:property DefineConstants=$(DefineConstants);api
 
 // Co-located Jaribu integration tests for the voluntary x402 tip jar (tasks 104-009, 104-020).

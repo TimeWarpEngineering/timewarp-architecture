@@ -16,9 +16,9 @@
 
 namespace RoleResolutionFailure_;
 
-using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Net;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;

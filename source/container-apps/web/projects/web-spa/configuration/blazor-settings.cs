@@ -25,4 +25,4 @@ public enum RenderMode
   InteractiveAuto
 }
 
-internal sealed class BlazorSettingsValidator: AbstractValidator<BlazorSettings>;
+internal sealed class BlazorSettingsValidator : AbstractValidator<BlazorSettings>;
