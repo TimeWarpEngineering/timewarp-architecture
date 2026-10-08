@@ -5,12 +5,18 @@
 
 #region Design
 // Thin wrapper over
-//   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t>
+//   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t> [--Parameters:<name>=<value> …]
 // (task 070-006), in this order:
-//   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+ and the printed
-//      kubectl context; aca: `az login` and the printed subscription, so the operator sees what they
-//      are about to hit).
-//   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself; with no terminal and no
+//   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+, the printed kubectl
+//      context answering and, for kind, its cluster existing; aca: `az login` and the printed
+//      subscription, so the operator sees what they are about to hit). Deploy parameters (task 286) are
+//      resolved best-effort the same way as `dev deploy` (Parameters__<name> env var, else AppHost user
+//      secret Parameters:<name>) and every one that is set is printed and forwarded as
+//      `--Parameters:<name>=<value>` after `--`, in case `aspire destroy`'s pipeline resolves parameters
+//      (with `--non-interactive` an unset one could not be prompted). A missing one is never refused —
+//      destroy works from Aspire's recorded deployment state — and the registry is not probed.
+//   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself (it runs with TTY passthrough
+//      so the prompt reaches the terminal); with no terminal and no
 //      --yes there is nobody to ask, so the verb refuses (as `dev deploy` does) instead of assuming yes.
 //   3. aspire destroy. On failure print the manual removal for the target and exit with Aspire's exit
 //      code: `aspire destroy` only knows deployments recorded on the machine that deployed. The verb
@@ -50,9 +56,13 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, requireParameters: false, ct);
       if (preflight is null) return Unit.Value;
       Terminal.WriteLine(preflight.Detail);
+      foreach (string line in AspireDeploy.BuildParameterLines(preflight.Parameters))
+      {
+        Terminal.WriteLine(line);
+      }
 
       if (!command.Yes && Terminal.IsInputRedirected)
       {
@@ -62,7 +72,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
       }
 
       ShellBuilder aspire = Shell.Builder("aspire")
-        .WithArguments(AspireDeploy.BuildDestroyArguments(preflight.AppHostProject, preflight.Target, command.Yes))
+        .WithArguments(AspireDeploy.BuildDestroyArguments(preflight.AppHostProject, preflight.Target, command.Yes, preflight.Parameters))
         .WithWorkingDirectory(preflight.RepoRoot)
         .WithNoValidation();
       foreach ((string name, string value) in preflight.AspireEnvironment)
@@ -70,7 +80,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
         aspire = aspire.WithEnvironmentVariable(name, value);
       }
 
-      CommandOutput destroy = await aspire.PassthroughAsync(ct);
+      CommandOutput destroy = await aspire.TtyPassthroughAsync(ct);
 
       if (!destroy.Success)
       {

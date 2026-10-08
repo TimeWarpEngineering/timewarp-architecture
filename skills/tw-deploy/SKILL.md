@@ -88,11 +88,11 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
 ```
 
 - **`dev deploy`** runs `aspire deploy --apphost <csproj> --environment Production --
-  --Publish:Target=<target>`. Preflight: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2 on PATH and
-  a current kubectl context, which is printed before anything happens — check it. It then asks for
-  confirmation; `--yes` skips the prompt and adds `--non-interactive`, so every parameter must
-  already have a value (interactive runs prompt for missing ones, and Aspire remembers them in
-  the deployment state). Without a terminal and without `--yes` it refuses. For aca the preflight
+  --Publish:Target=<target> --Parameters:<name>=<value> …`, forwarding the target's deploy
+  parameters (below) after the preflight (below). It then asks for confirmation; `--yes` skips the
+  prompt and adds `--non-interactive`. Without a terminal and without `--yes` it refuses. Aspire runs
+  attached to the terminal, so a prompt it still shows (e.g. aca's location and resource group)
+  works. For aca the preflight
   requires `az login` and prints the subscription and where it came from, in this order: the
   `Azure__SubscriptionId` environment variable, then the AppHost user secret `Azure:SubscriptionId`
   (read with `dotnet user-secrets list --project <apphost>`), then the one `az account show`
@@ -100,10 +100,38 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   az CLI never overrides a subscription you pinned. A subscription Aspire remembered in its own
   deployment state is not checked; pin it in user secrets if `az account` may point elsewhere.
   Location and resource group come from `Azure__Location` / `Azure__ResourceGroup`, or Aspire's prompt.
+- **Deploy configuration lives in the AppHost user secrets** as `Parameters:<name>` — the same
+  per-machine store as `postgres-password` and `Azure:SubscriptionId`, never committed and never a
+  literal in the template. The kubernetes target needs `k8s-namespace`, `helm-release-name`,
+  `registry-endpoint` and `registry-repository` (the AppHost parameters without a default); compose
+  and aca need none. Set each once (pwsh):
+
+  ```powershell
+  dotnet user-secrets set 'Parameters:k8s-namespace' 'my-app' --project <apphost.csproj>
+  dotnet user-secrets set 'Parameters:helm-release-name' 'my-app' --project <apphost.csproj>
+  dotnet user-secrets set 'Parameters:registry-endpoint' 'localhost:5001' --project <apphost.csproj>
+  dotnet user-secrets set 'Parameters:registry-repository' 'my-app' --project <apphost.csproj>
+  ```
+
+  A `Parameters__<name>` environment variable overrides the secret for one session
+  (`${env:Parameters__k8s-namespace} = 'my-app'`; the name is matched case-insensitively). The plan
+  prints each value and its source, and the values appear in the `aspire` command line, so a
+  forwarded parameter is never a secret — secrets stay in user secrets or env vars, where Aspire
+  reads them itself.
+- **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
+  nothing run: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
+  check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
+  missing one is listed with the command that sets it), and for a kind context (`kind-<cluster>`)
+  that `kind get clusters` lists the cluster and the registry at `registry-endpoint` answers its
+  `/v2/` API. The API and registry checks give up after 5 seconds and every other probe after 20
+  (e.g. a credential plugin waiting for a login), reported as timed out; if a parameter is missing
+  and `dotnet user-secrets list` failed, the report says the secrets could not be read.
 - **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
   never creates a cluster, installs an ingress controller or switches context.
-- **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight (for
-  kubernetes it prints the kubectl context first). It deletes the deployment's data (Compose volumes,
+- **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight, minus
+  the registry check (for kubernetes it prints the kubectl context first). Deploy parameters are
+  optional there: each one that is set is forwarded the same way (`--Parameters:<name>=<value>`), and
+  a missing one is never refused. It deletes the deployment's data (Compose volumes,
   the Kubernetes postgres claim), so Aspire asks for confirmation; `--yes` skips the prompt. Without
   a terminal and without `--yes` it refuses.
 - **`aspire destroy` is local.** It only knows deployments that `aspire deploy` recorded on the
@@ -115,13 +143,14 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   asks for confirmation) plus the Key Vault purge below. It never falls back to a destructive command
   on its own.
 - **Runtime:** Compose deploy and teardown go through Aspire, so `ASPIRE_CONTAINER_RUNTIME` picks
-  the runtime; the verbs call no container CLI themselves.
+  the runtime; the verbs call no container CLI themselves (the registry check is an HTTP request).
 - **Without the `dev` CLI** (it lives in the template's source repository), run the same commands
-  the verbs wrap, and do the preflight yourself (`helm version`, `kubectl config current-context`):
+  the verbs wrap, and do the preflight yourself (`helm version`, `kubectl config current-context`,
+  `kubectl get --raw /version`):
 
   ```bash
-  aspire deploy  --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
-  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
+  aspire deploy  --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> --Parameters:<name>=<value>
+  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> [--Parameters:<name>=<value>]
   ```
 
   When `aspire destroy` fails or reports nothing to destroy, nothing was removed; use the manual
@@ -160,12 +189,16 @@ helm upgrade --install ingress-nginx ingress-nginx \
 kubectl wait --namespace ingress-nginx --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller --timeout=180s
 
-# 5. Deploy (kubectl context is now kind-app); answer the parameter prompts:
-#    registry-endpoint=localhost:5001, registry-repository=<app>, k8s-namespace, helm-release-name,
-#    ingress-class=nginx
+# 5. Deploy configuration, once per machine (kubectl context is now kind-app)
+dotnet user-secrets set 'Parameters:k8s-namespace' '<app>' --project <apphost.csproj>
+dotnet user-secrets set 'Parameters:helm-release-name' '<app>' --project <apphost.csproj>
+dotnet user-secrets set 'Parameters:registry-endpoint' 'localhost:5001' --project <apphost.csproj>
+dotnet user-secrets set 'Parameters:registry-repository' '<app>' --project <apphost.csproj>
+
+# 6. Deploy; preflight checks the cluster answers, kind lists it and localhost:5001 is up
 dev deploy --target kubernetes
 
-# 6. Migrate (see Postgres and migrations), then reach the ingress
+# 7. Migrate (see Postgres and migrations), then reach the ingress
 kubectl port-forward --namespace ingress-nginx service/ingress-nginx-controller 8080:80
 
 # Tear down the app (data included), then the cluster and registry when done
@@ -207,9 +240,9 @@ Every value that differs per deployment is an `AddParameter`, never a literal. S
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
 | Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`. The Postgres connection string lives in a Key Vault Aspire provisions, which web-server reads with its managed identity; the Postgres password is also on web-server as the container-app secrets `postgres-db-password` and `postgres-db-uri`, built from the `@secure()` parameter |
 
-- Supply values non-interactively with `Parameters__<name>` environment variables or AppHost
-  configuration/user secrets; interactive `aspire deploy` prompts for the rest. A non-interactive
-  run (`dev deploy --yes`) must supply all of them.
+- Supply values with AppHost user secrets `Parameters:<name>` or `Parameters__<name>` environment
+  variables. `dev deploy` refuses until the target's required ones are set and forwards them to
+  Aspire; interactive `aspire deploy` prompts for any other unset parameter.
 - Parameters such as `ingress-class`, `postgres-storage-capacity` and `helm-chart-version` are
   baked into the chart at publish time; change them by re-publishing, not `helm --set`.
 - Under a plain `helm install` (no `aspire deploy`), the Postgres password appears under two keys

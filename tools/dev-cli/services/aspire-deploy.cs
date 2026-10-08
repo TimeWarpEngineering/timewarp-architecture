@@ -35,6 +35,36 @@
 //
 // Runtime neutrality (task 277): nothing here calls a container CLI. Compose deploy and destroy are
 // Aspire's, which honour ASPIRE_CONTAINER_RUNTIME; the runtime name only appears in printed text.
+//
+// Deploy parameters (task 286): the AppHost declares per-deployment parameters with no value (for
+// kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository). The template
+// never ships values for them. The operator's deploy configuration lives in the AppHost user secrets as
+// Parameters:<name> — the same store as postgres-password and Azure:SubscriptionId, per machine, never
+// committed — set with `dotnet user-secrets set`. A Parameters__<name> environment variable overrides
+// it for one shell. `dev deploy` resolves every required parameter of the target (env var, then user
+// secret), refuses with one report listing each missing one and the exact command to set it, and
+// forwards the resolved values as `--Parameters:<name>=<value>` after `--`, so Aspire never reaches a
+// parameter prompt it cannot show. The required lists are the AppHost's value-less parameters per
+// target; a parameter with a default is not listed. Kubernetes preflight also requires the context's API
+// to answer, and for a kind context (kind-<cluster>) that the kind cluster exists and the registry at
+// registry-endpoint answers its /v2/ API (an HTTP probe, so still no container CLI). The environment
+// variable is matched case-insensitively, like .NET configuration matches keys. When `dotnet user-secrets
+// list` itself fails and a parameter is missing, the report says the secrets could not be read (with
+// the tool's first error line) instead of only asking the operator to set values they may have set.
+// Which cluster checks run and which refusals reach the report (CollectClusterProblems,
+// CollectKubernetesProblems) is decided here, so it is tested; the process half only gathers probe
+// results. Every probe has a timeout (ProbeTimeout): an exec credential plugin waiting for an
+// interactive login or a wedged Docker daemon is reported as timed out, not waited on.
+//
+// Forwarded parameters must be non-secret: the plan prints each value and it is visible in the aspire
+// process's argv. A secret deploy value (a password, a client secret) stays in the AppHost user secrets
+// or a Parameters__<name> environment variable, where Aspire reads it itself; never add one to
+// RequiredParameters.
+//
+// `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
+// `aspire destroy` sees the deployment's configuration if its pipeline resolves parameters; it never
+// refuses on a missing one (destroy works from Aspire's recorded deployment state) and never probes
+// the registry.
 #endregion
 
 namespace DevCli.Services;
@@ -48,6 +78,27 @@ internal sealed record AzureAccount(string Id, string Name);
 /// <summary>The subscription an aca deploy targets, the line that says why, and whether the verb must pass it to Aspire.</summary>
 internal sealed record AzureSubscriptionChoice(string SubscriptionId, string Detail, bool PassToAspire);
 
+/// <summary>A deploy parameter value and where it came from (environment variable or AppHost user secret).</summary>
+internal sealed record ResolvedDeployParameter(string Name, string Value, string Source);
+
+/// <summary>The target's required parameters: those with a value, and the names nobody set.</summary>
+internal sealed record DeployParameterResolution(IReadOnlyList<ResolvedDeployParameter> Resolved, IReadOnlyList<string> Missing);
+
+/// <summary>
+/// What the process half observed for one kubectl context: the API reachability probe, <c>kind get clusters</c> (kind contexts
+/// only) and the registry probe (only when <see cref="AspireDeploy.RegistryToProbe"/> named an endpoint).
+/// </summary>
+internal sealed record ClusterProbeResults(
+  string Context,
+  bool Reachable,
+  string ReachabilityError,
+  bool KindProbeSucceeded = false,
+  bool KindTimedOut = false,
+  string KindOutput = "",
+  string? RegistryEndpoint = null,
+  bool RegistryAnswered = false,
+  string? RegistryFailure = null);
+
 /// <summary>Builds and checks the <c>aspire deploy</c> / <c>aspire destroy</c> invocations for <c>dev deploy</c> / <c>dev deprovision</c>.</summary>
 internal static class AspireDeploy
 {
@@ -60,6 +111,14 @@ internal static class AspireDeploy
   internal const string PostgresClaimName = "postgres-data";
   internal const string HelmReleaseNameParameter = "helm-release-name";
   internal const string KubernetesNamespaceParameter = "k8s-namespace";
+  internal const string RegistryEndpointParameter = "registry-endpoint";
+  internal const string RegistryRepositoryParameter = "registry-repository";
+  internal const string KindContextPrefix = "kind-";
+  internal const string ReachabilityTimeout = "5s";
+  internal const string UserSecretSource = "AppHost user secret";
+
+  /// <summary>Upper bound for each read-only preflight probe (kubectl, kind, helm, az, dotnet user-secrets).</summary>
+  internal static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(20);
   internal const string AzureSubscriptionIdVariable = "Azure__SubscriptionId";
   internal const string AzureSubscriptionIdConfigurationKey = "Azure:SubscriptionId";
   internal const string AzureResourceGroupVariable = "Azure__ResourceGroup";
@@ -83,21 +142,228 @@ internal static class AspireDeploy
   internal static string UnknownTargetMessage(string name) =>
     $"Unknown deploy target '{name}'. Valid targets: {string.Join(", ", Targets.Select(target => target.Name))} (default: {DefaultTarget.Name}).";
 
-  /// <summary><c>aspire deploy</c>; <c>--non-interactive</c> only when the operator passed <c>--yes</c>.</summary>
-  internal static string[] BuildDeployArguments(string appHostProject, DeployTarget target, bool nonInteractive) =>
-    nonInteractive
-      ? ["deploy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--non-interactive", "--", $"--Publish:Target={target.Name}"]
-      : ["deploy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--", $"--Publish:Target={target.Name}"];
+  /// <summary>
+  /// <c>aspire deploy</c>; <c>--non-interactive</c> only when the operator passed <c>--yes</c>. The resolved deploy
+  /// parameters follow the target after <c>--</c> as <c>--Parameters:&lt;name&gt;=&lt;value&gt;</c>.
+  /// </summary>
+  internal static string[] BuildDeployArguments(string appHostProject, DeployTarget target, bool nonInteractive, IReadOnlyList<ResolvedDeployParameter> parameters) =>
+  [
+    "deploy", "--apphost", appHostProject, "--environment", DeployEnvironment,
+    .. nonInteractive ? (string[])["--non-interactive"] : [],
+    "--", $"--Publish:Target={target.Name}",
+    .. parameters.Select(parameter => $"--{ParameterConfigurationKey(parameter.Name)}={parameter.Value}"),
+  ];
 
-  /// <summary><c>aspire destroy</c>; <c>--yes --non-interactive</c> only when the operator passed <c>--yes</c>, else Aspire asks.</summary>
-  internal static string[] BuildDestroyArguments(string appHostProject, DeployTarget target, bool yes) =>
-    yes
-      ? ["destroy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--yes", "--non-interactive", "--", $"--Publish:Target={target.Name}"]
-      : ["destroy", "--apphost", appHostProject, "--environment", DeployEnvironment, "--", $"--Publish:Target={target.Name}"];
+  /// <summary>The AppHost parameters a deploy of <paramref name="target"/> needs and that have no default.</summary>
+  internal static string[] RequiredParameters(DeployTarget target) =>
+    target == Kubernetes
+      ? [KubernetesNamespaceParameter, HelmReleaseNameParameter, RegistryEndpointParameter, RegistryRepositoryParameter]
+      : [];
+
+  /// <summary>Configuration key of an AppHost parameter: <c>Parameters:&lt;name&gt;</c>.</summary>
+  internal static string ParameterConfigurationKey(string name) => $"Parameters:{name}";
+
+  /// <summary>Environment variable of an AppHost parameter: <c>Parameters__&lt;name&gt;</c>.</summary>
+  internal static string ParameterEnvironmentVariable(string name) => $"Parameters__{name}";
+
+  /// <summary>
+  /// Environment lookup that matches names case-insensitively, like .NET configuration does (an exact match wins when
+  /// two variables differ only by case).
+  /// </summary>
+  internal static Func<string, string?> CaseInsensitiveEnvironment(IReadOnlyDictionary<string, string> variables) =>
+    name => variables.TryGetValue(name, out string? exact)
+      ? exact
+      : variables.FirstOrDefault(pair => string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase)).Value;
+
+  /// <summary>
+  /// Resolves the target's required parameters: the <c>Parameters__&lt;name&gt;</c> environment variable, else the AppHost
+  /// user secret <c>Parameters:&lt;name&gt;</c> (from <c>dotnet user-secrets list</c> output). Blank values count as missing.
+  /// </summary>
+  internal static DeployParameterResolution ResolveParameters(
+    DeployTarget target, Func<string, string?> environment, bool userSecretsProbeSucceeded, string userSecretsOutput)
+  {
+    List<ResolvedDeployParameter> resolved = [];
+    List<string> missing = [];
+    foreach (string name in RequiredParameters(target))
+    {
+      string? fromEnvironment = environment(ParameterEnvironmentVariable(name));
+      string? fromSecret = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, ParameterConfigurationKey(name));
+      if (!string.IsNullOrWhiteSpace(fromEnvironment))
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromEnvironment.Trim(), $"{ParameterEnvironmentVariable(name)} environment variable"));
+      }
+      else if (fromSecret is not null)
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromSecret, UserSecretSource));
+      }
+      else
+      {
+        missing.Add(name);
+      }
+    }
+
+    return new DeployParameterResolution(resolved, missing);
+  }
+
+  /// <summary>The refusal for unset deploy parameters: each one with the pwsh command that sets it.</summary>
+  internal static string[] BuildMissingParameterLines(string appHostProject, DeployTarget target, IReadOnlyList<string> missing) =>
+  [
+    $"Missing deploy parameter{(missing.Count == 1 ? "" : "s")} for {target.Name}: {string.Join(", ", missing)}. Set each once in the AppHost user secrets (per machine, never committed):",
+    .. missing.Select(name => $"  dotnet user-secrets set '{ParameterConfigurationKey(name)}' '<value>' --project '{appHostProject}'"),
+    "or for the current pwsh session only:",
+    .. missing.Select(name => $"  ${{env:{ParameterEnvironmentVariable(name)}}} = '<value>'"),
+  ];
+
+  /// <summary>
+  /// Deploy refusal lines for unset parameters: none when all are set; else, when the user secrets could not be read
+  /// (<paramref name="userSecretsFailure"/>), that first, then the missing list with the command to set each.
+  /// </summary>
+  internal static string[] CollectParameterProblems(
+    string appHostProject, DeployTarget target, DeployParameterResolution parameters, string? userSecretsFailure) =>
+    parameters.Missing.Count == 0
+      ? []
+      :
+      [
+        .. userSecretsFailure is null ? (string[])[] : [UserSecretsUnreadableMessage(appHostProject, userSecretsFailure)],
+        string.Join('\n', BuildMissingParameterLines(appHostProject, target, parameters.Missing)),
+      ];
+
+  /// <summary>The AppHost user secrets could not be listed, so a "missing" parameter may in fact be set.</summary>
+  internal static string UserSecretsUnreadableMessage(string appHostProject, string reason) =>
+    $"Could not read the AppHost user secrets (`dotnet user-secrets list --project '{appHostProject}'` failed: {reason}), "
+    + "so parameters set there are not visible. Fix that first (e.g. `dotnet restore` the AppHost); the list below may already be set.";
+
+  /// <summary>First non-blank line of <paramref name="text"/>, else <paramref name="fallback"/>.</summary>
+  internal static string FirstLine(string text, string fallback) =>
+    text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? fallback;
+
+  /// <summary>Refusal for a probe that hit <see cref="ProbeTimeout"/>.</summary>
+  internal static string ProbeTimedOutMessage(string executable, IReadOnlyList<string> arguments) =>
+    $"`{executable} {string.Join(' ', arguments)}` timed out after {ProbeTimeout.TotalSeconds:0}s (an exec credential plugin waiting for "
+    + "an interactive login, or a wedged Docker daemon?). Make it answer from this shell, then re-run.";
+
+  /// <summary>
+  /// <c>aspire destroy</c>; <c>--yes --non-interactive</c> only when the operator passed <c>--yes</c>, else Aspire asks. Any
+  /// deploy parameter the operator has set follows the target as <c>--Parameters:&lt;name&gt;=&lt;value&gt;</c>.
+  /// </summary>
+  internal static string[] BuildDestroyArguments(string appHostProject, DeployTarget target, bool yes, IReadOnlyList<ResolvedDeployParameter> parameters) =>
+  [
+    "destroy", "--apphost", appHostProject, "--environment", DeployEnvironment,
+    .. yes ? (string[])["--yes", "--non-interactive"] : [],
+    "--", $"--Publish:Target={target.Name}",
+    .. parameters.Select(parameter => $"--{ParameterConfigurationKey(parameter.Name)}={parameter.Value}"),
+  ];
 
   internal static string[] BuildHelmVersionArguments() => ["version", "--short"];
 
   internal static string[] BuildKubectlContextArguments() => ["config", "current-context"];
+
+  /// <summary>Reads the API server's <c>/version</c> through <paramref name="context"/>: does the cluster answer at all.</summary>
+  internal static string[] BuildKubectlReachabilityArguments(string context) =>
+    ["--context", context, "get", "--raw", "/version", $"--request-timeout={ReachabilityTimeout}"];
+
+  /// <summary>Error when the context's API did not answer; null when it did.</summary>
+  internal static string? ValidateKubectlReachable(bool probeSucceeded, string context, string error)
+  {
+    if (probeSucceeded)
+    {
+      return null;
+    }
+
+    string reason = FirstLine(error, "no response");
+    return $"The kubectl context {context} does not answer (`kubectl --context {context} get --raw /version` failed: {reason}). "
+      + "Start or recreate the cluster, or switch context with `kubectl config use-context <name>`.";
+  }
+
+  /// <summary>The kind cluster a <c>kind-&lt;cluster&gt;</c> context points at; null for any other context.</summary>
+  internal static string? KindClusterName(string context) =>
+    context.StartsWith(KindContextPrefix, StringComparison.Ordinal) && context.Length > KindContextPrefix.Length
+      ? context[KindContextPrefix.Length..]
+      : null;
+
+  internal static string[] BuildKindClustersArguments() => ["get", "clusters"];
+
+  /// <summary>Error when kind is missing or <c>kind get clusters</c> does not list <paramref name="cluster"/>; null when it does.</summary>
+  internal static string? ValidateKindCluster(bool probeSucceeded, string output, string cluster)
+  {
+    if (!probeSucceeded)
+    {
+      return $"The kubectl context {KindContextPrefix}{cluster} is a kind context, but kind is not on PATH or `kind get clusters` failed. Install kind, or switch context.";
+    }
+
+    bool exists = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+      .Any(line => string.Equals(line, cluster, StringComparison.Ordinal));
+    return exists
+      ? null
+      : $"The kind cluster '{cluster}' (context {KindContextPrefix}{cluster}) does not exist — `kind get clusters` does not list it. "
+        + $"Create it (see Local Kubernetes with kind in the tw-deploy skill), or delete the stale context: kubectl config delete-context {KindContextPrefix}{cluster}";
+  }
+
+  /// <summary>The registry's <c>/v2/</c> API for <paramref name="endpoint"/> (<c>host:port</c>, or a URL); null when unparseable.</summary>
+  internal static Uri? BuildRegistryProbeUri(string endpoint)
+  {
+    string trimmed = endpoint.Trim().TrimEnd('/');
+    string withScheme = trimmed.Contains("://", StringComparison.Ordinal) ? trimmed : $"http://{trimmed}";
+    return Uri.TryCreate(withScheme, UriKind.Absolute, out Uri? root) && root.Scheme is "http" or "https"
+      ? new Uri(root, "/v2/")
+      : null;
+  }
+
+  /// <summary>
+  /// Error when the registry at <paramref name="endpoint"/> did not answer (any HTTP status counts as answering); null when it
+  /// did. <paramref name="failure"/> is why (e.g. a TLS error), when known.
+  /// </summary>
+  internal static string? ValidateRegistry(bool answered, string endpoint, string appHostProject, string? failure = null) =>
+    answered
+      ? null
+      : $"The container registry at {endpoint} ({RegistryEndpointParameter}) does not answer{(string.IsNullOrWhiteSpace(failure) ? "" : $" ({failure.Trim()})")}. "
+        + "For kind, start the local registry container (kind-registry in the tw-deploy skill's kind recipe), or point the parameter at a running registry: "
+        + $"dotnet user-secrets set '{ParameterConfigurationKey(RegistryEndpointParameter)}' '<host:port>' --project '{appHostProject}'";
+
+  /// <summary>
+  /// The registry to probe for <paramref name="context"/>: <c>registry-endpoint</c> when deploying (<paramref name="deploying"/>)
+  /// to a kind context and the parameter resolved; null otherwise (deprovision, a non-kind context, or the parameter is unset).
+  /// </summary>
+  internal static string? RegistryToProbe(string context, DeployParameterResolution parameters, bool deploying) =>
+    deploying && KindClusterName(context) is not null
+      ? parameters.Resolved.FirstOrDefault(parameter => parameter.Name == RegistryEndpointParameter)?.Value
+      : null;
+
+  /// <summary>
+  /// The cluster refusals from the probe results: a missing kind cluster is reported instead of the unreachable API (it is
+  /// the root cause); the registry refusal only when a registry was probed (see <see cref="RegistryToProbe"/>).
+  /// </summary>
+  internal static string[] CollectClusterProblems(ClusterProbeResults probes, string appHostProject)
+  {
+    string? kindCluster = KindClusterName(probes.Context);
+    string? kindError = kindCluster is null ? null : probes.KindTimedOut
+      ? ProbeTimedOutMessage("kind", BuildKindClustersArguments())
+      : ValidateKindCluster(probes.KindProbeSucceeded, probes.KindOutput, kindCluster);
+    string? clusterError = kindError ?? ValidateKubectlReachable(probes.Reachable, probes.Context, probes.ReachabilityError);
+    string? registryError = kindCluster is not null && probes.RegistryEndpoint is not null
+      ? ValidateRegistry(probes.RegistryAnswered, probes.RegistryEndpoint, appHostProject, probes.RegistryFailure)
+      : null;
+    return [.. new[] { clusterError, registryError }.OfType<string>()];
+  }
+
+  /// <summary>
+  /// Every kubernetes refusal in one list: parameter problems, helm, then no context or the cluster problems (only checked
+  /// when a context is set).
+  /// </summary>
+  internal static string[] CollectKubernetesProblems(
+    IReadOnlyList<string> parameterProblems, string? helmError, string? contextError, string? context, IReadOnlyList<string> clusterProblems) =>
+  [
+    .. parameterProblems,
+    .. helmError is null ? (string[])[] : [helmError],
+    .. context is null ? [contextError ?? NoKubectlContextMessage] : clusterProblems,
+  ];
+
+  /// <summary>One report for every preflight problem found, so the operator fixes them in one pass.</summary>
+  internal static string[] BuildPreflightReport(string verb, IReadOnlyList<string> problems) =>
+  [
+    $"{verb} preflight failed ({problems.Count} problem{(problems.Count == 1 ? "" : "s")}); nothing was run:",
+    .. problems.Select(problem => $"- {problem}"),
+  ];
 
   /// <summary><c>az account show</c>: the logged-in subscription id and name, one per line.</summary>
   internal static string[] BuildAzureAccountArguments() => ["account", "show", "--query", "[id, name]", "--output", "tsv"];
@@ -208,14 +474,19 @@ internal static class AspireDeploy
     string.IsNullOrWhiteSpace(configured) ? DefaultContainerRuntime : configured.Trim();
 
   /// <summary>What `dev deploy` is about to do, printed before the confirmation.</summary>
-  internal static string[] BuildDeployPlanLines(string appHostProject, DeployTarget target, string preflightDetail) =>
+  internal static string[] BuildDeployPlanLines(string appHostProject, DeployTarget target, string preflightDetail, IReadOnlyList<ResolvedDeployParameter> parameters) =>
   [
     $"dev deploy → aspire deploy ({target.Name})",
     $"  AppHost:     {appHostProject}",
     $"  Environment: {DeployEnvironment}",
     $"  Target:      Publish:Target={target.Name}",
+    .. BuildParameterLines(parameters),
     $"  {preflightDetail}",
   ];
+
+  /// <summary>One line per forwarded parameter: name, value and source (forwarded parameters are never secret).</summary>
+  internal static string[] BuildParameterLines(IReadOnlyList<ResolvedDeployParameter> parameters) =>
+    [.. parameters.Select(parameter => $"  Parameter:   {parameter.Name}={parameter.Value} (from the {parameter.Source})")];
 
   internal const string DeployConfirmationRefusal =
     "Not deploying: no confirmation. Re-run with --yes to deploy non-interactively, or from a terminal to answer the prompt.";
