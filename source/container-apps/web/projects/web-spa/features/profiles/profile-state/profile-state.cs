@@ -14,7 +14,7 @@
 namespace TimeWarp.Architecture.Features.Profiles;
 
 [StateAccess]
-public sealed partial class ProfileState: State<ProfileState>
+public sealed partial class ProfileState : State<ProfileState>
 {
   public string? Alias { get; private set; }
   public string? Email { get; private set; }

@@ -30,7 +30,7 @@ public class CurrentUserService : ICurrentUserService
   /// </summary>
   public CurrentUserService(IHttpContextAccessor httpContextAccessor)
   {
-    string? claim  = httpContextAccessor.HttpContext?.User?.FindFirstValue(claimType: nameof(UserId));
+    string? claim = httpContextAccessor.HttpContext?.User?.FindFirstValue(claimType: nameof(UserId));
     if (claim is null) return;
     UserId = Guid.Parse(claim);
     IsAuthenticated = httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;

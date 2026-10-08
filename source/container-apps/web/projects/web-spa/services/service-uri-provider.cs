@@ -17,7 +17,7 @@ public class ServiceUriProvider
 {
   private readonly IHttpClientFactory HttpClientFactory;
   private readonly ILogger<ServiceUriProvider> Logger;
-  public Dictionary<string, Uri> ServiceUris { get; private set; } = new();
+  public Dictionary<string, Uri> ServiceUris { get; private set; } = [];
   private bool IsInitialized;
 
   public ServiceUriProvider(

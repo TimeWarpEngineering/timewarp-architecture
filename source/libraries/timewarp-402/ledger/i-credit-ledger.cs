@@ -16,6 +16,7 @@
 #endregion
 
 namespace TimeWarp.X402;
+
 using TimeWarp.Identity;
 
 /// <summary>Credit ledger keyed by principal.</summary>

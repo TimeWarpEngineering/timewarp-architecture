@@ -16,9 +16,6 @@
 
 namespace EntraOidcHandlerRoundTrip_;
 
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using FastEndpoints;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -32,6 +29,9 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;

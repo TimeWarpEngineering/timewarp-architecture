@@ -110,6 +110,9 @@ public sealed class HttpApiService : IApiService
       HttpVerb.Post => await HttpClient.PostAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
       HttpVerb.Put => await HttpClient.PutAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
       HttpVerb.Patch => await HttpClient.PatchAsync(route, httpContent, cancellationToken).ConfigureAwait(false),
+      // Head and Options have no sender here. NotSupportedException matches the discard, which is
+      // what these verbs threw before IDE0072 required them to be named.
+      HttpVerb.Head or HttpVerb.Options => throw new NotSupportedException($"HttpVerb: {apiRequest.GetHttpVerb()} is not supported."),
       var verb => throw new NotSupportedException($"HttpVerb: {verb} is not supported.")
     };
   }
@@ -168,15 +171,18 @@ public sealed class HttpApiService : IApiService
   private static SharedProblemDetails SynthesizeProblemFromStatus(HttpStatusCode statusCode)
   {
     int status = (int)statusCode;
-    return statusCode switch
+    // Numeric switch: HttpStatusCode names every IANA code, and undefined values exist too.
+    // Only 401 and 403 have their own problem; every other code shares the discard body.
+    // IDE0072's fixer would throw NotImplementedException for those codes and break clients.
+    return status switch
     {
-      HttpStatusCode.Unauthorized => new SharedProblemDetails
+      (int)HttpStatusCode.Unauthorized => new SharedProblemDetails
       {
         Title = "Unauthorized",
         Status = status,
         Detail = "Authentication is required."
       },
-      HttpStatusCode.Forbidden => new SharedProblemDetails
+      (int)HttpStatusCode.Forbidden => new SharedProblemDetails
       {
         Title = "Forbidden",
         Status = status,
@@ -198,6 +204,8 @@ public sealed class HttpApiService : IApiService
       // besides route parameters.
       HttpVerb.Get or HttpVerb.Delete =>
         (apiRequest as IQueryStringRouteProvider)?.GetRouteWithQueryString() ?? apiRequest.GetRoute(),
+      HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch or HttpVerb.Head or HttpVerb.Options =>
+        apiRequest.GetRoute(),
       _ => apiRequest.GetRoute()
     };
 
@@ -211,6 +219,7 @@ public sealed class HttpApiService : IApiService
           Encoding.UTF8,
           MediaTypeNames.Application.Json
         ),
+      HttpVerb.Get or HttpVerb.Delete or HttpVerb.Head or HttpVerb.Options => null,
       _ => null
     };
 

@@ -54,7 +54,7 @@ public static class AgentScopePermissionSeed
   {
     ArgumentNullException.ThrowIfNull(scopes);
 
-    HashSet<string> granted = new(StringComparer.Ordinal);
+    HashSet<string> granted = [with(StringComparer.Ordinal)];
     foreach (string scope in scopes)
     {
       if (string.IsNullOrWhiteSpace(scope))

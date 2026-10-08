@@ -22,7 +22,7 @@ using TimeWarp.Identity;
 public sealed class InMemoryPrincipalRoleStore : IPrincipalRoleStore
 {
   private readonly ConcurrentDictionary<PrincipalId, Guid[]> Assignments = new();
-  private readonly object FirstAdminGate = new();
+  private readonly Lock FirstAdminGate = new();
 
   public Task<IReadOnlyList<Guid>> GetRoleIdsAsync(
     PrincipalId principalId,

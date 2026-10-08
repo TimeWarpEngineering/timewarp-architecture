@@ -3,6 +3,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Common.Interfaces;
+
 public interface IStaticRoute
 {
   [SuppressMessage

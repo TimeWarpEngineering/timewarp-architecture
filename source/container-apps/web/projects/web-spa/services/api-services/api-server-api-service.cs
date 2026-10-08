@@ -23,7 +23,7 @@ public sealed class ApiServerApiService : BaseApiService, IApiServerApiService
     IHttpClientFactory httpClientFactory,
     IAccessTokenProvider accessTokenProvider,
     IOptions<JsonSerializerOptions> options
-  ) : base(httpClientFactory, ServiceNames.ApiServiceName, accessTokenProvider, options) {}
+  ) : base(httpClientFactory, ServiceNames.ApiServiceName, accessTokenProvider, options) { }
 
   /// <summary>
   /// Used for testing purposes
@@ -33,7 +33,7 @@ public sealed class ApiServerApiService : BaseApiService, IApiServerApiService
     HttpClient httpClient,
     IAccessTokenProvider accessTokenProvider,
     JsonSerializerOptions jsonSerializerOptions
-  ) : base(httpClient, accessTokenProvider, jsonSerializerOptions) {}
+  ) : base(httpClient, accessTokenProvider, jsonSerializerOptions) { }
 
 }
 

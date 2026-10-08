@@ -17,9 +17,9 @@
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Features.Identity;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
@@ -148,48 +148,51 @@ internal sealed class ScriptedCredentialsApiService : TimeWarp.Architecture.Serv
     switch (request)
     {
       case Query query:
-      {
-        if (List(query.IncludeRevoked) is TResponse listResponse)
         {
-          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(listResponse);
-        }
+          if (List(query.IncludeRevoked) is TResponse listResponse)
+          {
+            return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(listResponse);
+          }
 
-        break;
-      }
+          break;
+        }
 
       case RevokeCredential.Command command:
-      {
-        int index = Credentials.FindIndex(c => c.Id.Value == command.CredentialId);
-        if (index >= 0)
         {
-          CredentialSummary row = Credentials[index];
-          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
-        }
+          int index = Credentials.FindIndex(c => c.Id.Value == command.CredentialId);
+          if (index >= 0)
+          {
+            CredentialSummary row = Credentials[index];
+            Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, row.Nickname, row.CreatedAt, DateTimeOffset.UtcNow, isActive: false, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
+          }
 
-        if (new RevokeCredential.Response() is TResponse revokeResponse)
-        {
-          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(revokeResponse);
-        }
+          if (new RevokeCredential.Response() is TResponse revokeResponse)
+          {
+            return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(revokeResponse);
+          }
 
-        break;
-      }
+          break;
+        }
 
       case RenameCredential.Command command:
-      {
-        int index = Credentials.FindIndex(c => c.Id.Value == command.CredentialId);
-        if (index >= 0)
         {
-          CredentialSummary row = Credentials[index];
-          Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, command.Nickname.Trim(), row.CreatedAt, row.RevokedAt, row.IsActive, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
+          int index = Credentials.FindIndex(c => c.Id.Value == command.CredentialId);
+          if (index >= 0)
+          {
+            CredentialSummary row = Credentials[index];
+            Credentials[index] = new CredentialSummary(row.Id, row.Type, row.Label, command.Nickname.Trim(), row.CreatedAt, row.RevokedAt, row.IsActive, row.RegisteredWith, row.Fingerprint, row.LastUsedAt);
+          }
+
+          if (new RenameCredential.Response() is TResponse renameResponse)
+          {
+            return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(renameResponse);
+          }
+
+          break;
         }
 
-        if (new RenameCredential.Response() is TResponse renameResponse)
-        {
-          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(renameResponse);
-        }
-
+      default:
         break;
-      }
     }
 
     throw new InvalidOperationException($"No scripted response for {request.GetType()} → {typeof(TResponse)}.");

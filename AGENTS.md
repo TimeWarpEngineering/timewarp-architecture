@@ -42,7 +42,7 @@ Run from the repo root (the `dev` CLI resolves the root via git):
 - `dev test` — every project under `tests/` (globbed, run one at a time — shared in-proc port base); includes
   family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
 - one suite: `cd tests/<project> && dotnet test -c Release` (MTP — the csproj-path form of
-  `dotnet test` is unsupported on .NET 10). Selection: `-- --filter-class <substring>` /
+  `dotnet test` is unsupported on .NET 11, same as .NET 10). Selection: `-- --filter-class <substring>` /
   `-- --filter-method <substring>` / `-- --filter-tag <tag>` (also honors `JARIBU_FILTER_TAG`;
   CLI wins), or `--list-tests` + `-- --filter-uid <uid>` for a specific discovered node
   (`TimeWarp.Jaribu.TestingPlatform` ≥ 1.0.0-beta.15, timewarp-jaribu#23; name/tag
@@ -68,7 +68,7 @@ Branch naming, commits, and merge policy: **`tw-git`**.
 
 ## Stack
 
-- **.NET 10**, C# latest, `Nullable` enabled repo-wide, central package management
+- **.NET 11** (SDK `11.0.100-rc.1.26425.128` until GA), C# latest, `Nullable` enabled repo-wide, central package management
 - Blazor WebAssembly + **TimeWarp.State**; **TimeWarp.Mediator** (NOT MediatR):
   `IRequest<OneOf<Response, SharedProblemDetails>>`
 - Server endpoints: **both** web-server and api-server host **FastEndpoints generated from

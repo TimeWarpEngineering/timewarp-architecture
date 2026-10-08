@@ -118,7 +118,7 @@ public static class ProfileCatalog
 
   private static IReadOnlyList<Entry> BuildRegions()
   {
-    Dictionary<string, Entry> byCode = new(StringComparer.OrdinalIgnoreCase);
+    Dictionary<string, Entry> byCode = [with(StringComparer.OrdinalIgnoreCase)];
     foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
     {
       RegionInfo regionInfo;

@@ -44,21 +44,36 @@ internal static class WebAuthnJsModule
     bool preferHybrid,
     CancellationToken cancellationToken)
   {
-    IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-      "import",
-      cancellationToken,
-      Specifier);
+    IJSObjectReference? module = null;
     try
     {
+      module = await jsRuntime.InvokeAsync<IJSObjectReference>(
+        "import",
+        cancellationToken,
+        Specifier);
       return await module.InvokeAsync<string>(
         exportName,
         cancellationToken,
         optionsJson,
         preferHybrid);
     }
+    catch (JSDisconnectedException exception)
+    {
+      throw new InvalidOperationException("The browser circuit disconnected during the passkey ceremony.", exception);
+    }
     finally
     {
-      await module.DisposeAsync();
+      if (module is not null)
+      {
+        try
+        {
+          await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+          // The circuit is already gone.
+        }
+      }
     }
   }
 }

@@ -28,7 +28,10 @@ partial class CommandPaletteState
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
+        // One read for this dispatch. The roster is rebuilt on the next Open.
+#pragma warning disable BL0013
         AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
         CommandPaletteState.Roster = await CommandPaletteRoster.BuildAsync
         (
           authenticationState.User,

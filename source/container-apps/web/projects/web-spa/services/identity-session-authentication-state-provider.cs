@@ -28,8 +28,8 @@
 
 namespace TimeWarp.Architecture.Services;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Foundation.Types;
@@ -105,6 +105,11 @@ public class IdentitySessionAuthenticationStateProvider : AuthenticationStatePro
   /// <summary>
   /// Call after a successful passkey ceremony so AuthorizeView and auth listeners re-read session.
   /// </summary>
-  public void NotifySessionChanged() =>
+  public void NotifySessionChanged()
+  {
+    // This type is the provider. It notifies subscribers; it does not subscribe to itself.
+#pragma warning disable BL0013
     NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+#pragma warning restore BL0013
+  }
 }

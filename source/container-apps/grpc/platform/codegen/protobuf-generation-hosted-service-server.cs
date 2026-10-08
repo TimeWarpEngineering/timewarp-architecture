@@ -14,16 +14,10 @@ namespace TimeWarp.Architecture.HostedServices;
 
 public class ProtobufGenerationHostedService : IHostedService
 {
-  private readonly IServiceProvider ServiceProvider;
   private readonly ILogger Logger;
 
-  public ProtobufGenerationHostedService
-  (
-    IServiceProvider serviceProvider,
-    ILogger<ProtobufGenerationHostedService> logger
-  )
+  public ProtobufGenerationHostedService(ILogger<ProtobufGenerationHostedService> logger)
   {
-    ServiceProvider = serviceProvider;
     Logger = logger;
   }
 

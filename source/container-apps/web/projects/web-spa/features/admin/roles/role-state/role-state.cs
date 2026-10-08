@@ -21,7 +21,7 @@ using static GetRoles;
 public sealed partial class RoleState : State<RoleState>
 {
   private List<RoleDto>? RolesList { get; set; }
-  private Dictionary<Guid, HashSet<string>> DraftPermissionIds { get; set; } = new();
+  private Dictionary<Guid, HashSet<string>> DraftPermissionIds { get; set; } = [];
 
   public IReadOnlyList<RoleDto>? Roles => RolesList?.AsReadOnly();
 
@@ -34,7 +34,7 @@ public sealed partial class RoleState : State<RoleState>
   {
     RolesList = null;
     LastCreatedRoleId = null;
-    DraftPermissionIds = new();
+    DraftPermissionIds = [];
     LastSetRolePermissionsSucceeded = false;
   }
 

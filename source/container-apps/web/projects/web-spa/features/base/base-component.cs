@@ -25,5 +25,5 @@ namespace TimeWarp.Architecture.Features;
 /// </remarks>
 public abstract partial class BaseComponent : TimeWarpStateDevComponent, IAttributeComponent
 {
-    protected bool IsAnyActive(params Type[] actions) => ActionTrackingState.IsAnyActive(actions);
+  protected bool IsAnyActive(params Type[] actions) => ActionTrackingState.IsAnyActive(actions);
 }

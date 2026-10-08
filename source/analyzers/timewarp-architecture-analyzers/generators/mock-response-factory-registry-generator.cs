@@ -42,7 +42,7 @@ public sealed class MockResponseFactoryRegistryGenerator : IIncrementalGenerator
     var entries = new List<(string RequestType, string Shell)>();
 
     IEnumerable<IAssemblySymbol> assemblies = HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation)
-      .Concat(new[] { (IAssemblySymbol)compilation.Assembly });
+      .Concat(new[] { compilation.Assembly });
 
     foreach (IAssemblySymbol assembly in assemblies)
     {

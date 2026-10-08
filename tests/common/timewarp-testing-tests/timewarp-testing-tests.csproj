@@ -7,7 +7,7 @@
          `dotnet run` + JARIBU_MULTI multi-mode compile here), mirroring the api/web family
          aggregators' MTP wiring (task 136) without their source-glob discovery mechanism. -->
     <DefineConstants>$(DefineConstants);JARIBU_MULTI</DefineConstants>
-    <!-- .NET 10 SDK requires this opt-in for the MTP-native `dotnet test` experience
+    <!-- .NET 11 SDK requires this opt-in for the MTP-native `dotnet test` experience
          (VSTest bridge is no longer supported) — https://aka.ms/dotnet-test-mtp-error.
          Pair with the project-local global.json test.runner project-local MTP runner; -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>

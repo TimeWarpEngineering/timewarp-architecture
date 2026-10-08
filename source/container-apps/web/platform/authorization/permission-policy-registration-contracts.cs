@@ -16,9 +16,8 @@
 
 namespace TimeWarp.Architecture.Authorization;
 
-using TimeWarp.Architecture.Features;
-
 using Microsoft.AspNetCore.Authorization;
+using TimeWarp.Architecture.Features;
 
 /// <summary>
 /// Permission-backed ASP.NET policy registration (policy name == <see cref="PermissionIds"/>).

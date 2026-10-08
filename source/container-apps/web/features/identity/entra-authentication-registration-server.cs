@@ -30,11 +30,11 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 public static class EntraAuthenticationRegistration
 {

@@ -43,8 +43,8 @@
 
 namespace TimeWarp.Architecture.Services;
 
-using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 using TimeWarp.Architecture.Abstractions;
 
 public sealed class HttpRequestHostAccessor : IRequestHostAccessor
@@ -98,7 +98,7 @@ public sealed class HttpRequestHostAccessor : IRequestHostAccessor
     }
 
     string candidate = host;
-    if (candidate.StartsWith('[') && candidate.EndsWith(']'))
+    if (candidate.StartsWith('[', StringComparison.Ordinal) && candidate.EndsWith(']', StringComparison.Ordinal))
     {
       candidate = candidate[1..^1];
     }

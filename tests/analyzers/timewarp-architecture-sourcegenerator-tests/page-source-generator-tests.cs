@@ -1,11 +1,11 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 
 // Verifies PageSourceGenerator: [Page("/route")] routing + Policy pit-of-success (task 094).
 // Policy must be a const field reference (Policies.X); literals and nameof are TWE005 errors.

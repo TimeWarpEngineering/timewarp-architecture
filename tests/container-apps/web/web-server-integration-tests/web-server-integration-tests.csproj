@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+    <!-- .NET 11 MTP-native dotnet test — pair with project-local global.json test.runner
          project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce.
@@ -21,9 +21,6 @@
     <PackageReference Include="AutoFixture" />
     <PackageReference Include="AutoFixture.AutoFakeItEasy" />
     <PackageReference Include="FakeItEasy" />
-    <!-- Direct reference pins Microsoft.Extensions.Hosting 10.0.9 at a nearer graph level than
-         web-server's transitive Oakton (< 10.0.0) bound, resolving the NU1107 version conflict
-         (same approach as web-spa-integration-tests). -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />

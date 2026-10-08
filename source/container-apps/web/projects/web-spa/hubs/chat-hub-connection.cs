@@ -42,11 +42,10 @@ public sealed class ChatHubConnection : IDisposable
     .WithUrl(chatHubUrl)
     .Build();
 
-    Func<ReceiveMessage.Command, Task> onReceiveMessage =
-      async (command) =>
+    async Task OnReceiveMessage(ReceiveMessage.Command command) =>
         await Store.GetState<ChatState>().ServerToClientMessage(command);
 
-    HubConnection.On(nameof(ReceiveMessage), onReceiveMessage);
+    HubConnection.On(nameof(ReceiveMessage), (Func<ReceiveMessage.Command, Task>)OnReceiveMessage);
   }
 
   public async Task ConnectAsync()

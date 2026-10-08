@@ -231,6 +231,8 @@ internal static class AspireDeploy
       {
         JsonValueKind.String => value.GetString(),
         JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False => value.GetRawText(),
+        // Objects, arrays, null, and undefined are absent parameters, same as the former discard.
+        JsonValueKind.Undefined or JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Null => null,
         _ => null,
       };
       return string.IsNullOrWhiteSpace(text) ? null : text.Trim();

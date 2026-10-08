@@ -18,11 +18,10 @@
 
 namespace TimeWarp.Architecture.Authorization;
 
-using TimeWarp.Architecture.Features;
-
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features;
 using TimeWarp.Identity;
 
 /// <summary>Authorization handler for <see cref="PermissionRequirement"/>.</summary>

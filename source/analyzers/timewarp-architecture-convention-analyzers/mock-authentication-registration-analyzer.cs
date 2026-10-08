@@ -19,12 +19,12 @@
 
 namespace TimeWarp.Architecture.Analyzers;
 
-using System.Collections.Immutable;
-using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Immutable;
+using System.IO;
 
 /// <summary>Roslyn analyzer for TWA0021: mock SPA auth providers must register only through MockAuthenticationRegistration.</summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
@@ -158,9 +158,9 @@ public sealed class MockAuthenticationRegistrationAnalyzer : DiagnosticAnalyzer
   private static IEnumerable<TypeSyntax> CollectTypeArguments(InvocationExpressionSyntax invocation)
   {
     if (invocation.Expression is MemberAccessExpressionSyntax
-        {
-          Name: GenericNameSyntax memberGeneric
-        })
+      {
+        Name: GenericNameSyntax memberGeneric
+      })
     {
       foreach (TypeSyntax arg in memberGeneric.TypeArgumentList.Arguments)
         yield return arg;

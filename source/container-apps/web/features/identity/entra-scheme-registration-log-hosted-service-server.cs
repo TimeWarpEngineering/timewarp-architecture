@@ -11,8 +11,8 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.Reflection;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 using TimeWarp.Architecture.Configuration;
 
 public sealed class EntraSchemeRegistrationLogHostedService : IHostedLifecycleService

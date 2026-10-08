@@ -55,7 +55,7 @@ public sealed class FeatureFilenameGrammarAnalyzer : DiagnosticAnalyzer
 
   private static string[] BuildLayerProjectFeatureMarkers()
   {
-    List<string> markers = new();
+    List<string> markers = [];
     foreach (string family in FeatureFilenameGrammar.Families)
     {
       foreach (string layer in FeatureFilenameGrammar.Layers)

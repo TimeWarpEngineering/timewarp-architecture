@@ -26,7 +26,7 @@ public static class LocalReturnUrl
   public static string Sanitize(string? returnUrl)
   {
     if (string.IsNullOrEmpty(returnUrl)
-      || !returnUrl.StartsWith('/')
+      || !returnUrl.StartsWith('/', StringComparison.Ordinal)
       || returnUrl.StartsWith("//", StringComparison.Ordinal)
       || returnUrl.StartsWith("/\\", StringComparison.Ordinal))
     {

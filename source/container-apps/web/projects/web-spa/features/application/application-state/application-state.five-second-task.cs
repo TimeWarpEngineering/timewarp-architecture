@@ -24,7 +24,7 @@ partial class ApplicationState
 
     internal sealed class Handler : StateActionHandler<Action>
     {
-      public Handler(IStore store) : base(store) {}
+      public Handler(IStore store) : base(store) { }
 
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {

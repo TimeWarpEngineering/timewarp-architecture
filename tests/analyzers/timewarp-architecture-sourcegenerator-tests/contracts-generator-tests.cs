@@ -1,8 +1,8 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
 using TimeWarp.Foundation.Contracts.Generators;
 
 // Verifies the contracts generator emits public marker attributes in TimeWarp.Foundation.Features

@@ -47,7 +47,7 @@ internal sealed class TokenCommand : ICommand<Unit>
         using LoadedKey key = AgentSigning.LoadKey(keyFile);
         string keyId = string.IsNullOrWhiteSpace(record?.KeyId)
           ? AgentSigning.ToBase64Url(key.KeyId)
-          : record!.KeyId!;
+          : record.KeyId;
         if (string.IsNullOrWhiteSpace(record?.KeyId))
         {
           Terminal.WriteLine($"No KeyId in store; using local KeyId {keyId}");

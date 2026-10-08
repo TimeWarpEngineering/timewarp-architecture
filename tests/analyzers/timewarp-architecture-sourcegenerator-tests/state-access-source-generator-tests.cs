@@ -1,8 +1,8 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
 
 // Verifies the Roslyn generator that replaced the web-spa StateAccess Moxy template (task 053):
 // for each [StateAccess] state class it emits the typed accessors into the shared BaseComponent

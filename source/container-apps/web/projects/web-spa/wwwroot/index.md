@@ -16,7 +16,7 @@ negotiation). Discovery index: [/llms.txt](/llms.txt). Auth story: [/auth.md](/a
 
 ## Built with
 
-- .NET 10 and Blazor WebAssembly
+- .NET 11 and Blazor WebAssembly
 - [FluentUI Blazor v5](https://github.com/microsoft/fluentui-blazor) + plain CSS design tokens
 - [TimeWarp.State](https://timewarpengineering.github.io/timewarp-state/) (Redux-style state)
 - [TimeWarp.Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator) for CQRS and

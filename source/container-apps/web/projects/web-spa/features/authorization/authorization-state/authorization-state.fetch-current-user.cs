@@ -12,6 +12,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.Authorization;
+
 using static GetCurrentUser;
 
 partial class AuthorizationState
@@ -30,7 +31,7 @@ partial class AuthorizationState
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
       IPublisher<ClientPipeline> publisher
-      ) : base(store, webServerApiService, logger, publisher) {}
+      ) : base(store, webServerApiService, logger, publisher) { }
 
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

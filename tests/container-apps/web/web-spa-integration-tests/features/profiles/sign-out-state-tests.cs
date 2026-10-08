@@ -17,12 +17,12 @@
 
 namespace SignOutState_;
 
-using System.Reflection;
-using System.Security.Claims;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Reflection;
+using System.Security.Claims;
 using TimeWarp.Architecture.Features.AgentLinks;
 using TimeWarp.Architecture.Features.Authorization;
 using TimeWarp.Architecture.Features.Identity;
@@ -191,8 +191,11 @@ public class SignOut_Should_
     public string? ImportedSpecifier { get; private set; }
     public RecordingModule Module { get; }
 
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
       InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
 
     public ValueTask<TValue> InvokeAsync<TValue>(
       string identifier,
@@ -221,8 +224,11 @@ public class SignOut_Should_
 
     public List<(string Export, object?[] Args)> Calls { get; } = [];
 
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
       InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
 
     public ValueTask<TValue> InvokeAsync<TValue>(
       string identifier,

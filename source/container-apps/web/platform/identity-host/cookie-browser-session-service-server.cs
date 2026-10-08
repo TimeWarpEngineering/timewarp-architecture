@@ -17,8 +17,8 @@
 
 namespace TimeWarp.Architecture.Services;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Configuration;
 

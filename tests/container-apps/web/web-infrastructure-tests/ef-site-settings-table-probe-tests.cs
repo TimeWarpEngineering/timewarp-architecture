@@ -12,9 +12,9 @@
 
 namespace SiteSettingsTableProbe_.Ef;
 
-using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using System.Collections.Concurrent;
 using TimeWarp.Architecture.Features.Settings.Infrastructure;
 using TimeWarp.Architecture.Testing;
 

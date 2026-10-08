@@ -153,7 +153,7 @@ public class SliceIsolationAnalyzer : DiagnosticAnalyzer
     TypeDeclarationSyntax? declaration = node.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
     return declaration is null
       ? null
-      : model.GetDeclaredSymbol(declaration, cancellationToken) as INamedTypeSymbol;
+      : model.GetDeclaredSymbol(declaration, cancellationToken);
   }
 
   private static string ReferencedDisplay(ISymbol symbol)

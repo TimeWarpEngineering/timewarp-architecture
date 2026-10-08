@@ -7,7 +7,7 @@
 // Handler stores Ct and RepoRoot as fields so private methods are zero-parameter.
 // Streams per-project output via Amuru RunAsync by default; --quiet uses CaptureAsync.
 //
-// Task 145-007: all suite-shaped projects are Jaribu Microsoft.Testing.Platform. On .NET 10,
+// Task 145-007: all suite-shaped projects are Jaribu Microsoft.Testing.Platform. On .NET 11,
 // `dotnet test <csproj-path>` / `--project` fail for MTP ("Testing with VSTest target is no longer
 // supported"). Always run bare `dotnet test -c Release` with cwd = project directory, which
 // picks up the project-local global.json test.runner. Root global.json must NOT set a runner

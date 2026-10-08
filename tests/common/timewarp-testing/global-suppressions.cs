@@ -7,5 +7,12 @@
 // Project-level suppressions either have no target or are given
 // a specific target and scoped to a namespace, type, member, etc.
 
+// These targets are the api and web fields on YarpTestServerApplication. Template
+// generation strips the losing conditional branch, and an assembly suppression whose
+// member is gone is IDE0076.
+#if(api)
 [assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Constructor assignment starts the nested test server; the field is otherwise unread.", Scope = "member", Target = "~F:TimeWarp.Architecture.Testing.YarpTestServerApplication.ApiTestServerApplication")]
+#endif
+#if(web)
 [assembly: SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Constructor assignment starts the nested test server; the field is otherwise unread.", Scope = "member", Target = "~F:TimeWarp.Architecture.Testing.YarpTestServerApplication.WebTestServerApplication")]
+#endif

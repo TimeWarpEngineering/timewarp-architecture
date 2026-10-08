@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!-- .NET 10 MTP-native dotnet test — pair with project-local global.json test.runner
+    <!-- .NET 11 MTP-native dotnet test — pair with project-local global.json test.runner
          project-local MTP runner; timewarp-jaribu#20: mirror root SDK pin. -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce. -->

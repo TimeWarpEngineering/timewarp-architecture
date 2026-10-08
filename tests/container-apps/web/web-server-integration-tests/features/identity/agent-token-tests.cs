@@ -12,8 +12,8 @@
 
 namespace AgentToken_;
 
-using System.Buffers.Text;
 using Microsoft.Extensions.DependencyInjection;
+using System.Buffers.Text;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;

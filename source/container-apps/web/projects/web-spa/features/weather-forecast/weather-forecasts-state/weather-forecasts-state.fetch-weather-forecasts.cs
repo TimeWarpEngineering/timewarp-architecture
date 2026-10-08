@@ -11,6 +11,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
+
 using static GetWeatherForecasts;
 partial class WeatherForecastsState
 {
@@ -32,7 +33,7 @@ partial class WeatherForecastsState
       IApiServerApiService apiServerApiService,
       ILogger<Handler> logger,
       IPublisher<ClientPipeline> publisher
-    ) : DefaultApiHandler<Action,Query,Response>(store, apiServerApiService, logger, publisher)
+    ) : DefaultApiHandler<Action, Query, Response>(store, apiServerApiService, logger, publisher)
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {

@@ -5,7 +5,7 @@
 #:package Microsoft.Extensions.DependencyInjection
 #:package Microsoft.AspNetCore.Authorization
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Co-located Jaribu tests for SPA permission claim policy registration (182-003).
 

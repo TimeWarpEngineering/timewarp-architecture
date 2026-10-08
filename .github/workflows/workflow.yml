@@ -144,7 +144,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
 
       # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
       # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
@@ -292,7 +294,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
 
       # Generated-app Jaribu aggregators hit HTTPS with the ASP.NET dev certificate (same as the
       # main `ci` job). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does

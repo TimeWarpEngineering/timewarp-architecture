@@ -14,10 +14,10 @@
 
 namespace TimeWarp.Architecture.Features.Identity;
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using TimeWarp.Identity;
 
 public static class EntraIssuerValidator

@@ -88,6 +88,8 @@ public static class AgentKeyProof
   {
     AgentKeyCeremonyType.Registration => RegistrationPrefix,
     AgentKeyCeremonyType.TokenIssuance => TokenIssuancePrefix,
+    // None and any unnamed value fail closed. Same exception the discard already threw.
+    AgentKeyCeremonyType.None => throw new ArgumentOutOfRangeException(nameof(ceremonyType), ceremonyType, "AgentKeyCeremonyType must be Registration or TokenIssuance."),
     _ => throw new ArgumentOutOfRangeException(nameof(ceremonyType), ceremonyType, "AgentKeyCeremonyType must be Registration or TokenIssuance.")
   };
 }

@@ -27,12 +27,12 @@
 
 namespace Program104SunnyPaths_;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Buffers.Text;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.MeteredCapability.Application;
@@ -106,7 +106,7 @@ public class SunnyPaths_
     completeResponse.ShouldNotBeNull();
     completeResponse.PrincipalId.IsEmpty.ShouldBeFalse();
 
-    GetCurrentSession.Response session = await GetCurrentSessionWithCookie(setCookieValues!);
+    GetCurrentSession.Response session = await GetCurrentSessionWithCookie(setCookieValues);
     session.IsAuthenticated.ShouldBeTrue();
     session.PrincipalId.ShouldBe(completeResponse.PrincipalId);
   }

@@ -33,7 +33,7 @@
     <NoWarn>$(NoWarn);CA2214</NoWarn>   <!-- Virtual call in ctor — intentional in test base classes -->
     <NoWarn>$(NoWarn);IDE0007</NoWarn>  <!-- Use 'var' — style preference -->
     <NoWarn>$(NoWarn);CA2000</NoWarn>   <!-- Dispose before out of scope — false positives in test infra (WebApplicationHost/HttpClient lifecycle owned by the framework; short-lived test scope) -->
-    <NoWarn>$(NoWarn);NU1608</NoWarn>   <!-- Transitive version ceilings that lag .NET 10 / FakeItEasy 9: Oakton 6.3.0 (Hosting <10) and AutoFixture.AutoFakeItEasy 4.18.1 (FakeItEasy <9). Both are latest; resolved versions are runtime-compatible (tests pass). -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>   <!-- Transitive version ceilings that lag the .NET 11 train / FakeItEasy 9: Oakton 6.3.0 (Hosting [6.0.0, 10.0.0)) and AutoFixture.AutoFakeItEasy 4.18.1 (FakeItEasy <9). Both are latest; resolved versions are runtime-compatible (tests pass). -->
     <NoWarn>$(NoWarn);RCS1102</NoWarn>  <!-- Roslynator 'make class static' — Jaribu uses static test methods; RCS1102 allowlist retained for fixture types -->
     <NoWarn>$(NoWarn);TWA0004</NoWarn> <!-- #region Purpose not yet adopted for test files — separate decision; TWA0008 (template-token guard) is the reason the convention analyzers are wired here -->
   </PropertyGroup>

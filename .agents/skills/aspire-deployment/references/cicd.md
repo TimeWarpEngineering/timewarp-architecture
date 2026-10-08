@@ -83,7 +83,7 @@ C# AppHost setup:
 - name: Setup .NET
   uses: actions/setup-dotnet@v4
   with:
-    dotnet-version: 10.0.x
+    dotnet-version: 11.0.x
 
 - name: Restore and build .NET workspace
   run: |
@@ -271,7 +271,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
           dotnet-quality: preview
 
       - name: Install Aspire CLI

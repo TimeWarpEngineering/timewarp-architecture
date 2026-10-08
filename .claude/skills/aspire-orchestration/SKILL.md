@@ -24,12 +24,12 @@ metadata:
 
 | Requirement | Install |
 |-------------|---------|
-| .NET 10.0 SDK | https://dotnet.microsoft.com/download |
+| .NET 11.0 SDK | https://dotnet.microsoft.com/download |
 | Aspire CLI (curl/PowerShell) | `curl -sSL https://aspire.dev/install.sh \| bash` |
-| Aspire CLI (NativeAOT global tool, .NET 10) | `dotnet tool install -g Aspire.Cli` |
+| Aspire CLI (NativeAOT global tool, .NET 11) | `dotnet tool install -g Aspire.Cli` |
 
 Either install method works. The `dotnet tool install` path produces a NativeAOT binary
-(instant startup, no JIT warmup) and is the recommended option when .NET 10 is already present.
+(instant startup, no JIT warmup) and is the recommended option when .NET 11 is already present.
 
 ## Detection
 

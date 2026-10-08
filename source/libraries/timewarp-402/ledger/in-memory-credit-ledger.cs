@@ -10,6 +10,7 @@
 #endregion
 
 namespace TimeWarp.X402;
+
 using System.Collections.Concurrent;
 using TimeWarp.Identity;
 

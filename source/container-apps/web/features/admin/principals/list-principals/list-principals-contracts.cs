@@ -48,7 +48,7 @@ public static partial class ListPrincipals
 
   public sealed class Response : ListResponse<PrincipalSummaryDto>
   {
-    public Response(int totalCount, PrincipalSummaryDto[] items) : base(totalCount, items) {}
+    public Response(int totalCount, PrincipalSummaryDto[] items) : base(totalCount, items) { }
   }
 
   public sealed class PrincipalSummaryDto

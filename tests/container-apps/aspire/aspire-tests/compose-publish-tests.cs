@@ -239,7 +239,7 @@ public partial class ComposePublish_Given_
   {
     File.Exists(path).ShouldBeTrue($"publish produced no {path}");
     return File.ReadAllLines(path)
-      .Where(line => line.Length > 0 && !line.StartsWith('#'))
+      .Where(line => line.Length > 0 && !line.StartsWith('#', StringComparison.Ordinal))
       .Select(line => line.Split('=', 2))
       .ToDictionary(parts => parts[0], parts => parts.Length > 1 ? parts[1] : "");
   }

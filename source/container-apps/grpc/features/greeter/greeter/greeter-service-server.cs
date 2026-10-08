@@ -17,12 +17,6 @@ namespace TimeWarp.Architecture.Features.Greeters;
 
 public class GreeterService : Greeter.GreeterBase
 {
-  private readonly ILogger Logger;
-  public GreeterService(ILogger<GreeterService> logger)
-  {
-    Logger = logger;
-  }
-
   public override Task<HelloReply> SayHello(TimeWarp.Architecture.GrpcServer.HelloRequest helloRequest, ServerCallContext serverCallContext) =>
     Task.FromResult(new HelloReply { Message = "Hello " + helloRequest.Name });
 }

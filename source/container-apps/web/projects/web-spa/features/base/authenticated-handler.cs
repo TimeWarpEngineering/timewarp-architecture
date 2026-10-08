@@ -33,7 +33,10 @@ internal abstract class AuthenticatedHandler<TAction> : BaseHandler<TAction>
 
   private async Task<bool> IsUserAuthenticatedAsync()
   {
+    // Re-read on every handle. The handler does not keep an AuthenticationState across calls.
+#pragma warning disable BL0013
     AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
     ClaimsPrincipal user = authState.User;
     return user.Identity?.IsAuthenticated ?? false;
   }

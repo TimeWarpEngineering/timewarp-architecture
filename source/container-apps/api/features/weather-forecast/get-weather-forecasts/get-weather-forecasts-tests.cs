@@ -5,7 +5,7 @@
 #:package Shouldly
 #:package FluentValidation
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
 // Co-located Jaribu in-proc Api tests (tasks 135/145-002/145-005). Replaces the Fixie twins under
 // tests/container-apps/api/api-server-integration-tests/features/weather-forecast/get/ (endpoint +

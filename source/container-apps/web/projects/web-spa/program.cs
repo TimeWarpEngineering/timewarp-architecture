@@ -169,12 +169,12 @@ public static class Program
         IHttpClientFactory httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
         IOptions<JsonSerializerOptions> options = serviceProvider.GetRequiredService<IOptions<JsonSerializerOptions>>();
         var realService = new WebServerApiService(accessTokenProvider, httpClientFactory, options);
-        #if MOCK_WEB_API
+#if MOCK_WEB_API
         ILogger<MockWebApiService> logger = serviceProvider.GetRequiredService<ILogger<MockWebApiService>>();
         return new MockWebApiService(realService, logger, serviceProvider);
-        #else
+#else
         return realService; // Comment out to use the mock service
-        #endif
+#endif
       }
     );
 

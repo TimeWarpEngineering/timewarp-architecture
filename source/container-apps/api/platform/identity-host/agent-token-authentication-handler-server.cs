@@ -20,12 +20,12 @@
 
 namespace TimeWarp.Architecture.Api.Server;
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Identity;

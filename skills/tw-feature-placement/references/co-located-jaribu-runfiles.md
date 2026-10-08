@@ -70,7 +70,7 @@ in-proc `HostGraphFactory` boots are already cheap; session sharing is for the c
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
 #region Purpose
 // One honest line: what this runfile proves.
@@ -88,15 +88,16 @@ namespace Your.Slice.Namespace
 }
 ```
 
-- `#:property PublishAot=false` — .NET 10 file-based apps default `PublishAot=true`, which bakes
+- `#:property PublishAot=false` — .NET 11 file-based apps default `PublishAot=true` (since .NET 10), which bakes
   in reflection-disabling runtime feature switches and breaks
   `ContractSerializationDefaults`-style reflection-based JSON.
 - `#:property NoWarn=$(NoWarn);…` — **the `$(NoWarn);` prefix is required.** A bare
   `NoWarn=CA1707;…` literal *replaces* the property rather than appending to it, silently
   un-suppressing everything `Directory.Build.props` already accumulated (CA1052/CA1515/RCS1102
   are already ambient from `source/container-apps/Directory.Build.props` and don't need
-  re-listing here; CA1707/CA1849/IDE0161/IDE0021/IDE0058 are the ones this runfile shape needs on
-  top of that).
+  re-listing here; CA1707/CA1849/IDE0161/IDE0021/IDE0058/IDE0211 are the ones this runfile shape needs on
+  top of that). IDE0211 ("convert to Program.Main") is a .NET 11 file-based-app false positive:
+  these programs are top-level by design, and a Program.Main rewrite would not be a `dotnet run file.cs`.
 - The `#if !JARIBU_MULTI` / `return` / `#endif` block MUST stay wrapped in the `//-:cnd:noEmit` /
   `//+:cnd:noEmit` escape (TWA0008) — without it, `dotnet new`'s conditional processor strips the
   `#if`/`#endif` directive lines from the generated app's copy while keeping the `return`

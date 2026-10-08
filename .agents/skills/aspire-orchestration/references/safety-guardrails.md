@@ -102,8 +102,8 @@ When Aspire is running, it holds file locks on:
 Running `dotnet build` while Aspire holds these locks produces:
 
 ```
-error MSB3491: Could not write to output file 'bin/Debug/net10.0/MyService.dll'
-error CS2012: Cannot open 'obj/Debug/net10.0/MyService.dll' for writing
+error MSB3491: Could not write to output file 'bin/Debug/net11.0/MyService.dll'
+error CS2012: Cannot open 'obj/Debug/net11.0/MyService.dll' for writing
 ```
 
 The agent then concludes the project is "un-buildable" — a false conclusion.

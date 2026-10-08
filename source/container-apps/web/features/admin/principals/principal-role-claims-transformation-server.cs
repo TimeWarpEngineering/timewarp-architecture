@@ -21,8 +21,8 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Identity;
 

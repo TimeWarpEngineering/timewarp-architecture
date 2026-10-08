@@ -14,8 +14,8 @@
 // ReSharper disable InconsistentNaming
 namespace RoleContracts_;
 
-using TimeWarp.Architecture.Features.Admin.Roles;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Admin.Roles;
 using TimeWarp.Architecture.Web.Contracts.Tests;
 
 public class CreateRole_Command_Should

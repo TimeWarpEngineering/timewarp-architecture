@@ -203,7 +203,7 @@ public sealed class PageLocalMessageBarAnalyzer : DiagnosticAnalyzer
 
     // Try to resolve to an Error or Success enum member.
     string? resolvedEnumMember = ResolveEnumMember(valueOperation);
-    if (resolvedEnumMember is not null && (resolvedEnumMember == "Error" || resolvedEnumMember == "Success"))
+    if (resolvedEnumMember is not null and ("Error" or "Success"))
     {
       // Check if this is in the MessageBars host (exempt if so).
       if (IsMessageBarsHostForOperation(valueOperation))

@@ -6,7 +6,7 @@
 // That is the honest empty-set result — not a fake "verified successfully" around a TODO.
 // A missing samples/ directory is an error because the placeholder is part of the template.
 // Each *.csproj is `dotnet build -c Release`. Loose *.cs files not covered by a csproj are
-// treated as .NET 10 file-based apps.
+// treated as .NET 11 file-based apps.
 #endregion
 
 namespace DevCli.Commands;

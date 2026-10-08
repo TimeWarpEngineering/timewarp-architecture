@@ -14,9 +14,9 @@
 
 namespace PostgresConnectionRecovery_;
 
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Npgsql;
+using System.Data.Common;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
 using TimeWarp.Architecture.Testing;

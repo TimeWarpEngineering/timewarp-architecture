@@ -14,9 +14,9 @@
 
 namespace TimeWarp.Architecture.Features.Analytics.Application;
 
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using Microsoft.Extensions.Logging;
 using TimeWarp.Foundation.Configuration;
 using static TimeWarp.Architecture.Features.Analytics.TrackEvent;
 

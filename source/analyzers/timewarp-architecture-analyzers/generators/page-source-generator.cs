@@ -544,7 +544,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
   private static string StripAttribute(string name)
   {
-    int dot = name.LastIndexOf('.');
+    int dot = name.LastIndexOf('.', StringComparison.Ordinal);
     if (dot >= 0) name = name.Substring(dot + 1);
     return name.EndsWith("Attribute", System.StringComparison.Ordinal) ? name.Substring(0, name.Length - "Attribute".Length) : name;
   }

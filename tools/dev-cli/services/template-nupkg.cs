@@ -45,7 +45,7 @@ internal static class TemplateNupkg
     return Directory
       .GetFiles(directory, $"{PackageId}.*.nupkg")
       .Where(path => IsArchitectureTemplateNupkgFileName(Path.GetFileName(path)))
-      .OrderByDescending(path => File.GetLastWriteTimeUtc(path))
+      .OrderByDescending(File.GetLastWriteTimeUtc)
       .ThenByDescending(path => path, StringComparer.Ordinal)
       .FirstOrDefault();
   }

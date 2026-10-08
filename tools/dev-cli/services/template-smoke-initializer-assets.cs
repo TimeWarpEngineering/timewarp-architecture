@@ -188,7 +188,7 @@ internal sealed partial class TemplateSmokeHarness
       return false;
 
     string relative = specifier["/_content/".Length..];
-    int slash = relative.IndexOf('/');
+    int slash = relative.IndexOf('/', StringComparison.Ordinal);
     if (slash <= 0 || slash == relative.Length - 1)
     {
       error = $"Malformed _content specifier: {specifier}";

@@ -3,7 +3,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Host-free SiteSettingsConfigurationDrift coverage (task 225 / 227).
 // Run standalone:  dotnet run source/container-apps/web/features/settings/site-settings-configuration-drift-tests.cs

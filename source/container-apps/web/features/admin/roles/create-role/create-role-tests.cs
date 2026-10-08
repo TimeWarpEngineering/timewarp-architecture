@@ -3,7 +3,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058
+#:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211
 
 // Co-located Jaribu contract test, physically host-free (task 135, ported from the task 134
 // spike). Duplicates the round-trip coverage of tests/container-apps/web/web-contracts-tests

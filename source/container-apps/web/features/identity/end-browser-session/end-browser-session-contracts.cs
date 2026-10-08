@@ -17,6 +17,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
+
 [ApiEndpoint]
 [EndpointAllowAnonymous("Sign-out is idempotent; missing/expired session is a success no-op.")]
 public static partial class EndBrowserSession

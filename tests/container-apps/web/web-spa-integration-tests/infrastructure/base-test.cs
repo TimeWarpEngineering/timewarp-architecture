@@ -56,7 +56,9 @@ public static class SpaIntegrationHost
     DistributedApplication app = await appHost.BuildAsync();
     await app.StartAsync();
 
-    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(2));
+    // EF Core 11 `dotnet ef --verbose` streams the MSBuild item graph for about 90s before
+    // web-migrations applies the schema. The boot seed waits up to 180s; this gate must outlast it.
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(4));
     await app.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
 #if(api)
     await app.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);

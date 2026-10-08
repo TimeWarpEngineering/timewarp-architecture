@@ -118,7 +118,7 @@ public static class MarkdownContentNegotiation
     request.Path = twinPath;
     context.Response.OnStarting(static state =>
     {
-      var httpContext = (HttpContext)state!;
+      var httpContext = (HttpContext)state;
       AppendVaryAccept(httpContext.Response.Headers);
       return Task.CompletedTask;
     }, context);

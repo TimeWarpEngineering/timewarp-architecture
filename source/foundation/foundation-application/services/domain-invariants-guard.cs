@@ -47,10 +47,10 @@
 
 namespace TimeWarp.Foundation.Application.Services;
 
-using System.Collections.Concurrent;
-using System.Reflection;
 using FluentValidation;
 using FluentValidation.Results;
+using System.Collections.Concurrent;
+using System.Reflection;
 using TimeWarp.Foundation.Application.Exceptions;
 
 /// <summary>

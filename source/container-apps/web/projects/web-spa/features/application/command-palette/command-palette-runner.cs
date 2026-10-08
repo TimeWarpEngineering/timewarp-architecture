@@ -45,6 +45,8 @@ public static class CommandPaletteRunner
 
         await entry.Execute(store, [], cancellationToken);
         break;
+      default:
+        break;
     }
   }
 }

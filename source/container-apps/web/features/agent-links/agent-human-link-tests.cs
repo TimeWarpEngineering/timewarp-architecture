@@ -4,7 +4,7 @@
 #:package TimeWarp.Jaribu
 #:package Shouldly
 #:property PublishAot=false
-#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0007;IDE0008
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
 // Co-located Jaribu tests for agent-human links + humanUx (task 205).
 // Run standalone:  dotnet run source/container-apps/web/features/agent-links/agent-human-link-tests.cs
@@ -116,7 +116,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks
         Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
         Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff"));
       link.Approve();
-      Should.Throw<InvalidOperationException>(() => link.Approve());
+      Should.Throw<InvalidOperationException>(link.Approve);
       return Task.CompletedTask;
     }
   }

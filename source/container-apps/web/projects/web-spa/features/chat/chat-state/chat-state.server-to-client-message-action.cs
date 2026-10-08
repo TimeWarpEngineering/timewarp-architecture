@@ -33,7 +33,7 @@ partial class ChatState
 
     internal sealed class Handler : BaseHandler<Action>
     {
-      public Handler(IStore store) : base(store) {}
+      public Handler(IStore store) : base(store) { }
 
       public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {

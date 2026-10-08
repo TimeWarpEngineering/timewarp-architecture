@@ -1,5 +1,6 @@
 @namespace TimeWarp.Architecture.Features.Developer.Components
 
+@implements IDisposable
 @code
 {
   [Inject]
@@ -16,8 +17,18 @@
 
   protected override async Task OnInitializedAsync()
   {
+    AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
     await GetClaimsPrincipalData();
   }
+
+  private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+  {
+    _ = await task;
+    await InvokeAsync(GetClaimsPrincipalData);
+  }
+
+  public void Dispose() =>
+    AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
 
   /// <summary>
   /// Retrieves user claims for the signed-in user.

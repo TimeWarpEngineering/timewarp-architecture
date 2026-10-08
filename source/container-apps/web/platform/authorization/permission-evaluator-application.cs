@@ -21,9 +21,8 @@
 
 namespace TimeWarp.Architecture.Authorization;
 
-using TimeWarp.Architecture.Features;
-
 using System.Collections.Concurrent;
+using TimeWarp.Architecture.Features;
 using TimeWarp.Identity;
 
 /// <summary>
@@ -119,7 +118,7 @@ public sealed class PermissionEvaluator : IPermissionEvaluator
       .GetEffectiveRoleIdsAsync(principalId, CancellationToken.None)
       .ConfigureAwait(false);
 
-    HashSet<string> granted = new(StringComparer.Ordinal);
+    HashSet<string> granted = [with(StringComparer.Ordinal)];
     foreach (Guid roleId in roleIds)
     {
       IReadOnlyList<string> forRole = await RolePermissionStore

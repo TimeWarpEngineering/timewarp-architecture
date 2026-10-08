@@ -26,7 +26,10 @@ partial class BaseComponent
   /// <returns>True if authorized, false otherwise.</returns>
   protected async Task<bool> CheckAuthorization(string? policy = null)
   {
+    // Re-read on every check. Callers do not render a cached AuthenticationState.
+#pragma warning disable BL0013
     AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
     ClaimsPrincipal user = authenticationState.User;
 
     if (policy is null)

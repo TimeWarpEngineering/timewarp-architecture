@@ -180,7 +180,7 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
 
   private static bool IsTypedIdAttributeName(string name)
   {
-    int dot = name.LastIndexOf('.');
+    int dot = name.LastIndexOf('.', StringComparison.Ordinal);
     if (dot >= 0)
       name = name.Substring(dot + 1);
 
@@ -481,6 +481,8 @@ public sealed class TypedIdSourceGenerator : IIncrementalGenerator
           yield return type;
           foreach (INamedTypeSymbol nested in GetNestedTypes(type))
             yield return nested;
+          break;
+        default:
           break;
       }
     }

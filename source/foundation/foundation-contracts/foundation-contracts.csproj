@@ -11,7 +11,7 @@
     <PackageReference Include="TimeWarp.Mediator.Contracts" />
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
+    <!-- Microsoft.Extensions.Options is in the net11 shared framework (NU1510). -->
     <PackageReference Include="OneOf" />
   </ItemGroup>
 

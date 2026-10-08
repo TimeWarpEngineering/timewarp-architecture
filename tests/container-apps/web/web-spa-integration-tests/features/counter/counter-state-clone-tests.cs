@@ -34,7 +34,7 @@ public class Clone_Should
 
     counterState.Initialize(count: 15);
 
-    var clone = counterState.Clone() as CounterState;
+    CounterState clone = counterState.Clone();
 
     counterState.ShouldNotBeSameAs(clone);
     counterState.Count.ShouldBe(clone!.Count);
