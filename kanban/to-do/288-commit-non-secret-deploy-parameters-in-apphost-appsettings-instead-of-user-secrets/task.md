@@ -188,8 +188,16 @@ dev deploy --target kubernetes
   helm-release-name, registry-repository and registry-endpoint=localhost:5001) and reports no
   missing deploy parameter.
 
+- **Review disposition:** `accepted-exceptions` — 1 round, effort 2, roster `general`
+  (Claude subagent). Final counts: bug 0; suggestion 1 wontfix (M1 — `onlyIf`-scoped bare-name
+  replacement kept so the monorepo's committed values stay deployable; smoke guards drift);
+  nit 1 fixed (M2 — AppHost program.cs comment re-wrapped, names all committed parameters).
+  Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 2026-10-08 (cockpit, per Steve)
 - 2026-10-08 implementer (ganda task work): implemented per Results; every gate green
   (`dev build` 0/0, dev-cli-tests 152/152, `dev publish kubernetes`, `dev template-smoke`, `ganda repo audit`).
+- 2026-10-08 review oracle (Claude Opus 5.5, general reviewer subagent ae1c94e3f85ac4543):
+  round 1, disposition accepted-exceptions (0 open).

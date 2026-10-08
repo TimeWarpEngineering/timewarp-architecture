@@ -244,8 +244,9 @@ internal class Program
     if (string.Equals(publishTarget, KubernetesPublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       // Task 070-004: `aspire publish` emits a Helm chart; `aspire deploy` runs helm upgrade --install
-      // against the current kubectl context. Namespace, release name and chart version are parameters
-      // (namespace and release name committed in appsettings.json Parameters, not here — see Design). No dashboard: it would be a second workload with an
+      // against the current kubectl context. Namespace, release name and chart version are parameters;
+      // namespace, release name and the registry parameters below are value-less here and committed in
+      // appsettings.json Parameters (see Design). No dashboard: it would be a second workload with an
       // unauthenticated UI beside the app.
       kubernetes = builder.AddKubernetesEnvironment(KubernetesEnvironmentResourceName)
         .WithHelm(helm => helm
