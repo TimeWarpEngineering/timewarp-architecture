@@ -34,6 +34,28 @@ RevokeCredential, UpdateProfile, UpdateSiteSettings) have had no caller until no
 
 - 272
 
+## Steve's direction (2026-10-09 ~02:00 ICT, overnight run)
+
+Steve asked for this task to be **implemented and merged tonight** (serial 272 → 271 → 273), and added:
+
+> "WebMCP should allow an agent to drive the functionality and the AI integration should be able to also."
+
+What that changes on this task:
+
+1. **Phase 1 gate is pre-approved for tonight.** Still write `design.md` (items 1–7, recommendation plus alternatives each), but do **not** stop and hand back. Implement the recommendations in Phase 2 in the same walk. Record in `design.md` and Results that the choices were made under this overnight instruction and are for Steve's morning review.
+2. **Item 7 is now in scope (build it, not just note it).** One catalog-to-tools mapping feeds **two** drivers:
+   - the in-app **AI integration** (`Microsoft.AspNetCore.Components.AI` `UIAgent` / `ChatPage` or palette "ask" mode) over any `IChatClient`;
+   - **WebMCP**: register the same page-scoped tools with the browser's WebMCP API (`navigator.modelContext` `registerTool` / provideContext, feature-detected; no-op when the browser lacks it), so an external browser agent can drive the same actions.
+   Both paths execute through the same TimeWarp.State store dispatch, the same `Visibility` (Human-only is never a tool), the same per-principal permission filtering, and the same approval gating. The server never trusts a model: every endpoint keeps `[EndpointAuthorize]`.
+3. **Guardrails for choices made without Steve:**
+   - Keep the adapter **in this template** tonight. If a timewarp-state change would be nicer, write it up in `design.md` as a follow-up; do not release timewarp-state.
+   - Feature is **off and the app fully usable with no model configured**. No template flag unless unavoidable. No real model credentials anywhere (tests use a fake `IChatClient`).
+   - Approval: every mutating / non-read-only action goes through `ApprovalRequiredAIFunction` (WebMCP equivalent: user confirmation in-app before dispatch).
+   - If a decision is genuinely high-risk or irreversible (cross-repo release, breaking public contract, new required secret), stop with `ORACLE_RESULT: Blocked — <decision for Steve>` instead of guessing.
+4. **Tests** add: WebMCP registration (tools registered per page and permission-filtered; absent API is a no-op) alongside the Phase 2 list.
+5. **Proof in the PR body (Steve's standing rule for UI work):** test output, build log summary, and a screenshot or captured log of the feature working (fake-client run dispatching a real action; WebMCP tool list for a page).
+
+
 ## Phase 1: design (stop for Steve before building)
 
 Write `kanban/<this task>/design.md` covering each item below, with a recommendation and the
