@@ -11,6 +11,18 @@ Related existing tasks (do not duplicate blindly):
 - **257** — Microsoft.OpenApi 3.x (gated on AspNetCore.OpenApi .NET 11 train).
 - **271** — net11 agentic UI over TimeWarp.State action catalog (depends on net11 landing).
 
+## Authorization (Steve, 2026-10-09 ~02:00 ICT)
+
+Steve asked for this task to be **implemented and merged tonight** (overnight run, serial 272 → 271 → 273). That is the authorization the Start condition asks for:
+
+- **Implement now on .NET 11 RC1** (`11.0.100-rc.1.26425.128`, installed on TWE-001). Record it as prerelease in Results. Do not wait for GA.
+- The "analysis + planning only" line above no longer applies: do the ordered upgrade steps, open the PR.
+- **Step 13 (`AddDotnetProject`)**: if `Aspire.Hosting.Dotnet` is still prerelease or does not work on 13.6.x, record that in Results and leave step 13 as a follow-up note for Steve. Do **not** block the walk on it.
+- **Step 11 (task 257)**: coordinate only; take OpenApi 3.x only if AspNetCore.OpenApi 11 RC allows it cleanly, else leave 257 open.
+- TimeWarp sibling packages without a `net11.0` asset are not a blocker (net11.0 consumes their net10.0 assets). Keep pins forward-only.
+- CI must go green on `11.0.x` (setup-dotnet may need `dotnet-quality: preview` for RC).
+- PR body must carry proof: `dotnet --version`, `dev build` 0/0 summary, `dev test` summary, `dev template-smoke` summary, `ganda repo audit` result.
+
 ## Requirements
 
 1. Follow the **ordered dependency list** in Notes (first → later). Do not bump TFMs before SDK / CI images are ready.
