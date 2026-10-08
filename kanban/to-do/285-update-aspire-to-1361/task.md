@@ -108,3 +108,10 @@ dev publish compose && dev publish kubernetes && dev publish aca
 `13.6.1-preview.1.26506.6`); the SDK and CI pins are `13.6.1`; the build has 0 warnings and
 0 errors; every test suite passes; each publish prints "production-safe". After pulling, clear
 the browser's site data if the SPA throws TypeLoad or TypeInitialization errors.
+
+### Review
+
+- Rounds: 1 · effort 1 · roster: general (review oracle, Claude Opus 5.5)
+- Final counts: bug 0 / suggestion 0 / nit 0 (0 open, 0 fixed, 0 wontfix)
+- Disposition: **clean**
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
