@@ -84,6 +84,7 @@ fast with one clear message before Aspire runs.
 
 - Created: 3130576 (2026-10-08)
 - 2026-10-08 implement (ganda task work): config in AppHost user secrets, preflight checks, forwarding, TTY passthrough, tests, skill; proof below.
+- 2026-10-08 review (ganda task work, tw-implementation-review, effort 2, roster general): 2 rounds, disposition clean. Reviewer subagents aa1b8e5e244d9df8d (round 1) and ace0b5c0c3151748d (round 2); fix implementer a9716e483b7c14928.
 
 ## Results
 
@@ -154,6 +155,24 @@ Not deploying: no confirmation. Re-run with --yes to deploy non-interactively, o
 Registry stopped → only the registry refusal. Cluster node stopped →
 `- The kubectl context kind-task286 does not answer (… The connection to the server 127.0.0.1:44697 was refused …)`.
 
+### Review disposition
+
+- **Process:** `tw-implementation-review`, effort 2, roster: general; 2 rounds.
+- **Round 1:** 10 findings (0 bug, 5 suggestion, 5 nit), all fixed in 20de37319: probe timeouts
+  (20s, Amuru 2.0.0-beta.2 `WithTimeout`); a failed `user-secrets list` is reported; a test checks the
+  required list against the AppHost's value-less `AddParameter` calls; the combination rules moved into
+  pure `Collect*Problems` functions with tests; deprovision forwards the parameters that are set,
+  best-effort; the registry probe keeps Ctrl+C and reports the TLS reason; env lookup is
+  case-insensitive; the real csproj path is printed; forwarded parameters must be non-secret (Design);
+  the synopsis is updated.
+- **Round 2:** M1–M10 re-verified as fixed, plus 2 new nits, both fixed: N1, the agreement test now
+  covers `secret:` and rejects literal or named-argument forms; N2, the skill's timeout and
+  user-secrets wording is corrected.
+- **Final:** 0 open; bug 0, suggestion 5 fixed, nit 7 fixed; wontfix 0. **Disposition: clean.**
+- **Tests after fixes:** dev-cli-tests 147/147.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -167,7 +186,7 @@ Registry stopped → only the registry refusal. Cluster node stopped →
    and `docker rm -f t-reg`.
 
 **Expect:**
-1. 134/134 pass.
+1. 147/147 pass.
 2. Exit 1 and one "preflight failed (N problems); nothing was run" report that lists every missing
    parameter with its `dotnet user-secrets set` and `${env:…}` command, plus the kind / reachability
    problem. `aspire` is never invoked.

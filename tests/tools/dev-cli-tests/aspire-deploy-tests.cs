@@ -361,6 +361,9 @@ public partial class DeployParameters_Given_
     branchStart.ShouldBeGreaterThan(0);
     branchEnd.ShouldBeGreaterThan(branchStart);
 
+    // Every AddParameter names a constants.cs identifier first, so the value-less scan below cannot miss a literal or named-argument form.
+    NonIdentifierParameterPattern().Matches(program).ShouldBeEmpty();
+
     // A value-less parameter anywhere in program.cs makes Aspire prompt; every one must be in the kubernetes branch and listed.
     Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
     Valueless(program).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
@@ -370,8 +373,12 @@ public partial class DeployParameters_Given_
   [System.Text.RegularExpressions.GeneratedRegex(@"const\s+string\s+(\w+)\s*=\s*""([^""]*)""")]
   private static partial System.Text.RegularExpressions.Regex ConstantPattern();
 
-  [System.Text.RegularExpressions.GeneratedRegex(@"AddParameter\(\s*(\w+)\s*\)")]
+  // Value-less: AddParameter(Name) or AddParameter(Name, secret: …) — no value argument.
+  [System.Text.RegularExpressions.GeneratedRegex(@"AddParameter\(\s*(\w+)\s*(?:\)|,\s*secret\s*:)")]
   private static partial System.Text.RegularExpressions.Regex ValuelessParameterPattern();
+
+  [System.Text.RegularExpressions.GeneratedRegex(@"AddParameter\(\s*(?!\w+\s*[,)])")]
+  private static partial System.Text.RegularExpressions.Regex NonIdentifierParameterPattern();
 
   private static string AppHostDirectory()
   {

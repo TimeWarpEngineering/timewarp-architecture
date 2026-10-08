@@ -123,8 +123,9 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
   missing one is listed with the command that sets it), and for a kind context (`kind-<cluster>`)
   that `kind get clusters` lists the cluster and the registry at `registry-endpoint` answers its
-  `/v2/` API. Each probe times out after 20 seconds (e.g. a credential plugin waiting for a login)
-  and is reported as timed out; if `dotnet user-secrets list` fails, the report says so.
+  `/v2/` API. The API and registry checks give up after 5 seconds and every other probe after 20
+  (e.g. a credential plugin waiting for a login), reported as timed out; if a parameter is missing
+  and `dotnet user-secrets list` failed, the report says the secrets could not be read.
 - **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
   never creates a cluster, installs an ingress controller or switches context.
 - **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight, minus
