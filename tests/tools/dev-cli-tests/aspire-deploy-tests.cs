@@ -1,6 +1,7 @@
 #region Purpose
 // Gates `dev deploy` / `dev deprovision` target parsing, argument building, the Helm / kubectl
-// preflight refusals, the aca subscription source selection and the manual-cleanup guidance, without deploying —
+// preflight refusals, deploy-parameter resolution and `--Parameters:*` forwarding, the cluster / kind /
+// registry refusals, the aca subscription source selection and the manual-cleanup guidance, without deploying —
 // and that no CI workflow or `dev workflow` mode ever invokes a deploy.
 #endregion
 
@@ -44,14 +45,14 @@ public class Arguments_Given_
 
   public static Task Deploy_Should_PassTheTargetToTheAppHostInProduction()
   {
-    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Kubernetes, nonInteractive: false)
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Kubernetes, nonInteractive: false, [])
       .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=kubernetes"]);
     return Task.CompletedTask;
   }
 
   public static Task DeployWithYes_Should_BeNonInteractive()
   {
-    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Compose, nonInteractive: true)
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Compose, nonInteractive: true, [])
       .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--non-interactive", "--", "--Publish:Target=compose"]);
     return Task.CompletedTask;
   }
@@ -78,9 +79,39 @@ public class Arguments_Given_
     return Task.CompletedTask;
   }
 
+  private static readonly ResolvedDeployParameter[] KindParameters =
+  [
+    new("k8s-namespace", "timewarp-architecture", "AppHost user secret"),
+    new("registry-endpoint", "localhost:5001", "Parameters__registry-endpoint environment variable"),
+  ];
+
+  public static Task Parameters_Should_FollowTheTargetAfterTheSeparator()
+  {
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Kubernetes, nonInteractive: false, KindParameters)
+      .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--",
+        "--Publish:Target=kubernetes", "--Parameters:k8s-namespace=timewarp-architecture", "--Parameters:registry-endpoint=localhost:5001"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task ParametersWithYes_Should_BeForwardedNonInteractively()
+  {
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.Kubernetes, nonInteractive: true, KindParameters)
+      .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--non-interactive", "--",
+        "--Publish:Target=kubernetes", "--Parameters:k8s-namespace=timewarp-architecture", "--Parameters:registry-endpoint=localhost:5001"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task ClusterProbes_Should_OnlyRead()
+  {
+    AspireDeploy.BuildKubectlReachabilityArguments("kind-simple")
+      .ShouldBe(["--context", "kind-simple", "get", "--raw", "/version", "--request-timeout=5s"]);
+    AspireDeploy.BuildKindClustersArguments().ShouldBe(["get", "clusters"]);
+    return Task.CompletedTask;
+  }
+
   public static Task AcaDeploy_Should_PassTheAcaTarget()
   {
-    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerApps, nonInteractive: false)
+    AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerApps, nonInteractive: false, [])
       .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=aca"]);
     return Task.CompletedTask;
   }
@@ -210,6 +241,148 @@ public class Preflight_Given_
   }
 }
 
+public class DeployParameters_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<DeployParameters_Given_>();
+
+  private const string AppHost = "/repo/app-host.csproj";
+
+  private static string? NoEnvironment(string _) => null;
+
+  public static Task Kubernetes_Should_RequireTheValuelessAppHostParameters()
+  {
+    AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes)
+      .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
+    AspireDeploy.RequiredParameters(AspireDeploy.Compose).ShouldBeEmpty();
+    AspireDeploy.RequiredParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task UserSecrets_Should_ResolveEveryParameter()
+  {
+    const string output =
+      "Parameters:postgres-password = secret\nParameters:k8s-namespace = timewarp-architecture\nParameters:helm-release-name = twa\n"
+      + "parameters:registry-endpoint = localhost:5001\nParameters:registry-repository = timewarp-architecture\n";
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, output);
+
+    resolution.Missing.ShouldBeEmpty();
+    resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
+      ["k8s-namespace=timewarp-architecture", "helm-release-name=twa", "registry-endpoint=localhost:5001", "registry-repository=timewarp-architecture"]);
+    resolution.Resolved.ShouldAllBe(parameter => parameter.Source == "AppHost user secret");
+    return Task.CompletedTask;
+  }
+
+  public static Task EnvironmentVariable_Should_BeatTheUserSecret()
+  {
+    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(
+      AspireDeploy.Kubernetes,
+      name => name == "Parameters__k8s-namespace" ? " from-env " : null,
+      true,
+      "Parameters:k8s-namespace = from-secret\n");
+
+    ResolvedDeployParameter ns = resolution.Resolved.Single();
+    ns.Value.ShouldBe("from-env");
+    ns.Source.ShouldContain("Parameters__k8s-namespace environment variable");
+    resolution.Missing.ShouldBe(["helm-release-name", "registry-endpoint", "registry-repository"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task NothingSet_Should_ListEveryMissingParameter()
+  {
+    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "").Missing
+      .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
+    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, _ => "  ", true, "Parameters:k8s-namespace = \n").Missing.Count.ShouldBe(4);
+    AspireDeploy.ResolveParameters(AspireDeploy.Compose, NoEnvironment, false, "").Resolved.ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task MissingParameterRefusal_Should_GiveThePwshCommandForEach()
+  {
+    string text = string.Join('\n', AspireDeploy.BuildMissingParameterLines(AppHost, AspireDeploy.Kubernetes, ["k8s-namespace", "registry-endpoint"]));
+
+    text.ShouldContain("Missing deploy parameters for kubernetes: k8s-namespace, registry-endpoint.");
+    text.ShouldContain("dotnet user-secrets set 'Parameters:k8s-namespace' '<value>' --project '/repo/app-host.csproj'");
+    text.ShouldContain("dotnet user-secrets set 'Parameters:registry-endpoint' '<value>' --project '/repo/app-host.csproj'");
+    text.ShouldContain("${env:Parameters__k8s-namespace} = '<value>'");
+    text.ShouldNotContain("export ");
+    text.ShouldNotContain("helm-release-name");
+    return Task.CompletedTask;
+  }
+
+  public static Task PreflightReport_Should_CollectEveryProblemOnce()
+  {
+    string[] report = AspireDeploy.BuildPreflightReport("dev deploy", ["first", "second"]);
+    report.ShouldBe(["dev deploy preflight failed (2 problems); nothing was run:", "- first", "- second"]);
+    return Task.CompletedTask;
+  }
+}
+
+public class ClusterChecks_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<ClusterChecks_Given_>();
+
+  public static Task ReachableContext_Should_Pass()
+  {
+    AspireDeploy.ValidateKubectlReachable(true, "kind-simple", "").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task UnreachableContext_Should_BeRefusedWithTheReason()
+  {
+    string error = AspireDeploy.ValidateKubectlReachable(
+      false, "kind-simple", "The connection to the server 127.0.0.1:40703 was refused - did you specify the right host or port?\n").ShouldNotBeNull();
+    error.ShouldContain("kind-simple does not answer");
+    error.ShouldContain("127.0.0.1:40703 was refused");
+    error.ShouldContain("kubectl config use-context");
+    return Task.CompletedTask;
+  }
+
+  public static Task KindContext_Should_NameItsCluster()
+  {
+    AspireDeploy.KindClusterName("kind-simple").ShouldBe("simple");
+    AspireDeploy.KindClusterName("kind-").ShouldBeNull();
+    AspireDeploy.KindClusterName("aks-prod").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task ExistingKindCluster_Should_Pass()
+  {
+    AspireDeploy.ValidateKindCluster(true, "app\nsimple\n", "simple").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task MissingKindCluster_Should_BeRefused()
+  {
+    // `kind get clusters` prints "No kind clusters found." to stderr and nothing to stdout.
+    string error = AspireDeploy.ValidateKindCluster(true, "", "simple").ShouldNotBeNull();
+    error.ShouldContain("kind cluster 'simple'");
+    error.ShouldContain("kubectl config delete-context kind-simple");
+    AspireDeploy.ValidateKindCluster(true, "simple-old\n", "simple").ShouldNotBeNull();
+    AspireDeploy.ValidateKindCluster(false, "", "simple").ShouldNotBeNull().ShouldContain("kind is not on PATH");
+    return Task.CompletedTask;
+  }
+
+  public static Task RegistryEndpoint_Should_ProbeTheV2Api()
+  {
+    AspireDeploy.BuildRegistryProbeUri("localhost:5001").ShouldBe(new Uri("http://localhost:5001/v2/"));
+    AspireDeploy.BuildRegistryProbeUri("https://registry.example.com/").ShouldBe(new Uri("https://registry.example.com/v2/"));
+    AspireDeploy.BuildRegistryProbeUri("::nonsense").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task RegistryNotRunning_Should_BeRefused()
+  {
+    AspireDeploy.ValidateRegistry(true, "localhost:5001").ShouldBeNull();
+    string error = AspireDeploy.ValidateRegistry(false, "localhost:5001").ShouldNotBeNull();
+    error.ShouldContain("registry at localhost:5001");
+    error.ShouldContain("kind-registry");
+    error.ShouldContain("dotnet user-secrets set 'Parameters:registry-endpoint'");
+    return Task.CompletedTask;
+  }
+}
+
 public class OperatorText_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -268,12 +441,15 @@ public class OperatorText_Given_
 
   public static Task DeployPlan_Should_NameTheAppHostTargetAndPreflight()
   {
-    string text = string.Join('\n', AspireDeploy.BuildDeployPlanLines("/repo/app-host.csproj", AspireDeploy.Kubernetes, "kubectl context: kind-local"));
+    string text = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+      "/repo/app-host.csproj", AspireDeploy.Kubernetes, "kubectl context: kind-local",
+      [new ResolvedDeployParameter("k8s-namespace", "timewarp-architecture", "AppHost user secret")]));
 
     text.ShouldContain("/repo/app-host.csproj");
     text.ShouldContain("Production");
     text.ShouldContain("Publish:Target=kubernetes");
     text.ShouldContain("kubectl context: kind-local");
+    text.ShouldContain("k8s-namespace=timewarp-architecture (from the AppHost user secret)");
     AspireDeploy.DeployConfirmationRefusal.ShouldContain("--yes");
     AspireDeploy.DeployDeclined.ShouldContain("Nothing was run");
     AspireDeploy.DestroyConfirmationRefusal.ShouldContain("--yes");

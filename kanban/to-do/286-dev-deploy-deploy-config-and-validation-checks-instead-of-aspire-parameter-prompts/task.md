@@ -68,21 +68,111 @@ fast with one clear message before Aspire runs.
 
 ## Checklist
 
-- [ ] Decide and document where the deploy config lives (user secrets, git-ignored file, or
+- [x] Decide and document where the deploy config lives (user secrets, git-ignored file, or
       `dev deploy config` command)
-- [ ] Read the config and forward it as `--Parameters:<name>=<value>` after `--`
-- [ ] Preflight: required parameters resolved (missing list + exact pwsh/`dev` command to set each)
-- [ ] Preflight: kubectl current context API reachable
-- [ ] Preflight: kind cluster exists and local registry container running (kind contexts)
-- [ ] `PassthroughAsync` → `TtyPassthroughAsync`; comment at `deploy-command.cs:20-24` corrected
-- [ ] Tests in `aspire-deploy-tests.cs` (config, forwarding, each refusal); NeverAutomated guard
+- [x] Read the config and forward it as `--Parameters:<name>=<value>` after `--`
+- [x] Preflight: required parameters resolved (missing list + exact pwsh/`dev` command to set each)
+- [x] Preflight: kubectl current context API reachable
+- [x] Preflight: kind cluster exists and local registry container running (kind contexts)
+- [x] `PassthroughAsync` → `TtyPassthroughAsync`; comment at `deploy-command.cs:20-24` corrected
+- [x] Tests in `aspire-deploy-tests.cs` (config, forwarding, each refusal); NeverAutomated guard
       intact
-- [ ] `skills/tw-deploy/SKILL.md` deploy section updated
-- [ ] Proof in PR: test output + preflight refusal text + successful plan
+- [x] `skills/tw-deploy/SKILL.md` deploy section updated
+- [x] Proof in PR: test output + preflight refusal text + successful plan
 
 ## Session
 
 - Created: 3130576 (2026-10-08)
+- 2026-10-08 implement (ganda task work): config in AppHost user secrets, preflight checks, forwarding, TTY passthrough, tests, skill; proof below.
+
+## Results
+
+**Decision — where deploy config lives:** AppHost user secrets, `Parameters:<name>`. It is the
+same per-machine, never-committed store that already holds `postgres-password` and
+`Azure:SubscriptionId`. It is set with plain `dotnet user-secrets set` (no new `dev deploy config`
+verb, because wrapping one tool call adds nothing), and a `Parameters__<name>` env var overrides it
+for one session. The required list per target is the AppHost's value-less parameters: for
+kubernetes `k8s-namespace`, `helm-release-name`, `registry-endpoint`, `registry-repository`; for
+compose and aca, none. Documented in the `aspire-deploy.cs` Design region and in `skills/tw-deploy`.
+
+**What changed:**
+- `tools/dev-cli/services/aspire-deploy.cs` (pure): `RequiredParameters`, `ResolveParameters`
+  (env, then user secret), `BuildMissingParameterLines` (pwsh: `dotnet user-secrets set '…'` and
+  `${env:Parameters__…} = '…'`), `BuildDeployArguments` now forwards `--Parameters:<name>=<value>`
+  after `--`, plus kubectl reachability (`--context <ctx> get --raw /version --request-timeout=5s`),
+  kind cluster (`kind get clusters`), registry `/v2/` probe URI and refusals, and a single
+  `BuildPreflightReport`. The plan lists each forwarded parameter and its source.
+- `aspire-deploy-preflight.cs`: kubernetes problems are collected into **one** report and the
+  command exits 1 before `aspire` runs. A missing kind cluster is reported as the root cause in
+  place of the unreachable API. The registry check is an HTTP GET, so the verbs still call no
+  container CLI. `dev deprovision` keeps the cluster checks but skips parameters and the registry
+  (`resolveParameters: false`).
+- `deploy-command.cs` / `deprovision-command.cs`: `PassthroughAsync` → `TtyPassthroughAsync`, so
+  Aspire's own prompts (deploy, and destroy's confirmation) reach the terminal. The misleading
+  "Aspire also prompts" Design comment is rewritten.
+- Tests: 17 new cases in `aspire-deploy-tests.cs` (`DeployParameters_Given_`, `ClusterChecks_Given_`,
+  forwarding in both `--yes` and interactive forms). The `NeverAutomated_Given_` guard is unchanged.
+
+### Proof (2026-10-08, this worktree)
+
+Tests — `cd tests/tools/dev-cli-tests && dotnet test -c Release`:
+```
+Test run summary: Passed!  total: 134  failed: 0  succeeded: 134  skipped: 0
+```
+`dev build`: 0 Warning(s), 0 Error(s). `ganda repo audit`: passes all checks.
+
+Refusal: the real stale `kind-simple` context, with nothing configured
+(`dotnet run tools/dev-cli/dev.cs -- deploy --target kubernetes </dev/null`, exit 1):
+```
+dev deploy preflight failed (2 problems); nothing was run:
+- Missing deploy parameters for kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository. Set each once in the AppHost user secrets (per machine, never committed):
+  dotnet user-secrets set 'Parameters:k8s-namespace' '<value>' --project '<repo>/source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj'
+  … (one line per parameter)
+or for the current pwsh session only:
+  ${env:Parameters__k8s-namespace} = '<value>'
+  … (one line per parameter)
+- The kind cluster 'simple' (context kind-simple) does not exist — `kind get clusters` does not list it. Create it (see Local Kubernetes with kind in the tw-deploy skill), or delete the stale context: kubectl config delete-context kind-simple
+```
+With the four `Parameters__*` env vars set, the same context reports the kind cluster and also:
+`- The container registry at localhost:5001 (registry-endpoint) does not answer. …`
+
+Successful plan: a temporary `kind create cluster --name task286` plus a `registry:2` on
+127.0.0.1:5001, env vars set, stdin redirected so it stops at the confirmation. Both were removed
+afterwards and the context was restored to `kind-simple`.
+```
+dev deploy → aspire deploy (kubernetes)
+  AppHost:     <repo>/source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj
+  Environment: Production
+  Target:      Publish:Target=kubernetes
+  Parameter:   k8s-namespace=timewarp-architecture (from the Parameters__k8s-namespace environment variable)
+  Parameter:   helm-release-name=timewarp-architecture (from the Parameters__helm-release-name environment variable)
+  Parameter:   registry-endpoint=localhost:5001 (from the Parameters__registry-endpoint environment variable)
+  Parameter:   registry-repository=timewarp-architecture (from the Parameters__registry-repository environment variable)
+  kubectl context: kind-task286 (helm v4.3.0+gbec5b06)
+Not deploying: no confirmation. Re-run with --yes to deploy non-interactively, or from a terminal to answer the prompt.
+```
+Registry stopped → only the registry refusal. Cluster node stopped →
+`- The kubectl context kind-task286 does not answer (… The connection to the server 127.0.0.1:44697 was refused …)`.
+
+### How to validate
+
+**Smoke:**
+1. `cd tests/tools/dev-cli-tests && dotnet test -c Release`
+2. From the repo root, with a kubectl context whose kind cluster is gone (or none configured), run
+   `dotnet run tools/dev-cli/dev.cs -- deploy --target kubernetes </dev/null`
+3. Optional: `kind create cluster --name t` and
+   `docker run -d -p 127.0.0.1:5001:5000 --name t-reg registry:2`, then set the four parameters as
+   `Parameters__*` env vars (pwsh: `${env:Parameters__k8s-namespace} = 'app'`, …;
+   registry-endpoint `localhost:5001`) and re-run step 2. Clean up with `kind delete cluster --name t`
+   and `docker rm -f t-reg`.
+
+**Expect:**
+1. 134/134 pass.
+2. Exit 1 and one "preflight failed (N problems); nothing was run" report that lists every missing
+   parameter with its `dotnet user-secrets set` and `${env:…}` command, plus the kind / reachability
+   problem. `aspire` is never invoked.
+3. The plan prints every `Parameter:` line and the kubectl context, then "Not deploying: no
+   confirmation" (stdin redirected). Nothing deploys.
 
 ## Notes
 

@@ -9,19 +9,24 @@
 // production-safety suites. Thin wrapper over
 //   aspire deploy --apphost <csproj> --environment Production [--non-interactive] -- --Publish:Target=<t>
 // with the target defaulting to the AppHost's Publish:Target default (compose).
-// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+ and a
-// current kubectl context, which is printed — any context works, a local kind cluster included; this
-// verb never creates a cluster. Compose prints the container runtime Aspire will use
+// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+, a
+// current kubectl context whose API answers, which is printed — any context works, a local kind cluster
+// included; for a kind context the kind cluster exists and the registry at registry-endpoint answers;
+// this verb never creates a cluster. Deploy parameters (task 286): every value-less AppHost parameter of
+// the target (kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository) must
+// be set — AppHost user secret Parameters:<name>, or a Parameters__<name> env var — and is forwarded as
+// `--Parameters:<name>=<value>` after `--`; missing ones are refused with the command to set each. Compose prints the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI. For aca (task
 // 070-007), `az login` and the subscription with its source, printed: the Azure__SubscriptionId
 // environment variable, else the AppHost user secret Azure:SubscriptionId, else the az CLI's — only
 // that fallback is passed to `aspire deploy` as Azure__SubscriptionId, so it never overrides a
 // subscription the operator pinned.
-// Confirmation: --yes deploys with `--non-interactive` (every deploy parameter must then already be
-// set, e.g. in user secrets or Parameters__* env vars). Without --yes the plan is printed and the
-// operator is asked; when stdin is not a terminal there is nobody to ask, so it refuses instead of
-// assuming yes; any answer but y/yes cancels with nothing run. Without --yes Aspire also prompts for
-// any missing parameter.
+// Confirmation: --yes deploys with `--non-interactive`. Without --yes the plan (with the forwarded
+// parameters) is printed and the operator is asked; when stdin is not a terminal there is nobody to
+// ask, so it refuses instead of assuming yes; any answer but y/yes cancels with nothing run. aspire
+// runs with TTY passthrough (it inherits the terminal), so any prompt Aspire still shows — e.g. an
+// optional parameter, or aca's location and resource group — works interactively; a piped stdin
+// would make Aspire fail "non-interactive mode" instead of asking.
 // Pure targets/arguments/parsing/text live in services/aspire-deploy.cs (dev-cli-tests).
 #endregion
 
@@ -29,7 +34,7 @@ namespace DevCli.Commands;
 
 [NuruRoute("deploy", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
-[NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+)")]
+[NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* in the AppHost user secrets)")]
 [NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : ICommand<Unit>
@@ -53,10 +58,10 @@ internal sealed class DeployCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, resolveParameters: true, ct);
       if (preflight is null) return Unit.Value;
 
-      foreach (string line in AspireDeploy.BuildDeployPlanLines(preflight.AppHostProject, preflight.Target, preflight.Detail))
+      foreach (string line in AspireDeploy.BuildDeployPlanLines(preflight.AppHostProject, preflight.Target, preflight.Detail, preflight.Parameters))
       {
         Terminal.WriteLine(line);
       }
@@ -79,7 +84,7 @@ internal sealed class DeployCommand : ICommand<Unit>
       }
 
       ShellBuilder aspire = Shell.Builder("aspire")
-        .WithArguments(AspireDeploy.BuildDeployArguments(preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes))
+        .WithArguments(AspireDeploy.BuildDeployArguments(preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes, preflight.Parameters))
         .WithWorkingDirectory(preflight.RepoRoot)
         .WithNoValidation();
       foreach ((string name, string value) in preflight.AspireEnvironment)
@@ -87,7 +92,7 @@ internal sealed class DeployCommand : ICommand<Unit>
         aspire = aspire.WithEnvironmentVariable(name, value);
       }
 
-      CommandOutput deploy = await aspire.PassthroughAsync(ct);
+      CommandOutput deploy = await aspire.TtyPassthroughAsync(ct);
 
       if (!deploy.Success)
       {

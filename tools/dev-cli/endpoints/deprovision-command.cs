@@ -7,10 +7,11 @@
 // Thin wrapper over
 //   aspire destroy --apphost <csproj> --environment Production [--yes --non-interactive] -- --Publish:Target=<t>
 // (task 070-006), in this order:
-//   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+ and the printed
-//      kubectl context; aca: `az login` and the printed subscription, so the operator sees what they
+//   1. Preflight shared with `dev deploy` (Aspire CLI 13.6+; kubernetes: Helm 4.2+, the printed kubectl
+//      context answering and, for kind, its cluster existing — deploy parameters are not required; aca: `az login` and the printed subscription, so the operator sees what they
 //      are about to hit).
-//   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself; with no terminal and no
+//   2. Confirmation is Aspire's: without --yes `aspire destroy` asks itself (it runs with TTY passthrough
+//      so the prompt reaches the terminal); with no terminal and no
 //      --yes there is nobody to ask, so the verb refuses (as `dev deploy` does) instead of assuming yes.
 //   3. aspire destroy. On failure print the manual removal for the target and exit with Aspire's exit
 //      code: `aspire destroy` only knows deployments recorded on the machine that deployed. The verb
@@ -50,7 +51,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deprovision", command.Target, resolveParameters: false, ct);
       if (preflight is null) return Unit.Value;
       Terminal.WriteLine(preflight.Detail);
 
@@ -70,7 +71,7 @@ internal sealed class DeprovisionCommand : ICommand<Unit>
         aspire = aspire.WithEnvironmentVariable(name, value);
       }
 
-      CommandOutput destroy = await aspire.PassthroughAsync(ct);
+      CommandOutput destroy = await aspire.TtyPassthroughAsync(ct);
 
       if (!destroy.Success)
       {
