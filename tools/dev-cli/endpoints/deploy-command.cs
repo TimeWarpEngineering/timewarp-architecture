@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deploy [--target compose|kubernetes]`: the operator's manual `aspire deploy` of one publish
+// `dev deploy [--target compose|kubernetes|aca]`: the operator's manual `aspire deploy` of one publish
 // target, after a preflight and a confirmation. Never run by CI.
 #endregion
 
@@ -12,7 +12,11 @@
 // Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+ and a
 // current kubectl context, which is printed — any context works, a local kind cluster included; this
 // verb never creates a cluster. Compose prints the container runtime Aspire will use
-// (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI.
+// (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI. For aca (task
+// 070-007), `az login` and the subscription with its source, printed: the Azure__SubscriptionId
+// environment variable, else the AppHost user secret Azure:SubscriptionId, else the az CLI's — only
+// that fallback is passed to `aspire deploy` as Azure__SubscriptionId, so it never overrides a
+// subscription the operator pinned.
 // Confirmation: --yes deploys with `--non-interactive` (every deploy parameter must then already be
 // set, e.g. in user secrets or Parameters__* env vars). Without --yes the plan is printed and the
 // operator is asked; when stdin is not a terminal there is nobody to ask, so it refuses instead of
@@ -26,10 +30,11 @@ namespace DevCli.Commands;
 [NuruRoute("deploy", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
 [NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+)")]
+[NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : ICommand<Unit>
 {
-  [Option("target", "t", Description = "Publish target: compose | kubernetes (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire deploy --non-interactive")]
@@ -73,11 +78,16 @@ internal sealed class DeployCommand : ICommand<Unit>
         }
       }
 
-      CommandOutput deploy = await Shell.Builder("aspire")
+      ShellBuilder aspire = Shell.Builder("aspire")
         .WithArguments(AspireDeploy.BuildDeployArguments(preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes))
         .WithWorkingDirectory(preflight.RepoRoot)
-        .WithNoValidation()
-        .PassthroughAsync(ct);
+        .WithNoValidation();
+      foreach ((string name, string value) in preflight.AspireEnvironment)
+      {
+        aspire = aspire.WithEnvironmentVariable(name, value);
+      }
+
+      CommandOutput deploy = await aspire.PassthroughAsync(ct);
 
       if (!deploy.Success)
       {

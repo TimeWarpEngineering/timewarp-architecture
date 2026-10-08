@@ -1,20 +1,27 @@
 #region Purpose
-// Process half of `dev deploy` / `dev deprovision` preflight: the aspire, helm and kubectl probes.
+// Process half of `dev deploy` / `dev deprovision` preflight: the aspire, helm, kubectl and az probes.
 #endregion
 
 #region Design
 // Kept apart from aspire-deploy.cs so that file stays pure for dev-cli-tests (same split as
 // aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version`, `helm version --short`,
-// `kubectl config current-context`. Nothing here deploys, contacts a cluster API, creates a cluster
-// or calls a container CLI. The kubernetes target needs Helm 4.2+ (Aspire's helm upgrade --install)
-// and a current kubectl context, which is printed so the operator sees where the deploy goes; compose
-// needs neither and reports the container runtime Aspire will use (ASPIRE_CONTAINER_RUNTIME).
+// `kubectl config current-context`, `az account show`, `dotnet user-secrets list --project <apphost>`.
+// Nothing here deploys, contacts a cluster API, creates a cluster or calls a container CLI. The
+// kubernetes target needs Helm 4.2+ (Aspire's helm upgrade --install) and a current kubectl context,
+// which is printed so the operator sees where the deploy goes; aca needs `az login` and prints the
+// subscription and its source (Azure__SubscriptionId, else the AppHost user secret
+// Azure:SubscriptionId, else the az CLI's — only that last one is passed to Aspire, task 070-007);
+// compose needs none of these and reports the container runtime Aspire will use
+// (ASPIRE_CONTAINER_RUNTIME).
 #endregion
 
 namespace DevCli.Services;
 
-/// <summary>Resolved preflight for one deploy target: the AppHost, and the detail line printed before acting.</summary>
-internal sealed record DeployPreflight(string RepoRoot, string AppHostProject, DeployTarget Target, string Detail);
+/// <summary>
+/// Resolved preflight for one deploy target: the AppHost, the detail line printed before acting, and the environment
+/// variables the aspire process needs (aca: Azure__SubscriptionId when only the az CLI chose the subscription).
+/// </summary>
+internal sealed record DeployPreflight(string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment);
 
 /// <summary>Runs the read-only probes both deploy verbs share.</summary>
 internal static class AspireDeployPreflight
@@ -47,7 +54,34 @@ internal static class AspireDeployPreflight
     }
 
     string detail;
-    if (target == AspireDeploy.Kubernetes)
+    Dictionary<string, string> aspireEnvironment = [];
+    if (target == AspireDeploy.ContainerApps)
+    {
+      CommandOutput? az = await ProbeAsync("az", AspireDeploy.BuildAzureAccountArguments(), cancellationToken);
+      AzureAccount? account = AspireDeploy.ParseAzureAccount(az?.Success == true, az?.Stdout ?? "");
+      if (account is null)
+      {
+        return Fail(terminal, $"Error: {AspireDeploy.NoAzureLoginMessage}");
+      }
+
+      string? environmentSubscription = Environment.GetEnvironmentVariable(AspireDeploy.AzureSubscriptionIdVariable);
+      string? userSecretSubscription = null;
+      if (string.IsNullOrWhiteSpace(environmentSubscription))
+      {
+        CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+        userSecretSubscription = AspireDeploy.ParseUserSecret(
+          secrets?.Success == true, secrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
+      }
+
+      AzureSubscriptionChoice subscription = AspireDeploy.ChooseAzureSubscription(environmentSubscription, userSecretSubscription, account);
+      if (subscription.PassToAspire)
+      {
+        aspireEnvironment[AspireDeploy.AzureSubscriptionIdVariable] = subscription.SubscriptionId;
+      }
+
+      detail = subscription.Detail;
+    }
+    else if (target == AspireDeploy.Kubernetes)
     {
       CommandOutput? helm = await ProbeAsync("helm", AspireDeploy.BuildHelmVersionArguments(), cancellationToken);
       string? helmError = AspireDeploy.ValidateHelm(helm?.Success == true, helm?.Stdout ?? "");
@@ -71,7 +105,7 @@ internal static class AspireDeployPreflight
       detail = $"Container runtime: {runtime} ({AspireDeploy.ContainerRuntimeVariable} selects another)";
     }
 
-    return new DeployPreflight(repoRoot, appHostProject, target, detail);
+    return new DeployPreflight(repoRoot, appHostProject, target, detail, aspireEnvironment);
   }
 
   /// <summary>Runs a read-only probe; null when <paramref name="executable"/> is not on PATH.</summary>
