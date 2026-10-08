@@ -117,6 +117,7 @@ it there and release it first.
 
 - Created: 494460 (2026-10-02)
 - Implemented: 2026-10-09. In-process catalog agent and WebMCP on the overnight choices in `design.md`. Gates green. Maintainer AppHost was not started.
+- Reviewed: 2026-10-09. Review oracle (Claude Opus 5.5, headless `ganda task work`), effort 3. Reviewer subagents: general, security, tests (round 1), then general re-review (round 2) and orchestrator verification (round 3).
 
 ## Notes
 
@@ -148,7 +149,7 @@ Smoke:
 
 - `./bin/dev build` — Build succeeded. 0 Warning(s). 0 Error(s). `wwwroot/js/features/web-mcp.js` emitted.
 - `./bin/dev test --quiet` — Tests completed successfully.
-- Catalog agent suite, from `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Release -- --filter-class CatalogAgent_Should` — 8 passed. Console:
+- Catalog agent suite, from `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Release -- --filter-class CatalogAgent_Should` — 15 passed (after the review fixes). Console:
   - `AGENT-PROOF action=Counter.IncrementCounter amount=5 approved count=15 reply=Done.`
   - `NO-MODEL-PROOF ConfigureServices IChatClient registered=False`
   - `NO-MODEL-PROOF host IChatClient configured=False`
@@ -165,3 +166,21 @@ Expect:
 - WebMCP registers the current page's agent-visible, permitted catalog tools plus `page_context`. `/Settings` lists Fetch, Revoke, Rename, and `page_context`. A missing `modelContext` registers 0 tools.
 - `WebMcpDispatcher.InvokeTool` for IncrementCounter waits on the in-app confirm bar. `ResolveApproval(true)` then returns completed JSON and the counter is 15.
 - An api-off generated app still builds: the test host names `JsWebMcpModelContext` and `ConfigurationBuilder` without the api-only global usings, and supplies a signed-in principal so the dispatcher can be constructed.
+
+### Implementation review
+
+- Roster and effort: effort 3. Round 1: general, security, tests. Round 2: general and security re-review. Round 3: orchestrator verification. 3 rounds in total.
+- Final counts: bug 4 fixed. Suggestion 10 fixed. Nit 5 fixed, 1 wontfix. 0 open.
+- Disposition: **accepted-exceptions**. The one wontfix is M13, a nit: WebMCP tools are published twice on navigation. Both triggers are needed, the replace is idempotent, and the reason is recorded in the WebMcpAgentSurface Design comment.
+- Main fixes:
+  - WebMCP approval is tied to each call by its own id. A second call is refused as busy.
+  - Navigation cancels a pending call, and the page is checked again right before `Execute`.
+  - The chat driver re-checks permission and page scope when a tool is invoked.
+  - Enums bind through `ContractSerializationDefaults`.
+  - `page_context` carries the profile and site-settings records.
+  - Arguments are bound before approval, and the banner shows the bound values.
+  - Read-only actions are an explicit allow-list.
+  - Negative-path tests were added.
+- Known limit, a follow-up in `design.md`: an in-browser agent that can act on the DOM could click Approve itself.
+- Fix commits: 3330690db and aa75fadff. Gates after the fixes: `dev build` 0/0, `CatalogAgent_Should` 15/15, `dev test` passed, `ganda repo audit` passed.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md` (last), `review/disposition.md`.
