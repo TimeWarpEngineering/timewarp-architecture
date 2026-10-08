@@ -114,17 +114,23 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   ```
 
   A `Parameters__<name>` environment variable overrides the secret for one session
-  (`${env:Parameters__k8s-namespace} = 'my-app'`). The plan prints each value and its source.
+  (`${env:Parameters__k8s-namespace} = 'my-app'`; the name is matched case-insensitively). The plan
+  prints each value and its source, and the values appear in the `aspire` command line, so a
+  forwarded parameter is never a secret — secrets stay in user secrets or env vars, where Aspire
+  reads them itself.
 - **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
   nothing run: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
   missing one is listed with the command that sets it), and for a kind context (`kind-<cluster>`)
   that `kind get clusters` lists the cluster and the registry at `registry-endpoint` answers its
-  `/v2/` API.
+  `/v2/` API. Each probe times out after 20 seconds (e.g. a credential plugin waiting for a login)
+  and is reported as timed out; if `dotnet user-secrets list` fails, the report says so.
 - **Any kubectl context works** — AKS, an on-prem cluster, or a local kind cluster. `dev deploy`
   never creates a cluster, installs an ingress controller or switches context.
 - **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight, minus
-  the deploy parameters and the registry (for kubernetes it prints the kubectl context first). It deletes the deployment's data (Compose volumes,
+  the registry check (for kubernetes it prints the kubectl context first). Deploy parameters are
+  optional there: each one that is set is forwarded the same way (`--Parameters:<name>=<value>`), and
+  a missing one is never refused. It deletes the deployment's data (Compose volumes,
   the Kubernetes postgres claim), so Aspire asks for confirmation; `--yes` skips the prompt. Without
   a terminal and without `--yes` it refuses.
 - **`aspire destroy` is local.** It only knows deployments that `aspire deploy` recorded on the
@@ -143,7 +149,7 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
 
   ```bash
   aspire deploy  --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> --Parameters:<name>=<value>
-  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target>
+  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> [--Parameters:<name>=<value>]
   ```
 
   When `aspire destroy` fails or reports nothing to destroy, nothing was removed; use the manual

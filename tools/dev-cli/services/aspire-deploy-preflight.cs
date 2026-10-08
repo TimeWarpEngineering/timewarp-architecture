@@ -6,12 +6,16 @@
 // Kept apart from aspire-deploy.cs so that file stays pure for dev-cli-tests (same split as
 // aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version`, `helm version --short`,
 // `kubectl config current-context`, `kubectl get --raw /version`, `kind get clusters`, an HTTP GET of
-// the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`. Nothing here
+// the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`. Each process
+// probe is bounded by AspireDeploy.ProbeTimeout (a timed-out probe is a refusal saying so). Nothing here
 // deploys, creates a cluster or calls a container CLI. The kubernetes target needs Helm 4.2+ (Aspire's
 // helm upgrade --install), a current kubectl context whose API answers (printed so the operator sees
-// where the deploy goes), for a kind context the kind cluster, and for `dev deploy` (resolveParameters)
+// where the deploy goes), for a kind context the kind cluster, and for `dev deploy` (requireParameters)
 // every required deploy parameter plus — on kind — a registry answering at registry-endpoint (task
-// 286). Kubernetes problems are collected into one report instead of stopping at the first; aca needs `az login` and prints the
+// 286); `dev deprovision` resolves the parameters too but only forwards the ones set. This file only
+// gathers probe results; which refusals they produce, and their precedence, is decided by the pure
+// AspireDeploy.Collect*Problems (tested). Kubernetes problems are collected into one report instead of
+// stopping at the first; aca needs `az login` and prints the
 // subscription and its source (Azure__SubscriptionId, else the AppHost user secret
 // Azure:SubscriptionId, else the az CLI's — only that last one is passed to Aspire, task 070-007);
 // compose needs none of these and reports the container runtime Aspire will use
@@ -32,10 +36,11 @@ internal sealed record DeployPreflight(
 internal static class AspireDeployPreflight
 {
   /// <summary>
-  /// Resolves the AppHost and target and runs the probes; null after printing the refusal. <paramref name="resolveParameters"/>
-  /// (dev deploy) also resolves the target's required deploy parameters and refuses when any is unset.
+  /// Resolves the AppHost and target and runs the probes; null after printing the refusal. Both verbs resolve the target's
+  /// deploy parameters; <paramref name="requireParameters"/> (dev deploy) refuses when any is unset and probes the kind
+  /// registry, while dev deprovision only forwards the ones that are set.
   /// </summary>
-  internal static async Task<DeployPreflight?> RunAsync(ITerminal terminal, string verb, string? targetName, bool resolveParameters, CancellationToken cancellationToken)
+  internal static async Task<DeployPreflight?> RunAsync(ITerminal terminal, string verb, string? targetName, bool requireParameters, CancellationToken cancellationToken)
   {
     string? repoRoot = Git.FindRoot();
     if (repoRoot is null)
@@ -63,25 +68,35 @@ internal static class AspireDeployPreflight
 
     string detail;
     Dictionary<string, string> aspireEnvironment = [];
-    List<string> problems = [];
+    string[] parameterProblems = [];
     DeployParameterResolution parameters = new([], []);
-    if (resolveParameters && AspireDeploy.RequiredParameters(target).Length > 0)
+    if (AspireDeploy.RequiredParameters(target).Length > 0)
     {
-      CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
-      parameters = AspireDeploy.ResolveParameters(target, Environment.GetEnvironmentVariable, secrets?.Success == true, secrets?.Stdout ?? "");
-      if (parameters.Missing.Count > 0)
+      string[] secretsArguments = AspireDeploy.BuildUserSecretsListArguments(appHostProject);
+      CommandOutput? secrets = await ProbeAsync("dotnet", secretsArguments, cancellationToken);
+      parameters = AspireDeploy.ResolveParameters(
+        target, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()), secrets?.Success == true, secrets?.Stdout ?? "");
+      if (requireParameters)
       {
-        problems.Add(string.Join('\n', AspireDeploy.BuildMissingParameterLines(appHostProject, target, parameters.Missing)));
+        string? secretsFailure = secrets switch
+        {
+          null => "dotnet is not on PATH",
+          { TimedOut: true } => $"timed out after {AspireDeploy.ProbeTimeout.TotalSeconds:0}s",
+          { Success: false } => AspireDeploy.FirstLine(secrets.Stderr, AspireDeploy.FirstLine(secrets.Stdout, $"exit {secrets.ExitCode}")),
+          _ => null,
+        };
+        parameterProblems = AspireDeploy.CollectParameterProblems(appHostProject, target, parameters, secretsFailure);
       }
     }
 
     if (target == AspireDeploy.ContainerApps)
     {
-      CommandOutput? az = await ProbeAsync("az", AspireDeploy.BuildAzureAccountArguments(), cancellationToken);
+      string[] azArguments = AspireDeploy.BuildAzureAccountArguments();
+      CommandOutput? az = await ProbeAsync("az", azArguments, cancellationToken);
       AzureAccount? account = AspireDeploy.ParseAzureAccount(az?.Success == true, az?.Stdout ?? "");
       if (account is null)
       {
-        return Fail(terminal, $"Error: {AspireDeploy.NoAzureLoginMessage}");
+        return Fail(terminal, $"Error: {(az?.TimedOut == true ? AspireDeploy.ProbeTimedOutMessage("az", azArguments) : AspireDeploy.NoAzureLoginMessage)}");
       }
 
       string? environmentSubscription = Environment.GetEnvironmentVariable(AspireDeploy.AzureSubscriptionIdVariable);
@@ -103,25 +118,23 @@ internal static class AspireDeployPreflight
     }
     else if (target == AspireDeploy.Kubernetes)
     {
-      CommandOutput? helm = await ProbeAsync("helm", AspireDeploy.BuildHelmVersionArguments(), cancellationToken);
-      string? helmError = AspireDeploy.ValidateHelm(helm?.Success == true, helm?.Stdout ?? "");
-      if (helmError is not null)
-      {
-        problems.Add(helmError);
-      }
+      string[] helmArguments = AspireDeploy.BuildHelmVersionArguments();
+      CommandOutput? helm = await ProbeAsync("helm", helmArguments, cancellationToken);
+      string? helmError = helm?.TimedOut == true
+        ? AspireDeploy.ProbeTimedOutMessage("helm", helmArguments)
+        : AspireDeploy.ValidateHelm(helm?.Success == true, helm?.Stdout ?? "");
 
-      CommandOutput? kubectl = await ProbeAsync("kubectl", AspireDeploy.BuildKubectlContextArguments(), cancellationToken);
+      string[] contextArguments = AspireDeploy.BuildKubectlContextArguments();
+      CommandOutput? kubectl = await ProbeAsync("kubectl", contextArguments, cancellationToken);
       string? context = AspireDeploy.ParseKubectlContext(kubectl?.Success == true, kubectl?.Stdout ?? "");
-      if (context is null)
-      {
-        problems.Add(AspireDeploy.NoKubectlContextMessage);
-      }
-      else
-      {
-        await CheckClusterAsync(context, parameters, problems, cancellationToken);
-      }
+      string? contextError = kubectl?.TimedOut == true ? AspireDeploy.ProbeTimedOutMessage("kubectl", contextArguments) : null;
 
-      if (problems.Count > 0)
+      string[] clusterProblems = context is null
+        ? []
+        : AspireDeploy.CollectClusterProblems(await ProbeClusterAsync(context, parameters, requireParameters, cancellationToken), appHostProject);
+
+      string[] problems = AspireDeploy.CollectKubernetesProblems(parameterProblems, helmError, contextError, context, clusterProblems);
+      if (problems.Length > 0)
       {
         return FailReport(terminal, verb, problems);
       }
@@ -134,68 +147,82 @@ internal static class AspireDeployPreflight
       detail = $"Container runtime: {runtime} ({AspireDeploy.ContainerRuntimeVariable} selects another)";
     }
 
-    if (problems.Count > 0)
+    if (parameterProblems.Length > 0)
     {
-      return FailReport(terminal, verb, problems);
+      return FailReport(terminal, verb, parameterProblems);
     }
 
     return new DeployPreflight(repoRoot, appHostProject, target, detail, aspireEnvironment, parameters.Resolved);
   }
 
-  /// <summary>The context's API answers; for a kind context, its cluster exists and (deploy) the registry answers.</summary>
-  private static async Task CheckClusterAsync(string context, DeployParameterResolution parameters, List<string> problems, CancellationToken cancellationToken)
+  /// <summary>Gathers the cluster probe results; which refusals they produce is AspireDeploy.CollectClusterProblems'.</summary>
+  private static async Task<ClusterProbeResults> ProbeClusterAsync(
+    string context, DeployParameterResolution parameters, bool deploying, CancellationToken cancellationToken)
   {
     CommandOutput? reach = await ProbeAsync("kubectl", AspireDeploy.BuildKubectlReachabilityArguments(context), cancellationToken);
-    string? reachError = AspireDeploy.ValidateKubectlReachable(reach?.Success == true, context, reach?.Stderr ?? "kubectl is not on PATH");
+    string reachError = reach switch
+    {
+      null => "kubectl is not on PATH",
+      { TimedOut: true } => $"timed out after {AspireDeploy.ProbeTimeout.TotalSeconds:0}s",
+      _ => reach.Stderr,
+    };
+    ClusterProbeResults probes = new(context, reach?.Success == true, reachError);
 
-    string? kindCluster = AspireDeploy.KindClusterName(context);
-    string? kindError = null;
-    if (kindCluster is not null)
+    if (AspireDeploy.KindClusterName(context) is not null)
     {
       CommandOutput? kind = await ProbeAsync("kind", AspireDeploy.BuildKindClustersArguments(), cancellationToken);
-      kindError = AspireDeploy.ValidateKindCluster(kind?.Success == true, kind?.Stdout ?? "", kindCluster);
+      probes = probes with { KindProbeSucceeded = kind?.Success == true, KindTimedOut = kind?.TimedOut == true, KindOutput = kind?.Stdout ?? "" };
     }
 
-    // A missing kind cluster is why its API does not answer; report the root cause only.
-    if (kindError is not null)
+    string? registry = AspireDeploy.RegistryToProbe(context, parameters, deploying);
+    if (registry is not null)
     {
-      problems.Add(kindError);
-    }
-    else if (reachError is not null)
-    {
-      problems.Add(reachError);
+      (bool answered, string? failure) = await RegistryAnswersAsync(registry, cancellationToken);
+      probes = probes with { RegistryEndpoint = registry, RegistryAnswered = answered, RegistryFailure = failure };
     }
 
-    ResolvedDeployParameter? registry = parameters.Resolved.FirstOrDefault(parameter => parameter.Name == AspireDeploy.RegistryEndpointParameter);
-    if (kindCluster is not null && registry is not null)
-    {
-      string? registryError = AspireDeploy.ValidateRegistry(await RegistryAnswersAsync(registry.Value, cancellationToken), registry.Value);
-      if (registryError is not null)
-      {
-        problems.Add(registryError);
-      }
-    }
+    return probes;
   }
 
-  /// <summary>GETs the registry's /v2/; any HTTP status (401 included) means something is listening.</summary>
-  private static async Task<bool> RegistryAnswersAsync(string endpoint, CancellationToken cancellationToken)
+  /// <summary>GETs the registry's /v2/; any HTTP status (401 included) means something is listening. Otherwise, why not.</summary>
+  private static async Task<(bool Answered, string? Failure)> RegistryAnswersAsync(string endpoint, CancellationToken cancellationToken)
   {
     Uri? uri = AspireDeploy.BuildRegistryProbeUri(endpoint);
     if (uri is null)
     {
-      return false;
+      return (false, "not a host:port or http(s) URL");
     }
 
     using System.Net.Http.HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) };
     try
     {
       using System.Net.Http.HttpResponseMessage response = await client.GetAsync(uri, cancellationToken);
-      return true;
+      return (true, null);
     }
-    catch (Exception exception) when (exception is System.Net.Http.HttpRequestException or TaskCanceledException)
+    catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
     {
-      return false;
+      return (false, $"no answer from {uri} within {client.Timeout.TotalSeconds:0}s");
     }
+    catch (System.Net.Http.HttpRequestException exception) when (!cancellationToken.IsCancellationRequested)
+    {
+      // e.g. "The SSL connection could not be established" with the certificate problem as the inner exception.
+      return (false, exception.InnerException is null ? exception.Message : $"{exception.Message} {exception.InnerException.Message}");
+    }
+  }
+
+  /// <summary>The process environment as a dictionary, for the case-insensitive Parameters__&lt;name&gt; lookup.</summary>
+  private static Dictionary<string, string> EnvironmentVariables()
+  {
+    Dictionary<string, string> variables = new(StringComparer.Ordinal);
+    foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+    {
+      if (entry.Key is string name && entry.Value is string value)
+      {
+        variables[name] = value;
+      }
+    }
+
+    return variables;
   }
 
   private static DeployPreflight? FailReport(ITerminal terminal, string verb, IReadOnlyList<string> problems)
@@ -209,12 +236,16 @@ internal static class AspireDeployPreflight
     return null;
   }
 
-  /// <summary>Runs a read-only probe; null when <paramref name="executable"/> is not on PATH.</summary>
+  /// <summary>
+  /// Runs a read-only probe bounded by <see cref="AspireDeploy.ProbeTimeout"/> (a timed-out probe reports TimedOut and fails);
+  /// null when <paramref name="executable"/> is not on PATH.
+  /// </summary>
   private static async Task<CommandOutput?> ProbeAsync(string executable, string[] arguments, CancellationToken cancellationToken) =>
     PathResolver.ResolveExecutable(executable) is null
       ? null
       : await Shell.Builder(executable)
         .WithArguments(arguments)
+        .WithTimeout(AspireDeploy.ProbeTimeout)
         .WithNoValidation()
         .CaptureAsync(cancellationToken);
 

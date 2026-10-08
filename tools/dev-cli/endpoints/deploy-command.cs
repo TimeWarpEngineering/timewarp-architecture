@@ -7,7 +7,7 @@
 // Deploying is a deliberate operator action, never a side effect of a merge (task 070-006): no
 // workflow step and no `dev workflow` mode calls this verb; CI stops at `dev publish` plus its
 // production-safety suites. Thin wrapper over
-//   aspire deploy --apphost <csproj> --environment Production [--non-interactive] -- --Publish:Target=<t>
+//   aspire deploy --apphost <csproj> --environment Production [--non-interactive] -- --Publish:Target=<t> [--Parameters:<name>=<value> …]
 // with the target defaulting to the AppHost's Publish:Target default (compose).
 // Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+, a
 // current kubectl context whose API answers, which is printed — any context works, a local kind cluster
@@ -15,7 +15,8 @@
 // this verb never creates a cluster. Deploy parameters (task 286): every value-less AppHost parameter of
 // the target (kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository) must
 // be set — AppHost user secret Parameters:<name>, or a Parameters__<name> env var — and is forwarded as
-// `--Parameters:<name>=<value>` after `--`; missing ones are refused with the command to set each. Compose prints the container runtime Aspire will use
+// `--Parameters:<name>=<value>` after `--`; missing ones are refused with the command to set each
+// (forwarded values are printed and appear in argv, so they are never secrets). Compose prints the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI. For aca (task
 // 070-007), `az login` and the subscription with its source, printed: the Azure__SubscriptionId
 // environment variable, else the AppHost user secret Azure:SubscriptionId, else the az CLI's — only
@@ -58,7 +59,7 @@ internal sealed class DeployCommand : ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, resolveParameters: true, ct);
+      DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, requireParameters: true, ct);
       if (preflight is null) return Unit.Value;
 
       foreach (string line in AspireDeploy.BuildDeployPlanLines(preflight.AppHostProject, preflight.Target, preflight.Detail, preflight.Parameters))
