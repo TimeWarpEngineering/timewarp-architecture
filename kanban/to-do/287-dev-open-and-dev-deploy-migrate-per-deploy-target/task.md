@@ -192,3 +192,4 @@ dev publish kubernetes; dev deploy migrate --target kubernetes; dev open --targe
 - Created: 2026-10-08 (cockpit, per Steve)
 - 2026-10-09: implemented under `ganda task work` (implement oracle); gates above.
 - 2026-10-09: review oracle (claude, effort 3, general): 2 rounds, `accepted-exceptions`; fixes in-task.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-08T18:35:28Z
