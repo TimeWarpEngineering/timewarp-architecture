@@ -13,8 +13,10 @@
 // is refused with an error instead of replacing the call on screen. While waiting, the dispatcher
 // listens to LocationChanged and cancels its own call on any navigation, which also covers
 // focused pages that do not host the banner. After the wait it clears its banner (ResolveApproval
-// with its own id is a no-op if already answered), then refuses unless the path is still the path
-// at call time and a fresh selection for the current principal still offers the same tool.
+// with its own id is a no-op if already answered), then refuses with PageChangedError if any
+// navigation happened while waiting (even one that returns to the same path, such as a query-only
+// change). Otherwise it refuses unless a fresh selection for the current principal still offers the
+// same tool, and it checks the path once more after that await, right before Execute.
 // Result JSON uses the contract seam options. Execute failures are not mapped: handlers report
 // their own outcomes on NotificationState.
 #endregion
@@ -94,8 +96,8 @@ public sealed class WebMcpDispatcher
         return Error(name, BusyError);
       }
 
-      bool approved = await WaitForApprovalAsync(callId, decision, tool.Name, rendered);
-      if (!string.Equals(PageAgentScope.FromNavigation(Navigation), path, StringComparison.OrdinalIgnoreCase))
+      (bool approved, bool navigated) = await WaitForApprovalAsync(callId, decision, tool.Name, rendered);
+      if (navigated || !IsOnPath(path))
       {
         return Error(name, PageChangedError);
       }
@@ -110,22 +112,43 @@ public sealed class WebMcpDispatcher
       {
         return Error(name, UnavailableError);
       }
+
+      // The permission check awaited; navigation may have happened after the listener was removed.
+      if (!IsOnPath(path))
+      {
+        return Error(name, PageChangedError);
+      }
     }
 
     await tool.Entry.Execute(Store, bound, CancellationToken.None);
     return Serialize(new WebMcpCompleted(tool.Name, Completed: true));
   }
 
-  private async Task<bool> WaitForApprovalAsync(Guid callId, Task<bool> decision, string toolName, string rendered)
+  private bool IsOnPath(string path) =>
+    string.Equals(PageAgentScope.FromNavigation(Navigation), path, StringComparison.OrdinalIgnoreCase);
+
+  private async Task<(bool Approved, bool Navigated)> WaitForApprovalAsync
+  (
+    Guid callId,
+    Task<bool> decision,
+    string toolName,
+    string rendered
+  )
   {
-    void Cancel(object? _, LocationChangedEventArgs __) => Gate.Complete(callId, approved: false);
+    bool navigated = false;
+    void Cancel(object? _, LocationChangedEventArgs __)
+    {
+      navigated = true;
+      Gate.Complete(callId, approved: false);
+    }
 
     Navigation.LocationChanged += Cancel;
     try
     {
       AgentSurfaceState surface = Store.GetState<AgentSurfaceState>();
       await surface.ShowApproval(callId, toolName, rendered);
-      return await decision;
+      bool approved = await decision;
+      return (approved, navigated);
     }
     finally
     {

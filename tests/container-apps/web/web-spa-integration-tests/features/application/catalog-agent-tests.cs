@@ -453,6 +453,24 @@ public class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
   }
 
+  public static async Task WebMcp_Same_Path_Navigation_Reports_Page_Changed_Not_Rejected()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigation.NavigateTo("/Counter");
+    scope.Store.GetState<CounterState>().Initialize(count: 10);
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+
+    Task<string> invoke = dispatcher.InvokeTool("Counter.IncrementCounter", """{"amount":5}""");
+    await WaitForPendingAsync(scope, invoke);
+
+    navigation.NavigateTo("/Counter?tab=1");
+    string result = await invoke.WaitAsync(Timeout);
+    result.ShouldContain(WebMcpDispatcher.PageChangedError);
+    result.ShouldNotContain("\"approved\":false");
+    scope.Store.GetState<CounterState>().Count.ShouldBe(10);
+  }
+
   public static Task Page_Context_Carries_Profile_And_Site_Settings_Records()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);

@@ -150,7 +150,8 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   (falling back to `navigator.modelContext`, then `provideContext`). A missing API registers nothing.
   Both paths execute with `ActionCatalogEntry.Execute`. Endpoints keep `[EndpointAuthorize]`.
 - Page facts live in `PageAgentContext`: credential ids and flags for Settings and Passkeys, and
-  the current record (with its Version token) for pages whose command replaces a whole record.
+  the current record for pages whose command replaces a whole record (including the Version
+  concurrency token where the command carries one, as site settings does).
   Components dispatch `SyncWebMcp` and `ResolveApproval`. They do not call the JS module.
 
 Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.
