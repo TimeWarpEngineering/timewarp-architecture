@@ -315,7 +315,6 @@ internal static class DeployOperate
       ? $"`{runtime} compose ls` lists no running project."
       : $"Running (`{runtime} compose ls`): {string.Join(", ", projects.Select(project => project.Name))}.";
 
-  /// <summary><c>&lt;runtime&gt; compose … exec -T postgres</c> psql for <paramref name="project"/>, stdin attached for the script.</summary>
   /// <summary>The migrate command as an operator would type it in pwsh: the script piped on stdin (<c>Get-Content -Raw</c>).</summary>
   internal static string BuildPipedCommandDisplay(string script, string executable, IReadOnlyList<string> arguments) =>
     $"Get-Content -Raw {PwshQuote(script)} | {executable} {string.Join(' ', arguments.Select(PwshQuote))}";
@@ -326,6 +325,7 @@ internal static class DeployOperate
       ? argument
       : $"'{argument.Replace("'", "''", StringComparison.Ordinal)}'";
 
+  /// <summary><c>&lt;runtime&gt; compose … exec -T postgres</c> psql for <paramref name="project"/>, stdin attached for the script.</summary>
   internal static string[] BuildComposeMigrateArguments(ComposeProject project) =>
   [
     "compose", "--project-name", project.Name,

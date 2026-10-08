@@ -149,12 +149,23 @@ Tests never touch a real cluster, Docker or Azure.
   runs were file-only `aspire publish` runs to `/tmp`, used to confirm the output layout (since
   removed).
 
+- **Review disposition (2026-10-09): `accepted-exceptions`.** Effort 3, roster general, 2 rounds.
+  Final counts: bug 3 fixed; suggestion 1 fixed, 1 wontfix; nit 3 fixed, 1 wontfix; 0 open. The fixes:
+  `dev deploy` is now the `DeployGroup` empty route, so `dev deploy --help` lists its options again. The
+  Key Vault grant uses pwsh backtick escapes. The migrate plan prints `Get-Content -Raw … | …`. A failed
+  `operator-migrate` delete is reported from the `finally`, so it survives Ctrl+C. `dev open` prints the
+  URL when the forward is slow. Wontfix: M5 (the bundle's `--connection` is visible in the local process
+  list; it is the documented interface and is recorded in the Design region) and M6 (migrate resolves all
+  four kubernetes parameters, as deploy does). After the fixes: dev-cli-tests 194/194, `dev build` 0/0,
+  audit pass. Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke**
 
 ```pwsh
 cd tests/tools/dev-cli-tests; dotnet test -c Release; cd ../../..
+dotnet run tools/dev-cli/dev.cs -- deploy --help   # lists deploy's own options and migrate
 dotnet run tools/dev-cli/dev.cs -- deploy migrate --help
 dotnet run tools/dev-cli/dev.cs -- open --help
 dotnet run tools/dev-cli/dev.cs -- deploy migrate   # compose, without artifacts/aspire-output/compose
@@ -165,7 +176,7 @@ dev publish kubernetes; dev deploy migrate --target kubernetes; dev open --targe
 
 **Expect**
 
-- dev-cli-tests: `total: 192 … failed: 0`.
+- dev-cli-tests: `total: 194 … failed: 0`.
 - Both `--help` outputs list the options above (`--project-name`, `--resource-group`, `--client-ip`;
   `--port`, `--no-browser`, `--controller-namespace`, `--controller-service`).
 - Migrate without published output refuses with `No published migrations for compose:
@@ -180,3 +191,4 @@ dev publish kubernetes; dev deploy migrate --target kubernetes; dev open --targe
 
 - Created: 2026-10-08 (cockpit, per Steve)
 - 2026-10-09: implemented under `ganda task work` (implement oracle); gates above.
+- 2026-10-09: review oracle (claude, effort 3, general): 2 rounds, `accepted-exceptions`; fixes in-task.
