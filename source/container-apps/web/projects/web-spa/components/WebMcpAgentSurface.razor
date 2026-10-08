@@ -1,0 +1,66 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.Applications
+
+@*
+  Purpose: Confirms a WebMCP tool call and republishes page tools when the route changes.
+
+  Design: The component only dispatches. SyncWebMcp publishes tools through the store handler.
+  ResolveApproval answers the gate the dispatcher is waiting on. The banner is the in-app
+  confirmation for mutating tools. An absent browser model context makes the publish a no-op.
+*@
+
+@code {
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  private bool Listening;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || Listening)
+    {
+      return;
+    }
+
+    Listening = true;
+    NavigationManager.LocationChanged += OnLocationChanged;
+    await AgentSurfaceState.SyncWebMcp();
+  }
+
+  private void OnLocationChanged(object? sender, LocationChangedEventArgs arguments)
+  {
+    _ = SyncAsync();
+  }
+
+  private async Task SyncAsync()
+  {
+    try
+    {
+      await AgentSurfaceState.SyncWebMcp();
+    }
+    catch (ObjectDisposedException)
+    {
+      // The circuit closed during navigation.
+    }
+  }
+
+  private Task ApproveAsync() => AgentSurfaceState.ResolveApproval(approved: true);
+
+  private Task RejectAsync() => AgentSurfaceState.ResolveApproval(approved: false);
+
+  public override void Dispose()
+  {
+    NavigationManager.LocationChanged -= OnLocationChanged;
+    base.Dispose();
+  }
+}
+
+@if (AgentSurfaceState.HasPendingApproval)
+{
+  <div class="twe-webmcp-approval" data-qa="WebMcpApproval" role="region" aria-label="Confirm action">
+    <p>Allow <strong data-qa="WebMcpApprovalTool">@AgentSurfaceState.PendingToolName</strong>?</p>
+    <pre data-qa="WebMcpApprovalArguments">@AgentSurfaceState.PendingArgumentsJson</pre>
+    <FluentButton Appearance="ButtonAppearance.Primary" data-qa="WebMcpApprove" OnClick="ApproveAsync">Approve</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Outline" data-qa="WebMcpReject" OnClick="RejectAsync">Reject</FluentButton>
+  </div>
+}

@@ -111,6 +111,7 @@
           </div>
         }
         <div class="twe-page__body">
+          <WebMcpAgentSurface />
           <MessageBars />
           <AddPasskeyPrompt />
           @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
@@ -148,6 +149,7 @@
   <ModalContainers>
     <AssemblyInfoModal />
     <CommandPalette />
+    <AgentAsk />
   </ModalContainers>
 </ModalController>
 

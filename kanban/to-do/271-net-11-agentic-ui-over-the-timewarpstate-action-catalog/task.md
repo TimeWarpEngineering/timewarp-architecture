@@ -102,20 +102,21 @@ it there and release it first.
 
 ## Checklist
 
-- [ ] Depends on task 272 (.NET 11 + `AddDotnetProject`, merged from 267); do not start before 272 merges
-- [ ] Phase 1 `design.md` (items 1–7, recommendation plus alternatives each); hand back to Steve
-- [ ] Steve's decisions recorded in this task
-- [ ] Phase 2 implementation per the approved design, with tests (mapping, permissions, approval,
+- [x] Depends on task 272 (.NET 11 + `AddDotnetProject`, merged from 267); do not start before 272 merges
+- [x] Phase 1 `design.md` (items 1–7, recommendation plus alternatives each); hand back to Steve
+- [x] Steve's decisions recorded in this task
+- [x] Phase 2 implementation per the approved design, with tests (mapping, permissions, approval,
       fake-client e2e, no-model path)
-- [ ] Skill updated; Purpose/Design regions on new files
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`,
+- [x] Skill updated; Purpose/Design regions on new files
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`,
       `dev check-version` if packages ship
-- [ ] Do **not** start the maintainer's AppHost; use no real model credentials in tests
+- [x] Do **not** start the maintainer's AppHost; use no real model credentials in tests
 - [ ] Implementation review; host `open-pr`
 
 ## Session
 
 - Created: 494460 (2026-10-02)
+- Implemented: 2026-10-09. In-process catalog agent and WebMCP on the overnight choices in `design.md`. Gates green. Maintainer AppHost was not started.
 
 ## Notes
 
@@ -135,8 +136,32 @@ it there and release it first.
 
 ## Results
 
-*(fill when done)*
+The template now has an in-process agent over the TimeWarp.State action catalog, and the same page-scoped tools are published to the browser WebMCP API. A person can ask in the Ctrl-K palette when a host has registered an `IChatClient`. The agent fills a catalog action and runs it through the store. Mutating actions wait for in-app approval. WebMCP uses that same confirm bar. Human-only actions stay off both tool lists. The template registers no model and no secret, so a generated app stays fully usable with the feature idle.
+
+Choices for items 1–7 are in `design.md`. They were made under Steve's 2026-10-09 overnight instruction (implement tonight, and build WebMCP in this same walk) and are there for morning review. The adapter stays in this template. No timewarp-state release. No new template flag. `dev check-version` was skipped because this change ships no package.
+
+The maintainer AppHost was not started. Proof is the fake-client log and the WebMCP tool list below.
 
 ### How to validate
 
-*(required before done)*
+Smoke:
+
+- `./bin/dev build` — Build succeeded. 0 Warning(s). 0 Error(s). `wwwroot/js/features/web-mcp.js` emitted.
+- `./bin/dev test --quiet` — Tests completed successfully.
+- Catalog agent suite, from `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Release -- --filter-class CatalogAgent_Should` — 8 passed. Console:
+  - `AGENT-PROOF action=Counter.IncrementCounter amount=5 approved count=15 reply=Done.`
+  - `NO-MODEL-PROOF ConfigureServices IChatClient registered=False`
+  - `NO-MODEL-PROOF host IChatClient configured=False`
+  - `WEBMCP-PROOF path=/Counter tools=Counter.IncrementCounter,page_context registered=2`
+  - `WEBMCP-PROOF path=/Settings tools=Credentials.FetchCredentials,Credentials.RevokeCredential,Credentials.RenameCredential,page_context`
+  - `WEBMCP-PROOF invoke Counter.IncrementCounter approved count=15 result={"action":"Counter.IncrementCounter","completed":true}`
+- `ganda repo audit` — Passed 31, Failed 0.
+- `./bin/dev template-smoke` — Template smoke SUCCEEDED. SmokeDefault, SmokeNoPostgres, and SmokeNoApi each built with 0 Warning(s) and 0 Error(s). SmokeNoApi `web-jaribu-tests` 227/227.
+
+Expect:
+
+- With no `IChatClient` registered, `CatalogAgentAvailability.IsConfigured` is false, the palette shows no Ask button, and `Program.ConfigureServices` has no `IChatClient` descriptor.
+- A scripted client that requests `Counter.IncrementCounter` with amount 5 leaves `CounterState.Count` at 10 when the approval answer is false, and moves it to 15 only after the answer is true. The reply is `Done.`
+- WebMCP registers the current page's agent-visible, permitted catalog tools plus `page_context`. `/Settings` lists Fetch, Revoke, Rename, and `page_context`. A missing `modelContext` registers 0 tools.
+- `WebMcpDispatcher.InvokeTool` for IncrementCounter waits on the in-app confirm bar. `ResolveApproval(true)` then returns completed JSON and the counter is 15.
+- An api-off generated app still builds: the test host names `JsWebMcpModelContext` and `ConfigurationBuilder` without the api-only global usings, and supplies a signed-in principal so the dispatcher can be constructed.

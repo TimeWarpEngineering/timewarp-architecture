@@ -144,6 +144,13 @@ public static class Program
     // Opt-in [CatalogAction] registry (TimeWarp.State 12.0.0-beta.7) for the Ctrl-K palette and
     // agent tools. Only web-spa declares cataloged actions; Plus declares none, so it is not named.
     serviceCollection.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly);
+    // Ask mode is the presence of IChatClient. The template registers none, so a generated app
+    // stays usable with no model and no secret. A host opts in with services.Add…<IChatClient>().
+    // WebMCP uses the same catalog tools and does not need a model.
+    serviceCollection.AddScoped<WebMcpApprovalGate>();
+    serviceCollection.AddScoped<WebMcpDispatcher>();
+    serviceCollection.AddScoped<JsWebMcpModelContext>();
+    serviceCollection.AddScoped<WebMcpPublisher>();
     serviceCollection.AddJavaScriptDispatch(AllowJavaScriptDispatch);
 
     // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and

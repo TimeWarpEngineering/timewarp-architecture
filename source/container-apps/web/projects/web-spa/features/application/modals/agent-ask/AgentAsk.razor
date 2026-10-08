@@ -1,0 +1,139 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using Ai = Microsoft.AspNetCore.Components.AI
+@using TimeWarp.Architecture.Components
+
+@*
+  Purpose: Ask mode. A person describes what they want and the in-app model runs a page catalog tool.
+
+  Design: Hosted as a modal so it does not collide with the app's /Chat page or the library ChatPage
+  type. The modal is opened from the Ctrl-K footer, and only when an IChatClient is registered.
+  Tools are the current page's catalog actions plus page_context. Mutating tools render
+  FunctionApprovalBlock; Approve and Reject answer that block. Outcomes of the dispatched actions
+  stay on NotificationState. The component builds the agent when the modal activates and does not
+  call the model context itself.
+*@
+
+@code {
+  public const string ModalId = nameof(AgentAsk);
+
+  [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
+  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+  [Inject] private IStore ScopedStore { get; set; } = null!;
+
+  private Ai.UIAgent? Agent;
+  private FunctionInvokingChatClient? InvokingClient;
+  private CatalogAgentFunctions? Functions;
+  private bool Started;
+
+  private Task Activate() => EnsureAgentAsync();
+
+  private async Task EnsureAgentAsync()
+  {
+    if (Started)
+    {
+      return;
+    }
+
+    Started = true;
+    IChatClient? chatClient = ServiceProvider.GetService<IChatClient>();
+    if (chatClient is null)
+    {
+      return;
+    }
+
+    // Re-read on every activation. The modal does not cache an AuthenticationState.
+#pragma warning disable BL0013
+    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+    string path = PageAgentScope.FromNavigation(NavigationManager);
+    IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
+    (
+      authentication.User,
+      AuthorizationService,
+      ActionCatalog.Entries,
+      path,
+      CancellationToken.None
+    );
+    Functions = CatalogAgentFunctions.Create(selected);
+    List<AITool> tools = [.. Functions.Tools];
+    tools.Add
+    (
+      AIFunctionFactory.Create
+      (
+        () => PageAgentContext.Describe(ScopedStore, PageAgentScope.FromNavigation(NavigationManager)),
+        PageAgentContext.ToolName,
+        PageAgentContext.ToolDescription
+      )
+    );
+    string instructions = "Drive this page only through the supplied tools. "
+      + PageAgentContext.Describe(ScopedStore, path);
+    InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
+    Agent = new Ai.UIAgent
+    (
+      InvokingClient,
+      options =>
+      {
+        options.ChatOptions = new ChatOptions
+        {
+          Tools = tools,
+          Instructions = instructions,
+        };
+      }
+    );
+  }
+
+  private Task CloseAsync() => ApplicationState.CloseModal();
+
+  public override void Dispose()
+  {
+    Agent?.Dispose();
+    Agent = null;
+    InvokingClient?.Dispose();
+    InvokingClient = null;
+    Functions?.Dispose();
+    Functions = null;
+    base.Dispose();
+  }
+}
+
+<ModalContainer ModalId=@ModalId OnActivate=Activate>
+  <MainContent>
+    <div class="twe-agent-ask" data-qa="AgentAsk">
+      <h2 id="modal-title" class="twe-agent-ask__title">Ask</h2>
+      @if (Agent is null)
+      {
+        <p data-qa="AgentAskUnavailable">Ask is off until a model is configured. The rest of the app is unchanged.</p>
+      }
+      else
+      {
+        <Microsoft.AspNetCore.Components.AI.ChatPage Agent="Agent" Placeholder="Tell the app what you want">
+          <WelcomeContent>
+            <p>Ask for something this page can do.</p>
+          </WelcomeContent>
+          <MessageListContent>
+            <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionApprovalBlock" Context="approval">
+              <div class="twe-agent-ask__approval" data-qa="AgentApproval">
+                <p>Allow <strong>@approval.ToolName</strong>?</p>
+                <pre data-qa="AgentApprovalArguments">@approval.Arguments</pre>
+                @if (approval.Status == Ai.ApprovalStatus.Pending)
+                {
+                  <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentApprove" OnClick="() => approval.Approve()">Approve</FluentButton>
+                  <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentReject" OnClick="@(() => approval.Reject("Declined."))">Reject</FluentButton>
+                }
+                else
+                {
+                  <p data-qa="AgentApprovalStatus">@approval.Status</p>
+                }
+              </div>
+            </Microsoft.AspNetCore.Components.AI.BlockRenderer>
+          </MessageListContent>
+        </Microsoft.AspNetCore.Components.AI.ChatPage>
+      }
+    </div>
+  </MainContent>
+  <ActionContent>
+    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AgentAskClose" OnClick="CloseAsync">Close</FluentButton>
+  </ActionContent>
+</ModalContainer>

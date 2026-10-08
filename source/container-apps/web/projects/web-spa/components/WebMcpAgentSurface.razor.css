@@ -1,0 +1,13 @@
+.twe-webmcp-approval {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  align-items: center;
+  margin-bottom: var(--twe-space-3);
+}
+
+.twe-webmcp-approval pre {
+  flex-basis: 100%;
+  margin: 0;
+  white-space: pre-wrap;
+}
