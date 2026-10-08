@@ -6,7 +6,8 @@
 // Kept apart from aspire-deploy.cs so that file stays pure for dev-cli-tests (same split as
 // aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version`, `helm version --short`,
 // `kubectl config current-context`, `kubectl get --raw /version`, `kind get clusters`, an HTTP GET of
-// the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`. Each process
+// the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`, and the
+// AppHost's appsettings.Production.json / appsettings.json (read as text; parsed by the pure half). Each process
 // probe is bounded by AspireDeploy.ProbeTimeout (a timed-out probe is a refusal saying so). Nothing here
 // deploys, creates a cluster or calls a container CLI. The kubernetes target needs Helm 4.2+ (Aspire's
 // helm upgrade --install), a current kubectl context whose API answers (printed so the operator sees
@@ -75,7 +76,8 @@ internal static class AspireDeployPreflight
       string[] secretsArguments = AspireDeploy.BuildUserSecretsListArguments(appHostProject);
       CommandOutput? secrets = await ProbeAsync("dotnet", secretsArguments, cancellationToken);
       parameters = AspireDeploy.ResolveParameters(
-        target, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()), secrets?.Success == true, secrets?.Stdout ?? "");
+        target, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()), secrets?.Success == true, secrets?.Stdout ?? "",
+        ReadAppSettings(appHostProject));
       if (requireParameters)
       {
         string? secretsFailure = secrets switch
@@ -248,6 +250,19 @@ internal static class AspireDeployPreflight
         .WithTimeout(AspireDeploy.ProbeTimeout)
         .WithNoValidation()
         .CaptureAsync(cancellationToken);
+
+  /// <summary>The AppHost appsettings files beside <paramref name="appHostProject"/> that exist, highest precedence first.</summary>
+  private static AppSettingsFile[] ReadAppSettings(string appHostProject)
+  {
+    string directory = Path.GetDirectoryName(appHostProject)!;
+    return
+    [
+      .. AspireDeploy.AppSettingsFileNames()
+        .Select(fileName => (FileName: fileName, Path: Path.Combine(directory, fileName)))
+        .Where(file => File.Exists(file.Path))
+        .Select(file => new AppSettingsFile(file.FileName, File.ReadAllText(file.Path))),
+    ];
+  }
 
   private static DeployPreflight? Fail(ITerminal terminal, string message)
   {

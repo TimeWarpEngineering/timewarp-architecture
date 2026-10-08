@@ -138,10 +138,16 @@
 // alternatives selected by configuration: `aspire publish -- --Publish:Target=kubernetes` (default
 // compose; any other value throws). The switch is read in publish mode only — run mode always
 // declares the Compose environment, as before, and never sees Kubernetes resources or parameters.
-// WithHelm takes the namespace and release name as parameters (supplied at deploy) and the chart
-// version as a parameter defaulting to 1.0.0. Images go to the registry from AddContainerRegistry
-// (registry-endpoint + registry-repository parameters) attached with WithContainerRegistry —
-// preview in Aspire 13.6, so ASPIRECOMPUTE003 is suppressed around those two calls only. No
+// WithHelm takes the namespace and release name as parameters and the chart version as a parameter
+// defaulting to 1.0.0. Images go to the registry from AddContainerRegistry (registry-endpoint +
+// registry-repository parameters) attached with WithContainerRegistry — preview in Aspire 13.6, so
+// ASPIRECOMPUTE003 is suppressed around those two calls only. Those four parameters carry no value
+// in code (task 288): Aspire reads Parameters:<name> from configuration, and appsettings.json commits
+// them — the app's kebab name for k8s-namespace / helm-release-name / registry-repository (the
+// template's appNameKebab symbol rewrites it per generated app) and localhost:5001, the kind
+// recipe's registry, for registry-endpoint. None is a secret; an env var or user secret overrides
+// one per machine (AKS's registry). `dev deploy` lists them as its required kubernetes parameters
+// and dev-cli-tests holds both agreements (value-less calls here, committed values there). No
 // Kubernetes dashboard (a second workload with an unauthenticated UI).
 // Ingress decision (carried from retired 070-001) — option (a): the cluster's ingress controller
 // forwards ALL traffic to the YARP ingress, which keeps the per-service routing above. Chosen over
@@ -238,8 +244,9 @@ internal class Program
     if (string.Equals(publishTarget, KubernetesPublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       // Task 070-004: `aspire publish` emits a Helm chart; `aspire deploy` runs helm upgrade --install
-      // against the current kubectl context. Namespace, release name and chart version are parameters
-      // (values the operator supplies at deploy). No dashboard: it would be a second workload with an
+      // against the current kubectl context. Namespace, release name and chart version are parameters;
+      // namespace, release name and the registry parameters below are value-less here and committed in
+      // appsettings.json Parameters (see Design). No dashboard: it would be a second workload with an
       // unauthenticated UI beside the app.
       kubernetes = builder.AddKubernetesEnvironment(KubernetesEnvironmentResourceName)
         .WithHelm(helm => helm

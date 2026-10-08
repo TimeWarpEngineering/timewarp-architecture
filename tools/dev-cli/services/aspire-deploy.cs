@@ -36,16 +36,23 @@
 // Runtime neutrality (task 277): nothing here calls a container CLI. Compose deploy and destroy are
 // Aspire's, which honour ASPIRE_CONTAINER_RUNTIME; the runtime name only appears in printed text.
 //
-// Deploy parameters (task 286): the AppHost declares per-deployment parameters with no value (for
-// kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository). The template
-// never ships values for them. The operator's deploy configuration lives in the AppHost user secrets as
-// Parameters:<name> — the same store as postgres-password and Azure:SubscriptionId, per machine, never
-// committed — set with `dotnet user-secrets set`. A Parameters__<name> environment variable overrides
-// it for one shell. `dev deploy` resolves every required parameter of the target (env var, then user
-// secret), refuses with one report listing each missing one and the exact command to set it, and
-// forwards the resolved values as `--Parameters:<name>=<value>` after `--`, so Aspire never reaches a
-// parameter prompt it cannot show. The required lists are the AppHost's value-less parameters per
-// target; a parameter with a default is not listed. Kubernetes preflight also requires the context's API
+// Deploy parameters (tasks 286, 288): the AppHost declares per-deployment parameters with no value in
+// code (for kubernetes: k8s-namespace, helm-release-name, registry-endpoint, registry-repository) and
+// reads them from configuration as Parameters:<name>. None of them is a secret. Three are the app's
+// identity — k8s-namespace, helm-release-name and registry-repository — and are committed in the
+// AppHost appsettings.json Parameters section, set to the app's kebab name by the template
+// (.template.config appNameKebab); registry-endpoint is committed as localhost:5001, the kind
+// recipe's registry, and an AKS operator overrides it per machine. `dev deploy` resolves every
+// required parameter of the target in the order Aspire's configuration applies it: a
+// Parameters__<name> environment variable, then the AppHost user secret Parameters:<name> (read by
+// wrapping `dotnet user-secrets list`), then appsettings.Production.json (DeployEnvironment — the
+// template ships none) and appsettings.json beside the AppHost project, read as plain JSON (the
+// Parameters section, keys matched case-insensitively), so the plan's "from …" label names the
+// source Aspire will use. It refuses with one report listing each parameter still missing and the
+// exact command to set it, and forwards the resolved values as `--Parameters:<name>=<value>` after
+// `--`, so Aspire never reaches a parameter prompt it cannot show. The required lists are the
+// AppHost's value-less parameters per target; a parameter with a default in code is not listed.
+// Kubernetes preflight also requires the context's API
 // to answer, and for a kind context (kind-<cluster>) that the kind cluster exists and the registry at
 // registry-endpoint answers its /v2/ API (an HTTP probe, so still no container CLI). The environment
 // variable is matched case-insensitively, like .NET configuration matches keys. When `dotnet user-secrets
@@ -59,7 +66,7 @@
 // Forwarded parameters must be non-secret: the plan prints each value and it is visible in the aspire
 // process's argv. A secret deploy value (a password, a client secret) stays in the AppHost user secrets
 // or a Parameters__<name> environment variable, where Aspire reads it itself; never add one to
-// RequiredParameters.
+// RequiredParameters, and never commit one to appsettings.json.
 //
 // `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
 // `aspire destroy` sees the deployment's configuration if its pipeline resolves parameters; it never
@@ -68,6 +75,8 @@
 #endregion
 
 namespace DevCli.Services;
+
+using System.Text.Json;
 
 /// <summary>One deploy target: the AppHost's Publish:Target value.</summary>
 internal sealed record DeployTarget(string Name);
@@ -78,8 +87,11 @@ internal sealed record AzureAccount(string Id, string Name);
 /// <summary>The subscription an aca deploy targets, the line that says why, and whether the verb must pass it to Aspire.</summary>
 internal sealed record AzureSubscriptionChoice(string SubscriptionId, string Detail, bool PassToAspire);
 
-/// <summary>A deploy parameter value and where it came from (environment variable or AppHost user secret).</summary>
+/// <summary>A deploy parameter value and where it came from (environment variable, AppHost user secret or appsettings file).</summary>
 internal sealed record ResolvedDeployParameter(string Name, string Value, string Source);
+
+/// <summary>An AppHost appsettings file (<see cref="FileName"/> beside the project) and its JSON text.</summary>
+internal sealed record AppSettingsFile(string FileName, string Json);
 
 /// <summary>The target's required parameters: those with a value, and the names nobody set.</summary>
 internal sealed record DeployParameterResolution(IReadOnlyList<ResolvedDeployParameter> Resolved, IReadOnlyList<string> Missing);
@@ -116,6 +128,8 @@ internal static class AspireDeploy
   internal const string KindContextPrefix = "kind-";
   internal const string ReachabilityTimeout = "5s";
   internal const string UserSecretSource = "AppHost user secret";
+  internal const string AppSettingsFileName = "appsettings.json";
+  internal const string ParametersSection = "Parameters";
 
   /// <summary>Upper bound for each read-only preflight probe (kubectl, kind, helm, az, dotnet user-secrets).</summary>
   internal static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(20);
@@ -176,11 +190,70 @@ internal static class AspireDeploy
       : variables.FirstOrDefault(pair => string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase)).Value;
 
   /// <summary>
-  /// Resolves the target's required parameters: the <c>Parameters__&lt;name&gt;</c> environment variable, else the AppHost
-  /// user secret <c>Parameters:&lt;name&gt;</c> (from <c>dotnet user-secrets list</c> output). Blank values count as missing.
+  /// The AppHost appsettings files Aspire reads for a deploy, highest precedence first:
+  /// <c>appsettings.&lt;DeployEnvironment&gt;.json</c>, then <c>appsettings.json</c>.
+  /// </summary>
+  internal static string[] AppSettingsFileNames() => [$"appsettings.{DeployEnvironment}.json", AppSettingsFileName];
+
+  /// <summary>Source label of a value read from an AppHost appsettings file.</summary>
+  internal static string AppSettingsSource(string fileName) => $"AppHost {fileName}";
+
+  /// <summary>
+  /// The value of <c>Parameters:&lt;name&gt;</c> in appsettings JSON (section and key matched case-insensitively, like .NET
+  /// configuration), or null when the JSON is unparseable, the key is absent or its value is blank.
+  /// </summary>
+  internal static string? ParseAppSettingsParameter(string json, string name)
+  {
+    try
+    {
+      using var document = JsonDocument.Parse(json, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+      if (document.RootElement.ValueKind != JsonValueKind.Object
+        || FindProperty(document.RootElement, ParametersSection) is not { ValueKind: JsonValueKind.Object } section
+        || FindProperty(section, name) is not { } value)
+      {
+        return null;
+      }
+
+      string? text = value.ValueKind switch
+      {
+        JsonValueKind.String => value.GetString(),
+        JsonValueKind.Number or JsonValueKind.True or JsonValueKind.False => value.GetRawText(),
+        _ => null,
+      };
+      return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
+  }
+
+  private static JsonElement? FindProperty(JsonElement element, string name)
+  {
+    JsonElement? found = null;
+    foreach (JsonProperty property in element.EnumerateObject())
+    {
+      // Last one wins, like the JSON configuration provider.
+      if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+      {
+        found = property.Value;
+      }
+    }
+
+    return found;
+  }
+
+  /// <summary>
+  /// Resolves the target's required parameters in Aspire's configuration order: the <c>Parameters__&lt;name&gt;</c> environment
+  /// variable, else the AppHost user secret <c>Parameters:&lt;name&gt;</c> (from <c>dotnet user-secrets list</c> output), else
+  /// the first of <paramref name="appSettings"/> (highest precedence first) that sets it. Blank values count as missing.
   /// </summary>
   internal static DeployParameterResolution ResolveParameters(
-    DeployTarget target, Func<string, string?> environment, bool userSecretsProbeSucceeded, string userSecretsOutput)
+    DeployTarget target,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
+    IReadOnlyList<AppSettingsFile>? appSettings = null)
   {
     List<ResolvedDeployParameter> resolved = [];
     List<string> missing = [];
@@ -196,6 +269,12 @@ internal static class AspireDeploy
       {
         resolved.Add(new ResolvedDeployParameter(name, fromSecret, UserSecretSource));
       }
+      else if ((appSettings ?? [])
+        .Select(file => (file.FileName, Value: ParseAppSettingsParameter(file.Json, name)))
+        .FirstOrDefault(candidate => candidate.Value is not null) is { Value: { } fromAppSettings } candidate)
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromAppSettings, AppSettingsSource(candidate.FileName)));
+      }
       else
       {
         missing.Add(name);
@@ -208,7 +287,8 @@ internal static class AspireDeploy
   /// <summary>The refusal for unset deploy parameters: each one with the pwsh command that sets it.</summary>
   internal static string[] BuildMissingParameterLines(string appHostProject, DeployTarget target, IReadOnlyList<string> missing) =>
   [
-    $"Missing deploy parameter{(missing.Count == 1 ? "" : "s")} for {target.Name}: {string.Join(", ", missing)}. Set each once in the AppHost user secrets (per machine, never committed):",
+    $"Missing deploy parameter{(missing.Count == 1 ? "" : "s")} for {target.Name}: {string.Join(", ", missing)}. "
+      + $"Commit each in the {ParametersSection} section of the AppHost {AppSettingsFileName} when every machine shares it, or set it per machine in the AppHost user secrets:",
     .. missing.Select(name => $"  dotnet user-secrets set '{ParameterConfigurationKey(name)}' '<value>' --project '{appHostProject}'"),
     "or for the current pwsh session only:",
     .. missing.Select(name => $"  ${{env:{ParameterEnvironmentVariable(name)}}} = '<value>'"),
