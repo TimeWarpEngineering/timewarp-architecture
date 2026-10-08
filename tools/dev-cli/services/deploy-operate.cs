@@ -35,9 +35,12 @@
 // ACA: the bundle runs with --connection through a temporary `operator-migrate` firewall rule for the
 // operator's IP; RunAcaBundleAsync creates the rule inside try and deletes it in finally, so it is
 // deleted on a failed create, a failed bundle and an exception alike, and a failed delete is reported
-// with the exact command to run by hand. The connection string is the Key Vault secret Aspire
+// with the exact command to run by hand — from inside the finally, so even when an exception (Ctrl+C)
+// propagates. The connection string is the Key Vault secret Aspire
 // provisioned (connectionstrings--postgres-db in the postgres-kv vault); it is passed to the bundle
-// only and never printed (RedactConnection). The operator's IP is --client-ip, else what
+// only and never printed (RedactConnection). It is an argument because --connection is the bundle's
+// documented interface; it is visible in the operator's own process list for the bundle's lifetime,
+// accepted for an operator-run verb on the operator's machine. The operator's IP is --client-ip, else what
 // https://api.ipify.org reports.
 #endregion
 
@@ -313,6 +316,16 @@ internal static class DeployOperate
       : $"Running (`{runtime} compose ls`): {string.Join(", ", projects.Select(project => project.Name))}.";
 
   /// <summary><c>&lt;runtime&gt; compose … exec -T postgres</c> psql for <paramref name="project"/>, stdin attached for the script.</summary>
+  /// <summary>The migrate command as an operator would type it in pwsh: the script piped on stdin (<c>Get-Content -Raw</c>).</summary>
+  internal static string BuildPipedCommandDisplay(string script, string executable, IReadOnlyList<string> arguments) =>
+    $"Get-Content -Raw {PwshQuote(script)} | {executable} {string.Join(' ', arguments.Select(PwshQuote))}";
+
+  /// <summary>pwsh single-quoted literal (embedded ' doubled) when the argument needs quoting; as-is otherwise.</summary>
+  internal static string PwshQuote(string argument) =>
+    argument.Length > 0 && argument.All(c => char.IsLetterOrDigit(c) || c is '-' or '_' or '.' or '/' or ':' or '=')
+      ? argument
+      : $"'{argument.Replace("'", "''", StringComparison.Ordinal)}'";
+
   internal static string[] BuildComposeMigrateArguments(ComposeProject project) =>
   [
     "compose", "--project-name", project.Name,
@@ -395,7 +408,7 @@ internal static class DeployOperate
       ? $"No Key Vault tagged aspire-resource-name={AspireDeploy.PostgresKeyVaultTag} in resource group {resourceGroup}. "
       : $"Cannot read the Key Vault secret {ConnectionStringSecret} in {vault}. ")
     + "The vault uses RBAC and the deployment grants you no role; grant yourself Key Vault Secrets User once (pwsh), then re-run:\n"
-    + $"  $vault = az keyvault list --resource-group {resourceGroup} --query \"[?tags.\\\"aspire-resource-name\\\"=='{AspireDeploy.PostgresKeyVaultTag}'].name\" --output tsv\n"
+    + $"  $vault = az keyvault list --resource-group {resourceGroup} --query \"[?tags.`\"aspire-resource-name`\"=='{AspireDeploy.PostgresKeyVaultTag}'].name\" --output tsv\n"
     + "  az role assignment create --assignee (az ad signed-in-user show --query id --output tsv) --role 'Key Vault Secrets User' "
     + "--scope (az keyvault show --name $vault --query id --output tsv)";
 
@@ -417,11 +430,12 @@ internal static class DeployOperate
   /// <summary>
   /// Creates the <c>operator-migrate</c> firewall rule, runs the bundle, and ALWAYS deletes the rule (finally) — on a failed
   /// create, a failed bundle and an exception alike. The exit code is the first failure's (create, then bundle), else the
-  /// delete's; <paramref name="run"/> executes one step and returns its exit code.
+  /// delete's; <paramref name="run"/> executes one step and returns its exit code. A failed delete is passed to
+  /// <paramref name="reportCleanupFailure"/> inside the finally, so it is reported even when an exception propagates.
   /// </summary>
   internal static async Task<AcaMigrationResult> RunAcaBundleAsync(
     ProcessStep createRule, ProcessStep bundle, ProcessStep deleteRule,
-    Func<ProcessStep, CancellationToken, Task<int>> run, CancellationToken cancellationToken)
+    Func<ProcessStep, CancellationToken, Task<int>> run, Action<string> reportCleanupFailure, CancellationToken cancellationToken)
   {
     int exitCode = 0;
     int cleanupExitCode = 0;
@@ -450,6 +464,8 @@ internal static class DeployOperate
       if (cleanupExitCode != 0)
       {
         cleanupFailure ??= $"exit {cleanupExitCode}";
+        // Reported here, not from the result: an exception from create/bundle skips the return.
+        reportCleanupFailure(cleanupFailure);
       }
     }
 
@@ -493,4 +509,7 @@ internal static class DeployOperate
     || (kernelVersion?.Contains("microsoft", StringComparison.OrdinalIgnoreCase) ?? false);
 
   internal static string NoBrowserMessage(string url) => $"No browser opener found (or --no-browser); open {url}";
+
+  internal static string ForwardNotReadyMessage(string url, int seconds) =>
+    $"The port-forward is not listening after {seconds}s; the browser was not opened. Open {url} once it is (Ctrl+C stops the forward).";
 }

@@ -29,19 +29,21 @@
 // runs with TTY passthrough (it inherits the terminal), so any prompt Aspire still shows — e.g. an
 // optional parameter, or aca's location and resource group — works interactively; a piped stdin
 // would make Aspire fail "non-interactive mode" instead of asking.
-// The follow-up steps are their own verbs (task 287): `dev deploy migrate` (DeployGroup subcommand —
-// this route stays `deploy`) and `dev open`; the success line names both.
+// The follow-up steps are their own verbs (task 287): `dev deploy migrate` and `dev open`; the success
+// line names both. This command is the DeployGroup's empty route, so `dev deploy` runs it and
+// `dev deploy --help` lists it beside `migrate` (a separate `deploy` route would be shadowed by the
+// group's help table).
 // Pure targets/arguments/parsing/text live in services/aspire-deploy.cs (dev-cli-tests).
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("deploy", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
+[NuruRoute("", Description = "Deploy the AppHost with `aspire deploy` to one publish target (operator-run, never CI). Asks for confirmation unless --yes")]
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
 [NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* from the AppHost appsettings.json, user secrets or env)")]
 [NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
-internal sealed class DeployCommand : ICommand<Unit>
+internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 {
   [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }

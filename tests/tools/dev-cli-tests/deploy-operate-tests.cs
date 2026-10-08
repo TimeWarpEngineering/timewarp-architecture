@@ -313,6 +313,23 @@ public class ContainerApps_Given_
     role.ShouldContain("Cannot read the Key Vault secret connectionstrings--postgres-db in kv1");
     role.ShouldContain("az role assignment create --assignee (az ad signed-in-user show --query id --output tsv) --role 'Key Vault Secrets User'");
     DeployOperate.ConnectionStringUnreadableMessage("rg", null).ShouldContain("No Key Vault tagged aspire-resource-name=postgres-kv");
+    // pwsh: `" escapes a double quote inside a double-quoted string; \" would end it.
+    role.ShouldContain("--query \"[?tags.`\"aspire-resource-name`\"=='postgres-kv'].name\"");
+    role.ShouldNotContain("\\\"");
+    return Task.CompletedTask;
+  }
+
+  public static Task PrintedMigrateCommand_Should_BePwsh()
+  {
+    string display = DeployOperate.BuildPipedCommandDisplay(
+      "/repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql",
+      "kubectl",
+      DeployOperate.BuildKubectlMigrateArguments("kind-x", "ns"));
+    display.ShouldStartWith("Get-Content -Raw /repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql | kubectl --context kind-x exec -i");
+    display.ShouldEndWith("-- sh -c 'PGPASSWORD=\"$POSTGRES_PASSWORD\" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1'");
+    display.ShouldNotContain(" < ");
+    DeployOperate.PwshQuote("it's here").ShouldBe("'it''s here'");
+    DeployOperate.PwshQuote("--file").ShouldBe("--file");
     return Task.CompletedTask;
   }
 }
@@ -325,6 +342,7 @@ public class FirewallCleanup_Given_
   private static readonly ProcessStep Create = new("az", ["create"]);
   private static readonly ProcessStep Bundle = new("bundle", ["--connection", "x"], Terminal: true);
   private static readonly ProcessStep Delete = new("az", ["delete"]);
+  private static readonly Action<string> NoReport = _ => { };
 
   private static Func<ProcessStep, CancellationToken, Task<int>> Runner(List<string> log, Func<ProcessStep, int> exitCode) =>
     (step, _) =>
@@ -336,7 +354,7 @@ public class FirewallCleanup_Given_
   public static async Task Success_Should_CreateRunAndDelete()
   {
     List<string> log = [];
-    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Runner(log, _ => 0), CancellationToken.None);
+    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, Runner(log, _ => 0), NoReport, CancellationToken.None);
     log.ShouldBe(["create", "--connection", "delete"]);
     result.ShouldBe(new AcaMigrationResult(0, 0, null));
   }
@@ -345,7 +363,7 @@ public class FirewallCleanup_Given_
   {
     List<string> log = [];
     AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
-      Create, Bundle, Delete, Runner(log, step => step == Bundle ? 3 : 0), CancellationToken.None);
+      Create, Bundle, Delete, Runner(log, step => step == Bundle ? 3 : 0), NoReport, CancellationToken.None);
     log.ShouldBe(["create", "--connection", "delete"]);
     result.ExitCode.ShouldBe(3);
     result.CleanupFailure.ShouldBeNull();
@@ -355,7 +373,7 @@ public class FirewallCleanup_Given_
   {
     List<string> log = [];
     AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
-      Create, Bundle, Delete, Runner(log, step => step == Create ? 2 : 0), CancellationToken.None);
+      Create, Bundle, Delete, Runner(log, step => step == Create ? 2 : 0), NoReport, CancellationToken.None);
     log.ShouldBe(["create", "delete"]);
     result.ExitCode.ShouldBe(2);
   }
@@ -369,7 +387,7 @@ public class FirewallCleanup_Given_
       return step == Bundle ? throw new OperationCanceledException("Ctrl+C") : Task.FromResult(0);
     };
 
-    await Should.ThrowAsync<OperationCanceledException>(() => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, CancellationToken.None));
+    await Should.ThrowAsync<OperationCanceledException>(() => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, CancellationToken.None));
     log.ShouldBe(["create", "--connection", "delete"]);
   }
 
@@ -388,7 +406,7 @@ public class FirewallCleanup_Given_
       return Task.FromResult(step == Bundle ? 130 : 0);
     };
 
-    await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, cancelled.Token);
+    await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, cancelled.Token);
     deleteToken.IsCancellationRequested.ShouldBeFalse();
   }
 
@@ -396,7 +414,7 @@ public class FirewallCleanup_Given_
   {
     List<string> log = [];
     AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
-      Create, Bundle, Delete, Runner(log, step => step == Delete ? 1 : 0), CancellationToken.None);
+      Create, Bundle, Delete, Runner(log, step => step == Delete ? 1 : 0), NoReport, CancellationToken.None);
     result.ExitCode.ShouldBe(1);
     result.CleanupExitCode.ShouldBe(1);
     result.CleanupFailure.ShouldBe("exit 1");
@@ -406,11 +424,22 @@ public class FirewallCleanup_Given_
     message.ShouldContain("az postgres flexible-server firewall-rule delete --resource-group rg --name pg1 --subscription sub --rule-name operator-migrate --yes");
   }
 
+  public static async Task ThrowingBundleAndFailedDelete_Should_StillReportTheCleanupFailure()
+  {
+    List<string> reported = [];
+    Func<ProcessStep, CancellationToken, Task<int>> run = (step, _) =>
+      step == Bundle ? throw new OperationCanceledException("Ctrl+C") : Task.FromResult(step == Delete ? 1 : 0);
+
+    await Should.ThrowAsync<OperationCanceledException>(
+      () => DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, reported.Add, CancellationToken.None));
+    reported.ShouldBe(["exit 1"]);
+  }
+
   public static async Task ThrowingDelete_Should_BeReportedNotSwallowed()
   {
     Func<ProcessStep, CancellationToken, Task<int>> run = (step, _) =>
       step == Delete ? throw new InvalidOperationException("az vanished") : Task.FromResult(0);
-    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, CancellationToken.None);
+    AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(Create, Bundle, Delete, run, NoReport, CancellationToken.None);
     result.ExitCode.ShouldBe(1);
     result.CleanupFailure.ShouldBe("az vanished");
   }

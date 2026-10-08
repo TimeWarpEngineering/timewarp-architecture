@@ -11,7 +11,7 @@
 //     Service (default the kind recipe's ingress-nginx / ingress-nginx-controller; --controller-namespace /
 //     --controller-service override). An external LoadBalancer address is opened directly; otherwise
 //     `kubectl port-forward` runs in the foreground with a real TTY (TtyPassthroughAsync — it streams),
-//     the browser opens once localhost:<port> accepts connections, and Ctrl+C stops the forward. The port
+//     the browser opens once localhost:<port> accepts connections (within 30s, else the URL is printed), and Ctrl+C stops the forward. The port
 //     (default 8080) is checked free first so the refusal can suggest --port instead of kubectl's error.
 //   - compose: http://localhost:<port> — --port, else INGRESS_PORT in the published .env, else the
 //     ingress-port parameter resolved like dev deploy's parameters, else the AppHost's default. No
@@ -56,6 +56,7 @@ internal sealed class OpenCommand : ICommand<Unit>
 
   internal sealed class Handler : ICommandHandler<OpenCommand, Unit>
   {
+    private const int ListenerTimeoutSeconds = 30;
     private readonly ITerminal Terminal;
 
     public Handler(ITerminal terminal)
@@ -139,6 +140,10 @@ internal sealed class OpenCommand : ICommand<Unit>
       if (await WaitForListenerAsync(port.Value, forward, ct))
       {
         await OpenBrowserAsync(plan.Url, command.NoBrowser, ct);
+      }
+      else if (!forward.IsCompleted && !ct.IsCancellationRequested)
+      {
+        Terminal.WriteLine(DeployOperate.ForwardNotReadyMessage(plan.Url, ListenerTimeoutSeconds).Yellow());
       }
 
       CommandOutput result;
@@ -255,7 +260,7 @@ internal sealed class OpenCommand : ICommand<Unit>
     /// <summary>True once localhost:<paramref name="port"/> accepts a connection; false if the forward ended first or never listened.</summary>
     private static async Task<bool> WaitForListenerAsync(int port, Task forward, CancellationToken ct)
     {
-      DateTime deadline = DateTime.UtcNow.AddSeconds(30);
+      DateTime deadline = DateTime.UtcNow.AddSeconds(ListenerTimeoutSeconds);
       while (DateTime.UtcNow < deadline && !forward.IsCompleted && !ct.IsCancellationRequested)
       {
         try

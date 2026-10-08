@@ -23,11 +23,12 @@
 //      Azure:ResourceGroup), the one Flexible Server in it, the connection string from the postgres-kv
 //      Key Vault secret (never printed; a missing role is refused with the pwsh grant), and the
 //      operator's IPv4 (--client-ip, else api.ipify.org).
-//   4. The plan is printed and confirmed unless --yes; with stdin redirected and no --yes it refuses.
+//   4. The plan (the command in pwsh form, the script piped with Get-Content -Raw) is printed and confirmed unless --yes; with stdin redirected and no --yes it refuses.
 //   5. compose / kubernetes pipe the script into psql inside the postgres container (PGPASSWORD from the
 //      container's environment) — stdin is the script, so plain passthrough, not a TTY. aca runs
 //      DeployOperate.RunAcaBundleAsync: create the operator-migrate firewall rule, run the bundle with
-//      --connection on a real TTY, and delete the rule in finally; a failed delete prints the command.
+//      --connection on a real TTY, and delete the rule in finally; a failed delete prints the command, from the finally, so even
+//      when Ctrl+C propagates.
 //   6. One summary line: what ran against which target; the exit code is the tool's.
 // The script and the bundle are idempotent (only pending migrations apply), so re-running is safe.
 #endregion
@@ -129,7 +130,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal.WriteLine($"{Verb} → {preflight.Target.Name}");
       Terminal.WriteLine($"  {preflight.Detail}");
       Terminal.WriteLine($"  Script:  {artifact}");
-      Terminal.WriteLine($"  Runs:    {executable} {string.Join(' ', arguments.Select(Quote))} < {Path.GetFileName(artifact)}");
+      Terminal.WriteLine($"  Runs:    {DeployOperate.BuildPipedCommandDisplay(artifact, executable, arguments)}");
       if (!Confirmed(command.Yes)) return Unit.Value;
 
       CommandOutput result = await Shell.Builder(executable)
@@ -206,18 +207,17 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal.WriteLine($"  Firewall rule {DeployOperate.FirewallRuleName} for {clientIp} is created for the run and always deleted afterwards.");
       if (!Confirmed(command.Yes)) return;
 
-      AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(create, run, delete, RunStepAsync, ct);
-      if (result.CleanupFailure is not null)
-      {
-        Terminal.WriteErrorLine(DeployOperate.FirewallCleanupFailedMessage(group, server, subscription, result.CleanupFailure).Red());
-      }
+      AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
+        create, run, delete, RunStepAsync,
+        reason => Terminal.WriteErrorLine(DeployOperate.FirewallCleanupFailedMessage(group, server, subscription, reason).Red()),
+        ct);
 
       Summarize(AspireDeploy.ContainerApps, "the web-migrations bundle", $"server {server} in {group}", result.ExitCode);
     }
 
     private async Task<int> RunStepAsync(ProcessStep step, CancellationToken ct)
     {
-      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployOperate.RedactConnection(step.Arguments).Select(Quote))}");
+      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployOperate.RedactConnection(step.Arguments).Select(DeployOperate.PwshQuote))}");
       ShellBuilder builder = Shell.Builder(step.Executable)
         .WithArguments([.. step.Arguments])
         .WithNoValidation();
@@ -270,8 +270,6 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal.WriteErrorLine($"\n{line}".Red());
       Environment.ExitCode = exitCode;
     }
-
-    private static string Quote(string argument) => argument.Contains(' ', StringComparison.Ordinal) ? $"'{argument}'" : argument;
 
     private void Fail(string message)
     {
