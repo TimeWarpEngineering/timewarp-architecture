@@ -74,18 +74,18 @@
     <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
-    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.6.0" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.6.1" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
     <!-- Task 070-003: Docker Compose publish environment (AddDockerComposeEnvironment). Publish-only. -->
-    <PackageVersion Include="Aspire.Hosting.Docker" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Docker" Version="13.6.1" />
     <!-- Task 070-007: Azure Container Apps publish environment (AddAzureContainerAppEnvironment → Bicep) and
          Azure Database for PostgreSQL Flexible Server. Publish-only (Publish:Target=aca); run mode never declares them. -->
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.0" />
-    <PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="13.6.0" />
-    <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only. Same train as stable 13.6.0 hosting pins (no stable 13.6 release). -->
-    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.0-preview.1.26479.8" />
-    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.6.0 hosting pins. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.0-preview.1.26479.8" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.1" />
+    <PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="13.6.1" />
+    <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only. Same train as stable 13.6.1 hosting pins (no stable 13.6 release). -->
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.1-preview.1.26506.6" />
+    <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same train as stable 13.6.1 hosting pins. -->
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="13.6.1-preview.1.26506.6" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
@@ -187,7 +187,7 @@
        Sourced from TimeWarp.Architecture/Directory.Packages.props; family-versioned
        packages (ASP.NET Core, Aspire) aligned with the pins above. -->
   <ItemGroup Label="Test Packages">
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.6.1" />
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />

@@ -159,7 +159,7 @@ jobs:
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
         if: github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.mode != 'probe')
-        run: dotnet tool install --global Aspire.Cli --version 13.6.0
+        run: dotnet tool install --global Aspire.Cli --version 13.6.1
 
       - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
