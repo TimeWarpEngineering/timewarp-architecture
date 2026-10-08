@@ -41,10 +41,10 @@ Versions available on nuget.org:
 
 ## Checklist
 
-- [ ] CPM Aspire pins + AppHost SDK + CI `Aspire.Cli` → 13.6.1 (previews to their 13.6.1 builds)
-- [ ] Release notes read; any workaround simplification recorded
-- [ ] Design-region version wording reconciled
-- [ ] Gates: `dev clean` then `dev build` 0/0 (stale wasm/webcil after package bumps), `dev test`,
+- [x] CPM Aspire pins + AppHost SDK + CI `Aspire.Cli` → 13.6.1 (previews to their 13.6.1 builds)
+- [x] Release notes read; any workaround simplification recorded
+- [x] Design-region version wording reconciled
+- [x] Gates: `dev clean` then `dev build` 0/0 (stale wasm/webcil after package bumps), `dev test`,
       `dev publish compose`, `dev publish kubernetes`, `dev publish aca`, `dev template-smoke`,
       `ganda repo audit`
 
@@ -60,3 +60,51 @@ Versions available on nuget.org:
 ## Session
 
 - Created: 2026-10-08 (cockpit, per Steve)
+- 2026-10-08 implementer (ganda task work): pins bumped, release notes read, gates green.
+
+## Results
+
+**Pins (all checked against the nuget.org flat container on 2026-10-08; every package has a 13.6.1 build):**
+
+- `Directory.Packages.props`: `Aspire.Hosting.Yarp`, `.PostgreSQL`, `.Docker`, `.Azure.AppContainers`,
+  `.Azure.PostgreSQL`, `.Testing` → `13.6.1`; `Aspire.Hosting.Kubernetes` and
+  `Aspire.Hosting.EntityFrameworkCore` → `13.6.1-preview.1.26506.6` (the same preview build for both).
+  The two preview comments now say "Same train as stable 13.6.1".
+- `aspire-app-host.csproj`: `Sdk="Aspire.AppHost.Sdk/13.6.1"`. This brings `Aspire.Hosting.AppHost`
+  13.6.1 transitively (checked in `project.assets.json`). The "Aspire AppHost" group in CPM has
+  no Aspire pin; it only holds MessagePack.
+- `.github/workflows/workflow.yml`: `Aspire.Cli --version 13.6.1`.
+
+**Left unchanged:** the dev-cli minimum-version floors are not pins. The `aspire-run-tests` and
+`db-nuke-tests` fixtures that parse the string `13.6.0+…` still pass (118/118). The `program.cs`
+Design region ("Re-tested 2026-10-02 on Aspire 13.6.0 …") and the `run-command.cs` note record
+what was verified on which version, so they keep 13.6.0.
+
+**Release notes (microsoft/aspire v13.6.1):** the fixes are dashboard metric-retention CPU, Metrics
+tree scrolling, dashboard navigation after a disconnect, DCP ContainerExec watch retry, and
+Windows session-container cleanup. None of them touches ASPIRE010 / `AspireUseCliBundle`, the
+ACA https-upgrade redirect, the Kubernetes or EF previews, the compose dashboard, or the
+web-migrations wait-edge issue. **No workaround simplified.**
+
+**Gates (worktree, 2026-10-08):** `dev clean` ✓; `dev build` 0 warnings / 0 errors; `dev test`
+passed every suite, 0 failures (aspire-tests 38/38, web-server-integration 295/295,
+web-jaribu 227/227, …); `dev publish compose` / `kubernetes` / `aca` all production-safe
+(helm lint 0 failed); `dev template-smoke` SUCCEEDED; `ganda repo audit` clean. The publishes ran
+with Aspire CLI 13.6.1 (`~/.dotnet/tools/aspire`). No release-version bump, so
+`dev check-version` was not needed.
+
+### How to validate
+
+**Smoke:**
+```bash
+grep -n 'Aspire\.' Directory.Packages.props | grep Version
+grep -n 'Aspire.AppHost.Sdk' source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj
+grep -n 'Aspire.Cli --version' .github/workflows/workflow.yml
+dev clean && dev build && dev test
+dev publish compose && dev publish kubernetes && dev publish aca
+```
+
+**Expect:** every `Aspire.*` pin is `13.6.1` (Kubernetes and EntityFrameworkCore are
+`13.6.1-preview.1.26506.6`); the SDK and CI pins are `13.6.1`; the build has 0 warnings and
+0 errors; every test suite passes; each publish prints "production-safe". After pulling, clear
+the browser's site data if the SPA throws TypeLoad or TypeInitialization errors.
