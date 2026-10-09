@@ -33,6 +33,7 @@ public static class RolePermissionSeed
     PermissionIds.SettingsRead,
     PermissionIds.CredentialManageSelf,
     PermissionIds.AgentLinkManageSelf,
+    PermissionIds.FeedbackFileSelf,
   ];
 
   /// <summary>All admin.* permissions (Administrator seed; protected-core target in 182-004).</summary>

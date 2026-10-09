@@ -147,6 +147,7 @@ public static class Program
     // Ask mode is the presence of IChatClient. The template registers none, so a generated app
     // stays usable with no model and no secret. A host opts in with services.Add…<IChatClient>().
     // WebMCP uses the same catalog tools and does not need a model.
+    serviceCollection.AddScoped<AgentCallOutcome>();
     serviceCollection.AddScoped<WebMcpApprovalGate>();
     serviceCollection.AddScoped<WebMcpDispatcher>();
     serviceCollection.AddScoped<JsWebMcpModelContext>();

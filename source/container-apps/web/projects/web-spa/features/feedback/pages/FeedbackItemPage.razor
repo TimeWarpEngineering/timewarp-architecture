@@ -1,0 +1,42 @@
+@namespace TimeWarp.Architecture.Features.Feedback
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Feedback";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Comment();
+
+  private Guid RequestedId;
+
+  protected override async Task OnParametersSetAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    if (FeedbackItemId == Guid.Empty || FeedbackItemId == RequestedId)
+    {
+      return;
+    }
+
+    RequestedId = FeedbackItemId;
+    await FeedbackState.OpenFeedback(FeedbackItemId);
+  }
+}
+
+<TimeWarpPage Title="Feedback">
+  <Section Title="Feedback" LoadingActionType="typeof(FeedbackState.OpenFeedbackActionSet.Action)">
+    @if (FeedbackState.LoadError is not null)
+    {
+      <p data-qa="FeedbackLoadError">@FeedbackState.LoadError</p>
+    }
+    else if (FeedbackState.Current is { } item)
+    {
+      <p data-qa="FeedbackReceiptId">@item.FeedbackItemId</p>
+      <p>@item.Kind</p>
+      <h2>@item.Title</h2>
+      <p>@item.Body</p>
+      <FluentLink Href="@item.Permalink" data-qa="FeedbackPermalink">@item.Permalink</FluentLink>
+    }
+  </Section>
+</TimeWarpPage>

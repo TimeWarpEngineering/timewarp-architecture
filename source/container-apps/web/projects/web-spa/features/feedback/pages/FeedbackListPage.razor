@@ -1,0 +1,111 @@
+@namespace TimeWarp.Architecture.Features.Feedback
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Feedback";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Comment();
+
+  private static readonly FeedbackKind[] KindChoices = Enum.GetValues<FeedbackKind>();
+
+  private readonly SubmitFeedback.Command Draft = new() { Kind = FeedbackKind.Complaint };
+
+  private bool IsBusy => ActionTrackingState.IsActive;
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await FeedbackState.ListMyFeedback();
+  }
+
+  private async Task SubmitAsync()
+  {
+    Guid? before = FeedbackState.LastReceipt?.FeedbackItemId;
+    await FeedbackState.SubmitFeedback(Draft.Kind, Draft.Title, Draft.Body, Draft.EmailCopy);
+    if (FeedbackState.LastReceipt is { } receipt && receipt.FeedbackItemId != before)
+    {
+      Draft.Title = null!;
+      Draft.Body = null!;
+      Draft.EmailCopy = false;
+      await FeedbackState.ListMyFeedback();
+    }
+  }
+
+  private static string KindLabel(FeedbackKind kind) => kind switch
+  {
+    FeedbackKind.BugReport => "Bug report",
+    FeedbackKind.FeatureRequest => "Feature request",
+    FeedbackKind.Complaint => "Complaint",
+    FeedbackKind.Other => "Other",
+    _ => kind.ToString(),
+  };
+}
+
+<TimeWarpPage Title="Feedback">
+  <div class="twe-stack">
+    <Section Title="File feedback" LoadingActionType="typeof(FeedbackState.SubmitFeedbackActionSet.Action)">
+      <EditForm Model="Draft" OnValidSubmit="SubmitAsync" FormName="FeedbackForm" novalidate>
+        <FluentValidator Validator="@(new SubmitFeedback.Validator())" />
+        <FormSection Title="Feedback" Description="File a bug report, feature request, complaint, or other note. You get an id and a link as soon as it lands.">
+          <FormGrid>
+            <FormField Label="Kind">
+              <FluentSelect TOption="FeedbackKind" TValue="FeedbackKind"
+                Items="KindChoices"
+                OptionText="@(static kind => KindLabel(kind))"
+                @bind-Value="Draft.Kind"
+                Name="Kind"
+                AriaLabel="Kind"
+                Width="100%"
+                data-qa="FeedbackKind" />
+              <ValidationMessage For="@(() => Draft.Kind)" />
+            </FormField>
+            <FormField Label="Title">
+              <FluentTextInput @bind-Value="Draft.Title" Name="Title" AriaLabel="Title" data-qa="FeedbackTitle" Width="100%" />
+              <ValidationMessage For="@(() => Draft.Title)" />
+            </FormField>
+            <FormField Label="Details">
+              <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Height="9rem" />
+              <ValidationMessage For="@(() => Draft.Body)" />
+            </FormField>
+            @if (FeedbackState.EmailCopyAvailable)
+            {
+              <FormField Label="Email me a copy">
+                <FluentCheckbox @bind-Value="Draft.EmailCopy" AriaLabel="Email me a copy" data-qa="FeedbackEmailCopy" />
+              </FormField>
+            }
+          </FormGrid>
+        </FormSection>
+        <FormActions>
+          <FluentButton Type="ButtonType.Submit" Appearance="ButtonAppearance.Primary" Disabled="@IsBusy" data-qa="FeedbackSubmit">File feedback</FluentButton>
+        </FormActions>
+      </EditForm>
+      @if (FeedbackState.LastReceipt is { } receipt)
+      {
+        <p data-qa="FeedbackReceiptId">Filed as @receipt.FeedbackItemId</p>
+        <FluentLink Href="@receipt.Permalink" data-qa="FeedbackPermalink">@receipt.Permalink</FluentLink>
+      }
+    </Section>
+
+    <Section Title="Your filings" LoadingActionType="typeof(FeedbackState.ListMyFeedbackActionSet.Action)">
+      @if (FeedbackState.Items.Count == 0)
+      {
+        <p>No feedback filed yet.</p>
+      }
+      else
+      {
+        <ul class="twe-stack">
+          @foreach (ListMyFeedback.Item item in FeedbackState.Items)
+          {
+            <li>
+              <FluentLink Href="@item.Permalink" data-qa="FeedbackList">@item.Title</FluentLink>
+              <span>@item.Kind</span>
+            </li>
+          }
+        </ul>
+      }
+    </Section>
+  </div>
+</TimeWarpPage>

@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Features.Settings;
 using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Identity;
@@ -469,6 +470,85 @@ public class CatalogAgent_Should
     result.ShouldContain(WebMcpDispatcher.PageChangedError);
     result.ShouldNotContain("\"approved\":false");
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
+  }
+
+  public static async Task Feedback_Tools_Are_Page_Scoped_Read_Only_Except_Submit_And_Carry_The_Receipt()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal everyone = Principal([.. PermissionIds.All]);
+
+    IReadOnlyList<WebMcpToolDescriptor> feedback = await WebMcpPublisher.DescribeAsync
+    (
+      everyone, authorization, catalog, "/Feedback", CancellationToken.None
+    );
+    Names(feedback).ShouldBe
+    (
+      [
+        "Feedback.SubmitFeedback",
+        "Feedback.ListMyFeedback",
+        "Feedback.OpenFeedback",
+        PageAgentContext.ToolName,
+      ]
+    );
+
+    Guid itemId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    IReadOnlyList<WebMcpToolDescriptor> detail = await WebMcpPublisher.DescribeAsync
+    (
+      everyone, authorization, catalog, $"/Feedback/{itemId:D}", CancellationToken.None
+    );
+    Names(detail).ShouldBe(Names(feedback));
+
+    Names
+    (
+      await WebMcpPublisher.DescribeAsync
+      (
+        everyone, authorization, catalog, "/FeedbackExtra", CancellationToken.None
+      )
+    ).ShouldBe([PageAgentContext.ToolName]);
+
+    ActionCatalogEntry submit = catalog.Find("Feedback.SubmitFeedback").ShouldNotBeNull();
+    ActionCatalogEntry list = catalog.Find("Feedback.ListMyFeedback").ShouldNotBeNull();
+    ActionCatalogEntry open = catalog.Find("Feedback.OpenFeedback").ShouldNotBeNull();
+    CatalogAgentApproval.RequiresApproval(submit).ShouldBeTrue();
+    CatalogAgentApproval.RequiresApproval(list).ShouldBeFalse();
+    CatalogAgentApproval.RequiresApproval(open).ShouldBeFalse();
+    submit.Permissions.ShouldBe([PermissionIds.FeedbackFileSelf]);
+    submit.Visibility.ShouldBe(ActionVisibility.Both);
+
+    string schema = CatalogAgentSchema.For(submit);
+    schema.ShouldContain("BugReport");
+    schema.ShouldContain("FeatureRequest");
+    schema.ShouldContain("Complaint");
+    schema.ShouldContain("Other");
+    schema.ShouldContain("emailCopy");
+
+    object?[] bound = CatalogAgentArguments.Bind
+    (
+      submit,
+      new Dictionary<string, object?>
+      {
+        ["kind"] = "Complaint",
+        ["title"] = "The export failed",
+        ["body"] = "Nothing came back.",
+        ["emailCopy"] = false,
+      }
+    );
+    bound[0].ShouldBe(FeedbackKind.Complaint);
+    bound[1].ShouldBe("The export failed");
+    bound[2].ShouldBe("Nothing came back.");
+    bound[3].ShouldBe(false);
+
+    string receipt = WebMcpDispatcher.FormatCompleted
+    (
+      "Feedback.SubmitFeedback",
+      new { Id = itemId, Permalink = $"/Feedback/{itemId:D}" }
+    );
+    receipt.ShouldContain("\"completed\":true");
+    receipt.ShouldContain(itemId.ToString("D"));
+    receipt.ShouldContain($"/Feedback/{itemId:D}");
+    Console.WriteLine($"WEBMCP-PROOF path=/Feedback tools={string.Join(",", Names(feedback))} receipt={receipt}");
   }
 
   public static Task Page_Context_Carries_Profile_And_Site_Settings_Records()

@@ -9,6 +9,8 @@
 // Profile is the teaching IAggregateRoot — DbSet + IEntityTypeConfiguration discovered via
 // ApplyConfigurationsFromAssembly (feature files ending in -infrastructure.cs compile into this
 // assembly). AgentHumanLink is the optional agent↔human product aggregate (schema "agent_links").
+// FeedbackItem is a filing aggregate (schema "feedback", table "feedback_items"): owner, kind,
+// title, body, and filed-at. It is insert-only.
 // Identity Principal/Credential are also mapped here (schema "identity") as the first
 // port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
 // EfPrincipalStore, not AggregateDbContext's Version hook.
@@ -45,6 +47,7 @@ namespace TimeWarp.Architecture.Persistence;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentLinks.Domain;
+using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
@@ -54,6 +57,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
   public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
 
   public DbSet<Profile> Profiles => Set<Profile>();
+  public DbSet<FeedbackItem> FeedbackItems => Set<FeedbackItem>();
   public DbSet<AgentHumanLink> AgentHumanLinks => Set<AgentHumanLink>();
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();

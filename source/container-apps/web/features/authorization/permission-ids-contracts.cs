@@ -62,6 +62,8 @@ public static class PermissionIds
   public const string CredentialManageSelf = "credential.manage.self";
   /// <summary>Invoke metered demo capability (maps from agent scope demo:invoke).</summary>
   public const string DemoInvoke = "demo.invoke";
+  /// <summary>File, list, and open the caller's own feedback. Not an agent-token scope.</summary>
+  public const string FeedbackFileSelf = "feedback.file.self";
 
   /// <summary>All product permission ids (stable catalog order).</summary>
   public static IReadOnlyList<string> All { get; } =
@@ -81,6 +83,7 @@ public static class PermissionIds
     IdentityRead,
     CredentialManageSelf,
     DemoInvoke,
+    FeedbackFileSelf,
   ];
 
   /// <summary>
