@@ -12,7 +12,8 @@
 // so the next principal on the same tab is not suppressed; the sessionStorage write lives in that
 // handler — the listener only dispatches (task 265, TWA0026).
 // Task 293: startup and every change also dispatch AgentSurfaceState.LoadChatConfiguration, so the
-// Ask readiness follows the session instead of keeping the first (possibly signed-out) answer.
+// Ask readiness follows the session instead of keeping the first (possibly signed-out) answer. It
+// runs after the identity work so an Ask probe never delays or skips profile/credentials/settings.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

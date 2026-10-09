@@ -142,10 +142,29 @@ dotnet test -c Release -- --filter-class Ask
 - `artifacts/playwright/293/ask-signed-out.png` shows Sign in. `ask-signed-in-configured.png` shows
   the chat box. `ask-signed-in-no-key.png` shows the user-secrets command.
 
+### Review disposition
+
+- **Effort / roster:** 3 (by-diff, 1115 lines); general reviewer. **Rounds:** 2.
+- **Final counts:** bug 1 fixed; suggestion 1 fixed, 1 wontfix; nit 1 fixed; 0 open.
+- **Disposition:** `accepted-exceptions`.
+  - M1 (bug, fixed): `AuthenticationStateListener` ran the Ask probe before profile, credentials and
+    site settings, so a probe exception skipped the identity work. The probe now runs last.
+  - M3 (fixed): the Playwright tests now wait for the post-sign-in configuration probe before opening
+    Ask. The race reproduced once locally; after the fix, 3 consecutive runs passed 3/3.
+  - M4 (fixed): removed the dead `ChatProbeCompleted`.
+  - M2 (wontfix): a transport exception, as opposed to a problem response, still does not become the
+    Error state. `ApiHandler` rethrows those for every SPA handler by design, and changing that is
+    outside this task.
+- **After the fixes:** `dev build` 0/0; `AgentAskReadiness_Should_` 9/9; Playwright
+  `--filter-class Ask` 3/3, three runs in a row; `ganda repo audit` passed.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 2018678 (2026-10-09)
 - Implementation: ganda task-work implementer (2026-10-10)
+- Review: ganda task-work review oracle (Claude Opus 5.5) + general reviewer subagent (2026-10-10)
 
 ## Notes
 

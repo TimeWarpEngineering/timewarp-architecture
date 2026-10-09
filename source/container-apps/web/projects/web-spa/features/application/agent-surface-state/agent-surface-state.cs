@@ -35,8 +35,6 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public string? ChatProblem { get; private set; }
 
-  public bool ChatProbeCompleted { get; private set; }
-
   public AgentSurfaceState() { }
 
   public override void Initialize()
@@ -48,6 +46,5 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ChatSetupCommand = XaiChatDefaults.SetupCommand;
     ChatModel = null;
     ChatProblem = null;
-    ChatProbeCompleted = false;
   }
 }

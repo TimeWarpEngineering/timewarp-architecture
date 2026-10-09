@@ -54,7 +54,6 @@ partial class AgentSurfaceState
         AgentSurfaceState.ChatSetupCommand = result.SetupCommand;
         AgentSurfaceState.ChatModel = result.Model;
         AgentSurfaceState.ChatProblem = result.Problem;
-        AgentSurfaceState.ChatProbeCompleted = true;
         return Task.CompletedTask;
       }
     }

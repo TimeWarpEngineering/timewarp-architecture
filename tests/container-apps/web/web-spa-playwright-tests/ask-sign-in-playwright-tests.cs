@@ -13,7 +13,8 @@
 // The signed-out and signed-in checks are collected and asserted together so a failing run on the
 // old code reports both bugs: the masked 401 and the stale readiness after sign-in.
 // Every GET api/agent-chat/configuration status is recorded so the test proves the probe re-ran and
-// what the server answered. The configured pass uses the fake upstream (no request leaves the
+// what the server answered. After sign-in the test waits for that re-probe's response before
+// opening Ask, so it does not read the store while it still holds the signed-out answer. The configured pass uses the fake upstream (no request leaves the
 // process); the no-key pass has no XAI:ApiKey. Screenshots go to artifacts/playwright/293, which
 // CI uploads.
 #endregion
@@ -65,6 +66,7 @@ public class AskSignIn_Given_Wasm
 
     // Sign in inside the SPA: Home "Sign in" -> /Login -> Create account (virtual passkey) -> /Settings.
     await session.SignInWithNewPasskeyAsync();
+    await session.WaitForConfigurationProbeAsync(signedOutProbes);
     string signedIn = await session.OpenAskAsync();
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
@@ -112,7 +114,10 @@ public class AskSignIn_Given_Wasm
 
     await using Session session = await Session.StartAsync();
     await session.GoHomeAsync();
+    await session.WaitForConfigurationProbeAsync(0);
+    int signedOutProbes = session.ConfigurationStatuses.Count;
     await session.SignInWithNewPasskeyAsync();
+    await session.WaitForConfigurationProbeAsync(signedOutProbes);
     string state = await session.OpenAskAsync();
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
@@ -252,6 +257,23 @@ public class AskSignIn_Given_Wasm
       await Page.Locator("[data-qa=CreatePasskey]").ClickAsync();
       await Page.WaitForURLAsync("**/Settings", new PageWaitForURLOptions { Timeout = 60_000 });
       await Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    }
+
+    /// <summary>
+    /// Waits until a configuration probe answers after <paramref name="priorCount"/> recorded probes,
+    /// so Ask is not opened while the store still holds the signed-out answer. Returns without
+    /// throwing on timeout: the old code never re-probes, and the caller's assertions report that.
+    /// </summary>
+    public async Task WaitForConfigurationProbeAsync(int priorCount)
+    {
+      DateTime deadline = DateTime.UtcNow.AddSeconds(30);
+      while (Configuration.Count <= priorCount && DateTime.UtcNow < deadline)
+      {
+        await Page.WaitForTimeoutAsync(100);
+      }
+
+      // The response event fires before the handler stores the result; let the dispatch finish.
+      await Page.WaitForTimeoutAsync(250);
     }
 
     public void AssertNoWasmFailures()
