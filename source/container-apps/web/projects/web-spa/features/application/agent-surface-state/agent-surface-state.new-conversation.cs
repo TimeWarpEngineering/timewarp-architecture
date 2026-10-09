@@ -3,7 +3,8 @@
 #endregion
 
 #region Design
-// The generation bump tells the panel to drop the previous transcript and mint a new credential.
+// The generation bump tells the panel to mint a new credential and rebuild on a new, empty
+// AskConversationThread; AskConversationThreads drops the previous transcript.
 // Privacy dismissal is a shell preference and is left as the person set it.
 #endregion
 

@@ -3,11 +3,14 @@
 #endregion
 
 #region Design
-// A null credential is allowed: existing sessions have no conversation credential and still run
-// under the signed-in principal. When a credential is present it must be unexpired, belong to
-// the same NameIdentifier when the user has one, and include every required permission id.
-// Listing tools does not consult this type. Both drivers call it after approval and before Execute.
-// The three error strings are the parity contract: chat and WebMCP return the same text.
+// An advisory client-side guardrail, not a security boundary: server [EndpointAuthorize] is.
+// A null credential is allowed and means unbounded: existing sessions have no conversation
+// credential and still run under the signed-in principal. When a credential is present it must be
+// unexpired, the current user must carry a parseable NameIdentifier guid equal to its principal
+// (fail closed: a missing user or an unparseable id is a mismatch), and it must include every
+// required permission id. Listing tools does not consult this type. Both drivers call it after
+// approval and before Execute. The three error strings are the parity contract: chat and WebMCP
+// return the same text. IsExpired is the same expiry test the panel header uses.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -34,19 +37,15 @@ public static class AgentConversationAuthority
       return null;
     }
 
-    DateTimeOffset now = utcNow ?? DateTimeOffset.UtcNow;
-    if (credential.ExpiresAt <= now)
+    if (IsExpired(credential, utcNow ?? DateTimeOffset.UtcNow))
     {
       return ExpiredError;
     }
 
-    if (user is not null)
+    string? idText = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!Guid.TryParse(idText, out Guid current) || current != credential.PrincipalId)
     {
-      string? idText = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-      if (Guid.TryParse(idText, out Guid current) && current != credential.PrincipalId)
-      {
-        return PrincipalError;
-      }
+      return PrincipalError;
     }
 
     if (requiredPermissions is null)
@@ -79,4 +78,8 @@ public static class AgentConversationAuthority
 
     return null;
   }
+
+  /// <summary>True when a credential is present and its expiry is at or before <paramref name="utcNow"/>.</summary>
+  public static bool IsExpired(AgentConversationCredential? credential, DateTimeOffset utcNow) =>
+    credential is not null && credential.ExpiresAt <= utcNow;
 }

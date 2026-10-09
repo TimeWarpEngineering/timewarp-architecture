@@ -11,8 +11,10 @@
 // ChatReadiness is the task 289 probe. It starts Unknown. LoadChatConfiguration sets Configured
 // or NotConfigured and stores the setup command. Ask renders from this, not from IChatClient.
 // The docked panel, its edit mode, and its conversation credential live here because TimeWarpPage
-// remounts on navigation. Listing tools does not read the credential. New conversation clears it
-// and bumps ConversationGeneration so the panel rebuilds.
+// remounts on navigation. The transcript does not: it is AskConversationThreads, keyed by
+// ConversationGeneration. EditMode is shared by the in-app chat and WebMCP; closing the panel
+// resets it to AskBeforeEditing. Listing tools does not read the credential. New conversation
+// clears it and bumps ConversationGeneration so the panel rebuilds on an empty thread.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

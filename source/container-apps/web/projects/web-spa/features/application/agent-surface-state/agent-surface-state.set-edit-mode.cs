@@ -3,8 +3,11 @@
 #endregion
 
 #region Design
-// The panel rebuilds its in-app functions when the mode changes, because the approval wrapper
-// is chosen when the functions are created. WebMCP reads the mode again at invoke time.
+// One mode for both drivers. The panel rebuilds its in-app functions when the mode changes (after
+// any running turn finishes), because the approval wrapper is chosen when the functions are
+// created; an unwrapped function refuses if the mode has gone back to Ask meanwhile. WebMCP reads
+// the mode again at invoke time. CloseAskPanel and NewConversation reset it to AskBeforeEditing,
+// so AutomaticallyEdit only lasts while the panel stays open on one conversation.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

@@ -2,13 +2,15 @@
 @inherits BaseComponent
 @using Ai = Microsoft.AspNetCore.Components.AI
 @using TimeWarp.Architecture.Services
-@attribute [DirectComponentSideEffect("Copy reads the rendered answer from the browser. Thumbs file feedback through SubmitFeedback.")]
+@attribute [DirectComponentSideEffect("Copy writes the last answer text to the browser clipboard. Thumbs file feedback through SubmitFeedback.")]
 
 @*
   Purpose: Copy, feedback, and Support actions under an Ask answer.
 
-  Design: Copy uses the rendered text. Thumbs are a human SubmitFeedback, not an agent tool call,
-  so they are not approval-gated. Support is hidden when configuration has no url.
+  Design: Copy and thumbs use the same text: the last response block with raw text (LastAnswer),
+  not the whole transcript. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
+  not approval-gated. Support is hidden when configuration has no url; LoadChatConfiguration has
+  already limited it to a relative path or http/https (AskSupportLink).
 *@
 
 @code {
@@ -22,7 +24,7 @@
 
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
-  private async Task CopyAsync() => await AskAiJsModule.CopyAnswerAsync(JsRuntime);
+  private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer());
 
   private Task HelpfulAsync() => FileAsync("Ask AI thumbs up");
 

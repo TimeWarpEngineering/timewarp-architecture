@@ -106,12 +106,13 @@ All are in `screenshots/` in this task folder. The eight `0N-*.png` shots were c
 
 - Created: 1987146 (2026-10-09)
 - Implementation: task-work oracle (2026-10-10)
+- Review round 1 fixes (M1–M16, `review/round-1/merged.md`): implementer (2026-10-10)
 
 ## Results
 
 Ask opens as a docked side panel from the top-bar Ask AI button and from Ctrl-K. At a viewport of at least 880px the dock is 450px wide and the page reflows beside it. Below 880px, and when Expand is on, the panel covers the viewport. There is no scrim.
 
-Decisions are in `design.md`. Adopted: the dock, page-scoped tools, Ask before editing as the default with per-conversation Automatically edit, collapsible reasoning and tool steps, copy and thumbs, and a Support link. Adapted: `@` tokens come from page-context JSON (`@credential:{id}`, `@profile:{alias}`, `@siteSettingsVersion:{n}`), and the conversation credential is an SPA value (version-7 id, principal, scopes, expiry capped at the next UTC midnight) checked before the tool runs. HTTP still uses the signed-in session, so `[EndpointAuthorize]` stays the authorization gate. Rejected: a model-held bearer, a standing agent key, a context chip, a scrim, attachments, and token streaming. `RecordChats` stays false, so the privacy notice stays hidden until a deployment turns recording on. This task does not add a transcript store.
+Decisions are in `design.md`. Adopted: the dock, page-scoped tools, Ask before editing as the default with per-conversation Automatically edit, collapsible reasoning and tool steps, copy and thumbs, and a Support link. Adapted: `@` tokens come from page-context JSON (`@credential:{id}`, `@profile:{alias}`, `@siteSettingsVersion:{n}`), and the conversation credential is an SPA value (version-7 id, principal, scopes, expiry capped at the next UTC midnight) checked before the tool runs. HTTP still uses the signed-in session, so `[EndpointAuthorize]` stays the authorization gate. Rejected: a model-held bearer, a standing agent key, a context chip, a scrim, attachments, and token streaming. `RecordChats` stays false, so the privacy notice stays hidden until a deployment turns recording on. This task does not add a server-side transcript store. The panel keeps each conversation's turns in memory for the browser session (one thread per conversation generation), so Close, navigation, and edit-mode changes restore the turns and the model history. Closing the panel resets the edit mode to Ask before editing.
 
 In-app AI and WebMCP share `CatalogAgentToolSet` for every `PageAgentScope` route, routes with no catalog tools, `/Feedback/item`, and `/FeedbackExtra`, four principals, and both edit modes. The comparison covers name, description, input schema, approval bit, and order, plus the shared `page_context` tool. An expired, out-of-scope, or foreign-principal credential refuses both drivers with the same message. Automatic mode skips the approval prompt and still refuses a bad credential.
 
@@ -147,7 +148,7 @@ cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Release
 
 **Not in scope**
 
-- No transcript store. `RecordChats` defaults to false.
+- No server-side transcript store (the in-memory per-conversation thread ends with the browser session). `RecordChats` defaults to false.
 - The conversation credential is an SPA value. It is not an HTTP bearer and does not add an authentication scheme.
 - Opening the pull request stays with the host `open-pr` node.
 

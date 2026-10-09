@@ -7,6 +7,8 @@
 // missing key must not toast. HandleError records NotConfigured and the constant setup command.
 // The shell dispatches this once. It does not check AuthenticationStateProvider first — an
 // anonymous skip would leave the probe Unknown forever.
+// SupportUrl goes through AskSupportLink.Normalize (relative path or http/https only) because the
+// answer bar renders it into an href.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -46,9 +48,7 @@ partial class AgentSurfaceState
         AgentSurfaceState.ChatProbeCompleted = true;
         AgentSurfaceState.RecordChats = response.RecordChats;
         AgentSurfaceState.PrivacyNotice = response.PrivacyNotice;
-        AgentSurfaceState.SupportUrl = string.IsNullOrWhiteSpace(response.SupportUrl)
-          ? XaiChatDefaults.SupportUrl
-          : response.SupportUrl;
+        AgentSurfaceState.SupportUrl = AskSupportLink.Normalize(response.SupportUrl);
         AgentSurfaceState.CredentialLifetimeMinutes = response.CredentialLifetimeMinutes > 0
           ? response.CredentialLifetimeMinutes
           : XaiChatDefaults.CredentialLifetimeMinutes;

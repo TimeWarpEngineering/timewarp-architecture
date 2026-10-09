@@ -1,10 +1,11 @@
 #region Purpose
-// On-demand import of ask-ai.js: insert an @ token and copy the rendered answer.
+// On-demand import of ask-ai.js: insert an @ token and copy answer text.
 #endregion
 
 #region Design
-// Same import-a-named-export shape as CommandPaletteJsModule. The textarea and the answer root
-// belong to the library chat control, so the insertion and the copy stay in the browser.
+// Same import-a-named-export shape as CommandPaletteJsModule. The textarea belongs to the library
+// chat control, so the insertion stays in the browser. Copy takes the text from C# (the last
+// answer the thumbs also use) and only writes it to the clipboard.
 // Callers opt out of TWA0026 with DirectComponentSideEffect. wwwroot/js is emitted by
 // TypeScript.MSBuild and is not committed.
 #endregion
@@ -23,10 +24,11 @@ internal static class AskAiJsModule
     await InvokeAsync(jsRuntime, "InsertReference", token);
   }
 
-  internal static async Task CopyAnswerAsync(IJSRuntime jsRuntime)
+  internal static async Task CopyTextAsync(IJSRuntime jsRuntime, string text)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
-    await InvokeAsync(jsRuntime, "CopyAnswer");
+    ArgumentNullException.ThrowIfNull(text);
+    await InvokeAsync(jsRuntime, "CopyText", text);
   }
 
   private static async Task InvokeAsync(IJSRuntime jsRuntime, string export, params object?[] arguments)

@@ -6,7 +6,9 @@
 // The page facts are already the catalog's parameter source. Credentials contribute
 // @credential:{id}, a profile alias contributes @profile:{alias}, and site settings contribute
 // @siteSettingsVersion:{n}. Pages with none of those yield an empty menu. Malformed JSON yields
-// an empty menu rather than a throw on the UI thread.
+// an empty menu rather than a throw on the UI thread. Token values drop whitespace and control
+// characters (a profile alias is user text), so a token is one word the model cannot be split
+// across lines by; a value that is empty after that is skipped. Labels keep the original text.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -52,8 +54,8 @@ public static class AskResourceReferences
         continue;
       }
 
-      string? id = idElement.GetString();
-      if (string.IsNullOrEmpty(id))
+      string id = TokenValue(idElement.ValueKind == JsonValueKind.String ? idElement.GetString() : null);
+      if (id.Length == 0)
       {
         continue;
       }
@@ -78,12 +80,13 @@ public static class AskResourceReferences
     }
 
     string? alias = aliasElement.GetString();
-    if (string.IsNullOrWhiteSpace(alias))
+    string value = TokenValue(alias);
+    if (value.Length == 0)
     {
       return;
     }
 
-    references.Add(new AskResourceReference(alias, "@profile:" + alias));
+    references.Add(new AskResourceReference(alias!.Trim(), "@profile:" + value));
   }
 
   private static void AddSiteSettings(JsonElement root, List<AskResourceReference> references)
@@ -105,11 +108,34 @@ public static class AskResourceReferences
       version = versionElement.GetString();
     }
 
-    if (string.IsNullOrWhiteSpace(version))
+    string value = TokenValue(version);
+    if (value.Length == 0)
     {
       return;
     }
 
-    references.Add(new AskResourceReference("Site settings v" + version, "@siteSettingsVersion:" + version));
+    references.Add(new AskResourceReference("Site settings v" + value, "@siteSettingsVersion:" + value));
+  }
+
+  /// <summary>The value with every whitespace and control character removed.</summary>
+  public static string TokenValue(string? value)
+  {
+    if (string.IsNullOrEmpty(value))
+    {
+      return string.Empty;
+    }
+
+    System.Text.StringBuilder builder = new(value.Length);
+    foreach (char character in value)
+    {
+      if (char.IsWhiteSpace(character) || char.IsControl(character))
+      {
+        continue;
+      }
+
+      builder.Append(character);
+    }
+
+    return builder.ToString();
   }
 }

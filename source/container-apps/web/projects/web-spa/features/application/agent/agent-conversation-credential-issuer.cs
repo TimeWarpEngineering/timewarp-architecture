@@ -4,8 +4,11 @@
 
 #region Design
 // Lifetime defaults to twelve hours and never crosses the next UTC midnight, so a conversation
-// opened late in the day cannot outlive that day. The scope list is copied. The display name
-// is the conversation title, truncated so a long first prompt cannot dominate the header.
+// opened late in the day cannot outlive that day. The scope list is copied; the caller decides
+// what goes in it (the panel passes every current permission claim), so the scopes are advisory,
+// not a boundary (server [EndpointAuthorize] is). The display name is a label: the panel passes
+// none, so it is DefaultDisplayName. It is not derived from the first prompt. A caller-supplied
+// name is trimmed and truncated to MaxDisplayNameLength.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

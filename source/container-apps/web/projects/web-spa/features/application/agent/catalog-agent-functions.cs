@@ -8,10 +8,15 @@
 // for a matching response before InvokeCoreAsync runs. The function reads IStore,
 // AuthenticationStateProvider, IAuthorizationService, NavigationManager, and IActionCatalog from
 // the arguments' service provider, which the invoking client sets from the circuit scope.
-// Selection happened when the modal opened; by invocation the person may have navigated, signed
+// Selection happened when the panel built the functions; by invocation the person may have navigated, signed
 // out, or lost a permission while the approval waited. InvokeCoreAsync therefore re-selects for
 // the current principal and route and returns a failed result (not an exception, so the model
 // sees why) when the tool is no longer offered. It executes the re-selected entry.
+// The wrapper is chosen at Create from the edit mode then; each function remembers whether it was
+// wrapped. If the re-selected tool now requires approval (the person switched back to Ask before
+// editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
+// instead of running without a prompt. A wrapped function in Automatic mode still runs: the
+// prompt it already showed is stricter than the mode.
 // Create always appends page_context with the same name, description, and empty schema WebMCP
 // publishes, and it is never approval-wrapped. The conversation credential is checked after the
 // approval wrapper has already run, and before Execute. A null credential is allowed.
@@ -25,6 +30,9 @@ using System.Text.Json.Serialization;
 /// <summary>Catalog tools as <see cref="AITool"/> instances, including approval wrappers.</summary>
 public sealed class CatalogAgentFunctions : IDisposable
 {
+  public const string ApprovalRequiredError =
+    "This action now needs approval. The edit mode changed to Ask before editing; ask again.";
+
   private readonly List<JsonDocument> Documents;
 
   private CatalogAgentFunctions(IReadOnlyList<AITool> tools, List<JsonDocument> documents)
@@ -44,7 +52,7 @@ public sealed class CatalogAgentFunctions : IDisposable
     {
       var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(tool.InputSchema) ? "{}" : tool.InputSchema);
       documents.Add(document);
-      CatalogAgentFunction function = new(tool, document);
+      CatalogAgentFunction function = new(tool, document, wrapped: tool.RequiresApproval);
       functions.Add(tool.RequiresApproval ? new ApprovalRequiredAIFunction(function) : function);
     }
 
@@ -68,11 +76,13 @@ public sealed class CatalogAgentFunctions : IDisposable
   {
     private readonly CatalogAgentTool Tool;
     private readonly JsonDocument Schema;
+    private readonly bool Wrapped;
 
-    public CatalogAgentFunction(CatalogAgentTool tool, JsonDocument schema)
+    public CatalogAgentFunction(CatalogAgentTool tool, JsonDocument schema, bool wrapped)
     {
       Tool = tool;
       Schema = schema;
+      Wrapped = wrapped;
     }
 
     public override string Name => Tool.Name;
@@ -114,6 +124,11 @@ public sealed class CatalogAgentFunctions : IDisposable
       if (current is null)
       {
         return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+      }
+
+      if (current.RequiresApproval && !Wrapped)
+      {
+        return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
       }
 
       object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);

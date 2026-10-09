@@ -68,11 +68,16 @@
   white-space: pre-wrap;
 }
 
-/* The library ChatPage is a full-page shell (height: 100vh). Inside the modal that pushed the
-   title and the first messages above the dialog once a reply arrived. Bound it to the modal. */
+/* The library's sc-ai-chat-page class is a full-page shell (height: 100vh). Inside the panel that
+   pushed the title and the first messages out of view once a reply arrived. Bound it to the panel. */
 .twe-agent-ask ::deep .sc-ai-chat-page {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
   max-height: min(28rem, 60dvh);
+}
+
+.twe-agent-ask__expired {
+  margin: 0;
+  color: var(--twe-ink-2);
 }

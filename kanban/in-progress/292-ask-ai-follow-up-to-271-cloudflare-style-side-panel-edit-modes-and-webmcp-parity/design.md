@@ -17,7 +17,7 @@ Compared with what task 271 shipped (catalog-to-tools mapping, Ctrl-K Ask modal,
 
 Replace the Ask modal with a right dock opened from a top-bar **Ask AI** button and from Ctrl-K Ask. Ctrl-K closes the palette, then opens the same panel. Width is 450px when the viewport is at least 880px (the observed 450px-at-1280px width). Below 880px, and when the header expand control is on, the panel is `position: fixed` and covers the viewport. No scrim. The page reflows beside the dock.
 
-Panel open, expand, edit mode, and the conversation credential live on `AgentSurfaceState`. `TimeWarpPage` remounts, so component fields would not survive navigation. While the panel is closed the shell stays `display: contents`, so the closed app bar matches the first-paint measurements. `TimeWarpFocusedPage` does not get the button.
+Panel open, expand, edit mode, and the conversation credential live on `AgentSurfaceState`. `TimeWarpPage` remounts, so component fields would not survive navigation. The transcript lives in an app-scoped `AskConversationThreads` (one in-memory `IConversationThread` per conversation generation). Every agent the panel builds gets that thread, and the panel owns the `AgentContext` and awaits `RestoreAsync` before the message list attaches, so Close, navigation, and edit-mode rebuilds keep the turns and the model history. The panel does not rebuild while a turn is streaming or waiting on approval. While the panel is closed the shell stays `display: contents`, so the closed app bar matches the first-paint measurements. `TimeWarpFocusedPage` does not get the button.
 
 The chat library's page is `height: 100vh`. The dock overrides that with a max height of `min(28rem, 60dvh)` so the header, transcript, and footer stay inside the panel.
 
@@ -31,15 +31,15 @@ A test crosses every `PageAgentScope` route, routes with no catalog tools, `/Fee
 
 ### 3. Ask before editing, with per-conversation auto-approve — adopt
 
-Default is `AskBeforeEditing`. `AutomaticallyEdit` is stored on the conversation and cleared by New conversation. `CatalogAgentApproval.RequiresApproval(entry, mode)` is false for every tool in automatic mode. The read-only allow-list never prompts in either mode. `SelectAsync`, `FindOfferedAsync`, and `DescribeAsync` take the mode. The dispatcher and the in-app function read `AgentSurfaceState.EditMode` at invoke time. The panel rebuilds its tools when the mode or the conversation generation changes.
+Default is `AskBeforeEditing`. `AutomaticallyEdit` is stored on the conversation and cleared by New conversation and by closing the panel. Both drivers read the one mode, so the reset on close bounds Automatic (and the missing WebMCP confirm bar) to an open panel. A function built unwrapped refuses if the re-selected tool now requires approval. `CatalogAgentApproval.RequiresApproval(entry, mode)` is false for every tool in automatic mode. The read-only allow-list never prompts in either mode. `SelectAsync`, `FindOfferedAsync`, and `DescribeAsync` take the mode. The dispatcher and the in-app function read `AgentSurfaceState.EditMode` at invoke time. The panel rebuilds its tools when the mode or the conversation generation changes.
 
 ### 4. Per-conversation credential — adapt
 
 Do not mint a bearer the model holds, and do not add a second authentication scheme. HTTP still uses the signed-in session. `[EndpointAuthorize]` is not bypassed.
 
-`AgentConversationCredential` is an SPA value: id (`Guid.CreateVersion7`), principal, permission scopes, display name, and expiry. The issuer caps expiry at the earlier of `utcNow + lifetime` and the next UTC midnight. The default lifetime is 12 hours (`CredentialLifetimeMinutes` = 720). The display name defaults to "Ask AI conversation" and is truncated to 80 characters. A null credential is the legacy session path and is allowed.
+`AgentConversationCredential` is an SPA value: id (`Guid.CreateVersion7`), principal, permission scopes, display name, and expiry. The issuer caps expiry at the earlier of `utcNow + lifetime` and the next UTC midnight. The default lifetime is 12 hours (`CredentialLifetimeMinutes` = 720). The display name defaults to "Ask AI conversation" and is truncated to 80 characters. A null credential is the legacy session path, is allowed, and means unbounded. The credential is an advisory client-side guardrail, not a security boundary: its scopes are copied from every permission claim the principal holds, and server `[EndpointAuthorize]` stays the boundary. The display name is the default label; it is not derived from the first prompt. When it has expired the panel header says so and points at New conversation.
 
-`AgentConversationAuthority.Denial` checks, in order: expiry (`ExpiresAt <= now`), then principal mismatch only when both the user and the credential have a parseable `ClaimTypes.NameIdentifier` guid (a missing claim does not mismatch), then scope. Empty required permissions allow the call. Listing tools does not read the credential.
+`AgentConversationAuthority.Denial` checks, in order: expiry (`ExpiresAt <= now`), then principal: the current user must have a parseable `ClaimTypes.NameIdentifier` guid equal to the credential's (a missing or unparseable claim is a mismatch), then scope. Empty required permissions allow the call. Listing tools does not read the credential.
 
 The chat approval wrapper runs before `InvokeCoreAsync`, so the credential check is inside `InvokeCoreAsync` after approval. WebMCP approves first when required, then refuses on denial before execute. `page_context` checks denial with an empty permission list. An expired credential in ask mode still prompts, then refuses. Automatic mode skips the prompt and refuses. The tool is still offered; denial is not implemented by refusing to wrap the function.
 
@@ -57,11 +57,11 @@ Cloudflare tags workers, zones, and KV. This app's typed tokens come from the pa
 - `profile.alias` → `@profile:{alias}`
 - `siteSettings.version` → `@siteSettingsVersion:{n}`
 
-Typing `@` opens that menu. Choosing an entry inserts the token into the chat input. There are no attachments.
+Token values drop whitespace and control characters. Typing `@` opens that menu. Choosing an entry inserts the token into the chat input, replacing an `@` just before the caret. There are no attachments.
 
 ### 6. Reasoning, tool steps, and feedback — adopt
 
-Function-invocation blocks render inside a collapsible "See reasoning" section. The approval card stays. Each answer has copy, thumbs up, and thumbs down. Thumbs dispatch `FeedbackState.SubmitFeedback` with `FeedbackKind.Other`. Support is a native link to the configured URL and is omitted when that URL is empty. The relay is not token streaming. While `Status` is streaming, the panel shows "Thinking…".
+Function-invocation blocks render inside a collapsible "See reasoning" section. The approval card stays. Each answer has copy, thumbs up, and thumbs down. Copy and thumbs use the same last-answer text. Thumbs dispatch `FeedbackState.SubmitFeedback` with `FeedbackKind.Other`. Support is a native link to the configured URL and is omitted when that URL is empty. The URL must be an app-relative path or http/https; anything else falls back to the default. The relay is not token streaming. While `Status` is streaming, the panel shows "Thinking…".
 
 ### 7. Privacy notice and chat recording — adopt as configuration
 

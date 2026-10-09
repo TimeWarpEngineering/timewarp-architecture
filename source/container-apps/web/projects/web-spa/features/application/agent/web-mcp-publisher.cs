@@ -8,6 +8,8 @@
 // Publishing is a store handler's job. The shell only dispatches SyncWebMcp.
 // DescribeAsync takes the conversation edit mode so RequiresApproval matches the in-app list.
 // PublishAsync reads that mode from AgentSurfaceState. The credential is not a list filter.
+// PublishAsync(context, …) is the same publish against any model context; the parameterless form
+// passes the JS context. Tests use it with a recording context to prove the store-read path.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -98,7 +100,9 @@ public sealed class WebMcpPublisher
     return tools;
   }
 
-  public async Task PublishAsync(CancellationToken cancellationToken)
+  public Task PublishAsync(CancellationToken cancellationToken) => PublishAsync(Context, cancellationToken);
+
+  public async Task PublishAsync(IWebMcpModelContext? context, CancellationToken cancellationToken)
   {
     // Re-read on every publish. The publisher does not cache an AuthenticationState.
 #pragma warning disable BL0013
@@ -114,6 +118,6 @@ public sealed class WebMcpPublisher
       Store.GetState<AgentSurfaceState>().EditMode,
       cancellationToken
     );
-    await WebMcpRegistration.ApplyAsync(Context, tools, cancellationToken);
+    await WebMcpRegistration.ApplyAsync(context, tools, cancellationToken);
   }
 }

@@ -151,6 +151,8 @@ public static class Program
     serviceCollection.AddScoped<WebMcpDispatcher>();
     serviceCollection.AddScoped<JsWebMcpModelContext>();
     serviceCollection.AddScoped<WebMcpPublisher>();
+    // The Ask transcript outlives the panel and page remounts; one thread per conversation generation.
+    serviceCollection.AddScoped<AskConversationThreads>();
     serviceCollection.AddJavaScriptDispatch(AllowJavaScriptDispatch);
 
     // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and
