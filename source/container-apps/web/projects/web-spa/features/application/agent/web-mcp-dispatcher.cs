@@ -69,6 +69,12 @@ public sealed class WebMcpDispatcher
     string path = PageAgentScope.FromNavigation(Navigation);
     if (string.Equals(name, PageAgentContext.ToolName, StringComparison.Ordinal))
     {
+      string? pageDenial = await CredentialDenialAsync([]);
+      if (pageDenial is not null)
+      {
+        return Error(name, pageDenial);
+      }
+
       return PageAgentContext.Describe(Store, path);
     }
 
@@ -124,6 +130,12 @@ public sealed class WebMcpDispatcher
       }
     }
 
+    string? denial = await CredentialDenialAsync(tool.Entry.Permissions);
+    if (denial is not null)
+    {
+      return Error(name, denial);
+    }
+
     AgentCallOutcome.Clear();
     await tool.Entry.Execute(Store, bound, CancellationToken.None);
     return Serialize(new WebMcpCompleted(tool.Name, Completed: true, AgentCallOutcome.Result));
@@ -176,8 +188,21 @@ public sealed class WebMcpDispatcher
       Catalog.Entries,
       path,
       name,
+      Store.GetState<AgentSurfaceState>().EditMode,
       CancellationToken.None
     );
+  }
+
+  private async Task<string?> CredentialDenialAsync(IEnumerable<string> requiredPermissions)
+  {
+    // Re-read on every call. The dispatcher does not cache an AuthenticationState.
+#pragma warning disable BL0013
+    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+    return AgentConversationAuthority.Denial(
+      Store.GetState<AgentSurfaceState>().Conversation,
+      authentication.User,
+      requiredPermissions);
   }
 
   private static Dictionary<string, object?> ParseArguments(string? argumentsJson)

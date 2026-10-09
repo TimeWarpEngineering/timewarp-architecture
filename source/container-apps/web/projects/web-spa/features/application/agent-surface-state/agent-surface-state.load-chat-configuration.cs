@@ -44,6 +44,14 @@ partial class AgentSurfaceState
           : response.SetupCommand;
         AgentSurfaceState.ChatModel = response.Model;
         AgentSurfaceState.ChatProbeCompleted = true;
+        AgentSurfaceState.RecordChats = response.RecordChats;
+        AgentSurfaceState.PrivacyNotice = response.PrivacyNotice;
+        AgentSurfaceState.SupportUrl = string.IsNullOrWhiteSpace(response.SupportUrl)
+          ? XaiChatDefaults.SupportUrl
+          : response.SupportUrl;
+        AgentSurfaceState.CredentialLifetimeMinutes = response.CredentialLifetimeMinutes > 0
+          ? response.CredentialLifetimeMinutes
+          : XaiChatDefaults.CredentialLifetimeMinutes;
         return Task.CompletedTask;
       }
 
@@ -63,6 +71,10 @@ partial class AgentSurfaceState
         AgentSurfaceState.ChatSetupCommand = XaiChatDefaults.SetupCommand;
         AgentSurfaceState.ChatModel = null;
         AgentSurfaceState.ChatProbeCompleted = true;
+        AgentSurfaceState.RecordChats = false;
+        AgentSurfaceState.PrivacyNotice = XaiChatDefaults.PrivacyNotice;
+        AgentSurfaceState.SupportUrl = XaiChatDefaults.SupportUrl;
+        AgentSurfaceState.CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
         return Task.CompletedTask;
       }
     }

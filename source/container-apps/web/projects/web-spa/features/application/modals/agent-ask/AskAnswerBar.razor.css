@@ -1,0 +1,13 @@
+.twe-agent-ask__answer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  align-items: center;
+}
+
+.twe-agent-ask__answer-bar button,
+.twe-agent-ask__answer-bar fluent-button,
+.twe-agent-ask__answer-bar a {
+  color: inherit;
+  cursor: pointer;
+}

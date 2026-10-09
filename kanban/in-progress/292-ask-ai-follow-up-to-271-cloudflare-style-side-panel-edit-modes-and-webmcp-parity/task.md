@@ -90,21 +90,66 @@ All are in `screenshots/` in this task folder. The eight `0N-*.png` shots were c
 
 ## Checklist
 
-- [ ] Design (`design.md`): compare every reference item with what 271 shipped
-- [ ] Design: decide docked non-modal side panel vs the current Ctrl-K modal (and whether Ctrl-K ask opens the panel)
-- [ ] Design: edit-mode setting (Ask before editing default, per-conversation Automatically edit)
-- [ ] Design: per-conversation, short-lived, scoped credential under the user's principal (never bypasses `[EndpointAuthorize]`)
-- [ ] Design: `@` resource references to typed catalog parameters; streamed answers with collapsible reasoning and tool steps; copy, thumbs and Support actions; privacy notice and chat recording as configuration
-- [ ] WebMCP parity: in-app AI and WebMCP expose the same tools, filtering and approval on every page
-- [ ] Implement the design decisions
-- [ ] Test: per page and principal, the in-app AI tool list equals the WebMCP tool list
-- [ ] Tests for edit modes, the credential lifetime and scope, and the panel
-- [ ] `dev build` 0/0, `dev test`, `ganda repo audit` clean
-- [ ] Browser proof screenshots in the PR body
+- [x] Design (`design.md`): compare every reference item with what 271 shipped
+- [x] Design: decide docked non-modal side panel vs the current Ctrl-K modal (and whether Ctrl-K ask opens the panel)
+- [x] Design: edit-mode setting (Ask before editing default, per-conversation Automatically edit)
+- [x] Design: per-conversation, short-lived, scoped credential under the user's principal (never bypasses `[EndpointAuthorize]`)
+- [x] Design: `@` resource references to typed catalog parameters; streamed answers with collapsible reasoning and tool steps; copy, thumbs and Support actions; privacy notice and chat recording as configuration
+- [x] WebMCP parity: in-app AI and WebMCP expose the same tools, filtering and approval on every page
+- [x] Implement the design decisions
+- [x] Test: per page and principal, the in-app AI tool list equals the WebMCP tool list
+- [x] Tests for edit modes, the credential lifetime and scope, and the panel
+- [x] `dev build` 0/0, `dev test`, `ganda repo audit` clean
+- [x] Browser proof screenshots in the PR body
 
 ## Session
 
 - Created: 1987146 (2026-10-09)
+- Implementation: task-work oracle (2026-10-10)
+
+## Results
+
+Ask opens as a docked side panel from the top-bar Ask AI button and from Ctrl-K. At a viewport of at least 880px the dock is 450px wide and the page reflows beside it. Below 880px, and when Expand is on, the panel covers the viewport. There is no scrim.
+
+Decisions are in `design.md`. Adopted: the dock, page-scoped tools, Ask before editing as the default with per-conversation Automatically edit, collapsible reasoning and tool steps, copy and thumbs, and a Support link. Adapted: `@` tokens come from page-context JSON (`@credential:{id}`, `@profile:{alias}`, `@siteSettingsVersion:{n}`), and the conversation credential is an SPA value (version-7 id, principal, scopes, expiry capped at the next UTC midnight) checked before the tool runs. HTTP still uses the signed-in session, so `[EndpointAuthorize]` stays the authorization gate. Rejected: a model-held bearer, a standing agent key, a context chip, a scrim, attachments, and token streaming. `RecordChats` stays false, so the privacy notice stays hidden until a deployment turns recording on. This task does not add a transcript store.
+
+In-app AI and WebMCP share `CatalogAgentToolSet` for every `PageAgentScope` route, routes with no catalog tools, `/Feedback/item`, and `/FeedbackExtra`, four principals, and both edit modes. The comparison covers name, description, input schema, approval bit, and order, plus the shared `page_context` tool. An expired, out-of-scope, or foreign-principal credential refuses both drivers with the same message. Automatic mode skips the approval prompt and still refuses a bad credential.
+
+Proof images for the PR body, beside this file:
+
+- [ask-panel-docked.png](ask-panel-docked.png) — 1280px viewport, 450px dock, page beside the panel.
+- [ask-panel-narrow.png](ask-panel-narrow.png) — 800px viewport, panel covers the width.
+- [ctrl-k-ask-result-page.png](ctrl-k-ask-result-page.png) — Ctrl-K Ask opens the same panel and shows an answer.
+- [ctrl-k-ask-not-configured-page.png](ctrl-k-ask-not-configured-page.png) — unconfigured relay, edit-mode footer still present.
+
+`./bin/dev build`: 0 warnings, 0 errors (8.5s). `./bin/dev test`: exit 0, including web-spa-integration-tests 162/162 and web-spa-playwright-tests 3/3. `ganda repo audit`: Passed 31, Failed 0.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class CatalogAgent_Should
+cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Release
+```
+
+**Expect**
+
+- `CatalogAgent_Should` passes. The parity method fails if any page, principal, or edit mode differs between the in-app tool list and the WebMCP tool list. Panel open, expand, automatic edit, and New conversation are read back from the store after each action. Expired, scope, and principal denials match `AgentConversationAuthority` on both drivers.
+- Playwright passes. At 1280×800 the panel width is 450px and the app bar plus the panel fit the viewport. Expand, and an 800px viewport, make the panel the full viewport width. Close hides `[data-qa=AgentAsk]`; the Ask AI button opens it again. `[data-qa=AskPrivacyNotice]` is absent. The shots above are rewritten next to this file.
+- `./bin/dev build` reports `0 Warning(s)` and `0 Error(s)`. `./bin/dev test` ends with `Tests completed successfully!`. `ganda repo audit` prints `Passed: 31 | Failed: 0`.
+
+**Automated gate**
+
+```bash
+./bin/dev build && ./bin/dev test && ganda repo audit
+```
+
+**Not in scope**
+
+- No transcript store. `RecordChats` defaults to false.
+- The conversation credential is an SPA value. It is not an HTTP bearer and does not add an authentication scheme.
+- Opening the pull request stays with the host `open-pr` node.
 
 ## Notes
 

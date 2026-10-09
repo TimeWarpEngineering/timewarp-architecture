@@ -36,7 +36,7 @@ using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 
 [TestTag("Integration")]
-public class CatalogAgent_Should
+public partial class CatalogAgent_Should
 {
   private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
   private static SpaSessionFixture? Session;
@@ -217,8 +217,9 @@ public class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Initialize(count: 10);
     using CatalogAgentFunctions functions = CatalogAgentFunctions.Create(await SelectForSessionAsync(scope));
     ChatOptions options = new() { Tools = [.. functions.Tools] };
-    Names(functions.Tools).ShouldBe(["Counter.IncrementCounter"]);
+    Names(functions.Tools).ShouldBe(["Counter.IncrementCounter", PageAgentContext.ToolName]);
     functions.Tools[0].ShouldBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools[1].ShouldNotBeOfType<ApprovalRequiredAIFunction>();
 
     using ScriptedChatClient rejecting = new();
     string rejected = await RunAsync(rejecting, scope.ServiceProvider, options, static _ => false)

@@ -51,6 +51,9 @@ public static class PageAgentScope
 
   private static readonly string[] PrefixRoutes = ["/Feedback"];
 
+  /// <summary>Routes that name catalog actions. Other paths offer page_context only.</summary>
+  public static IReadOnlyCollection<string> KnownRoutes => Actions.Keys;
+
   public static string Normalize(string? path)
   {
     if (string.IsNullOrWhiteSpace(path))

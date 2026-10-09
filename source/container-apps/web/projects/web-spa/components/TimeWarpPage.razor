@@ -50,6 +50,13 @@
 
   private string? ActiveModalId => ApplicationState.ActiveModalId;
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
+  private Task OpenAskPanelAsync() => AgentSurfaceState.OpenAskPanel();
+
+  private string ShellClass => AgentSurfaceState.IsPanelOpen
+    ? AgentSurfaceState.IsPanelExpanded
+      ? "twe-shell twe-shell--ask twe-shell--ask-expanded"
+      : "twe-shell twe-shell--ask"
+    : "twe-shell";
 
   protected override async Task OnInitializedAsync()
   {
@@ -74,7 +81,7 @@
   @* Native root: CSS isolation stamps its scope attribute only on elements this component
      authors, never on FluentLayout's root (Wall A). TimeWarpPage.razor.css anchors its
      ::deep rules for Fluent children on this div. *@
-  <div class="twe-shell">
+  <div class="@ShellClass">
     <FluentLayout Class=@($"{Id} twe-shell__layout")>
 
       @* No Height parameter here: with it, FluentLayoutItem swaps its default
@@ -95,6 +102,7 @@
             </FluentTextInput>
           </div>
           <div class="twe-appbar__actions">
+            <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">Ask AI</FluentButton>
             <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
               <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
             </FluentButton>
@@ -160,6 +168,10 @@
       </FluentLayoutItem>
 
     </FluentLayout>
+    @if (AgentSurfaceState.IsPanelOpen)
+    {
+      <AgentAsk />
+    }
   </div>
 </CascadingValue>
 
@@ -167,6 +179,5 @@
   <ModalContainers>
     <AssemblyInfoModal />
     <CommandPalette />
-    <AgentAsk />
   </ModalContainers>
 </ModalController>

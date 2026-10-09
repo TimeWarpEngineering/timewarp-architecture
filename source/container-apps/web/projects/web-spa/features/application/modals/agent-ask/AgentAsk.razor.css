@@ -2,7 +2,47 @@
   display: flex;
   flex-direction: column;
   gap: var(--twe-space-3);
-  min-height: 24rem;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: var(--twe-space-3);
+  background: var(--twe-paper);
+  border-left: 1px solid var(--twe-rule);
+  overflow: hidden;
+}
+
+.twe-agent-ask__header,
+.twe-agent-ask__header-actions,
+.twe-agent-ask__edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  align-items: center;
+}
+
+.twe-agent-ask__header {
+  justify-content: space-between;
+}
+
+.twe-agent-ask__heading {
+  min-width: 0;
+}
+
+.twe-agent-ask__conversation,
+.twe-agent-ask__greeting,
+.twe-agent-ask__edit-label,
+.twe-agent-ask__privacy {
+  margin: 0;
+}
+
+.twe-agent-ask__header button,
+.twe-agent-ask__header fluent-button,
+.twe-agent-ask__edit button,
+.twe-agent-ask__edit fluent-button,
+.twe-agent-ask__privacy button,
+.twe-agent-ask__privacy fluent-button,
+.twe-agent-ask__tag {
+  cursor: pointer;
 }
 
 .twe-agent-ask__title {
@@ -31,6 +71,8 @@
 /* The library ChatPage is a full-page shell (height: 100vh). Inside the modal that pushed the
    title and the first messages above the dialog once a reply arrived. Bound it to the modal. */
 .twe-agent-ask ::deep .sc-ai-chat-page {
-  height: min(28rem, 60vh);
-  height: min(28rem, 60dvh);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: min(28rem, 60dvh);
 }
