@@ -36,6 +36,9 @@
   <head> before first paint. A <style>@(...)</style> block here was HTML-encoded by prerender and
   dropped until interactive, so the shell flashed unstyled. Components author no <style> elements
   (skills/tw-blazor-css-strategy).
+  Task 293: the shell no longer runs the Ask readiness probe. It ran once per app, so a signed-out
+  401 survived an in-app sign-in. AuthenticationStateListener probes at startup and on every
+  AuthenticationState change.
 *@
 
 @code {
@@ -50,15 +53,6 @@
 
   private string? ActiveModalId => ApplicationState.ActiveModalId;
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
-
-  protected override async Task OnInitializedAsync()
-  {
-    await base.OnInitializedAsync();
-    if (!AgentSurfaceState.ChatProbeCompleted)
-    {
-      await AgentSurfaceState.LoadChatConfiguration();
-    }
-  }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {

@@ -1,12 +1,17 @@
 #region Purpose
-// Loads whether the server can call xAI. A failure still finishes the probe so Ask can render.
+// Loads whether the server can call xAI, and whether this user may ask, for the Ask surface.
 #endregion
 
 #region Design
-// Not a DefaultApiHandler: that base publishes ProblemDetailsNotification, and a 401 or a
-// missing key must not toast. HandleError records NotConfigured and the constant setup command.
-// The shell dispatches this once. It does not check AuthenticationStateProvider first — an
-// anonymous skip would leave the probe Unknown forever.
+// Not a DefaultApiHandler: that base publishes ProblemDetailsNotification, and a signed-out 401
+// must not toast. Every outcome goes through ChatReadinessProbe (task 293): the server's answer is
+// Configured or NotConfigured, a 401 is Unauthenticated and anything else is Error with the status
+// and detail. Before task 293 every failure became NotConfigured, which told a signed-out user to
+// set a key that was already set.
+// AuthenticationStateListener dispatches this at startup and on every AuthenticationState change,
+// so an in-app sign-in (no page load) re-probes. It does not skip anonymous users: a mock-header
+// session can be authorized on the server while the SPA principal is anonymous, so the server's
+// status is the answer.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -34,34 +39,21 @@ partial class AgentSurfaceState
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Query?>(new Query());
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
-      {
-        AgentSurfaceState.ChatReadiness = response.Configured
-          ? CatalogAgentReadiness.Configured
-          : CatalogAgentReadiness.NotConfigured;
-        AgentSurfaceState.ChatSetupCommand = string.IsNullOrWhiteSpace(response.SetupCommand)
-          ? XaiChatDefaults.SetupCommand
-          : response.SetupCommand;
-        AgentSurfaceState.ChatModel = response.Model;
-        AgentSurfaceState.ChatProbeCompleted = true;
-        return Task.CompletedTask;
-      }
+      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken) =>
+        Apply(ChatReadinessProbe.FromResponse(response));
 
-      protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken)
-      {
-        return MarkNotConfigured();
-      }
+      protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken) =>
+        Apply(ChatReadinessProbe.FromFileResponse());
 
-      protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
-      {
-        return MarkNotConfigured();
-      }
+      protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken) =>
+        Apply(ChatReadinessProbe.FromProblem(problemDetails));
 
-      private Task MarkNotConfigured()
+      private Task Apply(ChatProbeResult result)
       {
-        AgentSurfaceState.ChatReadiness = CatalogAgentReadiness.NotConfigured;
-        AgentSurfaceState.ChatSetupCommand = XaiChatDefaults.SetupCommand;
-        AgentSurfaceState.ChatModel = null;
+        AgentSurfaceState.ChatReadiness = result.Readiness;
+        AgentSurfaceState.ChatSetupCommand = result.SetupCommand;
+        AgentSurfaceState.ChatModel = result.Model;
+        AgentSurfaceState.ChatProblem = result.Problem;
         AgentSurfaceState.ChatProbeCompleted = true;
         return Task.CompletedTask;
       }

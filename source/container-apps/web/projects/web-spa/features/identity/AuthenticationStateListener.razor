@@ -23,6 +23,9 @@
 
   private async Task HandleUserAuthentication(ClaimsPrincipal user)
   {
+    // Task 293: Ask's readiness depends on the session, so re-read it on every change. An in-app
+    // sign-in navigates without a page load; a once-per-app probe kept the signed-out 401.
+    await NoSubAgentSurfaceState.LoadChatConfiguration();
     if (user.Identity?.IsAuthenticated == true)
     {
       await NoSubProfileState.FetchProfileData();

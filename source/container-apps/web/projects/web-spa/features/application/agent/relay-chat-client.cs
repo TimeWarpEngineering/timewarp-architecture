@@ -6,8 +6,9 @@
 // The key stays on web-server. This type has no secret and no model SDK. Streaming is one
 // buffered response: UIAgent reads GetStreamingResponseAsync, and FunctionInvokingChatClient
 // still runs tools locally between turns. A problem detail from the relay is thrown as
-// InvalidOperationException whose message is the detail we authored (setup command or a
-// generic failure), never an upstream exception. Dispose is a no-op; the API service is scoped
+// InvalidOperationException whose message is ChatReadinessProbe.Describe (status, title and the
+// detail we authored), never an upstream exception (task 293: a bare 401 used to read only "The
+// model request failed."). Dispose is a no-op; the API service is scoped
 // to the circuit and must outlive this client. CatalogAgentSession wraps it in a second
 // non-disposing client before FunctionInvokingChatClient.
 #endregion
@@ -41,7 +42,7 @@ internal sealed class RelayChatClient : IChatClient
     (
       ToChatResponse,
       _ => throw new InvalidOperationException("The model relay returned a file."),
-      problem => throw new InvalidOperationException(problem.Detail ?? "The model request failed.")
+      problem => throw new InvalidOperationException(ChatReadinessProbe.Describe(problem))
     );
   }
 
