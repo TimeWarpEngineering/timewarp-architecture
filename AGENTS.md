@@ -395,8 +395,10 @@ both come from the same release commit.
 `documentation/` is **maintainer-only** and is not packed into the template
 (generated apps have no `documentation/` tree). It holds
 `documentation/developer/guides/releasing.md` (artifact retention, Free-plan
-cap, `dev release` cut). Operator sequence is the cross-repo **`tw-release`**
-skill.
+cap, `dev release` cut) and
+`documentation/developer/guides/webmcp-testing.md` (hand-testing WebMCP in the
+browser; task 271). Operator sequence for a release cut is the cross-repo
+**`tw-release`** skill.
 
 ADRs are not shipped as pages. A still-true rule lives in the skill that owns it or in the
 Design region of the code/analyzer that enforces it.
