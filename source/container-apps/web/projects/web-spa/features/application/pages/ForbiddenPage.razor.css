@@ -1,0 +1,8 @@
+/* ForbiddenPage: CSS isolation. Mirrors NotFoundPage.razor.css. Tokens only. */
+.twe-status-page__code {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--twe-purple);
+}
+
+.twe-status-page__title { margin: 0 0 8px; }

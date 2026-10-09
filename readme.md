@@ -37,9 +37,10 @@ Ctrl-K **Ask** calls xAI through web-server. The key stays in user-secrets and i
 the browser. Set it with:
 
 ```pwsh
-dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj
+dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id 0e53fdd3-6f93-4d5a-9c86-040621f7929e
 ```
 
+The `--id` is web-server's `UserSecretsId`, so the command works from any directory.
 `dev run` still starts when the key is missing and prints that command. Ask stays visible and
 shows the same command until the key is set. `XAI:Model` overrides the default `grok-4.7`.
 

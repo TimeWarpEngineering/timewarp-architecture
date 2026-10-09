@@ -1,6 +1,6 @@
 /* Global app styles: a minimal reset (replacing Tailwind's preflight) plus the few
-   genuinely-global element rules. Component styles live in scoped *.razor.css or
-   scope-handle <style> blocks (see skills/blazor-css-strategy). Brand values come from
+   genuinely-global element rules. Component styles live in scoped *.razor.css files; components
+   never author <style> elements (skills/tw-blazor-css-strategy). Brand values come from
    tokens.css — do not hard-code color/type here. */
 
 /* Reset */

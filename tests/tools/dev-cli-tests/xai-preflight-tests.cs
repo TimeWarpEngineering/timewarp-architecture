@@ -53,8 +53,10 @@ public class WarningLead_Given_
     unreadable.ShouldContain("XAI:ApiKey");
     readable.ShouldNotContain("secret-value");
     unreadable.ShouldNotContain("secret-value");
-    XaiPreflight.SetupCommand.ShouldContain(XaiPreflight.WebServerProject);
-    XaiPreflight.SetupCommand.ShouldContain("<your-xai-key>");
+    // Task 290: --id, not a repo-relative --project path, so it works from any directory.
+    XaiPreflight.SetupCommand.ShouldBe(
+      "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + XaiPreflight.UserSecretsId);
+    XaiPreflight.SetupCommand.ShouldNotContain("--project");
     return Task.CompletedTask;
   }
 
@@ -78,6 +80,12 @@ public class WarningLead_Given_
     contracts.ShouldContain(XaiPreflight.WebServerProject);
     contracts.ShouldContain("<your-xai-key>");
     contracts.ShouldContain("XAI:ApiKey");
+    contracts.ShouldContain($"UserSecretsId = \"{XaiPreflight.UserSecretsId}\"");
+    contracts.ShouldContain("--id \" + UserSecretsId");
+
+    // The id in the command must be the one web-server actually uses.
+    string project = File.ReadAllText(Path.Combine(directory, XaiPreflight.WebServerProject));
+    project.ShouldContain($"<UserSecretsId>{XaiPreflight.UserSecretsId}</UserSecretsId>");
     return Task.CompletedTask;
   }
 }

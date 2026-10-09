@@ -1,0 +1,13 @@
+/* NotFoundPage: CSS isolation. Elements are authored here inside Card's ChildContent, so they are
+   stamped. Mirrors ForbiddenPage.razor.css. Tokens only. */
+.twe-status-page__code {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--twe-purple);
+}
+
+.twe-status-page__title { margin: 0 0 8px; }
+
+.twe-status-page__message { margin: 0 0 16px; color: var(--twe-ink-2); }
+
+.twe-status-page__home { font-weight: 600; }

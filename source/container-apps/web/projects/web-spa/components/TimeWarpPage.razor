@@ -32,6 +32,10 @@
   ReadOnly and carries the CommandPaletteJsModule trigger attribute, so focusing or clicking it
   opens the CommandPalette modal (as Ctrl-K / Cmd-K anywhere on the page does). The palette is a
   ModalContainer beside AssemblyInfoModal and owns its JS registration; only this shell hosts it.
+  Task 290: all shell CSS is in TimeWarpPage.razor.css (CSS isolation), which the browser loads in
+  <head> before first paint. A <style>@(...)</style> block here was HTML-encoded by prerender and
+  dropped until interactive, so the shell flashed unstyled. Components author no <style> elements
+  (skills/tw-blazor-css-strategy).
 *@
 
 @code {
@@ -67,91 +71,96 @@
 }
 
 <CascadingValue Value=@this>
-  <FluentLayout Class=@($"{Id} twe-shell")>
+  @* Native root: CSS isolation stamps its scope attribute only on elements this component
+     authors, never on FluentLayout's root (Wall A). TimeWarpPage.razor.css anchors its
+     ::deep rules for Fluent children on this div. *@
+  <div class="twe-shell">
+    <FluentLayout Class=@($"{Id} twe-shell__layout")>
 
-    @* No Height parameter here: with it, FluentLayoutItem swaps its default
-       height: var(--layout-header-height) for a hard-coded inline height. The slot
-       height comes from the --layout-header-height override in the styles below. *@
-    <FluentLayoutItem Area="LayoutArea.Header">
-      <header class="twe-appbar">
-        <div class="twe-brand">
-          @* Horizontal lockup (icon + wordmark side by side) built from the original
-             stacked timewarp-logo.svg so the wordmark stays readable at bar height.
-             Explicit width/height reserve the box before styles apply (no first-paint
-             size flash). *@
-          <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="201" height="48" />
-        </div>
-        <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
-          <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
-            <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
-          </FluentTextInput>
-        </div>
-        <div class="twe-appbar__actions">
-          <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
-            <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
-          </FluentButton>
-          <Profile />
-        </div>
-      </header>
-    </FluentLayoutItem>
+      @* No Height parameter here: with it, FluentLayoutItem swaps its default
+         height: var(--layout-header-height) for a hard-coded inline height. The slot
+         height comes from the --layout-header-height override in TimeWarpPage.razor.css. *@
+      <FluentLayoutItem Area="LayoutArea.Header">
+        <header class="twe-appbar">
+          <div class="twe-brand">
+            @* Horizontal lockup (icon + wordmark side by side) built from the original
+               stacked timewarp-logo.svg so the wordmark stays readable at bar height.
+               Explicit width/height reserve the box before styles apply (no first-paint
+               size flash). *@
+            <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="201" height="48" />
+          </div>
+          <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
+            <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
+              <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
+            </FluentTextInput>
+          </div>
+          <div class="twe-appbar__actions">
+            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
+              <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
+            </FluentButton>
+            <Profile />
+          </div>
+        </header>
+      </FluentLayoutItem>
 
-    <FluentLayoutItem Area="LayoutArea.Navigation" Width="240px">
-      <NavMenu />
-    </FluentLayoutItem>
+      <FluentLayoutItem Area="LayoutArea.Navigation" Width="240px">
+        <NavMenu />
+      </FluentLayoutItem>
 
-    <FluentLayoutItem Area="LayoutArea.Content">
-      <div class="twe-page">
-        @if (!string.IsNullOrWhiteSpace(Title))
-        {
+      <FluentLayoutItem Area="LayoutArea.Content">
+        <div class="twe-page">
+          @if (!string.IsNullOrWhiteSpace(Title))
+          {
+            @if (ShowInBreadcrumbs)
+            {
+              <TwPageTitle>@Title</TwPageTitle>
+            }
+            else
+            {
+              <PageTitle>@Title</PageTitle>
+            }
+            <h1 class="twe-page__title">@Title</h1>
+          }
           @if (ShowInBreadcrumbs)
           {
-            <TwPageTitle>@Title</TwPageTitle>
+            <div class="twe-page__crumbs">
+              <TwBreadcrumb MaxLinks="4" />
+            </div>
           }
-          else
-          {
-            <PageTitle>@Title</PageTitle>
-          }
-          <h1 class="twe-page__title">@Title</h1>
-        }
-        @if (ShowInBreadcrumbs)
-        {
-          <div class="twe-page__crumbs">
-            <TwBreadcrumb MaxLinks="4" />
+          <div class="twe-page__body">
+            <WebMcpAgentSurface />
+            <MessageBars />
+            <AddPasskeyPrompt />
+            @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
+              && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))
+            {
+              @ChildContent
+            }
           </div>
-        }
-        <div class="twe-page__body">
-          <WebMcpAgentSurface />
-          <MessageBars />
-          <AddPasskeyPrompt />
-          @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
-            && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))
-          {
-            @ChildContent
-          }
         </div>
-      </div>
-    </FluentLayoutItem>
-
-    @if (Aside is not null)
-    {
-      <FluentLayoutItem Area="LayoutArea.Aside" Width="300px">
-        <div class="twe-aside">@Aside</div>
       </FluentLayoutItem>
-    }
 
-    @* Like the header: no Height parameter, so the item keeps its default
-       height: var(--layout-footer-height); the variable is overridden below. *@
-    <FluentLayoutItem Area="LayoutArea.Footer">
-      <footer class="twe-footer">
-        <span class="twe-footer__mode">@RendererInfo.Name</span>
-        <FluentSpacer />
-        <FluentSpinner Visible=@ActionTrackingState.IsActive Size="SpinnerSize.Tiny" />
-        <FluentSpacer />
-        <FluentButton Appearance="ButtonAppearance.Transparent" @onclick=ShowAssemblyInfoModalAsync>@ApplicationState.Version</FluentButton>
-      </footer>
-    </FluentLayoutItem>
+      @if (Aside is not null)
+      {
+        <FluentLayoutItem Area="LayoutArea.Aside" Width="300px">
+          <div class="twe-aside">@Aside</div>
+        </FluentLayoutItem>
+      }
 
-  </FluentLayout>
+      @* Like the header: no Height parameter, so the item keeps its default
+         height: var(--layout-footer-height); TimeWarpPage.razor.css overrides the variable. *@
+      <FluentLayoutItem Area="LayoutArea.Footer">
+        <footer class="twe-footer">
+          <span class="twe-footer__mode">@RendererInfo.Name</span>
+          <FluentSpacer />
+          <FluentSpinner Visible=@ActionTrackingState.IsActive Size="SpinnerSize.Tiny" />
+          <FluentSpacer />
+          <FluentButton Appearance="ButtonAppearance.Transparent" @onclick=ShowAssemblyInfoModalAsync>@ApplicationState.Version</FluentButton>
+        </footer>
+      </FluentLayoutItem>
+
+    </FluentLayout>
+  </div>
 </CascadingValue>
 
 <ModalController ActiveModalId=@ActiveModalId>
@@ -161,79 +170,3 @@
     <AgentAsk />
   </ModalContainers>
 </ModalController>
-
-@* Tier-2 shell styles (skills/blazor-css-strategy): scoped to the fixed .twe-shell root
-   class because they style FluentUI light-DOM children (fluent-nav, fluent-text-input)
-   which CSS isolation can't reach. Verbatim string so CSS braces are literal. *@
-<style>
-  @(@"
-    /* Appbar/footer height single source. FluentLayout writes its defaults for
-       --layout-header-height / --layout-footer-height inline on the root element,
-       so the overrides need !important to win; the layout items and the
-       body-height calc all consume the vars. */
-    .twe-shell {
-      --twe-appbar-height: 70px; --layout-header-height: var(--twe-appbar-height) !important;
-      --twe-footer-height: 44px; --layout-footer-height: var(--twe-footer-height) !important;
-    }
-    /* Header slot: Fluent sets area=header background to --colorBrandBackground (theme
-       purple). White appbar + 8px Fluent padding ⇒ purple frame. Green accent on the
-       bottom edge of the bar. Footer mirrors with blue slot + green on top (task 162). */
-    .twe-shell .twe-appbar {
-      display: flex; align-items: center; gap: 12px;
-      width: 100%; height: 100%; padding: 0 16px;
-      background: var(--twe-paper); border-bottom: 3px solid var(--twe-green);
-    }
-    .twe-shell .twe-appbar__search { flex: 0 1 520px; width: 520px; margin-inline: auto; }
-    .twe-shell .twe-appbar__actions {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      /* Task 149: breathing room so profile FluentMenu is not flush to the viewport edge. */
-      padding-inline-end: 8px;
-    }
-    .twe-shell .search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
-
-    .twe-shell .twe-brand { display: inline-flex; align-items: center; padding: 0 6px; }
-    .twe-shell .twe-brand__logo { height: 48px; width: auto; flex: none; display: block; }
-
-    .twe-shell .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
-
-    .twe-shell .twe-page { padding: 20px 28px 28px; }
-    .twe-shell .twe-page__title { margin: 0 0 8px; font-size: var(--twe-text-page-title); font-weight: 700; letter-spacing: -0.015em; color: var(--twe-ink); }
-    .twe-shell .twe-page__title:focus { outline: none; }
-    /* Plus TwBreadcrumb (timewarp-state 081) ships Bootstrap class names and no CSS.
-       Style that contract from this shell wrapper only — do not load bootstrap.min.css. */
-    .twe-shell .twe-page__crumbs { margin: 0 0 16px; }
-    .twe-shell .twe-page__crumbs .breadcrumb {
-      display: flex; flex-wrap: wrap; align-items: center;
-      list-style: none; margin: 0; padding: 0;
-      font-size: var(--twe-text-helper); color: var(--twe-muted);
-    }
-    .twe-shell .twe-page__crumbs .breadcrumb:empty { display: none; }
-    .twe-shell .twe-page__crumbs .breadcrumb-item { display: inline-flex; align-items: center; }
-    .twe-shell .twe-page__crumbs .breadcrumb-item + .breadcrumb-item::before {
-      content: ""/""; padding: 0 8px; color: var(--twe-muted);
-    }
-    .twe-shell .twe-page__crumbs .breadcrumb-item a { color: var(--twe-blue); text-decoration: none; }
-    .twe-shell .twe-page__crumbs .breadcrumb-item a:hover { text-decoration: underline; color: var(--twe-blue-deep); }
-    .twe-shell .twe-page__crumbs .breadcrumb-item.active { color: var(--twe-ink-2); }
-    .twe-shell .twe-page__crumbs .text-muted { color: var(--twe-muted); }
-    .twe-shell .twe-page__body { color: var(--twe-ink); }
-
-    .twe-shell .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }
-
-    /* Footer slot: Fluent defaults area=footer to neutral disabled background; override
-       to TimeWarp blue so it pairs with the purple header frame (logo blue). Green
-       accent on the top edge mirrors the header's bottom accent. */
-    .twe-shell .fluent-layout-item[area=footer] {
-      background-color: var(--twe-blue);
-    }
-    .twe-shell .twe-footer {
-      display: flex; align-items: center; gap: 12px; width: 100%;
-      height: 100%; padding: 0 16px; box-sizing: border-box;
-      border-top: 3px solid var(--twe-green); background: var(--twe-paper);
-      color: var(--twe-muted); font-size: var(--twe-text-helper);
-    }
-  ")
-</style>

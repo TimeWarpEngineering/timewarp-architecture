@@ -1,5 +1,5 @@
 /* FormField — Tier-1 leaf, CSS isolation. Tokens from tokens.css.
-   Wrapper width applies here. Fluent host stretch is Exception B in FormField.razor. */
+   Wrapper width and Fluent host stretch both live here (task 290). */
 .twe-form-field {
   display: flex;
   flex-direction: column;
@@ -19,6 +19,23 @@
   display: block;
   width: 100%;
   min-width: 0;
+}
+
+/* Fluent hosts are FluentTextInput/FluentSelect/... roots, which isolation never stamps
+   (Wall A). A plain child selector here would compile to `> *[b-…]` and miss them
+   (task 234 review M1). ::deep keeps the scope on the stamped wrapper only. */
+.twe-form-field__control ::deep > fluent-text-input,
+.twe-form-field__control ::deep > fluent-dropdown,
+.twe-form-field__control ::deep > fluent-select,
+.twe-form-field__control ::deep > fluent-combobox,
+.twe-form-field__control ::deep > fluent-textarea,
+.twe-form-field__control ::deep > fluent-text-area,
+.twe-form-field__control ::deep > fluent-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .twe-form-field__hint {
