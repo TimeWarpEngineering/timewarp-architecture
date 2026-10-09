@@ -2,15 +2,13 @@
 
 Task lifecycle is **`ganda kanban`**. Do not hand-number ids or invent filenames.
 
-SSOT:
-
-- `AGENTS.md` — **Task management**
-- Skill **`tw-kanban`**
+SSOT: skill **`tw-kanban`**. `ganda kanban create` is a deprecated alias of reserve + first claim.
 
 Columns are kebab folders under `kanban/`: `backlog/`, `to-do/`, `in-progress/`, `done/`,
-`archived/`. Folder location **is** status. New work: `ganda kanban create "title"` (it assigns
-the number). Then `move` / `done` to transition. Keep checklist / `## Session` current; commit
-kanban mutations. See `kanban/task-template.md` for the body shape.
+`archived/`. Folder location **is** status. New work: `ganda kanban reserve`, then
+`ganda kanban claim <id> "title"`. Reserve allocates the id. Then `move` / `done` to transition.
+Keep checklist / `## Session` current; commit kanban
+mutations. See `kanban/task-template.md` for the body shape.
 
 ## Definition of Ready
 
@@ -26,6 +24,10 @@ Before moving a task from backlog to to-do, ensure it meets these criteria:
 - [ ] Dependencies identified and available
 
 ## Definition of Done
+
+A new endpoint follows `tw-web-api-contracts` (generated FastEndpoint, no separate mapper, no
+isolated validator unit tests). A client feature follows `tw-blazor`. The checklist below is the
+older board template.
 
 Tasks are considered complete when they meet the appropriate criteria:
 

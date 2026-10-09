@@ -1,408 +1,54 @@
 # AGENTS.md
 
-Guidance for all coding agents in this repository. CLAUDE.md includes this file (`@AGENTS.md`);
-other tools read it directly.
+Guidance for coding agents in this repository. `CLAUDE.md` includes this file (`@AGENTS.md`).
 
-## Agent communication — no calendar estimates
+This repository is the `dotnet new timewarp-architecture` template. Root `source/` and `tests/`
+are the template content (`.template.config/`). `timewarp-templates/` packs that content as a
+NuGet template. A change here ships to every generated app. This file is the monorepo agent
+guide and is not in the pack. Generated apps get `skills/`.
 
-**Never give temporal estimates** (hours, days, weeks, sprints, quarters, “multi-quarter,”
-“quick win this afternoon,” etc.). Calendar duration is meaningless for agent work: parallelism,
-model choice, and available context/tokens are unknown to the estimator and change per session.
+Feature flags `api`, `grpc`, `web`, `yarp`, and `postgres` are preprocessor switches. Leave
+`<!--#if (flag)-->` and `#if flag` regions intact (TWA0008 / TWA0010). Counter and analytics
+ship in every app. Removing one is `tw-slice-isolation`.
 
-- Prefer **scope** (what / how many surfaces / which blockers) over **when**.
-- Prefer **dependencies and proof gates** over “should take about…”
-- Do **not** substitute “tokens” or “agent-hours” as a fake precision unit either — they are not
-  stable or comparable across runs. If magnitude helps, use countable work (files, suites,
-  decisions, blockers), not time or budget guesses.
-- Kanban tasks must not carry Estimate fields (see **`tw-kanban`**).
+## Hard rules
 
-## What this repo is
-
-- **This repo IS the `dotnet new timewarp-architecture` template.** Root `source/` + `tests/` are
-  the template content (defined by root `.template.config/`); `timewarp-templates/` is the NuGet
-  packaging tree. Changes here ship to every generated app.
-- Feature flags (`api`, `grpc`, `web`, `yarp`, `postgres`) are template preprocessor switches —
-  keep `<!--#if (flag)-->` / `#if flag` regions intact when editing near them. Demo features
-  (counter, analytics) ship unconditionally; removing them is **`tw-slice-isolation`**
-  (Removing a demo slice).
-
-## Build / run / test
-
-Run from the repo root (the `dev` CLI resolves the root via git):
-
-- `dev run` — Aspire orchestrator (Development); `-lp <profile>` picks an AppHost launch profile
-  (e.g. `http`; default: first profile in launchSettings.json; needs Aspire CLI 13.6+)
-- `dev db reset --yes` — drop + re-migrate the database **inside the running AppHost**; the Docker
-  volume survives. `dev db nuke --yes` — **stops the AppHost** and deletes its Aspire-owned volumes
-  (`aspire stop --force --volumes`, Aspire CLI 13.6+; exits with its code); the next `dev run`
-  starts empty. A volume created before Aspire 13.6 is adopted, not owned, and may survive — nuke
-  prints a hint to remove it by hand (`docker volume ls` / `docker volume rm <name>`, or the
-  `ASPIRE_CONTAINER_RUNTIME` CLI). Without `--yes`, nuke only describes what it would do
-- `dev build` — full solution; **warnings are errors, 0/0 is the only acceptable result**
-- `dev test` — every project under `tests/` (globbed, run one at a time — shared in-proc port base); includes
-  family `JARIBU_MULTI` aggregators that compile co-located `source/**/*-tests.cs` runfiles
-- one suite: `cd tests/<project> && dotnet test -c Release` (MTP — the csproj-path form of
-  `dotnet test` is unsupported on .NET 11, same as .NET 10). Selection: `-- --filter-class <substring>` /
-  `-- --filter-method <substring>` / `-- --filter-tag <tag>` (also honors `JARIBU_FILTER_TAG`;
-  CLI wins), or `--list-tests` + `-- --filter-uid <uid>` for a specific discovered node
-  (`TimeWarp.Jaribu.TestingPlatform` ≥ 1.0.0-beta.15, timewarp-jaribu#23; name/tag
-  selection: cross-repo **`tw-jaribu`**).
-- `dotnet run source/<family>/features/…/<name>-tests.cs` — one co-located Jaribu runfile
-  standalone (local dev loop; CI uses family aggregators via `dev test`)
-- More commands: `dev --capabilities` (see the `tw-dev-cli` skill)
-
-## Before opening a PR
-
-Use the **`tw-pr`** skill (`/tw-pr`) — do not open a PR until its gates pass.
-Mandatory for this repo:
-
-1. **`ganda repo audit`** (blocking). On failure, prefer `ganda repo audit --fix`
-   (or `--fix --checks <id>`) then re-run audit and commit any fixes.
-2. **`dev check-version`** when shipping packages/template — source version must
-   be new vs the latest GitHub release tag; platform CPM pins equal `<Version>`
-   (task 124).
-3. **`dev build`** (0/0) for code changes; add tests / `dev template-smoke` when
-   the change type warrants it (see skill for scope table).
-
-Branch naming, commits, and merge policy: **`tw-git`**.
+- Never give calendar estimates (hours, days, weeks, sprints). Say scope, dependencies, and
+  proof gates. Do not invent token or agent-hour budgets. Kanban tasks have no Estimate field
+  (`tw-kanban`).
+- `dev build` is 0 warnings and 0 errors. Warnings are errors.
+- Tests are Jaribu and Shouldly. Do not add Fixie, xUnit, NUnit, MSTest, FluentAssertions,
+  MediatR, or Tailwind.
+- Mediator calls use TimeWarp.Mediator: `IRequest<OneOf<Response, SharedProblemDetails>>`.
+- Purpose regions are analyzer **TWA0004** (every source file; generated code is exempt). The
+  cross-repo skill's id **TWPA0004** is wrong for this repo. Maintenance rule:
+  `tw-agent-context-regions`.
+- When two things must agree, generate one from the other or add a build check.
+- Work that changes this repo is a kanban task (`tw-kanban`). Do not hand-number task files.
 
 ## Stack
 
-- **.NET 11** (SDK `11.0.100-rc.1.26425.128` until GA), C# latest, `Nullable` enabled repo-wide, central package management
-- Blazor WebAssembly + **TimeWarp.State**; **TimeWarp.Mediator** (NOT MediatR):
-  `IRequest<OneOf<Response, SharedProblemDetails>>`
-- Server endpoints: **both** web-server and api-server host **FastEndpoints generated from
-  contracts** (`[ApiEndpoint]` + `[ApiRoute]`; every hosted contract carries exactly one of
-  `[EndpointAuthorize]` (policies) or `[EndpointAllowAnonymous(reason)]` — the generator is
-  fail-closed, so a contract with neither marker emits no auth config at all rather than defaulting
-  to anonymous; TWA0013/TWA0014 enforce the pairing at build time; TWA0024 enforces that a named
-  Policy is registered by the hosting server). No hand-written `BaseEndpoint`
-  shims in the template. **Exception — browser-protocol endpoints:** a hand-written
-  `EndpointWithoutRequest` under `features/<slice>/…-endpoint-server.cs` is allowed when the
-  response is not the contract's JSON — an auth challenge, a form POST answered with a redirect, or
-  an antiforgery token fetch (today: `ChallengeEntraEndpoint`, `SignOutBrowserSessionEndpoint`,
-  `SignOutAntiforgeryTokenEndpoint`). Paths live in a shared contracts class; any session/state
-  change dispatches the existing mediator handler (no second implementation); the Design region
-  states why the generator does not fit. Not worth a generator: the bodies share nothing but the
-  route and `AllowAnonymous`. Validation stays on the mediator's `FluentValidationBehavior` — do not
-  adopt FastEndpoints' validator integration.
-- Tests — **single-framework Jaribu** (zero Fixie and zero xUnit; epic 145 / decision task 143 §6;
-  Fixie retired task **145-007**). Assertions: **Shouldly** only (do not introduce FluentAssertions
-  — v8+ is commercially licensed). **Do not reintroduce Fixie or xUnit.**
-  - **New product-slice tests** are co-located Jaribu runfiles (`<name>[-<function>]-tests.cs`
-    under `features/` / `platform/`), standalone via `dotnet run`. Preamble and C-create host
-    rules: skill **`tw-feature-placement`**; Jaribu itself: cross-repo **`tw-jaribu`**. Exemplars:
-    `create-role-tests.cs` (web, host-free), `get-weather-forecasts-tests.cs` (api, SetupOnce).
-  - **Host-level / topology** suites stay suite-shaped under `tests/` on **Jaribu MTP** (project-local
-    `global.json` test.runner). Closed-box topology: `aspire-tests` (145-003). In-proc HostGraph:
-    HostGraphFactory C-create (145-002).
-  - **Fixture lifetime — C-create is the default; C-share is the exception (145-008):** every
-    test class owns and disposes its own host graph (C-create, `HostGraphFactory` /
-    `SessionHostFixture<TInner>` subclass's `CreateAsync`) unless the suite is genuinely
-    **expensive AND multi-class closed-box** — then it may opt into a Jaribu session-scoped
-    fixture (`TimeWarp.Jaribu` ≥ 1.0.0-beta.15: `RegisterSessionFixture<T>` +
-    `SessionFixture.GetAsync<T>()`) via a `SessionHostFixture<TInner>`
-    (`tests/common/timewarp-testing`) subclass that delegates to the SAME per-class factory —
-    no duplicated boot logic. Exemplar: `web-spa-integration-tests`' `SpaSessionFixture`
-    (~109s → ~20s wall for its 6 previously-booting classes). Full rules and the anti-pattern
-    warning (never a process-static `Lazy`/bare static for sharing): skill
-    `tw-feature-placement` (C-share host lifetime).
-  - **CI:** family **`JARIBU_MULTI` aggregators** under
-    `tests/container-apps/<family>/<family>-jaribu-tests/` (web + api; Microsoft.Testing.Platform;
-    not in `.slnx` — task 136). Each aggregator's project-local `global.json` must **mirror the
-    root SDK pin** on SDK bumps (timewarp-jaribu#20). Standalone `dotnet run <file>.cs` is the
-    local dev loop.
-  - Playwright e2e is unaffected.
-- **Test host lanes (Aspire vs in-proc):** two lanes, no wholesale Aspire migration —
-  - **In-proc** (`WebApplicationHost` / timewarp-testing; defaults web=7000 web-http=7001 api=7255 yarp=8443, override with `TIMEWARP_TEST_PORT_BASE`):
-    DI substitution, mediator/pipeline, BFF mocks — **only place these ports live**; `dev test`
-    stays serialized for those projects (same base). Auth: `MockAccessTokenProvider` DI override and real
-    passkey-ceremony cookies remain first-class.
-  - **Closed-box** (`Aspire.Hosting.Testing` / AppHost): topology, ingress, multi-resource, and
-    process-isolation cases (e.g. FastEndpoints discovery pollution across AppDomain). No DI
-    mock/substitution across the process wall; dynamic Aspire ports. Auth: Development/Testing +
-    `Authentication:UseMock` enables fail-closed mock principal header
-    (`X-TimeWarp-Mock-Principal-Id`) for authenticated ingress→web BFF coverage (task 145-009);
-    Production never activates mock auth even when the flag is set.
-- Blazor form validation: **Blazilla** (explicit validator instance — supports `I*Details` binding)
-- **FluentUI v5 + plain CSS** design tokens (`wwwroot/css/tokens.css`); no Tailwind — do not
-  reintroduce it (see `tw-blazor-css-strategy` skill)
-- .NET Aspire orchestration; EF Core (postgres behind its flag)
+.NET 11 (SDK pin is `global.json`), C# latest, nullable on. Blazor WebAssembly and
+TimeWarp.State. FastEndpoints generated from contracts (`tw-web-api-contracts`). FluentUI v5
+and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 
-## Layout (kebab-case paths everywhere; namespaces PascalCase)
+## Where to look
 
-**File naming:** kebab-case for files and folders (map `user-service.cs` → `UserService`). Full
-agent rules and exception table: **`tw-csharp`** (File and directory naming). Axis-1 product
-grammar (`name[-function]-layer.cs`): **`tw-feature-placement`**.
+| Question | Home |
+|----------|------|
+| Build, run, test, database | `dev --capabilities` and `tw-dev-cli`. `dev run` starts Aspire. |
+| Before a PR | `tw-pr`. Gates in this repo: `ganda repo audit`; `dev check-version` when shipping the template or packages (bump `<Version>` and the platform package pins in the same commit); `dev build`; `dev template-smoke` when template output changes. Branch and merge: `tw-git`. |
+| File and type names | `tw-csharp`. `.cs` kebab is **TW0001** (warning, so the build fails). Feature filenames: `tw-feature-placement`. |
+| Where a file goes | `tw-feature-placement`. Slice boundaries: `tw-slice-isolation`. |
+| Contracts and browser-protocol endpoints | `tw-web-api-contracts` |
+| Razor, actions, outcomes | `tw-blazor`, `tw-blazor-layout` |
+| Aggregates | `tw-aggregate-pattern` |
+| Tests | `tw-jaribu` for the framework. Co-located runfiles, C-create / C-share, and host lanes: `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md` |
+| Deploy | `tw-deploy` |
+| Release cut | `tw-release`. Maintainer notes: `documentation/developer/guides/` (not packed). |
+| Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. |
+| Platform NuGet vs project reference | Root `Directory.Build.props`, `Directory.Packages.props`, and `msbuild/timewarp-platform-packages.props`. |
 
-**Do not kebab-force:** `.razor` / paired `.razor.cs` / `.razor.css` (Blazor type-matching names);
-MSBuild well-known props/targets; ASP.NET `Properties/`, `launchSettings.json`,
-`appsettings.<Environment>.json`; `_Imports.razor` / `App.razor` where the host requires them;
-`SKILL.md` (agent-skill mandated basename); `AnalyzerReleases.Shipped.md` /
-`AnalyzerReleases.Unshipped.md` (Roslyn release-tracking mandated basenames).
-
-**`.cs` enforcement:** `TimeWarp.SourceGenerators` diagnostic **`TW0001`** (`TW*` package family —
-not Architecture `TWA*`). Package is referenced repo-wide from root `Directory.Build.props`;
-`.editorconfig` sets `dotnet_diagnostic.TW0001.severity = warning` (build-breaking via
-TreatWarningsAsErrors). Requires SourceGenerators **≥ 1.0.0-beta.11** (TW0007 kebab
-`global-usings.cs`; multi-dot partials + skip `obj/`/`bin/` generated trees since beta.10).
-Non-`.cs` / folder basenames: **`ganda repo audit`**
-**`kebab-path-names`** (Ganda task **188**, shipped).
-
-```
-source/
-  foundation/        # shared contracts/application/domain/server layers -> TimeWarp.Foundation.* packages
-  analyzers/         # Roslyn analyzers + source generators -> TimeWarp.Architecture.{Analyzers,Generators,Attributes}
-  container-apps/
-    web/
-      features/      # product slices (feature-cohesive): all layers together under <slice>/
-                     # files named <name>[-<function>]-<layer>.cs; layer projects glob by suffix
-      platform/      # host/platform clusters (postgres, identity-host): same -layer suffix grammar
-                     # as features/, NOT …Features.* namespaces (TWA0009 platform, not product)
-      projects/      # artifact folders (csproj homes): web-contracts/ web-application/
-                     # web-domain/ web-infrastructure/ web-server/ web-spa/
-                     # (SPA features stay conventional under web-spa/features — not rehomed)
-      msbuild/       # feature-filename-grammar.g.props + feature-membership.targets
-    api/             # same axis-1 shape as web (features/ + platform/ + msbuild/);
-                     # features/weather-forecast/ (demo slice); platform/identity-host/ (agent token auth)
-      projects/      # api-contracts/ api-application/ api-domain/
-                     # api-infrastructure/ api-server/
-    grpc/            # same axis-1 shape as web (features/ + platform/ + msbuild/);
-                     # features/hello/ superhero/ greeter/ (demo slices); platform/codegen/
-      projects/      # grpc-contracts/ grpc-application/ grpc-domain/
-                     # grpc-infrastructure/ grpc-server/ (protos/ stays out of grammar scope)
-    aspire/projects/ # aspire-app-host/ aspire-service-defaults/
-    yarp/            # single-project family (IS the artifact; left flat)
-tests/               # mirrors source/; includes web-contracts-tests (host-free serialization round-trips)
-```
-
-**Where a file goes:** all logic lives in a concern folder under one of the two shared trees
-above — `features/` for product concerns, `platform/` for platform concerns — named by the
-filename grammar below; an artifact folder (`web-server/`, `web-infrastructure/`, …) holds only
-its own definition (csproj, global-usings) and entry-point bootstrap (program.cs, appsettings,
-host-config exemplars). Litmus test for the fuzzy middle: if the deployable were deleted, would
-the file still mean something? Yes → a shared tree; no → bootstrap, stays with the artifact.
-
-**Features substrate:** cross-slice compile-time constants (e.g. `ModuleIds`, `RoleIds`,
-`PermissionIds`) may use the bare `…Features` namespace (no slice Id) so product slices can
-share ids without TWA0009 cross-slice references. Runtime engines and host ports those ids
-feed (permission evaluator, payment HttpContext adapter) live under `platform/` with
-non-Features namespaces. Document the choice in the file's Design region. Full litmus:
-`skills/tw-feature-placement` (**Features substrate**).
-
-**Axis-1 filename grammar (family-generic — web, api, grpc):** files under `<family>/features/`
-and `<family>/platform/` use `<name>[-<function>]-<layer>.cs` (`handler`→application,
-`endpoint`→server; contracts drop the function segment: `create-role-contracts.cs`). Escape
-hatch: `<name>-<layer>.cs` with no function (`role-store-application.cs`,
-`postgres-db-context-infrastructure.cs`). Registry SSOT (itself family-agnostic):
-`source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
-generates the analyzer constants once, plus a standalone `<family>/msbuild/feature-filename-grammar.g.props`
-per family (web, api, grpc — yarp is a single-project family and is excluded). Each family's own
-tree roots (`WebFeatureTreeRoot`/`WebPlatformTreeRoot`, `ApiFeatureTreeRoot`/`ApiPlatformTreeRoot`,
-`GrpcFeatureTreeRoot`/`GrpcPlatformTreeRoot`) are globbed into that family's layer projects via
-its own `<family>/msbuild/feature-membership.targets`, imported once via
-`<family>/Directory.Build.targets`. **Registry edit ⇒ full rebuild** (analyzer DLLs can go stale
-under pure incremental builds). Namespaces do **not** track folders — product slices use
-`…Features.<Id>` (TWA0009 — namespace-based, already universal across families); platform
-clusters keep non-Features namespaces. Full rule, litmus test, and decision table:
-**`tw-feature-placement` skill** (`skills/tw-feature-placement/SKILL.md`).
-
-**Registered-unrouted layer (`tests`, task 135):** the JSON registry's `"unroutedLayers"` key
-(currently `["tests"]`) registers a layer suffix that TWA0015/0016 and the membership guard
-match and validate exactly like a routed layer, but that gets NO `Compile` glob in any family's
-`feature-filename-grammar.g.props` — a `<name>[-<function>]-tests.cs` co-located Jaribu runfile
-stays a first-class grammar citizen (misnamed/orphaned files still trip the teaching error, and
-`-handler-tests.cs` still trips TWA0015) while compiling into no layer project. **Enforcement
-surface:** TWA0015/0016 and the membership guard only fire when the file is compiled. The repo
-`dev build` solution gate never touches unrouted `*-tests.cs` (no layer `Compile` glob; not in
-`.slnx`). Coverage restored by (1) standalone `dotnet run` / `dotnet build` on the runfile,
-(2) family `JARIBU_MULTI` aggregators under `tests/container-apps/<family>/<family>-jaribu-tests/`
-via `dev test` (task 136), and (3) `dev template-smoke` tiers 1–3 for the exemplars. Runfile
-authoring convention: **`tw-feature-placement`** skill (Co-located Jaribu runfile preamble
-section).
-
-## Platform packages (foundation + analyzers + identity)
-
-Greenfield `dotnet new timewarp-architecture` apps **always** reference **published NuGet packages**
-for foundation, analyzers, and identity (package-mode only — vendored platform trees are
-unconditionally excluded from template output). This monorepo dogfoods all three via
-`ProjectReference` when source trees are present.
-
-| PackageId | Contents |
-|-----------|----------|
-| `TimeWarp.Foundation.*` / `TimeWarp.Modules` | Runtime foundation layers (task 051) |
-| `TimeWarp.Architecture.Analyzers` | Convention DiagnosticAnalyzers only (TWA0002–0016, TWA0020–0028) — safe repo-wide |
-| `TimeWarp.Architecture.Generators` | Source generators + TWA0001, TWA0017/0018 (ingress route generation) — attach only where gens should run |
-| `TimeWarp.Architecture.Attributes` | Runtime attributes (e.g. `[ApiEndpoint]`) — public library |
-| `TimeWarp.Identity` | Principal identity (passkeys / agent keys); published since 2.0.0-beta.6 |
-
-MSBuild dual-mode (auto-detects missing source trees; switches defined in ROOT
-Directory.Build.props so the tests tree gets them too): `UseFoundationPackages` /
-`UseAnalyzerPackages` / `UseIdentityPackages` / `UseX402Packages`. CPM `PackageVersion` pins for platform packages
-**equal the release `<Version>`** and bump in the same commit as it (task 124 policy — packages
-and template publish together in one release run, so pins always reference versions that exist
-by the time any generated app restores; the old lag-behind-published policy shipped a template
-whose pins predated its own release). Greenfield generated apps are package-mode only — do not
-vendor `source/analyzers/**`. Analyzers are repo-wide; Generators attach only on projects that
-should run generators; never leave both a ProjectReference and a PackageReference for the same
-consumer. Keep `CompilerVisibleProperty` `TimeWarpSliceRoot` (TWA0009).
-
-**sourceName-safe platform package IDs:** template `sourceName` is `TimeWarp.Architecture`, so a
-literal `TimeWarp.Architecture.Analyzers` in csproj/CPM would rewrite to `AppName.Analyzers` on
-generate. IDs and the Attributes namespace are composed in
-`msbuild/timewarp-platform-packages.props` (`$(_TwPlatformVendor).Architecture.*` → properties
-like `$(TwArchitectureAnalyzersPackageId)`). Import that props from both root
-`Directory.Build.props` and `Directory.Packages.props` (CPM does not inherit DBP). Contracts use
-dual-mode MSBuild `<Using>` for the Attributes namespace (package → platform namespace property;
-source → `$(RootNamespace).Attributes`). Regression gate: `dev template-smoke` (also
-`.github/workflows/template-smoke.yml`).
-
-## Key patterns
-
-- **Endpoint-centric contracts**: `public static partial class Operation` with nested
-  `Query`/`Command`, `Response`, `Validator`; `[ApiRoute("api/…", HttpVerb.X)]` (+
-  `[AuthApiRequest]`, `[OpenDataQueryParameters]`) source-generate route members onto the partial.
-  Hosted operations also carry `[ApiEndpoint]` (generation opt-in) plus exactly one of
-  `[EndpointAuthorize(Policy=…)]` or `[EndpointAllowAnonymous(reason)]` so the FastEndpoint
-  generator emits the HTTP shim's auth config (fail-closed: no marker means no auth config emitted,
-  not anonymous). `IAuthApiRequest` is a client/mock-mode identity signal only — it never secures
-  the server; `[EndpointAuthorize]` is the sole server-auth marker (TWA0014 enforces the pairing).
-  Full spec: **`tw-web-api-contracts` skill** — invoke it before touching contracts.
-- **Prefer analyzers/source generators over convention-by-memory**: when two things must agree,
-  generate one from the other or add a build-time check. Existing generators: contract attributes,
-  FastEndpoints, `[Page]`, `[StateAccess]`, the SPA mock-factory registry.
-- **IAssemblyMarker**: every product/platform assembly gets a generated interface marker
-  (`GenerateAssemblyMarker` in root `Directory.Build.targets`; namespace via
-  `AssemblyMarkerNamespace`, not `RootNamespace` alone — container-apps share one RootNamespace).
-  Opt out with `TwGenerateAssemblyMarker=false`.
-- Serializer options for the contract seam come from `ContractSerializationDefaults` — never
-  declare seam options inline.
-
-## Enforcement — conventions are compiler-checked (build-breaking)
-
-Diagnostic IDs use the prefix **TWA** = **T**ime**W**arp **A**rchitecture (not the generic
-`TimeWarp.SourceGenerators` package, which will use a different prefix).
-
-| ID | Rule |
-|----|------|
-| TWA0001 | partial-class primary/secondary file declaration shape |
-| TWA0002/0003 | contract property nullability must agree with FluentValidation presence rules |
-| TWA0004 | every source file carries `#region Purpose` (one honest line minimum) |
-| TWA0005 | **retired** (task 131 F-002) — was MVC endpoint verb vs `[ApiRoute]`; ID reserved, do not reuse. FastEndpoints take verb from the contract at generation time |
-| TWA0006 | every routed contract has a server endpoint or `[ClientOnlyContract(reason)]` |
-| TWA0007 | Aspire `AddProject` resource names are `ServiceNames` constant values |
-| TWA0008 | no template-conditional tokens in comments/strings (the dotnet-new engine misreads them and truncates generated files); escape hatch: the `cnd:noEmit` comment-marker pair |
-| TWA0009 | product slices (`…Features.<Id>` under SliceRoot) must not reference other product slices (share via Components/contracts); platform `Applications` is one-way free; opt-out: `[CrossSliceReference(typeof(T), reason)]` |
-| TWA0010 | a directive naming a template.json flag requires that flag in DefineConstants (else the region silently vanishes from the repo build) |
-| TWA0011/0012 | an `IAggregateRoot` must declare a nested `Invariants : AbstractValidator<T>`, and it must be `private` (kept out of `AddValidatorsFromAssemblyContaining`) |
-| TWA0013 | an `[ApiEndpoint]` contract must carry `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]` — the generator is fail-closed and emits no auth config for neither |
-| TWA0014 | an `[ApiEndpoint]` contract's auth posture must not be contradictory: not both markers, and not `[EndpointAllowAnonymous]` paired with a nested `Query`/`Command` that declares `IAuthApiRequest` |
-| TWA0015 | feature filename: registered function segment pairs with the wrong layer (see feature-filename-grammar.json); also fires on a routed function paired with the registered-unrouted `tests` layer (e.g. `create-role-handler-tests.cs`). Features-tree-only — `platform/` is not function-pair-checked (membership guard still requires a layer suffix there) |
-| TWA0016 | feature filename: unregistered or mis-spelled function segment used as archetype (escape hatch `<name>-<layer>.cs` stays valid, including `<name>-tests.cs`). Same features-tree-only scope as TWA0015 |
-| TWA0017 | a generated ingress web prefix (`WebServerApiRoutePrefixes`) shadows another server's route space — it equals/parents a hosted route in another contracts assembly, or collides with an `IngressReservedPathPrefixes` entry (grpc) |
-| TWA0018 | a web-contracts route cannot be collapsed to a top-level ingress prefix (bare `api` or a parameterized second segment like `api/{id}`) |
-| TWA0019 | a name in `IngressWebContractAssemblies` matches no marked referenced assembly (typo / renamed assembly / missing `[assembly: ApiEndpointsEmbedded]`) — otherwise the ingress list would silently generate empty |
-| TWA0020 | `[ApiEndpoint]` combined with `[ClientOnlyContract]` (outer or nested Query/Command) — generators skip ClientOnly; remove one of the markers |
-| TWA0021 | mock SPA auth providers (`MockAuthenticationStateProvider` / `MockAccessTokenProvider`) registered outside `MockAuthenticationRegistration` — bypasses the Development/Testing + `Authentication:UseMock` fail-closed gate (task 145-009) |
-| TWA0022 | direct `Send` on the mediator (`ISender`/`IMediator`, incl. the inherited `Mediator` member) anywhere in SPA client code — dispatch through the TimeWarp.State generated `<Name>ActionSet` method, which wires the `CancellationToken`. Gated on the Blazor WASM SDK's `UsingMicrosoftNETSdkBlazorWebAssembly`; razor-generated trees ARE analyzed, other `.g.cs` trees exempt (task 196) |
-| TWA0023 | type-stem identifiers: named type that already names the role **is** the identifier (strip leading `I` on interfaces; two of the same type qualify with the type as head). **Default off** — enable with `dotnet_diagnostic.TWA0023.severity = warning`. Opt-out: `[TypeStemIdentifier(reason)]`. Rule prose: flow skill `tw-csharp`. |
-| TWA0024 | hosted `[EndpointAuthorize] Policy` must equal a policy this server registers (`AuthorizationOptions`/`AuthorizationBuilder.AddPolicy`, or `PermissionIds` when `AddPermissionPolicies` is called). Contracts cannot reference server-layer constants; the server compilation is the agreement check (task 111) |
-| TWA0025 | `FluentMessageBar` with `Intent` `Error`/`Success` in web-spa razor outside `components/MessageBars.razor` — operation outcomes go through `NotificationState` (`AddNotification` / `ReportProblem`, or `OutcomeNotification` / `ProblemDetailsNotification` published from a handler) and the shell paints the single region; static `Info`/`Warning` guidance stays inline. Opt-out: `[PageLocalMessageBar(reason)]` on the component. Gated on the Blazor WASM SDK like TWA0022 (task 247) |
-| TWA0026 | a web-spa component (any member of a `ComponentBase` type, lifecycle overrides included) calls a side effect directly — `NavigationManager.NavigateTo`/`NavigateToLogin`/`Refresh`, `IJSRuntime`/`IJSObjectReference` invoke, `IApiService` (and `IWebServerApiService`/`IApiServerApiService`), `HttpClient` send/get/post/put/delete/patch, Blazored session/local storage writes, or a first-party `[SideEffectService]` type (`PasskeyCeremonyClient`, the `*JsModule` helpers). Components only dispatch; the action's handler does the work. Handlers, services and static helpers are never flagged. Opt-out: `[DirectComponentSideEffect(reason)]` on the component or member. Gated on the Blazor WASM SDK like TWA0022 (task 265) |
-| TWA0027 | `[DirectComponentSideEffect]` with an empty or whitespace reason — it does not opt out of TWA0026 (task 265) |
-| TWA0028 | an `Enumeration` (Bogard) subclass member — a static field or property typed as the subclass — must be a `public static readonly` field; any other shape is invisible to (or mutable behind) `Enumeration.GetAll` and every `From*`/`TryFrom*`/JSON lookup (task 105) |
-| TWA0029/0030/0031 | **retired** (task 282) — were the server-offers agreement checks (`[ActionOffer]` / `[Offerable]` vs `[CatalogAction]`); offers were replaced by typed availability flags and page-scoped actions. IDs reserved, do not reuse |
-
-**Generator diagnostics (TWE / SG)** live in
-`source/analyzers/timewarp-architecture-analyzers/diagnostics/diagnostic-descriptors.cs`
-(SSOT — do not redeclare private copies of these IDs):
-
-| ID | Rule |
-|----|------|
-| TWE002 | `[ApiEndpoint]` contract missing nested `Query`/`Command` — no endpoint generated |
-| TWE003 | route+verb conflict across `[ApiEndpoint]` contracts — **all** parties reported; **none** of the group generated |
-| TWE005 | `[Page]` `Policy` must be a const field reference (not string literal / `nameof`) |
-| TWE006 | `[TypedId]` target must be a `readonly partial record struct` |
-| TWE007 | unresolvable route or `HttpVerb` (missing/empty `[ApiRoute]`, unknown verb) — fail-closed; no emission |
-| TWE008 | `EnableApiEndpointGeneration` requires `ApiEndpointContractAssemblies` as AssemblyName allow-list (`web-contracts`, `api-contracts`); empty/typo/unmarked is fail-closed — no silent empty generation |
-| TWE009 | `[Page] Navigable = true` requires a static route (no `{token}`) and a literal `true`/`false` — otherwise the page would silently miss `PageRegistry` |
-| TWE010 | two routes of one `[Page]` page are the same Blazor route (case-insensitive, token names ignored) — primary, additional, or a hand-written `[Route]` repeating one; no page surface generated |
-| TWE011 | conflicting `[Page]` route declaration — stacked `[Page]` (put aliases on one: `[Page("/primary", "/alias")]`), a non-literal additional route, or an alias token typed differently from the primary route |
-| SG001 | shared source-generator log (resilience backstop) |
-| SG002 | `EnableApiEndpointGeneration` true but FastEndpoints / `BaseFastEndpoint` missing |
-| SG010 | TypedId BCL surface generation failed (resilience) |
-| SG011 | TypedId EF converter generation failed (resilience) |
-
-Retired / reserved generator IDs (do not reuse without deliberate new meaning): **TWE001**,
-**TWE004** (declared historically, never reported; deleted task 131-001 F-014); **TWE012**,
-**TWE013**, **TWE014** (the `[Offerable]` server-offers generator, retired task 282 — never
-shipped; offers replaced by typed availability flags).
-
-**Slice isolation (TWA0009):** product code under SliceRoot must not reach other product
-slices. Placement, platform `Applications`, sharing, and `[CrossSliceReference]` opt-out:
-skill **`tw-slice-isolation`** (`skills/tw-slice-isolation/SKILL.md`).
-
-**Aggregate pattern (TWA0011/0012):** typed id, `Entity<TId>` base, fail-closed `Create`, named
-mutations, private nested `Invariants`, save-time enforcement via `AggregateDbContext`. Pattern
-SSOT: skill **`tw-aggregate-pattern`** (`skills/tw-aggregate-pattern/SKILL.md`).
-
-## Agent Context Regions — maintenance rule
-
-Every source file carries a `#region Purpose` block (enforced by TWA0004); files with design
-decisions also carry `#region Design`, and optionally `#region Open Questions`. These are part of
-the code, not decoration:
-
-- **When you edit a file that has regions, reconcile them with your change before finishing.**
-  A Design region describing the old approach is a bug you just introduced.
-- **When you create a source file, add `#region Purpose`** (one honest line minimum) at the top,
-  before the namespace — plus `Design` where there are genuine decisions to record.
-- **When you read an unanswered question in `#region Open Questions` that you can answer,**
-  answer it (or implement the answer and remove the pair).
-
-Formats and lifecycle: the `tw-agent-context-regions` skill.
-
-## Definition of Done
-
-- **API endpoint**: contract per the skill (Request/Response/Validator, shared `I*Details` where
-  bindable; `[ApiEndpoint]` when the host should generate the FastEndpoint; exactly one of
-  `[EndpointAuthorize]` or `[EndpointAllowAnonymous(reason)]`, always) + Handler + **co-located
-  Jaribu** integration tests (happy path AND validation rejection). Backend validation comes from
-  the mediator's `FluentValidationBehavior` — do not re-validate in handlers.
-- **Client feature**: State/Actions/Components + serialization round-trips (prefer co-located
-  Jaribu; suite-shaped `web-contracts-tests` is Jaribu MTP) for non-trivial shapes (ctor+Guard,
-  envelopes, generated route properties).
-
-## Task management
-
-**Always work on a kanban task** when changing this repo (code, docs, config, skills, CI). Prefer an
-existing open task; otherwise create one. Exceptions: pure Q&A, user-waived, read-only exploration.
-
-`ganda kanban` over the `kanban/` tree (`backlog/`, `to-do/`, `in-progress/`, `done/`):
-**always `ganda kanban create "title"`** (it assigns the number — never hand-number), then
-`move`/`done` to transition. Keep checklist / `## Session` current; commit kanban mutations.
-Do not create perpetual/never-closing tasks. See the `tw-kanban` skill.
-
-## Documentation
-
-Purpose/Design regions (TWA0004 + the reconcile-on-edit rule) plus skills are the
-documentation of record for generated apps. Published packages (`IsPackable=true`)
-carry real XML summaries on public surface (CS1591 is a warning there; template/app
-code keeps CS1591 in NoWarn and does not add hollow `///`). The nine repo skills
-under `skills/` ship in those apps (pinned to the analyzers they ship beside;
-`skills/*/analysis/` does not ship). The timewarp.software copy is discovery/always-latest;
-both come from the same release commit.
-
-`documentation/` is **maintainer-only** and is not packed into the template
-(generated apps have no `documentation/` tree). It holds
-`documentation/developer/guides/releasing.md` (artifact retention, Free-plan
-cap, `dev release` cut) and
-`documentation/developer/guides/webmcp-testing.md` (hand-testing WebMCP in the
-browser; task 271). Operator sequence for a release cut is the cross-repo
-**`tw-release`** skill.
-
-ADRs are not shipped as pages. A still-true rule lives in the skill that owns it or in the
-Design region of the code/analyzer that enforces it.
-
-Cross-repo flow skills used from this repo (not packed here): **`tw-csharp`** (file naming),
-**`tw-git`** (branch/merge), **`tw-kanban`**, **`tw-jaribu`**, **`tw-dev-cli`**,
-**`tw-agent-context-regions`**, **`tw-release`**.
+Repo skills under `skills/` ship in generated apps. `skills/*/analysis/` does not.
+`documentation/` is maintainer-only and is not packed. A live rule belongs in the skill that
+owns it or in a Design region.

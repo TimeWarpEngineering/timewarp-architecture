@@ -55,6 +55,11 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+.twe-agent-ask__actions {
+  display: flex;
+  gap: var(--twe-space-3);
+}
+
 .twe-agent-ask__approval {
   display: flex;
   flex-wrap: wrap;

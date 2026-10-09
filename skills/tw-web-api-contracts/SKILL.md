@@ -25,6 +25,23 @@ shape without a parallel view model.
 hand-written MVC `BaseEndpoint` shims. Validation stays on the mediator's `FluentValidationBehavior`. Hosts set
 `EnableApiEndpointGeneration` plus an `ApiEndpointContractAssemblies` AssemblyName allow-list (TWE008).
 
+### Browser-protocol endpoints (the exception)
+
+A hand-written `EndpointWithoutRequest` at `features/<slice>/…-endpoint-server.cs` is allowed when
+the HTTP response is not the contract's JSON: an auth challenge, a form POST answered with a
+redirect, or an antiforgery token fetch. The living cases are `ChallengeEntraEndpoint`,
+`SignOutBrowserSessionEndpoint`, and `SignOutAntiforgeryTokenEndpoint`.
+
+- The path lives on a shared contracts class.
+- Any session or state change dispatches the existing mediator handler. Do not write a second
+  implementation.
+- The Design region says why the generator does not fit.
+- These bodies share nothing but the route and `AllowAnonymous`, so a generator is not worth it.
+- Validation stays on `FluentValidationBehavior`. Do not adopt FastEndpoints' validator integration.
+
+Ordinary JSON operations stay generated. The filename function `endpoint` is for this exception
+(`tw-feature-placement`).
+
 ## Detection — find the pattern in the current repo
 
 Activate when **any** signal matches:
@@ -138,7 +155,8 @@ mistyped, or unmarked names are **TWE008**. Hosted contracts assemblies apply
 | Update | `Put` |
 | Delete | `Delete` |
 
-The verb must match the server endpoint.
+The verb is the contract's `[ApiRoute]` verb. Generated FastEndpoints take it from there. Do not
+hand-write a second verb. Analyzer id TWA0005 (MVC verb vs `[ApiRoute]`) is retired and reserved.
 
 ## Contract shell
 
@@ -357,8 +375,9 @@ host-free serialization check is the only test that can run in that window. Pref
 `create-role-tests.cs`). Suite-shaped `*contracts-tests` projects are Jaribu MTP — assert with
 **Shouldly** only; do not reintroduce Fixie or xUnit.
 
-Add `SerializeAndDeserialize` round-trips using `ContractSerializationDefaults` (camelCase
-properties; PascalCase string enums via `JsonStringEnumConverter`, integers rejected). **Prioritize**
+Add `SerializeAndDeserialize` round-trips using `ContractSerializationDefaults`. Never declare
+contract-seam `JsonSerializerOptions` inline. The shared options are camelCase properties and
+PascalCase string enums via `JsonStringEnumConverter` (integers rejected). **Prioritize**
 contracts where serialization can actually diverge: `required`/`init` members, custom converters,
 non-default constructors, enum properties, `OneOf`/`SharedProblemDetails` envelopes. Plain
 auto-property POCOs are low-priority once server integration tests exist. Do not use

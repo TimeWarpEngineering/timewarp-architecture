@@ -64,6 +64,15 @@ in-proc `HostGraphFactory` boots are already cheap; session sharing is for the c
   would need to be the same file (or the type simply isn't shared when run alone) — no co-located
   exemplar exists yet; treat this as an open follow-up if a co-located suite ever needs it.
 
+## Host lanes
+
+Two lanes. Do not move a DI-substitution test onto Aspire to "use the real host."
+
+| Lane | Use for | Auth |
+|------|---------|------|
+| In-proc (`HostGraphFactory`, `WebApplicationHost`, timewarp-testing) | mediator, pipeline, BFF mocks, DI substitution. Ports live only in `InProcTestPorts`. `dev test` runs those projects one at a time because they share that base. | `MockAccessTokenProvider` as a DI override, and real passkey-ceremony cookies. Register mock SPA auth only through `MockAuthenticationRegistration` (TWA0021). |
+| Closed-box (`Aspire.Hosting.Testing`) | topology, ingress, multi-resource, process isolation (for example FastEndpoints discovery across an AppDomain) | No DI substitution across the process wall. Dynamic Aspire ports. `Authentication:UseMock` plus header `X-TimeWarp-Mock-Principal-Id` for authenticated ingress, and only in Development/Testing. Production never honors the flag (`tw-deploy`). |
+
 ```csharp
 #!/usr/bin/env -S dotnet --
 #:project <path-to-the-layer-project-this-test-needs, e.g. $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj>

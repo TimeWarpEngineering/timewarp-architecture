@@ -8,8 +8,10 @@
 // id it rendered. ResolveApproval clears the state only for the matching id and releases that call
 // in the gate. SyncWebMcp republishes the page's tools after navigation; the dispatcher itself
 // cancels a pending call when the location changes.
-// ChatReadiness is the task 289 probe. It starts Unknown. LoadChatConfiguration sets Configured
-// or NotConfigured and stores the setup command. Ask renders from this, not from IChatClient.
+// ChatReadiness is the task 289 probe. It starts Unknown. LoadChatConfiguration maps the outcome
+// through ChatReadinessProbe (task 293): Configured, NotConfigured (server says no key),
+// Unauthenticated (401) or Error, and ChatProblem keeps the Error text. AuthenticationStateListener
+// re-runs the probe on every sign-in and sign-out. Ask renders from this, not from IChatClient.
 // The docked panel, its edit mode, and its conversation credential live here because TimeWarpPage
 // remounts on navigation. The transcript does not: it is AskConversationThreads, keyed by
 // ConversationGeneration. EditMode is shared by the in-app chat and WebMCP; closing the panel
@@ -36,7 +38,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public string? ChatModel { get; private set; }
 
-  public bool ChatProbeCompleted { get; private set; }
+  public string? ChatProblem { get; private set; }
 
   public bool IsPanelOpen { get; private set; }
 
@@ -99,7 +101,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ChatReadiness = CatalogAgentReadiness.Unknown;
     ChatSetupCommand = XaiChatDefaults.SetupCommand;
     ChatModel = null;
-    ChatProbeCompleted = false;
+    ChatProblem = null;
     IsPanelOpen = false;
     IsPanelExpanded = false;
     EditMode = AgentEditMode.AskBeforeEditing;

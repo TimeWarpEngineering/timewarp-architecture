@@ -8,6 +8,11 @@
 
   Design: Docked on the shell, not a modal. The top-bar Ask AI button and the Ctrl-K Ask action
   both open it. The page reflows beside it; below 880px and when expanded it covers the viewport.
+  It renders the probe's state (task 293): only when the server answered "no key" does it show
+  "AI not configured" and the pwsh user-secrets command. Signed out (401) shows "Sign in to use
+  Ask" and a button that closes the panel and goes to Login with the current page as the return
+  path. Any other failure shows the status, title and detail and a Retry that runs the probe
+  again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
   Tools are the current page's catalog actions plus page_context, the same list WebMCP publishes,
   including the approval bit for the conversation's edit mode. The panel rebuilds the agent when
   the route, the edit mode, or the conversation generation changes. A route or edit-mode rebuild
@@ -65,6 +70,7 @@
     string.IsNullOrWhiteSpace(AgentSurfaceState.ConversationDisplayName)
       ? "New conversation"
       : AgentSurfaceState.ConversationDisplayName;
+  private string? Problem => CatalogAgentAvailability.Problem(AgentSurfaceState);
 
   private bool ConversationExpired =>
     AgentConversationAuthority.IsExpired(AgentSurfaceState.Conversation, DateTimeOffset.UtcNow);
@@ -249,6 +255,15 @@
     }
   }
 
+  private async Task SignInAsync()
+  {
+    string returnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+    await AgentSurfaceState.CloseAskPanel();
+    await NoSubRouteState.ChangeRoute(newRoute: TimeWarp.Architecture.Features.Identity.LoginPage.GetLoginUrl(returnPath));
+  }
+
+  private Task RetryAsync() => AgentSurfaceState.LoadChatConfiguration();
+
   private void OnStatusChanged(Ai.ConversationStatus status)
   {
     if (!Disposed && status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
@@ -351,6 +366,21 @@
   {
     <p data-qa="AgentAskNotConfigured">AI not configured</p>
     <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+  }
+  else if (Readiness == CatalogAgentReadiness.Unauthenticated)
+  {
+    <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
+    <div class="twe-agent-ask__actions">
+      <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+    </div>
+  }
+  else if (Readiness == CatalogAgentReadiness.Error)
+  {
+    <p data-qa="AgentAskError">Ask could not load its configuration</p>
+    <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
+    <div class="twe-agent-ask__actions">
+      <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+    </div>
   }
   else if (Agent is null || Conversation is null)
   {

@@ -16,8 +16,9 @@
 
 ### Documentation
 
-Purpose/Design regions plus `skills/` are the documentation of record (`AGENTS.md`).
-Generated apps include `skills/` in their template output.
+Purpose/Design regions plus `skills/` are the documentation of record. `AGENTS.md` is the short
+core for agents in this repo and is not packed into the template. Generated apps include
+`skills/` in their template output.
 
 ### Installation
 

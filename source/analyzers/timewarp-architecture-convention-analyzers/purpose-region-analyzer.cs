@@ -9,7 +9,7 @@
 // of an exemption, so the check needs no judgment. Generated code is excluded structurally via
 // GeneratedCodeAnalysisFlags.None (auto-generated headers, *.g.cs), not by heuristic.
 // A #region Design block is intentionally NOT enforced — "has decisions worth recording" cannot
-// be judged mechanically; that half of the convention is governed by AGENTS.md and review.
+// be judged mechanically; that half of the convention is the tw-agent-context-regions skill.
 // Placement anywhere in the file counts: position is skill guidance, not analyzer scope.
 #endregion
 
