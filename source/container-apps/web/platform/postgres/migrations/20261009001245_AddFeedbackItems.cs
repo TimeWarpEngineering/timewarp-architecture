@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TimeWarp.Architecture.Persistence.Migrations;
 
 /// <inheritdoc />
-public partial class _20261009001245_AddFeedbackItems : Migration
+public partial class AddFeedbackItems : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)

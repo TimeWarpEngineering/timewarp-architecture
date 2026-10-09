@@ -11,7 +11,8 @@
 
 #region Purpose
 // Jaribu runfile for requirement 7: id and permalink, owner read, other-user 404, mail only when
-// opted in with an email on the profile, and submit success when there is no email.
+// opted in with an email on the profile, submit success when there is no email, a receipt even
+// when the mail send throws, and CR/LF rejection in mail headers.
 #endregion
 
 //-:cnd:noEmit
@@ -25,6 +26,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
   using System.Text.Json;
   using FluentValidation.Results;
+  using Microsoft.Extensions.Logging.Abstractions;
   using Shouldly;
   using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Architecture.Features.Feedback.Application;
@@ -178,6 +180,31 @@ namespace TimeWarp.Architecture.Features.Feedback
         $"FILING-PROOF id={response.FeedbackItemId:D} permalink={response.Permalink} emailCopySent=true");
     }
 
+    public static async Task FailingMailSend_Should_StillReturnTheReceipt()
+    {
+      World world = new(new ThrowingEmailSender());
+      await world.SetEmailAsync("ada@example.com");
+      SubmitContract.Command command = Complaint("Mail is down");
+      command.EmailCopy = true;
+      SubmitContract.Response response = await world.SubmitAsync(world.Owner, command);
+
+      response.FeedbackItemId.ShouldNotBe(Guid.Empty);
+      response.Permalink.ShouldBe(FeedbackPermalink.For(response.FeedbackItemId));
+      response.EmailCopySent.ShouldBeFalse();
+      GetContract.Response stored = await world.GetAsync(world.Owner, response.FeedbackItemId);
+      stored.Title.ShouldBe("Mail is down");
+      Console.WriteLine(
+        $"FILING-PROOF id={response.FeedbackItemId:D} permalink={response.Permalink} emailCopySent=false (sender threw)");
+    }
+
+    public static Task EmailMessage_Should_RejectLineBreaksInHeaders()
+    {
+      Should.Throw<ArgumentException>(() => new EmailMessage("a@b.example\r\nBcc: x@y.example", "Subject", "Body"));
+      Should.Throw<ArgumentException>(() => new EmailMessage("a@b.example", "Subject\nBcc: x@y.example", "Body"));
+      Should.NotThrow(() => new EmailMessage("a@b.example", "Subject", "Line one\r\nLine two"));
+      return Task.CompletedTask;
+    }
+
     public static async Task UncheckedEmailCopy_Should_SendNothing()
     {
       World world = new();
@@ -303,14 +330,22 @@ namespace TimeWarp.Architecture.Features.Feedback
       public ProfileEmailLookup Lookup { get; }
       public RecordingEmailSender Mail { get; } = new();
       public PrincipalId Owner { get; } = PrincipalId.New();
+      private readonly IEmailSender Sender;
 
-      public World()
+      public World(IEmailSender? sender = null)
       {
         Lookup = new ProfileEmailLookup(Profiles);
+        Sender = sender ?? Mail;
       }
 
       public SubmitHandler SubmitAs(PrincipalId? principal) =>
-        new(new StubCurrentPrincipalAccessor(principal), Feedback, Lookup, Mail, new FixedBaseUrl(new Uri("https://app.example")));
+        new(
+          new StubCurrentPrincipalAccessor(principal),
+          Feedback,
+          Lookup,
+          Sender,
+          new FixedBaseUrl(new Uri("https://app.example")),
+          NullLogger<SubmitHandler>.Instance);
 
       public GetHandler GetAs(PrincipalId? principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Feedback);
@@ -367,6 +402,12 @@ namespace TimeWarp.Architecture.Features.Feedback
         Messages.Add(message);
         return Task.CompletedTask;
       }
+    }
+
+    private sealed class ThrowingEmailSender : IEmailSender
+    {
+      public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException("Mail transport is down");
     }
 
     private sealed class FixedBaseUrl : IAppBaseUrlAccessor

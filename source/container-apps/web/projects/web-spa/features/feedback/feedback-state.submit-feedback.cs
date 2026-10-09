@@ -5,8 +5,10 @@
 #region Design
 // Visibility Both so the in-app assistant and WebMCP can file as the signed-in user. Submit is
 // not on the read-only allow-list, so it stays approval-gated. The handler does not navigate;
-// the receipt stays on the form. The page prepends nothing itself — it re-lists after success.
-// The agent payload is the API response (id and permalink included).
+// the receipt stays on the form. On success the handler puts the new item at the top of Items
+// (built from the response; FiledAt is the client's clock, the list shows no time), so a human,
+// in-app assistant, or WebMCP submit all refresh "Your filings" the same way and the page does not
+// re-list. The agent payload is the API response (id and permalink included).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -72,6 +74,17 @@ partial class FeedbackState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackState.LastReceipt = response;
+        ListMyFeedback.Item filed = new(
+          response.FeedbackItemId,
+          response.Permalink,
+          response.Kind,
+          response.Title,
+          DateTimeOffset.UtcNow);
+        FeedbackState.Items =
+        [
+          filed,
+          .. FeedbackState.Items.Where(item => item.FeedbackItemId != response.FeedbackItemId),
+        ];
         AgentCallOutcome.Set(response);
         return Task.CompletedTask;
       }

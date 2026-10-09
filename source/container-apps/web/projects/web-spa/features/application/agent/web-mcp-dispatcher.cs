@@ -62,9 +62,6 @@ public sealed class WebMcpDispatcher
     AgentCallOutcome = agentCallOutcome;
   }
 
-  public static string FormatCompleted(string action, object? result) =>
-    JsonSerializer.Serialize(new WebMcpCompleted(action, true, result), ContractSerializationDefaults.Options);
-
   [JSInvokable]
   public async Task<string> InvokeTool(string name, string? argumentsJson)
   {

@@ -13,7 +13,7 @@ namespace TimeWarp.Architecture.Persistence.Migrations;
 
 [DbContext(typeof(PostgresDbContext))]
 [Migration("20261009001245_AddFeedbackItems")]
-partial class _20261009001245_AddFeedbackItems
+partial class AddFeedbackItems
 {
     /// <inheritdoc />
     protected override void BuildTargetModel(ModelBuilder modelBuilder)

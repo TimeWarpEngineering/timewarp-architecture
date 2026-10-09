@@ -1,10 +1,13 @@
 #region Purpose
-// Registers the development mail sender and the request base-URL accessor.
+// Registers the configured mail sender and the public base-URL accessor.
 #endregion
 
 #region Design
-// Always registered. There is no production provider in this host. Tests that need a fake
-// construct IEmailSender themselves and do not boot this module.
+// Mail:Sender selects the sender. "Development" (set in appsettings.Development.json) registers
+// DevelopmentEmailSender; any other value or no value registers UnconfiguredEmailSender, which
+// throws so a deployed app without a real provider reports EmailCopySent=false instead of claiming
+// a delivery that never happened. A real provider adds its own Mail:Sender value and registration
+// here. Tests that need a fake construct IEmailSender themselves and do not boot this module.
 #endregion
 
 namespace TimeWarp.Architecture.Mail;
@@ -15,9 +18,18 @@ public sealed class MailModule : IModule
 {
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    serviceCollection.Configure<MailOptions>(configuration.GetSection(MailOptions.SectionName));
+    IConfigurationSection section = configuration.GetSection(MailOptions.SectionName);
+    serviceCollection.Configure<MailOptions>(section);
     serviceCollection.AddHttpContextAccessor();
-    serviceCollection.AddSingleton<IEmailSender, DevelopmentEmailSender>();
+    if (string.Equals(section[nameof(MailOptions.Sender)], MailOptions.DevelopmentSender, StringComparison.Ordinal))
+    {
+      serviceCollection.AddSingleton<IEmailSender, DevelopmentEmailSender>();
+    }
+    else
+    {
+      serviceCollection.AddSingleton<IEmailSender, UnconfiguredEmailSender>();
+    }
+
     serviceCollection.AddSingleton<IAppBaseUrlAccessor, HttpAppBaseUrlAccessor>();
   }
 }
