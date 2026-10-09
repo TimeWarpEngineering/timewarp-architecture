@@ -4,7 +4,7 @@
 #endregion
 
 #region Design
-// C-create (AGENTS.md fixture-lifetime default): these facts substitute IWebServerApiService so
+// C-create (co-located Jaribu runfiles default): these facts substitute IWebServerApiService so
 // GetCredentials can answer with a chosen credential mix (passkey + agent key, one active, …)
 // and RevokeCredential can "remove" a row from the next snapshot — the closed-box
 // AspireSpaTestApplication cannot script the server. FetchCredentials / RevokeCredential handlers

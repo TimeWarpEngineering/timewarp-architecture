@@ -1,5 +1,8 @@
 ; Unshipped analyzer release
 ; https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.Analyzers/ReleaseTrackingAnalyzers.Help.md
+; Retired / reserved — do not reuse: TWA0005 (MVC verb vs [ApiRoute]; FastEndpoints take the verb
+; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
+; availability flags and page-scoped actions).
 
 ### New Rules
 

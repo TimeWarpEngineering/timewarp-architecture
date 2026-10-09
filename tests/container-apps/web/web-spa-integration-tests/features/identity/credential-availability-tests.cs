@@ -5,7 +5,7 @@
 #endregion
 
 #region Design
-// C-create in-proc SPA ServiceProvider per test (AGENTS.md default): real TimeWarp.State pipeline, real
+// C-create in-proc SPA ServiceProvider per test (co-located Jaribu runfiles default): real TimeWarp.State pipeline, real
 // IActionCatalog and CommandPaletteState.Open, a TestNavigationManager for the current path, and the
 // shared ScriptedCredentialsApiService standing in for the BFF. The script sets the flags with the
 // server's real CredentialRules and applies the real effects (revoke/rename), so "the follow-up fetch
