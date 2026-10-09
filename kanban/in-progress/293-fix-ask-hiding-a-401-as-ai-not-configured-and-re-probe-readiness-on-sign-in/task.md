@@ -57,22 +57,95 @@ Steven's direction: fix the root cause, show the real state, do not hide or disa
 
 ## Checklist
 
-- [ ] Real-WASM Playwright test: anonymous Home → Ask, then in-SPA passkey sign-in (CDP virtual
+- [x] Real-WASM Playwright test: anonymous Home → Ask, then in-SPA passkey sign-in (CDP virtual
       authenticator) → Ask. Fails on master (stale "AI not configured" after a real 401), passes after.
-- [ ] Unit tests for the readiness mapping (200 configured / 200 no key / 401 / 403 / 500 / 499 /
+- [x] Unit tests for the readiness mapping (200 configured / 200 no key / 401 / 403 / 500 / 499 /
       file response) and for the Ask markup per state
-- [ ] `CatalogAgentReadiness` gains Unauthenticated and Error; `AgentSurfaceState` keeps the problem text
-- [ ] `LoadChatConfiguration` maps outcomes through one pure function; no failure becomes NotConfigured
-- [ ] Probe dispatched from `AuthenticationStateListener` (startup + every auth change), not once from
+- [x] `CatalogAgentReadiness` gains Unauthenticated and Error; `AgentSurfaceState` keeps the problem text
+- [x] `LoadChatConfiguration` maps outcomes through one pure function; no failure becomes NotConfigured
+- [x] Probe dispatched from `AuthenticationStateListener` (startup + every auth change), not once from
       `TimeWarpPage`
-- [ ] `AgentAsk.razor` renders the four states; sign-in button and Retry
-- [ ] `RelayChatClient` error text carries status and title
-- [ ] Screenshots: signed-in configured, signed-out, signed-in no key (and the master failure)
-- [ ] `ganda repo audit`, `dev build`, targeted tests green; PR with proof (not merged)
+- [x] `AgentAsk.razor` renders the four states; sign-in button and Retry
+- [x] `RelayChatClient` error text carries status and title
+- [x] Screenshots: signed-in configured, signed-out, signed-in no key (and the master failure)
+- [x] `ganda repo audit`, `dev build`, targeted tests green. Proof is in Results. The PR is the host
+      open-pr node (not opened from this oracle).
+
+## Results
+
+Ask tells the truth about the configuration probe, and it asks again when the session changes.
+
+- `ChatReadinessProbe` is the one mapping. A 200 is Configured or NotConfigured. A 401 is
+  Unauthenticated. 403, 500, the transport's synthetic 499, an empty problem, and a file body are
+  Error with `status title: detail`. Nothing else becomes NotConfigured, so the user-secrets command
+  shows only when the server said there is no key.
+- `AuthenticationStateListener` dispatches `LoadChatConfiguration` at startup and on every
+  `AuthenticationState` change. `TimeWarpPage` no longer probes. An in-app sign-in
+  (`NotifySessionChanged`, no `forceLoad`) replaces the anonymous 401.
+- `AgentAsk` renders the four states. Unauthenticated is "Sign in to use Ask" plus a Sign in button
+  that closes the modal and `ChangeRoute`s to `LoginPage.GetLoginUrl` for the current path
+  (TWA0026). Error shows the problem text and Retry. The Identity edge is
+  `[CrossSliceReference]` on `AgentAsk`. The configuration endpoint's auth is unchanged.
+- `RelayChatClient` throws `ChatReadinessProbe.Describe(problem)` (status, title, detail).
+
+### Proof
+
+On master (handoff `pw-before.log`, base `7834c9f75`), the same browser test logged:
+
+```text
+task-293 configuration statuses: [401]; signed out: AgentAskNotConfigured; signed in: AgentAskNotConfigured
+```
+
+The signed-in Ask still said "AI not configured" and printed the user-secrets command. That screenshot
+is the handoff `before/master-ask-signed-in-stale.png`.
+
+This branch, Release, real InteractiveWebAssembly, no mock principal, CDP virtual authenticator
+(2026-10-10):
+
+```text
+task-293 configuration statuses: [401, 200]; signed out: AgentAskSignIn; signed in: Configured
+```
+
+`web-spa-playwright-tests --filter-class Ask`: 3 passed, 0 failed (the two new tests plus the existing
+mock-header `AskSurface_Given_Wasm`). Screenshots under `artifacts/playwright/293/` (gitignored; CI
+uploads `artifacts/playwright/`):
+
+- `ask-signed-out.png` — "Sign in to use Ask" and a Sign in button. No key command.
+- `ask-signed-in-configured.png` — the chat ("Ask for something this page can do.").
+- `ask-signed-in-configured-answer.png` — a fake-upstream answer containing `page_context:`.
+- `ask-signed-in-no-key.png` — "AI not configured" and
+  `dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id 0e53fdd3-6f93-4d5a-9c86-040621f7929e`.
+
+`AgentAskReadiness_Should_` (Release): 9 passed, 0 failed. Covers 200 configured, 200 no key, 401,
+403, 500, 499, a file body, markup per state, and a second probe replacing a 401 with Configured.
+
+`./bin/dev build`: succeeded, 0 warnings, 0 errors. `ganda repo audit`: 31 passed, 0 failed.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests
+dotnet test -c Release -- --filter-class AgentAskReadiness_Should_
+cd ../web-spa-playwright-tests
+dotnet test -c Release -- --filter-class Ask
+```
+
+**Expect:**
+
+- Readiness tests: 9 passed, 0 failed. A 401 assertion contains `Sign in to use Ask` and does not
+  contain `user-secrets`. A 500 assertion contains `500 Internal Server Error: upstream exploded`
+  and `AgentAskRetry`.
+- Playwright: 3 passed, 0 failed. The log line is
+  `task-293 configuration statuses: [401, 200]; signed out: AgentAskSignIn; signed in: Configured`.
+- `artifacts/playwright/293/ask-signed-out.png` shows Sign in. `ask-signed-in-configured.png` shows
+  the chat box. `ask-signed-in-no-key.png` shows the user-secrets command.
 
 ## Session
 
 - Created: 2018678 (2026-10-09)
+- Implementation: ganda task-work implementer (2026-10-10)
 
 ## Notes
 
