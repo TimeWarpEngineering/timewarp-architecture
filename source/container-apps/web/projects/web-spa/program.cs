@@ -144,9 +144,8 @@ public static class Program
     // Opt-in [CatalogAction] registry (TimeWarp.State 12.0.0-beta.7) for the Ctrl-K palette and
     // agent tools. Only web-spa declares cataloged actions; Plus declares none, so it is not named.
     serviceCollection.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly);
-    // Ask mode is the presence of IChatClient. The template registers none, so a generated app
-    // stays usable with no model and no secret. A host opts in with services.Add…<IChatClient>().
-    // WebMCP uses the same catalog tools and does not need a model.
+    // Ask is always registered. RelayChatClient holds no key; web-server owns XAI:ApiKey.
+    // WebMCP uses the same catalog tools and does not need this client.
     serviceCollection.AddScoped<AgentCallOutcome>();
     serviceCollection.AddScoped<WebMcpApprovalGate>();
     serviceCollection.AddScoped<WebMcpDispatcher>();
@@ -185,6 +184,9 @@ public static class Program
 #endif
       }
     );
+
+    // Unkeyed IChatClient is the browser relay. The xAI client is keyed on the server only.
+    serviceCollection.AddScoped<IChatClient, RelayChatClient>();
 
     // We are using a factory here to explicitly determine which constructor to use for DI.
 #if api

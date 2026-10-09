@@ -31,6 +31,18 @@ dotnet new --install TimeWarp.Architecture
 dotnet new timewarp-architecture -n MyTimeWarpApp
 ```
 
+### In-app Ask (xAI Grok)
+
+Ctrl-K **Ask** calls xAI through web-server. The key stays in user-secrets and is never sent to
+the browser. Set it with:
+
+```pwsh
+dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj
+```
+
+`dev run` still starts when the key is missing and prints that command. Ask stays visible and
+shows the same command until the key is set. `XAI:Model` overrides the default `grok-4.7`.
+
 ## Content
 
 The template creates the distributed app projects and their corresponding test projects.

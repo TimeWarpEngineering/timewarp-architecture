@@ -23,6 +23,11 @@
 // parent ASPNETCORE_ENVIRONMENT=Development + profile Staging → AppHost saw Staging; with no
 // -lp the first profile applies the same way. The inherited value only matters for a profile
 // that does not set ASPNETCORE_ENVIRONMENT (both https and http set Development today).
+//
+// Before launch, warn when XAI__ApiKey and the web-server user secret XAI:ApiKey are both
+// absent. The warning prints the setup command only — never the secret value, and never
+// `dotnet user-secrets list` stdout (that stream holds every secret). A failed or timed-out
+// list is still a warning. dev run starts either way.
 #endregion
 
 namespace DevCli.Commands;
@@ -57,6 +62,7 @@ internal sealed class RunCommand : ICommand<Unit>
         if (!await ValidateCliVersionAsync()) return Unit.Value;
       }
 
+      await WarnIfXaiKeyMissingAsync();
       await RunAsync();
 
       return Unit.Value;
@@ -101,6 +107,34 @@ internal sealed class RunCommand : ICommand<Unit>
       Terminal.WriteErrorLine(message.Red());
       Environment.ExitCode = 1;
       return false;
+    }
+
+    private async Task WarnIfXaiKeyMissingAsync()
+    {
+      try
+      {
+        string? environmentValue = Environment.GetEnvironmentVariable(XaiPreflight.EnvironmentVariable);
+        string project = Path.Combine(RepoRoot, XaiPreflight.WebServerProject);
+        CommandOutput list = await Shell.Builder("dotnet")
+          .WithArguments("user-secrets", "list", "--project", project)
+          .WithWorkingDirectory(RepoRoot)
+          .WithTimeout(TimeSpan.FromSeconds(20))
+          .WithNoValidation()
+          .CaptureAsync(Ct);
+
+        if (XaiPreflight.HasKey(environmentValue, list.Success ? list.Stdout : null))
+        {
+          return;
+        }
+
+        Terminal.WriteLine(XaiPreflight.WarningLead(list.Success).Yellow());
+        Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());
+      }
+      catch (Exception exception) when (exception is not OperationCanceledException)
+      {
+        Terminal.WriteLine($"{XaiPreflight.UnreadableSecretsLead} ({exception.Message})".Yellow());
+        Terminal.WriteLine(XaiPreflight.SetupCommand.Yellow());
+      }
     }
 
     private async Task RunAsync()

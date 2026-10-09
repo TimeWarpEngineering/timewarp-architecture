@@ -9,6 +9,12 @@
   margin: 0;
 }
 
+.twe-agent-ask__setup {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .twe-agent-ask__approval {
   display: flex;
   flex-wrap: wrap;

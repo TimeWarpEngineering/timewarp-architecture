@@ -1,22 +1,33 @@
 #region Purpose
-// Reports whether a host registered an IChatClient for the in-app ask UI.
+// Reads the Ask probe on AgentSurfaceState. The button is not gated on IChatClient registration.
 #endregion
 
 #region Design
-// The template never registers a client. Ask mode is the presence of IChatClient in DI, so a
-// generated app stays fully usable with no model and no secret. WebMCP does not consult this:
-// an external browser agent needs no in-app model.
+// Task 271 treated "an IChatClient is registered" as configured, which hid Ask in the template.
+// Task 289 always registers a relay. Configured means the server status probe said so. Until
+// that probe finishes the readiness is Unknown. A missing key, a failed probe, or a 401 is
+// NotConfigured and still shows Ask, with the pwsh user-secrets command.
+// WebMCP does not consult this.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-using Microsoft.Extensions.AI;
-
+/// <summary>Ask readiness for the palette and the modal.</summary>
 public static class CatalogAgentAvailability
 {
-  public static bool IsConfigured(IServiceProvider serviceProvider)
+  /// <summary>Probe result. Unknown until <c>LoadChatConfiguration</c> finishes.</summary>
+  public static CatalogAgentReadiness Readiness(AgentSurfaceState state)
   {
-    ArgumentNullException.ThrowIfNull(serviceProvider);
-    return serviceProvider.GetService<IChatClient>() is not null;
+    ArgumentNullException.ThrowIfNull(state);
+    return state.ChatReadiness;
+  }
+
+  /// <summary>Setup command from the probe, or the constant when the probe has not stored one.</summary>
+  public static string SetupCommand(AgentSurfaceState state)
+  {
+    ArgumentNullException.ThrowIfNull(state);
+    return string.IsNullOrWhiteSpace(state.ChatSetupCommand)
+      ? XaiChatDefaults.SetupCommand
+      : state.ChatSetupCommand;
   }
 }

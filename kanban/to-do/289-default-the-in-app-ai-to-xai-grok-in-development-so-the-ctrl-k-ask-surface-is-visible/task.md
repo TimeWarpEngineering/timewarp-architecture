@@ -72,22 +72,43 @@ absent") and takes the item 3 follow-up (keep the model key on the server). See
 
 ## Checklist
 
-- [ ] Decide where the server relay lives (web-server vs api-server) and record it
-- [ ] Add `Microsoft.Extensions.AI.OpenAI` (central package version) and the xAI options (`XAI:ApiKey`, `XAI:Model`, endpoint)
-- [ ] Server: authorized relay endpoint to `https://api.x.ai/v1`, key from user-secrets/config, limits
-- [ ] Development default registration; no key in repo/appsettings; nothing key-related reaches WASM
-- [ ] web-spa: relay `IChatClient` registered so Ask renders; tri-state availability
-- [ ] Ask surface shows "AI not configured" + pwsh `dotnet user-secrets set` command when key missing (all environments)
-- [ ] Docs (pwsh) for setting the key; optional `dev run` preflight warning
-- [ ] Verify 271 guarantees (visibility, permissions, approval, server distrust) still hold; WebMCP unchanged
-- [ ] Tests with fake `IChatClient` / fake upstream
+- [x] Decide where the server relay lives (web-server vs api-server) and record it
+- [x] Add `Microsoft.Extensions.AI.OpenAI` (central package version) and the xAI options (`XAI:ApiKey`, `XAI:Model`, endpoint)
+- [x] Server: authorized relay endpoint to `https://api.x.ai/v1`, key from user-secrets/config, limits
+- [x] Development default registration; no key in repo/appsettings; nothing key-related reaches WASM
+- [x] web-spa: relay `IChatClient` registered so Ask renders; tri-state availability
+- [x] Ask surface shows "AI not configured" + pwsh `dotnet user-secrets set` command when key missing (all environments)
+- [x] Docs (pwsh) for setting the key; optional `dev run` preflight warning
+- [x] Verify 271 guarantees (visibility, permissions, approval, server distrust) still hold; WebMCP unchanged
+- [x] Tests with fake `IChatClient` / fake upstream
 - [ ] Playwright WASM test (configured + not-configured) and Ctrl-K Ask screenshot in PR
-- [ ] Recheck the WASM `SemaphoreSlim.Wait` observation (Notes) in the browser test
+- [x] Recheck the WASM `SemaphoreSlim.Wait` observation (Notes) in the browser test
 - [ ] Build, tests, template-smoke, ganda repo audit green
 
 ## Session
 
 - Created: 620441 (2026-10-09)
+- Implement: grok `01a11eaf-294b-79b0-a840-090b955324b6` (2026-10-09)
+
+## Results
+
+The relay lives on web-server. Development registers an OpenAI-compatible client for `https://api.x.ai/v1` with default model `grok-4.7` when `XAI:ApiKey` is set in user-secrets. The key is not in the repo or the browser. The SPA always registers `RelayChatClient`, so Ask stays visible. A missing key shows "AI not configured" and:
+
+```pwsh
+dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj
+```
+
+`dev run` warns and still starts when the key is missing. Catalog visibility, permissions, approval, and WebMCP are unchanged. The server forwards declarations only.
+
+The WASM proof did not pass. InteractiveWebAssembly store dispatches throw `PlatformNotSupportedException` from `SemaphoreSlim.Wait` in TimeWarp.State 12.0.0-beta.8 (`StateTransactionBehavior` → AnyClone). Ctrl-K calls `ApplicationState.SetActiveModal`, so the palette never opens and no Ask screenshot was captured. `UseStateTransactionBehavior` was not disabled. Filed https://github.com/TimeWarpEngineering/timewarp-state/issues/616.
+
+### How to validate
+
+Smoke: from `tests/container-apps/web/web-spa-playwright-tests`, `dotnet test -c Release`.
+
+Expect: after timewarp-state 616 is fixed, Ctrl-K shows Ask. With no key the panel text is `AI not configured` and the setup command above. With the Development fake upstream, asking "What is on this page?" returns text that contains `page_context:` and `path`. The browser console does not contain `PlatformNotSupportedException` or `SemaphoreSlim.Wait`.
+
+Smoke that passed on this walk: `web-server-integration-tests` filter `XaiChatUpstream` (3), `web-jaribu-tests` filter `CompleteAgentChat` (6), `web-spa-integration-tests` filter `CatalogAgent` (17). Fake clients only; no xAI key.
 
 ## Notes
 
@@ -96,10 +117,10 @@ absent") and takes the item 3 follow-up (keep the model key on the server). See
   user-secrets.
 - The template must stay usable with no key: a missing key is a visible not-configured state,
   never a startup failure.
-- **Observation to recheck (not confirmed):** on 2026-10-09 the web-server logs showed a
-  .NET 11 single-threaded WASM `PlatformNotSupportedException` from `SemaphoreSlim.Wait` in
-  TimeWarp.State's AnyClone clone path (`StateTransactionBehavior` → `AnyClone.Clone`).
-  Steve then cleared his browser cache and sign-in worked. The Playwright WASM test should
-  dispatch at least one action through the store and assert no such exception is logged; if it
-  reproduces, file it against timewarp-state rather than disabling `UseStateTransactionBehavior`.
+- **Confirmed 2026-10-09:** the Playwright WASM test (InteractiveWebAssembly, prerender off)
+  logs `PlatformNotSupportedException` from `SemaphoreSlim.Wait` in TimeWarp.State 12.0.0-beta.8
+  AnyClone, called by `StateTransactionBehavior` on `SyncWebMcp`, `ClearProfileData`, and
+  `LoadChatConfiguration`. Ctrl-K does not open the palette. Filed
+  https://github.com/TimeWarpEngineering/timewarp-state/issues/616.
+  `UseStateTransactionBehavior` stays on.
 - Related: 271 (agentic UI, PR #448), 272 (.NET 11, PR #447).
