@@ -12,7 +12,11 @@
 // the same tool list applied to a stand-in model context; a null context registers nothing. WebMCP
 // invoke tests drive WebMcpDispatcher with the per-test store and TestNavigationManager, read the
 // call id from AgentSurfaceState, and bound every await so a hung approval fails instead of
-// stalling the suite.
+// stalling the suite. The feedback submit receipt runs on an in-proc FeedbackSpa (C-create) whose
+// scripted IWebServerApiService answers SubmitFeedback with a fresh id: the closed-box Aspire SPA
+// registers no web-server BFF client and its mock session has no profile store to file against.
+// That test drives the real path — dispatcher, approval, ActionSet handler, AgentCallOutcome, and
+// the dispatcher's own result serialization — and asserts the JSON the agent receives.
 #endregion
 
 namespace CatalogAgent_;
@@ -24,8 +28,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Features.Settings;
 using TimeWarp.Architecture.Web.Spa;
+using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 
 [TestTag("Integration")]
@@ -471,6 +477,115 @@ public class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
   }
 
+  public static async Task Feedback_Tools_Are_Page_Scoped_And_Read_Only_Except_Submit()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal everyone = Principal([.. PermissionIds.All]);
+
+    IReadOnlyList<WebMcpToolDescriptor> feedback = await WebMcpPublisher.DescribeAsync
+    (
+      everyone, authorization, catalog, "/Feedback", CancellationToken.None
+    );
+    Names(feedback).ShouldBe
+    (
+      [
+        "Feedback.SubmitFeedback",
+        "Feedback.ListMyFeedback",
+        "Feedback.OpenFeedback",
+        PageAgentContext.ToolName,
+      ]
+    );
+
+    Guid itemId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    IReadOnlyList<WebMcpToolDescriptor> detail = await WebMcpPublisher.DescribeAsync
+    (
+      everyone, authorization, catalog, $"/Feedback/{itemId:D}", CancellationToken.None
+    );
+    Names(detail).ShouldBe(Names(feedback));
+
+    Names
+    (
+      await WebMcpPublisher.DescribeAsync
+      (
+        everyone, authorization, catalog, "/FeedbackExtra", CancellationToken.None
+      )
+    ).ShouldBe([PageAgentContext.ToolName]);
+
+    ActionCatalogEntry submit = catalog.Find("Feedback.SubmitFeedback").ShouldNotBeNull();
+    ActionCatalogEntry list = catalog.Find("Feedback.ListMyFeedback").ShouldNotBeNull();
+    ActionCatalogEntry open = catalog.Find("Feedback.OpenFeedback").ShouldNotBeNull();
+    CatalogAgentApproval.RequiresApproval(submit).ShouldBeTrue();
+    CatalogAgentApproval.RequiresApproval(list).ShouldBeFalse();
+    CatalogAgentApproval.RequiresApproval(open).ShouldBeFalse();
+    submit.Permissions.ShouldBe([PermissionIds.FeedbackFileSelf]);
+    submit.Visibility.ShouldBe(ActionVisibility.Both);
+
+    string schema = CatalogAgentSchema.For(submit);
+    schema.ShouldContain("BugReport");
+    schema.ShouldContain("FeatureRequest");
+    schema.ShouldContain("Complaint");
+    schema.ShouldContain("Other");
+    schema.ShouldContain("emailCopy");
+
+    object?[] bound = CatalogAgentArguments.Bind
+    (
+      submit,
+      new Dictionary<string, object?>
+      {
+        ["kind"] = "Complaint",
+        ["title"] = "The export failed",
+        ["body"] = "Nothing came back.",
+        ["emailCopy"] = false,
+      }
+    );
+    bound[0].ShouldBe(FeedbackKind.Complaint);
+    bound[1].ShouldBe("The export failed");
+    bound[2].ShouldBe("Nothing came back.");
+    bound[3].ShouldBe(false);
+
+    Console.WriteLine($"WEBMCP-PROOF path=/Feedback tools={string.Join(",", Names(feedback))}");
+  }
+
+  public static async Task WebMcp_Approved_Submit_Feedback_Returns_The_Real_Receipt()
+  {
+    using FeedbackSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    scope.ServiceProvider.GetRequiredService<NavigationManager>().NavigateTo("/Feedback");
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+
+    Task<string> invoke = dispatcher.InvokeTool
+    (
+      "Feedback.SubmitFeedback",
+      """{"kind":"Complaint","title":"The export failed","body":"Nothing came back.","emailCopy":false}"""
+    );
+    Guid callId = await WaitForPendingAsync(scope, invoke);
+    spa.Api.Requests.ShouldBeEmpty();
+    await scope.Store.GetState<AgentSurfaceState>().ResolveApproval(callId, approved: true);
+    string receipt = await invoke.WaitAsync(Timeout);
+
+    SubmitFeedback.Command sent = spa.Api.Requests.ShouldHaveSingleItem();
+    sent.Kind.ShouldBe(FeedbackKind.Complaint);
+    sent.Title.ShouldBe("The export failed");
+    using JsonDocument document = JsonDocument.Parse(receipt);
+    JsonElement root = document.RootElement;
+    root.GetProperty("action").GetString().ShouldBe("Feedback.SubmitFeedback");
+    root.GetProperty("completed").GetBoolean().ShouldBeTrue();
+    JsonElement result = root.GetProperty("result");
+    Guid feedbackItemId = result.GetProperty("feedbackItemId").GetGuid();
+    feedbackItemId.ShouldBe(spa.Api.LastId.ShouldNotBeNull());
+    result.GetProperty("permalink").GetString().ShouldBe($"/Feedback/{feedbackItemId:D}");
+    result.GetProperty("emailCopySent").GetBoolean().ShouldBeFalse();
+
+    FeedbackState state = scope.Store.GetState<FeedbackState>();
+    state.LastReceipt.ShouldNotBeNull().FeedbackItemId.ShouldBe(feedbackItemId);
+    state.Items.ShouldNotBeEmpty();
+    state.Items[0].FeedbackItemId.ShouldBe(feedbackItemId);
+    state.Items[0].Permalink.ShouldBe($"/Feedback/{feedbackItemId:D}");
+    Console.WriteLine($"WEBMCP-PROOF invoke Feedback.SubmitFeedback approved receipt={receipt}");
+  }
+
   public static Task Page_Context_Carries_Profile_And_Site_Settings_Records()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
@@ -609,6 +724,103 @@ public class CatalogAgent_Should
     }
 
     return names;
+  }
+
+  /// <summary>In-proc SPA: real catalog, WebMCP dispatcher, and store; signed-in with every permission; scripted feedback BFF.</summary>
+  private sealed class FeedbackSpa : ISpaTestApplication, IDisposable
+  {
+    public IServiceProvider ServiceProvider { get; }
+    public ScriptedFeedbackApiService Api { get; } = new();
+
+    public FeedbackSpa()
+    {
+      ClaimsPrincipal user = new(new ClaimsIdentity(
+        [
+          new Claim("sub", Guid.NewGuid().ToString()),
+          .. PermissionIds.All.Select(static permission => new Claim(PermissionIds.ClaimType, permission)),
+        ],
+        authenticationType: "test"));
+
+      ServiceCollection services = new();
+      services.AddLogging();
+      services.AddWebSpaGeneratedMediator();
+      services.AddTimeWarpState
+      (
+        options =>
+        {
+          options.Assemblies =
+          [
+            typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly,
+            typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly
+          ];
+        }
+      );
+      services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
+      services.AddScoped<
+        TimeWarp.Features.Persistence.IPersistenceService,
+        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
+      services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
+      services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);
+      services.AddScoped(_ => FakeItEasy.A.Fake<Microsoft.JSInterop.IJSRuntime>());
+      services.AddScoped<NavigationManager, TestNavigationManager>();
+      services.AddScoped<AgentCallOutcome>();
+      services.AddScoped<WebMcpApprovalGate>();
+      services.AddScoped<WebMcpDispatcher>();
+
+      ServiceProvider = services.BuildServiceProvider();
+    }
+
+    public void Dispose()
+    {
+      if (ServiceProvider is IDisposable disposable)
+      {
+        disposable.Dispose();
+      }
+    }
+  }
+
+  private sealed class FixedAuthenticationStateProvider(ClaimsPrincipal user) : AuthenticationStateProvider
+  {
+    public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
+      Task.FromResult(new AuthenticationState(user));
+  }
+
+  /// <summary>Scripted BFF: answers SubmitFeedback with a fresh id and the server's permalink shape, echoing the command.</summary>
+  private sealed class ScriptedFeedbackApiService : TimeWarp.Architecture.Services.IWebServerApiService
+  {
+    public List<SubmitFeedback.Command> Requests { get; } = [];
+    public Guid? LastId { get; private set; }
+
+    public Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
+    (
+      IApiRequest request,
+      CancellationToken cancellationToken
+    ) where TResponse : class
+    {
+      _ = cancellationToken;
+      if (request is SubmitFeedback.Command command)
+      {
+        Requests.Add(command);
+        Guid id = Guid.NewGuid();
+        LastId = id;
+        SubmitFeedback.Response response = new
+        (
+          id,
+          $"/Feedback/{id:D}",
+          command.Kind,
+          command.Title.Trim(),
+          command.Body.Trim(),
+          emailCopySent: false
+        );
+        if (response is TResponse typed)
+        {
+          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(typed);
+        }
+      }
+
+      throw new InvalidOperationException($"No scripted response for {request.GetType()} → {typeof(TResponse)}.");
+    }
   }
 
   private sealed class RecordingModelContext : IWebMcpModelContext

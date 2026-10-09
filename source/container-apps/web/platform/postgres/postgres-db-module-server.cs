@@ -17,8 +17,8 @@
 // Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006),
-// IRolePermissionStore → EfRolePermissionStore (task 182-001), and IProfileStore → EfProfileStore
-// (task 148 D4). Challenge/token stores stay in-memory either way.
+// IRolePermissionStore → EfRolePermissionStore (task 182-001), IProfileStore → EfProfileStore
+// (task 148 D4), and IFeedbackStore → EfFeedbackStore. Challenge/token stores stay in-memory either way.
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
@@ -49,6 +49,8 @@ using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Application;
+using TimeWarp.Architecture.Features.Feedback.Application;
+using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Settings.Infrastructure;
 using TimeWarp.Identity;
@@ -92,6 +94,9 @@ public sealed partial class PostgresDbModule : IModule
     // Task 148 D4: durable Profile (same connection gate).
     serviceCollection.RemoveAll<IProfileStore>();
     serviceCollection.AddScoped<IProfileStore, EfProfileStore>();
+
+    serviceCollection.RemoveAll<IFeedbackStore>();
+    serviceCollection.AddScoped<IFeedbackStore, EfFeedbackStore>();
 
     serviceCollection.RemoveAll<IAgentHumanLinkStore>();
     serviceCollection.AddScoped<IAgentHumanLinkStore, EfAgentHumanLinkStore>();

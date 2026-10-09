@@ -57,7 +57,7 @@ public class CommandPalette_Should_
 
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Command).Select(static row => row.Target)
       .OrderBy(static name => name, StringComparer.Ordinal)
-      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Profile.SignOut"]);
+      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Feedback.ListMyFeedback", "Profile.SignOut"]);
 
     // Task 260: the Settings "Link Microsoft 365" button is a palette command too; task 268: its
     // label is the authored [CatalogAction(DisplayName)], so the brand casing survives.
@@ -88,6 +88,8 @@ public class CommandPalette_Should_
   [Input("Application.TwoSecondTask")]
   [Input("Counter.ThrowException")]
   [Input("Profile.ClearProfileData")]
+  [Input("Feedback.SubmitFeedback")]
+  [Input("Feedback.OpenFeedback")]
   [Input("Credentials.FetchCredentials")]
   [Input("Theme.Update")]
   public static async Task Exclude_Agent_Parameterized_And_Internal_Actions(string name)
@@ -116,7 +118,7 @@ public class CommandPalette_Should_
     foreach (string denied in new[]
     {
       "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Authentication",
-      "/AgentLinks", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
+      "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
     {
       targets.ShouldNotContain(denied);

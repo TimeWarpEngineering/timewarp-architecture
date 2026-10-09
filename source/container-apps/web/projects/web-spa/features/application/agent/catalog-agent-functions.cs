@@ -17,6 +17,8 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
+using System.Text.Json.Serialization;
+
 /// <summary>Catalog tools as <see cref="AITool"/> instances, including approval wrappers.</summary>
 public sealed class CatalogAgentFunctions : IDisposable
 {
@@ -87,6 +89,7 @@ public sealed class CatalogAgentFunctions : IDisposable
       IAuthorizationService authorizationService = services.GetRequiredService<IAuthorizationService>();
       NavigationManager navigation = services.GetRequiredService<NavigationManager>();
       IActionCatalog catalog = services.GetRequiredService<IActionCatalog>();
+      AgentCallOutcome outcome = services.GetRequiredService<AgentCallOutcome>();
 
       // Re-read on every invocation. The function does not cache an AuthenticationState.
 #pragma warning disable BL0013
@@ -107,10 +110,15 @@ public sealed class CatalogAgentFunctions : IDisposable
       }
 
       object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);
+      outcome.Clear();
       await current.Entry.Execute(store, bound, cancellationToken);
-      return new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null);
+      return new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result);
     }
   }
 
-  private sealed record CatalogAgentCallResult(string Action, bool Completed, string? Error);
+  private sealed record CatalogAgentCallResult(
+    string Action,
+    bool Completed,
+    string? Error,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] object? Result = null);
 }

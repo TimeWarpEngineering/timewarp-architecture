@@ -18,6 +18,8 @@ public static class CatalogAgentApproval
   private static readonly HashSet<string> ReadOnlyActions =
   [
     "Credentials.FetchCredentials",
+    "Feedback.ListMyFeedback",
+    "Feedback.OpenFeedback",
   ];
 
   public static bool RequiresApproval(ActionCatalogEntry entry)

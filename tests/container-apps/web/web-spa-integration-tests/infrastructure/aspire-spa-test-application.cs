@@ -105,6 +105,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).Assembly);
     services.AddJavaScriptDispatch(Web.Spa.Program.AllowJavaScriptDispatch);
     services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
+    services.AddScoped<AgentCallOutcome>();
     services.AddScoped<WebMcpApprovalGate>();
     services.AddScoped<WebMcpDispatcher>();
     services.AddScoped<TimeWarp.Architecture.Services.JsWebMcpModelContext>();

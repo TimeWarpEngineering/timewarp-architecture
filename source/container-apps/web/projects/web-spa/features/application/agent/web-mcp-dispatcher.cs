@@ -24,6 +24,7 @@
 namespace TimeWarp.Architecture.Features.Applications;
 
 using Microsoft.AspNetCore.Components.Routing;
+using System.Text.Json.Serialization;
 
 /// <summary>JS entry point for WebMCP tool execution.</summary>
 [SideEffectService]
@@ -39,6 +40,7 @@ public sealed class WebMcpDispatcher
   private readonly AuthenticationStateProvider AuthenticationStateProvider;
   private readonly NavigationManager Navigation;
   private readonly WebMcpApprovalGate Gate;
+  private readonly AgentCallOutcome AgentCallOutcome;
 
   public WebMcpDispatcher
   (
@@ -47,7 +49,8 @@ public sealed class WebMcpDispatcher
     IAuthorizationService authorizationService,
     AuthenticationStateProvider authenticationStateProvider,
     NavigationManager navigation,
-    WebMcpApprovalGate gate
+    WebMcpApprovalGate gate,
+    AgentCallOutcome agentCallOutcome
   )
   {
     Store = store;
@@ -56,6 +59,7 @@ public sealed class WebMcpDispatcher
     AuthenticationStateProvider = authenticationStateProvider;
     Navigation = navigation;
     Gate = gate;
+    AgentCallOutcome = agentCallOutcome;
   }
 
   [JSInvokable]
@@ -120,8 +124,9 @@ public sealed class WebMcpDispatcher
       }
     }
 
+    AgentCallOutcome.Clear();
     await tool.Entry.Execute(Store, bound, CancellationToken.None);
-    return Serialize(new WebMcpCompleted(tool.Name, Completed: true));
+    return Serialize(new WebMcpCompleted(tool.Name, Completed: true, AgentCallOutcome.Result));
   }
 
   private bool IsOnPath(string path) =>
@@ -206,7 +211,10 @@ public sealed class WebMcpDispatcher
 
   private static string Error(string action, string error) => Serialize(new WebMcpFailed(action, error));
 
-  private sealed record WebMcpCompleted(string Action, bool Completed);
+  private sealed record WebMcpCompleted(
+    string Action,
+    bool Completed,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] object? Result = null);
 
   private sealed record WebMcpRejected(string Action, bool Approved);
 

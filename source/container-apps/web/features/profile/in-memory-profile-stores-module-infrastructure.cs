@@ -12,6 +12,7 @@
 namespace TimeWarp.Architecture.Features.Profiles.Infrastructure;
 
 using TimeWarp.Architecture.Features.Profiles.Application;
+using TimeWarp.Architecture.Abstractions;
 
 /// <summary>Registers the zero-infra IProfileStore default.</summary>
 public sealed class InMemoryProfileStoresModule : IModule
@@ -20,5 +21,6 @@ public sealed class InMemoryProfileStoresModule : IModule
   {
     _ = configuration;
     serviceCollection.AddSingleton<IProfileStore, InMemoryProfileStore>();
+    serviceCollection.AddScoped<IProfileEmailLookup, ProfileEmailLookup>();
   }
 }

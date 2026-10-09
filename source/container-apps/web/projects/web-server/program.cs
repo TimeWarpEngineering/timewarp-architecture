@@ -67,7 +67,9 @@ using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
+using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
 
@@ -200,6 +202,8 @@ public partial class Program : IAspNetProgram
     // Scoped: ISiteSettingsStore is the scoped SeedOnReadSiteSettingsStore decorator (task 254).
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryFeedbackStoresModule.ConfigureServices(serviceCollection, configuration);
+    MailModule.ConfigureServices(serviceCollection, configuration);
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);
 #if postgres

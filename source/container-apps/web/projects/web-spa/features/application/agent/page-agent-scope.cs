@@ -8,6 +8,9 @@
 // settings). Human-only entries stay in the list so the visibility filter, not a second copy of
 // the page, is what drops them. Paths match [Page] routes, ordinal and case-insensitive, with
 // the query and hash removed. A route with no entry offers no catalog tools.
+// /Feedback is the one prefix: /Feedback/{id} offers the same tools as /Feedback.
+// The match requires a following slash, so /FeedbackExtra does not inherit them.
+// Other routes stay exact so /Settings tools do not leak onto /Settings/extra.
 // Profile.UpdateProfile and SiteSettings.UpdateSiteSettings replace whole records (the latter
 // with a Version token), so page_context on those routes carries the current values the agent
 // must echo (PageAgentContext); there is no separate read tool on those pages.
@@ -38,7 +41,15 @@ public static class PageAgentScope
     ["/Profile"] = ["Profile.UpdateProfile"],
     ["/Admin/Roles/New"] = ["Role.CreateRole"],
     ["/Admin/Authentication"] = ["SiteSettings.UpdateSiteSettings"],
+    ["/Feedback"] =
+    [
+      "Feedback.SubmitFeedback",
+      "Feedback.ListMyFeedback",
+      "Feedback.OpenFeedback",
+    ],
   };
+
+  private static readonly string[] PrefixRoutes = ["/Feedback"];
 
   public static string Normalize(string? path)
   {
@@ -83,6 +94,20 @@ public static class PageAgentScope
   public static IReadOnlyList<string> ActionNamesFor(string? path)
   {
     string normalized = Normalize(path);
-    return Actions.TryGetValue(normalized, out string[]? names) ? names : [];
+    if (Actions.TryGetValue(normalized, out string[]? names))
+    {
+      return names;
+    }
+
+    foreach (string prefix in PrefixRoutes)
+    {
+      if (normalized.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase)
+        && Actions.TryGetValue(prefix, out string[]? prefixed))
+      {
+        return prefixed;
+      }
+    }
+
+    return [];
   }
 }

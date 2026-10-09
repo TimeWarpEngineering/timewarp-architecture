@@ -55,6 +55,7 @@ namespace TimeWarp.Architecture.Authorization
         PermissionIds.SettingsRead,
         PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
+        PermissionIds.FeedbackFileSelf,
       ]);
       (await evaluator.HasPermissionAsync(id, AuthenticationSchemeNames.IdentitySession, PermissionIds.ProfileRead))
         .ShouldBeTrue();
@@ -111,6 +112,7 @@ namespace TimeWarp.Architecture.Authorization
         PermissionIds.SettingsRead,
         PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
+        PermissionIds.FeedbackFileSelf,
       ]);
       foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
       {
@@ -363,6 +365,7 @@ namespace TimeWarp.Architecture.Authorization
         PermissionIds.SettingsRead,
         PermissionIds.AgentLinkManageSelf,
         PermissionIds.CredentialManageSelf,
+        PermissionIds.FeedbackFileSelf,
       ]);
       permissions.ShouldNotContain(PermissionIds.AdminAccess);
     }
