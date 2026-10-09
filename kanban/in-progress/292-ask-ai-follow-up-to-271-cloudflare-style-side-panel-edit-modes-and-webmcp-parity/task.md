@@ -107,6 +107,7 @@ All are in `screenshots/` in this task folder. The eight `0N-*.png` shots were c
 - Created: 1987146 (2026-10-09)
 - Implementation: task-work oracle (2026-10-10)
 - Review round 1 fixes (M1–M16, `review/round-1/merged.md`): implementer (2026-10-10)
+- Review (effort 3): review oracle, Claude Opus 5.5. Round 1 reviewers were general, tests and security (Sonnet subagents); round 2 was a general re-review (2026-10-10)
 
 ## Results
 
@@ -124,6 +125,30 @@ Proof images for the PR body, beside this file:
 - [ctrl-k-ask-not-configured-page.png](ctrl-k-ask-not-configured-page.png) — unconfigured relay, edit-mode footer still present.
 
 `./bin/dev build`: 0 warnings, 0 errors (8.5s). `./bin/dev test`: exit 0, including web-spa-integration-tests 162/162 and web-spa-playwright-tests 3/3. `ganda repo audit`: Passed 31, Failed 0.
+
+### Review disposition
+
+- **Outcome:** `clean`. 2 rounds at effort 3. Round 1 used three parallel reviewers (general, tests and security). Round 2 was a general re-review of the fix commit.
+- **Final counts:** bug 5 fixed, suggestion 8 fixed, nit 6 fixed. 0 open, 0 wontfix, no escalations.
+- **Round 1 (M1–M16):**
+  - The transcript now persists for each conversation generation (`AskConversationThreads` plus `RestoreAsync`).
+  - Close resets the edit mode, so WebMCP prompts again.
+  - A stale function built without the approval wrapper now refuses.
+  - The principal check fails closed.
+  - The `@` double-insert is fixed.
+  - Copy is scoped to the last answer.
+  - An expired conversation is now shown in the header.
+  - `SupportUrl` and token values are sanitized.
+  - Parity, credential and Playwright coverage are wider.
+- **Round 2 (N1–N3):**
+  - A build that finishes after dispose now frees what it created.
+  - New conversation is no longer blocked by a pending approval.
+  - Playwright waits for `data-built-mode` before asserting the transcript survived.
+- **Artifacts:**
+  - `review/review-framework.md`
+  - `review/round-1/` (general, tests, security, merged)
+  - `review/round-2/` (general, merged)
+  - `review/disposition.md`
 
 ### How to validate
 

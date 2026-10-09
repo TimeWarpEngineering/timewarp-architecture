@@ -10,8 +10,11 @@
   both open it. The page reflows beside it; below 880px and when expanded it covers the viewport.
   Tools are the current page's catalog actions plus page_context, the same list WebMCP publishes,
   including the approval bit for the conversation's edit mode. The panel rebuilds the agent when
-  the route, the edit mode, or the conversation generation changes, but never while a turn is
-  streaming or waiting on an approval card: it waits for the turn to go idle, then rebuilds.
+  the route, the edit mode, or the conversation generation changes. A route or edit-mode rebuild
+  never runs while a turn is streaming or waiting on an approval card: it waits for the turn to
+  go idle. New conversation (a generation change) rebuilds at once and abandons that turn. A build
+  that finishes after the panel was disposed (navigation mid-build) frees what it created.
+  The root carries data-built-mode, the edit mode of the agent actually built.
   The transcript is not a component field. Every agent gets the AskConversationThread for the
   current generation (AskConversationThreads, app-scoped), and the panel owns the AgentContext
   instead of ChatPage's AgentBoundary, so it can await AgentContext.RestoreAsync before the
@@ -49,6 +52,7 @@
   private FunctionInvokingChatClient? InvokingClient;
   private CatalogAgentFunctions? Functions;
   private bool Building;
+  private bool Disposed;
   private bool ResourceMenuOpen;
   private int DeclinedGeneration = -1;
   private string? BuiltPath;
@@ -166,8 +170,9 @@
     }
 
     // A rebuild disposes the AgentContext, which cancels the stream and orphans an approval card.
-    // Wait for the turn to finish; the status callback re-renders and this runs again.
-    if (Building || TurnInProgress)
+    // Wait for the turn to finish; the status callback re-renders and this runs again. New
+    // conversation (a generation change) abandons the turn on purpose, so it does not wait.
+    if (Building || (TurnInProgress && BuiltGeneration == generation))
     {
       return;
     }
@@ -194,6 +199,11 @@
         mode,
         CancellationToken.None
       );
+      if (Disposed)
+      {
+        return;
+      }
+
       ReleaseAgent();
       Functions = CatalogAgentFunctions.Create(selected);
       string instructions = "Drive this page only through the supplied tools. "
@@ -216,6 +226,15 @@
       Ai.AgentContext conversation = new(agent);
       // Restore before MessageList attaches: it reads Turns once, when its AgentContext changes.
       await conversation.RestoreAsync();
+      if (Disposed)
+      {
+        // Dispose already released the fields; free what this build created.
+        conversation.Dispose();
+        agent.Dispose();
+        ReleaseAgent();
+        return;
+      }
+
       Agent = agent;
       Conversation = conversation;
       Thread = thread;
@@ -232,7 +251,7 @@
 
   private void OnStatusChanged(Ai.ConversationStatus status)
   {
-    if (status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
+    if (!Disposed && status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
     {
       // A rebuild may have been deferred while the turn ran.
       _ = InvokeAsync(StateHasChanged);
@@ -297,12 +316,13 @@
 
   public override void Dispose()
   {
+    Disposed = true;
     ReleaseAgent();
     base.Dispose();
   }
 }
 
-<div class="twe-agent-ask" data-qa="AgentAsk" @onkeydown="OnKeyDown">
+<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())" @onkeydown="OnKeyDown">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
       <h2 class="twe-agent-ask__title">Ask</h2>

@@ -182,9 +182,8 @@ public class AskSurface_Given_Wasm
       await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "true");
       await PressedShouldBeAsync(page, "AskBeforeEditing", "false");
       // The mode change rebuilds the agent; the turn must still be on screen afterwards.
-      await page.Locator("[data-qa=AgentAskStarting]").WaitForAsync(new LocatorWaitForOptions
+      await page.Locator("[data-qa=AgentAsk][data-built-mode=AutomaticallyEdit]").WaitForAsync(new LocatorWaitForOptions
       {
-        State = WaitForSelectorState.Hidden,
         Timeout = 30_000,
       });
       await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
