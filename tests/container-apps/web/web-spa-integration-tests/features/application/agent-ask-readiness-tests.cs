@@ -10,7 +10,9 @@
 // palette tests) with a scripted IWebServerApiService, opens the docked panel (task 292 moved Ask
 // off ModalController) and renders AgentAsk with HtmlRenderer, then checks the markup: the
 // user-secrets command appears only when the server said there is no key, a 401 asks the user to
-// sign in, and an error shows its status and detail with Retry. HtmlRenderer does not run OnAfterRenderAsync, so a configured probe
+// sign in, and an error shows its status and detail with Retry. A server answer copies the panel
+// settings (RecordChats, notice, normalized SupportUrl, credential lifetime) and a failure puts
+// those back to XaiChatDefaults. HtmlRenderer does not run OnAfterRenderAsync, so a configured probe
 // renders "Starting Ask…" here; the Playwright test proves the chat itself.
 #endregion
 
@@ -168,6 +170,59 @@ public class AgentAskReadiness_Should_
     state.ChatModel.ShouldBe("grok-4.7");
     state.ChatProblem.ShouldBeNull();
     server.Calls.ShouldBe(2);
+  }
+
+  public static async Task Probe_Applies_Panel_Settings_And_Resets_Them_On_Failure()
+  {
+    ScriptedWebServer server = new(PanelResponse(recordChats: true, supportUrl: "javascript:alert(1)", lifetimeMinutes: 15));
+    using AskSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new AgentSurfaceState.LoadChatConfigurationActionSet.Action());
+    AgentSurfaceState applied = scope.Store.GetState<AgentSurfaceState>();
+    applied.ChatReadiness.ShouldBe(CatalogAgentReadiness.Configured);
+    applied.RecordChats.ShouldBeTrue();
+    applied.PrivacyNotice.ShouldBe("Kept for this deployment.");
+    applied.SupportUrl.ShouldBe(XaiChatDefaults.SupportUrl);
+    applied.CredentialLifetimeMinutes.ShouldBe(15);
+
+    server.Outcome = new SharedProblemDetails { Status = 401, Title = "Unauthorized" };
+    await scope.Send(new AgentSurfaceState.LoadChatConfigurationActionSet.Action());
+    AgentSurfaceState reset = scope.Store.GetState<AgentSurfaceState>();
+    reset.ChatReadiness.ShouldBe(CatalogAgentReadiness.Unauthenticated);
+    reset.RecordChats.ShouldBe(XaiChatDefaults.RecordChats);
+    reset.PrivacyNotice.ShouldBe(XaiChatDefaults.PrivacyNotice);
+    reset.SupportUrl.ShouldBe(XaiChatDefaults.SupportUrl);
+    reset.CredentialLifetimeMinutes.ShouldBe(XaiChatDefaults.CredentialLifetimeMinutes);
+
+    server.Outcome = PanelResponse(recordChats: true, supportUrl: "https://support.example/ask", lifetimeMinutes: 0);
+    await scope.Send(new AgentSurfaceState.LoadChatConfigurationActionSet.Action());
+    AgentSurfaceState restored = scope.Store.GetState<AgentSurfaceState>();
+    restored.ChatReadiness.ShouldBe(CatalogAgentReadiness.Configured);
+    restored.RecordChats.ShouldBeTrue();
+    restored.PrivacyNotice.ShouldBe("Kept for this deployment.");
+    restored.SupportUrl.ShouldBe("https://support.example/ask");
+    restored.CredentialLifetimeMinutes.ShouldBe(XaiChatDefaults.CredentialLifetimeMinutes);
+    server.Calls.ShouldBe(3);
+  }
+
+  private static GetAgentChatConfiguration.Response PanelResponse
+  (
+    bool recordChats,
+    string supportUrl,
+    int lifetimeMinutes
+  )
+  {
+    return new()
+    {
+      Configured = true,
+      SetupCommand = XaiChatDefaults.SetupCommand,
+      Model = "grok-4.7",
+      RecordChats = recordChats,
+      PrivacyNotice = "Kept for this deployment.",
+      SupportUrl = supportUrl,
+      CredentialLifetimeMinutes = lifetimeMinutes,
+    };
   }
 
   private static async Task<string> ProbeAndRenderAsync(object outcome, CatalogAgentReadiness expected)

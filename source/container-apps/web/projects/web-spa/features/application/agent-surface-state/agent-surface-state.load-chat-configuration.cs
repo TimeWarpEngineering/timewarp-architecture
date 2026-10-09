@@ -60,7 +60,7 @@ partial class AgentSurfaceState
         AgentSurfaceState.ChatProblem = result.Problem;
         if (response is null)
         {
-          AgentSurfaceState.RecordChats = false;
+          AgentSurfaceState.RecordChats = XaiChatDefaults.RecordChats;
           AgentSurfaceState.PrivacyNotice = XaiChatDefaults.PrivacyNotice;
           AgentSurfaceState.SupportUrl = XaiChatDefaults.SupportUrl;
           AgentSurfaceState.CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
