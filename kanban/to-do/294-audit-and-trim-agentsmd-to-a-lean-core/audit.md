@@ -1,7 +1,7 @@
 # AGENTS.md audit (task 294)
 
 Measured on this branch before the rewrite: 33,098 bytes, 408 lines, 4,000 words.
-After: 3,498 bytes, 54 lines, 470 words (under the 8 KB target).
+After: 3,566 bytes, 54 lines, 481 words (under the 8 KB target).
 
 The file was a second copy of skills, analyzer release notes, MSBuild comments, and `dev`
 command help. A few of those copies had drifted. The lean core keeps what every run needs:

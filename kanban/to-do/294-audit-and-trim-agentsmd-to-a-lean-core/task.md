@@ -55,12 +55,13 @@ Merge with `ganda pr merge` only when Steven approves. Do not merge as part of t
 ## Session
 
 - Implementer: Grok session 01a121e2-20df-7741-9b78-feb8a06de58a (2026-10-10)
+- Review oracle: Claude Opus 5.5 with a general reviewer subagent (2026-10-10), effort 3
 
 ## Results
 
-`AGENTS.md` is a short core every agent run can load. Situational rules that were only in that file now live in the skill or catalog that owns them. The audit (verdict table and nine contradictions, both sides quoted) is `audit.md` beside this kitchen.
+`AGENTS.md` is a short core every agent run can load. Situational rules that were only in that file now live in the skill or catalog that owns them. The audit (verdict table and nine contradictions, both sides quoted) is `audit.md` in this task folder.
 
-After: 3,498 bytes, 54 lines, 470 words. Before: 33,098 bytes, 408 lines, 4,000 words.
+After: 3,566 bytes, 54 lines, 481 words. Before: 33,098 bytes, 408 lines, 4,000 words.
 
 ### Files
 
@@ -76,7 +77,7 @@ After: 3,498 bytes, 54 lines, 470 words. Before: 33,098 bytes, 408 lines, 4,000 
 - The template pack does not include `AGENTS.md` or `CLAUDE.md`. `ganda agents targets` does not list this repo. Both are deliberate; `audit.md` records why. `CLAUDE.md` stays `@AGENTS.md`.
 - Flow skills `tw-agent-context-regions` (says TWPA0004), `tw-csharp` ("non-trivial" Purpose), and `tw-jaribu` (dotted test names) were not edited. They live in timewarp-flow. The lean core states the ids this repo actually enforces.
 - `readme.md` still badges `dotnet-10.0` while the repo is `net11.0`. Left as-is; outside this audit.
-- Column stays `to-do` so the host kitchen path remains valid. PR and merge stay for later nodes.
+- Column stays `to-do` so the host's task-folder path stays valid. PR and merge stay for later nodes.
 
 ### Tests
 
@@ -96,7 +97,7 @@ rg -n 'AGENTS.md' timewarp-templates/source/timewarp-architecture-template/timew
 
 **Expect**
 
-- First command prints `3498 54 470` (bytes, lines, words). 3498 is under 8192.
+- First command prints `3566 54 481` (bytes, lines, words). 3566 is under 8192.
 - `audit.md` exists and its verdict table header is `| Section | Verdict | Reason |`.
 - The template csproj allow-list does not name `AGENTS.md` (the echo line, or no match).
 
@@ -111,6 +112,14 @@ Expect build 0 warnings and 0 errors, and audit `Failed: 0`.
 
 **Not in scope:** opening the PR, merging, editing timewarp-flow skills, or the readme `dotnet-10.0` badge.
 
+### Review
+
+- Effort 3 (by-diff, 836 lines), roster: general. Rounds: 2 (round 2 re-verified the fix delta).
+- Final counts: bug 0; suggestion 1 fixed; nit 2 fixed and 1 wontfix; 0 open.
+- Disposition: **accepted-exceptions**. M2 is wontfix because `TIMEWARP_TEST_PORT_BASE` is already in the same reference, and `InProcTestPorts` owns the defaults.
+- Fixes: `AGENTS.md` PR-gates row restores the same-commit `<Version>` and pin bump rule (task 124). The task.md wording and the `tw-feature-placement` rewrap are fixed.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### Pull request body
 
 ```markdown
@@ -123,7 +132,7 @@ Every agent run loads `AGENTS.md`. It had grown into a second copy of the skills
 | | Bytes | Lines | Words |
 |--|------:|------:|------:|
 | Before (master, 2026-10-10) | 33,098 | 408 | 4,000 |
-| After | 3,498 | 54 | 470 |
+| After | 3,566 | 54 | 481 |
 
 Target was well under 8 KB (8,192 bytes).
 

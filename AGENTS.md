@@ -37,7 +37,7 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Question | Home |
 |----------|------|
 | Build, run, test, database | `dev --capabilities` and `tw-dev-cli`. `dev run` starts Aspire. |
-| Before a PR | `tw-pr`. Gates in this repo: `ganda repo audit`; `dev check-version` when shipping the template or packages; `dev build`; `dev template-smoke` when template output changes. Branch and merge: `tw-git`. |
+| Before a PR | `tw-pr`. Gates in this repo: `ganda repo audit`; `dev check-version` when shipping the template or packages (bump `<Version>` and the platform package pins in the same commit); `dev build`; `dev template-smoke` when template output changes. Branch and merge: `tw-git`. |
 | File and type names | `tw-csharp`. `.cs` kebab is **TW0001** (warning, so the build fails). Feature filenames: `tw-feature-placement`. |
 | Where a file goes | `tw-feature-placement`. Slice boundaries: `tw-slice-isolation`. |
 | Contracts and browser-protocol endpoints | `tw-web-api-contracts` |

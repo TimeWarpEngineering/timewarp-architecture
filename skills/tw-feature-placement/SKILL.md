@@ -258,8 +258,8 @@ The canonical in-repo authoring convention for co-located Jaribu runfiles — pr
 (`#:project`/`#:package`, `PublishAot=false`, `NoWarn=$(NoWarn);…`, Purpose region, the
 `cnd:noEmit`-escaped `JARIBU_MULTI` switch), C-create host graphs via `HostGraphFactory`,
 session-scoped fixtures for expensive closed-box graphs, the in-proc vs closed-box host lanes,
-aggregator wiring and its mandatory
-project-local `global.json`, and the maintenance rules that ride along:
+aggregator wiring and its mandatory project-local `global.json`, and the maintenance rules that
+ride along:
 **[references/co-located-jaribu-runfiles.md](references/co-located-jaribu-runfiles.md)**.
 
 Reference implementations: `create-role-tests.cs` (web, host-free),
