@@ -113,7 +113,14 @@ internal sealed class RelayChatClient : IChatClient
       else if (content is FunctionResultContent result)
       {
         turn.ToolCallId = result.CallId;
-        turn.ToolResult = result.Result as string ?? JsonSerializer.Serialize(result.Result);
+        // AIFunctionFactory returns a string result as a JsonElement string. Serializing that
+        // again double-encodes it ("{\u0022path\u0022:...}") for the model; send the string itself.
+        turn.ToolResult = result.Result switch
+        {
+          string text => text,
+          JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+          _ => JsonSerializer.Serialize(result.Result),
+        };
       }
     }
 

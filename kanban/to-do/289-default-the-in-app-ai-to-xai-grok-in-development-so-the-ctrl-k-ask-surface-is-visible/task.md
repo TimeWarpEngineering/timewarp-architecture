@@ -81,7 +81,7 @@ absent") and takes the item 3 follow-up (keep the model key on the server). See
 - [x] Docs (pwsh) for setting the key; optional `dev run` preflight warning
 - [x] Verify 271 guarantees (visibility, permissions, approval, server distrust) still hold; WebMCP unchanged
 - [x] Tests with fake `IChatClient` / fake upstream
-- [ ] Playwright WASM test (configured + not-configured) and Ctrl-K Ask screenshot in PR
+- [x] Playwright WASM test (configured + not-configured) and Ctrl-K Ask screenshot in PR
 - [x] Recheck the WASM `SemaphoreSlim.Wait` observation (Notes) in the browser test
 - [ ] Build, tests, template-smoke, ganda repo audit green
 
@@ -100,13 +100,20 @@ dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container
 
 `dev run` warns and still starts when the key is missing. Catalog visibility, permissions, approval, and WebMCP are unchanged. The server forwards declarations only.
 
-The WASM proof did not pass. InteractiveWebAssembly store dispatches throw `PlatformNotSupportedException` from `SemaphoreSlim.Wait` in TimeWarp.State 12.0.0-beta.8 (`StateTransactionBehavior` → AnyClone). Ctrl-K calls `ApplicationState.SetActiveModal`, so the palette never opens and no Ask screenshot was captured. `UseStateTransactionBehavior` was not disabled. Filed https://github.com/TimeWarpEngineering/timewarp-state/issues/616.
+The WASM proof passes on TimeWarp.State 12.0.0-beta.9, which replaces AnyClone with a non-blocking clone. Ctrl-K dispatches `ApplicationState.SetActiveModal` through `StateTransactionBehavior` in InteractiveWebAssembly, the palette opens, and Ask is visible with and without `XAI:ApiKey`. The browser console has no `PlatformNotSupportedException` or `SemaphoreSlim.Wait`. `UseStateTransactionBehavior` stays on.
+
+The browser run also found two defects, both fixed here:
+
+- `RelayChatClient` double-encoded string tool results. `AIFunctionFactory` returns them as a `JsonElement` string, and re-serializing sent `"{\u0022path\u0022:...}"` to the model. The relay now sends the string itself.
+- The library `ChatPage` is `height: 100vh`. Inside the Ask modal, the first reply pushed the title and the first messages above the dialog. `AgentAsk.razor.css` bounds it to `min(28rem, 60dvh)`. The Playwright test asserts the title and chat stay inside the viewport.
+
+Screenshots (written by the Playwright test into this folder): `ctrl-k-palette-page.png`, `ctrl-k-ask-not-configured-page.png`, `ctrl-k-ask-result-page.png`.
 
 ### How to validate
 
 Smoke: from `tests/container-apps/web/web-spa-playwright-tests`, `dotnet test -c Release`.
 
-Expect: after timewarp-state 616 is fixed, Ctrl-K shows Ask. With no key the panel text is `AI not configured` and the setup command above. With the Development fake upstream, asking "What is on this page?" returns text that contains `page_context:` and `path`. The browser console does not contain `PlatformNotSupportedException` or `SemaphoreSlim.Wait`.
+Expect: Ctrl-K shows Ask. With no key the panel text is `AI not configured` and the setup command above. With the Development fake upstream, asking "What is on this page?" returns text that contains `page_context:` and `path`. The browser console does not contain `PlatformNotSupportedException` or `SemaphoreSlim.Wait`.
 
 Smoke that passed on this walk: `web-server-integration-tests` filter `XaiChatUpstream` (3), `web-jaribu-tests` filter `CompleteAgentChat` (6), `web-spa-integration-tests` filter `CatalogAgent` (17). Fake clients only; no xAI key.
 
@@ -124,3 +131,7 @@ Smoke that passed on this walk: `web-server-integration-tests` filter `XaiChatUp
   https://github.com/TimeWarpEngineering/timewarp-state/issues/616.
   `UseStateTransactionBehavior` stays on.
 - Related: 271 (agentic UI, PR #448), 272 (.NET 11, PR #447).
+- **Unblocked 2026-10-09:** TimeWarp.State 12.0.0-beta.9 (timewarp-state task 095, PR #617)
+  replaces AnyClone/TypeSupport with a non-blocking clone, which removes the WASM
+  `SemaphoreSlim.Wait` `PlatformNotSupportedException`. Pins moved to 12.0.0-beta.9; test
+  global using `AnyClone` -> `TimeWarp.Features.Cloning`.

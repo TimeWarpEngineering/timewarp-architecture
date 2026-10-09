@@ -2,7 +2,7 @@
 // Project-wide using directives so individual files omit repeated imports.
 #endregion
 
-global using AnyClone;
+global using TimeWarp.Features.Cloning;
 global using Microsoft.Extensions.DependencyInjection;
 // Auth, configuration, options, and Services: weather + mock API surfaces excluded when api is off.
 #if(api)

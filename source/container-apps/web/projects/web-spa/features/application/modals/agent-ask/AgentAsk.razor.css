@@ -27,3 +27,10 @@
   margin: 0;
   white-space: pre-wrap;
 }
+
+/* The library ChatPage is a full-page shell (height: 100vh). Inside the modal that pushed the
+   title and the first messages above the dialog once a reply arrived. Bound it to the modal. */
+.twe-agent-ask ::deep .sc-ai-chat-page {
+  height: min(28rem, 60vh);
+  height: min(28rem, 60dvh);
+}

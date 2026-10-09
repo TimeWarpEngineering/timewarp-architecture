@@ -6,7 +6,9 @@
 // WebApplicationHost layers this project's appsettings (UseMock, InteractiveWebAssembly,
 // prerender off) and strips secrets.json. PostConfigure clears any machine XAI__ApiKey.
 // The configured pass sets UseFakeUpstream so no request leaves the process. The mock
-// principal header lets the relay's identity-session policy succeed. Console text is
+// principal header lets the relay's identity-session policy succeed. Opening Ctrl-K dispatches
+// ApplicationState.SetActiveModal through StateTransactionBehavior, so a visible Ask proves a
+// store action ran in WASM. Console text is
 // checked for the TimeWarp.State SemaphoreSlim.Wait failure noted on 2026-10-09.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
@@ -50,7 +52,9 @@ public class AskSurface_Given_Wasm
       services.PostConfigure<XaiChatOptions>(options =>
       {
         options.UseFakeUpstream = useFakeUpstream;
-        options.ApiKey = null;
+        // Configured pass: a placeholder XAI:ApiKey is set; the fake upstream still wins, so no
+        // request leaves the process. Not-configured pass: no key at all.
+        options.ApiKey = useFakeUpstream ? "playwright-placeholder-key" : null;
       });
     });
 
@@ -129,6 +133,10 @@ public class AskSurface_Given_Wasm
     {
       Path = ScreenshotPath(useFakeUpstream ? "ctrl-k-ask-configured.png" : "ctrl-k-ask.png"),
     });
+    await page.ScreenshotAsync(new PageScreenshotOptions
+    {
+      Path = ScreenshotPath(useFakeUpstream ? "ctrl-k-palette-configured-page.png" : "ctrl-k-palette-page.png"),
+    });
 
     await ask.ClickAsync();
     if (useFakeUpstream)
@@ -142,10 +150,19 @@ public class AskSurface_Given_Wasm
       string text = await page.Locator(".sc-ai-root").InnerTextAsync();
       text.ShouldContain("page_context:");
       text.ShouldContain("path");
+      text.ShouldNotContain("\\u0022");
+      // The reply must not push the modal title out of the dialog (ChatPage is 100vh by default).
+      LocatorBoundingBoxResult? title = await page.Locator(".twe-agent-ask__title").BoundingBoxAsync();
+      LocatorBoundingBoxResult? chat = await page.Locator(".sc-ai-chat-page").BoundingBoxAsync();
+      title.ShouldNotBeNull();
+      chat.ShouldNotBeNull();
+      title.Y.ShouldBeGreaterThanOrEqualTo(0);
+      (chat.Y + chat.Height).ShouldBeLessThanOrEqualTo(page.ViewportSize!.Height);
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
         Path = ScreenshotPath("ctrl-k-ask-result.png"),
       });
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-result-page.png") });
     }
     else
     {
@@ -158,6 +175,7 @@ public class AskSurface_Given_Wasm
       {
         Path = ScreenshotPath("ctrl-k-ask-not-configured.png"),
       });
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-not-configured-page.png") });
     }
 
     string log = string.Join('\n', console);
