@@ -21,6 +21,7 @@
 
 namespace CatalogAgent_;
 
+using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -257,7 +258,7 @@ public class CatalogAgent_Should
     reply.ShouldBe("Done.");
   }
 
-  public static Task ConfigureServices_Does_Not_Register_A_Chat_Client()
+  public static Task ConfigureServices_Registers_Relay_Without_A_Key()
   {
     ServiceCollection services = new();
     // Qualified: Microsoft.Extensions.Configuration is a global using only when the api flag is on.
@@ -265,9 +266,15 @@ public class CatalogAgent_Should
       new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();
     Program.ConfigureServices(services, configuration, "Testing");
 
-    bool registered = services.Any(descriptor => descriptor.ServiceType == typeof(IChatClient));
-    registered.ShouldBeFalse();
-    Console.WriteLine($"NO-MODEL-PROOF ConfigureServices IChatClient registered={registered}");
+    ServiceDescriptor relay = services.Single(descriptor =>
+      descriptor.ServiceType == typeof(IChatClient) && descriptor.ServiceKey is null);
+    relay.ImplementationType.ShouldBe(typeof(RelayChatClient));
+    services.Any(descriptor => descriptor.ServiceKey is not null && descriptor.ServiceType == typeof(IChatClient))
+      .ShouldBeFalse();
+    typeof(RelayChatClient).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+      .Any(field => field.Name.Contains("ApiKey", StringComparison.Ordinal) || field.Name.Contains("Key", StringComparison.Ordinal))
+      .ShouldBeFalse();
+    Console.WriteLine("RELAY-PROOF IChatClient=RelayChatClient keyedXai=False");
     return Task.CompletedTask;
   }
 

@@ -70,6 +70,7 @@ global using TimeWarp.Architecture.Configuration;
 global using TimeWarp.Architecture.Authorization;
 global using TimeWarp.Architecture.Features;
 global using TimeWarp.Architecture.Features.Applications;
+global using TimeWarp.Architecture.Features.AgentChats;
 global using TimeWarp.Architecture.Features.Authorization;
 global using TimeWarp.Architecture.Features.Identity;
 global using TimeWarp.Architecture.Features.Settings;

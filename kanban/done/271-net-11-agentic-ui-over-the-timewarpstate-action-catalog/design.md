@@ -33,6 +33,8 @@ Tools are page-scoped. `PageAgentScope` lists the catalog actions each page's bu
 - Server agent behind `AGUIChatClient`. Right when the API key must stay off the client, and it is the documented follow-up. It needs a host endpoint, an AG-UI package, and frontend-tool round trips so decisions still land in the browser store. Not required to prove the catalog mapping, and it would put a model hop on the template by default.
 - Let the server execute catalog actions on behalf of the model. Rejected: the store and the page flags live in the browser, and a server executor would be a second authorization path.
 
+Task 289 supersedes the "in-process client holds the key" default. The agent loop and `ActionCatalogEntry.Execute` stay in the browser. web-server relays chat completions to xAI so the key never reaches WASM. See `kanban/to-do/289-default-the-in-app-ai-to-xai-grok-in-development-so-the-ctrl-k-ask-surface-is-visible/design.md` (the folder moves with the task).
+
 ## 4. Model and provider
 
 **Recommendation.** Any `IChatClient`. The template registers none. `CatalogAgentAvailability.IsConfigured` is `GetService<IChatClient>() is not null`. With no registration the ask button is absent, the palette behaves as it does today, and the rest of the app is unchanged. A host that wants a model registers an `IChatClient` (OpenAI, Foundry, Ollama, a fake). The key stays in that registration, not in this repo. Tests use a scripted `IChatClient`. Cost and privacy follow the host's client: an in-browser client puts the prompt and the page context on that provider's network; a host that cannot accept that should front the client with its own server (item 3 follow-up).
@@ -42,6 +44,8 @@ Tools are page-scoped. `PageAgentScope` lists the catalog actions each page's bu
 - Ship an OpenAI or Foundry client with a placeholder key. Rejected: the template would be unusable or unsafe without a secret.
 - A local ONNX model. Rejected earlier (task notes): size, WASM, and the dropped npm toolchain.
 - A template flag to include the feature. Rejected in item 6.
+
+Task 289 supersedes "the template registers none, so Ask is absent". The template registers a browser relay `IChatClient` and, when `XAI:ApiKey` is set, a server-side xAI client. A missing key keeps Ask visible with the user-secrets command. It does not hide the button and it does not fail startup.
 
 ## 5. UI surface
 

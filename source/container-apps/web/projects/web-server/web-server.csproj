@@ -45,6 +45,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Oakton" />
+    <!-- Server-side xAI chat completions. The key stays in this project. The WASM client never references it. -->
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
   </ItemGroup>
 
 

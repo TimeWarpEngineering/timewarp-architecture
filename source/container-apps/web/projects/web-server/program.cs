@@ -298,6 +298,10 @@ public partial class Program : IAspNetProgram
 
     Web.Spa.Program.ConfigureServices(serviceCollection, configuration, environmentName);
 
+    // Task 289: key-bearing xAI client. Not the unkeyed IChatClient — SPA registers that relay
+    // above, and prerender resolves the same container. A missing key does not fail startup.
+    XaiChatRegistration.ConfigureServices(serviceCollection, configuration);
+
     // Task 183: last registration wins — prefer cookie principal during hosted prerender.
     // Only when SPA registered IdentitySessionAuthenticationStateProvider (not mock / Entra).
     if (serviceCollection.Any(static d =>

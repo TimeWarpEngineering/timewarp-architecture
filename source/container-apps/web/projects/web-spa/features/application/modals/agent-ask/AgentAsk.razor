@@ -7,11 +7,12 @@
   Purpose: Ask mode. A person describes what they want and the in-app model runs a page catalog tool.
 
   Design: Hosted as a modal so it does not collide with the app's /Chat page or the library ChatPage
-  type. The modal is opened from the Ctrl-K footer, and only when an IChatClient is registered.
+  type. The modal is opened from the Ctrl-K footer. Ask is always available. When the probe says
+  the server has no model, the modal shows "AI not configured" and the pwsh user-secrets command.
   Tools are the current page's catalog actions plus page_context. Mutating tools render
   FunctionApprovalBlock; Approve and Reject answer that block. Outcomes of the dispatched actions
-  stay on NotificationState. The component builds the agent when the modal activates and does not
-  call the model context itself.
+  stay on NotificationState. The component builds the agent when readiness becomes Configured.
+  It does not call the model context itself.
 *@
 
 @code {
@@ -25,23 +26,43 @@
   private Ai.UIAgent? Agent;
   private FunctionInvokingChatClient? InvokingClient;
   private CatalogAgentFunctions? Functions;
-  private bool Started;
+  private bool Building;
+
+  private CatalogAgentReadiness Readiness => CatalogAgentAvailability.Readiness(AgentSurfaceState);
+  private string SetupCommand => CatalogAgentAvailability.SetupCommand(AgentSurfaceState);
 
   private Task Activate() => EnsureAgentAsync();
 
-  private async Task EnsureAgentAsync()
+  protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (Started)
+    await base.OnAfterRenderAsync(firstRender);
+    if (Agent is not null || Building || Readiness != CatalogAgentReadiness.Configured)
     {
       return;
     }
 
-    Started = true;
+    bool built = Agent is not null;
+    await EnsureAgentAsync();
+    if (!built && Agent is not null)
+    {
+      StateHasChanged();
+    }
+  }
+
+  private async Task EnsureAgentAsync()
+  {
+    if (Agent is not null || Building || Readiness != CatalogAgentReadiness.Configured)
+    {
+      return;
+    }
+
     IChatClient? chatClient = ServiceProvider.GetService<IChatClient>();
     if (chatClient is null)
     {
       return;
     }
+
+    Building = true;
 
     // Re-read on every activation. The modal does not cache an AuthenticationState.
 #pragma warning disable BL0013
@@ -82,6 +103,7 @@
         };
       }
     );
+    Building = false;
   }
 
   private Task CloseAsync() => ApplicationState.CloseModal();
@@ -102,9 +124,14 @@
   <MainContent>
     <div class="twe-agent-ask" data-qa="AgentAsk">
       <h2 id="modal-title" class="twe-agent-ask__title">Ask</h2>
-      @if (Agent is null)
+      @if (Readiness == CatalogAgentReadiness.NotConfigured)
       {
-        <p data-qa="AgentAskUnavailable">Ask is off until a model is configured. The rest of the app is unchanged.</p>
+        <p data-qa="AgentAskNotConfigured">AI not configured</p>
+        <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+      }
+      else if (Agent is null)
+      {
+        <p data-qa="AgentAskStarting">Starting Ask…</p>
       }
       else
       {

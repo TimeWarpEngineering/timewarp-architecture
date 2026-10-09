@@ -1,5 +1,5 @@
 #region Purpose
-// Shell state for a WebMCP confirmation the person has not answered yet.
+// Shell state for a WebMCP confirmation and for whether Ask can call a model.
 #endregion
 
 #region Design
@@ -8,6 +8,8 @@
 // id it rendered. ResolveApproval clears the state only for the matching id and releases that call
 // in the gate. SyncWebMcp republishes the page's tools after navigation; the dispatcher itself
 // cancels a pending call when the location changes.
+// ChatReadiness is the task 289 probe. It starts Unknown. LoadChatConfiguration sets Configured
+// or NotConfigured and stores the setup command. Ask renders from this, not from IChatClient.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -23,6 +25,14 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public bool HasPendingApproval => PendingCallId is not null;
 
+  public CatalogAgentReadiness ChatReadiness { get; private set; }
+
+  public string ChatSetupCommand { get; private set; } = XaiChatDefaults.SetupCommand;
+
+  public string? ChatModel { get; private set; }
+
+  public bool ChatProbeCompleted { get; private set; }
+
   public AgentSurfaceState() { }
 
   public override void Initialize()
@@ -30,5 +40,9 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     PendingCallId = null;
     PendingToolName = null;
     PendingArgumentsJson = null;
+    ChatReadiness = CatalogAgentReadiness.Unknown;
+    ChatSetupCommand = XaiChatDefaults.SetupCommand;
+    ChatModel = null;
+    ChatProbeCompleted = false;
   }
 }

@@ -143,9 +143,16 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   correlated by call id; navigation cancels the pending call. Both drivers re-select tools for the
   current principal and route when a tool runs, and refuse one that is no longer offered. Approval
   does not grant a permission the principal lacks.
-- The ask UI is the Ctrl-K **Ask** button, shown only when the host registered an `IChatClient`.
-  It opens the `AgentAsk` modal (`UIAgent` over a `FunctionInvokingChatClient`). The template
-  registers no client and no secret. WebMCP does not need a client.
+- The ask UI is the Ctrl-K **Ask** button. It is always shown. It opens the `AgentAsk` modal
+  (`UIAgent` over a `FunctionInvokingChatClient` whose inner client is the browser relay).
+  web-server holds `XAI:ApiKey` and forwards completions to xAI. When the key is missing, the
+  modal shows "AI not configured" and:
+
+  ```pwsh
+  dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj
+  ```
+
+  The template registers the relay, not a key. WebMCP does not need a client.
 - WebMCP registers the same tools, plus `page_context`, through `document.modelContext.registerTool`
   (falling back to `navigator.modelContext`, then `provideContext`). A missing API registers nothing.
   Both paths execute with `ActionCatalogEntry.Execute`. Endpoints keep `[EndpointAuthorize]`.

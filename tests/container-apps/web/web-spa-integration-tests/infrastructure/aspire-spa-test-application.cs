@@ -17,8 +17,8 @@
 // tests resolve IAuthorizationService and WebMcpDispatcher from the per-test scope (task 271).
 // JsWebMcpModelContext is fully qualified: TimeWarp.Architecture.Services is a global using
 // only when the api flag is on. Without api, a signed-in principal with every permission
-// stands in for the mock session so the dispatcher can be constructed. The host still
-// registers no IChatClient.
+// stands in for the mock session so the dispatcher can be constructed. This host does not
+// register the production relay; Web.Spa.Program.ConfigureServices does (RelayChatClient, no key).
 // MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
 // IApiServerApiService factory sit in the api conditional. A generated app with the api
 // flag off drops the Services import and the api-server client, so those names do not
