@@ -30,8 +30,10 @@ descendants by **cascading it**, and you keep the routed layout empty so it does
 ## How to build it
 
 1. **Empty layout.** Your `LayoutComponentBase` renders just `@Body` (plus any genuinely
-   layout-root, run-once concerns — e.g. applying a theme). Guard anything that uses JS interop so it
-   only runs when interactive (not during server prerender). No header/nav/footer here.
+   layout-root, run-once concerns). The brand theme is not one of them: it is set on the first
+   server render (`App.razor`'s `<body data-theme-color … data-theme>`), never applied from
+   `OnAfterRenderAsync` — see `tw-blazor-css-strategy` rule 8. Guard anything else that uses JS
+   interop so it only runs when interactive (not during server prerender). No header/nav/footer here.
 2. **Shell component.** A normal component that **inherits your state/base component** (not
    `LayoutComponentBase`). It:
    - renders the chrome zones using your UI library's layout primitive (header / navigation /
@@ -52,8 +54,10 @@ descendants by **cascading it**, and you keep the routed layout empty so it does
 - **Don't make the shell a `LayoutComponentBase`** (or register it as the routed layout) — that
   throws away the state/lifecycle benefits that are the whole point.
 - **Don't put chrome in the layout or in individual pages.** It lives in the shell only.
-- **Guard interop for prerender.** Theme/JS-interop calls in the layout or shell must be gated on
-  "is interactive," or they throw during server-side prerender.
+- **Guard interop for prerender.** JS-interop calls in the layout or shell must be gated on
+  "is interactive," or they throw during server-side prerender. Don't solve the theme this way:
+  a theme applied once interactive paints the default theme first and then flashes. Set it on the
+  first server render instead (`tw-blazor-css-strategy` rule 8).
 
 ## The shell owns the notification region
 
@@ -93,8 +97,9 @@ generated list of pages — never a second hand-copied route list.
 
 Concrete instance of the pattern in this repo:
 - **Empty layout:** `components/layouts/MainLayout.razor` — `@inherits LayoutComponentBase`, renders
-  `@Body` + `<FluentUIRequiredFeatures/>`, applies the brand ramp via `IThemeService.SetThemeAsync`
-  in `OnAfterRenderAsync` guarded by `RendererInfo.IsInteractive`.
+  `@Body` + `<FluentUIRequiredFeatures/>`. It owns the brand color constant; `App.razor` renders it
+  as `<body data-theme-color>` so Fluent builds the brand theme at script start, not after the page
+  goes interactive (task 290).
 - **Shell:** `components/TimeWarpPage.razor` — `@inherits BaseComponent` (the TimeWarp.State base
   component → gives it the state `Id` and render-on-state-change, e.g. the footer activity spinner
   bound to `ActionTrackingState.IsActive`). Renders FluentUI `FluentLayout` zones + brand/search/nav/
@@ -105,7 +110,7 @@ Concrete instance of the pattern in this repo:
   `[Route]`, `GetPageUrl`, and route parameters). The shell is named `TimeWarpPage` (not `Page`)
   precisely because `[Page]` is the routing concept.
 - **Styling of the shell:** see the `tw-blazor-css-strategy` skill — this skill is the *structure*, that
-  one is the *styling* (Tier-2 scope-handle `.twe-shell`).
+  one is the *styling* (`TimeWarpPage.razor.css`, anchored on the native `.twe-shell` root).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
   pages and state live in product slice namespaces (`…Features.<Id>`). See skill `tw-slice-isolation`.
 - **Navigation registry:** `[Page("/route", Policy = …, Navigable = true)]` lists a static-route

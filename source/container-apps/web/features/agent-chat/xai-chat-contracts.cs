@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// The key name and the web-server project path are duplicated by dev-cli (it must not reference
-// this assembly). Checked https://docs.x.ai/docs/models on 2026-10-09: grok-4.7 is the current
+// The key name, the web-server project path and its user-secrets id are duplicated by dev-cli (it
+// must not reference this assembly). Checked https://docs.x.ai/docs/models on 2026-10-09: grok-4.7 is the current
 // recommended chat and code model, and the alias tracks the latest stable release, so the
 // template default is not a dated snapshot. XAI:Model overrides it. The endpoint is the
 // OpenAI-compatible API at https://api.x.ai/v1.
@@ -46,7 +46,13 @@ public static class XaiChatDefaults
   /// <summary>web-server project, relative to the repository root. Owns the user-secrets id.</summary>
   public const string ProjectPath = "source/container-apps/web/projects/web-server/web-server.csproj";
 
-  /// <summary>Exact pwsh command shown when no key is configured.</summary>
+  /// <summary>web-server's &lt;UserSecretsId&gt; (web-server.csproj). A test pins the two together.</summary>
+  public const string UserSecretsId = "0e53fdd3-6f93-4d5a-9c86-040621f7929e";
+
+  /// <summary>
+  /// Exact pwsh command shown when no key is configured. <c>--id</c> works from any directory;
+  /// the old repo-relative <c>--project</c> path failed outside the repo root (task 290).
+  /// </summary>
   public const string SetupCommand =
-    "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --project source/container-apps/web/projects/web-server/web-server.csproj";
+    "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + UserSecretsId;
 }

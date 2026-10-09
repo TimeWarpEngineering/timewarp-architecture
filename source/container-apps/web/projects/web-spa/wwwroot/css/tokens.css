@@ -71,6 +71,10 @@
   --twe-space-6: 24px;
   --twe-space-12: 48px;
 
+  /* App shell chrome heights (TimeWarpPage.razor.css feeds them to FluentLayout). */
+  --twe-appbar-height: 70px;
+  --twe-footer-height: 44px;
+
   /* Notification region (shell MessageBars host): gap between bars and the margin that
      separates the region from the first card. The region owns its spacing; pages do not. */
   --twe-notify-gap: var(--twe-space-3);

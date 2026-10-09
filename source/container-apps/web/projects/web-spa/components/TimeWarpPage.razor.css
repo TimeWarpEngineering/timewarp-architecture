@@ -1,0 +1,138 @@
+/* TimeWarpPage: the app shell. CSS isolation (skills/tw-blazor-css-strategy).
+   The bundle (Web.Spa.styles.css) is linked in App.razor <head>, so these rules apply to the
+   server-prerendered HTML on first paint. Task 290 moved them here from a <style>@(...)</style>
+   block that prerender HTML-encoded, which dropped every rule until interactive render.
+
+   Wall A: the scope attribute is stamped only on elements this component authors. FluentLayout,
+   FluentLayoutItem, FluentNav (NavMenu) and TwBreadcrumb render their own roots, which are never
+   stamped. Rules for those use the native .twe-shell root (or another authored element) as the
+   anchor and ::deep for the Fluent child. Elements authored here inside a Fluent ChildContent
+   (.twe-appbar, .twe-page, .twe-footer, ...) are stamped and need no ::deep. */
+
+/* The wrapper exists only to anchor ::deep rules; it adds no box. */
+.twe-shell { display: contents; }
+
+/* Appbar/footer height single source (tokens.css). FluentLayout writes its defaults for
+   --layout-header-height / --layout-footer-height inline on its root element, so the overrides
+   need !important to win; the layout items and the body-height calc all consume the vars. */
+.twe-shell ::deep .twe-shell__layout {
+  --layout-header-height: var(--twe-appbar-height) !important;
+  --layout-footer-height: var(--twe-footer-height) !important;
+}
+
+/* Header slot: white appbar inside Fluent's 8px item padding gives a brand-purple frame, with a
+   green accent on the appbar's bottom edge. The frame color is the brand token, not Fluent's
+   runtime --colorBrandBackground, so it is the same before and after Fluent's theme script runs.
+   Footer mirrors it with a blue slot and a green accent on top (task 162). */
+.twe-shell ::deep .fluent-layout-item[area=header] {
+  background-color: var(--twe-purple);
+}
+.twe-shell ::deep .fluent-layout-item[area=footer] {
+  background-color: var(--twe-blue);
+}
+
+.twe-appbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
+  background: var(--twe-paper);
+  border-bottom: 3px solid var(--twe-green);
+}
+/* Brand and actions share the space either side equally, so the search box sits in the centre
+   of the bar whatever the two sides contain. Their content differs before Fluent's web
+   components upgrade (no avatar image yet), and the search box must not move when they do. */
+.twe-appbar__search { flex: 0 1 520px; width: 520px; }
+.twe-appbar__actions {
+  flex: 1 1 0;
+  min-width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  /* Task 149: breathing room so profile FluentMenu is not flush to the viewport edge. */
+  padding-inline-end: 8px;
+}
+.search-end { white-space: nowrap; color: var(--twe-muted); font-size: var(--twe-text-helper); }
+
+/* Until Fluent's script defines fluent-field / fluent-text-input they are unknown inline
+   elements with no box, so the search field collapsed to its "Ctrl-K" text. Reserve the
+   upgraded field's box (Fluent v5 medium input) so nothing moves when it upgrades. These rules
+   stop matching once the elements are defined. */
+.twe-appbar__search ::deep fluent-field:not(:defined) { display: block; width: 100%; }
+.twe-appbar__search ::deep fluent-text-input:not(:defined) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--twe-rule);
+  border-radius: 4px;
+  background: var(--twe-paper);
+}
+
+.twe-brand { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; padding: 0 6px; }
+.twe-brand__logo { height: 48px; width: auto; flex: none; display: block; }
+
+/* FluentNav is NavMenu's root (a child component), so it is reached from the shell anchor. */
+.twe-shell ::deep .twe-nav {
+  height: 100%;
+  padding: 8px;
+  background: var(--twe-paper-2);
+  border-right: 1px solid var(--twe-rule);
+}
+
+.twe-page { padding: 20px 28px 28px; }
+.twe-page__title {
+  margin: 0 0 8px;
+  font-size: var(--twe-text-page-title);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--twe-ink);
+}
+.twe-page__title:focus { outline: none; }
+
+/* Plus TwBreadcrumb (timewarp-state 081) ships Bootstrap class names and no CSS.
+   Style that contract from this shell wrapper only; do not load bootstrap.min.css. */
+.twe-page__crumbs { margin: 0 0 16px; }
+.twe-page__crumbs ::deep .breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+.twe-page__crumbs ::deep .breadcrumb:empty { display: none; }
+.twe-page__crumbs ::deep .breadcrumb-item { display: inline-flex; align-items: center; }
+.twe-page__crumbs ::deep .breadcrumb-item + .breadcrumb-item::before {
+  content: "/";
+  padding: 0 8px;
+  color: var(--twe-muted);
+}
+.twe-page__crumbs ::deep .breadcrumb-item a { color: var(--twe-blue); text-decoration: none; }
+.twe-page__crumbs ::deep .breadcrumb-item a:hover { text-decoration: underline; color: var(--twe-blue-deep); }
+.twe-page__crumbs ::deep .breadcrumb-item.active { color: var(--twe-ink-2); }
+.twe-page__crumbs ::deep .text-muted { color: var(--twe-muted); }
+.twe-page__body { color: var(--twe-ink); }
+
+.twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }
+
+.twe-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+  border-top: 3px solid var(--twe-green);
+  background: var(--twe-paper);
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}

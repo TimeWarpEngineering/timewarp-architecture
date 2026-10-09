@@ -1,20 +1,22 @@
 @namespace TimeWarp.Architecture.Components
 @inherits LayoutComponentBase
-@inject IThemeService ThemeService
 @code
 {
   protected const string HeadingHeight = "52px";
 
-  // Generate the FluentUI v5 brand ramp from the TimeWarp Enterprises brand purple (the
-  // dominant logo color). SetThemeAsync uses JS interop, so it must run client-side
-  // (interactive), never during server prerender.
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    if (firstRender && RendererInfo.IsInteractive)
-    {
-      await ThemeService.SetThemeAsync(new ThemeSettings("#55409c", 0, 0, ThemeMode.Light, false));
-    }
-  }
+  /// <summary>
+  /// TimeWarp Enterprises brand purple (the dominant logo color, tokens.css --twe-purple).
+  /// App.razor renders it as &lt;body data-theme-color&gt; with data-theme="light".
+  /// </summary>
+  /// <remarks>
+  /// Task 290: Fluent's startup script reads those body attributes in its beforeStart initializer
+  /// and generates the FluentUI v5 brand ramp from this color, before any component is
+  /// interactive. The ramp used to be applied here with IThemeService.SetThemeAsync in
+  /// OnAfterRenderAsync, which a fresh browser painted as Fluent's default blue first and then
+  /// switched to purple. The shell's header/footer frame colors come from tokens.css, so the
+  /// prerendered HTML is already on brand before any script runs.
+  /// </remarks>
+  public const string BrandColor = "#55409c";
 }
 @Body
 

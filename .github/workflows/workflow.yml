@@ -185,6 +185,18 @@ jobs:
             dotnet run tools/dev-cli/dev.cs -- workflow
           fi
 
+      # Task 290: browser proof. The web-spa Playwright tests write screenshots (first paint with
+      # JavaScript off, with blazor.web.js blocked, and settled interactive) and the prerendered
+      # HTML under artifacts/playwright/. Diagnostic upload, so retention-days: 1.
+      - name: Upload Playwright screenshots
+        if: always() && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ github.run_number }}
+          path: artifacts/playwright/
+          if-no-files-found: warn
+          retention-days: 1
+
       # Task 070-003: generated Compose output is CI-only (never committed). The migration bundle is
       # a ~100 MB self-contained binary and is left out; the idempotent SQL script is the
       # documented migration path for Compose (see the AppHost Design region).

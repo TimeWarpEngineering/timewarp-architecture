@@ -152,20 +152,20 @@ what breaks prerender.
 
 ## Checklist
 
-- [ ] Step 0: verify Wall A on .NET 11 with a minimal repro; record the decision and why in Results
-- [ ] TimeWarpPage shell CSS → stylesheet (per step 0); inline `<style>` removed
-- [ ] Profile → `.razor.css` + CSS custom properties for per-instance values; inline `<style>` removed
-- [ ] FormField → stylesheet per step 0 (Fluent host stretch still works; keep the task-234 M1 behavior); inline `<style>` removed
-- [ ] LoginPage → `.razor.css`; inline `<style>` removed
-- [ ] NotFoundPage → `.razor.css`; inline `<style>` removed (fix the 403 copy)
-- [ ] Tokens and app-wide rules in global stylesheet, linked before `Web.Spa.styles.css`
-- [ ] Brand theme in first server render (no blue → purple)
-- [ ] Rewrite `skills/tw-blazor-css-strategy/SKILL.md`; ban inline `<style>` in components
-- [ ] Test (a): no encoded entities, no `<style>` in prerendered components
-- [ ] Test (b): JS-off / pre-interactive appbar layout (flex, background, logo visible, search full width)
-- [ ] Test (c): brand header color on first paint
-- [ ] "AI not configured" hint works from any directory (`--id` form, pwsh)
-- [ ] Template copy (`TimeWarp.Architecture/` if it carries these files) kept in sync
+- [x] Step 0: verify Wall A on .NET 11 with a minimal repro; record the decision and why in Results
+- [x] TimeWarpPage shell CSS → stylesheet (per step 0); inline `<style>` removed
+- [x] Profile → `.razor.css` (no per-instance values existed, so no custom properties or `style=`; see Results); inline `<style>` removed
+- [x] FormField → stylesheet per step 0 (Fluent host stretch still works; keep the task-234 M1 behavior); inline `<style>` removed
+- [x] LoginPage → `.razor.css`; inline `<style>` removed
+- [x] NotFoundPage → `.razor.css`; inline `<style>` removed (fix the 403 copy)
+- [x] Tokens and app-wide rules in global stylesheet, linked before `Web.Spa.styles.css`
+- [x] Brand theme in first server render (no blue → purple)
+- [x] Rewrite `skills/tw-blazor-css-strategy/SKILL.md`; ban inline `<style>` in components
+- [x] Test (a): no encoded entities, no `<style>` in prerendered components
+- [x] Test (b): JS-off / pre-interactive appbar layout (flex, background, logo visible, search full width)
+- [x] Test (c): brand header color on first paint
+- [x] "AI not configured" hint works from any directory (`--id` form, pwsh)
+- [x] Template copy (`TimeWarp.Architecture/` if it carries these files) kept in sync
 - [ ] PR with before/after real-browser screenshots of first paint (JS off / pre-interactive) and settled state; CI green
 
 ## Session
@@ -184,3 +184,129 @@ what breaks prerender.
     (the Steven ↔ Pete conversation, 2024-05-28).
 - Current `App.razor` head order: `tokens.css`, `app.css`, `Web.Spa.styles.css`, the Fluent
   `bundle.scp.css`, then `ai-chat.css`.
+
+## Results
+
+### Step 0: Wall A on .NET 11 (decided before coding)
+
+Minimal repro on SDK `11.0.100-rc.1.26425.128` (runtime `11.0.0-rc.1.26425.128`), FluentUI 5.0.0:
+a `Repro.razor` + `Repro.razor.css` rendered with `HtmlRenderer`.
+
+```razor
+<div class="native-root">
+  <FluentStack Class="fluent-child"><span class="authored-in-child-content">x</span></FluentStack>
+  <FluentTextInput Class="fluent-input" />
+  <Child />
+</div>
+```
+
+Rendered (trimmed):
+
+```html
+<div class="native-root" b-71g489ft2r>
+  <div class="fluent-stack-horizontal fluent-child" style="…"><span class="authored-in-child-content" b-71g489ft2r>x</span></div>
+  <fluent-field class="fluent-input" …><fluent-text-input …></fluent-text-input></fluent-field>
+  <section class="child-root">child</section></div>
+<div id="…-container"><div class="fluent-layout twe-shell" style="…--layout-header-height: 44px…">…
+<fluent-menu …><div slot="trigger" class="trig" b-71g489ft2r>t</div><fluent-menu-list>…
+```
+
+- **Wall A still applies on .NET 11.** The scope attribute is on elements the component authors,
+  including ones inside a Fluent `ChildContent`. It is never on a child component's root:
+  FluentStack's div, `fluent-field`, FluentLayout's root, `fluent-menu-list`, or `Child`'s
+  `<section>`.
+- `::deep` compiles as expected on .NET 11: `.a ::deep > fluent-field` →
+  `.a[b-x]  > fluent-field`, `.a ::deep fluent-menu > fluent-menu-list` →
+  `.a[b-x]  fluent-menu > fluent-menu-list`.
+- **Decision: option (i), isolation everywhere with a native anchor + targeted `::deep`.** Every
+  component keeps its CSS in its own `.razor.css` (locality, which was the reason for the old
+  inline blocks), and the bundle is in `<head>`, so it applies on first paint. Where the component
+  root is a Fluent component (TimeWarpPage → FluentLayout, Profile → FluentMenu) a native root div
+  is added as the anchor, with `display: contents` so it adds no box. Option (ii), static
+  class-scoped stylesheets in `wwwroot/css`, would also work but brings back per-area global files
+  away from their components, so it was not chosen.
+- Side finding: FluentUI itself emits inline `style=` attributes and a raw container-query
+  `<style>` (FluentLayout, FluentStack). It is framework markup, rendered raw (not encoded).
+
+### CSP and per-instance values (Profile)
+
+- The app sends no Content-Security-Policy today (no CSP header or meta in `source/`). The rule
+  against inline `style=` comes from the crunchit 022 research (strict CSP / locked-down browsers).
+- Profile's `{Id}` CSS had **no per-instance values**; `{Id}` was only a scope handle. Isolation's
+  scope attribute replaces it, so Profile.razor.css is fully static: no `style=`, no
+  `style="--x: …"`, no generated CSS. Requirement 4's sanctioned `style="--avatar-size: …"` was not
+  needed and was not used.
+- For future genuine per-instance variation the skill now says: a class or `data-*` attribute
+  selected in `.razor.css`, never generated CSS or `style=`. ForbiddenPage's inline `style=`
+  attributes were moved to `ForbiddenPage.razor.css` as a drive-by.
+  `StyleGuidePage.razor` (`style="background: var(@token)"`) and `ServiceList.razor` still carry
+  inline `style=` and are left for a follow-up.
+
+### What changed
+
+- **TimeWarpPage**: native `<div class="twe-shell">` root (`display: contents`); all shell CSS in
+  `TimeWarpPage.razor.css`. Fluent roots via `.twe-shell ::deep …` (layout height vars,
+  header/footer frame, `.twe-nav`); breadcrumbs via `.twe-page__crumbs ::deep …`. Header frame is
+  now `var(--twe-purple)` (#55409c) instead of Fluent's runtime `--colorBrandBackground` (#6b55a9),
+  so it is identical before and after Fluent's script runs (same pattern the footer already used
+  with `--twe-blue`). Brand and actions get `flex: 1 1 0` so the search box is centred in the bar
+  regardless of side content, and an anchored `:not(:defined)` rule reserves the search field's
+  32px box until Fluent defines `fluent-text-input`.
+- **Profile** → `Profile.razor.css` (native `.twe-profile` root, `::deep fluent-menu > fluent-menu-list`).
+- **FormField** → `FormField.razor.css` (`.twe-form-field__control ::deep > fluent-…`; task 234 M1
+  host stretch kept).
+- **LoginPage** → `LoginPage.razor.css` (plain isolation).
+- **NotFoundPage** → `NotFoundPage.razor.css`; copy fixed to 404 / "Page not found" with a home link
+  (the 403 text and dead `#` links are gone). Same Card layout as ForbiddenPage.
+- **Tokens**: `--twe-appbar-height` / `--twe-footer-height` in `tokens.css` (linked before
+  `Web.Spa.styles.css`).
+- **Theme**: `App.razor` renders `<body data-theme-color="#55409c" data-theme="light">`
+  (`MainLayout.BrandColor`). Fluent 5.0.0's `beforeStart` initializer
+  (`Theme.initializeThemeSettings`) builds the brand ramp from it, so Fluent is purple from script
+  start. `MainLayout`'s `OnAfterRenderAsync` `SetThemeAsync` is removed, which also proves the new
+  path: the settled `--colorBrandBackground` is still the purple ramp (#6b55a9).
+- **Skills**: `skills/tw-blazor-css-strategy/SKILL.md` rewritten (rules, Wall A/B, step-0 result,
+  ban on any `<style>` element in components with the prerender-encoding reason, history);
+  `skills/tw-blazor-layout/SKILL.md` references updated. **The shared Grok Bot copy at
+  `/home/box/agent-data/workflows/tw-blazor-css-strategy/SKILL.md` needs the same update; it was
+  not edited here and gets synced separately.**
+- **"AI not configured" hint**: `XaiChatDefaults.SetupCommand` and dev-cli `XaiPreflight.SetupCommand`
+  are now `dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id 0e53fdd3-6f93-4d5a-9c86-040621f7929e`
+  (pwsh-valid, works from any directory). readme updated; dev-cli test pins the id to
+  web-server.csproj's `<UserSecretsId>`.
+- **Template copy**: the repo root is the template (`.template.config`), so there is no separate
+  copy to sync.
+- **CI**: `workflow.yml` uploads `artifacts/playwright/` as `playwright-<run>` (retention 1 day).
+
+### Tests
+
+- (a) `FirstPaint_Given_PrerenderedShell.Components_Should_AuthorNoStyleElements`: no `<style>` in
+  any `source/**/*.razor` (Razor comments ignored). Before the fix it listed the five files.
+  `FirstPaint_Should_MatchTheSettledShell` fetches the prerendered `/` and fails on `&#x`, `&quot;`
+  or `&amp;` inside any `<style>` (before the fix: `&#x` found).
+- (b) Same test, three real Chromium passes against the in-proc host with InteractiveAuto +
+  prerender on: JavaScript disabled, `blazor.web.js` blocked, and settled interactive. Each asserts
+  `.twe-appbar` `display:flex` + white, logo top ≥ 0 and 48px tall, search ≥ 400px wide,
+  "Ctrl-K" on one line; app bar, logo and search-input boxes must be identical to the settled pass.
+- (c) Header frame `rgb(85, 64, 156)` in all three passes; settled `--colorBrandBackground` is a
+  purple ramp, not Fluent's `#0f6cbd`.
+- FormField render test updated (rules now in `.razor.css`, no `<style>` rendered).
+
+Measured (1280×800):
+
+| Pass | App bar | Logo | Search input | Header |
+|---|---|---|---|---|
+| Before, JS off | 201×305 at y=-130, `display:block`, transparent | y=-130 (clipped) | 201px wide | transparent |
+| After, JS off | 1264×54 at (8,8), flex, white | (30,10) 201×48 | (382,18) 520×32 | rgb(85,64,156) |
+| After, blazor.web.js blocked | same | same | same | same |
+| After, settled (Server) | same | same | same | same |
+
+Screenshots: `screenshots/before-*.png` (unchanged master, same test) and `screenshots/after-*.png`.
+
+### Residual (not in scope)
+
+Before Fluent's script runs (or with JS off) Fluent web components are undefined and Fluent's own
+design tokens are unset, so Fluent-rendered pieces (nav item styling, avatar, message bars, the
+search placeholder) are plain until the script defines them. The shell geometry and brand colors
+no longer change; with JS on, Fluent's script defines them well before the page is interactive.
+

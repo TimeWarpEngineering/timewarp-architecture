@@ -33,7 +33,8 @@
   @* Component-scoped CSS (Blazor isolation) — Card/StatusBadge/Modal/pages *.razor.css *@
   <link href="Web.Spa.styles.css" rel="stylesheet"/>
 
-  @* FluentUI v5 component styles (design tokens are applied at runtime by FluentProviders) *@
+  @* FluentUI v5 component styles. Fluent's design tokens are applied at runtime by its startup
+     script from <body data-theme-color>; the shell's brand frame comes from tokens.css. *@
   <link href="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" rel="stylesheet" />
   <link href="_content/Microsoft.AspNetCore.Components.AI/ai-chat.css" rel="stylesheet" />
 
@@ -47,7 +48,10 @@
 
   <HeadOutlet @rendermode=RenderMode />
 </head>
-<body>
+@* Task 290: Fluent's beforeStart initializer builds the brand theme from these attributes, so
+   Fluent components are purple from the first script tick, not blue until MainLayout went
+   interactive. data-theme="light" keeps the light mode the app always used. *@
+<body data-theme-color="@MainLayout.BrandColor" data-theme="light">
 <Routes @rendermode=RenderMode />
 @* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
 <div id="blazor-error-ui">

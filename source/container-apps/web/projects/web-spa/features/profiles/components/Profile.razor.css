@@ -1,0 +1,20 @@
+/* Profile menu: CSS isolation (skills/tw-blazor-css-strategy). The wrapper only anchors ::deep;
+   display: contents keeps the appbar's flex layout exactly as it was. */
+.twe-profile { display: contents; }
+
+.profile-persona {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Task 152: the fluent-menu shadow stylesheet anchors the slotted popup at
+   inset-inline-start: anchor(start) with only flip-block fallbacks, so a far-right trigger
+   always overflows the viewport. fluent-menu-list is light DOM, and document styles outrank
+   ::slotted() defaults, so right-align the popup to the trigger the same way the component does
+   for [split]. fluent-menu-list is FluentMenuList's root, so it is reached through ::deep. */
+.twe-profile ::deep fluent-menu > fluent-menu-list {
+  inset-inline-start: auto;
+  inset-inline-end: anchor(end);
+}

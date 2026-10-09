@@ -3,10 +3,12 @@
 #endregion
 
 #region Design
-// HtmlRenderer is enough — FormField is a Tier-1 leaf with no DI. Isolated
-// FormField.razor.css cannot target Fluent hosts (Wall A); host stretch is
-// Exception B in FormField.razor. The test asserts that unscoped rule and the
-// wrapper width on FormField.razor.css, not a child `> *` isolation selector.
+// HtmlRenderer is enough — FormField is a Tier-1 leaf with no DI. Fluent hosts are
+// child-component roots that isolation never stamps (Wall A). Task 290 moved the host
+// stretch from an inline <style> (HTML-encoded by prerender) into FormField.razor.css as
+// `.twe-form-field__control ::deep > fluent-…`, so the scope stays on the wrapper. The test
+// asserts those rules, that no `> *` isolation selector came back, and that the rendered
+// component carries no <style> element.
 #endregion
 
 namespace FormFieldRender_;
@@ -31,10 +33,12 @@ public class FormField_Should_
     css.ShouldContain(".twe-form-field__hint");
     css.ShouldNotContain(".twe-form-field__control > *");
 
+    css.ShouldContain(".twe-form-field__control ::deep > fluent-text-input");
+    css.ShouldContain(".twe-form-field__control ::deep > fluent-dropdown");
+    css.ShouldContain(".twe-form-field__control ::deep > fluent-field");
+
     string razor = ReadFormFieldRazor();
-    razor.ShouldContain(".twe-form-field__control > fluent-text-input");
-    razor.ShouldContain(".twe-form-field__control > fluent-dropdown");
-    razor.ShouldContain("width: 100%");
+    razor.ShouldNotContain("<style");
 
     await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
     await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
@@ -62,8 +66,7 @@ public class FormField_Should_
     html.ShouldContain("twe-form-field__control");
     html.ShouldContain("twe-form-field--span-12");
     html.ShouldContain("data-qa=\"FormFieldControl\"");
-    html.ShouldContain("fluent-text-input");
-    html.ShouldContain("fluent-dropdown");
+    html.ShouldNotContain("<style");
   }
 
   private static string ReadFormFieldCss() => ReadFormFieldSource("FormField.razor.css");

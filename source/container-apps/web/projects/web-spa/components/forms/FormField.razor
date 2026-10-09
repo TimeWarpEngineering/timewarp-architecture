@@ -4,8 +4,9 @@
 
   Design: Tier-1 leaf with a native root. Span (1–12) is the FormGrid column span;
   default 12 (full row). Pair short fields only when they genuinely share a row
-  (City / State / ZIP). Isolated CSS cannot target Fluent light-DOM hosts (Wall A),
-  so host stretch lives in Exception B `<style>` on `.twe-form-field__control`
+  (City / State / ZIP). Fluent hosts are child-component roots, so isolation never
+  stamps them (Wall A). FormField.razor.css stretches them with
+  `.twe-form-field__control ::deep > fluent-…`: the stamped wrapper is the anchor
   (fluent-text-input, fluent-dropdown, fluent-select, fluent-combobox,
   fluent-textarea, fluent-field). Avatar and checkbox hosts are left to intrinsic
   size. Pages still pass Width="100%" on text/select/combobox controls.
@@ -35,24 +36,3 @@
     <p class="twe-form-field__hint">@Hint</p>
   }
 </div>
-
-@* Exception B: isolated `.twe-form-field__control > *` is rewritten to require
-   [b-xxxxx] on the child, which Fluent hosts never get. This unscoped rule is
-   anchored on the namespaced wrapper so it reaches light-DOM hosts. *@
-<style>
-  @(@"
-    .twe-form-field__control > fluent-text-input,
-    .twe-form-field__control > fluent-dropdown,
-    .twe-form-field__control > fluent-select,
-    .twe-form-field__control > fluent-combobox,
-    .twe-form-field__control > fluent-textarea,
-    .twe-form-field__control > fluent-text-area,
-    .twe-form-field__control > fluent-field {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
-    }
-  ")
-</style>

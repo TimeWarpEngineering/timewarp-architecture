@@ -35,45 +35,27 @@
 
 @* V5 removed FluentPersona — compose FluentAvatar + label as the menu trigger.
    The trigger lives INSIDE FluentMenu via slot="trigger" so the web component wires
-   the click-to-open itself (the external Trigger=<id> attribute did not render in rc.3). *@
-<FluentMenu Class="@($"{Id}-menu")">
-  <div slot="@FluentSlot.Trigger" class="@($"{Id} profile-persona")">
-    <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size32" />
-    <FluentText>@ProfileState.Alias</FluentText>
-  </div>
-  <FluentMenuList>
-    <AuthorizeView>
-      <Authorized>
-        <FluentMenuItem OnClick=@HandleYourProfile IconStart="@(new Icons.Regular.Size20.Person())">Profile</FluentMenuItem>
-        <FluentMenuItem OnClick=@HandleSettings IconStart="@(new Icons.Regular.Size20.Settings())">Settings</FluentMenuItem>
-        <FluentMenuItem OnClick=@HandleSignOut IconStart="@(new Icons.Regular.Size20.SignOut())">Sign out</FluentMenuItem>
-      </Authorized>
-      <NotAuthorized>
-        <FluentMenuItem OnClick=@HandleSignIn IconStart="@(new Icons.Regular.Size20.Person())">Sign-in</FluentMenuItem>
-      </NotAuthorized>
-    </AuthorizeView>
-  </FluentMenuList>
-</FluentMenu>
-
-<style>
-  @($@"
-    .{Id}.profile-persona {{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }}
-
-    /* Task 152: the fluent-menu shadow stylesheet anchors the slotted popup at
-       inset-inline-start: anchor(start) with only flip-block fallbacks, so a
-       far-right trigger always overflows the viewport. fluent-menu-list is
-       light DOM, and document styles outrank ::slotted() defaults — right-align
-       the popup to the trigger the same way the component does for [split]. */
-    fluent-menu.{Id}-menu > fluent-menu-list {{
-      inset-inline-start: auto;
-      inset-inline-end: anchor(end);
-    }}
-  ")
-</style>
-
-
+   the click-to-open itself (the external Trigger=<id> attribute did not render in rc.3).
+   Styles are in Profile.razor.css (task 290). The native .twe-profile root anchors the ::deep
+   rule for fluent-menu-list, which isolation cannot stamp (Wall A). Nothing here is
+   per-instance, so no inline style= and no generated CSS. *@
+<div class="twe-profile">
+  <FluentMenu>
+    <div slot="@FluentSlot.Trigger" class="profile-persona">
+      <FluentAvatar Image=@ProfileState.Avatar Name=@ProfileState.Alias Size="AvatarSize.Size32" />
+      <FluentText>@ProfileState.Alias</FluentText>
+    </div>
+    <FluentMenuList>
+      <AuthorizeView>
+        <Authorized>
+          <FluentMenuItem OnClick=@HandleYourProfile IconStart="@(new Icons.Regular.Size20.Person())">Profile</FluentMenuItem>
+          <FluentMenuItem OnClick=@HandleSettings IconStart="@(new Icons.Regular.Size20.Settings())">Settings</FluentMenuItem>
+          <FluentMenuItem OnClick=@HandleSignOut IconStart="@(new Icons.Regular.Size20.SignOut())">Sign out</FluentMenuItem>
+        </Authorized>
+        <NotAuthorized>
+          <FluentMenuItem OnClick=@HandleSignIn IconStart="@(new Icons.Regular.Size20.Person())">Sign-in</FluentMenuItem>
+        </NotAuthorized>
+      </AuthorizeView>
+    </FluentMenuList>
+  </FluentMenu>
+</div>
