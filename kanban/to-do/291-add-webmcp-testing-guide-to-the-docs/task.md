@@ -68,16 +68,56 @@ without the flag you will see no tools. That is expected, not a bug.
 
 ## Checklist
 
-- [ ] Write `documentation/developer/guides/webmcp-testing.md` with all of the required content
-- [ ] Verify every source path the guide names exists on master (drop any that do not)
-- [ ] Link the guide from the AGENTS.md "Documentation" section (and any other docs index)
-- [ ] `ganda repo audit` clean
+- [x] Write `documentation/developer/guides/webmcp-testing.md` with all of the required content
+- [x] Verify every source path the guide names exists on master (drop any that do not)
+- [x] Link the guide from the AGENTS.md "Documentation" section (and any other docs index)
+- [x] `ganda repo audit` clean
 - [ ] One PR
 - [ ] Merge via `ganda pr merge`
 
 ## Session
 
 - Created: 1981641 (2026-10-09)
+- Implementation: grok 01a12166-f737-7b43-b02c-0493fcc337db (2026-10-09)
+
+## Results
+
+Added `documentation/developer/guides/webmcp-testing.md` with the hand-test steps:
+Chrome 146 / `#enable-webmcp-testing` (or Experimental Web Platform features), the
+Beaufort inspector extension, `dev run` over HTTPS, sign-in, JSON tool calls,
+the in-app Approve bar, and an empty tool list in normal Chrome. Named the five
+WebMCP source paths after confirming each exists on `origin/master`, and pointed
+at task 271
+(`kanban/done/271-net-11-agentic-ui-over-the-timewarpstate-action-catalog/`).
+Linked the guide from the AGENTS.md Documentation section beside `releasing.md`.
+`readme.md` points at skills and AGENTS.md and does not list individual maintainer
+guides, so it was left unchanged. `.template.config/template.json` already excludes
+`documentation/**`. `ganda repo audit`: 31 passed, 0 failed.
+
+PR open and merge stay with the host (`open-pr`, `ganda pr merge`).
+
+### How to validate
+
+Smoke:
+
+```bash
+test -f documentation/developer/guides/webmcp-testing.md
+git cat-file -e origin/master:source/container-apps/web/projects/web-spa/source/features/web-mcp.ts
+git cat-file -e origin/master:source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-publisher.cs
+git cat-file -e origin/master:source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-dispatcher.cs
+git cat-file -e origin/master:source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-approval-gate.cs
+git cat-file -e origin/master:source/container-apps/web/projects/web-spa/components/WebMcpAgentSurface.razor
+git cat-file -e origin/master:kanban/done/271-net-11-agentic-ui-over-the-timewarpstate-action-catalog/task.md
+rg -n "webmcp-testing\\.md" AGENTS.md documentation/developer/guides/webmcp-testing.md
+rg -n "document\\.modelContext|#enable-webmcp-testing|gbpdfapgefenggkahomfgkhfehlcenpd|page_context|François Beaufort|dev run" documentation/developer/guides/webmcp-testing.md
+```
+
+Expect:
+
+- `test -f` succeeds and each `git cat-file -e` exits 0 (guide on disk; five source paths and task 271 on master).
+- `AGENTS.md` names `documentation/developer/guides/webmcp-testing.md`.
+- The guide `rg` hits include `document.modelContext`, `#enable-webmcp-testing`, the Chrome Web Store id, `page_context`, François Beaufort, and `dev run`.
+- `ganda repo audit` prints `Passed: 31 | Failed: 0`.
 
 ## Notes
 
