@@ -108,6 +108,7 @@ All are in `screenshots/` in this task folder. The eight `0N-*.png` shots were c
 - Implementation: task-work oracle (2026-10-10)
 - Review round 1 fixes (M1–M16, `review/round-1/merged.md`): implementer (2026-10-10)
 - Review (effort 3): review oracle, Claude Opus 5.5. Round 1 reviewers were general, tests and security (Sonnet subagents); round 2 was a general re-review (2026-10-10)
+- Post-merge re-run (origin/master, task 293 probe states): implementer (2026-10-10)
 
 ## Results
 
@@ -117,6 +118,8 @@ Decisions are in `design.md`. Adopted: the dock, page-scoped tools, Ask before e
 
 In-app AI and WebMCP share `CatalogAgentToolSet` for every `PageAgentScope` route, routes with no catalog tools, `/Feedback/item`, and `/FeedbackExtra`, four principals, and both edit modes. The comparison covers name, description, input schema, approval bit, and order, plus the shared `page_context` tool. An expired, out-of-scope, or foreign-principal credential refuses both drivers with the same message. Automatic mode skips the approval prompt and still refuses a bad credential.
 
+After the merge of `origin/master`, the dock and the WebMCP parity stay, and the task 293 probe states stay with them. A 401 shows "Sign in to use Ask" and closes the panel on the way to Login. Any other failure shows the status and a Retry. The user-secrets command appears only when the server says there is no key. A server answer copies `RecordChats`, the privacy notice, a normalized `SupportUrl`, and the credential lifetime. A failure puts those four back to `XaiChatDefaults` (`RecordChats` through the constant). A non-positive lifetime and a `javascript:` SupportUrl use the defaults.
+
 Proof images for the PR body, beside this file:
 
 - [ask-panel-docked.png](ask-panel-docked.png) — 1280px viewport, 450px dock, page beside the panel.
@@ -124,7 +127,7 @@ Proof images for the PR body, beside this file:
 - [ctrl-k-ask-result-page.png](ctrl-k-ask-result-page.png) — Ctrl-K Ask opens the same panel and shows an answer.
 - [ctrl-k-ask-not-configured-page.png](ctrl-k-ask-not-configured-page.png) — unconfigured relay, edit-mode footer still present.
 
-`./bin/dev build`: 0 warnings, 0 errors (8.5s). `./bin/dev test`: exit 0, including web-spa-integration-tests 162/162 and web-spa-playwright-tests 3/3. `ganda repo audit`: Passed 31, Failed 0.
+Re-validated on the merged branch (2026-10-10). `./bin/dev build`: 0 warnings, 0 errors (3.6s, incremental). `./bin/dev test`: exit 0, including web-spa-integration-tests 179/179 and web-spa-playwright-tests 5/5. `ganda repo audit`: Passed 31, Failed 0.
 
 ### Review disposition
 
@@ -156,13 +159,15 @@ Proof images for the PR body, beside this file:
 
 ```bash
 cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class CatalogAgent_Should
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class AgentAskReadiness
 cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Release
 ```
 
 **Expect**
 
 - `CatalogAgent_Should` passes. The parity method fails if any page, principal, or edit mode differs between the in-app tool list and the WebMCP tool list. Panel open, expand, automatic edit, and New conversation are read back from the store after each action. Expired, scope, and principal denials match `AgentConversationAuthority` on both drivers.
-- Playwright passes. At 1280×800 the panel width is 450px and the app bar plus the panel fit the viewport. Expand, and an 800px viewport, make the panel the full viewport width. Close hides `[data-qa=AgentAsk]`; the Ask AI button opens it again. `[data-qa=AskPrivacyNotice]` is absent. The shots above are rewritten next to this file.
+- `AgentAskReadiness_Should_` passes (10 tests). A configured answer copies `RecordChats`, the privacy notice, a normalized `SupportUrl`, and the credential lifetime. A 401 resets those four to `XaiChatDefaults`. The next configured answer restores them. A non-positive lifetime and a `javascript:` SupportUrl use the defaults. A 401 renders "Sign in to use Ask" and does not show the user-secrets command. Other failures render the status and Retry.
+- Playwright passes (5 tests). At 1280×800 the panel width is 450px and the app bar plus the panel fit the viewport. Expand, and an 800px viewport, make the panel the full viewport width. Close hides `[data-qa=AgentAsk]`; the Ask AI button opens it again. `[data-qa=AskPrivacyNotice]` is absent. The shots above are rewritten next to this file.
 - `./bin/dev build` reports `0 Warning(s)` and `0 Error(s)`. `./bin/dev test` ends with `Tests completed successfully!`. `ganda repo audit` prints `Passed: 31 | Failed: 0`.
 
 **Automated gate**
@@ -186,4 +191,4 @@ cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Release
   - `agent-surface-state.load-chat-configuration.cs`: every outcome goes through `ChatReadinessProbe` (401 is Unauthenticated, other failures are Error with the problem text, only a server "no key" is NotConfigured). A server answer also sets 292's `RecordChats`, `PrivacyNotice`, `SupportUrl` (via `AskSupportLink.Normalize`) and `CredentialLifetimeMinutes`; any failure resets them to `XaiChatDefaults`.
   - `AgentAsk.razor`: the docked panel keeps edit modes, WebMCP parity, the restored transcript and the expired-conversation header, and gains 293's "Sign in to use Ask" and Error-with-Retry states. Sign in closes the panel (not a modal) and routes to Login with the current page as the return path. `AgentAsk.razor.cs` Design text updated to match.
   - `agent-ask-readiness-tests.cs` (from 293): it rendered AgentAsk through `ModalController`, which 292 no longer uses; it now opens the panel and renders AgentAsk directly and registers `AskConversationThreads`. Web SPA integration tests: 178 passed, 0 failed. Solution build: 0 warnings, 0 errors.
-  - The walk is re-run after this note so review, tests and audit cover the combined code before the human merge gate.
+  - Re-run (2026-10-10) covered the combined code. `Probe_Applies_Panel_Settings_And_Resets_Them_On_Failure` locks the four panel settings across a configured answer, a 401, and the next answer. A failure assigns `RecordChats` from `XaiChatDefaults.RecordChats`. `./bin/dev build`: 0 warnings, 0 errors. `./bin/dev test`: exit 0 (web-spa-integration-tests 179/179, web-spa-playwright-tests 5/5). `ganda repo audit`: Passed 31, Failed 0.
