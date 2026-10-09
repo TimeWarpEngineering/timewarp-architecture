@@ -131,8 +131,8 @@ Re-validated on the merged branch (2026-10-10). `./bin/dev build`: 0 warnings, 0
 
 ### Review disposition
 
-- **Outcome:** `clean`. 2 rounds at effort 3. Round 1 used three parallel reviewers (general, tests and security). Round 2 was a general re-review of the fix commit.
-- **Final counts:** bug 5 fixed, suggestion 8 fixed, nit 6 fixed. 0 open, 0 wontfix, no escalations.
+- **Outcome:** `clean`. 3 rounds at effort 3. Round 1 used three parallel reviewers (general, tests and security). Round 2 was a general re-review of the fix commit. Round 3 was a general review of the merge with `origin/master` (task 293) and of 5cb3a6023.
+- **Final counts:** bug 5 fixed, suggestion 9 fixed, nit 7 fixed. 0 open, 0 wontfix, no escalations.
 - **Round 1 (M1–M16):**
   - The transcript now persists for each conversation generation (`AskConversationThreads` plus `RestoreAsync`).
   - Close resets the edit mode, so WebMCP prompts again.
@@ -147,10 +147,16 @@ Re-validated on the merged branch (2026-10-10). `./bin/dev build`: 0 warnings, 0
   - A build that finishes after dispose now frees what it created.
   - New conversation is no longer blocked by a pending approval.
   - Playwright waits for `data-built-mode` before asserting the transcript survived.
+- **Round 3 (R1–R2):**
+  - Neither side's behavior was lost in the merge.
+  - The task 293 Playwright sign-in test now signs in through Ask's own Sign in button. It checks that the panel closes and the route goes to `/Login`.
+  - The unused `AgentAsk.ModalId` is removed.
+  - Re-validated after the round 3 fixes: `./bin/dev build` 0 warnings, 0 errors; `./bin/dev test` exit 0 (web-spa-integration-tests 179/179, web-spa-playwright-tests 5/5); `ganda repo audit` passes.
 - **Artifacts:**
   - `review/review-framework.md`
   - `review/round-1/` (general, tests, security, merged)
   - `review/round-2/` (general, merged)
+  - `review/round-3/` (general, merged)
   - `review/disposition.md`
 
 ### How to validate
