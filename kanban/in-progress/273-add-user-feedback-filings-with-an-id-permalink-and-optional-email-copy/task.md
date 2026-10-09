@@ -75,7 +75,15 @@ The three actions are agent-callable through the existing catalog-to-tools mappi
 
 Persistence is the existing dual store. With a Postgres connection string, `EfFeedbackStore` and migration `20261009001245_AddFeedbackItems` (schema `feedback`, table `feedback_items`, plus `feedback.file.self` on Member, Operator, Administrator, and Developer) keep the row across a process restart. With no connection string the in-memory store is the record for that process only; it does not survive a restart. The chat transcript is not the record.
 
-Mail is `IEmailSender` plus `DevelopmentEmailSender`. It logs every message and, when `Mail:PickupDirectory` is non-empty, writes one `.eml` file. No credentials and no provider SDK are committed. `appsettings.Development.json` leaves `Mail:PickupDirectory` empty. A real provider needs an SMTP or HTTP API host, a credential that stays out of the repo, a from-address (the message type has none; the development pickup file uses a fixed from-line), and a production `IEmailSender` registration in place of `DevelopmentEmailSender`.
+Mail goes through `IEmailSender`. `DevelopmentEmailSender` is registered only when `Mail:Sender` is `Development`, which `appsettings.Development.json` sets. It logs the recipient and subject, logs the body only at Debug, and, when `Mail:PickupDirectory` is non-empty, writes one `.eml` file with a fixed `From: no-reply@localhost`. In any other environment, `UnconfiguredEmailSender` throws. Mail is best-effort after the row is stored: a failed send is logged and returns `EmailCopySent=false`, and the filer still gets the id and permalink. The emailed absolute link uses `Mail:PublicBaseUrl`, else the forwarded proto and host from the ingress, else the request. No credentials and no provider SDK are committed.
+
+A real provider needs:
+- an SMTP or HTTP API host
+- a credential kept out of the repo
+- a from-address (`EmailMessage` has none)
+- a production `IEmailSender` registered in place of `UnconfiguredEmailSender`
+
+Before it goes live it also needs a verified profile email or a send rate limit. `Profile.Email` is unverified, so today "email me a copy" would send user-written text to any address the user enters. With a real provider, tie the "email me a copy" offer to the provider being present. `EmailMessage` rejects CR and LF in To and Subject.
 
 The interactive browser filing was not driven. Sign-in is passkey, and the Aspire host from the catalog suite is not left running. Proof is the captured logs below. The receipt markup is on `FeedbackListPage` and `FeedbackItemPage`.
 
@@ -87,13 +95,14 @@ Build: `dotnet build source/container-apps/web/projects/web-server/web-server.cs
 
 Commands that already passed on 2026-10-09:
 
-- From `tests/container-apps/web/web-jaribu-tests`: `dotnet test -- --filter-class FeedbackFiling` — 15 passed. Console:
+- From `tests/container-apps/web/web-jaribu-tests`: `dotnet test -- --filter-class FeedbackFiling` — 17 passed (after the review fixes). Console:
   - `FILING-PROOF id=01a11e06-2282-7518-ba03-25dc09bedef4 permalink=/Feedback/01a11e06-2282-7518-ba03-25dc09bedef4`
   - `FILING-PROOF id=01a11e06-22ae-78b9-91f5-0f95437c8490 permalink=/Feedback/01a11e06-22ae-78b9-91f5-0f95437c8490 emailCopySent=true`
 - Same directory: `dotnet test -- --filter-class PermissionIds` — 8 passed. `dotnet test -- --filter-class PermissionEvaluator` — 17 passed.
 - From `tests/container-apps/web/web-infrastructure-tests`: `dotnet test -- --filter-class Feedback` — 3 passed (model mapping plus a Postgres round-trip that applied `20261009001245_AddFeedbackItems`).
 - From `tests/container-apps/web/web-spa-integration-tests`:
-  - `dotnet test -- --filter-class CatalogAgent` — 16 passed. Console includes `WEBMCP-PROOF path=/Feedback tools=Feedback.SubmitFeedback,Feedback.ListMyFeedback,Feedback.OpenFeedback,page_context receipt={"action":"Feedback.SubmitFeedback","completed":true,"result":{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","permalink":"/Feedback/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}}`
+  - `dotnet test -- --filter-class CatalogAgent` — 17 passed. The real dispatcher submit, with approval, prints `WEBMCP-PROOF invoke Feedback.SubmitFeedback approved receipt={"action":"Feedback.SubmitFeedback","completed":true,"result":{"feedbackItemId":"1a43a86d-6705-41c4-9e26-e1e378ecea72","permalink":"/Feedback/1a43a86d-6705-41c4-9e26-e1e378ecea72","kind":"Complaint","title":"The export failed","body":"Nothing came back.","emailCopySent":false}}`
+- From `tests/container-apps/web/web-server-integration-tests`: `dotnet test -- --filter-class GetBaseUrl_Should` — 7 passed (public permalink origin).
   - `dotnet test -- --filter-class ActionCatalog` — 10 passed.
   - `dotnet test -- --filter-class CommandPalette` — 35 passed.
   - `dotnet test -- --filter-class SignOut_Should` — 2 passed.
@@ -106,3 +115,26 @@ Commands that already passed on 2026-10-09:
 - The no-email filing still succeeds.
 - On `/Feedback`, WebMCP lists `Feedback.SubmitFeedback`, `Feedback.ListMyFeedback`, `Feedback.OpenFeedback`, and `page_context`. An approved submit returns the id and permalink in the tool result. List and open are not approval-gated. Submit is.
 - Sign-out clears `FeedbackState`. The command palette lists the `/Feedback` page and the parameterless `Feedback.ListMyFeedback` command for a principal who can file. `Feedback.SubmitFeedback` and `Feedback.OpenFeedback` stay out of the palette because they take arguments. A principal without `feedback.file.self` sees neither the page nor the list command.
+
+### Implementation review
+
+- **Effort and roster:** effort 3, `general` reviewer (Claude subagent). The orchestrator verified every finding and re-ran the build, FeedbackFiling, and GetBaseUrl_Should gates.
+- **Rounds:** 2. Round 1 raised 8 findings: 3 bugs, 3 suggestions, 2 nits. Round 2 re-verified the fixes and found nothing new.
+- **Final counts:**
+  - bug: 3 fixed
+  - suggestion: 3 fixed
+  - nit: 2 fixed
+  - Nothing is open or wontfix.
+- **Disposition:** **clean**. All fixes are in commit `4dbe19124`. They are:
+  - a public mail origin
+  - best-effort mail that keeps the receipt
+  - a real WebMCP receipt test
+  - an opt-in development sender
+  - an agent submit refreshes the list
+  - CR and LF rejected in mail headers
+  - a From line in the `.eml`
+  - the migration class renamed to `AddFeedbackItems`
+- **Follow-up (not a finding):** with a real mail provider, tie the "email me a copy" offer to the provider being present.
+- **PR note:** `PostgresDbContextModelSnapshot.cs` was regenerated by EF 11 tooling: file-scoped namespace, no BOM, ProductVersion 11.0.0-rc. Most of its diff is reformatting. The real model change is the `FeedbackItem` entity and the permission seed rows.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
