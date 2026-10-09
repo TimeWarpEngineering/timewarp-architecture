@@ -82,3 +82,56 @@ Steven's direction: fix the root cause, show the real state, do not hide or disa
 - Related: task 289 (Ask + probe), task 290 (prerender style flash, also changed the setup command
   to `--id`).
 - After merge Steven pulls master and restarts his web-server; his key needs no change.
+
+### 2026-10-09 23:58 ICT: interactive investigation handed to the ganda walk
+
+Steven's rule (tw-ganda-walk): this task goes through `ganda task work`. Nothing below was
+committed or pushed. It's context for the walk.
+
+**Root cause (confirmed with a real-WASM Playwright run on the box):**
+
+- (b) wrong scheme and (c) missing credentials are ruled out. With a real passkey-issued
+  identity-session cookie present at page load, `GET api/agent-chat/configuration` returns 200 in
+  both InteractiveAuto (server circuit) and InteractiveWebAssembly, and Ask is configured.
+- (a) is the cause. The anonymous Home page renders TimeWarpPage, which probes once
+  (`if (!ChatProbeCompleted)`). It gets an honest 401, and `HandleError` stored NotConfigured.
+  Home "Sign in" → in-SPA `/Login` → CreateAccount/SignInWithPasskey (and Entra bootstrap choices)
+  → `NotifySessionChanged()` (the `api/identity/session` 200 in Steven's log) → `NavigateTo` without
+  forceLoad. The probe never runs again, so "AI not configured" sticks.
+- On master the repro test logs `configuration statuses: [401]; signed out: AgentAskNotConfigured;
+  signed in: AgentAskNotConfigured`. With the fix it logs `[401, 200]; signed out: AgentAskSignIn;
+  signed in: Configured`. Both tests pass (2/2).
+
+**Interactive work (uncommitted), as a patch:** `C:\Users\steve\ovn\ask401-handoff.tgz` on TWE-001
+(= `/mnt/c/Users/steve/ovn/ask401-handoff.tgz`; the box copy is `/workspace/ask401/`). It holds
+`293-interactive.patch` (applies to master 7834c9f75), the master and fixed screenshots
+(`before/`, `after/`), and the Playwright logs (`pw-before.log`, `pw-after.log`). The walk may reuse
+it or redo it:
+
+- `features/application/agent/chat-readiness-probe.cs` (new): pure `ChatReadinessProbe`
+  (FromResponse/FromProblem/FromFileResponse/Describe). 200 maps to Configured/NotConfigured, 401 to
+  Unauthenticated, anything else (403/5xx/499/file) to Error with "status title: detail".
+- `CatalogAgentReadiness` gains Unauthenticated and Error. `AgentSurfaceState.ChatProblem`
+  holds the Error text. `CatalogAgentAvailability.Problem`.
+- `LoadChatConfiguration` handler applies the mapper, so no failure becomes NotConfigured.
+- `AuthenticationStateListener` dispatches `LoadChatConfiguration` at startup and on every
+  AuthenticationState change (with a CrossSliceReference). TimeWarpPage no longer probes.
+- `AgentAsk.razor` shows: NotConfigured with the command; Unauthenticated as "Sign in to use Ask"
+  plus a Sign in button (closes the modal, `RouteState.ChangeRoute(LoginPage.GetLoginUrl(current))`,
+  because TWA0026 forbids NavigateTo); Error with status/detail and Retry. Adds `.twe-agent-ask__actions`
+  CSS.
+- `RelayChatClient` throws `ChatReadinessProbe.Describe(problem)` instead of the generic text.
+- `HomePage.razor`: `data-qa="HomeSignIn"` on the Sign in button (test hook).
+- Tests: `web-spa-playwright-tests/ask-sign-in-playwright-tests.cs` (CDP virtual authenticator,
+  no mock header; screenshots to `artifacts/playwright/293`), and
+  `web-spa-integration-tests/features/application/agent-ask-readiness-tests.cs` (mapping and
+  HtmlRenderer markup per state, plus re-probe replacing a 401). It builds; I did not get to run it.
+
+**Still open for the walk:**
+
+- Run the unit tests.
+- Run the existing `ask-surface-playwright-tests` (mock header) to check for regressions.
+- `dev build` and `ganda repo audit`.
+- The PR body needs proof (failing-then-passing output, screenshots of the signed-in configured,
+  signed-out and no-key states) and CI green.
+- After merge Steven pulls and restarts his web-server. His key needs no change.
