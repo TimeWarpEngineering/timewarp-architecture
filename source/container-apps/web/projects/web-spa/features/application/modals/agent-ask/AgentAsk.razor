@@ -7,8 +7,11 @@
   Purpose: Ask mode. A person describes what they want and the in-app model runs a page catalog tool.
 
   Design: Hosted as a modal so it does not collide with the app's /Chat page or the library ChatPage
-  type. The modal is opened from the Ctrl-K footer. Ask is always available. When the probe says
-  the server has no model, the modal shows "AI not configured" and the pwsh user-secrets command.
+  type. The modal is opened from the Ctrl-K footer. Ask is always available. It renders the probe's
+  state (task 293): only when the server answered "no key" does it show "AI not configured" and the
+  pwsh user-secrets command. Signed out (401) shows "Sign in to use Ask" and a button to Login with
+  the current page as the return path. Any other failure shows the status, title and detail and a
+  Retry that runs the probe again. The probe itself re-runs on every sign-in and sign-out.
   Tools are the current page's catalog actions plus page_context. Mutating tools render
   FunctionApprovalBlock; Approve and Reject answer that block. Outcomes of the dispatched actions
   stay on NotificationState. The component builds the agent when readiness becomes Configured.
@@ -30,6 +33,7 @@
 
   private CatalogAgentReadiness Readiness => CatalogAgentAvailability.Readiness(AgentSurfaceState);
   private string SetupCommand => CatalogAgentAvailability.SetupCommand(AgentSurfaceState);
+  private string? Problem => CatalogAgentAvailability.Problem(AgentSurfaceState);
 
   private Task Activate() => EnsureAgentAsync();
 
@@ -108,6 +112,15 @@
 
   private Task CloseAsync() => ApplicationState.CloseModal();
 
+  private async Task SignInAsync()
+  {
+    string returnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+    await ApplicationState.CloseModal();
+    await NoSubRouteState.ChangeRoute(newRoute: TimeWarp.Architecture.Features.Identity.LoginPage.GetLoginUrl(returnPath));
+  }
+
+  private Task RetryAsync() => AgentSurfaceState.LoadChatConfiguration();
+
   public override void Dispose()
   {
     Agent?.Dispose();
@@ -128,6 +141,21 @@
       {
         <p data-qa="AgentAskNotConfigured">AI not configured</p>
         <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+      }
+      else if (Readiness == CatalogAgentReadiness.Unauthenticated)
+      {
+        <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
+        <div class="twe-agent-ask__actions">
+          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+        </div>
+      }
+      else if (Readiness == CatalogAgentReadiness.Error)
+      {
+        <p data-qa="AgentAskError">Ask could not load its configuration</p>
+        <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
+        <div class="twe-agent-ask__actions">
+          <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+        </div>
       }
       else if (Agent is null)
       {

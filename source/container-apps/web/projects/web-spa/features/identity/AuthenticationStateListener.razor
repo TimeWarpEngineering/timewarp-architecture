@@ -37,6 +37,11 @@
       await NoSubSiteSettingsState.ClearSiteSettings();
       await ClearPasskeySoftPromptLaterAsync();
     }
+
+    // Task 293: Ask's readiness depends on the session, so re-read it on every change. An in-app
+    // sign-in navigates without a page load; a once-per-app probe kept the signed-out 401. Last, so
+    // the probe never delays or cuts short the identity work above.
+    await NoSubAgentSurfaceState.LoadChatConfiguration();
   }
 
   private async Task ClearPasskeySoftPromptLaterAsync()
