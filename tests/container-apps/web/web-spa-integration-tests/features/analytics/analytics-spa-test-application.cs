@@ -4,7 +4,7 @@
 #endregion
 
 #region Design
-// C-create (AGENTS.md fixture-lifetime default): these facts substitute IWebServerApiService,
+// C-create (co-located Jaribu runfiles default): these facts substitute IWebServerApiService,
 // which the closed-box AspireSpaTestApplication cannot do. TrackEventBehavior is compile-time
 // on ClientPipeline. Recording is a singleton so SpaTestScope sees the same instance the
 // TrackEvent handler resolves. Message-bar handlers record state and do not need a provider.

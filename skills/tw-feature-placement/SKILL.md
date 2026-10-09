@@ -105,7 +105,7 @@ a human remembering the pairing.
 | Filename | Layer | Function → required layer | Living anchor |
 |----------|-------|----------------------------|----------------|
 | `create-role-handler-application.cs` | application | `handler` → `application` | `web/features/admin/roles/create-role/create-role-handler-application.cs` |
-| *(reserved)* `<name>-endpoint-server.cs` | server | `endpoint` → `server` | registered for a hand-authored server endpoint shim; the template generates FastEndpoints from contracts rather than hand-authoring them, so use this only for a genuinely hand-written endpoint |
+| `<name>-endpoint-server.cs` | server | `endpoint` → `server` | hand-written browser-protocol endpoint only (`tw-web-api-contracts`). Ordinary JSON endpoints are generated from contracts |
 
 A mismatched pairing (e.g. `create-role-handler-server.cs`, function `handler` on layer
 `server`) is **TWA0015** — see below.
@@ -114,8 +114,10 @@ A mismatched pairing (e.g. `create-role-handler-server.cs`, function `handler` o
 membership-guard entry, but most product slices need only contracts and application (plus
 infrastructure or server where relevant) — a slice earns a `-domain.cs` file only once it needs
 its own aggregate root (`IAggregateRoot`) rather than a platform/shared one. `domain` stays
-registered as intentional headroom for that case, the same way the reserved `endpoint` function
-above is kept documented but currently unused.
+registered as intentional headroom for that case. The `endpoint` function is in use for the
+browser-protocol shims (`challenge-entra-endpoint-server.cs`,
+`sign-out-browser-session-endpoint-server.cs`, `sign-out-antiforgery-token-endpoint-server.cs`),
+not for ordinary API operations.
 
 ### Contracts drop the function segment
 
@@ -255,7 +257,8 @@ standalone run) after adding a runfile.
 The canonical in-repo authoring convention for co-located Jaribu runfiles — preamble shape
 (`#:project`/`#:package`, `PublishAot=false`, `NoWarn=$(NoWarn);…`, Purpose region, the
 `cnd:noEmit`-escaped `JARIBU_MULTI` switch), C-create host graphs via `HostGraphFactory`,
-session-scoped fixtures for expensive closed-box graphs, aggregator wiring and its mandatory
+session-scoped fixtures for expensive closed-box graphs, the in-proc vs closed-box host lanes,
+aggregator wiring and its mandatory
 project-local `global.json`, and the maintenance rules that ride along:
 **[references/co-located-jaribu-runfiles.md](references/co-located-jaribu-runfiles.md)**.
 
@@ -375,9 +378,9 @@ namespaces don't change; only which project's glob claims them does.
   is slice-wide, not operation-specific.
 - **Moving a file between slices:** rename only the `name` segment (and relocate the folder);
   `function`/`layer` segments don't change unless the file's role changed too. Namespaces are
-  never renamed by a folder move (see AGENTS.md).
+  never renamed by a folder move (`tw-slice-isolation`).
 - **Hitting a build error on a new file:** it almost always means a missing or misspelled
-  layer/function suffix — the membership guard and TWA0004 catch misplacement at build time,
+  layer/function suffix — the membership guard and TWA0015/TWA0016 catch misplacement at build time,
   not at file-creation time, so a freshly created file with the wrong name compiles into
   whatever project's default globs happen to claim it until the next build.
 - **Extending the registry:** see Registry section above — edit the JSON, rebuild fully, never
@@ -393,8 +396,8 @@ namespaces don't change; only which project's glob claims them does.
   repo-specific co-located runfile preamble for the `tests` registered-unrouted layer lives
   above, in **Co-located Jaribu runfile preamble** — updating the cross-repo skill with a pointer
   to it is tracked as a follow-up, not this skill's job
-- **AGENTS.md** — Layout section (cohesive tree diagram) and the TWA diagnostic table
-  (TWA0015/TWA0016 rows)
+- Diagnostic catalog (not a second copy of these rules): `AnalyzerReleases.Unshipped.md` in the
+  convention-analyzers project. This skill owns the TWA0015/TWA0016 rows.
 - **Registry (source of truth):**
   `source/analyzers/timewarp-architecture-convention-analyzers/feature-filename-grammar.json`
 - **Analyzer (source of truth):**

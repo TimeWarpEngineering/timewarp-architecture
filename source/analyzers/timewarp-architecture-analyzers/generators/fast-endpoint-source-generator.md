@@ -109,4 +109,4 @@ contradiction.
 Authoritative diagnostics: TWE002 (missing Query/Command), TWE003 (route+verb conflict),
 TWE007 (unresolvable route/HttpVerb), TWE008 (allow-list empty/mistyped/unmarked), SG002
 (missing FastEndpoints). See
-`skills/tw-web-api-contracts/SKILL.md` and AGENTS.md.
+`skills/tw-web-api-contracts/SKILL.md` and `AnalyzerReleases.Unshipped.md` in this project.

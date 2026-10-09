@@ -16,7 +16,7 @@
 // features/identity/passkey-authentication-tests.cs's Returns_.Ok_With_Cookie_And_Session_Given_
 // Valid_Authentication / GetCurrentSessionWithCookie (same reason: the shared HttpClient's ambient
 // cookie jar must not be relied on — each test isolates its own session cookie).
-// Fixture: C-create per class (AGENTS.md default, 145-008) — SetupOnce/CleanUpOnce own a fresh
+// Fixture: C-create per class (co-located Jaribu runfiles default, 145-008) — SetupOnce/CleanUpOnce own a fresh
 // HostGraph, same as Passkey_Authentication_Tests.cs; this suite is not expensive/multi-class
 // enough to warrant opting into the session fixture.
 #endregion

@@ -214,6 +214,7 @@ the live database — AppHost `AddEFMigrations` applies committed migrations. Se
 - `tw-blazor-layout` — empty layout + shell; chrome **outside** SliceRoot
 - `tw-blazor-css-strategy` — shell/component styling only
 - `tw-agent-context-regions` — Purpose/Design on new files (TWA0004)
-- **AGENTS.md** — TWA diagnostic table (row TWA0009)
+- Diagnostic catalog: `AnalyzerReleases.Unshipped.md` in the convention-analyzers project
+  (TWA0009 row). This skill is the placement rule.
 - **Analyzer (source of truth):** `source/analyzers/timewarp-architecture-convention-analyzers/slice-isolation-analyzer.cs`
 - **Opt-out attribute:** `source/foundation/foundation-contracts/base/cross-slice-reference-attribute.cs`
