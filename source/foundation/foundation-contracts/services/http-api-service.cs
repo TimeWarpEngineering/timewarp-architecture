@@ -10,7 +10,9 @@
 //
 // Verbs: Get/Delete/Post/Put/Patch only — Head/Options throw NotSupportedException (no
 // real client for them on either side). GET/DELETE take data via query string
-// (IQueryStringRouteProvider); POST/PUT/PATCH send JSON bodies with the seam options.
+// (IQueryStringRouteProvider). POST/PUT/PATCH send JSON bodies with the seam options,
+// except IFileUploadRequest, which sends the stream as the body and the file name in
+// X-File-Name. The media type is the file's type, with no charset.
 // 204 is checked before IsSuccessStatusCode (it is 2xx but has no body to deserialize) and
 // maps to SharedProblemDetails; other non-success map to problem; cancellation maps to 499.
 // Stream TResponse becomes FileResponse without EnsureSuccessStatusCode (already on the
@@ -31,6 +33,9 @@ using System.Net.Http.Headers;
 /// </summary>
 public sealed class HttpApiService : IApiService
 {
+  /// <summary>Title of the problem synthesized for a non-problem failure body other than 401/403.</summary>
+  public const string UnhandledErrorTitle = "Unhandled Error";
+
   private readonly HttpClient HttpClient;
   private readonly JsonSerializerOptions JsonSerializerOptions;
   private readonly Func<CancellationToken, Task<string?>>? AcquireBearerTokenAsync;
@@ -101,8 +106,15 @@ public sealed class HttpApiService : IApiService
   {
     // Relative-or-absolute so contract routes ("/api/…") resolve against HttpClient.BaseAddress.
     Uri route = new(PrepareRoute(apiRequest), UriKind.RelativeOrAbsolute);
-    using StringContent? httpContent = PrepareContent(apiRequest);
     await ApplyBearerTokenAsync(cancellationToken).ConfigureAwait(false);
+    if (apiRequest is IFileUploadRequest fileUpload
+      && apiRequest.GetHttpVerb() is HttpVerb.Post or HttpVerb.Put or HttpVerb.Patch)
+    {
+      return await SendFileAsync(route, fileUpload, apiRequest.GetHttpVerb(), cancellationToken)
+        .ConfigureAwait(false);
+    }
+
+    using StringContent? httpContent = PrepareContent(apiRequest);
     return apiRequest.GetHttpVerb() switch
     {
       HttpVerb.Get => await HttpClient.GetAsync(route, cancellationToken).ConfigureAwait(false),
@@ -115,6 +127,32 @@ public sealed class HttpApiService : IApiService
       HttpVerb.Head or HttpVerb.Options => throw new NotSupportedException($"HttpVerb: {apiRequest.GetHttpVerb()} is not supported."),
       var verb => throw new NotSupportedException($"HttpVerb: {verb} is not supported.")
     };
+  }
+
+  private async Task<HttpResponseMessage> SendFileAsync(
+    Uri route,
+    IFileUploadRequest fileUpload,
+    HttpVerb verb,
+    CancellationToken cancellationToken)
+  {
+    HttpMethod method = verb switch
+    {
+      HttpVerb.Post => HttpMethod.Post,
+      HttpVerb.Put => HttpMethod.Put,
+      HttpVerb.Patch => HttpMethod.Patch,
+      HttpVerb.Get or HttpVerb.Delete or HttpVerb.Head or HttpVerb.Options =>
+        throw new NotSupportedException($"HttpVerb: {verb} is not supported for a file upload."),
+      var unsupported => throw new NotSupportedException($"HttpVerb: {unsupported} is not supported for a file upload."),
+    };
+
+    using HttpRequestMessage message = new(method, route);
+    StreamContent content = new(fileUpload.Content);
+    content.Headers.ContentType = new MediaTypeHeaderValue(fileUpload.ContentType);
+    message.Content = content;
+    message.Headers.TryAddWithoutValidation(
+      FileUploadHeaders.FileName,
+      Uri.EscapeDataString(fileUpload.FileName));
+    return await HttpClient.SendAsync(message, cancellationToken).ConfigureAwait(false);
   }
 
   private async Task ApplyBearerTokenAsync(CancellationToken cancellationToken)
@@ -190,7 +228,7 @@ public sealed class HttpApiService : IApiService
       },
       _ => new SharedProblemDetails
       {
-        Title = "Unhandled Error",
+        Title = UnhandledErrorTitle,
         Status = status,
         Detail = "An unhandled error occurred while processing the request."
       }

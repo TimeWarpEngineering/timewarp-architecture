@@ -10,7 +10,9 @@
 // ApplyConfigurationsFromAssembly (feature files ending in -infrastructure.cs compile into this
 // assembly). AgentHumanLink is the optional agent↔human product aggregate (schema "agent_links").
 // FeedbackItem is a filing aggregate (schema "feedback", table "feedback_items"): owner, kind,
-// title, body, and filed-at. It is insert-only.
+// title, body, and filed-at. It is insert-only. FeedbackAttachment (same schema, table
+// "feedback_attachments") is the file row for that filing. It is not an aggregate: Version is
+// mapped and is not a concurrency token. FeedbackItemId stays null until submit links it.
 // Identity Principal/Credential are also mapped here (schema "identity") as the first
 // port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
 // EfPrincipalStore, not AggregateDbContext's Version hook.
@@ -58,6 +60,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
 
   public DbSet<Profile> Profiles => Set<Profile>();
   public DbSet<FeedbackItem> FeedbackItems => Set<FeedbackItem>();
+  public DbSet<FeedbackAttachment> FeedbackAttachments => Set<FeedbackAttachment>();
   public DbSet<AgentHumanLink> AgentHumanLinks => Set<AgentHumanLink>();
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();

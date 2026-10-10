@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261009001245_AddFeedbackItems";
+    public override string LastMigrationId => "20261010075816_AddFeedbackAttachments";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -72,6 +72,50 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .HasFilter("\"Status\" IN (1, 2)");
 
                 b.ToTable("agent_links", "agent_links");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackAttachment", b =>
+            {
+                b.Property<Guid>("Id")
+                    .HasColumnType("uuid");
+
+                b.Property<string>("ContentType")
+                    .IsRequired()
+                    .HasMaxLength(127)
+                    .HasColumnType("character varying(127)");
+
+                b.Property<Guid?>("FeedbackItemId")
+                    .HasColumnType("uuid");
+
+                b.Property<string>("FileName")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)");
+
+                b.Property<Guid>("OwnerPrincipalId")
+                    .HasColumnType("uuid");
+
+                b.Property<long>("Size")
+                    .HasColumnType("bigint");
+
+                b.Property<string>("StorageKey")
+                    .IsRequired()
+                    .HasMaxLength(80)
+                    .HasColumnType("character varying(80)");
+
+                b.Property<DateTimeOffset>("UploadedAt")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<long>("Version")
+                    .HasColumnType("bigint");
+
+                b.HasKey("Id");
+
+                b.HasIndex("FeedbackItemId");
+
+                b.HasIndex("OwnerPrincipalId");
+
+                b.ToTable("feedback_attachments", "feedback");
             });
 
         modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackItem", b =>
@@ -279,6 +323,14 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasKey("Id");
 
                 b.ToTable("site_settings", "identity");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackAttachment", b =>
+            {
+                b.HasOne("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackItem", null)
+                    .WithMany()
+                    .HasForeignKey("FeedbackItemId")
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 #pragma warning restore 612, 618
     }

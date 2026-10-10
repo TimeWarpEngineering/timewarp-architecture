@@ -326,6 +326,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     private sealed class World
     {
       public InMemoryFeedbackStore Feedback { get; } = new();
+      public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
       public InMemoryProfileStore Profiles { get; } = new();
       public ProfileEmailLookup Lookup { get; }
       public RecordingEmailSender Mail { get; } = new();
@@ -345,10 +346,11 @@ namespace TimeWarp.Architecture.Features.Feedback
           Lookup,
           Sender,
           new FixedBaseUrl(new Uri("https://app.example")),
-          NullLogger<SubmitHandler>.Instance);
+          NullLogger<SubmitHandler>.Instance,
+          Attachments);
 
       public GetHandler GetAs(PrincipalId? principal) =>
-        new(new StubCurrentPrincipalAccessor(principal), Feedback);
+        new(new StubCurrentPrincipalAccessor(principal), Feedback, Attachments);
 
       public ListHandler ListAs(PrincipalId? principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Feedback, Lookup);

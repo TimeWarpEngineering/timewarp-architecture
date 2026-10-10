@@ -4,7 +4,8 @@
 
 #region Design
 // Scoped, depends on PostgresDbContext. PostgresDbModule replaces the in-memory singleton when a
-// connection string is present. Items are insert-only. A unique id violation becomes
+// connection string is present. Items are insert-only except for Remove, which rolls back a
+// filing whose attachments could not be linked. A unique id violation becomes
 // InvalidOperationException, matching InMemoryFeedbackStore.
 #endregion
 
@@ -58,6 +59,15 @@ public sealed class EfFeedbackStore : IFeedbackStore
       .OrderByDescending(item => item.FiledAt)
       .ThenBy(item => item.Id)
       .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task RemoveAsync(FeedbackItemId id, CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    await Db.FeedbackItems
+      .Where(item => item.Id == id)
+      .ExecuteDeleteAsync(cancellationToken)
       .ConfigureAwait(false);
   }
 

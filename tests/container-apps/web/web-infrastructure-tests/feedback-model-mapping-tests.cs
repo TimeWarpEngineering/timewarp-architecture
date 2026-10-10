@@ -49,6 +49,30 @@ public class Map
   {
     await using PostgresDbContext db = CreateModelOnlyContext();
     db.FeedbackItems.ShouldNotBeNull();
+    db.FeedbackAttachments.ShouldNotBeNull();
+  }
+
+  public static async Task FeedbackAttachment_with_nullable_item_and_no_concurrency_token()
+  {
+    await using PostgresDbContext db = CreateModelOnlyContext();
+
+    IEntityType entityType = db.Model.FindEntityType(typeof(FeedbackAttachment))
+      .ShouldNotBeNull("FeedbackAttachment must be on the PostgresDbContext model");
+
+    entityType.GetSchema().ShouldBe(FeedbackItemEntityTypeConfiguration.SchemaName);
+    entityType.GetTableName().ShouldBe(FeedbackAttachmentEntityTypeConfiguration.TableName);
+
+    IProperty itemId = entityType.FindProperty(nameof(FeedbackAttachment.FeedbackItemId)).ShouldNotBeNull();
+    itemId.IsNullable.ShouldBeTrue();
+    itemId.GetValueConverter().ShouldNotBeNull("FeedbackItemId must convert to a store type (Guid)");
+
+    IProperty version = entityType.FindProperty(nameof(FeedbackAttachment.Version)).ShouldNotBeNull();
+    version.IsConcurrencyToken.ShouldBeFalse();
+    version.GetPropertyAccessMode().ShouldBe(PropertyAccessMode.Property);
+
+    IForeignKey foreignKey = entityType.GetForeignKeys().ShouldHaveSingleItem();
+    foreignKey.PrincipalEntityType.ClrType.ShouldBe(typeof(FeedbackItem));
+    foreignKey.DeleteBehavior.ShouldBe(DeleteBehavior.Cascade);
   }
 
   private static PostgresDbContext CreateModelOnlyContext()

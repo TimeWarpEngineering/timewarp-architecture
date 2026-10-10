@@ -9,6 +9,9 @@
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
 
+using TimeWarp.Architecture.Features.Feedback.Domain;
+using SubmitFeedbackContract = TimeWarp.Architecture.Features.Feedback.SubmitFeedback;
+
 internal static class FeedbackProblems
 {
   public static SharedProblemDetails Unauthenticated() => new()
@@ -23,5 +26,64 @@ internal static class FeedbackProblems
     Title = "Feedback not found",
     Status = 404,
     Detail = "This feedback item is not available."
+  };
+
+  public static SharedProblemDetails EmptyFile() => new()
+  {
+    Title = "Empty file",
+    Status = 400,
+    Detail = "The file has no bytes."
+  };
+
+  public static SharedProblemDetails TooLarge() => new()
+  {
+    Title = "File too large",
+    Status = 413,
+    Detail = "The file is larger than the attachment limit."
+  };
+
+  public static SharedProblemDetails UnsupportedMedia() => new()
+  {
+    Title = "Unsupported file",
+    Status = 415,
+    Detail = "The file type is not an allowed attachment."
+  };
+
+  public static SharedProblemDetails InvalidFileName() => new()
+  {
+    Title = "Invalid file name",
+    Status = 400,
+    Detail = "The file name cannot be stored."
+  };
+
+  public static SharedProblemDetails TooManyAttachments() => new()
+  {
+    Title = "Too many attachments",
+    Status = 409,
+    Detail = $"A feedback item can include at most {FeedbackAttachment.MaxPerItem} attachments."
+  };
+
+  public static SharedProblemDetails AttachmentUnavailable(IReadOnlyCollection<Guid>? unavailableIds = null)
+  {
+    SharedProblemDetails problem = new()
+    {
+      Title = "Attachment not available",
+      Status = 400,
+      Detail = "One or more attachments are no longer available. Pending uploads expire after "
+        + $"{FeedbackAttachmentRules.PendingLifetime.TotalHours:0} hours; attach the file again."
+    };
+    if (unavailableIds is { Count: > 0 })
+    {
+      problem.Extensions[SubmitFeedbackContract.UnavailableAttachmentIdsExtension] = unavailableIds.ToList();
+    }
+
+    return problem;
+  }
+
+  public static SharedProblemDetails AlreadyFiled() => new()
+  {
+    Title = "Attachment already filed",
+    Status = 409,
+    Detail = "Filed attachments stay with the feedback item."
   };
 }

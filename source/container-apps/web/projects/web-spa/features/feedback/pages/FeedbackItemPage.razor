@@ -36,6 +36,24 @@
       <p>@item.Kind</p>
       <h2>@item.Title</h2>
       <p>@item.Body</p>
+      @if (item.Attachments.Count > 0)
+      {
+        <ul class="feedback-item-attachments">
+          @foreach (GetFeedback.Attachment attachment in item.Attachments)
+          {
+            <li data-qa="FeedbackItemAttachment">
+              @if (attachment.IsImage)
+              {
+                <img src="@attachment.DownloadPath" alt="@attachment.FileName" />
+              }
+              else
+              {
+                <a href="@attachment.DownloadPath">@attachment.FileName</a>
+              }
+            </li>
+          }
+        </ul>
+      }
       <FluentLink Href="@item.Permalink" data-qa="FeedbackPermalink">@item.Permalink</FluentLink>
     }
   </Section>

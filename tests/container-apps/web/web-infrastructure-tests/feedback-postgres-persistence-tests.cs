@@ -1,10 +1,12 @@
 namespace Feedback_Postgres_Persistence_;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
+using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Testing;
 
 /// <summary>
-/// Live Postgres round-trip for a feedback filing. Prefers an explicit connection string, else an
+/// Live Postgres round-trip for a feedback filing, and the attachment store's conditional link,
+/// unlink-by-item, and pending-expiry statements. Prefers an explicit connection string, else an
 /// ephemeral Testcontainers Postgres. When neither is available the test is skipped, same as Profile.
 /// </summary>
 public class Round_Trip
@@ -43,6 +45,52 @@ public class Round_Trip
     reloaded.Body.ShouldBe("Nothing came back.");
     reloaded.FiledAt.ShouldBe(filedAt);
     reloaded.Version.ShouldBe(0);
+  }
+
+  public static async Task Attachment_store_links_conditionally_and_expires_pending_rows()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using PostgresDbContext db = await CreateContextAsync();
+    await db.Database.MigrateAsync();
+    EfFeedbackStore items = new(db);
+    EfFeedbackAttachmentStore attachments = new(db);
+
+    Guid owner = Guid.NewGuid();
+    DateTimeOffset now = DateTimeOffset.UtcNow;
+    FeedbackItem item = FeedbackItem.File(owner, FeedbackKind.Complaint, "With files", "Body", now);
+    await items.AddAsync(item);
+    FeedbackItem other = FeedbackItem.File(owner, FeedbackKind.Complaint, "Second", "Body", now);
+    await items.AddAsync(other);
+
+    var pending = FeedbackAttachment.Create(owner, "notes.txt", "text/plain", 5, now);
+    var expired = FeedbackAttachment.Create(owner, "lost.txt", "text/plain", 5, now.AddDays(-2));
+    await attachments.AddAsync(pending);
+    await attachments.AddAsync(expired);
+
+    (await attachments.TryLinkAsync(pending.Id, Guid.NewGuid(), item.Id)).ShouldBeFalse();
+    (await attachments.TryLinkAsync(pending.Id, owner, item.Id)).ShouldBeTrue();
+    (await attachments.TryLinkAsync(pending.Id, owner, other.Id)).ShouldBeFalse();
+    (await attachments.FindAsync(pending.Id))!.FeedbackItemId.ShouldBe(item.Id);
+
+    var second = FeedbackAttachment.Create(owner, "second.txt", "text/plain", 5, now);
+    await attachments.AddAsync(second);
+    (await attachments.TryLinkAsync(second.Id, owner, item.Id)).ShouldBeTrue();
+
+    await attachments.UnlinkAllAsync(other.Id);
+    (await attachments.FindAsync(pending.Id))!.FeedbackItemId.ShouldBe(item.Id);
+    await attachments.UnlinkAllAsync(item.Id);
+    (await attachments.FindAsync(pending.Id))!.FeedbackItemId.ShouldBeNull();
+    (await attachments.FindAsync(second.Id))!.FeedbackItemId.ShouldBeNull();
+
+    IReadOnlyList<FeedbackAttachment> removed = await attachments.RemoveExpiredUnlinkedAsync(owner, now.AddDays(-1));
+    removed.ShouldHaveSingleItem().Id.ShouldBe(expired.Id);
+    (await attachments.FindAsync(expired.Id)).ShouldBeNull();
+    (await attachments.CountUnlinkedByOwnerAsync(owner)).ShouldBe(2);
+
+    await items.RemoveAsync(other.Id);
+    (await items.FindAsync(other.Id)).ShouldBeNull();
+    (await items.FindAsync(item.Id)).ShouldNotBeNull();
   }
 
   private static async Task<bool> SkipIfUnavailableAsync()

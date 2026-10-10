@@ -98,6 +98,9 @@ public sealed partial class PostgresDbModule : IModule
     serviceCollection.RemoveAll<IFeedbackStore>();
     serviceCollection.AddScoped<IFeedbackStore, EfFeedbackStore>();
 
+    serviceCollection.RemoveAll<IFeedbackAttachmentStore>();
+    serviceCollection.AddScoped<IFeedbackAttachmentStore, EfFeedbackAttachmentStore>();
+
     serviceCollection.RemoveAll<IAgentHumanLinkStore>();
     serviceCollection.AddScoped<IAgentHumanLinkStore, EfAgentHumanLinkStore>();
 
