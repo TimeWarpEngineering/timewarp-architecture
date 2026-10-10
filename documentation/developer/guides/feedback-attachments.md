@@ -69,7 +69,12 @@ Contracts do not reference the domain.
 file's type, with no charset. The file name is the percent-encoded `X-File-Name` header.
 `HttpApiService` does this for any `IFileUploadRequest`. The server decodes the header and
 keeps only the last path segment. A name with a control character, such as a decoded line
-break, is HTTP 400. The endpoint's request body limit is one byte over the cap, so an
+break, is HTTP 400. The endpoint accepts each allow-list media type. A POST otherwise accepts
+only `application/json`, and the host answers an empty HTTP 415 before the binder runs. The
+JSON default is cleared by a convention that removes every accepts entry, so the allow-list is
+added after that convention. A type outside the list is that empty 415. A body that does not
+match an accepted type is the handler's `application/problem+json` 415. The endpoint's request
+body limit is one byte over the cap, so an
 oversize body gets the handler's `application/problem+json` 413. A body that Kestrel stops
 first gets the same 413 problem.
 
@@ -101,6 +106,8 @@ The file picker and the paste hook both call `UploadFeedbackAttachment`. Paste i
 module on the Details box (`feedback-paste.ts`). It refuses an image over the size limit before
 reading it. It passes the file to .NET as a JS stream reference, so paste also works on the
 InteractiveServer circuit of a first InteractiveAuto visit. A refused or failed paste shows the
-page's normal error notification. A successful upload appends a markdown link
+page's normal error notification. A failed upload shows the API problem. When that problem is
+missing, or is only the generic unhandled error from an empty failure body, the form says the
+file could not be uploaded. A successful upload appends a markdown link
 when it fits in the body. The item page lists the stored files and shows an image when the
 type is `image/*`. The body stays plain text.

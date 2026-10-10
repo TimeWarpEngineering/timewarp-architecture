@@ -6,6 +6,12 @@
 // Hand-written BaseFastEndpoint, not [ApiEndpoint]: the generator's success path is JSON
 // and its binder cannot take the request stream. TWA0006 still sees this subclass.
 // Auth matches the contract: feedback.file.self on both human session schemes.
+// A POST request DTO accepts only application/json until Configure replaces that metadata.
+// AddSwaggerDefaults writes that JSON entry before Configure. ClearDefaultAccepts schedules a
+// convention that deletes every IAcceptsMetadata, so an Accepts() call in the same method is
+// deleted with the JSON default. The allow-list is added in Finally, which runs after that
+// convention. A type outside the list is the host's empty 415. The handler's 415 is a body
+// that does not match an accepted type.
 // MaxRequestBodySize is one byte over the handler's cap, so a body that is just too large
 // reaches the handler and gets its 413 problem. Kestrel still stops a larger body (or a
 // Content-Length over the limit) on the first read with BadHttpRequestException; HandleAsync
@@ -14,6 +20,7 @@
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
+using Microsoft.AspNetCore.Http.Metadata;
 using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Foundation.Features;
 
@@ -29,6 +36,17 @@ public sealed class UploadFeedbackAttachmentEndpoint
     Policies(PermissionIds.FeedbackFileSelf);
     RequestBinder(new UploadFeedbackAttachmentBinder());
     MaxRequestBodySize(FeedbackAttachmentRules.MaxBytes + 1L);
+    // Finally, not Accepts(): ClearDefaultAccepts removes every accepts entry at build time.
+    Description(builder =>
+    {
+      string[] contentTypes = FeedbackAttachmentRules.AllowedContentTypes;
+      builder.ClearDefaultAccepts();
+      builder.Finally(endpointBuilder =>
+      {
+        endpointBuilder.Metadata.Add(
+          new AcceptsMetadata(contentTypes, typeof(UploadFeedbackAttachment.Command)));
+      });
+    });
   }
 
   /// <inheritdoc />

@@ -165,12 +165,25 @@
       return;
     }
 
+    HashSet<string> errorsBefore = NotificationState.Messages
+      .Where(message => message.Intent == MessageBarIntent.Error)
+      .Select(message => message.Id)
+      .ToHashSet();
     HashSet<Guid> before = FeedbackState.DraftAttachments.Select(draft => draft.AttachmentId).ToHashSet();
     await FeedbackState.UploadFeedbackAttachment(fileName, canonical, content);
     FeedbackState.DraftAttachment? added = FeedbackState.DraftAttachments
       .FirstOrDefault(draft => !before.Contains(draft.AttachmentId));
     if (added is null)
     {
+      bool explained = NotificationState.Messages.Any(message =>
+        message.Intent == MessageBarIntent.Error
+        && !errorsBefore.Contains(message.Id)
+        && !string.Equals(message.Title, "Unhandled Error", StringComparison.Ordinal));
+      if (!explained)
+      {
+        await NotificationState.AddNotification(MessageBarIntent.Error, "The file could not be uploaded.");
+      }
+
       return;
     }
 

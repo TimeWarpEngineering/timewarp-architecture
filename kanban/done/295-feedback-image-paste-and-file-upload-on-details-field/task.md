@@ -73,18 +73,20 @@ CI on PR #458 failed two tests. The action catalog roster omitted `Feedback.Remo
 
 This host is TWE-001, so the Playwright browser run was not started. `web-spa-playwright-tests` builds with 0 warnings. CI writes `feedback-upload.png`, `feedback-paste.png`, and `feedback-item-attachments.png` beside this task when that test runs.
 
+The next CI run (PR #458, run 38041035106, head `386050071`) still rejected `notes.txt`. `POST /api/Feedback/attachments` with `text/plain` matched the host's empty 415 endpoint before the upload endpoint ran, because a POST request DTO accepts only `application/json`. Clearing that default also deletes an `Accepts()` call in the same method, so the allow-list is added after that convention. `text/plain`, `text/plain; charset=utf-8`, and `image/png` now return 200. `image/svg+xml` stays the empty 415. When an upload fails and the API problem is missing or only the generic unhandled error, the form says the file could not be uploaded.
+
 ### How to validate
 
 **Smoke:**
 
 ```powershell
-cd tests/container-apps/web/web-spa-integration-tests; dotnet test -c Release -- --filter-class ActionCatalog_Should
+cd tests/container-apps/web/web-server-integration-tests; dotnet test -c Release -- --filter-class Accepts_
 cd ../web-spa-playwright-tests; dotnet build -c Release
 ```
 
 **Expect:**
 
-- `ActionCatalog_Should`: 10 passed. The roster includes `Feedback.RemoveFeedbackAttachment` and `Feedback.UploadFeedbackAttachment`. Both are Human and require `feedback.file.self`.
+- `Accepts_`: 4 passed. `text/plain` (21-byte `notes.txt`), `text/plain` with charset, and `image/png` return 200. `image/svg+xml` returns an empty 415.
 - `web-spa-playwright-tests` builds with 0 warnings and 0 errors. The browser run stays on CI. It signs in with a virtual passkey, opens `/Feedback`, fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
 
 ### Review disposition
@@ -119,6 +121,7 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
 - 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): round 4 on the CI-fix delta; no findings; disposition still clean.
 - 2026-10-10 implementer (ganda task work, CI fix): catalog names added; Playwright signs in before `/Feedback`. `ActionCatalog_Should` 10/10. Playwright project builds. Browser run left for CI.
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-10T09:19:19Z
+- 2026-10-10 implementer (ganda task work, upload 415): the allow-list is applied after the JSON accepts default is cleared. `Accepts_` 4/4. Playwright project builds with 0 warnings. Browser run left for CI. A failed upload shows a message when the API problem is missing.
 
 ## Notes
 
@@ -132,3 +135,4 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
   Steven approved another walk pass (`ganda task work 295 --restart --no-merge --yes`) to fix both on this branch and PR #458. First walk log: `~/logs/task-work-timewarp-architecture-295-20261010-135714.log`.
 - 2026-10-10 fix: the catalog expected list now includes the two attachment actions. The Playwright timeout was the signed-out login page (`LoginPage` has no `.twe-appbar`), not a shell that failed to render. The test signs in with a virtual passkey before opening `/Feedback`.
 - 2026-10-10: second CI run after the CI-fix pass (PR #458, run 38041035106, job 114181177066, head `386050071`) still failed `ci`. `ActionCatalog_Should` now passes and the sign-in fix works: the feedback form renders. The remaining failure, `FeedbackAttachment_Given_Wasm.PasteAndUpload_Should_ShowAttachmentsOnTheItem`, timed out at `feedback-attachment-playwright-tests.cs:88` waiting for `[data-qa=FeedbackAttachment]` after the file picker set `notes.txt` (`text/plain`). The web-server log shows the cause, a real product bug: `POST /api/Feedback/attachments - text/plain 21` matched endpoint `415 HTTP Unsupported Media Type` and returned 415. The upload endpoint's content-type matching (e.g. an `Accepts<...>`/consumes restriction or a request-body binding that only takes certain media types) rejects the raw file body for allowed file types. Fix the endpoint so every allowed attachment type (text, images, etc.) uploads with its own Content-Type, add a test for a non-octet-stream upload, and make the UI surface an upload error instead of silently showing nothing. Steven approved another walk pass (`ganda task work 295 --restart --no-merge --yes`). Second walk log: `~/logs/task-work-timewarp-architecture-295-20261010-160656.log`.
+- 2026-10-10 fix: the upload allow-list is added after the convention that clears the JSON default. `text/plain` and `image/png` return 200. `image/svg+xml` stays an empty 415. The form says the file could not be uploaded when the failure body has no useful problem.
