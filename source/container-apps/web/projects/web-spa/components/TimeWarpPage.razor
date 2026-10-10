@@ -39,6 +39,14 @@
   Task 293: the shell no longer runs the Ask readiness probe. It ran once per app, so a signed-out
   401 survived an in-app sign-in. AuthenticationStateListener probes at startup and on every
   AuthenticationState change.
+  Task 296: Ask is a FluentLayout aside, not a sibling of the layout. FluentLayout's grid is
+  `nav content aside` / `auto 1fr auto`, so a 450px aside reflows the page. The layout has one
+  aside column. While Ask is open it owns that column and the page Aside parameter is not
+  rendered; the page aside returns when Ask closes. Two aside items would share one grid area
+  and paint on top of each other. FluentLayout MobileBreakdownWidth is 880. Below that, and
+  when the panel is expanded, TimeWarpPage.razor.css covers the viewport with one full-screen
+  treatment on `.fluent-layout-item[area=aside]`. `.twe-shell` stays `display: contents`.
+  The `twe-shell--ask` class is only the hook for that treatment. It does not change display.
 *@
 
 @code {
@@ -55,11 +63,12 @@
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
   private Task OpenAskPanelAsync() => AgentSurfaceState.OpenAskPanel();
 
-  private string ShellClass => AgentSurfaceState.IsPanelOpen
-    ? AgentSurfaceState.IsPanelExpanded
-      ? "twe-shell twe-shell--ask twe-shell--ask-expanded"
-      : "twe-shell twe-shell--ask"
-    : "twe-shell";
+  private string ShellClass =>
+    !AgentSurfaceState.IsPanelOpen
+      ? "twe-shell"
+      : AgentSurfaceState.IsPanelExpanded
+        ? "twe-shell twe-shell--ask twe-shell--ask-expanded"
+        : "twe-shell twe-shell--ask";
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
@@ -76,7 +85,7 @@
      authors, never on FluentLayout's root (Wall A). TimeWarpPage.razor.css anchors its
      ::deep rules for Fluent children on this div. *@
   <div class="@ShellClass">
-    <FluentLayout Class=@($"{Id} twe-shell__layout")>
+    <FluentLayout Class=@($"{Id} twe-shell__layout") MobileBreakdownWidth="880">
 
       @* No Height parameter here: with it, FluentLayoutItem swaps its default
          height: var(--layout-header-height) for a hard-coded inline height. The slot
@@ -142,7 +151,14 @@
         </div>
       </FluentLayoutItem>
 
-      @if (Aside is not null)
+      @* One aside column. Ask owns it while open; the page Aside is the column only while Ask is closed. *@
+      @if (AgentSurfaceState.IsPanelOpen)
+      {
+        <FluentLayoutItem Area="LayoutArea.Aside" Width="450px">
+          <AgentAsk />
+        </FluentLayoutItem>
+      }
+      else if (Aside is not null)
       {
         <FluentLayoutItem Area="LayoutArea.Aside" Width="300px">
           <div class="twe-aside">@Aside</div>
@@ -162,10 +178,6 @@
       </FluentLayoutItem>
 
     </FluentLayout>
-    @if (AgentSurfaceState.IsPanelOpen)
-    {
-      <AgentAsk />
-    }
   </div>
 </CascadingValue>
 

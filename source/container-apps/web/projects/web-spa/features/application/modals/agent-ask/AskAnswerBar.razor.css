@@ -1,7 +1,7 @@
 .twe-agent-ask__answer-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
+  flex-wrap: nowrap;
+  gap: var(--twe-space-2);
   align-items: center;
 }
 

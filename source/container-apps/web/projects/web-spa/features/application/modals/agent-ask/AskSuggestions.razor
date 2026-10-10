@@ -28,6 +28,6 @@
 <div class="twe-agent-ask__suggestions">
   @foreach (string suggestion in Suggestions)
   {
-    <FluentButton Appearance="ButtonAppearance.Subtle" Class="twe-agent-ask__suggestion" data-qa="AskSuggestion" OnClick="() => SendAsync(suggestion)">@suggestion</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Outline" Class="twe-agent-ask__suggestion" data-qa="AskSuggestion" OnClick="() => SendAsync(suggestion)">@suggestion</FluentButton>
   }
 </div>

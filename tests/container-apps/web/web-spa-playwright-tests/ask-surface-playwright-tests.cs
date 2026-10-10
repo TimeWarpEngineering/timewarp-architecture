@@ -14,6 +14,10 @@
 // edit-mode buttons toggle aria-pressed; the transcript survives an edit-mode rebuild and Close
 // plus reopen; Close resets the mode to Ask before editing; @ insertion does not double the @;
 // Copy writes the last answer (not the whole panel) to the clipboard.
+// Geometry (task 296): at 1280 the aside is the right 450px — panel x about 830, its right
+// edge on the viewport, the layout wider than 800, and FluentLayout has no mobile attribute.
+// Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
+// viewport. Shots are written beside task 296.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -173,6 +177,9 @@ public class AskSurface_Given_Wasm
       await page.Locator("[data-qa=AskCopy]").WaitForAsync();
       await page.Locator("[data-qa=AskThumbsUp]").WaitForAsync();
       await page.Locator("[data-qa=AskThumbsDown]").WaitForAsync();
+      await AssertIconButtonAsync(page, "AskCopy", "Copy");
+      await AssertIconButtonAsync(page, "AskThumbsUp", "Thumbs up");
+      await AssertIconButtonAsync(page, "AskThumbsDown", "Thumbs down");
       await page.Locator("[data-qa=AskSupport]").WaitForAsync();
       await AssertCopyWritesTheLastAnswerAsync(page);
       await AssertReferenceInsertReplacesTypedAtAsync(page);
@@ -208,6 +215,9 @@ public class AskSurface_Given_Wasm
       string command = await page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync();
       command.ShouldBe(XaiChatDefaults.SetupCommand);
       await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      await AssertIconButtonAsync(page, "AskNewConversation", "New conversation");
+      await AssertIconButtonAsync(page, "AskExpand", "Expand");
+      await AssertIconButtonAsync(page, "AgentAskClose", "Close");
       (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
@@ -230,29 +240,72 @@ public class AskSurface_Given_Wasm
     }
 
     directory.ShouldNotBeNull();
-    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), "292-*", SearchOption.AllDirectories)
+    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), "296-*", SearchOption.AllDirectories)
       .Single(path => File.Exists(Path.Combine(path, "task.md")));
     return Path.Combine(folder, fileName);
   }
 
   private static async Task AssertDockedPanelAsync(IPage page)
   {
+    // The configured pass opens the tag menu before geometry. Close it so the state shots
+    // show the docked panel, not the resource list.
+    ILocator resourceMenu = page.Locator("[data-qa=AskResourceMenu]");
+    if (await resourceMenu.CountAsync() > 0 && await resourceMenu.IsVisibleAsync())
+    {
+      await page.Locator("[data-qa=AskResourceClose]").ClickAsync();
+      await resourceMenu.WaitForAsync(new LocatorWaitForOptions
+      {
+        State = WaitForSelectorState.Hidden,
+        Timeout = 30_000,
+      });
+    }
+
     await page.SetViewportSizeAsync(1280, 800);
-    LocatorBoundingBoxResult panel = await BoxAsync(page, "[data-qa=AgentAsk]");
-    ((double)panel.Width).ShouldBe(450, 2);
-    LocatorBoundingBoxResult appBar = await BoxAsync(page, ".twe-appbar");
-    (appBar.Width + panel.Width).ShouldBeLessThanOrEqualTo(page.ViewportSize!.Width + 2);
-    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-panel-docked.png") });
+    await AssertIconButtonAsync(page, "AskNewConversation", "New conversation");
+    await AssertIconButtonAsync(page, "AskExpand", "Expand");
+    await AssertIconButtonAsync(page, "AgentAskClose", "Close");
+    await AssertHeaderActionsSitBesideTheTitleAsync(page);
+    await AssertSegmentsShareARowAsync(page);
+
+    double width = page.ViewportSize!.Width;
+    LocatorBoundingBoxResult panel = await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box =>
+      Math.Abs(box.X - (width - 450)) <= 8
+      && Math.Abs(box.X + box.Width - width) <= 2
+      && Math.Abs(box.Width - 450) <= 2);
+    LocatorBoundingBoxResult layout = await BoxAsync(page, ".twe-shell__layout");
+    LocatorBoundingBoxResult content = await BoxAsync(page, ".fluent-layout-item[area=content]");
+    layout.Width.ShouldBeGreaterThan(800);
+    content.Width.ShouldBeGreaterThan(400);
+    (await page.Locator(".fluent-layout").GetAttributeAsync("mobile")).ShouldBeNull();
+    ((double)panel.X).ShouldBe(width - 450, 8);
+    ((double)(panel.X + panel.Width)).ShouldBe(width, 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-docked-1280.png") });
 
     await page.Locator("[data-qa=AskExpand]").ClickAsync();
-    LocatorBoundingBoxResult expanded = await BoxAsync(page, "[data-qa=AgentAsk]");
-    ((double)expanded.Width).ShouldBe(page.ViewportSize!.Width, 2);
+    await AssertIconButtonAsync(page, "AskExpand", "Collapse");
+    double height = page.ViewportSize!.Height;
+    LocatorBoundingBoxResult expanded = await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box =>
+      box.X <= 2
+      && box.Y <= 2
+      && Math.Abs(box.Width - width) <= 2
+      && Math.Abs(box.Height - height) <= 2);
+    ((double)expanded.Width).ShouldBe(width, 2);
+    ((double)expanded.Height).ShouldBe(height, 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-expanded-1280.png") });
+
     await page.Locator("[data-qa=AskExpand]").ClickAsync();
+    await AssertIconButtonAsync(page, "AskExpand", "Expand");
+    await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box => Math.Abs(box.X - (width - 450)) <= 8);
 
     await page.SetViewportSizeAsync(800, 700);
-    LocatorBoundingBoxResult narrow = await BoxAsync(page, "[data-qa=AgentAsk]");
+    LocatorBoundingBoxResult narrow = await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box =>
+      box.X <= 2
+      && box.Y <= 2
+      && Math.Abs(box.Width - 800) <= 2
+      && Math.Abs(box.Height - 700) <= 2);
     ((double)narrow.Width).ShouldBe(800, 2);
-    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-panel-narrow.png") });
+    ((double)narrow.Height).ShouldBe(700, 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-narrow-800.png") });
 
     await page.SetViewportSizeAsync(1280, 800);
     await page.Locator("[data-qa=AgentAskClose]").ClickAsync();
@@ -261,8 +314,60 @@ public class AskSurface_Given_Wasm
       State = WaitForSelectorState.Hidden,
       Timeout = 30_000,
     });
+    LocatorBoundingBoxResult closed = await WaitForBoxAsync(page, ".twe-shell__layout", box =>
+      box.X <= 2 && Math.Abs(box.Width - page.ViewportSize!.Width) <= 2);
+    ((double)closed.Width).ShouldBe(page.ViewportSize!.Width, 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-closed-1280.png") });
+
     await page.Locator("[data-qa=AskAiButton]").ClickAsync();
     await page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box =>
+      Math.Abs(box.X - (page.ViewportSize!.Width - 450)) <= 8);
+  }
+
+  private static async Task AssertIconButtonAsync(IPage page, string qa, string accessibleName)
+  {
+    ILocator button = page.Locator($"[data-qa={qa}]");
+    (await button.GetAttributeAsync("aria-label")).ShouldBe(accessibleName, qa);
+    (await button.GetAttributeAsync("title")).ShouldBe(accessibleName, qa);
+  }
+
+  private static async Task AssertHeaderActionsSitBesideTheTitleAsync(IPage page)
+  {
+    LocatorBoundingBoxResult title = await BoxAsync(page, ".twe-agent-ask__title");
+    LocatorBoundingBoxResult actions = await BoxAsync(page, ".twe-agent-ask__header-actions");
+    actions.X.ShouldBeGreaterThan(title.X + title.Width);
+  }
+
+  private static async Task AssertSegmentsShareARowAsync(IPage page)
+  {
+    LocatorBoundingBoxResult askFirst = await BoxAsync(page, "[data-qa=AskBeforeEditing]");
+    LocatorBoundingBoxResult automatic = await BoxAsync(page, "[data-qa=AskAutomaticallyEdit]");
+    ((double)askFirst.Y).ShouldBe(automatic.Y, 4);
+    automatic.X.ShouldBeGreaterThan(askFirst.X + askFirst.Width - 2);
+  }
+
+  private static async Task<LocatorBoundingBoxResult> WaitForBoxAsync(
+    IPage page,
+    string selector,
+    Func<LocatorBoundingBoxResult, bool> ready)
+  {
+    LocatorBoundingBoxResult? last = null;
+    for (int attempt = 0; attempt < 50; attempt++)
+    {
+      last = await page.Locator(selector).BoundingBoxAsync();
+      if (last is not null && ready(last))
+      {
+        return last;
+      }
+
+      await Task.Delay(100);
+    }
+
+    string detail = last is null
+      ? "no box"
+      : $"x={last.X} y={last.Y} width={last.Width} height={last.Height}";
+    throw new TimeoutException($"{selector} did not reach the expected box ({detail})");
   }
 
   private static async Task PressedShouldBeAsync(IPage page, string qa, string expected)

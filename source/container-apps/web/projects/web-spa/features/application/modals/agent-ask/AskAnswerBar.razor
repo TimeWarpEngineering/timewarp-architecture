@@ -65,9 +65,30 @@
 }
 
 <div class="twe-agent-ask__answer-bar">
-  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskCopy" OnClick="CopyAsync">Copy</FluentButton>
-  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskThumbsUp" OnClick="HelpfulAsync">Thumbs up</FluentButton>
-  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskThumbsDown" OnClick="UnhelpfulAsync">Thumbs down</FluentButton>
+  <FluentButton Appearance="ButtonAppearance.Subtle"
+                IconOnly="true"
+                IconStart="@(new Icons.Regular.Size20.Copy())"
+                Title="Copy"
+                Tooltip="Copy"
+                aria-label="Copy"
+                data-qa="AskCopy"
+                OnClick="CopyAsync" />
+  <FluentButton Appearance="ButtonAppearance.Subtle"
+                IconOnly="true"
+                IconStart="@(new Icons.Regular.Size20.ThumbLike())"
+                Title="Thumbs up"
+                Tooltip="Thumbs up"
+                aria-label="Thumbs up"
+                data-qa="AskThumbsUp"
+                OnClick="HelpfulAsync" />
+  <FluentButton Appearance="ButtonAppearance.Subtle"
+                IconOnly="true"
+                IconStart="@(new Icons.Regular.Size20.ThumbDislike())"
+                Title="Thumbs down"
+                Tooltip="Thumbs down"
+                aria-label="Thumbs down"
+                data-qa="AskThumbsDown"
+                OnClick="UnhelpfulAsync" />
   @if (!string.IsNullOrWhiteSpace(SupportUrl))
   {
     <a data-qa="AskSupport" href="@SupportUrl">Support</a>

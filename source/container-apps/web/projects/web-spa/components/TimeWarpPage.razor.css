@@ -9,53 +9,43 @@
    anchor and ::deep for the Fluent child. Elements authored here inside a Fluent ChildContent
    (.twe-appbar, .twe-page, .twe-footer, ...) are stamped and need no ::deep. */
 
-/* The wrapper exists only to anchor ::deep rules; it adds no box. */
+/* The wrapper exists only to anchor ::deep rules; it adds no box. Ask does not change this. */
 .twe-shell { display: contents; }
 
-/* Open Ask docks beside the page. Two classes beat .twe-shell, so the closed shell stays contents. */
-.twe-shell.twe-shell--ask {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.twe-shell.twe-shell--ask ::deep .twe-shell__layout {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  overflow: auto;
-}
-
-.twe-shell.twe-shell--ask ::deep .twe-agent-ask {
-  flex: 0 0 450px;
-  width: 450px;
-  max-width: 450px;
-  height: 100%;
-  min-height: 0;
-  box-sizing: border-box;
-}
-
+/* Ask covers the viewport below FluentLayout's 880px breakdown and when expanded.
+   One treatment, anchored on the aside item. Specificity (shell scope + area) beats Fluent's
+   container-query `.fluent-layout .fluent-layout-item[area="aside"] { display: none }`.
+   width, height, and margin are !important because FluentLayoutItem writes them inline.
+   twe-shell--ask limits the rule to the open panel, so a page Aside stays in the grid.
+   z-index sits above Fluent's layout chrome (header 85) and below the shell modal (1000). */
 @media (max-width: 879px) {
-  .twe-shell.twe-shell--ask ::deep .twe-agent-ask {
+  .twe-shell.twe-shell--ask ::deep .fluent-layout-item[area=aside] {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     inset: 0;
-    z-index: 40;
-    width: 100%;
-    max-width: none;
-    flex: none;
+    z-index: 200;
+    box-sizing: border-box;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    overflow: hidden;
   }
 }
 
-.twe-shell.twe-shell--ask.twe-shell--ask-expanded ::deep .twe-agent-ask {
+.twe-shell.twe-shell--ask.twe-shell--ask-expanded ::deep .fluent-layout-item[area=aside] {
+  display: flex;
+  flex-direction: column;
   position: fixed;
   inset: 0;
-  z-index: 40;
-  width: 100%;
-  max-width: none;
-  flex: none;
+  z-index: 200;
+  box-sizing: border-box;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  overflow: hidden;
 }
 
 /* Appbar/footer height single source (tokens.css). FluentLayout writes its defaults for
