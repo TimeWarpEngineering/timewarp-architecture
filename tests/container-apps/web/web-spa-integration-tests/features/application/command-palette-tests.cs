@@ -455,6 +455,7 @@ public class CommandPalette_Should_
           ];
         }
       );
+      services.AddTimeWarpStateBlazor();
       services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
       services.AddScoped<
         TimeWarp.Features.Persistence.IPersistenceService,

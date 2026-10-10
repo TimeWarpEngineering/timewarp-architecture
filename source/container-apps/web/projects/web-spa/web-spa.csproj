@@ -77,6 +77,10 @@
          Static web assets stay (they are not contentFiles). Avoid percent-delimited template
          tokens in this csproj — they are stripped by dotnet new. -->
     <PackageReference Include="TimeWarp.State" ExcludeAssets="contentFiles" />
+    <!-- Blazor components, JS interop, Redux DevTools, and render subscriptions moved here in
+         12.0.0-beta.10. Same contentFiles exclusion as TimeWarp.State: do not feed a package
+         tsconfig to TypeScript.MSBuild. Static web assets stay under /_content/TimeWarp.State/. -->
+    <PackageReference Include="TimeWarp.State.Blazor" ExcludeAssets="contentFiles" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />

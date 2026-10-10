@@ -269,6 +269,7 @@ public class SignInActions_Should_
           ];
         }
       );
+      services.AddTimeWarpStateBlazor();
 
       services.AddScoped<
         TimeWarp.Features.Persistence.IPersistenceService,

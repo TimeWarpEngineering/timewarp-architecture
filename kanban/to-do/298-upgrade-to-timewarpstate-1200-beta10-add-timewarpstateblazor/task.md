@@ -39,15 +39,71 @@ https://github.com/TimeWarpEngineering/timewarp-state/blob/master/documentation/
 
 ## Checklist
 
-- [ ] Confirm current pins and all TimeWarp.State consumers
-- [ ] Read beta.10 release notes; list every breaking change that applies here
-- [ ] Bump TimeWarp.State and TimeWarp.State.Plus to 12.0.0-beta.10
-- [ ] Add TimeWarp.State.Blazor 12.0.0-beta.10 and reference it where needed
-- [ ] Fix Blazor-split compile/registration changes
-- [ ] Remove/replace FeatureFlagState usage (task 100)
-- [ ] Add ICloneable where the source-generated cloner cannot clone a type (task 097)
-- [ ] Full build green
-- [ ] Unit, end-to-end and browser (Playwright/WASM) tests green in CI
+- [x] Confirm current pins and all TimeWarp.State consumers
+- [x] Read beta.10 release notes; list every breaking change that applies here
+- [x] Bump TimeWarp.State and TimeWarp.State.Plus to 12.0.0-beta.10
+- [x] Add TimeWarp.State.Blazor 12.0.0-beta.10 and reference it where needed
+- [x] Fix Blazor-split compile/registration changes
+- [x] Remove/replace FeatureFlagState usage (task 100)
+- [x] Add ICloneable where the source-generated cloner cannot clone a type (task 097)
+- [x] Full build green
+- [x] Unit, end-to-end and browser (Playwright/WASM) tests green locally (`./bin/dev test`; CI re-runs on the PR)
+
+## Results
+
+Pins on this branch before the edit were still `TimeWarp.State` and `TimeWarp.State.Plus`
+`12.0.0-beta.9` in `Directory.Packages.props`. The only direct package references were
+`source/container-apps/web/projects/web-spa/web-spa.csproj`. Test projects reach those
+assemblies through the web-spa project reference.
+
+Published NuGet `12.0.0-beta.10` (tag `v12.0.0-beta.10`, timewarp-state PR 625) breaking
+changes that apply here:
+
+- Blazor components, JavaScript interop, Redux DevTools, render subscriptions, and wwwroot
+  moved to `TimeWarp.State.Blazor`. Namespaces are unchanged. Blazor hosts call
+  `AddTimeWarpStateBlazor()` after `AddTimeWarpState()`. `UseReduxDevTools` and
+  `AddJavaScriptDispatch` stay in the `TimeWarp.State` namespace and live in the Blazor
+  assembly. `RenderSubscriptionsPostProcessor` requires `RenderSubscriptionContext`, so
+  every host that uses `AddWebSpaGeneratedMediator` registers Blazor services.
+- `TimeWarpCacheableState<TState>` now requires `where TState : TimeWarpCacheableState<TState>`.
+  `BaseCacheableState<TState>` uses `where TState : BaseCacheableState<TState>`.
+  `AuthorizationState` already passes itself. Existing `Hydrate` overrides already return
+  the concrete state.
+- `FeatureFlagState` and `UseFeatureFlags` are gone. This repo has no references to either.
+- `InvalidCloneException` now takes a cause. This repo does not construct it.
+
+`web-spa` references `TimeWarp.State.Blazor` `12.0.0-beta.10` with `ExcludeAssets="contentFiles"`
+so the package `tsconfig.json` is not compiled by TypeScript.MSBuild. Static web assets stay
+under `/_content/TimeWarp.State/`. `Web.Server` maps Razor components from
+`TimeWarp.State.Blazor` (where `ReduxDevTools.razor` now lives) and `TimeWarp.State.Plus`.
+
+The source-generated cloner (timewarp-state task 097, PR 626) is not in the published
+`12.0.0-beta.10` package. `TimeWarp.State.dll` still contains `DeepCloner` and
+`CloneExtensions`. The packed source generator has no `StateCloneSourceGenerator` and no
+`TWSG002`. No state here implements `ICloneable` for that generator. That change is
+documented as `12.0.0-beta.11`, which is not on NuGet.
+
+`./bin/dev build` succeeded with 0 warnings and 0 errors. `./bin/dev test` succeeded for
+every project under `tests/`, including `web-server-integration-tests` (304 passed, 1
+skipped), `web-spa-integration-tests` (179 passed), and `web-spa-playwright-tests` (5
+passed).
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+./bin/dev test
+```
+
+Expect:
+
+- `./bin/dev build` prints `0 Warning(s)`, `0 Error(s)`, and `Build completed successfully!`.
+- `./bin/dev test` prints `Tests completed successfully!`.
+- `web-server-integration-tests` reports 304 succeeded and 1 skipped.
+- `web-spa-integration-tests` reports 179 succeeded.
+- `web-spa-playwright-tests` reports 5 succeeded.
 
 ## Acceptance
 
@@ -63,3 +119,4 @@ https://github.com/TimeWarpEngineering/timewarp-state/blob/master/documentation/
 ## Session
 
 - Created: 2026-10-10
+- Implementation: 2026-10-10 (Grok implement oracle)

@@ -49,6 +49,7 @@ internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisp
         ];
       }
     );
+    services.AddTimeWarpStateBlazor();
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.

@@ -7,12 +7,14 @@
 // construction instead of producing a state that never (or always) reads as stale.
 // The 30-second default lets derived states opt into caching without each one choosing a
 // duration; states with real freshness requirements pass their own.
+// TimeWarp.State.Plus 12.0.0-beta.10 requires where TState : TimeWarpCacheableState<TState>.
+// The tighter BaseCacheableState<TState> constraint keeps the argument the derived state itself.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
 
 public abstract class BaseCacheableState<TState> : TimeWarpCacheableState<TState>
-where TState : IState
+where TState : BaseCacheableState<TState>
 {
   protected BaseCacheableState(TimeSpan? cacheDuration = null)
   {

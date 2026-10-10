@@ -100,6 +100,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
         ];
       }
     );
+    services.AddTimeWarpStateBlazor();
 
     // Same catalog registration as Web.Spa.Program (task 239-002).
     services.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).Assembly);

@@ -208,6 +208,7 @@ public class CredentialList_Should_
     services.AddLogging();
     services.AddFluentUIComponents();
     services.AddTimeWarpState(options => options.Assemblies = [typeof(CredentialList).Assembly]);
+    services.AddTimeWarpStateBlazor();
     services.AddAuthorizationCore();
     services.AddScoped(_ => A.Fake<AuthenticationStateProvider>());
     services.AddScoped(_ => A.Fake<IJSRuntime>());

@@ -38,6 +38,7 @@ internal sealed class AnalyticsSpaTestApplication : ISpaTestApplication, IDispos
         ];
       }
     );
+    services.AddTimeWarpStateBlazor();
     services.AddJavaScriptDispatch(TimeWarp.Architecture.Web.Spa.Program.AllowJavaScriptDispatch);
 
     // Fully qualified: TimeWarp.Architecture.Services is a global using only when the api
