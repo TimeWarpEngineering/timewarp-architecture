@@ -86,6 +86,7 @@ below 880px or when Expanded.
 
 - Created: 3183331 (2026-10-10, filed at Steven's request after root-cause investigation)
 - Implementation: 01a123c6-0b7a-7a02-b748-b976f5f7bdc1 (2026-10-10, Grok 4.7 implementer)
+- Review: Claude Opus 5.5 review oracle (2026-10-10, effort 2, roster general)
 
 ## Notes
 
@@ -158,6 +159,21 @@ Test run summary: Passed! total: 1 failed: 0 succeeded: 1 skipped: 0 duration: 1
 
 Playwright logged that chromium has no ubuntu26.04 build, then used the ubuntu24.04 fallback.
 The class still passed. Review, done-move, PR, and CI are later host nodes.
+
+### Review
+
+- Rounds: 2. Effort 2 (Budget.ByDiff 682 lines). Roster: general.
+- Final counts: bug 1 fixed; suggestion 0; nit 1 wontfix; 0 open.
+- Disposition: **accepted-exceptions**.
+  - M1 (bug, fixed): icon-only Ask buttons drew their icons as specks because `app.css`
+    `svg { max-width: 100% }` resolved against the button's shrink-to-fit start slot.
+    `AgentAsk.razor.css` and `AskAnswerBar.razor.css` now set `max-width: none` on the slotted
+    svg. `AssertIconButtonAsync` requires a 16×16 or larger icon box. The Playwright class passed
+    again and the shots were refreshed.
+  - M2 (nit, wontfix): screenshots go to the `296-*` task folder. This is the same per-task
+    evidence pattern the other Playwright classes use.
+- Gates after the fix: `./bin/dev build` 0 warnings / 0 errors; `ganda repo audit` passes.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

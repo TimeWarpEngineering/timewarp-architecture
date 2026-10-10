@@ -5,6 +5,11 @@
   align-items: center;
 }
 
+/* Icon-only buttons keep their 20px icon; app.css max-width: 100% collapses it in the start slot. */
+.twe-agent-ask__answer-bar ::deep fluent-button > svg {
+  max-width: none;
+}
+
 .twe-agent-ask__answer-bar button,
 .twe-agent-ask__answer-bar fluent-button,
 .twe-agent-ask__answer-bar a {

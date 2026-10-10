@@ -24,6 +24,12 @@
   flex: none;
 }
 
+/* app.css caps svg at max-width: 100%. An icon-only button's start slot shrinks to fit, so the
+   cap collapses the icon to a speck. Icons keep their intrinsic 20px. */
+.twe-agent-ask__header-actions ::deep fluent-button > svg {
+  max-width: none;
+}
+
 .twe-agent-ask__edit {
   display: flex;
   flex-direction: column;

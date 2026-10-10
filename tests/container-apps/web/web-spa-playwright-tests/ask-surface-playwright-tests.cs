@@ -330,6 +330,10 @@ public class AskSurface_Given_Wasm
     ILocator button = page.Locator($"[data-qa={qa}]");
     (await button.GetAttributeAsync("aria-label")).ShouldBe(accessibleName, qa);
     (await button.GetAttributeAsync("title")).ShouldBe(accessibleName, qa);
+    LocatorBoundingBoxResult? icon = await button.Locator("svg").First.BoundingBoxAsync();
+    icon.ShouldNotBeNull(qa);
+    ((double)icon.Width).ShouldBeGreaterThanOrEqualTo(16, qa);
+    ((double)icon.Height).ShouldBeGreaterThanOrEqualTo(16, qa);
   }
 
   private static async Task AssertHeaderActionsSitBesideTheTitleAsync(IPage page)
