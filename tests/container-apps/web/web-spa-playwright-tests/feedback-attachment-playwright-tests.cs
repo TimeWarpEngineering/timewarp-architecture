@@ -4,16 +4,20 @@
 
 #region Design
 // Same host as the other WASM proofs: appsettings UseMock on the server, wwwroot UseMock left
-// false so the page calls the real in-memory API. The mock principal header authorizes
-// feedback.file.self. Shots are written beside task 295. Chromium install retries with the
-// ubuntu24.04 build when the host distro is newer than Playwright's platform list.
+// false so the page calls the real in-memory API. /Feedback is [Authorize] for
+// feedback.file.self. That gate reads the SPA authentication state, which comes from the
+// identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
+// so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
+// an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
+// /Feedback. A new account's role includes feedback.file.self. Shots are written beside task
+// 295. Chromium install retries with the ubuntu24.04 build when the host distro is newer than
+// Playwright's platform list.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
 
 public class FeedbackAttachment_Given_Wasm
 {
-  private const string MockPrincipalId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
   private const string PngBase64 =
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
@@ -34,11 +38,8 @@ public class FeedbackAttachment_Given_Wasm
     {
       IgnoreHTTPSErrors = true,
       ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      // The host locale can be en-us@posix, which .NET WASM rejects and never renders the shell.
       Locale = "en-US",
-      ExtraHTTPHeaders = new Dictionary<string, string>
-      {
-        ["X-TimeWarp-Mock-Principal-Id"] = MockPrincipalId,
-      },
     });
     IPage page = await context.NewPageAsync();
     ConcurrentQueue<string> console = new();
@@ -52,6 +53,8 @@ public class FeedbackAttachment_Given_Wasm
         Interlocked.Exchange(ref sawWasm, 1);
       }
     };
+
+    await SignInWithNewPasskeyAsync(page, context);
 
     string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
     await page.GotoAsync(feedbackUrl, new PageGotoOptions
@@ -67,7 +70,9 @@ public class FeedbackAttachment_Given_Wasm
     catch (TimeoutException exception)
     {
       string startupLog = string.Join('\n', console);
-      throw new TimeoutException($"Feedback form did not render. Console:\n{startupLog}", exception);
+      throw new TimeoutException(
+        $"Feedback form did not render at {page.Url}. Console:\n{startupLog}",
+        exception);
     }
 
     Volatile.Read(ref sawWasm).ShouldBe(1, "InteractiveWebAssembly did not download a .wasm");
@@ -126,6 +131,37 @@ public class FeedbackAttachment_Given_Wasm
     (await page.Locator("[data-qa=FeedbackItemAttachment] img").CountAsync()).ShouldBeGreaterThan(0);
     (await page.Locator("[data-qa=FeedbackItemAttachment] a").CountAsync()).ShouldBeGreaterThan(0);
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-item-attachments.png") });
+  }
+
+  private static async Task SignInWithNewPasskeyAsync(IPage page, IBrowserContext context)
+  {
+    // A platform authenticator that always verifies the user, so the passkey ceremony completes headless.
+    ICDPSession cdp = await context.NewCDPSessionAsync(page);
+    await cdp.SendAsync("WebAuthn.enable");
+    await cdp.SendAsync("WebAuthn.addVirtualAuthenticator", new Dictionary<string, object>
+    {
+      ["options"] = new Dictionary<string, object>
+      {
+        ["protocol"] = "ctap2",
+        ["transport"] = "internal",
+        ["hasResidentKey"] = true,
+        ["hasUserVerification"] = true,
+        ["isUserVerified"] = true,
+        ["automaticPresenceSimulation"] = true,
+      },
+    });
+
+    await page.GotoAsync(InProcTestPorts.WebHostUrl, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    await page.Locator("[data-qa=HomeSignIn]").ClickAsync();
+    await page.WaitForURLAsync("**/Login**", new PageWaitForURLOptions { Timeout = 30_000 });
+    await page.Locator("[data-qa=CreatePasskey]").ClickAsync();
+    await page.WaitForURLAsync("**/Settings", new PageWaitForURLOptions { Timeout = 60_000 });
+    await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
   }
 
   private static void InstallChromium()

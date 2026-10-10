@@ -32,7 +32,10 @@ public class ActionCatalog_Should
     "Credentials.RevokeCredential",
     "Feedback.ListMyFeedback",
     "Feedback.OpenFeedback",
+    // Human: the file picker and the paste hook both dispatch these.
+    "Feedback.RemoveFeedbackAttachment",
     "Feedback.SubmitFeedback",
+    "Feedback.UploadFeedbackAttachment",
     "Profile.SignOut",
     "Profile.UpdateProfile",
     "Role.CreateRole",
@@ -86,6 +89,13 @@ public class ActionCatalog_Should
     linkMicrosoft365.Visibility.ShouldBe(ActionVisibility.Human);
     linkMicrosoft365.Description.ShouldNotBeNullOrWhiteSpace();
     linkMicrosoft365.DisplayName.ShouldBe("Link Microsoft 365");
+
+    foreach (string fileAction in new[] { "Feedback.UploadFeedbackAttachment", "Feedback.RemoveFeedbackAttachment" })
+    {
+      ActionCatalogEntry entry = actionCatalog.Find(fileAction).ShouldNotBeNull();
+      entry.Visibility.ShouldBe(ActionVisibility.Human, fileAction);
+      entry.Permissions.ShouldBe([PermissionIds.FeedbackFileSelf], fileAction);
+    }
 
     // Task 282: item actions need a credential id, so people reach them from the page's row buttons;
     // the catalog exposes them to agents only (Ctrl-K lists navigation and parameter-free commands).
