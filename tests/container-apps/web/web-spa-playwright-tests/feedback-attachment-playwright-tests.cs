@@ -11,7 +11,8 @@
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
 // an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
 // /Feedback. A new account's role includes feedback.file.self. Attachment shots are written
-// beside task 295. The Details layout shot is written beside task 302. Chromium install
+// beside task 295. The Details layout shot is written beside task 302. Without kanban/ (a
+// generated app) shots go to the test output folder. Chromium install
 // retries with the ubuntu24.04 build when the host distro is newer than Playwright's platform
 // list. Layout measures fluent-textarea's shadow part=root and part=control against Title's
 // shadow part=root and input. The host element can be full width while the visible box stays
@@ -59,25 +60,7 @@ public class FeedbackAttachment_Given_Wasm
     };
 
     await SignInWithNewPasskeyAsync(page, context);
-
-    string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
-    await page.GotoAsync(feedbackUrl, new PageGotoOptions
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded,
-      Timeout = 120_000,
-    });
-    try
-    {
-      await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
-      await page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-    }
-    catch (TimeoutException exception)
-    {
-      string startupLog = string.Join('\n', console);
-      throw new TimeoutException(
-        $"Feedback form did not render at {page.Url}. Console:\n{startupLog}",
-        exception);
-    }
+    await OpenFeedbackAsync(page, console);
 
     Volatile.Read(ref sawWasm).ShouldBe(1, "InteractiveWebAssembly did not download a .wasm");
 
@@ -305,9 +288,12 @@ public class FeedbackAttachment_Given_Wasm
       directory = Path.GetDirectoryName(directory);
     }
 
-    directory.ShouldNotBeNull();
-    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), taskPrefix + "-*", SearchOption.AllDirectories)
-      .Single(path => File.Exists(Path.Combine(path, "task.md")));
-    return Path.Combine(folder, fileName);
+    // Generated apps ship tests/ without kanban/, so the shot falls back to the test output folder.
+    string? kanban = directory is null ? null : Path.Combine(directory, "kanban");
+    string? folder = kanban is not null && Directory.Exists(kanban)
+      ? Directory.GetDirectories(kanban, taskPrefix + "-*", SearchOption.AllDirectories)
+        .SingleOrDefault(path => File.Exists(Path.Combine(path, "task.md")))
+      : null;
+    return Path.Combine(folder ?? AppContext.BaseDirectory, fileName);
   }
 }

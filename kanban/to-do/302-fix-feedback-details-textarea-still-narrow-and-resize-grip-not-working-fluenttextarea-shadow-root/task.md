@@ -109,6 +109,7 @@ Use the component's public styling API rather than fighting the host size:
 
 - Created: 218251 (2026-10-11)
 - Implement: 2026-10-11
+- Review: 2026-10-11, review oracle (Claude Opus 5.5), effort 2, roster general
 
 ## Notes
 
@@ -146,6 +147,16 @@ Screenshot: `feedback-details-302.png` in this folder.
 - `Details_Host_Stays_The_Paste_Target` passed. It only checks the paste wrapper (`feedback-details`, `DetailsHost`, no in-file `<style>`).
 - `./bin/dev test`: Playwright 7/7 and the projects that do not need Docker passed in the first run. `api-server-integration-tests`, `aspire-tests`, `web-infrastructure-tests`, and `web-spa-integration-tests` failed in that process with `permission denied` on `/var/run/docker.sock` because the session lacked the `docker` supplementary group. Rerun with `sg docker`: 1, 38, 68, and 184 passed, 0 failed.
 - `ganda repo audit`: 31 passed, 0 failed.
+
+### Review
+
+- Rounds: 2. Effort 2, one general reviewer.
+- Final counts: 1 bug fixed, 1 suggestion fixed, 0 nits, 0 open, 0 wontfix.
+- Disposition: **clean**.
+- M1 (bug): `ScreenshotPath` threw in generated apps because the template ships `tests/` but not `kanban/`. It now falls back to the test output folder.
+- M2 (suggestion): the attachment test now calls `OpenFeedbackAsync` instead of repeating the goto-and-wait code.
+- After the fixes: `./bin/dev build` 0 warnings, Playwright 7/7, `ganda repo audit` passed.
+- Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
