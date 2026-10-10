@@ -1,13 +1,22 @@
 @namespace TimeWarp.Architecture.Features.Feedback
 @inherits BaseComponent
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
 
 @code {
   public static string Title => "Feedback";
   public static Icon? NavIcon => new Icons.Regular.Size20.Comment();
 
   private static readonly FeedbackKind[] KindChoices = Enum.GetValues<FeedbackKind>();
+  private static string Accept => string.Join(',', FeedbackAttachmentRules.AllowedContentTypes);
 
   private readonly SubmitFeedback.Command Draft = new() { Kind = FeedbackKind.Complaint };
+  private readonly Dictionary<Guid, string> Previews = new();
+
+  private ElementReference DetailsHost;
+  private DotNetObjectReference<FeedbackListPage>? HostReference;
+  private IJSObjectReference? PasteHandle;
+  private bool PasteAttached;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -21,15 +30,174 @@
     await FeedbackState.ListMyFeedback();
   }
 
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!RendererInfo.IsInteractive || PasteAttached)
+    {
+      return;
+    }
+
+    PasteAttached = true;
+    await AttachPasteAsync();
+  }
+
+  [DirectComponentSideEffect("The details box paste listener is presentational JavaScript. The upload itself is the UploadFeedbackAttachment action.")]
+  private async Task AttachPasteAsync()
+  {
+    HostReference ??= DotNetObjectReference.Create(this);
+    PasteHandle = await FeedbackPasteJsModule.RegisterAsync(JsRuntime, HostReference, DetailsHost, CancellationToken.None);
+  }
+
+  [DirectComponentSideEffect("The details box paste listener is presentational JavaScript bound to this component's lifetime. The upload itself is the UploadFeedbackAttachment action.")]
+  public async ValueTask DisposeAsync()
+  {
+    if (PasteHandle is not null)
+    {
+      await FeedbackPasteJsModule.DisposeAsync(PasteHandle);
+      PasteHandle = null;
+    }
+
+    HostReference?.Dispose();
+    HostReference = null;
+  }
+
+  [JSInvokable]
+  public Task ReceivePastedImage(string fileName, string contentType, byte[] content)
+  {
+    string name = string.IsNullOrWhiteSpace(fileName) ? "pasted-image.png" : fileName;
+    return UploadOneAsync(name, contentType, content);
+  }
+
+  private async Task OnFilesAsync(InputFileChangeEventArgs change)
+  {
+    int room = FeedbackAttachmentRules.MaxPerItem - FeedbackState.DraftAttachments.Count;
+    if (room <= 0)
+    {
+      await NotificationState.AddNotification(
+        MessageBarIntent.Error,
+        $"A feedback item can include at most {FeedbackAttachmentRules.MaxPerItem} attachments.");
+      return;
+    }
+
+    foreach (IBrowserFile file in change.GetMultipleFiles(room))
+    {
+      if (file.Size <= 0)
+      {
+        await NotificationState.AddNotification(MessageBarIntent.Error, "The file has no bytes.");
+        continue;
+      }
+
+      if (file.Size > FeedbackAttachmentRules.MaxBytes)
+      {
+        await NotificationState.AddNotification(MessageBarIntent.Error, "The file is larger than the attachment limit.");
+        continue;
+      }
+
+      await using Stream stream = file.OpenReadStream(maxAllowedSize: FeedbackAttachmentRules.MaxBytes);
+      using MemoryStream buffer = new();
+      await stream.CopyToAsync(buffer);
+      await UploadOneAsync(file.Name, file.ContentType, buffer.ToArray());
+    }
+  }
+
+  private async Task UploadOneAsync(string fileName, string contentType, byte[] content)
+  {
+    if (FeedbackState.DraftAttachments.Count >= FeedbackAttachmentRules.MaxPerItem)
+    {
+      await NotificationState.AddNotification(
+        MessageBarIntent.Error,
+        $"A feedback item can include at most {FeedbackAttachmentRules.MaxPerItem} attachments.");
+      return;
+    }
+
+    if (content.Length == 0)
+    {
+      await NotificationState.AddNotification(MessageBarIntent.Error, "The file has no bytes.");
+      return;
+    }
+
+    if (content.LongLength > FeedbackAttachmentRules.MaxBytes)
+    {
+      await NotificationState.AddNotification(MessageBarIntent.Error, "The file is larger than the attachment limit.");
+      return;
+    }
+
+    string? canonical = FeedbackAttachmentRules.CanonicalContentType(contentType);
+    if (canonical is null)
+    {
+      await NotificationState.AddNotification(MessageBarIntent.Error, "The file type is not an allowed attachment.");
+      return;
+    }
+
+    HashSet<Guid> before = FeedbackState.DraftAttachments.Select(draft => draft.AttachmentId).ToHashSet();
+    await FeedbackState.UploadFeedbackAttachment(fileName, canonical, content);
+    FeedbackState.DraftAttachment? added = FeedbackState.DraftAttachments
+      .FirstOrDefault(draft => !before.Contains(draft.AttachmentId));
+    if (added is null)
+    {
+      return;
+    }
+
+    if (canonical.StartsWith("image/", StringComparison.Ordinal))
+    {
+      Previews[added.AttachmentId] = $"data:{canonical};base64,{Convert.ToBase64String(content)}";
+    }
+
+    AppendMarkdown(added);
+  }
+
+  private void AppendMarkdown(FeedbackState.DraftAttachment draft)
+  {
+    string alt = draft.FileName
+      .Replace("]", string.Empty, StringComparison.Ordinal)
+      .Replace("\r", " ", StringComparison.Ordinal)
+      .Replace("\n", " ", StringComparison.Ordinal);
+    string line = $"![{alt}]({DownloadFeedbackAttachment.DownloadPath(draft.AttachmentId)})";
+    string body = Draft.Body ?? "";
+    string next = body.Length == 0 ? line : body + "\n" + line;
+    if (next.Length <= SubmitFeedback.MaxBodyLength)
+    {
+      Draft.Body = next;
+    }
+  }
+
+  private async Task RemoveAsync(Guid attachmentId)
+  {
+    await FeedbackState.RemoveFeedbackAttachment(attachmentId);
+    if (FeedbackState.DraftAttachments.All(draft => draft.AttachmentId != attachmentId))
+    {
+      Previews.Remove(attachmentId);
+      StripMarkdown(attachmentId);
+    }
+  }
+
+  private void StripMarkdown(Guid attachmentId)
+  {
+    if (string.IsNullOrEmpty(Draft.Body))
+    {
+      return;
+    }
+
+    string token = attachmentId.ToString("D");
+    string[] lines = Draft.Body.Split('\n');
+    Draft.Body = string.Join('\n', lines.Where(line => !line.Contains(token, StringComparison.OrdinalIgnoreCase)));
+  }
+
   private async Task SubmitAsync()
   {
     Guid? before = FeedbackState.LastReceipt?.FeedbackItemId;
-    await FeedbackState.SubmitFeedback(Draft.Kind, Draft.Title, Draft.Body, Draft.EmailCopy);
+    await FeedbackState.SubmitFeedback(
+      Draft.Kind,
+      Draft.Title,
+      Draft.Body,
+      Draft.EmailCopy,
+      includeDraftAttachments: true);
     if (FeedbackState.LastReceipt is { } receipt && receipt.FeedbackItemId != before)
     {
       Draft.Title = null!;
       Draft.Body = null!;
       Draft.EmailCopy = false;
+      Previews.Clear();
     }
   }
 
@@ -66,8 +234,32 @@
               <ValidationMessage For="@(() => Draft.Title)" />
             </FormField>
             <FormField Label="Details">
-              <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Height="9rem" />
+              <div @ref="DetailsHost" class="feedback-details">
+                <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Height="9rem" />
+              </div>
               <ValidationMessage For="@(() => Draft.Body)" />
+            </FormField>
+            <FormField Label="Attachments">
+              <InputFile OnChange="OnFilesAsync" multiple accept="@Accept" class="feedback-file" aria-label="Attachments" data-qa="FeedbackFile" />
+              @if (FeedbackState.DraftAttachments.Count > 0)
+              {
+                <ul class="feedback-attachments">
+                  @foreach (FeedbackState.DraftAttachment draft in FeedbackState.DraftAttachments)
+                  {
+                    <li class="feedback-attachment" data-qa="FeedbackAttachment">
+                      @if (Previews.TryGetValue(draft.AttachmentId, out string? preview))
+                      {
+                        <img src="@preview" alt="" />
+                      }
+                      <span>@draft.FileName</span>
+                      <FluentButton Type="ButtonType.Button"
+                        Appearance="ButtonAppearance.Outline"
+                        data-qa="FeedbackAttachmentRemove"
+                        OnClick="@(() => RemoveAsync(draft.AttachmentId))">Remove</FluentButton>
+                    </li>
+                  }
+                </ul>
+              }
             </FormField>
             @if (FeedbackState.EmailCopyAvailable)
             {

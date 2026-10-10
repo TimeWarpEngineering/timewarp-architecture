@@ -1,0 +1,92 @@
+#region Purpose
+// Thread-safe in-memory IFeedbackAttachmentStore for hosts without Postgres.
+#endregion
+
+#region Design
+// Process-lifetime singleton, matching InMemoryFeedbackStore. PostgresDbModule swaps it
+// for scoped EfFeedbackAttachmentStore when a connection string is present. Link mutates
+// the stored instance. List order is UploadedAt then id.
+#endregion
+
+namespace TimeWarp.Architecture.Features.Feedback.Application;
+
+using System.Collections.Concurrent;
+using TimeWarp.Architecture.Features.Feedback.Domain;
+
+/// <summary>In-memory feedback attachment rows.</summary>
+public sealed class InMemoryFeedbackAttachmentStore : IFeedbackAttachmentStore
+{
+  private readonly ConcurrentDictionary<FeedbackAttachmentId, FeedbackAttachment> Items = new();
+
+  /// <inheritdoc />
+  public Task AddAsync(FeedbackAttachment attachment, CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(attachment);
+    cancellationToken.ThrowIfCancellationRequested();
+    if (!Items.TryAdd(attachment.Id, attachment))
+    {
+      throw new InvalidOperationException($"Feedback attachment '{attachment.Id}' already exists.");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  /// <inheritdoc />
+  public Task<FeedbackAttachment?> FindAsync(
+    FeedbackAttachmentId id,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    Items.TryGetValue(id, out FeedbackAttachment? attachment);
+    return Task.FromResult(attachment);
+  }
+
+  /// <inheritdoc />
+  public Task<IReadOnlyList<FeedbackAttachment>> ListByItemAsync(
+    FeedbackItemId itemId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    var items = Items.Values
+      .Where(attachment => attachment.FeedbackItemId == itemId)
+      .OrderBy(attachment => attachment.UploadedAt)
+      .ThenBy(attachment => attachment.Id.Value)
+      .ToList();
+    return Task.FromResult<IReadOnlyList<FeedbackAttachment>>(items);
+  }
+
+  /// <inheritdoc />
+  public Task<int> CountUnlinkedByOwnerAsync(
+    Guid ownerPrincipalId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    int count = Items.Values.Count(attachment =>
+      attachment.OwnerPrincipalId == ownerPrincipalId && attachment.FeedbackItemId is null);
+    return Task.FromResult(count);
+  }
+
+  /// <inheritdoc />
+  public Task LinkAsync(
+    FeedbackAttachmentId id,
+    FeedbackItemId itemId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    if (!Items.TryGetValue(id, out FeedbackAttachment? attachment))
+    {
+      throw new InvalidOperationException($"Feedback attachment '{id}' does not exist.");
+    }
+
+    attachment.Link(itemId);
+    return Task.CompletedTask;
+  }
+
+  /// <inheritdoc />
+  public Task RemoveAsync(FeedbackAttachmentId id, CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    Items.TryRemove(id, out _);
+    return Task.CompletedTask;
+  }
+}

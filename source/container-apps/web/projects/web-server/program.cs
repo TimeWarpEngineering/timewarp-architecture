@@ -203,6 +203,7 @@ public partial class Program : IAspNetProgram
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryFeedbackStoresModule.ConfigureServices(serviceCollection, configuration);
+    FeedbackAttachmentBlobModule.ConfigureServices(serviceCollection, configuration);
     MailModule.ConfigureServices(serviceCollection, configuration);
     InMemoryAgentHumanLinkStoresModule.ConfigureServices(serviceCollection, configuration);
     CommonInfrastructureModule.ConfigureServices(serviceCollection, configuration);

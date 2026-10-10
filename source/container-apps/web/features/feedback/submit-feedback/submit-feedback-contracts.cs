@@ -8,7 +8,8 @@
 // Length literals 200 and 8000 duplicate FeedbackItem.MaxTitleLength / MaxBodyLength. Contracts
 // must not reference domain.
 // Permalink in the response is the relative path /Feedback/{guid:D}. EmailCopySent is true only
-// when a copy was actually handed to the sender.
+// when a copy was actually handed to the sender. AttachmentIds are uploads already stored for
+// this principal; the handler links them. The response echoes the ids that were linked.
 // GetMockResponseFactory keeps mock mode deterministic with a fixed id.
 #endregion
 
@@ -32,6 +33,7 @@ public static partial class SubmitFeedback
     public string Title { get; set; } = null!;
     public string Body { get; set; } = null!;
     public bool EmailCopy { get; set; }
+    public List<Guid> AttachmentIds { get; set; } = [];
   }
 
   public sealed class Validator : AbstractValidator<Command>
@@ -41,6 +43,11 @@ public static partial class SubmitFeedback
       RuleFor(command => command.Kind).IsInEnum();
       RuleFor(command => command.Title).NotEmpty().MaximumLength(MaxTitleLength);
       RuleFor(command => command.Body).NotEmpty().MaximumLength(MaxBodyLength);
+      RuleFor(command => command.AttachmentIds)
+        .Cascade(CascadeMode.Stop)
+        .NotNull()
+        .Must(ids => ids.Count <= FeedbackAttachmentRules.MaxPerItem)
+        .Must(ids => ids.Distinct().Count() == ids.Count);
     }
   }
 
@@ -52,6 +59,7 @@ public static partial class SubmitFeedback
     public string Title { get; }
     public string Body { get; }
     public bool EmailCopySent { get; }
+    public IReadOnlyList<Guid> AttachmentIds { get; }
 
     public Response(
       Guid feedbackItemId,
@@ -59,7 +67,8 @@ public static partial class SubmitFeedback
       FeedbackKind kind,
       string title,
       string body,
-      bool emailCopySent)
+      bool emailCopySent,
+      IReadOnlyList<Guid>? attachmentIds = null)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       Permalink = Guard.Against.NullOrWhiteSpace(permalink);
@@ -72,6 +81,7 @@ public static partial class SubmitFeedback
       Title = Guard.Against.NullOrWhiteSpace(title);
       Body = Guard.Against.NullOrWhiteSpace(body);
       EmailCopySent = emailCopySent;
+      AttachmentIds = attachmentIds ?? [];
     }
   }
 

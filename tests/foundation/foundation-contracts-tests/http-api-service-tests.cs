@@ -294,4 +294,50 @@ public class HttpApiService_GetResponse
     handler.LastRequest.ShouldNotBeNull();
     handler.LastRequest!.Headers.Authorization.ShouldBeNull();
   }
+
+  public static async Task Posts_file_upload_as_raw_body_and_file_name_header()
+  {
+    byte[] payload = "hello notes"u8.ToArray();
+    byte[] captured = [];
+    RecordingHandler handler = new(async (request, cancellationToken) =>
+    {
+      captured = request.Content is null
+        ? []
+        : await request.Content.ReadAsByteArrayAsync(cancellationToken);
+      return JsonResponse(HttpStatusCode.OK, new SampleDto { Name = "stored" });
+    });
+    HttpApiService service = CreateService(handler);
+    await using MemoryStream body = new(payload);
+
+    OneOf<SampleDto, FileResponse, SharedProblemDetails> result = await service.GetResponse<SampleDto>(
+      new FilePostRequest(body, "my notes.txt", "text/plain"),
+      CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue();
+    result.AsT0.Name.ShouldBe("stored");
+    handler.LastRequest.ShouldNotBeNull();
+    handler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
+    handler.LastRequest.Content.ShouldNotBeNull();
+    handler.LastRequest.Content!.Headers.ContentType.ShouldNotBeNull();
+    handler.LastRequest.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
+    handler.LastRequest.Content.Headers.ContentType.CharSet.ShouldBeNull();
+    handler.LastRequest.Headers.GetValues(FileUploadHeaders.FileName).ShouldBe(["my%20notes.txt"]);
+    captured.ShouldBe(payload);
+  }
+
+  private sealed class FilePostRequest : IFileUploadRequest
+  {
+    public FilePostRequest(Stream content, string fileName, string contentType)
+    {
+      Content = content;
+      FileName = fileName;
+      ContentType = contentType;
+    }
+
+    public Stream Content { get; }
+    public string FileName { get; }
+    public string ContentType { get; }
+    public string GetRoute() => "/api/Feedback/attachments";
+    public HttpVerb GetHttpVerb() => HttpVerb.Post;
+  }
 }

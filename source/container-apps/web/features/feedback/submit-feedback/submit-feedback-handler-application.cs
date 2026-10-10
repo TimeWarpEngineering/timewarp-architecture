@@ -8,7 +8,9 @@
 // email lookup and send run with CancellationToken.None (the row already exists, so a cancelled
 // request must not lose its receipt), and any failure other than OperationCanceledException is
 // logged as a warning and reported as EmailCopySent=false. The filer always gets the id and
-// permalink once the row is stored, so a retry never files a duplicate. EmailCopySent is true only
+// permalink once the row is stored, so a retry never files a duplicate. Attachment ids are
+// checked before File: each must be this principal's unlinked upload, or nothing is filed.
+// EmailCopySent is true only
 // when the profile already has an email, the filer opted in, and the send completed. No profile
 // row is created. The permalink in the response is the relative path; the message body uses an
 // absolute URL when IAppBaseUrlAccessor returns a public origin.
@@ -40,6 +42,7 @@ public sealed class SubmitFeedback
     private readonly IEmailSender EmailSender;
     private readonly IAppBaseUrlAccessor AppBaseUrlAccessor;
     private readonly ILogger<Handler> Logger;
+    private readonly IFeedbackAttachmentStore AttachmentStore;
 
     public Handler(
       ICurrentPrincipalAccessor currentPrincipalAccessor,
@@ -47,7 +50,8 @@ public sealed class SubmitFeedback
       IProfileEmailLookup profileEmailLookup,
       IEmailSender emailSender,
       IAppBaseUrlAccessor appBaseUrlAccessor,
-      ILogger<Handler> logger)
+      ILogger<Handler> logger,
+      IFeedbackAttachmentStore attachmentStore)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
@@ -55,6 +59,7 @@ public sealed class SubmitFeedback
       EmailSender = emailSender;
       AppBaseUrlAccessor = appBaseUrlAccessor;
       Logger = logger;
+      AttachmentStore = attachmentStore;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -79,6 +84,28 @@ public sealed class SubmitFeedback
         };
       }
 
+      List<Guid> requested = request.AttachmentIds ?? [];
+      if (requested.Count > FeedbackAttachment.MaxPerItem || requested.Distinct().Count() != requested.Count)
+      {
+        return FeedbackProblems.AttachmentUnavailable();
+      }
+
+      List<FeedbackAttachment> attachments = [];
+      foreach (Guid attachmentId in requested)
+      {
+        FeedbackAttachment? attachment = await AttachmentStore
+          .FindAsync(FeedbackAttachmentId.From(attachmentId), cancellationToken)
+          .ConfigureAwait(false);
+        if (attachment is null
+          || attachment.OwnerPrincipalId != principalId.Value.Value
+          || attachment.FeedbackItemId is not null)
+        {
+          return FeedbackProblems.AttachmentUnavailable();
+        }
+
+        attachments.Add(attachment);
+      }
+
       var item = FeedbackItem.File(
         principalId.Value.Value,
         kind,
@@ -86,6 +113,10 @@ public sealed class SubmitFeedback
         request.Body,
         DateTimeOffset.UtcNow);
       await FeedbackStore.AddAsync(item, cancellationToken).ConfigureAwait(false);
+      foreach (FeedbackAttachment attachment in attachments)
+      {
+        await AttachmentStore.LinkAsync(attachment.Id, item.Id, cancellationToken).ConfigureAwait(false);
+      }
 
       string permalink = FeedbackPermalink.For(item.Id.Value);
       bool emailCopySent = request.EmailCopy
@@ -97,7 +128,8 @@ public sealed class SubmitFeedback
         request.Kind,
         item.Title,
         item.Body,
-        emailCopySent);
+        emailCopySent,
+        attachments.ConvertAll(attachment => attachment.Id.Value));
     }
 
     private async Task<bool> TrySendCopyAsync(Guid ownerId, FeedbackItem item, DomainKind kind, string permalink)

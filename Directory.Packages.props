@@ -108,6 +108,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.1.1" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
 
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0-rc.1.26425.128" />

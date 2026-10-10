@@ -1,0 +1,359 @@
+#!/usr/bin/env -S dotnet --
+#:project $(SourceDirectory)container-apps/web/projects/web-contracts/web-contracts.csproj
+#:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
+#:package TimeWarp.Jaribu
+#:package Shouldly
+#:property PublishAot=false
+#:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0005;IDE0007;IDE0008
+
+// Co-located Jaribu: attachment limits, owner-or-admin download, and submit linking.
+// Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-attachment-tests.cs
+
+#region Purpose
+// Jaribu runfile for attachment size and type limits, the owner-or-admin download rule,
+// safe download headers, and filing that links only the caller's pending uploads.
+#endregion
+
+//-:cnd:noEmit
+#if !JARIBU_MULTI
+return await TimeWarp.Jaribu.TestRunner.RunAllTests();
+#endif
+//+:cnd:noEmit
+
+namespace TimeWarp.Architecture.Features.Feedback
+{
+  using Microsoft.Extensions.Logging.Abstractions;
+  using OneOf;
+  using Shouldly;
+  using TimeWarp.Architecture.Abstractions;
+  using TimeWarp.Architecture.Authorization;
+  using TimeWarp.Architecture.Features.Feedback.Application;
+  using TimeWarp.Architecture.Features.Feedback.Domain;
+  using TimeWarp.Architecture.Mail;
+  using TimeWarp.Foundation.Types;
+  using TimeWarp.Identity;
+  using TimeWarp.Jaribu;
+  using static TimeWarp.Jaribu.TestRunner;
+  using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
+  using DownloadHandler = TimeWarp.Architecture.Features.Feedback.Application.DownloadFeedbackAttachment.Handler;
+  using GetHandler = TimeWarp.Architecture.Features.Feedback.Application.GetFeedback.Handler;
+  using RemoveHandler = TimeWarp.Architecture.Features.Feedback.Application.RemoveFeedbackAttachment.Handler;
+  using SubmitHandler = TimeWarp.Architecture.Features.Feedback.Application.SubmitFeedback.Handler;
+  using UploadHandler = TimeWarp.Architecture.Features.Feedback.Application.UploadFeedbackAttachment.Handler;
+
+  [TestTag("Handler")]
+  public class FeedbackAttachment_Given_
+  {
+    private static readonly byte[] Png = Convert.FromBase64String(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
+
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<FeedbackAttachment_Given_>();
+
+    public static Task Limits_Should_MatchBetweenContractAndDomain()
+    {
+      FeedbackAttachment.MaxBytes.ShouldBe(FeedbackAttachmentRules.MaxBytes);
+      FeedbackAttachment.MaxFileNameLength.ShouldBe(FeedbackAttachmentRules.MaxFileNameLength);
+      FeedbackAttachment.MaxPerItem.ShouldBe(FeedbackAttachmentRules.MaxPerItem);
+      FeedbackAttachment.AllowedContentTypes.ShouldBe(FeedbackAttachmentRules.AllowedContentTypes);
+      return Task.CompletedTask;
+    }
+
+    public static async Task Read_Should_RejectOversizeEmptyAndMismatchedBytes()
+    {
+      OneOf<byte[], SharedProblemDetails> oversize = await FeedbackAttachmentContent.ReadAsync(
+        new SizedStream(FeedbackAttachmentRules.MaxBytes + 1),
+        FeedbackAttachmentRules.Png);
+      Problem(oversize).Status.ShouldBe(413);
+
+      OneOf<byte[], SharedProblemDetails> empty = await FeedbackAttachmentContent.ReadAsync(
+        Stream.Null,
+        FeedbackAttachmentRules.Text);
+      Problem(empty).Status.ShouldBe(400);
+
+      OneOf<byte[], SharedProblemDetails> svg = await FeedbackAttachmentContent.ReadAsync(
+        new MemoryStream("<svg xmlns='http://www.w3.org/2000/svg'/>"u8.ToArray()),
+        "image/svg+xml");
+      Problem(svg).Status.ShouldBe(415);
+
+      OneOf<byte[], SharedProblemDetails> badMagic = await FeedbackAttachmentContent.ReadAsync(
+        new MemoryStream("not a png"u8.ToArray()),
+        FeedbackAttachmentRules.Png);
+      Problem(badMagic).Status.ShouldBe(415);
+
+      OneOf<byte[], SharedProblemDetails> script = await FeedbackAttachmentContent.ReadAsync(
+        new MemoryStream("<script>alert(1)</script>"u8.ToArray()),
+        FeedbackAttachmentRules.Text);
+      Problem(script).Status.ShouldBe(415);
+
+      OneOf<byte[], SharedProblemDetails> text = await FeedbackAttachmentContent.ReadAsync(
+        new MemoryStream("hello"u8.ToArray()),
+        FeedbackAttachmentRules.Text);
+      text.IsT0.ShouldBeTrue();
+    }
+
+    public static async Task Upload_Should_RejectANameThatCannotBeStored()
+    {
+      World world = new();
+      SharedProblemDetails problem = await world.UploadProblemAsync(
+        world.Owner,
+        "quote\".png",
+        FeedbackAttachmentRules.Png,
+        Png);
+      problem.Status.ShouldBe(400);
+    }
+
+    public static async Task Download_Should_AllowTheOwnerAndAnAdminOnlyAfterLink()
+    {
+      World world = new();
+      Guid attachmentId = await world.UploadAsync(world.Owner, "shot.png", FeedbackAttachmentRules.Png, Png);
+      PrincipalId other = PrincipalId.New();
+      PrincipalId admin = PrincipalId.New();
+      world.Permissions.Grant(admin, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess);
+
+      (await world.DownloadAsync(world.Owner, attachmentId)).ContentType.ShouldBe(FeedbackAttachmentRules.Png);
+      (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
+      (await world.DownloadProblemAsync(admin, attachmentId)).Status.ShouldBe(404);
+
+      await world.Attachments.LinkAsync(FeedbackAttachmentId.From(attachmentId), FeedbackItemId.New());
+
+      (await world.DownloadAsync(world.Owner, attachmentId)).FileName.ShouldBe("shot.png");
+      (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
+      DownloadFeedbackAttachment.Response allowed = await world.DownloadAsync(admin, attachmentId);
+      await using Stream content = allowed.Content;
+      byte[] bytes = new byte[Png.Length];
+      (await content.ReadAsync(bytes)).ShouldBe(Png.Length);
+      bytes.ShouldBe(Png);
+    }
+
+    public static Task Disposition_Should_NotBreakOutOfTheHeader()
+    {
+      string header = FeedbackAttachmentHttp.ContentDisposition(
+        "a\"; filename=\"b\r\nSet-Cookie: x.png",
+        FeedbackAttachmentRules.Pdf);
+      header.ShouldNotContain("\r");
+      header.ShouldNotContain("\n");
+      header.ShouldStartWith("attachment; filename=\"");
+      header.Count(character => character == '"').ShouldBe(2);
+      return Task.CompletedTask;
+    }
+
+    public static async Task Remove_Should_RejectALinkedAttachment()
+    {
+      World world = new();
+      Guid attachmentId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      await world.Attachments.LinkAsync(FeedbackAttachmentId.From(attachmentId), FeedbackItemId.New());
+      SharedProblemDetails problem = await world.RemoveProblemAsync(world.Owner, attachmentId);
+      problem.Status.ShouldBe(409);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(attachmentId))).ShouldNotBeNull();
+    }
+
+    public static async Task Submit_Should_LinkOwnedAttachmentsAndGetShouldReturnThem()
+    {
+      World world = new();
+      Guid textId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      Guid imageId = await world.UploadAsync(world.Owner, "shot.png", FeedbackAttachmentRules.Png, Png);
+      SubmitFeedback.Response filed = await world.SubmitAsync(world.Owner, [textId, imageId]);
+      filed.AttachmentIds.ShouldBe([textId, imageId]);
+
+      GetFeedback.Response opened = await world.GetAsync(world.Owner, filed.FeedbackItemId);
+      opened.Attachments.Count.ShouldBe(2);
+      GetFeedback.Attachment notes = opened.Attachments.Single(attachment => attachment.FileName == "notes.txt");
+      notes.IsImage.ShouldBeFalse();
+      GetFeedback.Attachment image = opened.Attachments.Single(attachment => attachment.FileName == "shot.png");
+      image.IsImage.ShouldBeTrue();
+      image.DownloadPath.ShouldStartWith("/api/Feedback/attachments/");
+    }
+
+    public static async Task Submit_Should_RejectAnotherPrincipalsPendingAttachment()
+    {
+      World world = new();
+      PrincipalId other = PrincipalId.New();
+      Guid foreign = await world.UploadAsync(other, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      SharedProblemDetails problem = await world.SubmitProblemAsync(world.Owner, [foreign]);
+      problem.Status.ShouldBe(400);
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(foreign)))!.FeedbackItemId.ShouldBeNull();
+    }
+
+    private static SharedProblemDetails Problem(OneOf<byte[], SharedProblemDetails> result) =>
+      result.Match(_ => throw new InvalidOperationException("Expected a problem"), problem => problem);
+
+    private sealed class World
+    {
+      public InMemoryFeedbackStore Feedback { get; } = new();
+      public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
+      public InMemoryFeedbackAttachmentBlobStore Blobs { get; } = new();
+      public GrantingPermissionEvaluator Permissions { get; } = new();
+      public PrincipalId Owner { get; } = PrincipalId.New();
+
+      public async Task<Guid> UploadAsync(PrincipalId principal, string fileName, string contentType, byte[] content)
+      {
+        UploadFeedbackAttachment.Response response = (await UploadAs(principal).Handle(
+            new UploadFeedbackAttachment.Command
+            {
+              FileName = fileName,
+              ContentType = contentType,
+              Content = new MemoryStream(content),
+            },
+            CancellationToken.None))
+          .Match(ok => ok, _ => throw new InvalidOperationException("Expected upload success"));
+        return response.AttachmentId;
+      }
+
+      public async Task<SharedProblemDetails> UploadProblemAsync(
+        PrincipalId principal,
+        string fileName,
+        string contentType,
+        byte[] content) =>
+        (await UploadAs(principal).Handle(
+            new UploadFeedbackAttachment.Command
+            {
+              FileName = fileName,
+              ContentType = contentType,
+              Content = new MemoryStream(content),
+            },
+            CancellationToken.None))
+          .Match(_ => throw new InvalidOperationException("Expected upload problem"), problem => problem);
+
+      public async Task<DownloadFeedbackAttachment.Response> DownloadAsync(PrincipalId principal, Guid attachmentId) =>
+        (await DownloadAs(principal).Handle(
+            new DownloadFeedbackAttachment.Query { AttachmentId = attachmentId },
+            CancellationToken.None))
+          .Match(ok => ok, _ => throw new InvalidOperationException("Expected download success"));
+
+      public async Task<SharedProblemDetails> DownloadProblemAsync(PrincipalId principal, Guid attachmentId) =>
+        (await DownloadAs(principal).Handle(
+            new DownloadFeedbackAttachment.Query { AttachmentId = attachmentId },
+            CancellationToken.None))
+          .Match(_ => throw new InvalidOperationException("Expected download problem"), problem => problem);
+
+      public async Task<SharedProblemDetails> RemoveProblemAsync(PrincipalId principal, Guid attachmentId) =>
+        (await RemoveAs(principal).Handle(
+            new RemoveFeedbackAttachment.Command { AttachmentId = attachmentId },
+            CancellationToken.None))
+          .Match(_ => throw new InvalidOperationException("Expected remove problem"), problem => problem);
+
+      public async Task<SubmitFeedback.Response> SubmitAsync(PrincipalId principal, IReadOnlyList<Guid> attachmentIds) =>
+        (await SubmitAs(principal).Handle(Command(attachmentIds), CancellationToken.None))
+          .Match(ok => ok, _ => throw new InvalidOperationException("Expected submit success"));
+
+      public async Task<SharedProblemDetails> SubmitProblemAsync(PrincipalId principal, IReadOnlyList<Guid> attachmentIds) =>
+        (await SubmitAs(principal).Handle(Command(attachmentIds), CancellationToken.None))
+          .Match(_ => throw new InvalidOperationException("Expected submit problem"), problem => problem);
+
+      public async Task<GetFeedback.Response> GetAsync(PrincipalId principal, Guid feedbackItemId) =>
+        (await GetAs(principal).Handle(new GetFeedback.Query { FeedbackItemId = feedbackItemId }, CancellationToken.None))
+          .Match(ok => ok, _ => throw new InvalidOperationException("Expected get success"));
+
+      private UploadHandler UploadAs(PrincipalId principal) =>
+        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs);
+
+      private DownloadHandler DownloadAs(PrincipalId principal) =>
+        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs, Permissions);
+
+      private RemoveHandler RemoveAs(PrincipalId principal) =>
+        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs);
+
+      private SubmitHandler SubmitAs(PrincipalId principal) =>
+        new(
+          new StubCurrentPrincipalAccessor(principal),
+          Feedback,
+          new NoEmail(),
+          new NoMail(),
+          new NoBaseUrl(),
+          NullLogger<SubmitHandler>.Instance,
+          Attachments);
+
+      private GetHandler GetAs(PrincipalId principal) =>
+        new(new StubCurrentPrincipalAccessor(principal), Feedback, Attachments);
+
+      private static SubmitFeedback.Command Command(IReadOnlyList<Guid> attachmentIds) => new()
+      {
+        Kind = ContractKind.Complaint,
+        Title = "With files",
+        Body = "Details",
+        AttachmentIds = attachmentIds.ToList(),
+      };
+    }
+
+    private sealed class SizedStream : Stream
+    {
+      private long Remaining;
+
+      public SizedStream(long length) => Remaining = length;
+
+      public override bool CanRead => true;
+      public override bool CanSeek => false;
+      public override bool CanWrite => false;
+      public override long Length => throw new NotSupportedException();
+      public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+      public override void Flush() { }
+      public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+      public override void SetLength(long value) => throw new NotSupportedException();
+      public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+      public override int Read(byte[] buffer, int offset, int count)
+      {
+        if (Remaining == 0)
+        {
+          return 0;
+        }
+
+        int take = (int)Math.Min(count, Remaining);
+        Remaining -= take;
+        return take;
+      }
+    }
+
+    private sealed class GrantingPermissionEvaluator : IPermissionEvaluator
+    {
+      private readonly HashSet<(Guid Principal, string Scheme, string Permission)> Grants = [];
+
+      public void Grant(PrincipalId principal, string scheme, string permission) =>
+        Grants.Add((principal.Value, scheme, permission));
+
+      public Task<bool> HasPermissionAsync(
+        PrincipalId principalId,
+        string? authenticationScheme,
+        string permissionId,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(
+          authenticationScheme is not null
+          && Grants.Contains((principalId.Value, authenticationScheme, permissionId)));
+
+      public Task<IReadOnlyList<string>> GetPermissionsAsync(
+        PrincipalId principalId,
+        string? authenticationScheme,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<string>>([]);
+    }
+
+    private sealed class StubCurrentPrincipalAccessor : ICurrentPrincipalAccessor
+    {
+      private readonly PrincipalId PrincipalId;
+
+      public StubCurrentPrincipalAccessor(PrincipalId principalId) => PrincipalId = principalId;
+
+      public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<PrincipalId?>(PrincipalId);
+    }
+
+    private sealed class NoEmail : IProfileEmailLookup
+    {
+      public Task<string?> FindEmailAsync(Guid principalId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<string?>(null);
+    }
+
+    private sealed class NoMail : IEmailSender
+    {
+      public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
+    }
+
+    private sealed class NoBaseUrl : IAppBaseUrlAccessor
+    {
+      public Uri? GetBaseUrl() => null;
+    }
+  }
+}

@@ -52,22 +52,49 @@ choose deliberately and document the decisions.
 
 ## Checklist
 
-- [ ] Decide and document the real attachment store (Blob vs R2) and limits (max size, allowed types)
-- [ ] Storage interface + real + in-memory implementations + module registration
-- [ ] Attachment record/entity configuration + EF migration
-- [ ] Upload endpoint (stream, limits, feedback permission, mock response factory)
-- [ ] Download endpoint (owner-or-admin check, safe headers)
-- [ ] File picker + attached-files list with remove, under Details
-- [ ] JS paste hook on Details using the same upload path (thumbnail/link in text if feasible)
-- [ ] FeedbackItemPage shows attachments
-- [ ] Unit tests: limits and permissions
-- [ ] Playwright WASM tests: paste and upload
+- [x] Decide and document the real attachment store (Blob vs R2) and limits (max size, allowed types)
+- [x] Storage interface + real + in-memory implementations + module registration
+- [x] Attachment record/entity configuration + EF migration
+- [x] Upload endpoint (stream, limits, feedback permission, mock response factory)
+- [x] Download endpoint (owner-or-admin check, safe headers)
+- [x] File picker + attached-files list with remove, under Details
+- [x] JS paste hook on Details using the same upload path (thumbnail/link in text if feasible)
+- [x] FeedbackItemPage shows attachments
+- [x] Unit tests: limits and permissions
+- [x] Playwright WASM tests: paste and upload
 - [ ] Full ganda walk (implement, review, audit, done-move, PR); CI green
 - [ ] PR includes browser screenshots of paste, upload, and the item page showing attachments
+
+## Results
+
+Azure Blob Storage is the real byte store. An empty `FeedbackAttachments:ConnectionString` keeps the in-memory blob store, so tests and an unconfigured host do not need Azurite. Rows live on `feedback.feedback_attachments` (migration `20261010075816_AddFeedbackAttachments`). Upload is a raw body with `X-File-Name`. Download is owner-or-admin after the item is filed, and uploader-only while it is still a draft. The Details field has a file picker and a paste hook; both call the same upload. The item page lists the stored files. Decisions and limits are in `documentation/developer/guides/feedback-attachments.md`.
+
+This host is TWE-001, so the Playwright browser run was not started. The test project builds. CI writes `feedback-upload.png`, `feedback-paste.png`, and `feedback-item.png` beside this task when that test runs.
+
+### How to validate
+
+**Smoke:**
+
+```powershell
+cd tests/container-apps/web/web-jaribu-tests; dotnet test -- --filter-class Features.Feedback
+cd ../web-infrastructure-tests; dotnet test -- --filter-class Feedback_Model_Mapping_
+dotnet test -- --filter-class Feedback_Postgres_Persistence_
+cd ../../../foundation/foundation-contracts-tests; dotnet test -- --filter-class HttpApiService_GetResponse
+cd ../../container-apps/web/web-spa-playwright-tests; dotnet test
+```
+
+**Expect:**
+
+- `Features.Feedback`: 25 passed. That covers size and type limits, owner download, admin denied before link and allowed after, another principal's pending id rejected, and the existing filing cases.
+- `Feedback_Model_Mapping_`: 3 passed. The attachment table is nullable on the item id, Version is not a concurrency token, and the item foreign key cascades.
+- `Feedback_Postgres_Persistence_`: 1 passed. `MigrateAsync` applies `AddFeedbackAttachments` on Testcontainers Postgres and the feedback item round-trips.
+- `HttpApiService_GetResponse`: 14 passed. The file upload test posts the raw bytes as `text/plain` with no charset and `X-File-Name: my%20notes.txt`.
+- Playwright `dotnet test` is for a CI runner, not TWE-001. It fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
 
 ## Session
 
 - Created: 2344160 (2026-10-10, filed from Steven's voice call)
+- 2026-10-10 implementer (ganda task work): attachments end to end; web-server and web-spa build clean; gates in Results; `ganda repo audit` 31 passed. Playwright was not executed on TWE-001.
 
 ## Notes
 

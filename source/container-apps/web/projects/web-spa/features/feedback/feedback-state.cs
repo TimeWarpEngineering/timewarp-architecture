@@ -5,7 +5,8 @@
 #region Design
 // LastReceipt is the proof a submit landed (id and permalink). List refreshes do not clear it.
 // EmailCopyAvailable comes from ListMyFeedback so the form does not read ProfileState.
-// Initialize clears every field so sign-out cannot leave another principal's filings on screen.
+// DraftAttachments are uploads that have not been filed yet. Initialize clears every field so
+// sign-out cannot leave another principal's filings or files on screen.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -18,6 +19,10 @@ public sealed partial class FeedbackState : State<FeedbackState>
   public bool EmailCopyAvailable { get; private set; }
   public GetFeedback.Response? Current { get; private set; }
   public string? LoadError { get; private set; }
+  public IReadOnlyList<DraftAttachment> DraftAttachments { get; private set; } = [];
+
+  /// <summary>One uploaded file that has not been filed yet.</summary>
+  public sealed record DraftAttachment(Guid AttachmentId, string FileName, string ContentType);
 
   public override void Initialize()
   {
@@ -26,5 +31,6 @@ public sealed partial class FeedbackState : State<FeedbackState>
     EmailCopyAvailable = false;
     Current = null;
     LoadError = null;
+    DraftAttachments = [];
   }
 }
