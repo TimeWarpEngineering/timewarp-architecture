@@ -706,6 +706,25 @@ public partial class CatalogAgent_Should
     parsedDictionary.RootElement.GetProperty("path").GetString().ShouldBe("/Feedback");
   }
 
+  public static async Task Route_Follows_The_Observed_Manager_And_Keeps_The_Path_For_A_Stuck_One()
+  {
+    TestNavigationManager shell = new();
+    TestNavigationManager stuck = new();
+    PageAgentRoute route = new();
+    route.PathOr(shell).ShouldBe("/");
+
+    shell.NavigateTo("/Feedback");
+    route.Observe(shell, jsRuntime: null);
+    route.PathOr(shell).ShouldBe("/Feedback");
+    route.PathOr(stuck).ShouldBe("/Feedback");
+
+    // No observer runs on a focused-page hop. The observed manager's live path still wins.
+    shell.NavigateTo("/Settings");
+    route.PathOr(shell).ShouldBe("/Settings");
+    route.PathOr(stuck).ShouldBe("/Settings");
+    await Task.CompletedTask;
+  }
+
   public static async Task Page_Context_On_Feedback_Uses_The_Ask_Scope_Not_A_Stuck_Manager()
   {
     const string secretBody = "secret body that must not reach the model";

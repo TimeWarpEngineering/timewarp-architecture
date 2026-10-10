@@ -94,6 +94,7 @@ must keep working.
 
 - Created: 70603 (2026-10-10)
 - Implementer: grok session 01a12619-5367-7331-b76e-16240b28b34b (2026-10-10)
+- Review oracle: Claude Code (claude-opus-5-5), effort 3, general reviewer (2026-10-10)
 
 ## Notes
 
@@ -144,7 +145,17 @@ Show the tool name in the collapsed "See reasoning" block. Pretty-print JSON arg
 
 - `./bin/dev build`: succeeded, 0 Warning(s), 0 Error(s), 00:00:05.12.
 - `./bin/dev test`: `Tests completed successfully!`, exit 0. Previously red projects in that run: `aspire-tests` 38 passed, `web-spa-integration-tests` 183 passed, `web-spa-playwright-tests` 6 passed. Every other project in the same run passed with 0 failures.
+- After the review fixes: `./bin/dev build` 0 Warning(s), 0 Error(s). `web-spa-integration-tests` 184 passed, 0 failed. `web-spa-playwright-tests` 6 passed, 0 failed.
 - `ganda repo audit`: Repository passes, exit 0, 1 advisory (non-blocking) warning. `memsearch-scaffold` reports `git config core.hooksPath=.githooks`. That hook path was already set and was not changed.
+
+### Review
+
+- Rounds: 2. Effort 3, roster `general`.
+- Final counts: bug 0, suggestion 2 fixed, nit 0. Open 0, wontfix 0.
+- Disposition: `clean`.
+- M1 (suggestion, fixed): an observed `PageAgentRoute` always beat the live `NavigationManager`, so it could go stale after a focused-page hop or on InteractiveServer. That weakened the WebMCP dispatcher's re-selection. `PathOr` now re-reads `timeWarpPagePath` when `Observe` found it. It returns the live path when the caller holds the observed manager and keeps the stored path only for a different (stuck) manager. `Current` delegates to `PathOr`. Test: `Route_Follows_The_Observed_Manager_And_Keeps_The_Path_For_A_Stuck_One` in `catalog-agent-tests.cs`.
+- M2 (suggestion, fixed): `timeWarpPagePath` returned the absolute `location.pathname`. It now removes the `document.baseURI` path, so it matches `ToBaseRelativePath` under a non-root base href.
+- Artifacts: `review/review-framework.md`, `review/round-1/`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
