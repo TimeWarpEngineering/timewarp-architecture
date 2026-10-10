@@ -95,22 +95,70 @@ Use the component's public styling API rather than fighting the host size:
 
 ## Checklist
 
-- [ ] Reproduce in Playwright: record host box vs shadow root box vs Title box on current master
-- [ ] Fix with the component's styling API (block attr / --inline-size / --min-block-size), scoped CSS
-- [ ] Make vertical resize work, or remove it with a recorded reason
-- [ ] Playwright test measures the shadow root/control box vs Title, at default and narrow widths
-- [ ] Show the test fails on the old CSS (numbers in Results)
-- [ ] Replace the string-matching layout test
-- [ ] Screenshot `feedback-details-302.png` in the task folder
-- [ ] Paste/upload on Details still works (295 tests green)
-- [ ] Full build and tests green
+- [x] Reproduce in Playwright: record host box vs shadow root box vs Title box on current master
+- [x] Fix with the component's styling API (block attr / --inline-size / --min-block-size), scoped CSS
+- [x] Make vertical resize work, or remove it with a recorded reason
+- [x] Playwright test measures the shadow root/control box vs Title, at default and narrow widths
+- [x] Show the test fails on the old CSS (numbers in Results)
+- [x] Replace the string-matching layout test
+- [x] Screenshot `feedback-details-302.png` in the task folder
+- [x] Paste/upload on Details still works (295 tests green)
+- [x] Full build and tests green
 
 ## Session
 
 - Created: 218251 (2026-10-11)
+- Implement: 2026-10-11
 
 ## Notes
 
 - Reported by Steven 2026-10-11 ~00:30 BKK with screenshots: Details ~200x100px, Kind/Title full width,
   resize grip visible but not working. Running build InformationalVersion `2.0.0-beta.20+490b95d22`.
 - Related: task 299 (PR #459) made the host full width; task 295 added the paste/upload host `.feedback-details`.
+
+## Results
+
+The visible Details box is the shadow `part="root"`, not the `fluent-textarea` host. On the pre-fix page the host was already the full column (934×144) while the bordered root stayed 288px wide (18rem). Right edges differed by 646px, which is why the #459 host `BoundingBox` check passed.
+
+Vertical resize stays. Dropping `Height="9rem"` and setting `--min-block-size: 9rem` gives the root a definite 9rem block size, so Chromium's grip changes that box. An 80px drag grew the root from 144px to 224px. The `block` attribute plus `--inline-size: 100%` makes the root fill the field. `.feedback-details` is still the paste host.
+
+### Measured boxes
+
+Old CSS (test failed, default 1280). Shouldly right-edge delta 646 against a limit of 4:
+
+`viewport=default-1280 host=934x144 detailsRoot=293..581 288x144 titleRoot=293..1227 934x32 detailsControl=304..570 266x130 titleControl=304..1216 912x30`
+
+After the fix (same test passed). Edges match exactly at both widths. The narrow pass is after the drag, so its height is the grown box:
+
+`viewport=default-1280 host=934x144 detailsRoot=293..1227 934x144 titleRoot=293..1227 934x32 detailsControl=304..1216 912x130 titleControl=304..1216 912x30`
+
+`drag=80 before=144 after=224 grown=80`
+
+`viewport=narrow-600 host=494x224 detailsRoot=53..547 494x224 titleRoot=53..547 494x32 detailsControl=64..536 472x210 titleControl=64..536 472x30`
+
+Screenshot: `feedback-details-302.png` in this folder.
+
+### Tests
+
+- `./bin/dev build`: 0 warnings, 0 errors.
+- `VisibleDetailsBox_Should_MatchTitle_And_Resize` failed on the old markup (numbers above) and passed after the fix.
+- `PasteAndUpload_Should_ShowAttachmentsOnTheItem` passed (shadow-box check included).
+- `Details_Host_Stays_The_Paste_Target` passed. It only checks the paste wrapper (`feedback-details`, `DetailsHost`, no in-file `<style>`).
+- `./bin/dev test`: Playwright 7/7 and the projects that do not need Docker passed in the first run. `api-server-integration-tests`, `aspire-tests`, `web-infrastructure-tests`, and `web-spa-integration-tests` failed in that process with `permission denied` on `/var/run/docker.sock` because the session lacked the `docker` supplementary group. Rerun with `sg docker`: 1, 38, 68, and 184 passed, 0 failed.
+- `ganda repo audit`: 31 passed, 0 failed.
+
+### How to validate
+
+**Smoke**
+
+1. Rebuild and open `/Feedback` signed in, InteractiveWebAssembly.
+2. The Details border lines up with the Title input on the left and the right, and the box is about 9rem tall with a grip at the bottom-right corner.
+3. Drag that grip downward. The bordered box grows with the pointer.
+4. Narrow the window to about 600px. Details still shares Title's left and right edges.
+5. Paste an image into Details and pick a file. Both still show up as attachments.
+
+**Expect**
+
+- The bordered box is the full field width, not an 18rem strip inside a wider host.
+- An 80px downward drag grows the visible root by about 80px (Playwright recorded 144 → 224).
+- Paste and file upload still attach files. The wrapper class `feedback-details` and `@ref="DetailsHost"` are still the paste host.

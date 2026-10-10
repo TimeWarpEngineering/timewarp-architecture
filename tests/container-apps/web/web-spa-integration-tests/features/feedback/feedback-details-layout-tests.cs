@@ -1,13 +1,12 @@
 #region Purpose
-// The feedback Details host stays the paste target and stretches like the Title field.
+// The feedback Details wrapper stays the paste target. Visible layout is proved in Playwright.
 #endregion
 
 #region Design
-// FormField stretches only a direct fluent-* child. Details wraps FluentTextArea so the paste
-// listener has a host, which is why the control used to stay at the component's intrinsic
-// width. FluentTextArea renders fluent-field around fluent-textarea, so the sheet reaches
-// the control as a descendant. A custom element stays at its intrinsic width until it is
-// display:block with width:100%. The Playwright width check is the rendered proof.
+// FormField stretches only a direct fluent-* child, so the paste host has to be a wrapper.
+// This file checks that contract: the wrapper class, the element reference, and no in-file
+// style. It does not grep CSS for width or height. The shadow root's edges, the 9rem start
+// height, and the resize grip are asserted by the Playwright test on the rendered page.
 #endregion
 
 namespace FeedbackDetails_;
@@ -18,27 +17,14 @@ public class FeedbackDetails_Should_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<FeedbackDetails_Should_>();
 
-  public static Task Details_Host_Stretches_And_Stays_The_Paste_Target()
+  public static Task Details_Host_Stays_The_Paste_Target()
   {
     string razor = Read("FeedbackListPage.razor");
-    string css = Read("FeedbackListPage.razor.css");
 
     razor.ShouldContain("class=\"feedback-details\"");
     razor.ShouldContain("@ref=\"DetailsHost\"");
     razor.ShouldContain("data-qa=\"FeedbackBody\"");
-    razor.ShouldContain("Width=\"100%\"");
-    razor.ShouldContain("Height=\"9rem\"");
-    razor.ShouldContain("Resize=\"TextAreaResize.Vertical\"");
     razor.ShouldNotContain("<style");
-
-    css.ShouldContain(".feedback-details");
-    css.ShouldContain("width: 100%");
-    css.ShouldContain("min-height: 9rem");
-    css.ShouldContain("::deep fluent-textarea");
-    css.ShouldContain("::deep fluent-text-area");
-    css.ShouldContain("display: block");
-    css.ShouldNotContain("::deep > fluent-textarea");
-    css.ShouldNotContain("<style");
     return Task.CompletedTask;
   }
 
