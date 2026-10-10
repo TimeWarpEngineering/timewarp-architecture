@@ -93,11 +93,11 @@ dotnet build tests/container-apps/web/web-spa-playwright-tests/web-spa-playwrigh
 
 ### Review disposition
 
-- **Outcome:** clean, after 5 rounds. Each round had one general reviewer (effort 3 by diff size; Claude subagents for rounds 1–3, the review oracle for rounds 4–5). Reviewer session ids are in `review/review-framework.md`.
+- **Outcome:** clean, after 6 rounds. Each round had one general reviewer (effort 3 by diff size; Claude subagents for rounds 1–3, the review oracle for rounds 4–6). Reviewer session ids are in `review/review-framework.md`.
 - **Final counts:**
   - bug: 5 fixed
   - suggestion: 5 fixed
-  - nit: 5 fixed
+  - nit: 6 fixed
   - 0 wontfix, 0 open
 - **Fix commits:**
   - `3d8bdac` (M1–M10): postgres-off template excludes, an ASCII fallback for the Content-Disposition file name, 24-hour expiry of pending uploads, paste re-render, paste sent as a stream with its size checked first, conditional linking with rollback, a reachable 413 response, a startup warning for in-memory blobs, the missing tests, and a non-image mock attachment.
@@ -105,6 +105,7 @@ dotnet build tests/container-apps/web/web-spa-playwright-tests/web-spa-playwrigh
   - M14 was a guide-wording fix made with the disposition.
   - Round 4 reviewed the CI-fix delta (`5052084ad` and the catalog roster): no new findings. `ActionCatalog_Should` 10/10 and the Playwright project build (0 warnings) were re-run by the review oracle.
   - Round 5 reviewed the upload-415 delta (`741a56e20`): M15 (suggestion), the page matched the literal `"Unhandled Error"`; fixed by the review oracle with `HttpApiService.UnhandledErrorTitle`. `dev build` 0/0, `Accepts_` 4/4, `HttpApiService_GetResponse` 14/14 re-run.
+  - Round 6 reviewed the paste-binding delta (`ba72dc876`). It had no code findings. M16 (nit) was an unwrapped guide line, reflowed by the review oracle. The `web-spa` Release build (0 warnings, 0 errors) was re-run.
 - **Gates (re-run by a reviewer):**
   - `dev build`: 0 warnings, 0 errors.
   - Features.Feedback: 37/37.
@@ -113,7 +114,7 @@ dotnet build tests/container-apps/web/web-spa-playwright-tests/web-spa-playwrigh
   - HttpApiService_GetResponse: 14/14.
   - `ganda repo audit`: passes.
 - **Not run:** Playwright, which is forbidden on TWE-001. The browser proof and screenshots are left for CI.
-- **Paths:** `review/review-framework.md`, `review/round-5/merged.md` (last ledger), `review/disposition.md`.
+- **Paths:** `review/review-framework.md`, `review/round-6/merged.md` (last ledger), `review/disposition.md`.
 
 ## Session
 
@@ -128,6 +129,7 @@ dotnet build tests/container-apps/web/web-spa-playwright-tests/web-spa-playwrigh
 - 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): round 5 on the upload-415 delta; M15 fixed; disposition clean (5 rounds, 15 fixed).
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-10T10:04:31Z
 - 2026-10-10 implementer (ganda task work, paste binding): the paste module binds `fluent-textarea` and its shadow textarea. web-spa and the Playwright project build with 0 warnings. Browser run left for CI.
+- 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): round 6 on the paste-binding delta. M16 (nit) fixed. Disposition clean (6 rounds, 16 fixed).
 
 ## Notes
 
