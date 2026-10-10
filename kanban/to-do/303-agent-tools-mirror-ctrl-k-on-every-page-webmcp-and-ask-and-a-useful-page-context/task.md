@@ -133,7 +133,7 @@ current page. This replaces task 282's "executable tools are page-scoped" rule.
 - [x] Page-bound actions off-page return a navigate offer, never execute; test on `/` with the passkey action (Ask + WebMCP)
 - [x] page_context text description (headings, main content, forms/fields, items/ids, buttons, actions), generic and bounded; test on `/` for "Welcome to TimeWarp.Architecture", "Built with", "Signed in"
 - [x] Optional screenshot supplement designed (opt-in) or noted as follow-up
-- [x] Playwright check if practical (WebMCP tool list on `/`, or Ask navigates from `/`)
+- [x] Playwright check if practical (WebMCP tool list on `/`, or Ask navigates from `/`) — judged not practical here: the app must not run on TWE-001. A live-browser check is a follow-up (see Notes)
 - [x] PR body lists the tool names an agent sees on `/` and sample `page_context` for `/` and `/Feedback`
 
 ## Notes
@@ -161,10 +161,16 @@ current page. This replaces task 282's "executable tools are page-scoped" rule.
   page_context text-description steering; resumed with `ganda task work 303 --yes`. Second log:
   `~/logs/task-work-timewarp-architecture-303-20261011-012004.log`.
 
+- 2026-10-11, review follow-ups (review/round-1/merged.md):
+  - M3: the TypeScript page walk (`page-surface.ts`) has no DOM test. A live-browser check is still owed: `page_context` on `/` lists the home headings, and on `/Feedback` lists the feedback page's own text after the filings load.
+  - M5: Ask lives inside the per-page `TimeWarpPage`. Calling `navigate` (or a handler that navigates, such as ListMyFeedback) disposes the panel. The page change completes, but the in-flight turn (the prompt, the tool call and its result) is not saved to AskConversationThreads, because a turn is saved only after streaming finishes. Fixing this means hoisting the Ask panel out of `TimeWarpPage`; that is a separate task.
+  - M12, for Steven: Ctrl-K runs `Feedback.ListMyFeedback` from any page (its handler navigates to `/Feedback`). For the agent it is page-bound (it is in the `/Feedback` scope of `PageAgentScope`), so off `/Feedback` it returns a navigate offer. This follows the steering literally. Say so if it should run globally.
+
 ## Session
 
 - Created: 238403 (2026-10-11 ICT)
 - Implementer: Grok session 01a1270b-965f-72c1-82af-38059a2653c8 (2026-10-11)
+- Review oracle: Claude Code (ganda task work, 2026-10-11), effort 3, roster general. Round 1 and round 2 general reviewers ran as subagents.
 
 ## Results
 
@@ -180,7 +186,7 @@ Ctrl-K is unchanged. `CommandPaletteRoster` and `command-palette-tests.cs` were 
 - Page-bound means the action is named by `PageAgentScope`. Off that page, invoke returns `{"executed":false,"navigateTo":"...","message":"..."}` and does not execute. On the page, existing edit-mode approval applies. Actions in no page scope stay executable everywhere.
 - A pending WebMCP approval is cancelled on navigation only when the tool is page-bound (`PageChangedError`). A tool that is not page-bound keeps waiting.
 - Page title and purpose come from `[Page(Description = ...)]`, emitted as `PageRegistryEntry.Description`. Every Navigable page has a non-empty description; `PageRegistry_.All_Should_` guards that.
-- Body text is one walk of `.twe-page__body` (`page-surface.ts`). Caps: summary 2,000 characters, 40 headings, 30 buttons, 10 forms, 20 fields, 40 items, 500 elements, document 12,000 characters. `screenshot` is reserved as JSON null. Pixel capture is child 303-001 (from task 297), not this task.
+- Body text is one walk of `.twe-page__body` (`page-surface.ts`). The stored copy is keyed by the route it was read on and is merged only on that route. WebMCP and Ask's `page_context` walk the page again when called. Caps: summary 2,000 characters, 40 headings of 200, 30 buttons of 120, 10 forms (20 fields of 80), 40 items, 500 elements, document 12,000 characters. Over the cap, surface text is dropped whole so the JSON stays valid. Ask's copy is built under 6,000. `screenshot` is reserved as JSON null. Pixel capture is child 303-001 (from task 297), not this task.
 
 ### What a fully permitted member sees on `/`
 
@@ -194,16 +200,16 @@ Ask offers the same four names, including `page_context`. Human-only palette com
 {"path":"/","title":"Home","purpose":"Public welcome page for TimeWarp.Architecture, with a sign-in entry.","headings":["Welcome to TimeWarp.Architecture","Built with","Signed in"],"summary":"Welcome to TimeWarp.Architecture. Built with. Signed in.","forms":[],"buttons":[],"items":[],"tools":["navigate","page_context"],"screenshot":null}
 ```
 
-`page_context` for `/Feedback` from the same call (the remembered home surface is still in the store, so headings are the home headings; feedback facts are the page's own):
+`page_context` for `/Feedback` from the same test. The stored summary was read on `/`, so it is not merged on `/Feedback`. Live callers walk the page when the tool is called, so a browser fills the feedback page's own headings. The feedback facts are the page's own:
 
 ```json
-{"path":"/Feedback","title":"Feedback","purpose":"File feedback and review the filings you submitted.","headings":["Welcome to TimeWarp.Architecture","Built with","Signed in"],"summary":"Welcome to TimeWarp.Architecture. Built with. Signed in.","forms":[],"buttons":[],"items":[],"tools":["navigate","Feedback.SubmitFeedback","Feedback.ListMyFeedback","Feedback.OpenFeedback","page_context"],"screenshot":null,"page":"Feedback","filingsLoaded":false,"filingCount":0,"filings":[],"emailCopyAvailable":false,"draftAttachmentCount":0}
+{"path":"/Feedback","title":"Feedback","purpose":"File feedback and review the filings you submitted.","headings":[],"summary":"","forms":[],"buttons":[],"items":[],"tools":["navigate","Feedback.SubmitFeedback","Feedback.ListMyFeedback","Feedback.OpenFeedback","page_context"],"screenshot":null,"page":"Feedback","filingsLoaded":false,"filingCount":0,"filings":[],"emailCopyAvailable":false,"draftAttachmentCount":0}
 ```
 
 ### Tests
 
-- `PageSourceGenerator_Tests`: 28 passed.
-- `CatalogAgent_Should`: 38 passed (Aspire). Includes WebMCP on `/`, permission-gated navigate refusal, Add passkey offer on `/` for Ask and WebMCP, approval on `/Settings`, and the page_context headings.
+- `PageSourceGenerator_Tests`: 29 passed (includes Description escaping).
+- `CatalogAgent_Should`: 40 passed (Aspire). Includes the literal WebMCP list on `/`, the live page walk via the dispatcher, the document cap, anonymous `/Counter`, permission-gated navigate refusal, Add passkey offer on `/` for Ask and WebMCP, approval on `/Settings`, and the page_context headings.
 - `CommandPalette_Should_`: 35 passed. Palette tests were not edited.
 - `ActionCatalog_Should`: 10 passed. `Credentials.AddPasskey` is `Both`.
 - `PageRegistry_.All_Should_`: 4 passed. Every navigable entry has a description.
@@ -226,12 +232,28 @@ Run the integration project from its directory so the project-local `global.json
 
 **Expect:**
 
-- Generator tests: 28 passed. Registry entries carry a `Description` argument.
-- `CatalogAgent_Should`: 38 passed. Console contains `WEBMCP-PROOF path=/ tools=Credentials.AddPasskey,Feedback.ListMyFeedback,navigate,page_context` and `PAGE-CONTEXT /` JSON whose `title` is `Home`, whose `purpose` is the home `[Page]` description, and which contains `Welcome to TimeWarp.Architecture`, `Built with`, and `Signed in`. `screenshot` is null.
+- Generator tests: 29 passed. Registry entries carry a `Description` argument.
+- `CatalogAgent_Should`: 40 passed. Console contains `WEBMCP-PROOF path=/ tools=Credentials.AddPasskey,Feedback.ListMyFeedback,navigate,page_context` and `PAGE-CONTEXT /` JSON whose `title` is `Home`, whose `purpose` is the home `[Page]` description, and which contains `Welcome to TimeWarp.Architecture`, `Built with`, and `Signed in`. `screenshot` is null.
 - `CommandPalette_Should_`: 35 passed, with no diff in `command-palette-tests.cs`.
 - `ActionCatalog_Should`: 10 passed.
 - `PageRegistry_.All_Should_`: 4 passed, and every navigable `Description` is non-empty.
 - A member with only Profile read and Settings read has no Add passkey tool, and `navigate` to `/Admin/Roles` returns `{"navigated":false,"error":"That page is not available."}`.
 - Invoking `Credentials.AddPasskey` on `/` returns `executed: false`, `navigateTo: "/Settings"`, and the message `Add passkey is on Settings; I can take you to the Settings page.`
+
+- Whole `web-spa-integration-tests` project after review fixes: 190 passed, 0 failed (run under `sg docker`).
+
+### Review
+
+- Body: `tw-implementation-review`, effort 3 (by-diff budget, 2,014 lines), roster `general`. 2 rounds.
+- Round 1: 12 findings (3 bug, 4 suggestion, 5 nit). Fixed in `95f184981`: the page_context text leaked across routes and was never re-walked (M1); the 12,000 cap was not enforced (M2); the anonymous guard on page tools (M4); the literal `/` list (M6); generator escaping (M7); the dead dispatcher branch (M8); Ask's mid-JSON clip (M9); the web-mcp.ts Purpose (M11).
+- Round 2: re-verified M1–M12 and found 1 suggestion (this Results section was stale) and 1 nit (empty-walk wording in two Design regions). Both are fixed in the review-artifacts commit.
+- Final counts: bug 2 fixed / 1 wontfix; suggestion 4 fixed / 1 wontfix; nit 4 fixed / 2 wontfix; 0 open.
+- Disposition: **accepted-exceptions**.
+  - M3: the TypeScript DOM walk has no test host, and Playwright can't run here; the C# capture path is tested.
+  - M5: Ask's in-flight turn is lost when navigate remounts the per-page panel. The fix is to hoist the panel, which is a separate task.
+  - M10: `/Admin/Roles/New` uses its section's purpose by the documented prefix rule.
+  - M12: ListMyFeedback is page-bound per the steering; this is flagged for Steven.
+  - Follow-ups are in Notes.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 **Not in scope:** a live Playwright pass, pixel capture (`screenshot` stays null; child 303-001), and a finished WebAuthn ceremony on the Aspire SPA (no BFF client). Do not run the app on TWE-001.

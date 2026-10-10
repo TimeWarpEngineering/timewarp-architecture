@@ -10,16 +10,16 @@
 // the Feedback title. The open item then replaces purpose with the one-item sentence.
 // Headings, summary, forms, buttons, and items are the bounded text walk PageSurfaceJsModule
 // returns. Live callers (the WebMCP dispatcher and Ask's page_context function) walk the page when
-// the tool is called and pass that JSON in. Otherwise, or when that walk returns nothing, the copy
-// SyncWebMcp stored on AgentSurfaceState is used only when its PageSurfacePath is this path, so
-// one page's text never appears on another. Caps, applied again here: 40 headings of 200
-// characters, 2,000 summary characters, 30 buttons of 120, 10 forms (name 120, 20 fields of 80),
-// 40 items (id 80, text 200), and 500 elements in the walk. The document cap is 12,000 characters
-// by default; Ask passes a smaller one for its instructions. Over the cap, surface text is dropped
-// whole, in order summary, items, forms, buttons, headings, so the JSON stays valid. Page facts are
-// bounded by their own caps and are not dropped. Text is always present; an empty walk yields
-// empty arrays and an empty summary. screenshot is null: pixel capture is a later opt-in, not this
-// document.
+// the tool is called and pass that JSON in. When there is no live walk (TrySummarizeAsync
+// returned null), the copy SyncWebMcp stored on AgentSurfaceState is used only when its
+// PageSurfacePath is this path, so one page's text never appears on another. Caps, applied
+// again here: 40 headings of 200 characters, 2,000 summary characters, 30 buttons of 120, 10
+// forms (name 120, 20 fields of 80), 40 items (id 80, text 200), and 500 elements in the walk.
+// The document cap is 12,000 characters by default; Ask passes a smaller one for its
+// instructions. Over the cap, surface text is dropped whole, in order summary, items, forms,
+// buttons, headings, so the JSON stays valid. Page facts are bounded by their own caps and are
+// not dropped. Text is always present; an empty walk yields empty arrays and an empty summary.
+// screenshot is null: pixel capture is a later opt-in, not this document.
 // Settings, Passkeys, Profile, Admin/Authentication, and Feedback keep their fact fields (ids,
 // flags, the records a replace-whole command must echo, filings capped at 20). The draft body is
 // not included. tools is the names the caller is offering, or, when omitted, navigate plus the

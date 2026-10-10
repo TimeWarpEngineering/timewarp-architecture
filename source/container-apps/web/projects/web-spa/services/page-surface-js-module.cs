@@ -6,8 +6,10 @@
 // [SideEffectService]: components do not call this (TWA0026).
 // The selector is PageAgentContext.SurfaceRootSelector, the shell's main column.
 // The SyncWebMcp handler, the WebMCP dispatcher, and Ask's page_context function call this.
-// TrySummarizeAsync returns null for a missing document, a disconnected circuit, a test host's
-// fake runtime, or an empty walk; page_context then still carries title, purpose, and route.
+// TrySummarizeAsync returns null when there is no runtime, the JS call fails (no document, a
+// disconnected circuit), or the call returns an empty string (a test host's fake runtime). A page
+// with no body still returns JSON with empty arrays. With null, page_context still carries title,
+// purpose, and route.
 #endregion
 
 namespace TimeWarp.Architecture.Services;

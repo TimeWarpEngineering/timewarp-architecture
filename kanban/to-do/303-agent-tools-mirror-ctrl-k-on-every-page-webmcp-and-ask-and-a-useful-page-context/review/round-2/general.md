@@ -1,0 +1,35 @@
+# Round 2 — general
+**Date:** 2026-10-11
+**Scope reviewed:** fix delta 95f184981 plus re-verification of round-1 M1–M12
+
+## Summary
+The code fixes in 95f184981 hold. Path keying is consistent: SyncWebMcp stores `PageAgentRoute.PathOr`, RememberPageSurface normalizes, and Describe normalizes and compares OrdinalIgnoreCase. The live walk cannot hang or throw into the dispatcher. Every test host resolves the new `IJSRuntime` constructor parameter. `Bound()`, the sign-in guard, and `FormatLiteral` are correct. The gaps are on the bookkeeping side. The dispositions for M3, M5, and M12 say follow-ups were recorded on task.md, but task.md was not touched in the fix. The M5 rationale overstates what the transcript restores. The task.md Results still show the M1 bug in the `/Feedback` sample that is meant for the PR body.
+
+## Prior findings
+| ID | Round-1 status | Verified? | Note |
+|----|----------------|-----------|------|
+| M1 | fixed | Yes | `PageAgentContext.SurfaceFor` (page-agent-context.cs:208) merges the stored copy only when `PageSurfacePath` equals the normalized path; a live walk wins. All three writers normalize the same way: `PathOr` returns `Normalize`d paths, `RememberPageSurface.Action` normalizes, and `Describe` normalizes. The `/Feedback` test asserts that the home headings are absent. Ask's instructions use the keyed stored copy only (`liveSurfaceJson: null`). |
+| M2 | fixed | Yes | `Texts`/`Forms`/`Items` re-apply count and per-string caps. `Bound` checks the length before each drop and drops summary, items, forms, buttons, and headings whole, so the JSON stays valid. The document can still exceed the cap through page facts. This is documented. |
+| M3 | wontfix | Partly | The dispatcher live walk is tested with `SurfaceJsRuntime` (catalog-agent-tests.cs:691), and Results say Playwright was not run (task.md:211). The disposition also says "a live-browser check as the follow-up recorded on task.md". No such follow-up is in task.md (it is unchanged since e6adf7714). |
+| M5 | wontfix | No (rationale inaccurate) | Navigation does complete, because `AgentNavigate` calls `RouteState.ChangeRoute` inside the call, before the remount. The claim "Only the model's follow-up sentence in that turn is lost" is not accurate. `ask-conversation-thread.cs:6-8` says a turn is written only after streaming finishes and "a turn cut off by close or navigation is not replayed". `AgentAsk.Dispose` → `ReleaseAgent` disposes the conversation, agent, and invoking client. So the restored transcript drops the whole in-flight turn: the person's prompt, the navigate call, and its result. Only earlier committed turns come back. The disposition also says this was recorded on task.md, and it was not. Deferring the fix can still be reasonable, but the follow-up text should describe the real loss. |
+| M6 | fixed | Yes | catalog-agent-tests.cs:304-305 asserts the literal `[Credentials.AddPasskey, Feedback.ListMyFeedback, navigate, page_context]`. The vacuous `ShouldNotContain("navigateTo")` is gone. |
+| M7 | fixed | Yes | `SymbolDisplay.FormatLiteral(value, quote: true)` (page-source-generator.cs:565). The Description is read from `Token.Value`, so it is re-escaped correctly. The new generator test covers a quote, a newline, and a backslash. A non-literal value still emits "", which is documented, and the registry guard catches it. |
+| M8 | fixed | Yes | `OffPageRoute` is set only when `PageAgentScope.PrimaryPage` is non-null, which means page-bound (catalog-agent-tool-set.cs:101-103). The removed branch was unreachable, and the Design text now says so. |
+| M9 | fixed | Yes, with a known residual | AgentAsk passes `AgentAskInstructions.ContextCap` to Describe, and `For` no longer slices the context separately. Residual (documented as the "last guard"): page facts are not dropped. On `/Feedback`, 20 filings with titles up to 200 characters come to about 5,500 characters of JSON before the envelope. Non-ASCII or `<&'+` characters are `\uXXXX`-escaped by the default `ToJsonString` encoder. Together these can push Describe past 7,000 − 607 (preface) and make `For` clip mid-JSON. This is rare data, so no new issue is filed. |
+| M10 | wontfix | Yes | `RolePage` is `[Page("/Admin/Roles/New", Policy = ...)]` with no `Navigable = true` (RolePage.razor.cs:12). `PageRegistry.All` emits only navigable pages (page-source-generator.cs:524), so `Identity` takes the `/Admin/Roles` prefix. The rationale is factually true. |
+| M11 | fixed | Yes | The web-mcp.ts Purpose names palette actions, navigate, page tools, and page_context. |
+| M12 | wontfix | Partly | It is factually true that `Feedback.ListMyFeedback` is in the `/Feedback` scope (page-agent-scope.cs:44-49), and its handler navigates to `/Feedback` (feedback-state.list-my-feedback.cs:63-66). The disposition also says "Flagged on task.md for Steven", and no such note exists in task.md. |
+
+## Issues
+
+### N1 — Severity: suggestion
+- File: kanban/to-do/303-agent-tools-mirror-ctrl-k-on-every-page-webmcp-and-ask-and-a-useful-page-context/task.md:197
+- Description: task.md was not updated by the fix commit. (1) The Results sample for `/Feedback` still shows the M1 bug: home headings and summary on `/Feedback`, plus the sentence "the remembered home surface is still in the store, so headings are the home headings". The code now prevents this, and the test asserts the opposite. The checklist says this sample goes into the PR body. (2) The test counts are stale: the generator tests are now 29 methods, not 28, and CatalogAgent gained two tests (`Page_Context_Stays_Valid_Json_Under_Its_Cap`, `WebMcp_Page_Context_Walks_The_Page_When_Called`). (3) The follow-ups the round-1 dispositions say were recorded are missing: the live-browser or Playwright check (M3), moving the Ask panel out of TimeWarpPage (M5), and the ListMyFeedback scope question for Steven (M12).
+- Suggestion: Regenerate the `/Feedback` sample from the fixed code. It should have empty headings and summary unless that page's surface was remembered. Update the counts, and add the three follow-up notes. The M5 note should state that the whole in-flight turn is lost.
+- Status: open
+
+### N2 — Severity: nit
+- File: source/container-apps/web/projects/web-spa/services/page-surface-js-module.cs:9
+- Description: The Design region says `TrySummarizeAsync` returns null for "an empty walk". `summarizeJson` always returns `JSON.stringify(summarize(root))` (page-surface.ts:39-41), so a missing root or an empty body yields a non-empty JSON object with empty arrays, not null. Null comes only from a missing runtime, a JS failure, or a whitespace or empty string (for example a test fake). As a result the stored copy is not used as a fallback on a page without `.twe-page__body`. That behavior is correct, because the stored copy would belong to another page, but the text misdescribes it. The page-agent-context.cs Design phrase "when that walk returns nothing" (line 13) has the same ambiguity.
+- Suggestion: Say "returns null when the runtime is missing, the interop call fails, or it returns an empty string; an empty page yields empty arrays".
+- Status: open
