@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3615
+- Lines changed: 5282
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -11,12 +11,12 @@
 # Review framework — task 295
 
 **Date:** 2026-10-10
-**Host task:** kanban/to-do/295-feedback-image-paste-and-file-upload-on-details-field/
-**Diff scope:** branch task/295-feedback-image-paste-and-file-upload-on-details-fi vs master (866d6e724)
-**Plan / brief:** task.md Requirements; documentation/developer/guides/feedback-attachments.md
+**Host task:** kanban/done/295-feedback-image-paste-and-file-upload-on-details-field/
+**Diff scope:** rounds 1–3: branch task/295-feedback-image-paste-and-file-upload-on-details-fi vs master (866d6e724). Round 4: CI-fix delta 5a37e7725..35b95c73b (action-catalog test, feedback attachment Playwright test).
+**Plan / brief:** task.md Requirements; documentation/developer/guides/feedback-attachments.md; task Notes (CI failures on PR #458)
 **Effort:** 3 (by-diff), roster axes: general
-**Reviewer roster:** general (Claude subagent, thorough pass)
-**Session IDs:** review oracle (Claude Opus 5.5, ganda task work); general reviewer subagent a183e4d2cd8444693
+**Reviewer roster:** general (rounds 1–3: Claude subagent; round 4: review oracle direct pass)
+**Session IDs:** review oracle (Claude Opus 5.5, ganda task work); round 1–3 general reviewer subagent a183e4d2cd8444693; round 4 review oracle (Claude Opus 5.5, ganda task work, session not reported)
 
 ## Ground rules
 
