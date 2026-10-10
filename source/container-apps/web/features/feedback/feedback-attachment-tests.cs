@@ -10,8 +10,9 @@
 // Run standalone:  dotnet run source/container-apps/web/features/feedback/feedback-attachment-tests.cs
 
 #region Purpose
-// Jaribu runfile for attachment size and type limits, the owner-or-admin download rule,
-// safe download headers, and filing that links only the caller's pending uploads.
+// Jaribu runfile for attachment size and type limits, the pending cap and its expiry, the
+// owner-or-admin download rule, safe download headers and X-File-Name decoding, and filing
+// that links only the caller's pending uploads and rolls back when a link loses a race.
 #endregion
 
 //-:cnd:noEmit
@@ -115,7 +116,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
       (await world.DownloadProblemAsync(admin, attachmentId)).Status.ShouldBe(404);
 
-      await world.Attachments.LinkAsync(FeedbackAttachmentId.From(attachmentId), FeedbackItemId.New());
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, FeedbackItemId.New()))
+        .ShouldBeTrue();
 
       (await world.DownloadAsync(world.Owner, attachmentId)).FileName.ShouldBe("shot.png");
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
@@ -138,11 +140,139 @@ namespace TimeWarp.Architecture.Features.Feedback
       return Task.CompletedTask;
     }
 
+    public static Task Disposition_Should_UseAnAsciiFallbackForANonAsciiName()
+    {
+      string resume = FeedbackAttachmentHttp.ContentDisposition("résumé.pdf", FeedbackAttachmentRules.Pdf);
+      resume.ShouldBe("attachment; filename=\"r_sum_.pdf\"; filename*=UTF-8''r%C3%A9sum%C3%A9.pdf");
+
+      string screenshot = FeedbackAttachmentHttp.ContentDisposition(
+        "Screenshot 2026-10-10 at 3.04.58\u202FPM.png",
+        FeedbackAttachmentRules.Png);
+      screenshot.ShouldStartWith("inline; filename=\"Screenshot 2026-10-10 at 3.04.58_PM.png\"; ");
+      screenshot.ShouldContain("filename*=UTF-8''Screenshot%202026-10-10%20at%203.04.58%E2%80%AFPM.png");
+      screenshot.All(character => character is >= ' ' and <= '~').ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static async Task HeaderName_Should_DecodeThenStoreOnlyTheLastSegment()
+    {
+      string traversal = FeedbackAttachmentHttp.DecodeFileNameHeader("..%2F..%2Fetc%2Fpasswd.txt");
+      traversal.ShouldBe("../../etc/passwd.txt");
+      FeedbackAttachmentHttp.DecodeFileNameHeader("").ShouldBe("");
+
+      World world = new();
+      Guid attachmentId = await world.UploadAsync(world.Owner, traversal, FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      FeedbackAttachment stored = (await world.Attachments.FindAsync(FeedbackAttachmentId.From(attachmentId)))!;
+      stored.FileName.ShouldBe("passwd.txt");
+      stored.StorageKey.ShouldNotContain("..");
+    }
+
+    public static async Task HeaderName_Should_RejectADecodedLineBreak()
+    {
+      string injected = FeedbackAttachmentHttp.DecodeFileNameHeader("a%0d%0aSet-Cookie%3A%20x.png");
+      injected.ShouldBe("a\r\nSet-Cookie: x.png");
+
+      World world = new();
+      SharedProblemDetails problem = await world.UploadProblemAsync(world.Owner, injected, FeedbackAttachmentRules.Png, Png);
+      problem.Status.ShouldBe(400);
+    }
+
+    public static async Task Upload_Should_RefuseMoreThanThePendingCap()
+    {
+      World world = new();
+      for (int index = 0; index < FeedbackAttachmentRules.MaxPerItem; index++)
+      {
+        await world.UploadAsync(world.Owner, $"notes-{index}.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      }
+
+      SharedProblemDetails problem = await world.UploadProblemAsync(
+        world.Owner,
+        "one-more.txt",
+        FeedbackAttachmentRules.Text,
+        "hello"u8.ToArray());
+      problem.Status.ShouldBe(409);
+      (await world.Attachments.CountUnlinkedByOwnerAsync(world.Owner.Value)).ShouldBe(FeedbackAttachmentRules.MaxPerItem);
+
+      PrincipalId other = PrincipalId.New();
+      await world.UploadAsync(other, "theirs.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+    }
+
+    public static async Task Upload_Should_DeleteExpiredPendingFilesBeforeCountingTheCap()
+    {
+      World world = new();
+      DateTimeOffset expiredAt = DateTimeOffset.UtcNow - FeedbackAttachmentRules.PendingLifetime - TimeSpan.FromMinutes(1);
+      List<FeedbackAttachment> stale = [];
+      for (int index = 0; index < FeedbackAttachmentRules.MaxPerItem; index++)
+      {
+        var attachment = FeedbackAttachment.Create(
+          world.Owner.Value,
+          $"lost-{index}.txt",
+          FeedbackAttachmentRules.Text,
+          5,
+          expiredAt);
+        await world.Attachments.AddAsync(attachment);
+        await world.Blobs.PutAsync(attachment.StorageKey, "hello"u8.ToArray(), FeedbackAttachmentRules.Text);
+        stale.Add(attachment);
+      }
+
+      Guid filedId = await world.UploadAsync(world.Owner, "kept.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(filedId), world.Owner.Value, FeedbackItemId.New()))
+        .ShouldBeTrue();
+
+      Guid freshId = await world.UploadAsync(world.Owner, "fresh.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+
+      foreach (FeedbackAttachment attachment in stale)
+      {
+        (await world.Attachments.FindAsync(attachment.Id)).ShouldBeNull();
+        (await world.Blobs.OpenReadAsync(attachment.StorageKey)).ShouldBeNull();
+      }
+
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(filedId))).ShouldNotBeNull();
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(freshId))).ShouldNotBeNull();
+      (await world.Attachments.CountUnlinkedByOwnerAsync(world.Owner.Value)).ShouldBe(1);
+    }
+
+    public static async Task Remove_Should_Return404ForAnotherPrincipalsPendingAttachment()
+    {
+      World world = new();
+      PrincipalId other = PrincipalId.New();
+      Guid foreign = await world.UploadAsync(other, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      SharedProblemDetails problem = await world.RemoveProblemAsync(world.Owner, foreign);
+      problem.Status.ShouldBe(404);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(foreign))).ShouldNotBeNull();
+    }
+
+    public static async Task Link_Should_SucceedOnceAndOnlyForTheOwner()
+    {
+      World world = new();
+      Guid attachmentId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      FeedbackAttachmentId id = FeedbackAttachmentId.From(attachmentId);
+      (await world.Attachments.TryLinkAsync(id, Guid.NewGuid(), FeedbackItemId.New())).ShouldBeFalse();
+      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, FeedbackItemId.New())).ShouldBeTrue();
+      (await world.Attachments.TryLinkAsync(id, world.Owner.Value, FeedbackItemId.New())).ShouldBeFalse();
+    }
+
+    public static async Task Submit_Should_RollBackWhenALinkLosesARace()
+    {
+      World world = new();
+      Guid first = await world.UploadAsync(world.Owner, "first.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      Guid second = await world.UploadAsync(world.Owner, "second.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      FeedbackItemId elsewhere = FeedbackItemId.New();
+      RacingAttachmentStore racing = new(world.Attachments, FeedbackAttachmentId.From(second), world.Owner.Value, elsewhere);
+
+      SharedProblemDetails problem = await world.SubmitProblemAsync(world.Owner, [first, second], racing);
+      problem.Status.ShouldBe(400);
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(first)))!.FeedbackItemId.ShouldBeNull();
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(second)))!.FeedbackItemId.ShouldBe(elsewhere);
+    }
+
     public static async Task Remove_Should_RejectALinkedAttachment()
     {
       World world = new();
       Guid attachmentId = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
-      await world.Attachments.LinkAsync(FeedbackAttachmentId.From(attachmentId), FeedbackItemId.New());
+      (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, FeedbackItemId.New()))
+        .ShouldBeTrue();
       SharedProblemDetails problem = await world.RemoveProblemAsync(world.Owner, attachmentId);
       problem.Status.ShouldBe(409);
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(attachmentId))).ShouldNotBeNull();
@@ -238,8 +368,11 @@ namespace TimeWarp.Architecture.Features.Feedback
         (await SubmitAs(principal).Handle(Command(attachmentIds), CancellationToken.None))
           .Match(ok => ok, _ => throw new InvalidOperationException("Expected submit success"));
 
-      public async Task<SharedProblemDetails> SubmitProblemAsync(PrincipalId principal, IReadOnlyList<Guid> attachmentIds) =>
-        (await SubmitAs(principal).Handle(Command(attachmentIds), CancellationToken.None))
+      public async Task<SharedProblemDetails> SubmitProblemAsync(
+        PrincipalId principal,
+        IReadOnlyList<Guid> attachmentIds,
+        IFeedbackAttachmentStore? attachmentStore = null) =>
+        (await SubmitAs(principal, attachmentStore).Handle(Command(attachmentIds), CancellationToken.None))
           .Match(_ => throw new InvalidOperationException("Expected submit problem"), problem => problem);
 
       public async Task<GetFeedback.Response> GetAsync(PrincipalId principal, Guid feedbackItemId) =>
@@ -255,7 +388,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       private RemoveHandler RemoveAs(PrincipalId principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs);
 
-      private SubmitHandler SubmitAs(PrincipalId principal) =>
+      private SubmitHandler SubmitAs(PrincipalId principal, IFeedbackAttachmentStore? attachmentStore = null) =>
         new(
           new StubCurrentPrincipalAccessor(principal),
           Feedback,
@@ -263,7 +396,7 @@ namespace TimeWarp.Architecture.Features.Feedback
           new NoMail(),
           new NoBaseUrl(),
           NullLogger<SubmitHandler>.Instance,
-          Attachments);
+          attachmentStore ?? Attachments);
 
       private GetHandler GetAs(PrincipalId principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Feedback, Attachments);
@@ -275,6 +408,67 @@ namespace TimeWarp.Architecture.Features.Feedback
         Body = "Details",
         AttachmentIds = attachmentIds.ToList(),
       };
+    }
+
+    /// <summary>Links one attachment to another item just before submit tries to link it.</summary>
+    private sealed class RacingAttachmentStore : IFeedbackAttachmentStore
+    {
+      private readonly IFeedbackAttachmentStore Inner;
+      private readonly FeedbackAttachmentId Contested;
+      private readonly Guid Owner;
+      private readonly FeedbackItemId Elsewhere;
+
+      public RacingAttachmentStore(
+        IFeedbackAttachmentStore inner,
+        FeedbackAttachmentId contested,
+        Guid owner,
+        FeedbackItemId elsewhere)
+      {
+        Inner = inner;
+        Contested = contested;
+        Owner = owner;
+        Elsewhere = elsewhere;
+      }
+
+      public Task AddAsync(FeedbackAttachment attachment, CancellationToken cancellationToken = default) =>
+        Inner.AddAsync(attachment, cancellationToken);
+
+      public Task<FeedbackAttachment?> FindAsync(FeedbackAttachmentId id, CancellationToken cancellationToken = default) =>
+        Inner.FindAsync(id, cancellationToken);
+
+      public Task<IReadOnlyList<FeedbackAttachment>> ListByItemAsync(
+        FeedbackItemId itemId,
+        CancellationToken cancellationToken = default) =>
+        Inner.ListByItemAsync(itemId, cancellationToken);
+
+      public Task<int> CountUnlinkedByOwnerAsync(Guid ownerPrincipalId, CancellationToken cancellationToken = default) =>
+        Inner.CountUnlinkedByOwnerAsync(ownerPrincipalId, cancellationToken);
+
+      public async Task<bool> TryLinkAsync(
+        FeedbackAttachmentId id,
+        Guid ownerPrincipalId,
+        FeedbackItemId itemId,
+        CancellationToken cancellationToken = default)
+      {
+        if (id == Contested)
+        {
+          (await Inner.TryLinkAsync(Contested, Owner, Elsewhere, cancellationToken)).ShouldBeTrue();
+        }
+
+        return await Inner.TryLinkAsync(id, ownerPrincipalId, itemId, cancellationToken);
+      }
+
+      public Task UnlinkAsync(FeedbackAttachmentId id, FeedbackItemId itemId, CancellationToken cancellationToken = default) =>
+        Inner.UnlinkAsync(id, itemId, cancellationToken);
+
+      public Task<IReadOnlyList<FeedbackAttachment>> RemoveExpiredUnlinkedAsync(
+        Guid ownerPrincipalId,
+        DateTimeOffset uploadedBefore,
+        CancellationToken cancellationToken = default) =>
+        Inner.RemoveExpiredUnlinkedAsync(ownerPrincipalId, uploadedBefore, cancellationToken);
+
+      public Task RemoveAsync(FeedbackAttachmentId id, CancellationToken cancellationToken = default) =>
+        Inner.RemoveAsync(id, cancellationToken);
     }
 
     private sealed class SizedStream : Stream

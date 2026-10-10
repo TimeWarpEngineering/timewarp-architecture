@@ -45,7 +45,12 @@
   private async Task AttachPasteAsync()
   {
     HostReference ??= DotNetObjectReference.Create(this);
-    PasteHandle = await FeedbackPasteJsModule.RegisterAsync(JsRuntime, HostReference, DetailsHost, CancellationToken.None);
+    PasteHandle = await FeedbackPasteJsModule.RegisterAsync(
+      JsRuntime,
+      HostReference,
+      DetailsHost,
+      FeedbackAttachmentRules.MaxBytes,
+      CancellationToken.None);
   }
 
   [DirectComponentSideEffect("The details box paste listener is presentational JavaScript bound to this component's lifetime. The upload itself is the UploadFeedbackAttachment action.")]
@@ -61,11 +66,42 @@
     HostReference = null;
   }
 
+  // The pasted file arrives as an IJSStreamReference, not a byte[]: on an InteractiveServer
+  // circuit (the first InteractiveAuto visit) a byte[] argument is one SignalR message and a
+  // screenshot exceeds its limit. The stream is read in chunks on both renderers.
   [JSInvokable]
-  public Task ReceivePastedImage(string fileName, string contentType, byte[] content)
+  public async Task ReceivePastedImage(string fileName, string contentType, IJSStreamReference content)
   {
+    ArgumentNullException.ThrowIfNull(content);
+    byte[] bytes;
+    await using (content)
+    {
+      if (content.Length > FeedbackAttachmentRules.MaxBytes)
+      {
+        await NotificationState.AddNotification(MessageBarIntent.Error, "The file is larger than the attachment limit.");
+        return;
+      }
+
+      await using Stream stream = await content.OpenReadStreamAsync(maxAllowedSize: FeedbackAttachmentRules.MaxBytes);
+      using MemoryStream buffer = new();
+      await stream.CopyToAsync(buffer);
+      bytes = buffer.ToArray();
+    }
+
     string name = string.IsNullOrWhiteSpace(fileName) ? "pasted-image.png" : fileName;
-    return UploadOneAsync(name, contentType, content);
+    await UploadOneAsync(name, contentType, bytes);
+    // A JS call is not a Blazor event, so nothing re-renders after the preview and the
+    // markdown link are added. The action's own render ran before those edits.
+    await InvokeAsync(StateHasChanged);
+  }
+
+  [JSInvokable]
+  public Task ReceivePasteRejected(string reason)
+  {
+    string message = reason == "too-large"
+      ? "The file is larger than the attachment limit."
+      : "The pasted image could not be read.";
+    return NotificationState.AddNotification(MessageBarIntent.Error, message);
   }
 
   private async Task OnFilesAsync(InputFileChangeEventArgs change)

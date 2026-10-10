@@ -8,6 +8,9 @@
 // Five mebibytes and eight files per item bound memory on the in-memory blob and on the
 // browser draft. SVG and HTML are refused so a download cannot become active content.
 // The served Content-Type is always one of AllowedContentTypes, never the request header.
+// PendingLifetime bounds an upload that is never filed: the draft list lives only in the
+// browser, so a reload loses it. Upload deletes the caller's own unlinked files older than
+// this before it counts against MaxPerItem, which keeps a person from locking themselves out.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -23,6 +26,9 @@ public static class FeedbackAttachmentRules
 
   /// <summary>Maximum attachments filed on one feedback item.</summary>
   public const int MaxPerItem = 8;
+
+  /// <summary>How long an unlinked upload is kept before the owner's next upload deletes it.</summary>
+  public static readonly TimeSpan PendingLifetime = TimeSpan.FromHours(24);
 
   /// <summary>PNG image.</summary>
   public const string Png = "image/png";

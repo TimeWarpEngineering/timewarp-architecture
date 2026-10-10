@@ -48,4 +48,11 @@ public sealed class InMemoryFeedbackStore : IFeedbackStore
       .ToList();
     return Task.FromResult<IReadOnlyList<FeedbackItem>>(items);
   }
+
+  public Task RemoveAsync(FeedbackItemId id, CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    Items.TryRemove(id, out _);
+    return Task.CompletedTask;
+  }
 }

@@ -10,7 +10,13 @@
 // logged as a warning and reported as EmailCopySent=false. The filer always gets the id and
 // permalink once the row is stored, so a retry never files a duplicate. Attachment ids are
 // checked before File: each must be this principal's unlinked upload, or nothing is filed.
-// EmailCopySent is true only
+// The pre-check gives the common case a clean 400 without writing. The link itself is
+// TryLinkAsync, a conditional write, because a remove or a second submit can run between the
+// check and the link. The item is inserted first (the attachment row has a foreign key to it);
+// if any TryLink fails or a store throws, the links already made are undone and the item is
+// removed, so the caller never gets an item with only some of its files. A full database
+// transaction would need a unit-of-work port spanning both stores; compensation keeps the
+// store ports independent. EmailCopySent is true only
 // when the profile already has an email, the filer opted in, and the send completed. No profile
 // row is created. The permalink in the response is the relative path; the message body uses an
 // absolute URL when IAppBaseUrlAccessor returns a public origin.
@@ -113,9 +119,9 @@ public sealed class SubmitFeedback
         request.Body,
         DateTimeOffset.UtcNow);
       await FeedbackStore.AddAsync(item, cancellationToken).ConfigureAwait(false);
-      foreach (FeedbackAttachment attachment in attachments)
+      if (!await TryLinkAllAsync(principalId.Value.Value, item.Id, attachments, cancellationToken).ConfigureAwait(false))
       {
-        await AttachmentStore.LinkAsync(attachment.Id, item.Id, cancellationToken).ConfigureAwait(false);
+        return FeedbackProblems.AttachmentUnavailable();
       }
 
       string permalink = FeedbackPermalink.For(item.Id.Value);
@@ -130,6 +136,48 @@ public sealed class SubmitFeedback
         item.Body,
         emailCopySent,
         attachments.ConvertAll(attachment => attachment.Id.Value));
+    }
+
+    private async Task<bool> TryLinkAllAsync(
+      Guid ownerId,
+      FeedbackItemId itemId,
+      List<FeedbackAttachment> attachments,
+      CancellationToken cancellationToken)
+    {
+      List<FeedbackAttachmentId> linked = [];
+      try
+      {
+        foreach (FeedbackAttachment attachment in attachments)
+        {
+          bool ok = await AttachmentStore
+            .TryLinkAsync(attachment.Id, ownerId, itemId, cancellationToken)
+            .ConfigureAwait(false);
+          if (!ok)
+          {
+            await RollBackAsync(itemId, linked).ConfigureAwait(false);
+            return false;
+          }
+
+          linked.Add(attachment.Id);
+        }
+      }
+      catch
+      {
+        await RollBackAsync(itemId, linked).ConfigureAwait(false);
+        throw;
+      }
+
+      return true;
+    }
+
+    private async Task RollBackAsync(FeedbackItemId itemId, List<FeedbackAttachmentId> linked)
+    {
+      foreach (FeedbackAttachmentId attachmentId in linked)
+      {
+        await AttachmentStore.UnlinkAsync(attachmentId, itemId, CancellationToken.None).ConfigureAwait(false);
+      }
+
+      await FeedbackStore.RemoveAsync(itemId, CancellationToken.None).ConfigureAwait(false);
     }
 
     private async Task<bool> TrySendCopyAsync(Guid ownerId, FeedbackItem item, DomainKind kind, string permalink)

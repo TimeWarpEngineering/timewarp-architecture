@@ -4,7 +4,10 @@
 
 #region Design
 // Scoped, depends on PostgresDbContext. PostgresDbModule replaces the in-memory singleton when a
-// connection string is present. Find and list are untracked. Link and remove load a tracked row.
+// connection string is present. Find and list are untracked. Remove loads a tracked row.
+// TryLink, Unlink, and RemoveExpiredUnlinked are single conditional statements (ExecuteUpdate /
+// ExecuteDelete with the owner and link state in the WHERE clause) and read the affected row
+// count, so a concurrent submit or remove cannot be overwritten by a stale tracked row.
 // A unique id violation becomes InvalidOperationException, matching InMemoryFeedbackAttachmentStore.
 #endregion
 
@@ -75,22 +78,62 @@ public sealed class EfFeedbackAttachmentStore : IFeedbackAttachmentStore
       .ConfigureAwait(false);
   }
 
-  public async Task LinkAsync(
+  public async Task<bool> TryLinkAsync(
+    FeedbackAttachmentId id,
+    Guid ownerPrincipalId,
+    FeedbackItemId itemId,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    FeedbackItemId? link = itemId;
+    int affected = await Db.FeedbackAttachments
+      .Where(row => row.Id == id && row.OwnerPrincipalId == ownerPrincipalId && row.FeedbackItemId == null)
+      .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.FeedbackItemId, link), cancellationToken)
+      .ConfigureAwait(false);
+    return affected == 1;
+  }
+
+  public async Task UnlinkAsync(
     FeedbackAttachmentId id,
     FeedbackItemId itemId,
     CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
-    FeedbackAttachment? attachment = await Db.FeedbackAttachments
-      .FirstOrDefaultAsync(row => row.Id == id, cancellationToken)
+    FeedbackItemId? linked = itemId;
+    await Db.FeedbackAttachments
+      .Where(row => row.Id == id && row.FeedbackItemId == linked)
+      .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.FeedbackItemId, (FeedbackItemId?)null), cancellationToken)
       .ConfigureAwait(false);
-    if (attachment is null)
+  }
+
+  public async Task<IReadOnlyList<FeedbackAttachment>> RemoveExpiredUnlinkedAsync(
+    Guid ownerPrincipalId,
+    DateTimeOffset uploadedBefore,
+    CancellationToken cancellationToken = default)
+  {
+    cancellationToken.ThrowIfCancellationRequested();
+    List<FeedbackAttachment> candidates = await Db.FeedbackAttachments.AsNoTracking()
+      .Where(row => row.OwnerPrincipalId == ownerPrincipalId
+        && row.FeedbackItemId == null
+        && row.UploadedAt < uploadedBefore)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    List<FeedbackAttachment> removed = [];
+    foreach (FeedbackAttachment candidate in candidates)
     {
-      throw new InvalidOperationException($"Feedback attachment '{id}' does not exist.");
+      FeedbackAttachmentId candidateId = candidate.Id;
+      int affected = await Db.FeedbackAttachments
+        .Where(row => row.Id == candidateId && row.FeedbackItemId == null)
+        .ExecuteDeleteAsync(cancellationToken)
+        .ConfigureAwait(false);
+      if (affected == 1)
+      {
+        removed.Add(candidate);
+      }
     }
 
-    attachment.Link(itemId);
-    await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    return removed;
   }
 
   public async Task RemoveAsync(FeedbackAttachmentId id, CancellationToken cancellationToken = default)

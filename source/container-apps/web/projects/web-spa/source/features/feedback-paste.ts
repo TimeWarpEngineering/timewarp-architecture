@@ -7,7 +7,17 @@
 // and, when the shadow tree is ready, on its textarea. A WeakSet keeps one paste from being
 // uploaded twice. preventDefault runs only when the clipboard holds an image. An empty
 // clipboard name becomes pasted-image.png. The page method is ReceivePastedImage.
+// maxBytes comes from .NET (FeedbackAttachmentRules.MaxBytes) at register time; a larger
+// file is refused before it is read. A refusal or a failed read/send goes to the page's
+// ReceivePasteRejected so the user sees the normal error notification; if that call fails
+// too, the error goes to the console. The file goes to .NET as a JS stream reference
+// (DotNet.createJSStreamReference), not a byte array, so an InteractiveServer circuit reads it
+// in chunks instead of one SignalR message over the hub's size limit.
 // #endregion
+
+declare const DotNet: {
+  createJSStreamReference(data: Blob): unknown;
+};
 
 interface FeedbackPasteHost {
   invokeMethodAsync(methodName: string, ...args: unknown[]): Promise<unknown>;
@@ -17,7 +27,7 @@ export interface FeedbackPasteHandle {
   Dispose(): void;
 }
 
-export function Register(host: FeedbackPasteHost, root: HTMLElement): FeedbackPasteHandle {
+export function Register(host: FeedbackPasteHost, root: HTMLElement, maxBytes: number): FeedbackPasteHandle {
   const listeners: Array<{ target: EventTarget; listener: EventListener }> = [];
   const bound = new WeakSet<EventTarget>();
 
@@ -42,7 +52,7 @@ export function Register(host: FeedbackPasteHost, root: HTMLElement): FeedbackPa
     event.preventDefault();
     event.stopPropagation();
     for (const file of images) {
-      void send(host, file);
+      void send(host, file, maxBytes);
     }
   };
 
@@ -85,9 +95,26 @@ export function Register(host: FeedbackPasteHost, root: HTMLElement): FeedbackPa
   };
 }
 
-async function send(host: FeedbackPasteHost, file: File): Promise<void> {
-  const buffer = new Uint8Array(await file.arrayBuffer());
-  const name = file.name.length > 0 ? file.name : "pasted-image.png";
-  const type = file.type.length > 0 ? file.type : "image/png";
-  await host.invokeMethodAsync("ReceivePastedImage", name, type, buffer);
+async function send(host: FeedbackPasteHost, file: File, maxBytes: number): Promise<void> {
+  if (file.size > maxBytes) {
+    await reject(host, "too-large");
+    return;
+  }
+
+  try {
+    const name = file.name.length > 0 ? file.name : "pasted-image.png";
+    const type = file.type.length > 0 ? file.type : "image/png";
+    await host.invokeMethodAsync("ReceivePastedImage", name, type, DotNet.createJSStreamReference(file));
+  } catch (error) {
+    console.error("Feedback paste failed", error);
+    await reject(host, "failed");
+  }
+}
+
+async function reject(host: FeedbackPasteHost, reason: string): Promise<void> {
+  try {
+    await host.invokeMethodAsync("ReceivePasteRejected", reason);
+  } catch (error) {
+    console.error("Feedback paste could not report a rejection", error);
+  }
 }

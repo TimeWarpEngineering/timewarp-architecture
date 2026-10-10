@@ -6,7 +6,12 @@
 // The owner comes from ICurrentPrincipalAccessor. The stream is read once, under the size
 // cap, and checked against the claimed type before either store is touched. A principal
 // may hold at most FeedbackAttachment.MaxPerItem unlinked files so a draft cannot grow
-// without bound. The blob is written first; if the row insert throws, the blob is deleted.
+// without bound. Before counting, the caller's own unlinked files older than
+// FeedbackAttachmentRules.PendingLifetime are deleted, row then blob: the draft list lives
+// only in the browser, so files from a lost draft would otherwise hold the cap forever.
+// The count and the insert are two calls, so concurrent uploads from one person can pass
+// the cap by a few files; the cap bounds abuse, not an exact quota.
+// The blob is written first; if the row insert throws, the blob is deleted.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -67,6 +72,15 @@ public sealed class UploadFeedbackAttachment
 
       byte[] bytes = body.AsT0;
       Guid ownerId = principalId.Value.Value;
+      DateTimeOffset now = DateTimeOffset.UtcNow;
+      IReadOnlyList<FeedbackAttachment> expired = await AttachmentStore
+        .RemoveExpiredUnlinkedAsync(ownerId, now - FeedbackAttachmentRules.PendingLifetime, cancellationToken)
+        .ConfigureAwait(false);
+      foreach (FeedbackAttachment stale in expired)
+      {
+        await BlobStore.DeleteAsync(stale.StorageKey, CancellationToken.None).ConfigureAwait(false);
+      }
+
       int pending = await AttachmentStore
         .CountUnlinkedByOwnerAsync(ownerId, cancellationToken)
         .ConfigureAwait(false);
@@ -80,7 +94,7 @@ public sealed class UploadFeedbackAttachment
         fileName,
         contentType,
         bytes.LongLength,
-        DateTimeOffset.UtcNow);
+        now);
 
       await BlobStore
         .PutAsync(attachment.StorageKey, bytes, contentType, cancellationToken)

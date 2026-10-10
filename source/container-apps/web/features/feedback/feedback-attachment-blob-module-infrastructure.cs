@@ -11,10 +11,16 @@
 // FeedbackAttachments:ContainerName defaults to "feedback-attachments". The name is checked
 // here so a bad value fails at startup instead of on the first upload. The container stays
 // private. Postgres swaps the row store only; this registration does not follow that flag.
+// The in-memory fallback loses bytes on restart while EF rows survive, so every older
+// download would 404. InMemoryBlobWarning logs a startup warning when the in-memory blob
+// store runs next to a durable row store or outside Development. It only warns: tests and
+// mock mode keep the fallback, and a host may knowingly run without durable files.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Features.Feedback.Application;
 
 public sealed class FeedbackAttachmentBlobModule : IModule
@@ -27,6 +33,7 @@ public sealed class FeedbackAttachmentBlobModule : IModule
     if (string.IsNullOrWhiteSpace(connectionString))
     {
       serviceCollection.AddSingleton<IFeedbackAttachmentBlobStore, InMemoryFeedbackAttachmentBlobStore>();
+      serviceCollection.AddHostedService<InMemoryBlobWarning>();
       return;
     }
 
@@ -67,5 +74,45 @@ public sealed class FeedbackAttachmentBlobModule : IModule
 
       previousHyphen = character == '-';
     }
+  }
+
+  private sealed class InMemoryBlobWarning : IHostedService
+  {
+    private static readonly Action<ILogger, string, string, Exception?> LogInMemoryBlobs =
+      LoggerMessage.Define<string, string>
+      (
+        LogLevel.Warning,
+        new EventId(1, nameof(LogInMemoryBlobs)),
+        "Feedback attachment bytes are held in memory (FeedbackAttachments:ConnectionString is empty) while rows use {RowStore} in {Environment}; files are lost on restart"
+      );
+
+    private readonly IServiceScopeFactory ScopeFactory;
+    private readonly IHostEnvironment HostEnvironment;
+    private readonly ILogger<FeedbackAttachmentBlobModule> Logger;
+
+    public InMemoryBlobWarning(
+      IServiceScopeFactory scopeFactory,
+      IHostEnvironment hostEnvironment,
+      ILogger<FeedbackAttachmentBlobModule> logger)
+    {
+      ScopeFactory = scopeFactory;
+      HostEnvironment = hostEnvironment;
+      Logger = logger;
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+      using IServiceScope scope = ScopeFactory.CreateScope();
+      IFeedbackAttachmentStore rowStore = scope.ServiceProvider.GetRequiredService<IFeedbackAttachmentStore>();
+      bool durableRows = rowStore is not InMemoryFeedbackAttachmentStore;
+      if (durableRows || !HostEnvironment.IsDevelopment())
+      {
+        LogInMemoryBlobs(Logger, rowStore.GetType().Name, HostEnvironment.EnvironmentName, null);
+      }
+
+      return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
   }
 }

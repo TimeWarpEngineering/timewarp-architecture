@@ -4,7 +4,8 @@
 
 #region Design
 // Not an aggregate: FeedbackItem stays immutable after File, and the attachment's only
-// mutation is Link, which runs once. FeedbackItemId stays null until submit. Pending
+// mutation is Link, which runs once. Unlink exists only so a filing that could not link
+// every attachment can undo the links it made before the item is removed. FeedbackItemId stays null until submit. Pending
 // attachments are visible only to the uploader. Limits duplicate FeedbackAttachmentRules
 // because domain does not reference contracts. The nested private Invariants validator is
 // the save-time half and stays out of AddValidatorsFromAssemblyContaining.
@@ -129,6 +130,17 @@ public sealed class FeedbackAttachment : Entity<FeedbackAttachmentId>
     }
 
     FeedbackItemId = feedbackItemId;
+  }
+
+  /// <summary>Reverses <see cref="Link"/> for a filing that is being rolled back.</summary>
+  public void Unlink(FeedbackItemId feedbackItemId)
+  {
+    if (FeedbackItemId != feedbackItemId)
+    {
+      throw new InvalidOperationException("Attachment is not linked to this item.");
+    }
+
+    FeedbackItemId = null;
   }
 
   private sealed class Invariants : AbstractValidator<FeedbackAttachment>
