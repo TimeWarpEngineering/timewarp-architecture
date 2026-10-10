@@ -8,6 +8,8 @@
 // for a matching response before InvokeCoreAsync runs. The function reads IStore,
 // AuthenticationStateProvider, IAuthorizationService, NavigationManager, and IActionCatalog from
 // the arguments' service provider, which the invoking client sets from the circuit scope.
+// The route is PageAgentRoute when the shell has observed one, so a NavigationManager left at
+// the base URI does not describe the site root while the page on screen is /Feedback.
 // Selection happened when the panel built the functions; by invocation the person may have navigated, signed
 // out, or lost a permission while the approval waited. InvokeCoreAsync therefore re-selects for
 // the current principal and route and returns a failed result (not an exception, so the model
@@ -116,7 +118,7 @@ public sealed class CatalogAgentFunctions : IDisposable
         authentication.User,
         authorizationService,
         catalog.Entries,
-        PageAgentScope.FromNavigation(navigation),
+        PageAgentRoute.Current(services, navigation),
         Tool.Name,
         store.GetState<AgentSurfaceState>().EditMode,
         cancellationToken
@@ -186,7 +188,7 @@ public sealed class CatalogAgentFunctions : IDisposable
         return new CatalogAgentCallResult(PageAgentContext.ToolName, Completed: false, denial);
       }
 
-      return PageAgentContext.Describe(store, PageAgentScope.FromNavigation(navigation));
+      return PageAgentContext.Describe(store, PageAgentRoute.Current(services, navigation));
     }
   }
 

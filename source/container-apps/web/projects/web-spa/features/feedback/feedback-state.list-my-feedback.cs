@@ -4,9 +4,10 @@
 
 #region Design
 // Parameterless and Visibility Both, so it is a Ctrl-K command and a read-only agent tool.
-// It does not clear LastReceipt. From any page other than /Feedback it navigates to the list
-// so the palette command shows the filings. A detail route (/Feedback/{id}) also navigates
-// to the list; that is the command's job.
+// It does not clear LastReceipt. Success sets FilingsLoaded, including when the filer has no
+// rows yet. From any page other than /Feedback it navigates to the list so the palette command
+// shows the filings. A detail route (/Feedback/{id}) also navigates to the list; that is the
+// command's job.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -56,6 +57,7 @@ partial class FeedbackState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackState.Items = response.Items;
+        FeedbackState.FilingsLoaded = true;
         FeedbackState.EmailCopyAvailable = response.EmailCopyAvailable;
         AgentCallOutcome.Set(response);
         string current = PageAgentScope.Normalize(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));

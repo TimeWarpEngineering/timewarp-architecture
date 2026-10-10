@@ -65,6 +65,17 @@
 {
   <script src="js/browser-log-forwarder.js"></script>
 }
+@* Base-relative pathname + search + hash for PageAgentRoute on WebAssembly, matching NavigationManager.ToBaseRelativePath. A NavigationManager left at the base URI loses. *@
+<script>
+  window.timeWarpPagePath = function () {
+    var basePath = new URL(document.baseURI).pathname;
+    var path = location.pathname;
+    if (path.indexOf(basePath) === 0) {
+      path = "/" + path.substring(basePath.length);
+    }
+    return path + location.search + location.hash;
+  };
+</script>
 <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

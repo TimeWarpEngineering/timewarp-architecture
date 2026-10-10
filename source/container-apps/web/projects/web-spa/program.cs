@@ -149,6 +149,7 @@ public static class Program
     serviceCollection.AddActionCatalog(typeof(Web.Spa.IAssemblyMarker).GetTypeInfo().Assembly);
     // Ask is always registered. RelayChatClient holds no key; web-server owns XAI:ApiKey.
     // WebMCP uses the same catalog tools and does not need this client.
+    serviceCollection.AddScoped<PageAgentRoute>();
     serviceCollection.AddScoped<AgentCallOutcome>();
     serviceCollection.AddScoped<WebMcpApprovalGate>();
     serviceCollection.AddScoped<WebMcpDispatcher>();

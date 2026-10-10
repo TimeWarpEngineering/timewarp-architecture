@@ -6,6 +6,7 @@
 // The browser agent is not trusted. InvokeTool selects the tools again for the current principal
 // and route, so a stale registration cannot call an action the person can no longer run.
 // page_context is not a catalog action; it returns the page facts and does not ask for approval.
+// The route is the shell's PageAgentRoute when one has been observed.
 // Arguments are parsed and bound before anything is shown: a call that cannot bind returns
 // {action, error} without a prompt, and the banner shows the canonical rendering of the bound
 // values (CatalogAgentArguments.Render). Execute receives exactly that bound array.
@@ -39,6 +40,7 @@ public sealed class WebMcpDispatcher
   private readonly IAuthorizationService AuthorizationService;
   private readonly AuthenticationStateProvider AuthenticationStateProvider;
   private readonly NavigationManager Navigation;
+  private readonly PageAgentRoute Route;
   private readonly WebMcpApprovalGate Gate;
   private readonly AgentCallOutcome AgentCallOutcome;
 
@@ -49,6 +51,7 @@ public sealed class WebMcpDispatcher
     IAuthorizationService authorizationService,
     AuthenticationStateProvider authenticationStateProvider,
     NavigationManager navigation,
+    PageAgentRoute route,
     WebMcpApprovalGate gate,
     AgentCallOutcome agentCallOutcome
   )
@@ -58,6 +61,7 @@ public sealed class WebMcpDispatcher
     AuthorizationService = authorizationService;
     AuthenticationStateProvider = authenticationStateProvider;
     Navigation = navigation;
+    Route = route;
     Gate = gate;
     AgentCallOutcome = agentCallOutcome;
   }
@@ -66,7 +70,7 @@ public sealed class WebMcpDispatcher
   public async Task<string> InvokeTool(string name, string? argumentsJson)
   {
     ArgumentException.ThrowIfNullOrEmpty(name);
-    string path = PageAgentScope.FromNavigation(Navigation);
+    string path = Route.PathOr(Navigation);
     if (string.Equals(name, PageAgentContext.ToolName, StringComparison.Ordinal))
     {
       string? pageDenial = await CredentialDenialAsync([]);
@@ -142,7 +146,7 @@ public sealed class WebMcpDispatcher
   }
 
   private bool IsOnPath(string path) =>
-    string.Equals(PageAgentScope.FromNavigation(Navigation), path, StringComparison.OrdinalIgnoreCase);
+    string.Equals(Route.PathOr(Navigation), path, StringComparison.OrdinalIgnoreCase);
 
   private async Task<(bool Approved, bool Navigated)> WaitForApprovalAsync
   (

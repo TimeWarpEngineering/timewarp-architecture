@@ -15,7 +15,11 @@
   path. Any other failure shows the status, title and detail and a Retry that runs the probe
   again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
   Tools are the current page's catalog actions plus page_context, the same list WebMCP publishes,
-  including the approval bit for the conversation's edit mode. The panel rebuilds the agent when
+  including the approval bit for the conversation's edit mode. The route is PageAgentRoute, which
+  this panel refreshes from the browser location on WebAssembly before it rebuilds. Tool arguments
+  render as JSON. An empty argument dictionary is omitted: Razor would print its CLR type name,
+  and page_context's schema is empty so that dictionary is {}. The tool result stays in the model
+  transcript and is not copied into the reasoning block. The panel rebuilds the agent when
   the route, the edit mode, or the conversation generation changes. A route or edit-mode rebuild
   never runs while a turn is streaming or waiting on an approval card: it waits for the turn to
   go idle. New conversation (a generation change) rebuilds at once and abandons that turn. A build
@@ -46,6 +50,8 @@
   [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
   [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+  [Inject] private PageAgentRoute PageAgentRoute { get; set; } = null!;
   [Inject] private IStore ScopedStore { get; set; } = null!;
   [Inject] private AskConversationThreads Threads { get; set; } = null!;
 
@@ -90,6 +96,7 @@
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
+    PageAgentRoute.Observe(NavigationManager, JsRuntime);
     await IssueConversationAsync();
     Ai.UIAgent? previous = Agent;
     await EnsureAgentAsync();
@@ -99,7 +106,7 @@
     }
   }
 
-  private string CurrentPath() => PageAgentScope.FromNavigation(NavigationManager);
+  private string CurrentPath() => PageAgentRoute.PathOr(NavigationManager);
 
   private async Task IssueConversationAsync()
   {
@@ -437,13 +444,19 @@
                 <details class="twe-agent-ask__reasoning" data-qa="AskReasoning">
                   <summary>See reasoning</summary>
                   <p>@call.ToolName</p>
-                  <pre>@call.Arguments</pre>
+                  @if (AgentArgumentText.Format(call.Arguments) is { } arguments)
+                  {
+                    <pre data-qa="AskReasoningArguments">@arguments</pre>
+                  }
                 </details>
               </Microsoft.AspNetCore.Components.AI.BlockRenderer>
               <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionApprovalBlock" Context="approval">
                 <div class="twe-agent-ask__approval" data-qa="AgentApproval">
                   <p>Allow <strong>@approval.ToolName</strong>?</p>
-                  <pre data-qa="AgentApprovalArguments">@approval.Arguments</pre>
+                  @if (AgentArgumentText.Format(approval.Arguments) is { } approvalArguments)
+                  {
+                    <pre data-qa="AgentApprovalArguments">@approvalArguments</pre>
+                  }
                   @if (RecordedApproval(approval) is { } recorded)
                   {
                     <p data-qa="AgentApprovalStatus">@recorded</p>

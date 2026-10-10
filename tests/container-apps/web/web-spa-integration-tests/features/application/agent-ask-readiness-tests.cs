@@ -294,6 +294,7 @@ public class AgentAskReadiness_Should_
       services.AddScoped<AuthenticationStateProvider>(_ => new AnonymousAuthenticationStateProvider());
       services.AddScoped(_ => A.Fake<IJSRuntime>());
       services.AddScoped<NavigationManager, TestNavigationManager>();
+      services.AddScoped<PageAgentRoute>();
       services.AddScoped(_ => webServer);
       services.AddScoped<AskConversationThreads>();
 

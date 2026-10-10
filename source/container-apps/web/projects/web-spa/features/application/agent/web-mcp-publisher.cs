@@ -7,7 +7,8 @@
 // present even when the route has no catalog tools. Human-only actions never appear.
 // Publishing is a store handler's job. The shell only dispatches SyncWebMcp.
 // DescribeAsync takes the conversation edit mode so RequiresApproval matches the in-app list.
-// PublishAsync reads that mode from AgentSurfaceState. The credential is not a list filter.
+// PublishAsync reads that mode from AgentSurfaceState. The route is the shell's PageAgentRoute
+// when one has been observed. The credential is not a list filter.
 // PublishAsync(context, …) is the same publish against any model context; the parameterless form
 // passes the JS context. Tests use it with a recording context to prove the store-read path.
 #endregion
@@ -22,6 +23,7 @@ public sealed class WebMcpPublisher
   private readonly IAuthorizationService AuthorizationService;
   private readonly AuthenticationStateProvider AuthenticationStateProvider;
   private readonly NavigationManager Navigation;
+  private readonly PageAgentRoute Route;
   private readonly IStore Store;
 
   public WebMcpPublisher
@@ -31,6 +33,7 @@ public sealed class WebMcpPublisher
     IAuthorizationService authorizationService,
     AuthenticationStateProvider authenticationStateProvider,
     NavigationManager navigation,
+    PageAgentRoute route,
     IStore store
   )
   {
@@ -39,6 +42,7 @@ public sealed class WebMcpPublisher
     AuthorizationService = authorizationService;
     AuthenticationStateProvider = authenticationStateProvider;
     Navigation = navigation;
+    Route = route;
     Store = store;
   }
 
@@ -108,7 +112,7 @@ public sealed class WebMcpPublisher
 #pragma warning disable BL0013
     AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 #pragma warning restore BL0013
-    string path = PageAgentScope.FromNavigation(Navigation);
+    string path = Route.PathOr(Navigation);
     IReadOnlyList<WebMcpToolDescriptor> tools = await DescribeAsync
     (
       authentication.User,

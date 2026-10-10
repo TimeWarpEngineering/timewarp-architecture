@@ -77,6 +77,13 @@ public class FeedbackAttachment_Given_Wasm
 
     Volatile.Read(ref sawWasm).ShouldBe(1, "InteractiveWebAssembly did not download a .wasm");
 
+    LocatorBoundingBoxResult titleBox = (await page.Locator("[data-qa=FeedbackTitle]").BoundingBoxAsync())
+      .ShouldNotBeNull();
+    LocatorBoundingBoxResult detailsBox = (await page.Locator("[data-qa=FeedbackBody]").BoundingBoxAsync())
+      .ShouldNotBeNull();
+    ((double)Math.Abs(titleBox.Width - detailsBox.Width)).ShouldBeLessThan(8d);
+    ((double)detailsBox.Height).ShouldBeGreaterThan(100d);
+
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Picker and paste");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Details before the file.");
     await page.Locator("[data-qa=FeedbackFile]").SetInputFilesAsync(new FilePayload

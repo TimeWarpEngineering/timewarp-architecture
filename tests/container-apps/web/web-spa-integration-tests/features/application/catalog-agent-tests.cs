@@ -17,6 +17,10 @@
 // registers no web-server BFF client and its mock session has no profile store to file against.
 // That test drives the real path — dispatcher, approval, ActionSet handler, AgentCallOutcome, and
 // the dispatcher's own result serialization — and asserts the JSON the agent receives.
+// page_context on /Feedback is driven through CatalogAgentSession.CreateInvokingClient with the
+// same scope the panel passes in. A wrapper that answers NavigationManager with a manager stuck
+// at the base URI still returns the observed /Feedback route. RelayChatClient is asserted to send
+// tool arguments and tool results as JSON, never a dictionary's CLR type name.
 #endregion
 
 namespace CatalogAgent_;
@@ -29,6 +33,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Features.Settings;
 using TimeWarp.Architecture.Web.Spa;
@@ -614,6 +619,208 @@ public partial class CatalogAgent_Should
     return Task.CompletedTask;
   }
 
+  public static Task Arguments_Render_As_Json_And_Empty_Payloads_Are_Omitted()
+  {
+    AgentArgumentText.Format(null).ShouldBeNull();
+    AgentArgumentText.Format(new Dictionary<string, object?>()).ShouldBeNull();
+
+    Dictionary<string, object?>? deserialized =
+      JsonSerializer.Deserialize<Dictionary<string, object?>>("""{"path":"/Feedback"}""");
+    string formatted = AgentArgumentText.Format(deserialized).ShouldNotBeNull();
+    formatted.ShouldNotContain("System.Collections.Generic");
+    using JsonDocument document = JsonDocument.Parse(formatted);
+    document.RootElement.GetProperty("path").GetString().ShouldBe("/Feedback");
+
+    string razor = File.ReadAllText(RepoFile(
+      "source",
+      "container-apps",
+      "web",
+      "projects",
+      "web-spa",
+      "features",
+      "application",
+      "modals",
+      "agent-ask",
+      "AgentAsk.razor"));
+    razor.ShouldNotContain("@call.Arguments");
+    razor.ShouldNotContain("@approval.Arguments");
+    razor.ShouldContain("AgentArgumentText.Format(call.Arguments)");
+    razor.ShouldContain("AgentArgumentText.Format(approval.Arguments)");
+    return Task.CompletedTask;
+  }
+
+  public static async Task Relay_Sends_Tool_Arguments_And_Page_Context_As_Json()
+  {
+    CapturingChatApi api = new();
+    RelayChatClient client = new(api);
+    Dictionary<string, object?> arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>
+    (
+      """{"title":"Export failed"}"""
+    ).ShouldNotBeNull();
+    ChatMessage user = new(ChatRole.User, "Explain this page");
+    ChatMessage call = new
+    (
+      ChatRole.Assistant,
+      [new FunctionCallContent("call-page", "page_context", arguments)]
+    );
+    ChatMessage pageResult = new
+    (
+      ChatRole.Tool,
+      [new FunctionResultContent("call-page", """{"path":"/Feedback","page":"Feedback"}""")]
+    );
+    ChatMessage dictionaryResult = new
+    (
+      ChatRole.Tool,
+      [
+        new FunctionResultContent
+        (
+          "call-dict",
+          new Dictionary<string, object?> { ["path"] = "/Feedback" }
+        ),
+      ]
+    );
+
+    await client.GetResponseAsync([user, call, pageResult, dictionaryResult]);
+
+    CompleteAgentChat.Command command = api.Command.ShouldNotBeNull();
+    string payload = JsonSerializer.Serialize(command);
+    payload.ShouldNotContain("System.Collections.Generic");
+
+    CompleteAgentChat.Turn callTurn = command.Messages.Single(turn => turn.ToolCalls.Count > 0);
+    string argumentsJson = callTurn.ToolCalls.Single().ArgumentsJson;
+    argumentsJson.ShouldNotContain("System.Collections.Generic");
+    using (JsonDocument parsedArguments = JsonDocument.Parse(argumentsJson))
+    {
+      parsedArguments.RootElement.GetProperty("title").GetString().ShouldBe("Export failed");
+    }
+
+    CompleteAgentChat.Turn pageTurn = command.Messages.Single(turn => turn.ToolCallId == "call-page");
+    pageTurn.ToolResult.ShouldBe("""{"path":"/Feedback","page":"Feedback"}""");
+    using JsonDocument parsedPage = JsonDocument.Parse(pageTurn.ToolResult.ShouldNotBeNull());
+    parsedPage.RootElement.GetProperty("path").GetString().ShouldBe("/Feedback");
+
+    CompleteAgentChat.Turn dictionaryTurn = command.Messages.Single(turn => turn.ToolCallId == "call-dict");
+    string dictionaryJson = dictionaryTurn.ToolResult.ShouldNotBeNull();
+    dictionaryJson.ShouldNotContain("System.Collections.Generic");
+    using JsonDocument parsedDictionary = JsonDocument.Parse(dictionaryJson);
+    parsedDictionary.RootElement.GetProperty("path").GetString().ShouldBe("/Feedback");
+  }
+
+  public static async Task Route_Follows_The_Observed_Manager_And_Keeps_The_Path_For_A_Stuck_One()
+  {
+    TestNavigationManager shell = new();
+    TestNavigationManager stuck = new();
+    PageAgentRoute route = new();
+    route.PathOr(shell).ShouldBe("/");
+
+    shell.NavigateTo("/Feedback");
+    route.Observe(shell, jsRuntime: null);
+    route.PathOr(shell).ShouldBe("/Feedback");
+    route.PathOr(stuck).ShouldBe("/Feedback");
+
+    // No observer runs on a focused-page hop. The observed manager's live path still wins.
+    shell.NavigateTo("/Settings");
+    route.PathOr(shell).ShouldBe("/Settings");
+    route.PathOr(stuck).ShouldBe("/Settings");
+    await Task.CompletedTask;
+  }
+
+  public static async Task Page_Context_On_Feedback_Uses_The_Ask_Scope_Not_A_Stuck_Manager()
+  {
+    const string secretBody = "secret body that must not reach the model";
+    using FeedbackSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    NavigationManager shellNavigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    shellNavigation.NavigateTo("/Feedback");
+    StuckNavigationProvider stuck = new(scope.ServiceProvider);
+
+    string stuckAtRoot = await InvokePageContextAsync(stuck);
+    stuckAtRoot.ShouldNotContain("System.Collections.Generic");
+    using (JsonDocument root = JsonDocument.Parse(stuckAtRoot))
+    {
+      root.RootElement.GetProperty("path").GetString().ShouldBe("/");
+    }
+
+    scope.ServiceProvider.GetRequiredService<PageAgentRoute>().Observe
+    (
+      shellNavigation,
+      scope.ServiceProvider.GetRequiredService<Microsoft.JSInterop.IJSRuntime>()
+    );
+    await scope.Send(new FeedbackState.ListMyFeedbackActionSet.Action());
+    await scope.Send(new FeedbackState.NoteComposerActionSet.Action(true, "Complaint", false, true));
+
+    string feedback = await InvokePageContextAsync(stuck);
+    feedback.ShouldNotContain("System.Collections.Generic");
+    feedback.ShouldNotContain(secretBody);
+    using (JsonDocument document = JsonDocument.Parse(feedback))
+    {
+      JsonElement element = document.RootElement;
+      element.GetProperty("path").GetString().ShouldBe("/Feedback");
+      element.GetProperty("page").GetString().ShouldBe("Feedback");
+      element.GetProperty("filingsLoaded").GetBoolean().ShouldBeTrue();
+      element.GetProperty("filingCount").GetInt32().ShouldBe(21);
+      element.GetProperty("filings").GetArrayLength().ShouldBe(20);
+      element.GetProperty("filings")[0].GetProperty("title").GetString().ShouldBe("Filing 0");
+      element.GetProperty("filings")[0].TryGetProperty("body", out _).ShouldBeFalse();
+      element.GetProperty("emailCopyAvailable").GetBoolean().ShouldBeTrue();
+      element.GetProperty("draftAttachmentCount").GetInt32().ShouldBe(0);
+      JsonElement draft = element.GetProperty("draft");
+      draft.GetProperty("kind").GetString().ShouldBe("Complaint");
+      draft.GetProperty("hasTitle").GetBoolean().ShouldBeFalse();
+      draft.GetProperty("hasBody").GetBoolean().ShouldBeTrue();
+      draft.TryGetProperty("body", out _).ShouldBeFalse();
+    }
+
+    Guid openId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    string permalink = $"/Feedback/{openId:D}";
+    shellNavigation.NavigateTo(permalink);
+    scope.ServiceProvider.GetRequiredService<PageAgentRoute>().Observe
+    (
+      shellNavigation,
+      scope.ServiceProvider.GetRequiredService<Microsoft.JSInterop.IJSRuntime>()
+    );
+    await scope.Send(new FeedbackState.OpenFeedbackActionSet.Action(openId));
+
+    string item = await InvokePageContextAsync(stuck);
+    item.ShouldNotContain("System.Collections.Generic");
+    item.ShouldNotContain(secretBody);
+    using JsonDocument itemDocument = JsonDocument.Parse(item);
+    itemDocument.RootElement.GetProperty("path").GetString().ShouldBe(permalink);
+    itemDocument.RootElement.GetProperty("openFeedbackId").GetString().ShouldBe(openId.ToString("D"));
+    itemDocument.RootElement.GetProperty("openItem").GetProperty("title").GetString().ShouldBe("Filing 0");
+    itemDocument.RootElement.GetProperty("openItem").TryGetProperty("body", out _).ShouldBeFalse();
+  }
+
+  private static async Task<string> InvokePageContextAsync(IServiceProvider services)
+  {
+    PageContextEchoClient echo = new();
+    using CatalogAgentFunctions functions = CatalogAgentFunctions.Create([]);
+    using FunctionInvokingChatClient client = CatalogAgentSession.CreateInvokingClient(echo, services);
+    ChatOptions options = new()
+    {
+      Tools = [.. functions.Tools],
+    };
+    await client.GetResponseAsync
+    (
+      [new ChatMessage(ChatRole.User, "Explain this page")],
+      options,
+      CancellationToken.None
+    );
+    return echo.ToolResult.ShouldNotBeNull();
+  }
+
+  private static string RepoFile(params string[] parts)
+  {
+    string? directory = AppContext.BaseDirectory;
+    while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
+    {
+      directory = Path.GetDirectoryName(directory);
+    }
+
+    directory.ShouldNotBeNull();
+    return Path.Combine([directory, .. parts]);
+  }
+
   private static async Task<Guid> WaitForPendingAsync(SpaTestScope scope, Task<string> invoke)
   {
     DateTime started = DateTime.UtcNow;
@@ -773,6 +980,7 @@ public partial class CatalogAgent_Should
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);
       services.AddScoped(_ => FakeItEasy.A.Fake<Microsoft.JSInterop.IJSRuntime>());
       services.AddScoped<NavigationManager, TestNavigationManager>();
+      services.AddScoped<PageAgentRoute>();
       services.AddScoped<AgentCallOutcome>();
       services.AddScoped<WebMcpApprovalGate>();
       services.AddScoped<WebMcpDispatcher>();
@@ -798,6 +1006,8 @@ public partial class CatalogAgent_Should
   /// <summary>Scripted BFF: answers SubmitFeedback with a fresh id and the server's permalink shape, echoing the command.</summary>
   private sealed class ScriptedFeedbackApiService : TimeWarp.Architecture.Services.IWebServerApiService
   {
+    private static readonly DateTimeOffset FiledAt = new(2026, 10, 9, 0, 0, 0, TimeSpan.Zero);
+
     public List<SubmitFeedback.Command> Requests { get; } = [];
     public Guid? LastId { get; private set; }
 
@@ -825,6 +1035,50 @@ public partial class CatalogAgent_Should
         if (response is TResponse typed)
         {
           return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(typed);
+        }
+      }
+
+      if (request is ListMyFeedback.Query)
+      {
+        List<ListMyFeedback.Item> items = [];
+        for (int index = 1; index <= 21; index++)
+        {
+          // Item rejects Guid.Empty. Index 1 is the open-id fixture (...0001) and "Filing 0".
+          Guid id = Guid.Parse($"00000000-0000-0000-0000-{index:x12}");
+          items.Add
+          (
+            new ListMyFeedback.Item
+            (
+              id,
+              $"/Feedback/{id:D}",
+              FeedbackKind.Complaint,
+              $"Filing {index - 1}",
+              FiledAt
+            )
+          );
+        }
+
+        ListMyFeedback.Response listed = new(items, emailCopyAvailable: true);
+        if (listed is TResponse listedTyped)
+        {
+          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(listedTyped);
+        }
+      }
+
+      if (request is GetFeedback.Query query)
+      {
+        GetFeedback.Response opened = new
+        (
+          query.FeedbackItemId,
+          $"/Feedback/{query.FeedbackItemId:D}",
+          FeedbackKind.Complaint,
+          "Filing 0",
+          "secret body that must not reach the model",
+          FiledAt
+        );
+        if (opened is TResponse openedTyped)
+        {
+          return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>(openedTyped);
         }
       }
 
@@ -891,5 +1145,108 @@ public partial class CatalogAgent_Should
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
     public void Dispose() { }
+  }
+
+  private sealed class CapturingChatApi : TimeWarp.Architecture.Services.IWebServerApiService
+  {
+    public CompleteAgentChat.Command? Command { get; private set; }
+
+    public Task<OneOf<TResponse, FileResponse, SharedProblemDetails>> GetResponse<TResponse>
+    (
+      IApiRequest request,
+      CancellationToken cancellationToken
+    ) where TResponse : class
+    {
+      _ = cancellationToken;
+      Command = request.ShouldBeOfType<CompleteAgentChat.Command>();
+      CompleteAgentChat.Response response = new() { Text = "ok" };
+      return Task.FromResult<OneOf<TResponse, FileResponse, SharedProblemDetails>>
+      (
+        response.ShouldBeOfType<TResponse>()
+      );
+    }
+  }
+
+  private sealed class PageContextEchoClient : IChatClient
+  {
+    private bool OfferedCall;
+
+    public string? ToolResult { get; private set; }
+
+    public Task<ChatResponse> GetResponseAsync
+    (
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      CancellationToken cancellationToken = default
+    )
+    {
+      _ = options;
+      _ = cancellationToken;
+      foreach (ChatMessage message in messages)
+      {
+        foreach (AIContent content in message.Contents)
+        {
+          if (content is FunctionResultContent result)
+          {
+            ToolResult = result.Result switch
+            {
+              string text => text,
+              JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+              _ => result.Result?.ToString(),
+            };
+          }
+        }
+      }
+
+      if (!OfferedCall)
+      {
+        OfferedCall = true;
+        FunctionCallContent call = new
+        (
+          "call-page",
+          PageAgentContext.ToolName,
+          new Dictionary<string, object?>()
+        );
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, [call])));
+      }
+
+      return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "done")));
+    }
+
+    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync
+    (
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
+    {
+      ChatResponse response = await GetResponseAsync(messages, options, cancellationToken);
+      foreach (ChatMessage message in response.Messages)
+      {
+        yield return new ChatResponseUpdate(message.Role, message.Contents);
+      }
+    }
+
+    public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+    public void Dispose() { }
+  }
+
+  /// <summary>
+  /// Answers NavigationManager with a manager that never left the base URI.
+  /// Every other service, including PageAgentRoute and IStore, comes from the shell scope.
+  /// </summary>
+  private sealed class StuckNavigationProvider : IServiceProvider
+  {
+    private readonly IServiceProvider Inner;
+    private readonly NavigationManager Stuck = new TestNavigationManager();
+
+    public StuckNavigationProvider(IServiceProvider inner)
+    {
+      Inner = inner;
+    }
+
+    public object? GetService(Type serviceType) =>
+      serviceType == typeof(NavigationManager) ? Stuck : Inner.GetService(serviceType);
   }
 }
