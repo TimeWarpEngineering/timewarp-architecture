@@ -1,0 +1,33 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@using Ai = Microsoft.AspNetCore.Components.AI
+
+@*
+  Purpose: Empty-state suggestion cards for the Ask panel.
+
+  Design: The cards send a task-shaped prompt through the cascaded conversation. They are about
+  this page, not a product catalog the template does not have. With no conversation context the
+  click does nothing.
+*@
+
+@code {
+  [Parameter] public IReadOnlyList<string> Suggestions { get; set; } = [];
+
+  [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
+
+  private Task SendAsync(string text)
+  {
+    if (Conversation is null)
+    {
+      return Task.CompletedTask;
+    }
+
+    return Conversation.SendMessageAsync(text);
+  }
+}
+
+<div class="twe-agent-ask__suggestions">
+  @foreach (string suggestion in Suggestions)
+  {
+    <FluentButton Appearance="ButtonAppearance.Subtle" Class="twe-agent-ask__suggestion" data-qa="AskSuggestion" OnClick="() => SendAsync(suggestion)">@suggestion</FluentButton>
+  }
+</div>

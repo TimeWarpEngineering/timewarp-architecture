@@ -6,8 +6,9 @@
 #region Design
 // Real InteractiveWebAssembly against Web.Server with the real identity-session cookie. No mock
 // principal header is sent, so the configuration endpoint authenticates exactly the way it does on
-// a developer machine. Sign-in is the in-app path Steven took on 2026-10-09: anonymous Home, the
-// Home "Sign in" button (an in-SPA route change to /Login), then Create account with a passkey.
+// a developer machine. Sign-in stays in the SPA. The first test signs in from Ask's own "Sign in"
+// button, which closes the panel and routes to /Login. The second uses the Home "Sign in" button,
+// the path Steven took on 2026-10-09. Both then Create account with a passkey.
 // A Chrome DevTools virtual authenticator answers the WebAuthn ceremony. The app then navigates to
 // /Settings without a page load, which is why a once-per-app probe never ran again.
 // The signed-out and signed-in checks are collected and asserted together so a failing run on the
@@ -62,10 +63,16 @@ public class AskSignIn_Given_Wasm
       failures.Add($"Signed out: the server answered 401 but Ask showed {signedOut} ('{await session.AskTextAsync()}').");
     }
 
-    await session.CloseAskAsync();
+    // Sign in inside the SPA: Ask "Sign in" closes the panel -> /Login -> Create account (virtual passkey) -> /Settings.
+    if (signedOut == "AgentAskSignIn")
+    {
+      await session.SignInFromAskWithNewPasskeyAsync();
+    }
+    else
+    {
+      await session.SignInWithNewPasskeyAsync();
+    }
 
-    // Sign in inside the SPA: Home "Sign in" -> /Login -> Create account (virtual passkey) -> /Settings.
-    await session.SignInWithNewPasskeyAsync();
     await session.WaitForConfigurationProbeAsync(signedOutProbes);
     string signedIn = await session.OpenAskAsync();
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
@@ -240,20 +247,27 @@ public class AskSignIn_Given_Wasm
     public async Task<string> AskTextAsync() =>
       (await Page.Locator("[data-qa=AgentAsk]").InnerTextAsync()).ReplaceLineEndings(" | ");
 
-    public async Task CloseAskAsync()
+    public async Task SignInFromAskWithNewPasskeyAsync()
     {
-      await Page.Locator("[data-qa=AgentAskClose]").ClickAsync();
+      await Page.Locator("[data-qa=AgentAskSignInButton]").ClickAsync();
+      await Page.WaitForURLAsync("**/Login**", new PageWaitForURLOptions { Timeout = 30_000 });
       await Page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions
       {
         State = WaitForSelectorState.Hidden,
         Timeout = 10_000,
       });
+      await CreatePasskeyAsync();
     }
 
     public async Task SignInWithNewPasskeyAsync()
     {
       await Page.Locator("[data-qa=HomeSignIn]").ClickAsync();
       await Page.WaitForURLAsync("**/Login**", new PageWaitForURLOptions { Timeout = 30_000 });
+      await CreatePasskeyAsync();
+    }
+
+    private async Task CreatePasskeyAsync()
+    {
       await Page.Locator("[data-qa=CreatePasskey]").ClickAsync();
       await Page.WaitForURLAsync("**/Settings", new PageWaitForURLOptions { Timeout = 60_000 });
       await Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });

@@ -12,6 +12,10 @@
 // so an in-app sign-in (no page load) re-probes. It does not skip anonymous users: a mock-header
 // session can be authorized on the server while the SPA principal is anonymous, so the server's
 // status is the answer.
+// Only a server answer carries the panel settings (task 292: RecordChats, PrivacyNotice, SupportUrl,
+// CredentialLifetimeMinutes); every failure resets them to the XaiChatDefaults. SupportUrl goes
+// through AskSupportLink.Normalize (relative path or http/https only) because the answer bar
+// renders it into an href.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -40,20 +44,37 @@ partial class AgentSurfaceState
         Task.FromResult<Query?>(new Query());
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken) =>
-        Apply(ChatReadinessProbe.FromResponse(response));
+        Apply(ChatReadinessProbe.FromResponse(response), response);
 
       protected override Task HandleFileResponse(FileResponse fileResponse, CancellationToken cancellationToken) =>
-        Apply(ChatReadinessProbe.FromFileResponse());
+        Apply(ChatReadinessProbe.FromFileResponse(), response: null);
 
       protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken) =>
-        Apply(ChatReadinessProbe.FromProblem(problemDetails));
+        Apply(ChatReadinessProbe.FromProblem(problemDetails), response: null);
 
-      private Task Apply(ChatProbeResult result)
+      private Task Apply(ChatProbeResult result, Response? response)
       {
         AgentSurfaceState.ChatReadiness = result.Readiness;
         AgentSurfaceState.ChatSetupCommand = result.SetupCommand;
         AgentSurfaceState.ChatModel = result.Model;
         AgentSurfaceState.ChatProblem = result.Problem;
+        if (response is null)
+        {
+          AgentSurfaceState.RecordChats = XaiChatDefaults.RecordChats;
+          AgentSurfaceState.PrivacyNotice = XaiChatDefaults.PrivacyNotice;
+          AgentSurfaceState.SupportUrl = XaiChatDefaults.SupportUrl;
+          AgentSurfaceState.CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
+        }
+        else
+        {
+          AgentSurfaceState.RecordChats = response.RecordChats;
+          AgentSurfaceState.PrivacyNotice = response.PrivacyNotice;
+          AgentSurfaceState.SupportUrl = AskSupportLink.Normalize(response.SupportUrl);
+          AgentSurfaceState.CredentialLifetimeMinutes = response.CredentialLifetimeMinutes > 0
+            ? response.CredentialLifetimeMinutes
+            : XaiChatDefaults.CredentialLifetimeMinutes;
+        }
+
         return Task.CompletedTask;
       }
     }

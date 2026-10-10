@@ -55,4 +55,16 @@ public static class XaiChatDefaults
   /// </summary>
   public const string SetupCommand =
     "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + UserSecretsId;
+
+  /// <summary>Template default: chats are not recorded until a deployment turns this on.</summary>
+  public const bool RecordChats = false;
+
+  /// <summary>Shown in Ask only when <see cref="RecordChats"/> is true.</summary>
+  public const string PrivacyNotice = "Chats are recorded.";
+
+  /// <summary>Support link under an answer. Empty hides the link.</summary>
+  public const string SupportUrl = "/Feedback";
+
+  /// <summary>Conversation credential lifetime, capped again at the next UTC midnight.</summary>
+  public const int CredentialLifetimeMinutes = 720;
 }

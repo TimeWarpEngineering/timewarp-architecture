@@ -56,7 +56,11 @@
 
   private bool IsActive => ApplicationState.ActiveModalId == ModalId;
 
-  private Task OpenAskAsync() => ApplicationState.SetActiveModal(AgentAsk.ModalId);
+  private async Task OpenAskAsync()
+  {
+    await ApplicationState.CloseModal();
+    await AgentSurfaceState.OpenAskPanel();
+  }
   private IReadOnlyList<CommandPaletteRow> Matches => CommandPaletteState.Matches;
   private int HighlightedIndex => CommandPaletteState.HighlightedIndex;
   private string? ActiveDescendant => HighlightedIndex >= 0 ? RowId(HighlightedIndex) : null;

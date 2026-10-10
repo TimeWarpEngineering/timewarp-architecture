@@ -1,0 +1,15 @@
+.twe-agent-ask__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-3);
+}
+
+.twe-agent-ask__suggestion {
+  text-align: left;
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: inherit;
+  cursor: pointer;
+}

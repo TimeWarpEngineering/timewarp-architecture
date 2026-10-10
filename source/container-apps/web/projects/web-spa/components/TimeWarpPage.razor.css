@@ -12,6 +12,52 @@
 /* The wrapper exists only to anchor ::deep rules; it adds no box. */
 .twe-shell { display: contents; }
 
+/* Open Ask docks beside the page. Two classes beat .twe-shell, so the closed shell stays contents. */
+.twe-shell.twe-shell--ask {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.twe-shell.twe-shell--ask ::deep .twe-shell__layout {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+.twe-shell.twe-shell--ask ::deep .twe-agent-ask {
+  flex: 0 0 450px;
+  width: 450px;
+  max-width: 450px;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 879px) {
+  .twe-shell.twe-shell--ask ::deep .twe-agent-ask {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    width: 100%;
+    max-width: none;
+    flex: none;
+  }
+}
+
+.twe-shell.twe-shell--ask.twe-shell--ask-expanded ::deep .twe-agent-ask {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  max-width: none;
+  flex: none;
+}
+
 /* Appbar/footer height single source (tokens.css). FluentLayout writes its defaults for
    --layout-header-height / --layout-footer-height inline on its root element, so the overrides
    need !important to win; the layout items and the body-height calc all consume the vars. */

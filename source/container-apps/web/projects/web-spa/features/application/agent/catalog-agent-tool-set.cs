@@ -10,6 +10,8 @@
 // FindOfferedAsync is the invocation-time re-check both drivers run: it re-selects for the
 // principal and route current at the call, so a tool offered earlier is refused once the person
 // navigates away or loses the permission.
+// Edit mode changes only the approval bit, not which names are offered. A conversation credential
+// is not a selection filter; both drivers enforce it at invoke time.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -23,6 +25,25 @@ public static class CatalogAgentToolSet
     IAuthorizationService authorizationService,
     IEnumerable<ActionCatalogEntry> entries,
     string? path,
+    CancellationToken cancellationToken
+  )
+  {
+    return await SelectAsync(
+      user,
+      authorizationService,
+      entries,
+      path,
+      AgentEditMode.AskBeforeEditing,
+      cancellationToken);
+  }
+
+  public static async Task<IReadOnlyList<CatalogAgentTool>> SelectAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorizationService,
+    IEnumerable<ActionCatalogEntry> entries,
+    string? path,
+    AgentEditMode editMode,
     CancellationToken cancellationToken
   )
   {
@@ -76,7 +97,7 @@ public static class CatalogAgentToolSet
           entry.Name,
           description,
           CatalogAgentSchema.For(entry),
-          CatalogAgentApproval.RequiresApproval(entry),
+          CatalogAgentApproval.RequiresApproval(entry, editMode),
           entry
         )
       );
@@ -96,12 +117,35 @@ public static class CatalogAgentToolSet
     CancellationToken cancellationToken
   )
   {
+    return await FindOfferedAsync(
+      user,
+      authorizationService,
+      entries,
+      path,
+      name,
+      AgentEditMode.AskBeforeEditing,
+      cancellationToken);
+  }
+
+  /// <summary>The named tool if it is offered now, for this principal on this path; otherwise null.</summary>
+  public static async Task<CatalogAgentTool?> FindOfferedAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorizationService,
+    IEnumerable<ActionCatalogEntry> entries,
+    string? path,
+    string name,
+    AgentEditMode editMode,
+    CancellationToken cancellationToken
+  )
+  {
     IReadOnlyList<CatalogAgentTool> tools = await SelectAsync
     (
       user,
       authorizationService,
       entries,
       path,
+      editMode,
       cancellationToken
     );
     foreach (CatalogAgentTool tool in tools)

@@ -1,0 +1,75 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using Ai = Microsoft.AspNetCore.Components.AI
+@using TimeWarp.Architecture.Services
+@attribute [DirectComponentSideEffect("Copy writes the last answer text to the browser clipboard. Thumbs file feedback through SubmitFeedback.")]
+
+@*
+  Purpose: Copy, feedback, and Support actions under an Ask answer.
+
+  Design: Copy and thumbs use the same text: the last response block with raw text (LastAnswer),
+  not the whole transcript. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
+  not approval-gated. Support is hidden when configuration has no url; LoadChatConfiguration has
+  already limited it to a relative path or http/https (AskSupportLink).
+*@
+
+@code {
+  [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "SupportUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+  [Parameter] public string? SupportUrl { get; set; }
+
+  [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
+
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+
+  private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer());
+
+  private Task HelpfulAsync() => FileAsync("Ask AI thumbs up");
+
+  private Task UnhelpfulAsync() => FileAsync("Ask AI thumbs down");
+
+  private async Task FileAsync(string title)
+  {
+    string body = LastAnswer();
+    if (body.Length > SubmitFeedback.MaxBodyLength)
+    {
+      body = body[..SubmitFeedback.MaxBodyLength];
+    }
+
+    await FeedbackState.SubmitFeedback(FeedbackKind.Other, title, body);
+  }
+
+  private string LastAnswer()
+  {
+    if (Conversation is null)
+    {
+      return "Ask AI answer";
+    }
+
+    for (int index = Conversation.Turns.Count - 1; index >= 0; index--)
+    {
+      Ai.ConversationTurn turn = Conversation.Turns[index];
+      foreach (Ai.ContentBlock block in turn.ResponseBlocks)
+      {
+        if (block is Ai.RichContentBlock rich && !string.IsNullOrWhiteSpace(rich.RawText))
+        {
+          return rich.RawText;
+        }
+      }
+    }
+
+    return "Ask AI answer";
+  }
+}
+
+<div class="twe-agent-ask__answer-bar">
+  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskCopy" OnClick="CopyAsync">Copy</FluentButton>
+  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskThumbsUp" OnClick="HelpfulAsync">Thumbs up</FluentButton>
+  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskThumbsDown" OnClick="UnhelpfulAsync">Thumbs down</FluentButton>
+  @if (!string.IsNullOrWhiteSpace(SupportUrl))
+  {
+    <a data-qa="AskSupport" href="@SupportUrl">Support</a>
+  }
+</div>

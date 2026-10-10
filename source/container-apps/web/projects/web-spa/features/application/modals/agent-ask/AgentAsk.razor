@@ -4,58 +4,179 @@
 @using TimeWarp.Architecture.Components
 
 @*
-  Purpose: Ask mode. A person describes what they want and the in-app model runs a page catalog tool.
+  Purpose: Ask panel. A person describes what they want and the in-app model runs a page catalog tool.
 
-  Design: Hosted as a modal so it does not collide with the app's /Chat page or the library ChatPage
-  type. The modal is opened from the Ctrl-K footer. Ask is always available. It renders the probe's
-  state (task 293): only when the server answered "no key" does it show "AI not configured" and the
-  pwsh user-secrets command. Signed out (401) shows "Sign in to use Ask" and a button to Login with
-  the current page as the return path. Any other failure shows the status, title and detail and a
-  Retry that runs the probe again. The probe itself re-runs on every sign-in and sign-out.
-  Tools are the current page's catalog actions plus page_context. Mutating tools render
-  FunctionApprovalBlock; Approve and Reject answer that block. Outcomes of the dispatched actions
-  stay on NotificationState. The component builds the agent when readiness becomes Configured.
-  It does not call the model context itself.
+  Design: Docked on the shell, not a modal. The top-bar Ask AI button and the Ctrl-K Ask action
+  both open it. The page reflows beside it; below 880px and when expanded it covers the viewport.
+  It renders the probe's state (task 293): only when the server answered "no key" does it show
+  "AI not configured" and the pwsh user-secrets command. Signed out (401) shows "Sign in to use
+  Ask" and a button that closes the panel and goes to Login with the current page as the return
+  path. Any other failure shows the status, title and detail and a Retry that runs the probe
+  again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
+  Tools are the current page's catalog actions plus page_context, the same list WebMCP publishes,
+  including the approval bit for the conversation's edit mode. The panel rebuilds the agent when
+  the route, the edit mode, or the conversation generation changes. A route or edit-mode rebuild
+  never runs while a turn is streaming or waiting on an approval card: it waits for the turn to
+  go idle. New conversation (a generation change) rebuilds at once and abandons that turn. A build
+  that finishes after the panel was disposed (navigation mid-build) frees what it created.
+  The root carries data-built-mode, the edit mode of the agent actually built.
+  The transcript is not a component field. Every agent gets the AskConversationThread for the
+  current generation (AskConversationThreads, app-scoped), and the panel owns the AgentContext
+  instead of ChatPage's AgentBoundary, so it can await AgentContext.RestoreAsync before the
+  MessageList attaches. That restores both the rendered turns and the model history across Close,
+  navigation (TimeWarpPage remounts), and rebuilds. New conversation bumps the generation and
+  gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
+  It mints one short-lived credential for the signed-in principal when a conversation has none.
+  The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
+  copy of every permission claim the principal holds now, a null credential means unbounded, and
+  server [EndpointAuthorize] remains the boundary. When it has expired the header says so and
+  points at New conversation. Outcomes of dispatched actions stay on NotificationState. Copy and
+  @ insertion are presentational JS on child components.
 *@
 
 @code {
-  public const string ModalId = nameof(AgentAsk);
+  private static readonly string[] Suggestions =
+  [
+    "What can I do here?",
+    "Explain this page",
+    "What would need my approval?",
+  ];
 
   [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
   [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
   [Inject] private NavigationManager NavigationManager { get; set; } = null!;
   [Inject] private IStore ScopedStore { get; set; } = null!;
+  [Inject] private AskConversationThreads Threads { get; set; } = null!;
 
   private Ai.UIAgent? Agent;
+  private Ai.AgentContext? Conversation;
+  private AskConversationThread? Thread;
+  private IDisposable? StatusSubscription;
   private FunctionInvokingChatClient? InvokingClient;
   private CatalogAgentFunctions? Functions;
   private bool Building;
+  private bool Disposed;
+  private bool ResourceMenuOpen;
+  private int DeclinedGeneration = -1;
+  private string? BuiltPath;
+  private AgentEditMode BuiltMode;
+  private int BuiltGeneration = -1;
 
   private CatalogAgentReadiness Readiness => CatalogAgentAvailability.Readiness(AgentSurfaceState);
   private string SetupCommand => CatalogAgentAvailability.SetupCommand(AgentSurfaceState);
+  private string ConversationTitle =>
+    string.IsNullOrWhiteSpace(AgentSurfaceState.ConversationDisplayName)
+      ? "New conversation"
+      : AgentSurfaceState.ConversationDisplayName;
   private string? Problem => CatalogAgentAvailability.Problem(AgentSurfaceState);
 
-  private Task Activate() => EnsureAgentAsync();
+  private bool ConversationExpired =>
+    AgentConversationAuthority.IsExpired(AgentSurfaceState.Conversation, DateTimeOffset.UtcNow);
+
+  private bool TurnInProgress =>
+    Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
+
+  private IReadOnlyList<AskResourceReference> References =>
+    AskResourceReferences.FromPageContext(PageAgentContext.Describe(ScopedStore, CurrentPath()));
+
+  private bool ShowPrivacy => AskPrivacyNotice.ShouldShow
+  (
+    AgentSurfaceState.RecordChats,
+    AgentSurfaceState.PrivacyNoticeDismissed,
+    AgentSurfaceState.PrivacyNotice
+  );
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
-    if (Agent is not null || Building || Readiness != CatalogAgentReadiness.Configured)
-    {
-      return;
-    }
-
-    bool built = Agent is not null;
+    await IssueConversationAsync();
+    Ai.UIAgent? previous = Agent;
     await EnsureAgentAsync();
-    if (!built && Agent is not null)
+    if (!ReferenceEquals(previous, Agent))
     {
       StateHasChanged();
     }
   }
 
+  private string CurrentPath() => PageAgentScope.FromNavigation(NavigationManager);
+
+  private async Task IssueConversationAsync()
+  {
+    if (AgentSurfaceState.Conversation is not null)
+    {
+      return;
+    }
+
+    if (DeclinedGeneration == AgentSurfaceState.ConversationGeneration)
+    {
+      return;
+    }
+
+    // Re-read on every issue. The panel does not cache an AuthenticationState.
+#pragma warning disable BL0013
+    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+    string? idText = authentication.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!Guid.TryParse(idText, out Guid principalId))
+    {
+      DeclinedGeneration = AgentSurfaceState.ConversationGeneration;
+      return;
+    }
+
+    List<string> scopes = [];
+    foreach (Claim claim in authentication.User.FindAll(PermissionIds.ClaimType))
+    {
+      if (!string.IsNullOrEmpty(claim.Value))
+      {
+        scopes.Add(claim.Value);
+      }
+    }
+
+    int minutes = AgentSurfaceState.CredentialLifetimeMinutes;
+    TimeSpan lifetime = minutes > 0
+      ? TimeSpan.FromMinutes(minutes)
+      : AgentConversationCredentialIssuer.DefaultLifetime;
+    AgentConversationCredential credential = AgentConversationCredentialIssuer.Issue
+    (
+      principalId,
+      scopes,
+      DateTimeOffset.UtcNow,
+      lifetime
+    );
+    await AgentSurfaceState.SetConversation
+    (
+      credential.Id,
+      credential.PrincipalId,
+      scopes.ToArray(),
+      credential.ExpiresAt,
+      credential.DisplayName
+    );
+  }
+
   private async Task EnsureAgentAsync()
   {
-    if (Agent is not null || Building || Readiness != CatalogAgentReadiness.Configured)
+    if (Readiness != CatalogAgentReadiness.Configured)
+    {
+      if (Agent is not null)
+      {
+        ReleaseAgent();
+      }
+
+      return;
+    }
+
+    string path = CurrentPath();
+    AgentEditMode mode = AgentSurfaceState.EditMode;
+    int generation = AgentSurfaceState.ConversationGeneration;
+    if (Agent is not null && BuiltPath == path && BuiltMode == mode && BuiltGeneration == generation)
+    {
+      return;
+    }
+
+    // A rebuild disposes the AgentContext, which cancels the stream and orphans an approval card.
+    // Wait for the turn to finish; the status callback re-renders and this runs again. New
+    // conversation (a generation change) abandons the turn on purpose, so it does not wait.
+    if (Building || (TurnInProgress && BuiltGeneration == generation))
     {
       return;
     }
@@ -67,128 +188,267 @@
     }
 
     Building = true;
-
-    // Re-read on every activation. The modal does not cache an AuthenticationState.
+    try
+    {
+      // Re-read on every rebuild. The panel does not cache an AuthenticationState.
 #pragma warning disable BL0013
-    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+      AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 #pragma warning restore BL0013
-    string path = PageAgentScope.FromNavigation(NavigationManager);
-    IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
-    (
-      authentication.User,
-      AuthorizationService,
-      ActionCatalog.Entries,
-      path,
-      CancellationToken.None
-    );
-    Functions = CatalogAgentFunctions.Create(selected);
-    List<AITool> tools = [.. Functions.Tools];
-    tools.Add
-    (
-      AIFunctionFactory.Create
+      IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
       (
-        () => PageAgentContext.Describe(ScopedStore, PageAgentScope.FromNavigation(NavigationManager)),
-        PageAgentContext.ToolName,
-        PageAgentContext.ToolDescription
-      )
-    );
-    string instructions = "Drive this page only through the supplied tools. "
-      + PageAgentContext.Describe(ScopedStore, path);
-    InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
-    Agent = new Ai.UIAgent
-    (
-      InvokingClient,
-      options =>
+        authentication.User,
+        AuthorizationService,
+        ActionCatalog.Entries,
+        path,
+        mode,
+        CancellationToken.None
+      );
+      if (Disposed)
       {
-        options.ChatOptions = new ChatOptions
-        {
-          Tools = tools,
-          Instructions = instructions,
-        };
+        return;
       }
-    );
-    Building = false;
-  }
 
-  private Task CloseAsync() => ApplicationState.CloseModal();
+      ReleaseAgent();
+      Functions = CatalogAgentFunctions.Create(selected);
+      string instructions = "Drive this page only through the supplied tools. "
+        + PageAgentContext.Describe(ScopedStore, path);
+      InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
+      AskConversationThread thread = Threads.For(generation);
+      Ai.UIAgent agent = new
+      (
+        InvokingClient,
+        options =>
+        {
+          options.ChatOptions = new ChatOptions
+          {
+            Tools = [.. Functions.Tools],
+            Instructions = instructions,
+          };
+          options.Thread = thread;
+        }
+      );
+      Ai.AgentContext conversation = new(agent);
+      // Restore before MessageList attaches: it reads Turns once, when its AgentContext changes.
+      await conversation.RestoreAsync();
+      if (Disposed)
+      {
+        // Dispose already released the fields; free what this build created.
+        conversation.Dispose();
+        agent.Dispose();
+        ReleaseAgent();
+        return;
+      }
+
+      Agent = agent;
+      Conversation = conversation;
+      Thread = thread;
+      StatusSubscription = conversation.RegisterOnStatusChanged(OnStatusChanged);
+      BuiltPath = path;
+      BuiltMode = mode;
+      BuiltGeneration = generation;
+    }
+    finally
+    {
+      Building = false;
+    }
+  }
 
   private async Task SignInAsync()
   {
     string returnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-    await ApplicationState.CloseModal();
+    await AgentSurfaceState.CloseAskPanel();
     await NoSubRouteState.ChangeRoute(newRoute: TimeWarp.Architecture.Features.Identity.LoginPage.GetLoginUrl(returnPath));
   }
 
   private Task RetryAsync() => AgentSurfaceState.LoadChatConfiguration();
 
-  public override void Dispose()
+  private void OnStatusChanged(Ai.ConversationStatus status)
   {
+    if (!Disposed && status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
+    {
+      // A rebuild may have been deferred while the turn ran.
+      _ = InvokeAsync(StateHasChanged);
+    }
+  }
+
+  private void ReleaseAgent()
+  {
+    StatusSubscription?.Dispose();
+    StatusSubscription = null;
+    Conversation?.Dispose();
+    Conversation = null;
+    Thread = null;
     Agent?.Dispose();
     Agent = null;
     InvokingClient?.Dispose();
     InvokingClient = null;
     Functions?.Dispose();
     Functions = null;
+  }
+
+  private string? RecordedApproval(Ai.FunctionApprovalBlock approval)
+  {
+    bool? answer = Thread?.ApprovalAnswer(approval.ApprovalRequest.RequestId);
+    return answer switch
+    {
+      true => nameof(Ai.ApprovalStatus.Approved),
+      false => nameof(Ai.ApprovalStatus.Rejected),
+      null => null,
+    };
+  }
+
+  private void OpenResources() => ResourceMenuOpen = true;
+
+  private void CloseResources() => ResourceMenuOpen = false;
+
+  private void OnKeyDown(KeyboardEventArgs args)
+  {
+    if (args.Key == "@")
+    {
+      ResourceMenuOpen = true;
+    }
+  }
+
+  private Task CloseAsync() => AgentSurfaceState.CloseAskPanel();
+
+  private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
+
+  private Task NewConversationAsync() => AgentSurfaceState.NewConversation();
+
+  private Task DismissPrivacyAsync() => AgentSurfaceState.DismissPrivacyNotice();
+
+  private Task AskBeforeAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AskBeforeEditing);
+
+  private Task AutoEditAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AutomaticallyEdit);
+
+  private string AskBeforePressed =>
+    AgentSurfaceState.EditMode == AgentEditMode.AskBeforeEditing ? "true" : "false";
+
+  private string AutoEditPressed =>
+    AgentSurfaceState.EditMode == AgentEditMode.AutomaticallyEdit ? "true" : "false";
+
+  public override void Dispose()
+  {
+    Disposed = true;
+    ReleaseAgent();
     base.Dispose();
   }
 }
 
-<ModalContainer ModalId=@ModalId OnActivate=Activate>
-  <MainContent>
-    <div class="twe-agent-ask" data-qa="AgentAsk">
-      <h2 id="modal-title" class="twe-agent-ask__title">Ask</h2>
-      @if (Readiness == CatalogAgentReadiness.NotConfigured)
+<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())" @onkeydown="OnKeyDown">
+  <header class="twe-agent-ask__header">
+    <div class="twe-agent-ask__heading">
+      <h2 class="twe-agent-ask__title">Ask</h2>
+      <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
+      @if (ConversationExpired)
       {
-        <p data-qa="AgentAskNotConfigured">AI not configured</p>
-        <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
-      }
-      else if (Readiness == CatalogAgentReadiness.Unauthenticated)
-      {
-        <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
-        <div class="twe-agent-ask__actions">
-          <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
-        </div>
-      }
-      else if (Readiness == CatalogAgentReadiness.Error)
-      {
-        <p data-qa="AgentAskError">Ask could not load its configuration</p>
-        <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
-        <div class="twe-agent-ask__actions">
-          <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
-        </div>
-      }
-      else if (Agent is null)
-      {
-        <p data-qa="AgentAskStarting">Starting Ask…</p>
-      }
-      else
-      {
-        <Microsoft.AspNetCore.Components.AI.ChatPage Agent="Agent" Placeholder="Tell the app what you want">
-          <WelcomeContent>
-            <p>Ask for something this page can do.</p>
-          </WelcomeContent>
-          <MessageListContent>
-            <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionApprovalBlock" Context="approval">
-              <div class="twe-agent-ask__approval" data-qa="AgentApproval">
-                <p>Allow <strong>@approval.ToolName</strong>?</p>
-                <pre data-qa="AgentApprovalArguments">@approval.Arguments</pre>
-                @if (approval.Status == Ai.ApprovalStatus.Pending)
-                {
-                  <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentApprove" OnClick="() => approval.Approve()">Approve</FluentButton>
-                  <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentReject" OnClick="@(() => approval.Reject("Declined."))">Reject</FluentButton>
-                }
-                else
-                {
-                  <p data-qa="AgentApprovalStatus">@approval.Status</p>
-                }
-              </div>
-            </Microsoft.AspNetCore.Components.AI.BlockRenderer>
-          </MessageListContent>
-        </Microsoft.AspNetCore.Components.AI.ChatPage>
+        <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
       }
     </div>
-  </MainContent>
-  <ActionContent>
-    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AgentAskClose" OnClick="CloseAsync">Close</FluentButton>
-  </ActionContent>
-</ModalContainer>
+    <div class="twe-agent-ask__header-actions">
+      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskNewConversation" OnClick="NewConversationAsync">New</FluentButton>
+      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskExpand" OnClick="ExpandAsync">Expand</FluentButton>
+      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AgentAskClose" OnClick="CloseAsync">Close</FluentButton>
+    </div>
+  </header>
+
+  @if (ShowPrivacy)
+  {
+    <div class="twe-agent-ask__privacy" data-qa="AskPrivacyNotice">
+      <p>@AgentSurfaceState.PrivacyNotice</p>
+      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskPrivacyDismiss" OnClick="DismissPrivacyAsync">Dismiss</FluentButton>
+    </div>
+  }
+
+  @if (Readiness == CatalogAgentReadiness.NotConfigured)
+  {
+    <p data-qa="AgentAskNotConfigured">AI not configured</p>
+    <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+  }
+  else if (Readiness == CatalogAgentReadiness.Unauthenticated)
+  {
+    <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
+    <div class="twe-agent-ask__actions">
+      <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+    </div>
+  }
+  else if (Readiness == CatalogAgentReadiness.Error)
+  {
+    <p data-qa="AgentAskError">Ask could not load its configuration</p>
+    <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
+    <div class="twe-agent-ask__actions">
+      <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+    </div>
+  }
+  else if (Agent is null || Conversation is null)
+  {
+    <p data-qa="AgentAskStarting">Starting Ask…</p>
+  }
+  else
+  {
+    @if (ResourceMenuOpen)
+    {
+      <AskResourceMenu References="References" OnClose="CloseResources" />
+    }
+    @* Mirrors ChatPage, with the panel's own AgentContext so the restored turns render. *@
+    <div class="sc-ai-root sc-ai-chat-page" @key="Conversation">
+      <CascadingValue Value="Conversation" IsFixed="true">
+        <div class="sc-ai-chat-page__body">
+          <Microsoft.AspNetCore.Components.AI.MessageList>
+            <ChildContent>
+              <AskStatusLine />
+              <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionInvocationContentBlock" Context="call">
+                <details class="twe-agent-ask__reasoning" data-qa="AskReasoning">
+                  <summary>See reasoning</summary>
+                  <p>@call.ToolName</p>
+                  <pre>@call.Arguments</pre>
+                </details>
+              </Microsoft.AspNetCore.Components.AI.BlockRenderer>
+              <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionApprovalBlock" Context="approval">
+                <div class="twe-agent-ask__approval" data-qa="AgentApproval">
+                  <p>Allow <strong>@approval.ToolName</strong>?</p>
+                  <pre data-qa="AgentApprovalArguments">@approval.Arguments</pre>
+                  @if (RecordedApproval(approval) is { } recorded)
+                  {
+                    <p data-qa="AgentApprovalStatus">@recorded</p>
+                  }
+                  else if (approval.Status == Ai.ApprovalStatus.Pending)
+                  {
+                    <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentApprove" OnClick="() => approval.Approve()">Approve</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentReject" OnClick="@(() => approval.Reject("Declined."))">Reject</FluentButton>
+                  }
+                  else
+                  {
+                    <p data-qa="AgentApprovalStatus">@approval.Status</p>
+                  }
+                </div>
+              </Microsoft.AspNetCore.Components.AI.BlockRenderer>
+              <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
+            </ChildContent>
+            <EmptyContent>
+              <div class="twe-agent-ask__welcome">
+                <p class="twe-agent-ask__greeting">What should we do on this page?</p>
+                <AskSuggestions Suggestions="Suggestions" />
+              </div>
+            </EmptyContent>
+          </Microsoft.AspNetCore.Components.AI.MessageList>
+        </div>
+        <div class="sc-ai-chat-page__footer">
+          <div class="sc-ai-chat-page__input-container">
+            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="Tell the app what you want">
+              <LeadingActions>
+                <FluentButton Appearance="ButtonAppearance.Subtle" Class="twe-agent-ask__tag" data-qa="AskTagResource" OnClick="OpenResources">Tag</FluentButton>
+              </LeadingActions>
+            </Microsoft.AspNetCore.Components.AI.MessageInput>
+          </div>
+        </div>
+      </CascadingValue>
+    </div>
+  }
+
+  <footer class="twe-agent-ask__edit" data-qa="AskEditMode">
+    <p class="twe-agent-ask__edit-label">Edit behavior</p>
+    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
+  </footer>
+</div>

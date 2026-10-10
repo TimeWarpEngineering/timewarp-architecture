@@ -9,6 +9,8 @@
 // those prefixes would silently skip approval. Adding an entry here is a reviewed decision that
 // the action changes no state the person cares about. Permissions are a separate gate: an
 // action the principal cannot run is not offered, and approval does not grant it.
+// Automatically edit turns the bit off for every tool in that conversation. Read-only actions
+// stay off in both modes. The bit is decided at selection; both drivers pass the same mode.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -26,5 +28,16 @@ public static class CatalogAgentApproval
   {
     ArgumentNullException.ThrowIfNull(entry);
     return !ReadOnlyActions.Contains(entry.Name);
+  }
+
+  public static bool RequiresApproval(ActionCatalogEntry entry, AgentEditMode mode)
+  {
+    ArgumentNullException.ThrowIfNull(entry);
+    if (mode == AgentEditMode.AutomaticallyEdit)
+    {
+      return false;
+    }
+
+    return RequiresApproval(entry);
   }
 }

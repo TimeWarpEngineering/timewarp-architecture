@@ -1,0 +1,41 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@using TimeWarp.Architecture.Services
+@attribute [DirectComponentSideEffect("Inserts a typed @ token into the library chat textarea at the caret. The draft is owned by that input, not by store state.")]
+
+@*
+  Purpose: Menu of typed page resources the person can tag in Ask.
+
+  Design: Tokens come from the current page_context. An empty page says so instead of inventing
+  resource types. Choosing one inserts the token and closes the menu.
+*@
+
+@code {
+  [Parameter] public IReadOnlyList<AskResourceReference> References { get; set; } = [];
+
+  [Parameter] public EventCallback OnClose { get; set; }
+
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+
+  private async Task InsertAsync(string token)
+  {
+    await AskAiJsModule.InsertReferenceAsync(JsRuntime, token);
+    await OnClose.InvokeAsync();
+  }
+
+  private Task CloseAsync() => OnClose.InvokeAsync();
+}
+
+<div class="twe-agent-ask__resources" data-qa="AskResourceMenu">
+  @if (References.Count == 0)
+  {
+    <p data-qa="AskResourceEmpty">Nothing on this page to tag.</p>
+  }
+  else
+  {
+    @foreach (AskResourceReference reference in References)
+    {
+      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskResourceOption" OnClick="() => InsertAsync(reference.Token)">@reference.Label</FluentButton>
+    }
+  }
+  <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskResourceClose" OnClick="CloseAsync">Close tags</FluentButton>
+</div>

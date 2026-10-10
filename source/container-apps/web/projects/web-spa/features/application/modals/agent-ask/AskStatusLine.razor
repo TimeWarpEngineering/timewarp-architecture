@@ -1,0 +1,18 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@using Ai = Microsoft.AspNetCore.Components.AI
+
+@*
+  Purpose: Shows when Ask is still producing an answer.
+
+  Design: The relay returns one response, so this line is the streaming status the chat control
+  already tracks. It renders nothing while the conversation is idle.
+*@
+
+@code {
+  [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
+}
+
+@if (Conversation?.Status == Ai.ConversationStatus.Streaming)
+{
+  <p data-qa="AskStreaming">Thinking…</p>
+}

@@ -10,6 +10,10 @@
 // ApplicationState.SetActiveModal through StateTransactionBehavior, so a visible Ask proves a
 // store action ran in WASM. Console text is
 // checked for the TimeWarp.State SemaphoreSlim.Wait failure noted on 2026-10-09.
+// The configured pass also proves the review-round-1 behaviours a fake upstream can reach: the
+// edit-mode buttons toggle aria-pressed; the transcript survives an edit-mode rebuild and Close
+// plus reopen; Close resets the mode to Ask before editing; @ insertion does not double the @;
+// Copy writes the last answer (not the whole panel) to the clipboard.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -66,8 +70,10 @@ public class AskSurface_Given_Wasm
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
       // The host locale can be en-us@posix, which .NET WASM rejects and never renders the shell.
       Locale = "en-US",
+      Permissions = ["clipboard-read", "clipboard-write"],
       ExtraHTTPHeaders = new Dictionary<string, string>
       {
         ["X-TimeWarp-Mock-Principal-Id"] = MockPrincipalId,
@@ -105,6 +111,7 @@ public class AskSurface_Given_Wasm
     Volatile.Read(ref sawWasm).ShouldBe(1, "InteractiveWebAssembly did not download a .wasm");
     string html = await page.ContentAsync();
     html.ShouldContain("webassembly", Case.Insensitive);
+    await page.Locator("[data-qa=AskAiButton]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
 
     // The palette listener is attached on the shell's first interactive render, after the app bar
     // is already in the document. Retry Ctrl-K until Ask is visible.
@@ -143,6 +150,11 @@ public class AskSurface_Given_Wasm
     {
       ILocator input = page.Locator(".sc-ai-input__textarea");
       await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+      (await page.Locator("[data-qa=AskSuggestion]").CountAsync()).ShouldBeGreaterThanOrEqualTo(3);
+      (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
+      await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      await page.Locator("[data-qa=AskTagResource]").ClickAsync();
+      await page.Locator("[data-qa=AskResourceEmpty]").WaitForAsync();
       await input.FillAsync("What is on this page?");
       await page.Locator(".sc-ai-input__send").ClickAsync();
       ILocator answer = page.Locator(".sc-ai-root").GetByText("page_context:");
@@ -158,6 +170,30 @@ public class AskSurface_Given_Wasm
       chat.ShouldNotBeNull();
       title.Y.ShouldBeGreaterThanOrEqualTo(0);
       (chat.Y + chat.Height).ShouldBeLessThanOrEqualTo(page.ViewportSize!.Height);
+      await page.Locator("[data-qa=AskCopy]").WaitForAsync();
+      await page.Locator("[data-qa=AskThumbsUp]").WaitForAsync();
+      await page.Locator("[data-qa=AskThumbsDown]").WaitForAsync();
+      await page.Locator("[data-qa=AskSupport]").WaitForAsync();
+      await AssertCopyWritesTheLastAnswerAsync(page);
+      await AssertReferenceInsertReplacesTypedAtAsync(page);
+
+      await PressedShouldBeAsync(page, "AskBeforeEditing", "true");
+      await page.Locator("[data-qa=AskAutomaticallyEdit]").ClickAsync();
+      await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "true");
+      await PressedShouldBeAsync(page, "AskBeforeEditing", "false");
+      // The mode change rebuilds the agent; the turn must still be on screen afterwards.
+      await page.Locator("[data-qa=AgentAsk][data-built-mode=AutomaticallyEdit]").WaitForAsync(new LocatorWaitForOptions
+      {
+        Timeout = 30_000,
+      });
+      await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+
+      await AssertDockedPanelAsync(page);
+
+      // Close + reopen: the transcript is restored and the edit mode is back to Ask before editing.
+      await page.Locator(".sc-ai-root").GetByText("page_context:").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      await PressedShouldBeAsync(page, "AskBeforeEditing", "true");
+      await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "false");
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
         Path = ScreenshotPath("ctrl-k-ask-result.png"),
@@ -171,6 +207,8 @@ public class AskSurface_Given_Wasm
       (await missing.InnerTextAsync()).ShouldBe("AI not configured");
       string command = await page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync();
       command.ShouldBe(XaiChatDefaults.SetupCommand);
+      await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
         Path = ScreenshotPath("ctrl-k-ask-not-configured.png"),
@@ -192,8 +230,101 @@ public class AskSurface_Given_Wasm
     }
 
     directory.ShouldNotBeNull();
-    string[] matches = Directory.GetDirectories(Path.Combine(directory, "kanban"), "289-*", SearchOption.AllDirectories);
-    string folder = matches.Single(path => File.Exists(Path.Combine(path, "task.md")));
+    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), "292-*", SearchOption.AllDirectories)
+      .Single(path => File.Exists(Path.Combine(path, "task.md")));
     return Path.Combine(folder, fileName);
+  }
+
+  private static async Task AssertDockedPanelAsync(IPage page)
+  {
+    await page.SetViewportSizeAsync(1280, 800);
+    LocatorBoundingBoxResult panel = await BoxAsync(page, "[data-qa=AgentAsk]");
+    ((double)panel.Width).ShouldBe(450, 2);
+    LocatorBoundingBoxResult appBar = await BoxAsync(page, ".twe-appbar");
+    (appBar.Width + panel.Width).ShouldBeLessThanOrEqualTo(page.ViewportSize!.Width + 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-panel-docked.png") });
+
+    await page.Locator("[data-qa=AskExpand]").ClickAsync();
+    LocatorBoundingBoxResult expanded = await BoxAsync(page, "[data-qa=AgentAsk]");
+    ((double)expanded.Width).ShouldBe(page.ViewportSize!.Width, 2);
+    await page.Locator("[data-qa=AskExpand]").ClickAsync();
+
+    await page.SetViewportSizeAsync(800, 700);
+    LocatorBoundingBoxResult narrow = await BoxAsync(page, "[data-qa=AgentAsk]");
+    ((double)narrow.Width).ShouldBe(800, 2);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-panel-narrow.png") });
+
+    await page.SetViewportSizeAsync(1280, 800);
+    await page.Locator("[data-qa=AgentAskClose]").ClickAsync();
+    await page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions
+    {
+      State = WaitForSelectorState.Hidden,
+      Timeout = 30_000,
+    });
+    await page.Locator("[data-qa=AskAiButton]").ClickAsync();
+    await page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+  }
+
+  private static async Task PressedShouldBeAsync(IPage page, string qa, string expected)
+  {
+    ILocator button = page.Locator($"[data-qa={qa}]");
+    for (int attempt = 0; attempt < 50; attempt++)
+    {
+      if (await button.GetAttributeAsync("aria-pressed") == expected)
+      {
+        return;
+      }
+
+      await Task.Delay(100);
+    }
+
+    (await button.GetAttributeAsync("aria-pressed")).ShouldBe(expected, qa);
+  }
+
+  private static async Task AssertCopyWritesTheLastAnswerAsync(IPage page)
+  {
+    await page.Locator("[data-qa=AskCopy]").ClickAsync();
+    string copied = "";
+    for (int attempt = 0; attempt < 50 && !copied.StartsWith("page_context:", StringComparison.Ordinal); attempt++)
+    {
+      copied = await page.EvaluateAsync<string>("() => navigator.clipboard.readText()");
+      await Task.Delay(100);
+    }
+
+    copied.ShouldStartWith("page_context:");
+    copied.ShouldNotContain("Thumbs up");
+    copied.ShouldNotContain("What is on this page?");
+  }
+
+  private static async Task AssertReferenceInsertReplacesTypedAtAsync(IPage page)
+  {
+    const string script = """
+      async () => {
+        const area = document.querySelector(".twe-agent-ask .sc-ai-input__textarea");
+        area.value = "see @";
+        area.selectionStart = area.value.length;
+        area.selectionEnd = area.value.length;
+        const module = await import(new URL("./js/features/ask-ai.js", document.baseURI).href);
+        module.InsertReference("@profile:ada");
+        const replaced = area.value;
+        area.value = "see ";
+        area.selectionStart = area.value.length;
+        area.selectionEnd = area.value.length;
+        module.InsertReference("@profile:ada");
+        const appended = area.value;
+        area.value = "";
+        area.dispatchEvent(new Event("input", { bubbles: true }));
+        return replaced + "|" + appended;
+      }
+      """;
+    string result = await page.EvaluateAsync<string>(script);
+    result.ShouldBe("see @profile:ada|see @profile:ada");
+  }
+
+  private static async Task<LocatorBoundingBoxResult> BoxAsync(IPage page, string selector)
+  {
+    LocatorBoundingBoxResult? box = await page.Locator(selector).BoundingBoxAsync();
+    box.ShouldNotBeNull(selector);
+    return box;
   }
 }

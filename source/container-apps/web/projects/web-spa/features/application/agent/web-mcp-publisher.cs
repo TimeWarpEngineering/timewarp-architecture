@@ -6,6 +6,10 @@
 // The list is the permission-filtered catalog tools for the route plus page_context, which is
 // present even when the route has no catalog tools. Human-only actions never appear.
 // Publishing is a store handler's job. The shell only dispatches SyncWebMcp.
+// DescribeAsync takes the conversation edit mode so RequiresApproval matches the in-app list.
+// PublishAsync reads that mode from AgentSurfaceState. The credential is not a list filter.
+// PublishAsync(context, …) is the same publish against any model context; the parameterless form
+// passes the JS context. Tests use it with a recording context to prove the store-read path.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -18,6 +22,7 @@ public sealed class WebMcpPublisher
   private readonly IAuthorizationService AuthorizationService;
   private readonly AuthenticationStateProvider AuthenticationStateProvider;
   private readonly NavigationManager Navigation;
+  private readonly IStore Store;
 
   public WebMcpPublisher
   (
@@ -25,7 +30,8 @@ public sealed class WebMcpPublisher
     IActionCatalog catalog,
     IAuthorizationService authorizationService,
     AuthenticationStateProvider authenticationStateProvider,
-    NavigationManager navigation
+    NavigationManager navigation,
+    IStore store
   )
   {
     Context = context;
@@ -33,6 +39,7 @@ public sealed class WebMcpPublisher
     AuthorizationService = authorizationService;
     AuthenticationStateProvider = authenticationStateProvider;
     Navigation = navigation;
+    Store = store;
   }
 
   public static async Task<IReadOnlyList<WebMcpToolDescriptor>> DescribeAsync
@@ -44,6 +51,25 @@ public sealed class WebMcpPublisher
     CancellationToken cancellationToken
   )
   {
+    return await DescribeAsync(
+      user,
+      authorizationService,
+      catalog,
+      path,
+      AgentEditMode.AskBeforeEditing,
+      cancellationToken);
+  }
+
+  public static async Task<IReadOnlyList<WebMcpToolDescriptor>> DescribeAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorizationService,
+    IActionCatalog catalog,
+    string? path,
+    AgentEditMode editMode,
+    CancellationToken cancellationToken
+  )
+  {
     ArgumentNullException.ThrowIfNull(catalog);
     IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
     (
@@ -51,13 +77,14 @@ public sealed class WebMcpPublisher
       authorizationService,
       catalog.Entries,
       path,
+      editMode,
       cancellationToken
     );
 
     List<WebMcpToolDescriptor> tools = [];
     foreach (CatalogAgentTool tool in selected)
     {
-      tools.Add(new WebMcpToolDescriptor(tool.Name, tool.Description, tool.InputSchema));
+      tools.Add(new WebMcpToolDescriptor(tool.Name, tool.Description, tool.InputSchema, tool.RequiresApproval));
     }
 
     tools.Add
@@ -66,13 +93,16 @@ public sealed class WebMcpPublisher
       (
         PageAgentContext.ToolName,
         PageAgentContext.ToolDescription,
-        PageAgentContext.EmptyInputSchema
+        PageAgentContext.EmptyInputSchema,
+        RequiresApproval: false
       )
     );
     return tools;
   }
 
-  public async Task PublishAsync(CancellationToken cancellationToken)
+  public Task PublishAsync(CancellationToken cancellationToken) => PublishAsync(Context, cancellationToken);
+
+  public async Task PublishAsync(IWebMcpModelContext? context, CancellationToken cancellationToken)
   {
     // Re-read on every publish. The publisher does not cache an AuthenticationState.
 #pragma warning disable BL0013
@@ -85,8 +115,9 @@ public sealed class WebMcpPublisher
       AuthorizationService,
       Catalog,
       path,
+      Store.GetState<AgentSurfaceState>().EditMode,
       cancellationToken
     );
-    await WebMcpRegistration.ApplyAsync(Context, tools, cancellationToken);
+    await WebMcpRegistration.ApplyAsync(context, tools, cancellationToken);
   }
 }

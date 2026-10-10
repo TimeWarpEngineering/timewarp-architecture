@@ -48,7 +48,11 @@ public sealed class GetAgentChatConfiguration
       {
         Configured = configured,
         SetupCommand = XaiChatDefaults.SetupCommand,
-        Model = configured ? Upstream.Model : null
+        Model = configured ? Upstream.Model : null,
+        RecordChats = XaiChatDefaults.RecordChats,
+        PrivacyNotice = XaiChatDefaults.PrivacyNotice,
+        SupportUrl = XaiChatDefaults.SupportUrl,
+        CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes
       };
     }
   }

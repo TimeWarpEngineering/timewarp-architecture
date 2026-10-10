@@ -8,10 +8,18 @@
 // for a matching response before InvokeCoreAsync runs. The function reads IStore,
 // AuthenticationStateProvider, IAuthorizationService, NavigationManager, and IActionCatalog from
 // the arguments' service provider, which the invoking client sets from the circuit scope.
-// Selection happened when the modal opened; by invocation the person may have navigated, signed
+// Selection happened when the panel built the functions; by invocation the person may have navigated, signed
 // out, or lost a permission while the approval waited. InvokeCoreAsync therefore re-selects for
 // the current principal and route and returns a failed result (not an exception, so the model
 // sees why) when the tool is no longer offered. It executes the re-selected entry.
+// The wrapper is chosen at Create from the edit mode then; each function remembers whether it was
+// wrapped. If the re-selected tool now requires approval (the person switched back to Ask before
+// editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
+// instead of running without a prompt. A wrapped function in Automatic mode still runs: the
+// prompt it already showed is stricter than the mode.
+// Create always appends page_context with the same name, description, and empty schema WebMCP
+// publishes, and it is never approval-wrapped. The conversation credential is checked after the
+// approval wrapper has already run, and before Execute. A null credential is allowed.
 // The model never calls an HTTP endpoint itself. Store handlers keep [EndpointAuthorize].
 #endregion
 
@@ -22,6 +30,9 @@ using System.Text.Json.Serialization;
 /// <summary>Catalog tools as <see cref="AITool"/> instances, including approval wrappers.</summary>
 public sealed class CatalogAgentFunctions : IDisposable
 {
+  public const string ApprovalRequiredError =
+    "This action now needs approval. The edit mode changed to Ask before editing; ask again.";
+
   private readonly List<JsonDocument> Documents;
 
   private CatalogAgentFunctions(IReadOnlyList<AITool> tools, List<JsonDocument> documents)
@@ -41,10 +52,13 @@ public sealed class CatalogAgentFunctions : IDisposable
     {
       var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(tool.InputSchema) ? "{}" : tool.InputSchema);
       documents.Add(document);
-      CatalogAgentFunction function = new(tool, document);
+      CatalogAgentFunction function = new(tool, document, wrapped: tool.RequiresApproval);
       functions.Add(tool.RequiresApproval ? new ApprovalRequiredAIFunction(function) : function);
     }
 
+    var pageContextSchema = JsonDocument.Parse(PageAgentContext.EmptyInputSchema);
+    documents.Add(pageContextSchema);
+    functions.Add(new PageContextFunction(pageContextSchema));
     return new CatalogAgentFunctions(functions, documents);
   }
 
@@ -62,11 +76,13 @@ public sealed class CatalogAgentFunctions : IDisposable
   {
     private readonly CatalogAgentTool Tool;
     private readonly JsonDocument Schema;
+    private readonly bool Wrapped;
 
-    public CatalogAgentFunction(CatalogAgentTool tool, JsonDocument schema)
+    public CatalogAgentFunction(CatalogAgentTool tool, JsonDocument schema, bool wrapped)
     {
       Tool = tool;
       Schema = schema;
+      Wrapped = wrapped;
     }
 
     public override string Name => Tool.Name;
@@ -102,6 +118,7 @@ public sealed class CatalogAgentFunctions : IDisposable
         catalog.Entries,
         PageAgentScope.FromNavigation(navigation),
         Tool.Name,
+        store.GetState<AgentSurfaceState>().EditMode,
         cancellationToken
       );
       if (current is null)
@@ -109,10 +126,67 @@ public sealed class CatalogAgentFunctions : IDisposable
         return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
       }
 
+      if (current.RequiresApproval && !Wrapped)
+      {
+        return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+      }
+
       object?[] bound = CatalogAgentArguments.Bind(current.Entry, arguments);
+      string? denial = AgentConversationAuthority.Denial(
+        store.GetState<AgentSurfaceState>().Conversation,
+        authentication.User,
+        current.Entry.Permissions);
+      if (denial is not null)
+      {
+        return new CatalogAgentCallResult(Tool.Name, Completed: false, denial);
+      }
+
       outcome.Clear();
       await current.Entry.Execute(store, bound, cancellationToken);
       return new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result);
+    }
+  }
+
+  private sealed class PageContextFunction : AIFunction
+  {
+    private readonly JsonDocument Schema;
+
+    public PageContextFunction(JsonDocument schema)
+    {
+      Schema = schema;
+    }
+
+    public override string Name => PageAgentContext.ToolName;
+
+    public override string Description => PageAgentContext.ToolDescription;
+
+    public override JsonElement JsonSchema => Schema.RootElement;
+
+    protected override async ValueTask<object?> InvokeCoreAsync
+    (
+      AIFunctionArguments arguments,
+      CancellationToken cancellationToken
+    )
+    {
+      IServiceProvider services = arguments.Services
+        ?? throw new InvalidOperationException("Tool 'page_context' needs a service provider on the function arguments.");
+      IStore store = services.GetRequiredService<IStore>();
+      AuthenticationStateProvider authenticationStateProvider =
+        services.GetRequiredService<AuthenticationStateProvider>();
+      NavigationManager navigation = services.GetRequiredService<NavigationManager>();
+#pragma warning disable BL0013
+      AuthenticationState authentication = await authenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+      string? denial = AgentConversationAuthority.Denial(
+        store.GetState<AgentSurfaceState>().Conversation,
+        authentication.User,
+        []);
+      if (denial is not null)
+      {
+        return new CatalogAgentCallResult(PageAgentContext.ToolName, Completed: false, denial);
+      }
+
+      return PageAgentContext.Describe(store, PageAgentScope.FromNavigation(navigation));
     }
   }
 
