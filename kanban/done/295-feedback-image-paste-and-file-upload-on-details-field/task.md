@@ -75,19 +75,21 @@ This host is TWE-001, so the Playwright browser run was not started. `web-spa-pl
 
 The next CI run (PR #458, run 38041035106, head `386050071`) still rejected `notes.txt`. `POST /api/Feedback/attachments` with `text/plain` matched the host's empty 415 endpoint before the upload endpoint ran, because a POST request DTO accepts only `application/json`. Clearing that default also deletes an `Accepts()` call in the same method, so the allow-list is added after that convention. `text/plain`, `text/plain; charset=utf-8`, and `image/png` now return 200. `image/svg+xml` stays the empty 415. When an upload fails and the API problem is missing or only the generic unhandled error, the form says the file could not be uploaded.
 
+The third CI run (PR #458, run 38043697206, head `c3135dc71`) filed the picked file and then timed out waiting for the pasted image. The server saw no second upload. Fluent UI v5 renders the details box as `fluent-textarea`. The paste module looked up `fluent-text-area`, so it never bound a listener, and `customElements.whenDefined("fluent-text-area")` never resolved. The page passes a wrapper; `[data-qa=FeedbackBody]` is the `fluent-textarea` inside it. The test pastes on that element's shadow textarea. That event does not cross the shadow boundary, so the listener has to be on the inner textarea. The module now finds `fluent-textarea` whether the passed element is the control or a wrapper, watches the shadow root, and binds the inner textarea when it appears. A jsdom harness checked that path, a control passed directly, a textarea added after register, a clipboard that only fills `items`, a non-image paste, and the old tag.
+
 ### How to validate
 
 **Smoke:**
 
 ```powershell
-cd tests/container-apps/web/web-server-integration-tests; dotnet test -c Release -- --filter-class Accepts_
-cd ../web-spa-playwright-tests; dotnet build -c Release
+dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release
+dotnet build tests/container-apps/web/web-spa-playwright-tests/web-spa-playwright-tests.csproj -c Release
 ```
 
 **Expect:**
 
-- `Accepts_`: 4 passed. `text/plain` (21-byte `notes.txt`), `text/plain` with charset, and `image/png` return 200. `image/svg+xml` returns an empty 415.
-- `web-spa-playwright-tests` builds with 0 warnings and 0 errors. The browser run stays on CI. It signs in with a virtual passkey, opens `/Feedback`, fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
+- Both builds finish with 0 warnings and 0 errors. The web-spa build compiles `feedback-paste.ts`.
+- The browser run stays on CI. It signs in with a virtual passkey, opens `/Feedback`, fills the picker, pastes a 1×1 PNG onto the Details shadow textarea, submits, and opens the item page. Both attachments render. Screenshots land next to this task file.
 
 ### Review disposition
 
@@ -125,6 +127,7 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
 - 2026-10-10 implementer (ganda task work, upload 415): the allow-list is applied after the JSON accepts default is cleared. `Accepts_` 4/4. Playwright project builds with 0 warnings. Browser run left for CI. A failed upload shows a message when the API problem is missing.
 - 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): round 5 on the upload-415 delta; M15 fixed; disposition clean (5 rounds, 15 fixed).
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-10T10:04:31Z
+- 2026-10-10 implementer (ganda task work, paste binding): the paste module binds `fluent-textarea` and its shadow textarea. web-spa and the Playwright project build with 0 warnings. Browser run left for CI.
 
 ## Notes
 
@@ -140,3 +143,4 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
 - 2026-10-10: second CI run after the CI-fix pass (PR #458, run 38041035106, job 114181177066, head `386050071`) still failed `ci`. `ActionCatalog_Should` now passes and the sign-in fix works: the feedback form renders. The remaining failure, `FeedbackAttachment_Given_Wasm.PasteAndUpload_Should_ShowAttachmentsOnTheItem`, timed out at `feedback-attachment-playwright-tests.cs:88` waiting for `[data-qa=FeedbackAttachment]` after the file picker set `notes.txt` (`text/plain`). The web-server log shows the cause, a real product bug: `POST /api/Feedback/attachments - text/plain 21` matched endpoint `415 HTTP Unsupported Media Type` and returned 415. The upload endpoint's content-type matching (e.g. an `Accepts<...>`/consumes restriction or a request-body binding that only takes certain media types) rejects the raw file body for allowed file types. Fix the endpoint so every allowed attachment type (text, images, etc.) uploads with its own Content-Type, add a test for a non-octet-stream upload, and make the UI surface an upload error instead of silently showing nothing. Steven approved another walk pass (`ganda task work 295 --restart --no-merge --yes`). Second walk log: `~/logs/task-work-timewarp-architecture-295-20261010-160656.log`.
 - 2026-10-10 fix: the upload allow-list is added after the convention that clears the JSON default. `text/plain` and `image/png` return 200. `image/svg+xml` stays an empty 415. The form says the file could not be uploaded when the failure body has no useful problem.
 - 2026-10-10: third CI run (PR #458, run 38043697206, head `c3135dc71`) still failed `ci` on one test. `template-smoke` passed and the action-catalog test passes. The 415 fix works: the file picker's `POST /api/Feedback/attachments` (text/plain) returned 200 and the first attachment rendered. `FeedbackAttachment_Given_Wasm.PasteAndUpload_Should_ShowAttachmentsOnTheItem` then timed out at `feedback-attachment-playwright-tests.cs:113` waiting for `[data-qa=FeedbackAttachment]` Nth(1), the pasted image. The web-server log shows no second upload request after the paste, so the paste never reached .NET. This is a real product bug, not test setup: the test dispatches paste on `[data-qa=FeedbackBody]`'s shadow-root textarea, which is the path users hit. Suspected cause, in `source/container-apps/web/projects/web-spa/source/features/feedback-paste.ts`: (1) `Register` finds the text area with `root.querySelector("fluent-text-area")`, which only searches descendants, so it misses when `root` (the element reference the page passes, `[data-qa=FeedbackBody]`) IS the `fluent-text-area`, and no listener is bound; (2) the fallback re-attaches only once, on `customElements.whenDefined`, which can fire before the shadow-root textarea exists, so the inner textarea may never be bound. Fix the binding (handle root being the text area itself, and bind once the inner textarea exists, e.g. after first render or via a MutationObserver), and confirm with the Playwright test in CI. Steven approved one more walk pass (`ganda task work 295 --restart --no-merge --yes`, 2026-10-10 18:25 ICT).
+- 2026-10-10 fix: Fluent UI v5's tag is `fluent-textarea`. The module looked up `fluent-text-area`, so no listener was bound and `whenDefined` never resolved. A paste on the shadow textarea does not cross the shadow boundary, so the inner textarea has to have the listener. The module finds `fluent-textarea` on the passed element or a descendant, watches the shadow root, and binds the inner textarea when it appears.
