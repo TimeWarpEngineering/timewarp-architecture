@@ -14,8 +14,10 @@
   Ask" and a button that closes the panel and goes to Login with the current page as the return
   path. Any other failure shows the status, title and detail and a Retry that runs the probe
   again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
-  Tools are the current page's catalog actions plus page_context, the same list WebMCP publishes,
-  including the approval bit for the conversation's edit mode. The route is PageAgentRoute, which
+  Tools are the palette's agent-visible commands, navigate, the current page's tools, and
+  page_context, the same list WebMCP publishes, including the approval bit for the conversation's
+  edit mode. Global actions and navigate run from any page. A page-bound action off its page
+  returns a navigate offer and does not run. The route is PageAgentRoute, which
   this panel refreshes from the browser location on WebAssembly before it rebuilds. Tool arguments
   render as JSON. An empty argument dictionary is omitted: Razor would print its CLR type name,
   and page_context's schema is empty so that dictionary is {}. The tool result stays in the model
@@ -218,8 +220,17 @@
 
       ReleaseAgent();
       Functions = CatalogAgentFunctions.Create(selected);
-      string instructions = "Drive this page only through the supplied tools. "
-        + PageAgentContext.Describe(ScopedStore, path);
+      List<string> toolNames = [];
+      foreach (CatalogAgentTool tool in selected)
+      {
+        toolNames.Add(tool.Name);
+      }
+
+      toolNames.Add(PageAgentContext.ToolName);
+      string instructions = AgentAskInstructions.For
+      (
+        PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
+      );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
       AskConversationThread thread = Threads.For(generation);
       Ai.UIAgent agent = new

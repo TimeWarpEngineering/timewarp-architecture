@@ -13,7 +13,7 @@
 // TimeWarp.State.Plus is included so [TrackAction] can resolve ActionTrackingState.
 // AddActionCatalog mirrors Web.Spa.Program so IActionCatalog tests see the production roster;
 // AddJavaScriptDispatch reuses Web.Spa.Program.AllowJavaScriptDispatch for the same reason (task 278).
-// Authorization policies and the WebMCP services mirror the same program so page-scoped tool
+// Authorization policies and the WebMCP services mirror the same program so palette-backed tool
 // tests resolve IAuthorizationService and WebMcpDispatcher from the per-test scope (task 271).
 // JsWebMcpModelContext is fully qualified: TimeWarp.Architecture.Services is a global using
 // only when the api flag is on. Without api, a signed-in principal with every permission
