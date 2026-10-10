@@ -5,19 +5,25 @@
 #region Design
 // The browser agent is not trusted. InvokeTool selects the tools again for the current principal
 // and route, so a stale registration cannot call an action the person can no longer run.
-// page_context is not a catalog action; it returns the page facts and does not ask for approval.
+// page_context and navigate are not catalog actions. page_context returns the page facts and does
+// not ask for approval. navigate rebuilds the palette and calls RouteState.ChangeRoute, and it
+// does not ask for approval. A page-bound palette tool invoked off its page returns the navigate
+// offer and does not bind or execute. A page-only tool is refused off its page.
 // The route is the shell's PageAgentRoute when one has been observed.
 // Arguments are parsed and bound before anything is shown: a call that cannot bind returns
 // {action, error} without a prompt, and the banner shows the canonical rendering of the bound
 // values (CatalogAgentArguments.Render). Execute receives exactly that bound array.
 // Mutating tools take the single WebMcpApprovalGate slot. A second mutating call while one waits
-// is refused with an error instead of replacing the call on screen. While waiting, the dispatcher
-// listens to LocationChanged and cancels its own call on any navigation, which also covers
-// focused pages that do not host the banner. After the wait it clears its banner (ResolveApproval
-// with its own id is a no-op if already answered), then refuses with PageChangedError if any
-// navigation happened while waiting (even one that returns to the same path, such as a query-only
-// change). Otherwise it refuses unless a fresh selection for the current principal still offers the
-// same tool, and it checks the path once more after that await, right before Execute.
+// is refused with an error instead of replacing the call on screen. While a page-bound call waits,
+// the dispatcher listens to LocationChanged and cancels that call, which also covers focused pages
+// that do not host the banner. A tool that is not page-bound keeps waiting across navigation.
+// After the wait it clears its banner (ResolveApproval with its own id is a no-op if already
+// answered). A page-bound tool then refuses with PageChangedError if any navigation happened
+// while waiting (even one that returns to the same path, such as a query-only change), and it
+// re-selects on the path the call started on. The page-changed refusal is distinct from a person
+// rejecting the prompt.
+// A tool that is not page-bound is not refused only because the path changed; it re-selects on
+// the path now showing, and returns a navigate offer if that selection is now discovery-only.
 // Result JSON uses the contract seam options. Execute failures are not mapped: handlers report
 // their own outcomes on NotificationState.
 #endregion
@@ -79,11 +85,48 @@ public sealed class WebMcpDispatcher
         return Error(name, pageDenial);
       }
 
-      return PageAgentContext.Describe(Store, path);
+      return PageAgentContext.Describe(Store, path, await OfferedNamesAsync(path));
+    }
+
+    if (string.Equals(name, AgentNavigate.ToolName, StringComparison.Ordinal))
+    {
+      AuthenticationState authentication = await AuthenticationAsync();
+      AgentNavigate.Result navigated = await AgentNavigate.InvokeAsync
+      (
+        authentication.User,
+        AuthorizationService,
+        Catalog.Entries,
+        Store,
+        path,
+        ParseArguments(argumentsJson),
+        CancellationToken.None
+      );
+      return Serialize(navigated);
     }
 
     CatalogAgentTool? tool = await FindOfferedAsync(path, name);
     if (tool is null)
+    {
+      return Error(name, UnavailableError);
+    }
+
+    if (tool.OffPageRoute is not null)
+    {
+      if (tool.Entry is null)
+      {
+        return Error(name, UnavailableError);
+      }
+
+      string? offerDenial = await CredentialDenialAsync(tool.Entry.Permissions);
+      if (offerDenial is not null)
+      {
+        return Error(name, offerDenial);
+      }
+
+      return Serialize(AgentNavigate.OfferFor(tool.Entry, tool.OffPageRoute));
+    }
+
+    if (tool.Entry is null)
     {
       return Error(name, UnavailableError);
     }
@@ -110,8 +153,16 @@ public sealed class WebMcpDispatcher
         return Error(name, BusyError);
       }
 
-      (bool approved, bool navigated) = await WaitForApprovalAsync(callId, decision, tool.Name, rendered);
-      if (navigated || !IsOnPath(path))
+      bool pageBound = PageAgentScope.PrimaryPage(tool.Name) is not null;
+      (bool approved, bool navigated) = await WaitForApprovalAsync
+      (
+        callId,
+        decision,
+        tool.Name,
+        rendered,
+        pageBound
+      );
+      if (pageBound && (navigated || !IsOnPath(path)))
       {
         return Error(name, PageChangedError);
       }
@@ -121,17 +172,51 @@ public sealed class WebMcpDispatcher
         return Serialize(new WebMcpRejected(tool.Name, Approved: false));
       }
 
-      tool = await FindOfferedAsync(path, name);
-      if (tool is null)
+      if (pageBound)
       {
-        return Error(name, UnavailableError);
+        tool = await FindOfferedAsync(path, name);
+        if (tool?.Entry is null || tool.OffPageRoute is not null)
+        {
+          return Error(name, UnavailableError);
+        }
+
+        // The permission check awaited; navigation may have happened after the listener was removed.
+        if (!IsOnPath(path))
+        {
+          return Error(name, PageChangedError);
+        }
+      }
+      else
+      {
+        string currentPath = Route.PathOr(Navigation);
+        tool = await FindOfferedAsync(currentPath, name);
+        if (tool?.Entry is null)
+        {
+          return Error(name, UnavailableError);
+        }
+
+        if (tool.OffPageRoute is not null)
+        {
+          return Serialize(AgentNavigate.OfferFor(tool.Entry, tool.OffPageRoute));
+        }
       }
 
-      // The permission check awaited; navigation may have happened after the listener was removed.
-      if (!IsOnPath(path))
+      try
       {
-        return Error(name, PageChangedError);
+        bound = CatalogAgentArguments.Bind(tool.Entry, ParseArguments(argumentsJson));
       }
+      catch (Exception exception) when
+      (
+        exception is ArgumentException or JsonException or NotSupportedException or InvalidOperationException
+      )
+      {
+        return Error(name, exception.Message);
+      }
+    }
+
+    if (tool.Entry is null)
+    {
+      return Error(name, UnavailableError);
     }
 
     string? denial = await CredentialDenialAsync(tool.Entry.Permissions);
@@ -145,6 +230,36 @@ public sealed class WebMcpDispatcher
     return Serialize(new WebMcpCompleted(tool.Name, Completed: true, AgentCallOutcome.Result));
   }
 
+  private async Task<IReadOnlyList<string>> OfferedNamesAsync(string path)
+  {
+    AuthenticationState authentication = await AuthenticationAsync();
+    IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
+    (
+      authentication.User,
+      AuthorizationService,
+      Catalog.Entries,
+      path,
+      Store.GetState<AgentSurfaceState>().EditMode,
+      CancellationToken.None
+    );
+    List<string> names = [];
+    foreach (CatalogAgentTool tool in selected)
+    {
+      names.Add(tool.Name);
+    }
+
+    names.Add(PageAgentContext.ToolName);
+    return names;
+  }
+
+  private async Task<AuthenticationState> AuthenticationAsync()
+  {
+    // Re-read on every call. The dispatcher does not cache an AuthenticationState.
+#pragma warning disable BL0013
+    return await AuthenticationStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
+  }
+
   private bool IsOnPath(string path) =>
     string.Equals(Route.PathOr(Navigation), path, StringComparison.OrdinalIgnoreCase);
 
@@ -153,12 +268,18 @@ public sealed class WebMcpDispatcher
     Guid callId,
     Task<bool> decision,
     string toolName,
-    string rendered
+    string rendered,
+    bool pageBound
   )
   {
     bool navigated = false;
     void Cancel(object? _, LocationChangedEventArgs __)
     {
+      if (!pageBound)
+      {
+        return;
+      }
+
       navigated = true;
       Gate.Complete(callId, approved: false);
     }
@@ -181,10 +302,7 @@ public sealed class WebMcpDispatcher
 
   private async Task<CatalogAgentTool?> FindOfferedAsync(string path, string name)
   {
-    // Re-read on every call. The dispatcher does not cache an AuthenticationState.
-#pragma warning disable BL0013
-    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-#pragma warning restore BL0013
+    AuthenticationState authentication = await AuthenticationAsync();
     return await CatalogAgentToolSet.FindOfferedAsync
     (
       authentication.User,
@@ -199,10 +317,7 @@ public sealed class WebMcpDispatcher
 
   private async Task<string?> CredentialDenialAsync(IEnumerable<string> requiredPermissions)
   {
-    // Re-read on every call. The dispatcher does not cache an AuthenticationState.
-#pragma warning disable BL0013
-    AuthenticationState authentication = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-#pragma warning restore BL0013
+    AuthenticationState authentication = await AuthenticationAsync();
     return AgentConversationAuthority.Denial(
       Store.GetState<AgentSurfaceState>().Conversation,
       authentication.User,

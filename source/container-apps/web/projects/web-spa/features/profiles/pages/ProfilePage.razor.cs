@@ -14,6 +14,6 @@
 
 namespace TimeWarp.Architecture.Features.Profiles;
 
-[Page("/Profile", Policy = PermissionIds.ProfileRead, Navigable = true)]
+[Page("/Profile", Policy = PermissionIds.ProfileRead, Navigable = true, Description = "View and replace the signed-in person's profile.")]
 [Authorize(Policy = PermissionIds.ProfileRead)]
 partial class ProfilePage;

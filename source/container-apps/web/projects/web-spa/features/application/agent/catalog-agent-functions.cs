@@ -13,7 +13,10 @@
 // Selection happened when the panel built the functions; by invocation the person may have navigated, signed
 // out, or lost a permission while the approval waited. InvokeCoreAsync therefore re-selects for
 // the current principal and route and returns a failed result (not an exception, so the model
-// sees why) when the tool is no longer offered. It executes the re-selected entry.
+// sees why) when the tool is no longer offered. A global palette tool is still offered after
+// navigation. A page-only tool is not. A page-bound palette tool offered off its page returns
+// AgentNavigate.Offer and does not Execute. navigate is checked by name and calls
+// AgentNavigate.InvokeAsync. A catalog tool executes the re-selected entry.
 // The wrapper is chosen at Create from the edit mode then; each function remembers whether it was
 // wrapped. If the re-selected tool now requires approval (the person switched back to Ask before
 // editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
@@ -128,6 +131,44 @@ public sealed class CatalogAgentFunctions : IDisposable
         return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
       }
 
+      if (string.Equals(current.Name, AgentNavigate.ToolName, StringComparison.Ordinal))
+      {
+        return await AgentNavigate.InvokeAsync
+        (
+          authentication.User,
+          authorizationService,
+          catalog.Entries,
+          store,
+          PageAgentRoute.Current(services, navigation),
+          arguments,
+          cancellationToken
+        );
+      }
+
+      if (current.OffPageRoute is not null)
+      {
+        if (current.Entry is null)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+        }
+
+        string? offerDenial = AgentConversationAuthority.Denial(
+          store.GetState<AgentSurfaceState>().Conversation,
+          authentication.User,
+          current.Entry.Permissions);
+        if (offerDenial is not null)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, offerDenial);
+        }
+
+        return AgentNavigate.OfferFor(current.Entry, current.OffPageRoute);
+      }
+
+      if (current.Entry is null)
+      {
+        return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
+      }
+
       if (current.RequiresApproval && !Wrapped)
       {
         return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
@@ -175,7 +216,9 @@ public sealed class CatalogAgentFunctions : IDisposable
       IStore store = services.GetRequiredService<IStore>();
       AuthenticationStateProvider authenticationStateProvider =
         services.GetRequiredService<AuthenticationStateProvider>();
+      IAuthorizationService authorizationService = services.GetRequiredService<IAuthorizationService>();
       NavigationManager navigation = services.GetRequiredService<NavigationManager>();
+      IActionCatalog catalog = services.GetRequiredService<IActionCatalog>();
 #pragma warning disable BL0013
       AuthenticationState authentication = await authenticationStateProvider.GetAuthenticationStateAsync();
 #pragma warning restore BL0013
@@ -188,7 +231,24 @@ public sealed class CatalogAgentFunctions : IDisposable
         return new CatalogAgentCallResult(PageAgentContext.ToolName, Completed: false, denial);
       }
 
-      return PageAgentContext.Describe(store, PageAgentRoute.Current(services, navigation));
+      string path = PageAgentRoute.Current(services, navigation);
+      IReadOnlyList<CatalogAgentTool> selected = await CatalogAgentToolSet.SelectAsync
+      (
+        authentication.User,
+        authorizationService,
+        catalog.Entries,
+        path,
+        store.GetState<AgentSurfaceState>().EditMode,
+        cancellationToken
+      );
+      List<string> names = [];
+      foreach (CatalogAgentTool tool in selected)
+      {
+        names.Add(tool.Name);
+      }
+
+      names.Add(PageAgentContext.ToolName);
+      return PageAgentContext.Describe(store, path, names);
     }
   }
 

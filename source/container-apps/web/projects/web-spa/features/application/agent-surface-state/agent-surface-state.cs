@@ -6,8 +6,9 @@
 // One pending call at a time, identified by PendingCallId (the WebMcpApprovalGate id). The banner
 // shows the tool and the bound argument values the dispatcher will execute, and answers with the
 // id it rendered. ResolveApproval clears the state only for the matching id and releases that call
-// in the gate. SyncWebMcp republishes the page's tools after navigation; the dispatcher itself
-// cancels a pending call when the location changes.
+// in the gate. SyncWebMcp republishes the page's tools after navigation and stores the page-body
+// summary in PageSurfaceJson. The dispatcher cancels a pending page-bound call when the location
+// changes. PageSurfaceJson stays null until that walk succeeds.
 // ChatReadiness is the task 289 probe. It starts Unknown. LoadChatConfiguration maps the outcome
 // through ChatReadinessProbe (task 293): Configured, NotConfigured (server says no key),
 // Unauthenticated (401) or Error, and ChatProblem keeps the Error text. AuthenticationStateListener
@@ -72,6 +73,9 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public bool PrivacyNoticeDismissed { get; private set; }
 
+  /// <summary>Bounded JSON from the page-body walk, or null when the walk has not run.</summary>
+  public string? PageSurfaceJson { get; private set; }
+
   /// <summary>The current conversation credential, or null when the session has not minted one.</summary>
   public AgentConversationCredential? Conversation
   {
@@ -116,5 +120,6 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     SupportUrl = XaiChatDefaults.SupportUrl;
     CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
     PrivacyNoticeDismissed = false;
+    PageSurfaceJson = null;
   }
 }

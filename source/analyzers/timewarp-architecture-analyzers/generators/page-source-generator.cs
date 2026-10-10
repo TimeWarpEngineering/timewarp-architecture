@@ -130,7 +130,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     ImmutableArray<PageDiagnostic> Errors,
     string RouteTemplate,
     bool Navigable, // valid opt-in only (static primary route): INavigationDestination + registry membership
-    PageDiagnostic? NavigableDiagnostic)
+    PageDiagnostic? NavigableDiagnostic,
+    string Description)
   {
     public bool Equals(PageModel? other) =>
       other is not null
@@ -146,7 +147,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       && Errors.SequenceEqual(other.Errors)
       && RouteTemplate == other.RouteTemplate
       && Navigable == other.Navigable
-      && Equals(NavigableDiagnostic, other.NavigableDiagnostic);
+      && Equals(NavigableDiagnostic, other.NavigableDiagnostic)
+      && Description == other.Description;
 
     public override int GetHashCode()
     {
@@ -156,7 +158,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         hash = (hash * 397) ^ AdditionalRouteAttributes.Length;
         hash = (hash * 397) ^ Parameters.Length;
         hash = (hash * 397) ^ Errors.Length;
-        return (hash * 397) ^ Navigable.GetHashCode();
+        hash = (hash * 397) ^ Navigable.GetHashCode();
+        return (hash * 397) ^ StringComparer.Ordinal.GetHashCode(Description);
       }
     }
 
@@ -174,7 +177,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         Errors: [.. errors],
         RouteTemplate: route,
         Navigable: false,
-        NavigableDiagnostic: null);
+        NavigableDiagnostic: null,
+        Description: "");
   }
 
   /// <summary>Location-free diagnostic payload; the Diagnostic is built in RegisterSourceOutput.</summary>
@@ -225,6 +229,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     bool policyArgumentPresent = false;
     bool navigableRequested = false;
     ExpressionSyntax? invalidNavigable = null;
+    string description = "";
 
     foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
     {
@@ -245,6 +250,13 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       {
         if (arg.Expression.IsKind(SyntaxKind.TrueLiteralExpression)) navigableRequested = true;
         else if (!arg.Expression.IsKind(SyntaxKind.FalseLiteralExpression)) invalidNavigable = arg.Expression;
+        continue;
+      }
+
+      if (argName == "Description")
+      {
+        if (arg.Expression is LiteralExpressionSyntax described && described.Token.Value is string text)
+          description = text;
         continue;
       }
 
@@ -362,7 +374,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
     return new PageModel(
       ns, className, hint, primary.RouteAttribute, [.. additionalAttributes], signature, primary.Format, [.. parameters], policy,
-      Errors: [], RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic);
+      Errors: [], RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic,
+      Description: description);
   }
 
   /// <summary>
@@ -500,7 +513,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    string Url,\n");
     sb.Append("    string Title,\n");
     sb.Append("    Icon? NavIcon,\n");
-    sb.Append("    string Policy);\n\n");
+    sb.Append("    string Policy,\n");
+    sb.Append("    string Description);\n\n");
     sb.Append("  /// <summary>Every navigation destination in this assembly, generated from [Page(Navigable = true)] (sorted by route).</summary>\n");
     sb.Append("  public static class PageRegistry\n  {\n");
     sb.Append("    public static global::System.Collections.Generic.IReadOnlyList<PageRegistryEntry> All { get; } =\n");
@@ -516,7 +530,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         .Append(type).Append(".GetPageUrl(), ")
         .Append(type).Append(".Title, ")
         .Append(type).Append(".NavIcon, ")
-        .Append(type).Append(".Policy),\n");
+        .Append(type).Append(".Policy, ")
+        .Append(CSharpString(page.Description)).Append("),\n");
     }
 
     sb.Append("    ];\n  }\n}\n");
@@ -535,11 +550,18 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("        public string Policy { get; set; }\n");
     sb.Append("        /// <summary>Literal true lists this static-route page in PageRegistry (NavMenu + palette destinations). Default false.</summary>\n");
     sb.Append("        public bool Navigable { get; set; }\n");
+    sb.Append("        /// <summary>One line saying what this page is for. Navigable pages set it.</summary>\n");
+    sb.Append("        public string Description { get; set; }\n");
     sb.Append("        /// <summary>Extra routes emitted as [Route] aliases; GetPageUrl and PageRegistry use RouteTemplate (the primary route) only.</summary>\n");
     sb.Append("        public string[] AdditionalRoutes { get; }\n");
     sb.Append("        public PageAttribute(string RouteTemplate, params string[] AdditionalRoutes) { this.RouteTemplate = RouteTemplate; this.AdditionalRoutes = AdditionalRoutes; }\n");
     sb.Append("    }\n}\n");
     return sb.ToString();
+  }
+
+  private static string CSharpString(string value)
+  {
+    return "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
   }
 
   private static string StripAttribute(string name)

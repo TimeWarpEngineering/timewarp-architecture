@@ -9,6 +9,6 @@
 
 namespace TimeWarp.Architecture.Features.Superheros;
 
-[Page("/Superheros", Policy = PermissionIds.DeveloperAccess, Navigable = true)]
+[Page("/Superheros", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Sample superhero list.")]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class SuperheroPage;

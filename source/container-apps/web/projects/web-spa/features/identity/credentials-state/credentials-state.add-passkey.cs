@@ -18,6 +18,9 @@
 // context hints, forwarded verbatim); success records PendingNicknameCredentialId with the
 // response's ProviderLabel as the prefill so the UI can prompt "name this passkey". Ownership defaults
 // to the list (PendingNicknameOwnedByPrompt=false); AddPasskeyPrompt claims it right after success.
+// Visibility is Both: the agent lists this command on every page, the same way Ctrl-K lists it.
+// Off Settings the call returns a navigate offer and does not run the ceremony. On Settings it
+// runs, and edit mode decides approval. Add existing and Link Microsoft 365 stay Human.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -37,7 +40,7 @@ partial class CredentialsState
     (
       Description = "Create a passkey on this device and attach it to the signed-in account.",
       Permissions = [PermissionIds.CredentialManageSelf],
-      Visibility = ActionVisibility.Human
+      Visibility = ActionVisibility.Both
     )]
     [TrackAction]
     public sealed class Action : IBaseAction

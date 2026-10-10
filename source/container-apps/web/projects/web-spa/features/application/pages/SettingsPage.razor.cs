@@ -54,7 +54,7 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-[Page("/Settings", Policy = PermissionIds.SettingsRead, Navigable = true)]
+[Page("/Settings", Policy = PermissionIds.SettingsRead, Navigable = true, Description = "Manage passkeys and linked accounts for the signed-in person.")]
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(CredentialList), "Settings composes the Identity credential list; Applications owns the page chrome.")]

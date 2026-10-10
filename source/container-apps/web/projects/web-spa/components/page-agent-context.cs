@@ -1,18 +1,22 @@
 #region Purpose
-// JSON facts about the current page that an agent uses when filling tool arguments.
+// JSON facts about the current page that an agent reads before it calls a tool.
 #endregion
 
 #region Design
-// Lives outside the product slices so the shell and the platform adapter can both read it.
-// Settings and Passkeys include the credential rows and the flags those pages' buttons use
-// (id, canRevoke, canRename, CanLinkMicrosoft365). Profile and Admin/Authentication include
-// the current record, because UpdateProfile and UpdateSiteSettings replace the whole record: the
-// agent copies the fields it was not asked to change, and for site settings it must echo the
-// Version concurrency token. Values are read from ProfileState / SiteSettingsState as loaded by
-// the page; hasSnapshot is false before the first fetch. Enums are member names, as the seam
-// writes them. /Feedback and /Feedback/{id} add the filer's own list (id, title, kind, capped),
-// whether that list has loaded, draft presence flags, and the open id. The draft body is not
-// included. Other routes carry the path only.
+// Every route gets the same envelope: path, title, purpose, headings, summary, forms, buttons,
+// items, tools, and screenshot. Title and purpose come from PageRegistry (the [Page] Description),
+// not a second list. An unknown route uses the path as the title and a fixed fallback purpose.
+// A registry URL other than / also matches as a prefix, longest first, so /Feedback/{id} takes
+// the Feedback title. The open item then replaces purpose with the one-item sentence.
+// Headings, summary, forms, buttons, and items are the bounded text walk PageSurfaceJsModule
+// stores on AgentSurfaceState. Caps: 40 headings, 2,000 summary characters, 30 buttons, 10 forms,
+// 20 fields, 40 items, 500 elements in the walk, and 12,000 characters for this document. Text is
+// always present; an empty walk yields empty arrays and an empty summary. screenshot is null:
+// pixel capture is a later opt-in, not this document.
+// Settings, Passkeys, Profile, Admin/Authentication, and Feedback keep their fact fields (ids,
+// flags, the records a replace-whole command must echo, filings capped at 20). The draft body is
+// not included. tools is the names the caller is offering, or, when omitted, navigate plus the
+// page-bound names (including human-only) plus page_context. Live callers pass the offered names.
 // page_context is not a catalog action and does not require approval.
 #endregion
 
@@ -29,44 +33,215 @@ public static class PageAgentContext
   public const string ToolName = "page_context";
 
   public const string ToolDescription =
-    "Facts about the current page, including item ids and flags the page's buttons use.";
+    "Facts about the current page: title, purpose, visible text, item ids, flags, and tool names.";
 
   public const string EmptyInputSchema =
     """{"type":"object","properties":{},"additionalProperties":false}""";
 
+  public const string SurfaceRootSelector = ".twe-page__body";
+
+  public const string UnknownPurpose = "This route has no navigation-destination description.";
+
+  public const int SummaryCap = 2_000;
+
+  public const int DocumentCap = 12_000;
+
   private const int FilingCap = 20;
 
-  public static string Describe(IStore store, string? path)
+  private const int HeadingCap = 40;
+
+  private const int ButtonCap = 30;
+
+  private const int FormCap = 10;
+
+  private const int ItemCap = 40;
+
+  public static string Describe(IStore store, string? path) => Describe(store, path, toolNames: null);
+
+  public static string Describe(IStore store, string? path, IReadOnlyList<string>? toolNames)
   {
     ArgumentNullException.ThrowIfNull(store);
     string normalized = PageAgentScope.Normalize(path);
+    JsonObject document = Envelope(store, normalized, toolNames);
     if (normalized.Equals("/Settings", StringComparison.OrdinalIgnoreCase)
       || normalized.Equals("/Passkeys", StringComparison.OrdinalIgnoreCase))
     {
-      return DescribeCredentials(store, normalized);
+      AddCredentials(document, store);
     }
-
-    if (normalized.Equals("/Profile", StringComparison.OrdinalIgnoreCase))
+    else if (normalized.Equals("/Profile", StringComparison.OrdinalIgnoreCase))
     {
-      return DescribeProfile(store, normalized);
+      AddProfile(document, store);
     }
-
-    if (normalized.Equals("/Admin/Authentication", StringComparison.OrdinalIgnoreCase))
+    else if (normalized.Equals("/Admin/Authentication", StringComparison.OrdinalIgnoreCase))
     {
-      return DescribeSiteSettings(store, normalized);
+      AddSiteSettings(document, store);
     }
-
-    if (normalized.Equals("/Feedback", StringComparison.OrdinalIgnoreCase))
+    else if (normalized.Equals("/Feedback", StringComparison.OrdinalIgnoreCase))
     {
-      return DescribeFeedback(store, normalized, openFeedbackId: null);
+      AddFeedback(document, store, openFeedbackId: null);
     }
-
-    if (TryOpenFeedbackId(normalized, out Guid openFeedbackId))
+    else if (TryOpenFeedbackId(normalized, out Guid openFeedbackId))
     {
-      return DescribeFeedback(store, normalized, openFeedbackId);
+      document["purpose"] = "One feedback item you filed.";
+      AddFeedback(document, store, openFeedbackId);
     }
 
-    return new JsonObject { ["path"] = normalized }.ToJsonString();
+    return Bound(document);
+  }
+
+  private static JsonObject Envelope(IStore store, string path, IReadOnlyList<string>? toolNames)
+  {
+    (string title, string purpose) = Identity(path);
+    JsonObject document = new()
+    {
+      ["path"] = path,
+      ["title"] = title,
+      ["purpose"] = purpose,
+      ["headings"] = new JsonArray(),
+      ["summary"] = "",
+      ["forms"] = new JsonArray(),
+      ["buttons"] = new JsonArray(),
+      ["items"] = new JsonArray(),
+      ["tools"] = ToolNames(path, toolNames),
+      ["screenshot"] = JsonNode.Parse("null"),
+    };
+    MergeSurface(document, store.GetState<AgentSurfaceState>().PageSurfaceJson);
+    return document;
+  }
+
+  private static (string Title, string Purpose) Identity(string path)
+  {
+    foreach (PageRegistryEntry entry in PageRegistry.All)
+    {
+      if (string.Equals(entry.Url, path, StringComparison.OrdinalIgnoreCase))
+      {
+        return (entry.Title, PurposeOf(entry));
+      }
+    }
+
+    PageRegistryEntry? prefix = null;
+    foreach (PageRegistryEntry entry in PageRegistry.All)
+    {
+      if (entry.Url.Length <= 1)
+      {
+        continue;
+      }
+
+      if (!path.StartsWith(entry.Url + "/", StringComparison.OrdinalIgnoreCase))
+      {
+        continue;
+      }
+
+      if (prefix is null || entry.Url.Length > prefix.Url.Length)
+      {
+        prefix = entry;
+      }
+    }
+
+    return prefix is null ? (path, UnknownPurpose) : (prefix.Title, PurposeOf(prefix));
+  }
+
+  private static string PurposeOf(PageRegistryEntry entry) =>
+    string.IsNullOrWhiteSpace(entry.Description) ? UnknownPurpose : entry.Description;
+
+  private static JsonArray ToolNames(string path, IReadOnlyList<string>? toolNames)
+  {
+    JsonArray names = [];
+    if (toolNames is not null)
+    {
+      foreach (string name in toolNames)
+      {
+        names.Add(name);
+      }
+
+      return names;
+    }
+
+    names.Add(AgentNavigate.ToolName);
+    foreach (string name in PageAgentScope.ActionNamesFor(path))
+    {
+      names.Add(name);
+    }
+
+    names.Add(ToolName);
+    return names;
+  }
+
+  private static void MergeSurface(JsonObject document, string? surfaceJson)
+  {
+    if (string.IsNullOrWhiteSpace(surfaceJson))
+    {
+      return;
+    }
+
+    JsonNode? parsed;
+    try
+    {
+      parsed = JsonNode.Parse(surfaceJson);
+    }
+    catch (JsonException)
+    {
+      return;
+    }
+
+    if (parsed is not JsonObject surface)
+    {
+      return;
+    }
+
+    CopyArray(document, surface, "headings", HeadingCap);
+    CopyArray(document, surface, "forms", FormCap);
+    CopyArray(document, surface, "buttons", ButtonCap);
+    CopyArray(document, surface, "items", ItemCap);
+    if (surface["summary"] is JsonValue summaryValue && summaryValue.TryGetValue(out string? summary) && summary is not null)
+    {
+      document["summary"] = summary.Length <= SummaryCap ? summary : summary[..SummaryCap];
+    }
+  }
+
+  private static void CopyArray(JsonObject document, JsonObject surface, string name, int cap)
+  {
+    if (surface[name] is not JsonArray source)
+    {
+      return;
+    }
+
+    JsonArray copy = [];
+    int count = 0;
+    foreach (JsonNode? item in source)
+    {
+      if (count == cap)
+      {
+        break;
+      }
+
+      count++;
+      if (item is not null)
+      {
+        copy.Add(item.DeepClone());
+      }
+    }
+
+    document[name] = copy;
+  }
+
+  private static string Bound(JsonObject document)
+  {
+    string json = document.ToJsonString();
+    if (json.Length <= DocumentCap)
+    {
+      return json;
+    }
+
+    document["summary"] = "";
+    json = document.ToJsonString();
+    if (json.Length <= DocumentCap)
+    {
+      return json;
+    }
+
+    document["headings"] = new JsonArray();
+    return document.ToJsonString();
   }
 
   private static bool TryOpenFeedbackId(string normalized, out Guid feedbackItemId)
@@ -82,17 +257,10 @@ public static class PageAgentContext
     return false;
   }
 
-  private static string DescribeFeedback(IStore store, string path, Guid? openFeedbackId)
+  private static void AddFeedback(JsonObject document, IStore store, Guid? openFeedbackId)
   {
     FeedbackState feedback = store.GetState<FeedbackState>();
-    JsonObject document = new()
-    {
-      ["path"] = path,
-      ["page"] = "Feedback",
-      ["purpose"] = openFeedbackId is null
-        ? "File feedback and review the filings you have submitted."
-        : "One feedback item you filed.",
-    };
+    document["page"] = "Feedback";
     AddFilings(document, feedback);
     document["emailCopyAvailable"] = feedback.EmailCopyAvailable;
     document["draftAttachmentCount"] = feedback.DraftAttachments.Count;
@@ -120,8 +288,6 @@ public static class PageAgentContext
         };
       }
     }
-
-    return document.ToJsonString();
   }
 
   private static void AddFilings(JsonObject document, FeedbackState feedback)
@@ -152,45 +318,35 @@ public static class PageAgentContext
     document["filings"] = filings;
   }
 
-  private static string DescribeProfile(IStore store, string path)
+  private static void AddProfile(JsonObject document, IStore store)
   {
     ProfileState profile = store.GetState<ProfileState>();
-    JsonObject document = new()
+    document["hasSnapshot"] = profile.Alias is not null;
+    document["profile"] = new JsonObject
     {
-      ["path"] = path,
-      ["hasSnapshot"] = profile.Alias is not null,
-      ["profile"] = new JsonObject
-      {
-        ["alias"] = profile.Alias,
-        ["email"] = profile.Email,
-        ["language"] = profile.Language,
-        ["region"] = profile.Region,
-        ["theme"] = profile.Theme,
-        ["notifications"] = profile.Notifications,
-      },
+      ["alias"] = profile.Alias,
+      ["email"] = profile.Email,
+      ["language"] = profile.Language,
+      ["region"] = profile.Region,
+      ["theme"] = profile.Theme,
+      ["notifications"] = profile.Notifications,
     };
-    return document.ToJsonString();
   }
 
-  private static string DescribeSiteSettings(IStore store, string path)
+  private static void AddSiteSettings(JsonObject document, IStore store)
   {
     SiteSettingsState settings = store.GetState<SiteSettingsState>();
-    JsonObject document = new()
+    document["hasSnapshot"] = settings.HasSnapshot;
+    document["siteSettings"] = new JsonObject
     {
-      ["path"] = path,
-      ["hasSnapshot"] = settings.HasSnapshot,
-      ["siteSettings"] = new JsonObject
-      {
-        ["entraSignInEnabled"] = settings.EntraSignInEnabled,
-        ["entraAllowBootstrap"] = settings.EntraAllowBootstrap,
-        ["passkeyPromptMode"] = settings.PasskeyPromptMode.ToString(),
-        ["version"] = settings.Version,
-      },
+      ["entraSignInEnabled"] = settings.EntraSignInEnabled,
+      ["entraAllowBootstrap"] = settings.EntraAllowBootstrap,
+      ["passkeyPromptMode"] = settings.PasskeyPromptMode.ToString(),
+      ["version"] = settings.Version,
     };
-    return document.ToJsonString();
   }
 
-  private static string DescribeCredentials(IStore store, string path)
+  private static void AddCredentials(JsonObject document, IStore store)
   {
     CredentialsState credentialsState = store.GetState<CredentialsState>();
     JsonArray credentials = [];
@@ -212,12 +368,7 @@ public static class PageAgentContext
       );
     }
 
-    JsonObject document = new()
-    {
-      ["path"] = path,
-      ["canLinkMicrosoft365"] = credentialsState.CanLinkMicrosoft365,
-      ["credentials"] = credentials,
-    };
-    return document.ToJsonString();
+    document["canLinkMicrosoft365"] = credentialsState.CanLinkMicrosoft365;
+    document["credentials"] = credentials;
   }
 }

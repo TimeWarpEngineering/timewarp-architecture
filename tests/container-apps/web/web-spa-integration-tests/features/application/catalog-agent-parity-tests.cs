@@ -397,7 +397,8 @@ public partial class CatalogAgent_Should
     (
       await SelectForSessionAsync(scope, AgentEditMode.AutomaticallyEdit)
     );
-    AIFunction increment = functions.Tools[0].ShouldBeAssignableTo<AIFunction>();
+    AIFunction increment = functions.Tools.Single(tool => tool.Name == "Counter.IncrementCounter")
+      .ShouldBeAssignableTo<AIFunction>();
     increment.ShouldNotBeOfType<ApprovalRequiredAIFunction>();
     object? chat = await increment.InvokeAsync(Arguments(scope, """{"amount":5}"""));
     string expiredText = chat.ShouldNotBeNull().ToString()!;

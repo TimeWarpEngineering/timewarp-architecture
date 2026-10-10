@@ -210,7 +210,7 @@ public class PageSourceGenerator_Tests
     string registry = RegistryOf(generated);
     registry.ShouldContain(
       "new(typeof(global::Test.Pages.CounterPage), \"/Counter\", global::Test.Pages.CounterPage.GetPageUrl(), "
-      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy),");
+      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\"),");
     registry.ShouldContain("new(typeof(global::Test.Pages.SettingsPage), \"/settings\"");
     registry.ShouldNotContain("LoginPage");
     registry.ShouldNotContain("LogoutPage");
@@ -221,6 +221,20 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("partial class CounterPage : INavigableComponent, IStaticRoute, INavigationDestination");
     generated.ShouldContain("partial class LoginPage : INavigableComponent, IStaticRoute\n");
     generated.ShouldContain("partial class LogoutPage : INavigableComponent, IStaticRoute\n");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_A_Description_Literal()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/Counter", Navigable = true, Description = "Demo counter.")]
+      public partial class CounterPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("public string Description { get; set; }");
+    RegistryOf(generated).ShouldContain("\"Demo counter.\"");
     return Task.CompletedTask;
   }
 
@@ -238,7 +252,7 @@ public class PageSourceGenerator_Tests
 
     // The entry reads the page's generated Policy member, which is the const expression.
     generated.ShouldContain("public static string Policy { get; } = Policies.SettingsEdit;");
-    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy)");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\")");
     return Task.CompletedTask;
   }
 

@@ -15,7 +15,7 @@
 
 namespace TimeWarp.Architecture.Features.Admin.SiteSettings;
 
-[Page("/Admin/Authentication", Policy = PermissionIds.SettingsWrite, Navigable = true)]
+[Page("/Admin/Authentication", Policy = PermissionIds.SettingsWrite, Navigable = true, Description = "Site authentication settings, including the passkey prompt.")]
 [Authorize(Policy = PermissionIds.SettingsWrite)]
 [CrossSliceReference(typeof(SiteSettingsState), "Admin Authentication edits the Settings slice site-settings singleton.")]
 partial class AuthenticationPage;

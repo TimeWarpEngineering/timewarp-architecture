@@ -1,22 +1,25 @@
 #region Purpose
-// Chooses the catalog entries an agent may call on one page for one principal.
+// Chooses the tools an agent may call on one page for one principal.
 #endregion
 
 #region Design
-// Same gates for the in-app model and WebMCP. Human-only entries are never tools.
-// The page list names the buttons on that route, in that order; visibility then drops the
-// human ceremonies that share the page. Permissions use the palette's IAuthorizationService
-// check (policy name == permission id). An anonymous principal gets nothing, matching Ctrl-K.
-// FindOfferedAsync is the invocation-time re-check both drivers run: it re-selects for the
-// principal and route current at the call, so a tool offered earlier is refused once the person
-// navigates away or loses the permission.
-// Edit mode changes only the approval bit, not which names are offered. A conversation credential
-// is not a selection filter; both drivers enforce it at invoke time.
+// The list is the Ctrl-K roster plus the current page's tools. CommandPaletteRoster stays the
+// filter for pages and commands; this type only reads it, so the palette rows do not change.
+// A palette command becomes a tool when its visibility includes Agent. Human-only commands stay
+// in the palette and never become tools. Page-bound commands (PageAgentScope) are executable on
+// their page and, off that page, are still listed: invoking one returns a navigate offer and does
+// not run. Actions that are not palette commands stay executable only on their page.
+// navigate is one tool. Its enum is the palette's Page rows for this principal, including Sign in
+// while signed out. It is not an edit, so RequiresApproval is false in both edit modes.
+// FindOfferedAsync re-checks permission for the principal at call time. A global tool survives
+// navigation. A page-only tool does not. A page-bound palette tool survives as a discovery offer.
+// Edit mode changes only the approval bit of tools that will actually run. The conversation
+// credential is not a selection filter; both drivers enforce it at invoke time.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-/// <summary>Page-scoped, permission-filtered catalog tools.</summary>
+/// <summary>Palette tools, navigate, and the current page's tools.</summary>
 public static class CatalogAgentToolSet
 {
   public static async Task<IReadOnlyList<CatalogAgentTool>> SelectAsync
@@ -52,27 +55,58 @@ public static class CatalogAgentToolSet
     ArgumentNullException.ThrowIfNull(entries);
     cancellationToken.ThrowIfCancellationRequested();
 
-    if (user.Identity?.IsAuthenticated != true)
-    {
-      return [];
-    }
-
-    IReadOnlyList<string> pageNames = PageAgentScope.ActionNamesFor(path);
-    if (pageNames.Count == 0)
-    {
-      return [];
-    }
+    string normalized = PageAgentScope.Normalize(path);
+    List<ActionCatalogEntry> entryList = [.. entries];
+    IReadOnlyList<CommandPaletteRow> rows = await CommandPaletteRoster.BuildAsync
+    (
+      user,
+      authorizationService,
+      PageRegistry.All,
+      entryList,
+      normalized
+    );
 
     Dictionary<string, ActionCatalogEntry> byName = [];
-    foreach (ActionCatalogEntry entry in entries)
+    foreach (ActionCatalogEntry entry in entryList)
     {
       byName[entry.Name] = entry;
     }
 
     List<CatalogAgentTool> tools = [];
-    foreach (string name in pageNames)
+    HashSet<string> seen = [];
+    bool anyPage = false;
+    foreach (CommandPaletteRow row in rows)
     {
-      if (!byName.TryGetValue(name, out ActionCatalogEntry? entry))
+      if (row.Kind == CommandPaletteRowKind.Page)
+      {
+        anyPage = true;
+        continue;
+      }
+
+      if (row.Kind != CommandPaletteRowKind.Command)
+      {
+        continue;
+      }
+
+      if (!byName.TryGetValue(row.Target, out ActionCatalogEntry? entry))
+      {
+        continue;
+      }
+
+      if (!entry.Visibility.HasFlag(ActionVisibility.Agent) || !seen.Add(entry.Name))
+      {
+        continue;
+      }
+
+      string? offPage = PageAgentScope.Serves(normalized, entry.Name)
+        ? null
+        : PageAgentScope.PrimaryPage(entry.Name);
+      tools.Add(ToTool(entry, editMode, offPage));
+    }
+
+    foreach (string name in PageAgentScope.ActionNamesFor(normalized))
+    {
+      if (!seen.Add(name) || !byName.TryGetValue(name, out ActionCatalogEntry? entry))
       {
         continue;
       }
@@ -87,20 +121,21 @@ public static class CatalogAgentToolSet
         continue;
       }
 
-      string description = string.IsNullOrWhiteSpace(entry.Description)
-        ? entry.DisplayName ?? entry.Name
-        : entry.Description;
-      tools.Add
-      (
-        new CatalogAgentTool
-        (
-          entry.Name,
-          description,
-          CatalogAgentSchema.For(entry),
-          CatalogAgentApproval.RequiresApproval(entry, editMode),
-          entry
-        )
-      );
+      tools.Add(ToTool(entry, editMode, offPageRoute: null));
+    }
+
+    if (anyPage)
+    {
+      List<CommandPaletteRow> pages = [];
+      foreach (CommandPaletteRow row in rows)
+      {
+        if (row.Kind == CommandPaletteRowKind.Page)
+        {
+          pages.Add(row);
+        }
+      }
+
+      tools.Add(AgentNavigate.Create(pages));
     }
 
     return tools;
@@ -157,5 +192,28 @@ public static class CatalogAgentToolSet
     }
 
     return null;
+  }
+
+  private static CatalogAgentTool ToTool(ActionCatalogEntry entry, AgentEditMode editMode, string? offPageRoute)
+  {
+    string description = string.IsNullOrWhiteSpace(entry.Description)
+      ? entry.DisplayName ?? entry.Name
+      : entry.Description;
+    if (offPageRoute is not null)
+    {
+      description += " It runs only on " + offPageRoute
+        + ". From any other page it does not run and returns a navigate offer.";
+    }
+
+    bool approval = offPageRoute is null && CatalogAgentApproval.RequiresApproval(entry, editMode);
+    return new CatalogAgentTool
+    (
+      entry.Name,
+      description,
+      CatalogAgentSchema.For(entry),
+      approval,
+      entry,
+      offPageRoute
+    );
   }
 }
