@@ -69,27 +69,23 @@ choose deliberately and document the decisions.
 
 Azure Blob Storage is the real byte store. An empty `FeedbackAttachments:ConnectionString` keeps the in-memory blob store, so tests and an unconfigured host do not need Azurite. Rows live on `feedback.feedback_attachments` (migration `20261010075816_AddFeedbackAttachments`). Upload is a raw body with `X-File-Name`. Download is owner-or-admin after the item is filed, and uploader-only while it is still a draft. The Details field has a file picker and a paste hook; both call the same upload. The item page lists the stored files. Decisions and limits are in `documentation/developer/guides/feedback-attachments.md`.
 
-This host is TWE-001, so the Playwright browser run was not started. The test project builds. CI writes `feedback-upload.png`, `feedback-paste.png`, and `feedback-item.png` beside this task when that test runs.
+CI on PR #458 failed two tests. The action catalog roster omitted `Feedback.RemoveFeedbackAttachment` and `Feedback.UploadFeedbackAttachment`. The Playwright test opened `/Feedback` while signed out. That page is `[Authorize]` for `feedback.file.self`, and the SPA reads that from the identity-session cookie. `X-TimeWarp-Mock-Principal-Id` authenticates server API calls only, so the router rendered `RedirectToLogin`, which has no `.twe-appbar`. The console showed `LoginPage-1: created` and a healthy WASM boot. The shell was not broken. The test now creates an account with a virtual passkey, the same ceremony as the Ask sign-in proof, then opens `/Feedback`.
+
+This host is TWE-001, so the Playwright browser run was not started. `web-spa-playwright-tests` builds with 0 warnings. CI writes `feedback-upload.png`, `feedback-paste.png`, and `feedback-item-attachments.png` beside this task when that test runs.
 
 ### How to validate
 
 **Smoke:**
 
 ```powershell
-cd tests/container-apps/web/web-jaribu-tests; dotnet test -- --filter-class Features.Feedback
-cd ../web-infrastructure-tests; dotnet test -- --filter-class Feedback_Model_Mapping_
-dotnet test -- --filter-class Feedback_Postgres_Persistence_
-cd ../../../foundation/foundation-contracts-tests; dotnet test -- --filter-class HttpApiService_GetResponse
-cd ../../container-apps/web/web-spa-playwright-tests; dotnet test
+cd tests/container-apps/web/web-spa-integration-tests; dotnet test -c Release -- --filter-class ActionCatalog_Should
+cd ../web-spa-playwright-tests; dotnet build -c Release
 ```
 
 **Expect:**
 
-- `Features.Feedback`: 25 passed. That covers size and type limits, owner download, admin denied before link and allowed after, another principal's pending id rejected, and the existing filing cases.
-- `Feedback_Model_Mapping_`: 3 passed. The attachment table is nullable on the item id, Version is not a concurrency token, and the item foreign key cascades.
-- `Feedback_Postgres_Persistence_`: 1 passed. `MigrateAsync` applies `AddFeedbackAttachments` on Testcontainers Postgres and the feedback item round-trips.
-- `HttpApiService_GetResponse`: 14 passed. The file upload test posts the raw bytes as `text/plain` with no charset and `X-File-Name: my%20notes.txt`.
-- Playwright `dotnet test` is for a CI runner, not TWE-001. It fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
+- `ActionCatalog_Should`: 10 passed. The roster includes `Feedback.RemoveFeedbackAttachment` and `Feedback.UploadFeedbackAttachment`. Both are Human and require `feedback.file.self`.
+- `web-spa-playwright-tests` builds with 0 warnings and 0 errors. The browser run stays on CI. It signs in with a virtual passkey, opens `/Feedback`, fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
 
 ### Review disposition
 
@@ -119,6 +115,7 @@ cd ../../container-apps/web/web-spa-playwright-tests; dotnet test
 - 2026-10-10 implementer (ganda task work): attachments end to end; web-server and web-spa build clean; gates in Results; `ganda repo audit` 31 passed. Playwright was not executed on TWE-001.
 - 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): tw-implementation-review, 3 rounds; disposition clean.
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-10T08:48:36Z
+- 2026-10-10 implementer (ganda task work, CI fix): catalog names added; Playwright signs in before `/Feedback`. `ActionCatalog_Should` 10/10. Playwright project builds. Browser run left for CI.
 
 ## Notes
 
@@ -130,3 +127,4 @@ cd ../../container-apps/web/web-spa-playwright-tests; dotnet test
   1. `ActionCatalog_Should.Enumerate_Expected_Names` (`tests/container-apps/web/web-spa-integration-tests/features/application/action-catalog-tests.cs:64`): the expected action-name list lacks the new `Feedback.*` actions this task added (`Feedback.RemoveFeedbackAttachment`, `Feedback.UploadFeedbackAttachment`, and any others). Update the expected list.
   2. `FeedbackAttachment_Given_Wasm.PasteAndUpload_Should_ShowAttachmentsOnTheItem` (new Playwright test, `tests/container-apps/web/web-spa-playwright-tests/feedback-attachment-*`): `System.TimeoutException: Feedback form did not render`, after a 120000ms wait for `Locator(".twe-appbar")` to be visible. Investigate whether this is a real bug (the page/app shell not rendering with the attachment changes) or test setup (navigation, auth/sign-in, base URL, render mode, wait target); compare with the setup of the other Playwright tests that pass in the same run. Fix the root cause, don't just raise the timeout.
   Steven approved another walk pass (`ganda task work 295 --restart --no-merge --yes`) to fix both on this branch and PR #458. First walk log: `~/logs/task-work-timewarp-architecture-295-20261010-135714.log`.
+- 2026-10-10 fix: the catalog expected list now includes the two attachment actions. The Playwright timeout was the signed-out login page (`LoginPage` has no `.twe-appbar`), not a shell that failed to render. The test signs in with a virtual passkey before opening `/Feedback`.
