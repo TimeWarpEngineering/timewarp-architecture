@@ -122,6 +122,7 @@ Expect:
 ## Notes
 
 - Filed from a voice call with Steven (via Amina), 2026-10-10. Left in to-do, unclaimed, not launched.
+- 2026-10-10: CI `template-smoke` failed after the PR opened (PR #457, run 38037662735, job 114171407302). The `ci` job passed, including Playwright. SmokeDefault built with 0 warnings and 0 errors, then the initializer import-graph check failed: `/_content/TimeWarp.State/js/logger.js` and `/_content/TimeWarp.State/js/constants.js` were looked up under `~/.nuget/packages/timewarp.state/12.0.0-beta.10/staticwebassets/js/`. In beta.10 those files live in the `timewarp.state.blazor` package's `staticwebassets/js/` (same `/_content/TimeWarp.State/` URL path). Fix in scope: `tools/dev-cli/services/template-smoke-initializer-assets.cs` must resolve `/_content/TimeWarp.State/` paths against the `TimeWarp.State.Blazor` package too. Steven approved another walk pass (`ganda task work 298 --restart --no-merge --yes`) to fix it on this branch and PR. First walk log: `~/logs/task-work-timewarp-architecture-298-20261010-150003.log`.
 
 ## Session
 
