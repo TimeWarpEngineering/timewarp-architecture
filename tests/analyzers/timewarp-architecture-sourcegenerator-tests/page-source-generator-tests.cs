@@ -238,6 +238,21 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Escape_A_Description_With_Quotes_And_A_Newline()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/Counter", Navigable = true, Description = "Line one.\nSay \"hi\" \\ done.")]
+      public partial class CounterPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    RegistryOf(generated).ShouldContain("""
+      "Line one.\nSay \"hi\" \\ done.")
+      """.Trim());
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Carry_Policy_Through_Registry_Entry()
   {
     (string generated, _) = Run("""

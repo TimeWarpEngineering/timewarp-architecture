@@ -559,10 +559,11 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     return sb.ToString();
   }
 
-  private static string CSharpString(string value)
-  {
-    return "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
-  }
+  // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as
+  // a newline, so any literal Description compiles in the registry. Description is read only as a
+  // string literal; any other expression emits "" and the registry guard test reports it.
+  private static string CSharpString(string value) =>
+    Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(value, quote: true);
 
   private static string StripAttribute(string name)
   {

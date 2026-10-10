@@ -227,7 +227,10 @@
       }
 
       toolNames.Add(PageAgentContext.ToolName);
-      string instructions = AgentAskInstructions.For(PageAgentContext.Describe(ScopedStore, path, toolNames));
+      string instructions = AgentAskInstructions.For
+      (
+        PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
+      );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
       AskConversationThread thread = Threads.For(generation);
       Ai.UIAgent agent = new

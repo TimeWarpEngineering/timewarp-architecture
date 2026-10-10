@@ -8,7 +8,9 @@
 // A palette command becomes a tool when its visibility includes Agent. Human-only commands stay
 // in the palette and never become tools. Page-bound commands (PageAgentScope) are executable on
 // their page and, off that page, are still listed: invoking one returns a navigate offer and does
-// not run. Actions that are not palette commands stay executable only on their page.
+// not run. Actions that are not palette commands stay executable only on their page, and only for
+// a signed-in principal, matching the palette's sign-in rule for commands, so an anonymous
+// visitor gets navigate alone.
 // navigate is one tool. Its enum is the palette's Page rows for this principal, including Sign in
 // while signed out. It is not an edit, so RequiresApproval is false in both edit modes.
 // FindOfferedAsync re-checks permission for the principal at call time. A global tool survives
@@ -104,7 +106,10 @@ public static class CatalogAgentToolSet
       tools.Add(ToTool(entry, editMode, offPage));
     }
 
-    foreach (string name in PageAgentScope.ActionNamesFor(normalized))
+    IReadOnlyList<string> pageNames = user.Identity?.IsAuthenticated == true
+      ? PageAgentScope.ActionNamesFor(normalized)
+      : [];
+    foreach (string name in pageNames)
     {
       if (!seen.Add(name) || !byName.TryGetValue(name, out ActionCatalogEntry? entry))
       {

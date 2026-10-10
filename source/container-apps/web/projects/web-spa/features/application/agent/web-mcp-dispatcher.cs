@@ -5,8 +5,9 @@
 #region Design
 // The browser agent is not trusted. InvokeTool selects the tools again for the current principal
 // and route, so a stale registration cannot call an action the person can no longer run.
-// page_context and navigate are not catalog actions. page_context returns the page facts and does
-// not ask for approval. navigate rebuilds the palette and calls RouteState.ChangeRoute, and it
+// page_context and navigate are not catalog actions. page_context walks the page body again
+// (PageSurfaceJsModule) so the text matches the page on screen when the tool is called, returns
+// the page facts, and does not ask for approval. navigate rebuilds the palette and calls RouteState.ChangeRoute, and it
 // does not ask for approval. A page-bound palette tool invoked off its page returns the navigate
 // offer and does not bind or execute. A page-only tool is refused off its page.
 // The route is the shell's PageAgentRoute when one has been observed.
@@ -23,7 +24,7 @@
 // re-selects on the path the call started on. The page-changed refusal is distinct from a person
 // rejecting the prompt.
 // A tool that is not page-bound is not refused only because the path changed; it re-selects on
-// the path now showing, and returns a navigate offer if that selection is now discovery-only.
+// the path now showing. Only page-bound tools carry an OffPageRoute, so it cannot become an offer.
 // Result JSON uses the contract seam options. Execute failures are not mapped: handlers report
 // their own outcomes on NotificationState.
 #endregion
@@ -49,6 +50,7 @@ public sealed class WebMcpDispatcher
   private readonly PageAgentRoute Route;
   private readonly WebMcpApprovalGate Gate;
   private readonly AgentCallOutcome AgentCallOutcome;
+  private readonly IJSRuntime JsRuntime;
 
   public WebMcpDispatcher
   (
@@ -59,7 +61,8 @@ public sealed class WebMcpDispatcher
     NavigationManager navigation,
     PageAgentRoute route,
     WebMcpApprovalGate gate,
-    AgentCallOutcome agentCallOutcome
+    AgentCallOutcome agentCallOutcome,
+    IJSRuntime jsRuntime
   )
   {
     Store = store;
@@ -70,6 +73,7 @@ public sealed class WebMcpDispatcher
     Route = route;
     Gate = gate;
     AgentCallOutcome = agentCallOutcome;
+    JsRuntime = jsRuntime;
   }
 
   [JSInvokable]
@@ -85,7 +89,9 @@ public sealed class WebMcpDispatcher
         return Error(name, pageDenial);
       }
 
-      return PageAgentContext.Describe(Store, path, await OfferedNamesAsync(path));
+      IReadOnlyList<string> offered = await OfferedNamesAsync(path);
+      string? surface = await PageSurfaceJsModule.TrySummarizeAsync(JsRuntime, CancellationToken.None);
+      return PageAgentContext.Describe(Store, path, offered, surface, PageAgentContext.DocumentCap);
     }
 
     if (string.Equals(name, AgentNavigate.ToolName, StringComparison.Ordinal))
@@ -193,11 +199,6 @@ public sealed class WebMcpDispatcher
         if (tool?.Entry is null)
         {
           return Error(name, UnavailableError);
-        }
-
-        if (tool.OffPageRoute is not null)
-        {
-          return Serialize(AgentNavigate.OfferFor(tool.Entry, tool.OffPageRoute));
         }
       }
 

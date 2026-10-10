@@ -9,10 +9,17 @@
 // A registry URL other than / also matches as a prefix, longest first, so /Feedback/{id} takes
 // the Feedback title. The open item then replaces purpose with the one-item sentence.
 // Headings, summary, forms, buttons, and items are the bounded text walk PageSurfaceJsModule
-// stores on AgentSurfaceState. Caps: 40 headings, 2,000 summary characters, 30 buttons, 10 forms,
-// 20 fields, 40 items, 500 elements in the walk, and 12,000 characters for this document. Text is
-// always present; an empty walk yields empty arrays and an empty summary. screenshot is null:
-// pixel capture is a later opt-in, not this document.
+// returns. Live callers (the WebMCP dispatcher and Ask's page_context function) walk the page when
+// the tool is called and pass that JSON in. Otherwise, or when that walk returns nothing, the copy
+// SyncWebMcp stored on AgentSurfaceState is used only when its PageSurfacePath is this path, so
+// one page's text never appears on another. Caps, applied again here: 40 headings of 200
+// characters, 2,000 summary characters, 30 buttons of 120, 10 forms (name 120, 20 fields of 80),
+// 40 items (id 80, text 200), and 500 elements in the walk. The document cap is 12,000 characters
+// by default; Ask passes a smaller one for its instructions. Over the cap, surface text is dropped
+// whole, in order summary, items, forms, buttons, headings, so the JSON stays valid. Page facts are
+// bounded by their own caps and are not dropped. Text is always present; an empty walk yields
+// empty arrays and an empty summary. screenshot is null: pixel capture is a later opt-in, not this
+// document.
 // Settings, Passkeys, Profile, Admin/Authentication, and Feedback keep their fact fields (ids,
 // flags, the records a replace-whole command must echo, filings capped at 20). The draft body is
 // not included. tools is the names the caller is offering, or, when omitted, navigate plus the
@@ -56,13 +63,38 @@ public static class PageAgentContext
 
   private const int ItemCap = 40;
 
+  private const int HeadingTextCap = 200;
+
+  private const int ButtonTextCap = 120;
+
+  private const int FormNameCap = 120;
+
+  private const int FieldCap = 20;
+
+  private const int FieldTextCap = 80;
+
+  private const int ItemIdCap = 80;
+
+  private const int ItemTextCap = 200;
+
   public static string Describe(IStore store, string? path) => Describe(store, path, toolNames: null);
 
-  public static string Describe(IStore store, string? path, IReadOnlyList<string>? toolNames)
+  public static string Describe(IStore store, string? path, IReadOnlyList<string>? toolNames) =>
+    Describe(store, path, toolNames, liveSurfaceJson: null, DocumentCap);
+
+  public static string Describe
+  (
+    IStore store,
+    string? path,
+    IReadOnlyList<string>? toolNames,
+    string? liveSurfaceJson,
+    int maxLength
+  )
   {
     ArgumentNullException.ThrowIfNull(store);
+    ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
     string normalized = PageAgentScope.Normalize(path);
-    JsonObject document = Envelope(store, normalized, toolNames);
+    JsonObject document = Envelope(store, normalized, toolNames, liveSurfaceJson);
     if (normalized.Equals("/Settings", StringComparison.OrdinalIgnoreCase)
       || normalized.Equals("/Passkeys", StringComparison.OrdinalIgnoreCase))
     {
@@ -86,10 +118,16 @@ public static class PageAgentContext
       AddFeedback(document, store, openFeedbackId);
     }
 
-    return Bound(document);
+    return Bound(document, maxLength);
   }
 
-  private static JsonObject Envelope(IStore store, string path, IReadOnlyList<string>? toolNames)
+  private static JsonObject Envelope
+  (
+    IStore store,
+    string path,
+    IReadOnlyList<string>? toolNames,
+    string? liveSurfaceJson
+  )
   {
     (string title, string purpose) = Identity(path);
     JsonObject document = new()
@@ -105,7 +143,7 @@ public static class PageAgentContext
       ["tools"] = ToolNames(path, toolNames),
       ["screenshot"] = JsonNode.Parse("null"),
     };
-    MergeSurface(document, store.GetState<AgentSurfaceState>().PageSurfaceJson);
+    MergeSurface(document, SurfaceFor(store.GetState<AgentSurfaceState>(), path, liveSurfaceJson));
     return document;
   }
 
@@ -167,6 +205,18 @@ public static class PageAgentContext
     return names;
   }
 
+  private static string? SurfaceFor(AgentSurfaceState surface, string path, string? liveSurfaceJson)
+  {
+    if (!string.IsNullOrWhiteSpace(liveSurfaceJson))
+    {
+      return liveSurfaceJson;
+    }
+
+    return string.Equals(surface.PageSurfacePath, path, StringComparison.OrdinalIgnoreCase)
+      ? surface.PageSurfaceJson
+      : null;
+  }
+
   private static void MergeSurface(JsonObject document, string? surfaceJson)
   {
     if (string.IsNullOrWhiteSpace(surfaceJson))
@@ -189,59 +239,120 @@ public static class PageAgentContext
       return;
     }
 
-    CopyArray(document, surface, "headings", HeadingCap);
-    CopyArray(document, surface, "forms", FormCap);
-    CopyArray(document, surface, "buttons", ButtonCap);
-    CopyArray(document, surface, "items", ItemCap);
-    if (surface["summary"] is JsonValue summaryValue && summaryValue.TryGetValue(out string? summary) && summary is not null)
-    {
-      document["summary"] = summary.Length <= SummaryCap ? summary : summary[..SummaryCap];
-    }
+    document["headings"] = Texts(surface["headings"], HeadingCap, HeadingTextCap);
+    document["buttons"] = Texts(surface["buttons"], ButtonCap, ButtonTextCap);
+    document["forms"] = Forms(surface["forms"]);
+    document["items"] = Items(surface["items"]);
+    document["summary"] = Clip(Text(surface["summary"]), SummaryCap);
   }
 
-  private static void CopyArray(JsonObject document, JsonObject surface, string name, int cap)
+  private static JsonArray Texts(JsonNode? source, int cap, int textCap)
   {
-    if (surface[name] is not JsonArray source)
+    JsonArray copy = [];
+    if (source is not JsonArray values)
     {
-      return;
+      return copy;
     }
 
-    JsonArray copy = [];
-    int count = 0;
-    foreach (JsonNode? item in source)
+    foreach (JsonNode? value in values)
     {
-      if (count == cap)
+      if (copy.Count == cap)
       {
         break;
       }
 
-      count++;
-      if (item is not null)
+      string text = Clip(Text(value), textCap);
+      if (text.Length > 0)
       {
-        copy.Add(item.DeepClone());
+        copy.Add(text);
       }
     }
 
-    document[name] = copy;
+    return copy;
   }
 
-  private static string Bound(JsonObject document)
+  private static JsonArray Forms(JsonNode? source)
+  {
+    JsonArray copy = [];
+    if (source is not JsonArray forms)
+    {
+      return copy;
+    }
+
+    foreach (JsonNode? form in forms)
+    {
+      if (copy.Count == FormCap)
+      {
+        break;
+      }
+
+      if (form is JsonObject value)
+      {
+        copy.Add
+        (
+          new JsonObject
+          {
+            ["name"] = Clip(Text(value["name"]), FormNameCap),
+            ["fields"] = Texts(value["fields"], FieldCap, FieldTextCap),
+          }
+        );
+      }
+    }
+
+    return copy;
+  }
+
+  private static JsonArray Items(JsonNode? source)
+  {
+    JsonArray copy = [];
+    if (source is not JsonArray items)
+    {
+      return copy;
+    }
+
+    foreach (JsonNode? item in items)
+    {
+      if (copy.Count == ItemCap)
+      {
+        break;
+      }
+
+      if (item is JsonObject value)
+      {
+        copy.Add
+        (
+          new JsonObject
+          {
+            ["id"] = Clip(Text(value["id"]), ItemIdCap),
+            ["text"] = Clip(Text(value["text"]), ItemTextCap),
+          }
+        );
+      }
+    }
+
+    return copy;
+  }
+
+  private static string Text(JsonNode? node) =>
+    node is JsonValue value && value.TryGetValue(out string? text) && text is not null ? text : "";
+
+  private static string Clip(string text, int cap) => text.Length <= cap ? text : text[..cap];
+
+  private static string Bound(JsonObject document, int maxLength)
   {
     string json = document.ToJsonString();
-    if (json.Length <= DocumentCap)
+    foreach (string name in (string[])["summary", "items", "forms", "buttons", "headings"])
     {
-      return json;
+      if (json.Length <= maxLength)
+      {
+        return json;
+      }
+
+      document[name] = name == "summary" ? "" : new JsonArray();
+      json = document.ToJsonString();
     }
 
-    document["summary"] = "";
-    json = document.ToJsonString();
-    if (json.Length <= DocumentCap)
-    {
-      return json;
-    }
-
-    document["headings"] = new JsonArray();
-    return document.ToJsonString();
+    return json;
   }
 
   private static bool TryOpenFeedbackId(string normalized, out Guid feedbackItemId)

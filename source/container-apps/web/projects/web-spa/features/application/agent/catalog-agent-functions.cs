@@ -23,7 +23,8 @@
 // instead of running without a prompt. A wrapped function in Automatic mode still runs: the
 // prompt it already showed is stricter than the mode.
 // Create always appends page_context with the same name, description, and empty schema WebMCP
-// publishes, and it is never approval-wrapped. The conversation credential is checked after the
+// publishes, and it is never approval-wrapped. page_context walks the page body when it is
+// called, like the WebMCP dispatcher, so its text matches the page on screen. The conversation credential is checked after the
 // approval wrapper has already run, and before Execute. A null credential is allowed.
 // The model never calls an HTTP endpoint itself. Store handlers keep [EndpointAuthorize].
 #endregion
@@ -248,7 +249,8 @@ public sealed class CatalogAgentFunctions : IDisposable
       }
 
       names.Add(PageAgentContext.ToolName);
-      return PageAgentContext.Describe(store, path, names);
+      string? surface = await PageSurfaceJsModule.TrySummarizeAsync(services.GetService<IJSRuntime>(), cancellationToken);
+      return PageAgentContext.Describe(store, path, names, surface, PageAgentContext.DocumentCap);
     }
   }
 

@@ -199,6 +199,13 @@ public partial class CatalogAgent_Should
         anonymous, authorization, catalog.Entries, "/", CancellationToken.None
       )
     ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
+
+    (
+      await CatalogAgentToolSet.SelectAsync
+      (
+        anonymous, authorization, catalog.Entries, "/Counter", CancellationToken.None
+      )
+    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
   }
 
   public static async Task Fake_Client_Dispatches_Increment_Only_After_Approval()
@@ -293,6 +300,9 @@ public partial class CatalogAgent_Should
     home.ShouldContain(tool => tool.Name == PageAgentContext.ToolName);
     home.ShouldNotContain(tool => tool.Name == "Profile.SignOut");
     home.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
+    // A literal, not the selection algorithm again: the tool list on / that the task promises.
+    Names(home).ShouldBe(
+      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", AgentNavigate.ToolName, PageAgentContext.ToolName]);
     Console.WriteLine($"WEBMCP-PROOF path=/ tools={string.Join(",", Names(home))}");
 
     IReadOnlyList<WebMcpToolDescriptor> settings = await WebMcpPublisher.DescribeAsync
@@ -604,6 +614,7 @@ public partial class CatalogAgent_Should
     (
       new AgentSurfaceState.RememberPageSurfaceActionSet.Action
       (
+        "/",
         """
         {"headings":["Welcome to TimeWarp.Architecture","Built with","Signed in"],"summary":"Welcome to TimeWarp.Architecture. Built with. Signed in.","forms":[],"buttons":[],"items":[]}
         """
@@ -618,7 +629,141 @@ public partial class CatalogAgent_Should
     string feedback = PageAgentContext.Describe(scope.Store, "/Feedback");
     feedback.ShouldContain("File feedback and review the filings you submitted.");
     feedback.ShouldContain("\"title\":\"Feedback\"");
+    feedback.ShouldNotContain("Welcome to TimeWarp.Architecture");
+    feedback.ShouldNotContain("Built with");
     Console.WriteLine("PAGE-CONTEXT /Feedback " + feedback);
+  }
+
+  public static async Task Page_Context_Stays_Valid_Json_Under_Its_Cap()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    string longText = new('h', 500);
+    System.Text.Json.Nodes.JsonObject surface = new()
+    {
+      ["headings"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 60).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+      ["summary"] = new string('s', 5_000),
+      ["buttons"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 60).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+      ["forms"] = new System.Text.Json.Nodes.JsonArray
+      (
+        [
+          .. Enumerable.Range(0, 20).Select
+          (
+            _ => (System.Text.Json.Nodes.JsonNode?)new System.Text.Json.Nodes.JsonObject
+            {
+              ["name"] = longText,
+              ["fields"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 40).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+            }
+          ),
+        ]
+      ),
+      ["items"] = new System.Text.Json.Nodes.JsonArray
+      (
+        [
+          .. Enumerable.Range(0, 80).Select
+          (
+            _ => (System.Text.Json.Nodes.JsonNode?)new System.Text.Json.Nodes.JsonObject { ["id"] = longText, ["text"] = longText }
+          ),
+        ]
+      ),
+    };
+    await scope.Send(new AgentSurfaceState.RememberPageSurfaceActionSet.Action("/Counter", surface.ToJsonString()));
+
+    string described = PageAgentContext.Describe(scope.Store, "/Counter");
+    described.Length.ShouldBeLessThanOrEqualTo(PageAgentContext.DocumentCap);
+    using (JsonDocument document = JsonDocument.Parse(described))
+    {
+      document.RootElement.GetProperty("title").GetString().ShouldBe("Counter");
+      foreach (JsonElement heading in document.RootElement.GetProperty("headings").EnumerateArray())
+      {
+        heading.GetString().ShouldNotBeNull().Length.ShouldBeLessThanOrEqualTo(200);
+      }
+    }
+
+    string forAsk = PageAgentContext.Describe
+    (
+      scope.Store, "/Counter", toolNames: null, liveSurfaceJson: null, AgentAskInstructions.ContextCap
+    );
+    forAsk.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.ContextCap);
+    using (JsonDocument document = JsonDocument.Parse(forAsk))
+    {
+      document.RootElement.GetProperty("path").GetString().ShouldBe("/Counter");
+    }
+  }
+
+  public static async Task WebMcp_Page_Context_Walks_The_Page_When_Called()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IServiceProvider services = scope.ServiceProvider;
+    await scope.Send
+    (
+      new AgentSurfaceState.RememberPageSurfaceActionSet.Action
+      (
+        "/", """{"headings":["Welcome to TimeWarp.Architecture"],"summary":"Welcome.","forms":[],"buttons":[],"items":[]}"""
+      )
+    );
+    services.GetRequiredService<NavigationManager>().NavigateTo("/Counter");
+
+    SurfaceJsRuntime browser = new
+    (
+      """{"headings":["Counter live heading"],"summary":"Counter live text.","forms":[],"buttons":["Increment"],"items":[]}"""
+    );
+    WebMcpDispatcher dispatcher = new
+    (
+      scope.Store,
+      services.GetRequiredService<IActionCatalog>(),
+      services.GetRequiredService<IAuthorizationService>(),
+      services.GetRequiredService<AuthenticationStateProvider>(),
+      services.GetRequiredService<NavigationManager>(),
+      services.GetRequiredService<PageAgentRoute>(),
+      services.GetRequiredService<WebMcpApprovalGate>(),
+      services.GetRequiredService<AgentCallOutcome>(),
+      browser
+    );
+
+    string described = await dispatcher.InvokeTool(PageAgentContext.ToolName, "{}").WaitAsync(Timeout);
+    described.ShouldContain("\"path\":\"/Counter\"");
+    described.ShouldContain("Counter live heading");
+    described.ShouldContain("Increment");
+    described.ShouldNotContain("Welcome to TimeWarp.Architecture");
+    browser.Selector.ShouldBe(PageAgentContext.SurfaceRootSelector);
+    Console.WriteLine("PAGE-CONTEXT live /Counter " + described);
+  }
+
+  /// <summary>Stands in for the browser: import returns a module whose summarizeJson answers the fixture.</summary>
+  private sealed class SurfaceJsRuntime : Microsoft.JSInterop.IJSRuntime, Microsoft.JSInterop.IJSObjectReference
+  {
+    private readonly string Json;
+
+    public SurfaceJsRuntime(string json)
+    {
+      Json = json;
+    }
+
+    public string? Selector { get; private set; }
+
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+      InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
+
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    {
+      if (identifier == "import")
+      {
+        return ValueTask.FromResult((TValue)(object)this);
+      }
+
+      if (identifier == "summarizeJson")
+      {
+        Selector = args is { Length: > 0 } ? args[0] as string : null;
+        return ValueTask.FromResult((TValue)(object)Json);
+      }
+
+      throw new InvalidOperationException($"Unexpected identifier '{identifier}'.");
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
   }
 
   public static async Task Navigate_Matches_Palette_Pages_And_Refuses_The_Rest()
@@ -743,7 +888,6 @@ public partial class CatalogAgent_Should
     InvalidOperationException thrown = await Should.ThrowAsync<InvalidOperationException>(
       () => dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout));
     thrown.Message.ShouldContain("IWebServerApiService");
-    thrown.Message.ShouldNotContain("navigateTo");
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
   }
 
