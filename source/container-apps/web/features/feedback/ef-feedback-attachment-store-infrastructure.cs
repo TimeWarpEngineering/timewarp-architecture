@@ -5,7 +5,7 @@
 #region Design
 // Scoped, depends on PostgresDbContext. PostgresDbModule replaces the in-memory singleton when a
 // connection string is present. Find and list are untracked. Remove loads a tracked row.
-// TryLink, Unlink, and RemoveExpiredUnlinked are single conditional statements (ExecuteUpdate /
+// TryLink, UnlinkAll, and RemoveExpiredUnlinked are single conditional statements (ExecuteUpdate /
 // ExecuteDelete with the owner and link state in the WHERE clause) and read the affected row
 // count, so a concurrent submit or remove cannot be overwritten by a stale tracked row.
 // A unique id violation becomes InvalidOperationException, matching InMemoryFeedbackAttachmentStore.
@@ -93,15 +93,12 @@ public sealed class EfFeedbackAttachmentStore : IFeedbackAttachmentStore
     return affected == 1;
   }
 
-  public async Task UnlinkAsync(
-    FeedbackAttachmentId id,
-    FeedbackItemId itemId,
-    CancellationToken cancellationToken = default)
+  public async Task UnlinkAllAsync(FeedbackItemId itemId, CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
     FeedbackItemId? linked = itemId;
     await Db.FeedbackAttachments
-      .Where(row => row.Id == id && row.FeedbackItemId == linked)
+      .Where(row => row.FeedbackItemId == linked)
       .ExecuteUpdateAsync(setters => setters.SetProperty(row => row.FeedbackItemId, (FeedbackItemId?)null), cancellationToken)
       .ConfigureAwait(false);
   }

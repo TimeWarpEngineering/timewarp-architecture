@@ -51,7 +51,13 @@ A pending file is one that was uploaded but not yet filed. The list of pending f
 only in the browser, so a reload loses it. Each upload first deletes the caller's own pending
 files older than the pending lifetime, rows and bytes, and then checks the cap of 8. A person
 who abandons a draft is locked out of new uploads for at most one pending lifetime. A ninth
-pending upload inside that window is HTTP 409. Concurrent uploads from one person can pass
+pending upload inside that window is HTTP 409. If an expired file's bytes cannot be deleted,
+the failure is logged and the upload still succeeds.
+
+A draft left open longer than the pending lifetime loses its earlier uploads the same way.
+Submit then returns HTTP 400 and lists those ids under the `unavailableAttachmentIds` problem
+extension. The form removes those files, their previews, and their markdown links, and shows
+a message asking the user to attach the file again. The next submit files the rest. Concurrent uploads from one person can pass
 the cap by a few files; the cap limits abuse and is not an exact quota.
 
 The contract constants and the domain constants are duplicates. A test locks them together.
@@ -78,9 +84,11 @@ filed, the item's owner or a principal with `admin.access` on `identity-session`
 Removing a filed file is HTTP 409.
 
 Filing links each attachment with a conditional write that succeeds only when the row is
-still the filer's and still pending. If a remove or a second submit takes a file first, the
-links already made are undone, the item is removed, and the filer gets HTTP 400. An item never
-keeps only some of its files.
+still the filer's and still pending. If a remove or a second submit takes a file first, every
+link to the new item is undone, the item is removed, and the filer gets HTTP 400 listing that
+id. If a store throws, the same rollback runs and the original error is kept. Once the item is
+saved, a cancelled request does not stop linking or rollback partway. An item never keeps only
+some of its files.
 
 `DELETE api/Feedback/attachments/{id}` is the generated JSON endpoint. Upload and download are
 hand-written endpoints because the generated one always writes JSON.

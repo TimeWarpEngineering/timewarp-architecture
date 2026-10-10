@@ -12,7 +12,9 @@
 #region Purpose
 // Jaribu runfile for attachment size and type limits, the pending cap and its expiry, the
 // owner-or-admin download rule, safe download headers and X-File-Name decoding, and filing
-// that links only the caller's pending uploads and rolls back when a link loses a race.
+// that links only the caller's pending uploads, lists unavailable ids, and rolls back when a
+// link loses a race, commits then throws, or the rollback's unlink step fails. Expiry survives
+// a blob delete that throws.
 #endregion
 
 //-:cnd:noEmit
@@ -265,6 +267,80 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(first)))!.FeedbackItemId.ShouldBeNull();
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(second)))!.FeedbackItemId.ShouldBe(elsewhere);
+      UnavailableIds(problem).ShouldBe([second]);
+    }
+
+    public static async Task Submit_Should_UndoALinkThatCommittedThenThrewAndKeepTheError()
+    {
+      World world = new();
+      Guid first = await world.UploadAsync(world.Owner, "first.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      Guid second = await world.UploadAsync(world.Owner, "second.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      RacingAttachmentStore throwing = new(world.Attachments, FeedbackAttachmentId.From(second), world.Owner.Value, FeedbackItemId.New())
+      {
+        CommitThenThrow = true,
+      };
+
+      InvalidOperationException error = await Should.ThrowAsync<InvalidOperationException>(
+        () => world.SubmitThrowsAsync(world.Owner, [first, second], throwing));
+      error.Message.ShouldBe("link committed then threw");
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(first)))!.FeedbackItemId.ShouldBeNull();
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(second)))!.FeedbackItemId.ShouldBeNull();
+    }
+
+    public static async Task Submit_Should_StillRemoveTheItemWhenUnlinkFails()
+    {
+      World world = new();
+      Guid first = await world.UploadAsync(world.Owner, "first.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      Guid second = await world.UploadAsync(world.Owner, "second.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      RacingAttachmentStore failing = new(world.Attachments, FeedbackAttachmentId.From(second), world.Owner.Value, FeedbackItemId.New())
+      {
+        CommitThenThrow = true,
+        ThrowOnUnlink = true,
+      };
+
+      InvalidOperationException error = await Should.ThrowAsync<InvalidOperationException>(
+        () => world.SubmitThrowsAsync(world.Owner, [first, second], failing));
+      error.Message.ShouldBe("link committed then threw");
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+    }
+
+    public static async Task Submit_Should_ListEveryUnavailableAttachment()
+    {
+      World world = new();
+      Guid kept = await world.UploadAsync(world.Owner, "kept.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      Guid removed = await world.UploadAsync(world.Owner, "removed.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      await world.Attachments.RemoveAsync(FeedbackAttachmentId.From(removed));
+      Guid missing = Guid.NewGuid();
+
+      SharedProblemDetails problem = await world.SubmitProblemAsync(world.Owner, [kept, removed, missing]);
+      problem.Status.ShouldBe(400);
+      UnavailableIds(problem).ShouldBe([removed, missing]);
+      (await world.Feedback.ListByOwnerAsync(world.Owner.Value)).Count.ShouldBe(0);
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(kept)))!.FeedbackItemId.ShouldBeNull();
+    }
+
+    public static async Task Upload_Should_SucceedWhenAnExpiredBlobCannotBeDeleted()
+    {
+      World world = new();
+      DateTimeOffset expiredAt = DateTimeOffset.UtcNow - FeedbackAttachmentRules.PendingLifetime - TimeSpan.FromMinutes(1);
+      List<FeedbackAttachment> stale = [];
+      for (int index = 0; index < 2; index++)
+      {
+        var attachment = FeedbackAttachment.Create(world.Owner.Value, $"lost-{index}.txt", FeedbackAttachmentRules.Text, 5, expiredAt);
+        await world.Attachments.AddAsync(attachment);
+        await world.Blobs.PutAsync(attachment.StorageKey, "hello"u8.ToArray(), FeedbackAttachmentRules.Text);
+        stale.Add(attachment);
+      }
+
+      world.UploadBlobs = new UndeletableBlobStore(world.Blobs);
+      Guid freshId = await world.UploadAsync(world.Owner, "fresh.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(freshId))).ShouldNotBeNull();
+      foreach (FeedbackAttachment attachment in stale)
+      {
+        (await world.Attachments.FindAsync(attachment.Id)).ShouldBeNull();
+      }
     }
 
     public static async Task Remove_Should_RejectALinkedAttachment()
@@ -306,6 +382,12 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(foreign)))!.FeedbackItemId.ShouldBeNull();
     }
 
+    private static List<Guid> UnavailableIds(SharedProblemDetails problem) =>
+      problem.Extensions.TryGetValue(SubmitFeedback.UnavailableAttachmentIdsExtension, out object? value)
+        && value is IEnumerable<Guid> ids
+          ? ids.ToList()
+          : [];
+
     private static SharedProblemDetails Problem(OneOf<byte[], SharedProblemDetails> result) =>
       result.Match(_ => throw new InvalidOperationException("Expected a problem"), problem => problem);
 
@@ -316,6 +398,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       public InMemoryFeedbackAttachmentBlobStore Blobs { get; } = new();
       public GrantingPermissionEvaluator Permissions { get; } = new();
       public PrincipalId Owner { get; } = PrincipalId.New();
+      public IFeedbackAttachmentBlobStore? UploadBlobs { get; set; }
 
       public async Task<Guid> UploadAsync(PrincipalId principal, string fileName, string contentType, byte[] content)
       {
@@ -368,6 +451,9 @@ namespace TimeWarp.Architecture.Features.Feedback
         (await SubmitAs(principal).Handle(Command(attachmentIds), CancellationToken.None))
           .Match(ok => ok, _ => throw new InvalidOperationException("Expected submit success"));
 
+      public async Task SubmitThrowsAsync(PrincipalId principal, IReadOnlyList<Guid> attachmentIds, IFeedbackAttachmentStore attachmentStore) =>
+        _ = await SubmitAs(principal, attachmentStore).Handle(Command(attachmentIds), CancellationToken.None);
+
       public async Task<SharedProblemDetails> SubmitProblemAsync(
         PrincipalId principal,
         IReadOnlyList<Guid> attachmentIds,
@@ -380,7 +466,7 @@ namespace TimeWarp.Architecture.Features.Feedback
           .Match(ok => ok, _ => throw new InvalidOperationException("Expected get success"));
 
       private UploadHandler UploadAs(PrincipalId principal) =>
-        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs);
+        new(new StubCurrentPrincipalAccessor(principal), Attachments, UploadBlobs ?? Blobs, NullLogger<UploadHandler>.Instance);
 
       private DownloadHandler DownloadAs(PrincipalId principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs, Permissions);
@@ -418,6 +504,12 @@ namespace TimeWarp.Architecture.Features.Feedback
       private readonly Guid Owner;
       private readonly FeedbackItemId Elsewhere;
 
+      /// <summary>Commit the contested link, then throw, instead of losing it to another item.</summary>
+      public bool CommitThenThrow { get; init; }
+
+      /// <summary>Throw from UnlinkAll, as a failing rollback step.</summary>
+      public bool ThrowOnUnlink { get; init; }
+
       public RacingAttachmentStore(
         IFeedbackAttachmentStore inner,
         FeedbackAttachmentId contested,
@@ -450,6 +542,12 @@ namespace TimeWarp.Architecture.Features.Feedback
         FeedbackItemId itemId,
         CancellationToken cancellationToken = default)
       {
+        if (id == Contested && CommitThenThrow)
+        {
+          (await Inner.TryLinkAsync(id, ownerPrincipalId, itemId, cancellationToken)).ShouldBeTrue();
+          throw new InvalidOperationException("link committed then threw");
+        }
+
         if (id == Contested)
         {
           (await Inner.TryLinkAsync(Contested, Owner, Elsewhere, cancellationToken)).ShouldBeTrue();
@@ -458,8 +556,10 @@ namespace TimeWarp.Architecture.Features.Feedback
         return await Inner.TryLinkAsync(id, ownerPrincipalId, itemId, cancellationToken);
       }
 
-      public Task UnlinkAsync(FeedbackAttachmentId id, FeedbackItemId itemId, CancellationToken cancellationToken = default) =>
-        Inner.UnlinkAsync(id, itemId, cancellationToken);
+      public Task UnlinkAllAsync(FeedbackItemId itemId, CancellationToken cancellationToken = default) =>
+        ThrowOnUnlink
+          ? throw new InvalidOperationException("unlink failed")
+          : Inner.UnlinkAllAsync(itemId, cancellationToken);
 
       public Task<IReadOnlyList<FeedbackAttachment>> RemoveExpiredUnlinkedAsync(
         Guid ownerPrincipalId,
@@ -469,6 +569,23 @@ namespace TimeWarp.Architecture.Features.Feedback
 
       public Task RemoveAsync(FeedbackAttachmentId id, CancellationToken cancellationToken = default) =>
         Inner.RemoveAsync(id, cancellationToken);
+    }
+
+    /// <summary>Blob store whose deletes always fail.</summary>
+    private sealed class UndeletableBlobStore : IFeedbackAttachmentBlobStore
+    {
+      private readonly IFeedbackAttachmentBlobStore Inner;
+
+      public UndeletableBlobStore(IFeedbackAttachmentBlobStore inner) => Inner = inner;
+
+      public Task PutAsync(string key, byte[] content, string contentType, CancellationToken cancellationToken = default) =>
+        Inner.PutAsync(key, content, contentType, cancellationToken);
+
+      public Task<Stream?> OpenReadAsync(string key, CancellationToken cancellationToken = default) =>
+        Inner.OpenReadAsync(key, cancellationToken);
+
+      public Task DeleteAsync(string key, CancellationToken cancellationToken = default) =>
+        throw new IOException("blob delete failed");
     }
 
     private sealed class SizedStream : Stream

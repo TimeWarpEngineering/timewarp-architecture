@@ -11,10 +11,14 @@
 // re-list. The agent payload is the API response (id and permalink included).
 // includeDraftAttachments stays false unless the feedback form passes true, so another
 // submit (for example a thumbs rating) does not file the user's pending uploads.
+// A 400 that lists UnavailableAttachmentIdsExtension (a pending upload expired or was removed)
+// drops exactly those ids from DraftAttachments before the problem notification is published,
+// so the next submit files the rest. The notification text says to attach the file again.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
+using System.Text.Json;
 using static SubmitFeedback;
 
 partial class FeedbackState
@@ -104,6 +108,46 @@ partial class FeedbackState
         ];
         AgentCallOutcome.Set(response);
         return Task.CompletedTask;
+      }
+
+      protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
+      {
+        HashSet<Guid> unavailable = UnavailableIds(problemDetails);
+        if (unavailable.Count > 0)
+        {
+          FeedbackState.DraftAttachments = FeedbackState.DraftAttachments
+            .Where(draft => !unavailable.Contains(draft.AttachmentId))
+            .ToList();
+        }
+
+        return base.HandleError(problemDetails, cancellationToken);
+      }
+
+      /// <summary>Ids under UnavailableAttachmentIdsExtension: a JSON array over HTTP, a list in process.</summary>
+      internal static HashSet<Guid> UnavailableIds(SharedProblemDetails problemDetails)
+      {
+        HashSet<Guid> ids = [];
+        if (!problemDetails.Extensions.TryGetValue(UnavailableAttachmentIdsExtension, out object? value))
+        {
+          return ids;
+        }
+
+        if (value is JsonElement { ValueKind: JsonValueKind.Array } array)
+        {
+          foreach (JsonElement element in array.EnumerateArray())
+          {
+            if (element.ValueKind == JsonValueKind.String && element.TryGetGuid(out Guid id))
+            {
+              ids.Add(id);
+            }
+          }
+        }
+        else if (value is IEnumerable<Guid> list)
+        {
+          ids.UnionWith(list);
+        }
+
+        return ids;
       }
     }
   }

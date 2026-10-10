@@ -10,6 +10,7 @@
 namespace TimeWarp.Architecture.Features.Feedback.Application;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
+using SubmitFeedbackContract = TimeWarp.Architecture.Features.Feedback.SubmitFeedback;
 
 internal static class FeedbackProblems
 {
@@ -62,12 +63,22 @@ internal static class FeedbackProblems
     Detail = $"A feedback item can include at most {FeedbackAttachment.MaxPerItem} attachments."
   };
 
-  public static SharedProblemDetails AttachmentUnavailable() => new()
+  public static SharedProblemDetails AttachmentUnavailable(IReadOnlyCollection<Guid>? unavailableIds = null)
   {
-    Title = "Attachment not available",
-    Status = 400,
-    Detail = "One of the attachments cannot be filed with this item."
-  };
+    SharedProblemDetails problem = new()
+    {
+      Title = "Attachment not available",
+      Status = 400,
+      Detail = "One or more attachments are no longer available. Pending uploads expire after "
+        + $"{FeedbackAttachmentRules.PendingLifetime.TotalHours:0} hours; attach the file again."
+    };
+    if (unavailableIds is { Count: > 0 })
+    {
+      problem.Extensions[SubmitFeedbackContract.UnavailableAttachmentIdsExtension] = unavailableIds.ToList();
+    }
+
+    return problem;
+  }
 
   public static SharedProblemDetails AlreadyFiled() => new()
   {

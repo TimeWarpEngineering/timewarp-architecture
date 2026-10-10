@@ -10,6 +10,9 @@
 // Permalink in the response is the relative path /Feedback/{guid:D}. EmailCopySent is true only
 // when a copy was actually handed to the sender. AttachmentIds are uploads already stored for
 // this principal; the handler links them. The response echoes the ids that were linked.
+// When some ids cannot be filed (expired after FeedbackAttachmentRules.PendingLifetime,
+// removed, or filed elsewhere), the 400 problem lists them under the
+// UnavailableAttachmentIdsExtension key so the client can drop exactly those from its draft.
 // GetMockResponseFactory keeps mock mode deterministic with a fixed id.
 #endregion
 
@@ -25,6 +28,9 @@ public static partial class SubmitFeedback
 {
   public const int MaxTitleLength = 200;
   public const int MaxBodyLength = 8000;
+
+  /// <summary>Problem extension key listing the attachment ids that could not be filed.</summary>
+  public const string UnavailableAttachmentIdsExtension = "unavailableAttachmentIds";
 
   [ApiRoute("api/Feedback", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>

@@ -5,7 +5,7 @@
 #region Design
 // Process-lifetime singleton, matching InMemoryFeedbackStore. PostgresDbModule swaps it
 // for scoped EfFeedbackAttachmentStore when a connection string is present. Link mutates
-// the stored instance. TryLink, Unlink, and RemoveExpiredUnlinked check and write under one
+// the stored instance. TryLink, UnlinkAll, and RemoveExpiredUnlinked check and write under one
 // lock so the conditional writes are atomic. List order is UploadedAt then id.
 #endregion
 
@@ -91,17 +91,17 @@ public sealed class InMemoryFeedbackAttachmentStore : IFeedbackAttachmentStore
   }
 
   /// <inheritdoc />
-  public Task UnlinkAsync(
-    FeedbackAttachmentId id,
-    FeedbackItemId itemId,
-    CancellationToken cancellationToken = default)
+  public Task UnlinkAllAsync(FeedbackItemId itemId, CancellationToken cancellationToken = default)
   {
     cancellationToken.ThrowIfCancellationRequested();
     lock (Gate)
     {
-      if (Items.TryGetValue(id, out FeedbackAttachment? attachment) && attachment.FeedbackItemId == itemId)
+      foreach (FeedbackAttachment attachment in Items.Values)
       {
-        attachment.Unlink(itemId);
+        if (attachment.FeedbackItemId == itemId)
+        {
+          attachment.Unlink(itemId);
+        }
       }
     }
 

@@ -222,6 +222,7 @@
   private async Task SubmitAsync()
   {
     Guid? before = FeedbackState.LastReceipt?.FeedbackItemId;
+    List<Guid> drafted = FeedbackState.DraftAttachments.Select(draft => draft.AttachmentId).ToList();
     await FeedbackState.SubmitFeedback(
       Draft.Kind,
       Draft.Title,
@@ -234,6 +235,18 @@
       Draft.Body = null!;
       Draft.EmailCopy = false;
       Previews.Clear();
+      return;
+    }
+
+    // A failed submit can drop expired or removed uploads from the draft; take their
+    // previews and markdown links out of the form too.
+    foreach (Guid attachmentId in drafted)
+    {
+      if (FeedbackState.DraftAttachments.All(draft => draft.AttachmentId != attachmentId))
+      {
+        Previews.Remove(attachmentId);
+        StripMarkdown(attachmentId);
+      }
     }
   }
 

@@ -13,10 +13,17 @@
 // The pre-check gives the common case a clean 400 without writing. The link itself is
 // TryLinkAsync, a conditional write, because a remove or a second submit can run between the
 // check and the link. The item is inserted first (the attachment row has a foreign key to it);
-// if any TryLink fails or a store throws, the links already made are undone and the item is
-// removed, so the caller never gets an item with only some of its files. A full database
-// transaction would need a unit-of-work port spanning both stores; compensation keeps the
-// store ports independent. EmailCopySent is true only
+// if any TryLink fails or a store throws, every link to the item is undone by item id (so a
+// link that committed and then threw is undone too) and the item is removed, so the caller
+// never gets an item with only some of its files. Once the item is stored, linking and
+// rollback run with CancellationToken.None so a cancelled request cannot stop halfway. The
+// two rollback steps run independently and log their own failures; the original exception
+// is rethrown. Unlinking before the delete matters: the attachment FK cascades, so a delete
+// with links still in place would drop those rows and orphan their blobs. If the unlink step
+// itself fails, that cascade can still happen; it is logged. A full database transaction
+// would need a unit-of-work port spanning both stores; compensation keeps the store ports
+// independent. A 400 lists the unavailable ids (pre-check and lost race) so the client can
+// drop them from its draft. EmailCopySent is true only
 // when the profile already has an email, the filer opted in, and the send completed. No profile
 // row is created. The permalink in the response is the relative path; the message body uses an
 // absolute URL when IAppBaseUrlAccessor returns a public origin.
@@ -34,6 +41,14 @@ public sealed class SubmitFeedback
 {
   public sealed class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
+    private static readonly Action<ILogger, Guid, string, Exception?> LogRollbackFailed =
+      LoggerMessage.Define<Guid, string>
+      (
+        LogLevel.Error,
+        new EventId(2, nameof(LogRollbackFailed)),
+        "Feedback {FeedbackItemId} could not be rolled back: {RollbackStep} failed"
+      );
+
     private static readonly Action<ILogger, Guid, Exception?> LogEmailCopyFailed =
       LoggerMessage.Define<Guid>
       (
@@ -97,6 +112,7 @@ public sealed class SubmitFeedback
       }
 
       List<FeedbackAttachment> attachments = [];
+      List<Guid> unavailable = [];
       foreach (Guid attachmentId in requested)
       {
         FeedbackAttachment? attachment = await AttachmentStore
@@ -106,10 +122,16 @@ public sealed class SubmitFeedback
           || attachment.OwnerPrincipalId != principalId.Value.Value
           || attachment.FeedbackItemId is not null)
         {
-          return FeedbackProblems.AttachmentUnavailable();
+          unavailable.Add(attachmentId);
+          continue;
         }
 
         attachments.Add(attachment);
+      }
+
+      if (unavailable.Count > 0)
+      {
+        return FeedbackProblems.AttachmentUnavailable(unavailable);
       }
 
       var item = FeedbackItem.File(
@@ -119,9 +141,11 @@ public sealed class SubmitFeedback
         request.Body,
         DateTimeOffset.UtcNow);
       await FeedbackStore.AddAsync(item, cancellationToken).ConfigureAwait(false);
-      if (!await TryLinkAllAsync(principalId.Value.Value, item.Id, attachments, cancellationToken).ConfigureAwait(false))
+      FeedbackAttachmentId? lost = await LinkAllOrRollBackAsync(principalId.Value.Value, item.Id, attachments)
+        .ConfigureAwait(false);
+      if (lost is { } lostId)
       {
-        return FeedbackProblems.AttachmentUnavailable();
+        return FeedbackProblems.AttachmentUnavailable([lostId.Value]);
       }
 
       string permalink = FeedbackPermalink.For(item.Id.Value);
@@ -138,46 +162,54 @@ public sealed class SubmitFeedback
         attachments.ConvertAll(attachment => attachment.Id.Value));
     }
 
-    private async Task<bool> TryLinkAllAsync(
+    /// <summary>Links every attachment, or rolls the filing back and returns the id that was lost.</summary>
+    private async Task<FeedbackAttachmentId?> LinkAllOrRollBackAsync(
       Guid ownerId,
       FeedbackItemId itemId,
-      List<FeedbackAttachment> attachments,
-      CancellationToken cancellationToken)
+      List<FeedbackAttachment> attachments)
     {
-      List<FeedbackAttachmentId> linked = [];
       try
       {
         foreach (FeedbackAttachment attachment in attachments)
         {
           bool ok = await AttachmentStore
-            .TryLinkAsync(attachment.Id, ownerId, itemId, cancellationToken)
+            .TryLinkAsync(attachment.Id, ownerId, itemId, CancellationToken.None)
             .ConfigureAwait(false);
           if (!ok)
           {
-            await RollBackAsync(itemId, linked).ConfigureAwait(false);
-            return false;
+            await RollBackAsync(itemId).ConfigureAwait(false);
+            return attachment.Id;
           }
-
-          linked.Add(attachment.Id);
         }
       }
       catch
       {
-        await RollBackAsync(itemId, linked).ConfigureAwait(false);
+        await RollBackAsync(itemId).ConfigureAwait(false);
         throw;
       }
 
-      return true;
+      return null;
     }
 
-    private async Task RollBackAsync(FeedbackItemId itemId, List<FeedbackAttachmentId> linked)
+    private async Task RollBackAsync(FeedbackItemId itemId)
     {
-      foreach (FeedbackAttachmentId attachmentId in linked)
+      try
       {
-        await AttachmentStore.UnlinkAsync(attachmentId, itemId, CancellationToken.None).ConfigureAwait(false);
+        await AttachmentStore.UnlinkAllAsync(itemId, CancellationToken.None).ConfigureAwait(false);
+      }
+      catch (Exception exception)
+      {
+        LogRollbackFailed(Logger, itemId.Value, "unlink", exception);
       }
 
-      await FeedbackStore.RemoveAsync(itemId, CancellationToken.None).ConfigureAwait(false);
+      try
+      {
+        await FeedbackStore.RemoveAsync(itemId, CancellationToken.None).ConfigureAwait(false);
+      }
+      catch (Exception exception)
+      {
+        LogRollbackFailed(Logger, itemId.Value, "remove item", exception);
+      }
     }
 
     private async Task<bool> TrySendCopyAsync(Guid ownerId, FeedbackItem item, DomainKind kind, string permalink)

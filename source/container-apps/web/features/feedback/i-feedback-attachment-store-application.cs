@@ -7,8 +7,9 @@
 // sees a connection string and swaps in EfFeedbackAttachmentStore. Blob bytes are a
 // separate port so a row and its object can fail independently.
 // TryLink is a conditional write: it succeeds only for the owner's still-unlinked row, so
-// two submits or a submit racing a remove cannot both claim one file. Unlink is the
-// compensation when a filing cannot link everything. RemoveExpiredUnlinked deletes rows one
+// two submits or a submit racing a remove cannot both claim one file. UnlinkAll is the
+// compensation when a filing cannot link everything; it works by item id, so a link that
+// committed but then threw is undone too. RemoveExpiredUnlinked deletes rows one
 // at a time under the same unlinked condition and returns only the rows it deleted, so the
 // caller deletes exactly those blobs.
 #endregion
@@ -48,11 +49,8 @@ public interface IFeedbackAttachmentStore
     FeedbackItemId itemId,
     CancellationToken cancellationToken = default);
 
-  /// <summary>Clears the link when the attachment is linked to <paramref name="itemId"/>.</summary>
-  Task UnlinkAsync(
-    FeedbackAttachmentId id,
-    FeedbackItemId itemId,
-    CancellationToken cancellationToken = default);
+  /// <summary>Clears the link on every attachment linked to <paramref name="itemId"/>.</summary>
+  Task UnlinkAllAsync(FeedbackItemId itemId, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Deletes the owner's unlinked attachments uploaded before <paramref name="uploadedBefore"/>
