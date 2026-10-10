@@ -48,6 +48,7 @@ https://github.com/TimeWarpEngineering/timewarp-state/blob/master/documentation/
 - [x] Add ICloneable where the source-generated cloner cannot clone a type (task 097)
 - [x] Full build green
 - [x] Unit, end-to-end and browser (Playwright/WASM) tests green locally (`./bin/dev test`; CI re-runs on the PR)
+- [x] Template-smoke resolves `/_content/TimeWarp.State/` assets from the TimeWarp.State.Blazor package
 
 ## Results
 
@@ -88,22 +89,32 @@ every project under `tests/`, including `web-server-integration-tests` (304 pass
 skipped), `web-spa-integration-tests` (179 passed), and `web-spa-playwright-tests` (5
 passed).
 
+CI `template-smoke` on PR #457 (run 38037662735) failed after that. SmokeDefault built
+with 0 warnings and 0 errors, then the initializer import-graph check looked up
+`/_content/TimeWarp.State/js/logger.js` and `constants.js` under
+`timewarp.state/12.0.0-beta.10/staticwebassets/`. Those files ship in
+`timewarp.state.blazor` at the same `/_content/TimeWarp.State/` base path
+(`TimeWarp.State.Blazor.PackageAssets.json` `BasePath` is `_content/TimeWarp.State`).
+`TemplateSmokeContentAssets` tries the URL package first, then `TimeWarp.State.Blazor`
+when that pin is present. `dev-cli-tests` covers the fallback (8 passed).
+`dotnet run tools/dev-cli/dev.cs -- template-smoke` printed `Template smoke SUCCEEDED`.
+Each matrix app (`SmokeDefault`, `SmokeNoPostgres`, `SmokeNoApi`) built with 0 warnings
+and 0 errors and printed `Initializer import graph OK (3 _content specifier(s) resolved ...)`.
+
 ### How to validate
 
 Smoke:
 
 ```bash
-./bin/dev build
-./bin/dev test
+(cd tests/tools/dev-cli-tests && dotnet test -c Release -- --filter-class TemplateSmokeContentAssets)
+dotnet run tools/dev-cli/dev.cs -- template-smoke
 ```
 
 Expect:
 
-- `./bin/dev build` prints `0 Warning(s)`, `0 Error(s)`, and `Build completed successfully!`.
-- `./bin/dev test` prints `Tests completed successfully!`.
-- `web-server-integration-tests` reports 304 succeeded and 1 skipped.
-- `web-spa-integration-tests` reports 179 succeeded.
-- `web-spa-playwright-tests` reports 5 succeeded.
+- `dev-cli-tests` prints `Passed!`, `total: 8`, `failed: 0`, `succeeded: 8`.
+- `template-smoke` prints `Initializer import graph OK (3 _content specifier(s) resolved` three times (one per matrix app) and ends with `Template smoke SUCCEEDED`.
+- Each generated app build in that log prints `0 Warning(s)` and `0 Error(s)`.
 
 ### Review disposition
 
@@ -128,5 +139,6 @@ Expect:
 
 - Created: 2026-10-10
 - Implementation: 2026-10-10 (Grok implement oracle)
+- Implementation: 2026-10-10 (Grok implement oracle) — template-smoke `_content/TimeWarp.State` resolves through TimeWarp.State.Blazor
 - Review: 2026-10-10 (Claude review oracle, effort 1, general) — clean
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-10T08:21:15Z
