@@ -178,7 +178,7 @@
       bool explained = NotificationState.Messages.Any(message =>
         message.Intent == MessageBarIntent.Error
         && !errorsBefore.Contains(message.Id)
-        && !string.Equals(message.Title, "Unhandled Error", StringComparison.Ordinal));
+        && !string.Equals(message.Title, HttpApiService.UnhandledErrorTitle, StringComparison.Ordinal));
       if (!explained)
       {
         await NotificationState.AddNotification(MessageBarIntent.Error, "The file could not be uploaded.");

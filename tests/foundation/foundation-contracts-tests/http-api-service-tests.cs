@@ -164,7 +164,7 @@ public class HttpApiService_GetResponse
     result.IsT2.ShouldBeTrue();
     SharedProblemDetails problem = result.AsT2;
     problem.Status.ShouldBe(500);
-    problem.Title.ShouldBe("Unhandled Error");
+    problem.Title.ShouldBe(HttpApiService.UnhandledErrorTitle);
   }
 
   public static async Task Synthesizes_unauthorized_when_401_body_is_empty()

@@ -91,10 +91,10 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
 
 ### Review disposition
 
-- **Outcome:** clean, after 4 rounds. Each round had one general reviewer (effort 3 by diff size; Claude subagents for rounds 1–3, the review oracle for round 4). Reviewer session ids are in `review/review-framework.md`.
+- **Outcome:** clean, after 5 rounds. Each round had one general reviewer (effort 3 by diff size; Claude subagents for rounds 1–3, the review oracle for rounds 4–5). Reviewer session ids are in `review/review-framework.md`.
 - **Final counts:**
   - bug: 5 fixed
-  - suggestion: 4 fixed
+  - suggestion: 5 fixed
   - nit: 5 fixed
   - 0 wontfix, 0 open
 - **Fix commits:**
@@ -102,6 +102,7 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
   - `2c0de45` (M11–M13): rollback by item id, best-effort expiry, and the client dropping expired attachments.
   - M14 was a guide-wording fix made with the disposition.
   - Round 4 reviewed the CI-fix delta (`5052084ad` and the catalog roster): no new findings. `ActionCatalog_Should` 10/10 and the Playwright project build (0 warnings) were re-run by the review oracle.
+  - Round 5 reviewed the upload-415 delta (`741a56e20`): M15 (suggestion), the page matched the literal `"Unhandled Error"`; fixed by the review oracle with `HttpApiService.UnhandledErrorTitle`. `dev build` 0/0, `Accepts_` 4/4, `HttpApiService_GetResponse` 14/14 re-run.
 - **Gates (re-run by a reviewer):**
   - `dev build`: 0 warnings, 0 errors.
   - Features.Feedback: 37/37.
@@ -110,7 +111,7 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
   - HttpApiService_GetResponse: 14/14.
   - `ganda repo audit`: passes.
 - **Not run:** Playwright, which is forbidden on TWE-001. The browser proof and screenshots are left for CI.
-- **Paths:** `review/review-framework.md`, `review/round-4/merged.md` (last ledger), `review/disposition.md`.
+- **Paths:** `review/review-framework.md`, `review/round-5/merged.md` (last ledger), `review/disposition.md`.
 
 ## Session
 
@@ -122,6 +123,7 @@ cd ../web-spa-playwright-tests; dotnet build -c Release
 - 2026-10-10 implementer (ganda task work, CI fix): catalog names added; Playwright signs in before `/Feedback`. `ActionCatalog_Should` 10/10. Playwright project builds. Browser run left for CI.
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-10T09:19:19Z
 - 2026-10-10 implementer (ganda task work, upload 415): the allow-list is applied after the JSON accepts default is cleared. `Accepts_` 4/4. Playwright project builds with 0 warnings. Browser run left for CI. A failed upload shows a message when the API problem is missing.
+- 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): round 5 on the upload-415 delta; M15 fixed; disposition clean (5 rounds, 15 fixed).
 
 ## Notes
 

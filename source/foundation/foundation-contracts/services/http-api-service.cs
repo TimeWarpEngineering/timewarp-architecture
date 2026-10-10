@@ -33,6 +33,9 @@ using System.Net.Http.Headers;
 /// </summary>
 public sealed class HttpApiService : IApiService
 {
+  /// <summary>Title of the problem synthesized for a non-problem failure body other than 401/403.</summary>
+  public const string UnhandledErrorTitle = "Unhandled Error";
+
   private readonly HttpClient HttpClient;
   private readonly JsonSerializerOptions JsonSerializerOptions;
   private readonly Func<CancellationToken, Task<string?>>? AcquireBearerTokenAsync;
@@ -225,7 +228,7 @@ public sealed class HttpApiService : IApiService
       },
       _ => new SharedProblemDetails
       {
-        Title = "Unhandled Error",
+        Title = UnhandledErrorTitle,
         Status = status,
         Detail = "An unhandled error occurred while processing the request."
       }
