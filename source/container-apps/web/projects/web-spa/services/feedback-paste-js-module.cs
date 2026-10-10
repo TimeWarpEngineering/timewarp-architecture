@@ -4,9 +4,9 @@
 
 #region Design
 // Same import-a-named-export shape as CommandPaletteJsModule. Register binds paste on the
-// details host the page passes, with the byte limit from FeedbackAttachmentRules so the
-// browser refuses an oversize image before reading it. The page keeps the handle and
-// disposes it with the page.
+// details host the page passes. That host is the fluent-textarea or a wrapper around it.
+// The byte limit comes from FeedbackAttachmentRules so the browser refuses an oversize
+// image before reading it. The page keeps the handle and disposes it with the page.
 // [SideEffectService]: the only caller is FeedbackListPage, which opts out with
 // [DirectComponentSideEffect]. The upload itself is a state action.
 #endregion

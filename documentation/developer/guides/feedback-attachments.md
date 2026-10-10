@@ -103,8 +103,11 @@ hand-written endpoints because the generated one always writes JSON.
 ## Client
 
 The file picker and the paste hook both call `UploadFeedbackAttachment`. Paste is a small
-module on the Details box (`feedback-paste.ts`). It refuses an image over the size limit before
-reading it. It passes the file to .NET as a JS stream reference, so paste also works on the
+module on the Details box (`feedback-paste.ts`). Fluent UI v5 renders that box as
+`fluent-textarea`. The module treats the element the page passes as that control when it
+is one, and otherwise searches its descendants. It binds the paste on the control and on
+the textarea in its open shadow root, including when that textarea appears after register.
+It refuses an image over the size limit before reading it. It passes the file to .NET as a JS stream reference, so paste also works on the
 InteractiveServer circuit of a first InteractiveAuto visit. A refused or failed paste shows the
 page's normal error notification. A failed upload shows the API problem. When that problem is
 missing, or is only the generic unhandled error from an empty failure body, the form says the
