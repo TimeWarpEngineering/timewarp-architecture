@@ -87,8 +87,10 @@ Filing links each attachment with a conditional write that succeeds only when th
 still the filer's and still pending. If a remove or a second submit takes a file first, every
 link to the new item is undone, the item is removed, and the filer gets HTTP 400 listing that
 id. If a store throws, the same rollback runs and the original error is kept. Once the item is
-saved, a cancelled request does not stop linking or rollback partway. An item never keeps only
-some of its files.
+saved, a cancelled request does not stop linking or rollback partway. A successful rollback
+leaves no item with only some of its files. If a rollback step itself throws, the failure is
+logged at Error and the item can stay filed, possibly with some of its files; that needs two
+store failures in a row.
 
 `DELETE api/Feedback/attachments/{id}` is the generated JSON endpoint. Upload and download are
 hand-written endpoints because the generated one always writes JSON.

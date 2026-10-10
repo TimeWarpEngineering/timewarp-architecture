@@ -91,10 +91,33 @@ cd ../../container-apps/web/web-spa-playwright-tests; dotnet test
 - `HttpApiService_GetResponse`: 14 passed. The file upload test posts the raw bytes as `text/plain` with no charset and `X-File-Name: my%20notes.txt`.
 - Playwright `dotnet test` is for a CI runner, not TWE-001. It fills the picker, pastes a 1×1 PNG into Details, submits, and opens the item page. Screenshots land next to this task file.
 
+### Review disposition
+
+- **Outcome:** clean, after 3 rounds. Each round had one general reviewer (effort 3 by diff size; Claude subagents). Reviewer session ids are in `review/review-framework.md`.
+- **Final counts:**
+  - bug: 5 fixed
+  - suggestion: 4 fixed
+  - nit: 5 fixed
+  - 0 wontfix, 0 open
+- **Fix commits:**
+  - `3d8bdac` (M1–M10): postgres-off template excludes, an ASCII fallback for the Content-Disposition file name, 24-hour expiry of pending uploads, paste re-render, paste sent as a stream with its size checked first, conditional linking with rollback, a reachable 413 response, a startup warning for in-memory blobs, the missing tests, and a non-image mock attachment.
+  - `2c0de45` (M11–M13): rollback by item id, best-effort expiry, and the client dropping expired attachments.
+  - M14 was a guide-wording fix made with the disposition.
+- **Gates (re-run by a reviewer):**
+  - `dev build`: 0 warnings, 0 errors.
+  - Features.Feedback: 37/37.
+  - Feedback_Model_Mapping_: 3/3.
+  - Feedback Postgres persistence: 2/2.
+  - HttpApiService_GetResponse: 14/14.
+  - `ganda repo audit`: passes.
+- **Not run:** Playwright, which is forbidden on TWE-001. The browser proof and screenshots are left for CI.
+- **Paths:** `review/review-framework.md`, `review/round-3/merged.md` (last ledger), `review/disposition.md`.
+
 ## Session
 
 - Created: 2344160 (2026-10-10, filed from Steven's voice call)
 - 2026-10-10 implementer (ganda task work): attachments end to end; web-server and web-spa build clean; gates in Results; `ganda repo audit` 31 passed. Playwright was not executed on TWE-001.
+- 2026-10-10 review oracle (Claude Opus 5.5, ganda task work): tw-implementation-review, 3 rounds; disposition clean.
 
 ## Notes
 

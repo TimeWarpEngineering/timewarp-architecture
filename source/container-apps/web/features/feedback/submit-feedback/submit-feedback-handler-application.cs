@@ -14,8 +14,9 @@
 // TryLinkAsync, a conditional write, because a remove or a second submit can run between the
 // check and the link. The item is inserted first (the attachment row has a foreign key to it);
 // if any TryLink fails or a store throws, every link to the item is undone by item id (so a
-// link that committed and then threw is undone too) and the item is removed, so the caller
-// never gets an item with only some of its files. Once the item is stored, linking and
+// link that committed and then threw is undone too) and the item is removed, so a successful
+// rollback never leaves an item with only some of its files. If a rollback step itself throws,
+// it is logged at Error and the item can stay filed, possibly partly linked. Once the item is stored, linking and
 // rollback run with CancellationToken.None so a cancelled request cannot stop halfway. The
 // two rollback steps run independently and log their own failures; the original exception
 // is rethrown. Unlinking before the delete matters: the attachment FK cascades, so a delete
