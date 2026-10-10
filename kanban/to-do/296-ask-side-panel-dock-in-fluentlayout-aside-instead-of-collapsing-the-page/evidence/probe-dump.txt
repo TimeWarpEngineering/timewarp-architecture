@@ -1,0 +1,84 @@
+=== 1280x800
+html: <html lang=en style=--blazor-load-percentage: 100%; --blazor-load-percentage-text: "100%";> box=0,0 1280x800 display=block position=static flex=0 1 auto width=1280px height=800px overflow=visible visibility=visible opacity=1 order=0
+body: <body data-theme-color=#55409c data-media=lg> box=0,0 1280x800 display=block position=static flex=0 1 auto width=1280px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell: <div class=twe-shell twe-shell--ask b-dqw5j6kcf8=> box=0,0 1280x800 display=flex position=static flex=0 1 auto width=1280px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell__layout: <div id=f7c2f2be class=fluent-layout TimeWarpPage-1 twe-shell__layout style=height: var(--layout-height); --layout-height: 100dvh; --layout-header-height: 4 mobile=> box=0,0 0x800 display=grid position=static flex=1 1 auto width=0px height=800px overflow=auto visibility=visible opacity=1 order=0
+.fluent-layout-item[area=header]: <div class=fluent-layout-item style=grid-area: header; height: var(--layout-header-height); area=header inside-layout=> box=0,0 16x70 display=flex position=static flex=0 1 auto width=16px height=70px overflow=hidden visibility=visible opacity=1 order=0
+.fluent-layout-item[area=content]: <div class=fluent-layout-item style=grid-area: content; area=content inside-layout=> box=0,70 16x686 display=block position=static flex=0 1 auto width=16px height=686px overflow=auto visibility=visible opacity=1 order=0
+.twe-appbar: <header class=twe-appbar b-dqw5j6kcf8=> box=8,8 32x54 display=flex position=static flex=0 1 auto width=32px height=54px overflow=visible visibility=visible opacity=1 order=0
+.twe-page: <div class=twe-page b-dqw5j6kcf8=> box=0,70 56x2102 display=block position=static flex=0 1 auto width=56px height=2102.06px overflow=visible visibility=visible opacity=1 order=0
+.twe-agent-ask: <div class=twe-agent-ask data-qa=AgentAsk b-hsey2r0gxh= data-built-mode=AskBeforeEditing> box=0,0 450x800 display=flex position=static flex=0 0 450px width=450px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-agent-ask__header: <header class=twe-agent-ask__header b-hsey2r0gxh=> box=13,12 425x104 display=flex position=static flex=0 1 auto width=425px height=104px overflow=visible visibility=visible opacity=1 order=0
+shell parent chain: DIV.twe-shell twe-shell--ask < BODY. < HTML.
+shell children: STYLE. | DIV. | DIV.twe-agent-ask
+sheets: https://localhost:7000/css/tokens.css , https://localhost:7000/css/app.css , https://localhost:7000/Web.Spa.styles.css , https://localhost:7000/_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css , https://localhost:7000/_content/Microsoft.AspNetCore.Components.AI/ai-chat.css , 
+RULES:
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] { display: contents; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] { display: flex; flex-direction: row; align-items: stretch; height: 100dvh; overflow: hidden; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-shell__layout { flex: 1 1 auto; min-width: 0px; height: 100%; overflow: auto; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { flex: 0 0 450px; width: 450px; max-width: 450px; height: 100%; min-height: 0px; box-sizing: border-box; }
+Web.Spa.styles.css :: @media (max-width: 879px) {
+  .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+}
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask.twe-shell--ask-expanded[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-shell__layout { --layout-header-height: var(--twe-appbar-height) !important; --layout-footer-height: var(--twe-footer-height) !important; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="header"] { background-color: var(--twe-purple); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="footer"] { background-color: var(--twe-blue); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
+
+=== 1600x900
+html: <html lang=en style=--blazor-load-percentage: 100%; --blazor-load-percentage-text: "100%";> box=0,0 1600x900 display=block position=static flex=0 1 auto width=1600px height=900px overflow=visible visibility=visible opacity=1 order=0
+body: <body data-theme-color=#55409c data-media=lg> box=0,0 1600x900 display=block position=static flex=0 1 auto width=1600px height=900px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell: <div class=twe-shell twe-shell--ask b-dqw5j6kcf8=> box=0,0 1600x900 display=flex position=static flex=0 1 auto width=1600px height=900px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell__layout: <div id=f7c2f2be class=fluent-layout TimeWarpPage-1 twe-shell__layout style=height: var(--layout-height); --layout-height: 100dvh; --layout-header-height: 4 mobile=> box=0,0 0x900 display=grid position=static flex=1 1 auto width=0px height=900px overflow=auto visibility=visible opacity=1 order=0
+.fluent-layout-item[area=header]: <div class=fluent-layout-item style=grid-area: header; height: var(--layout-header-height); area=header inside-layout=> box=0,0 16x70 display=flex position=static flex=0 1 auto width=16px height=70px overflow=hidden visibility=visible opacity=1 order=0
+.fluent-layout-item[area=content]: <div class=fluent-layout-item style=grid-area: content; area=content inside-layout=> box=0,70 16x786 display=block position=static flex=0 1 auto width=16px height=786px overflow=auto visibility=visible opacity=1 order=0
+.twe-appbar: <header class=twe-appbar b-dqw5j6kcf8=> box=8,8 32x54 display=flex position=static flex=0 1 auto width=32px height=54px overflow=visible visibility=visible opacity=1 order=0
+.twe-page: <div class=twe-page b-dqw5j6kcf8=> box=0,70 56x2102 display=block position=static flex=0 1 auto width=56px height=2102.06px overflow=visible visibility=visible opacity=1 order=0
+.twe-agent-ask: <div class=twe-agent-ask data-qa=AgentAsk b-hsey2r0gxh= data-built-mode=AskBeforeEditing> box=0,0 450x900 display=flex position=static flex=0 0 450px width=450px height=900px overflow=hidden visibility=visible opacity=1 order=0
+.twe-agent-ask__header: <header class=twe-agent-ask__header b-hsey2r0gxh=> box=13,12 425x104 display=flex position=static flex=0 1 auto width=425px height=104px overflow=visible visibility=visible opacity=1 order=0
+shell parent chain: DIV.twe-shell twe-shell--ask < BODY. < HTML.
+shell children: STYLE. | DIV. | DIV.twe-agent-ask
+sheets: https://localhost:7000/css/tokens.css , https://localhost:7000/css/app.css , https://localhost:7000/Web.Spa.styles.css , https://localhost:7000/_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css , https://localhost:7000/_content/Microsoft.AspNetCore.Components.AI/ai-chat.css , 
+RULES:
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] { display: contents; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] { display: flex; flex-direction: row; align-items: stretch; height: 100dvh; overflow: hidden; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-shell__layout { flex: 1 1 auto; min-width: 0px; height: 100%; overflow: auto; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { flex: 0 0 450px; width: 450px; max-width: 450px; height: 100%; min-height: 0px; box-sizing: border-box; }
+Web.Spa.styles.css :: @media (max-width: 879px) {
+  .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+}
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask.twe-shell--ask-expanded[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-shell__layout { --layout-header-height: var(--twe-appbar-height) !important; --layout-footer-height: var(--twe-footer-height) !important; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="header"] { background-color: var(--twe-purple); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="footer"] { background-color: var(--twe-blue); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
+
+=== EXPERIMENT container flex:1 1 0 @1280x800
+html: <html lang=en style=--blazor-load-percentage: 100%; --blazor-load-percentage-text: "100%";> box=0,0 1280x800 display=block position=static flex=0 1 auto width=1280px height=800px overflow=visible visibility=visible opacity=1 order=0
+body: <body data-theme-color=#55409c data-media=lg> box=0,0 1280x800 display=block position=static flex=0 1 auto width=1280px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell: <div class=twe-shell twe-shell--ask b-dqw5j6kcf8=> box=0,0 1280x800 display=flex position=static flex=0 1 auto width=1280px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-shell__layout: <div id=f7c2f2be class=fluent-layout TimeWarpPage-1 twe-shell__layout style=height: var(--layout-height); --layout-height: 100dvh; --layout-header-height: 4> box=0,0 830x800 display=grid position=static flex=1 1 auto width=830px height=800px overflow=auto visibility=visible opacity=1 order=0
+.fluent-layout-item[area=header]: <div class=fluent-layout-item style=grid-area: header; height: var(--layout-header-height); area=header inside-layout=> box=0,0 830x70 display=flex position=static flex=0 1 auto width=830px height=70px overflow=hidden visibility=visible opacity=1 order=0
+.fluent-layout-item[area=content]: <div class=fluent-layout-item style=grid-area: content; area=content inside-layout=> box=240,70 590x686 display=block position=static flex=0 1 auto width=590px height=686px overflow=auto visibility=visible opacity=1 order=0
+.twe-appbar: <header class=twe-appbar b-dqw5j6kcf8=> box=8,8 814x54 display=flex position=static flex=0 1 auto width=814px height=54px overflow=visible visibility=visible opacity=1 order=0
+.twe-page: <div class=twe-page b-dqw5j6kcf8=> box=240,70 590x724 display=block position=static flex=0 1 auto width=590px height=724.188px overflow=visible visibility=visible opacity=1 order=0
+.twe-agent-ask: <div class=twe-agent-ask data-qa=AgentAsk b-hsey2r0gxh= data-built-mode=AskBeforeEditing> box=830,0 450x800 display=flex position=static flex=0 0 450px width=450px height=800px overflow=hidden visibility=visible opacity=1 order=0
+.twe-agent-ask__header: <header class=twe-agent-ask__header b-hsey2r0gxh=> box=843,12 425x104 display=flex position=static flex=0 1 auto width=425px height=104px overflow=visible visibility=visible opacity=1 order=0
+shell parent chain: DIV.twe-shell twe-shell--ask < BODY. < HTML.
+shell children: STYLE. | DIV. | DIV.twe-agent-ask
+sheets: https://localhost:7000/css/tokens.css , https://localhost:7000/css/app.css , https://localhost:7000/Web.Spa.styles.css , https://localhost:7000/_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css , https://localhost:7000/_content/Microsoft.AspNetCore.Components.AI/ai-chat.css ,  , 
+RULES:
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] { display: contents; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] { display: flex; flex-direction: row; align-items: stretch; height: 100dvh; overflow: hidden; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-shell__layout { flex: 1 1 auto; min-width: 0px; height: 100%; overflow: auto; }
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { flex: 0 0 450px; width: 450px; max-width: 450px; height: 100%; min-height: 0px; box-sizing: border-box; }
+Web.Spa.styles.css :: @media (max-width: 879px) {
+  .twe-shell.twe-shell--ask[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+}
+Web.Spa.styles.css :: .twe-shell.twe-shell--ask.twe-shell--ask-expanded[b-dqw5j6kcf8] .twe-agent-ask { position: fixed; inset: 0px; z-index: 40; width: 100%; max-width: none; flex: 0 0 auto; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-shell__layout { --layout-header-height: var(--twe-appbar-height) !important; --layout-footer-height: var(--twe-footer-height) !important; }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="header"] { background-color: var(--twe-purple); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .fluent-layout-item[area="footer"] { background-color: var(--twe-blue); }
+Web.Spa.styles.css :: .twe-shell[b-dqw5j6kcf8] .twe-nav { height: 100%; padding: 8px; background: var(--twe-paper-2); border-right: 1px solid var(--twe-rule); }
+inline :: .twe-shell.twe-shell--ask > div[id$="-container"] { flex: 1 1 0px; min-width: 0px; height: 100%; }
