@@ -178,5 +178,4 @@ internal sealed partial class TemplateSmokeHarness
         specifiers.Add(match.Groups[1].Value);
     }
   }
-
 }

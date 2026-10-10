@@ -118,10 +118,10 @@ Expect:
 
 ### Review disposition
 
-- Rounds: 1. Roster: general (effort 1).
-- Final counts: bug 0, suggestion 0, nit 0. Open 0, fixed 0, wontfix 0.
-- Disposition: **clean**.
-- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+- Rounds: 2. Roster: general. Round 1 effort 1 (beta.10 upgrade); round 2 effort 2 (template-smoke resolver fix c6b085f0d).
+- Final counts (round 2): bug 0, suggestion 0, nit 1 fixed. Open 0, wontfix 0.
+- Disposition: **clean**. The one nit was an empty line in `template-smoke-initializer-assets.cs`. It is fixed on this branch.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ## Acceptance
 
@@ -141,4 +141,5 @@ Expect:
 - Implementation: 2026-10-10 (Grok implement oracle)
 - Implementation: 2026-10-10 (Grok implement oracle) — template-smoke `_content/TimeWarp.State` resolves through TimeWarp.State.Blazor
 - Review: 2026-10-10 (Claude review oracle, effort 1, general) — clean
+- Review: 2026-10-10 (Claude review oracle, round 2, effort 2, general) — clean (1 nit fixed)
 - Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-10T08:21:15Z
