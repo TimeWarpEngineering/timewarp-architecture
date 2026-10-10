@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--twe-space-3);
+  width: 100%;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
@@ -12,12 +13,55 @@
 }
 
 .twe-agent-ask__header,
-.twe-agent-ask__header-actions,
+.twe-agent-ask__header-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--twe-space-2);
+  align-items: center;
+}
+
+.twe-agent-ask__header-actions {
+  flex: none;
+}
+
+/* app.css caps svg at max-width: 100%. An icon-only button's start slot shrinks to fit, so the
+   cap collapses the icon to a speck. Icons keep their intrinsic 20px. */
+.twe-agent-ask__header-actions ::deep fluent-button > svg {
+  max-width: none;
+}
+
 .twe-agent-ask__edit {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--twe-space-2);
+}
+
+.twe-agent-ask__segments {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.twe-agent-ask__segments ::deep > fluent-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.twe-agent-ask__segments ::deep > fluent-button::part(control) {
+  width: 100%;
+  justify-content: center;
+  border-radius: 0;
+}
+
+.twe-agent-ask__segments ::deep > fluent-button:first-child::part(control) {
+  border-start-start-radius: var(--twe-radius-sm);
+  border-end-start-radius: var(--twe-radius-sm);
+}
+
+.twe-agent-ask__segments ::deep > fluent-button:last-child::part(control) {
+  border-start-end-radius: var(--twe-radius-sm);
+  border-end-end-radius: var(--twe-radius-sm);
 }
 
 .twe-agent-ask__header {

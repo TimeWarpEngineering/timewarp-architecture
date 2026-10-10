@@ -41,7 +41,8 @@ descendants by **cascading it**, and you keep the routed layout empty so it does
    - declares `[Parameter]`s for per-page inputs (`Title`, `ChildContent`, optional `Aside`);
    - `<CascadingValue Value=@this>` wraps its tree so descendants can reach the shell;
    - renders `@ChildContent` in the content zone, and conditionally renders the aside zone only when
-     `Aside` is supplied.
+     `Aside` is supplied. A shell tool that needs the same column (Ask) owns it while it is open
+     and the page `Aside` returns when that tool closes. The layout has one aside area.
 3. **Pages wrap their content in the shell:** `<Shell Title="…">…page body…</Shell>`. Routing stays
    a separate concern (your `@page`/route attribute), independent of the shell.
 
@@ -104,7 +105,11 @@ Concrete instance of the pattern in this repo:
   component → gives it the state `Id` and render-on-state-change, e.g. the footer activity spinner
   bound to `ActionTrackingState.IsActive`). Renders FluentUI `FluentLayout` zones + brand/search/nav/
   footer/`ModalController`, and `<CascadingValue Value=@this>`s itself. Parameters: `Title`,
-  `ChildContent`, `Aside`.
+  `ChildContent`, `Aside`. `FluentLayout` `MobileBreakdownWidth` is 880. Ask, when open, is the
+  aside item (`LayoutArea.Aside`, 450px) so the grid reflows the page. The page `Aside` is that
+  same column only while Ask is closed — two aside items would share one grid area. Below 880px,
+  and when Ask is expanded, `TimeWarpPage.razor.css` covers the viewport from
+  `.twe-shell ::deep .fluent-layout-item[area=aside]`. `.twe-shell` stays `display: contents`.
 - **Pages:** `@inherits BaseComponent`, wrap content in `<TimeWarpPage Title="…">…</TimeWarpPage>`;
   routing comes from `[Page("/route")]` on the `.razor.cs` partial (`PageSourceGenerator` emits
   `[Route]`, `GetPageUrl`, and route parameters). The shell is named `TimeWarpPage` (not `Page`)

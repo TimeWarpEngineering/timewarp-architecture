@@ -143,10 +143,13 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   correlated by call id; navigation cancels the pending call. Both drivers re-select tools for the
   current principal and route when a tool runs, and refuse one that is no longer offered. Approval
   does not grant a permission the principal lacks.
-- The ask UI is the Ctrl-K **Ask** button. It is always shown. It opens the `AgentAsk` modal
+- The ask UI is the Ctrl-K **Ask** button and the top-bar Ask AI button. It is always shown.
+  It opens the `AgentAsk` side panel in `TimeWarpPage`'s FluentLayout aside
   (`UIAgent` over a `FunctionInvokingChatClient` whose inner client is the browser relay).
-  web-server holds `XAI:ApiKey` and forwards completions to xAI. When the key is missing, the
-  modal shows "AI not configured" and:
+  The page reflows beside the 450px panel. Below 880px, and when expanded, the panel covers
+  the viewport. While Ask is open it owns the aside column; a page `Aside` shows only when
+  Ask is closed. web-server holds `XAI:ApiKey` and forwards completions to xAI. When the key
+  is missing, the panel shows "AI not configured" and:
 
   ```pwsh
   dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj

@@ -1,8 +1,13 @@
 .twe-agent-ask__answer-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
+  flex-wrap: nowrap;
+  gap: var(--twe-space-2);
   align-items: center;
+}
+
+/* Icon-only buttons keep their 20px icon; app.css max-width: 100% collapses it in the start slot. */
+.twe-agent-ask__answer-bar ::deep fluent-button > svg {
+  max-width: none;
 }
 
 .twe-agent-ask__answer-bar button,

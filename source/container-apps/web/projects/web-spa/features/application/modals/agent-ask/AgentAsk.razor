@@ -6,8 +6,9 @@
 @*
   Purpose: Ask panel. A person describes what they want and the in-app model runs a page catalog tool.
 
-  Design: Docked on the shell, not a modal. The top-bar Ask AI button and the Ctrl-K Ask action
-  both open it. The page reflows beside it; below 880px and when expanded it covers the viewport.
+  Design: Docked in TimeWarpPage's FluentLayout aside (450px), not a modal and not a flex
+  sibling of the layout. The top-bar Ask AI button and the Ctrl-K Ask action both open it.
+  The page reflows beside it; below 880px and when expanded the aside item covers the viewport.
   It renders the probe's state (task 293): only when the server answered "no key" does it show
   "AI not configured" and the pwsh user-secrets command. Signed out (401) shows "Sign in to use
   Ask" and a button that closes the panel and goes to Login with the current page as the return
@@ -327,6 +328,20 @@
   private string AutoEditPressed =>
     AgentSurfaceState.EditMode == AgentEditMode.AutomaticallyEdit ? "true" : "false";
 
+  private string ExpandLabel => AgentSurfaceState.IsPanelExpanded ? "Collapse" : "Expand";
+
+  private Icon ExpandIcon => AgentSurfaceState.IsPanelExpanded
+    ? new Icons.Regular.Size20.FullScreenMinimize()
+    : new Icons.Regular.Size20.FullScreenMaximize();
+
+  private ButtonAppearance AskBeforeAppearance =>
+    AskBeforePressed == "true" ? ButtonAppearance.Primary : ButtonAppearance.Outline;
+
+  private ButtonAppearance AutoEditAppearance =>
+    AutoEditPressed == "true" ? ButtonAppearance.Primary : ButtonAppearance.Outline;
+
+  private string EditBehaviorLabelId => $"{Id}-edit-behavior";
+
   public override void Dispose()
   {
     Disposed = true;
@@ -346,9 +361,30 @@
       }
     </div>
     <div class="twe-agent-ask__header-actions">
-      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskNewConversation" OnClick="NewConversationAsync">New</FluentButton>
-      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskExpand" OnClick="ExpandAsync">Expand</FluentButton>
-      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AgentAskClose" OnClick="CloseAsync">Close</FluentButton>
+      <FluentButton Appearance="ButtonAppearance.Subtle"
+                    IconOnly="true"
+                    IconStart="@(new Icons.Regular.Size20.ChatAdd())"
+                    Title="New conversation"
+                    Tooltip="New conversation"
+                    aria-label="New conversation"
+                    data-qa="AskNewConversation"
+                    OnClick="NewConversationAsync" />
+      <FluentButton Appearance="ButtonAppearance.Subtle"
+                    IconOnly="true"
+                    IconStart="@ExpandIcon"
+                    Title="@ExpandLabel"
+                    Tooltip="@ExpandLabel"
+                    aria-label="@ExpandLabel"
+                    data-qa="AskExpand"
+                    OnClick="ExpandAsync" />
+      <FluentButton Appearance="ButtonAppearance.Subtle"
+                    IconOnly="true"
+                    IconStart="@(new Icons.Regular.Size20.Dismiss())"
+                    Title="Close"
+                    Tooltip="Close"
+                    aria-label="Close"
+                    data-qa="AgentAskClose"
+                    OnClick="CloseAsync" />
     </div>
   </header>
 
@@ -446,9 +482,11 @@
     </div>
   }
 
-  <footer class="twe-agent-ask__edit" data-qa="AskEditMode">
-    <p class="twe-agent-ask__edit-label">Edit behavior</p>
-    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
-    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
+  <footer class="twe-agent-ask__edit">
+    <p class="twe-agent-ask__edit-label" id="@EditBehaviorLabelId">Edit behavior</p>
+    <div class="twe-agent-ask__segments" role="group" aria-labelledby="@EditBehaviorLabelId" data-qa="AskEditMode">
+      <FluentButton Appearance="@AskBeforeAppearance" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
+      <FluentButton Appearance="@AutoEditAppearance" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
+    </div>
   </footer>
 </div>
