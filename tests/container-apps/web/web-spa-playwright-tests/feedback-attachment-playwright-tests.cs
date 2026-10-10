@@ -1,5 +1,6 @@
 #region Purpose
-// Browser proof that the feedback form accepts a picked file and a pasted image.
+// Browser proof that the feedback form accepts a picked file and a pasted image,
+// and that the Details visible box matches Title.
 #endregion
 
 #region Design
@@ -9,9 +10,13 @@
 // identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
 // an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
-// /Feedback. A new account's role includes feedback.file.self. Shots are written beside task
-// 295. Chromium install retries with the ubuntu24.04 build when the host distro is newer than
-// Playwright's platform list.
+// /Feedback. A new account's role includes feedback.file.self. Attachment shots are written
+// beside task 295. The Details layout shot is written beside task 302. Without kanban/ (a
+// generated app) shots go to the test output folder. Chromium install
+// retries with the ubuntu24.04 build when the host distro is newer than Playwright's platform
+// list. Layout measures fluent-textarea's shadow part=root and part=control against Title's
+// shadow part=root and input. The host element can be full width while the visible box stays
+// at the component's 18rem inline size, so a host BoundingBox check does not prove the fix.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -55,34 +60,11 @@ public class FeedbackAttachment_Given_Wasm
     };
 
     await SignInWithNewPasskeyAsync(page, context);
-
-    string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
-    await page.GotoAsync(feedbackUrl, new PageGotoOptions
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded,
-      Timeout = 120_000,
-    });
-    try
-    {
-      await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
-      await page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-    }
-    catch (TimeoutException exception)
-    {
-      string startupLog = string.Join('\n', console);
-      throw new TimeoutException(
-        $"Feedback form did not render at {page.Url}. Console:\n{startupLog}",
-        exception);
-    }
+    await OpenFeedbackAsync(page, console);
 
     Volatile.Read(ref sawWasm).ShouldBe(1, "InteractiveWebAssembly did not download a .wasm");
 
-    LocatorBoundingBoxResult titleBox = (await page.Locator("[data-qa=FeedbackTitle]").BoundingBoxAsync())
-      .ShouldNotBeNull();
-    LocatorBoundingBoxResult detailsBox = (await page.Locator("[data-qa=FeedbackBody]").BoundingBoxAsync())
-      .ShouldNotBeNull();
-    ((double)Math.Abs(titleBox.Width - detailsBox.Width)).ShouldBeLessThan(8d);
-    ((double)detailsBox.Height).ShouldBeGreaterThan(100d);
+    await AssertDetailsMatchesTitleAsync(page, "attachment");
 
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Picker and paste");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Details before the file.");
@@ -140,6 +122,120 @@ public class FeedbackAttachment_Given_Wasm
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-item-attachments.png") });
   }
 
+  public static async Task VisibleDetailsBox_Should_MatchTitle_And_Resize()
+  {
+    InstallChromium();
+
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    using IPlaywright playwright = await Playwright.CreateAsync();
+    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+    });
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    await OpenFeedbackAsync(page, console);
+
+    await AssertDetailsMatchesTitleAsync(page, "default-1280");
+    await page.ScreenshotAsync(new PageScreenshotOptions
+    {
+      Path = ScreenshotPath("feedback-details-302.png", "302"),
+      FullPage = true,
+    });
+
+    const float dragDistance = 80f;
+    ILocator detailsRoot = page.Locator("[data-qa=FeedbackBody]").Locator("[part=root]");
+    await detailsRoot.ScrollIntoViewIfNeededAsync();
+    EdgeBox before = await ShadowBoxAsync(page, "FeedbackBody", "root");
+    float gripX = before.Right - 8f;
+    float gripY = before.Y + before.Height - 4f;
+    await page.Mouse.MoveAsync(gripX, gripY);
+    await page.Mouse.DownAsync();
+    await page.Mouse.MoveAsync(gripX, gripY + dragDistance, new MouseMoveOptions { Steps = 12 });
+    await page.Mouse.UpAsync();
+    EdgeBox after = await ShadowBoxAsync(page, "FeedbackBody", "root");
+    double grown = after.Height - before.Height;
+    string dragReport = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"drag={dragDistance:0.#} before={before.Height:0.#} after={after.Height:0.#} grown={grown:0.#}");
+    Console.WriteLine(dragReport);
+    grown.ShouldBeGreaterThan(dragDistance - 20d, dragReport);
+    grown.ShouldBeLessThan(dragDistance + 20d, dragReport);
+
+    await page.SetViewportSizeAsync(600, 900);
+    await page.EvaluateAsync("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+    await AssertDetailsMatchesTitleAsync(page, "narrow-600");
+  }
+
+  private static async Task OpenFeedbackAsync(IPage page, ConcurrentQueue<string> console)
+  {
+    string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
+    await page.GotoAsync(feedbackUrl, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    try
+    {
+      await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+      await page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      string startupLog = string.Join('\n', console);
+      throw new TimeoutException(
+        $"Feedback form did not render at {page.Url}. Console:\n{startupLog}",
+        exception);
+    }
+  }
+
+  private static async Task AssertDetailsMatchesTitleAsync(IPage page, string viewport)
+  {
+    EdgeBox host = await HostBoxAsync(page, "FeedbackBody");
+    EdgeBox titleRoot = await ShadowBoxAsync(page, "FeedbackTitle", "root");
+    EdgeBox detailsRoot = await ShadowBoxAsync(page, "FeedbackBody", "root");
+    EdgeBox titleControl = await ShadowBoxAsync(page, "FeedbackTitle", "control");
+    EdgeBox detailsControl = await ShadowBoxAsync(page, "FeedbackBody", "control");
+    string report = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"viewport={viewport} host={host.Width:0.#}x{host.Height:0.#} detailsRoot={detailsRoot.X:0.#}..{detailsRoot.Right:0.#} {detailsRoot.Width:0.#}x{detailsRoot.Height:0.#} titleRoot={titleRoot.X:0.#}..{titleRoot.Right:0.#} {titleRoot.Width:0.#}x{titleRoot.Height:0.#} detailsControl={detailsControl.X:0.#}..{detailsControl.Right:0.#} {detailsControl.Width:0.#}x{detailsControl.Height:0.#} titleControl={titleControl.X:0.#}..{titleControl.Right:0.#} {titleControl.Width:0.#}x{titleControl.Height:0.#}");
+    Console.WriteLine(report);
+    SameEdges(titleRoot, detailsRoot, report);
+    SameEdges(titleControl, detailsControl, report);
+    ((double)detailsRoot.Height).ShouldBeGreaterThanOrEqualTo(140d, report);
+    ((double)detailsControl.Height).ShouldBeGreaterThan(100d, report);
+  }
+
+  private static void SameEdges(EdgeBox expected, EdgeBox actual, string report)
+  {
+    ((double)Math.Abs(expected.X - actual.X)).ShouldBeLessThan(4d, report);
+    ((double)Math.Abs(expected.Right - actual.Right)).ShouldBeLessThan(4d, report);
+  }
+
+  private static async Task<EdgeBox> HostBoxAsync(IPage page, string qa)
+  {
+    LocatorBoundingBoxResult box = (await page.Locator($"[data-qa={qa}]").BoundingBoxAsync()).ShouldNotBeNull();
+    return new EdgeBox(box.X, box.Y, box.Width, box.Height);
+  }
+
+  private static async Task<EdgeBox> ShadowBoxAsync(IPage page, string qa, string part)
+  {
+    ILocator locator = page.Locator($"[data-qa={qa}]").Locator($"[part={part}]");
+    LocatorBoundingBoxResult box = (await locator.BoundingBoxAsync()).ShouldNotBeNull($"{qa} part={part}");
+    return new EdgeBox(box.X, box.Y, box.Width, box.Height);
+  }
+
+  private readonly record struct EdgeBox(float X, float Y, float Width, float Height)
+  {
+    public float Right => X + Width;
+  }
+
   private static async Task SignInWithNewPasskeyAsync(IPage page, IBrowserContext context)
   {
     // A platform authenticator that always verifies the user, so the passkey ceremony completes headless.
@@ -184,7 +280,7 @@ public class FeedbackAttachment_Given_Wasm
     install.ShouldBe(0, "Playwright chromium install failed");
   }
 
-  private static string ScreenshotPath(string fileName)
+  private static string ScreenshotPath(string fileName, string taskPrefix = "295")
   {
     string? directory = AppContext.BaseDirectory;
     while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
@@ -192,9 +288,12 @@ public class FeedbackAttachment_Given_Wasm
       directory = Path.GetDirectoryName(directory);
     }
 
-    directory.ShouldNotBeNull();
-    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), "295-*", SearchOption.AllDirectories)
-      .Single(path => File.Exists(Path.Combine(path, "task.md")));
-    return Path.Combine(folder, fileName);
+    // Generated apps ship tests/ without kanban/, so the shot falls back to the test output folder.
+    string? kanban = directory is null ? null : Path.Combine(directory, "kanban");
+    string? folder = kanban is not null && Directory.Exists(kanban)
+      ? Directory.GetDirectories(kanban, taskPrefix + "-*", SearchOption.AllDirectories)
+        .SingleOrDefault(path => File.Exists(Path.Combine(path, "task.md")))
+      : null;
+    return Path.Combine(folder ?? AppContext.BaseDirectory, fileName);
   }
 }
