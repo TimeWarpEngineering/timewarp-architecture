@@ -142,6 +142,7 @@ public class SignOut_Should_
           ];
         }
       );
+      services.AddTimeWarpStateBlazor();
 
       services.AddScoped<
         TimeWarp.Features.Persistence.IPersistenceService,

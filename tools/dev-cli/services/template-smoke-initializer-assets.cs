@@ -5,9 +5,9 @@
 #region Design
 // Task 240: a PascalCase `_content` specifier 404s the whole Blazor JS initializer. The runtime
 // HTTP smoke lives in web-server-integration-tests; this check runs after each generated app
-// build with no server. Root-relative `/_content/<PackageId>/...` maps to
-// `{NuGet packages}/<package-id-lower>/<version>/staticwebassets/...` using Directory.Packages.props
-// versions. Recurses one level. Relative specifiers are skipped (same rule as the HTTP smoke).
+// build with no server. Root-relative `/_content/<segment>/...` maps through
+// TemplateSmokeContentAssets (Directory.Packages.props versions, NuGet staticwebassets).
+// Recurses one level. Relative specifiers are skipped (same rule as the HTTP smoke).
 #endregion
 
 namespace DevCli.Services;
@@ -81,7 +81,12 @@ internal sealed partial class TemplateSmokeHarness
       bool isEmitRoot = string.Equals(file, emitPath, StringComparison.OrdinalIgnoreCase);
       foreach (string specifier in ParseStaticImportSpecifiers(File.ReadAllText(file)))
       {
-        if (!TryResolveContentSpecifier(specifier, packageVersions, packagesRoot, out string? resolved, out string? error))
+        if (!TemplateSmokeContentAssets.TryResolve(
+          specifier,
+          packageVersions,
+          packagesRoot,
+          out string? resolved,
+          out string? error))
         {
           if (error is not null)
           {
@@ -172,51 +177,5 @@ internal sealed partial class TemplateSmokeHarness
       if (match.Success && match.Groups.Count > 1 && !string.IsNullOrWhiteSpace(match.Groups[1].Value))
         specifiers.Add(match.Groups[1].Value);
     }
-  }
-
-  private static bool TryResolveContentSpecifier(
-    string specifier,
-    Dictionary<string, string> packageVersions,
-    string packagesRoot,
-    out string? resolvedPath,
-    out string? error)
-  {
-    resolvedPath = null;
-    error = null;
-
-    if (string.IsNullOrWhiteSpace(specifier) || !specifier.StartsWith("/_content/", StringComparison.Ordinal))
-      return false;
-
-    string relative = specifier["/_content/".Length..];
-    int slash = relative.IndexOf('/', StringComparison.Ordinal);
-    if (slash <= 0 || slash == relative.Length - 1)
-    {
-      error = $"Malformed _content specifier: {specifier}";
-      return false;
-    }
-
-    string packageId = relative[..slash];
-    string assetPath = relative[(slash + 1)..].Replace('/', Path.DirectorySeparatorChar);
-
-    if (!packageVersions.TryGetValue(packageId, out string? version))
-    {
-      error = $"{specifier} (PackageVersion for {packageId} not found)";
-      return false;
-    }
-
-    resolvedPath = Path.Combine(
-      packagesRoot,
-      packageId.ToLowerInvariant(),
-      version,
-      "staticwebassets",
-      assetPath);
-
-    if (!File.Exists(resolvedPath))
-    {
-      error = $"{specifier} → {resolvedPath}";
-      return false;
-    }
-
-    return true;
   }
 }

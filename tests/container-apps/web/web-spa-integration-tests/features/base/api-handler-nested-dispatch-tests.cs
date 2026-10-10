@@ -205,6 +205,7 @@ internal sealed class NestedDispatchSpaTestApplication : IDisposable
           typeof(NestedDispatchProbeState).Assembly
         ];
       });
+    services.AddTimeWarpStateBlazor();
     services.AddSingleton<IApiService>(Api);
     services.AddSingleton<IPublisher<ClientPipeline>, NoOpPublisher>();
     services.AddScoped<NestedDispatchProbeState.UpdateActionSet.Handler>();

@@ -499,7 +499,9 @@ public partial class Program : IAspNetProgram
       .AddInteractiveWebAssemblyRenderMode()
       .AddAdditionalAssemblies
       (
-        typeof(TimeWarp.State.AssemblyMarker).Assembly,
+        // ReduxDevTools is in TimeWarp.State.Blazor (12.0.0-beta.10). TimeWarp.State
+        // has no Razor components.
+        typeof(TimeWarp.State.Blazor.AssemblyMarker).Assembly,
         typeof(TimeWarp.State.Plus.AssemblyMarker).Assembly,
         typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly
       );
