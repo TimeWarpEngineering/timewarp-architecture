@@ -65,6 +65,12 @@
 {
   <script src="js/browser-log-forwarder.js"></script>
 }
+@* pathname + search + hash for PageAgentRoute on WebAssembly. A NavigationManager left at the base URI loses. *@
+<script>
+  window.timeWarpPagePath = function () {
+    return location.pathname + location.search + location.hash;
+  };
+</script>
 <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

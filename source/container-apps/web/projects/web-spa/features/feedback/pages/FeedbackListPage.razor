@@ -17,6 +17,10 @@
   private DotNetObjectReference<FeedbackListPage>? HostReference;
   private IJSObjectReference? PasteHandle;
   private bool PasteAttached;
+  private string? NotedKind;
+  private bool NotedTitle;
+  private bool NotedBody;
+  private bool NotedComposer;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -32,13 +36,36 @@
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (!RendererInfo.IsInteractive || PasteAttached)
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await NoteComposerAsync();
+    if (PasteAttached)
     {
       return;
     }
 
     PasteAttached = true;
     await AttachPasteAsync();
+  }
+
+  private async Task NoteComposerAsync()
+  {
+    string kind = Draft.Kind.ToString();
+    bool hasTitle = !string.IsNullOrWhiteSpace(Draft.Title);
+    bool hasBody = !string.IsNullOrWhiteSpace(Draft.Body);
+    if (NotedComposer && NotedKind == kind && NotedTitle == hasTitle && NotedBody == hasBody)
+    {
+      return;
+    }
+
+    NotedComposer = true;
+    NotedKind = kind;
+    NotedTitle = hasTitle;
+    NotedBody = hasBody;
+    await FeedbackState.NoteComposer(true, kind, hasTitle, hasBody);
   }
 
   [DirectComponentSideEffect("The details box paste listener is presentational JavaScript. The upload itself is the UploadFeedbackAttachment action.")]
@@ -56,6 +83,18 @@
   [DirectComponentSideEffect("The details box paste listener is presentational JavaScript bound to this component's lifetime. The upload itself is the UploadFeedbackAttachment action.")]
   public async ValueTask DisposeAsync()
   {
+    if (RendererInfo.IsInteractive)
+    {
+      try
+      {
+        await FeedbackState.NoteComposer(false, "", false, false);
+      }
+      catch (ObjectDisposedException)
+      {
+        // The circuit closed with the page.
+      }
+    }
+
     if (PasteHandle is not null)
     {
       await FeedbackPasteJsModule.DisposeAsync(PasteHandle);
@@ -297,7 +336,7 @@
             </FormField>
             <FormField Label="Details">
               <div @ref="DetailsHost" class="feedback-details">
-                <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Height="9rem" />
+                <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Width="100%" Height="9rem" Resize="TextAreaResize.Vertical" />
               </div>
               <ValidationMessage For="@(() => Draft.Body)" />
             </FormField>

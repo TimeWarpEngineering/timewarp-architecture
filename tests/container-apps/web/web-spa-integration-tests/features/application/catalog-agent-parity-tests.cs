@@ -265,6 +265,7 @@ public partial class CatalogAgent_Should
       services.GetRequiredService<IAuthorizationService>(),
       services.GetRequiredService<AuthenticationStateProvider>(),
       services.GetRequiredService<NavigationManager>(),
+      services.GetRequiredService<PageAgentRoute>(),
       scope.Store
     );
 

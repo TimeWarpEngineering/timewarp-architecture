@@ -102,6 +102,57 @@ public class AskSignIn_Given_Wasm
       {
         Path = ScreenshotPath("ask-signed-in-configured-answer.png"),
       });
+      string settingsAnswer = await session.Page.Locator(".sc-ai-root").InnerTextAsync();
+      if (settingsAnswer.Contains("System.Collections.Generic", StringComparison.Ordinal))
+      {
+        failures.Add("Settings: the answer rendered a dictionary type name.");
+      }
+
+      if (!settingsAnswer.Contains("/Settings", StringComparison.Ordinal))
+      {
+        failures.Add($"Settings: page_context did not report /Settings. Answer: {settingsAnswer}");
+      }
+
+      await AssertReasoningOmitsDictionaryAsync(session, failures, "Settings");
+
+      string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
+      await session.Page.GotoAsync(feedbackUrl, new PageGotoOptions
+      {
+        WaitUntil = WaitUntilState.DOMContentLoaded,
+        Timeout = 120_000,
+      });
+      await session.Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+      await session.Page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      string feedbackState = await session.OpenAskAsync();
+      if (feedbackState != "Configured")
+      {
+        failures.Add($"Feedback: Ask showed {feedbackState} ('{await session.AskTextAsync()}').");
+      }
+      else
+      {
+        ILocator feedbackInput = session.Page.Locator(".sc-ai-input__textarea");
+        await feedbackInput.FillAsync("Explain this page");
+        await session.Page.Locator(".sc-ai-input__send").ClickAsync();
+        ILocator feedbackAnswer = session.Page.Locator(".sc-ai-root").GetByText("page_context:");
+        await feedbackAnswer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+        string feedbackText = await session.Page.Locator(".sc-ai-root").InnerTextAsync();
+        await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+        {
+          Path = ScreenshotPath("ask-feedback-page-context.png", "299"),
+        });
+        if (feedbackText.Contains("System.Collections.Generic", StringComparison.Ordinal))
+        {
+          failures.Add("Feedback: the answer rendered a dictionary type name.");
+        }
+
+        if (!feedbackText.Contains("/Feedback", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"page\":\"Feedback\"", StringComparison.Ordinal))
+        {
+          failures.Add($"Feedback: page_context did not describe /Feedback. Answer: {feedbackText}");
+        }
+
+        await AssertReasoningOmitsDictionaryAsync(session, failures, "Feedback");
+      }
     }
 
     Console.WriteLine($"task-293 configuration statuses: [{session.Statuses}]; signed out: {signedOut}; signed in: {signedIn}");
@@ -306,6 +357,22 @@ public class AskSignIn_Given_Wasm
     }
   }
 
+  private static async Task AssertReasoningOmitsDictionaryAsync(Session session, List<string> failures, string pageName)
+  {
+    ILocator reasoning = session.Page.Locator("[data-qa=AskReasoning]").First;
+    await reasoning.Locator("summary").ClickAsync();
+    string text = await reasoning.InnerTextAsync();
+    if (text.Contains("System.Collections.Generic", StringComparison.Ordinal))
+    {
+      failures.Add($"{pageName}: See reasoning printed a dictionary type name. Text: {text}");
+    }
+
+    if (await session.Page.Locator("[data-qa=AskReasoningArguments]").CountAsync() != 0)
+    {
+      failures.Add($"{pageName}: empty page_context arguments were shown.");
+    }
+  }
+
   private static void InstallChromium()
   {
     int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -320,7 +387,7 @@ public class AskSignIn_Given_Wasm
     install.ShouldBe(0, "Playwright chromium install failed");
   }
 
-  private static string ScreenshotPath(string fileName)
+  private static string ScreenshotPath(string fileName, string folderName = "293")
   {
     string? directory = AppContext.BaseDirectory;
     while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
@@ -329,7 +396,7 @@ public class AskSignIn_Given_Wasm
     }
 
     directory.ShouldNotBeNull();
-    string folder = Path.Combine(directory, "artifacts", "playwright", "293");
+    string folder = Path.Combine(directory, "artifacts", "playwright", folderName);
     Directory.CreateDirectory(folder);
     return Path.Combine(folder, fileName);
   }

@@ -1,5 +1,20 @@
+/* The paste host wraps fluent-textarea, so FormField's direct-child width rule does not reach it. */
 .feedback-details {
   display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* FluentTextArea renders fluent-field > fluent-textarea, so a direct-child rule misses the control. */
+.feedback-details ::deep fluent-textarea,
+.feedback-details ::deep fluent-text-area {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 9rem;
+  box-sizing: border-box;
 }
 
 .feedback-file {
