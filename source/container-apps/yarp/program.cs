@@ -25,6 +25,8 @@
 // X-Forwarded-Proto and X-Forwarded-Host onto the request only when the peer is listed under
 // TrustedProxy (loopback when that section is absent). Set then forwards those values, so a
 // client that is not a trusted proxy still cannot inject them. X-Forwarded-For is not consumed.
+// Run mode hosts this project as the AppHost ingress, so the Development routes and clusters are
+// template-gated per flag (api, grpc, web conditional comments), matching the AppHost publish routes.
 // Implements IAspNetProgram so every container app shares the same Configure* phase structure,
 // keeping the template's entry points uniform; unused phases stay as empty methods rather than
 // being removed.

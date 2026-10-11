@@ -91,13 +91,25 @@ The scheme was lost on the YARP hop, not in Web.Server. `"X-Forwarded": "Set"` c
 
 The yarp project now calls `UseTrustedProxyForwardedHeaders` before `MapReverseProxy`. It applies `X-Forwarded-Proto` and `X-Forwarded-Host` with `ForwardLimit` 1, and only when the peer is in `TrustedProxy:KnownProxies` or `TrustedProxy:KnownNetworks`. An absent section trusts loopback (`127.0.0.1` and `::1`), which is Caddy on this machine. An explicit section replaces that default. Both lists empty skips the middleware: the framework treats two empty allow-lists as trust-everyone, and this ingress must not. A bad address or CIDR fails startup. `X-Forwarded-Host` is honored because Caddy sets it to the request Host and the public-origin smoke sends it without replacing `Host`. An untrusted peer still cannot inject proto or host; `Set` then forwards what the ingress itself accepted. `X-Forwarded-For` is not applied. Web.Server rate limiting reads `Connection.RemoteIpAddress` and does not use that header. `ASPNETCORE_FORWARDEDHEADERS_ENABLED` is not used: it omits Host and clears the allow-lists.
 
-Run mode executes the yarp project (`AddProject`, launch profile `Yarp`, `DisableForwardedHeaders`) so this middleware is the process on the pinned port. The http endpoint is not DCP-proxied: a proxy hop in front of it can replace `X-Forwarded-Proto` with the scheme that hop saw (http) and `ForwardLimit` 1 would drop Caddy's https. The resource name stays the literal `"ingress"` (`ServiceNames.IngressServiceName`) so the dev-cli text scan and TWA0007 still agree. Publish mode keeps the AddYarp image, so Compose, Kubernetes, and ACA manifests are unchanged. That image does not contain this middleware. ACA's external ingress is already https, so the stock image does not drop a client scheme there. A deployment of the yarp project behind a proxy that is not on loopback sets `KnownNetworks` to that proxy's CIDR.
+Run mode executes the yarp project (`AddProject`, launch profile `Yarp`, `DisableForwardedHeaders`) so this middleware is the process on the pinned port. The http endpoint is not DCP-proxied: a proxy hop in front of it can replace `X-Forwarded-Proto` with the scheme that hop saw (http) and `ForwardLimit` 1 would drop Caddy's https. The resource name stays the literal `"ingress"` (`ServiceNames.IngressServiceName`) so the dev-cli text scan and TWA0007 still agree. Publish mode keeps the AddYarp image, so Compose, Kubernetes, and ACA manifests are unchanged. That image does not contain this middleware. A TLS-terminating edge in front of it (ACA managed ingress, a Kubernetes ingress controller) may still produce `http` tags; that path is not verified and is out of scope here. `SiteMetadata:BaseUrl` and `PublicOrigin` cover link previews and Entra there. Mail permalinks have no override. A deployment of the yarp project behind a proxy that is not on loopback sets `KnownNetworks` to that proxy's CIDR.
 
 `SiteMetadata:BaseUrl` still wins for link-preview tags when it is set. Nothing hard-codes `arch.timewarp.work`.
 
 Files: `source/container-apps/yarp/trusted-proxy-forwarded-headers.cs`, `program.cs`, `global-usings.cs`, `appsettings.json`; AppHost `program.cs`, `constants.cs`, `aspire-app-host.csproj`; `ServiceNames.IngressServiceName`; in-proc http listener (`InProcTestPorts.YarpHttpUrl`, default `http://localhost:8444`); standalone and Aspire ingress smokes; task 112 `runbook-public-path.md`; `skills/tw-deploy`. Design notes on the mail accessor, link preview, and passkey host accessor record that the trust check stays on the ingress.
 
 Tests: `yarp-integration-tests` 10/10 (trusted `GET http://localhost:8444/` renders the four `https://public.example.test` tags; the same headers with remote address `203.0.113.5` stay `http://localhost:8444` and do not mention `public.example.test`). Aspire `IngressSmoke` 10/10 through the AppHost `ingress` http endpoint, including the same four tags. `aspire-app-host` and `yarp` build with 0 warnings. The untrusted remote address is a test-only `IStartupFilter`; it is not in the product pipeline.
+
+### Review disposition
+
+Implementation review ran 2 rounds at effort 2 (by-diff budget) with the `general` reviewer. Disposition: **clean**. Final counts: bug 1 fixed, suggestion 2 fixed, nit 0, open 0, wontfix 0.
+
+- M1 (bug): run mode loads ingress routes from the yarp project's `appsettings.Development.json`, which had no template conditionals. `--api false` / `--grpc false` apps sent `/api/**` and `/grpc/**` to services that do not exist. The routes and clusters are now gated with `//#if (api|web|grpc)`. `dev template-smoke` SmokeNoApi confirms the output.
+- M2 (suggestion): JSON `[]` reads as absent through `Exists()`, so both lists empty trusted loopback. `ReadList` now checks the declared key. `trusted-proxy-configuration-tests.cs` adds 5 tests (no lists declared, both empty, network-only, scalar, malformed CIDR).
+- M3 (suggestion): the ACA "already https" claim was unverified. The docs now say the published AddYarp path may forward http and point to `SiteMetadata:BaseUrl` / `PublicOrigin`. That path is out of scope here.
+
+Gates after fixes: `dev build` clean; `yarp-integration-tests` 15/15; `dev template-smoke` SUCCEEDED; `ganda repo audit` pass. The Aspire `IngressSmoke` suite was not re-run in review: for the default flags the route config only gained comment lines.
+
+Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate (required before done)
 
@@ -114,3 +126,4 @@ curl -s -H 'Accept: text/html' -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Hos
 ## Session
 
 - Created: 507654 (2026-10-11)
+- Review oracle: Claude Opus 5.5 (ganda task work, headless), effort 2, roster general, 2 rounds

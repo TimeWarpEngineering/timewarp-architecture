@@ -123,8 +123,11 @@ ON_ERROR_STOP=1 -f efmigrations/web-migrations.sql`, through the same firewall r
   travels in `X-Forwarded-Host`, which web-server reads for passkey RP-ID selection (task 070-008,
   the same on every target). There is no aca-specific web route. The published ingress is the
   AddYarp image, so it does not run the yarp project's trusted-proxy middleware (task 305). ACA's
-  external ingress is already https. A deployment that runs the yarp project behind a non-loopback
-  proxy sets `TrustedProxy:KnownNetworks` to that proxy's CIDR.
+  managed ingress terminates TLS, so the published ingress may forward `X-Forwarded-Proto: http`.
+  This has not been verified on ACA. Until it is, set `SiteMetadata:BaseUrl` (link-preview tags)
+  and `PublicOrigin` (Entra) on web-server to the public https origin. Mail permalinks have no
+  override. A deployment that runs the yarp project behind a non-loopback proxy sets
+  `TrustedProxy:KnownNetworks` to that proxy's CIDR.
 
 **Deprovision.** `dev deprovision --target aca` runs `aspire destroy`, then prints the Key Vault
 purge. When `aspire destroy` has no record of the deployment (another machine or checkout deployed

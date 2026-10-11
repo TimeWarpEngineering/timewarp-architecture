@@ -7,10 +7,12 @@
 // http, so without this step Set replaces Caddy's https with http and link previews and mail
 // permalinks leave as http. This middleware runs before MapReverseProxy, so the Set transform
 // forwards the client-facing scheme and host. ForwardLimit is 1 (the closest hop only).
-// KnownProxies and KnownIPNetworks come from the TrustedProxy section. An absent section trusts
-// loopback only (127.0.0.1 and ::1): Caddy on this machine connects to the pinned http endpoint.
-// An explicit section replaces that default, so a cluster can name its proxy CIDR without also
-// trusting loopback. Both lists empty skips the middleware. The framework treats two empty
+// KnownProxies and KnownIPNetworks come from the TrustedProxy section. When neither key is declared
+// the ingress trusts loopback only (127.0.0.1 and ::1): Caddy on this machine connects to the pinned
+// http endpoint. Declaring either key replaces that default, so a cluster can name its proxy CIDR
+// without also trusting loopback. A declared key counts even when its array is empty: JSON stores []
+// as a null-valued key that Exists() reports as absent, so ReadList checks the key itself. Both
+// lists empty skips the middleware. The framework treats two empty
 // allow-lists as trust-everyone; this ingress must not. An unparseable address or CIDR fails
 // startup. X-Forwarded-For is not applied: Web.Server rate limiting reads Connection.RemoteIpAddress
 // and does not consume that header. ASPNETCORE_FORWARDEDHEADERS_ENABLED is not used: it clears the
@@ -24,60 +26,40 @@ namespace TimeWarp.Architecture.Yarp.Server;
 /// </summary>
 public static class TrustedProxyForwardedHeaders
 {
-  /// <summary>Configuration section. An absent section trusts loopback only.</summary>
+  /// <summary>Configuration section. When neither list is declared, loopback only is trusted.</summary>
   public const string SectionName = "TrustedProxy";
 
   /// <summary>
   /// Honors <c>X-Forwarded-Proto</c> and <c>X-Forwarded-Host</c> from the peers named by
   /// <see cref="SectionName"/>. A peer outside that list cannot change scheme or host.
   /// </summary>
-  /// <exception cref="InvalidOperationException">A configured address or CIDR does not parse.</exception>
+  /// <exception cref="InvalidOperationException">
+  /// A configured address or CIDR does not parse, or a list is a single value instead of an array.
+  /// </exception>
   public static void UseTrustedProxyForwardedHeaders(this WebApplication webApplication)
   {
     IConfiguration section = webApplication.Configuration.GetSection(SectionName);
-    IConfigurationSection proxiesSection = section.GetSection("KnownProxies");
-    IConfigurationSection networksSection = section.GetSection("KnownNetworks");
-    bool proxiesConfigured = proxiesSection.Exists();
-    bool networksConfigured = networksSection.Exists();
+    string[]? configuredProxies = ReadList(section, "KnownProxies");
+    string[]? configuredNetworks = ReadList(section, "KnownNetworks");
 
     List<IPAddress> proxies = [];
     List<System.Net.IPNetwork> networks = [];
 
-    if (!proxiesConfigured && !networksConfigured)
+    if (configuredProxies is null && configuredNetworks is null)
     {
       proxies.Add(IPAddress.Loopback);
       proxies.Add(IPAddress.IPv6Loopback);
     }
     else
     {
-      if (proxiesConfigured)
+      foreach (string value in configuredProxies ?? [])
       {
-        string[]? configuredProxies = proxiesSection.Get<string[]>();
-        if (configuredProxies is null)
-        {
-          throw new InvalidOperationException(
-            "TrustedProxy:KnownProxies must be an array of IP addresses.");
-        }
-
-        foreach (string value in configuredProxies)
-        {
-          proxies.Add(ParseProxy(value));
-        }
+        proxies.Add(ParseProxy(value));
       }
 
-      if (networksConfigured)
+      foreach (string value in configuredNetworks ?? [])
       {
-        string[]? configuredNetworks = networksSection.Get<string[]>();
-        if (configuredNetworks is null)
-        {
-          throw new InvalidOperationException(
-            "TrustedProxy:KnownNetworks must be an array of CIDR networks.");
-        }
-
-        foreach (string value in configuredNetworks)
-        {
-          networks.Add(ParseNetwork(value));
-        }
+        networks.Add(ParseNetwork(value));
       }
     }
 
@@ -105,6 +87,25 @@ public static class TrustedProxyForwardedHeaders
     }
 
     webApplication.UseForwardedHeaders(options);
+  }
+
+  // A declared key is configured even when empty: JSON stores [] as a key with a null value, which
+  // IConfigurationSection.Exists() reports as absent. Returns null only when the key is not declared.
+  private static string[]? ReadList(IConfiguration section, string key)
+  {
+    IConfigurationSection? list = section.GetChildren()
+      .FirstOrDefault(child => string.Equals(child.Key, key, StringComparison.OrdinalIgnoreCase));
+    if (list is null)
+    {
+      return null;
+    }
+
+    if (!string.IsNullOrEmpty(list.Value))
+    {
+      throw new InvalidOperationException($"TrustedProxy:{key} must be an array, not a single value.");
+    }
+
+    return [.. list.GetChildren().Select(child => child.Value ?? string.Empty)];
   }
 
   private static IPAddress ParseProxy(string value)

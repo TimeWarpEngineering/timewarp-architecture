@@ -90,8 +90,9 @@
 // yarp project, whose UseTrustedProxyForwardedHeaders applies those two headers only from a trusted
 // proxy (loopback by default — Caddy on this machine) before that Set, so Web.Server reads the
 // client-facing scheme and host. A peer that is not a trusted proxy cannot inject either header.
-// Publish mode keeps the AddYarp image, which has no such middleware; its internal hops already use
-// the deployment's own scheme (ACA https). One rule on every target:
+// Publish mode keeps the AddYarp image, which has no such middleware. Behind a TLS-terminating
+// edge (ACA managed ingress, a Kubernetes controller) it may forward http; set SiteMetadata:BaseUrl
+// and PublicOrigin on Web.Server there (not verified on ACA). One rule on every target:
 // a public Host on the web hop breaks Azure Container Apps, whose internal ingress routes
 // app-to-app traffic by Host. Web.Server's per-request WebAuthn RP-ID selection reads the public
 // host from X-Forwarded-Host (HttpRequestHostAccessor only — no UseForwardedHeaders, which would also
