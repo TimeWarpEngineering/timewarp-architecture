@@ -19,8 +19,8 @@
 // Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
 // viewport. Shots are written beside task 296.
 // Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
-// .sc-ai-input padding (about 16px), its width is at least 90% of that box, and Tag
-// and send sit below it. Shift+Enter grows the field; Enter sends. Those shots are
+// .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and Tag
+// and send sit below it. The Tag chip's left edge is within 4px of the textarea text start. Shift+Enter grows the field; Enter sends. Those shots are
 // written beside task 307.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
@@ -277,6 +277,9 @@ public class AskSurface_Given_Wasm
     ((double)sendBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
     ((double)(tagBox.X - composerBox.X)).ShouldBeGreaterThanOrEqualTo(0);
     ((double)(tagBox.X - composerBox.X)).ShouldBeLessThanOrEqualTo(24);
+    double textStart = areaBox.X + await textarea.EvaluateAsync<double>(
+      "element => parseFloat(getComputedStyle(element).paddingLeft)");
+    Math.Abs(tagBox.X - textStart).ShouldBeLessThanOrEqualTo(4);
     double sendInset = composerBox.X + composerBox.Width - (sendBox.X + sendBox.Width);
     sendInset.ShouldBeGreaterThanOrEqualTo(0);
     sendInset.ShouldBeLessThanOrEqualTo(24);

@@ -84,6 +84,7 @@ something on this page in your message." Give it a clear label and tooltip, e.g.
 ## Session
 
 - Created: 742019 (2026-10-11)
+- Review oracle: claude-opus-5-5 (headless ganda task work), effort 2, roster general
 
 ## Notes
 
@@ -105,7 +106,7 @@ The Ask composer still uses the library `MessageInput`. Scoped CSS in `AgentAsk.
 
 Tag (`data-qa=AskTagResource`) calls `OpenResources()`, which sets `ResourceMenuOpen = true`. Typing `@` anywhere in the panel does the same (`OnKeyDown`). That shows `AskResourceMenu`: the typed resources on the current page (`page_context` via `AskResourceReferences.FromPageContext`), or "Nothing on this page to tag." Choosing a row inserts that resource's `@` token at the caret (`AskAiJsModule.InsertReferenceAsync` → `source/features/ask-ai.ts` `InsertReference`, which replaces a just-typed `@` instead of doubling it) and closes the menu. Tag means "reference something on this page in your message."
 
-The control is a pill: a tag icon plus the label "Tag". `Title`, `Tooltip`, and `aria-label` are "Tag a resource on this page (@)". The placeholder is "Tell the app what you want. Type @ to tag something on this page."
+The control is a bordered pill: a tag icon plus the label "Tag". Its left edge sits on the textarea's text start. Fluent v5 `fluent-button` has no `control` part, so the pill is styled on the host (`min-width: 0`, `justify-content: flex-start`). `Title`, `Tooltip`, and `aria-label` are "Tag a resource on this page (@)". The placeholder is "Tell the app what you want. Type @ to tag something on this page."
 
 ### Layout
 
@@ -116,7 +117,7 @@ Playwright measured the inner `textarea.sc-ai-input__textarea` against `.twe-age
 - Left inset (`textarea.X − composer.X`) is in [4, 20] px. Container padding is `--twe-space-3` (12px). The textarea's `padding-inline` is 0, so the placeholder starts at that padding.
 - Textarea width is at least 90% of the composer width.
 - Tag's top and send's top are at or below the textarea bottom (2px tolerance).
-- Tag's left inset is in [0, 24] px. Send's right inset is in [0, 24] px. Send sits to the right of Tag.
+- Tag's left inset is in [0, 24] px, and its left edge is within 4px of the textarea text start (textarea left + computed padding-left). Send's right inset is in [0, 24] px. Send sits to the right of Tag.
 - The Tag icon is at least 12px wide.
 - Three Shift+Enter lines grew the textarea by at least 8px (`field-sizing: content`, min-height 3rem, max-height 10rem).
 - Enter sent. A user bubble containing "one" and a `page_context:` answer appeared, then the textarea enabled again.
@@ -144,3 +145,12 @@ Run that from the project directory. Its `global.json` selects Microsoft.Testing
 - `ask-composer-before.png` shows the placeholder starting at the left padding, the Tag pill on the footer left, and send on the footer right.
 - `ask-composer-after.png` shows three lines of text with Tag and send still on the footer.
 - Tag still opens `AskResourceEmpty` on the home page, and `@` insertion still replaces a typed `@`.
+
+### Review disposition
+
+- Effort 2, roster `general`, 2 rounds. Framework: `review/review-framework.md`. Last merged: `review/round-2/merged.md`. Disposition: `review/disposition.md`.
+- Final counts: bug 2 fixed, suggestion 0, nit 1 fixed. 0 open, 0 wontfix. Outcome: **clean**.
+- M1: the Tag pill CSS targeted `::part(control)`, which Fluent v5 `fluent-button` does not have. The host's 96px centered minimum indented the chip about 25px (Steven's steering note). Fixed by styling the host.
+- M2: added the steering assertion that the chip is within 4px of the textarea text start.
+- M3: the comment said 16px. The padding is 12px.
+- After the fixes, `./bin/dev build` reported 0 warnings and 0 errors, and the Playwright project ran 7 passed and 0 failed. The `kanban/done/295-*`, `296-*`, and `302-*` screenshots the run rewrote were restored, not committed.

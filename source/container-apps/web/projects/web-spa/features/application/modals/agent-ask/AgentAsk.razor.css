@@ -170,10 +170,22 @@
   padding-inline: 0;
 }
 
+/* Fluent v5 fluent-button styles its :host (min-width 96px, centered content) and has no
+   control part, so the pill is styled on the host. min-width 0 and flex-start keep the
+   chip's left edge on the textarea's text start. */
 .twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag {
   grid-area: lead;
   justify-self: start;
   align-self: center;
+  min-width: 0;
+  min-height: 2rem;
+  justify-content: flex-start;
+  column-gap: var(--twe-space-2);
+  padding-inline: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: 999px;
+  background: var(--twe-paper);
+  color: var(--twe-ink);
   cursor: pointer;
 }
 
@@ -181,16 +193,6 @@
   max-width: none;
   width: 16px;
   height: 16px;
-}
-
-.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag::part(control) {
-  border: 1px solid var(--twe-rule);
-  border-radius: 999px;
-  background: var(--twe-paper);
-  color: var(--twe-ink);
-  column-gap: var(--twe-space-2);
-  padding-inline: var(--twe-space-3);
-  min-height: 2rem;
 }
 
 .twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {
