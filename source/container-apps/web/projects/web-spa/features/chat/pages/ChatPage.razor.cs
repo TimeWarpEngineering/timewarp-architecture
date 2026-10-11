@@ -12,6 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Chat;
 
-[Page("/Chat", Policy = PermissionIds.DeveloperAccess, Navigable = true)]
+[Page("/Chat", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Developer chat demo.")]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class ChatPage;

@@ -31,6 +31,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.AI;
+using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentChats;
@@ -151,68 +152,60 @@ public partial class CatalogAgent_Should
     (
       everyone, authorization, catalog.Entries, "/Counter?from=palette", CancellationToken.None
     );
-    Names(counter).ShouldBe(["Counter.IncrementCounter"]);
-    counter[0].RequiresApproval.ShouldBeTrue();
+    Names(counter).ShouldBe(await ExpectedNamesAsync(everyone, authorization, catalog, "/Counter?from=palette"));
+    counter.Single(tool => tool.Name == "Counter.IncrementCounter").RequiresApproval.ShouldBeTrue();
+    counter.ShouldContain(tool => tool.Name == AgentNavigate.ToolName && !tool.RequiresApproval);
+    counter.Single(tool => tool.Name == "Credentials.AddPasskey").OffPageRoute.ShouldBe("/Settings");
 
     IReadOnlyList<CatalogAgentTool> settings = await CatalogAgentToolSet.SelectAsync
     (
       everyone, authorization, catalog.Entries, "/Settings/", CancellationToken.None
     );
-    Names(settings).ShouldBe
-    (
-      [
-        "Credentials.FetchCredentials",
-        "Credentials.RevokeCredential",
-        "Credentials.RenameCredential",
-      ]
-    );
+    Names(settings).ShouldBe(await ExpectedNamesAsync(everyone, authorization, catalog, "/Settings/"));
     settings.Single(tool => tool.Name == "Credentials.FetchCredentials").RequiresApproval.ShouldBeFalse();
     settings.Single(tool => tool.Name == "Credentials.RevokeCredential").RequiresApproval.ShouldBeTrue();
+    settings.Single(tool => tool.Name == "Credentials.AddPasskey").OffPageRoute.ShouldBeNull();
+    settings.Single(tool => tool.Name == "Credentials.AddPasskey").RequiresApproval.ShouldBeTrue();
 
-    settings.ShouldNotContain(tool => tool.Name == "Credentials.AddPasskey");
     settings.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
     settings.ShouldNotContain(tool => tool.Name == "Credentials.LinkMicrosoft365");
+    settings.ShouldNotContain(tool => tool.Name == "Profile.SignOut");
 
-    // Positive control: a permitted principal is offered CreateRole on this route, so the
-    // developer's empty list below is the permission filter, not a missing mapping.
-    Names
+    IReadOnlyList<CatalogAgentTool> newRole = await CatalogAgentToolSet.SelectAsync
     (
-      await CatalogAgentToolSet.SelectAsync
-      (
-        everyone, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
-      )
-    ).ShouldBe(["Role.CreateRole"]);
+      everyone, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
+    );
+    Names(newRole).ShouldBe(await ExpectedNamesAsync(everyone, authorization, catalog, "/Admin/Roles/New"));
+    newRole.ShouldContain(tool => tool.Name == "Role.CreateRole");
 
-    Names
+    IReadOnlyList<CatalogAgentTool> developerNewRole = await CatalogAgentToolSet.SelectAsync
     (
-      await CatalogAgentToolSet.SelectAsync
-      (
-        developer, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
-      )
-    ).ShouldBeEmpty();
+      developer, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
+    );
+    Names(developerNewRole).ShouldBe([AgentNavigate.ToolName]);
+    developerNewRole.ShouldNotContain(tool => tool.Name == "Role.CreateRole");
 
     Names
     (
       await CatalogAgentToolSet.SelectAsync
       (
-        everyone, authorization, catalog.Entries, "/Admin/Roles", CancellationToken.None
+        everyone, authorization, catalog.Entries, "/", CancellationToken.None
       )
-    ).ShouldBeEmpty();
+    ).ShouldBe(await ExpectedNamesAsync(everyone, authorization, catalog, "/"));
 
-    Names
     (
       await CatalogAgentToolSet.SelectAsync
       (
-        everyone, authorization, catalog.Entries, "/StyleGuide", CancellationToken.None
+        anonymous, authorization, catalog.Entries, "/", CancellationToken.None
       )
-    ).ShouldBeEmpty();
+    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
 
     (
       await CatalogAgentToolSet.SelectAsync
       (
         anonymous, authorization, catalog.Entries, "/Counter", CancellationToken.None
       )
-    ).ShouldBeEmpty();
+    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
   }
 
   public static async Task Fake_Client_Dispatches_Increment_Only_After_Approval()
@@ -222,9 +215,9 @@ public partial class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Initialize(count: 10);
     using CatalogAgentFunctions functions = CatalogAgentFunctions.Create(await SelectForSessionAsync(scope));
     ChatOptions options = new() { Tools = [.. functions.Tools] };
-    Names(functions.Tools).ShouldBe(["Counter.IncrementCounter", PageAgentContext.ToolName]);
-    functions.Tools[0].ShouldBeOfType<ApprovalRequiredAIFunction>();
-    functions.Tools[1].ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools.Single(tool => tool.Name == "Counter.IncrementCounter").ShouldBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools.Single(tool => tool.Name == AgentNavigate.ToolName).ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools.Single(tool => tool.Name == PageAgentContext.ToolName).ShouldNotBeOfType<ApprovalRequiredAIFunction>();
 
     using ScriptedChatClient rejecting = new();
     string rejected = await RunAsync(rejecting, scope.ServiceProvider, options, static _ => false)
@@ -295,22 +288,29 @@ public partial class CatalogAgent_Should
     (
       everyone, authorization, catalog, "/Counter", CancellationToken.None
     );
-    Names(counter).ShouldBe(["Counter.IncrementCounter", PageAgentContext.ToolName]);
+    Names(counter).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/Counter"));
+
+    IReadOnlyList<WebMcpToolDescriptor> home = await WebMcpPublisher.DescribeAsync
+    (
+      everyone, authorization, catalog, "/", CancellationToken.None
+    );
+    Names(home).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/"));
+    home.ShouldContain(tool => tool.Name == "Credentials.AddPasskey");
+    home.ShouldContain(tool => tool.Name == AgentNavigate.ToolName);
+    home.ShouldContain(tool => tool.Name == PageAgentContext.ToolName);
+    home.ShouldNotContain(tool => tool.Name == "Profile.SignOut");
+    home.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
+    // A literal, not the selection algorithm again: the tool list on / that the task promises.
+    Names(home).ShouldBe(
+      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", AgentNavigate.ToolName, PageAgentContext.ToolName]);
+    Console.WriteLine($"WEBMCP-PROOF path=/ tools={string.Join(",", Names(home))}");
 
     IReadOnlyList<WebMcpToolDescriptor> settings = await WebMcpPublisher.DescribeAsync
     (
       everyone, authorization, catalog, "/Settings", CancellationToken.None
     );
-    Names(settings).ShouldBe
-    (
-      [
-        "Credentials.FetchCredentials",
-        "Credentials.RevokeCredential",
-        "Credentials.RenameCredential",
-        PageAgentContext.ToolName,
-      ]
-    );
-    settings.ShouldNotContain(tool => tool.Name == "Credentials.AddPasskey");
+    Names(settings).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/Settings"));
+    settings.ShouldContain(tool => tool.Name == "Credentials.AddPasskey");
     settings.ShouldNotContain(tool => tool.Name == "Credentials.LinkMicrosoft365");
 
     IReadOnlyList<WebMcpToolDescriptor> styleGuide = await WebMcpPublisher.DescribeAsync
@@ -321,30 +321,29 @@ public partial class CatalogAgent_Should
       "/StyleGuide",
       CancellationToken.None
     );
-    Names(styleGuide).ShouldBe([PageAgentContext.ToolName]);
+    Names(styleGuide).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
 
-    // Denying principals on pages that do have tools: only page_context is published.
     Names
     (
       await WebMcpPublisher.DescribeAsync
       (
         everyone, authorization, catalog, "/Admin/Roles/New", CancellationToken.None
       )
-    ).ShouldBe(["Role.CreateRole", PageAgentContext.ToolName]);
+    ).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/Admin/Roles/New"));
     Names
     (
       await WebMcpPublisher.DescribeAsync
       (
         Principal(PermissionIds.DeveloperAccess), authorization, catalog, "/Admin/Roles/New", CancellationToken.None
       )
-    ).ShouldBe([PageAgentContext.ToolName]);
+    ).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
     Names
     (
       await WebMcpPublisher.DescribeAsync
       (
         Principal(), authorization, catalog, "/Profile", CancellationToken.None
       )
-    ).ShouldBe([PageAgentContext.ToolName]);
+    ).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
 
     WebMcpApplyResult absent = await WebMcpRegistration.ApplyAsync(null, counter, CancellationToken.None);
     absent.Available.ShouldBeFalse();
@@ -419,7 +418,7 @@ public partial class CatalogAgent_Should
       .ShouldContain("\"error\":");
 
     navigation.NavigateTo("/Settings");
-    (await dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout))
+    (await dispatcher.InvokeTool("Credentials.AddExistingPasskey", null).WaitAsync(Timeout))
       .ShouldContain(WebMcpDispatcher.UnavailableError);
 
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
@@ -501,15 +500,10 @@ public partial class CatalogAgent_Should
     (
       everyone, authorization, catalog, "/Feedback", CancellationToken.None
     );
-    Names(feedback).ShouldBe
-    (
-      [
-        "Feedback.SubmitFeedback",
-        "Feedback.ListMyFeedback",
-        "Feedback.OpenFeedback",
-        PageAgentContext.ToolName,
-      ]
-    );
+    Names(feedback).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/Feedback"));
+    feedback.ShouldContain(tool => tool.Name == "Feedback.SubmitFeedback");
+    feedback.ShouldContain(tool => tool.Name == "Feedback.ListMyFeedback");
+    feedback.ShouldContain(tool => tool.Name == "Feedback.OpenFeedback");
 
     Guid itemId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     IReadOnlyList<WebMcpToolDescriptor> detail = await WebMcpPublisher.DescribeAsync
@@ -524,7 +518,7 @@ public partial class CatalogAgent_Should
       (
         everyone, authorization, catalog, "/FeedbackExtra", CancellationToken.None
       )
-    ).ShouldBe([PageAgentContext.ToolName]);
+    ).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/FeedbackExtra"));
 
     ActionCatalogEntry submit = catalog.Find("Feedback.SubmitFeedback").ShouldNotBeNull();
     ActionCatalogEntry list = catalog.Find("Feedback.ListMyFeedback").ShouldNotBeNull();
@@ -597,6 +591,314 @@ public partial class CatalogAgent_Should
     state.Items[0].FeedbackItemId.ShouldBe(feedbackItemId);
     state.Items[0].Permalink.ShouldBe($"/Feedback/{feedbackItemId:D}");
     Console.WriteLine($"WEBMCP-PROOF invoke Feedback.SubmitFeedback approved receipt={receipt}");
+  }
+
+  public static async Task Home_Page_Context_Carries_Title_Purpose_Tools_And_Headings()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    string bare = PageAgentContext.Describe(scope.Store, "/");
+    using (JsonDocument document = JsonDocument.Parse(bare))
+    {
+      document.RootElement.GetProperty("path").GetString().ShouldBe("/");
+      document.RootElement.GetProperty("title").GetString().ShouldBe("Home");
+      document.RootElement.GetProperty("purpose").GetString()
+        .ShouldBe("Public welcome page for TimeWarp.Architecture, with a sign-in entry.");
+      document.RootElement.GetProperty("tools").GetArrayLength().ShouldBeGreaterThan(1);
+      document.RootElement.GetProperty("screenshot").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    bare.ShouldContain("\"title\"");
+    bare.Length.ShouldBeGreaterThan("{\"path\":\"/\"}".Length);
+
+    await scope.Send
+    (
+      new AgentSurfaceState.RememberPageSurfaceActionSet.Action
+      (
+        "/",
+        """
+        {"headings":["Welcome to TimeWarp.Architecture","Built with","Signed in"],"summary":"Welcome to TimeWarp.Architecture. Built with. Signed in.","forms":[],"buttons":[],"items":[]}
+        """
+      )
+    );
+    string described = PageAgentContext.Describe(scope.Store, "/");
+    described.ShouldContain("Welcome to TimeWarp.Architecture");
+    described.ShouldContain("Built with");
+    described.ShouldContain("Signed in");
+    Console.WriteLine("PAGE-CONTEXT / " + described);
+
+    string feedback = PageAgentContext.Describe(scope.Store, "/Feedback");
+    feedback.ShouldContain("File feedback and review the filings you submitted.");
+    feedback.ShouldContain("\"title\":\"Feedback\"");
+    feedback.ShouldNotContain("Welcome to TimeWarp.Architecture");
+    feedback.ShouldNotContain("Built with");
+    Console.WriteLine("PAGE-CONTEXT /Feedback " + feedback);
+  }
+
+  public static async Task Page_Context_Stays_Valid_Json_Under_Its_Cap()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    string longText = new('h', 500);
+    System.Text.Json.Nodes.JsonObject surface = new()
+    {
+      ["headings"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 60).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+      ["summary"] = new string('s', 5_000),
+      ["buttons"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 60).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+      ["forms"] = new System.Text.Json.Nodes.JsonArray
+      (
+        [
+          .. Enumerable.Range(0, 20).Select
+          (
+            _ => (System.Text.Json.Nodes.JsonNode?)new System.Text.Json.Nodes.JsonObject
+            {
+              ["name"] = longText,
+              ["fields"] = new System.Text.Json.Nodes.JsonArray([.. Enumerable.Range(0, 40).Select(_ => (System.Text.Json.Nodes.JsonNode?)longText)]),
+            }
+          ),
+        ]
+      ),
+      ["items"] = new System.Text.Json.Nodes.JsonArray
+      (
+        [
+          .. Enumerable.Range(0, 80).Select
+          (
+            _ => (System.Text.Json.Nodes.JsonNode?)new System.Text.Json.Nodes.JsonObject { ["id"] = longText, ["text"] = longText }
+          ),
+        ]
+      ),
+    };
+    await scope.Send(new AgentSurfaceState.RememberPageSurfaceActionSet.Action("/Counter", surface.ToJsonString()));
+
+    string described = PageAgentContext.Describe(scope.Store, "/Counter");
+    described.Length.ShouldBeLessThanOrEqualTo(PageAgentContext.DocumentCap);
+    using (JsonDocument document = JsonDocument.Parse(described))
+    {
+      document.RootElement.GetProperty("title").GetString().ShouldBe("Counter");
+      foreach (JsonElement heading in document.RootElement.GetProperty("headings").EnumerateArray())
+      {
+        heading.GetString().ShouldNotBeNull().Length.ShouldBeLessThanOrEqualTo(200);
+      }
+    }
+
+    string forAsk = PageAgentContext.Describe
+    (
+      scope.Store, "/Counter", toolNames: null, liveSurfaceJson: null, AgentAskInstructions.ContextCap
+    );
+    forAsk.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.ContextCap);
+    using (JsonDocument document = JsonDocument.Parse(forAsk))
+    {
+      document.RootElement.GetProperty("path").GetString().ShouldBe("/Counter");
+    }
+  }
+
+  public static async Task WebMcp_Page_Context_Walks_The_Page_When_Called()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IServiceProvider services = scope.ServiceProvider;
+    await scope.Send
+    (
+      new AgentSurfaceState.RememberPageSurfaceActionSet.Action
+      (
+        "/", """{"headings":["Welcome to TimeWarp.Architecture"],"summary":"Welcome.","forms":[],"buttons":[],"items":[]}"""
+      )
+    );
+    services.GetRequiredService<NavigationManager>().NavigateTo("/Counter");
+
+    SurfaceJsRuntime browser = new
+    (
+      """{"headings":["Counter live heading"],"summary":"Counter live text.","forms":[],"buttons":["Increment"],"items":[]}"""
+    );
+    WebMcpDispatcher dispatcher = new
+    (
+      scope.Store,
+      services.GetRequiredService<IActionCatalog>(),
+      services.GetRequiredService<IAuthorizationService>(),
+      services.GetRequiredService<AuthenticationStateProvider>(),
+      services.GetRequiredService<NavigationManager>(),
+      services.GetRequiredService<PageAgentRoute>(),
+      services.GetRequiredService<WebMcpApprovalGate>(),
+      services.GetRequiredService<AgentCallOutcome>(),
+      browser
+    );
+
+    string described = await dispatcher.InvokeTool(PageAgentContext.ToolName, "{}").WaitAsync(Timeout);
+    described.ShouldContain("\"path\":\"/Counter\"");
+    described.ShouldContain("Counter live heading");
+    described.ShouldContain("Increment");
+    described.ShouldNotContain("Welcome to TimeWarp.Architecture");
+    browser.Selector.ShouldBe(PageAgentContext.SurfaceRootSelector);
+    Console.WriteLine("PAGE-CONTEXT live /Counter " + described);
+  }
+
+  /// <summary>Stands in for the browser: import returns a module whose summarizeJson answers the fixture.</summary>
+  private sealed class SurfaceJsRuntime : Microsoft.JSInterop.IJSRuntime, Microsoft.JSInterop.IJSObjectReference
+  {
+    private readonly string Json;
+
+    public SurfaceJsRuntime(string json)
+    {
+      Json = json;
+    }
+
+    public string? Selector { get; private set; }
+
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+      InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
+
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    {
+      if (identifier == "import")
+      {
+        return ValueTask.FromResult((TValue)(object)this);
+      }
+
+      if (identifier == "summarizeJson")
+      {
+        Selector = args is { Length: > 0 } ? args[0] as string : null;
+        return ValueTask.FromResult((TValue)(object)Json);
+      }
+
+      throw new InvalidOperationException($"Unexpected identifier '{identifier}'.");
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+  }
+
+  public static async Task Navigate_Matches_Palette_Pages_And_Refuses_The_Rest()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal member = Principal(PermissionIds.ProfileRead, PermissionIds.SettingsRead);
+    IReadOnlyList<CatalogAgentTool> tools = await CatalogAgentToolSet.SelectAsync
+    (
+      member, authorization, catalog.Entries, "/", CancellationToken.None
+    );
+    tools.ShouldNotContain(tool => tool.Name == "Credentials.AddPasskey");
+    tools.ShouldNotContain(tool => tool.Name == "Feedback.ListMyFeedback");
+    CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
+    navigate.RequiresApproval.ShouldBeFalse();
+    navigate.InputSchema.ShouldContain("\"/Settings\"");
+    navigate.InputSchema.ShouldContain("\"/Profile\"");
+    navigate.InputSchema.ShouldContain("\"/\"");
+    navigate.InputSchema.ShouldNotContain("\"/Admin/Roles\"");
+    navigate.InputSchema.ShouldNotContain("\"/Counter\"");
+    navigate.InputSchema.ShouldNotContain("\"/Feedback\"");
+
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    string before = navigation.Uri;
+    AgentNavigate.Result refused = await AgentNavigate.InvokeAsync
+    (
+      member,
+      authorization,
+      catalog.Entries,
+      scope.Store,
+      "/",
+      new Dictionary<string, object?> { ["url"] = "/Admin/Roles" },
+      CancellationToken.None
+    );
+    refused.Navigated.ShouldBeFalse();
+    refused.Error.ShouldBe(AgentNavigate.Refusal);
+    navigation.Uri.ShouldBe(before);
+
+    AgentNavigate.Result allowed = await AgentNavigate.InvokeAsync
+    (
+      member,
+      authorization,
+      catalog.Entries,
+      scope.Store,
+      "/",
+      new Dictionary<string, object?> { ["url"] = "/Settings" },
+      CancellationToken.None
+    );
+    allowed.Navigated.ShouldBeTrue();
+    allowed.Destination.ShouldBe("/Settings");
+    navigation.Uri.ShouldContain("/Settings");
+
+    navigation.NavigateTo("/");
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+    string missing = await dispatcher.InvokeTool("navigate", """{"url":"/not-a-page"}""").WaitAsync(Timeout);
+    missing.ShouldContain(AgentNavigate.Refusal);
+    missing.ShouldContain("\"navigated\":false");
+  }
+
+  public static async Task AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    navigation.NavigateTo("/");
+    int messages = scope.Store.GetState<NotificationState>().Messages.Count;
+    using CatalogAgentFunctions homeFunctions = CatalogAgentFunctions.Create(await SelectForSessionAsync(scope));
+    AIFunction homeAdd = homeFunctions.Tools.Single(tool => tool.Name == "Credentials.AddPasskey")
+      .ShouldBeAssignableTo<AIFunction>();
+    homeAdd.ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+    object? asked = await homeAdd.InvokeAsync
+    (
+      new AIFunctionArguments(new Dictionary<string, object?>()) { Services = scope.ServiceProvider }
+    );
+    AgentNavigate.Offer offer = asked.ShouldBeOfType<AgentNavigate.Offer>();
+    offer.Executed.ShouldBeFalse();
+    offer.NavigateTo.ShouldBe("/Settings");
+    offer.Message.ShouldBe("Add passkey is on Settings; I can take you to the Settings page.");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+    scope.Store.GetState<NotificationState>().Messages.Count.ShouldBe(messages);
+
+    WebMcpDispatcher dispatcher = scope.ServiceProvider.GetRequiredService<WebMcpDispatcher>();
+    string json = await dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout);
+    using (JsonDocument document = JsonDocument.Parse(json))
+    {
+      document.RootElement.GetProperty("executed").GetBoolean().ShouldBeFalse();
+      document.RootElement.GetProperty("navigateTo").GetString().ShouldBe("/Settings");
+      document.RootElement.GetProperty("message").GetString().ShouldBe(offer.Message);
+    }
+
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+    scope.Store.GetState<NotificationState>().Messages.Count.ShouldBe(messages);
+
+    navigation.NavigateTo("/Settings");
+    using CatalogAgentFunctions settingsFunctions = CatalogAgentFunctions.Create(await SelectForSessionAsync(scope));
+    settingsFunctions.Tools.Single(tool => tool.Name == "Credentials.AddPasskey")
+      .ShouldBeOfType<ApprovalRequiredAIFunction>();
+    bool askedApproval = false;
+    using ScriptedChatClient client = new("Credentials.AddPasskey", new Dictionary<string, object?>());
+    await RunAsync
+    (
+      client,
+      scope.ServiceProvider,
+      new ChatOptions { Tools = [.. settingsFunctions.Tools] },
+      _ =>
+      {
+        askedApproval = true;
+        return false;
+      }
+    ).WaitAsync(Timeout);
+    askedApproval.ShouldBeTrue();
+    scope.Store.GetState<NotificationState>().Messages.Count.ShouldBe(messages);
+
+    Task<string> pending = dispatcher.InvokeTool("Credentials.AddPasskey", null);
+    Guid callId = await WaitForPendingAsync(scope, pending);
+    await scope.Store.GetState<AgentSurfaceState>().ResolveApproval(callId, approved: false);
+    (await pending.WaitAsync(Timeout)).ShouldContain("\"approved\":false");
+
+    await scope.Send(new AgentSurfaceState.SetEditModeActionSet.Action(AgentEditMode.AutomaticallyEdit));
+    // The closed-box Aspire SPA registers no web-server BFF client, so the handler cannot finish
+    // the ceremony. Reaching that activation proves this was an execute, not a navigate offer.
+    InvalidOperationException thrown = await Should.ThrowAsync<InvalidOperationException>(
+      () => dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout));
+    thrown.Message.ShouldContain("IWebServerApiService");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+  }
+
+  public static Task Instructions_Stay_Under_The_Contract_Cap()
+  {
+    string text = AgentAskInstructions.For(new string('x', 20_000));
+    text.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.MaxLength);
+    text.Length.ShouldBeLessThan(CompleteAgentChat.MaxInstructionsLength);
+    text.ShouldStartWith("You can run global actions and navigate from any page");
+    AgentAskInstructions.Preface.ShouldNotContain("Drive this page only");
+    return Task.CompletedTask;
   }
 
   public static Task Page_Context_Carries_Profile_And_Site_Settings_Records()
@@ -897,6 +1199,89 @@ public partial class CatalogAgent_Should
     throw new InvalidOperationException($"The catalog agent stopped after {maximumApprovalRounds} approval rounds.");
   }
 
+  private static async Task<string[]> ExpectedNamesAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    IActionCatalog catalog,
+    string path
+  )
+  {
+    string normalized = PageAgentScope.Normalize(path);
+    IReadOnlyList<CommandPaletteRow> rows = await CommandPaletteRoster.BuildAsync
+    (
+      user,
+      authorization,
+      PageRegistry.All,
+      catalog.Entries,
+      normalized
+    );
+    Dictionary<string, ActionCatalogEntry> byName = [];
+    foreach (ActionCatalogEntry entry in catalog.Entries)
+    {
+      byName[entry.Name] = entry;
+    }
+
+    List<string> names = [];
+    HashSet<string> seen = [];
+    bool anyPage = false;
+    foreach (CommandPaletteRow row in rows)
+    {
+      if (row.Kind == CommandPaletteRowKind.Page)
+      {
+        anyPage = true;
+        continue;
+      }
+
+      if (row.Kind != CommandPaletteRowKind.Command
+        || !byName.TryGetValue(row.Target, out ActionCatalogEntry? entry)
+        || !entry.Visibility.HasFlag(ActionVisibility.Agent)
+        || !seen.Add(entry.Name))
+      {
+        continue;
+      }
+
+      names.Add(entry.Name);
+    }
+
+    foreach (string name in PageAgentScope.ActionNamesFor(normalized))
+    {
+      if (!seen.Add(name) || !byName.TryGetValue(name, out ActionCatalogEntry? entry))
+      {
+        continue;
+      }
+
+      if (!entry.Visibility.HasFlag(ActionVisibility.Agent))
+      {
+        continue;
+      }
+
+      if (await CommandPaletteRoster.IsPermittedAsync(user, authorization, entry))
+      {
+        names.Add(name);
+      }
+    }
+
+    if (anyPage)
+    {
+      names.Add(AgentNavigate.ToolName);
+    }
+
+    return [.. names];
+  }
+
+  private static async Task<string[]> ExpectedWebMcpNamesAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    IActionCatalog catalog,
+    string path
+  )
+  {
+    string[] names = await ExpectedNamesAsync(user, authorization, catalog, path);
+    return [.. names, PageAgentContext.ToolName];
+  }
+
   private static ClaimsPrincipal Principal(params string[] permissions)
   {
     List<Claim> claims = [new Claim(ClaimTypes.Name, "catalog-agent")];
@@ -909,17 +1294,6 @@ public partial class CatalogAgent_Should
   }
 
   private static string[] Names(IReadOnlyList<CatalogAgentTool> tools)
-  {
-    string[] names = new string[tools.Count];
-    for (int index = 0; index < tools.Count; index++)
-    {
-      names[index] = tools[index].Name;
-    }
-
-    return names;
-  }
-
-  private static string[] Names(IReadOnlyList<AITool> tools)
   {
     string[] names = new string[tools.Count];
     for (int index = 0; index < tools.Count; index++)
@@ -1104,7 +1478,20 @@ public partial class CatalogAgent_Should
 
   private sealed class ScriptedChatClient : IChatClient
   {
+    private readonly string ToolName;
+    private readonly Dictionary<string, object?> Arguments;
     private bool OfferedCall;
+
+    public ScriptedChatClient()
+      : this("Counter.IncrementCounter", new Dictionary<string, object?> { ["amount"] = 5 })
+    {
+    }
+
+    public ScriptedChatClient(string toolName, Dictionary<string, object?> arguments)
+    {
+      ToolName = toolName;
+      Arguments = arguments;
+    }
 
     public Task<ChatResponse> GetResponseAsync
     (
@@ -1116,12 +1503,7 @@ public partial class CatalogAgent_Should
       if (!OfferedCall)
       {
         OfferedCall = true;
-        FunctionCallContent call = new
-        (
-          "call-increment",
-          "Counter.IncrementCounter",
-          new Dictionary<string, object?> { ["amount"] = 5 }
-        );
+        FunctionCallContent call = new("call-scripted", ToolName, Arguments);
         return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, [call])));
       }
 

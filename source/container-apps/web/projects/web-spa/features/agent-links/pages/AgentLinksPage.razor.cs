@@ -9,6 +9,6 @@
 
 namespace TimeWarp.Architecture.Features.AgentLinks;
 
-[Page("/AgentLinks", Policy = PermissionIds.AgentLinkManageSelf, Navigable = true)]
+[Page("/AgentLinks", Policy = PermissionIds.AgentLinkManageSelf, Navigable = true, Description = "Manage agent links for the signed-in person.")]
 [Authorize(Policy = PermissionIds.AgentLinkManageSelf)]
 partial class AgentLinksPage;

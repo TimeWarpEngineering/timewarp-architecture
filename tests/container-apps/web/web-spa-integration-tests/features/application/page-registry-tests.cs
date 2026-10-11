@@ -66,6 +66,7 @@ public class All_Should_
       entry.Url.ShouldBe(entry.RouteTemplate, entry.PageType.Name);
       entry.RouteTemplate.ShouldNotContain("{", Case.Sensitive, entry.PageType.Name);
       entry.Title.ShouldNotBeNullOrWhiteSpace(entry.PageType.Name);
+      entry.Description.ShouldNotBeNullOrWhiteSpace(entry.PageType.Name);
       entry.Policy.ShouldNotBeNullOrWhiteSpace(entry.PageType.Name);
       typeof(INavigationDestination).IsAssignableFrom(entry.PageType).ShouldBeTrue(entry.PageType.Name);
     }

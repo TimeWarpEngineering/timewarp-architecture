@@ -1,17 +1,17 @@
 #region Purpose
-// Names the catalog actions each page's buttons dispatch, so agents see that page and no other.
+// Names which catalog actions are bound to a page, and which route executes them.
 #endregion
 
 #region Design
-// Task 282: tools are the actions the current page dispatches, not the whole catalog. The lists
-// are the button call sites (Settings, Passkeys, Profile, Counter, new role, authentication
-// settings). Human-only entries stay in the list so the visibility filter, not a second copy of
-// the page, is what drops them. Paths match [Page] routes, ordinal and case-insensitive, with
-// the query and hash removed. A route with no entry offers no catalog tools.
-// /Feedback is the one prefix: /Feedback/{id} offers the same tools as /Feedback.
-// The match requires a following slash, so /FeedbackExtra does not inherit them.
-// Other routes stay exact so /Settings tools do not leak onto /Settings/extra.
-// Profile.UpdateProfile and SiteSettings.UpdateSiteSettings replace whole records (the latter
+// The map is the reverse of "which buttons this page dispatches". PrimaryPage is the first route
+// in insertion order (Settings before Passkeys, so FetchCredentials executes on Settings).
+// Serves is true when the action is not page-bound, or the current path is one of its routes.
+// /Feedback is the one prefix: /Feedback/{id} serves the Feedback actions. The match requires a
+// following slash, so /FeedbackExtra does not. Other routes stay exact.
+// CatalogAgentToolSet uses this to decide execution versus a navigate offer. It is not the agent
+// tool list: palette commands whose visibility includes Agent are offered on every page.
+// Human-only names stay in the map so the visibility filter, not a second copy of the page, drops
+// them. Profile.UpdateProfile and SiteSettings.UpdateSiteSettings replace whole records (the latter
 // with a Version token), so page_context on those routes carries the current values the agent
 // must echo (PageAgentContext); there is no separate read tool on those pages.
 #endregion
@@ -51,8 +51,74 @@ public static class PageAgentScope
 
   private static readonly string[] PrefixRoutes = ["/Feedback"];
 
-  /// <summary>Routes that name catalog actions. Other paths offer page_context only.</summary>
+  /// <summary>Routes that name page-bound catalog actions.</summary>
   public static IReadOnlyCollection<string> KnownRoutes => Actions.Keys;
+
+  /// <summary>Routes that execute <paramref name="actionName"/>, in map insertion order.</summary>
+  public static IReadOnlyList<string> PagesFor(string actionName)
+  {
+    List<string> pages = [];
+    foreach (KeyValuePair<string, string[]> pair in Actions)
+    {
+      foreach (string name in pair.Value)
+      {
+        if (string.Equals(name, actionName, StringComparison.Ordinal))
+        {
+          pages.Add(pair.Key);
+          break;
+        }
+      }
+    }
+
+    return pages;
+  }
+
+  /// <summary>The route that executes <paramref name="actionName"/>, or null when it is not page-bound.</summary>
+  public static string? PrimaryPage(string actionName)
+  {
+    IReadOnlyList<string> pages = PagesFor(actionName);
+    return pages.Count == 0 ? null : pages[0];
+  }
+
+  /// <summary>True when the action may run on <paramref name="path"/>.</summary>
+  public static bool Serves(string? path, string actionName)
+  {
+    IReadOnlyList<string> pages = PagesFor(actionName);
+    if (pages.Count == 0)
+    {
+      return true;
+    }
+
+    string normalized = Normalize(path);
+    foreach (string page in pages)
+    {
+      if (string.Equals(normalized, page, StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+
+      if (IsPrefixRoute(page)
+        && normalized.StartsWith(page + "/", StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static bool IsPrefixRoute(string page)
+  {
+    foreach (string prefix in PrefixRoutes)
+    {
+      if (string.Equals(prefix, page, StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   public static string Normalize(string? path)
   {

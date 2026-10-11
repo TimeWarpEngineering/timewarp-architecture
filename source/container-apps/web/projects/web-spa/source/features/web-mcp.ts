@@ -1,5 +1,6 @@
 // #region Purpose
-// Registers the page's catalog tools with the browser model context so an external agent can call them.
+// Registers the agent tools (palette actions, navigate, page tools, page_context) with the
+// browser model context so an external agent can call them.
 // #endregion
 //
 // #region Design

@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// The list is the permission-filtered catalog tools for the route plus page_context, which is
-// present even when the route has no catalog tools. Human-only actions never appear.
+// The list is CatalogAgentToolSet for the route (palette agent commands, navigate, and the
+// page's own tools) plus page_context, which is always present. Human-only actions never appear.
+// A page-bound palette command stays on the list after navigation, as a discovery tool.
 // Publishing is a store handler's job. The shell only dispatches SyncWebMcp.
 // DescribeAsync takes the conversation edit mode so RequiresApproval matches the in-app list.
 // PublishAsync reads that mode from AgentSurfaceState. The route is the shell's PageAgentRoute

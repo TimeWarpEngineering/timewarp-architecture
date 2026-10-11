@@ -78,6 +78,9 @@ public class ActionCatalog_Should
     createRole.Permissions.ShouldBe([PermissionIds.AdminRolesManage]);
     createRole.Visibility.ShouldBe(ActionVisibility.Agent);
 
+    ActionCatalogEntry addPasskey = actionCatalog.Find("Credentials.AddPasskey").ShouldNotBeNull();
+    addPasskey.Visibility.ShouldBe(ActionVisibility.Both);
+
     ActionCatalogEntry signOut = actionCatalog.Find("Profile.SignOut").ShouldNotBeNull();
     signOut.Permissions.ShouldBeEmpty();
     signOut.Visibility.ShouldBe(ActionVisibility.Human);

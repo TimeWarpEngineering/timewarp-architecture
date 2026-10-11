@@ -111,8 +111,11 @@ server rule into the client.
    parameter-free action whose rule may not hold (Link Microsoft 365) can stay a general command:
    its own flow reports when it does not apply. Actions that need an item are cataloged with
    `Visibility = Agent`.
-5. **Agents get tools scoped to the current page,** the same actions the page's buttons dispatch,
-   not a server-enumerated list of every action on every item.
+5. **Agents get the Ctrl-K commands whose visibility includes Agent, on every page, plus that
+   page's button actions.** Human-only commands stay out. A page-bound command is executable on
+   its page and, off that page, returns a navigate offer instead of running. Item actions that
+   are not palette commands stay on their page. There is no server-enumerated list of every
+   action on every item.
 
 Why: a client copy of a server rule drifts and races (the button shows, the server answers 409),
 and every surface that wants the rule needs its own copy. A flag is the server's answer for this
@@ -133,15 +136,19 @@ under `source/container-apps/web/`; `features/application/pages/SettingsPage.raz
 
 One catalog-to-tools mapping drives both the in-app model and an external browser agent.
 
-- `CatalogAgentToolSet.SelectAsync` keeps entries whose visibility includes Agent, whose name is on
-  the current page (`PageAgentScope`), and whose permissions the principal passes
-  (`CommandPaletteRoster.IsPermittedAsync`). Human-only actions are never tools. An anonymous
-  principal gets no catalog tools.
+- `CatalogAgentToolSet.SelectAsync` reads `CommandPaletteRoster` (the Ctrl-K filter). A command
+  whose visibility includes Agent is a tool on every page. Human-only commands are never tools.
+  Every permitted page row is one `navigate` tool (a URL enum). `PageAgentScope` adds the current
+  page's button actions and decides which palette commands only execute on their page. An
+  anonymous principal gets the palette's anonymous pages: Home and Sign in, as `navigate`.
 - Read-only tools are an explicit allow-list of catalog names in `CatalogAgentApproval` (never a
   name-prefix rule). Every other tool is wrapped in `ApprovalRequiredAIFunction`. WebMCP uses the
   same split: the shell's confirmation bar (`AgentSurfaceState`) gates dispatch, one call at a time,
-  correlated by call id; navigation cancels the pending call. Both drivers re-select tools for the
-  current principal and route when a tool runs, and refuse one that is no longer offered. Approval
+  correlated by call id; navigation cancels a pending page-bound call. A tool that is not page-bound
+  is not cancelled only because the path changed. Both drivers re-select tools for the
+  current principal and route when a tool runs. A global tool stays offered. A page-only tool is
+  refused off its page. A page-bound palette tool off its page returns a navigate offer and does
+  not run. Approval
   does not grant a permission the principal lacks.
 - The ask UI is the Ctrl-K **Ask** button and the top-bar Ask AI button. It is always shown.
   It opens the `AgentAsk` side panel in `TimeWarpPage`'s FluentLayout aside
@@ -159,9 +166,10 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
 - WebMCP registers the same tools, plus `page_context`, through `document.modelContext.registerTool`
   (falling back to `navigator.modelContext`, then `provideContext`). A missing API registers nothing.
   Both paths execute with `ActionCatalogEntry.Execute`. Endpoints keep `[EndpointAuthorize]`.
-- Page facts live in `PageAgentContext`: credential ids and flags for Settings and Passkeys, and
-  the current record for pages whose command replaces a whole record (including the Version
-  concurrency token where the command carries one, as site settings does).
+- Page facts live in `PageAgentContext` on every route: path, title, purpose (the `[Page]`
+  Description), a bounded text summary of the page body, and the offered tool names. Settings,
+  Passkeys, Profile, authentication settings, and Feedback keep their ids, flags, and records
+  (including the Version concurrency token where the command carries one).
   Components dispatch `SyncWebMcp` and `ResolveApproval`. They do not call the JS module.
 
 Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.

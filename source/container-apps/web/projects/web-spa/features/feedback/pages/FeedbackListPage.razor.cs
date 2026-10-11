@@ -9,6 +9,6 @@
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
-[Page("/Feedback", Policy = PermissionIds.FeedbackFileSelf, Navigable = true)]
+[Page("/Feedback", Policy = PermissionIds.FeedbackFileSelf, Navigable = true, Description = "File feedback and review the filings you submitted.")]
 [Authorize(Policy = PermissionIds.FeedbackFileSelf)]
 partial class FeedbackListPage;
