@@ -85,7 +85,7 @@ around it for Entra with an explicit `PublicOrigin`.
 Setting `SiteMetadata__BaseUrl=https://arch.timewarp.work` on Web.Server fixes the link-preview
 tags only (not mail).
 
-## Results (required before done)
+## Results
 
 The scheme was lost on the YARP hop, not in Web.Server. `"X-Forwarded": "Set"` copies `Request.Scheme`, and the hop from Caddy is plain http, so Caddy's `X-Forwarded-Proto: https` was replaced before Web.Server read it. `HttpAppBaseUrlAccessor.GetRequestOrigin` (mail and `LinkPreview`) still reads that first forwarded value. Web.Server still does not call `UseForwardedHeaders`.
 
@@ -111,7 +111,7 @@ Gates after fixes: `dev build` clean; `yarp-integration-tests` 15/15; `dev templ
 
 Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
-### How to validate (required before done)
+### How to validate
 
 **Smoke** (after `./bin/dev run`, simulating Caddy on loopback):
 
@@ -123,7 +123,12 @@ curl -s -H 'Accept: text/html' -H 'X-Forwarded-Proto: https' -H 'X-Forwarded-Hos
 **Expect**: all four are `https://public.example.test/...`. After deploy, Globalping
 `GET https://arch.timewarp.work/` shows `https://arch.timewarp.work/...` in the same tags.
 
+## Notes
+
+- 2026-10-11 13:20 BKK: walk (`~/logs/task-work-timewarp-architecture-305-20261011-115257.log`) stopped after the review oracle (Done) at the `results` compute step: "Task 305 kitchen is missing ## Results and/or ### How to validate." Cause: the filed task used the template headings `## Results (required before done)` / `### How to validate (required before done)`, which the results check does not match. Renamed to `## Results` / `### How to validate` (content unchanged) and re-ran `ganda task work 305 --yes` to resume.
+
 ## Session
 
 - Created: 507654 (2026-10-11)
 - Review oracle: Claude Opus 5.5 (ganda task work, headless), effort 2, roster general, 2 rounds
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-11T06:18:20Z
