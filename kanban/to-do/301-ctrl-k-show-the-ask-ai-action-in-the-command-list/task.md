@@ -4,7 +4,11 @@
 
 The app bar "Ask AI" button opens the Ask panel through a TimeWarp.State action, but that action
 is not in the Ctrl-K command list. Steven suspected the action is missing the attribute that
-registers it in the catalog. Confirmed: it is.
+registers it in the catalog. Confirmed: it is. But the fix is NOT to add `[CatalogAction]` to
+`OpenAskPanel`. Steven's direction (2026-10-11): derive as much as possible, avoid handwriting.
+The Ctrl-K catalog must be derived from the same source that drives the action system (every
+registered TimeWarp.State action / ActionSet), so anything registered as an action shows in
+Ctrl-K automatically, with no separate hand-written opt-in step.
 
 ### Current state (master `650fa24f2`, paths under `source/container-apps/web/projects/web-spa/` unless noted)
 
@@ -38,41 +42,58 @@ registers it in the catalog. Confirmed: it is.
   (`ThemeState.Update(Theme.Dark)`, has a required argument, so not a palette command as-is) and
   the assembly-info modal `TimeWarpPage.razor:63`.
 
-Root cause: `AgentSurfaceState.OpenAskPanelActionSet.Action` was never given `[CatalogAction]`;
-the palette got a hand-wired footer button instead.
+Root cause: the catalog is opt-in (`program.cs:149` `AddActionCatalog` only collects
+`[CatalogAction]` types), and `AgentSurfaceState.OpenAskPanelActionSet.Action` has no
+`[CatalogAction]`; the palette got a hand-wired footer button instead. The deeper cause is the
+separate hand-written opt-in step: any action without the attribute is invisible to Ctrl-K.
 
 ## Requirements
 
-- Add `[CatalogAction(DisplayName = "Ask AI", Description = "Open the Ask AI panel to ask about this app or get help with the current page.", Visibility = ActionVisibility.Human)]`
-  (wording may be tuned) to `OpenAskPanelActionSet.Action`, so the palette shows a typed,
-  ranked "AgentSurface: Ask AI" row (or adjust the owner label if "AgentSurface" reads poorly).
-  Human-only: the agent must not open its own panel.
-- Running the row closes the palette and opens the docked Ask panel (the runner already closes
-  the modal before executing).
-- Decide signed-out behavior and record it: the roster rule shows commands to signed-in users
-  only; the app bar button is visible signed-out and Ask then shows "Sign in to use Ask". Keep
-  the rule unless there is a good reason, and say so in Notes.
-- Icon and shortcut: rows have neither today. If adding an icon to the row model is cheap, add it
-  for both pages (`PageRegistryEntry.NavIcon`) and commands; otherwise record it as follow-up.
-  No new keyboard shortcut is required.
-- Remove or justify the hand-wired footer "Ask" button in `CommandPalette.razor:278` (it may
-  stay as a shortcut to the same action, but it must dispatch the catalogued action).
-- Guard against recurrence: a test (or analyzer) that fails when an app-chrome button in
-  `TimeWarpPage` dispatches a parameterless user-facing action that is not in `IActionCatalog`;
-  at minimum a test asserting `AgentSurface.OpenAskPanel` is a palette command. Update the
-  pinned set at `command-palette-tests.cs:60`.
-- Note the convention in the relevant skill (tw-blazor / command palette docs): user-facing
-  chrome actions get `[CatalogAction]`.
+- **Derive the catalog from the action system.** Build `IActionCatalog` (or the palette roster's
+  command source) from the same discovery that registers TimeWarp.State actions (the
+  `AddTimeWarpState` assembly scan / source generator / DI registration that already finds every
+  `ActionSet.Action`), so every registered action is a catalog entry automatically. No
+  per-action attribute is required to appear. If TimeWarp.State's `AddActionCatalog` can only do
+  opt-in, either use the existing action registration data from the app side or add the
+  capability to TimeWarp.State and record the follow-up in Notes (kanban, not a GitHub issue).
+- **Naming by convention.** Display name, owner label and icon come from the State/ActionSet
+  names (e.g. `AgentSurfaceState.OpenAskPanelActionSet` -> "Ask AI" via humanized "Open Ask
+  Panel" or a convention rule). Optional metadata (the existing `[CatalogAction]` DisplayName /
+  Description / Visibility) may override but is never required.
+- **Exclusion only by explicit opt-out.** Internal/plumbing actions (loads, probes, set-state
+  internals, actions needing arguments the palette can't supply) are excluded only by an explicit
+  opt-out marker or convention, never by omission. The opt-out list is justified (a reason per
+  entry) and guarded by a test that fails when a new action is neither shown nor explicitly
+  opted out with a reason.
+- **Keep filtering.** Keep the roster's existing rules: Human/Both visibility, parameterless,
+  signed-in only, and per-action policy/permission checks via `IAuthorizationService`. Human-only
+  for `OpenAskPanel`: the agent must not open its own panel. Record the signed-out decision in
+  Notes (default: keep the signed-in-only rule).
+- **Ask AI appears with no per-action attribute.** Running the derived row closes the palette and
+  opens the docked Ask panel.
+- **Remove the hand-coded palette footer "Ask" button** (`CommandPalette.razor:59-63`, `:278`,
+  `data-qa="CommandPaletteAsk"`); the derived row replaces it.
+- **Icons.** If convention-derived icons are cheap, add an icon to `CommandPaletteRow` for both
+  pages (`PageRegistryEntry.NavIcon`) and commands; otherwise record a follow-up.
+- **Tests.** Replace the pinned hand list at `command-palette-tests.cs:60` with a derivation
+  assertion: every registered, non-opted-out, palette-eligible action is present (and opted-out
+  ones are absent). Keep the real-browser test: Ctrl-K, type "ask", Enter, palette closes and
+  `[data-qa=AgentAsk]` panel is open.
+- Update the relevant skill/docs: actions appear in Ctrl-K by derivation; opt out explicitly with
+  a reason.
+- **Acceptance.** Full ganda walk via `ganda task work 301 --yes`, CI green, merge only via
+  `ganda pr merge` after Steven approves.
 
 ## Checklist
 
-- [ ] `[CatalogAction]` on `OpenAskPanelActionSet.Action` with DisplayName and Description
-- [ ] Palette row label reads well ("Ask AI")
-- [ ] Footer "Ask" button removed or dispatching the same catalogued action
-- [ ] Signed-out decision recorded
-- [ ] Icon on rows added or follow-up recorded
-- [ ] Guard test/analyzer for uncatalogued chrome actions; pinned command set updated
-- [ ] Real-browser (Playwright) test: Ctrl-K, type "ask", the Ask AI row is highlighted, Enter, palette closes and `[data-qa=AgentAsk]` panel is open
+- [ ] Catalog/roster derived from TimeWarp.State action registration; no required opt-in attribute
+- [ ] Convention-based display name/owner/icon; optional metadata override
+- [ ] Explicit, justified opt-out for internal actions, guarded by a test
+- [ ] Policy/permission, visibility, parameterless and signed-in filtering kept; signed-out decision recorded
+- [ ] "Ask AI" row appears with no per-action attribute; runs and opens the panel
+- [ ] Footer "Ask" button removed
+- [ ] Pinned command-set test replaced by derivation assertion
+- [ ] Real-browser (Playwright) test: Ctrl-K, type "ask", Enter, palette closes and `[data-qa=AgentAsk]` is open
 - [ ] Skill/docs note
 - [ ] Screenshot in the PR (palette filtered to "ask" showing the row; panel open after)
 
@@ -80,6 +101,10 @@ the palette got a hand-wired footer button instead.
 
 - Steven, 2026-10-11 00:19 ICT: "the 'Ask AI' button has an action why isn't it showing in the
   Ctrl-K list we must not have added the attribute?"
+- Steven, 2026-10-11 (voice call): correction. Derive as much as possible, avoid handwriting.
+  Don't fix this by adding `[CatalogAction]` to `OpenAskPanel`; Ctrl-K must list every
+  registered action automatically, excluding internal ones only by explicit, justified opt-out,
+  and the hand-coded footer "Ask" button goes away.
 - Related: task 300 (Ask app-wide page context).
 - Acceptance: full ganda walk via `ganda task work 301 --yes` (implement, review, audit,
   done-move commit, PR), CI green, merge only via `ganda pr merge` after Steven approves.
