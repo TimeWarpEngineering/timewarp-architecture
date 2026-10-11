@@ -4,11 +4,13 @@
 
 #region Design
 // Origin order matches outbound mail: SiteMetadata.BaseUrl when it is an absolute http(s) URL,
-// else the first X-Forwarded-Proto value (only http/https) and the first X-Forwarded-Host value
-// (port kept), else Request.Scheme + Request.Host. PathBase joins the request fallback only —
-// a configured BaseUrl already includes any public path prefix. YARP sets those headers with
-// action Set (client values dropped). Where web-server is reached directly, a client can forge
-// them, the same posture as HttpAppBaseUrlAccessor.
+// else HttpAppBaseUrlAccessor.GetRequestOrigin, the one shared forwarded-header policy: first
+// X-Forwarded-Proto (http/https only), first X-Forwarded-Host (port kept), else Request.Scheme +
+// Request.Host, plus PathBase. A configured BaseUrl already includes any public path prefix. YARP
+// sets those headers with action Set (client values dropped). Where web-server is reached directly,
+// a client can forge them, the same posture as HttpAppBaseUrlAccessor.
+// No resolvable origin (malformed forwarded host, no Host) returns null and the tags are omitted:
+// link-preview metadata is optional and must never fail the page render.
 // The page URL is that origin plus Request.Path. The query is omitted. The image is site-wide:
 // an absolute ImagePath is used as-is; a root-relative path is resolved against the origin,
 // not against the page. A leading slash on the relative part would replace the origin path,
@@ -17,16 +19,20 @@
 
 namespace TimeWarp.Architecture.Configuration;
 
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Primitives;
+using TimeWarp.Architecture.Mail;
 
 internal static class LinkPreview
 {
-  internal static LinkPreviewValues Resolve(SiteMetadata metadata, HttpRequest? request)
+  internal static LinkPreviewValues? Resolve(SiteMetadata metadata, HttpRequest? request)
   {
     ArgumentNullException.ThrowIfNull(metadata);
 
-    Uri origin = ResolveOrigin(metadata, request);
+    Uri? origin = ResolveOrigin(metadata, request);
+    if (origin is null)
+    {
+      return null;
+    }
+
     Uri pageUrl = Combine(origin, request?.Path.Value);
     Uri? absoluteImage = AbsoluteHttpOrNull(metadata.ImagePath);
     Uri imageUrl = absoluteImage ?? Combine(origin, metadata.ImagePath);
@@ -45,43 +51,15 @@ internal static class LinkPreview
     };
   }
 
-  private static Uri ResolveOrigin(SiteMetadata metadata, HttpRequest? request)
+  private static Uri? ResolveOrigin(SiteMetadata metadata, HttpRequest? request)
   {
     if (metadata.BaseUrl is { IsAbsoluteUri: true } configured && IsHttpScheme(configured.Scheme))
     {
       return NormalizeOrigin(configured);
     }
 
-    if (request is null)
-    {
-      throw new InvalidOperationException(
-        "SiteMetadata.BaseUrl is unset and there is no request to derive the public origin from.");
-    }
-
-    string? forwardedProto = FirstValue(request.Headers[ForwardedHeadersDefaults.XForwardedProtoHeaderName]);
-    string scheme = forwardedProto switch
-    {
-      not null when string.Equals(forwardedProto, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
-        => Uri.UriSchemeHttps,
-      not null when string.Equals(forwardedProto, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
-        => Uri.UriSchemeHttp,
-      _ => request.Scheme,
-    };
-
-    string? host = FirstValue(request.Headers[ForwardedHeadersDefaults.XForwardedHostHeaderName])
-      ?? (request.Host.HasValue ? request.Host.Value : null);
-    if (string.IsNullOrEmpty(host))
-    {
-      throw new InvalidOperationException("The request has no host, so link-preview URLs cannot be absolute.");
-    }
-
-    string pathBase = request.PathBase.Value ?? string.Empty;
-    if (!Uri.TryCreate($"{scheme}://{host}{pathBase}", UriKind.Absolute, out Uri? created))
-    {
-      throw new InvalidOperationException("The request host did not form an absolute link-preview origin.");
-    }
-
-    return NormalizeOrigin(created);
+    Uri? fromRequest = request is null ? null : HttpAppBaseUrlAccessor.GetRequestOrigin(request);
+    return fromRequest is not null && IsHttpScheme(fromRequest.Scheme) ? NormalizeOrigin(fromRequest) : null;
   }
 
   private static Uri NormalizeOrigin(Uri absolute)
@@ -117,10 +95,4 @@ internal static class LinkPreview
   private static bool IsHttpScheme(string scheme) =>
     string.Equals(scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
     || string.Equals(scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase);
-
-  private static string? FirstValue(StringValues values)
-  {
-    string? first = values.FirstOrDefault()?.Split(',')[0].Trim();
-    return string.IsNullOrEmpty(first) ? null : first;
-  }
 }

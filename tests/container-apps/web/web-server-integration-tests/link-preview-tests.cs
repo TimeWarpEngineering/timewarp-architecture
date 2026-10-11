@@ -1,6 +1,7 @@
 #region Purpose
 // Host-free coverage that LinkPreview prefers SiteMetadata.BaseUrl, then the forwarded public
-// origin, then the request, and that the page path drops the query.
+// origin, then the request, that the page path drops the query, and that an unresolvable origin
+// yields no tags instead of throwing.
 #endregion
 
 namespace LinkPreview_;
@@ -23,7 +24,7 @@ public class Resolve_Should
     httpContext.Request.Headers["X-Forwarded-Proto"] = "https";
     httpContext.Request.Headers["X-Forwarded-Host"] = "evil.test";
 
-    LinkPreviewValues values = LinkPreview.Resolve(
+    LinkPreviewValues values = Resolved(
       Metadata(baseUrl: "https://arch.timewarp.work/app"),
       httpContext.Request);
 
@@ -35,7 +36,7 @@ public class Resolve_Should
 
   public static Task Use_Configured_Base_Url_When_There_Is_No_Request()
   {
-    LinkPreviewValues values = LinkPreview.Resolve(Metadata(baseUrl: "https://arch.timewarp.work"), request: null);
+    LinkPreviewValues values = Resolved(Metadata(baseUrl: "https://arch.timewarp.work"), request: null);
 
     values.PageUrl.AbsoluteUri.ShouldBe("https://arch.timewarp.work/");
     values.ImageUrl.AbsoluteUri.ShouldBe("https://arch.timewarp.work/images/og-image.png");
@@ -50,7 +51,7 @@ public class Resolve_Should
     httpContext.Request.Headers["X-Forwarded-Proto"] = "https";
     httpContext.Request.Headers["X-Forwarded-Host"] = "arch.timewarp.work";
 
-    LinkPreviewValues values = LinkPreview.Resolve(Metadata(), httpContext.Request);
+    LinkPreviewValues values = Resolved(Metadata(), httpContext.Request);
 
     values.PageUrl.AbsoluteUri.ShouldBe("https://arch.timewarp.work/");
     values.ImageUrl.AbsoluteUri.ShouldBe("https://arch.timewarp.work/images/og-image.png");
@@ -65,7 +66,7 @@ public class Resolve_Should
     httpContext.Request.Headers["X-Forwarded-Proto"] = "https";
     httpContext.Request.Headers["X-Forwarded-Host"] = "localhost:63610, evil.test";
 
-    LinkPreviewValues values = LinkPreview.Resolve(Metadata(), httpContext.Request);
+    LinkPreviewValues values = Resolved(Metadata(), httpContext.Request);
 
     values.PageUrl.AbsoluteUri.ShouldBe("https://localhost:63610/");
     return Task.CompletedTask;
@@ -78,7 +79,7 @@ public class Resolve_Should
     httpContext.Request.Host = new HostString("arch.timewarp.work");
     httpContext.Request.Headers["X-Forwarded-Proto"] = "javascript";
 
-    LinkPreviewValues values = LinkPreview.Resolve(Metadata(), httpContext.Request);
+    LinkPreviewValues values = Resolved(Metadata(), httpContext.Request);
 
     values.PageUrl.AbsoluteUri.ShouldBe("https://arch.timewarp.work/");
     return Task.CompletedTask;
@@ -93,7 +94,7 @@ public class Resolve_Should
     httpContext.Request.Path = "/Login";
     httpContext.Request.QueryString = new QueryString("?utm=discord");
 
-    LinkPreviewValues values = LinkPreview.Resolve(Metadata(), httpContext.Request);
+    LinkPreviewValues values = Resolved(Metadata(), httpContext.Request);
 
     values.PageUrl.AbsoluteUri.ShouldBe("https://localhost:7000/app/Login");
     values.ImageUrl.AbsoluteUri.ShouldBe("https://localhost:7000/app/images/og-image.png");
@@ -108,17 +109,35 @@ public class Resolve_Should
     SiteMetadata metadata = Metadata();
     metadata.ImagePath = "https://cdn.example/logos/card.png";
 
-    LinkPreviewValues values = LinkPreview.Resolve(metadata, httpContext.Request);
+    LinkPreviewValues values = Resolved(metadata, httpContext.Request);
 
     values.ImageUrl.AbsoluteUri.ShouldBe("https://cdn.example/logos/card.png");
     values.Description.ShouldBe(SiteMetadata.DefaultDescription);
     return Task.CompletedTask;
   }
 
-  public static Task Throw_When_No_Origin_Can_Be_Resolved()
+  public static Task Return_Null_When_No_Origin_Can_Be_Resolved()
   {
-    Should.Throw<InvalidOperationException>(() => LinkPreview.Resolve(Metadata(), request: null));
+    LinkPreview.Resolve(Metadata(), request: null).ShouldBeNull();
     return Task.CompletedTask;
+  }
+
+  public static Task Return_Null_For_A_Malformed_Forwarded_Host()
+  {
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "https";
+    httpContext.Request.Host = new HostString("localhost", 7000);
+    httpContext.Request.Headers["X-Forwarded-Host"] = "a b";
+
+    LinkPreview.Resolve(Metadata(), httpContext.Request).ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  private static LinkPreviewValues Resolved(SiteMetadata metadata, HttpRequest? request)
+  {
+    LinkPreviewValues? values = LinkPreview.Resolve(metadata, request);
+    values.ShouldNotBeNull();
+    return values;
   }
 
   private static SiteMetadata Metadata(string? baseUrl = null) =>

@@ -13,6 +13,7 @@
 // (3) Request.Scheme and Request.Host when no forwarded header is present (web-server reached
 // directly). Path base is appended in (2) and (3). Returns null when there is no request, no host,
 // or the values do not form an absolute URL, so mail falls back to the relative permalink.
+// GetRequestOrigin is the request half, static so LinkPreview (web-server) shares one policy.
 // Trust: where web-server is directly reachable a client can forge these headers, exactly as it can
 // forge Host. The only recipient of the link is the filer's own profile address, so a forged origin
 // only misleads the person who forged it. Set Mail:PublicBaseUrl to remove the header dependency.
@@ -42,10 +43,17 @@ public sealed class HttpAppBaseUrlAccessor : IAppBaseUrlAccessor
       return configured;
     }
 
-    if (HttpContextAccessor.HttpContext?.Request is not { } request)
-    {
-      return null;
-    }
+    return HttpContextAccessor.HttpContext?.Request is { } request ? GetRequestOrigin(request) : null;
+  }
+
+  /// <summary>
+  /// The public origin of one request: forwarded proto and host when present, else the request's
+  /// scheme and host, plus path base. Null when no host or the values do not form an absolute URL.
+  /// Shared with link-preview tags so mail links and canonical URLs agree.
+  /// </summary>
+  public static Uri? GetRequestOrigin(HttpRequest request)
+  {
+    ArgumentNullException.ThrowIfNull(request);
 
     string? forwardedProto = FirstValue(request.Headers[ForwardedHeadersDefaults.XForwardedProtoHeaderName]);
     string scheme = forwardedProto is not null

@@ -90,7 +90,9 @@ the interactive render mode, so the tags are in the document even when `Prerende
 Copy and the image path come from the `SiteMetadata` options section. Absolute `og:url`,
 canonical, and `og:image` URLs use `SiteMetadata.BaseUrl` when it is an absolute http(s) URL,
 otherwise the first `X-Forwarded-Proto` / `X-Forwarded-Host` values (http or https only; port
-kept), otherwise the request scheme, host, and path base. The query string is omitted. The
+kept), otherwise the request scheme, host, and path base. That request half is
+`HttpAppBaseUrlAccessor.GetRequestOrigin`, shared with mail. The query string is omitted. If no
+origin resolves (for example a malformed forwarded host), the tags are omitted and the page still renders. The
 visible `<title>` stays `TimeWarp.Architecture`.
 
 The preview image is the TimeWarp Enterprises logo on a dark background (the timewarp.software
@@ -102,8 +104,9 @@ IHDR 1200×630). `MapStaticAssets` serves it as `image/png`.
 
 - `source/container-apps/web/projects/web-server/components/App.razor` — static `<LinkPreviewMeta />`
 - `source/container-apps/web/projects/web-server/components/LinkPreviewMeta.razor`
-- `source/container-apps/web/projects/web-server/components/link-preview.cs`
-- `source/container-apps/web/projects/web-server/components/link-preview-values.cs`
+- `source/container-apps/web/projects/web-server/configuration/link-preview.cs`
+- `source/container-apps/web/projects/web-server/configuration/link-preview-values.cs`
+- `source/container-apps/web/platform/mail/http-app-base-url-accessor-server.cs` — static `GetRequestOrigin`, the one forwarded-origin policy shared by mail and link preview
 - `source/container-apps/web/projects/web-server/configuration/site-metadata.cs`
 - `source/container-apps/web/projects/web-server/configuration/site-metadata-validator.cs`
 - `source/container-apps/web/projects/web-server/program.cs` — `AddFluentValidatedOptions<SiteMetadata, SiteMetadataValidator>` with `ValidateOnStart`
@@ -131,7 +134,7 @@ IHDR 1200×630). `MapStaticAssets` serves it as `image/png`.
 
 `cd tests/container-apps/web/web-server-integration-tests && dotnet test --nologo -- --filter-class LinkPreview`
 
-12 passed, 0 failed (8 host-free, 4 against the running web server). The home-page case asserts
+13 passed, 0 failed (9 host-free, 4 against the running web server). The home-page case asserts
 every required tag has non-empty content, that `og:url` and `og:image` are absolute, that the
 visible title is still `TimeWarp.Architecture`, and that `og:image` returns 200 `image/png` with
 a 1200×630 IHDR under 300 KB. Forwarded host, query stripping, and `/Login` are covered.
@@ -176,7 +179,7 @@ ganda repo audit
 ```
 
 Run the test from that project directory. The repo root `dotnet test` still targets VSTest, which
-this repo no longer supports. Expect 12 passed. Expect build 0 warnings and audit 0 failed.
+this repo no longer supports. Expect 13 passed. Expect build 0 warnings and audit 0 failed.
 
 **Depends on**
 
@@ -191,7 +194,22 @@ this repo no longer supports. Expect 12 passed. Expect build 0 warnings and audi
 - JSON-LD.
 - Deploying to arch.timewarp.work and confirming the live Discord card.
 
+### Review
+
+- Workspace: `review/` (`review-framework.md`, `round-1/`, `round-2/`, `disposition.md`)
+- Effort 3, roster: general. 2 rounds.
+- Round 1: 0 bugs, 3 suggestions, 1 nit. All fixed on this task:
+  - M1: shared `GetRequestOrigin`; the origin logic is no longer copied from mail.
+  - M2: an unresolvable origin omits the tags instead of returning 500 for the page.
+  - M3: `Resolve` runs once per render.
+  - M4: the files moved to `configuration/`.
+- Round 2: no new findings.
+- Final counts: bug 0/0/0, suggestion 0 open / 3 fixed / 0 wontfix, nit 0 open / 1 fixed / 0 wontfix.
+- Disposition: **clean**. Last ledger: `review/round-2/merged.md`.
+- Verified after fixes: `./bin/dev build` 0 warnings / 0 errors; LinkPreview 13/13; mail `GetBaseUrl_Should` 7/7.
+
 ## Session
 
 - Created: 453480 (2026-10-11)
 - Implementer: Grok session 01a128f7-c094-7702-bacf-e5acb228de83 (2026-10-11)
+- Reviewer: Claude Code review oracle (Opus 5.5), effort 3, roster general (2026-10-11)
