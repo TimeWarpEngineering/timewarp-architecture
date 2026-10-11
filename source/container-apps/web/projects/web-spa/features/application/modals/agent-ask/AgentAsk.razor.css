@@ -84,8 +84,7 @@
 .twe-agent-ask__edit button,
 .twe-agent-ask__edit fluent-button,
 .twe-agent-ask__privacy button,
-.twe-agent-ask__privacy fluent-button,
-.twe-agent-ask__tag {
+.twe-agent-ask__privacy fluent-button {
   cursor: pointer;
 }
 
@@ -129,4 +128,73 @@
 .twe-agent-ask__expired {
   margin: 0;
   color: var(--twe-ink-2);
+}
+
+/* MessageInput renders one flex row: leading actions, .sc-ai-input__body, then send.
+   Grid areas put the body on the first row and Tag / send on the footer row.
+   field-sizing grows the textarea with its content; min and max height cap it. */
+.twe-agent-ask ::deep .sc-ai-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "body body body"
+    "lead . send";
+  align-items: center;
+  width: 100%;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-3);
+  background: var(--twe-paper);
+  border-color: var(--twe-rule);
+  border-radius: var(--twe-radius);
+}
+
+.twe-agent-ask ::deep .sc-ai-input:focus-within {
+  border-color: var(--twe-primary);
+}
+
+.twe-agent-ask ::deep .sc-ai-input__body {
+  grid-area: body;
+  min-width: 0;
+  width: 100%;
+}
+
+.twe-agent-ask ::deep .sc-ai-input__textarea {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  field-sizing: content;
+  min-height: 3rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  padding-inline: 0;
+}
+
+.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag {
+  grid-area: lead;
+  justify-self: start;
+  align-self: center;
+  cursor: pointer;
+}
+
+.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag > svg {
+  max-width: none;
+  width: 16px;
+  height: 16px;
+}
+
+.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag::part(control) {
+  border: 1px solid var(--twe-rule);
+  border-radius: 999px;
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  column-gap: var(--twe-space-2);
+  padding-inline: var(--twe-space-3);
+  min-height: 2rem;
+}
+
+.twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {
+  grid-area: send;
+  justify-self: end;
+  align-self: center;
 }

@@ -74,12 +74,12 @@ something on this page in your message." Give it a clear label and tooltip, e.g.
 
 ## Checklist
 
-- [ ] Verify `MessageInput` rendered DOM and Enter/Shift+Enter behavior
-- [ ] Composer: full-width textarea on top, footer row with Tag pill (icon + tooltip) left, send right
-- [ ] Textarea auto-grows to a cap
-- [ ] Tag has a clear label/tooltip/aria-label; document what Tag does in Results
-- [ ] Playwright layout test measuring the inner textarea (left edge, ≥90% width, Tag/send below), auto-grow, Enter sends
-- [ ] Existing Ask Playwright tests green; before/after screenshots captured if practical
+- [x] Verify `MessageInput` rendered DOM and Enter/Shift+Enter behavior
+- [x] Composer: full-width textarea on top, footer row with Tag pill (icon + tooltip) left, send right
+- [x] Textarea auto-grows to a cap
+- [x] Tag has a clear label/tooltip/aria-label; document what Tag does in Results
+- [x] Playwright layout test measuring the inner textarea (left edge, ≥90% width, Tag/send below), auto-grow, Enter sends
+- [x] Existing Ask Playwright tests green; before/after screenshots captured if practical
 
 ## Session
 
@@ -90,4 +90,57 @@ something on this page in your message." Give it a clear label and tooltip, e.g.
 - Screenshots from Steven: `assets/before-ours.png`, `assets/before-ours-devtools.png` (ours),
   `assets/target-cloudflare.png`, `assets/target-cloudflare-devtools.png` (Cloudflare target).
 
+- Steering 2026-10-11 22:12 (Steven via parent): (1) Playwright runs rewrite screenshots under
+  `kanban/done/295-*`, `296-*` and `302-*`. Those must NOT be in the PR: `git restore` them before
+  every commit and check `git status` before pushing. (2) In the after screenshot the Tag chip is
+  indented about 30px from the textarea's text. Align the chip's left edge with the textarea's left
+  padding / text start, like Cloudflare's Ask chip; add a Playwright assertion that the Tag chip's
+  left edge is within a few px of the textarea's text start (textarea left + its padding-left).
+
 ## Results
+
+The Ask composer still uses the library `MessageInput`. Scoped CSS in `AgentAsk.razor.css` turns `.sc-ai-input` from one flex row into a two-row grid: the textarea spans the full width on the first row, and Tag and send sit on the footer. The middle footer column stays empty so a later options control can sit beside send. `MessageInput` was not forked. There is no options button.
+
+### What Tag does
+
+Tag (`data-qa=AskTagResource`) calls `OpenResources()`, which sets `ResourceMenuOpen = true`. Typing `@` anywhere in the panel does the same (`OnKeyDown`). That shows `AskResourceMenu`: the typed resources on the current page (`page_context` via `AskResourceReferences.FromPageContext`), or "Nothing on this page to tag." Choosing a row inserts that resource's `@` token at the caret (`AskAiJsModule.InsertReferenceAsync` → `source/features/ask-ai.ts` `InsertReference`, which replaces a just-typed `@` instead of doubling it) and closes the menu. Tag means "reference something on this page in your message."
+
+The control is a pill: a tag icon plus the label "Tag". `Title`, `Tooltip`, and `aria-label` are "Tag a resource on this page (@)". The placeholder is "Tell the app what you want. Type @ to tag something on this page."
+
+### Layout
+
+Decompiled `Microsoft.AspNetCore.Components.AI` 0.1.0-preview.1.26466.103 `MessageInput`. Direct children of `.sc-ai-input` are the leading actions (no wrapper), `.sc-ai-input__body` (the `textarea.sc-ai-input__textarea`), then the default `.sc-ai-input__send` button. Enter without Shift calls `SubmitAsync`. Shift+Enter does not submit; the browser inserts a newline. The textarea stays disabled while `ConversationStatus` is Streaming or AwaitingInput.
+
+Playwright measured the inner `textarea.sc-ai-input__textarea` against `.twe-agent-ask .sc-ai-input` with the panel open:
+
+- Left inset (`textarea.X − composer.X`) is in [4, 20] px. Container padding is `--twe-space-3` (12px). The textarea's `padding-inline` is 0, so the placeholder starts at that padding.
+- Textarea width is at least 90% of the composer width.
+- Tag's top and send's top are at or below the textarea bottom (2px tolerance).
+- Tag's left inset is in [0, 24] px. Send's right inset is in [0, 24] px. Send sits to the right of Tag.
+- The Tag icon is at least 12px wide.
+- Three Shift+Enter lines grew the textarea by at least 8px (`field-sizing: content`, min-height 3rem, max-height 10rem).
+- Enter sent. A user bubble containing "one" and a `page_context:` answer appeared, then the textarea enabled again.
+
+Shots in this folder: `ask-composer-before.png` (placeholder, Tag pill, send) and `ask-composer-after.png` (`one` / `two` / `three` on three lines, Tag and send still on the footer).
+
+The same test still opens the empty resource menu on the home page, inserts a reference without doubling `@`, copies the last answer, toggles edit mode, and checks the docked panel. The layout check's Enter is the first answer, so the later click-send waits on the second `page_context:` match.
+
+`./bin/dev build` completed with 0 warnings and 0 errors. `ganda repo audit` passed 31 checks and failed 0.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Release
+```
+
+Run that from the project directory. Its `global.json` selects Microsoft.Testing.Platform. `dotnet test` with a project path from the repo root uses the VSTest target and fails.
+
+**Expect:**
+
+- 7 passed, 0 failed: Ask surface, both ask-sign-in tests, both feedback-attachment tests, and FirstPaint.
+- `AskSurface_Given_Wasm.CtrlK_Should_ShowAsk_And_TheKeyState` measures the inner textarea (left inset in [4, 20] px, width at least 90% of `.sc-ai-input`), Tag and send below it (Tag left, send right), growth after Shift+Enter, and Enter sending.
+- `ask-composer-before.png` shows the placeholder starting at the left padding, the Tag pill on the footer left, and send on the footer right.
+- `ask-composer-after.png` shows three lines of text with Tag and send still on the footer.
+- Tag still opens `AskResourceEmpty` on the home page, and `@` insertion still replaces a typed `@`.

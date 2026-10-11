@@ -18,6 +18,10 @@
 // edge on the viewport, the layout wider than 800, and FluentLayout has no mobile attribute.
 // Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
 // viewport. Shots are written beside task 296.
+// Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
+// .sc-ai-input padding (about 16px), its width is at least 90% of that box, and Tag
+// and send sit below it. Shift+Enter grows the field; Enter sends. Those shots are
+// written beside task 307.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -157,11 +161,13 @@ public class AskSurface_Given_Wasm
       (await page.Locator("[data-qa=AskSuggestion]").CountAsync()).ShouldBeGreaterThanOrEqualTo(3);
       (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      await AssertComposerLayoutAsync(page);
       await page.Locator("[data-qa=AskTagResource]").ClickAsync();
       await page.Locator("[data-qa=AskResourceEmpty]").WaitForAsync();
       await input.FillAsync("What is on this page?");
       await page.Locator(".sc-ai-input__send").ClickAsync();
-      ILocator answer = page.Locator(".sc-ai-root").GetByText("page_context:");
+      // Enter already produced one answer. The click send is the second turn.
+      ILocator answer = page.Locator(".sc-ai-root").GetByText("page_context:").Nth(1);
       await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
       string text = await page.Locator(".sc-ai-root").InnerTextAsync();
       text.ShouldContain("page_context:");
@@ -198,7 +204,7 @@ public class AskSurface_Given_Wasm
       await AssertDockedPanelAsync(page);
 
       // Close + reopen: the transcript is restored and the edit mode is back to Ask before editing.
-      await page.Locator(".sc-ai-root").GetByText("page_context:").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      await page.Locator(".sc-ai-root").GetByText("page_context:").Nth(1).WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
       await PressedShouldBeAsync(page, "AskBeforeEditing", "true");
       await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "false");
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
@@ -231,7 +237,7 @@ public class AskSurface_Given_Wasm
     log.ShouldNotContain("SemaphoreSlim.Wait");
   }
 
-  private static string ScreenshotPath(string fileName)
+  private static string ScreenshotPath(string fileName, string taskPrefix = "296")
   {
     string? directory = AppContext.BaseDirectory;
     while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
@@ -240,9 +246,97 @@ public class AskSurface_Given_Wasm
     }
 
     directory.ShouldNotBeNull();
-    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), "296-*", SearchOption.AllDirectories)
+    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), taskPrefix + "-*", SearchOption.AllDirectories)
       .Single(path => File.Exists(Path.Combine(path, "task.md")));
     return Path.Combine(folder, fileName);
+  }
+
+  private static async Task AssertComposerLayoutAsync(IPage page)
+  {
+    const string areaSelector = "textarea.sc-ai-input__textarea";
+    const string composerSelector = ".twe-agent-ask .sc-ai-input";
+    const string tagName = "Tag a resource on this page (@)";
+    ILocator textarea = page.Locator(areaSelector);
+    ILocator composer = page.Locator(composerSelector);
+    ILocator tag = page.Locator("[data-qa=AskTagResource]");
+    string? placeholder = await textarea.GetAttributeAsync("placeholder");
+    placeholder.ShouldNotBeNull();
+    placeholder.ShouldContain("Type @ to tag");
+    (await tag.GetAttributeAsync("aria-label")).ShouldBe(tagName);
+    (await tag.GetAttributeAsync("title")).ShouldBe(tagName);
+
+    LocatorBoundingBoxResult composerBox = await BoxAsync(page, composerSelector);
+    LocatorBoundingBoxResult areaBox = await BoxAsync(page, areaSelector);
+    LocatorBoundingBoxResult tagBox = await BoxAsync(page, "[data-qa=AskTagResource]");
+    LocatorBoundingBoxResult sendBox = await BoxAsync(page, ".twe-agent-ask .sc-ai-input__send");
+    double inset = areaBox.X - composerBox.X;
+    inset.ShouldBeGreaterThanOrEqualTo(4);
+    inset.ShouldBeLessThanOrEqualTo(20);
+    ((double)areaBox.Width).ShouldBeGreaterThanOrEqualTo(composerBox.Width * 0.9);
+    ((double)tagBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
+    ((double)sendBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
+    ((double)(tagBox.X - composerBox.X)).ShouldBeGreaterThanOrEqualTo(0);
+    ((double)(tagBox.X - composerBox.X)).ShouldBeLessThanOrEqualTo(24);
+    double sendInset = composerBox.X + composerBox.Width - (sendBox.X + sendBox.Width);
+    sendInset.ShouldBeGreaterThanOrEqualTo(0);
+    sendInset.ShouldBeLessThanOrEqualTo(24);
+    ((double)sendBox.X).ShouldBeGreaterThan(tagBox.X + tagBox.Width);
+    LocatorBoundingBoxResult? icon = await tag.Locator("svg").BoundingBoxAsync();
+    icon.ShouldNotBeNull();
+    ((double)icon.Width).ShouldBeGreaterThanOrEqualTo(12);
+
+    await composer.ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-composer-before.png", "307"),
+    });
+
+    double before = areaBox.Height;
+    await textarea.ClickAsync();
+    await textarea.PressSequentiallyAsync("one");
+    await textarea.PressAsync("Shift+Enter");
+    await textarea.PressSequentiallyAsync("two");
+    await textarea.PressAsync("Shift+Enter");
+    await textarea.PressSequentiallyAsync("three");
+    string draft = await textarea.InputValueAsync();
+    draft.ShouldContain("one");
+    draft.ShouldContain("\n");
+    draft.ShouldContain("three");
+    LocatorBoundingBoxResult grown = await WaitForBoxAsync(
+      page,
+      areaSelector,
+      box => box.Height >= before + 8);
+    ((double)grown.Height).ShouldBeGreaterThan(before);
+    await composer.ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-composer-after.png", "307"),
+    });
+
+    await textarea.PressAsync("Enter");
+    await page.Locator(".sc-ai-message--user").GetByText("one").WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 30_000,
+    });
+    await page.Locator(".sc-ai-root").GetByText("page_context:").WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 60_000,
+    });
+    await WaitUntilInputEnabledAsync(page);
+  }
+
+  private static async Task WaitUntilInputEnabledAsync(IPage page)
+  {
+    ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
+    for (int attempt = 0; attempt < 100; attempt++)
+    {
+      if (await textarea.GetAttributeAsync("disabled") is null)
+      {
+        return;
+      }
+
+      await Task.Delay(100);
+    }
+
+    throw new TimeoutException("Ask textarea stayed disabled after Enter");
   }
 
   private static async Task AssertDockedPanelAsync(IPage page)

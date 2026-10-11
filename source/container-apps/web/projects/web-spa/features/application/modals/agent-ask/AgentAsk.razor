@@ -33,6 +33,10 @@
   MessageList attaches. That restores both the rendered turns and the model history across Close,
   navigation (TimeWarpPage remounts), and rebuilds. New conversation bumps the generation and
   gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
+  MessageInput stays the library component. Scoped CSS turns its flex row into a two-row
+  grid: the textarea spans the full width and grows with field-sizing up to 10rem, and Tag
+  and send sit on the footer row. Tag opens the resource menu, the same menu a typed @ opens,
+  and choosing a row inserts that page resource's @ token at the caret.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
@@ -42,6 +46,11 @@
 *@
 
 @code {
+  private const string AskPlaceholder =
+    "Tell the app what you want. Type @ to tag something on this page.";
+
+  private const string TagHelp = "Tag a resource on this page (@)";
+
   private static readonly string[] Suggestions =
   [
     "What can I do here?",
@@ -495,9 +504,16 @@
         </div>
         <div class="sc-ai-chat-page__footer">
           <div class="sc-ai-chat-page__input-container">
-            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="Tell the app what you want">
+            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
               <LeadingActions>
-                <FluentButton Appearance="ButtonAppearance.Subtle" Class="twe-agent-ask__tag" data-qa="AskTagResource" OnClick="OpenResources">Tag</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Subtle"
+                              Class="twe-agent-ask__tag"
+                              IconStart="@(new Icons.Regular.Size16.Tag())"
+                              Title="@TagHelp"
+                              Tooltip="@TagHelp"
+                              aria-label="@TagHelp"
+                              data-qa="AskTagResource"
+                              OnClick="OpenResources">Tag</FluentButton>
               </LeadingActions>
             </Microsoft.AspNetCore.Components.AI.MessageInput>
           </div>
