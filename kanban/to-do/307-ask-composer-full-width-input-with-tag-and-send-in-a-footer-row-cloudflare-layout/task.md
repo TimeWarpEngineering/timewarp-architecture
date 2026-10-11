@@ -85,6 +85,7 @@ something on this page in your message." Give it a clear label and tooltip, e.g.
 
 - Created: 742019 (2026-10-11)
 - Review oracle: claude-opus-5-5 (headless ganda task work), effort 2, roster general
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-11T15:25:22Z
 
 ## Notes
 
