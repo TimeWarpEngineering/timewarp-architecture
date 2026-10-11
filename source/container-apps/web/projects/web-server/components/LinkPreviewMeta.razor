@@ -1,0 +1,51 @@
+@namespace TimeWarp.Architecture.Components
+@using TimeWarp.Architecture.Configuration
+
+@code {
+  #region Purpose
+  // Server-rendered Open Graph, Twitter card, description, and canonical tags for every page.
+  #endregion
+
+  #region Design
+  // Rendered from App.razor outside HeadOutlet and outside any interactive render mode, so the
+  // tags are in the first HTML response whether or not Blazor prerender runs. Crawlers do not
+  // execute JavaScript. Per-route copy is a follow-up and must stay in this static shell —
+  // HeadContent from an interactive page disappears when Prerender is false.
+  // HttpContext is the static-SSR cascade. IHttpContextAccessor is the fallback for the same
+  // request when the cascade is absent. This component is not interactive.
+  // Resolved once per render. No resolvable origin renders no tags rather than failing the page.
+  #endregion
+
+  [Inject] private IOptions<SiteMetadata> SiteMetadataAccessor { get; set; } = null!;
+
+  [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
+
+  [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+  private LinkPreviewValues? Tags;
+
+  protected override void OnInitialized() =>
+    Tags = LinkPreview.Resolve(
+      SiteMetadataAccessor.Value,
+      HttpContext?.Request ?? HttpContextAccessor.HttpContext?.Request);
+}
+
+@if (Tags is not null)
+{
+  <meta name="description" content="@Tags.Description" />
+  <meta property="og:site_name" content="@Tags.SiteName" />
+  <meta property="og:title" content="@Tags.Title" />
+  <meta property="og:description" content="@Tags.Description" />
+  <meta property="og:type" content="@SiteMetadata.OpenGraphType" />
+  <meta property="og:url" content="@Tags.PageUrl.AbsoluteUri" />
+  <meta property="og:image" content="@Tags.ImageUrl.AbsoluteUri" />
+  <meta property="og:image:width" content="@Tags.ImageWidth" />
+  <meta property="og:image:height" content="@Tags.ImageHeight" />
+  <meta property="og:image:type" content="@Tags.ImageType" />
+  <meta property="og:image:alt" content="@Tags.ImageAlt" />
+  <meta name="twitter:card" content="@SiteMetadata.TwitterCard" />
+  <meta name="twitter:title" content="@Tags.Title" />
+  <meta name="twitter:description" content="@Tags.Description" />
+  <meta name="twitter:image" content="@Tags.ImageUrl.AbsoluteUri" />
+  <link rel="canonical" href="@Tags.PageUrl.AbsoluteUri" />
+}
