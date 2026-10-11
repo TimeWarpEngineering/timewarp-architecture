@@ -21,6 +21,12 @@
 // would hit Api.Server's /api/{**catch-all}. Not a generated prefix (TWA0018 forbids bare `api`).
 // AddServiceDiscoveryDestinationResolver lets cluster destinations use Aspire logical service
 // names instead of hard-coded addresses.
+// Task 305: UseTrustedProxyForwardedHeaders runs before MapReverseProxy. It copies
+// X-Forwarded-Proto and X-Forwarded-Host onto the request only when the peer is listed under
+// TrustedProxy (loopback when that section is absent). Set then forwards those values, so a
+// client that is not a trusted proxy still cannot inject them. X-Forwarded-For is not consumed.
+// Run mode hosts this project as the AppHost ingress, so the Development routes and clusters are
+// template-gated per flag (api, grpc, web conditional comments), matching the AppHost publish routes.
 // Implements IAspNetProgram so every container app shares the same Configure* phase structure,
 // keeping the template's entry points uniform; unused phases stay as empty methods rather than
 // being removed.
@@ -48,9 +54,10 @@ public class Program : IAspNetProgram
 
     WebApplication webApplication = builder.Build();
 
-    webApplication.MapDefaultEndpoints();
-
+    // Forwarded-headers middleware has to be registered before any Map* call. A Use after Map
+    // does not run for a matched request, so the health endpoints are mapped second.
     ConfigureMiddleware(webApplication);
+    webApplication.MapDefaultEndpoints();
     ConfigureEndpoints(webApplication);
 
     return webApplication.RunAsync();
@@ -60,6 +67,7 @@ public class Program : IAspNetProgram
 
   public static void ConfigureMiddleware(WebApplication webApplication)
   {
+    webApplication.UseTrustedProxyForwardedHeaders();
     webApplication.MapReverseProxy();
   }
 

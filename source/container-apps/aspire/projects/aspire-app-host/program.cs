@@ -72,9 +72,11 @@
 // generated set by construction, not by a hand-removed line.
 // Ingress:Port (https) / Ingress:HttpPort (http) pin the YARP host ports so external clients, E2E
 // tests, and reverse proxies get stable ingress URLs. Development pins https 63610 / http 63620
-// (appsettings.Development.json), matching the standalone yarp project's launchSettings on purpose:
-// the two are alternative ingress modes that never run together, so "ingress https is 63610" holds
-// in both. The *.timewarp.work share path (Caddy in WSL, task 112) targets the http endpoint 63620.
+// (appsettings.Development.json), the same ports as the yarp project's launch profile. Run mode
+// hosts that project, so the pins and the profile are one process; do not also dotnet-run the yarp
+// project beside dev run. The *.timewarp.work share path (Caddy in WSL, task 112) targets the http
+// endpoint 63620, which run mode binds in-process so Caddy's X-Forwarded-Proto reaches the
+// trusted-proxy middleware (task 305).
 // Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
 // this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
 // dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
@@ -82,10 +84,15 @@
 // The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
 // the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
 // on Web.Server for any proxied Entra deployment.
-// Public-host forwarding (task 070-008, replacing 104-031's original-Host forwarding): YARP sends the
-// DESTINATION host as Host on every route (its default) and the Web.Server routes chain
-// WithTransformXForwarded(xHost: Set), which OVERWRITES X-Forwarded-Host with the browser's public
-// host — a client-supplied X-Forwarded-Host never survives the ingress. One rule on every target:
+// Public-host forwarding (task 070-008, task 305): YARP sends the DESTINATION host as Host on every
+// route (its default) and the Web.Server routes chain WithTransformXForwarded(Set), which OVERWRITES
+// X-Forwarded-Proto and X-Forwarded-Host with Request.Scheme and Request.Host. Run mode executes the
+// yarp project, whose UseTrustedProxyForwardedHeaders applies those two headers only from a trusted
+// proxy (loopback by default — Caddy on this machine) before that Set, so Web.Server reads the
+// client-facing scheme and host. A peer that is not a trusted proxy cannot inject either header.
+// Publish mode keeps the AddYarp image, which has no such middleware. Behind a TLS-terminating
+// edge (ACA managed ingress, a Kubernetes controller) it may forward http; set SiteMetadata:BaseUrl
+// and PublicOrigin on Web.Server there (not verified on ACA). One rule on every target:
 // a public Host on the web hop breaks Azure Container Apps, whose internal ingress routes
 // app-to-app traffic by Host. Web.Server's per-request WebAuthn RP-ID selection reads the public
 // host from X-Forwarded-Host (HttpRequestHostAccessor only — no UseForwardedHeaders, which would also
@@ -95,15 +102,16 @@
 // own X-Forwarded-Host exactly as it can send its own Host, and selection-only is what makes both
 // safe — full argument in HttpRequestHostAccessor's Design region. Applied to Web.Server routes
 // only; the api/grpc backends do no host-based selection and keep YARP's defaults.
-// Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008): request-level smokes through
-// the ingress with a foreign Host on a web route, and a forged X-Forwarded-Host that must not reach
-// web-server's RP-ID selection.
-// Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so
-// "Healthy" means "answers HTTP through the DCP host proxy", not merely "container Running".
+// Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008, 305): request-level smokes
+// through the ingress with a foreign Host on a web route. A loopback client is a trusted proxy, so
+// its X-Forwarded-Host is honored; the untrusted-peer case is the standalone yarp suite.
+// Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so "Healthy"
+// means the http endpoint answered, not merely that the process or container started.
 // AddYarp registers no health check of its own; see the inline note at the call site.
 // Container images (task 070-002): there are no hand-written Dockerfiles. `aspire publish` builds each
 // AddProject resource's image with the .NET SDK container build (Microsoft.NET.Sdk.Web enables it by
-// default), and the ingress is the AddYarp container image, not the yarp project. No ContainerRepository /
+// default). Run mode (task 305) hosts the yarp project so the trusted-proxy middleware is the process
+// behind the pinned http port. Publish mode keeps the AddYarp container image. No ContainerRepository /
 // ContainerFamily / ContainerBaseImage properties are set: Aspire supplies the repository and tag per
 // resource, and the SDK picks the aspnet base image matching the project's TFM, so a .NET bump needs no
 // image edit. Add those properties to a server csproj only when a deployment target actually needs a
@@ -480,130 +488,187 @@ internal class Program
     int? ingressHttpsPort = isRunMode && int.TryParse(builder.Configuration["Ingress:Port"], out int httpsPort) ? httpsPort : null;
     int? ingressHttpPort = isRunMode && int.TryParse(builder.Configuration["Ingress:HttpPort"], out int httpPort) ? httpPort : null;
 
-    // Create the YARP resource
-    IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
-
-    // Task 070-003: published, the ingress is the ONLY service with a host port, pinned to the
-    // ingress-port .env parameter (Compose would otherwise pick a random host port).
-    if (kubernetes is not null)
-    {
-      // Task 070-004 ingress decision (a): the cluster's ingress controller forwards everything to the
-      // YARP ingress, which keeps doing the per-service routing below. The Ingress resource's default
-      // backend is YARP's http endpoint (TLS terminates at the controller); the class is a parameter
-      // because the controller belongs to the cluster, not to this chart.
-      yarp = yarp.WithExternalHttpEndpoints();
-      kubernetes.AddIngress(KubernetesIngressResourceName)
-        .WithIngressClass(builder.AddParameter(IngressClassParameterName, "nginx", publishValueAsDefault: true))
-        .WithDefaultBackend(yarp.GetEndpoint("http"));
-    }
-    else if (containerApps is not null)
-    {
-      // Task 070-007: the ingress is the ONLY external container app (ACA's managed HTTPS ingress
-      // with a public FQDN); web-server, api-server and grpc-server keep internal-only ingress.
-      yarp = yarp.WithExternalHttpEndpoints();
-    }
-    else if (builder.ExecutionContext.IsPublishMode)
-    {
-      IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, "8080", publishValueAsDefault: true);
-      yarp = yarp
-        .WithExternalHttpEndpoints()
-        .PublishAsDockerComposeService((composeService, service) =>
-          service.Ports = [.. service.Ports.Select(containerPort => $"{ingressPort.AsEnvironmentPlaceholder(composeService)}:{containerPort}")]);
-    }
-
-    if (ingressHttpsPort is not null)
-    {
-      yarp = yarp.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort.Value);
-    }
-
-    if (ingressHttpPort is not null)
-    {
-      yarp = yarp.WithEndpoint("http", endpoint => endpoint.Port = ingressHttpPort.Value);
-    }
-
     string? ingressPublicUrl = builder.Configuration["Ingress:PublicUrl"];
 
-    if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
+    if (isRunMode)
     {
-      // Display text IS the URL: a friendly label ("public") renders INSTEAD of the address in the
-      // dashboard's URL column, hiding the very hostname the link exists to surface.
-      yarp = yarp.WithUrl(ingressPublicUrl, ingressPublicUrl);
-    }
+      // Task 305: run mode executes the yarp project so UseTrustedProxyForwardedHeaders is the
+      // process behind the pinned http port. Publish mode keeps the AddYarp image so Compose,
+      // Kubernetes and ACA manifests stay on that image. DisableForwardedHeaders stops Aspire
+      // injecting ASPNETCORE_FORWARDEDHEADERS_ENABLED, which trusts every peer and does not
+      // honor X-Forwarded-Host.
+      IResourceBuilder<ProjectResource> yarpProject = builder
+        .AddProject<Projects.yarp>(YarpResourceName, options => options.LaunchProfileName = "Yarp")
+        .DisableForwardedHeaders();
 
-#if web
-    // The ingress forwards web routes over the HTTP endpoint — TLS terminates at the ingress edge
-    // (and at Caddy on the public chain), not on this hop. This dates from 104-031's original-Host
-    // forwarding (an https hop validated Web.Server's localhost dev cert against the PUBLIC
-    // hostname and 502'd); task 070-008 sends the destination host instead but keeps the plain
-    // HTTP hop on run, Compose and Kubernetes. api/grpc routes stay on their default (https) endpoints.
-    // Under Publish:Target=aca the same named-endpoint address resolves to the https internal ingress
-    // (Aspire's https upgrade), which works: Host is the destination (ACA routes and validates TLS by
-    // it) and the public host travels in X-Forwarded-Host (task 070-008). No aca-specific web route.
-    // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
-    // "https+http://web-server", which service discovery resolves https-first — reintroducing the
-    // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
-    // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
-    // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
-    // NOT a resource reference — this explicit reference keeps the services__web-server__* env
-    // injected so the ingress can resolve that address.
-    yarp = yarp.WithReference(webServer);
-
-    // Readiness, not liveness (task 058-001): WITHOUT a health check the ingress reports Healthy
-    // the moment DCP reports the YARP container Running, which is strictly weaker than "serves
-    // traffic" — the DCP host-side proxy already accepts connections while Kestrel inside the
-    // container is still starting, so a request issued in that window gets an immediate
-    // connection EOF (HttpRequestException / "The response ended prematurely"), not an HTTP
-    // status. Measured gap: up to ~810ms after WaitForResourceHealthyAsync("ingress") returned.
-    // Every Aspire.Hosting.Testing suite that waits for "ingress" then sends a request raced
-    // that window. This HTTP check probes the SAME host-side endpoint URL those tests use, so
-    // Healthy now means "the proxy is wired AND YARP routed a request to a live web-server".
-    // Path "/" (the default) is the web catch-all route -> SPA shell 200, which holds in every
-    // environment — unlike "/health", which aspire-service-defaults maps only in Development.
-    // Web-gated: with web excluded there is no catch-all, so "/" would 404 forever.
-    // AppHost health checks run only while the AppHost runs the app (local dev + testing);
-    // publish mode emits a manifest and never executes them, so deployments are unaffected.
-    yarp = yarp.WithHttpHealthCheck(endpointName: "http");
-#endif
-    yarp = yarp.WithConfiguration(yarpConfiguration =>
-    {
-#if api
-      yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
-#endif
-#if web
-      global::Aspire.Hosting.Yarp.YarpCluster webServerHttp = yarpConfiguration.AddCluster("web-server-http", "http://_http.web-server");
-
-      // Web.Server owns these top-level /api prefixes (generated: WebServerApiRoutePrefixes.All from
-      // the web-contracts ApiRoute templates — see the Design region). Each literal segment outranks
-      // the Api.Server catch-all above, so they win regardless of order.
-      // ForwardPublicHost (task 070-008): Host stays the destination; X-Forwarded-Host is SET
-      // (client value dropped) to the browser's public host, which HttpRequestHostAccessor reads for
-      // passkey RP-ID selection against the allowlist. Web.Server routes ONLY — the api/grpc
-      // backends keep YARP's defaults.
-      static global::Aspire.Hosting.Yarp.YarpRoute ForwardPublicHost(global::Aspire.Hosting.Yarp.YarpRoute route) =>
-        route.WithTransformXForwarded(xHost: global::Yarp.ReverseProxy.Transforms.ForwardedTransformActions.Set);
-
-      foreach (string apiPrefix in global::WebServerApiRoutePrefixes.All)
+      if (ingressHttpsPort is not null)
       {
-        ForwardPublicHost(yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp));
+        yarpProject = yarpProject.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort.Value);
       }
 
-      // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
-      // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
-      // (TWA0018 forbids bare `api` as a contracts prefix).
-      ForwardPublicHost(yarpConfiguration.AddRoute("/api", webServerHttp));
-      ForwardPublicHost(yarpConfiguration.AddRoute("/api/", webServerHttp));
+      if (ingressHttpPort is not null)
+      {
+        // Bind the pinned http port in-process. A DCP hop in front of it can replace
+        // X-Forwarded-Proto with the scheme that hop saw (plain http) and drop Caddy's https
+        // before UseTrustedProxyForwardedHeaders runs.
+        yarpProject = yarpProject.WithEndpoint
+        (
+          "http",
+          endpoint =>
+          {
+            endpoint.Port = ingressHttpPort.Value;
+            endpoint.IsProxied = false;
+          }
+        );
+      }
+
+      if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
+      {
+        // Display text IS the URL: a friendly label renders INSTEAD of the address in the
+        // dashboard's URL column, hiding the hostname the link exists to surface.
+        yarpProject = yarpProject.WithUrl(ingressPublicUrl, ingressPublicUrl);
+      }
+
+#if api
+      yarpProject = yarpProject.WithReference(apiServer);
+#endif
+#if grpc
+      yarpProject = yarpProject.WithReference(grpcServer);
+#endif
+#if web
+      // Routes live in the yarp project's Development configuration (the same Set transform and
+      // http://_http.web-server cluster the publish path builds below). WithReference injects
+      // services__web-server__* so that address resolves. The http health check is the catch-all
+      // SPA shell; with web excluded, "/" would 404.
+      yarpProject = yarpProject.WithReference(webServer);
+      yarpProject = yarpProject.WithHttpHealthCheck(endpointName: "http");
+#endif
+    }
+    else
+    {
+      // Create the YARP resource
+      IResourceBuilder<YarpResource> yarp = builder.AddYarp(YarpResourceName);
+
+      // Task 070-003: published, the ingress is the ONLY service with a host port, pinned to the
+      // ingress-port .env parameter (Compose would otherwise pick a random host port).
+      if (kubernetes is not null)
+      {
+        // Task 070-004 ingress decision (a): the cluster's ingress controller forwards everything to the
+        // YARP ingress, which keeps doing the per-service routing below. The Ingress resource's default
+        // backend is YARP's http endpoint (TLS terminates at the controller); the class is a parameter
+        // because the controller belongs to the cluster, not to this chart.
+        yarp = yarp.WithExternalHttpEndpoints();
+        kubernetes.AddIngress(KubernetesIngressResourceName)
+          .WithIngressClass(builder.AddParameter(IngressClassParameterName, "nginx", publishValueAsDefault: true))
+          .WithDefaultBackend(yarp.GetEndpoint("http"));
+      }
+      else if (containerApps is not null)
+      {
+        // Task 070-007: the ingress is the ONLY external container app (ACA's managed HTTPS ingress
+        // with a public FQDN); web-server, api-server and grpc-server keep internal-only ingress.
+        yarp = yarp.WithExternalHttpEndpoints();
+      }
+      else if (builder.ExecutionContext.IsPublishMode)
+      {
+        IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, "8080", publishValueAsDefault: true);
+        yarp = yarp
+          .WithExternalHttpEndpoints()
+          .PublishAsDockerComposeService((composeService, service) =>
+            service.Ports = [.. service.Ports.Select(containerPort => $"{ingressPort.AsEnvironmentPlaceholder(composeService)}:{containerPort}")]);
+      }
+
+      if (ingressHttpsPort is not null)
+      {
+        yarp = yarp.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort.Value);
+      }
+
+      if (ingressHttpPort is not null)
+      {
+        yarp = yarp.WithEndpoint("http", endpoint => endpoint.Port = ingressHttpPort.Value);
+      }
+
+      if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
+      {
+        // Display text IS the URL: a friendly label ("public") renders INSTEAD of the address in the
+        // dashboard's URL column, hiding the very hostname the link exists to surface.
+        yarp = yarp.WithUrl(ingressPublicUrl, ingressPublicUrl);
+      }
+
+#if web
+      // The ingress forwards web routes over the HTTP endpoint — TLS terminates at the ingress edge
+      // (and at Caddy on the public chain), not on this hop. This dates from 104-031's original-Host
+      // forwarding (an https hop validated Web.Server's localhost dev cert against the PUBLIC
+      // hostname and 502'd); task 070-008 sends the destination host instead but keeps the plain
+      // HTTP hop on run, Compose and Kubernetes. api/grpc routes stay on their default (https) endpoints.
+      // Under Publish:Target=aca the same named-endpoint address resolves to the https internal ingress
+      // (Aspire's https upgrade), which works: Host is the destination (ACA routes and validates TLS by
+      // it) and the public host travels in X-Forwarded-Host (task 070-008). No aca-specific web route.
+      // NOTE (13.4.6): YarpCluster(EndpointReference) still emits the service-level address
+      // "https+http://web-server", which service discovery resolves https-first — reintroducing the
+      // mismatch. The explicit named-endpoint service-discovery address pins the scheme AND the
+      // endpoint: http://_http.web-server resolves ONLY services__web-server__http__0.
+      // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
+      // NOT a resource reference — this explicit reference keeps the services__web-server__* env
+      // injected so the ingress can resolve that address.
+      yarp = yarp.WithReference(webServer);
+
+      // Readiness, not liveness (task 058-001): WITHOUT a health check the ingress reports Healthy
+      // the moment DCP reports the YARP container Running, which is strictly weaker than "serves
+      // traffic" — the DCP host-side proxy already accepts connections while Kestrel inside the
+      // container is still starting, so a request issued in that window gets an immediate
+      // connection EOF (HttpRequestException / "The response ended prematurely"), not an HTTP
+      // status. Measured gap: up to ~810ms after WaitForResourceHealthyAsync("ingress") returned.
+      // Every Aspire.Hosting.Testing suite that waits for "ingress" then sends a request raced
+      // that window. This HTTP check probes the SAME host-side endpoint URL those tests use, so
+      // Healthy now means "the proxy is wired AND YARP routed a request to a live web-server".
+      // Path "/" (the default) is the web catch-all route -> SPA shell 200, which holds in every
+      // environment — unlike "/health", which aspire-service-defaults maps only in Development.
+      // Web-gated: with web excluded there is no catch-all, so "/" would 404 forever.
+      // AppHost health checks run only while the AppHost runs the app (local dev + testing);
+      // publish mode emits a manifest and never executes them, so deployments are unaffected.
+      yarp = yarp.WithHttpHealthCheck(endpointName: "http");
+#endif
+      yarp = yarp.WithConfiguration(yarpConfiguration =>
+      {
+#if api
+        yarpConfiguration.AddRoute("/api/{**catch-all}", apiServer);
+#endif
+#if web
+        global::Aspire.Hosting.Yarp.YarpCluster webServerHttp = yarpConfiguration.AddCluster("web-server-http", "http://_http.web-server");
+
+        // Web.Server owns these top-level /api prefixes (generated: WebServerApiRoutePrefixes.All from
+        // the web-contracts ApiRoute templates — see the Design region). Each literal segment outranks
+        // the Api.Server catch-all above, so they win regardless of order.
+        // ForwardPublicHost (task 070-008): Host stays the destination; X-Forwarded-Host is SET
+        // (client value dropped) to the browser's public host, which HttpRequestHostAccessor reads for
+        // passkey RP-ID selection against the allowlist. Web.Server routes ONLY — the api/grpc
+        // backends keep YARP's defaults.
+        static global::Aspire.Hosting.Yarp.YarpRoute ForwardPublicHost(global::Aspire.Hosting.Yarp.YarpRoute route) =>
+          route.WithTransformXForwarded(xHost: global::Yarp.ReverseProxy.Transforms.ForwardedTransformActions.Set);
+
+        foreach (string apiPrefix in global::WebServerApiRoutePrefixes.All)
+        {
+          ForwardPublicHost(yarpConfiguration.AddRoute($"/{apiPrefix}/{{**catch-all}}", webServerHttp));
+        }
+
+        // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
+        // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
+        // (TWA0018 forbids bare `api` as a contracts prefix).
+        ForwardPublicHost(yarpConfiguration.AddRoute("/api", webServerHttp));
+        ForwardPublicHost(yarpConfiguration.AddRoute("/api/", webServerHttp));
 
 #endif
 #if grpc
-      yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
-        .WithTransformPathRemovePrefix("/grpc");
+        yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
+          .WithTransformPathRemovePrefix("/grpc");
 #endif
 #if web
-      // Catch-all to Web.Server (SPA + everything not owned above): same public-host forwarding as
-      // the literal /api routes so RP-ID selection sees the public host (task 070-008).
-      ForwardPublicHost(yarpConfiguration.AddRoute(webServerHttp));
+        // Catch-all to Web.Server (SPA + everything not owned above): same public-host forwarding as
+        // the literal /api routes so RP-ID selection sees the public host (task 070-008).
+        ForwardPublicHost(yarpConfiguration.AddRoute(webServerHttp));
 #endif
-    });
+      });
+    }
 #endif
 
     builder.Build().Run();

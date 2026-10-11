@@ -16,7 +16,9 @@ using global::Yarp.ReverseProxy.Configuration;
 // smokes. AddConfigurationServiceEndpointProvider remains for any remaining service-name
 // destinations (Api.Server / Grpc.Server).
 // Api is optional: CreateWebYarpAsync boots Web+Yarp only; CreateWebApiYarpAsync still passes both.
-// Listen URL is InProcTestPorts.YarpHostUrl (TIMEWARP_TEST_PORT_BASE; default :8443).
+// Listen URLs are InProcTestPorts.YarpHostUrl (https, default :8443) and YarpHttpUrl (http, the
+// next port). The http listener is how a trusted-proxy test proves X-Forwarded-Proto changed the
+// scheme: the https listener is already https, so it cannot show that the header supplied it.
 #endregion
 
 /// <summary>
@@ -32,6 +34,7 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
   private readonly ApiTestServerApplication? ApiTestServerApplication;
 #endif
   internal static readonly int YarpPort = InProcTestPorts.YarpPort;
+  internal static readonly int YarpHttpPort = InProcTestPorts.YarpHttpPort;
 
   /// <param name="configureServices">
   /// Optional extras after the built-in test wiring (C-create / <see cref="HostGraphFactory"/>).
@@ -52,7 +55,8 @@ public class YarpTestServerApplication : TestServerApplication<Yarp.Server.Progr
     (
       urls:
       [
-        InProcTestPorts.YarpHostUrl
+        InProcTestPorts.YarpHostUrl,
+        InProcTestPorts.YarpHttpUrl,
       ],
       webApplicationOptions:
         new WebApplicationOptions

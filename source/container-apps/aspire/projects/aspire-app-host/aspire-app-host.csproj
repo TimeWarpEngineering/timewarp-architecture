@@ -66,6 +66,9 @@
     <!--#if (web) -->
     <ProjectReference Include="../../../web/projects/web-server/web-server.csproj" />
     <!--#endif -->
+    <!--#if (yarp) -->
+    <ProjectReference Include="../../../yarp/yarp.csproj" />
+    <!--#endif -->
   </ItemGroup>
 
 

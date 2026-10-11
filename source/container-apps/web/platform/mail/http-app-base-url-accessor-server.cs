@@ -8,7 +8,9 @@
 // public origin: the first X-Forwarded-Proto value (only "http"/"https" are honored) and the first
 // X-Forwarded-Host value, port kept. Behind the YARP ingress Request.Scheme/Request.Host are the
 // internal web-server hop (plain http, destination Host), so they would mail an unusable link; the
-// Web.Server routes Set both headers (client values dropped), the same first-value rule as
+// Web.Server routes Set both headers from the ingress request. The ingress honors
+// X-Forwarded-Proto and X-Forwarded-Host only from a trusted proxy before that Set (task 305),
+// so a client-facing https origin survives the plain-http hop. The same first-value rule as
 // HttpRequestHostAccessor.GetPublicHost, which strips the port and so cannot be reused for a URL.
 // (3) Request.Scheme and Request.Host when no forwarded header is present (web-server reached
 // directly). Path base is appended in (2) and (3). Returns null when there is no request, no host,

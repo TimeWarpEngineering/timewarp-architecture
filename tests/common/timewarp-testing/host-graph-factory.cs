@@ -111,7 +111,7 @@ public static class HostGraphFactory
   {
     EnsurePortIsFree(ApiTestServerApplication.ApiPort, "Api.Server (ApiTestServerApplication)");
     EnsureWebPortsAreFree();
-    EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
+    EnsureYarpPortsAreFree();
 
     ApiTestServerApplication api = new(configureApi);
     WebTestServerApplication? web = null;
@@ -144,7 +144,7 @@ public static class HostGraphFactory
   )
   {
     EnsureWebPortsAreFree();
-    EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
+    EnsureYarpPortsAreFree();
 
     WebTestServerApplication web = new(configureWeb);
     try
@@ -158,6 +158,14 @@ public static class HostGraphFactory
       await web.DisposeAsync().ConfigureAwait(false);
       throw;
     }
+  }
+#endif
+
+#if(yarp)
+  private static void EnsureYarpPortsAreFree()
+  {
+    EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
+    EnsurePortIsFree(YarpTestServerApplication.YarpHttpPort, "Yarp HTTP (YarpTestServerApplication)");
   }
 #endif
 

@@ -17,6 +17,8 @@ internal class Constants
   public const string WebServerProjectResourceName = ServiceNames.WebServiceName;
   public const string GrpcServerProjectResourceName = ServiceNames.GrpcServiceName;
   public const string YarpProjectResourceName = ServiceNames.YarpServiceName;
+  // Literal, not an alias: dev-cli reads this file as text. The value must equal
+  // ServiceNames.IngressServiceName so TWA0007 accepts AddProject(YarpResourceName).
   public const string YarpResourceName = "ingress";
 
   // Postgres resource names are intentionally NOT ServiceNames.* values: TWA0007 and service

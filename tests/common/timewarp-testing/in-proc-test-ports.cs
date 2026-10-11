@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Defaults preserve the historical fixed ports (web=7000, web-http=7001, api=7255, yarp=8443).
-// TIMEWARP_TEST_PORT_BASE shifts the whole set by replacing the web HTTPS port; offsets stay
-// fixed (+0 / +1 / +255 / +1443) so a single env var keeps the spread without four overrides.
+// Defaults preserve the historical fixed ports (web=7000, web-http=7001, api=7255, yarp=8443,
+// yarp-http=8444). TIMEWARP_TEST_PORT_BASE shifts the whole set by replacing the web HTTPS port;
+// offsets stay fixed (+0 / +1 / +255 / +1443, and yarp-http is the next port) so a single env var
+// keeps the spread without four overrides.
 // template-smoke tiers 2–3 set a non-default base so generated-app hosts do not collide with
 // monorepo `dev test` on the defaults. `dev test` still serializes projects that share one base.
 // Resolved once per process (Lazy); child processes inherit via the environment.
@@ -48,6 +49,9 @@ public static class InProcTestPorts
   /// <summary>YARP gateway HTTPS port.</summary>
   public static int YarpPort => Resolved.Value.YarpPort;
 
+  /// <summary>YARP gateway HTTP port (trusted-proxy scheme tests; the next port after <see cref="YarpPort"/>).</summary>
+  public static int YarpHttpPort => YarpPort + 1;
+
   /// <summary>Web.Server HTTPS URL.</summary>
   [SuppressMessage(
     "Design",
@@ -76,17 +80,24 @@ public static class InProcTestPorts
     Justification = "Kestrel UseUrls and YARP DestinationConfig.Address take strings.")]
   public static string YarpHostUrl => Resolved.Value.YarpHostUrl;
 
+  /// <summary>YARP gateway HTTP URL.</summary>
+  [SuppressMessage(
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "Kestrel UseUrls and YARP DestinationConfig.Address take strings.")]
+  public static string YarpHttpUrl => $"http://localhost:{YarpHttpPort}";
+
   private static ResolvedPorts Resolve()
   {
     int basePort = DefaultBase;
     string? raw = Environment.GetEnvironmentVariable(EnvironmentVariableName);
     if (!string.IsNullOrWhiteSpace(raw))
     {
-      if (!int.TryParse(raw, out basePort) || basePort is < 1 or > 65535 - YarpOffset)
+      if (!int.TryParse(raw, out basePort) || basePort is < 1 or > 65535 - YarpOffset - 1)
       {
         throw new InvalidOperationException(
-          $"{EnvironmentVariableName} must be an integer port in [1, {65535 - YarpOffset}] " +
-          $"(got '{raw}'); yarp uses base+{YarpOffset}.");
+          $"{EnvironmentVariableName} must be an integer port in [1, {65535 - YarpOffset - 1}] " +
+          $"(got '{raw}'); yarp uses base+{YarpOffset} and the next port.");
       }
     }
 

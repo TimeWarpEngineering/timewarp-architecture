@@ -18,8 +18,10 @@
 // https://localhost:7000 in run mode). Why reading this header is safe — it reverses 104-031's
 // "no X-Forwarded-Host is consumed" stance, so the argument is recorded here:
 //   1. YARP overwrites, never appends: every Web.Server route carries the X-Forwarded transform with
-//      action Set, which drops any client-supplied X-Forwarded-Host (aspire-tests ingress smoke
-//      sends a forged one and asserts web-server sees the real public host).
+//      action Set. The value it writes is the ingress request's host after trusted-proxy forwarding
+//      (task 305). A peer that is not a configured trusted proxy cannot inject X-Forwarded-Host.
+//      Loopback is trusted (Caddy on this machine, and in-proc clients), so that peer's
+//      X-Forwarded-Host is what Set forwards. The standalone ingress smoke covers the untrusted peer.
 //   2. Selection only, never expansion: the value only SELECTS among the operator-approved
 //      WebAuthnOptions.AllowedRpIds, exactly as Host did. A forged value cannot mint a credential
 //      for an RP ID the operator did not approve; absent or unapproved means "host not allowed".
