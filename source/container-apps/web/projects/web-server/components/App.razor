@@ -24,6 +24,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TimeWarp.Architecture</title>
+  @* Static shell, outside HeadOutlet: crawlers do not run Blazor, and Prerender may be off. *@
+  <LinkPreviewMeta />
   <base href="/"/>
 
   @* Design tokens + global app styles + design-system components (plain CSS, replaces Tailwind) *@

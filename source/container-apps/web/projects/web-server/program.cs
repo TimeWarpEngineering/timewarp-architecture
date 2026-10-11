@@ -537,6 +537,10 @@ public partial class Program : IAspNetProgram
       .ValidateOnStart();
 
     serviceCollection
+      .AddFluentValidatedOptions<SiteMetadata, SiteMetadataValidator>(configuration)
+      .ValidateOnStart();
+
+    serviceCollection
       .AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator>(configuration)
       .ValidateOnStart();
 
