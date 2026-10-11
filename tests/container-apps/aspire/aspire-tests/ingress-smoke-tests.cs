@@ -1,8 +1,9 @@
 #region Purpose
 // Request-level smoke THROUGH the YARP ingress (task 117): guards the http-endpoint forwarding to
 // Web.Server that the 2026-07-22 RemoteCertificateNameMismatch 502 shipped around — backend health
-// checks alone proved 'backends up', not 'requests flow'. Task 070-008: proves the ingress SETS
-// X-Forwarded-Host (a forged client value never reaches web-server's passkey RP-ID selection).
+// checks alone proved 'backends up', not 'requests flow'. Task 070-008 / 305: proves the ingress
+// SETS X-Forwarded-Host after trusted-proxy forwarding. Loopback is trusted, so the test client's
+// X-Forwarded-Host is honored. The untrusted-peer case is the standalone yarp suite.
 // Extended for task 107: proves the GENERATED Web.Server /api carve-outs
 // (WebServerApiRoutePrefixes) actually reach Web.Server through the ingress — including
 // /api/identity (the 104-003 drift that shipped unreachable) and /api/Roles (a live drift the
@@ -98,8 +99,8 @@ public partial class IngressSmoke_Given_
     );
 
     // Backstop only, as of task 058-001: the AppHost now gives the yarp resource an HTTP health
-    // check, so the Healthy wait above already means "the DCP host proxy is wired and YARP
-    // answered a request" and this poll returns on its first attempt. It predates that check —
+    // check, so the Healthy wait above already means the http endpoint answered a request and
+    // this poll returns on its first attempt. It predates that check —
     // Healthy used to mean nothing more than "YARP container Running", and requests issued in the
     // gap got an immediate connection EOF ("response ended prematurely"), NOT an HTTP error. Kept
     // as a cheap, explicit reachability assertion for this closed-box edge suite. Any HTTP status
@@ -266,31 +267,49 @@ public partial class IngressSmoke_Given_
     body.ShouldContain("Hello, Smoke!");
   }
 
-  public static async Task ForgedForwardedHostThroughIngress_Should_BeOverwrittenWithPublicHost()
+  public static async Task TrustedForwardedHostThroughIngress_Should_SelectThatHost()
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
 
-    // Task 070-008: the client's real Host is localhost (allowlisted by default); it also forges
-    // X-Forwarded-Host. The ingress must SET (overwrite) X-Forwarded-Host with the Host it received,
-    // so web-server selects rp.id "localhost". Had the forged value survived (append, or no
-    // transform), selection would see "not-allowed.example" and answer 400 "Host not allowed".
+    // The client reaches the ingress from loopback, which is a trusted proxy (task 305). Its
+    // X-Forwarded-Host is applied before Set. not-allowed.example is not an approved RP ID.
     HttpResponseMessage response = await PostStartPasskeyAuthentication(httpClient, host: null, forwardedHost: "not-allowed.example");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    (await response.Content.ReadAsStringAsync()).ShouldContain("Host not allowed");
+  }
+
+  public static async Task TrustedForwardedHostNamingAllowedRpIdThroughIngress_Should_SelectThatRpId()
+  {
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+
+    // A foreign Host plus a trusted X-Forwarded-Host of an allowed RP ID selects that RP ID.
+    // An untrusted peer is covered by the standalone yarp suite: this closed-box client cannot
+    // present a non-loopback remote address.
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(httpClient, host: "smoke.test", forwardedHost: "localhost");
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     (await ReadRpId(response)).ShouldBe("localhost");
   }
 
-  public static async Task ForeignHostWithForgedAllowedForwardedHostThroughIngress_Should_BeHostNotAllowed()
+  public static async Task TrustedForwardedProtoAndHostThroughIngress_Should_RenderHttpsPublicOrigin()
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+    using HttpRequestMessage request = new(HttpMethod.Get, "/");
+    request.Headers.Accept.ParseAdd("text/html");
+    request.Headers.Add("X-Forwarded-Proto", "https");
+    request.Headers.Add("X-Forwarded-Host", "public.example.test");
 
-    // Task 070-008, the other direction: a foreign Host plus a forged X-Forwarded-Host naming an
-    // ALLOWED RP ID. The ingress overwrites the forged value with the foreign host, so selection is
-    // fail-closed — the forged header never selects (or expands) an RP ID.
-    HttpResponseMessage response = await PostStartPasskeyAuthentication(httpClient, host: "smoke.test", forwardedHost: "localhost");
+    HttpResponseMessage response = await httpClient.SendAsync(request);
 
-    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    (await response.Content.ReadAsStringAsync()).ShouldContain("Host not allowed");
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string body = await response.Content.ReadAsStringAsync();
+    const string origin = "https://public.example.test/";
+    const string image = "https://public.example.test/images/og-image.png";
+    body.ShouldContain($"<meta property=\"og:url\" content=\"{origin}\" />");
+    body.ShouldContain($"<meta property=\"og:image\" content=\"{image}\" />");
+    body.ShouldContain($"<meta name=\"twitter:image\" content=\"{image}\" />");
+    body.ShouldContain($"<link rel=\"canonical\" href=\"{origin}\" />");
   }
 
   private static async Task<HttpResponseMessage> PostStartPasskeyAuthentication(HttpClient httpClient, string? host, string forwardedHost)

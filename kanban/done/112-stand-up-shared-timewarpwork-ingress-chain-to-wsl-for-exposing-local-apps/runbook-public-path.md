@@ -13,7 +13,20 @@ visitor → *.timewarp.work (Cloudflare DNS, grey cloud) → 49.0.91.107
 ```
 
 Backend for `arch.timewarp.work`: Aspire YARP ingress `localhost:63620` (http, pinned;
-https 63610 is the local/dashboard entry). Requires `dev run` to be up.
+https 63610 is the local/dashboard entry). Requires `dev run` to be up. Run mode binds that
+http port in the yarp project (no extra proxy hop).
+
+## Trusted proxy (scheme and host)
+
+Caddy terminates TLS and proxies to `localhost:63620` over plain http, sending
+`X-Forwarded-Proto: https`. The yarp project honors `X-Forwarded-Proto` and `X-Forwarded-Host`
+only from a trusted peer, then sets those values toward web-server. The default `TrustedProxy`
+section (`source/container-apps/yarp/appsettings.json`) trusts loopback (`127.0.0.1` and `::1`),
+which is this Caddy hop, so link-preview tags and mail permalinks stay `https` with no extra
+setting. Do not clear the lists to "trust everyone": an empty allow-list makes the ingress
+ignore the headers. A proxy that is not on loopback must be added as `TrustedProxy:KnownProxies`
+(one address) or `TrustedProxy:KnownNetworks` (a CIDR such as `10.0.0.0/8`). `SiteMetadata:BaseUrl`
+on web-server still overrides link-preview tags when it is set; it does not fix mail.
 
 ## Kill switches (public exposure OFF)
 

@@ -291,15 +291,23 @@ The script is piped on stdin (`< efmigrations/web-migrations.sql` in bash; in pw
 
 All public traffic enters through the **YARP ingress**, which owns the routing table (generated
 web `/api` prefixes, the api catch-all, `/grpc` prefix strip, and the public-host forwarding for
-web routes). The routing is therefore identical in run mode, Compose and Kubernetes.
+web routes). Run mode loads that table from the yarp project. Publish mode (Compose, Kubernetes,
+Azure Container Apps) loads the same table from the AppHost onto the AddYarp image.
 
-- **Public host travels in `X-Forwarded-Host`.** YARP sends the destination host as `Host` on
-  every route and *sets* `X-Forwarded-Host` to the browser's host on web-server routes,
-  overwriting any value the client sent. web-server reads it only to select the passkey RP ID
-  from `WebAuthn:AllowedRpIds`; a value outside that list is rejected. Nothing else consumes
-  forwarded headers (no `UseForwardedHeaders`). If you put another proxy in front of the ingress,
-  it may set `X-Forwarded-Host` too; YARP still overwrites it with the `Host` it received, so make
-  that proxy preserve the public `Host`.
+- **Client-facing scheme and host.** On web-server routes YARP *sets* `X-Forwarded-Proto` and
+  `X-Forwarded-Host` from the request it is proxying, overwriting anything the client sent
+  web-server. Run mode (and the standalone yarp project) runs `UseTrustedProxyForwardedHeaders`
+  first, so those values are the ones a **trusted proxy** sent. The default `TrustedProxy` list
+  is loopback (`127.0.0.1` and `::1`), which is Caddy on the same machine; `dev run` needs no
+  extra setting. An empty list does not trust everyone — the headers are ignored. A proxy that
+  is not on loopback sets `TrustedProxy:KnownNetworks` to its CIDR (or `KnownProxies` to its
+  address) in the yarp appsettings. The pinned http port is bound by the yarp process itself, so
+  no extra hop rewrites `X-Forwarded-Proto` back to `http`. Publish mode keeps the AddYarp image,
+  which does not run that middleware; give that deployment a proxy whose hop to YARP is already
+  the public scheme, or run the yarp project and set `KnownNetworks`. web-server reads
+  `X-Forwarded-Host` only to select the passkey RP ID from `WebAuthn:AllowedRpIds` and does not
+  call `UseForwardedHeaders`. Link-preview tags and mail permalinks read the same headers for
+  the absolute origin (`SiteMetadata:BaseUrl` still wins for tags when it is set).
 
 - **Compose:** the ingress is the only service with a host port. Put TLS in front of it (your
   reverse proxy or load balancer).

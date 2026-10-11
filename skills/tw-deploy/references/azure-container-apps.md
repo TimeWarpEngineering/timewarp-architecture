@@ -121,7 +121,10 @@ ON_ERROR_STOP=1 -f efmigrations/web-migrations.sql`, through the same firewall r
   (`https://web-server.internal.<domain>`; Aspire's https upgrade stays on). That works because
   `Host` is the destination host (ACA routes and validates TLS by it) and the browser's public host
   travels in `X-Forwarded-Host`, which web-server reads for passkey RP-ID selection (task 070-008,
-  the same on every target). There is no aca-specific web route.
+  the same on every target). There is no aca-specific web route. The published ingress is the
+  AddYarp image, so it does not run the yarp project's trusted-proxy middleware (task 305). ACA's
+  external ingress is already https. A deployment that runs the yarp project behind a non-loopback
+  proxy sets `TrustedProxy:KnownNetworks` to that proxy's CIDR.
 
 **Deprovision.** `dev deprovision --target aca` runs `aspire destroy`, then prints the Key Vault
 purge. When `aspire destroy` has no record of the deployment (another machine or checkout deployed

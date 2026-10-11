@@ -87,7 +87,17 @@ tags only (not mail).
 
 ## Results (required before done)
 
-[What was implemented, files changed, key decisions, test outcomes]
+The scheme was lost on the YARP hop, not in Web.Server. `"X-Forwarded": "Set"` copies `Request.Scheme`, and the hop from Caddy is plain http, so Caddy's `X-Forwarded-Proto: https` was replaced before Web.Server read it. `HttpAppBaseUrlAccessor.GetRequestOrigin` (mail and `LinkPreview`) still reads that first forwarded value. Web.Server still does not call `UseForwardedHeaders`.
+
+The yarp project now calls `UseTrustedProxyForwardedHeaders` before `MapReverseProxy`. It applies `X-Forwarded-Proto` and `X-Forwarded-Host` with `ForwardLimit` 1, and only when the peer is in `TrustedProxy:KnownProxies` or `TrustedProxy:KnownNetworks`. An absent section trusts loopback (`127.0.0.1` and `::1`), which is Caddy on this machine. An explicit section replaces that default. Both lists empty skips the middleware: the framework treats two empty allow-lists as trust-everyone, and this ingress must not. A bad address or CIDR fails startup. `X-Forwarded-Host` is honored because Caddy sets it to the request Host and the public-origin smoke sends it without replacing `Host`. An untrusted peer still cannot inject proto or host; `Set` then forwards what the ingress itself accepted. `X-Forwarded-For` is not applied. Web.Server rate limiting reads `Connection.RemoteIpAddress` and does not use that header. `ASPNETCORE_FORWARDEDHEADERS_ENABLED` is not used: it omits Host and clears the allow-lists.
+
+Run mode executes the yarp project (`AddProject`, launch profile `Yarp`, `DisableForwardedHeaders`) so this middleware is the process on the pinned port. The http endpoint is not DCP-proxied: a proxy hop in front of it can replace `X-Forwarded-Proto` with the scheme that hop saw (http) and `ForwardLimit` 1 would drop Caddy's https. The resource name stays the literal `"ingress"` (`ServiceNames.IngressServiceName`) so the dev-cli text scan and TWA0007 still agree. Publish mode keeps the AddYarp image, so Compose, Kubernetes, and ACA manifests are unchanged. That image does not contain this middleware. ACA's external ingress is already https, so the stock image does not drop a client scheme there. A deployment of the yarp project behind a proxy that is not on loopback sets `KnownNetworks` to that proxy's CIDR.
+
+`SiteMetadata:BaseUrl` still wins for link-preview tags when it is set. Nothing hard-codes `arch.timewarp.work`.
+
+Files: `source/container-apps/yarp/trusted-proxy-forwarded-headers.cs`, `program.cs`, `global-usings.cs`, `appsettings.json`; AppHost `program.cs`, `constants.cs`, `aspire-app-host.csproj`; `ServiceNames.IngressServiceName`; in-proc http listener (`InProcTestPorts.YarpHttpUrl`, default `http://localhost:8444`); standalone and Aspire ingress smokes; task 112 `runbook-public-path.md`; `skills/tw-deploy`. Design notes on the mail accessor, link preview, and passkey host accessor record that the trust check stays on the ingress.
+
+Tests: `yarp-integration-tests` 10/10 (trusted `GET http://localhost:8444/` renders the four `https://public.example.test` tags; the same headers with remote address `203.0.113.5` stay `http://localhost:8444` and do not mention `public.example.test`). Aspire `IngressSmoke` 10/10 through the AppHost `ingress` http endpoint, including the same four tags. `aspire-app-host` and `yarp` build with 0 warnings. The untrusted remote address is a test-only `IStartupFilter`; it is not in the product pipeline.
 
 ### How to validate (required before done)
 

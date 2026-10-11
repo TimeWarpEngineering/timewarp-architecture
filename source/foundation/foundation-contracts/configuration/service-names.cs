@@ -27,7 +27,14 @@ public static class ServiceNames
   /// </summary>
   public const string WebServiceName = "web-server";
   /// <summary>
-  /// Aspire resource name for the YARP ingress.
+  /// Service-discovery name reserved for a yarp project resource. The public ingress resource is
+  /// <see cref="IngressServiceName"/>.
   /// </summary>
   public const string YarpServiceName = "yarp";
+
+  /// <summary>
+  /// Aspire resource name of the public ingress. Run mode hosts the yarp project under this name;
+  /// publish mode hosts the AddYarp resource under the same name.
+  /// </summary>
+  public const string IngressServiceName = "ingress";
 }

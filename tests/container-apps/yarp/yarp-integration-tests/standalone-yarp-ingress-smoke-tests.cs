@@ -2,8 +2,8 @@
 // Request-level smoke THROUGH the standalone YARP gateway (task 120): generated
 // WebServerApiRoutePrefixes carve-outs must reach Web.Server over the Development
 // http cluster, including foreign-Host (the 107 https→http / RemoteCertificateNameMismatch path),
-// and that the gateway SETS X-Forwarded-Host so a forged client value never reaches passkey RP-ID
-// selection (task 070-008).
+// and that the gateway SETS X-Forwarded-Host from the request after trusted-proxy forwarding
+// (task 070-008, task 305). Loopback is trusted. An untrusted peer's headers are ignored.
 // Aspire AppHost ingress remains aspire-tests; this suite boots yarp + web-server in-proc.
 #endregion
 
@@ -13,6 +13,9 @@
 // No Aspire, no Api host — the generated prefixes are Web.Server-owned. YarpTestServerApplication
 // rewrites the config Web.Server cluster onto WebHttpUrl so the hop matches Development
 // (http; Host is the destination, the public host travels in X-Forwarded-Host — task 070-008).
+// UntrustedRemoteIpStartupFilter runs before UseTrustedProxyForwardedHeaders and, only when the
+// test sends X-TimeWarp-Test-Remote-Ip, replaces Connection.RemoteIpAddress so the same headers
+// can be shown ignored. The filter is not part of the product pipeline.
 // Suite-shaped under tests/ per hybrid topology policy.
 #endregion
 
@@ -31,7 +34,10 @@ public class Smoke_Given_
 
   public static async Task SetupOnce()
   {
-    Graph = await HostGraphFactory.CreateWebYarpAsync();
+    Graph = await HostGraphFactory.CreateWebYarpAsync
+    (
+      configureYarp: services => services.AddSingleton<IStartupFilter, UntrustedRemoteIpStartupFilter>()
+    );
   }
 
   public static async Task CleanUpOnce()
@@ -77,27 +83,95 @@ public class Smoke_Given_
     body.ShouldContain("Hello, Smoke!");
   }
 
-  public static async Task ForgedForwardedHostThroughStandaloneYarp_Should_BeOverwritten()
+  public static async Task TrustedForwardedHostThroughStandaloneYarp_Should_SelectThatHost()
   {
-    // Task 070-008: the real Host is localhost (allowlisted); the forged X-Forwarded-Host is not.
-    // "X-Forwarded": "Set" overwrites it, so selection still answers rp.id "localhost".
+    // Loopback is a trusted proxy, so X-Forwarded-Host is applied before Set. not-allowed.example
+    // is not an approved RP ID.
     HttpResponseMessage response = await PostStartPasskeyAuthentication(host: null, forwardedHost: "not-allowed.example");
-
-    response.StatusCode.ShouldBe(HttpStatusCode.OK);
-    (await ReadRpId(response)).ShouldBe("localhost");
-  }
-
-  public static async Task ForeignHostWithForgedAllowedForwardedHostThroughStandaloneYarp_Should_BeHostNotAllowed()
-  {
-    // The forged header names an allowed RP ID; the gateway replaces it with the foreign Host, so
-    // selection fails closed.
-    HttpResponseMessage response = await PostStartPasskeyAuthentication(host: "smoke.test", forwardedHost: "localhost");
 
     response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     (await response.Content.ReadAsStringAsync()).ShouldContain("Host not allowed");
   }
 
-  private static async Task<HttpResponseMessage> PostStartPasskeyAuthentication(string? host, string forwardedHost)
+  public static async Task UntrustedForwardedHostThroughStandaloneYarp_Should_BeOverwritten()
+  {
+    // The same forged header from a peer outside KnownProxies is ignored. Set writes the Host
+    // YARP saw (localhost, allowlisted), so selection answers rp.id "localhost".
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(
+      host: null,
+      forwardedHost: "not-allowed.example",
+      remoteIp: "203.0.113.5");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await ReadRpId(response)).ShouldBe("localhost");
+  }
+
+  public static async Task TrustedForwardedHostNamingAllowedRpId_Should_SelectThatRpId()
+  {
+    // A foreign Host plus a trusted X-Forwarded-Host of an allowed RP ID selects that RP ID.
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(host: "smoke.test", forwardedHost: "localhost");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await ReadRpId(response)).ShouldBe("localhost");
+  }
+
+  public static async Task UntrustedForeignHostWithForgedAllowedForwardedHost_Should_BeHostNotAllowed()
+  {
+    // The forged header names an allowed RP ID. An untrusted peer is ignored, so Set writes the
+    // foreign Host and selection fails closed.
+    HttpResponseMessage response = await PostStartPasskeyAuthentication(
+      host: "smoke.test",
+      forwardedHost: "localhost",
+      remoteIp: "203.0.113.5");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    (await response.Content.ReadAsStringAsync()).ShouldContain("Host not allowed");
+  }
+
+  public static async Task TrustedForwardedProtoAndHost_Should_RenderHttpsPublicOrigin()
+  {
+    // Arrives on the http listener. The https scheme in the tags can only have come from the header.
+    using HttpClient httpClient = new() { BaseAddress = new Uri(InProcTestPorts.YarpHttpUrl) };
+    using HttpRequestMessage request = HtmlRequest();
+    request.Headers.Add("X-Forwarded-Proto", "https");
+    request.Headers.Add("X-Forwarded-Host", "public.example.test");
+
+    HttpResponseMessage response = await httpClient.SendAsync(request);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string body = await response.Content.ReadAsStringAsync();
+    const string origin = "https://public.example.test/";
+    const string image = "https://public.example.test/images/og-image.png";
+    body.ShouldContain($"<meta property=\"og:url\" content=\"{origin}\" />");
+    body.ShouldContain($"<meta property=\"og:image\" content=\"{image}\" />");
+    body.ShouldContain($"<meta name=\"twitter:image\" content=\"{image}\" />");
+    body.ShouldContain($"<link rel=\"canonical\" href=\"{origin}\" />");
+  }
+
+  public static async Task UntrustedForwardedProtoAndHost_Should_KeepTheSchemeAndHostYarpSaw()
+  {
+    using HttpClient httpClient = new() { BaseAddress = new Uri(InProcTestPorts.YarpHttpUrl) };
+    using HttpRequestMessage request = HtmlRequest();
+    request.Headers.Add("X-Forwarded-Proto", "https");
+    request.Headers.Add("X-Forwarded-Host", "public.example.test");
+    request.Headers.Add(UntrustedRemoteIpStartupFilter.HeaderName, "203.0.113.5");
+
+    HttpResponseMessage response = await httpClient.SendAsync(request);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string body = await response.Content.ReadAsStringAsync();
+    string origin = $"http://localhost:{InProcTestPorts.YarpHttpPort}/";
+    body.ShouldNotContain("public.example.test");
+    body.ShouldContain($"<meta property=\"og:url\" content=\"{origin}\" />");
+    body.ShouldContain($"<link rel=\"canonical\" href=\"{origin}\" />");
+  }
+
+  private static async Task<HttpResponseMessage> PostStartPasskeyAuthentication
+  (
+    string? host,
+    string forwardedHost,
+    string? remoteIp = null
+  )
   {
     // StartPasskeyAuthentication is [EndpointAllowAnonymous]: its first step is RP-ID selection.
     using HttpRequestMessage request = new(HttpMethod.Post, "/api/identity/passkey/authenticate/options")
@@ -110,8 +184,19 @@ public class Smoke_Given_
     }
 
     request.Headers.Add("X-Forwarded-Host", forwardedHost);
+    if (remoteIp is not null)
+    {
+      request.Headers.Add(UntrustedRemoteIpStartupFilter.HeaderName, remoteIp);
+    }
 
     return await YarpClient.SendAsync(request);
+  }
+
+  private static HttpRequestMessage HtmlRequest()
+  {
+    HttpRequestMessage request = new(HttpMethod.Get, "/");
+    request.Headers.Accept.ParseAdd("text/html");
+    return request;
   }
 
   private static async Task<string> ReadRpId(HttpResponseMessage response)
@@ -142,5 +227,34 @@ public class Smoke_Given_
 
     response.StatusCode.ShouldNotBe(HttpStatusCode.NotFound);
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+}
+
+/// <summary>
+/// Test-only. Sets <c>Connection.RemoteIpAddress</c> from <see cref="HeaderName"/> before the rest
+/// of the pipeline, including trusted-proxy forwarded headers.
+/// </summary>
+internal sealed class UntrustedRemoteIpStartupFilter : IStartupFilter
+{
+  internal const string HeaderName = "X-TimeWarp-Test-Remote-Ip";
+
+  public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+  {
+    return applicationBuilder =>
+    {
+      applicationBuilder.Use
+      (
+        async (context, nextMiddleware) =>
+        {
+          if (IPAddress.TryParse(context.Request.Headers[HeaderName].ToString(), out IPAddress? remoteIp))
+          {
+            context.Connection.RemoteIpAddress = remoteIp;
+          }
+
+          await nextMiddleware(context);
+        }
+      );
+      next(applicationBuilder);
+    };
   }
 }
