@@ -3,10 +3,15 @@
 ## Description
 
 Ask only knows about the page it is open on. Steven asked "where can I add a passkey" on Home
-(`/`), and Ask answered "This page (/) doesn't expose any passkey controls...". Ctrl-K already
-knows every page the user may open and every runnable command; Ask should get the same app-wide
-picture, from the same source, so it can say "Passkeys are added on Settings (/Settings)" and
-offer to take the user there.
+(`/`), and Ask answered "This page (/) doesn't expose any passkey controls...". The left-hand
+navigation menu already defines what is navigable for the current user. Ask must be able to
+navigate anywhere the menu can, from every page including Home, with its navigation tools
+**derived from the menu's source of truth**, not from a hand-written per-page map.
+
+Steven's correction (2026-10-11): do NOT keep or extend the hand-written per-page tool map
+(`page-agent-scope.cs:23-50`) or the per-page cases in `page-agent-context.cs`. Replace them
+with derivation from the nav menu data (`PageRegistry` from `[Page(..., Navigable = true)]`).
+One source feeds the menu, Ctrl-K, Ask and WebMCP.
 
 ### Current state (master `650fa24f2`, paths under `source/container-apps/web/projects/web-spa/` unless noted)
 
@@ -34,7 +39,21 @@ What the model gets today:
 - Instructions are capped at 8,000 chars:
   `source/container-apps/web/features/agent-chat/complete-agent-chat/complete-agent-chat-contracts.cs:30`.
 
-What Ctrl-K uses (the source to share):
+What the left-hand menu uses (the source of truth to derive from):
+
+- `components/NavMenu.razor`: every link is `<TimeWarpNavLink TPage=... />`, and
+  `components/elements/TimeWarpNavLink.razor:2` constrains `TPage` to `INavigationDestination`,
+  i.e. `[Page(..., Navigable = true)]`, so every menu link is a generated `PageRegistry.All` entry.
+- The menu still reads two hand-written things that are NOT on `[Page]`: the grouping
+  (`FluentNavCategory` "Admin", "Demos", "Developer", plus the `#if (api)`/`#if (grpc)` template
+  conditionals) and the `AuthorizeView Policy=AdminAccess` / `DeveloperAccess` region gates
+  around those groups. Each page's own `Policy` is on `PageRegistryEntry`. The "External" group
+  (Freeze Team, GitHub) is plain `FluentNavItem` hrefs, not registry pages.
+- Which registry entries the menu actually lists is the hand markup's choice; the registry may
+  contain Navigable pages that are not in the menu (and vice versa nothing outside the registry
+  can be an internal link).
+
+What Ctrl-K uses (same registry):
 
 - `features/application/command-palette/command-palette-roster.cs:43-82`
   `CommandPaletteRoster.BuildAsync`: pages from the generated `PageRegistry.All`
@@ -52,48 +71,71 @@ What Ctrl-K uses (the source to share):
   (`features/application/command-palette/command-palette-runner.cs:29-31`).
 
 Root cause: the model's whole world is the current route (tools + `page_context` + a prompt that
-says "this page only"). There is no app-wide map.
+says "this page only"), and its tools come from a hand-written per-route map instead of the
+menu/registry data. There is no app-wide map and no way to navigate.
 
 ## Requirements
 
-- Give the model the app-wide navigation map and the global action catalog, built from the
-  **same source as Ctrl-K** (`PageRegistry.All` + `IActionCatalog`, filtered with the same
-  `IAuthorizationService` checks as `CommandPaletteRoster`). No second hand-written page list.
-  Factor the shared filtering so palette and agent cannot drift.
-- Add a read-only tool (e.g. `site_map` / `list_pages`, never approval-wrapped, like
-  `page_context`) returning, for the current principal: each permitted page's title, URL, icon
-  name and a one-line description of what can be done there, plus the permitted catalog actions
-  grouped by the page whose buttons dispatch them (reverse of `PageAgentScope`) with their
-  descriptions.
-- Page descriptions: add an authored source (e.g. a `Description` on `[Page]` emitted into
-  `PageRegistryEntry`, or the catalog action descriptions per page) so "add a passkey" maps to
-  Settings. Keep it single-sourced and generated; an analyzer/test should flag a Navigable page
-  with no description.
-- Optionally add a short permitted site map to the instructions (stay well under the 8,000-char
-  cap), and change the "Drive this page only" prompt so the model may answer about and point to
-  other pages while still only *executing* the current page's tools.
-- Add a `navigate` tool (target must be a URL in the permitted map; refuse anything else) that
-  goes through `RouteState.ChangeRoute` like the palette. It follows the edit-mode approval rules
-  (asks first in "Ask before editing"). Answers should also include the page as a link. After
-  navigation, the existing rebuild-on-path-change picks up the new page's tools.
-- Signed-out: the map is the anonymous set (Home + Sign in), same as Ctrl-K.
-- WebMCP publishes the same read-only map tool (and `navigate` if adopted) with the same
-  filtering; update `documentation/developer/guides/webmcp-testing.md` and the Ask/agent
-  sections of the repo skills that describe the tool set.
-- Extend the Development fake upstream so a CI test can exercise the new tool (e.g. a prompt
-  mentioning "passkey" calls the map tool and answers with the Settings link).
+- **Derive, don't hand-write.** Delete the hand-written per-route map in
+  `features/application/agent/page-agent-scope.cs:23-50` and the per-page `Describe` cases in
+  `components/page-agent-context.cs:39-70` that exist only to feed it. Do not extend them.
+  Ask's navigation knowledge and tools come from the nav menu's source of truth:
+  `PageRegistry.All` (`[Page(..., Navigable = true)]`).
+- **One source for menu, Ctrl-K, Ask and WebMCP.** Move what the menu still hand-writes onto
+  `[Page]` so it is generated into `PageRegistryEntry`: menu group/category (and order), and any
+  page description used by the AI. Then `NavMenu.razor` renders from the registry (keeping the
+  template `#if` conditionals working, e.g. via the page types themselves being conditional),
+  and the group gates come from the pages' own `Policy` rather than separate `AuthorizeView`
+  regions. If a page needs to be navigable but hidden from the menu, that is a flag on `[Page]`,
+  not a separate list. Factor one policy-filtered "destinations for this principal" service
+  (the `IAuthorizationService` checks now in `CommandPaletteRoster.BuildAsync:60-66`) and use it
+  from NavMenu, `CommandPaletteRoster`, Ask (`CatalogAgentToolSet`/`CatalogAgentFunctions`) and
+  `WebMcpPublisher`, so they cannot drift.
+- **Guard.** Add a test or analyzer that fails if a second hand-written list of pages/routes for
+  the agent reappears (e.g. no route string literals / `typeof(...Page)` lists in
+  `features/application/agent/**`), and that the menu, palette and agent destination sets are
+  equal for the same principal.
+- **`site_map` tool (read-only).** Generated from that source, never approval-wrapped (like
+  `page_context`), available on every page including Home and signed-out: for the current
+  principal, each permitted destination's title, URL, group, icon and description (description
+  only if it lives on the `[Page]` declaration).
+- **`navigate` tool.** Generated from the same source, available on every page including Home.
+  Target must be a destination in the current principal's filtered set (exactly what the menu
+  shows that user); refuse anything else. Goes through `RouteState.ChangeRoute` like the
+  palette. Approval follows the edit-behavior setting (asks first in "Ask before editing").
+  Answers also include the page as a link. After navigation, the existing rebuild-on-path-change
+  picks up the new page.
+- **Page-scoped execution.** Page actions the agent may execute are also derived (e.g. from the
+  catalog actions the page's own components dispatch, or metadata on `[Page]`/the action),
+  not from a hand-written route map. If full derivation of per-page actions is not possible in
+  this task, record the gap in Notes rather than keeping the old map.
+- **System prompt.** Remove "Drive this page only"; the model may answer about and navigate to
+  any permitted destination. Optionally inline a short permitted site map; stay well under the
+  8,000-char instructions cap.
+- **Signed-out.** Destinations are the anonymous set the menu shows (plus Sign in), same as Ctrl-K.
+- **WebMCP** publishes the same `site_map` and `navigate` tools with the same filtering; update
+  `documentation/developer/guides/webmcp-testing.md` and the Ask/agent/nav sections of the repo
+  skills.
+- Extend the Development fake upstream so CI can exercise `site_map` and `navigate`.
+- **Tests.** Keep the passkey acceptance test: signed in, Ask on Home, "where can I add a passkey"
+  answers with the `/Settings` link and navigate (with approval) lands on `/Settings`. Add a test
+  that every menu destination the user can see is a `navigate` target (and nothing else is), for
+  admin, plain user, developer and anonymous principals.
+- **Acceptance.** Full ganda walk via `ganda task work 300 --yes`, CI green, merge only via
+  `ganda pr merge` after Steven approves.
 
 ## Checklist
 
-- [ ] Shared, policy-filtered page + action source used by both `CommandPaletteRoster` and the agent
-- [ ] Page descriptions single-sourced in the registry, with a guard for missing ones
-- [ ] Read-only site-map tool in Ask (`CatalogAgentFunctions`) and WebMCP (`WebMcpPublisher`)
-- [ ] `navigate` tool restricted to permitted registry URLs, approval per edit mode
-- [ ] System prompt updated (no longer "this page only"); size under the instructions cap
-- [ ] Fake upstream supports the new tool
-- [ ] Unit tests: payload contents and policy filtering (admin vs plain user vs anonymous; DeveloperAccess pages hidden without it); navigate refuses non-registry/unpermitted URLs
-- [ ] Integration test: Ask tool list and WebMCP list both include the map tool on every route
-- [ ] Real-browser (Playwright) test: signed in, Ask on Home, "where can I add a passkey" answers with the /Settings link (fake upstream ok); navigate with approval lands on /Settings
+- [ ] `page-agent-scope.cs` hand-written map and per-page `page-agent-context.cs` cases deleted
+- [ ] Menu grouping/description metadata on `[Page]`, generated into `PageRegistryEntry`; NavMenu renders from the registry
+- [ ] One policy-filtered destination service used by NavMenu, Ctrl-K, Ask and WebMCP
+- [ ] Guard test/analyzer against a second hand-written list; menu = palette = agent destinations
+- [ ] Read-only `site_map` tool and `navigate` tool on every page (Ask + WebMCP), approval per edit mode
+- [ ] System prompt no longer "this page only"; under the instructions cap
+- [ ] Fake upstream supports the new tools
+- [ ] Unit tests: policy filtering (admin / plain user / developer / anonymous); navigate refuses non-menu URLs
+- [ ] Test: every menu destination visible to the user is a navigate target
+- [ ] Real-browser (Playwright) test: Ask on Home, "where can I add a passkey" -> /Settings link; navigate with approval lands on /Settings
 - [ ] Docs and skills updated
 - [ ] Proof screenshots in the PR (Home question + answer, approval card, landed on Settings)
 
@@ -102,8 +144,12 @@ says "this page only"). There is no app-wide map.
 - Steven, 2026-10-11 00:19 ICT: "the AI should have context of all the damn pages like Ctrl-K
   has ... not just what can be done on the page." Screenshot: Ask on Home answering that `/`
   has no passkey controls.
-- Keep task 282's rule that *executable* tools are page-scoped; this task adds knowledge and
-  navigation, not cross-page execution.
+- Steven, 2026-10-11 (voice call): correction. Do not keep or extend the hand-written per-page
+  tool map. The left-hand nav menu already defines what is navigable; derive Ask's tools from
+  that same menu/registry data so navigation works from every page, and Ask can navigate
+  anywhere the menu can. Page descriptions, if any, live only on the `[Page]` declaration.
+- Keep task 282's rule that *executable* page actions are page-scoped; this task adds
+  app-wide knowledge and navigation, not cross-page execution.
 - Related: task 301 (Ask AI action missing from Ctrl-K).
 - Acceptance: full ganda walk via `ganda task work 300 --yes` (implement, review, audit,
   done-move commit, PR), CI green, merge only via `ganda pr merge` after Steven approves.
