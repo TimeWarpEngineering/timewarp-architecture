@@ -7,7 +7,8 @@
 // C-create in-proc ServiceProvider (TimeWarp.State + ClientPipeline), same shape as
 // SignOut_Should_: the closed-box Aspire host cannot observe IJSRuntime calls. The clipboard is
 // an externality, so IJSRuntime is a recording fake (import → module → "WriteText"); throwing a
-// JSException from the module stands in for a denied clipboard.
+// JSException from the module stands in for a denied clipboard, and a TaskCanceledException
+// for a JS-interop timeout.
 // The dispatch test renders MessageBars on ClickRenderer, a minimal Renderer that records each
 // element's onclick handler id by data-qa and fires it with DispatchEventAsync (no bUnit in this
 // repo). Clicking MessageBarCopy must reach the fake clipboard through the real pipeline, which
@@ -96,6 +97,22 @@ public class CopyMessage_Should_
     warning.Body.ShouldBe(CopyFailedBody);
   }
 
+  public static async Task Report_Warning_When_Clipboard_Times_Out()
+  {
+    using CopySpa spa = new(clipboardThrows: false, clipboardTimesOut: true);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new AddNotificationActionSet.Action(MessageBarIntent.Error, "Save failed"));
+    string id = scope.Store.GetState<NotificationState>().Messages[0].Id;
+
+    await scope.Send(new CopyMessageActionSet.Action(id));
+
+    NotificationState state = scope.Store.GetState<NotificationState>();
+    state.CopiedMessageId.ShouldBeNull();
+    state.Messages.Count.ShouldBe(2, "a timeout is a Warning, not a pipeline Error bar");
+    state.Messages.Single(message => message.Intent == MessageBarIntent.Warning).Title.ShouldBe(CopyFailedTitle);
+    state.Messages.ShouldNotContain(message => message.Intent == MessageBarIntent.Error && message.Title != "Save failed");
+  }
+
   public static async Task Ignore_Unknown_Id()
   {
     using CopySpa spa = new(clipboardThrows: false);
@@ -135,9 +152,9 @@ public class CopyMessage_Should_
     public IServiceProvider ServiceProvider { get; }
     public RecordingJsRuntime JsRuntime { get; }
 
-    public CopySpa(bool clipboardThrows)
+    public CopySpa(bool clipboardThrows, bool clipboardTimesOut = false)
     {
-      JsRuntime = new RecordingJsRuntime(clipboardThrows);
+      JsRuntime = new RecordingJsRuntime(clipboardThrows, clipboardTimesOut);
       ServiceCollection services = new();
 
       services.AddLogging();
@@ -272,9 +289,9 @@ public class CopyMessage_Should_
 
   private sealed class RecordingJsRuntime : IJSRuntime
   {
-    public RecordingJsRuntime(bool clipboardThrows)
+    public RecordingJsRuntime(bool clipboardThrows, bool clipboardTimesOut)
     {
-      Module = new RecordingModule(clipboardThrows);
+      Module = new RecordingModule(clipboardThrows, clipboardTimesOut);
     }
 
     public string? ImportedSpecifier { get; private set; }
@@ -307,10 +324,12 @@ public class CopyMessage_Should_
   private sealed class RecordingModule : IJSObjectReference
   {
     private readonly bool Throws;
+    private readonly bool TimesOut;
 
-    public RecordingModule(bool throws)
+    public RecordingModule(bool throws, bool timesOut)
     {
       Throws = throws;
+      TimesOut = timesOut;
     }
 
     public List<(string Export, string Text)> Calls { get; } = [];
@@ -332,6 +351,11 @@ public class CopyMessage_Should_
       if (Throws)
       {
         throw new JSException("NotAllowedError: Write permission denied.");
+      }
+
+      if (TimesOut)
+      {
+        throw new TaskCanceledException("JS interop call timed out.");
       }
 
       return ValueTask.FromResult<TValue>(default!);

@@ -44,6 +44,8 @@ gets a small copy-to-clipboard button. It copies the message's Title plus Body a
 
 - Created: 2026-10-12 (cockpit, per Steve)
 - 2026-10-12: implemented under `ganda task work` (implement oracle, Claude).
+- 2026-10-12: implementation review under `ganda task work` (review oracle, Claude Opus 5.5, effort 2,
+  roster general).
 
 ## Results
 
@@ -68,7 +70,7 @@ gets a small copy-to-clipboard button. It copies the message's Title plus Body a
 - **CSS:** no change to `MessageBars.razor.css`. The `fluent-message-bar` actions slot already
   spaces Copy and Dismiss.
 - **Tests:** `tests/container-apps/web/web-spa-integration-tests/features/notification/notification-copy-tests.cs`
-  has 6 tests, all passing. They cover title-only format, title+body format, a write that
+  has 6 tests, all passing (7 after review M1 added the timeout case). They cover title-only format, title+body format, a write that
   confirms and then expires, the Warning on a clipboard `JSException`, an unknown id, and the
   Copy button dispatching `CopyMessage`. The dispatch test uses a minimal `Renderer` that fires
   the button's onclick handler and checks that the fake clipboard received the text. A fresh
@@ -82,12 +84,20 @@ gets a small copy-to-clipboard button. It copies the message's Title plus Body a
 - `dev test` rewrites Playwright screenshots under `kanban/done/*`. They were restored and not
   committed.
 
+- **Review disposition: clean.** The review ran 2 rounds at effort 2 with a general reviewer.
+  Final counts: bug 0, suggestion 1 fixed, nit 0, open 0, wontfix 0. M1: the CopyMessage
+  handler now treats a JS-interop timeout (an `OperationCanceledException` while the token is
+  live) as a failed copy and shows the Warning. A cancelled token (host disposed) is swallowed.
+  Test `Report_Warning_When_Clipboard_Times_Out` was added, and `CopyMessage_Should_` now
+  passes 7/7. Artifacts: `review/review-framework.md`, `review/round-2/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 - **Smoke:** `./tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests --filter-class CopyMessage_Should_`
   (after `dev build`). Manually, in `dev run`, cause any notification (for example a failed
   action), then click the copy icon on the bar and paste.
-- **Expect:** 6 passed, 0 failed. In the browser the icon becomes a checkmark labelled "Copied"
+- **Expect:** 7 passed, 0 failed. In the browser the icon becomes a checkmark labelled "Copied"
   for about 2s, and the pasted text is the bar title, a blank line, then the body. With
   clipboard permission blocked, a Warning bar "Couldn't copy the message." appears and nothing
   throws.
