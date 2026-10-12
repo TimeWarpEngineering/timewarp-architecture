@@ -22,7 +22,7 @@
 // is used (WASM claim policies do not need the scheme).
 //
 // Task 183: not sealed — web-server registers HostedIdentitySessionAuthenticationStateProvider
-// which prefers HttpContext.User during prerender (SPA HttpClient loopback cannot forward the
+// which prefers HttpContext.User during prerender (SPA HttpClient self-call cannot forward the
 // identity-session cookie). Pure WASM still uses this type via IdentitySessionAuthenticationRegistration.
 #endregion
 

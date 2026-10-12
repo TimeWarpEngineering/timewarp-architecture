@@ -8,7 +8,7 @@
          (e.g. the counter's IncrementCounter action dispatched from JS). A 2b5a1ff6 path-rename had
          silently dropped this, breaking the JS initializer + JS-interop dispatch. -->
     <AssemblyName>Web.Spa</AssemblyName>
-    <DefineConstants>grpc;api;web</DefineConstants>
+    <DefineConstants>$(DefineConstants);grpc;api;web</DefineConstants>
     <Nullable>enable</Nullable>
     <!-- Interactive-Auto serves users whose browser culture differs from the server's; without
          full ICU data the WASM runtime aborts on startup with "Blazor detected a change in the

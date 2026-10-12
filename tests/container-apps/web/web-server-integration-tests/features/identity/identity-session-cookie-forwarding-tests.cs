@@ -1,7 +1,8 @@
 #region Purpose
 // Host-free coverage that IdentitySessionCookieForwardingHandler copies Cookie, mock
-// principal, and circuit host (X-Forwarded-Host, else Request.Host) from HttpContext onto the
-// outgoing loopback request without rewriting HTTP Host (HTTPS TLS must keep validating the URI host).
+// principal, and the circuit's public origin (forwarded proto/host, else Request.Scheme/Host; port
+// kept) from HttpContext onto the outgoing self-call's X-Forwarded-Host / X-Forwarded-Proto without
+// rewriting HTTP Host (TLS on the https hop must keep validating the URI host).
 #endregion
 
 namespace IdentitySessionCookieForwarding_;
@@ -9,11 +10,15 @@ namespace IdentitySessionCookieForwarding_;
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Server;
 
 public class Copies_
 {
+  private const string ForwardedHostHeader = "X-Forwarded-Host";
+  private const string ForwardedProtoHeader = "X-Forwarded-Proto";
+
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Copies_>();
 
@@ -54,14 +59,17 @@ public class Copies_
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.Contains("Cookie").ShouldBeFalse();
     inner.LastRequest.Headers.Contains(MockAuthenticationDefaults.MockPrincipalIdHeader).ShouldBeFalse();
-    inner.LastRequest.Headers.Contains(MockAuthenticationDefaults.CircuitHostHeader).ShouldBeFalse();
+    inner.LastRequest.Headers.Contains(ForwardedHostHeader).ShouldBeFalse();
+    inner.LastRequest.Headers.Contains(ForwardedProtoHeader).ShouldBeFalse();
   }
 
-  public static async Task Circuit_Host_From_HttpContext_Is_Copied_Port_Stripped_Without_Setting_Http_Host()
+  public static async Task Public_Origin_From_HttpContext_Keeps_Port_And_Scheme_Without_Setting_Http_Host()
   {
+    // Run mode, web-server reached directly: Request.Scheme/Host are the browser's origin.
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
-    httpContext.Request.Host = new HostString("arch.timewarp.work", 443);
+    httpContext.Request.Scheme = "https";
+    httpContext.Request.Host = new HostString("localhost", 63610);
 
     IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
     {
@@ -72,15 +80,16 @@ public class Copies_
     await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
-      .ShouldContain("arch.timewarp.work");
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader).ShouldBe(["localhost:63610"]);
+    inner.LastRequest.Headers.GetValues(ForwardedProtoHeader).ShouldBe(["https"]);
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }
 
-  public static async Task Circuit_Host_Is_Copied_When_HttpContext_Has_No_Cookie()
+  public static async Task Public_Host_Is_Copied_When_HttpContext_Has_No_Cookie()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "https";
     httpContext.Request.Host = new HostString("arch.timewarp.work");
 
     IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
@@ -92,20 +101,23 @@ public class Copies_
     await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("arch.timewarp.work");
+    inner.LastRequest.Headers.GetValues(ForwardedProtoHeader).ShouldBe(["https"]);
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
     inner.LastRequest.Headers.Contains("Cookie").ShouldBeFalse();
   }
 
-  public static async Task Circuit_Host_From_X_Forwarded_Host_When_Behind_Ingress()
+  public static async Task Public_Origin_From_Forwarded_Headers_When_Behind_Ingress_Keeps_Port_And_Proto()
   {
-    // Behind YARP the circuit request's Host is the destination (web-server); the public host
-    // arrives in the ingress-set X-Forwarded-Host (task 070-008).
+    // Behind YARP the circuit request's Host is the destination (web-server) and its scheme is the
+    // plain-http hop; the public origin arrives in the ingress-set X-Forwarded-Host/Proto (task 070-008).
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "http";
     httpContext.Request.Host = new HostString("web-server", 8080);
-    httpContext.Request.Headers["X-Forwarded-Host"] = "arch.timewarp.work:443";
+    httpContext.Request.Headers[ForwardedHostHeader] = "arch.timewarp.work:8443";
+    httpContext.Request.Headers[ForwardedProtoHeader] = "https";
 
     IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
     {
@@ -113,18 +125,46 @@ public class Copies_
     };
 
     using HttpClient client = new(handler);
-    await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
+    await client.GetAsync("http://web-server/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
-      .ShouldBe(["arch.timewarp.work"]);
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader).ShouldBe(["arch.timewarp.work:8443"]);
+    inner.LastRequest.Headers.GetValues(ForwardedProtoHeader).ShouldBe(["https"]);
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }
 
-  public static async Task Http_Host_Already_Set_Is_Left_Alone_And_Circuit_Host_Is_Copied()
+  public static async Task Self_Call_Headers_Give_Rp_Id_Without_Port_And_Mail_Origin_With_Port()
+  {
+    // The self-call hop's two readers: RP-ID selection strips the port, the mail origin keeps it.
+    CapturingHandler inner = new();
+    DefaultHttpContext circuit = new();
+    circuit.Request.Host = new HostString("web-server", 8080);
+    circuit.Request.Headers[ForwardedHostHeader] = "arch.timewarp.work:8443";
+    circuit.Request.Headers[ForwardedProtoHeader] = "https";
+
+    IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = circuit })
+    {
+      InnerHandler = inner
+    };
+
+    using HttpClient client = new(handler);
+    await client.GetAsync("http://web-server/api/feedback");
+
+    DefaultHttpContext selfCall = new();
+    selfCall.Request.Scheme = "http";
+    selfCall.Request.Host = new HostString("web-server");
+    selfCall.Request.Headers[ForwardedHostHeader] = inner.LastRequest!.Headers.GetValues(ForwardedHostHeader).ToArray();
+    selfCall.Request.Headers[ForwardedProtoHeader] = inner.LastRequest.Headers.GetValues(ForwardedProtoHeader).ToArray();
+
+    HttpRequestHostAccessor.GetPublicHost(selfCall.Request).ShouldBe("arch.timewarp.work");
+    HttpAppBaseUrlAccessor.GetRequestOrigin(selfCall.Request).ShouldBe(new Uri("https://arch.timewarp.work:8443/"));
+  }
+
+  public static async Task Http_Host_Already_Set_Is_Left_Alone_And_Public_Host_Is_Copied()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "https";
     httpContext.Request.Host = new HostString("arch.timewarp.work");
 
     IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
@@ -139,14 +179,15 @@ public class Copies_
 
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.Host.ShouldBe("already.set.test");
-    inner.LastRequest.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("arch.timewarp.work");
   }
 
-  public static async Task Circuit_Host_Already_Set_Is_Not_Overwritten()
+  public static async Task Public_Host_Already_Set_Is_Not_Overwritten()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "https";
     httpContext.Request.Host = new HostString("arch.timewarp.work");
 
     IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
@@ -156,15 +197,38 @@ public class Copies_
 
     using HttpClient client = new(handler);
     using HttpRequestMessage request = new(HttpMethod.Get, "https://localhost:63611/api/identity/passkey/authenticate");
-    request.Headers.TryAddWithoutValidation(MockAuthenticationDefaults.CircuitHostHeader, "already.set.test");
+    request.Headers.TryAddWithoutValidation(ForwardedHostHeader, "already.set.test");
     await client.SendAsync(request);
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("already.set.test");
-    inner.LastRequest.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest.Headers.GetValues(ForwardedHostHeader)
       .ShouldNotContain("arch.timewarp.work");
+    inner.LastRequest.Headers.GetValues(ForwardedProtoHeader).ShouldBe(["https"]);
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
+  }
+
+  public static async Task Public_Proto_Already_Set_Is_Not_Overwritten()
+  {
+    CapturingHandler inner = new();
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "http";
+    httpContext.Request.Host = new HostString("arch.timewarp.work", 8443);
+
+    IdentitySessionCookieForwardingHandler handler = new(new HttpContextAccessor { HttpContext = httpContext })
+    {
+      InnerHandler = inner
+    };
+
+    using HttpClient client = new(handler);
+    using HttpRequestMessage request = new(HttpMethod.Get, "https://localhost:63611/api/identity/passkey/authenticate");
+    request.Headers.TryAddWithoutValidation(ForwardedProtoHeader, "https");
+    await client.SendAsync(request);
+
+    inner.LastRequest.ShouldNotBeNull();
+    inner.LastRequest!.Headers.GetValues(ForwardedProtoHeader).ShouldBe(["https"]);
+    inner.LastRequest.Headers.GetValues(ForwardedHostHeader).ShouldBe(["arch.timewarp.work:8443"]);
   }
 
   private sealed class CapturingHandler : HttpMessageHandler

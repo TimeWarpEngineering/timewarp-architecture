@@ -44,8 +44,7 @@ public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.
 
   private static void ConfigureServicesCallback(IServiceCollection serviceCollection)
   {
-    Uri webServiceUri = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName) ?? new Uri(ApiHostUrl);
-    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = webServiceUri);
+    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(ApiHostUrl));
   }
 
   protected override IWebApiTestService CreateWebApiTestService(WebApplicationHost<Api.Server.Program> webApplicationHost) =>

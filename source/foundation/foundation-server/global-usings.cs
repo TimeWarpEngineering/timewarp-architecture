@@ -2,7 +2,6 @@
 // Project-wide using directives so individual files omit repeated imports.
 #endregion
 
-global using Ardalis.GuardClauses;
 global using FastEndpoints;
 global using FastEndpoints.OpenApi;
 global using FluentValidation;

@@ -61,10 +61,14 @@ public static class HostGraphFactory
   /// see web-server-integration-tests call sites' api-flag-guarded branch (task 145-004 R2-1:
   /// SmokeNoApi regression) — and by any class that genuinely doesn't need a live Api host.
   /// </summary>
-  public static async Task<HostGraph> CreateWebAsync(Action<IServiceCollection>? configureWeb = null)
+  public static async Task<HostGraph> CreateWebAsync
+  (
+    Action<IServiceCollection>? configureWeb = null,
+    IReadOnlyDictionary<string, string?>? serviceEndpoints = null
+  )
   {
     EnsureWebPortsAreFree();
-    WebTestServerApplication web = new(configureWeb);
+    WebTestServerApplication web = new(configureWeb, serviceEndpoints);
     await Task.CompletedTask.ConfigureAwait(false);
     return new HostGraph { Web = web };
   }

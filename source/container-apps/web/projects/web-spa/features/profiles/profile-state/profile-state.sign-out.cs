@@ -12,7 +12,7 @@
 //      SignOutBrowserSession.Path; the server ends the session (EndBrowserSession.Handler),
 //      returns the expired identity-session Set-Cookie to the browser, and 303s to /Login.
 // Why not the old IWebServerApiService POST + NotifySessionChanged + soft NavigateTo: under
-// InteractiveServer that POST is a server→server loopback (cookie forwarded by
+// InteractiveServer that POST is a server→server self-call (cookie forwarded by
 // IdentitySessionCookieForwardingHandler), so the cookie deletion landed on the HttpClient
 // response, the hosted AuthenticationStateProvider was never re-evaluated, and the soft
 // navigation kept the circuit's signed-in principal. The full navigation supersedes all three:

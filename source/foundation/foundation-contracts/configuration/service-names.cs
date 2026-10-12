@@ -3,8 +3,10 @@
 #endregion
 
 #region Design
-// Aspire AppHost resource names must equal these constants: service discovery resolves
-// addresses by name, and a mismatch yields a null BaseAddress during server-side rendering.
+// Aspire AppHost resource names must equal these constants: server-side named HttpClients use
+// https+http://{name} and service discovery resolves that by resource name, so a mismatch fails
+// the first server-side call. Browser clients never use these names; they call the ingress origin
+// (IngressPaths).
 #endregion
 
 namespace TimeWarp.Foundation.Configuration;

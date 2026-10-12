@@ -6,7 +6,7 @@
 #region Design
 // Scoped over IHttpContextAccessor, mirroring HttpRequestHostAccessor. Returns the header verbatim;
 // RegistrationContext caps and classifies it. No forwarded-header handling is needed: User-Agent is
-// end-to-end (the task-112 ingress passes it through untouched, and the InteractiveServer loopback
+// end-to-end (the task-112 ingress passes it through untouched, and the InteractiveServer self-call
 // hop copies it via IdentitySessionCookieForwardingHandler).
 #endregion
 

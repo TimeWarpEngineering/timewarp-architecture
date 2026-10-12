@@ -1,7 +1,6 @@
 #region Purpose
-// IRequestHostAccessor implementation: reads the circuit host (internal header) when the request
-// Host is loopback, otherwise the public host (X-Forwarded-Host, else Request.Host; port stripped)
-// so identity handlers can select a WebAuthn RP ID per request.
+// IRequestHostAccessor implementation: reads the public host (X-Forwarded-Host, else Request.Host;
+// port stripped) so identity handlers can select a WebAuthn RP ID per request.
 #endregion
 
 #region Design
@@ -25,19 +24,27 @@
 //   2. Selection only, never expansion: the value only SELECTS among the operator-approved
 //      WebAuthnOptions.AllowedRpIds, exactly as Host did. A forged value cannot mint a credential
 //      for an RP ID the operator did not approve; absent or unapproved means "host not allowed".
-//   3. Narrow consumption: this accessor (and IdentitySessionCookieForwardingHandler, which copies
-//      GetPublicHost onto the loopback hop) is the only reader. No UseForwardedHeaders — that would
-//      also rewrite scheme and remote IP. Entra keeps its explicit PublicOrigin.
+//   3. Narrow consumption: X-Forwarded-Host is read by this accessor (RP-ID selection, port
+//      stripped), by HttpAppBaseUrlAccessor.GetRequestOrigin (absolute mail/link-preview URLs, port
+//      kept), and by IdentitySessionCookieForwardingHandler, which copies that origin onto the
+//      self-call hop. None of them rewrites Request.Host. Web.Server never calls UseForwardedHeaders
+//      itself. Aspire does set
+//      ASPNETCORE_FORWARDEDHEADERS_ENABLED=true on every project resource with endpoints in
+//      publish mode only (Compose/Kubernetes/ACA output; Aspire.Hosting 13.6). That turns on ASP.NET Core's ForwardedHeaders middleware
+//      for X-Forwarded-For and X-Forwarded-Proto only — not X-Forwarded-Host — with the known
+//      proxies/networks cleared, so Request.Scheme and RemoteIpAddress follow the ingress's
+//      headers while Request.Host stays the destination. Entra keeps its explicit PublicOrigin.
 //   4. Posture equals the old one: where web-server is directly reachable (run mode), a client can
 //      send its own X-Forwarded-Host just as it could always send its own Host. Point 2 is what makes
 //      both safe; the forwarded host is never trusted input, only a selector.
-// InteractiveServer/Auto named-HttpClient loopback: IdentitySessionCookieForwardingHandler copies
-// the circuit request's public host onto X-TimeWarp-Circuit-Host. This accessor honors that internal
-// header only when Request.Host.Host is loopback (localhost case-insensitive, or an
-// IPAddress.IsLoopback address such as 127.0.0.1 / ::1) so HTTPS loopback TLS still validates
-// localhost against the ASP.NET dev cert while RP-ID selection sees the circuit/page host. On the
-// public path Host is not loopback, so a client-supplied copy of the header is ignored.
-// HTTP Host is left unset on the loopback hop.
+// InteractiveServer/Auto self-call (task 312): the web-server named HttpClient reaches this app
+// through service discovery — https://localhost in run mode, http://web-server on published
+// targets (not loopback). IdentitySessionCookieForwardingHandler sets X-Forwarded-Host (port kept)
+// and X-Forwarded-Proto on that hop to the circuit request's public origin; this accessor strips the
+// port again, so this one rule serves both hops. The retired
+// X-TimeWarp-Circuit-Host header was honored only on a loopback Host and so failed on published
+// targets; X-Forwarded-Host needs no extra trust (points 1, 2 and 4). HTTP Host is left unset on
+// the hop so TLS keeps validating the discovered host.
 // Null-safe: no HttpContext (e.g. resolved outside a request) returns null rather than throwing,
 // which the selection treats as a fail-closed "host not allowed" — same posture as
 // HttpCurrentPrincipalAccessor's null return for no authenticated caller.
@@ -46,7 +53,6 @@
 namespace TimeWarp.Architecture.Services;
 
 using Microsoft.AspNetCore.HttpOverrides;
-using System.Net;
 using TimeWarp.Architecture.Abstractions;
 
 public sealed class HttpRequestHostAccessor : IRequestHostAccessor
@@ -66,12 +72,6 @@ public sealed class HttpRequestHostAccessor : IRequestHostAccessor
       return null;
     }
 
-    string circuitHost = httpContext.Request.Headers[MockAuthenticationDefaults.CircuitHostHeader].ToString();
-    if (!string.IsNullOrEmpty(circuitHost) && IsLoopbackHost(httpContext.Request.Host.Host))
-    {
-      return circuitHost;
-    }
-
     return GetPublicHost(httpContext.Request);
   }
 
@@ -85,26 +85,5 @@ public sealed class HttpRequestHostAccessor : IRequestHostAccessor
     string? host = string.IsNullOrEmpty(forwardedHost) ? request.Host.Host : new HostString(forwardedHost).Host;
 
     return string.IsNullOrEmpty(host) ? null : host;
-  }
-
-  private static bool IsLoopbackHost(string? host)
-  {
-    if (string.IsNullOrEmpty(host))
-    {
-      return false;
-    }
-
-    if (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase))
-    {
-      return true;
-    }
-
-    string candidate = host;
-    if (candidate.StartsWith('[', StringComparison.Ordinal) && candidate.EndsWith(']', StringComparison.Ordinal))
-    {
-      candidate = candidate[1..^1];
-    }
-
-    return IPAddress.TryParse(candidate, out IPAddress? address) && IPAddress.IsLoopback(address);
   }
 }

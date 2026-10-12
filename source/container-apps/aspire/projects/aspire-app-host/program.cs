@@ -12,7 +12,8 @@
 // a kubectl port-forward of the ingress controller); both wrap the by-hand commands recorded here.
 // Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
 // Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
-// injected services__{name}__https__0 env vars by resource name; server-side BaseAddress resolution breaks otherwise.
+// injected services__{name}__{endpoint}__0 env vars by resource name, and Web.Server's https+http://{name} named
+// clients resolve through them (task 312); a mismatch fails the first server-side call.
 // Postgres is not a project: a container resource in run mode, Compose and Kubernetes, an Azure Database for
 // PostgreSQL Flexible Server for aca. Its connection string is injected into Web.Server keyed by the
 // DATABASE resource name (constants.cs PostgresDatabaseResourceName), and PostgresDbModule reads it by that same key.
@@ -671,8 +672,9 @@ internal class Program
 
 #endif
 #if grpc
-        yarpConfiguration.AddRoute("/grpc/{**catch-all}", grpcServer)
-          .WithTransformPathRemovePrefix("/grpc");
+        // The SPA's gRPC-Web client targets the ingress origin plus this prefix (task 312).
+        yarpConfiguration.AddRoute(global::TimeWarp.Foundation.Configuration.IngressPaths.GrpcPathPrefix + "/{**catch-all}", grpcServer)
+          .WithTransformPathRemovePrefix(global::TimeWarp.Foundation.Configuration.IngressPaths.GrpcPathPrefix);
 #endif
 #if web
         // Catch-all to Web.Server (SPA + everything not owned above): same public-host forwarding as
