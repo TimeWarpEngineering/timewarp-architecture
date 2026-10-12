@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <DefineConstants>api;yarp;web</DefineConstants>
+    <DefineConstants>$(DefineConstants);api;yarp;web</DefineConstants>
     <RootNamespace>TimeWarp.Architecture.Testing</RootNamespace>
     <NoWarn>$(NoWarn);CS0436</NoWarn>
     <!-- Shared test-support library (HostGraphFactory, WebApplicationHost, test applications).

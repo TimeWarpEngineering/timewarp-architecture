@@ -82,6 +82,7 @@ The publish safety suites inspect output and never run the app, so CI was green.
 
 - Created: 2026-10-12 (cockpit, per Steve's kind-deployment error report)
 - 2026-10-12 implementer (ganda task work, headless): implemented; gates below.
+- 2026-10-12 review oracle (claude-opus-5-5, headless): tw-implementation-review effort 3; reviewer + fix subagents via the Agent tool; disposition accepted-exceptions.
 
 ## Results
 
@@ -157,6 +158,15 @@ The publish safety suites inspect output and never run the app, so CI was green.
   YARP's default request version policy (2.0 OrLower) downgrades cleartext to HTTP/1.1. Browser
   gRPC-Web through the ingress may therefore fail on Compose/Kubernetes, independent of this task.
   Worth its own task if the maintainer sees it after redeploy.
+
+### Review disposition
+
+- **Rounds:** 2. Effort 3 (by-diff). Roster: round 1 general + security; round 2 general re-review.
+- **Final counts:** bug 1 fixed · suggestion 2 fixed · nit 3 fixed, 1 wontfix · **0 open**.
+- **Disposition:** `accepted-exceptions`. M4 (nit, wontfix): the test host mirrors the `AddServiceDefaults` discovery calls because it cannot run `Main`.
+- **Review fixes (140ab824f):** the self-call forwards the full public origin (`X-Forwarded-Host` with port, plus `X-Forwarded-Proto`), so mail permalinks stay correct. New tests: `SuperheroGrpcServiceProvider_` (3/3) and the yarp gRPC route ↔ `IngressPaths` check. "loopback" → "self-call" wording. `DefineConstants` appends (web-server; boyscout: web-spa, timewarp-testing). The pass-through DNS fallback is documented.
+- **Verification:** `dev build` 0/0 · `dev template-smoke` SUCCEEDED · manual `--grpc false` app builds with 0 errors · targeted classes green.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,security,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ### How to validate
 
