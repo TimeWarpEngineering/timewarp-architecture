@@ -12,7 +12,9 @@
 //      stable FNV-1a hash of the normalized absolute path (Derived). Bases land in
 //      [DerivedRangeStart, DerivedRangeEnd) on DerivedStep boundaries, so two different bases never
 //      share a port (step ≥ the 1444 spread) and the whole set stays below 40000, clear of the
-//      7000-range defaults other tools pick and of the Windows ephemeral range (49152+).
+//      7000-range defaults other tools pick and of the Windows ephemeral range (49152+). The top
+//      slots (32000+) overlap Linux's default ephemeral range (32768–60999); that keeps 13 slots
+//      instead of 8, and a port an outbound socket happens to hold fails loudly like any collision.
 //   3. No *.slnx found → LegacyBase 7000 (Fallback).
 // Why per checkout: parallel workers each run `dev test` in their own worktree; a fixed 7000 made
 // two worktrees collide. Different checkouts get different bases (13 slots — not a guarantee, so
@@ -148,8 +150,8 @@ public static class InProcTestPorts
   public static string Describe(int basePort, BaseSource source, string? checkoutRoot) => source switch
   {
     BaseSource.Override when checkoutRoot is not null =>
-      $"base {basePort} from {EnvironmentVariableName} (checkout {checkoutRoot} derives {DeriveBase(checkoutRoot)}; " +
-      "`dev test` exports the derived base)",
+      $"base {basePort} from {EnvironmentVariableName} (checkout {checkoutRoot} would derive {DeriveBase(checkoutRoot)}; " +
+      "`dev test` sets the variable for its children)",
     BaseSource.Override => $"base {basePort} from {EnvironmentVariableName}",
     BaseSource.Derived =>
       $"base {basePort} derived from checkout {checkoutRoot} (set {EnvironmentVariableName} to override)",

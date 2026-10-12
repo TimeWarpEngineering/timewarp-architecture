@@ -60,6 +60,7 @@ Parallel workers are now normal (`ganda task work` on several tasks), so this re
 
 - Created: 2026-10-12 (cockpit, per Steve; found by the 319 worker)
 - 2026-10-12 implementer (ganda task work): implemented, gates green, results below.
+- 2026-10-12 review oracle (ganda task work, Claude Code headless): tw-implementation-review effort 2, roster general; disposition clean.
 
 ## Results
 
@@ -100,6 +101,11 @@ discovery, collision message (real held port 0) and derived-describe text.
 (14/14) and `dotnet run` of get-weather-forecasts-tests.cs from `/tmp` (5/5) passed with 7255 held.
 `dev template-smoke` SUCCEEDED. `ganda repo audit` passes. `dev check-version` passes (2.0.0-beta.20 is
 already ahead of NuGet).
+
+**Review disposition.** `clean` after 1 round (effort 2, roster: general). Final counts: bug 0, suggestion 0,
+nit 2 (both fixed, 0 open, 0 wontfix). M1: the Design region now states that slots 32000+ overlap Linux's ephemeral
+range and why 13 slots are kept. M2: the override `Describe()` text no longer says `dev test` exports the derived base.
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
