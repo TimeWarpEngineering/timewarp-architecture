@@ -62,6 +62,8 @@ would show a wrong order across pages.
 
 - Created: 2026-10-12 (cockpit, per Steve's screenshot of `/Admin/Feedback`)
 - 2026-10-13: implemented under `ganda task work` (implement oracle). All gates green.
+- Review oracle: claude-opus-5-5, effort 2, roster general, 1 round, session not reported — 2026-10-13
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-12T19:09:29Z
 
 ## Results
 
@@ -125,6 +127,15 @@ would show a wrong order across pages.
 - `dev template-smoke`: SUCCEEDED
 - `ganda repo audit`: pass, after the Nuru bump
 - `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet beta.19, so no bump needed
+
+### Review disposition
+
+- Rounds: 1. Effort 2. Roster: general.
+- Final counts: bug 0. suggestion 1 (wontfix). nit 1 (fixed). Open: 0.
+- Disposition: **accepted-exceptions**.
+  - M1 (nit): the stale "Section spinner" wording in the `FetchFeedbackList` Design region is fixed.
+  - M2 (suggestion): the stale-response race on rapid header clicks is wontfix here. The same race already exists for the filters and all admin list fetches, so it should be a cross-list follow-up.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
