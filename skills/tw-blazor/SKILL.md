@@ -187,6 +187,32 @@ Reference: `source/container-apps/web/projects/web-spa/features/style-guide/page
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
 
+# Server-sorted FluentDataGrid
+
+A list that the server pages must also be sorted by the server. Sorting one page in the browser
+shows the wrong order across pages. The pattern is grid sort → State action → `Query.SortBy`:
+
+1. The query contract carries `SortBy` (a closed enum of the sortable columns) and
+   `SortDescending`, with a default that matches the old fixed order. Stores sort the whole
+   match set before `Skip`/`Take` and end with an id tiebreaker.
+2. The state holds `SortBy` / `SortDescending`. A `SetSort` action changes them and resets
+   `Page` to 1. The fetch handler copies them onto the query.
+3. The grid gets `Items="@State.Items?.AsQueryable()"` (the current page) and `RefreshItems`.
+   With `RefreshItems` set, the grid does not sort or page `Items` itself. `RefreshItems` maps
+   the primary sort column (`ColumnId` = the enum name) and direction. When they differ from
+   state, it dispatches `SetSort` and then the fetch. Otherwise it returns, so the first render
+   and new rows dispatch nothing.
+4. Each sortable column sets `Sortable="true"` and a `SortBy` `GridSort` (the grid needs one to
+   mark a column sortable, but never runs it). `IsDefaultSortColumn` and `InitialSortDirection`
+   follow state, so a re-created grid shows the stored sort.
+5. `Loading` binds to `IsAnyActive(typeof(FetchX.Action))`. The grid's `Section` has no
+   `LoadingActionType`: `Section` swaps its content for a spinner, which would destroy the grid.
+6. Enum and date cells use `TemplateColumn` (`@context.Kind`). `PropertyColumn` renders enums
+   lowercased.
+
+Reference: `web-spa/features/admin/feedback/pages/FeedbackAdminListPage.razor` with
+`ListFeedback.Query` and `FeedbackAdminState.SetSort`.
+
 # Operation outcomes
 
 No page, card, or feature component renders its own `FluentMessageBar` for an operation outcome

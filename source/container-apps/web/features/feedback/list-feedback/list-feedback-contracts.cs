@@ -8,6 +8,8 @@
 // is inclusive and FiledTo exclusive. Page is 1-based and capped at MaxPage so the row offset
 // cannot overflow; PageSize defaults to 25 and is capped at MaxPageSize. GET carries its filters in the query string (IQueryStringRouteProvider), so the
 // client builds the URL from the contract. Items omit the body; opening an item loads it.
+// SortBy and SortDescending (task 327) order the whole match set before the page window, so a
+// sort is correct across pages. They default to FiledAt descending, the newest-first view.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -38,6 +40,8 @@ public static partial class ListFeedback
     public bool IncludeClosed { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = DefaultPageSize;
+    public FeedbackListSortColumn SortBy { get; set; } = FeedbackListSortColumn.FiledAt;
+    public bool SortDescending { get; set; } = true;
 
     public string GetRouteWithQueryString()
     {
@@ -50,6 +54,8 @@ public static partial class ListFeedback
         { nameof(IncludeClosed), IncludeClosed ? "true" : null },
         { nameof(Page), Page.ToString(CultureInfo.InvariantCulture) },
         { nameof(PageSize), PageSize.ToString(CultureInfo.InvariantCulture) },
+        { nameof(SortBy), SortBy.ToString() },
+        { nameof(SortDescending), SortDescending ? "true" : "false" },
       };
       return $"{GetRoute()}?{this.GetQueryString(parameters)}";
     }
@@ -63,6 +69,7 @@ public static partial class ListFeedback
       RuleFor(query => query.Kind).IsInEnum();
       RuleFor(query => query.Page).InclusiveBetween(1, MaxPage);
       RuleFor(query => query.PageSize).InclusiveBetween(1, MaxPageSize);
+      RuleFor(query => query.SortBy).IsInEnum();
       RuleFor(query => query.FiledTo)
         .GreaterThan(query => query.FiledFrom)
         .When(query => query.FiledFrom is not null && query.FiledTo is not null);

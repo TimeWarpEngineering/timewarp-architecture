@@ -26,7 +26,7 @@ public interface IFeedbackStore
     Guid ownerPrincipalId,
     CancellationToken cancellationToken = default);
 
-  /// <summary>Every owner's items matching the filter, newest first, one page at a time.</summary>
+  /// <summary>Every owner's items matching the filter, in the filter's sort order, one page at a time.</summary>
   Task<FeedbackPage> ListAllAsync(FeedbackListFilter filter, CancellationToken cancellationToken = default);
 
   /// <summary>Saves status and new thread entries. False when the item changed since it was read.</summary>

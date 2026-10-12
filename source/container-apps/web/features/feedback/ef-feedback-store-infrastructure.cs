@@ -13,6 +13,10 @@
 // conflict or a duplicate (item, sequence) key from a racing writer returns false. Add and
 // Update both clear the change tracker when they finish, so no tracked instance outlives a call
 // and a later Update in the same scope can attach its detached copy (task 314 review).
+// ListAll orders in SQL before Skip/Take (task 327). Kind and Status are text columns, so they
+// order by name. No index was added for the new sorts: the admin list filters by status first
+// (the (Status, FiledAt) index), a feedback table stays small enough for an in-memory sort of
+// the match set, and an index per sortable column would tax every filing for a rare view.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -98,14 +102,38 @@ public sealed class EfFeedbackStore : IFeedbackStore
     }
 
     int total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
-    List<FeedbackItem> page = await query
-      .OrderByDescending(item => item.FiledAt)
-      .ThenBy(item => item.Id)
+    List<FeedbackItem> page = await Sort(query, filter)
       .Skip(filter.Skip)
       .Take(filter.Take)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
     return new FeedbackPage(page, total);
+  }
+
+  private static IOrderedQueryable<FeedbackItem> Sort(IQueryable<FeedbackItem> query, FeedbackListFilter filter)
+  {
+    bool descending = filter.SortDescending;
+    IOrderedQueryable<FeedbackItem> ordered = filter.SortBy switch
+    {
+      FeedbackListSortColumn.Title => descending
+        ? query.OrderByDescending(item => item.Title)
+        : query.OrderBy(item => item.Title),
+      FeedbackListSortColumn.Kind => descending
+        ? query.OrderByDescending(item => item.Kind)
+        : query.OrderBy(item => item.Kind),
+      FeedbackListSortColumn.Status => descending
+        ? query.OrderByDescending(item => item.Status)
+        : query.OrderBy(item => item.Status),
+      FeedbackListSortColumn.FiledAt or _ => descending
+        ? query.OrderByDescending(item => item.FiledAt)
+        : query.OrderBy(item => item.FiledAt),
+    };
+    if (filter.SortBy is not FeedbackListSortColumn.FiledAt)
+    {
+      ordered = ordered.ThenByDescending(item => item.FiledAt);
+    }
+
+    return ordered.ThenBy(item => item.Id);
   }
 
   public async Task<bool> UpdateAsync(FeedbackItem item, CancellationToken cancellationToken = default)
