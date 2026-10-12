@@ -41,7 +41,8 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod `
 dev deploy --target kubernetes
 
 # 6. Migrate (dev publish kubernetes first if artifacts/aspire-output/kubernetes is missing),
-#    then reach the ingress: forwards localhost:8080 and opens the browser; Ctrl+C stops it
+#    then reach the ingress: forwards localhost:<ingress-port> (the app's committed
+#    Parameters:ingress-port) and opens the browser; Ctrl+C stops it
 dev deploy migrate --target kubernetes
 dev open --target kubernetes
 
@@ -84,7 +85,8 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod \
 #    Preflight checks the cluster answers, kind lists it and localhost:5001 is up
 dev deploy --target kubernetes
 
-# 6. Migrate, then reach the ingress (forwards localhost:8080, opens the browser; Ctrl+C stops it)
+# 6. Migrate, then reach the ingress (forwards localhost:<ingress-port>, the app's committed
+#    Parameters:ingress-port; opens the browser; Ctrl+C stops it)
 dev deploy migrate --target kubernetes
 dev open --target kubernetes
 

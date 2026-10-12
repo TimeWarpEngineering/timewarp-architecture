@@ -152,6 +152,19 @@
         { "after": "\"helm-release-name\": \"" },
         { "after": "\"registry-repository\": \"" }
       ]
+    },
+    "ingressPort": {
+      "type": "generated",
+      "generator": "port",
+      "description": "The app's own ingress port (task 311): the committed AppHost Parameters:ingress-port, which is the Compose host port and the port dev open forwards. A free port in 20000-60000 chosen at generation, so generated apps do not share one. Replaces the monorepo's 36371 only as that parameter's value (onlyIf).",
+      "parameters": {
+        "low": 20000,
+        "high": 60000
+      },
+      "replaces": "36371",
+      "onlyIf": [
+        { "after": "\"ingress-port\": \"" }
+      ]
     }
   },
   "forms": {

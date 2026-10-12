@@ -13,8 +13,15 @@
 // published output under artifacts/aspire-output/<target>, or a documented CLI (kubectl, az, the
 // container runtime's `compose ls`). The resource names below are the AppHost's (constants.cs:
 // YarpResourceName, PostgresResourceName, PostgresDatabaseResourceName) and Aspire's published names
-// derived from them (statefulset/postgres-statefulset); dev-cli-tests reads constants.cs and the
-// ingress-port default in program.cs so the copies cannot drift.
+// derived from them (statefulset/postgres-statefulset); dev-cli-tests reads constants.cs so the copies
+// cannot drift.
+//
+// Ingress port (task 311): no default lives here. The port is the AppHost's ingress-port parameter,
+// committed in the Parameters section of its appsettings.json (36371 in this repo; the template's
+// ingressPort port generator picks one per generated app) and resolved like dev deploy's parameters —
+// env, user secret, appsettings.Production.json, appsettings.json. One number per app: the Compose host
+// port, the `dev open --target kubernetes` forward port and the compose fallback. --port overrides it;
+// with neither, `dev open` refuses (NoIngressPortMessage) rather than guess a shared port such as 8080.
 //
 // Missing published output: `dev deploy migrate` REFUSES with the exact `dev publish <target>`
 // command instead of publishing itself. Publishing is a separate, gated step (it wipes the output
@@ -73,7 +80,6 @@ internal sealed record BrowserLauncher(string Executable, IReadOnlyList<string> 
 /// <summary>Builds and decides the <c>dev open</c> / <c>dev deploy migrate</c> invocations per deploy target.</summary>
 internal static class DeployOperate
 {
-  internal const int DefaultForwardPort = 8080;
   internal const int IngressControllerPort = 80;
   internal const string IngressControllerNamespace = "ingress-nginx";
   internal const string IngressControllerService = "ingress-nginx-controller";
@@ -85,7 +91,6 @@ internal static class DeployOperate
   internal const string PostgresStatefulSet = "statefulset/postgres-statefulset";
   internal const string IngressPortParameter = "ingress-port";
   internal const string IngressPortVariable = "INGRESS_PORT";
-  internal const string DefaultIngressPort = "8080";
 
   internal const string MigrationScript = "efmigrations/web-migrations.sql";
   internal const string MigrationBundle = "efmigrations/web-migrations";
@@ -111,21 +116,42 @@ internal static class DeployOperate
     + $"dev publish {target.Name}";
 
   /// <summary>
-  /// The port <c>--port</c> asks for (null = <paramref name="fallback"/>); an error when it is not a TCP port. Returns the
-  /// port or the error, never both.
+  /// <paramref name="value"/> as a TCP port; an error naming <paramref name="origin"/> (e.g. <c>--port</c>) when it is not one.
+  /// Returns the port or the error, never both.
   /// </summary>
-  internal static (int? Port, string? Error) ParsePort(string? value, int fallback)
-  {
-    if (string.IsNullOrWhiteSpace(value))
-    {
-      return (fallback, null);
-    }
-
-    return int.TryParse(value.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int port)
+  internal static (int? Port, string? Error) ParsePort(string value, string origin) =>
+    int.TryParse(value.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int port)
       && port is > 0 and <= 65535
       ? (port, null)
-      : (null, $"--port '{value}' is not a TCP port (1-65535).");
+      : (null, $"{origin} '{value}' is not a TCP port (1-65535).");
+
+  /// <summary>
+  /// The kubernetes forward port: <c>--port</c>, else the resolved <c>ingress-port</c> parameter. Returns the port and where it
+  /// came from, or (null, the error) when the chosen value is not a TCP port or neither is set.
+  /// </summary>
+  internal static (int? Port, string Detail) ChooseForwardPort(string? option, ResolvedDeployParameter? parameter, string appHostProject)
+  {
+    if (!string.IsNullOrWhiteSpace(option))
+    {
+      (int? port, string? error) = ParsePort(option, "--port");
+      return (port, error ?? "--port");
+    }
+
+    if (parameter is null)
+    {
+      return (null, NoIngressPortMessage(appHostProject));
+    }
+
+    string source = $"{IngressPortParameter} from the {parameter.Source}";
+    (int? parameterPort, string? parameterError) = ParsePort(parameter.Value, source);
+    return (parameterPort, parameterError ?? source);
   }
+
+  /// <summary>Refusal when neither <c>--port</c> nor the AppHost's <c>ingress-port</c> parameter gives a port.</summary>
+  internal static string NoIngressPortMessage(string appHostProject) =>
+    $"No ingress port: the AppHost parameter {IngressPortParameter} is not set. Commit it in the {AspireDeploy.ParametersSection} section of "
+    + $"{Path.Combine(Path.GetDirectoryName(appHostProject) ?? "", AspireDeploy.AppSettingsFileName)}, set it per machine with "
+    + $"`dotnet user-secrets set '{AspireDeploy.ParameterConfigurationKey(IngressPortParameter)}' '<port>' --project '{appHostProject}'`, or pass --port <n>.";
 
   internal static string PortInUseMessage(int port) =>
     $"Port {port} on localhost is already in use, so kubectl cannot forward to it. Pick a free one: dev open --target kubernetes --port <n>";
@@ -231,13 +257,13 @@ internal static class DeployOperate
 
   /// <summary>
   /// The Compose host port: <c>--port</c>, else <c>INGRESS_PORT</c> in the published <c>.env</c>, else the resolved
-  /// <c>ingress-port</c> parameter, else the AppHost's default (8080). Returns the port and where it came from.
+  /// <c>ingress-port</c> parameter. Returns the port and where it came from; (null, null) when none is set.
   /// </summary>
-  internal static (string Port, string Source) ChooseComposePort(string? option, string? envValue, ResolvedDeployParameter? parameter) =>
+  internal static (string? Port, string? Source) ChooseComposePort(string? option, string? envValue, ResolvedDeployParameter? parameter) =>
     !string.IsNullOrWhiteSpace(option) ? (option.Trim(), "--port")
     : envValue is not null ? (envValue, $"{IngressPortVariable} in the published .env")
     : parameter is not null ? (parameter.Value, $"{IngressPortParameter} from the {parameter.Source}")
-    : (DefaultIngressPort, $"the AppHost's {IngressPortParameter} default");
+    : (null, null);
 
   /// <summary><c>&lt;runtime&gt; compose ls --format json</c>: the running Compose projects.</summary>
   internal static string[] BuildComposeListArguments() => ["compose", "ls", "--format", "json"];

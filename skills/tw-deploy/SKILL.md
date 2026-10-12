@@ -110,14 +110,19 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   none. None of them is a secret. The template sets the three that identify the app —
   `k8s-namespace`, `helm-release-name`, `registry-repository` — to the app's kebab name (a DNS-1123
   label: `Contoso.Shop` → `contoso-shop`), and `registry-endpoint` to `localhost:5001`, the kind
-  recipe's registry, so a kind deploy needs no configuration:
+  recipe's registry, so a kind deploy needs no configuration. It also commits the app's
+  **`ingress-port`**: the Compose host port and the local port `dev open` forwards, one number per
+  app on every target. `dotnet new` picks it when the app is generated (a free port in
+  20000–60000), so two generated apps do not fight over one port, and nothing defaults to a shared
+  port such as 8080:
 
   ```json
   "Parameters": {
     "k8s-namespace": "contoso-shop",
     "helm-release-name": "contoso-shop",
     "registry-endpoint": "localhost:5001",
-    "registry-repository": "contoso-shop"
+    "registry-repository": "contoso-shop",
+    "ingress-port": "41873"
   }
   ```
 
@@ -163,11 +168,14 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   opener on PATH it prints it too — on WSL it uses `wslview`, then `explorer.exe`). kubernetes: if
   the ingress controller's Service has an external (LoadBalancer) address, it opens that;
   otherwise it runs `kubectl port-forward --namespace ingress-nginx
-  service/ingress-nginx-controller 8080:80` in the foreground, opens `http://localhost:8080`, and
-  Ctrl+C stops the forward. `--port` picks another local port (a taken one is refused with that
-  hint); `--controller-namespace` / `--controller-service` name a controller other than the kind
-  recipe's. compose: `http://localhost:<port>` from `INGRESS_PORT` in the published `.env`, else the
-  `ingress-port` parameter (default 8080). aca: `https://<fqdn>` of the `ingress` container app
+  service/ingress-nginx-controller <ingress-port>:80` in the foreground, opens
+  `http://localhost:<ingress-port>`, and Ctrl+C stops the forward. The port is the app's
+  `ingress-port` parameter, resolved like `dev deploy`'s parameters (env, user secret,
+  `appsettings.Production.json`, `appsettings.json`). `--port` picks another local port (a taken
+  one is refused with that hint); `--controller-namespace` / `--controller-service` name a
+  controller other than the kind recipe's. compose: `http://localhost:<port>` from `--port`, else
+  `INGRESS_PORT` in the published `.env`, else the `ingress-port` parameter. With no `--port` and no
+  `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca: `https://<fqdn>` of the `ingress` container app
   (`az containerapp show --name ingress --resource-group <rg> --query
   properties.configuration.ingress.fqdn`).
 - **aca resource group** for both: `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
@@ -201,7 +209,9 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   When `aspire destroy` fails or reports nothing to destroy, nothing was removed; use the manual
   removal above. `dev deploy migrate` runs the commands in the Postgres and migrations table, and
   `dev open` runs `kubectl port-forward --namespace ingress-nginx
-  service/ingress-nginx-controller 8080:80` (kind) and opens `http://localhost:8080`.
+  service/ingress-nginx-controller <ingress-port>:80` (kind) and opens
+  `http://localhost:<ingress-port>`, where `<ingress-port>` is the `Parameters:ingress-port` value
+  in the AppHost `appsettings.json`.
 
 ### Local Kubernetes with kind
 

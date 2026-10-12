@@ -160,6 +160,15 @@
 // one per machine (AKS's registry). `dev deploy` lists them as its required kubernetes parameters
 // and dev-cli-tests holds both agreements (value-less calls here, committed values there). No
 // Kubernetes dashboard (a second workload with an unauthenticated UI).
+// Ingress port (task 311): ingress-port is the Compose host port and the port `dev open` uses on
+// every target (the kind port-forward included), so one number per app. Like the 288 parameters it
+// has no value in code — appsettings.json commits it (36371 in this repo, `ganda generate-port
+// timewarp-architecture`; the template's ingressPort symbol, a dotnet new port generator scoped to
+// "ingress-port": ", gives each generated app its own). Unlike them it keeps publishValueAsDefault so
+// the published .env carries the port, and that overload needs the value at declaration time, so
+// program.cs reads Parameters:ingress-port from configuration (env and user secrets still override)
+// instead of a literal; a missing value fails publish rather than falling back to a shared port.
+// dev-cli-tests checks the committed value is a port and that program.cs declares no literal.
 // Ingress decision (carried from retired 070-001) — option (a): the cluster's ingress controller
 // forwards ALL traffic to the YARP ingress, which keeps the per-service routing above. Chosen over
 // (b), per-service controller routes from WebServerApiRoutePrefixes, because (b) would fork the
@@ -570,7 +579,11 @@ internal class Program
       }
       else if (builder.ExecutionContext.IsPublishMode)
       {
-        IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, "8080", publishValueAsDefault: true);
+        // Task 311: the value is the committed Parameters:ingress-port (see Design), read here only
+        // because publishValueAsDefault needs it at declaration time to write it into the .env.
+        string ingressPortValue = builder.Configuration[$"Parameters:{IngressPortParameterName}"]
+          ?? throw new InvalidOperationException($"Parameters:{IngressPortParameterName} is not set; commit it in the AppHost appsettings.json.");
+        IResourceBuilder<ParameterResource> ingressPort = builder.AddParameter(IngressPortParameterName, ingressPortValue, publishValueAsDefault: true);
         yarp = yarp
           .WithExternalHttpEndpoints()
           .PublishAsDockerComposeService((composeService, service) =>

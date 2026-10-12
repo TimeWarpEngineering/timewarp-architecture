@@ -47,6 +47,9 @@ internal class Constants
   // its fixed data volume name, and the publish-only parameters that land in the generated .env.
   public const string ComposeEnvironmentResourceName = "compose";
   public const string PostgresPublishedDataVolumeName = "postgres-data";
+  // Task 311: ingress-port has no value in code. appsettings.json commits Parameters:ingress-port
+  // (36371 in this repo; the template's ingressPort port generator rewrites it per generated app),
+  // and dev open forwards / opens that same port on every target.
   public const string IngressPortParameterName = "ingress-port";
   public const string EntraEnabledParameterName = "entra-enabled";
   public const string EntraTenantIdParameterName = "entra-tenant-id";
