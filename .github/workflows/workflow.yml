@@ -185,15 +185,15 @@ jobs:
             dotnet run tools/dev-cli/dev.cs -- workflow
           fi
 
-      # Task 290: browser proof. The web-spa Playwright tests write screenshots (first paint with
-      # JavaScript off, with blazor.web.js blocked, and settled interactive) and the prerendered
-      # HTML under artifacts/playwright/. Diagnostic upload, so retention-days: 1.
+      # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
+      # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
+      # Diagnostic upload, so retention-days: 1.
       - name: Upload Playwright screenshots
         if: always() && github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-${{ github.run_number }}
-          path: artifacts/playwright/
+          path: tests/container-apps/web/web-spa-playwright-tests/bin/**/playwright-screenshots/
           if-no-files-found: warn
           retention-days: 1
 

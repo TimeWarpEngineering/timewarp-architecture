@@ -9,3 +9,4 @@ global using Shouldly;
 global using TimeWarp.Architecture.Features.AgentChats;
 global using TimeWarp.Architecture.Testing;
 global using static TimeWarp.Jaribu.TestRunner;
+global using WebSpaPlaywright_;

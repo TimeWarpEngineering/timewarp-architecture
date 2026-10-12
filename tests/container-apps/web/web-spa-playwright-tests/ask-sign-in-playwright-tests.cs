@@ -16,8 +16,8 @@
 // Every GET api/agent-chat/configuration status is recorded so the test proves the probe re-ran and
 // what the server answered. After sign-in the test waits for that re-probe's response before
 // opening Ask, so it does not read the store while it still holds the signed-out answer. The configured pass uses the fake upstream (no request leaves the
-// process); the no-key pass has no XAI:ApiKey. Screenshots go to artifacts/playwright/293, which
-// CI uploads.
+// process); the no-key pass has no XAI:ApiKey. Screenshots go to test output (PlaywrightScreenshot),
+// which CI uploads.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -138,7 +138,7 @@ public class AskSignIn_Given_Wasm
         string feedbackText = await session.Page.Locator(".sc-ai-root").InnerTextAsync();
         await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
         {
-          Path = ScreenshotPath("ask-feedback-page-context.png", "299"),
+          Path = ScreenshotPath("ask-feedback-page-context.png"),
         });
         if (feedbackText.Contains("System.Collections.Generic", StringComparison.Ordinal))
         {
@@ -387,17 +387,6 @@ public class AskSignIn_Given_Wasm
     install.ShouldBe(0, "Playwright chromium install failed");
   }
 
-  private static string ScreenshotPath(string fileName, string folderName = "293")
-  {
-    string? directory = AppContext.BaseDirectory;
-    while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
-    {
-      directory = Path.GetDirectoryName(directory);
-    }
-
-    directory.ShouldNotBeNull();
-    string folder = Path.Combine(directory, "artifacts", "playwright", folderName);
-    Directory.CreateDirectory(folder);
-    return Path.Combine(folder, fileName);
-  }
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<AskSignIn_Given_Wasm>(fileName);
 }

@@ -17,11 +17,10 @@
 // Geometry (task 296): at 1280 the aside is the right 450px — panel x about 830, its right
 // edge on the viewport, the layout wider than 800, and FluentLayout has no mobile attribute.
 // Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
-// viewport. Shots are written beside task 296.
+// viewport. Shots go to test output (PlaywrightScreenshot).
 // Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
 // .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and Tag
-// and send sit below it. The Tag chip's left edge is within 4px of the textarea text start. Shift+Enter grows the field; Enter sends. Those shots are
-// written beside task 307.
+// and send sit below it. The Tag chip's left edge is within 4px of the textarea text start. Shift+Enter grows the field; Enter sends.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -237,19 +236,8 @@ public class AskSurface_Given_Wasm
     log.ShouldNotContain("SemaphoreSlim.Wait");
   }
 
-  private static string ScreenshotPath(string fileName, string taskPrefix = "296")
-  {
-    string? directory = AppContext.BaseDirectory;
-    while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
-    {
-      directory = Path.GetDirectoryName(directory);
-    }
-
-    directory.ShouldNotBeNull();
-    string folder = Directory.GetDirectories(Path.Combine(directory, "kanban"), taskPrefix + "-*", SearchOption.AllDirectories)
-      .Single(path => File.Exists(Path.Combine(path, "task.md")));
-    return Path.Combine(folder, fileName);
-  }
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<AskSurface_Given_Wasm>(fileName);
 
   private static async Task AssertComposerLayoutAsync(IPage page)
   {
@@ -290,7 +278,7 @@ public class AskSurface_Given_Wasm
 
     await composer.ScreenshotAsync(new LocatorScreenshotOptions
     {
-      Path = ScreenshotPath("ask-composer-before.png", "307"),
+      Path = ScreenshotPath("ask-composer-before.png"),
     });
 
     double before = areaBox.Height;
@@ -311,7 +299,7 @@ public class AskSurface_Given_Wasm
     ((double)grown.Height).ShouldBeGreaterThan(before);
     await composer.ScreenshotAsync(new LocatorScreenshotOptions
     {
-      Path = ScreenshotPath("ask-composer-after.png", "307"),
+      Path = ScreenshotPath("ask-composer-after.png"),
     });
 
     await textarea.PressAsync("Enter");
