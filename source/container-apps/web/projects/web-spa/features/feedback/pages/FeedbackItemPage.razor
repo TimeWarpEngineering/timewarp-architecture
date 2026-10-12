@@ -94,7 +94,7 @@
           }
         </ul>
       }
-      <FluentTextArea @bind-Value="ReplyDraft" AriaLabel="Reply" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="FeedbackReply" />
+      <TextArea @bind-Value="ReplyDraft" AriaLabel="Reply" data-qa="FeedbackReply" />
       <FluentButton Appearance="ButtonAppearance.Primary"
         data-qa="FeedbackSendReply"
         OnClick="@(() => SendReplyAsync(item.FeedbackItemId))">Send reply</FluentButton>

@@ -1,0 +1,48 @@
+@namespace TimeWarp.Architecture.Components
+@using System.Linq.Expressions
+@*
+  Purpose: the one multi-line text field. Wraps FluentTextArea so every page gets a box that
+  fills its field, starts at a usable height, and resizes vertically.
+
+  Design: the visible box is FluentUI's shadow part="root", not the fluent-textarea host. Its
+  --inline-size defaults to 18rem, so Width="100%" and `block` on the host leave a narrow box
+  inside a full-width host (task 302, again on task 326's admin and permalink pages).
+  --block-size tracks --min-block-size, so the default height is a custom property too. A fixed
+  host height fights the resize grip, so height is only ever a minimum. TextArea.razor.css sets
+  both custom properties from the stamped native wrapper with ::deep (the fluent-textarea host
+  is a child-component root that isolation never stamps). MinHeight feeds
+  --twe-text-area-min-block-size on the wrapper; the CSS default is 9rem.
+  Value, ValueChanged, and ValueExpression pass through so @bind-Value works and EditForm
+  validation still sees the caller's field. Unmatched attributes (data-qa, ...) land on the
+  fluent-textarea host, so tests and paste hosts find the same element as before.
+  Raw FluentTextArea anywhere else in the SPA is TWA0032; this file is the only exempt one.
+*@
+
+@code {
+  [Parameter] public string? Value { get; set; }
+  [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+  [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+  [Parameter] public string? Name { get; set; }
+  [Parameter] public string? AriaLabel { get; set; }
+  [Parameter] public string? Placeholder { get; set; }
+  [Parameter] public bool Disabled { get; set; }
+  [Parameter] public string? MinHeight { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string? WrapperStyle =>
+    string.IsNullOrWhiteSpace(MinHeight) ? null : $"--twe-text-area-min-block-size: {MinHeight}";
+}
+
+<div class="twe-text-area @Class" style="@WrapperStyle">
+  <FluentTextArea Value="@Value"
+    ValueChanged="@ValueChanged"
+    ValueExpression="@ValueExpression"
+    Name="@Name"
+    AriaLabel="@AriaLabel"
+    Placeholder="@Placeholder"
+    Disabled="@Disabled"
+    Width="100%"
+    Resize="TextAreaResize.Vertical"
+    @attributes="AdditionalAttributes" />
+</div>

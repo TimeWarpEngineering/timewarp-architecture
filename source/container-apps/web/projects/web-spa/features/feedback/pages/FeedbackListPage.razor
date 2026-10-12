@@ -336,7 +336,7 @@
             </FormField>
             <FormField Label="Details">
               <div @ref="DetailsHost" class="feedback-details">
-                <FluentTextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" Width="100%" block Resize="TextAreaResize.Vertical" />
+                <TextArea @bind-Value="Draft.Body" Name="Body" AriaLabel="Details" data-qa="FeedbackBody" />
               </div>
               <ValidationMessage For="@(() => Draft.Body)" />
             </FormField>

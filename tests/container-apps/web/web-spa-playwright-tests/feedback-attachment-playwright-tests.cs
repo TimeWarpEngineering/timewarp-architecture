@@ -1,6 +1,7 @@
 #region Purpose
-// Browser proof that the feedback form accepts a picked file and a pasted image,
-// and that the Details visible box matches Title.
+// Browser proof that the feedback form accepts a picked file and a pasted image, that the
+// Details visible box matches Title, and that every shared TextArea (filer reply, admin reply,
+// admin note) fills its field and resizes.
 #endregion
 
 #region Design
@@ -16,6 +17,9 @@
 // list. Layout measures fluent-textarea's shadow part=root and part=control against Title's
 // shadow part=root and input. The host element can be full width while the visible box stays
 // at the component's 18rem inline size, so a host BoundingBox check does not prove the fix.
+// The reply and note boxes have no Title beside them, so they measure part=root against the
+// content box of the element that holds the shared TextArea (task 326). The first passkey
+// account on a fresh host claims Administrator, so the same session opens /Admin/Feedback/{id}.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -152,26 +156,177 @@ public class FeedbackAttachment_Given_Wasm
       FullPage = true,
     });
 
+    await AssertGripResizesAsync(page, "FeedbackBody");
+
+    await page.SetViewportSizeAsync(600, 900);
+    await page.EvaluateAsync("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+    await AssertDetailsMatchesTitleAsync(page, "narrow-600");
+  }
+
+  public static async Task ReplyAndNoteBoxes_Should_FillTheirField_And_Resize()
+  {
+    InstallChromium();
+
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    using IPlaywright playwright = await Playwright.CreateAsync();
+    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+    });
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    await OpenFeedbackAsync(page, console);
+
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Reply box sizing");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Measure the reply and note boxes.");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    ILocator receipt = await SubmitFeedbackAsync(page);
+    string receiptText = await receipt.InnerTextAsync();
+    string feedbackItemId = receiptText.Replace("Filed as", string.Empty, StringComparison.Ordinal).Trim();
+    Guid.TryParse(feedbackItemId, out _).ShouldBeTrue(receiptText);
+
+    await page.Locator("[data-qa=FeedbackPermalink]").ClickAsync();
+    await page.Locator("[data-qa=FeedbackReply]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await AssertBoxesFillTheirFieldAsync(page, "filer", ["FeedbackReply"]);
+
+    await page.SetViewportSizeAsync(1280, 900);
+    string adminUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback/" + feedbackItemId;
+    await page.GotoAsync(adminUrl, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    try
+    {
+      await page.Locator("[data-qa=AdminFeedbackNote]").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      string log = string.Join('\n', console);
+      throw new TimeoutException($"Admin feedback item did not render at {page.Url}. Console:\n{log}", exception);
+    }
+
+    await AssertBoxesFillTheirFieldAsync(page, "admin", ["AdminFeedbackReply", "AdminFeedbackNote"]);
+  }
+
+  // The submit button is Disabled while any action is active, and blurring Details dispatches the
+  // composer-context action, so a click straight after typing can land on a disabled button and
+  // do nothing. Wait for it to be enabled; click again only while no receipt has appeared.
+  private static async Task<ILocator> SubmitFeedbackAsync(IPage page)
+  {
+    ILocator receipt = page.Locator("[data-qa=FeedbackReceiptId]");
+    for (int attempt = 1; attempt <= 5; attempt++)
+    {
+      await page.WaitForFunctionAsync(
+        "() => { const button = document.querySelector('[data-qa=FeedbackSubmit]'); return button && !button.hasAttribute('disabled'); }",
+        null,
+        new PageWaitForFunctionOptions { Timeout = 30_000 });
+      await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
+      try
+      {
+        await receipt.WaitForAsync(new LocatorWaitForOptions { Timeout = 6_000 });
+        return receipt;
+      }
+      catch (TimeoutException) when (attempt < 5)
+      {
+      }
+    }
+
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-reply-submit-failed.png"), FullPage = true });
+    throw new TimeoutException("Feedback submit showed no receipt after 5 attempts.");
+  }
+
+  private static async Task AssertBoxesFillTheirFieldAsync(IPage page, string surface, string[] qas)
+  {
+    foreach (string qa in qas)
+    {
+      await AssertFillsFieldAsync(page, qa, $"{surface}-1280");
+    }
+
+    await page.ScreenshotAsync(new PageScreenshotOptions
+    {
+      Path = ScreenshotPath($"feedback-{surface}-textareas-1280.png"),
+      FullPage = true,
+    });
+
+    foreach (string qa in qas)
+    {
+      await AssertGripResizesAsync(page, qa);
+    }
+
+    await page.SetViewportSizeAsync(600, 900);
+    await page.EvaluateAsync("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+    foreach (string qa in qas)
+    {
+      await AssertFillsFieldAsync(page, qa, $"{surface}-600");
+    }
+
+    await page.ScreenshotAsync(new PageScreenshotOptions
+    {
+      Path = ScreenshotPath($"feedback-{surface}-textareas-600.png"),
+      FullPage = true,
+    });
+  }
+
+  // The field is the element holding the shared TextArea wrapper; its content box is the width
+  // the visible part=root must fill. A narrow box (18rem default) fails the right-edge check.
+  private static async Task AssertFillsFieldAsync(IPage page, string qa, string viewport)
+  {
+    const string fieldScript = """
+      (qa) => {
+        const host = document.querySelector(`[data-qa=${qa}]`);
+        const wrapper = host && host.closest('.twe-text-area');
+        const field = wrapper && wrapper.parentElement;
+        if (!field) {
+          return null;
+        }
+        const rect = field.getBoundingClientRect();
+        const style = getComputedStyle(field);
+        const left = rect.left + parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth);
+        const right = rect.right - parseFloat(style.paddingRight) - parseFloat(style.borderRightWidth);
+        return [left, right];
+      }
+      """;
+    await page.Locator($"[data-qa={qa}]").ScrollIntoViewIfNeededAsync();
+    float[] field = (await page.EvaluateAsync<float[]?>(fieldScript, qa)).ShouldNotBeNull($"{qa} has no TextArea field");
+    EdgeBox fieldBox = new(field[0], 0f, field[1] - field[0], 0f);
+    EdgeBox root = await ShadowBoxAsync(page, qa, "root");
+    EdgeBox control = await ShadowBoxAsync(page, qa, "control");
+    string report = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"viewport={viewport} qa={qa} field={fieldBox.X:0.#}..{fieldBox.Right:0.#} {fieldBox.Width:0.#} root={root.X:0.#}..{root.Right:0.#} {root.Width:0.#}x{root.Height:0.#} control={control.Width:0.#}x{control.Height:0.#}");
+    Console.WriteLine(report);
+    SameEdges(fieldBox, root, report);
+    ((double)root.Height).ShouldBeGreaterThanOrEqualTo(140d, report);
+    ((double)control.Height).ShouldBeGreaterThan(100d, report);
+  }
+
+  private static async Task AssertGripResizesAsync(IPage page, string qa)
+  {
     const float dragDistance = 80f;
-    ILocator detailsRoot = page.Locator("[data-qa=FeedbackBody]").Locator("[part=root]");
-    await detailsRoot.ScrollIntoViewIfNeededAsync();
-    EdgeBox before = await ShadowBoxAsync(page, "FeedbackBody", "root");
+    ILocator rootLocator = page.Locator($"[data-qa={qa}]").Locator("[part=root]");
+    await rootLocator.ScrollIntoViewIfNeededAsync();
+    EdgeBox before = await ShadowBoxAsync(page, qa, "root");
     float gripX = before.Right - 8f;
     float gripY = before.Y + before.Height - 4f;
     await page.Mouse.MoveAsync(gripX, gripY);
     await page.Mouse.DownAsync();
     await page.Mouse.MoveAsync(gripX, gripY + dragDistance, new MouseMoveOptions { Steps = 12 });
     await page.Mouse.UpAsync();
-    EdgeBox after = await ShadowBoxAsync(page, "FeedbackBody", "root");
+    EdgeBox after = await ShadowBoxAsync(page, qa, "root");
     double grown = after.Height - before.Height;
-    string dragReport = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"drag={dragDistance:0.#} before={before.Height:0.#} after={after.Height:0.#} grown={grown:0.#}");
+    string dragReport = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"qa={qa} drag={dragDistance:0.#} before={before.Height:0.#} after={after.Height:0.#} grown={grown:0.#}");
     Console.WriteLine(dragReport);
     grown.ShouldBeGreaterThan(dragDistance - 20d, dragReport);
     grown.ShouldBeLessThan(dragDistance + 20d, dragReport);
-
-    await page.SetViewportSizeAsync(600, 900);
-    await page.EvaluateAsync("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
-    await AssertDetailsMatchesTitleAsync(page, "narrow-600");
   }
 
   private static async Task OpenFeedbackAsync(IPage page, ConcurrentQueue<string> console)

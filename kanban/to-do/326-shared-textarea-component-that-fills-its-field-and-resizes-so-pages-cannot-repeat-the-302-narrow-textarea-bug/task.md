@@ -49,13 +49,89 @@ Affected uses today:
 
 ## Checklist
 
-- [ ] `components/forms/TextArea.razor` (+ isolated CSS) with fill/resize behaviour
-- [ ] Four call sites migrated; page CSS cleaned; paste host still works
-- [ ] Guard (analyzer preferred, or source-scan test) with recorded choice
-- [ ] Playwright measurements for admin reply/note and filer reply
-- [ ] Skill line
-- [ ] Gates: `dev build` 0/0, `dev test` (Playwright), `dev template-smoke`, `ganda repo audit`
+- [x] `components/forms/TextArea.razor` (+ isolated CSS) with fill/resize behaviour
+- [x] Four call sites migrated; page CSS cleaned; paste host still works
+- [x] Guard (analyzer preferred, or source-scan test) with recorded choice
+- [x] Playwright measurements for admin reply/note and filer reply
+- [x] Skill line
+- [x] Gates: `dev build` 0/0, `dev test` (Playwright), `dev template-smoke`, `ganda repo audit` (one aspire-tests failure that also fails on origin/master; see Results)
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve's screenshot of `/Admin/Feedback/{id}`)
+- 2026-10-12: implemented under `ganda task work` (implement oracle).
+
+## Results
+
+**Component.** `web-spa/components/forms/TextArea.razor` + `TextArea.razor.css`. The native
+`.twe-text-area` wrapper is the stamped anchor; `::deep fluent-textarea` sets `display: block`,
+`min-width: 0`, `--inline-size: 100%`, and `--min-block-size: var(--twe-text-area-min-block-size, 9rem)`.
+The `MinHeight` parameter overrides the 9rem default through that custom property. Resize is
+always `Vertical`, and there is no fixed host height. Pass-through: `@bind-Value` (Value /
+ValueChanged / ValueExpression, so EditForm validation still sees the caller's field), `Name`,
+`AriaLabel`, `Placeholder`, `Disabled`, `Class`, plus unmatched attributes (`data-qa`, ...) on the
+`fluent-textarea` host. The shadow-root sizing is explained once, in its Purpose/Design comment.
+
+**Call sites.** `FeedbackListPage` (Details, still inside the `.feedback-details` paste host),
+`FeedbackItemPage` (filer reply), and `FeedbackAdminItemPage` (reply, internal note) now use `<TextArea>`.
+The `fluent-textarea` rules are gone from `FeedbackListPage.razor.css`. Paste still works:
+`PasteAndUpload_Should_ShowAttachmentsOnTheItem` passes, because the paste script finds
+`fluent-textarea` as a descendant of the host.
+
+**Guard: analyzer TWA0032 (chosen over a source scan).** `DirectFluentTextAreaAnalyzer` in
+convention-analyzers is the same family as TWA0025. It reports `OpenComponent<FluentTextArea>` in
+Blazor WASM compilations outside `TextArea.razor`, matching the host by file name (generated
+tree or `#line` path) so it survives template namespace renames. It reports on the first
+`#line`-mapped parameter, so the error lands on the `.razor` line, for example
+`FeedbackItemPage.razor(97,48): error TWA0032`. Opt-out is
+`[DirectFluentTextArea("reason")]` (new attribute in `timewarp-architecture-attributes`); an empty
+reason does not opt out. TWA0029–0031 are retired, so 0032 is the next free id. Listed in
+`AnalyzerReleases.Unshipped.md`, `skills/tw-blazor`, `components/overview.md`, and the
+web-spa.csproj Attributes comment. 11 analyzer tests in
+`tests/analyzers/.../direct-fluent-text-area-analyzer-tests.cs`.
+
+**Playwright.** New test `ReplyAndNoteBoxes_Should_FillTheirField_And_Resize` in
+`feedback-attachment-playwright-tests.cs`. It files an item, opens the permalink (filer reply),
+then opens `/Admin/Feedback/{id}` (admin reply + note; the first passkey account claims
+Administrator). For each box it measures shadow `part=root` against the content box of the
+element holding the TextArea, at 1280 and 600 wide, checks a height of at least 140px, and drags the
+grip 80px. The 302 drag logic is now the shared `AssertGripResizesAsync`, which the Details test also uses.
+Screenshots: `playwright-screenshots/FeedbackAttachment_Given_Wasm/feedback-{filer,admin}-textareas-{1280,600}.png`.
+Negative check: with `--inline-size` removed from TextArea.razor.css, the test fails with
+`root=293..581 288x144` against `field=293..1227` (the 18rem bug).
+Submit helper: the submit button is `Disabled` while any action is active, so the test waits until
+it is enabled and clicks again only if no receipt appears.
+
+**Gates.**
+- `dev build`: 0 warnings, 0 errors.
+- `dev test`: every project passes except one aspire-tests failure,
+  `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole` (Unauthorized vs
+  Forbidden). The same test fails on a clean `origin/master` checkout (9e95be869), so this task did not cause it.
+  The run used `TIMEWARP_TEST_PORT_BASE=17300` because another process held port 7000.
+- web-spa-playwright-tests: 3/3 FeedbackAttachment tests pass.
+- Analyzer tests: 203/203 pass.
+- `dev template-smoke`: SUCCEEDED.
+- `ganda repo audit`: passes.
+- `dev check-version`: source 2.0.0-beta.20 is already ahead of NuGet beta.19, so no bump was needed.
+
+### How to validate
+
+**Smoke**
+
+```bash
+./bin/dev build
+dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -c Release -- --filter-class Should_Require_The_Shared_TextArea
+dotnet run --project tests/container-apps/web/web-spa-playwright-tests -c Release -- --filter-class FeedbackAttachment
+# Guard: change one <TextArea to <FluentTextArea in FeedbackItemPage.razor, then:
+dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release
+```
+
+**Expect**
+
+- Build: 0 warnings, 0 errors.
+- Analyzer class: 11/11 pass.
+- Playwright: 3/3 pass. The console shows `root=` equal to `field=` (for example 293..1227 at 1280 and
+  53..547 at 600) for FeedbackReply, AdminFeedbackReply, and AdminFeedbackNote, and `grown=80` for each drag.
+- Screenshots `feedback-filer-textareas-*.png` and `feedback-admin-textareas-*.png` show full-width,
+  9rem-tall boxes.
+- The guard edit fails the build with `FeedbackItemPage.razor(97,48): error TWA0032`.

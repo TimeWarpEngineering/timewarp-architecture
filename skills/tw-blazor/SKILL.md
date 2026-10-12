@@ -221,7 +221,8 @@ Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Su
 Transparent; danger via `--twe-danger`). Navigation is `FluentAnchor` / `TimeWarpNavLink`.
 Persisting a model is `EditForm` + `FluentButton` submit (RoleForm). Never raw `<button>` or
 page-local button/link classes; reuse `components/elements` and existing feature components
-before writing markup.
+before writing markup. Multi-line text is the shared `TextArea` (`components/forms/TextArea.razor`),
+never a raw `FluentTextArea` (TWA0032; opt out with `[DirectFluentTextArea("reason")]`).
 
 Reference appearances: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
 (Primary, Outline, Subtle, Transparent, and Outline + `Class="twe-button-danger"`).

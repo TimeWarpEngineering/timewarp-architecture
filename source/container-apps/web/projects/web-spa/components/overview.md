@@ -22,6 +22,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `StatusBadge.razor`
 - `FormContainer.razor` (Card shell; `ActionContent` renders in `FormActions`)
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
+- `TextArea.razor` (forms) — the only multi-line text field: fills its field, 9rem default height, vertical resize; raw `FluentTextArea` elsewhere is TWA0032
 - `Section.razor` (composites) — Card + `FluentSpinner` while `ActionTrackingState.IsAnyActive(LoadingActionType)`
 
 **Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.
