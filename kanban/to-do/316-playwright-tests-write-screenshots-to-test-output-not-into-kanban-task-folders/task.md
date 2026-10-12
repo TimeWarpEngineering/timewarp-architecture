@@ -49,6 +49,7 @@ So every test run:
 
 - Created: 2026-10-12 (cockpit, per Steve; found by the 313 worker)
 - 2026-10-12: implemented under `ganda task work` (implement oracle).
+- 2026-10-12: reviewed under `ganda task work` (review oracle, effort 2, general); accepted-exceptions.
 
 ## Results
 
@@ -85,6 +86,15 @@ So every test run:
   ran with no `kanban/` folder: 8/8 passed, with shots in its bin.
 - `dev check-version`: 2.0.0-beta.20 is ahead of nuget 2.0.0-beta.19, no bump needed.
 - `ganda repo audit`: passes.
+
+### Review disposition (2026-10-12)
+
+- Rounds: 1. Effort 2, roster: general (review oracle, Claude Opus 5.5).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix); 0 open.
+- Disposition: **accepted-exceptions**. M1 (nit): the guard regex only matches literals that start
+  with `kanban`; accepted because that is the form that caused the problem, and widening it risks
+  false positives.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
