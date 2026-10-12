@@ -16,7 +16,7 @@
 // a source scan (no component under source/ authors a <style> element) and a prerendered-HTML
 // scan (no <style> in the served page contains an HTML entity). FluentLayout emits its own
 // container-query <style>; it is framework markup, so the HTML scan checks entities, not count.
-// Screenshots go to artifacts/playwright/290 under the repo root. CI uploads that folder.
+// Screenshots go to test output (PlaywrightScreenshot). CI uploads that folder.
 // Brand purple is --twe-purple (#55409c), the same value App.razor puts in data-theme-color.
 #endregion
 
@@ -253,12 +253,8 @@ public partial class FirstPaint_Given_PrerenderedShell
     return directory;
   }
 
-  private static string ScreenshotPath(string fileName)
-  {
-    string folder = Path.Combine(RepoRoot(), "artifacts", "playwright", "290");
-    Directory.CreateDirectory(folder);
-    return Path.Combine(folder, fileName);
-  }
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<FirstPaint_Given_PrerenderedShell>(fileName);
 }
 
 public sealed record Box(int X, int Y, int Width, int Height);

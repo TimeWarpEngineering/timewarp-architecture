@@ -10,9 +10,8 @@
 // identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
 // an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
-// /Feedback. A new account's role includes feedback.file.self. Attachment shots are written
-// beside task 295. The Details layout shot is written beside task 302. Without kanban/ (a
-// generated app) shots go to the test output folder. Chromium install
+// /Feedback. A new account's role includes feedback.file.self. Shots go to test output
+// (PlaywrightScreenshot). Chromium install
 // retries with the ubuntu24.04 build when the host distro is newer than Playwright's platform
 // list. Layout measures fluent-textarea's shadow part=root and part=control against Title's
 // shadow part=root and input. The host element can be full width while the visible box stays
@@ -149,7 +148,7 @@ public class FeedbackAttachment_Given_Wasm
     await AssertDetailsMatchesTitleAsync(page, "default-1280");
     await page.ScreenshotAsync(new PageScreenshotOptions
     {
-      Path = ScreenshotPath("feedback-details-302.png", "302"),
+      Path = ScreenshotPath("feedback-details.png"),
       FullPage = true,
     });
 
@@ -280,20 +279,6 @@ public class FeedbackAttachment_Given_Wasm
     install.ShouldBe(0, "Playwright chromium install failed");
   }
 
-  private static string ScreenshotPath(string fileName, string taskPrefix = "295")
-  {
-    string? directory = AppContext.BaseDirectory;
-    while (directory is not null && !File.Exists(Path.Combine(directory, "timewarp-architecture.slnx")))
-    {
-      directory = Path.GetDirectoryName(directory);
-    }
-
-    // Generated apps ship tests/ without kanban/, so the shot falls back to the test output folder.
-    string? kanban = directory is null ? null : Path.Combine(directory, "kanban");
-    string? folder = kanban is not null && Directory.Exists(kanban)
-      ? Directory.GetDirectories(kanban, taskPrefix + "-*", SearchOption.AllDirectories)
-        .SingleOrDefault(path => File.Exists(Path.Combine(path, "task.md")))
-      : null;
-    return Path.Combine(folder ?? AppContext.BaseDirectory, fileName);
-  }
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<FeedbackAttachment_Given_Wasm>(fileName);
 }
