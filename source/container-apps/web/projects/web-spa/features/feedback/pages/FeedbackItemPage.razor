@@ -6,6 +6,7 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Comment();
 
   private Guid RequestedId;
+  private string ReplyDraft = "";
 
   protected override async Task OnParametersSetAsync()
   {
@@ -22,6 +23,23 @@
     RequestedId = FeedbackItemId;
     await FeedbackState.OpenFeedback(FeedbackItemId);
   }
+
+  private async Task SendReplyAsync(Guid feedbackItemId)
+  {
+    await FeedbackState.ReplyAsFiler(feedbackItemId, ReplyDraft);
+    if (FeedbackState.LastReplySucceeded)
+    {
+      ReplyDraft = "";
+    }
+  }
+
+  private static string ActivityLabel(FeedbackActivityKind kind) => kind switch
+  {
+    FeedbackActivityKind.StatusChange => "Status change",
+    FeedbackActivityKind.AdminReply => "Reply from the team",
+    FeedbackActivityKind.FilerReply => "Your reply",
+    _ => kind.ToString(),
+  };
 }
 
 <TimeWarpPage Title="Feedback">
@@ -34,6 +52,7 @@
     {
       <p data-qa="FeedbackReceiptId">@item.FeedbackItemId</p>
       <p>@item.Kind</p>
+      <p data-qa="FeedbackStatus">Status: @FeedbackState.CurrentStatus</p>
       <h2>@item.Title</h2>
       <p>@item.Body</p>
       @if (item.Attachments.Count > 0)
@@ -55,6 +74,30 @@
         </ul>
       }
       <FluentLink Href="@item.Permalink" data-qa="FeedbackPermalink">@item.Permalink</FluentLink>
+      @if (FeedbackState.CurrentActivity.Count > 0)
+      {
+        <ul class="feedback-item-thread" data-qa="FeedbackThread">
+          @foreach (FeedbackActivityEntry entry in FeedbackState.CurrentActivity)
+          {
+            <li @key="entry.Sequence" data-qa="@($"Feedback{entry.Kind}")">
+              <strong>@ActivityLabel(entry.Kind)</strong>
+              <span>@entry.At.ToString("u")</span>
+              @if (entry.Kind == FeedbackActivityKind.StatusChange)
+              {
+                <p>@entry.FromStatus → @entry.ToStatus</p>
+              }
+              else
+              {
+                <p>@entry.Body</p>
+              }
+            </li>
+          }
+        </ul>
+      }
+      <FluentTextArea @bind-Value="ReplyDraft" AriaLabel="Reply" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="FeedbackReply" />
+      <FluentButton Appearance="ButtonAppearance.Primary"
+        data-qa="FeedbackSendReply"
+        OnClick="@(() => SendReplyAsync(item.FeedbackItemId))">Send reply</FluentButton>
     }
   </Section>
 </TimeWarpPage>

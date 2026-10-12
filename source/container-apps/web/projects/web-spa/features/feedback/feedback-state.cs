@@ -7,6 +7,9 @@
 // EmailCopyAvailable comes from ListMyFeedback so the form does not read ProfileState.
 // DraftAttachments are uploads that have not been filed yet. FilingsLoaded is true only after
 // ListMyFeedback succeeds: an empty Items list is also the state before that response.
+// CurrentStatus and CurrentActivity mirror the open item's status and filer-visible thread
+// (never internal notes). GetFeedback.Response is immutable, so OpenFeedback and ReplyAsFiler
+// success set them; Initialize clears them.
 // ComposerActive and the draft flags are presence only (kind, has title, has body). The draft
 // text stays on the form. Initialize clears every field so sign-out cannot leave another
 // principal's filings or files on screen.
@@ -23,6 +26,9 @@ public sealed partial class FeedbackState : State<FeedbackState>
   public bool EmailCopyAvailable { get; private set; }
   public GetFeedback.Response? Current { get; private set; }
   public string? LoadError { get; private set; }
+  public FeedbackStatus CurrentStatus { get; private set; } = FeedbackStatus.New;
+  public IReadOnlyList<FeedbackActivityEntry> CurrentActivity { get; private set; } = [];
+  public bool LastReplySucceeded { get; private set; }
   public IReadOnlyList<DraftAttachment> DraftAttachments { get; private set; } = [];
   public bool ComposerActive { get; private set; }
   public string DraftKind { get; private set; } = "";
@@ -40,6 +46,9 @@ public sealed partial class FeedbackState : State<FeedbackState>
     EmailCopyAvailable = false;
     Current = null;
     LoadError = null;
+    CurrentStatus = FeedbackStatus.New;
+    CurrentActivity = [];
+    LastReplySucceeded = false;
     DraftAttachments = [];
     ComposerActive = false;
     DraftKind = "";

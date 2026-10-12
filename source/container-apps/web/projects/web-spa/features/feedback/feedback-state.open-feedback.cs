@@ -63,6 +63,9 @@ partial class FeedbackState
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackState.Current = response;
+        FeedbackState.CurrentStatus = response.Status;
+        FeedbackState.CurrentActivity = response.Activity;
+        FeedbackState.LastReplySucceeded = false;
         FeedbackState.LoadError = null;
         AgentCallOutcome.Set(response);
         string current = PageAgentScope.Normalize(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
@@ -80,6 +83,7 @@ partial class FeedbackState
         if (problemDetails.Status == 404)
         {
           FeedbackState.Current = null;
+          FeedbackState.CurrentActivity = [];
           FeedbackState.LoadError = "This feedback item is not available.";
         }
 

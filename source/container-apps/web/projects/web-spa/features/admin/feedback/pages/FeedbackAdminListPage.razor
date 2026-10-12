@@ -1,0 +1,132 @@
+@namespace TimeWarp.Architecture.Features.Admin.Feedback
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.CommentMultiple();
+  public static string Title => "Feedback review";
+
+  private static readonly string[] StatusChoices =
+    ["", .. Enum.GetValues<FeedbackStatus>().Select(static status => status.ToString())];
+  private static readonly string[] KindChoices =
+    ["", .. Enum.GetValues<FeedbackKind>().Select(static kind => kind.ToString())];
+
+  private string StatusValue => FeedbackAdminState.Status?.ToString() ?? "";
+  private string KindValue => FeedbackAdminState.Kind?.ToString() ?? "";
+
+  private static string StatusLabel(string value) => value.Length == 0 ? "Open (default)" : value;
+  private static string KindLabel(string value) => value.Length == 0 ? "All kinds" : value;
+
+  protected override async Task OnInitializedAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    await FeedbackAdminState.FetchFeedbackList();
+  }
+
+  private async Task ApplyFilterAsync(FeedbackStatus? status, FeedbackKind? kind, bool includeClosed)
+  {
+    await FeedbackAdminState.SetFilter(status, kind, includeClosed);
+    await FeedbackAdminState.FetchFeedbackList();
+  }
+
+  private Task OnStatusChanged(string value) =>
+    ApplyFilterAsync(Enum.TryParse(value, out FeedbackStatus status) ? status : null, FeedbackAdminState.Kind, FeedbackAdminState.IncludeClosed);
+
+  private Task OnKindChanged(string value) =>
+    ApplyFilterAsync(FeedbackAdminState.Status, Enum.TryParse(value, out FeedbackKind kind) ? kind : null, FeedbackAdminState.IncludeClosed);
+
+  private Task OnIncludeClosedChanged(bool value) =>
+    ApplyFilterAsync(FeedbackAdminState.Status, FeedbackAdminState.Kind, value);
+
+  private async Task GoToPageAsync(int page)
+  {
+    await FeedbackAdminState.SetPage(page);
+    await FeedbackAdminState.FetchFeedbackList();
+  }
+}
+
+<TimeWarpPage Title="Feedback review">
+  <div class="twe-stack">
+    <Section Title="Filter" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
+      <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Wrap="true">
+        <FormField Label="Status">
+          <FluentSelect TOption="string" TValue="string"
+            Items="StatusChoices"
+            OptionText="@(static value => StatusLabel(value))"
+            Value="@StatusValue"
+            ValueChanged="@OnStatusChanged"
+            AriaLabel="Status"
+            data-qa="AdminFeedbackStatus" />
+        </FormField>
+        <FormField Label="Kind">
+          <FluentSelect TOption="string" TValue="string"
+            Items="KindChoices"
+            OptionText="@(static value => KindLabel(value))"
+            Value="@KindValue"
+            ValueChanged="@OnKindChanged"
+            AriaLabel="Kind"
+            data-qa="AdminFeedbackKind" />
+        </FormField>
+        <FormField Label="Show closed">
+          <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
+            ValueChanged="@OnIncludeClosedChanged"
+            AriaLabel="Show closed"
+            data-qa="AdminFeedbackIncludeClosed" />
+        </FormField>
+      </FluentStack>
+    </Section>
+    <Section Title="Feedback" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
+      @if (FeedbackAdminState.ListLoadError is not null)
+      {
+        <p data-qa="AdminFeedbackLoadError">@FeedbackAdminState.ListLoadError</p>
+      }
+      else if (FeedbackAdminState.Items is null || FeedbackAdminState.Items.Count == 0)
+      {
+        <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
+      }
+      else
+      {
+        <table class="twe-table" data-qa="AdminFeedbackTable">
+          <thead>
+            <tr>
+              <TableHeader>Title</TableHeader>
+              <TableHeader>Kind</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Filed</TableHeader>
+              <TableHeader>Owner</TableHeader>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (ListFeedback.Item row in FeedbackAdminState.Items)
+            {
+              <tr @key="row.FeedbackItemId">
+                <Cell><FluentLink Href="@($"/Admin/Feedback/{row.FeedbackItemId:D}")" data-qa="AdminFeedbackRow">@row.Title</FluentLink></Cell>
+                <Cell>@row.Kind</Cell>
+                <Cell>@row.Status</Cell>
+                <Cell>@row.FiledAt.ToString("u")</Cell>
+                <Cell><code>@row.OwnerPrincipalId</code></Cell>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (FeedbackAdminState.TotalCount > 0 || FeedbackAdminState.HasPreviousPage)
+      {
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
+          <FluentButton Appearance="ButtonAppearance.Outline"
+            Disabled="@(!FeedbackAdminState.HasPreviousPage)"
+            data-qa="AdminFeedbackPrevious"
+            OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page - 1))">Previous</FluentButton>
+          <span data-qa="AdminFeedbackPage">Page @FeedbackAdminState.Page · @FeedbackAdminState.TotalCount items</span>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+            Disabled="@(!FeedbackAdminState.HasNextPage)"
+            data-qa="AdminFeedbackNext"
+            OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page + 1))">Next</FluentButton>
+        </FluentStack>
+      }
+    </Section>
+  </div>
+</TimeWarpPage>

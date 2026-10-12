@@ -61,6 +61,8 @@ namespace TimeWarp.Architecture.Features
         PermissionIds.AdminRolesManage,
         PermissionIds.AdminPrincipalsRead,
         PermissionIds.AdminPrincipalsManage,
+        PermissionIds.AdminFeedbackRead,
+        PermissionIds.AdminFeedbackManage,
       ]);
       return Task.CompletedTask;
     }

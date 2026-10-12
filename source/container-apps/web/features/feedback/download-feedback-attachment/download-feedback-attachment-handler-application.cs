@@ -4,8 +4,9 @@
 
 #region Design
 // A missing id, another principal, and an admin asking for an unlinked draft are the same
-// 404. After Link, the item owner or a principal with admin.access on either human scheme
-// may read. Agent-token is not a human scheme and is not consulted. The stream is the blob
+// 404. After Link, the item owner or a principal with admin.feedback.read on either human
+// scheme may read (task 314: the read permission covers attachment download; admin.access
+// alone opens the Admin area, not other people's files). Agent-token is not a human scheme and is not consulted. The stream is the blob
 // object; the endpoint writes it with the safe headers.
 #endregion
 
@@ -84,7 +85,7 @@ public sealed class DownloadFeedbackAttachment
       if (await PermissionEvaluator.HasPermissionAsync(
         principalId,
         AuthenticationSchemeNames.IdentitySession,
-        PermissionIds.AdminAccess,
+        PermissionIds.AdminFeedbackRead,
         cancellationToken).ConfigureAwait(false))
       {
         return true;
@@ -93,7 +94,7 @@ public sealed class DownloadFeedbackAttachment
       return await PermissionEvaluator.HasPermissionAsync(
         principalId,
         AuthenticationSchemeNames.MockIdentitySession,
-        PermissionIds.AdminAccess,
+        PermissionIds.AdminFeedbackRead,
         cancellationToken).ConfigureAwait(false);
     }
   }

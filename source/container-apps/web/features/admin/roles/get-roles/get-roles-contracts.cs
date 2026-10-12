@@ -114,6 +114,8 @@ public static partial class GetRoles
           PermissionIds.AdminRolesManage,
           PermissionIds.AdminPrincipalsRead,
           PermissionIds.AdminPrincipalsManage,
+          PermissionIds.AdminFeedbackRead,
+          PermissionIds.AdminFeedbackManage,
           PermissionIds.ProfileRead,
           PermissionIds.SettingsRead,
         ]),

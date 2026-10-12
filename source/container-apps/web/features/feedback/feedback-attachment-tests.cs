@@ -112,7 +112,9 @@ namespace TimeWarp.Architecture.Features.Feedback
       Guid attachmentId = await world.UploadAsync(world.Owner, "shot.png", FeedbackAttachmentRules.Png, Png);
       PrincipalId other = PrincipalId.New();
       PrincipalId admin = PrincipalId.New();
-      world.Permissions.Grant(admin, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess);
+      PrincipalId adminAreaOnly = PrincipalId.New();
+      world.Permissions.Grant(admin, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminFeedbackRead);
+      world.Permissions.Grant(adminAreaOnly, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess);
 
       (await world.DownloadAsync(world.Owner, attachmentId)).ContentType.ShouldBe(FeedbackAttachmentRules.Png);
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
@@ -123,6 +125,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
       (await world.DownloadAsync(world.Owner, attachmentId)).FileName.ShouldBe("shot.png");
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
+      (await world.DownloadProblemAsync(adminAreaOnly, attachmentId)).Status.ShouldBe(404);
       DownloadFeedbackAttachment.Response allowed = await world.DownloadAsync(admin, attachmentId);
       await using Stream content = allowed.Content;
       byte[] bytes = new byte[Png.Length];

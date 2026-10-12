@@ -31,7 +31,7 @@ public class All_Should_
     foreach (string expected in new[]
     {
       "HomePage", "SettingsPage", "AgentLinksPage", "ProfilePage",
-      "RolesListPage", "PrincipalsPage", "AuthenticationPage",
+      "RolesListPage", "PrincipalsPage", "FeedbackAdminListPage", "AuthenticationPage",
       "CounterPage", "ChatPage", "PasskeysPage",
       "StyleGuidePage", "TestPage", "ServicesPage", "UserClaimsPage",
     })
@@ -48,7 +48,7 @@ public class All_Should_
     string[] names = PageNames();
     foreach (string excluded in new[]
     {
-      "TodoItemPage", "RoleDetailPage", "LoginPage", "LogoutPage", "ChooseMicrosoft365Page",
+      "TodoItemPage", "RoleDetailPage", "FeedbackAdminItemPage", "LoginPage", "LogoutPage", "ChooseMicrosoft365Page",
     })
     {
       names.ShouldNotContain(excluded);

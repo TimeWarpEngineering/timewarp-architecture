@@ -84,7 +84,7 @@ outside printable ASCII is `_`. The real name is in `filename*=UTF-8''…`. The 
 `Cache-Control: private, no-store`. The `Content-Type` is the allow-list spelling.
 
 An unlinked file can be downloaded or removed only by the person who uploaded it. After it is
-filed, the item's owner or a principal with `admin.access` on `identity-session` or
+filed, the item's owner or a principal with `admin.feedback.read` on `identity-session` or
 `mock-identity-session` can download it. Anyone else gets the same 404 as a missing id.
 Removing a filed file is HTTP 409.
 
