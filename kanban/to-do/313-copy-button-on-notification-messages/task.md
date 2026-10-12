@@ -46,6 +46,7 @@ gets a small copy-to-clipboard button. It copies the message's Title plus Body a
 - 2026-10-12: implemented under `ganda task work` (implement oracle, Claude).
 - 2026-10-12: implementation review under `ganda task work` (review oracle, Claude Opus 5.5, effort 2,
   roster general).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-12T09:47:30Z
 
 ## Results
 
