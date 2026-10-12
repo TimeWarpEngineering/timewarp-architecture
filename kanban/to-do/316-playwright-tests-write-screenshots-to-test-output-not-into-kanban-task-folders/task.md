@@ -41,10 +41,57 @@ So every test run:
 
 ## Checklist
 
-- [ ] Shared screenshot-path helper writing to test output; both suites use it
-- [ ] No `kanban` path references under `tests/` + guard (test or dirty-tree check)
-- [ ] Gates incl. clean `git status` after `dev test`
+- [x] Shared screenshot-path helper writing to test output; both suites use it
+- [x] No `kanban` path references under `tests/` + guard (test or dirty-tree check)
+- [x] Gates incl. clean `git status` after `dev test`
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve; found by the 313 worker)
+- 2026-10-12: implemented under `ganda task work` (implement oracle).
+
+## Results
+
+- New `tests/container-apps/web/web-spa-playwright-tests/playwright-screenshot.cs`:
+  `PlaywrightScreenshot.PathFor<TTest>(file)` writes to
+  `<test bin>/playwright-screenshots/<test class>/<file>`. Its Design region has the one-line
+  rule: a worker copies shots into a task folder by hand when they are review evidence.
+- All four web-spa Playwright suites use it: ask-surface and feedback-attachment (dropped the
+  kanban glob and the task-number parameter), plus ask-sign-in and first-paint (dropped
+  `artifacts/playwright/<n>`), so there is one rule. `feedback-details-302.png` is now
+  `feedback-details.png`.
+- **Guard chosen: source-scan test** (not a dirty-tree check in `dev test`).
+  `screenshot-path-guard-tests.cs` (`[TestTag("Unit")]`) scans `tests/**/*.cs` (skipping
+  bin/obj and itself) for a string literal that starts with `kanban` as a path segment. It ships
+  in generated apps and passes there. It is a test and not a `dev test` dirty-tree check because
+  it fails at the source line that causes the problem and does not depend on the developer's
+  working-tree state.
+- CI `Upload Playwright screenshots` now uploads
+  `tests/container-apps/web/web-spa-playwright-tests/bin/**/playwright-screenshots/`.
+- The committed shots under `kanban/done/{295,296,302,307}-*` are unchanged.
+
+### Gates (2026-10-12)
+
+- `dev build`: succeeded (0 warnings / 0 errors; warnings are errors).
+- web-spa-playwright-tests (`dotnet run`): 8/8 passed, including the guard. 27 files were
+  written under `bin/Debug/net11.0/playwright-screenshots/`.
+- `dev test`: every project passed except aspire-tests 39/40.
+  `IngressSmoke_Given_.RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`
+  got 401 because ingress port 63620 was bound by a `yarp` process another session started
+  from the `master` checkout ("address already in use"). This is an environment collision; the
+  change does not touch aspire or ingress. Rerun once that port is free.
+- `git status` was clean after `dev test` and after the Playwright run.
+- `dev template-smoke`: SUCCEEDED. The generated SmokeDefault `web-spa-playwright-tests` also
+  ran with no `kanban/` folder: 8/8 passed, with shots in its bin.
+- `dev check-version`: 2.0.0-beta.20 is ahead of nuget 2.0.0-beta.19, no bump needed.
+- `ganda repo audit`: passes.
+
+### How to validate
+
+- **Smoke:** `cd tests/container-apps/web/web-spa-playwright-tests && dotnet run`, then
+  `git status --short` at the repo root and
+  `find tests/container-apps/web/web-spa-playwright-tests/bin -path '*playwright-screenshots*' -type f`.
+- **Expect:** 8/8 tests pass, including `TestSources_Should_.Not_Reference_Kanban_As_A_Path`.
+  `git status` is empty, and nothing under `kanban/done/{295,296,302,307}-*` changed. The PNGs
+  are under `bin/<config>/net11.0/playwright-screenshots/{AskSurface_Given_Wasm,AskSignIn_Given_Wasm,FeedbackAttachment_Given_Wasm,FirstPaint_Given_PrerenderedShell}/`.
+  Adding `Path.Combine(root, "kanban")` to any test `.cs` makes the guard fail and name that file.
