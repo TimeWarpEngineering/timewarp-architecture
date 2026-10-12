@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageId>TimeWarp.Foundation.Server</PackageId>
     <Title>TimeWarp.Foundation.Server</Title>
-    <Description>ASP.NET server building blocks (modules, base endpoints, CORS, service discovery) for the TimeWarp foundation layer.</Description>
+    <Description>ASP.NET server building blocks (modules, base endpoints, CORS) for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />

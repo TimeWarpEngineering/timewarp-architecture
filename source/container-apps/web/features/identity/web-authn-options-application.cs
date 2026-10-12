@@ -32,11 +32,9 @@
 // a forged Host or X-Forwarded-Host can only ever SELECT among already-approved RP IDs, never expand
 // them — which is why reading the forwarded header is safe even where web-server is directly
 // reachable (full argument: HttpRequestHostAccessor's Design region).
-// HttpRequestHostAccessor honors X-TimeWarp-Circuit-Host only when Request.Host is loopback
-// (IdentitySessionCookieForwardingHandler sets it on InteractiveServer HTTPS loopback); on the
-// public path the public host wins even if a client supplied the header. That loopback does not
-// rewrite HTTP Host (TLS must keep validating localhost). The circuit host is the circuit
-// request's public host, by the same rule.
+// The InteractiveServer self-call carries the circuit request's public host on X-Forwarded-Host
+// (IdentitySessionCookieForwardingHandler, task 312), so the same rule selects on that hop. It does
+// not rewrite HTTP Host (TLS must keep validating the discovered host).
 // MEMBERSHIP ORACLE (round-1 security S2, accepted): the precise fail-closed claim is that the
 // selected/requested host is never REFLECTED in the response body (the 400 Detail is a fixed string),
 // NOT that there is no enumeration whatsoever — the 200-vs-400 status on the anonymous Start endpoints

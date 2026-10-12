@@ -26,6 +26,9 @@
 // Web.Server.Program's ConfigureServices Design region.
 // Task 205-003: WASM named HttpClients attach BrowserRequestCredentialsHandler (fetch
 // credentials SameOrigin) so the identity-session cookie rides on PUT/GET to the SPA origin.
+// Task 312: every WASM named client targets the origin the SPA was served from (the ingress on
+// every target). The gRPC client adds IngressPaths.GrpcPathPrefix; the browser never receives
+// internal service URIs (the /service-discovery endpoint and ServiceUriProvider are gone).
 //
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
@@ -59,6 +62,10 @@ public static class Program
 #if api
     builder.Services.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
       .AddHttpMessageHandler<BrowserRequestCredentialsHandler>();
+#endif
+#if grpc
+    // Task 312: gRPC-Web goes through the ingress origin; the ingress strips the prefix.
+    builder.Services.AddHttpClient(ServiceNames.GrpcServiceName, client => client.BaseAddress = new Uri(new Uri(builder.HostEnvironment.BaseAddress), $"{IngressPaths.GrpcPathPrefix.TrimStart('/')}/"));
 #endif
 
     await using WebAssemblyHost host = builder.Build();

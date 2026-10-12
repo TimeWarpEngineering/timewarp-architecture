@@ -9,11 +9,10 @@
 // which deliberately has NO ASP.NET Core reference — the same layering constraint that gave rise to
 // ICurrentPrincipalAccessor (impl in web-server via IHttpContextAccessor). This port is that same
 // pattern: a scheme-agnostic host read that web-application declares and web-server implements
-// (HttpRequestHostAccessor). The server implementation honors X-TimeWarp-Circuit-Host only when
-// Request.Host.Host is loopback (the InteractiveServer HTTPS hop); otherwise the public host —
-// the ingress-set X-Forwarded-Host, else Request.Host.Host (task 070-008) — wins even if a client
-// supplied the circuit header. Callers still receive a bare host string (no port); they never see
-// which source was used, and the value only SELECTS among AllowedRpIds.
+// (HttpRequestHostAccessor). The server implementation returns the public host — the ingress-set
+// X-Forwarded-Host, else Request.Host.Host (task 070-008); the InteractiveServer self-call carries
+// the circuit's public host on the same header (task 312). Callers receive a bare host string (no
+// port); they never see which source was used, and the value only SELECTS among AllowedRpIds.
 // Returns the HOST ONLY (no port): an RP ID is a bare domain, and WebAuthnRelyingPartySelection
 // matches it against AllowedRpIds entries which are validated as bare DNS names. Returns null (never
 // throws) when there is no active HTTP request or no Host — callers treat null as "host not allowed"

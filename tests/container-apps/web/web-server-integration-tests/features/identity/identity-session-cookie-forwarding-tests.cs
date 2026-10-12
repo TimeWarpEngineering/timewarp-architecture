@@ -1,7 +1,8 @@
 #region Purpose
 // Host-free coverage that IdentitySessionCookieForwardingHandler copies Cookie, mock
-// principal, and circuit host (X-Forwarded-Host, else Request.Host) from HttpContext onto the
-// outgoing loopback request without rewriting HTTP Host (HTTPS TLS must keep validating the URI host).
+// principal, and the circuit's public host (X-Forwarded-Host, else Request.Host) from HttpContext
+// onto the outgoing self-call's X-Forwarded-Host without rewriting HTTP Host (TLS on the https hop
+// must keep validating the URI host).
 #endregion
 
 namespace IdentitySessionCookieForwarding_;
@@ -14,6 +15,8 @@ using TimeWarp.Architecture.Web.Server;
 
 public class Copies_
 {
+  private const string ForwardedHostHeader = "X-Forwarded-Host";
+
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Copies_>();
 
@@ -54,10 +57,10 @@ public class Copies_
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.Contains("Cookie").ShouldBeFalse();
     inner.LastRequest.Headers.Contains(MockAuthenticationDefaults.MockPrincipalIdHeader).ShouldBeFalse();
-    inner.LastRequest.Headers.Contains(MockAuthenticationDefaults.CircuitHostHeader).ShouldBeFalse();
+    inner.LastRequest.Headers.Contains(ForwardedHostHeader).ShouldBeFalse();
   }
 
-  public static async Task Circuit_Host_From_HttpContext_Is_Copied_Port_Stripped_Without_Setting_Http_Host()
+  public static async Task Public_Host_From_HttpContext_Is_Copied_Port_Stripped_Without_Setting_Http_Host()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
@@ -72,12 +75,12 @@ public class Copies_
     await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("arch.timewarp.work");
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }
 
-  public static async Task Circuit_Host_Is_Copied_When_HttpContext_Has_No_Cookie()
+  public static async Task Public_Host_Is_Copied_When_HttpContext_Has_No_Cookie()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
@@ -92,13 +95,13 @@ public class Copies_
     await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("arch.timewarp.work");
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
     inner.LastRequest.Headers.Contains("Cookie").ShouldBeFalse();
   }
 
-  public static async Task Circuit_Host_From_X_Forwarded_Host_When_Behind_Ingress()
+  public static async Task Public_Host_From_X_Forwarded_Host_When_Behind_Ingress()
   {
     // Behind YARP the circuit request's Host is the destination (web-server); the public host
     // arrives in the ingress-set X-Forwarded-Host (task 070-008).
@@ -116,12 +119,12 @@ public class Copies_
     await client.GetAsync("https://localhost:63611/api/identity/passkey/authenticate");
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldBe(["arch.timewarp.work"]);
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }
 
-  public static async Task Http_Host_Already_Set_Is_Left_Alone_And_Circuit_Host_Is_Copied()
+  public static async Task Http_Host_Already_Set_Is_Left_Alone_And_Public_Host_Is_Copied()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
@@ -139,11 +142,11 @@ public class Copies_
 
     inner.LastRequest.ShouldNotBeNull();
     inner.LastRequest!.Headers.Host.ShouldBe("already.set.test");
-    inner.LastRequest.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("arch.timewarp.work");
   }
 
-  public static async Task Circuit_Host_Already_Set_Is_Not_Overwritten()
+  public static async Task Public_Host_Already_Set_Is_Not_Overwritten()
   {
     CapturingHandler inner = new();
     DefaultHttpContext httpContext = new();
@@ -156,13 +159,13 @@ public class Copies_
 
     using HttpClient client = new(handler);
     using HttpRequestMessage request = new(HttpMethod.Get, "https://localhost:63611/api/identity/passkey/authenticate");
-    request.Headers.TryAddWithoutValidation(MockAuthenticationDefaults.CircuitHostHeader, "already.set.test");
+    request.Headers.TryAddWithoutValidation(ForwardedHostHeader, "already.set.test");
     await client.SendAsync(request);
 
     inner.LastRequest.ShouldNotBeNull();
-    inner.LastRequest!.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest!.Headers.GetValues(ForwardedHostHeader)
       .ShouldContain("already.set.test");
-    inner.LastRequest.Headers.GetValues(MockAuthenticationDefaults.CircuitHostHeader)
+    inner.LastRequest.Headers.GetValues(ForwardedHostHeader)
       .ShouldNotContain("arch.timewarp.work");
     string.IsNullOrEmpty(inner.LastRequest.Headers.Host).ShouldBeTrue();
   }

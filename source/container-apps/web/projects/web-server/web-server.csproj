@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>postgres</DefineConstants>
+    <DefineConstants>postgres;grpc</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -22,6 +22,10 @@ using Microsoft.Extensions.Configuration.Json;
 // consumer override read explicitly from AppContext.BaseDirectory — see the inline comment there —
 // so a consumer that authors its own appsettings.json (the pre-existing "merged appsettings.json"
 // pattern) still gets it applied, without reintroducing the collision bug.
+//
+// Task 312: configurationOverrides is an in-memory source added last, so a host can supply what
+// Aspire injects as environment variables in a real deployment — e.g. the Services:* endpoints
+// service discovery resolves named HttpClients from.
 #endregion
 
 /// <summary>
@@ -50,7 +54,8 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
   (
     string[] urls,
     WebApplicationOptions webApplicationOptions,
-    Action<IServiceCollection>? configureServicesDelegate = null
+    Action<IServiceCollection>? configureServicesDelegate = null,
+    IReadOnlyDictionary<string, string?>? configurationOverrides = null
   )
   {
     Urls = urls;
@@ -88,6 +93,11 @@ public class WebApplicationHost<TProgram> : IAsyncDisposable
       && File.Exists(consumerOverridePath))
     {
       builder.Configuration.AddJsonFile(consumerOverridePath, optional: true, reloadOnChange: false);
+    }
+
+    if (configurationOverrides is not null)
+    {
+      builder.Configuration.AddInMemoryCollection(configurationOverrides);
     }
 
     builder.WebHost

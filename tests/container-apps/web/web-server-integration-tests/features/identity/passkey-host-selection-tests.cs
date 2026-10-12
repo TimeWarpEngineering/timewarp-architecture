@@ -1,9 +1,9 @@
 #region Purpose
 // End-to-end tests for per-request WebAuthn RP-ID selection (task 104-031): the same running host
 // serves passkeys under a second allowlisted host, rejects an unlisted host (by Host or by
-// X-Forwarded-Host), selects from X-Forwarded-Host when the ingress sets it (task 070-008), and
-// ignores a client-supplied X-TimeWarp-Circuit-Host on non-loopback Host — the RP ID is chosen
-// from the public host against WebAuthnOptions.AllowedRpIds.
+// X-Forwarded-Host), and selects from X-Forwarded-Host when the ingress (or the InteractiveServer
+// self-call, task 312) sets it — the RP ID is chosen from the public host against
+// WebAuthnOptions.AllowedRpIds.
 #endregion
 
 #region Design
@@ -19,9 +19,7 @@
 // X-Forwarded-Host is the public host (the ingress SETS it and sends the destination as Host —
 // HttpRequestHostAccessor's Design region). It only SELECTS: an allowlisted forwarded host moves
 // rp.id to it, and an unlisted one is "Host not allowed" even when the real Host is allowlisted —
-// the forged value is never replaced by Host and never expands AllowedRpIds. A client-supplied
-// X-TimeWarp-Circuit-Host is ignored unless Host is loopback (the InteractiveServer HTTPS hop); on
-// the public path the public host wins.
+// the forged value is never replaced by Host and never expands AllowedRpIds.
 #endregion
 
 namespace PasskeyHostSelection_;
@@ -31,7 +29,6 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using TimeWarp.Architecture.Features.Identity;
-using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 
 public class Returns_
@@ -151,23 +148,6 @@ public class Returns_
     await ShouldBeHostNotAllowed(response);
   }
 
-  public static async Task Selection_Stays_On_Request_Host_Given_Spoofed_CircuitHost_On_NonLoopback()
-  {
-    // Real Host is an allowlisted public host; a client-supplied circuit-host header must NOT win
-    // because Request.Host is not loopback.
-    HttpResponseMessage response = await Post
-    (
-      StartPasskeyRegistration.Command.RouteTemplate,
-      new StartPasskeyRegistration.Command(),
-      host: SecondHost,
-      circuitHost: "localhost"
-    );
-
-    response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-    (await ReadRpId(response)).ShouldBe(SecondHost);
-  }
-
   private static async Task<string> ReadRpId(HttpResponseMessage response)
   {
     StartPasskeyRegistration.Response? startResponse =
@@ -194,8 +174,7 @@ public class Returns_
     string routeTemplate,
     TCommand command,
     string host,
-    string? forwardedHost = null,
-    string? circuitHost = null
+    string? forwardedHost = null
   )
   {
     string json = JsonSerializer.Serialize(command, ContractSerializationDefaults.Options);
@@ -223,11 +202,6 @@ public class Returns_
     if (forwardedHost is not null)
     {
       request.Headers.Add("X-Forwarded-Host", forwardedHost);
-    }
-
-    if (circuitHost is not null)
-    {
-      request.Headers.Add(MockAuthenticationDefaults.CircuitHostHeader, circuitHost);
     }
 
     return await client.SendAsync(request);

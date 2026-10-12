@@ -1,5 +1,5 @@
 #region Purpose
-// Copies inbound Cookie, mock-principal, User-Agent, and circuit host onto server HttpClient loopback.
+// Copies inbound Cookie, mock-principal, User-Agent, and public host onto the server HttpClient self-call.
 #endregion
 
 #region Design
@@ -9,15 +9,13 @@
 // IHttpContextAccessor is AsyncLocal-safe on a pooled DelegatingHandler. Copies Cookie as
 // sent and X-TimeWarp-Mock-Principal-Id so mock-identity-session still authenticates when
 // that header is in play. Does not invent cookies — missing inbound Cookie stays anonymous.
-// Task 213: copies the circuit/page host (port stripped) onto X-TimeWarp-Circuit-Host so
-// HttpRequestHostAccessor / WebAuthn RP-ID selection sees the browser's public host rather than
-// the loopback URI host (localhost). Does not set HTTP Host on the outgoing HTTPS request —
-// HttpClient uses Host for TLS SNI / certificate name validation, and the loopback cert is the
-// ASP.NET dev cert for localhost. The circuit host comes from HttpRequestHostAccessor.GetPublicHost
-// (task 070-008): the ingress-set X-Forwarded-Host, else Request.Host — the same rule and the same
-// selection-only argument as the accessor's Design region (behind YARP, Request.Host is the
-// destination host, not the browser's). Does not overwrite X-TimeWarp-Circuit-Host when the
-// outgoing request already set it.
+// Task 213 / 312: copies the circuit request's public host (HttpRequestHostAccessor.GetPublicHost:
+// the ingress-set X-Forwarded-Host, else Request.Host; port stripped) onto X-Forwarded-Host so
+// WebAuthn RP-ID selection on the self-call sees the browser's host, not the discovered one
+// (https://localhost in run mode, http://web-server published). The accessor reads that header on
+// every hop with the same selection-only argument (its Design region). Does not set HTTP Host —
+// HttpClient uses Host for TLS SNI / certificate name validation on the https hop. Does not
+// overwrite an X-Forwarded-Host the outgoing request already set.
 // Task 248-001: copies User-Agent as sent so HttpRequestUserAgentAccessor on the loopback hop
 // sees the registering browser (credential rows record its browser/OS family), not the
 // server-side HttpClient. Same copy-as-sent / never-invent posture as Cookie.
@@ -26,11 +24,12 @@
 namespace TimeWarp.Architecture.Web.Server;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Primitives;
 using TimeWarp.Architecture.Services;
 
 /// <summary>
-/// Forwards the browser identity-session cookie, mock principal header, User-Agent, and circuit host on server loopback.
+/// Forwards the browser identity-session cookie, mock principal header, User-Agent, and public host on the server self-call.
 /// </summary>
 public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
 {
@@ -54,7 +53,7 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
       // Task 248-001: the registering browser's User-Agent must survive the loopback hop so the
       // credential row records the real browser/OS family, not the server's HttpClient.
       CopyHeader(httpContext, request, "User-Agent");
-      CopyCircuitHost(httpContext, request);
+      ForwardPublicHost(httpContext, request);
     }
 
     return base.SendAsync(request, cancellationToken);
@@ -76,9 +75,9 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
     request.Headers.TryAddWithoutValidation(headerName, values.ToArray());
   }
 
-  private static void CopyCircuitHost(HttpContext httpContext, HttpRequestMessage request)
+  private static void ForwardPublicHost(HttpContext httpContext, HttpRequestMessage request)
   {
-    if (request.Headers.Contains(MockAuthenticationDefaults.CircuitHostHeader))
+    if (request.Headers.Contains(ForwardedHeadersDefaults.XForwardedHostHeaderName))
     {
       return;
     }
@@ -89,6 +88,6 @@ public sealed class IdentitySessionCookieForwardingHandler : DelegatingHandler
       return;
     }
 
-    request.Headers.TryAddWithoutValidation(MockAuthenticationDefaults.CircuitHostHeader, host);
+    request.Headers.TryAddWithoutValidation(ForwardedHeadersDefaults.XForwardedHostHeaderName, host);
   }
 }

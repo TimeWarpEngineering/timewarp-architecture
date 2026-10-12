@@ -41,14 +41,20 @@
 // Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
 // HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
 // instead of anonymous session loopback — see that type's Design region.
-// Task 205-003: named WebService HttpClient loopback attaches
-// IdentitySessionCookieForwardingHandler so InteractiveServer/Auto API calls (Profile PUT)
-// present the inbound identity-session cookie instead of challenging 401.
-// Task 213: that handler also forwards the circuit host on X-TimeWarp-Circuit-Host (not HTTP
-// Host — HTTPS loopback TLS must still validate localhost) so passkey RP-ID selection sees the
-// browser's public host (ingress-set X-Forwarded-Host, task 070-008), not the loopback URI host.
-// HttpRequestHostAccessor honors that header only when Request.Host is loopback; the public path
-// ignores a client-supplied copy.
+// Task 312: server-side named HttpClients (web-server self-call, api-server, grpc-server) use
+// https+http://{ServiceNames.*} through Aspire service discovery, which AddServiceDefaults
+// registers for every client. https+http prefers https (run mode, dev cert) and falls back to http
+// (Compose, Kubernetes and ACA expose http only). Never hand-read services__* env vars: the old
+// https-only read gave a null BaseAddress on every published target. An unresolvable name fails
+// the first call with the service name in the error. The browser never receives service URIs:
+// WASM clients target the ingress origin, so there is no /service-discovery endpoint.
+// Task 205-003: the web-server self-call attaches IdentitySessionCookieForwardingHandler so
+// InteractiveServer/Auto API calls (Profile PUT) present the inbound identity-session cookie
+// instead of challenging 401. Tasks 213 / 312: that handler also forwards the circuit's public
+// host on X-Forwarded-Host (never HTTP Host — TLS on the https hop validates the discovered host),
+// so passkey RP-ID selection sees the browser's host on both the run-mode https://localhost hop
+// and the published http://web-server hop. On published targets that hop is cleartext inside the
+// deployment network, the same as ingress → web-server.
 // Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
 // merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
 // cleared once instead of re-validated on every request.
@@ -154,9 +160,16 @@ public partial class Program : IAspNetProgram
   {
     serviceCollection.AddHttpClient();
     serviceCollection.AddTransient<IdentitySessionCookieForwardingHandler>();
-    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.WebServiceName))
+    // Task 312: Aspire service discovery (AddServiceDefaults) resolves these; https+http prefers
+    // https (run mode) and falls back to http (Compose, Kubernetes, ACA publish http only).
+    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.WebServiceName))
       .AddHttpMessageHandler<IdentitySessionCookieForwardingHandler>();
-    serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceUriHelper.GetServiceHttpsUri(ServiceNames.ApiServiceName));
+    serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.ApiServiceName));
+#if grpc
+    // Server-side half of the SPA's gRPC client (prerender + InteractiveServer). The browser half
+    // targets the ingress origin plus IngressPaths.GrpcPathPrefix — see Web.Spa.Program.
+    serviceCollection.AddHttpClient(ServiceNames.GrpcServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.GrpcServiceName));
+#endif
 
     serviceCollection
       .AddRazorComponents()
@@ -336,6 +349,12 @@ public partial class Program : IAspNetProgram
     (serviceCollection.LastOrDefault(static descriptor => descriptor.ServiceType == typeof(IHostEnvironment))
       ?.ImplementationInstance as IHostEnvironment)?.EnvironmentName;
 
+  /// <summary>
+  /// The Aspire service-discovery address for a sibling (or this) service:
+  /// <c>https+http://{serviceName}/</c> — https when the target exposes it, else http.
+  /// </summary>
+  private static Uri ServiceDiscoveryAddress(string serviceName) => new($"https+http://{serviceName}/");
+
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     // RFC 219 D10: identity-session is always DefaultScheme. Entra is a named OIDC scheme when
@@ -512,22 +531,6 @@ public partial class Program : IAspNetProgram
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
 
-    // Map the new endpoint to expose service discovery information
-    webApplication.MapGet
-    (
-      "/service-discovery",
-      async context =>
-      {
-        var services = new Dictionary<string, Uri?>
-        {
-          { TimeWarp.Foundation.Configuration.ServiceNames.GrpcServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.GrpcServiceName) },
-          { TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.ApiServiceName) },
-          { TimeWarp.Foundation.Configuration.ServiceNames.WebServiceName, ServiceUriHelper.GetServiceHttpsUri(TimeWarp.Foundation.Configuration.ServiceNames.WebServiceName) }
-        };
-
-        await context.Response.WriteAsJsonAsync(services);
-      }
-    );
   }
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)

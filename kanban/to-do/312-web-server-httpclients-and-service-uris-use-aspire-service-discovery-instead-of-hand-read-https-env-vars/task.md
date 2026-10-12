@@ -60,12 +60,12 @@ The publish safety suites inspect output and never run the app, so CI was green.
 
 ## Checklist
 
-- [ ] Named clients via `https+http://` service discovery; loopback/circuit-host behaviour verified
-- [ ] `/service-discovery` + `ServiceUriProvider` removed (grpc-web via ingress origin) or justified
-- [ ] `ServiceUriHelper` deleted (package surface noted)
-- [ ] Regression test with http-only discovery config (fails before, passes after)
-- [ ] Design regions reconciled
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev publish compose|kubernetes|aca`, `dev template-smoke`,
+- [x] Named clients via `https+http://` service discovery; loopback/circuit-host behaviour verified
+- [x] `/service-discovery` + `ServiceUriProvider` removed (grpc-web via ingress origin) or justified
+- [x] `ServiceUriHelper` deleted (package surface noted)
+- [x] Regression test with http-only discovery config (fails before, passes after)
+- [x] Design regions reconciled
+- [x] Gates: `dev build` 0/0, `dev test`, `dev publish compose|kubernetes|aca`, `dev template-smoke`,
       `ganda repo audit`
 
 ## Notes
@@ -81,3 +81,99 @@ The publish safety suites inspect output and never run the app, so CI was green.
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve's kind-deployment error report)
+- 2026-10-12 implementer (ganda task work, headless): implemented; gates below.
+
+## Results
+
+### What changed
+
+- **web-server named clients** (`program.cs`): `web-server`, `api-server` and a new `grpc-server`
+  client use `https+http://{ServiceNames.*}/` through the service discovery that
+  `AddServiceDefaults` already registers. https in run mode, http on Compose / Kubernetes / ACA.
+  `web-server.csproj` adds `grpc` to `DefineConstants` (TWA0010) for the `#if grpc` client.
+- **Self-call host forwarding.** On published targets the self-call goes to `http://web-server`,
+  which is not loopback, so `X-TimeWarp-Circuit-Host` (honored only on a loopback Host) would have
+  broken passkey RP-ID selection under InteractiveServer. The header is retired:
+  `IdentitySessionCookieForwardingHandler` now sets **`X-Forwarded-Host`** on the self-call, and
+  `HttpRequestHostAccessor.GetRequestHost()` is just `GetPublicHost` (X-Forwarded-Host, else
+  Request.Host). No new trust: since 070-008 the accessor already reads X-Forwarded-Host from any
+  peer as a selector only. HTTP Host is still never set (TLS on the https run-mode hop).
+  `MockAuthenticationDefaults.CircuitHostHeader` is removed.
+- **`/service-discovery` endpoint and `ServiceUriProvider` deleted.** The browser never gets
+  internal URIs. `SuperheroGrpcServiceProvider` builds its gRPC-Web channel from the host's
+  `grpc-server` named client. WASM: ingress origin + `IngressPaths.GrpcPathPrefix` (new constant in
+  foundation-contracts, also used by the AppHost `/grpc` route). Server (prerender /
+  InteractiveServer): `https+http://grpc-server/`. A private `GrpcBaseAddressHandler` outside the
+  factory pipeline rebases each call, because GrpcChannel drops address paths and rejects
+  non-http(s) schemes. The channel keeps HTTP/2 exact (h2c on the published http hop) since
+  grpc-server endpoints are Http2-only. An unregistered client throws on first use.
+- **`ServiceUriHelper` deleted.** **Release note:** `TimeWarp.Foundation.Extensions.ServiceUriHelper`
+  (`GetServiceHttpUri` / `GetServiceHttpsUri`) is removed from the **TimeWarp.Foundation.Server**
+  package. That was the only type in the `TimeWarp.Foundation.Extensions` namespace. Use
+  `https+http://{name}` with Aspire service discovery. There is no PublicAPI file in this repo.
+  `dev check-version`: source 2.0.0-beta.20 is already ahead of nuget beta.19, so no bump.
+- **Test host.** `WebApplicationHost` accepts `configurationOverrides`. `WebTestServerApplication`
+  registers `AddServiceDiscovery` plus the `ConfigureHttpClientDefaults` discovery handler, the same
+  two calls `AddServiceDefaults` makes, and feeds `Services:*` endpoints (`HttpsServiceEndpoints`
+  default, `HttpOnlyServiceEndpoints` for published shape) instead of `PostConfigure`d
+  BaseAddresses. `HostGraphFactory.CreateWebAsync` passes `serviceEndpoints` through.
+- **Regression test:** `web-server-integration-tests/features/service-discovery/
+  web-server-named-client-service-discovery-tests.cs` boots web-server with http-only discovery
+  config. It calls `/api/health` through the production `web-server` named client, including the
+  forwarding handler.
+- **Side observation (recorded in `HttpRequestHostAccessor` Design).** Aspire.Hosting 13.6 sets
+  `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` on project resources with endpoints in **publish
+  mode only** (decompiled `ProjectResourceBuilderExtensions`). It enables X-Forwarded-For and
+  X-Forwarded-Proto with known proxies cleared, **not** Host. So Request.Scheme and
+  RemoteIpAddress follow the ingress on published targets, and Request.Host stays the destination.
+
+### Gate evidence
+
+- `dev build`: 0 warnings, 0 errors.
+- Regression test fails before: with the named client temporarily reverted to the old
+  `services__web-server__https__0` read, the class failed with
+  `InvalidOperationException: An invalid request URI was provided. Either the request URI must be
+  an absolute URI or BaseAddress must be set.` It passes after (1/1).
+- `dev test`: every project green except one aspire-tests case,
+  `RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole` (401 vs 403). This
+  is environmental. The maintainer's master `aspire run` holds ingress ports 63610/63620, so the
+  test AppHost's ingress could not bind 63620 ("address already in use") and the test hit the
+  maintainer's instance, which has no mock auth. A re-run with ports moved off
+  (`Ingress__Port=64610 Ingress__HttpPort=64620 dotnet run -c Release -- --filter-class
+  IngressSmoke`) passed: IngressSmoke 10/10. The maintainer's app was not touched.
+- `dev publish compose|kubernetes|aca`: all production-safe, helm lint clean. The Kubernetes
+  output has only `services__{api,grpc,web}-server__http__0`, which is the shape the regression
+  test models.
+- `dev template-smoke`: SUCCEEDED (defaults, SmokeNoApi, postgres-off; web-jaribu 270/270).
+- `ganda repo audit`: passes.
+
+### Not verified / follow-ups
+
+- The SPA gRPC (Superhero page) path was not exercised end to end in a browser or Aspire test,
+  for either the WASM path via `/grpc` or the server path via discovery. It compiles, and its
+  composition is described in the provider's Design region.
+- Unverified observation: on published targets the AddYarp ingress forwards `/grpc` to
+  grpc-server's http endpoint. grpc-server is `Protocols: Http2` (h2c only on cleartext), and
+  YARP's default request version policy (2.0 OrLower) downgrades cleartext to HTTP/1.1. Browser
+  gRPC-Web through the ingress may therefore fail on Compose/Kubernetes, independent of this task.
+  Worth its own task if the maintainer sees it after redeploy.
+
+### How to validate
+
+Smoke:
+```bash
+dev build
+cd tests/container-apps/web/web-server-integration-tests
+dotnet run -- --filter-class WebServerNamedClientServiceDiscovery_
+dotnet run -- --filter-class IdentitySessionCookieForwarding_
+dotnet run -- --filter-class HttpRequestHostAccessor_
+dotnet run -- --filter-class PasskeyHostSelection_
+cd - && dev publish kubernetes && grep -rhoE 'services__[a-z-]+__https?__0' artifacts/aspire-output/kubernetes | sort -u
+# after merge (maintainer): dev deploy --target kubernetes, reload the ingress page
+curl -s -o /dev/null -w '%{http_code}\n' <ingress>/service-discovery
+```
+Expect: build 0/0. Each filtered class passes (1/1 for the regression class). The Kubernetes
+output lists only `__http__0` entries. On kind, the page loads with no "invalid request URI"
+notification, passkey sign-in works on the first (InteractiveServer) visit, and
+`/service-discovery` no longer returns the URI map: it falls through to the SPA, not JSON.
+

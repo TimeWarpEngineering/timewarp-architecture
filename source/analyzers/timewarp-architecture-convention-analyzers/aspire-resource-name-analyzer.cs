@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Service discovery resolves each app's BaseAddress from services__{name}__ env vars that Aspire
-// keys by resource name; a name that is not a ServiceNames value yields a null BaseAddress, and
-// only under server-side rendering — a delayed runtime failure this makes a build error instead.
+// Service discovery resolves each app's https+http://{name} clients from services__{name}__ env vars
+// that Aspire keys by resource name; a name that is not a ServiceNames value leaves the name
+// unresolved, and only under server-side rendering — a delayed runtime failure this makes a build
+// error instead.
 // The first argument is checked via semantic constant evaluation, so literals and const
 // references (including aliases of ServiceNames itself) are all covered; non-constant names are
 // skipped (nothing to verify at compile time). ServiceNames is resolved by its full metadata name

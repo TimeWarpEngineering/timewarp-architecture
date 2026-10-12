@@ -1,6 +1,5 @@
 namespace TimeWarp.Architecture.Testing;
 
-using Microsoft.Extensions.Http;
 using TimeWarp.Architecture.Abuse;
 
 /// <summary>
@@ -18,11 +17,38 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
   internal static readonly int WebHttpPort = InProcTestPorts.WebHttpPort;
   private static readonly string ApiHostUrl = InProcTestPorts.ApiHostUrl;
 
+  /// <summary>
+  /// The Services:* endpoints a dev run injects (https), keyed as Aspire's services__* env vars
+  /// bind. Web.Server's named HttpClients resolve https+http://{name} from these.
+  /// </summary>
+  public static IReadOnlyDictionary<string, string?> HttpsServiceEndpoints =>
+    new Dictionary<string, string?>
+    {
+      [$"Services:{ServiceNames.WebServiceName}:https:0"] = WebHostUrl,
+      [$"Services:{ServiceNames.ApiServiceName}:https:0"] = ApiHostUrl
+    };
+
+  /// <summary>
+  /// The Services:* endpoints a published target injects: http only (Compose, Kubernetes, ACA).
+  /// </summary>
+  public static IReadOnlyDictionary<string, string?> HttpOnlyServiceEndpoints =>
+    new Dictionary<string, string?>
+    {
+      [$"Services:{ServiceNames.WebServiceName}:http:0"] = WebHttpUrl
+    };
+
   /// <param name="configureServices">
   /// Optional extras after the built-in test wiring (includes <see cref="MockAccessTokenProvider"/>).
   /// Used by C-create / <see cref="HostGraphFactory"/>.
   /// </param>
-  public WebTestServerApplication(Action<IServiceCollection>? configureServices = null) :
+  /// <param name="serviceEndpoints">
+  /// Service-discovery endpoints (default <see cref="HttpsServiceEndpoints"/>).
+  /// </param>
+  public WebTestServerApplication
+  (
+    Action<IServiceCollection>? configureServices = null,
+    IReadOnlyDictionary<string, string?>? serviceEndpoints = null
+  ) :
     base
     (
       new WebApplicationHost<Web.Server.Program>
@@ -48,24 +74,18 @@ public class WebTestServerApplication : TestServerApplication<Web.Server.Program
         {
           ConfigureServicesCallback(services);
           configureServices?.Invoke(services);
-        }
+        },
+        serviceEndpoints ?? HttpsServiceEndpoints
       )
     )
   { }
 
   protected static void ConfigureServicesCallback(IServiceCollection serviceCollection)
   {
-    serviceCollection.PostConfigure<HttpClientFactoryOptions>
-    (
-      ServiceNames.WebServiceName,
-      options => options.HttpClientActions.Add(client => client.BaseAddress ??= new Uri(WebHostUrl))
-    );
-
-    serviceCollection.PostConfigure<HttpClientFactoryOptions>
-    (
-      ServiceNames.ApiServiceName,
-      options => options.HttpClientActions.Add(client => client.BaseAddress ??= new Uri(ApiHostUrl))
-    );
+    // Production gets service discovery from AddServiceDefaults (Main), which this host does not
+    // run; register the same two calls so the named clients resolve from the Services:* endpoints.
+    serviceCollection.AddServiceDiscovery();
+    serviceCollection.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
 
     serviceCollection.AddSingleton<IAccessTokenProvider, MockAccessTokenProvider>();
 
