@@ -42,11 +42,55 @@ start with an empty, ready-to-use board.
 
 ## Checklist
 
-- [ ] Skeleton (five columns + `.gitkeep`, overview, task template) packed; monorepo tasks/journals excluded
-- [ ] Generic overview decision recorded
-- [ ] Template-smoke assertions
-- [ ] Gates: `dev template-smoke`, `dev build` 0/0, `ganda repo audit`
+- [x] Skeleton (five columns + `.gitkeep`, overview, task template) packed; monorepo tasks/journals excluded
+- [x] Generic overview decision recorded
+- [x] Template-smoke assertions
+- [x] Gates: `dev template-smoke`, `dev build` 0/0, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve)
+- 2026-10-12: implementer (ganda task work) — skeleton packed, smoke assert added, gates green.
+
+## Results
+
+**Decision — generic overview:** the root `kanban/overview.md` is now generic and packs as is
+(one source, nothing to keep in sync). It says columns are folders and the folder is the status,
+ids come from the tooling (`ganda kanban` where available), `task-template.md` is the body shape,
+and the Definition of Ready / Done point at the shipped skills (`tw-web-api-contracts`,
+`tw-blazor`, `tw-blazor-layout`, `tw-blazor-css-strategy`, `tw-aggregate-pattern`,
+`tw-feature-placement`, `tw-slice-isolation`, `tw-deploy`). The old Mapper/Handler checklist and
+the Figma line are gone. `kanban/task-template.md` was trimmed (no `tw-agent-collaboration`
+reference, which does not ship; no example task number) and also packs as is.
+
+Changes:
+
+- `kanban/{to-do,in-progress,done,archived}/.gitkeep` added (`backlog/` already had one).
+- `timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj`:
+  explicit `Content` items for the five `.gitkeep` files, `overview.md` and `task-template.md`.
+  No `kanban\**` glob, so tasks, journals and `task-examples/` never pack.
+- `tools/dev-cli/services/template-smoke-harness.cs`: `AssertKanbanSkeletonShipped` — requires
+  the five column `.gitkeep` files, `overview.md` and `task-template.md`, and fails on any other
+  file or directory under `kanban/`. Called from `template-smoke` next to `AssertSkillsShipped`.
+- No test reads or writes `kanban/` (316 interaction unchanged).
+
+Gates: `dev template-smoke` SUCCEEDED (skeleton assert passed for SmokeDefault, SmokeNoApi,
+SmokeNoPostgres); `dev build` succeeded (warnings are errors); `ganda repo audit` passes.
+
+### How to validate
+
+**Smoke**
+
+```bash
+dotnet run tools/dev-cli/dev.cs -- self-install   # refresh bin/dev with the new assert
+./bin/dev template-smoke
+find artifacts/template-smoke/work/SmokeDefault/kanban | sort
+```
+
+**Expect**
+
+- `template-smoke` prints "Generated app contains the empty kanban/ skeleton (five columns,
+  overview, task template)." for each matrix app and ends with `Template smoke SUCCEEDED`.
+- The `find` lists exactly `kanban/`, the five column folders each with `.gitkeep`,
+  `overview.md` and `task-template.md` — no task folders, `*.md` tasks or `*.journal.json`.
+

@@ -37,6 +37,16 @@
     <Content Include="..\..\..\skills\**\*"
              Exclude="..\..\..\skills\**\analysis\**"
              PackagePath="content\templates\TimeWarp.Architecture\skills\%(RecursiveDir)%(FileName)%(Extension)" />
+    <!-- kanban/: an empty board skeleton only — the five column .gitkeep files, the generic
+         overview.md and task-template.md. This repo's tasks, journals and task-examples/
+         never pack, so each skeleton file is listed explicitly (no kanban\** glob). -->
+    <Content Include="..\..\..\kanban\backlog\.gitkeep" PackagePath="content\templates\TimeWarp.Architecture\kanban\backlog\.gitkeep" />
+    <Content Include="..\..\..\kanban\to-do\.gitkeep" PackagePath="content\templates\TimeWarp.Architecture\kanban\to-do\.gitkeep" />
+    <Content Include="..\..\..\kanban\in-progress\.gitkeep" PackagePath="content\templates\TimeWarp.Architecture\kanban\in-progress\.gitkeep" />
+    <Content Include="..\..\..\kanban\done\.gitkeep" PackagePath="content\templates\TimeWarp.Architecture\kanban\done\.gitkeep" />
+    <Content Include="..\..\..\kanban\archived\.gitkeep" PackagePath="content\templates\TimeWarp.Architecture\kanban\archived\.gitkeep" />
+    <Content Include="..\..\..\kanban\overview.md;..\..\..\kanban\task-template.md"
+             PackagePath="content\templates\TimeWarp.Architecture\kanban\%(FileName)%(Extension)" />
     <Content Include="..\..\..\timewarp-architecture.slnx;..\..\..\Directory.Build.props;..\..\..\Directory.Build.targets;..\..\..\Directory.Packages.props;..\..\..\global.json;..\..\..\BannedSymbols.txt;..\..\..\aspire.config.json;..\..\..\.editorconfig;..\..\..\.gitattributes;..\..\..\.gitignore;..\..\..\unlicense.md"
              PackagePath="content\templates\TimeWarp.Architecture\%(FileName)%(Extension)" />
     <Compile Remove="**\*" />

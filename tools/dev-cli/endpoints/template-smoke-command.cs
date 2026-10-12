@@ -378,6 +378,9 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
           if (!Harness.AssertSkillsShipped(outputDir))
             return Task.FromResult(false);
 
+          if (!Harness.AssertKanbanSkeletonShipped(outputDir))
+            return Task.FromResult(false);
+
           // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.
           if (!Harness.AssertDeployParametersUseAppKebabName(outputDir, name.ToLowerInvariant()))
             return Task.FromResult(false);
