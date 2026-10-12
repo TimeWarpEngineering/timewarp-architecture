@@ -29,12 +29,7 @@ public class OpenApiDocument_Given_
   public static async Task SetupOnce()
   {
     IDistributedApplicationTestingBuilder appHost =
-      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
-      (
-        // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
-        // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
-        ["--Postgres:UseDataVolume=false"]
-      );
+      await ClosedBoxAppHost.CreateAsync();
 
     App = await appHost.BuildAsync();
     await App.StartAsync();

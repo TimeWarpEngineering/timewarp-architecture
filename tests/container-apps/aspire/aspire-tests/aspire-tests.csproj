@@ -26,4 +26,8 @@
     <Using Include="TimeWarp.Jaribu" />
     <Using Include="TimeWarp.Jaribu.TestRunner" Static="true" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Task 319: the one closed-box run-mode AppHost boot (ephemeral postgres + dynamic ingress). -->
+    <Compile Include="..\..\..\common\closed-box-app-host\closed-box-app-host.cs" Link="infrastructure\closed-box-app-host.cs" />
+  </ItemGroup>
 </Project>

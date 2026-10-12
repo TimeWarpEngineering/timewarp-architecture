@@ -46,12 +46,7 @@ public static class SpaIntegrationHost
   public static async Task<DistributedApplication> StartAsync()
   {
     IDistributedApplicationTestingBuilder appHost =
-      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>
-      (
-        // Ephemeral postgres: test AppHosts must NOT share the deterministic data volume
-        // (overlapping instances corrupt its WAL and hang WaitFor - see AppHost Design region).
-        ["--Postgres:UseDataVolume=false"]
-      );
+      await ClosedBoxAppHost.CreateAsync();
 
     DistributedApplication app = await appHost.BuildAsync();
     await app.StartAsync();
