@@ -12,11 +12,15 @@
 //     --controller-service override). An external LoadBalancer address is opened directly; otherwise
 //     `kubectl port-forward` runs in the foreground with a real TTY (TtyPassthroughAsync — it streams),
 //     the browser opens once localhost:<port> accepts connections (within 30s, else the URL is
-//     printed), and Ctrl+C stops the forward. The port (default 8080) is checked free first so the
-//     refusal can suggest --port instead of kubectl's error.
+//     printed), and Ctrl+C stops the forward. The port is --port, else the app's ingress-port parameter
+//     (task 311: committed in the AppHost appsettings.json, one per generated app),
+//     resolved like dev deploy's parameters; it is checked free first so the refusal can suggest --port
+//     instead of kubectl's error.
 //   - compose: http://localhost:<port> — --port, else INGRESS_PORT in the published .env, else the
-//     ingress-port parameter resolved like dev deploy's parameters, else the AppHost's default. No
-//     forwarding: the ingress publishes the host port itself.
+//     ingress-port parameter resolved like dev deploy's parameters. No forwarding: the ingress
+//     publishes the host port itself.
+// Neither target has a hard-coded port: with no --port and no ingress-port anywhere the verb refuses
+// (DeployOperate.NoIngressPortMessage) instead of guessing a shared default such as 8080.
 //   - aca: https://<fqdn> of the ingress container app from `az containerapp show … --query
 //     properties.configuration.ingress.fqdn`, in the preflight's subscription and the resource group
 //     from --resource-group, Azure__ResourceGroup or the AppHost user secret Azure:ResourceGroup.
@@ -31,8 +35,8 @@ using System.Net;
 using System.Net.Sockets;
 
 [NuruRoute("open", Description = "Open the deployed app in the browser (kubernetes: port-forwards the ingress controller unless it has an external address; operator-run)")]
-[NuruRouteExample("open --target kubernetes", Description = "Forward localhost:8080 to the kind ingress-nginx controller and open the browser (Ctrl+C stops the forward)")]
-[NuruRouteExample("open --target kubernetes --port 9090", Description = "Forward a different local port")]
+[NuruRouteExample("open --target kubernetes", Description = "Forward localhost:<ingress-port> (the ingress-port parameter committed in the AppHost appsettings.json) to the kind ingress-nginx controller and open the browser (Ctrl+C stops the forward)")]
+[NuruRouteExample("open --target kubernetes --port 9090", Description = "Forward a different local port than ingress-port")]
 [NuruRouteExample("open", Description = "Open the compose deployment at http://localhost:<ingress-port>")]
 [NuruRouteExample("open --target aca --no-browser", Description = "Print the ingress container app's https URL")]
 internal sealed class OpenCommand : ICommand<Unit>
@@ -40,7 +44,7 @@ internal sealed class OpenCommand : ICommand<Unit>
   [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
-  [Option("port", Description = "Local port: kubernetes forwards it (default 8080); compose overrides the ingress-port lookup")]
+  [Option("port", Description = "Local port (default: the ingress-port parameter committed in the AppHost appsettings.json); kubernetes forwards it, compose opens it")]
   public string? Port { get; set; }
 
   [Option("no-browser", Description = "Print the URL instead of opening a browser")]
@@ -91,12 +95,17 @@ internal sealed class OpenCommand : ICommand<Unit>
 
     private async Task OpenKubernetesAsync(OpenCommand command, DeployPreflight preflight, CancellationToken ct)
     {
-      (int? port, string? portError) = DeployOperate.ParsePort(command.Port, DeployOperate.DefaultForwardPort);
+      ResolvedDeployParameter? parameter = string.IsNullOrWhiteSpace(command.Port)
+        ? await AspireDeployPreflight.ResolveParameterAsync(preflight.AppHostProject, DeployOperate.IngressPortParameter, ct)
+        : null;
+      (int? port, string portDetail) = DeployOperate.ChooseForwardPort(command.Port, parameter, preflight.AppHostProject);
       if (port is null)
       {
-        Fail(portError!);
+        Fail(portDetail);
         return;
       }
+
+      Terminal.WriteLine($"Ingress port: {port} ({portDetail})");
 
       string context = preflight.KubectlContext!;
       string controllerNamespace = string.IsNullOrWhiteSpace(command.ControllerNamespace) ? DeployOperate.IngressControllerNamespace : command.ControllerNamespace.Trim();
@@ -166,7 +175,7 @@ internal sealed class OpenCommand : ICommand<Unit>
 
     private async Task OpenComposeAsync(OpenCommand command, DeployPreflight preflight, CancellationToken ct)
     {
-      if (!string.IsNullOrWhiteSpace(command.Port) && DeployOperate.ParsePort(command.Port, DeployOperate.DefaultForwardPort).Error is { } portError)
+      if (!string.IsNullOrWhiteSpace(command.Port) && DeployOperate.ParsePort(command.Port, "--port").Error is { } portError)
       {
         Fail(portError);
         return;
@@ -177,7 +186,19 @@ internal sealed class OpenCommand : ICommand<Unit>
       ResolvedDeployParameter? parameter = envValue is null && string.IsNullOrWhiteSpace(command.Port)
         ? await AspireDeployPreflight.ResolveParameterAsync(preflight.AppHostProject, DeployOperate.IngressPortParameter, ct)
         : null;
-      (string port, string source) = DeployOperate.ChooseComposePort(command.Port, envValue, parameter);
+      (string? port, string? source) = DeployOperate.ChooseComposePort(command.Port, envValue, parameter);
+      if (port is null)
+      {
+        Fail(DeployOperate.NoIngressPortMessage(preflight.AppHostProject));
+        return;
+      }
+
+      if (DeployOperate.ParsePort(port, source!).Error is { } sourceError)
+      {
+        Fail(sourceError);
+        return;
+      }
+
       Terminal.WriteLine($"Ingress port: {port} ({source})");
       await OpenBrowserAsync($"http://localhost:{port}", command.NoBrowser, ct);
     }

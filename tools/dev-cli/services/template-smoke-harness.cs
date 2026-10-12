@@ -32,6 +32,11 @@
 // app's DNS-1123 kebab name. The template engine cannot fail generation on an invalid label, so this
 // assert is the loud failure. GenerateAsync is the generate-only half of SmokeOneAsync, for names
 // that only need that cheap assert (template-smoke's Contoso.Shop).
+// Task 311: ReadGeneratedIngressPort — the ingressPort port-generator symbol rewrites the committed
+// Parameters:ingress-port. The range and the monorepo value it replaces are read from
+// .template.config/template.json (symbols.ingressPort), never copied here, so the assert follows
+// the template. The generator is random per generation; template-smoke collects every generation's
+// port and fails when they are all the same (the value was not regenerated).
 #endregion
 
 namespace DevCli.Services;
@@ -786,6 +791,65 @@ internal sealed partial class TemplateSmokeHarness
       Terminal.WriteLine($"AppHost deploy parameters use the app's kebab name ({expectedKebabName}).");
 
     return ok;
+  }
+
+  /// <summary>
+  /// Task 311: the generated AppHost appsettings.json's Parameters:ingress-port — an integer inside the template's ingressPort
+  /// generator range and not the monorepo's own value it replaces. Returns the port, or null after printing the failure.
+  /// </summary>
+  public int? ReadGeneratedIngressPort(string outputDir)
+  {
+    const string parameterName = "ingress-port";
+    string templateJson = Path.Combine(RepoRoot, ".template.config", "template.json");
+    int low, high;
+    string replaced;
+    try
+    {
+      using var template = JsonDocument.Parse(File.ReadAllText(templateJson), new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+      JsonElement symbol = template.RootElement.GetProperty("symbols").GetProperty("ingressPort");
+      low = symbol.GetProperty("parameters").GetProperty("low").GetInt32();
+      high = symbol.GetProperty("parameters").GetProperty("high").GetInt32();
+      replaced = symbol.GetProperty("replaces").GetString() ?? "";
+    }
+    catch (Exception exception) when (exception is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
+    {
+      Terminal.WriteErrorLine($".template.config/template.json has no usable symbols.ingressPort (parameters.low/high, replaces): {exception.Message}".Red());
+      return null;
+    }
+
+    string path = Path.Combine(outputDir, AppHostAppSettingsRelativePath.Replace('/', Path.DirectorySeparatorChar));
+    string? value = null;
+    try
+    {
+      using var document = JsonDocument.Parse(File.ReadAllText(path));
+      if (document.RootElement.TryGetProperty("Parameters", out JsonElement section)
+        && section.ValueKind == JsonValueKind.Object
+        && section.TryGetProperty(parameterName, out JsonElement element)
+        && element.ValueKind == JsonValueKind.String)
+      {
+        value = element.GetString();
+      }
+    }
+    catch (Exception exception) when (exception is JsonException or IOException)
+    {
+      Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} could not be read: {exception.Message}".Red());
+      return null;
+    }
+
+    if (value == replaced)
+    {
+      Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} Parameters:{parameterName} is still the monorepo's {replaced} (ingressPort template symbol did not run).".Red());
+      return null;
+    }
+
+    if (!int.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int port) || port < low || port > high)
+    {
+      Terminal.WriteErrorLine($"{AppHostAppSettingsRelativePath} Parameters:{parameterName} is '{value}', expected an integer in {low}-{high} (ingressPort template symbol).".Red());
+      return null;
+    }
+
+    Terminal.WriteLine($"AppHost ingress-port is the generated {port} ({low}-{high}).");
+    return port;
   }
 
   /// <summary>

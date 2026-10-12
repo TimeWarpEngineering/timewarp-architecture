@@ -2,7 +2,7 @@
 // Gates `dev open` / `dev deploy migrate` (task 287) without a cluster, a container runtime or Azure: option parsing, the
 // per-target command construction (port-forward, exec + script, bundle + firewall rule), the LoadBalancer-vs-forward
 // decision, the firewall-rule cleanup on failure, the refusal texts, the preflight scopes, and agreement with the
-// AppHost's resource names and ingress-port default.
+// AppHost's resource names and its committed ingress-port parameter.
 #endregion
 
 // ReSharper disable InconsistentNaming
@@ -13,17 +13,37 @@ public class Options_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Options_Given_>();
 
-  public static Task NoPort_Should_UseTheFallback()
+  public static Task ValidPort_Should_Parse()
   {
-    DeployOperate.ParsePort(null, DeployOperate.DefaultForwardPort).ShouldBe((8080, null));
-    DeployOperate.ParsePort(" ", 8080).ShouldBe((8080, null));
+    DeployOperate.ParsePort("9090", "--port").ShouldBe((9090, null));
+    DeployOperate.ParsePort(" 65535 ", "--port").ShouldBe((65535, null));
     return Task.CompletedTask;
   }
 
-  public static Task ValidPort_Should_Parse()
+  public static Task ForwardPort_Should_PreferOptionThenIngressPortParameter()
   {
-    DeployOperate.ParsePort("9090", 8080).ShouldBe((9090, null));
-    DeployOperate.ParsePort(" 65535 ", 8080).ShouldBe((65535, null));
+    ResolvedDeployParameter parameter = new("ingress-port", "36371", "AppHost appsettings.json");
+    DeployOperate.ChooseForwardPort("9090", parameter, "app/app.csproj").ShouldBe((9090, "--port"));
+    DeployOperate.ChooseForwardPort(null, parameter, "app/app.csproj").ShouldBe((36371, "ingress-port from the AppHost appsettings.json"));
+    DeployOperate.ChooseForwardPort(" ", parameter, "app/app.csproj").Port.ShouldBe(36371);
+    return Task.CompletedTask;
+  }
+
+  public static Task ForwardPort_Should_RefuseWithoutOptionOrParameter()
+  {
+    (int? port, string detail) = DeployOperate.ChooseForwardPort(null, null, "app/app.csproj");
+    port.ShouldBeNull();
+    detail.ShouldContain("ingress-port is not set");
+    detail.ShouldContain("--port <n>");
+    detail.ShouldContain("dotnet user-secrets set 'Parameters:ingress-port'");
+    return Task.CompletedTask;
+  }
+
+  public static Task ForwardPort_Should_RefuseABadIngressPortParameter()
+  {
+    (int? port, string detail) = DeployOperate.ChooseForwardPort(null, new ResolvedDeployParameter("ingress-port", "http", "AppHost user secret"), "a.csproj");
+    port.ShouldBeNull();
+    detail.ShouldContain("ingress-port from the AppHost user secret 'http' is not a TCP port");
     return Task.CompletedTask;
   }
 
@@ -31,7 +51,7 @@ public class Options_Given_
   {
     foreach (string value in (string[])["0", "65536", "-1", "http", "80.5"])
     {
-      (int? port, string? error) = DeployOperate.ParsePort(value, 8080);
+      (int? port, string? error) = DeployOperate.ParsePort(value, "--port");
       port.ShouldBeNull(value);
       error.ShouldNotBeNull().ShouldContain($"--port '{value}' is not a TCP port");
     }
@@ -62,6 +82,11 @@ public class Options_Given_
     DeployParameterResolution fromEnvironment = AspireDeploy.ResolveParameters(["ingress-port"], environment, false, "");
     fromEnvironment.Resolved.Single().ShouldBe(new ResolvedDeployParameter("ingress-port", "9000", "Parameters__ingress-port environment variable"));
 
+    AppSettingsFile[] appSettings = [new("appsettings.json", """{ "Parameters": { "ingress-port": "36371" } }""")];
+    DeployParameterResolution fromAppSettings = AspireDeploy.ResolveParameters(["ingress-port"], _ => null, true, "", appSettings);
+    fromAppSettings.Resolved.Single().ShouldBe(new ResolvedDeployParameter("ingress-port", "36371", "AppHost appsettings.json"));
+    AspireDeploy.ResolveParameters(["ingress-port"], environment, true, "", appSettings).Resolved.Single().Value.ShouldBe("9000");
+
     DeployParameterResolution fromSecret = AspireDeploy.ResolveParameters(["ingress-port"], _ => null, true, "Parameters:ingress-port = 9100");
     fromSecret.Resolved.Single().Source.ShouldBe(AspireDeploy.UserSecretSource);
 
@@ -82,8 +107,8 @@ public class Kubernetes_Given_
 
   public static Task PortForward_Should_TargetTheControllerServicePort80InTheContext()
   {
-    DeployOperate.BuildPortForwardArguments("kind-app", "ingress-nginx", "ingress-nginx-controller", 8080)
-      .ShouldBe(["--context", "kind-app", "port-forward", "--namespace", "ingress-nginx", "service/ingress-nginx-controller", "8080:80"]);
+    DeployOperate.BuildPortForwardArguments("kind-app", "ingress-nginx", "ingress-nginx-controller", 36371)
+      .ShouldBe(["--context", "kind-app", "port-forward", "--namespace", "ingress-nginx", "service/ingress-nginx-controller", "36371:80"]);
     DeployOperate.BuildControllerServiceArguments("kind-app", "edge", "traefik")
       .ShouldBe(["--context", "kind-app", "get", "service", "traefik", "--namespace", "edge", "--output", "json"]);
     return Task.CompletedTask;
@@ -93,7 +118,6 @@ public class Kubernetes_Given_
   {
     DeployOperate.IngressControllerNamespace.ShouldBe("ingress-nginx");
     DeployOperate.IngressControllerService.ShouldBe("ingress-nginx-controller");
-    DeployOperate.DefaultForwardPort.ShouldBe(8080);
     return Task.CompletedTask;
   }
 
@@ -114,13 +138,13 @@ public class Kubernetes_Given_
 
   public static Task ExternalAddress_Should_OpenItWithoutForwarding()
   {
-    OpenPlan ip = DeployOperate.DecideKubernetesOpen(DeployOperate.ParseLoadBalancerAddress(IpLoadBalancer), "ingress-nginx", "ingress-nginx-controller", 8080);
+    OpenPlan ip = DeployOperate.DecideKubernetesOpen(DeployOperate.ParseLoadBalancerAddress(IpLoadBalancer), "ingress-nginx", "ingress-nginx-controller", 36371);
     ip.PortForward.ShouldBeFalse();
     ip.Url.ShouldBe("http://20.1.2.3");
     ip.Detail.ShouldContain("no port-forward");
 
-    DeployOperate.DecideKubernetesOpen(DeployOperate.ParseLoadBalancerAddress(HostnameLoadBalancer), "n", "s", 8080).Url.ShouldBe("http://lb.example.com");
-    DeployOperate.DecideKubernetesOpen("2001:db8::1", "n", "s", 8080).Url.ShouldBe("http://[2001:db8::1]");
+    DeployOperate.DecideKubernetesOpen(DeployOperate.ParseLoadBalancerAddress(HostnameLoadBalancer), "n", "s", 36371).Url.ShouldBe("http://lb.example.com");
+    DeployOperate.DecideKubernetesOpen("2001:db8::1", "n", "s", 36371).Url.ShouldBe("http://[2001:db8::1]");
     return Task.CompletedTask;
   }
 
@@ -138,7 +162,7 @@ public class Kubernetes_Given_
 
   public static Task Refusals_Should_NameTheFix()
   {
-    DeployOperate.PortInUseMessage(8080).ShouldContain("--port <n>");
+    DeployOperate.PortInUseMessage(36371).ShouldContain("--port <n>");
     string controller = DeployOperate.ControllerServiceMissingMessage("kind-app", "ingress-nginx", "ingress-nginx-controller", "NotFound");
     controller.ShouldContain("--controller-namespace <namespace> --controller-service <service>");
     controller.ShouldContain("kind recipe");
@@ -153,13 +177,13 @@ public class Compose_Given_
 
   private const string Env = "# Parameter ingress-port\nINGRESS_PORT=\n\n# Parameter postgres-password\nPOSTGRES_PASSWORD=secret\n";
 
-  public static Task Port_Should_PreferOptionThenEnvThenParameterThenDefault()
+  public static Task Port_Should_PreferOptionThenEnvThenParameter()
   {
     ResolvedDeployParameter parameter = new("ingress-port", "9200", "AppHost user secret");
     DeployOperate.ChooseComposePort("7000", "9100", parameter).ShouldBe(("7000", "--port"));
     DeployOperate.ChooseComposePort(null, "9100", parameter).Port.ShouldBe("9100");
     DeployOperate.ChooseComposePort(null, null, parameter).ShouldBe(("9200", "ingress-port from the AppHost user secret"));
-    DeployOperate.ChooseComposePort(null, null, null).ShouldBe(("8080", "the AppHost's ingress-port default"));
+    DeployOperate.ChooseComposePort(null, null, null).ShouldBe((null, null));
     return Task.CompletedTask;
   }
 
@@ -497,7 +521,7 @@ public class Browser_Given_
     DeployOperate.BrowserLaunchers(true, false, false).Single().Executable.ShouldBe("explorer.exe");
     DeployOperate.BrowserLaunchers(false, true, false).Single().Executable.ShouldBe("open");
     DeployOperate.BrowserLaunchers(false, false, false).Single().Executable.ShouldBe("xdg-open");
-    DeployOperate.NoBrowserMessage("http://localhost:8080").ShouldContain("open http://localhost:8080");
+    DeployOperate.NoBrowserMessage("http://localhost:36371").ShouldContain("open http://localhost:36371");
     return Task.CompletedTask;
   }
 
@@ -530,12 +554,23 @@ public partial class AppHostAgreement_Given_
     return Task.CompletedTask;
   }
 
-  public static Task IngressPortDefault_Should_EqualTheAppHostsDefault()
+  public static Task IngressPort_Should_BeTheCommittedParameterNotACodeLiteral()
   {
-    string program = File.ReadAllText(Path.Combine(AppHostDirectory(), "program.cs"));
-    program.ShouldContain($"AddParameter(IngressPortParameterName, \"{DeployOperate.DefaultIngressPort}\"");
+    string appHost = AppHostDirectory();
+    string? committed = AspireDeploy.ParseAppSettingsParameter(
+      File.ReadAllText(Path.Combine(appHost, AspireDeploy.AppSettingsFileName)), DeployOperate.IngressPortParameter);
+    committed.ShouldNotBeNull();
+    DeployOperate.ParsePort(committed, "Parameters:ingress-port").Error.ShouldBeNull();
+
+    // program.cs declares the parameter from configuration (the value appsettings.json commits), never a literal port.
+    string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
+    program.ShouldContain("builder.Configuration[$\"Parameters:{IngressPortParameterName}\"]");
+    IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("program.cs passes a literal to AddParameter(IngressPortParameterName, …)");
     return Task.CompletedTask;
   }
+
+  [System.Text.RegularExpressions.GeneratedRegex(@"AddParameter\(\s*IngressPortParameterName\s*,\s*""")]
+  private static partial System.Text.RegularExpressions.Regex IngressPortLiteralPattern();
 
   [System.Text.RegularExpressions.GeneratedRegex(@"const\s+string\s+(\w+)\s*=\s*""([^""]*)""")]
   private static partial System.Text.RegularExpressions.Regex ConstantPattern();

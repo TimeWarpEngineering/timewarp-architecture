@@ -20,6 +20,9 @@
 // environment, so "absent" here means no service is configured as Development/Testing and no
 // dashboard service exists at all. RunMode_Should_CarryNoPublishOnlyWiring is the other half of
 // "publish-only": the run-mode model gains no publish parameters and keeps web-server external.
+// PublishedIngressPort_Should_DefaultToTheCommittedParameter (task 311) checks the publish model, not
+// the files: `aspire publish` leaves every .env value blank, and the ingress-port default the deploy
+// step writes there must be the committed Parameters:ingress-port.
 #endregion
 
 namespace Aspire.Tests;
@@ -221,6 +224,29 @@ public partial class ComposePublish_Given_
       webServer.Annotations.OfType<EndpointAnnotation>().Where(endpoint => endpoint.UriScheme.StartsWith("http", StringComparison.Ordinal))
         .ShouldAllBe(endpoint => endpoint.IsExternal);
     }
+  }
+
+  public static async Task PublishedIngressPort_Should_DefaultToTheCommittedParameter()
+  {
+    // Task 311: ingress-port has no literal in program.cs. Its publish default (what `aspire deploy` /
+    // prepare-compose write into the .env) is the committed Parameters:ingress-port.
+    await using IDistributedApplicationTestingBuilder appHost =
+      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
+        ["--operation", "publish", "--step", "publish-compose"],
+        (_, settings) => settings.EnvironmentName = "Production");
+
+    ParameterResource? ingressPort = appHost.Resources.OfType<ParameterResource>().SingleOrDefault(parameter => parameter.Name == "ingress-port");
+    if (ingressPort is null)
+    {
+      // yarp off: no ingress, so no host port and no ingress-port parameter.
+      ServiceNames().ShouldNotContain(IngressService);
+      return;
+    }
+
+    string committed = appHost.Configuration["Parameters:ingress-port"].ShouldNotBeNull();
+    int.TryParse(committed, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int port).ShouldBeTrue(committed);
+    port.ShouldBeInRange(1, 65535);
+    ingressPort.Default.ShouldNotBeNull().GetDefaultValue().ShouldBe(committed);
   }
 
   private static async Task PublishInProcAsync(string outputDirectory)

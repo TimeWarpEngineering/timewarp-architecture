@@ -125,6 +125,7 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     private string PackagesDir = null!;
     private string WorkDir = null!;
     private TemplateSmokeHarness Harness = null!;
+    private readonly List<int> IngressPorts = [];
 
     public Handler(ITerminal terminal)
     {
@@ -160,6 +161,8 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
           return Unit.Value;
         }
       }
+
+      if (!AssertIngressPortsRegenerated()) return Unit.Value;
 
       Terminal.WriteLine("\nTemplate smoke SUCCEEDED".Green());
       return Unit.Value;
@@ -311,10 +314,46 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     private async Task<bool> AssertDottedNameKebabsAsync()
     {
       string? outputDir = await Harness.GenerateAsync(DottedSmokeName, WorkDir, [], TemplateShortName, Ct);
-      if (outputDir is not null && Harness.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName))
+      if (outputDir is not null
+        && Harness.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName)
+        && RecordIngressPort(outputDir))
+      {
         return true;
+      }
 
       Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {DottedSmokeName}".Red());
+      Environment.ExitCode = 1;
+      return false;
+    }
+
+    private bool RecordIngressPort(string outputDir)
+    {
+      if (Harness.ReadGeneratedIngressPort(outputDir) is not { } port)
+        return false;
+
+      IngressPorts.Add(port);
+      return true;
+    }
+
+    /// <summary>
+    /// Task 311: each generation draws its own ingress-port. The generator is random, so two apps may collide by chance;
+    /// every generation of the run sharing one value means the port was not regenerated.
+    /// </summary>
+    private bool AssertIngressPortsRegenerated()
+    {
+      if (IngressPorts.Count < 2)
+      {
+        Terminal.WriteLine($"Generated ingress-ports: {string.Join(", ", IngressPorts)} (fewer than two generations; per-app difference not checked).");
+        return true;
+      }
+
+      if (IngressPorts.Distinct().Count() > 1)
+      {
+        Terminal.WriteLine($"Generated ingress-ports differ per app: {string.Join(", ", IngressPorts)}.");
+        return true;
+      }
+
+      Terminal.WriteErrorLine($"\nTemplate smoke FAILED — all {IngressPorts.Count} generated apps share ingress-port {IngressPorts[0]}".Red());
       Environment.ExitCode = 1;
       return false;
     }
@@ -341,6 +380,10 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 
           // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.
           if (!Harness.AssertDeployParametersUseAppKebabName(outputDir, name.ToLowerInvariant()))
+            return Task.FromResult(false);
+
+          // Task 311: the ingressPort port generator gave this app its own ingress-port.
+          if (!RecordIngressPort(outputDir))
             return Task.FromResult(false);
 
           // Task 145-009: Production appsettings must not enable mock auth; mock registration
