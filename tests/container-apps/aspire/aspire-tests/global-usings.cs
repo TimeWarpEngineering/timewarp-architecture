@@ -4,3 +4,4 @@ global using Microsoft.Extensions.DependencyInjection;
 global using System.Collections.Concurrent;
 global using System.Net;
 global using System.Text.RegularExpressions;
+global using TimeWarp.Architecture.Testing;

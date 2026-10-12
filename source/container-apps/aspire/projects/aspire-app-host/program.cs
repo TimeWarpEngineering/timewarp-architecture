@@ -78,6 +78,13 @@
 // project beside dev run. The *.timewarp.work share path (Caddy in WSL, task 112) targets the http
 // endpoint 63620, which run mode binds in-process so Caddy's X-Forwarded-Proto reaches the
 // trusted-proxy middleware (task 305).
+// The pins are the only port source in run mode (task 319): the run-mode yarp endpoints take the
+// pin or, when it does not parse, no port, overriding the launch profile's applicationUrl. Closed-box
+// test AppHosts clear both (`--Ingress:Port=` `--Ingress:HttpPort=`, via the tests' ClosedBoxAppHost
+// helper) so they never bind the `dev run` ports and never reach a running dev instance. With no
+// http pin the http endpoint stays proxied on a dynamic port; the in-process http binding (and
+// with it Caddy's X-Forwarded-Proto) is a `dev run` behaviour, and the ingress smoke drives the
+// forwarded headers itself from a loopback (trusted) client.
 // Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
 // this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
 // dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
@@ -510,10 +517,10 @@ internal class Program
         .AddProject<Projects.yarp>(YarpResourceName, options => options.LaunchProfileName = "Yarp")
         .DisableForwardedHeaders();
 
-      if (ingressHttpsPort is not null)
-      {
-        yarpProject = yarpProject.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort.Value);
-      }
+      // The launch profile's applicationUrl also carries 63610/63620. Overwrite its ports with the
+      // pins so configuration is the only source: an unset pin (closed-box tests clear both,
+      // task 319) means Aspire assigns the port.
+      yarpProject = yarpProject.WithEndpoint("https", endpoint => endpoint.Port = ingressHttpsPort);
 
       if (ingressHttpPort is not null)
       {
@@ -529,6 +536,10 @@ internal class Program
             endpoint.IsProxied = false;
           }
         );
+      }
+      else
+      {
+        yarpProject = yarpProject.WithEndpoint("http", endpoint => endpoint.Port = null);
       }
 
       if (!string.IsNullOrWhiteSpace(ingressPublicUrl))
