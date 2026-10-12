@@ -64,6 +64,7 @@ would show a wrong order across pages.
 - 2026-10-13: implemented under `ganda task work` (implement oracle). All gates green.
 - Review oracle: claude-opus-5-5, effort 2, roster general, 1 round, session not reported — 2026-10-13
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-12T19:09:29Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-12T19:12:43Z
 
 ## Results
 
