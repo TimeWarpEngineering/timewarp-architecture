@@ -22,6 +22,9 @@
 // expires them via ExpireMessages; everything else stays until DismissMessage or the route
 // changes (NavigationListener → ClearOnNavigation). Initialize clears the list so a reset
 // drops stale bars.
+// Copy (task 313): CopyMessage marks the copied row with CopiedMessageId until CopiedUntil
+// (now + CopiedConfirmationInterval). NextExpiry includes CopiedUntil, so the same host timer
+// that expires Success bars also ends the "Copied" icon swap in RemoveExpired.
 // Namespace is Features substrate (not a product slice): DefaultApiHandler and other base
 // handlers publish failures here, so every product may depend on it without TWA0009 opt-outs.
 #endregion
@@ -37,7 +40,16 @@ public sealed partial class NotificationState : State<NotificationState>
   /// <summary>How long a Success bar stays before the host expires it.</summary>
   public static readonly TimeSpan SuccessAutoDismissInterval = TimeSpan.FromSeconds(6);
 
+  /// <summary>How long a row shows its "Copied" confirmation after CopyMessage.</summary>
+  public static readonly TimeSpan CopiedConfirmationInterval = TimeSpan.FromSeconds(2);
+
   private List<NotificationMessage> MessageBarList { get; set; } = [];
+
+  /// <summary>Row currently showing its "Copied" confirmation, or null.</summary>
+  public string? CopiedMessageId { get; private set; }
+
+  /// <summary>When the "Copied" confirmation ends, or null when none is showing.</summary>
+  public DateTimeOffset? CopiedUntil { get; private set; }
 
   /// <summary>All messages in arrival order (oldest first).</summary>
   public IReadOnlyList<NotificationMessage> Messages => MessageBarList;
@@ -51,9 +63,17 @@ public sealed partial class NotificationState : State<NotificationState>
   /// <summary>Messages beyond the visible cap.</summary>
   public int HiddenCount => Math.Max(0, MessageBarList.Count - MaxVisible);
 
-  /// <summary>Earliest pending auto-dismiss, or null when nothing expires.</summary>
-  public DateTimeOffset? NextExpiry =>
-    MessageBarList.Min(message => message.AutoDismissAt);
+  /// <summary>Earliest pending auto-dismiss or copied-confirmation end, or null when nothing expires.</summary>
+  public DateTimeOffset? NextExpiry
+  {
+    get
+    {
+      DateTimeOffset? autoDismiss = MessageBarList.Min(message => message.AutoDismissAt);
+      return autoDismiss is null || (CopiedUntil is not null && CopiedUntil < autoDismiss)
+        ? CopiedUntil
+        : autoDismiss;
+    }
+  }
 
   public sealed record NotificationMessage
   (
@@ -72,6 +92,7 @@ public sealed partial class NotificationState : State<NotificationState>
   public sealed override void Initialize()
   {
     MessageBarList = [];
+    ClearCopied();
   }
 
   /// <summary>Title/Body shape for a problem: Title is the problem title, Body its detail.</summary>
@@ -124,15 +145,37 @@ public sealed partial class NotificationState : State<NotificationState>
   internal void RemoveMessage(string id)
   {
     MessageBarList.RemoveAll(message => message.Id == id);
+    if (CopiedMessageId == id)
+    {
+      ClearCopied();
+    }
   }
 
   internal void RemoveExpired(DateTimeOffset now)
   {
     MessageBarList.RemoveAll(message => message.AutoDismissAt is not null && message.AutoDismissAt <= now);
+    if ((CopiedUntil is not null && CopiedUntil <= now)
+      || (CopiedMessageId is not null && !MessageBarList.Exists(message => message.Id == CopiedMessageId)))
+    {
+      ClearCopied();
+    }
   }
 
   internal void Clear()
   {
     MessageBarList.Clear();
+    ClearCopied();
+  }
+
+  internal void MarkCopied(string id, DateTimeOffset now)
+  {
+    CopiedMessageId = id;
+    CopiedUntil = now + CopiedConfirmationInterval;
+  }
+
+  private void ClearCopied()
+  {
+    CopiedMessageId = null;
+    CopiedUntil = null;
   }
 }

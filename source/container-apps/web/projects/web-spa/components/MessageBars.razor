@@ -15,7 +15,12 @@
   // full list (ShowAll is view-only state, reset per page because this host is re-created).
   // Lifetime: after each render the host schedules ExpireMessages for NotificationState
   // .NextExpiry (Success auto-dismiss); navigation clearing lives in NavigationListener.
-  // Spacing: MessageBars.razor.css owns the bar gap and bottom margin via tokens.
+  // Copy (task 313): each row has an icon-only Copy button next to Dismiss that dispatches
+  // CopyMessage (the handler owns the clipboard interop and reports a failure as a Warning).
+  // Confirmation is an icon swap: the row matching CopiedMessageId shows a Checkmark labelled
+  // "Copied" until the ExpireMessages timer clears it (NextExpiry includes CopiedUntil).
+  // Spacing: MessageBars.razor.css owns the bar gap and bottom margin via tokens; the
+  // fluent-message-bar actions slot spaces Copy and Dismiss itself.
   // No INotificationService and no FluentMessageBarProvider — headless tests never render this.
 
   private bool ShowAll;
@@ -29,6 +34,11 @@
 
   private Task DismissAsync(string id) =>
     NotificationState.DismissMessage(id, CancellationToken);
+
+  private Task CopyAsync(string id) =>
+    NotificationState.CopyMessage(id, CancellationToken);
+
+  private bool IsCopied(string id) => NotificationState.CopiedMessageId == id;
 
   private void ToggleShowAll() => ShowAll = !ShowAll;
 
@@ -109,6 +119,14 @@
           }
         </ChildContent>
         <ActionsTemplate>
+          <FluentButton Appearance="ButtonAppearance.Subtle"
+                        Size="ButtonSize.Small"
+                        IconOnly="true"
+                        IconStart="@(IsCopied(message.Id) ? new Icons.Regular.Size20.Checkmark() : new Icons.Regular.Size20.Copy())"
+                        Title="@(IsCopied(message.Id) ? "Copied" : "Copy message")"
+                        aria-label="@(IsCopied(message.Id) ? "Copied" : "Copy message")"
+                        data-qa="MessageBarCopy"
+                        OnClick="@(() => CopyAsync(message.Id))" />
           <FluentButton Size="ButtonSize.Small" data-qa="MessageBarDismiss" OnClick="@(() => DismissAsync(message.Id))">
             Dismiss
           </FluentButton>
