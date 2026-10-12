@@ -24,9 +24,11 @@
 //   2. Selection only, never expansion: the value only SELECTS among the operator-approved
 //      WebAuthnOptions.AllowedRpIds, exactly as Host did. A forged value cannot mint a credential
 //      for an RP ID the operator did not approve; absent or unapproved means "host not allowed".
-//   3. Narrow consumption: this accessor (and IdentitySessionCookieForwardingHandler, which copies
-//      GetPublicHost onto the self-call hop) is the only reader of X-Forwarded-Host. Web.Server
-//      never calls UseForwardedHeaders itself, and nothing rewrites Request.Host. Aspire does set
+//   3. Narrow consumption: X-Forwarded-Host is read by this accessor (RP-ID selection, port
+//      stripped), by HttpAppBaseUrlAccessor.GetRequestOrigin (absolute mail/link-preview URLs, port
+//      kept), and by IdentitySessionCookieForwardingHandler, which copies that origin onto the
+//      self-call hop. None of them rewrites Request.Host. Web.Server never calls UseForwardedHeaders
+//      itself. Aspire does set
 //      ASPNETCORE_FORWARDEDHEADERS_ENABLED=true on every project resource with endpoints in
 //      publish mode only (Compose/Kubernetes/ACA output; Aspire.Hosting 13.6). That turns on ASP.NET Core's ForwardedHeaders middleware
 //      for X-Forwarded-For and X-Forwarded-Proto only — not X-Forwarded-Host — with the known
@@ -37,8 +39,9 @@
 //      both safe; the forwarded host is never trusted input, only a selector.
 // InteractiveServer/Auto self-call (task 312): the web-server named HttpClient reaches this app
 // through service discovery — https://localhost in run mode, http://web-server on published
-// targets (not loopback). IdentitySessionCookieForwardingHandler sets X-Forwarded-Host on that hop
-// to the circuit request's public host, so this one rule serves both hops. The retired
+// targets (not loopback). IdentitySessionCookieForwardingHandler sets X-Forwarded-Host (port kept)
+// and X-Forwarded-Proto on that hop to the circuit request's public origin; this accessor strips the
+// port again, so this one rule serves both hops. The retired
 // X-TimeWarp-Circuit-Host header was honored only on a loopback Host and so failed on published
 // targets; X-Forwarded-Host needs no extra trust (points 1, 2 and 4). HTTP Host is left unset on
 // the hop so TLS keeps validating the discovered host.

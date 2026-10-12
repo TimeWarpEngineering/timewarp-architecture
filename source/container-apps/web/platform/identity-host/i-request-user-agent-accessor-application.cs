@@ -9,7 +9,7 @@
 // header value (or null when there is no request / no header); the CALLER (RegistrationContext) is
 // what reduces it to family names — the raw string never reaches a Credential row. Synchronous for
 // the same reason as IRequestHostAccessor: a header read is a pure property access.
-// On the InteractiveServer loopback hop the circuit's User-Agent is copied onto the internal request
+// On the InteractiveServer self-call hop the circuit's User-Agent is copied onto the internal request
 // by IdentitySessionCookieForwardingHandler, so server-rendered ceremonies still see the browser.
 #endregion
 

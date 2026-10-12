@@ -40,7 +40,7 @@
 // IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
 // Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
 // HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
-// instead of anonymous session loopback — see that type's Design region.
+// instead of an anonymous session self-call — see that type's Design region.
 // Task 312: server-side named HttpClients (web-server self-call, api-server, grpc-server) use
 // https+http://{ServiceNames.*} through Aspire service discovery, which AddServiceDefaults
 // registers for every client. https+http prefers https (run mode, dev cert) and falls back to http
@@ -51,10 +51,18 @@
 // Task 205-003: the web-server self-call attaches IdentitySessionCookieForwardingHandler so
 // InteractiveServer/Auto API calls (Profile PUT) present the inbound identity-session cookie
 // instead of challenging 401. Tasks 213 / 312: that handler also forwards the circuit's public
-// host on X-Forwarded-Host (never HTTP Host — TLS on the https hop validates the discovered host),
-// so passkey RP-ID selection sees the browser's host on both the run-mode https://localhost hop
-// and the published http://web-server hop. On published targets that hop is cleartext inside the
-// deployment network, the same as ingress → web-server.
+// origin on X-Forwarded-Host (port kept) and X-Forwarded-Proto (never HTTP Host — TLS on the https
+// hop validates the discovered host), so passkey RP-ID selection and absolute mail links see the
+// browser's origin on both the run-mode https://localhost hop and the published http://web-server
+// hop. On published targets that hop is cleartext inside the deployment network, the same as
+// ingress → web-server.
+// Missing discovery config: with no Services:web-server:* entry, service discovery's pass-through
+// resolver does not fail — it resolves https://web-server through DNS (search domains included),
+// and the forwarding handler still sends the Cookie and mock-principal headers. https is tried
+// first, so TLS certificate name validation for "web-server" is what keeps those credentials off a
+// foreign endpoint (an internal CA issuing that name would defeat it). Configuring
+// Services:web-server:http:0 with an external URL sends them in cleartext; that takes control of
+// configuration. Aspire always injects the entry, so this only bites a host started outside Aspire.
 // Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
 // merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
 // cleared once instead of re-validated on every request.

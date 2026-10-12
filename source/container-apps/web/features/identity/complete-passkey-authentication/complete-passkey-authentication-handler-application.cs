@@ -17,7 +17,7 @@
 // generic 400 "Authentication failed" — an attacker probing the endpoint cannot distinguish
 // "this credential was never registered" from "this credential exists but is revoked." Verify
 // failures stay that same generic 400 in the response; FailureReason is logged at Information so
-// OriginMismatch / RpIdHashMismatch (InteractiveServer loopback Host vs browser origin) is
+// OriginMismatch / RpIdHashMismatch (InteractiveServer self-call host vs browser origin) is
 // visible in server logs without becoming an enumeration oracle. A
 // quarantined account (IsActive false) is the one deliberate exception: it returns 403, a distinct
 // signal — but ONLY once WebAuthnAuthentication.Verify has succeeded. The IsActive check runs

@@ -4,7 +4,7 @@
 
 #region Design
 // Task 251: sign-out must be a BROWSER request in every render mode. Under InteractiveServer the
-// SPA handler runs in the circuit, so an IWebServerApiService POST is a server→server loopback and
+// SPA handler runs in the circuit, so an IWebServerApiService POST is a server→server self-call and
 // the cookie-deletion Set-Cookie lands on that HttpClient response, never in the browser.
 // Not [ApiRoute]/[ApiEndpoint] (same reason as ChallengeEntra): the sign-out response is a 303
 // redirect to /Login, not mediator JSON, and the token read is a browser-only precondition.
