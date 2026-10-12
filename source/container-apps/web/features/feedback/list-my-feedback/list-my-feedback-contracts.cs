@@ -6,7 +6,8 @@
 // EmailCopyAvailable is true only when the caller's profile already has an email. The list
 // handler does not create a profile row. The form uses the flag to show "email me a copy"
 // and does not ask the filer to add an address.
-// Items omit the body; opening an item loads it.
+// Items omit the body; opening an item loads it. Status (task 314) is the item's current
+// triage status, so the filer's list shows where each filing stands.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -31,13 +32,15 @@ public static partial class ListMyFeedback
     public FeedbackKind Kind { get; }
     public string Title { get; }
     public DateTimeOffset FiledAt { get; }
+    public FeedbackStatus Status { get; }
 
     public Item(
       Guid feedbackItemId,
       string permalink,
       FeedbackKind kind,
       string title,
-      DateTimeOffset filedAt)
+      DateTimeOffset filedAt,
+      FeedbackStatus status = FeedbackStatus.New)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       Permalink = Guard.Against.NullOrWhiteSpace(permalink);
@@ -49,6 +52,12 @@ public static partial class ListMyFeedback
       Kind = kind;
       Title = Guard.Against.NullOrWhiteSpace(title);
       FiledAt = filedAt;
+      if (!Enum.IsDefined(status))
+      {
+        throw new ArgumentException("Status must be a defined feedback status.", nameof(status));
+      }
+
+      Status = status;
     }
   }
 
@@ -74,7 +83,8 @@ public static partial class ListMyFeedback
           $"/Feedback/{feedbackItemId:D}",
           FeedbackKind.Complaint,
           "Mock complaint",
-          DateTimeOffset.Parse("2026-10-09T00:00:00Z"))
+          DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
+          FeedbackStatus.UnderReview)
       ],
       emailCopyAvailable: false);
   }

@@ -4,14 +4,13 @@
 
 #region Design
 // EmailCopyAvailable reads the existing profile email and does not create a profile. Another
-// principal's items are never included. Kind maps by name onto the contract enum.
+// principal's items are never included. Kind and status map by name onto the contract enums.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using static TimeWarp.Architecture.Features.Feedback.ListMyFeedback;
-using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
 
 public sealed class ListMyFeedback
 {
@@ -50,17 +49,13 @@ public sealed class ListMyFeedback
       var items = new List<Item>(stored.Count);
       foreach (FeedbackItem item in stored)
       {
-        if (!Enum.TryParse(item.Kind.ToString(), out ContractKind kind) || !Enum.IsDefined(kind))
-        {
-          throw new InvalidOperationException($"Stored feedback kind '{item.Kind}' has no contract member.");
-        }
-
         items.Add(new Item(
           item.Id.Value,
           FeedbackPermalink.For(item.Id.Value),
-          kind,
+          FeedbackContractMap.ToContract(item.Kind),
           item.Title,
-          item.FiledAt));
+          item.FiledAt,
+          FeedbackContractMap.ToContract(item.Status)));
       }
 
       string? email = await ProfileEmailLookup

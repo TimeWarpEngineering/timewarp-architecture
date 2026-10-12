@@ -34,6 +34,7 @@ public class ActionCatalog_Should
     "Feedback.OpenFeedback",
     // Human: the file picker and the paste hook both dispatch these.
     "Feedback.RemoveFeedbackAttachment",
+    "Feedback.ReplyAsFiler",
     "Feedback.SubmitFeedback",
     "Feedback.UploadFeedbackAttachment",
     "Profile.SignOut",
@@ -93,7 +94,7 @@ public class ActionCatalog_Should
     linkMicrosoft365.Description.ShouldNotBeNullOrWhiteSpace();
     linkMicrosoft365.DisplayName.ShouldBe("Link Microsoft 365");
 
-    foreach (string fileAction in new[] { "Feedback.UploadFeedbackAttachment", "Feedback.RemoveFeedbackAttachment" })
+    foreach (string fileAction in new[] { "Feedback.UploadFeedbackAttachment", "Feedback.RemoveFeedbackAttachment", "Feedback.ReplyAsFiler" })
     {
       ActionCatalogEntry entry = actionCatalog.Find(fileAction).ShouldNotBeNull();
       entry.Visibility.ShouldBe(ActionVisibility.Human, fileAction);

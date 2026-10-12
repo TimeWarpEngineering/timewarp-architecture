@@ -1,0 +1,181 @@
+@namespace TimeWarp.Architecture.Features.Admin.Feedback
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Feedback item";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Comment();
+
+  private Guid RequestedId;
+  private string? PendingStatus;
+  private string ReplyDraft = "";
+  private string NoteDraft = "";
+
+  private IEnumerable<string> StatusChoices(FeedbackAdminView item) =>
+    FeedbackStatusRules.Assignable.Where(status => status != item.Status).Select(static status => status.ToString());
+
+  private string SelectedStatus(FeedbackAdminView item)
+  {
+    string[] choices = [.. StatusChoices(item)];
+    return PendingStatus is not null && choices.Contains(PendingStatus) ? PendingStatus : choices.FirstOrDefault() ?? "";
+  }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    if (FeedbackItemId == Guid.Empty || FeedbackItemId == RequestedId)
+    {
+      return;
+    }
+
+    RequestedId = FeedbackItemId;
+    await FeedbackAdminState.OpenFeedbackForAdmin(FeedbackItemId);
+  }
+
+  private async Task ChangeStatusAsync(FeedbackAdminView item)
+  {
+    if (Enum.TryParse(SelectedStatus(item), out FeedbackStatus status))
+    {
+      await FeedbackAdminState.ChangeFeedbackStatus(item.FeedbackItemId, status);
+      PendingStatus = null;
+    }
+  }
+
+  private async Task SendReplyAsync(FeedbackAdminView item)
+  {
+    await FeedbackAdminState.ReplyToFeedback(item.FeedbackItemId, ReplyDraft);
+    if (FeedbackAdminState.LastReplySucceeded)
+    {
+      ReplyDraft = "";
+    }
+  }
+
+  private async Task AddNoteAsync(FeedbackAdminView item)
+  {
+    await FeedbackAdminState.AddFeedbackNote(item.FeedbackItemId, NoteDraft);
+    if (FeedbackAdminState.LastNoteSucceeded)
+    {
+      NoteDraft = "";
+    }
+  }
+
+  private static string ActivityLabel(FeedbackActivityKind kind) => kind switch
+  {
+    FeedbackActivityKind.StatusChange => "Status change",
+    FeedbackActivityKind.AdminReply => "Admin reply",
+    FeedbackActivityKind.FilerReply => "Filer reply",
+    FeedbackActivityKind.InternalNote => "Internal note — not visible to the filer",
+    _ => kind.ToString(),
+  };
+}
+
+<TimeWarpPage Title="Feedback item">
+  <div class="twe-stack">
+    <Section Title="Feedback" LoadingActionType="typeof(FeedbackAdminState.OpenFeedbackForAdminActionSet.Action)">
+      @if (FeedbackAdminState.LoadError is not null)
+      {
+        <p data-qa="AdminFeedbackLoadError">@FeedbackAdminState.LoadError</p>
+      }
+      else if (FeedbackAdminState.Current is { } item)
+      {
+        <h2 data-qa="AdminFeedbackTitle">@item.Title</h2>
+        <dl class="admin-feedback-facts">
+          <dt>Kind</dt><dd>@item.Kind</dd>
+          <dt>Status</dt><dd data-qa="AdminFeedbackStatusValue">@item.Status</dd>
+          <dt>Filed</dt><dd>@item.FiledAt.ToString("u")</dd>
+          <dt>Owner</dt><dd><code>@item.OwnerPrincipalId</code></dd>
+        </dl>
+        <p>@item.Body</p>
+        @if (item.Attachments.Count > 0)
+        {
+          <ul class="admin-feedback-attachments">
+            @foreach (GetFeedback.Attachment attachment in item.Attachments)
+            {
+              <li data-qa="AdminFeedbackAttachment">
+                @if (attachment.IsImage)
+                {
+                  <img src="@attachment.DownloadPath" alt="@attachment.FileName" />
+                }
+                else
+                {
+                  <a href="@attachment.DownloadPath">@attachment.FileName</a>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+    </Section>
+
+    @if (FeedbackAdminState.Current is { } thread)
+    {
+      <Section Title="Activity" LoadingActionType="typeof(FeedbackAdminState.OpenFeedbackForAdminActionSet.Action)">
+        @if (thread.Activity.Count == 0)
+        {
+          <p>No activity yet.</p>
+        }
+        else
+        {
+          <ul class="admin-feedback-thread" data-qa="AdminFeedbackThread">
+            @foreach (FeedbackActivityEntry entry in thread.Activity)
+            {
+              <li @key="entry.Sequence"
+                class="@(entry.Kind == FeedbackActivityKind.InternalNote ? "admin-feedback-entry admin-feedback-note" : "admin-feedback-entry")"
+                data-qa="@($"AdminFeedback{entry.Kind}")">
+                <strong>@ActivityLabel(entry.Kind)</strong>
+                <span class="admin-feedback-when">@entry.At.ToString("u")</span>
+                @if (entry.Kind == FeedbackActivityKind.StatusChange)
+                {
+                  <p>@entry.FromStatus → @entry.ToStatus</p>
+                }
+                else
+                {
+                  <p>@entry.Body</p>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </Section>
+
+      <AuthorizeView Policy="@PermissionIds.AdminFeedbackManage">
+        <Authorized>
+          <Section Title="Change status" LoadingActionType="typeof(FeedbackAdminState.ChangeFeedbackStatusActionSet.Action)">
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Bottom">
+              <FluentSelect TOption="string" TValue="string"
+                Items="StatusChoices(thread)"
+                Value="@SelectedStatus(thread)"
+                ValueChanged="@(value => PendingStatus = value)"
+                AriaLabel="New status"
+                data-qa="AdminFeedbackNewStatus" />
+              <FluentButton Appearance="ButtonAppearance.Primary"
+                data-qa="AdminFeedbackChangeStatus"
+                OnClick="@(() => ChangeStatusAsync(thread))">Change status</FluentButton>
+            </FluentStack>
+          </Section>
+          <Section Title="Reply to filer" LoadingActionType="typeof(FeedbackAdminState.ReplyToFeedbackActionSet.Action)">
+            <p data-qa="AdminFeedbackReplyHint">
+              @(thread.FilerHasEmail
+                ? "The filer has an email on file and will be emailed this reply."
+                : "The filer has no email on file. They will see this reply only in the app.")
+            </p>
+            <FluentTextArea @bind-Value="ReplyDraft" AriaLabel="Reply" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="AdminFeedbackReply" />
+            <FluentButton Appearance="ButtonAppearance.Primary"
+              data-qa="AdminFeedbackSendReply"
+              OnClick="@(() => SendReplyAsync(thread))">Send reply</FluentButton>
+          </Section>
+          <Section Title="Internal note" LoadingActionType="typeof(FeedbackAdminState.AddFeedbackNoteActionSet.Action)">
+            <p>Internal notes are not visible to the filer.</p>
+            <FluentTextArea @bind-Value="NoteDraft" AriaLabel="Internal note" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="AdminFeedbackNote" />
+            <FluentButton Appearance="ButtonAppearance.Primary"
+              data-qa="AdminFeedbackAddNote"
+              OnClick="@(() => AddNoteAsync(thread))">Add note</FluentButton>
+          </Section>
+        </Authorized>
+      </AuthorizeView>
+    }
+  </div>
+</TimeWarpPage>

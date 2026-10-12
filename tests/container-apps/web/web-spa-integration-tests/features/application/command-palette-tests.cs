@@ -117,7 +117,7 @@ public class CommandPalette_Should_
     targets.ShouldContain("Profile.SignOut");
     foreach (string denied in new[]
     {
-      "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Authentication",
+      "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
       "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
     {

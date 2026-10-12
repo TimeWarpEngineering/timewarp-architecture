@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261010075816_AddFeedbackAttachments";
+    public override string LastMigrationId => "20261012115946_AddFeedbackTriage";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -139,6 +139,11 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.Property<Guid>("OwnerPrincipalId")
                     .HasColumnType("uuid");
 
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
+
                 b.Property<string>("Title")
                     .IsRequired()
                     .HasMaxLength(200)
@@ -151,6 +156,8 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasKey("Id");
 
                 b.HasIndex("OwnerPrincipalId");
+
+                b.HasIndex("Status", "FiledAt");
 
                 b.ToTable("feedback_items", "feedback");
             });
@@ -331,6 +338,50 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .WithMany()
                     .HasForeignKey("FeedbackItemId")
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackItem", b =>
+            {
+                b.OwnsMany("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackActivity", "Activity", b1 =>
+                    {
+                        b1.Property<Guid>("FeedbackItemId")
+                            .HasColumnType("uuid");
+
+                        b1.Property<int>("Sequence")
+                            .HasColumnType("integer");
+
+                        b1.Property<DateTimeOffset>("At")
+                            .HasColumnType("timestamp with time zone");
+
+                        b1.Property<Guid>("AuthorPrincipalId")
+                            .HasColumnType("uuid");
+
+                        b1.Property<string>("Body")
+                            .HasMaxLength(4000)
+                            .HasColumnType("character varying(4000)");
+
+                        b1.Property<string>("FromStatus")
+                            .HasMaxLength(32)
+                            .HasColumnType("character varying(32)");
+
+                        b1.Property<string>("Kind")
+                            .IsRequired()
+                            .HasMaxLength(32)
+                            .HasColumnType("character varying(32)");
+
+                        b1.Property<string>("ToStatus")
+                            .HasMaxLength(32)
+                            .HasColumnType("character varying(32)");
+
+                        b1.HasKey("FeedbackItemId", "Sequence");
+
+                        b1.ToTable("feedback_activity", "feedback");
+
+                        b1.WithOwner()
+                            .HasForeignKey("FeedbackItemId");
+                    });
+
+                b.Navigation("Activity");
             });
 #pragma warning restore 612, 618
     }

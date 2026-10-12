@@ -111,16 +111,114 @@ choice and the reason. To change one, add a dated entry below it; don't rewrite 
 ## Checklist
 
 - [x] Decisions 1–6 recorded (decision log, 2026-10-12)
-- [ ] Domain: `FeedbackStatus`, activity thread, named mutations + invariants; EF migration
-- [ ] Store: cross-owner `ListAllAsync` (paged/filtered) + `UpdateAsync`; EF index
-- [ ] Permissions `admin.feedback.read` / `.manage` (policies, seed → Administrator)
-- [ ] Admin contracts/handlers + co-located Jaribu tests (happy, validation, authz denial)
-- [ ] Filer view: status + thread + reply
-- [ ] Email on admin reply and Planned/Completed/Declined
-- [ ] SPA admin list + detail (State actions only; NotificationState outcomes)
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Domain: `FeedbackStatus`, activity thread, named mutations + invariants; EF migration
+- [x] Store: cross-owner `ListAllAsync` (paged/filtered) + `UpdateAsync`; EF index
+- [x] Permissions `admin.feedback.read` / `.manage` (policies, seed → Administrator)
+- [x] Admin contracts/handlers + co-located Jaribu tests (happy, validation, authz denial)
+- [x] Filer view: status + thread + reply
+- [x] Email on admin reply and Planned/Completed/Declined
+- [x] SPA admin list + detail (State actions only; NotificationState outcomes)
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve). Reference conversation captured under `references/`.
 - 2026-10-12: Steve delegated decisions 1–6 to the cockpit; recorded in the decision log. Moved to to-do.
+- 2026-10-12: Implemented by the headless implementer (ganda task work). Server, migration, and tests by
+  the implementer; the SPA slice by a delegated subagent, then reviewed. Gates below.
+
+## Results
+
+**Domain.** `FeedbackItem` has a `Status` (`FeedbackStatus`: New, UnderReview, Planned, InProgress,
+Completed, Declined) and an owned, append-only thread of `FeedbackActivity` entries (kinds: StatusChange,
+AdminReply, FilerReply, InternalNote; keyed by item id + `Sequence`). Named mutations: `ChangeStatus`
+(never back to New, never to the current status; reopening is allowed), `AddAdminReply`,
+`AddFilerReply` (owner only) and `AddInternalNote`. The `Invariants` validator checks that sequences are
+dense, that `Status` equals the last change's `To`, the per-kind shape, and that a filer reply is
+written by the owner. Migration `20261012115946_AddFeedbackTriage`: adds `Status` (existing rows
+default to New), the `feedback_activity` table, a `(Status, FiledAt)` index, and the Administrator
+grants.
+
+**Deviation from the shape text:** `AddReply(...)` is split into `AddAdminReply` / `AddFilerReply`,
+so the author role is part of the mutation's name and not a flag. Visibility is derived from the
+kind (`IsVisibleToFiler`) and not stored, so the two can never disagree.
+
+**Store.** `IFeedbackStore.ListAllAsync(FeedbackListFilter)` (paged; filters by status set, kind and
+date range; newest first) and `UpdateAsync` (returns false on a Version or key conflict, which
+handlers turn into 409). The EF store attaches the detached item, marks `Status` modified and inserts
+only the entries above the stored maximum sequence. The in-memory store has no Version check; this
+is documented in its Design region.
+
+**Permissions.** `admin.feedback.read` and `admin.feedback.manage` are in `PermissionIds.All`, their
+policies are auto-registered, and they are seeded to Administrator only (seed and migration). Because
+they are `admin.*`, they join Administrator's protected core. The mock role payloads were updated.
+Attachment download for admins now needs `admin.feedback.read` instead of `admin.access`, per
+decision 4 ("read covers attachment download").
+
+**Contracts and handlers** (in `web/features/feedback/`):
+- `ListFeedback`: `GET api/admin/feedback`; closed items are hidden unless `IncludeClosed` or an
+  explicit `Status`.
+- `GetFeedbackForAdmin`: `GET api/admin/feedback/{id}`.
+- `ChangeFeedbackStatus`: `PUT .../{id}/status`.
+- `ReplyToFeedback`: `POST .../{id}/replies`.
+- `AddFeedbackNote`: `POST .../{id}/notes`.
+- `ReplyAsFiler`: `POST api/Feedback/{id}/replies`.
+
+Admin mutations return the updated `FeedbackAdminView`. `GetFeedback` and `ListMyFeedback` now carry
+`Status`. `GetFeedback` also carries the filer thread, built by `FeedbackContractMap.FilerThread`,
+which drops internal notes and admin ids.
+
+**Email.** `FeedbackFilerMail` reuses the 273 path (`IProfileEmailLookup` + `IEmailSender`) and is
+best-effort after the commit. It sends on every admin reply and on changes to Planned, Completed or
+Declined (`FeedbackStatusRules.NotifiesFiler`). It never sends for notes.
+
+**SPA.**
+- `web-spa/features/admin/feedback/`: `FeedbackAdminState` plus `/Admin/Feedback` (filters, status
+  column, paging) and `/Admin/Feedback/{id}` (thread with internal notes marked). The manage
+  controls sit behind `AuthorizeView` on `admin.feedback.manage`.
+- The filer's list shows status. The permalink shows status, the thread and a reply box
+  (`ReplyAsFilerActionSet`).
+- All clicks dispatch State actions, and success toasts go through `OutcomeNotification`.
+
+**Deferred (decision 5/6):** assignee, tags, merge duplicates, kind re-classification, admin delete,
+and erasure. No follow-up tasks have been filed.
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors.
+- `ganda repo audit`: all checks pass.
+- `dev template-smoke`: SUCCEEDED.
+- `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet beta.19, so no bump is needed.
+- `dev test`: every project is green except one failure in aspire-tests,
+  `IngressSmoke_Given_.RolesThroughIngress_Should_Forbidden_Given_MockPrincipal_WithoutAdminRole`
+  (expected 403, got 401). It fails the same way on the untouched base commit `d6a8e7103` (checked in
+  a scratch checkout), so it predates this task. It is not fixed here.
+- New tests: `features/feedback/feedback-triage-tests.cs` (28/28),
+  `web-server-integration-tests/features/feedback/admin-feedback-authorization-tests.cs` (passing in
+  the `Returns_` run, 139/139), and `web-spa-integration-tests/features/admin/feedback-admin-state-tests.cs`
+  (4/4).
+
+### How to validate
+
+**Smoke:**
+1. `dotnet run source/container-apps/web/features/feedback/feedback-triage-tests.cs`
+2. `dotnet run --project tests/container-apps/web/web-server-integration-tests -c Release -- --filter-class Returns_`
+3. Manual: `dev run`, then sign in with a passkey as user A (the first human becomes Administrator).
+   - As user B (a Member), file feedback at `/Feedback`.
+   - As A, open `/Admin/Feedback`, open the item, change the status to Planned, send a reply, and
+     add an internal note.
+   - As B, reopen the permalink and answer in the thread.
+
+**Expect:**
+1. 28/28 pass, and the run prints `TRIAGE-PROOF ... status=Declined mails=3`.
+2. `failed: 0`. The admin feedback endpoints return:
+   - anonymous: 401;
+   - Member: 403;
+   - Administrator: 200;
+   - an Administrator with only `admin.feedback.read`: 403 on a status change or note.
+3. In the manual run:
+   - B's permalink shows status Planned and A's reply, and never shows the note.
+   - B gets one email for Planned and one for the reply (when B's profile has an email).
+   - A's admin detail shows all four entries, with the note marked internal.
+   - The list hides the item once it is Completed or Declined, unless "show closed" is ticked.
+

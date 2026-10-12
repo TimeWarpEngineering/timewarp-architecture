@@ -10,7 +10,9 @@
 // ApplyConfigurationsFromAssembly (feature files ending in -infrastructure.cs compile into this
 // assembly). AgentHumanLink is the optional agent↔human product aggregate (schema "agent_links").
 // FeedbackItem is a filing aggregate (schema "feedback", table "feedback_items"): owner, kind,
-// title, body, and filed-at. It is insert-only. FeedbackAttachment (same schema, table
+// title, body, filed-at, triage status, and its owned activity thread (table
+// "feedback_activity"); only status and new thread entries are ever written after filing.
+// FeedbackAttachment (same schema, table
 // "feedback_attachments") is the file row for that filing. It is not an aggregate: Version is
 // mapped and is not a concurrency token. FeedbackItemId stays null until submit links it.
 // Identity Principal/Credential are also mapped here (schema "identity") as the first

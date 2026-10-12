@@ -28,6 +28,8 @@
 // role_permissions data migration plus a catalog break. Protected-core remains prefix admin
 // (roles/principals lockout). Stripping settings.write disables the editor; it does not lock
 // out Admin. The Admin nav category (admin.access) is the audience lock.
+// Task 314: admin.feedback.read / admin.feedback.manage follow the same read/manage split and,
+// being admin.*, join Administrator's protected core. Operator does not receive them (118).
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -46,6 +48,10 @@ public static class PermissionIds
   public const string AdminRolesManage = "admin.roles.manage";
   public const string AdminPrincipalsRead = "admin.principals.read";
   public const string AdminPrincipalsManage = "admin.principals.manage";
+  /// <summary>List and open every principal's feedback, and download its attachments (task 314).</summary>
+  public const string AdminFeedbackRead = "admin.feedback.read";
+  /// <summary>Change feedback status, reply to the filer, and add internal notes (task 314).</summary>
+  public const string AdminFeedbackManage = "admin.feedback.manage";
   public const string DeveloperAccess = "developer.access";
   public const string DeveloperClaimsRead = "developer.claims.read";
   public const string ProfileRead = "profile.read";
@@ -73,6 +79,8 @@ public static class PermissionIds
     AdminRolesManage,
     AdminPrincipalsRead,
     AdminPrincipalsManage,
+    AdminFeedbackRead,
+    AdminFeedbackManage,
     DeveloperAccess,
     DeveloperClaimsRead,
     ProfileRead,

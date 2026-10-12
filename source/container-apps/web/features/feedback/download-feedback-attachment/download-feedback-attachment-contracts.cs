@@ -7,7 +7,7 @@
 // stream. There is no [ApiEndpoint] because the generated endpoint JSON-serializes success.
 // A hand-written BaseFastEndpoint covers TWA0006. DownloadPath prefixes a slash: GetRoute
 // is app-relative without one, and a relative api/... link from /Feedback would miss.
-// The owner-or-admin check is the handler's. The route policy is the same feedback
+// The owner-or-admin.feedback.read check is the handler's. The route policy is the same feedback
 // permission as the other filing endpoints, so an anonymous caller never reaches it.
 #endregion
 

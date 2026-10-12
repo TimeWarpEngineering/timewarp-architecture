@@ -4,15 +4,14 @@
 
 #region Design
 // A missing id and an id owned by another principal are both 404. The response kind is mapped
-// back by name onto the contract enum. Attachments are the rows linked to this item.
+// back by name onto the contract enum. Attachments are the rows linked to this item. Status and
+// the thread are the filer's view (FeedbackContractMap.FilerThread: no internal notes).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using static TimeWarp.Architecture.Features.Feedback.GetFeedback;
-using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
-using DownloadFeedbackAttachmentContract = TimeWarp.Architecture.Features.Feedback.DownloadFeedbackAttachment;
 
 public sealed class GetFeedback
 {
@@ -52,33 +51,20 @@ public sealed class GetFeedback
         return FeedbackProblems.NotFound();
       }
 
-      if (!Enum.TryParse(item.Kind.ToString(), out ContractKind kind) || !Enum.IsDefined(kind))
-      {
-        throw new InvalidOperationException($"Stored feedback kind '{item.Kind}' has no contract member.");
-      }
-
-      IReadOnlyList<FeedbackAttachment> stored = await AttachmentStore
-        .ListByItemAsync(item.Id, cancellationToken)
+      List<Attachment> attachments = await FeedbackContractMap
+        .AttachmentsAsync(AttachmentStore, item.Id, cancellationToken)
         .ConfigureAwait(false);
-      var attachments = new List<Attachment>(stored.Count);
-      foreach (FeedbackAttachment attachment in stored)
-      {
-        attachments.Add(new Attachment(
-          attachment.Id.Value,
-          attachment.FileName,
-          attachment.ContentType,
-          attachment.Size,
-          DownloadFeedbackAttachmentContract.DownloadPath(attachment.Id.Value)));
-      }
 
       return new Response(
         item.Id.Value,
         FeedbackPermalink.For(item.Id.Value),
-        kind,
+        FeedbackContractMap.ToContract(item.Kind),
         item.Title,
         item.Body,
         item.FiledAt,
-        attachments);
+        attachments,
+        FeedbackContractMap.ToContract(item.Status),
+        FeedbackContractMap.FilerThread(item));
     }
   }
 }

@@ -7,7 +7,7 @@
   Grouping and AuthorizeView gates stay hand markup; a new nav page opts in on its [Page] first.
 
   Demo / developer tooling is nav-gated by developer.access (task 147-001 / 182-003).
-  Admin section requires admin.access (Roles, Principals, Authentication). Product entry points: Home, Settings; Login is profile-menu.
+  Admin section requires admin.access (Roles, Principals, Feedback review, Authentication). Product entry points: Home, Settings; Login is profile-menu.
 *@
 <FluentNav Class="twe-nav">
   <TimeWarpNavLink TPage=HomePage />
@@ -20,6 +20,11 @@
       <FluentNavCategory Title="Admin">
         <TimeWarpNavLink TPage=RolesListPage />
         <TimeWarpNavLink TPage=PrincipalsPage />
+        <AuthorizeView Policy=@PermissionIds.AdminFeedbackRead Context="feedbackAccess">
+          <Authorized Context="feedbackAccess">
+            <TimeWarpNavLink TPage=FeedbackAdminListPage />
+          </Authorized>
+        </AuthorizeView>
         <TimeWarpNavLink TPage=AuthenticationPage />
       </FluentNavCategory>
     </Authorized>

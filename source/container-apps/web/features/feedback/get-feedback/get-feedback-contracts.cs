@@ -8,6 +8,8 @@
 // Attachments are the files linked at submit, oldest first. DownloadPath is app-rooted.
 // The mock sample is text, not an image: the item page renders it as a link, because an
 // img src would go to the real server, which MockWebApiService does not intercept.
+// Task 314: Status and Activity are the filer's view of triage. The server leaves out internal
+// notes and admin identities; the SPA renders what it is given.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -40,6 +42,8 @@ public static partial class GetFeedback
     public string Body { get; }
     public DateTimeOffset FiledAt { get; }
     public IReadOnlyList<Attachment> Attachments { get; }
+    public FeedbackStatus Status { get; }
+    public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
 
     public Response(
       Guid feedbackItemId,
@@ -48,7 +52,9 @@ public static partial class GetFeedback
       string title,
       string body,
       DateTimeOffset filedAt,
-      IReadOnlyList<Attachment>? attachments = null)
+      IReadOnlyList<Attachment>? attachments = null,
+      FeedbackStatus status = FeedbackStatus.New,
+      IReadOnlyList<FeedbackActivityEntry>? activity = null)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       Permalink = Guard.Against.NullOrWhiteSpace(permalink);
@@ -62,6 +68,13 @@ public static partial class GetFeedback
       Body = Guard.Against.NullOrWhiteSpace(body);
       FiledAt = filedAt;
       Attachments = attachments ?? [];
+      if (!Enum.IsDefined(status))
+      {
+        throw new ArgumentException("Status must be a defined feedback status.", nameof(status));
+      }
+
+      Status = status;
+      Activity = activity ?? [];
     }
   }
 
@@ -114,7 +127,26 @@ public static partial class GetFeedback
         "Mock complaint",
         "Mock body",
         DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
-        [sample]);
+        [sample],
+        FeedbackStatus.UnderReview,
+        [
+          new FeedbackActivityEntry(
+            1,
+            FeedbackActivityKind.StatusChange,
+            null,
+            null,
+            FeedbackStatus.New,
+            FeedbackStatus.UnderReview,
+            DateTimeOffset.Parse("2026-10-09T01:00:00Z")),
+          new FeedbackActivityEntry(
+            2,
+            FeedbackActivityKind.AdminReply,
+            null,
+            "Thanks, we are looking.",
+            null,
+            null,
+            DateTimeOffset.Parse("2026-10-09T02:00:00Z")),
+        ]);
     };
   }
 }
