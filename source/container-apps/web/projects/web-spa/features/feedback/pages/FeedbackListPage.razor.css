@@ -1,22 +1,10 @@
-/* The paste host wraps fluent-textarea, so FormField's direct-child width rule does not reach it. */
+/* The paste host wraps the shared TextArea, so FormField's direct-child width rule does not reach it.
+   TextArea.razor.css owns the textarea box sizing. */
 .feedback-details {
   display: block;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-}
-
-/* The visible box is shadow .root. Host width and height do not size it: --inline-size defaults
-   to 18rem and --block-size tracks --min-block-size. A fixed host height fights the resize grip. */
-.feedback-details ::deep fluent-textarea,
-.feedback-details ::deep fluent-text-area {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  --inline-size: 100%;
-  --min-block-size: 9rem;
 }
 
 .feedback-file {

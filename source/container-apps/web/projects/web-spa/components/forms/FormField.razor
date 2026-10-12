@@ -8,8 +8,8 @@
   stamps them (Wall A). FormField.razor.css stretches them with
   `.twe-form-field__control ::deep > fluent-…`: the stamped wrapper is the anchor
   (fluent-text-input, fluent-dropdown, fluent-select, fluent-combobox,
-  fluent-textarea, fluent-field). Avatar and checkbox hosts are left to intrinsic
-  size. Pages still pass Width="100%" on text/select/combobox controls.
+  fluent-field). Multi-line text uses TextArea.razor, which sizes itself.
+  Avatar and checkbox hosts are left to intrinsic size. Pages still pass Width="100%" on text/select/combobox controls.
 *@
 
 @code {

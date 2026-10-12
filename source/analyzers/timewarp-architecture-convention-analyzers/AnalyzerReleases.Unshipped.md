@@ -31,3 +31,4 @@ TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with 
 TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
 TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason
 TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclass member is not a public static readonly field
+TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea outside the shared components/forms/TextArea.razor

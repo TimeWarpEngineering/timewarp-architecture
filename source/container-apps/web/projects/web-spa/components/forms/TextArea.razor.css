@@ -1,0 +1,21 @@
+/* TextArea — Tier-1 leaf, CSS isolation. The stamped wrapper is the anchor; the
+   fluent-textarea host and its shadow part="root" are sized through custom properties. */
+.twe-text-area {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* The visible box is shadow .root. Host width and height do not size it: --inline-size defaults
+   to 18rem and --block-size tracks --min-block-size. A fixed host height fights the resize grip. */
+.twe-text-area ::deep fluent-textarea,
+.twe-text-area ::deep fluent-text-area {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  --inline-size: 100%;
+  --min-block-size: var(--twe-text-area-min-block-size, 9rem);
+}

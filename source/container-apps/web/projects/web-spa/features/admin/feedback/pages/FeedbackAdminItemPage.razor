@@ -165,14 +165,14 @@
                 ? "The filer has an email on file and will be emailed this reply."
                 : "The filer has no email on file. They will see this reply only in the app.")
             </p>
-            <FluentTextArea @bind-Value="ReplyDraft" AriaLabel="Reply" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="AdminFeedbackReply" />
+            <TextArea @bind-Value="ReplyDraft" AriaLabel="Reply" data-qa="AdminFeedbackReply" />
             <FluentButton Appearance="ButtonAppearance.Primary"
               data-qa="AdminFeedbackSendReply"
               OnClick="@(() => SendReplyAsync(thread))">Send reply</FluentButton>
           </Section>
           <Section Title="Internal note" LoadingActionType="typeof(FeedbackAdminState.AddFeedbackNoteActionSet.Action)">
             <p>Internal notes are not visible to the filer.</p>
-            <FluentTextArea @bind-Value="NoteDraft" AriaLabel="Internal note" Width="100%" block Resize="TextAreaResize.Vertical" data-qa="AdminFeedbackNote" />
+            <TextArea @bind-Value="NoteDraft" AriaLabel="Internal note" data-qa="AdminFeedbackNote" />
             <FluentButton Appearance="ButtonAppearance.Primary"
               data-qa="AdminFeedbackAddNote"
               OnClick="@(() => AddNoteAsync(thread))">Add note</FluentButton>
