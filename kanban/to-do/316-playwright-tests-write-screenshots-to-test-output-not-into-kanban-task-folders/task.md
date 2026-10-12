@@ -50,6 +50,7 @@ So every test run:
 - Created: 2026-10-12 (cockpit, per Steve; found by the 313 worker)
 - 2026-10-12: implemented under `ganda task work` (implement oracle).
 - 2026-10-12: reviewed under `ganda task work` (review oracle, effort 2, general); accepted-exceptions.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-12T11:48:45Z
 
 ## Results
 
