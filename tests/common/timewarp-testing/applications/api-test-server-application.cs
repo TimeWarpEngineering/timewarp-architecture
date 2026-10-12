@@ -6,7 +6,7 @@ namespace TimeWarp.Architecture.Testing;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public sealed class ApiTestServerApplication : TestServerApplication<Api.Server.Program>
 {
-  // Ports / URLs from InProcTestPorts (TIMEWARP_TEST_PORT_BASE; default api=7255).
+  // Ports / URLs from InProcTestPorts (api = base+255; TIMEWARP_TEST_PORT_BASE or per-checkout base).
   internal static readonly string ApiHostUrl = InProcTestPorts.ApiHostUrl;
   internal static readonly int ApiPort = InProcTestPorts.ApiPort;
 

@@ -10,7 +10,7 @@
 // The test project's appsettings.json pins AllowedRpIds to ["localhost","webauthn-second.test"]
 // (localhost is the C# default; webauthn-second.test is appended — see WebAuthnOptions_Binding_Tests).
 // Each request sets its Host explicitly via HttpRequestMessage.Headers.Host so a single shared host
-// (bound via InProcTestPorts.WebHostUrl, default localhost:7000) exercises multiple RP IDs. Raw HttpRequestMessage (not TestApiService)
+// (bound via InProcTestPorts.WebHostUrl, localhost:<base>) exercises multiple RP IDs. Raw HttpRequestMessage (not TestApiService)
 // is required because per-request Host cannot be set through the shared HttpClient's default headers.
 // The ceremony vectors are built with rpId/origin matching the SELECTED host: registering under
 // webauthn-second.test means authenticatorData hashes "webauthn-second.test" and clientDataJSON's
@@ -184,7 +184,7 @@ public class Returns_
     // target host used for server-CERTIFICATE-NAME validation from the request authority, which
     // Headers.Host overrides — so with Host="webauthn-second.test" the localhost dev cert no longer
     // name-matches and the handshake aborts. The TCP connection still targets the in-proc web
-    // listener (InProcTestPorts.WebHostUrl; default localhost:7000). Accept the
+    // listener (InProcTestPorts.WebHostUrl; localhost:<base>). Accept the
     // dev cert regardless of the mismatched name — this test exercises RP-ID selection, not TLS.
     // (This is why the localhost case passes without the override and the others do not.)
     using var handler = new HttpClientHandler

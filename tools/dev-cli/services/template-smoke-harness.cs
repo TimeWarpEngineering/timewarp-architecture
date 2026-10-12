@@ -21,7 +21,9 @@
 // from each family aggregator project dir. Gate is exit 0, failed == 0, total > 0, and
 // total == succeeded + skipped. Unparsable MTP summary fails (silent zero-discovery).
 // Tiers 2–3 set TIMEWARP_TEST_PORT_BASE so generated-app in-proc hosts do not collide with
-// monorepo `dev test` on the default ports (task 245).
+// monorepo `dev test` (task 245). Task 330: the value is InProcTestPorts' derived base for the
+// generated app's own path (what its tests would pick unset), bumped one slot if it equals this
+// checkout's base. The old fixed 17000 collided when two worktrees ran template-smoke at once.
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
@@ -957,17 +959,27 @@ internal sealed partial class TemplateSmokeHarness
     return outputDir;
   }
 
-  // In-proc port base for generated-app tier 2/3 hosts (task 245). Distinct from
-  // InProcTestPorts.DefaultBase (7000) so smoke can run beside monorepo `dev test`.
-  private const string InProcTestPortBaseEnvironmentVariable = "TIMEWARP_TEST_PORT_BASE";
-  private const string TemplateSmokeInProcTestPortBase = "17000";
+  /// <summary>
+  /// In-proc port base for generated-app tier 2/3 hosts (tasks 245, 330): the generated app's
+  /// derived base, never equal to this checkout's derived base, so smoke can run beside
+  /// monorepo <c>dev test</c> and beside another worktree's smoke.
+  /// </summary>
+  private string TemplateSmokeInProcTestPortBase(string outputDir)
+  {
+    int repoBase = InProcTestPorts.DeriveBase(RepoRoot);
+    int smokeBase = InProcTestPorts.DeriveBase(outputDir);
+    if (smokeBase == repoBase)
+      smokeBase = InProcTestPorts.NextDerivedBase(smokeBase);
+
+    return smokeBase.ToString(System.Globalization.CultureInfo.InvariantCulture);
+  }
 
   /// <summary>
   /// Tier 2 (authoritative): `dotnet run` each generated co-located runfile standalone and assert
   /// exit 0 with a nonzero, all-passing Jaribu grand total. Proves the file is not just textually
   /// intact but genuinely compiles and runs end to end post-generation (sourceName namespace
   /// rewrite, contract shape, everything). Runs files one at a time (shared smoke port base);
-  /// hosts use TIMEWARP_TEST_PORT_BASE=17000 (see TemplateSmokeInProcTestPortBase).
+  /// hosts use TemplateSmokeInProcTestPortBase.
   /// </summary>
   public async Task<bool> AssertCoLocatedTestFilesRunAsync(
     string outputDir,
@@ -990,7 +1002,7 @@ internal sealed partial class TemplateSmokeHarness
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("run", generatedPath)
         .WithWorkingDirectory(outputDir)
-        .WithEnvironmentVariable(InProcTestPortBaseEnvironmentVariable, TemplateSmokeInProcTestPortBase)
+        .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
         .WithNoValidation()
         .CaptureAsync(ct);
 
@@ -1036,8 +1048,8 @@ internal sealed partial class TemplateSmokeHarness
   /// and that bare <c>dotnet test -c Release</c> from that project directory exits 0, reports
   /// zero failures, a nonzero total, and total == succeeded + skipped. Aggregators are not in
   /// .slnx (solution build never compiles them); this is the multi-mode / MTP regression gate.
-  /// Uses TIMEWARP_TEST_PORT_BASE=17000 so hosts do not collide with monorepo <c>dev test</c>
-  /// (task 245).
+  /// Uses TemplateSmokeInProcTestPortBase so hosts do not collide with monorepo <c>dev test</c>
+  /// (tasks 245, 330).
   /// </summary>
   public async Task<bool> AssertJaribuFamilyAggregatorsAsync(
     string outputDir,
@@ -1086,7 +1098,7 @@ internal sealed partial class TemplateSmokeHarness
       CommandOutput result = await Shell.Builder("dotnet")
         .WithArguments("test", "-c", "Release")
         .WithWorkingDirectory(projectDir)
-        .WithEnvironmentVariable(InProcTestPortBaseEnvironmentVariable, TemplateSmokeInProcTestPortBase)
+        .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
         .WithNoValidation()
         .CaptureAsync(ct);
 

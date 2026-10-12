@@ -9,7 +9,7 @@
 
 #region Design
 // In-proc HostGraphFactory.CreateWebYarpAsync (C-create): Web then Yarp (InProcTestPorts;
-// defaults :7000/:7001 then :8443).
+// web base/base+1 then yarp base+1443).
 // No Aspire, no Api host — the generated prefixes are Web.Server-owned. YarpTestServerApplication
 // rewrites the config Web.Server cluster onto WebHttpUrl so the hop matches Development
 // (http; Host is the destination, the public host travels in X-Forwarded-Host — task 070-008).

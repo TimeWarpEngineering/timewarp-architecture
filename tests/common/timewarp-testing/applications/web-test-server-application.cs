@@ -8,7 +8,8 @@ using TimeWarp.Architecture.Abuse;
 /// <remarks>One can override the configuration for testing by updating the <see cref="ConfigureServicesDelegate"/></remarks>
 public class WebTestServerApplication : TestServerApplication<Web.Server.Program>
 {
-  // Ports / URLs from InProcTestPorts (TIMEWARP_TEST_PORT_BASE; defaults 7000/7001/7255).
+  // Ports / URLs from InProcTestPorts (web = base, web-http = base+1, api = base+255;
+  // TIMEWARP_TEST_PORT_BASE or per-checkout base).
   // In-proc YARP Development cluster forwards Web.Server over http (task 107 https→http;
   // task 120 standalone smoke). Field aliases (not properties) avoid CA1056.
   internal static readonly string WebHostUrl = InProcTestPorts.WebHostUrl;

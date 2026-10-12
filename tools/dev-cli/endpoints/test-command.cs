@@ -12,8 +12,11 @@
 // supported"). Always run bare `dotnet test -c Release` with cwd = project directory, which
 // picks up the project-local global.json test.runner. Root global.json must NOT set a runner
 // (co-located runfiles and other tooling still use the default VSTest path when needed).
-// Projects still run ONE AT A TIME: integration suites share one InProcTestPorts base
-// (defaults web=7000, web-http=7001, api=7255, yarp=8443; override TIMEWARP_TEST_PORT_BASE).
+// Projects still run ONE AT A TIME: integration suites share one InProcTestPorts base.
+// Task 330: the base is resolved ONCE here (InProcTestPorts, compiled in from timewarp-testing:
+// TIMEWARP_TEST_PORT_BASE if set, else derived from this checkout's root) and exported to every
+// child `dotnet test`, so a suite and anything it spawns agree on one port set and two worktrees
+// running `dev test` at once get different bases.
 #endregion
 
 namespace DevCli.Commands;
@@ -30,6 +33,7 @@ internal sealed class TestCommand : ICommand<Unit>
     private TestCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
+    private string PortBase = null!;
 
     public Handler(ITerminal terminal)
     {
@@ -65,8 +69,7 @@ internal sealed class TestCommand : ICommand<Unit>
     private async Task<bool> TestAsync()
     {
       // Run test projects ONE AT A TIME. Integration suites share one InProcTestPorts base
-      // (defaults web=7000, web-http=7001, api=7255, yarp=8443 — override via
-      // TIMEWARP_TEST_PORT_BASE), so concurrent hosts in the same process tree would collide.
+      // (exported below), so concurrent hosts in the same process tree would collide.
       // Globbing the tests/ tree (rather than the .slnx) keeps this correct in a generated app where
       // feature-flagged test projects are physically excluded.
       string testsDirectory = Path.Combine(RepoRoot, "tests");
@@ -76,6 +79,12 @@ internal sealed class TestCommand : ICommand<Unit>
                  && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
         .OrderBy(p => p, StringComparer.Ordinal)
         .ToArray();
+
+      string? overrideValue = Environment.GetEnvironmentVariable(InProcTestPorts.EnvironmentVariableName);
+      string? checkoutRoot = InProcTestPorts.FindCheckoutRoot([RepoRoot]);
+      (int basePort, InProcTestPorts.BaseSource source) = InProcTestPorts.ResolveBase(overrideValue, checkoutRoot);
+      PortBase = basePort.ToString(System.Globalization.CultureInfo.InvariantCulture);
+      Terminal.WriteLine($"In-proc test ports: {InProcTestPorts.Describe(basePort, source, checkoutRoot)}");
 
       bool allPassed = true;
       foreach (string project in projects)
@@ -102,7 +111,7 @@ internal sealed class TestCommand : ICommand<Unit>
     /// <c>dotnet test -c Release</c> with cwd = project directory so project-local
     /// global.json supplies the MTP runner (task 145-007).
     /// </summary>
-    private static CommandResult BuildTestCommand(string project)
+    private CommandResult BuildTestCommand(string project)
     {
       string projectDir = Path.GetDirectoryName(project)
         ?? throw new InvalidOperationException($"No directory for project path: {project}");
@@ -110,6 +119,7 @@ internal sealed class TestCommand : ICommand<Unit>
       return Shell.Builder("dotnet")
         .WithArguments("test", "-c", "Release")
         .WithWorkingDirectory(projectDir)
+        .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, PortBase)
         .WithNoValidation()
         .Build();
     }

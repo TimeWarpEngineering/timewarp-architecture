@@ -25,6 +25,9 @@
     <Compile Include="global-usings.cs" />
     <Compile Include="endpoints/**/*.cs" />
     <Compile Include="services/**/*.cs" />
+    <!-- InProcTestPorts is the one place the in-proc test port base is decided (task 330).
+         `dev test` and template-smoke compile it in and export its result to child processes. -->
+    <Compile Include="../../tests/common/timewarp-testing/in-proc-test-ports.cs" Link="services/in-proc-test-ports.cs" />
   </ItemGroup>
 
   <ItemGroup>
