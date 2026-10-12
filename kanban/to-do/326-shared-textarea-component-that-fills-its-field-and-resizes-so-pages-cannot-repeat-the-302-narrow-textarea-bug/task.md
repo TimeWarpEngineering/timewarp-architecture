@@ -61,6 +61,7 @@ Affected uses today:
 - Created: 2026-10-12 (cockpit, per Steve's screenshot of `/Admin/Feedback/{id}`)
 - 2026-10-12: implemented under `ganda task work` (implement oracle).
 - 2026-10-12: review oracle (Claude Opus 5.5), effort 3; general reviewer subagent a40fda73b7c3f58ac (Sonnet).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-12T15:04:56Z
 
 ## Results
 
