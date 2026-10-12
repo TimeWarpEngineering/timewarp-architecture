@@ -341,7 +341,13 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     /// </summary>
     private bool AssertIngressPortsRegenerated()
     {
-      if (IngressPorts.Count < 2 || IngressPorts.Distinct().Count() > 1)
+      if (IngressPorts.Count < 2)
+      {
+        Terminal.WriteLine($"Generated ingress-ports: {string.Join(", ", IngressPorts)} (fewer than two generations; per-app difference not checked).");
+        return true;
+      }
+
+      if (IngressPorts.Distinct().Count() > 1)
       {
         Terminal.WriteLine($"Generated ingress-ports differ per app: {string.Join(", ", IngressPorts)}.");
         return true;

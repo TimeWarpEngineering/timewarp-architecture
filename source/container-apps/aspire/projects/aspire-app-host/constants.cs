@@ -48,7 +48,7 @@ internal class Constants
   public const string ComposeEnvironmentResourceName = "compose";
   public const string PostgresPublishedDataVolumeName = "postgres-data";
   // Task 311: ingress-port has no value in code. appsettings.json commits Parameters:ingress-port
-  // (36371 in this repo; the template's ingressPort port generator rewrites it per generated app),
+  // (the template's ingressPort port generator rewrites it per generated app),
   // and dev open forwards / opens that same port on every target.
   public const string IngressPortParameterName = "ingress-port";
   public const string EntraEnabledParameterName = "entra-enabled";

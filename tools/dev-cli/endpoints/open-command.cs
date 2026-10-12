@@ -13,7 +13,7 @@
 //     `kubectl port-forward` runs in the foreground with a real TTY (TtyPassthroughAsync — it streams),
 //     the browser opens once localhost:<port> accepts connections (within 30s, else the URL is
 //     printed), and Ctrl+C stops the forward. The port is --port, else the app's ingress-port parameter
-//     (task 311: committed in the AppHost appsettings.json, 36371 in this repo, one per generated app),
+//     (task 311: committed in the AppHost appsettings.json, one per generated app),
 //     resolved like dev deploy's parameters; it is checked free first so the refusal can suggest --port
 //     instead of kubectl's error.
 //   - compose: http://localhost:<port> — --port, else INGRESS_PORT in the published .env, else the
@@ -35,7 +35,7 @@ using System.Net;
 using System.Net.Sockets;
 
 [NuruRoute("open", Description = "Open the deployed app in the browser (kubernetes: port-forwards the ingress controller unless it has an external address; operator-run)")]
-[NuruRouteExample("open --target kubernetes", Description = "Forward localhost:<ingress-port> (the AppHost ingress-port parameter, 36371 in this repo) to the kind ingress-nginx controller and open the browser (Ctrl+C stops the forward)")]
+[NuruRouteExample("open --target kubernetes", Description = "Forward localhost:<ingress-port> (the ingress-port parameter committed in the AppHost appsettings.json) to the kind ingress-nginx controller and open the browser (Ctrl+C stops the forward)")]
 [NuruRouteExample("open --target kubernetes --port 9090", Description = "Forward a different local port than ingress-port")]
 [NuruRouteExample("open", Description = "Open the compose deployment at http://localhost:<ingress-port>")]
 [NuruRouteExample("open --target aca --no-browser", Description = "Print the ingress container app's https URL")]
@@ -44,7 +44,7 @@ internal sealed class OpenCommand : ICommand<Unit>
   [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
-  [Option("port", Description = "Local port (default: the AppHost ingress-port parameter, 36371 in this repo); kubernetes forwards it, compose opens it")]
+  [Option("port", Description = "Local port (default: the ingress-port parameter committed in the AppHost appsettings.json); kubernetes forwards it, compose opens it")]
   public string? Port { get; set; }
 
   [Option("no-browser", Description = "Print the URL instead of opening a browser")]
@@ -190,6 +190,12 @@ internal sealed class OpenCommand : ICommand<Unit>
       if (port is null)
       {
         Fail(DeployOperate.NoIngressPortMessage(preflight.AppHostProject));
+        return;
+      }
+
+      if (DeployOperate.ParsePort(port, source!).Error is { } sourceError)
+      {
+        Fail(sourceError);
         return;
       }
 

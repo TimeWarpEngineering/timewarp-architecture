@@ -17,8 +17,8 @@
 // cannot drift.
 //
 // Ingress port (task 311): no default lives here. The port is the AppHost's ingress-port parameter,
-// committed in the Parameters section of its appsettings.json (36371 in this repo; the template's
-// ingressPort port generator picks one per generated app) and resolved like dev deploy's parameters —
+// committed in the Parameters section of its appsettings.json (the template's ingressPort port
+// generator picks one per generated app) and resolved like dev deploy's parameters —
 // env, user secret, appsettings.Production.json, appsettings.json. One number per app: the Compose host
 // port, the `dev open --target kubernetes` forward port and the compose fallback. --port overrides it;
 // with neither, `dev open` refuses (NoIngressPortMessage) rather than guess a shared port such as 8080.

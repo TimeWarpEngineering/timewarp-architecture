@@ -78,6 +78,8 @@ generated app should get its **own** port.
 
 - Created: 2026-10-12 (cockpit, per Steve)
 - 2026-10-12 implement oracle (ganda task work, headless Claude): implemented and gated; see Results.
+- 2026-10-12 review oracle (ganda task work, headless Claude Opus 5.5): tw-implementation-review,
+  effort 2, roster general; 1 round; disposition clean.
 
 ## Results
 
@@ -100,7 +102,8 @@ generated app should get its **own** port.
   - If nothing resolves, both targets refuse with `NoIngressPortMessage`, which names the
     appsettings key, the user-secrets command and `--port`.
   - `ParsePort` now names where the value came from (`--port` or the parameter) in its error.
-  - Help text and route examples say "the AppHost ingress-port parameter, 36371 in this repo".
+  - Help text and route examples say "the ingress-port parameter committed in the AppHost appsettings.json".
+    They give no number, because tools/dev-cli ships in generated apps (review M1).
 - **Tests:** dev-cli-tests: 211/211.
   - New: forward-port precedence (option, then parameter); refusal with no port; a bad parameter
     value; resolving `ingress-port` from `appsettings.json`, with env winning over it.
@@ -146,10 +149,22 @@ dev open --target kubernetes   # maintainer, after merge, against kind-timewarp-
 - `appsettings.json` shows `"ingress-port": "36371"`.
 - dev-cli-tests pass, including `IngressPort_Should_BeTheCommittedParameterNotACodeLiteral` and
   the `ForwardPort_*` facts.
-- `dev open --help` shows no 8080. The `--port` option and the kubernetes example name the
-  ingress-port parameter (36371 in this repo).
+- `dev open --help` shows no 8080 and no 36371. The `--port` option and the kubernetes example name
+  the ingress-port parameter committed in the AppHost appsettings.json.
 - `dev template-smoke` prints `AppHost ingress-port is the generated <n> (20000-60000).` once per
   generated app, then `Generated ingress-ports differ per app: …`, then `Template smoke
   SUCCEEDED`.
 - `dev open --target kubernetes` prints `Ingress port: 36371 (ingress-port from the AppHost
   appsettings.json)` and forwards `localhost:36371` to port 80 of the controller.
+
+### Review disposition
+
+- **Rounds:** 1. **Effort:** 2. **Roster:** general (headless review oracle).
+- **Final counts:** bug 0, suggestion 2 fixed, nit 1 fixed, 0 open, 0 wontfix.
+- **Disposition:** `clean`.
+  - M1: shipped help text and Design regions no longer say "36371 in this repo" or cite ganda.
+  - M2: compose `dev open` checks a port that comes from `.env` or the parameter.
+  - M3: the template-smoke message no longer claims a check it skipped.
+- **Re-verified:** `dev build` 0/0, dev-cli-tests 211/211, `ganda repo audit` passes.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.

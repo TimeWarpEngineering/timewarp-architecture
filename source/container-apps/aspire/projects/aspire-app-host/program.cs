@@ -162,9 +162,8 @@
 // Kubernetes dashboard (a second workload with an unauthenticated UI).
 // Ingress port (task 311): ingress-port is the Compose host port and the port `dev open` uses on
 // every target (the kind port-forward included), so one number per app. Like the 288 parameters it
-// has no value in code — appsettings.json commits it (36371 in this repo, `ganda generate-port
-// timewarp-architecture`; the template's ingressPort symbol, a dotnet new port generator scoped to
-// "ingress-port": ", gives each generated app its own). Unlike them it keeps publishValueAsDefault so
+// has no value in code — appsettings.json commits it (the template's ingressPort symbol, a dotnet new
+// port generator scoped to "ingress-port": ", gives each generated app its own). Unlike them it keeps publishValueAsDefault so
 // the published .env carries the port, and that overload needs the value at declaration time, so
 // program.cs reads Parameters:ingress-port from configuration (env and user secrets still override)
 // instead of a literal; a missing value fails publish rather than falling back to a shared port.
