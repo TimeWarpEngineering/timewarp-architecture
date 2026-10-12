@@ -128,6 +128,7 @@ choice and the reason. To change one, add a dated entry below it; don't rewrite 
   the implementer; the SPA slice by a delegated subagent, then reviewed. Gates below.
 - 2026-10-12: Review oracle (ganda task work, headless implementer-claude). Effort 3, roster general
   split into `general-server` / `general-spa` (Claude Sonnet subagents). Fixes on this id.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-12T12:32:02Z
 
 ## Results
 
