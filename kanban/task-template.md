@@ -46,7 +46,7 @@
 **Smoke** — 1–5 copy-paste commands and/or UI steps:
 
 ```bash
-# e.g. ./bin/dev run && curl -si …
+# e.g. dotnet run --project source/container-apps/aspire/projects/aspire-app-host && curl -si …
 ```
 
 **Expect** — concrete outcomes (status codes, headers, UI copy, pack id):

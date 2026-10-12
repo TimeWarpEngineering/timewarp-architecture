@@ -94,3 +94,13 @@ find artifacts/template-smoke/work/SmokeDefault/kanban | sort
 - The `find` lists exactly `kanban/`, the five column folders each with `.gitkeep`,
   `overview.md` and `task-template.md` — no task folders, `*.md` tasks or `*.journal.json`.
 
+
+### Review disposition
+
+- Rounds: 1. Reviewer: general. Effort: 2 (by-diff budget).
+- Final counts: bug 0, suggestion 0, nit 1 fixed. Open 0, wontfix 0.
+- Disposition: **clean**. M1, the `./bin/dev run` smoke example in the shipped `task-template.md`, now
+  uses a `dotnet run --project …/aspire-app-host` example instead.
+- I re-ran the gate during review: `dev template-smoke` SUCCEEDED, and the skeleton check passed for 3/3 matrix apps.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
