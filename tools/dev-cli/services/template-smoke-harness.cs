@@ -25,6 +25,8 @@
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
 // AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
+// Task 318: AssertKanbanSkeletonShipped — generated apps get the empty board skeleton (five
+// column .gitkeep files, overview.md, task-template.md) and nothing else under kanban/.
 // Task 240: AssertInitializerImportGraphResolves (partial in template-smoke-initializer-assets.cs)
 // after the generated solution build — host-free `_content` → NuGet staticwebassets file check.
 // Task 288: AssertDeployParametersUseAppKebabName — the appNameKebab derived symbol (template.json)
@@ -720,6 +722,66 @@ internal sealed partial class TemplateSmokeHarness
 
     if (ok)
       Terminal.WriteLine("Generated app contains skills/ (nine SKILL.md files; analysis/ excluded).");
+
+    return ok;
+  }
+
+  /// <summary>
+  /// Task 318: generated apps get an empty board — kanban/{backlog,to-do,in-progress,done,archived}/
+  /// each with a .gitkeep, plus kanban/overview.md and kanban/task-template.md — and no task
+  /// folders, task files or journals from this repo's board.
+  /// </summary>
+  public bool AssertKanbanSkeletonShipped(string outputDir)
+  {
+    string kanbanDir = Path.Combine(outputDir, "kanban");
+    if (!Directory.Exists(kanbanDir))
+    {
+      Terminal.WriteErrorLine("Generated app is missing kanban/ — template pack did not include the board skeleton.".Red());
+      return false;
+    }
+
+    string[] columns = ["backlog", "to-do", "in-progress", "done", "archived"];
+    string[] expectedFiles =
+    [
+      .. columns.Select(column => $"{column}/.gitkeep"),
+      "overview.md",
+      "task-template.md",
+    ];
+
+    bool ok = true;
+    foreach (string relative in expectedFiles)
+    {
+      if (!File.Exists(Path.Combine(kanbanDir, relative.Replace('/', Path.DirectorySeparatorChar))))
+      {
+        Terminal.WriteErrorLine($"Generated app is missing kanban/{relative}.".Red());
+        ok = false;
+      }
+    }
+
+    HashSet<string> expected = [.. expectedFiles];
+    foreach (string file in Directory.EnumerateFiles(kanbanDir, "*", SearchOption.AllDirectories))
+    {
+      string relative = Path.GetRelativePath(kanbanDir, file).Replace('\\', '/');
+      if (!expected.Contains(relative))
+      {
+        Terminal.WriteErrorLine($"Generated app contains kanban/{relative} — only the empty board skeleton may ship.".Red());
+        ok = false;
+      }
+    }
+
+    HashSet<string> expectedDirectories = [.. columns];
+    foreach (string directory in Directory.EnumerateDirectories(kanbanDir, "*", SearchOption.AllDirectories))
+    {
+      string relative = Path.GetRelativePath(kanbanDir, directory).Replace('\\', '/');
+      if (!expectedDirectories.Contains(relative))
+      {
+        Terminal.WriteErrorLine($"Generated app contains kanban/{relative}/ — task folders must not ship.".Red());
+        ok = false;
+      }
+    }
+
+    if (ok)
+      Terminal.WriteLine("Generated app contains the empty kanban/ skeleton (five columns, overview, task template).");
 
     return ok;
   }

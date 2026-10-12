@@ -1,13 +1,14 @@
 # Task Template
 
-> **IMPORTANT NOTE**: This template provides a set of optional suggestions and ideas to choose from when creating tasks. Not all sections or items are required for every task. When creating tasks, choose conservatively which elements should be included based on the specific needs of the task. As an AI assistant, I will select appropriate sections based on the task's complexity and requirements.
+> **Note**: The sections below are suggestions. Not every section or item applies to every task.
+> Include only what the task needs.
 
 ## Description
 
 [Provide a brief description of the task, outlining its purpose and goals]
 
 ## Parent (optional)
-<Parent task id, e.g. 210>
+<Parent task id>
 
 ## Requirements (optional)
 
@@ -40,13 +41,12 @@
 
 ### How to validate (required before done)
 
-> SSOT: `tw-agent-collaboration` (Results-before-done). Without this subsection, do not
-> mark the task done.
+> Without this subsection, do not mark the task done.
 
 **Smoke** — 1–5 copy-paste commands and/or UI steps:
 
 ```bash
-# e.g. ./bin/dev run && curl -si …
+# e.g. dotnet run --project source/container-apps/aspire/projects/aspire-app-host && curl -si …
 ```
 
 **Expect** — concrete outcomes (status codes, headers, UI copy, pack id):
