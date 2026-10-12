@@ -59,6 +59,7 @@ Run-mode boots:
 
 - Created: 2026-10-12 (cockpit, per Steve; recurring worker collision in 312/313/316)
 - 2026-10-12: implemented (headless implementer, ganda task work).
+- 2026-10-12: implementation review (headless review oracle, effort 2, general). Disposition: accepted-exceptions.
 
 ## Results
 
@@ -101,6 +102,8 @@ Run-mode boots:
     in-process port 7000, which another concurrent process held (the in-process lane, unaffected by
     this task). Rerun with `TIMEWARP_TEST_PORT_BASE=47000`: 3/3, 298/298, and 323/324 with 1 skipped.
   - `ganda repo audit`: clean.
+
+- **Review disposition:** accepted-exceptions after 1 round at effort 2 (roster: general). Final counts: bug 0; suggestion 0 open, 1 wontfix (M3); nit 0 open, 2 wontfix (M1, M2). M3 is pre-existing: aspire-tests ingress facts are not yarp-excluded, and neither is ingress-smoke on master. The review oracle re-ran `ClosedBoxAppHost_Should_`: 4/4. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
