@@ -10,7 +10,9 @@
 // filing columns stay unchanged, Status is marked modified, and only thread entries whose
 // Sequence is above the stored maximum are inserted (the thread is append-only). The root is
 // Modified, so AggregateDbContext runs the invariants and the Version check; a concurrency
-// conflict or a duplicate (item, sequence) key from a racing writer returns false.
+// conflict or a duplicate (item, sequence) key from a racing writer returns false. Add and
+// Update both clear the change tracker when they finish, so no tracked instance outlives a call
+// and a later Update in the same scope can attach its detached copy (task 314 review).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -40,8 +42,11 @@ public sealed class EfFeedbackStore : IFeedbackStore
     }
     catch (DbUpdateException exception) when (IsUniqueViolation(exception))
     {
-      Db.Entry(item).State = EntityState.Detached;
       throw new InvalidOperationException($"Feedback item '{item.Id}' already exists.", exception);
+    }
+    finally
+    {
+      Db.ChangeTracker.Clear();
     }
   }
 

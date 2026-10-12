@@ -5,7 +5,8 @@
 #region Design
 // The request reads Status, Kind, IncludeClosed, and Page from state, so the action carries no
 // parameters. [TrackAction] drives the Section spinner. Not a catalog action: admin actions in
-// this app are page-bound human controls.
+// this app are page-bound human controls. A failed fetch clears the rows and sets ListLoadError,
+// so the table never shows the previous query's rows under the new filter.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Feedback;
@@ -43,7 +44,16 @@ partial class FeedbackAdminState
         FeedbackAdminState.TotalCount = response.TotalCount;
         FeedbackAdminState.Page = response.Page;
         FeedbackAdminState.PageSize = response.PageSize;
+        FeedbackAdminState.ListLoadError = null;
         return Task.CompletedTask;
+      }
+
+      protected override async Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken)
+      {
+        FeedbackAdminState.ItemList = null;
+        FeedbackAdminState.TotalCount = 0;
+        FeedbackAdminState.ListLoadError = "The feedback list could not be loaded.";
+        await base.HandleError(problemDetails, cancellationToken);
       }
     }
   }

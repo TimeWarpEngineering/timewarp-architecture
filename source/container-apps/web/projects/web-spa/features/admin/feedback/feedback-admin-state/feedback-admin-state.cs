@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Items null = no snapshot yet; empty = loaded with zero rows. Filter fields (Status, Kind,
+// Items null = no snapshot yet (or the last fetch failed: ListLoadError); empty = loaded with zero rows. Filter fields (Status, Kind,
 // IncludeClosed, Page) are State actions; the page dispatches FetchFeedbackList afterwards.
 // Status null with IncludeClosed false is the server's default "open items" view.
 // Current is the open item. Every mutation stores the returned Item here, so the thread never
@@ -30,6 +30,7 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
   public bool IncludeClosed { get; private set; }
   public FeedbackAdminView? Current { get; private set; }
   public string? LoadError { get; private set; }
+  public string? ListLoadError { get; private set; }
   public bool LastReplySucceeded { get; private set; }
   public bool LastNoteSucceeded { get; private set; }
 
@@ -47,6 +48,7 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
     IncludeClosed = false;
     Current = null;
     LoadError = null;
+    ListLoadError = null;
     LastReplySucceeded = false;
     LastNoteSucceeded = false;
   }

@@ -67,7 +67,7 @@ public sealed class ListFeedback
       }
 
       int pageSize = Math.Clamp(request.PageSize, 1, MaxPageSize);
-      int page = Math.Max(request.Page, 1);
+      int page = Math.Clamp(request.Page, 1, MaxPage);
       FeedbackPage result = await FeedbackStore
         .ListAllAsync(
           new FeedbackListFilter(statuses, kind, request.FiledFrom, request.FiledTo, (page - 1) * pageSize, pageSize),

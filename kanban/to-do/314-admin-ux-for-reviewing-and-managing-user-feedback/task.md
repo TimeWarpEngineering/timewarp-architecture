@@ -126,6 +126,8 @@ choice and the reason. To change one, add a dated entry below it; don't rewrite 
 - 2026-10-12: Steve delegated decisions 1–6 to the cockpit; recorded in the decision log. Moved to to-do.
 - 2026-10-12: Implemented by the headless implementer (ganda task work). Server, migration, and tests by
   the implementer; the SPA slice by a delegated subagent, then reviewed. Gates below.
+- 2026-10-12: Review oracle (ganda task work, headless implementer-claude). Effort 3, roster general
+  split into `general-server` / `general-spa` (Claude Sonnet subagents). Fixes on this id.
 
 ## Results
 
@@ -222,3 +224,32 @@ and erasure. No follow-up tasks have been filed.
    - A's admin detail shows all four entries, with the note marked internal.
    - The list hides the item once it is Completed or Declined, unless "show closed" is ticked.
 
+### Review disposition
+
+- **Rounds:** 1. **Roster:** general, split into `general-server` and `general-spa`. **Effort:** 3 (by-diff budget, 4588 lines).
+- **Final counts:**
+  - bug: 2 fixed (M1, and M9 which the new Postgres test surfaced).
+  - suggestion: 4 fixed.
+  - nit: 3 fixed.
+  - 0 open and 0 wontfix.
+- **Disposition:** `clean`.
+- **Fixes:**
+  - M1: the attachment download route no longer gates on `feedback.file.self`, so a read-only feedback admin can download.
+  - M9: `EfFeedbackStore.AddAsync` clears the change tracker.
+  - M3: `ListFeedback.MaxPage` bounds the row offset.
+  - M5 / M6: admin SPA state no longer shows a stale item or stale rows. There is a new `ListLoadError`.
+  - M7: pager wording and visibility.
+  - M2 / M8: new Postgres store tests, SPA state tests, and an admin-download integration test.
+  - M4: the store tie-break order is documented.
+- **Gates after fixes:**
+  - `./bin/dev build`: 0/0.
+  - `ganda repo audit`: pass.
+  - web-server-integration `Returns_`: 140/140.
+  - web-infrastructure-tests: 70/70.
+  - SPA feedback admin state: 7/7.
+  - triage runfile: 28/28.
+  - attachment runfile: 20/20.
+- **Artifacts:**
+  - `review/review-framework.md`
+  - `review/round-1/general-server.md`, `review/round-1/general-spa.md`, `review/round-1/merged.md`
+  - `review/disposition.md`

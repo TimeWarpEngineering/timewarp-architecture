@@ -8,7 +8,10 @@
 // list and on a status change. An Administrator lists, changes status, and the filer then sees
 // the new status and the reply on their own item (the filer view never shows an internal
 // note). Read-without-manage shrinks the Administrator bundle to admin.feedback.read: list 200,
-// status change 403. The original bundle is restored in finally.
+// status change 403. Attachment download shrinks the
+// bundle to admin.access + admin.feedback.read with no feedback.file.self: the admin reads the
+// filer's attachment (200) while another Member gets 404, so the route never gates on the filer
+// permission. The original bundle is restored in finally.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -16,6 +19,7 @@ namespace AdminFeedbackAuthorization_;
 using Microsoft.Extensions.DependencyInjection;
 using System.Buffers.Text;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using TimeWarp.Architecture.Configuration;
@@ -23,6 +27,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
+using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 
 public class Returns_
@@ -142,6 +147,49 @@ public class Returns_
     }
   }
 
+  public static async Task Ok_Download_Given_Administrator_With_Feedback_Read_And_No_File_Self()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    Guid attachmentId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      attachmentId = await UploadAttachmentAsync(filer, "notes.txt", "attached by the filer"u8.ToArray());
+      await FileFeedbackAsync(filer, "With an attachment", attachmentId);
+      (await filer.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    (string strangerCookie, PrincipalId strangerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(strangerId, RoleIds.Member);
+    using (HttpClient stranger = Client(strangerCookie))
+    {
+      (await stranger.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode
+        .ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(principalId, RoleIds.Administrator);
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IReadOnlyList<string> original = await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
+    try
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(
+        RoleIds.Administrator,
+        [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
+
+      using HttpClient client = Client(cookie);
+      HttpResponseMessage download = await client.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId));
+      download.StatusCode.ShouldBe(HttpStatusCode.OK);
+      (await download.Content.ReadAsStringAsync()).ShouldBe("attached by the filer");
+    }
+    finally
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
+    }
+  }
+
   private static HttpClient Client(string cookie)
   {
     HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
@@ -149,15 +197,28 @@ public class Returns_
     return client;
   }
 
-  private static async Task<Guid> FileFeedbackAsync(HttpClient client, string title)
+  private static async Task<Guid> FileFeedbackAsync(HttpClient client, string title, params Guid[] attachmentIds)
   {
     HttpResponseMessage response = await PostAsync(
       client,
       "api/Feedback",
-      new { kind = "BugReport", title, body = "Body for " + title, emailCopy = false, attachmentIds = Array.Empty<Guid>() });
+      new { kind = "BugReport", title, body = "Body for " + title, emailCopy = false, attachmentIds });
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
     return document.RootElement.GetProperty("feedbackItemId").GetGuid();
+  }
+
+  private static async Task<Guid> UploadAttachmentAsync(HttpClient client, string fileName, byte[] body)
+  {
+    using HttpRequestMessage request = new(HttpMethod.Post, UploadFeedbackAttachment.Command.RouteTemplate);
+    ByteArrayContent content = new(body);
+    content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+    request.Content = content;
+    request.Headers.TryAddWithoutValidation(FileUploadHeaders.FileName, Uri.EscapeDataString(fileName));
+    using HttpResponseMessage response = await client.SendAsync(request);
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+    return document.RootElement.GetProperty("attachmentId").GetGuid();
   }
 
   private static Task<HttpResponseMessage> PutStatusAsync(HttpClient client, Guid itemId, FeedbackStatus status) =>

@@ -7,7 +7,8 @@
 // C-create in-proc ServiceProvider (same shape as SignInSpa): a scripted IWebServerApiService
 // answers per request type. States are re-read from the Store after Send (clone-on-dispatch
 // replaces instances). Covers the filter-to-query path, mutations storing the returned item,
-// the reply/note success flags, and the non-revealing 404.
+// the reply/note success flags, the non-revealing 404, paging (a filter change resets Page),
+// opening another item clearing the previous one, and a failed fetch clearing the rows.
 #endregion
 
 namespace FeedbackAdminState_;
@@ -91,6 +92,62 @@ public class FeedbackAdminActions_Should_
     FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
     state.Current.ShouldBeNull();
     state.LoadError.ShouldBe("This feedback item is not available.");
+  }
+
+  public static async Task Filter_Change_Resets_Page_And_Paging_Flags_Follow_The_Total()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ListFeedback.Query? seen = null;
+    spa.Api.Answer<ListFeedback.Query>(query =>
+    {
+      seen = query;
+      return new ListFeedback.Response(totalCount: (2 * query.PageSize) + 1, [], query.Page, query.PageSize);
+    });
+
+    await scope.Send(new FeedbackAdminState.SetPageActionSet.Action(2));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.ShouldNotBeNull().Page.ShouldBe(2);
+    FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
+    state.HasPreviousPage.ShouldBeTrue();
+    state.HasNextPage.ShouldBeTrue();
+
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(null, FeedbackKind.BugReport, includeClosed: false));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.Page.ShouldBe(1);
+    scope.Store.GetState<FeedbackAdminState>().HasPreviousPage.ShouldBeFalse();
+  }
+
+  public static async Task Failed_Fetch_Clears_The_Rows_And_Sets_A_List_Error()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<ListFeedback.Query>(query => ListFeedback.GetMockResponseFactory()(query));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    scope.Store.GetState<FeedbackAdminState>().Items.ShouldNotBeNull();
+
+    spa.Api.Problem<ListFeedback.Query>(new SharedProblemDetails { Status = 500, Title = "Boom" });
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(FeedbackStatus.Planned, null, includeClosed: false));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+
+    FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
+    state.Items.ShouldBeNull();
+    state.TotalCount.ShouldBe(0);
+    state.ListLoadError.ShouldNotBeNull();
+  }
+
+  public static async Task Open_Of_Another_Item_Clears_The_Previous_One_When_It_Fails()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<GetFeedbackForAdmin.Query>(query => new GetFeedbackForAdmin.Response(FeedbackAdminView.Sample(query.FeedbackItemId)));
+    await scope.Send(new FeedbackAdminState.OpenFeedbackForAdminActionSet.Action(ItemId));
+    scope.Store.GetState<FeedbackAdminState>().Current.ShouldNotBeNull();
+
+    spa.Api.Problem<GetFeedbackForAdmin.Query>(new SharedProblemDetails { Status = 500, Title = "Boom" });
+    await scope.Send(new FeedbackAdminState.OpenFeedbackForAdminActionSet.Action(Guid.NewGuid()));
+
+    scope.Store.GetState<FeedbackAdminState>().Current.ShouldBeNull();
   }
 
   private sealed class AdminSpa : ISpaTestApplication, IDisposable

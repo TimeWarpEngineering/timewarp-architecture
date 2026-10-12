@@ -4,7 +4,9 @@
 
 #region Design
 // A 404 clears Current and sets a non-revealing LoadError, then still publishes the problem
-// toast. Opening a different item first clears the draft success flags.
+// toast. Opening a different item first clears Current and LoadError, so the previous item's
+// body and manage controls never show under the new id while it loads or after it fails.
+// Every open clears the draft success flags.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Feedback;
@@ -36,6 +38,12 @@ partial class FeedbackAdminState
     {
       protected override Task<Query?> GetRequest(Action action, CancellationToken cancellationToken)
       {
+        if (FeedbackAdminState.Current?.FeedbackItemId != action.FeedbackItemId)
+        {
+          FeedbackAdminState.Current = null;
+          FeedbackAdminState.LoadError = null;
+        }
+
         FeedbackAdminState.LastReplySucceeded = false;
         FeedbackAdminState.LastNoteSucceeded = false;
         return Task.FromResult<Query?>(new Query { FeedbackItemId = action.FeedbackItemId });

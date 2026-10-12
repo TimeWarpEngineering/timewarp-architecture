@@ -5,7 +5,9 @@
 #region Design
 // Process-lifetime singleton, matching InMemoryProfileStore. PostgresDbModule swaps it for
 // scoped EfFeedbackStore when a connection string is present. Add throws on a duplicate id.
-// List order is FiledAt descending, then id, so the filer's list is stable.
+// List order is FiledAt descending, then id, so the filer's list is stable. The id tie-break
+// is .NET Guid order, which differs from Postgres uuid order in EfFeedbackStore, so two items
+// with the same FiledAt can page in a different order per store; each store is stable alone.
 // Find hands back the stored instance, so a handler's mutation is visible before Update; Update
 // only checks the item still exists. There is no Version check here: this store is the
 // zero-infra development path, and concurrent triage of one item is a Postgres concern.

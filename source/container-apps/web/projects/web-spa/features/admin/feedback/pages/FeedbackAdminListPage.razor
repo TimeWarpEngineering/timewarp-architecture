@@ -79,7 +79,11 @@
       </FluentStack>
     </Section>
     <Section Title="Feedback" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
-      @if (FeedbackAdminState.Items is null || FeedbackAdminState.Items.Count == 0)
+      @if (FeedbackAdminState.ListLoadError is not null)
+      {
+        <p data-qa="AdminFeedbackLoadError">@FeedbackAdminState.ListLoadError</p>
+      }
+      else if (FeedbackAdminState.Items is null || FeedbackAdminState.Items.Count == 0)
       {
         <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
       }
@@ -108,12 +112,15 @@
             }
           </tbody>
         </table>
+      }
+      @if (FeedbackAdminState.TotalCount > 0 || FeedbackAdminState.HasPreviousPage)
+      {
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
           <FluentButton Appearance="ButtonAppearance.Outline"
             Disabled="@(!FeedbackAdminState.HasPreviousPage)"
             data-qa="AdminFeedbackPrevious"
             OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page - 1))">Previous</FluentButton>
-          <span data-qa="AdminFeedbackPage">Page @FeedbackAdminState.Page of @FeedbackAdminState.TotalCount items</span>
+          <span data-qa="AdminFeedbackPage">Page @FeedbackAdminState.Page · @FeedbackAdminState.TotalCount items</span>
           <FluentButton Appearance="ButtonAppearance.Outline"
             Disabled="@(!FeedbackAdminState.HasNextPage)"
             data-qa="AdminFeedbackNext"

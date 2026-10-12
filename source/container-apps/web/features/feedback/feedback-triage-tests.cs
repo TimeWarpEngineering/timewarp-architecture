@@ -248,6 +248,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       validator.Validate(new AdminListContract.Query()).IsValid.ShouldBeTrue();
       validator.Validate(new AdminListContract.Query { Page = 0 }).IsValid.ShouldBeFalse();
       validator.Validate(new AdminListContract.Query { PageSize = AdminListContract.MaxPageSize + 1 }).IsValid.ShouldBeFalse();
+      validator.Validate(new AdminListContract.Query { Page = AdminListContract.MaxPage + 1 }).IsValid.ShouldBeFalse();
+      validator.Validate(new AdminListContract.Query { Page = AdminListContract.MaxPage, PageSize = AdminListContract.MaxPageSize }).IsValid.ShouldBeTrue();
       validator.Validate(new AdminListContract.Query { FiledFrom = TriageWorld.Day(3), FiledTo = TriageWorld.Day(2) })
         .IsValid.ShouldBeFalse();
       return Task.CompletedTask;

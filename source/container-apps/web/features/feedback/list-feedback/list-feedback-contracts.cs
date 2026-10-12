@@ -5,8 +5,8 @@
 #region Design
 // Task 314. admin.feedback.read on the human session schemes. Closed items (Completed,
 // Declined) are hidden unless IncludeClosed is true or Status names one explicitly. FiledFrom
-// is inclusive and FiledTo exclusive. Page is 1-based; PageSize defaults to 25 and is capped at
-// MaxPageSize. GET carries its filters in the query string (IQueryStringRouteProvider), so the
+// is inclusive and FiledTo exclusive. Page is 1-based and capped at MaxPage so the row offset
+// cannot overflow; PageSize defaults to 25 and is capped at MaxPageSize. GET carries its filters in the query string (IQueryStringRouteProvider), so the
 // client builds the URL from the contract. Items omit the body; opening an item loads it.
 #endregion
 
@@ -24,6 +24,9 @@ public static partial class ListFeedback
 {
   public const int DefaultPageSize = 25;
   public const int MaxPageSize = 100;
+
+  /// <summary>Largest Page whose row offset, (Page - 1) * MaxPageSize, still fits in an int.</summary>
+  public const int MaxPage = (int.MaxValue / MaxPageSize) + 1;
 
   [ApiRoute("api/admin/feedback", HttpVerb.Get)]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
@@ -58,7 +61,7 @@ public static partial class ListFeedback
     {
       RuleFor(query => query.Status).IsInEnum();
       RuleFor(query => query.Kind).IsInEnum();
-      RuleFor(query => query.Page).GreaterThanOrEqualTo(1);
+      RuleFor(query => query.Page).InclusiveBetween(1, MaxPage);
       RuleFor(query => query.PageSize).InclusiveBetween(1, MaxPageSize);
       RuleFor(query => query.FiledTo)
         .GreaterThan(query => query.FiledFrom)
