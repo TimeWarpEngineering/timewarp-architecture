@@ -9,7 +9,7 @@
 
 // Co-located Jaribu in-proc Api tests (tasks 135/145-002/145-005). Replaces the Fixie twins under
 // tests/container-apps/api/api-server-integration-tests/features/weather-forecast/get/ (endpoint +
-// handler + validator). Real in-proc Api host (InProcTestPorts; default :7255, override
+// handler + validator). Real in-proc Api host (InProcTestPorts; api = base+255, override
 // TIMEWARP_TEST_PORT_BASE); `dev test` serializes suites that share one base.
 // Run: dotnet run source/container-apps/api/features/weather-forecast/get-weather-forecasts/get-weather-forecasts-tests.cs
 

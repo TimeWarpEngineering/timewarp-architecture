@@ -50,12 +50,71 @@ Parallel workers are now normal (`ganda task work` on several tasks), so this re
 
 ## Checklist
 
-- [ ] Derived per-checkout base in `InProcTestPorts` (range/alignment), override precedence
-- [ ] Collision message; `dev test` exports the resolved base to children
-- [ ] Comments/help/skill text updated
-- [ ] Tests + proof run with 7000 occupied
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Derived per-checkout base in `InProcTestPorts` (range/alignment), override precedence
+- [x] Collision message; `dev test` exports the resolved base to children
+- [x] Comments/help/skill text updated
+- [x] Tests + proof run with 7000 occupied
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve; found by the 319 worker)
+- 2026-10-12 implementer (ganda task work): implemented, gates green, results below.
+
+## Results
+
+**Derivation (`tests/common/timewarp-testing/in-proc-test-ports.cs`).** Precedence:
+`TIMEWARP_TEST_PORT_BASE` (exact, as before) → base derived from the checkout root → legacy 7000.
+The checkout root is the nearest ancestor holding a `*.slnx`, searched from the runfile's source
+directory (`AppContext` `EntryPointFileDirectoryPath`), then `AppContext.BaseDirectory`, then the
+current directory. So `dev test`, plain `dotnet test`, and Jaribu runfiles (built in the runfile
+cache) all find it in-process, and the `dev test`-only fallback was not needed. Hash: FNV-1a over the
+normalized absolute path (separators `/`, trailing separator trimmed, upper-cased on Windows). Bases:
+20000 + n·1500, n in 0..12 (13 slots; the highest port is 38000+1444 = 39444 < 40000). Step 1500 is
+larger than the 1444 spread, so two different bases never share a port. Collisions between checkouts
+are possible (1 in 13) and fail loudly.
+
+**Collision.** `HostGraphFactory.EnsurePortIsFree` now reports the port, the host, `InProcTestPorts.Describe()`
+(base, source, checkout path, and the derived base when an override is set) and the override variable.
+It never moves a port.
+
+**`dev test`.** Compiles `in-proc-test-ports.cs` in (linked from `tools/dev-cli/Directory.Build.props`,
+so there is one source), resolves the base once, prints it, and exports `TIMEWARP_TEST_PORT_BASE` to every
+child `dotnet test`.
+
+**Template-smoke choice.** Dropped the fixed 17000. Tiers 2–3 now pass the generated app's own derived
+base (from its `artifacts/template-smoke/work/<app>` path), bumped one slot if it equals this checkout's
+base. Reason: a fixed 17000 collided when two worktrees ran template-smoke at the same time.
+
+**Text.** Comments and help updated in host-graph-factory, web/api/yarp test server applications,
+test-command, template-smoke-harness, the co-located-runfiles skill reference, and the comments that
+mentioned :7000/:7255/:8443. AGENTS.md does not name the defaults, so it was not changed.
+
+**Tests.** `tests/common/timewarp-testing-tests/in-proc-test-ports-tests.cs` (11): stable per path,
+different across two paths, 500 fixture paths in range/aligned and covering all 13 slots, next-slot wrap,
+override wins, derive when unset, fallback without root, override range rejection, `*.slnx` root
+discovery, collision message (real held port 0) and derived-describe text.
+
+**Gates (this worktree).** `dev build` 0 warnings / 0 errors. `dev test` with a python listener holding
+127.0.0.1:7000: all 23 projects passed on derived base 32000. Plain `dotnet test` in timewarp-testing-tests
+(14/14) and `dotnet run` of get-weather-forecasts-tests.cs from `/tmp` (5/5) passed with 7255 held.
+`dev template-smoke` SUCCEEDED. `ganda repo audit` passes. `dev check-version` passes (2.0.0-beta.20 is
+already ahead of NuGet).
+
+### How to validate
+
+Smoke:
+```bash
+./bin/dev self-install   # or: dotnet run tools/dev-cli/dev.cs -- self-install
+python3 -c "import socket,time;s=socket.socket();s.bind(('127.0.0.1',7000));s.listen();time.sleep(3000)" & H=$!
+./bin/dev test --quiet; kill $H
+dotnet run tests/common/timewarp-testing-tests/in-proc-test-ports-tests.cs
+TIMEWARP_TEST_PORT_BASE=47000 ./bin/dev test --quiet 2>&1 | head -1
+```
+
+Expect: the first line of `dev test` is `In-proc test ports: base <20000..38000, step 1500> derived from checkout <this worktree path>`,
+and "Tests completed successfully!" while 7000 is held. The runfile reports 11/11 passed. With the override,
+the first line reads `base 47000 from TIMEWARP_TEST_PORT_BASE (...)`. A second worktree prints a different
+base (or, 1 time in 13, the same base, and a held port then fails with the port, base, checkout path and
+`TIMEWARP_TEST_PORT_BASE` in the message).
+

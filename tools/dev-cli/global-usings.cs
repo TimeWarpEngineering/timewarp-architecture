@@ -17,4 +17,5 @@ global using TimeWarp.Amuru;
 global using TimeWarp.Terminal;
 global using DevCli;
 global using DevCli.Services;
+global using TimeWarp.Architecture.Testing;
 global using Microsoft.Extensions.DependencyInjection;

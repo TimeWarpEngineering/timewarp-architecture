@@ -16,8 +16,9 @@ using System.Net.Sockets;
 //   Web+Api:  Api first (BFF HttpClient bases → ApiHostUrl), then Web
 //   Web+Yarp: Web, then Yarp (task 120 standalone gateway smoke; no Api)
 //   Full:     Api, Web, then Yarp (Yarp depends on the others for DI identity only)
-// Ports come from InProcTestPorts (TIMEWARP_TEST_PORT_BASE; defaults 7000/7001/7255/8443).
-// Port preflight fails with a teaching error so parallel/leaked hosts are obvious.
+// Ports come from InProcTestPorts (TIMEWARP_TEST_PORT_BASE, else a per-checkout derived base).
+// Port preflight fails with a teaching error (port, base provenance, override variable) so
+// parallel/leaked hosts are obvious; it never moves a port, because child processes must agree.
 // Per-host Action<IServiceCollection> runs after each host's built-in test wiring
 // (Web already registers MockAccessTokenProvider).
 // Host constructors start Kestrel synchronously; async methods still use await for dispose
@@ -182,10 +183,10 @@ public static class HostGraphFactory
 #endif
 
   /// <summary>
-  /// Fails if an in-proc test port is already bound — usually another suite or a leaked host.
-  /// <c>dev test</c> runs projects one at a time because they share one
-  /// <see cref="InProcTestPorts"/> base; override via <c>TIMEWARP_TEST_PORT_BASE</c> to isolate
-  /// a second process (e.g. template-smoke).
+  /// Fails if an in-proc test port is already bound — usually another suite, a leaked host, or a
+  /// concurrent checkout whose derived base landed on the same slot. <c>dev test</c> runs projects
+  /// one at a time because they share one <see cref="InProcTestPorts"/> base; set
+  /// <see cref="InProcTestPorts.EnvironmentVariableName"/> to move this process to another base.
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
   {
@@ -197,13 +198,15 @@ public static class HostGraphFactory
     }
     catch (SocketException exception)
     {
-      throw new InvalidOperationException(
-        $"In-proc test port {port} for {hostLabel} is already in use. " +
-        "Stop the other process (or finish its CleanUpOnce/DisposeAsync). " +
-        "`dev test` runs test projects serially so ports are not shared across projects; " +
-        "set TIMEWARP_TEST_PORT_BASE to isolate a concurrent process (template-smoke does); " +
-        "within a project each Jaribu class must own and dispose its HostGraph (C-create).",
-        exception);
+      throw new InvalidOperationException(PortInUseMessage(port, hostLabel, InProcTestPorts.Describe()), exception);
     }
   }
+
+  /// <summary>The collision error text; <paramref name="baseDescription"/> is <see cref="InProcTestPorts.Describe()"/>.</summary>
+  public static string PortInUseMessage(int port, string hostLabel, string baseDescription) =>
+    $"In-proc test port {port} for {hostLabel} is already in use ({baseDescription}). " +
+    "Stop the other process (or finish its CleanUpOnce/DisposeAsync), or set " +
+    $"{InProcTestPorts.EnvironmentVariableName} to a free base (the set spans base..base+{InProcTestPorts.PortSpan}). " +
+    "`dev test` runs test projects serially so ports are not shared across projects; " +
+    "within a project each Jaribu class must own and dispose its HostGraph (C-create).";
 }
