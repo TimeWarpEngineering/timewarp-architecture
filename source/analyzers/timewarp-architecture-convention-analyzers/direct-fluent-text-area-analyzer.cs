@@ -16,9 +16,11 @@
 // to that call. Scope and generated-code handling follow TWA0025: razor/cshtml-generated trees are
 // analyzed, other generated trees are exempt.
 //
-// Host exemption is by file name: the tree (components_forms_TextArea_razor.g.cs) or its #line
-// mapped path (TextArea.razor). A file name keeps the rule stable when the template renames the
-// root namespace. Opt-out: [DirectFluentTextArea("reason")] on the component or a containing type,
+// Host exemption is by project-relative path, not namespace: the tree name ends in
+// components/forms/TextArea_razor.g.cs (the Razor generator's hint name) or
+// components_forms_TextArea_razor.g.cs, or the #line mapped path ends in
+// components/forms/TextArea.razor (either separator). The folder survives a template root
+// namespace rename; a same-named TextArea.razor in another folder is still reported. Opt-out: [DirectFluentTextArea("reason")] on the component or a containing type,
 // matched by simple name. An empty or whitespace reason does not opt out.
 #endregion
 
@@ -38,9 +40,9 @@ public sealed class DirectFluentTextAreaAnalyzer : DiagnosticAnalyzer
   private const string FluentUiNamespace = "Microsoft.FluentUI.AspNetCore.Components";
   private const string OpenComponentMethodName = "OpenComponent";
   private const string CloseComponentMethodName = "CloseComponent";
-  private const string HostFileName = "TextArea.razor";
-  private const string HostGeneratedSuffix = "_TextArea_razor.g.cs";
-  private const string HostGeneratedFileName = "TextArea_razor.g.cs";
+  private const string HostPath = "components/forms/TextArea.razor";
+  private const string HostGeneratedPath = "components/forms/TextArea_razor.g.cs";
+  private const string HostGeneratedFileName = "components_forms_TextArea_razor.g.cs";
   private const string DirectFluentTextAreaAttributeName = "DirectFluentTextAreaAttribute";
 
   private static readonly DiagnosticDescriptor Rule =
@@ -147,10 +149,20 @@ public sealed class DirectFluentTextAreaAnalyzer : DiagnosticAnalyzer
 
   private static bool IsHostPath(string path)
   {
-    string fileName = Path.GetFileName(path.Replace("\\", "/", StringComparison.Ordinal));
-    return string.Equals(fileName, HostFileName, StringComparison.OrdinalIgnoreCase)
-      || string.Equals(fileName, HostGeneratedFileName, StringComparison.OrdinalIgnoreCase)
-      || fileName.EndsWith(HostGeneratedSuffix, StringComparison.OrdinalIgnoreCase);
+    string normalized = path.Replace("\\", "/", StringComparison.Ordinal);
+    return EndsWithSegment(normalized, HostPath, '/')
+      || EndsWithSegment(normalized, HostGeneratedPath, '/')
+      || EndsWithSegment(Path.GetFileName(normalized), HostGeneratedFileName, '_');
+  }
+
+  // True when path is suffix or ends with separator + suffix, so "xcomponents/forms/…" does not match.
+  private static bool EndsWithSegment(string path, string suffix, char separator)
+  {
+    if (!path.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+      return false;
+
+    int start = path.Length - suffix.Length;
+    return start == 0 || path[start - 1] == separator || path[start - 1] == '/';
   }
 
   private static bool IsRazorGeneratedPath(string path) =>

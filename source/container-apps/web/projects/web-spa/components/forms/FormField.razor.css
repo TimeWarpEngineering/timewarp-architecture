@@ -28,8 +28,6 @@
 .twe-form-field__control ::deep > fluent-dropdown,
 .twe-form-field__control ::deep > fluent-select,
 .twe-form-field__control ::deep > fluent-combobox,
-.twe-form-field__control ::deep > fluent-textarea,
-.twe-form-field__control ::deep > fluent-text-area,
 .twe-form-field__control ::deep > fluent-field {
   display: block;
   width: 100%;

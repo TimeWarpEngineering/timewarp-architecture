@@ -4,8 +4,8 @@
 
 #region Design
 // Gated on the Blazor WASM SDK like TWA0025. Razor-generated trees and ordinary .cs trees are
-// analyzed; other .g.cs trees are exempt. The host is matched by file name (generated tree or
-// #line-mapped path). [DirectFluentTextArea("non-empty-reason")] opts a component out; an empty
+// analyzed; other .g.cs trees are exempt. The host is matched by its components/forms path
+// (generated tree name or #line-mapped path, either separator); a TextArea.razor elsewhere is not. [DirectFluentTextArea("non-empty-reason")] opts a component out; an empty
 // reason does not.
 #endregion
 
@@ -155,6 +155,19 @@ public class Should_Require_The_Shared_TextArea
     await Test(RawPage, "components_forms_TextArea_razor.g.cs").RunAsync();
   }
 
+  public static async Task Given_Razor_Generator_Hint_Path_For_Host_Does_Not_Flag()
+  {
+    await Test(RawPage, "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/components/forms/TextArea_razor.g.cs").RunAsync();
+  }
+
+  public static async Task Given_Razor_Generator_Hint_Path_In_Other_Folder_Flags()
+  {
+    const string path = "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/features/notes/TextArea_razor.g.cs";
+    CSharpAnalyzerTest<DirectFluentTextAreaAnalyzer, RoslynTestVerifier> test = Test(RawPage, path);
+    test.ExpectedDiagnostics.Add(Flag(path, 11, 5, 45));
+    await test.RunAsync();
+  }
+
   public static async Task Given_Line_Mapped_To_TextArea_Razor_Does_Not_Flag()
   {
     const string source =
@@ -170,6 +183,38 @@ public class Should_Require_The_Shared_TextArea
         protected void BuildRenderTree(RenderTreeBuilder builder)
         {
       #line 40 "/src/web-spa/components/forms/TextArea.razor"
+          builder.OpenComponent<FluentTextArea>(1);
+      #line default
+          builder.CloseComponent();
+        }
+      }
+      """;
+
+    await Test(source, "obj_TextArea_generated_razor.g.cs").RunAsync();
+  }
+
+  public static async Task Given_Same_Named_Component_In_Other_Folder_Flags()
+  {
+    CSharpAnalyzerTest<DirectFluentTextAreaAnalyzer, RoslynTestVerifier> test = Test(RawPage, "features_notes_TextArea_razor.g.cs");
+    test.ExpectedDiagnostics.Add(Flag("features_notes_TextArea_razor.g.cs", 11, 5, 45));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Backslash_Line_Mapped_To_TextArea_Razor_Does_Not_Flag()
+  {
+    const string source =
+      """
+      #region Purpose
+      // Generated tree whose markup maps back to TextArea.razor through a Windows path.
+      #endregion
+      using Microsoft.AspNetCore.Components.Rendering;
+      using Microsoft.FluentUI.AspNetCore.Components;
+
+      public class TextArea
+      {
+        protected void BuildRenderTree(RenderTreeBuilder builder)
+        {
+      #line 40 "C:\src\web-spa\components\forms\TextArea.razor"
           builder.OpenComponent<FluentTextArea>(1);
       #line default
           builder.CloseComponent();

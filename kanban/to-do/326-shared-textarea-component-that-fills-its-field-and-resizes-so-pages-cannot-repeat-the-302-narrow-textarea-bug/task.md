@@ -60,6 +60,7 @@ Affected uses today:
 
 - Created: 2026-10-12 (cockpit, per Steve's screenshot of `/Admin/Feedback/{id}`)
 - 2026-10-12: implemented under `ganda task work` (implement oracle).
+- 2026-10-12: review oracle (Claude Opus 5.5), effort 3; general reviewer subagent a40fda73b7c3f58ac (Sonnet).
 
 ## Results
 
@@ -114,6 +115,23 @@ it is enabled and clicks again only if no receipt appears.
 - `ganda repo audit`: passes.
 - `dev check-version`: source 2.0.0-beta.20 is already ahead of NuGet beta.19, so no bump was needed.
 
+### Review disposition
+
+- **Outcome:** clean. 2 rounds, effort 3, roster: general (Sonnet subagent) plus an orchestrator re-review.
+- **Final counts:** bug 0; suggestion 2 fixed; nit 1 fixed; 0 open; 0 wontfix.
+- **M1:** TWA0032 now matches its host by project-relative path, not bare file name. The accepted
+  forms are the Razor generator hint path `components/forms/TextArea_razor.g.cs`,
+  `components_forms_TextArea_razor.g.cs`, or a `#line` path ending in
+  `components/forms/TextArea.razor` (either separator). A same-named `TextArea.razor` in another
+  folder is now reported. 4 new tests; the class is 15/15.
+- **M2:** the Playwright submit waits until the button has stayed enabled for 500ms, then clicks once.
+  The 5-click retry that could file duplicates is gone.
+- **M3:** removed the dead `> fluent-textarea` selectors from FormField.razor.css and its Design comment.
+- **Re-verified:** `dev build` 0/0; guard edit still fails with `FeedbackItemPage.razor(97,48): error TWA0032`;
+  FeedbackAttachment Playwright 3/3 on two runs.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke**
@@ -129,7 +147,7 @@ dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Releas
 **Expect**
 
 - Build: 0 warnings, 0 errors.
-- Analyzer class: 11/11 pass.
+- Analyzer class: 15/15 pass.
 - Playwright: 3/3 pass. The console shows `root=` equal to `field=` (for example 293..1227 at 1280 and
   53..547 at 600) for FeedbackReply, AdminFeedbackReply, and AdminFeedbackNote, and `grown=80` for each drag.
 - Screenshots `feedback-filer-textareas-*.png` and `feedback-admin-textareas-*.png` show full-width,

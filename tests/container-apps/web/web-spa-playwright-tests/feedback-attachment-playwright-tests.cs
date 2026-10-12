@@ -221,29 +221,36 @@ public class FeedbackAttachment_Given_Wasm
 
   // The submit button is Disabled while any action is active, and blurring Details dispatches the
   // composer-context action, so a click straight after typing can land on a disabled button and
-  // do nothing. Wait for it to be enabled; click again only while no receipt has appeared.
+  // do nothing. Wait until the button has stayed enabled for 500ms, then click exactly once: a
+  // re-click could file a duplicate item and would hide a submit that really did nothing.
   private static async Task<ILocator> SubmitFeedbackAsync(IPage page)
   {
+    await page.WaitForFunctionAsync(
+      """
+      () => {
+        const button = document.querySelector('[data-qa=FeedbackSubmit]');
+        const enabled = button && !button.hasAttribute('disabled');
+        if (!enabled) { window.feedbackSubmitEnabledSince = undefined; return false; }
+        window.feedbackSubmitEnabledSince ??= performance.now();
+        return performance.now() - window.feedbackSubmitEnabledSince >= 500;
+      }
+      """,
+      null,
+      new PageWaitForFunctionOptions { Timeout = 30_000, PollingInterval = 50 });
+    await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
+
     ILocator receipt = page.Locator("[data-qa=FeedbackReceiptId]");
-    for (int attempt = 1; attempt <= 5; attempt++)
+    try
     {
-      await page.WaitForFunctionAsync(
-        "() => { const button = document.querySelector('[data-qa=FeedbackSubmit]'); return button && !button.hasAttribute('disabled'); }",
-        null,
-        new PageWaitForFunctionOptions { Timeout = 30_000 });
-      await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
-      try
-      {
-        await receipt.WaitForAsync(new LocatorWaitForOptions { Timeout = 6_000 });
-        return receipt;
-      }
-      catch (TimeoutException) when (attempt < 5)
-      {
-      }
+      await receipt.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-reply-submit-failed.png"), FullPage = true });
+      throw new TimeoutException("Feedback submit showed no receipt after one click on an enabled button.", exception);
     }
 
-    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-reply-submit-failed.png"), FullPage = true });
-    throw new TimeoutException("Feedback submit showed no receipt after 5 attempts.");
+    return receipt;
   }
 
   private static async Task AssertBoxesFillTheirFieldAsync(IPage page, string surface, string[] qas)
