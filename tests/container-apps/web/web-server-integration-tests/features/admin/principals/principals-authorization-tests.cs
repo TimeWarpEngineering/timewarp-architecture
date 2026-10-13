@@ -7,8 +7,9 @@
 // IPrincipalRoleStore, then assert 403 → 200. Read-without-manage: shrink Administrator permission
 // set to principals.read only → List 200, Set 403. Agent bearer remains 401 (cookie-scheme policy).
 // Task 328: GetPrincipal shares admin.principals.read (401 anonymous, 403 Member, 200 Administrator
-// with the profile). An Administrator role set that lacks admin.profiles.read still gets 200 from
-// List and Get, but no display name or email (PII gating).
+// with the profile). PII gating uses the reachable shape: a non-Administrator role (Operator)
+// granted admin.access + admin.principals.read without admin.profiles.read gets 200 from List and
+// Get, but no display name or email. Administrator cannot drop admin.profiles.read (protected core).
 #endregion
 
 namespace PrincipalsAuthorization_;
@@ -294,22 +295,23 @@ public class Returns_
     list.Items.Single(item => item.PrincipalId.Value == principalId.Value).Email.ShouldBe(email);
   }
 
-  public static async Task Ok_Administrator_Without_Profiles_Read_Sees_No_Profile_Fields()
+  public static async Task Ok_Principals_Reader_Without_Profiles_Read_Sees_No_Profile_Fields()
   {
     (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
-    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    IReadOnlyList<Guid> originalRoleIds = await roleStore.GetRoleIdsAsync(principalId);
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Operator]);
     string email = await EnsureProfileAsync(scope, principalId);
 
-    IReadOnlyList<string> originalAdminPermissions =
-      await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
+    IReadOnlyList<string> originalOperatorPermissions =
+      await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Operator);
     try
     {
       await permissionStore.SetPermissionIdsForRoleAsync(
-        RoleIds.Administrator,
-        [.. originalAdminPermissions.Where(static id => id != PermissionIds.AdminProfilesRead)]);
+        RoleIds.Operator,
+        [.. originalOperatorPermissions, PermissionIds.AdminAccess, PermissionIds.AdminPrincipalsRead]);
 
       using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
       client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -338,7 +340,8 @@ public class Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
+      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Operator, originalOperatorPermissions);
+      await roleStore.SetRoleIdsAsync(principalId, [.. originalRoleIds]);
     }
   }
 

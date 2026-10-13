@@ -5,8 +5,9 @@
 #region Design
 // Task 328. Opening a different principal first clears Current and LoadError, so the previous
 // principal's profile and role editor never show under the new id while it loads or after it
-// fails. A 404 clears Current and sets a non-revealing LoadError, then still publishes the
-// problem. On success the role draft for that principal is seeded from the detail's effective
+// fails. A 404 clears Current and sets a non-revealing LoadError; any other failure with no
+// principal loaded sets a generic LoadError, so the page never renders an empty Status section.
+// Both still publish the problem. On success the role draft for that principal is seeded from the detail's effective
 // RoleIds (replacing any unsaved edits, which is the intent after a save or a reload).
 #endregion
 
@@ -62,6 +63,10 @@ partial class PrincipalState
         {
           PrincipalState.Current = null;
           PrincipalState.LoadError = "This principal is not available.";
+        }
+        else if (PrincipalState.Current is null)
+        {
+          PrincipalState.LoadError = "This principal could not be loaded.";
         }
 
         await base.HandleError(problemDetails, cancellationToken);

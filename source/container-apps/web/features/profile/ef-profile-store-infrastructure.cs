@@ -11,7 +11,8 @@
 // Scoped lifetime: depends on scoped PostgresDbContext. InMemoryProfileStoresModule registers
 // singleton InMemoryProfileStore; PostgresDbModule replaces when connected.
 // Task 328: FindMany is AsNoTracking WHERE Id IN (...). Search is a lower-cased contains on
-// DisplayName or Email. No index: a leading-wildcard LIKE cannot use a btree index, the admin
+// DisplayName or Email (term via ToLowerInvariant, columns via Postgres lower(), which follows the
+// database LC_CTYPE; equal to InMemoryProfileStore's OrdinalIgnoreCase for ASCII). No index: a leading-wildcard LIKE cannot use a btree index, the admin
 // list is small, and a pg_trgm GIN index is the upgrade path if it grows.
 // Profile is IAggregateRoot — AggregateDbContext owns Version + DomainInvariantsGuard on SaveChanges.
 #endregion

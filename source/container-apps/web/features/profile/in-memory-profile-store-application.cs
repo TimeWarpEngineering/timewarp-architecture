@@ -8,7 +8,8 @@
 // connection string is present. Add throws on duplicate so GetProfile create-if-missing can
 // re-find after a concurrent insert race (same contract as EF unique-PK path).
 // Task 328: FindMany/Search scan the dictionary; Search is OrdinalIgnoreCase contains on
-// DisplayName or Email, mirroring the EF store's lower-cased contains.
+// DisplayName or Email. It matches the EF store's lower-cased contains for ASCII; non-ASCII case
+// folds (e.g. Turkish dotted i) can differ, since Postgres lower() follows the database LC_CTYPE.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles.Application;

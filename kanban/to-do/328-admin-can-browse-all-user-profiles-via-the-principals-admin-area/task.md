@@ -74,6 +74,8 @@ Following the 314 practice: these are recorded choices, open to revision with hi
 - Created: 2026-10-12 (cockpit, per Steve)
 - 2026-10-13: implemented under `ganda task work` (implement oracle). Gates re-run in this
   worktree after the implementation pass (see Results).
+- Review oracle: claude (claude-opus-5-5), effort 3, roster general, 2 rounds, disposition clean — 2026-10-13
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T02:05:06Z
 
 ## Results
 
@@ -151,8 +153,9 @@ All paths are under `source/container-apps/web/` unless noted.
 - `tests/.../web-server-integration-tests/.../principals-authorization-tests.cs` covers, over
   HTTP:
   - GetPrincipal: anonymous gets 401, Member gets 403, and an admin gets 200 with the profile;
-  - an admin whose Administrator grants lack `admin.profiles.read` sees no display name or email
-    in the list or the detail, and their search gets 403.
+  - an Operator-only principal granted `admin.access` + `admin.principals.read` (no
+    `admin.profiles.read`) sees no display name or email in the list or the detail, and their
+    search gets 403.
 - `tests/.../web-spa-integration-tests/features/admin/principal-state-tests.cs` (new) checks
   that SetSort and SetSearch reach the fetch query, and that a 404 from OpenPrincipal sets
   LoadError.
@@ -166,6 +169,20 @@ All paths are under `source/container-apps/web/` unless noted.
 - `dev template-smoke`: SUCCEEDED (web-jaribu aggregate 324/324)
 - `ganda repo audit`: passes all checks
 - `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet beta.19, so no bump is needed
+
+### Review disposition
+
+- Effort 3 (by-diff budget, 2668 lines). Roster: general. Rounds: 2 (round 2 re-verified the fixes).
+- Final counts: bug 0; suggestion 1 fixed; nit 2 fixed; 0 open; 0 wontfix.
+- **Disposition: clean.**
+  - M1: the no-PII HTTP test and the validation steps now use an Operator role with
+    `admin.principals.read`, because Administrator cannot drop `admin.profiles.read`
+    (protected core).
+  - M2: the ASCII-only case-folding caveat is recorded in the store Design regions.
+  - M3: a generic LoadError now shows on non-404 detail failures.
+- After the fixes: `dev build` reports 0 warnings and 0 errors, and `dev test` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ### Follow-up (not done here; for the cockpit to file)
 
@@ -194,6 +211,8 @@ email into the search box, then click the Display name header twice. Open a row.
   descending order.
 - The detail page shows status, roles, the full profile card (display name, email, language,
   region, theme, notifications) and the role editor with Save.
-- If `admin.profiles.read` is removed from Administrator in `/Admin/Roles`, the profile columns
-  show "—", the search box and profile sorting disappear, and the profile card is hidden. The
-  pages still load.
+- `admin.profiles.read` is Administrator protected core, so it cannot be removed from
+  Administrator. To see the no-PII view, grant Operator `admin.access` and
+  `admin.principals.read` in `/Admin/Roles`, then sign in as a principal whose only admin role is
+  Operator. The profile columns show "—", the search box and profile sorting disappear, and the
+  profile card is hidden. The pages still load.
