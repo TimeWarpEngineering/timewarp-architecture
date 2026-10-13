@@ -17,7 +17,11 @@
 // element under the pointer is found with elementFromPoint. Listeners run in the capture phase:
 // a click picks instead of following a link or pressing a button. Clicks inside the Ask panel
 // pass through, so its Cancel button still works. Keys: Tab / Down / Right next, Shift+Tab / Up /
-// Left previous, Enter chooses, Esc cancels. The first candidate is highlighted at start so the
+// Left previous, Enter chooses, Esc cancels. Esc cancels everywhere, but Enter, Space and Tab
+// with focus inside the Ask panel stay native, so the Cancel button is reachable and pressable.
+// The pick root is looked up on every use, because the page body is re-created on navigation.
+// A hit anywhere in a grid row resolves to the mark inside that row, and its text is the whole
+// row's. data-qa is the marked element's own, never an ancestor's. The first candidate is highlighted at start so the
 // keyboard path needs no pointer. Styles are global (app.css): this markup is created here, so
 // scoped CSS cannot reach it. Imported on demand by AskTagJsModule.
 // #endregion
@@ -53,7 +57,7 @@ export function CancelPick(): void {
 }
 
 class PickSession {
-  private readonly root: Element | null;
+  private readonly rootSelector: string;
   private readonly resolve: (json: string) => void;
   private readonly outline: HTMLDivElement;
   private readonly badge: HTMLDivElement;
@@ -62,7 +66,7 @@ class PickSession {
   private done = false;
 
   constructor(rootSelector: string, resolve: (json: string) => void) {
-    this.root = document.querySelector(rootSelector);
+    this.rootSelector = rootSelector;
     this.resolve = resolve;
     this.outline = element("twe-ask-tag-outline");
     this.badge = element("twe-ask-tag-badge");
@@ -108,19 +112,29 @@ class PickSession {
     this.resolve(candidate === null ? "" : JSON.stringify(candidate));
   }
 
+  /** The page body is re-created on navigation, so it is looked up each time, never cached. */
+  private root(): Element | null {
+    return document.querySelector(this.rootSelector);
+  }
+
   private candidates(): Element[] {
-    if (this.root === null) {
+    const root = this.root();
+    if (root === null) {
       return [];
     }
 
-    return Array.from(this.root.querySelectorAll(`[${kindAttribute}]`)).filter(isPickable);
+    return Array.from(root.querySelectorAll(`[${kindAttribute}]`)).filter(isPickable);
   }
 
   private candidateAt(x: number, y: number): Element | null {
+    const root = this.root();
     const hit = document.elementFromPoint(x, y);
-    let marked = hit?.closest(`[${kindAttribute}]`) ?? null;
+    // A grid row is marked in one cell, so a hit anywhere in the row is that mark.
+    const row = hit?.closest("tr, [role='row']") ?? null;
+    const inRow = row?.querySelector(`[${kindAttribute}]`) ?? null;
+    let marked = inRow ?? hit?.closest(`[${kindAttribute}]`) ?? null;
     while (marked !== null) {
-      if (this.root?.contains(marked) && isPickable(marked)) {
+      if (root?.contains(marked) && isPickable(marked)) {
         return marked;
       }
 
@@ -218,9 +232,17 @@ class PickSession {
         this.finish(null);
         break;
       case "Enter":
+        if (insideAsk(event.target)) {
+          return;
+        }
+
         this.choose(this.current);
         break;
       case "Tab":
+        if (insideAsk(event.target)) {
+          return;
+        }
+
         this.move(event.shiftKey ? -1 : 1);
         break;
       case "ArrowDown":
@@ -356,11 +378,11 @@ function landmarkOf(target: Element): string | null {
 }
 
 function describe(target: Element): AskTagCandidate {
-  const dataQa = target.getAttribute("data-qa") ?? target.closest("[data-qa]")?.getAttribute("data-qa") ?? null;
+  const dataQa = target.getAttribute("data-qa");
   return {
     kind: squash(target.getAttribute(kindAttribute)),
     label: labelOf(target),
-    text: visibleText(target, textCap),
+    text: visibleText(boxOf(target), textCap),
     dataQa,
     landmark: landmarkOf(target),
     reference: target.getAttribute(referenceAttribute),

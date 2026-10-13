@@ -4,10 +4,14 @@
 
 #region Design
 // Dispatched by AuthenticationStateListener with AskReferenceState.PrincipalIdOf, next to the 345
-// reference reset. A notification for the same principal keeps everything.
+// reference reset. A notification for the same principal keeps everything. A change while picking
+// also tells the browser to leave pick mode (AskTagJsModule.CancelPickAsync), so the overlay and
+// its capture listeners do not outlive the principal.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
+
+using TimeWarp.Architecture.Services;
 
 partial class AskTagState
 {
@@ -25,22 +29,27 @@ partial class AskTagState
 
     internal sealed class Handler
     (
-      IStore store
+      IStore store,
+      IJSRuntime jsRuntime
     ) : BaseHandler<Action>(store)
     {
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         if (string.Equals(AskTagState.SessionPrincipalId, action.PrincipalId, StringComparison.Ordinal))
         {
-          return ValueTask.CompletedTask;
+          return;
         }
 
+        bool wasPicking = AskTagState.IsPicking;
         AskTagState.SessionPrincipalId = action.PrincipalId;
         AskTagState.PickGeneration++;
         AskTagState.IsPicking = false;
         AskTagState.Attached = [];
         AskTagState.Sent = [];
-        return ValueTask.CompletedTask;
+        if (wasPicking)
+        {
+          await AskTagJsModule.CancelPickAsync(jsRuntime);
+        }
       }
     }
   }

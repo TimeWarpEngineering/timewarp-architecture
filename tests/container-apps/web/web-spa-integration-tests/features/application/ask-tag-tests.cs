@@ -165,16 +165,22 @@ public class AskTag_Should_
     (
       inner,
       () => scope.Store.GetState<AskTagState>().AttachedFor(scope.Store.GetState<AgentSurfaceState>().ConversationGeneration),
-      async () =>
+      async ids =>
       {
         marked++;
-        await scope.Send(new AskTagState.MarkSentActionSet.Action());
-      }
+        await scope.Send(new AskTagState.MarkSentActionSet.Action(ids));
+      },
+      () => "instructions " + scope.Store.GetState<AskTagState>().Sent.Count
     );
     ChatMessage typed = new(ChatRole.User, "What is wrong with this?");
-    await foreach (ChatResponseUpdate _ in client.GetStreamingResponseAsync([typed]))
+    ChatOptions requested = new() { Instructions = "stale" };
+    await foreach (ChatResponseUpdate _ in client.GetStreamingResponseAsync([typed], requested))
     {
     }
+
+    // Instructions are re-rendered per request on a clone, so the caller's options are untouched.
+    requested.Instructions.ShouldBe("stale");
+    inner.Options.ShouldHaveSingleItem()!.Instructions.ShouldBe("instructions 0");
 
     marked.ShouldBe(1);
     typed.Contents.Count.ShouldBe(1);
@@ -200,8 +206,10 @@ public class AskTag_Should_
     state.Attached.ShouldBeEmpty();
     state.Sent.ShouldHaveSingleItem().ShouldBe(tag);
     ChatMessage toolResult = new(ChatRole.Tool, [new FunctionResultContent("call-1", "{}")]);
-    await client.GetResponseAsync([typed, toolResult]);
+    await client.GetResponseAsync([typed, toolResult], requested);
     marked.ShouldBe(1);
+    // The next request sees the tag that was sent.
+    inner.Options[^1]!.Instructions.ShouldBe("instructions 1");
     inner.Requests[^1][^1].ShouldBeSameAs(toolResult);
 
     // page_context.tags keeps the sent tag for later turns, until New conversation.
@@ -217,6 +225,46 @@ public class AskTag_Should_
     {
       context.RootElement.GetProperty("tags").GetArrayLength().ShouldBe(0);
     }
+  }
+
+  public static async Task Keep_Chips_Attached_When_The_Request_Fails()
+  {
+    using TagSpa spa = new(Administrator);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new AskTagState.ChooseActionSet.Action(Candidate("Card", "Your filings"), "/Feedback"));
+
+    RecordingChatClient inner = new() { Fail = true };
+    int marked = 0;
+    using AskTagChatClient client = new
+    (
+      inner,
+      () => scope.Store.GetState<AskTagState>().AttachedFor(0),
+      async ids =>
+      {
+        marked++;
+        await scope.Send(new AskTagState.MarkSentActionSet.Action(ids));
+      }
+    );
+    ChatMessage typed = new(ChatRole.User, "Why?");
+    await Should.ThrowAsync<InvalidOperationException>(() => client.GetResponseAsync([typed]));
+    await Should.ThrowAsync<InvalidOperationException>(async () =>
+    {
+      await foreach (ChatResponseUpdate _ in client.GetStreamingResponseAsync([typed]))
+      {
+      }
+    });
+    marked.ShouldBe(0);
+    AskTagState state = scope.Store.GetState<AskTagState>();
+    state.Attached.ShouldHaveSingleItem();
+    state.Sent.ShouldBeEmpty();
+
+    // Only the chips that went out move: one attached after the snapshot stays for the next message.
+    AskTag first = state.Attached[0];
+    await scope.Send(new AskTagState.ChooseActionSet.Action(Candidate("Card", "Late"), "/Feedback"));
+    await scope.Send(new AskTagState.MarkSentActionSet.Action([first.Id]));
+    state = scope.Store.GetState<AskTagState>();
+    state.Sent.ShouldHaveSingleItem().Id.ShouldBe(first.Id);
+    state.Attached.ShouldHaveSingleItem().Label.ShouldBe("Late");
   }
 
   public static async Task Resolve_A_Picked_Feedback_Row_To_Its_Reference()
@@ -333,6 +381,10 @@ public class AskTag_Should_
   {
     public List<List<ChatMessage>> Requests { get; } = [];
 
+    public List<ChatOptions?> Options { get; } = [];
+
+    public bool Fail { get; init; }
+
     public Task<ChatResponse> GetResponseAsync
     (
       IEnumerable<ChatMessage> messages,
@@ -340,7 +392,13 @@ public class AskTag_Should_
       CancellationToken cancellationToken = default
     )
     {
+      if (Fail)
+      {
+        throw new InvalidOperationException("upstream failed");
+      }
+
       Requests.Add([.. messages]);
+      Options.Add(options);
       return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "ok")));
     }
 

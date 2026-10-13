@@ -7,15 +7,14 @@
   Design: Shows AskTagState's chips for the current conversation above the composer. Each chip
   is a disclosure: the summary is the chip text ("Feedback row: Dark theme broken") and the open
   chip lists every field that will be sent with the next message (AskTagPayload), so the chip
-  shows exactly what leaves the page. Remove dispatches Remove. While StartPick is in flight
-  ([TrackAction]) a status line says pick mode is on and offers Cancel (CancelPick); the overlay
+  shows exactly what leaves the page. Remove dispatches Remove. While AskTagState.IsPicking a status line says pick mode is on and offers Cancel (CancelPick); the overlay
   itself is ask-tag.ts. Nothing here touches the DOM.
 *@
 
 @code {
   private IReadOnlyList<AskTag> Tags => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration);
 
-  private bool Picking => ActionTrackingState.IsAnyActive(typeof(AskTagState.StartPickActionSet.Action));
+  private bool Picking => AskTagState.IsPicking;
 
   private Task RemoveAsync(int id) => AskTagState.Remove(id);
 
