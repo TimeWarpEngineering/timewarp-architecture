@@ -1,0 +1,45 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+
+@*
+  Purpose: The short "Chats are recorded." notice directly above the Ask composer (task 347).
+
+  Design: Renders only when AskPrivacyNotice.ShouldShow: the app records chats (XAI:RecordChats),
+  the notice text is not blank, and this browser has not dismissed it. The text is
+  XAI:PrivacyNotice (default "Chats are recorded."); a Privacy link follows it only when
+  XAI:PrivacyUrl is set and safe (AgentSurfaceState.PrivacyUrl is already normalized). The X
+  dispatches DismissPrivacyNotice, which also remembers the dismissal in local storage. Plain
+  copy on purpose: no legalese. Visual polish belongs to the chat panel redesign (task 349).
+*@
+
+@code {
+  private bool Show => AskPrivacyNotice.ShouldShow
+  (
+    AgentSurfaceState.RecordChats,
+    AgentSurfaceState.PrivacyNoticeDismissed,
+    AgentSurfaceState.PrivacyNotice
+  );
+
+  private Task DismissAsync() => AgentSurfaceState.DismissPrivacyNotice();
+}
+
+@if (Show)
+{
+  <div class="twe-ask-privacy" role="note" data-qa="AskPrivacyNotice">
+    <p class="twe-ask-privacy__text">
+      <span data-qa="AskPrivacyText">@AgentSurfaceState.PrivacyNotice</span>
+      @if (AgentSurfaceState.PrivacyUrl is { } privacyUrl)
+      {
+        <a href="@privacyUrl" data-qa="AskPrivacyLink">Privacy</a>
+      }
+    </p>
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  Size="ButtonSize.Small"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                  Title="Dismiss"
+                  aria-label="Dismiss notice"
+                  data-qa="AskPrivacyDismiss"
+                  OnClick="DismissAsync" />
+  </div>
+}
