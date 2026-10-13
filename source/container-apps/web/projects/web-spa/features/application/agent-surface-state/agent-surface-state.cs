@@ -18,6 +18,9 @@
 // ConversationGeneration. EditMode is shared by the in-app chat and WebMCP; closing the panel
 // resets it to AskBeforeEditing. Listing tools does not read the credential. New conversation
 // clears it and bumps ConversationGeneration so the panel rebuilds on an empty thread.
+// PrivacyNoticeDismissed mirrors a browser local-storage flag (task 347): DismissPrivacyNotice
+// writes it and LoadPrivacyNoticeDismissal reads it back when Ask first renders, so a dismissed
+// notice stays dismissed across reloads in this browser.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -62,6 +65,12 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   public bool RecordChats { get; private set; }
 
   public string? PrivacyNotice { get; private set; } = XaiChatDefaults.PrivacyNotice;
+
+  [SuppressMessage(
+    "Design",
+    "CA1056:URI-like properties should not be strings",
+    Justification = "PrivacyUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+  public string? PrivacyUrl { get; private set; }
 
   [SuppressMessage(
     "Design",
@@ -120,6 +129,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ConversationGeneration = 0;
     RecordChats = false;
     PrivacyNotice = XaiChatDefaults.PrivacyNotice;
+    PrivacyUrl = null;
     SupportUrl = XaiChatDefaults.SupportUrl;
     CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
     PrivacyNoticeDismissed = false;

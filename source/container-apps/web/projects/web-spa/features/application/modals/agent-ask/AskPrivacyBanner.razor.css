@@ -1,0 +1,22 @@
+.twe-ask-privacy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+  padding: calc(var(--twe-space-2) / 2) var(--twe-space-2) calc(var(--twe-space-2) / 2) var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: var(--twe-ink-2);
+}
+
+.twe-ask-privacy__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-2);
+  margin: 0;
+}
+
+.twe-ask-privacy ::deep fluent-button {
+  cursor: pointer;
+}

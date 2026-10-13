@@ -210,7 +210,7 @@ public partial class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
   }
 
-  public static async Task Dismiss_Privacy_Notice_Hides_It_For_The_Session()
+  public static async Task Dismiss_Privacy_Notice_Hides_It_Across_New_Conversations()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
     AgentSurfaceState surface = scope.Store.GetState<AgentSurfaceState>();

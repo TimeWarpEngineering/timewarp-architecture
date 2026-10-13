@@ -74,17 +74,14 @@
 
 .twe-agent-ask__conversation,
 .twe-agent-ask__greeting,
-.twe-agent-ask__edit-label,
-.twe-agent-ask__privacy {
+.twe-agent-ask__edit-label {
   margin: 0;
 }
 
 .twe-agent-ask__header button,
 .twe-agent-ask__header fluent-button,
 .twe-agent-ask__edit button,
-.twe-agent-ask__edit fluent-button,
-.twe-agent-ask__privacy button,
-.twe-agent-ask__privacy fluent-button {
+.twe-agent-ask__edit fluent-button {
   cursor: pointer;
 }
 

@@ -56,11 +56,14 @@ public static class XaiChatDefaults
   public const string SetupCommand =
     "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + UserSecretsId;
 
-  /// <summary>Template default: chats are not recorded until a deployment turns this on.</summary>
+  /// <summary>Template default: chats are not recorded until a deployment sets XAI:RecordChats.</summary>
   public const bool RecordChats = false;
 
-  /// <summary>Shown in Ask only when <see cref="RecordChats"/> is true.</summary>
+  /// <summary>Shown in Ask only when <see cref="RecordChats"/> is true. XAI:PrivacyNotice overrides it.</summary>
   public const string PrivacyNotice = "Chats are recorded.";
+
+  /// <summary>Optional privacy page linked from the notice (XAI:PrivacyUrl). Empty shows no link.</summary>
+  public const string PrivacyUrl = "";
 
   /// <summary>Support link under an answer. Empty hides the link.</summary>
   public const string SupportUrl = "/Feedback";

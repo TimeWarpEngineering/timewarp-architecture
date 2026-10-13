@@ -49,6 +49,8 @@
   change cancel pick mode; every request re-renders the instructions, so page_context.tags in
   them is current.
   Closing the panel also closes the reference picker.
+  AskPrivacyBanner (task 347) sits first in the footer, directly above the composer. The first
+  render restores its local-storage dismissal before the agent (and so the footer) is built.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
@@ -104,13 +106,6 @@
   private bool TurnInProgress =>
     Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
 
-  private bool ShowPrivacy => AskPrivacyNotice.ShouldShow
-  (
-    AgentSurfaceState.RecordChats,
-    AgentSurfaceState.PrivacyNoticeDismissed,
-    AgentSurfaceState.PrivacyNotice
-  );
-
   protected override void OnInitialized()
   {
     base.OnInitialized();
@@ -129,6 +124,11 @@
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
+    if (firstRender)
+    {
+      await AgentSurfaceState.LoadPrivacyNoticeDismissal();
+    }
+
     PageAgentRoute.Observe(NavigationManager, JsRuntime);
     await IssueConversationAsync();
     Ai.UIAgent? previous = Agent;
@@ -386,8 +386,6 @@
 
   private Task NewConversationAsync() => AgentSurfaceState.NewConversation();
 
-  private Task DismissPrivacyAsync() => AgentSurfaceState.DismissPrivacyNotice();
-
   private Task AskBeforeAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AskBeforeEditing);
 
   private Task AutoEditAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AutomaticallyEdit);
@@ -463,14 +461,6 @@
                     OnClick="CloseAsync" />
     </div>
   </header>
-
-  @if (ShowPrivacy)
-  {
-    <div class="twe-agent-ask__privacy" data-qa="AskPrivacyNotice">
-      <p>@AgentSurfaceState.PrivacyNotice</p>
-      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskPrivacyDismiss" OnClick="DismissPrivacyAsync">Dismiss</FluentButton>
-    </div>
-  }
 
   @if (Readiness == CatalogAgentReadiness.NotConfigured)
   {
@@ -552,6 +542,7 @@
           </Microsoft.AspNetCore.Components.AI.MessageList>
         </div>
         <div class="sc-ai-chat-page__footer">
+          <AskPrivacyBanner />
           <AskTagChips />
           <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
             <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
