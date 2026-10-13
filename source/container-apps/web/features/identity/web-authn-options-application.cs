@@ -74,10 +74,12 @@
 // inherent to WebAuthn, so a credential registered on one host simply not appearing on another must
 // not be filed as a bug (see also the PasskeysPage note).
 //
-// AllowedOrigins defaults to empty, which WebAuthnRelyingParty treats as "accept any https origin
-// whose host equals the SELECTED RP ID" (see its Design region) — this deliberately covers both
-// fixed local origins above without hand-listing ports; production configuration should set
-// AllowedOrigins explicitly. CAVEAT (interplay with per-request selection): AllowedOrigins is a
+// AllowedOrigins defaults to empty, which WebAuthnRelyingParty treats as "accept an https origin
+// whose host equals the SELECTED RP ID, or http when that host is loopback" (see its Design region;
+// the http case mirrors the browser secure-context rule, so a plain-http `dev open --target
+// kubernetes` port-forward on localhost works) — this deliberately covers the fixed local origins
+// above without hand-listing ports; a non-localhost host needs https or an explicit AllowedOrigins.
+// Production configuration should set AllowedOrigins explicitly. CAVEAT (interplay with per-request selection): AllowedOrigins is a
 // FLAT list shared across ALL entries in AllowedRpIds, not partitioned per RP ID. With the empty-list
 // dev fallback this is fine (each ceremony keys the host==selected-RP-ID rule off whichever RP ID was
 // selected). But if you populate AllowedOrigins explicitly AND serve multiple RP IDs, every listed

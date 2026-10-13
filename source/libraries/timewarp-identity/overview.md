@@ -11,7 +11,7 @@ cohesion. The placement rules:
 | `persistence/` | `IPrincipalStore`, `ISiteSettingsStore`, in-memory impls, `ConcurrencyConflictException` | The **durable domain-data seam** — what a database will hold; the port hosts swap for EF/Postgres |
 | `ceremonies/webauthn/` | Passkey verifier + its challenge store | Feature cohesion: everything the ceremony needs, including its **ephemeral** protocol state |
 | `ceremonies/agent-key/` | Agent-key proof + its challenge store | Same rule |
-| `ceremonies/` (root) | `InMemoryChallengeStoreCore` shared by both challenge stores | Shared ceremony machinery |
+| `ceremonies/` (root) | `InMemoryChallengeStoreCore` shared by both challenge stores; `LoopbackHost` (the one "http allowed only on loopback" predicate, shared by the WebAuthn origin fallback and the host's Entra `PublicOrigin` validator) | Shared ceremony machinery |
 | `tokens/` | Scopes, grants, `IAgentTokenStore`, in-memory impl | Feature cohesion; grants are ephemeral (TTL'd) |
 
 The store-placement distinction, stated once: **`persistence/` = what the database will hold;

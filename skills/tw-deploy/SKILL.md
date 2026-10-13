@@ -197,6 +197,10 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca: `https://<fqdn>` of the `ingress` container app
   (`az containerapp show --name ingress --resource-group <rg> --query
   properties.configuration.ingress.fqdn`).
+  Passkeys work over these plain-http localhost URLs: with `WebAuthnOptions:AllowedOrigins` empty,
+  web-server accepts `http` only when the origin host is loopback (`localhost`, `127.0.0.1`,
+  `[::1]`) and equals the selected RP ID — the same rule browsers use for a secure context. Any
+  other host needs https, or an explicit `AllowedOrigins` list (an exact match, no fallback).
 - **aca resource group** for both: `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
   user secret `Azure:ResourceGroup` — the values `dev deploy --target aca` uses; the subscription
   comes from the same preflight as `dev deploy`.
