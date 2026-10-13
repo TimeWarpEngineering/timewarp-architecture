@@ -78,8 +78,8 @@
 // whose host equals the SELECTED RP ID, or http when that host is loopback" (see its Design region;
 // the http case mirrors the browser secure-context rule, so a plain-http `dev open --target
 // kubernetes` port-forward on localhost works) — this deliberately covers the fixed local origins
-// above without hand-listing ports; a non-localhost host needs https or an explicit AllowedOrigins; production configuration should set
-// AllowedOrigins explicitly. CAVEAT (interplay with per-request selection): AllowedOrigins is a
+// above without hand-listing ports; a non-localhost host needs https or an explicit AllowedOrigins.
+// Production configuration should set AllowedOrigins explicitly. CAVEAT (interplay with per-request selection): AllowedOrigins is a
 // FLAT list shared across ALL entries in AllowedRpIds, not partitioned per RP ID. With the empty-list
 // dev fallback this is fine (each ceremony keys the host==selected-RP-ID rule off whichever RP ID was
 // selected). But if you populate AllowedOrigins explicitly AND serve multiple RP IDs, every listed
