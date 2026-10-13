@@ -8,6 +8,8 @@
 // A developer who turns the flag on in Development replaces the real Grok client.
 // RecordChats, PrivacyNotice, and PrivacyUrl are the per-app chat-recording notice (task 347).
 // They default to XaiChatDefaults, so an app that sets nothing records nothing and shows nothing.
+// StarterPrompts is the Ask empty-state list (task 348). It is get-only so configuration binding
+// fills it; empty means AgentChatStarterPrompts.Defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -45,4 +47,7 @@ public sealed class XaiChatOptions
     "CA1056:URI-like properties should not be strings",
     Justification = "PrivacyUrl is a relative app path or an absolute href, bound from configuration.")]
   public string? PrivacyUrl { get; set; } = XaiChatDefaults.PrivacyUrl;
+
+  /// <summary>Ask empty-state starter prompts (XAI:StarterPrompts). Empty uses the template defaults.</summary>
+  public IList<AgentChatStarterPrompt> StarterPrompts { get; } = [];
 }

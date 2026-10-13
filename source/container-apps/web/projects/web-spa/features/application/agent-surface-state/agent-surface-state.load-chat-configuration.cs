@@ -13,10 +13,12 @@
 // session can be authorized on the server while the SPA principal is anonymous, so the server's
 // status is the answer.
 // Only a server answer carries the panel settings (task 292: RecordChats, PrivacyNotice, SupportUrl,
-// CredentialLifetimeMinutes; task 347: PrivacyUrl); every failure resets them to the XaiChatDefaults.
+// CredentialLifetimeMinutes; task 347: PrivacyUrl; task 348: StarterPrompts); every failure resets
+// them to the XaiChatDefaults.
 // SupportUrl goes through AskSupportLink.Normalize (relative path or http/https only) because the
 // answer bar renders it into an href. PrivacyUrl goes through NormalizeOptional: unsafe or blank is
-// null, and the notice shows no link.
+// null, and the notice shows no link. StarterPrompts goes through AgentChatStarterPrompts.Normalize
+// again because the panel trusts state: an empty or blank server list still shows the defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -66,6 +68,7 @@ partial class AgentSurfaceState
           AgentSurfaceState.PrivacyUrl = null;
           AgentSurfaceState.SupportUrl = XaiChatDefaults.SupportUrl;
           AgentSurfaceState.CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
+          AgentSurfaceState.StarterPrompts = AgentChatStarterPrompts.Defaults;
         }
         else
         {
@@ -76,6 +79,7 @@ partial class AgentSurfaceState
           AgentSurfaceState.CredentialLifetimeMinutes = response.CredentialLifetimeMinutes > 0
             ? response.CredentialLifetimeMinutes
             : XaiChatDefaults.CredentialLifetimeMinutes;
+          AgentSurfaceState.StarterPrompts = AgentChatStarterPrompts.Normalize(response.StarterPrompts);
         }
 
         return Task.CompletedTask;

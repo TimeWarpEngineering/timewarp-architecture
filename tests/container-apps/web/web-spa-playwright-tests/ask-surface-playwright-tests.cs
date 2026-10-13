@@ -162,7 +162,7 @@ public class AskSurface_Given_Wasm
     {
       ILocator input = page.Locator(".sc-ai-input__textarea");
       await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
-      (await page.Locator("[data-qa=AskSuggestion]").CountAsync()).ShouldBeGreaterThanOrEqualTo(3);
+      (await page.Locator("[data-qa=AskStarterPrompt]").CountAsync()).ShouldBeGreaterThanOrEqualTo(3);
       (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
       await AssertComposerLayoutAsync(page);

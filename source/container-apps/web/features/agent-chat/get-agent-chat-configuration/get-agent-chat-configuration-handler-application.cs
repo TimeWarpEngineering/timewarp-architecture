@@ -7,7 +7,8 @@
 // the palette probes on every shell load, and that must not consume the completion budget.
 // A missing principal is 401 even though the endpoint policy already requires one.
 // The notice settings are read from XaiChatOptions per request. A blank notice falls back to
-// XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link).
+// XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
+// goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -66,7 +67,8 @@ public sealed class GetAgentChatConfiguration
           : options.PrivacyNotice.Trim(),
         PrivacyUrl = string.IsNullOrWhiteSpace(options.PrivacyUrl) ? null : options.PrivacyUrl.Trim(),
         SupportUrl = XaiChatDefaults.SupportUrl,
-        CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes
+        CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes,
+        StarterPrompts = AgentChatStarterPrompts.Normalize(options.StarterPrompts)
       };
     }
   }

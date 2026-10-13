@@ -20,7 +20,8 @@
 // clears it and bumps ConversationGeneration so the panel rebuilds on an empty thread.
 // PrivacyNoticeDismissed mirrors a browser local-storage flag (task 347): DismissPrivacyNotice
 // writes it and LoadPrivacyNoticeDismissal reads it back when Ask first renders, so a dismissed
-// notice stays dismissed across reloads in this browser.
+// notice stays dismissed across reloads in this browser. StarterPrompts (task 348) is the Ask
+// empty-state list; it holds the template defaults until a server answer replaces it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -82,6 +83,8 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public bool PrivacyNoticeDismissed { get; private set; }
 
+  public IReadOnlyList<AgentChatStarterPrompt> StarterPrompts { get; private set; } = AgentChatStarterPrompts.Defaults;
+
   /// <summary>Bounded JSON from the page-body walk, or null when the walk has not run.</summary>
   public string? PageSurfaceJson { get; private set; }
 
@@ -133,6 +136,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     SupportUrl = XaiChatDefaults.SupportUrl;
     CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
     PrivacyNoticeDismissed = false;
+    StarterPrompts = AgentChatStarterPrompts.Defaults;
     PageSurfaceJson = null;
     PageSurfacePath = null;
   }
