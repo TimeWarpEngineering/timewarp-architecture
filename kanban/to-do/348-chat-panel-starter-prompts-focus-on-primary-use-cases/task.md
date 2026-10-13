@@ -37,6 +37,7 @@ Existing chat surfaces to start from:
 - Implemented: 2026-10-13 (ganda task work, implement oracle)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T15:44:32Z
 - Review oracle: claude-opus-5-5 orchestrator plus one general reviewer subagent (sonnet), effort 2, 2 rounds, disposition clean — 2026-10-13
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-13T15:49:17Z
 
 ## Results
 
