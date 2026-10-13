@@ -33,7 +33,7 @@
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
 //
-// TimeWarp.State 12.0.0-beta.12 registers Blazor services with AddTimeWarpStateBlazor.
+// TimeWarp.State 12.0.0-beta.13 registers Blazor services with AddTimeWarpStateBlazor.
 // Call it after AddTimeWarpState so RenderSubscriptionsPostProcessor can be constructed.
 // Task 278: JavaScript dispatch is opt-in since TimeWarp.State 12.0.0-beta.8. AllowJavaScriptDispatch
 // is the allow-list (today only the Counter demo's IncrementCounter, under the

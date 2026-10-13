@@ -165,3 +165,4 @@ find . -name project.assets.json -path '*obj*' | xargs grep -ohE '"TimeWarp\.Med
 - Every test project reports `passed` with `x0` failures.
 - If SPA tests throw `TypeLoadException ... PipelineBehaviorRegistry`, the local NuGet cache is poisoned (timewarp-state #647). Delete `~/.nuget/packages/timewarp.state*/12.0.0-beta.12` and restore again.
 
+- 2026-10-13: cockpit bumped State to 12.0.0-beta.13 (built on Mediator beta.5) after it released; cache source verified nuget.org.
