@@ -58,3 +58,8 @@ This task gives the Ask panel's **Tag** button that meaning.
 ## Session
 
 - Created: 2026-10-13 (cockpit, from a design conversation with Steve; after 345)
+
+## Depends on
+
+- 345
+
