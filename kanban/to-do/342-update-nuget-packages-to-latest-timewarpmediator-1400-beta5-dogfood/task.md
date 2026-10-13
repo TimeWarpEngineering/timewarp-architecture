@@ -43,6 +43,8 @@ Filed by Claude (timewarp-mediator cockpit session) at Steven's request.
 
 - Created: 1014986 (2026-10-13)
 - Implemented: ganda task work implement oracle (Claude Opus 5.5), 2026-10-13
+- Review oracle: Claude Opus 5.5, effort 2, 1 round, accepted-exceptions — 2026-10-13
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T09:04:23Z
 
 ## Notes
 
@@ -123,6 +125,25 @@ Every `project.assets.json` resolves only `TimeWarp.Mediator.*/14.0.0-beta.5`. T
 - `dev test`: 22 projects, all passed, 0 failed. web-server-integration-tests has 1 skipped. Counts include web-spa-integration 215, web-spa-playwright 11, web-jaribu 329, and web-server-integration 331.
 - `dev template-smoke`: SUCCEEDED.
 - `dev check-version`: 2.0.0-beta.20 is ahead of nuget.org 2.0.0-beta.19, so no bump was needed.
+
+### Review disposition
+
+- Rounds: 1. Effort 2 (by-diff); roster: general (review oracle, Claude Opus 5.5).
+- Final counts:
+  - bug: 1 fixed
+  - suggestion: 0
+  - nit: 1 fixed, 1 wontfix
+  - open: 0
+- Disposition: **accepted-exceptions**.
+  - M1 (bug), fixed: ApiHandler's semaphore table was a static field on a generic class, so each handler type had its own table and different actions on one state did not serialize. It moved to the non-generic `features/base/api-handler-semaphores.cs`.
+  - M2 (nit), fixed: the stale comment.
+  - M3 (nit), wontfix: the `Clone() => this` DTOs expose an unmutated `List<T>`. The shims go away with timewarp-state#646.
+- Post-fix gates: `dev build` 0 warnings, 0 errors. `dev test` passes all projects. `ganda repo audit` clean.
+- Artifacts:
+  - `review/review-framework.md`
+  - `review/round-1/general.md`
+  - `review/round-1/merged.md`
+  - `review/disposition.md`
 
 ### How to validate
 
