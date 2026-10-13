@@ -3,18 +3,19 @@
 #endregion
 
 #region Design
-// Task 346. The library MessageInput sends plain text and has no attachment hook, so the panel
-// puts this client in front of the tool-invoking client. When the request ends with a person's
-// text message and chips are waiting, it sends a copy of that message with one more text part,
+// Task 346. The library MessageInput sends plain text and has no attachment hook, so the panel puts
+// this client in front of the tool-invoking client. When the request ends with a person's text
+// message and chips are waiting, it sends a copy of that message with one more text part,
 // AskTagPayload.Message. Only after the inner call succeeds (the response, or the first streamed
-// update, or the end of an empty stream; never an exception or cancellation) does it report the
-// ids it sent (MarkSent, a State action), so the composer clears just those chips, a failed send
-// keeps them attached, and page_context.tags keeps them. The conversation thread keeps the
-// person's own text: the transcript shows what they typed, and later turns read the tags from
-// page_context.tags. The panel builds its instructions (which embed page_context) once per agent,
-// so the optional instructions delegate re-renders them on a clone of the request's ChatOptions;
-// every request therefore carries the tags sent so far. Requests that do not end in a text message (tool results, approval
-// answers) pass through untouched, so a tag is sent once, with the message it was chosen for.
+// update, or the end of an empty stream; never an exception or cancellation) does it report the ids
+// it sent (MarkSent, a State action), so the composer clears just those chips, a failed send keeps
+// them attached, and page_context.tags keeps them. The conversation thread keeps the person's own
+// text: the transcript shows what they typed, and later turns read the tags from page_context.tags.
+// The panel builds its instructions (which embed page_context) once per agent, so the optional
+// instructions delegate re-renders them on a clone of the request's ChatOptions; every request
+// therefore carries the tags sent so far. Requests that do not end in a text message (tool results,
+// approval answers) pass through untouched, so a tag is sent once, with the message it was chosen
+// for.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

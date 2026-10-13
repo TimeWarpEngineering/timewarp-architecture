@@ -17,13 +17,15 @@
 // element under the pointer is found with elementFromPoint. Listeners run in the capture phase:
 // a click picks instead of following a link or pressing a button. Clicks inside the Ask panel
 // pass through, so its Cancel button still works. Keys: Tab / Down / Right next, Shift+Tab / Up /
-// Left previous, Enter chooses, Esc cancels. Esc cancels everywhere, but Enter, Space and Tab
-// with focus inside the Ask panel stay native, so the Cancel button is reachable and pressable.
-// The pick root is looked up on every use, because the page body is re-created on navigation.
-// A hit anywhere in a grid row resolves to the mark inside that row, and its text is the whole
-// row's. data-qa is the marked element's own, never an ancestor's. The first candidate is highlighted at start so the
-// keyboard path needs no pointer. Styles are global (app.css): this markup is created here, so
-// scoped CSS cannot reach it. Imported on demand by AskTagJsModule.
+// Left previous, Enter chooses, Esc cancels. Pick mode starts by blurring focus left in the Ask
+// panel (the Tag button that started it), so those keys drive the pick at once. Esc cancels
+// everywhere, but Enter and Tab with focus moved back into the Ask panel stay native, so its
+// Cancel button is still pressable. The pick root is looked up on every use, because the page
+// body is re-created on navigation. A hit anywhere in a grid row resolves to the mark inside
+// that row, and its text is the whole row's. data-qa is the marked element's own, never an
+// ancestor's. The first candidate is highlighted at start so the keyboard path needs no
+// pointer. Styles are global (app.css): this markup is created here, so scoped CSS cannot reach
+// it. Imported on demand by AskTagJsModule.
 // #endregion
 
 const kindAttribute = "data-ask-tag";
@@ -83,6 +85,10 @@ class PickSession {
     window.addEventListener("keydown", this.onKeyDown, true);
     window.addEventListener("scroll", this.onLayout, true);
     window.addEventListener("resize", this.onLayout, true);
+    if (insideAsk(document.activeElement) && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     const first = this.candidates()[0] ?? null;
     this.highlight(first);
     if (first === null) {

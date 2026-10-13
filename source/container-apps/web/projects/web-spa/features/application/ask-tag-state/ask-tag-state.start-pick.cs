@@ -7,9 +7,10 @@
 // keyboard; the panel reads IsPicking to show "Picking" and the Cancel button while it waits (the
 // action is not tracked: a tracked action is the app-wide busy signal, and the page must not look
 // busy while the person points at it); because the handler stays open, it re-renders the
-// AskTagState subscribers itself once IsPicking is on. Route is the page the pick ran on (the panel passes PageAgentRoute's path). A pick applies
-// only while its PickGeneration is current: CancelPick, or a newer StartPick, makes the old answer
-// stale. Cancel (Esc, a click on nothing, or a dropped circuit) attaches nothing.
+// AskTagState subscribers itself once IsPicking is on. Route is the page the pick ran on (the panel
+// passes PageAgentRoute's path). A pick applies only while its PickGeneration is current:
+// CancelPick, or a newer StartPick, makes the old answer stale. Cancel (Esc, a click on nothing, or
+// a dropped circuit) attaches nothing.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

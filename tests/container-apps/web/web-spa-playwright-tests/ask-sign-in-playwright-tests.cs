@@ -482,11 +482,10 @@ public class AskSignIn_Given_Wasm
       : "";
   }
 
-  /// <summary>Tab cycles the candidates (focus on the page, not in the panel); returns every hint it showed.</summary>
+  /// <summary>Tab cycles the candidates; returns every hint it showed.</summary>
   private static async Task<List<string>> CycleHintsAsync(IPage page, int steps)
   {
     List<string> hints = [];
-    await page.EvaluateAsync("() => document.activeElement instanceof HTMLElement && document.activeElement.blur()");
     for (int step = 0; step < steps; step++)
     {
       await page.Keyboard.PressAsync("Tab");
@@ -539,7 +538,10 @@ public class AskSignIn_Given_Wasm
     ILocator outline = page.Locator("[data-qa=AskTagOutline]");
     ILocator chip = page.Locator("[data-qa=AskTagChip]");
 
-    await tag.ClickAsync();
+    // Keyboard start: Enter on the focused Tag button; pick mode takes focus out of the panel, so
+    // Tab drives the pick without a blur.
+    await tag.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
     await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
     await outline.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
     // Privacy: marked elements the person cannot see are never candidates (private, aria-hidden).

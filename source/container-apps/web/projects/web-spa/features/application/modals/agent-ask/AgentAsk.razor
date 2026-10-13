@@ -48,7 +48,7 @@
   does not raise the app-wide busy signal). Closing the panel, disposing it, and any location
   change cancel pick mode; every request re-renders the instructions, so page_context.tags in
   them is current.
-  Closing the panel closes the picker and cancels pick mode.
+  Closing the panel also closes the reference picker.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
