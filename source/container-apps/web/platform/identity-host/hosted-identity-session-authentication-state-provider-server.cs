@@ -21,6 +21,11 @@
 // claim the WASM path projects from GetCurrentSession, so the prerender path adds it (a separate
 // unauthenticated ClaimsIdentity on a cloned principal — HttpContext.User itself is not mutated),
 // computed with the same PrincipalFingerprint the session response uses.
+// Task 350: the principal a Server circuit sees is fixed when the circuit starts; nothing here
+// re-reads a cookie issued later in the circuit's life (and a self-call response's Set-Cookie never
+// reaches the browser at all). Session-issuing completions therefore run from the browser
+// (PasskeyCeremonyClient) and end in a forceLoad navigation — a new request and circuit, which this
+// provider then reads from HttpContext.User as usual.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;

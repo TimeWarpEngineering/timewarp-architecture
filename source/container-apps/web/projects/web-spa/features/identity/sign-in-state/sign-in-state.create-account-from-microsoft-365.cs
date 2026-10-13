@@ -3,9 +3,11 @@
 #endregion
 
 #region Design
-// CompleteEntraBootstrapCreate sets the session cookie server-side; the handler notifies the
-// identity-session auth state provider (AuthorizeView re-reads without a reload) before the
-// navigation, the same as the already-have path through PasskeyCeremonyClient. A problem whose
+// CompleteEntraBootstrapCreate issues the session cookie and clears the parked choice cookie, so it
+// runs through PasskeyCeremonyClient.CompleteEntraChoiceCreateAsync: the browser sends the request
+// and stores both Set-Cookie headers (task 350; under InteractiveServer IWebServerApiService is a
+// server-side self-call). The navigation is forceLoad so the next request carries the session, the
+// same as the already-have path. A problem whose
 // title or detail says "expired" flips Microsoft365ChoiceValid to false so the page offers the
 // sign-in again; every problem also goes to the shell region.
 #endregion
@@ -13,7 +15,6 @@
 namespace TimeWarp.Architecture.Features.Identity;
 
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using TimeWarp.Architecture.Services;
 
 partial class SignInState
@@ -26,8 +27,7 @@ partial class SignInState
     internal sealed class Handler
     (
       IStore store,
-      IWebServerApiService apiService,
-      AuthenticationStateProvider authenticationStateProvider,
+      PasskeyCeremonyClient ceremony,
       NavigationManager navigationManager,
       IPublisher<ClientPipeline> publisher
     ) : BaseHandler<Action>(store)
@@ -35,27 +35,25 @@ partial class SignInState
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         SignInState.CeremonyFailed = false;
-        OneOf<CompleteEntraBootstrapCreate.Response, FileResponse, SharedProblemDetails> result =
-          await apiService.GetResponse<CompleteEntraBootstrapCreate.Response>(
-            new CompleteEntraBootstrapCreate.Command(),
-            cancellationToken);
-
-        if (!result.TryPickT0(out CompleteEntraBootstrapCreate.Response response, out OneOf<FileResponse, SharedProblemDetails> rest))
+        try
         {
-          SharedProblemDetails problem = rest.IsT1
-            ? rest.AsT1
-            : new SharedProblemDetails { Status = 500, Title = "Could not create the account." };
-          await SignInState.FailMicrosoft365ChoiceAsync(problem, publisher, cancellationToken);
-          return;
-        }
+          OneOf<CompleteEntraBootstrapCreate.Response, SharedProblemDetails> result =
+            await ceremony.CompleteEntraChoiceCreateAsync(cancellationToken);
 
-        if (authenticationStateProvider is IdentitySessionAuthenticationStateProvider identitySession)
+          if (result.IsT1)
+          {
+            await SignInState.FailMicrosoft365ChoiceAsync(result.AsT1, publisher, cancellationToken);
+            return;
+          }
+
+          SignInState.IsAuthenticated = true;
+          navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(result.AsT0.Destination), forceLoad: true);
+        }
+        catch (JSException jsException)
         {
-          identitySession.NotifySessionChanged();
+          SignInState.CeremonyFailed = true;
+          await publisher.Publish(CeremonyFailure(jsException), cancellationToken);
         }
-
-        SignInState.IsAuthenticated = true;
-        navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(response.Destination));
       }
     }
   }

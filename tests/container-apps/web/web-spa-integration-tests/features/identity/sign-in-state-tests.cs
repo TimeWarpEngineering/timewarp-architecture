@@ -7,10 +7,13 @@
 #region Design
 // C-create in-proc ServiceProvider (same shape as SignOutSpa): a scripted IWebServerApiService
 // answers per request type, NavigationManager records every NavigateTo with its forceLoad flag,
-// and ISessionStorageService / IJSRuntime are FakeItEasy fakes. The passkey ceremony is driven
-// only to its first HTTP leg (Start{Passkey,}Registration / StartPasskeyAuthentication answer with a problem): the browser
-// half needs a real authenticator, and what this suite pins is the action seam — failure marks
-// CeremonyFailed, reaches NotificationState, and does not navigate. States are re-read from the
+// and ISessionStorageService is a FakeItEasy fake. IJSRuntime is BrowserJsRuntime: it answers the
+// web-authn.js module's credential exports with canned JSON and its SendJson export with the
+// BrowserFetchScript reply for the route, which records each browser request. Task 350:
+// session-issuing completions go out through SendJson, never IWebServerApiService (ScriptedApiService throws on an unscripted
+// request, so a completion sent the old way fails the test), and a successful completion navigates
+// with forceLoad so the next request carries the new cookie. A failed first leg (Start* problem)
+// marks CeremonyFailed, reaches NotificationState, and does not navigate. States are re-read from the
 // Store after Send (clone-on-dispatch replaces instances). Fetch actions (session, Microsoft 365
 // offered/choice) are covered for their success, problem and throwing reads.
 #endregion
@@ -23,6 +26,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using System.Text.Json;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Spa;
@@ -97,9 +101,9 @@ public class SignInActions_Should_
   {
     using SignInSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    spa.Api.Answer<CompleteEntraBootstrapCreate.Command>
+    spa.Browser.Answer<CompleteEntraBootstrapCreate.Command>
     (
-      _ => new CompleteEntraBootstrapCreate.Response(PrincipalId.New(), "/Settings")
+      new CompleteEntraBootstrapCreate.Response(PrincipalId.New(), "/Settings")
     );
 
     await scope.Send(new SignInState.CreateAccountFromMicrosoft365ActionSet.Action());
@@ -107,7 +111,8 @@ public class SignInActions_Should_
     SignInState state = scope.Store.GetState<SignInState>();
     state.CeremonyFailed.ShouldBeFalse();
     state.IsAuthenticated.ShouldBe(true);
-    spa.Navigations(scope).ShouldBe([("/Settings", false)]);
+    spa.Navigations(scope).ShouldBe([("/Settings", true)]);
+    spa.Browser.Sent.ShouldBe([("POST", "http://localhost/api/identity/entra/choice/create")]);
   }
 
   public static async Task CreateAccountFromMicrosoft365_Mark_The_Choice_Expired_On_An_Expired_Problem()
@@ -115,7 +120,7 @@ public class SignInActions_Should_
     using SignInSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
     spa.Api.Answer<GetEntraBootstrapChoice.Query>(_ => new GetEntraBootstrapChoice.Response(valid: true, destination: "/"));
-    spa.Api.Problem<CompleteEntraBootstrapCreate.Command>
+    spa.Browser.Problem<CompleteEntraBootstrapCreate.Command>
     (
       new SharedProblemDetails { Status = 400, Title = "Microsoft 365 sign-in expired" }
     );
@@ -131,6 +136,59 @@ public class SignInActions_Should_
     spa.Navigations(scope).ShouldBeEmpty();
     scope.Store.GetState<NotificationState>().Messages
       .ShouldContain(message => message.Title == "Microsoft 365 sign-in expired");
+  }
+
+  public static async Task SignInWithPasskey_Complete_In_The_Browser_And_Force_Load()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<StartPasskeyAuthentication.Command>(_ => new StartPasskeyAuthentication.Response("{}"));
+    spa.Browser.Answer<CompletePasskeyAuthentication.Command>(new CompletePasskeyAuthentication.Response(PrincipalId.New()));
+
+    await scope.Send(new SignInState.SignInWithPasskeyActionSet.Action("/Admin/Roles"));
+
+    SignInState state = scope.Store.GetState<SignInState>();
+    state.CeremonyFailed.ShouldBeFalse();
+    state.IsAuthenticated.ShouldBe(true);
+    spa.Navigations(scope).ShouldBe([("/Admin/Roles", true)]);
+    spa.Browser.Sent.ShouldBe([("POST", "http://localhost/api/identity/passkey/authenticate")]);
+  }
+
+  public static async Task CreateAccountWithPasskey_Complete_In_The_Browser_And_Force_Load()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<StartPasskeyRegistration.Command>(_ => new StartPasskeyRegistration.Response("{}"));
+    spa.Browser.Answer<CompletePasskeyRegistration.Command>
+    (
+      new CompletePasskeyRegistration.Response(PrincipalId.New(), CredentialId.New(), "Test Provider")
+    );
+
+    await scope.Send(new SignInState.CreateAccountWithPasskeyActionSet.Action("/"));
+
+    SignInState state = scope.Store.GetState<SignInState>();
+    state.CeremonyFailed.ShouldBeFalse();
+    state.IsAuthenticated.ShouldBe(true);
+    spa.Navigations(scope).ShouldBe([("/Settings", true)]);
+    spa.Browser.Sent.ShouldBe([("POST", "http://localhost/api/identity/passkey/register")]);
+  }
+
+  public static async Task CreateAccountWithPasskey_Report_A_Problem_From_The_Browser_Completion()
+  {
+    using SignInSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    spa.Api.Answer<StartPasskeyRegistration.Command>(_ => new StartPasskeyRegistration.Response("{}"));
+    spa.Browser.Problem<CompletePasskeyRegistration.Command>
+    (
+      new SharedProblemDetails { Status = 409, Title = "Passkey already registered" }
+    );
+
+    await scope.Send(new SignInState.CreateAccountWithPasskeyActionSet.Action("/Settings"));
+
+    scope.Store.GetState<SignInState>().CeremonyFailed.ShouldBeTrue();
+    spa.Navigations(scope).ShouldBeEmpty();
+    scope.Store.GetState<NotificationState>().Messages
+      .ShouldContain(message => message.Title == "Passkey already registered");
   }
 
   public static async Task SignInWithPasskey_Report_A_Failed_Ceremony_Without_Navigating()
@@ -250,6 +308,7 @@ public class SignInActions_Should_
   {
     public IServiceProvider ServiceProvider { get; }
     public ScriptedApiService Api { get; } = new();
+    public BrowserFetchScript Browser { get; } = new();
     public ISessionStorageService SessionStorage { get; } = A.Fake<ISessionStorageService>();
 
     public SignInSpa()
@@ -274,7 +333,8 @@ public class SignInActions_Should_
       services.AddTimeWarpStatePersistence();
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);
       services.AddScoped<AuthenticationStateProvider, SignedInAuthenticationStateProvider>();
-      services.AddSingleton(A.Fake<IJSRuntime>());
+      services.AddSingleton<IJSRuntime>(new BrowserJsRuntime(Browser));
+      services.Configure<JsonSerializerOptions>(ContractSerializationDefaults.Apply);
       services.AddSingleton(SessionStorage);
       services.AddScoped<TimeWarp.Architecture.Services.PasskeyCeremonyClient>();
       services.AddScoped<NavigationManager, RecordingNavigationManager>();
@@ -325,6 +385,66 @@ public class SignInActions_Should_
         _ => throw new InvalidOperationException("Scripted response was null.")
       };
     }
+  }
+
+  /// <summary>
+  /// Scripted replies for web-authn.js SendJson, keyed by route path, plus every (method, url) the
+  /// browser was asked to send. Unscripted routes fail loudly.
+  /// </summary>
+  private sealed class BrowserFetchScript
+  {
+    private readonly Dictionary<string, (int Status, string ContentType, string Body)> Replies = [];
+
+    public List<(string Method, string Url)> Sent { get; } = [];
+
+    public void Answer<TRequest>(object response) where TRequest : IApiRequest, new() =>
+      Replies[RoutePath<TRequest>()] =
+        (200, "application/json; charset=utf-8", JsonSerializer.Serialize(response, ContractSerializationDefaults.Options));
+
+    public void Problem<TRequest>(SharedProblemDetails problem) where TRequest : IApiRequest, new() =>
+      Replies[RoutePath<TRequest>()] =
+        (problem.Status ?? 400, "application/problem+json", JsonSerializer.Serialize(problem, ContractSerializationDefaults.Options));
+
+    public string Reply(string method, string url)
+    {
+      Sent.Add((method, url));
+      if (!Replies.TryGetValue(new Uri(url).AbsolutePath, out (int Status, string ContentType, string Body) reply))
+      {
+        throw new InvalidOperationException($"No scripted browser reply for {method} {url}.");
+      }
+
+      return JsonSerializer.Serialize(new { status = reply.Status, contentType = reply.ContentType, body = reply.Body });
+    }
+
+    private static string RoutePath<TRequest>() where TRequest : IApiRequest, new() =>
+      "/" + new TRequest().GetRoute().TrimStart('/');
+  }
+
+  /// <summary>The browser half: web-authn.js credential exports answer canned JSON; SendJson asks the script.</summary>
+  private sealed class BrowserJsRuntime(BrowserFetchScript script) : IJSRuntime, IJSObjectReference
+  {
+    // Test double: this forwards to the other overload. It is not a browser interop call.
+#pragma warning disable BL0016
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+      InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
+
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    {
+      _ = cancellationToken;
+      object? result = identifier switch
+      {
+        "import" => this,
+        "CreateCredential" => """{"credentialId":"cid","clientDataJson":"cdj","attestationObject":"att"}""",
+        "GetCredential" =>
+          """{"credentialId":"cid","clientDataJson":"cdj","authenticatorData":"ad","signature":"sig","userHandle":null}""",
+        "SendJson" => script.Reply((string)args![0]!, (string)args[1]!),
+        _ => default(TValue)
+      };
+      return ValueTask.FromResult((TValue)result!);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
   }
 
   private sealed class SignedInAuthenticationStateProvider : AuthenticationStateProvider

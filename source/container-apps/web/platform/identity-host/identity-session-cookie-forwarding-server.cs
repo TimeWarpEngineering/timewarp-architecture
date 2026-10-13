@@ -24,6 +24,10 @@
 // Task 248-001: copies User-Agent as sent so HttpRequestUserAgentAccessor on the self-call hop
 // sees the registering browser (credential rows record its browser/OS family), not the
 // server-side HttpClient. Same copy-as-sent / never-invent posture as Cookie.
+// Task 350: forwarding is one-way. The inbound browser Cookie goes out on the self-call; a
+// Set-Cookie on the self-call's response stays in this server-side HttpClient and never reaches the
+// browser. Do not route session-issuing calls through here: PasskeyCeremonyClient sends them from
+// the browser (BrowserFetchHttpMessageHandler). Sign-out is the browser form POST (task 251).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;

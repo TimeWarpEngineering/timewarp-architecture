@@ -9,6 +9,8 @@
 // A problem from either HTTP leg publishes ProblemDetailsNotification; a JSException (cancelled
 // browser dialog, no authenticator) publishes an Error outcome. Mock mode has no ceremony mock
 // factories, so the 501 problem reaches the shell region the same way.
+// Task 350: the ReturnPath navigation is forceLoad so a new request (and circuit) carries the session
+// cookie the browser just received — see PasskeyCeremonyClient's Design region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -58,7 +60,7 @@ partial class SignInState
           SignInState.IsAuthenticated = true;
           if (action.ReturnPath.Length > 0)
           {
-            navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(action.ReturnPath));
+            navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(action.ReturnPath), forceLoad: true);
             return;
           }
 
