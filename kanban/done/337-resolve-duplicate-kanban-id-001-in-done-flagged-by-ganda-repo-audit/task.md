@@ -23,9 +23,15 @@ root and rename to kebab-case"):
 
 ## Checklist
 
-- [ ] Reserve new id, rename one file, fix references
-- [ ] `ganda repo audit` clean
+- [x] Reserve new id, rename one file, fix references
+- [x] `ganda repo audit` clean
 
 ## Session
 
 - Created: 2026-10-13 (cockpit; found when `ganda pr merge 477` was refused)
+
+## Results
+
+- `001-navlink-encapsulation-implementation.md` keeps 001 (created 2025-01-24, `088a4c54a`).
+- `001-fix-fastendpointsourcegenerator.md` (2025-02-13) renamed to `338-fix-fastendpointsourcegenerator.md` (id from `ganda kanban reserve`), with a renumber note appended.
+- No other references to either filename existed outside this task.
