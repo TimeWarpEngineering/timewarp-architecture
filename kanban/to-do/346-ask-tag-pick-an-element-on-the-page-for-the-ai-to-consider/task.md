@@ -59,6 +59,9 @@ This task gives the Ask panel's **Tag** button that meaning.
 
 - Created: 2026-10-13 (cockpit, from a design conversation with Steve; after 345)
 - 2026-10-13 implementer (ganda task work, Claude): implemented; decisions and validation below.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T14:53:35Z
+
+- 2026-10-13 review oracle (ganda task work, Claude claude-opus-5-5, session id not reported): tw-implementation-review effort 3, roster general; 2 rounds; disposition clean.
 
 ## Decisions
 
@@ -76,8 +79,8 @@ This task gives the Ask panel's **Tag** button that meaning.
   copy of the outgoing user message and dispatches `MarkSent`. The transcript keeps what the person
   typed; `page_context.tags` lists sent tags for later turns.
 - **JS:** `ask-tag.ts` through the `[SideEffectService]` `AskTagJsModule`, called only from the
-  `StartPick` / `CancelPick` handlers (TWA0026). `StartPick` is `[TrackAction]`; the panel reads
-  ActionTracking to show pick mode and Cancel.
+  `StartPick` / `CancelPick` handlers (TWA0026). `StartPick` is not tracked (a tracked action is
+  the app-wide busy signal); the panel reads `AskTagState.IsPicking` to show pick mode and Cancel.
 - **Privacy:** only marked elements inside `.twe-page__body` that are rendered and visible;
   `data-ask-tag-private`, `[hidden]`, `[aria-hidden=true]`, `[inert]` and the Ask panel are never
   candidates; text is rendered text nodes only (input values are never read). AuthorizeView
@@ -106,7 +109,8 @@ page_context (`tags`), Ask instructions, the two feedback list contracts (prefix
 AuthenticationStateListener, app.css (overlay styles).
 
 Tests: `tests/container-apps/web/web-spa-integration-tests/features/application/ask-tag-tests.cs`
-(7: pick + cancel, chips add/remove/cap/per-conversation, payload + MarkSent + page_context.tags,
+(8: pick + cancel, chips add/remove/cap/per-conversation, payload + MarkSent + page_context.tags,
+failed send keeps chips attached,
 feedback-row resource mapping, privacy for references and principals, AuthorizeView render
 privacy). Playwright: `ask-sign-in-playwright-tests.cs` (file feedback → Tag → Esc → Tag → hover
 row → click → chip → send → page_context.tags) and `ask-surface-playwright-tests.cs` (Tag button
@@ -118,6 +122,21 @@ open, so the test now waits for the receipt and reloads /Feedback); after that f
 web-spa-playwright-tests 11/11 and web-spa-integration-tests Unit 114/114; `dev template-smoke`
 succeeded; `dev check-version` safe (2.0.0-beta.20 > nuget beta.19); `ganda repo audit` 32/32.
 
+### Review disposition
+
+- **Effort / roster:** 3 (by-diff), general reviewer; **rounds:** 2.
+- **Final counts:** bug 4 fixed · suggestion 3 fixed · nit 3 fixed · 0 open · 0 wontfix.
+- **Disposition:** `clean`. Round 1 fixes (657470909): MarkSent only after a successful send and only
+  the sent ids; instructions re-rendered per request so `page_context.tags` stays current; Enter/Tab
+  native inside the Ask panel; pick cancelled on session change, navigation and panel dispose; pick
+  root re-queried; `[TrackAction]` dropped (panel reads `IsPicking`); whole admin grid row maps to
+  its mark; own `data-qa` only; Playwright asserts the payload in the outgoing message, keyboard
+  choose and privacy probes. Round 2 fixes (d96dfd149): pick start blurs focus left in the panel
+  (keyboard start from Tag works), Design regions rewrapped.
+- **Gates after fixes:** `dev build` 0/0; web-spa-integration-tests 232/232; web-spa-playwright-tests 11/11.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -128,7 +147,7 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet run -- --filter-
 cd tests/container-apps/web/web-spa-playwright-tests && dotnet run -- --filter-class AskSignIn_Given_Wasm
 ```
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. `AskTag_` reports 7 passed, 0 failed.
+**Expect:** `dev build` reports 0 warnings and 0 errors. `AskTag_` reports 8 passed, 0 failed.
 The Playwright sign-in run passes and writes `ask-tag-hover-row.png` (outline + "Feedback row:
 Dark theme broken" badge over the filing) and `ask-tag-chip.png` (chip in the composer) to test
 output. Manually: `dev run`, sign in, file a feedback item on /Feedback, open Ask, click **Tag**,
