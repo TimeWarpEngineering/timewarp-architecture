@@ -20,17 +20,20 @@ public sealed class AddFeedbackNote
     private readonly IFeedbackStore FeedbackStore;
     private readonly IFeedbackAttachmentStore AttachmentStore;
     private readonly IProfileEmailLookup ProfileEmailLookup;
+    private readonly FeedbackOwnerNames OwnerNames;
 
     public Handler(
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackStore feedbackStore,
       IFeedbackAttachmentStore attachmentStore,
-      IProfileEmailLookup profileEmailLookup)
+      IProfileEmailLookup profileEmailLookup,
+      FeedbackOwnerNames ownerNames)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       FeedbackStore = feedbackStore;
       AttachmentStore = attachmentStore;
       ProfileEmailLookup = profileEmailLookup;
+      OwnerNames = ownerNames;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -65,7 +68,7 @@ public sealed class AddFeedbackNote
       }
 
       return new Response(
-        await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, cancellationToken)
+        await FeedbackContractMap.AdminViewAsync(item, AttachmentStore, ProfileEmailLookup, OwnerNames, cancellationToken)
           .ConfigureAwait(false));
     }
   }

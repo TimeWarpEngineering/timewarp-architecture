@@ -17,7 +17,9 @@
 // Planned/Completed/Declined), admin replies (always emailed when an address is known),
 // internal notes (never shown to the filer, never emailed), filer replies (own items only),
 // contract validators, and the authorization surface: each contract's [EndpointAuthorize]
-// policy and the Administrator-only seed. HTTP 401/403 proofs live in
+// policy and the Administrator-only seed. Task 336: the owner display name on list rows and the
+// admin view (set only with admin.profiles.read, null for a missing profile, one directory
+// batch per page). HTTP 401/403 and no-PII proofs live in
 // web-server-integration-tests (admin-feedback-authorization-tests).
 #endregion
 
@@ -34,6 +36,7 @@ namespace TimeWarp.Architecture.Features.Feedback
   using System.Text.Json;
   using FluentValidation.Results;
   using Microsoft.Extensions.Logging.Abstractions;
+  using Microsoft.Extensions.Options;
   using Shouldly;
   using TimeWarp.Architecture.Abstractions;
   using TimeWarp.Architecture.Authorization;
@@ -555,6 +558,99 @@ namespace TimeWarp.Architecture.Features.Feedback
     }
   }
 
+  [TestTag("Handler")]
+  public class FeedbackOwnerName_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<FeedbackOwnerName_Given_>();
+
+    public static async Task List_WithProfilesRead_Should_NameOwnersInOneBatchPerPage()
+    {
+      TriageWorld world = new();
+      var ada = Guid.NewGuid();
+      var grace = Guid.NewGuid();
+      var noProfile = Guid.NewGuid();
+      await world.AddProfileAsync(ada, "Ada Lovelace");
+      await world.AddProfileAsync(grace, "Grace Hopper");
+      await world.AddAsync(ada, day: 1);
+      await world.AddAsync(ada, day: 2);
+      await world.AddAsync(grace, day: 3);
+      await world.AddAsync(noProfile, day: 4);
+
+      AdminListContract.Response response = await world.ListAsync(new AdminListContract.Query());
+
+      response.Items.Select(item => item.OwnerDisplayName)
+        .ShouldBe([null, "Grace Hopper", "Ada Lovelace", "Ada Lovelace"]);
+      world.Directory.Batches.Count.ShouldBe(1, "one batch per page, never one call per row");
+      world.Directory.Batches[0].Order().ShouldBe(new[] { ada, grace, noProfile }.Order(), "distinct owners only");
+    }
+
+    public static async Task List_WithoutProfilesRead_Should_ShowIdsOnlyAndNeverAskTheDirectory()
+    {
+      TriageWorld world = new(grantProfilesRead: false);
+      var ada = Guid.NewGuid();
+      await world.AddProfileAsync(ada, "Ada Lovelace");
+      await world.AddAsync(ada, day: 1);
+
+      AdminListContract.Response response = await world.ListAsync(new AdminListContract.Query());
+
+      response.Items.Single().OwnerPrincipalId.ShouldBe(ada);
+      response.Items.Single().OwnerDisplayName.ShouldBeNull();
+      world.Directory.Batches.ShouldBeEmpty();
+    }
+
+    public static async Task EmptyPage_Should_NotAskTheDirectory()
+    {
+      TriageWorld world = new();
+      (await world.ListAsync(new AdminListContract.Query())).Items.ShouldBeEmpty();
+      world.Directory.Batches.ShouldBeEmpty();
+    }
+
+    public static async Task AdminView_Should_NameTheFilerOnlyWithProfilesRead()
+    {
+      TriageWorld world = new();
+      await world.AddProfileAsync(world.Filer.Value, "Ada Lovelace");
+      FeedbackItem item = await world.AddAsync(world.Filer.Value, day: 1);
+      FeedbackItem orphan = await world.AddAsync(Guid.NewGuid(), day: 2);
+
+      AdminGetContract.Response named = (await world.AdminGet()
+          .Handle(new AdminGetContract.Query { FeedbackItemId = item.Id.Value }, CancellationToken.None)).AsT0;
+      named.Item.OwnerDisplayName.ShouldBe("Ada Lovelace");
+      world.Directory.Batches.Count.ShouldBe(1);
+
+      AdminGetContract.Response missing = (await world.AdminGet()
+          .Handle(new AdminGetContract.Query { FeedbackItemId = orphan.Id.Value }, CancellationToken.None)).AsT0;
+      missing.Item.OwnerDisplayName.ShouldBeNull("no profile row");
+
+      // A mutation returns the same view, so the detail page keeps the name after a write.
+      (await world.NoteAsync(item.Id.Value, "Checked")).Item.OwnerDisplayName.ShouldBe("Ada Lovelace");
+
+      TriageWorld gated = new(grantProfilesRead: false);
+      await gated.AddProfileAsync(gated.Filer.Value, "Ada Lovelace");
+      FeedbackItem hidden = await gated.AddAsync(gated.Filer.Value, day: 1);
+      AdminGetContract.Response noPii = (await gated.AdminGet()
+          .Handle(new AdminGetContract.Query { FeedbackItemId = hidden.Id.Value }, CancellationToken.None)).AsT0;
+      noPii.Item.OwnerDisplayName.ShouldBeNull();
+      noPii.Item.OwnerPrincipalId.ShouldBe(gated.Filer.Value);
+      gated.Directory.Batches.ShouldBeEmpty();
+    }
+
+    public static Task Contracts_Should_CarryOwnerDisplayNameThroughJson()
+    {
+      AdminListContract.Item row = new(
+        Guid.NewGuid(), Guid.NewGuid(), ContractKind.BugReport, ContractStatus.New, "Title", DateTimeOffset.UnixEpoch, "Ada");
+      string json = JsonSerializer.Serialize(new AdminListContract.Response(1, [row], 1, 25), ContractSerializationDefaults.Options);
+      JsonSerializer.Deserialize<AdminListContract.Response>(json, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull().Items[0].OwnerDisplayName.ShouldBe("Ada");
+
+      FeedbackAdminView view = FeedbackAdminView.Sample(Guid.NewGuid());
+      string viewJson = JsonSerializer.Serialize(view, ContractSerializationDefaults.Options);
+      JsonSerializer.Deserialize<FeedbackAdminView>(viewJson, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull().OwnerDisplayName.ShouldBe("Ada Lovelace");
+      return Task.CompletedTask;
+    }
+  }
+
   [TestTag("Authorization")]
   public class FeedbackAdminAuthorization_Given_
   {
@@ -602,16 +698,35 @@ namespace TimeWarp.Architecture.Features.Feedback
     public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
     public InMemoryProfileStore Profiles { get; } = new();
     public ProfileEmailLookup Lookup { get; }
+    public TriageCountingDirectory Directory { get; }
     public TriageMailCapture Mail { get; } = new();
     public PrincipalId Filer { get; } = PrincipalId.New();
     public PrincipalId Admin { get; } = PrincipalId.New();
     private readonly IEmailSender Sender;
     private readonly TriageBaseUrl BaseUrl = new(new Uri("https://app.example"));
+    private readonly PermissionEvaluator Evaluator;
 
-    public TriageWorld(IEmailSender? sender = null)
+    /// <summary>Admin is an Administrator; grantProfilesRead false strips admin.profiles.read from that role.</summary>
+    public TriageWorld(IEmailSender? sender = null, bool grantProfilesRead = true)
     {
       Lookup = new ProfileEmailLookup(Profiles);
+      Directory = new TriageCountingDirectory(new ProfileDirectory(Profiles));
       Sender = sender ?? Mail;
+      InMemoryPrincipalRoleStore roles = new();
+      roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
+      InMemoryRolePermissionStore permissions = new();
+      if (!grantProfilesRead)
+      {
+        permissions.SetPermissionIdsForRoleAsync(
+          RoleIds.Administrator,
+          [.. RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead)])
+          .GetAwaiter().GetResult();
+      }
+
+      EffectiveRolesResolver resolver = new(
+        roles,
+        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
+      Evaluator = new PermissionEvaluator(resolver, permissions, new TriageNoAgentScopes());
     }
 
     public static DateTimeOffset Day(int day) => new(2026, 10, day, 0, 0, 0, TimeSpan.Zero);
@@ -645,6 +760,15 @@ namespace TimeWarp.Architecture.Features.Feedback
           .Items.Select(item => item.FeedbackItemId)
       ];
 
+    public async Task AddProfileAsync(Guid principal, string displayName)
+    {
+      Profile profile = Profile.Create(ProfileId.From(principal), displayName, "en-US", "US", "dark");
+      await Profiles.AddAsync(profile);
+    }
+
+    public FeedbackOwnerNames OwnerNames(PrincipalId? principal) =>
+      new(new TriagePrincipalAccessor(principal), Evaluator, Directory);
+
     public async Task SetFilerEmailAsync(string email)
     {
       Profile profile = Profile.Create(ProfileId.From(Filer.Value), "Ada Lovelace", "en-US", "US", "dark");
@@ -652,22 +776,22 @@ namespace TimeWarp.Architecture.Features.Feedback
       await Profiles.AddAsync(profile);
     }
 
-    public AdminListHandler AdminList() => new(Feedback);
+    public AdminListHandler AdminList() => new(Feedback, OwnerNames(Admin));
 
-    public AdminGetHandler AdminGet() => new(Feedback, Attachments, Lookup);
+    public AdminGetHandler AdminGet() => new(Feedback, Attachments, Lookup, OwnerNames(Admin));
 
     public ChangeStatusHandler ChangeStatus(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, Sender, BaseUrl,
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal), Sender, BaseUrl,
         NullLogger<ChangeStatusHandler>.Instance);
 
     public ReplyHandler Reply(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, Sender, BaseUrl,
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal), Sender, BaseUrl,
         NullLogger<ReplyHandler>.Instance);
 
     public ReplyHandler Reply() => Reply(Admin);
 
     public AddNoteHandler Note(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup);
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal));
 
     public AddNoteHandler Note() => Note(Admin);
 
@@ -709,6 +833,32 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
       Task.FromResult(PrincipalId);
+  }
+
+  /// <summary>The real ProfileDirectory, counting batch calls so a test can prove one per page.</summary>
+  internal sealed class TriageCountingDirectory : IProfileDirectory
+  {
+    private readonly IProfileDirectory Inner;
+
+    public TriageCountingDirectory(IProfileDirectory inner) => Inner = inner;
+
+    public List<Guid[]> Batches { get; } = [];
+
+    public Task<IReadOnlyDictionary<Guid, ProfileDirectoryEntry>> FindManyAsync(
+      IReadOnlyCollection<Guid> principalIds,
+      CancellationToken cancellationToken = default)
+    {
+      Batches.Add([.. principalIds]);
+      return Inner.FindManyAsync(principalIds, cancellationToken);
+    }
+
+    public Task<IReadOnlyList<Guid>> SearchAsync(string term, CancellationToken cancellationToken = default) =>
+      Inner.SearchAsync(term, cancellationToken);
+  }
+
+  internal sealed class TriageNoAgentScopes : IAgentPermissionScopeSource
+  {
+    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) => null;
   }
 
   internal sealed class TriageMailCapture : IEmailSender

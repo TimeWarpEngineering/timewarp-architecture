@@ -7,6 +7,8 @@
 // IncludeClosed (FeedbackStatusRules.IsClosed is the one copy of "closed"). Enums map by name
 // onto the domain. The page window is computed here; the store returns the matching total.
 // SortBy and SortDescending pass through to the store, which sorts before it pages.
+// Task 336: owner display names come from FeedbackOwnerNames in one batch over the page's
+// distinct owners (never per row), and only with the caller's admin.profiles.read.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -21,10 +23,12 @@ public sealed class ListFeedback
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly IFeedbackStore FeedbackStore;
+    private readonly FeedbackOwnerNames OwnerNames;
 
-    public Handler(IFeedbackStore feedbackStore)
+    public Handler(IFeedbackStore feedbackStore, FeedbackOwnerNames ownerNames)
     {
       FeedbackStore = feedbackStore;
+      OwnerNames = ownerNames;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -83,6 +87,9 @@ public sealed class ListFeedback
           cancellationToken)
         .ConfigureAwait(false);
 
+      IReadOnlyDictionary<Guid, string> ownerNames = await OwnerNames
+        .FindManyAsync(result.Items.Select(static item => item.OwnerPrincipalId), cancellationToken)
+        .ConfigureAwait(false);
       Item[] items =
       [
         .. result.Items.Select(item => new Item(
@@ -91,7 +98,8 @@ public sealed class ListFeedback
           FeedbackContractMap.ToContract(item.Kind),
           FeedbackContractMap.ToContract(item.Status),
           item.Title,
-          item.FiledAt))
+          item.FiledAt,
+          ownerNames.GetValueOrDefault(item.OwnerPrincipalId)))
       ];
       return new Response(result.TotalCount, items, page, pageSize);
     }

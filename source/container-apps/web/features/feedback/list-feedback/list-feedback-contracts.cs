@@ -10,6 +10,10 @@
 // client builds the URL from the contract. Items omit the body; opening an item loads it.
 // SortBy and SortDescending (task 327) order the whole match set before the page window, so a
 // sort is correct across pages. They default to FiledAt descending, the newest-first view.
+// Task 336: OwnerDisplayName is the owner's profile display name, set only when the caller
+// holds admin.profiles.read and the owner has a profile row (null otherwise). Owner stays
+// unsortable: the store pages in the database and the name lives in another slice, so a name
+// sort would have to load every match; the 403 rule of task 328 would apply if it is added.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -84,6 +88,7 @@ public static partial class ListFeedback
     public FeedbackStatus Status { get; }
     public string Title { get; }
     public DateTimeOffset FiledAt { get; }
+    public string? OwnerDisplayName { get; }
 
     public Item(
       Guid feedbackItemId,
@@ -91,7 +96,8 @@ public static partial class ListFeedback
       FeedbackKind kind,
       FeedbackStatus status,
       string title,
-      DateTimeOffset filedAt)
+      DateTimeOffset filedAt,
+      string? ownerDisplayName = null)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -109,6 +115,7 @@ public static partial class ListFeedback
       Status = status;
       Title = Guard.Against.NullOrWhiteSpace(title);
       FiledAt = filedAt;
+      OwnerDisplayName = ownerDisplayName;
     }
   }
 
@@ -135,14 +142,16 @@ public static partial class ListFeedback
         FeedbackKind.BugReport,
         FeedbackStatus.UnderReview,
         "Mock bug report",
-        DateTimeOffset.Parse("2026-10-09T00:00:00Z")),
+        DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
+        "Ada Lovelace"),
       new(
         Guid.Parse("55555555-5555-5555-5555-555555555555"),
         owner,
         FeedbackKind.FeatureRequest,
         FeedbackStatus.New,
         "Mock feature request",
-        DateTimeOffset.Parse("2026-10-08T00:00:00Z")),
+        DateTimeOffset.Parse("2026-10-08T00:00:00Z"),
+        "Ada Lovelace"),
     ];
     return _ => new Response(items.Length, items, page: 1, DefaultPageSize);
   }
