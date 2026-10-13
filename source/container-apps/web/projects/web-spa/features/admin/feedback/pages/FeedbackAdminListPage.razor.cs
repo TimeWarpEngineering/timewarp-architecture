@@ -12,7 +12,9 @@
 // when the sort already matches state, so the first render and new rows dispatch nothing. Each
 // sortable column's IsDefaultSortColumn and InitialSortDirection follow state, so a grid that
 // is created again (revisiting the page, or after a load error) shows the stored sort. Owner is
-// not sortable (raw principal id). Paging stays on Previous/Next: FluentPaginator drives the
+// not sortable (task 336 decision: the name lives in the profile slice and the store pages in
+// the database; see FeedbackListSortColumn). The Owner cell is FeedbackOwnerLink: the display
+// name when the server sent one, else the id, linked to /Admin/Principals/{id}. Paging stays on Previous/Next: FluentPaginator drives the
 // grid's own PaginationState, which would be a second copy of Page beside FeedbackAdminState.
 // GridItems is a new IQueryable on every page render on purpose: the grid only re-reads rows
 // when the Items reference changes, and the state instance is cloned before the fetch handler

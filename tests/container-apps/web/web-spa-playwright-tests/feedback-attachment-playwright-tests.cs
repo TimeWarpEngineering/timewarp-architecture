@@ -22,7 +22,10 @@
 // account on a fresh host claims Administrator, so the same session opens /Admin/Feedback/{id}.
 // The admin list sort proof (task 327) files two items, opens /Admin/Feedback, clicks the
 // Title header's sort button, and checks the rows re-order (server-side sort) and aria-sort
-// toggles ascending then descending.
+// toggles ascending then descending. The owner proof (task 336) files one item as that
+// Administrator, opens /Admin/Feedback, and checks the Owner cell links to
+// /Admin/Principals/{id} and shows the display name IProfileDirectory holds for that id, not the
+// raw id; following the link lands on the principal detail page.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -287,6 +290,72 @@ public class FeedbackAttachment_Given_Wasm
     await Assertions.Expect(titleHeader).ToHaveAttributeAsync("aria-sort", "descending", new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
     await Assertions.Expect(rows).ToHaveTextAsync(["Zulu sort", "Alpha sort"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-sort-title-descending.png"), FullPage = true });
+  }
+
+  public static async Task AdminListOwnerCell_Should_ShowTheDisplayName_And_LinkToThePrincipal()
+  {
+    InstallChromium();
+
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    using IPlaywright playwright = await Playwright.CreateAsync();
+    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+    });
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    await OpenFeedbackAsync(page, console);
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Owner name");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Who filed me?");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    await SubmitFeedbackAsync(page);
+
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    ILocator owner = page.Locator("[data-qa=AdminFeedbackOwner]").First;
+    try
+    {
+      await owner.WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-owner-failed.png"), FullPage = true });
+      string text = await page.Locator("body").InnerTextAsync();
+      string log = string.Join('\n', console);
+      throw new TimeoutException($"Admin feedback list showed no owner cell at {page.Url}. Page:\n{text}\nConsole:\n{log}", exception);
+    }
+
+    string href = (await owner.GetAttributeAsync("href")).ShouldNotBeNull();
+    href.ShouldStartWith("/Admin/Principals/");
+    Guid ownerId = Guid.Parse(href["/Admin/Principals/".Length..]);
+
+    await using AsyncServiceScope scope = graph.Web!.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IReadOnlyDictionary<Guid, TimeWarp.Architecture.Abstractions.ProfileDirectoryEntry> profiles = await scope.ServiceProvider
+      .GetRequiredService<TimeWarp.Architecture.Abstractions.IProfileDirectory>()
+      .FindManyAsync([ownerId]);
+    profiles.ShouldContainKey(ownerId, "signing in opens Settings, which creates the profile");
+    string displayName = profiles[ownerId].DisplayName;
+
+    await Assertions.Expect(owner).ToHaveTextAsync(displayName, new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    (await owner.InnerTextAsync()).ShouldNotContain(ownerId.ToString());
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-owner-name.png"), FullPage = true });
+
+    await owner.ClickAsync();
+    await page.WaitForURLAsync($"**/Admin/Principals/{ownerId}", new PageWaitForURLOptions { Timeout = 30_000 });
+    await page.Locator("[data-qa=AdminPrincipalStatus]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
   }
 
   // The submit button is Disabled while any action is active, and blurring Details dispatches the

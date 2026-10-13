@@ -9,6 +9,9 @@
 // notifying status change will also reach the filer by email; the address itself is not sent.
 // Attachments reuse GetFeedback.Attachment, whose DownloadPath the download endpoint serves to
 // the owner and to admin.feedback.read.
+// Task 336: OwnerDisplayName is the filer's profile display name, set only when the caller
+// holds admin.profiles.read and the filer has a profile row; every admin endpoint that returns
+// this view fills it the same way, so a mutation never blanks the name on the detail page.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -25,6 +28,7 @@ public sealed class FeedbackAdminView
   public bool FilerHasEmail { get; }
   public IReadOnlyList<GetFeedback.Attachment> Attachments { get; }
   public IReadOnlyList<FeedbackActivityEntry> Activity { get; }
+  public string? OwnerDisplayName { get; }
 
   public FeedbackAdminView(
     Guid feedbackItemId,
@@ -36,7 +40,8 @@ public sealed class FeedbackAdminView
     DateTimeOffset filedAt,
     bool filerHasEmail,
     IReadOnlyList<GetFeedback.Attachment>? attachments = null,
-    IReadOnlyList<FeedbackActivityEntry>? activity = null)
+    IReadOnlyList<FeedbackActivityEntry>? activity = null,
+    string? ownerDisplayName = null)
   {
     FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
     OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -58,6 +63,7 @@ public sealed class FeedbackAdminView
     FilerHasEmail = filerHasEmail;
     Attachments = attachments ?? [];
     Activity = activity ?? [];
+    OwnerDisplayName = ownerDisplayName;
   }
 
   /// <summary>Deterministic sample for mock mode: one item under review with a reply and a note.</summary>
@@ -80,6 +86,7 @@ public sealed class FeedbackAdminView
         new FeedbackActivityEntry(1, FeedbackActivityKind.StatusChange, admin, null, FeedbackStatus.New, status, filedAt.AddHours(1)),
         new FeedbackActivityEntry(2, FeedbackActivityKind.AdminReply, admin, "Thanks, we are looking.", null, null, filedAt.AddHours(2)),
         new FeedbackActivityEntry(3, FeedbackActivityKind.InternalNote, admin, "Reproduced locally.", null, null, filedAt.AddHours(3)),
-      ]);
+      ],
+      ownerDisplayName: "Ada Lovelace");
   }
 }

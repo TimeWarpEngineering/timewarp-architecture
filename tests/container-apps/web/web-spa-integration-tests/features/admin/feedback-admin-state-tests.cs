@@ -9,7 +9,8 @@
 // replaces instances). Covers the filter-to-query path, mutations storing the returned item,
 // the reply/note success flags, the non-revealing 404, paging (a filter change resets Page),
 // opening another item clearing the previous one, a failed fetch clearing the rows, and the
-// task 327 sort (SetSort lands on the query and resets Page).
+// task 327 sort (SetSort lands on the query and resets Page), and the task 336 owner display
+// name reaching state on list rows and on the open item (kept after a mutation).
 #endregion
 
 namespace FeedbackAdminState_;
@@ -52,6 +53,35 @@ public class FeedbackAdminActions_Should_
     state.Items.ShouldNotBeNull();
     state.Items.Count.ShouldBe(2);
     state.TotalCount.ShouldBe(2);
+  }
+
+  public static async Task Owner_Display_Name_Lands_In_State_For_Rows_And_The_Open_Item()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    var named = Guid.NewGuid();
+    var unnamed = Guid.NewGuid();
+    spa.Api.Answer<ListFeedback.Query>(query => new ListFeedback.Response(
+      2,
+      [
+        new ListFeedback.Item(Guid.NewGuid(), named, FeedbackKind.BugReport, FeedbackStatus.New, "Named", DateTimeOffset.UnixEpoch, "Ada Lovelace"),
+        new ListFeedback.Item(Guid.NewGuid(), unnamed, FeedbackKind.BugReport, FeedbackStatus.New, "Unnamed", DateTimeOffset.UnixEpoch),
+      ],
+      query.Page,
+      query.PageSize));
+    spa.Api.Answer<GetFeedbackForAdmin.Query>(query => new GetFeedbackForAdmin.Response(FeedbackAdminView.Sample(query.FeedbackItemId)));
+    spa.Api.Answer<AddFeedbackNote.Command>(command => new AddFeedbackNote.Response(FeedbackAdminView.Sample(command.FeedbackItemId)));
+
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
+    state.Items.ShouldNotBeNull().Select(static item => item.OwnerDisplayName).ShouldBe(["Ada Lovelace", null]);
+    state.Items.Select(static item => item.OwnerPrincipalId).ShouldBe([named, unnamed]);
+
+    await scope.Send(new FeedbackAdminState.OpenFeedbackForAdminActionSet.Action(ItemId));
+    scope.Store.GetState<FeedbackAdminState>().Current.ShouldNotBeNull().OwnerDisplayName.ShouldBe("Ada Lovelace");
+
+    await scope.Send(new FeedbackAdminState.AddFeedbackNoteActionSet.Action(ItemId, "Checked"));
+    scope.Store.GetState<FeedbackAdminState>().Current.ShouldNotBeNull().OwnerDisplayName.ShouldBe("Ada Lovelace");
   }
 
   public static async Task ChangeStatus_Stores_The_Returned_Item()

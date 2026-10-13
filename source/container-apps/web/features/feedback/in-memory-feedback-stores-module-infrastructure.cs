@@ -6,6 +6,7 @@
 // Called from Web.Server Program next to the profile store module. PostgresDbModule replaces
 // IFeedbackStore and IFeedbackAttachmentStore with the scoped EF stores when a connection
 // string is present. Blob bytes are registered by FeedbackAttachmentBlobModule.
+// FeedbackOwnerNames (task 336) is scoped and store-agnostic, so it is registered here once.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -19,5 +20,6 @@ public sealed class InMemoryFeedbackStoresModule : IModule
     _ = configuration;
     serviceCollection.AddSingleton<IFeedbackStore, InMemoryFeedbackStore>();
     serviceCollection.AddSingleton<IFeedbackAttachmentStore, InMemoryFeedbackAttachmentStore>();
+    serviceCollection.AddScoped<FeedbackOwnerNames>();
   }
 }

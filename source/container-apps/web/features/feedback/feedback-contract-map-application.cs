@@ -7,7 +7,8 @@
 // change meaning; a stored name with no contract member is a programming error and throws.
 // FilerThread is the one place that decides what the filer sees: internal notes are dropped
 // and author ids are nulled. AdminThread keeps every entry and author. AdminViewAsync loads
-// attachments and the filer's email presence (not the address) for FeedbackAdminView.
+// attachments and the filer's email presence (not the address) for FeedbackAdminView, and the
+// filer's display name through FeedbackOwnerNames (null without admin.profiles.read).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -68,12 +69,16 @@ internal static class FeedbackContractMap
     FeedbackItem item,
     IFeedbackAttachmentStore attachmentStore,
     IProfileEmailLookup profileEmailLookup,
+    FeedbackOwnerNames ownerNames,
     CancellationToken cancellationToken)
   {
     List<GetFeedbackContract.Attachment> attachments = await AttachmentsAsync(attachmentStore, item.Id, cancellationToken)
       .ConfigureAwait(false);
     string? email = await profileEmailLookup
       .FindEmailAsync(item.OwnerPrincipalId, cancellationToken)
+      .ConfigureAwait(false);
+    string? ownerDisplayName = await ownerNames
+      .FindAsync(item.OwnerPrincipalId, cancellationToken)
       .ConfigureAwait(false);
     return new FeedbackAdminView(
       item.Id.Value,
@@ -85,7 +90,8 @@ internal static class FeedbackContractMap
       item.FiledAt,
       filerHasEmail: !string.IsNullOrWhiteSpace(email),
       attachments,
-      AdminThread(item));
+      AdminThread(item),
+      ownerDisplayName);
   }
 
   private static FeedbackActivityEntry ToEntry(FeedbackActivity entry, bool includeAuthor) =>

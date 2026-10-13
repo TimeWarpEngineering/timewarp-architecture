@@ -12,6 +12,9 @@
 // bundle to admin.access + admin.feedback.read with no feedback.file.self: the admin reads the
 // filer's attachment (200) while another Member gets 404, so the route never gates on the filer
 // permission. The original bundle is restored in finally.
+// Task 336: an Administrator sees the filer's display name on the list row and the detail; an
+// Operator granted admin.access + admin.feedback.read without admin.profiles.read (the
+// reachable no-PII shape, as in principals-authorization-tests) sees ids only.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -26,6 +29,8 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Features.Profiles.Application;
+using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
@@ -188,6 +193,103 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
     }
+  }
+
+  public static async Task Ok_Owner_Display_Name_Given_Administrator()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(filerId);
+    Guid itemId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      itemId = await FileFeedbackAsync(filer, "Named owner");
+    }
+
+    (string adminCookie, PrincipalId adminId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(adminId, RoleIds.Member, RoleIds.Administrator);
+    using HttpClient admin = Client(adminCookie);
+
+    ListFeedback.Response list = await ReadAsync<ListFeedback.Response>(
+      await admin.GetAsync(new ListFeedback.Query { PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString()));
+    list.Items.Single(item => item.FeedbackItemId == itemId).OwnerDisplayName.ShouldBe(displayName);
+
+    GetFeedbackForAdmin.Response detail = await ReadAsync<GetFeedbackForAdmin.Response>(
+      await admin.GetAsync($"api/admin/feedback/{itemId}"));
+    detail.Item.OwnerDisplayName.ShouldBe(displayName);
+  }
+
+  public static async Task Ok_Feedback_Reader_Without_Profiles_Read_Sees_No_Owner_Name()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(filerId);
+    Guid itemId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      itemId = await FileFeedbackAsync(filer, "Unnamed owner");
+    }
+
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(principalId, RoleIds.Member, RoleIds.Operator);
+
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IReadOnlyList<string> original = await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Operator);
+    try
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(
+        RoleIds.Operator,
+        [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
+
+      using HttpClient client = Client(cookie);
+      HttpResponseMessage listResponse = await client.GetAsync(
+        new ListFeedback.Query { PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString());
+      listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+      string listJson = await listResponse.Content.ReadAsStringAsync();
+      listJson.ShouldContain(itemId.ToString());
+      listJson.ShouldNotContain(displayName);
+      ListFeedback.Response list = JsonSerializer
+        .Deserialize<ListFeedback.Response>(listJson, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull();
+      list.Items.ShouldAllBe(item => item.OwnerDisplayName == null);
+      list.Items.Single(item => item.FeedbackItemId == itemId).OwnerPrincipalId.ShouldBe(filerId.Value);
+
+      HttpResponseMessage getResponse = await client.GetAsync($"api/admin/feedback/{itemId}");
+      getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+      string getJson = await getResponse.Content.ReadAsStringAsync();
+      getJson.ShouldNotContain(displayName);
+      JsonSerializer.Deserialize<GetFeedbackForAdmin.Response>(getJson, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull().Item.OwnerDisplayName.ShouldBeNull();
+    }
+    finally
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Operator, original);
+    }
+  }
+
+  private static async Task<string> EnsureProfileAsync(PrincipalId principalId)
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IProfileStore profiles = scope.ServiceProvider.GetRequiredService<IProfileStore>();
+    ProfileId profileId = ProfileId.From(principalId.Value);
+    if (await profiles.FindAsync(profileId) is { } existing)
+    {
+      return existing.DisplayName;
+    }
+
+    string displayName = $"Filer {principalId.Value:N}";
+    await profiles.AddAsync(TimeWarp.Architecture.Features.Profiles.Domain.Profile.Create(
+      profileId, displayName, "en-US", "US", "system"));
+    return displayName;
+  }
+
+  private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
+  {
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string json = await response.Content.ReadAsStringAsync();
+    return JsonSerializer.Deserialize<T>(json, ContractSerializationDefaults.Options)
+      ?? throw new InvalidOperationException($"{typeof(T).Name} deserialized to null.");
   }
 
   private static HttpClient Client(string cookie)

@@ -1,0 +1,43 @@
+@namespace TimeWarp.Architecture.Features.Admin.Feedback
+@using TimeWarp.Architecture.Features
+@inherits BaseComponent
+
+@*
+  Purpose: a feedback owner as a link to the principal detail page, by name when allowed.
+
+  Design: Task 336. The server sets OwnerDisplayName only for callers with admin.profiles.read,
+  so the name shows exactly when the caller may see it. Only the name is shown, never the email:
+  the principal detail page (task 328), which this links to, holds the rest of the profile.
+  Without a name the raw principal id shows, still linked; the detail page hides the profile
+  itself. A caller with admin.profiles.read and no name means the owner has no profile row, so
+  "no profile" is added. The link is a plain Href, so navigation needs no component method.
+*@
+
+@code {
+  [Parameter, EditorRequired]
+  public Guid OwnerPrincipalId { get; set; }
+
+  [Parameter]
+  public string? OwnerDisplayName { get; set; }
+
+  private string Href => $"/Admin/Principals/{OwnerPrincipalId:D}";
+}
+
+<FluentLink Href="@Href" data-qa="AdminFeedbackOwner">
+  @if (OwnerDisplayName is { Length: > 0 } name)
+  {
+    @name
+  }
+  else
+  {
+    <code>@OwnerPrincipalId</code>
+  }
+</FluentLink>
+@if (OwnerDisplayName is not { Length: > 0 })
+{
+  <AuthorizeView Policy="@PermissionIds.AdminProfilesRead">
+    <Authorized>
+      <span data-qa="AdminFeedbackOwnerNoProfile"> (no profile)</span>
+    </Authorized>
+  </AuthorizeView>
+}

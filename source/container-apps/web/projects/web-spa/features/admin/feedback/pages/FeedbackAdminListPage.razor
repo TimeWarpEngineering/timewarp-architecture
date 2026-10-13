@@ -148,8 +148,8 @@
               IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
               @context.FiledAt.ToString("u")
             </TemplateColumn>
-            <TemplateColumn Title="Owner" Width="11rem" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
-              <code>@context.OwnerPrincipalId</code>
+            <TemplateColumn Title="Owner" Width="14rem" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
+              <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />
             </TemplateColumn>
           </ChildContent>
           <EmptyContent>
