@@ -13,7 +13,8 @@
 // session can be authorized on the server while the SPA principal is anonymous, so the server's
 // status is the answer.
 // Only a server answer carries the panel settings (task 292: RecordChats, PrivacyNotice, SupportUrl,
-// CredentialLifetimeMinutes; task 347: PrivacyUrl; task 348: StarterPrompts); every failure resets them to the XaiChatDefaults.
+// CredentialLifetimeMinutes; task 347: PrivacyUrl; task 348: StarterPrompts); every failure resets
+// them to the XaiChatDefaults.
 // SupportUrl goes through AskSupportLink.Normalize (relative path or http/https only) because the
 // answer bar renders it into an href. PrivacyUrl goes through NormalizeOptional: unsafe or blank is
 // null, and the notice shows no link. StarterPrompts goes through AgentChatStarterPrompts.Normalize

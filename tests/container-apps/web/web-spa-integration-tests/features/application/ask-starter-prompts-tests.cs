@@ -8,7 +8,8 @@
 // appsettings. The SPA side is the banner tests' container shape: the real LoadChatConfiguration
 // handler against a scripted IWebServerApiService, then AskStarterPrompts rendered with
 // HtmlRenderer. The renderer has no AgentContext, so a click would do nothing; the prompt text
-// each card sends is asserted through its data-prompt attribute.
+// each card sends is asserted through its data-prompt attribute. The server hop is the real
+// GetAgentChatConfiguration handler with fake principal and upstream ports.
 #endregion
 
 namespace AskStarterPrompts_;
@@ -19,13 +20,18 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using System.Security.Claims;
 using TimeWarp.Architecture;
+using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Foundation.Features;
+using TimeWarp.Identity;
+using Handler = TimeWarp.Architecture.Features.AgentChats.Application.GetAgentChatConfiguration.Handler;
+using IAgentChatUpstream = TimeWarp.Architecture.Features.AgentChats.Application.IAgentChatUpstream;
 using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 
 [TestTag("Unit")]
@@ -170,6 +176,23 @@ public class AskStarterPrompts_Should_
     }
   }
 
+  public static async Task Send_Normalized_Configured_Prompts_From_The_Handler()
+  {
+    XaiChatOptions options = new();
+    options.StarterPrompts.Add(new() { Icon = " Search ", Title = " Find an order ", Prompt = " Help me find an order. " });
+    Handler handler = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(options));
+
+    GetAgentChatConfiguration.Response configured = (await handler.Handle(new(), CancellationToken.None)).AsT0;
+
+    configured.StarterPrompts.Count.ShouldBe(1);
+    configured.StarterPrompts[0].Icon.ShouldBe("Search");
+    configured.StarterPrompts[0].Title.ShouldBe("Find an order");
+    configured.StarterPrompts[0].Prompt.ShouldBe("Help me find an order.");
+
+    Handler unset = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(new XaiChatOptions()));
+    (await unset.Handle(new(), CancellationToken.None)).AsT0.StarterPrompts.ShouldBe(AgentChatStarterPrompts.Defaults);
+  }
+
   private static int CountOf(string html, string fragment) =>
     html.Split(fragment).Length - 1;
 
@@ -266,6 +289,26 @@ public class AskStarterPrompts_Should_
 
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) =>
       throw new NotSupportedException(identifier);
+  }
+
+  private sealed class FixedPrincipalAccessor : ICurrentPrincipalAccessor
+  {
+    public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
+      Task.FromResult<PrincipalId?>(PrincipalId.New());
+  }
+
+  /// <summary>The configuration answer does not depend on the upstream; completion is a test failure.</summary>
+  private sealed class UnconfiguredUpstream : IAgentChatUpstream
+  {
+    public bool IsConfigured => false;
+
+    public string? Model => null;
+
+    public Task<OneOf<CompleteAgentChat.Response, SharedProblemDetails>> CompleteAsync
+    (
+      CompleteAgentChat.Command command,
+      CancellationToken cancellationToken
+    ) => throw new NotSupportedException(nameof(CompleteAsync));
   }
 
   private sealed class AnonymousAuthenticationStateProvider : AuthenticationStateProvider

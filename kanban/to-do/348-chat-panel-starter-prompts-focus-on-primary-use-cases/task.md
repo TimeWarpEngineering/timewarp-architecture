@@ -35,6 +35,8 @@ Existing chat surfaces to start from:
 
 - Created: 1441658 (2026-10-13)
 - Implemented: 2026-10-13 (ganda task work, implement oracle)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T15:44:32Z
+- Review oracle: claude-opus-5-5 orchestrator plus one general reviewer subagent (sonnet), effort 2, 2 rounds, disposition clean — 2026-10-13
 
 ## Results
 
@@ -95,3 +97,17 @@ dotnet run --project tests/container-apps/web/web-spa-integration-tests -- --fil
 - With the override, Ask shows only the "Find an order" card with a search icon. More than six
   configured entries show only the first six. Entries with no title or no prompt are skipped.
 
+### Review disposition
+
+- **Rounds:** 2 at effort 2, with one `general` reviewer. Framework: `review/review-framework.md`.
+- **Final counts** (`review/round-2/merged.md`): bug 0; suggestion 1 fixed; nit 3 fixed; 0 open;
+  0 wontfix.
+- **Disposition:** `clean` (`review/disposition.md`).
+- **Fixes from review:**
+  - M1: the handler test `Send_Normalized_Configured_Prompts_From_The_Handler`. The class now has
+    7 tests.
+  - M2: the Design region wording on list replacement and merge by index.
+  - M3: init-only properties on `AgentChatStarterPrompt`.
+  - M4: a re-wrapped Design comment.
+- **Gates after the fixes:** `dev build` had 0 warnings and 0 errors, and the web-spa Unit lane
+  passed 126/126.

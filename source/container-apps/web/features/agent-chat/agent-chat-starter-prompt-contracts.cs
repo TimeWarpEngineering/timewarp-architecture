@@ -7,9 +7,11 @@
 // A prompt is a value record: an icon name, a title, a one-line subtitle, and the text Ask sends
 // on click. The icon is a name, not a FluentUI type: contracts and appsettings cannot carry a
 // component. The SPA maps the name (AskStarterPromptIcons); an unknown name gets the default icon.
-// XAI:StarterPrompts replaces the whole list. Normalize drops entries without a title or prompt,
-// trims every field, and keeps at most MaxCount, so a long list cannot push the composer off the
-// panel. When nothing usable is left (unset, empty, or all blank) Ask shows Defaults.
+// A configured XAI:StarterPrompts list is used instead of Defaults, not merged with them (layered
+// configuration sources still merge entries by index). Normalize drops entries without a title or
+// prompt, trims every field, and keeps at most MaxCount, so a long list cannot push the composer off
+// the panel. When nothing usable is left (unset, empty, or all blank) Ask shows Defaults. The
+// properties are init-only because Defaults is one shared list handed to every caller.
 // The defaults are the template's primary uses of Ask: find a page, explain this page, run an
 // action, and check what needs approval. They describe what every generated app has, not a
 // product catalog the template does not ship.
@@ -21,16 +23,16 @@ namespace TimeWarp.Architecture.Features.AgentChats;
 public sealed record AgentChatStarterPrompt
 {
   /// <summary>Icon name (see AskStarterPromptIcons in the SPA). Blank or unknown uses the default icon.</summary>
-  public string? Icon { get; set; }
+  public string? Icon { get; init; }
 
   /// <summary>Short card title, for example "Explain this page".</summary>
-  public string Title { get; set; } = string.Empty;
+  public string Title { get; init; } = string.Empty;
 
   /// <summary>One-line description under the title.</summary>
-  public string? Subtitle { get; set; }
+  public string? Subtitle { get; init; }
 
   /// <summary>Text sent to the model when the card is clicked.</summary>
-  public string Prompt { get; set; } = string.Empty;
+  public string Prompt { get; init; } = string.Empty;
 }
 
 /// <summary>Template defaults and normalization for <see cref="AgentChatStarterPrompt"/>.</summary>
