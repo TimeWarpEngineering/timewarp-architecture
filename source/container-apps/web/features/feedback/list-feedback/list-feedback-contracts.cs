@@ -28,9 +28,12 @@ using System.Globalization;
   Policy = PermissionIds.AdminFeedbackRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
-[ReferenceableResource("feedback", "Feedback items", IdProperty = nameof(ListFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListFeedback.Item.Title))]
+[ReferenceableResource(ListFeedback.ReferencePrefix, "Feedback items", IdProperty = nameof(ListFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListFeedback.Item.Title))]
 public static partial class ListFeedback
 {
+  /// <summary>The @ prefix of a feedback item (task 345); pages mark rows with it (AskTagMark, task 346).</summary>
+  public const string ReferencePrefix = "feedback";
+
   public const int DefaultPageSize = 25;
   public const int MaxPageSize = 100;
   public const int MaxSearchLength = 200;

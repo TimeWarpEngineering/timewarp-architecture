@@ -171,6 +171,12 @@
   padding-inline: 0;
 }
 
+.twe-agent-ask__lead {
+  grid-area: lead;
+  display: flex;
+  align-items: center;
+}
+
 .twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {
   grid-area: send;
   justify-self: end;

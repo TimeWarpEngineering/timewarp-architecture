@@ -21,9 +21,12 @@ namespace TimeWarp.Architecture.Features.Feedback;
   Policy = PermissionIds.FeedbackFileSelf,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
-[ReferenceableResource("my-feedback", "My feedback", IdProperty = nameof(ListMyFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListMyFeedback.Item.Title))]
+[ReferenceableResource(ListMyFeedback.ReferencePrefix, "My feedback", IdProperty = nameof(ListMyFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListMyFeedback.Item.Title))]
 public static partial class ListMyFeedback
 {
+  /// <summary>The @ prefix of the caller's own feedback item (task 345); pages mark rows with it (AskTagMark, task 346).</summary>
+  public const string ReferencePrefix = "my-feedback";
+
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/Feedback", HttpVerb.Get)]
