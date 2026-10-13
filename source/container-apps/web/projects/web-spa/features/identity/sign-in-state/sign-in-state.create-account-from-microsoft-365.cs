@@ -7,9 +7,9 @@
 // runs through PasskeyCeremonyClient.CompleteEntraChoiceCreateAsync: the browser sends the request
 // and stores both Set-Cookie headers (task 350; under InteractiveServer IWebServerApiService is a
 // server-side self-call). The navigation is forceLoad so the next request carries the session, the
-// same as the already-have path. A problem whose
-// title or detail says "expired" flips Microsoft365ChoiceValid to false so the page offers the
-// sign-in again; every problem also goes to the shell region.
+// same as the already-have path. A problem whose title or detail says "expired" flips
+// Microsoft365ChoiceValid to false so the page offers the sign-in again; every problem also goes to
+// the shell region.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
