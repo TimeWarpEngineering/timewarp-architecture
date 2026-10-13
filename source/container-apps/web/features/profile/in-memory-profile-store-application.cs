@@ -7,6 +7,9 @@
 // InMemoryPrincipalStore registration. PostgresDbModule swaps to scoped EfProfileStore when a
 // connection string is present. Add throws on duplicate so GetProfile create-if-missing can
 // re-find after a concurrent insert race (same contract as EF unique-PK path).
+// Task 328: FindMany/Search scan the dictionary; Search is OrdinalIgnoreCase contains on
+// DisplayName or Email. It matches the EF store's lower-cased contains for ASCII; non-ASCII case
+// folds (e.g. Turkish dotted i) can differ, since Postgres lower() follows the database LC_CTYPE.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles.Application;
@@ -24,6 +27,37 @@ public sealed class InMemoryProfileStore : IProfileStore
     cancellationToken.ThrowIfCancellationRequested();
     Profiles.TryGetValue(id, out Profile? profile);
     return Task.FromResult(profile);
+  }
+
+  public Task<IReadOnlyList<Profile>> FindManyAsync(
+    IReadOnlyCollection<ProfileId> ids,
+    CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(ids);
+    cancellationToken.ThrowIfCancellationRequested();
+    List<Profile> found = [];
+    foreach (ProfileId id in ids.Distinct())
+    {
+      if (Profiles.TryGetValue(id, out Profile? profile))
+      {
+        found.Add(profile);
+      }
+    }
+
+    return Task.FromResult<IReadOnlyList<Profile>>(found);
+  }
+
+  public Task<IReadOnlyList<Profile>> SearchAsync(string term, CancellationToken cancellationToken = default)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(term);
+    cancellationToken.ThrowIfCancellationRequested();
+    IReadOnlyList<Profile> matches =
+    [
+      .. Profiles.Values.Where(profile =>
+        profile.DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase)
+        || profile.Email?.Contains(term, StringComparison.OrdinalIgnoreCase) == true)
+    ];
+    return Task.FromResult(matches);
   }
 
   public Task AddAsync(Profile profile, CancellationToken cancellationToken = default)
