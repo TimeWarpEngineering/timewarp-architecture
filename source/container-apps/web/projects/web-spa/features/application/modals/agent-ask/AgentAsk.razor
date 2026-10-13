@@ -466,10 +466,12 @@
                     OnClick="CloseAsync" />
     </div>
   </header>
-  @if (ConversationExpired)
-  {
-    <p class="twe-agent-ask__expired" role="status" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
-  }
+  <div class="twe-agent-ask__status" role="status">
+    @if (ConversationExpired)
+    {
+      <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
+    }
+  </div>
 
   @if (Readiness == CatalogAgentReadiness.NotConfigured)
   {

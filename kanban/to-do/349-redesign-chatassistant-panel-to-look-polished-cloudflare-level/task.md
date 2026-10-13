@@ -40,6 +40,8 @@ Responsive, light/dark consistent with the template theme.
 
 - Created: 1442907 (2026-10-13)
 - 2026-10-13: implemented by ganda task work (Opus 5.5, headless implementer).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T16:18:15Z
+- Review oracle: claude-opus-5-5 (headless), effort 3, roster general (subagent a5decffb365815db4); 2 rounds; disposition clean — 2026-10-13
 
 ## Results
 
@@ -82,6 +84,24 @@ Responsive, light/dark consistent with the template theme.
 - `web-spa-playwright-tests` (all): 12/12 passed, including the new `AskPanelDesign_Given_Wasm`.
 - `web-spa-integration-tests --filter-class Ask`: 38/38. `--filter-class CatalogAgent`: 40/40 after the boyscout fix (39/40 before).
 - `ganda repo audit`: passes all checks.
+
+### Review disposition
+
+- Rounds: 2. Roster: general, effort 3 (by-diff budget, 867 lines).
+- Final counts: bug 2 fixed, suggestion 2 fixed, nit 4 fixed. 0 open, 0 wontfix.
+- Disposition: **clean**.
+- Fixes on this task:
+  - The Tag pill and edit-behavior segment styles now target the fluent-button host. Fluent v5 buttons have no `control` part.
+  - `WaitForBoxAsync` now asserts that the box reached the expected size.
+  - On short viewports the orbs shrink to half size (`zoom`), so all four cards fit at 1280x800 docked and at 800x700.
+  - Small secondary text moved from `--twe-muted` (below AA) to `--twe-ink-2`.
+  - The duplicate comment is removed, and the cards respect reduced motion.
+  - `AskAnswerBar.LastAnswer()` returns `string?` instead of comparing against the fallback label.
+  - The title uses the type token.
+  - The expired notice sits in an always-present `role=status` live region.
+- Re-run gates: `dev build` 0/0; Playwright 12/12; integration `Ask` 38/38, `CatalogAgent` 40/40.
+- Artifacts: `review/review-framework.md`, `review/round-1/{general,merged}.md`, `review/round-2/{general,merged}.md`, `review/disposition.md`.
+- The `after-ask-empty-state-{1280,800}.png` assets were re-taken after the fixes.
 
 ### How to validate
 

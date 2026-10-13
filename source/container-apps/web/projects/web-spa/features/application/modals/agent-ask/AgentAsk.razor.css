@@ -80,7 +80,7 @@
 
 .twe-agent-ask__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--twe-text-body);
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -89,7 +89,7 @@
 .twe-agent-ask__conversation {
   margin: 0;
   overflow: hidden;
-  color: var(--twe-muted);
+  color: var(--twe-ink-2);
   font-size: var(--twe-text-helper);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -117,8 +117,11 @@
   color: var(--twe-ink-2);
 }
 
-.twe-agent-ask__expired {
+.twe-agent-ask__status {
   flex: none;
+}
+
+.twe-agent-ask__expired {
   margin: var(--twe-space-2) var(--twe-ask-inset) 0;
   padding: var(--twe-space-2) var(--twe-space-3);
   border: 1px solid var(--twe-warning);
@@ -267,7 +270,17 @@
 
 .twe-agent-ask__tagline {
   margin: 0 0 calc(var(--twe-space-2) * 2);
-  color: var(--twe-muted);
+  color: var(--twe-ink-2);
+}
+
+/* On short viewports the decorative orbs shrink and give their height to the cards, so the last
+   card clears the notice and composer without scrolling. Zoom, unlike the scale transform, also
+   shrinks the layout box. */
+@media (max-height: 900px) {
+  .twe-agent-ask__hero {
+    transform: none;
+    zoom: 0.5;
+  }
 }
 
 /* ---------- Transcript extras ---------- */
@@ -366,7 +379,7 @@
   align-items: center;
 }
 
-.twe-agent-ask__lead ::deep fluent-button::part(control) {
+.twe-agent-ask__lead ::deep fluent-button {
   border-radius: 999px;
   border-color: var(--twe-rule);
   color: var(--twe-ink-2);
@@ -395,7 +408,7 @@
 
 .twe-agent-ask__edit-label {
   margin: 0;
-  color: var(--twe-muted);
+  color: var(--twe-ink-2);
   font-size: var(--twe-text-helper);
 }
 
@@ -409,21 +422,17 @@
 .twe-agent-ask__segments ::deep > fluent-button {
   flex: 1 1 0;
   min-width: 0;
-}
-
-.twe-agent-ask__segments ::deep > fluent-button::part(control) {
-  width: 100%;
   justify-content: center;
   border-radius: 0;
   font-size: var(--twe-text-helper);
 }
 
-.twe-agent-ask__segments ::deep > fluent-button:first-child::part(control) {
+.twe-agent-ask__segments ::deep > fluent-button:first-child {
   border-start-start-radius: var(--twe-radius-sm);
   border-end-start-radius: var(--twe-radius-sm);
 }
 
-.twe-agent-ask__segments ::deep > fluent-button:last-child::part(control) {
+.twe-agent-ask__segments ::deep > fluent-button:last-child {
   border-start-end-radius: var(--twe-radius-sm);
   border-end-end-radius: var(--twe-radius-sm);
 }

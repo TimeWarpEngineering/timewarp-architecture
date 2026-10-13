@@ -31,8 +31,6 @@
 
   private IDisposable? StatusSubscription;
 
-  private bool HasAnswer => LastAnswer() != NoAnswer;
-
   protected override void OnInitialized()
   {
     base.OnInitialized();
@@ -48,7 +46,7 @@
     base.Dispose();
   }
 
-  private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer());
+  private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer() ?? NoAnswer);
 
   private Task HelpfulAsync() => FileAsync("Ask AI thumbs up");
 
@@ -56,7 +54,7 @@
 
   private async Task FileAsync(string title)
   {
-    string body = LastAnswer();
+    string body = LastAnswer() ?? NoAnswer;
     if (body.Length > SubmitFeedback.MaxBodyLength)
     {
       body = body[..SubmitFeedback.MaxBodyLength];
@@ -65,11 +63,11 @@
     await FeedbackState.SubmitFeedback(FeedbackKind.Other, title, body);
   }
 
-  private string LastAnswer()
+  private string? LastAnswer()
   {
     if (Conversation is null)
     {
-      return NoAnswer;
+      return null;
     }
 
     for (int index = Conversation.Turns.Count - 1; index >= 0; index--)
@@ -84,11 +82,11 @@
       }
     }
 
-    return NoAnswer;
+    return null;
   }
 }
 
-@if (HasAnswer)
+@if (LastAnswer() is not null)
 {
   <div class="twe-agent-ask__answer-bar">
     <FluentButton Appearance="ButtonAppearance.Subtle"

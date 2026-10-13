@@ -7,9 +7,6 @@
   text-align: start;
 }
 
-/* FluentButton's root is the child component, so the card styles anchor on this div. The title
-   and subtitle are light DOM: they inherit alignment and weight from the fluent-button host, not
-   from its shadow control, so the host carries them. */
 /* FluentButton's root is the child component, so the card styles anchor on this div. Fluent v5
    draws the button's border, radius and fill on the fluent-button host, and the title and subtitle
    are light DOM that inherit alignment and weight from it, so the card is styled on the host. */
@@ -44,6 +41,16 @@
   transform: translateY(1px);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .twe-ask-starters ::deep > fluent-button {
+    transition: none;
+  }
+
+  .twe-ask-starters ::deep > fluent-button:active {
+    transform: none;
+  }
+}
+
 .twe-ask-starters__icon {
   display: inline-flex;
   flex: none;
@@ -75,7 +82,7 @@
 }
 
 .twe-ask-starters__subtitle {
-  color: var(--twe-muted);
+  color: var(--twe-ink-2);
   font-size: var(--twe-text-helper);
   line-height: 1.35;
 }

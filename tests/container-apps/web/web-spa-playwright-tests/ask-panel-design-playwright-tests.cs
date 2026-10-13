@@ -150,6 +150,7 @@ public class AskPanelDesign_Given_Wasm
     }
 
     last.ShouldNotBeNull(selector);
+    ready(last).ShouldBeTrue($"{selector} never reached the expected box: x={last.X}, width={last.Width}");
     return last;
   }
 }
