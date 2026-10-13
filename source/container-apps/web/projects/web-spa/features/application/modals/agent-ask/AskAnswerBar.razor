@@ -11,6 +11,9 @@
   not the whole transcript. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
   not approval-gated. Support is hidden when configuration has no url; LoadChatConfiguration has
   already limited it to a relative path or http/https (AskSupportLink).
+  The bar renders only once the conversation has an answer, so the empty state shows no Copy or
+  thumbs (task 349). The bar subscribes to the conversation status: the cascade is fixed, so a
+  finished turn would not otherwise re-render it.
 *@
 
 @code {
@@ -23,6 +26,27 @@
   [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
 
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+
+  private const string NoAnswer = "Ask AI answer";
+
+  private IDisposable? StatusSubscription;
+
+  private bool HasAnswer => LastAnswer() != NoAnswer;
+
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    StatusSubscription = Conversation?.RegisterOnStatusChanged(OnStatusChanged);
+  }
+
+  private void OnStatusChanged(Ai.ConversationStatus status) => _ = InvokeAsync(StateHasChanged);
+
+  public override void Dispose()
+  {
+    StatusSubscription?.Dispose();
+    StatusSubscription = null;
+    base.Dispose();
+  }
 
   private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer());
 
@@ -45,7 +69,7 @@
   {
     if (Conversation is null)
     {
-      return "Ask AI answer";
+      return NoAnswer;
     }
 
     for (int index = Conversation.Turns.Count - 1; index >= 0; index--)
@@ -60,37 +84,40 @@
       }
     }
 
-    return "Ask AI answer";
+    return NoAnswer;
   }
 }
 
-<div class="twe-agent-ask__answer-bar">
-  <FluentButton Appearance="ButtonAppearance.Subtle"
-                IconOnly="true"
-                IconStart="@(new Icons.Regular.Size20.Copy())"
-                Title="Copy"
-                Tooltip="Copy"
-                aria-label="Copy"
-                data-qa="AskCopy"
-                OnClick="CopyAsync" />
-  <FluentButton Appearance="ButtonAppearance.Subtle"
-                IconOnly="true"
-                IconStart="@(new Icons.Regular.Size20.ThumbLike())"
-                Title="Thumbs up"
-                Tooltip="Thumbs up"
-                aria-label="Thumbs up"
-                data-qa="AskThumbsUp"
-                OnClick="HelpfulAsync" />
-  <FluentButton Appearance="ButtonAppearance.Subtle"
-                IconOnly="true"
-                IconStart="@(new Icons.Regular.Size20.ThumbDislike())"
-                Title="Thumbs down"
-                Tooltip="Thumbs down"
-                aria-label="Thumbs down"
-                data-qa="AskThumbsDown"
-                OnClick="UnhelpfulAsync" />
-  @if (!string.IsNullOrWhiteSpace(SupportUrl))
-  {
-    <a data-qa="AskSupport" href="@SupportUrl">Support</a>
-  }
-</div>
+@if (HasAnswer)
+{
+  <div class="twe-agent-ask__answer-bar">
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size20.Copy())"
+                  Title="Copy"
+                  Tooltip="Copy"
+                  aria-label="Copy"
+                  data-qa="AskCopy"
+                  OnClick="CopyAsync" />
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size20.ThumbLike())"
+                  Title="Thumbs up"
+                  Tooltip="Thumbs up"
+                  aria-label="Thumbs up"
+                  data-qa="AskThumbsUp"
+                  OnClick="HelpfulAsync" />
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size20.ThumbDislike())"
+                  Title="Thumbs down"
+                  Tooltip="Thumbs down"
+                  aria-label="Thumbs down"
+                  data-qa="AskThumbsDown"
+                  OnClick="UnhelpfulAsync" />
+    @if (!string.IsNullOrWhiteSpace(SupportUrl))
+    {
+      <a data-qa="AskSupport" href="@SupportUrl">Support</a>
+    }
+  </div>
+}

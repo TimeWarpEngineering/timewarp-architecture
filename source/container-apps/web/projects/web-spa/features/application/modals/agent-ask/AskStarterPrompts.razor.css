@@ -3,41 +3,79 @@
   flex-direction: column;
   gap: var(--twe-space-2);
   width: 100%;
+  max-width: 22rem;
+  text-align: start;
 }
 
-/* FluentButton's root is the child component, so the card styles anchor on this div. */
+/* FluentButton's root is the child component, so the card styles anchor on this div. The title
+   and subtitle are light DOM: they inherit alignment and weight from the fluent-button host, not
+   from its shadow control, so the host carries them. */
+/* FluentButton's root is the child component, so the card styles anchor on this div. Fluent v5
+   draws the button's border, radius and fill on the fluent-button host, and the title and subtitle
+   are light DOM that inherit alignment and weight from it, so the card is styled on the host. */
 .twe-ask-starters ::deep > fluent-button {
   width: 100%;
-}
-
-.twe-ask-starters ::deep > fluent-button::part(control) {
-  width: 100%;
+  max-width: none;
   height: auto;
-  min-height: 44px;
+  min-height: 52px;
   justify-content: flex-start;
   align-items: center;
   gap: var(--twe-space-3);
+  padding: var(--twe-space-2) var(--twe-space-3) var(--twe-space-2) var(--twe-space-2);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  font-weight: 400;
   text-align: start;
   white-space: normal;
-  padding: var(--twe-space-3);
+  box-shadow: var(--twe-shadow-sm);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.twe-ask-starters ::deep > fluent-button:hover {
+  border-color: var(--twe-purple-soft);
+  background: var(--twe-paper);
+  box-shadow: var(--twe-shadow);
+}
+
+.twe-ask-starters ::deep > fluent-button:active {
+  transform: translateY(1px);
+}
+
+.twe-ask-starters__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--twe-rule);
   border-radius: var(--twe-radius-sm);
   background: var(--twe-paper-2);
-  color: var(--twe-ink);
-  cursor: pointer;
+}
+
+/* app.css caps svg at max-width: 100%; the tile keeps the icon at its 20px. */
+.twe-ask-starters__icon ::deep svg {
+  max-width: none;
 }
 
 .twe-ask-starters__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .twe-ask-starters__title {
-  font-weight: 600;
+  font-size: var(--twe-text-body);
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .twe-ask-starters__subtitle {
-  color: var(--twe-ink-2);
-  font-size: 0.875em;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+  line-height: 1.35;
 }

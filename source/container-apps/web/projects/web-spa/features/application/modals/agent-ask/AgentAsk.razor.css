@@ -1,27 +1,105 @@
+/* Panel root. */
 .twe-agent-ask {
+  --twe-ask-inset: calc(var(--twe-space-2) * 2);
+  --twe-ask-dot: var(--twe-rule);
   display: flex;
   flex-direction: column;
-  gap: var(--twe-space-3);
   width: 100%;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
-  padding: var(--twe-space-3);
   background: var(--twe-paper);
   border-left: 1px solid var(--twe-rule);
+  color: var(--twe-ink);
+  font-size: var(--twe-text-body);
   overflow: hidden;
 }
 
-.twe-agent-ask__header,
-.twe-agent-ask__header-actions {
+/* The library declares its --sc-ai-* tokens on .sc-ai-root itself, so the mapping onto --twe-*
+   sits on that element (the scoped selector outranks the library's). The transcript, the composer
+   and the send button then follow the template theme instead of the library's Bootstrap blue. */
+.twe-agent-ask ::deep .sc-ai-root {
+  --sc-ai-font-family: var(--twe-font-sans);
+  --sc-ai-font-size: var(--twe-text-body);
+  --sc-ai-font-size-sm: var(--twe-text-helper);
+  --sc-ai-color-bg: transparent;
+  --sc-ai-color-surface: var(--twe-paper);
+  --sc-ai-color-surface-hover: var(--twe-paper-2);
+  --sc-ai-color-text: var(--twe-ink);
+  --sc-ai-color-text-secondary: var(--twe-muted);
+  --sc-ai-color-text-on-accent: var(--twe-on-primary);
+  --sc-ai-color-accent: var(--twe-primary);
+  --sc-ai-color-accent-hover: var(--twe-primary-hover);
+  --sc-ai-color-border: var(--twe-rule);
+  --sc-ai-color-success: var(--twe-positive);
+  --sc-ai-color-error: var(--twe-danger);
+  --sc-ai-color-bubble-user: var(--twe-paper-2);
+  --sc-ai-color-bubble-user-text: var(--twe-ink);
+  --sc-ai-color-bubble-assistant-text: var(--twe-ink);
+  --sc-ai-border-radius-lg: var(--twe-radius);
+  --sc-ai-border-radius-sm: var(--twe-radius-sm);
+}
+
+/* ---------- Header: one compact row over a hairline ---------- */
+.twe-agent-ask__header {
   display: flex;
+  flex: none;
   flex-wrap: nowrap;
-  gap: var(--twe-space-2);
   align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-2) var(--twe-space-2) var(--twe-space-2) var(--twe-ask-inset);
+  border-bottom: 1px solid var(--twe-rule);
+  background: var(--twe-paper);
+}
+
+.twe-agent-ask__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--twe-space-2);
+  min-width: 0;
+}
+
+.twe-agent-ask__mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--twe-radius-sm);
+  background: linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue));
+}
+
+.twe-agent-ask__titles {
+  display: flex;
+  align-items: baseline;
+  gap: var(--twe-space-2);
+  min-width: 0;
+}
+
+.twe-agent-ask__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.twe-agent-ask__conversation {
+  margin: 0;
+  overflow: hidden;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .twe-agent-ask__header-actions {
+  display: flex;
   flex: none;
+  align-items: center;
+  gap: 2px;
 }
 
 /* app.css caps svg at max-width: 100%. An icon-only button's start slot shrinks to fit, so the
@@ -30,69 +108,60 @@
   max-width: none;
 }
 
-.twe-agent-ask__edit {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--twe-space-2);
-}
-
-.twe-agent-ask__segments {
-  display: flex;
-  flex-wrap: nowrap;
-  width: 100%;
-}
-
-.twe-agent-ask__segments ::deep > fluent-button {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.twe-agent-ask__segments ::deep > fluent-button::part(control) {
-  width: 100%;
-  justify-content: center;
-  border-radius: 0;
-}
-
-.twe-agent-ask__segments ::deep > fluent-button:first-child::part(control) {
-  border-start-start-radius: var(--twe-radius-sm);
-  border-end-start-radius: var(--twe-radius-sm);
-}
-
-.twe-agent-ask__segments ::deep > fluent-button:last-child::part(control) {
-  border-start-end-radius: var(--twe-radius-sm);
-  border-end-end-radius: var(--twe-radius-sm);
-}
-
-.twe-agent-ask__header {
-  justify-content: space-between;
-}
-
-.twe-agent-ask__heading {
-  min-width: 0;
-}
-
-.twe-agent-ask__conversation,
-.twe-agent-ask__greeting,
-.twe-agent-ask__edit-label {
-  margin: 0;
-}
-
-.twe-agent-ask__header button,
-.twe-agent-ask__header fluent-button,
-.twe-agent-ask__edit button,
-.twe-agent-ask__edit fluent-button {
+.twe-agent-ask__header ::deep fluent-button,
+.twe-agent-ask__edit ::deep fluent-button {
   cursor: pointer;
 }
 
-.twe-agent-ask__title {
+.twe-agent-ask__header-actions ::deep fluent-button {
+  color: var(--twe-ink-2);
+}
+
+.twe-agent-ask__expired {
+  flex: none;
+  margin: var(--twe-space-2) var(--twe-ask-inset) 0;
+  padding: var(--twe-space-2) var(--twe-space-3);
+  border: 1px solid var(--twe-warning);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-helper);
+}
+
+/* ---------- Not-ready states (not configured, sign in, error, starting) ---------- */
+.twe-agent-ask__state {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--twe-space-3);
+  min-height: 0;
+  padding: var(--twe-space-6) var(--twe-ask-inset);
+  overflow-y: auto;
+}
+
+.twe-agent-ask__state-title {
   margin: 0;
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+}
+
+.twe-agent-ask__state-text {
+  margin: 0;
+  color: var(--twe-ink-2);
 }
 
 .twe-agent-ask__setup {
   margin: 0;
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: var(--twe-ink);
+  font-family: var(--twe-font-mono);
+  font-size: var(--twe-text-helper);
   white-space: pre-wrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
 }
 
 .twe-agent-ask__actions {
@@ -100,33 +169,152 @@
   gap: var(--twe-space-3);
 }
 
+/* ---------- Body: dotted canvas between header and footer ---------- */
+/* The library's sc-ai-chat-page class is a full-page shell (height: 100vh). Inside the panel that
+   pushed the title and the first messages out of view once a reply arrived. It fills the space
+   between header and edit row instead, and the body scrolls inside it. */
+.twe-agent-ask ::deep .sc-ai-chat-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  background-color: var(--twe-background);
+  background-image: radial-gradient(var(--twe-ask-dot) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.twe-agent-ask ::deep .sc-ai-chat-page__body {
+  min-height: 0;
+}
+
+.twe-agent-ask ::deep .sc-ai-message-list {
+  min-height: 100%;
+  padding: var(--twe-ask-inset);
+}
+
+.twe-agent-ask ::deep .sc-ai-chat-page__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-2) var(--twe-ask-inset) var(--twe-space-3);
+  border-top: 0;
+  background: transparent;
+}
+
+.twe-agent-ask ::deep .sc-ai-chat-page__input-container {
+  width: 100%;
+}
+
+/* ---------- Empty state: orbs, greeting, tagline, cards ---------- */
+.twe-agent-ask__welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--twe-space-2);
+  min-height: 100%;
+  padding-block: var(--twe-space-3);
+  text-align: center;
+}
+
+/* Three overlapping gradient orbs in the brand purple, blue and green: the TimeWarp take on the
+   reference's 3D cloud, drawn in CSS so there is no image to ship or theme. */
+.twe-agent-ask__hero {
+  position: relative;
+  width: 132px;
+  height: 80px;
+  margin-bottom: var(--twe-space-2);
+  transform: scale(0.85);
+}
+
+.twe-agent-ask__orb {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.twe-agent-ask__orb--back {
+  top: 22px;
+  left: 6px;
+  width: 54px;
+  height: 54px;
+  background: radial-gradient(circle at 35% 30%, var(--twe-blue-bright), var(--twe-blue) 70%);
+  opacity: 0.8;
+}
+
+.twe-agent-ask__orb--side {
+  top: 26px;
+  right: 4px;
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at 35% 30%, var(--twe-green-soft), var(--twe-green) 75%);
+  opacity: 0.85;
+}
+
+.twe-agent-ask__orb--front {
+  top: 0;
+  left: 30px;
+  width: 76px;
+  height: 76px;
+  background: radial-gradient(circle at 32% 28%, var(--twe-purple-soft), var(--twe-purple-2) 55%, var(--twe-purple-deep));
+  box-shadow: var(--twe-shadow);
+}
+
+.twe-agent-ask__greeting {
+  margin: 0;
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.twe-agent-ask__tagline {
+  margin: 0 0 calc(var(--twe-space-2) * 2);
+  color: var(--twe-muted);
+}
+
+/* ---------- Transcript extras ---------- */
+.twe-agent-ask__reasoning {
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}
+
+.twe-agent-ask__reasoning summary {
+  cursor: pointer;
+}
+
+.twe-agent-ask__reasoning p,
+.twe-agent-ask__reasoning pre {
+  margin: var(--twe-space-2) 0 0;
+  white-space: pre-wrap;
+  font-family: var(--twe-font-mono);
+}
+
 .twe-agent-ask__approval {
   display: flex;
   flex-wrap: wrap;
   gap: var(--twe-space-3);
   align-items: center;
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  background: var(--twe-paper);
+  box-shadow: var(--twe-shadow-sm);
+}
+
+.twe-agent-ask__approval p {
+  margin: 0;
 }
 
 .twe-agent-ask__approval pre {
   flex-basis: 100%;
   margin: 0;
+  padding: var(--twe-space-2);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  font-family: var(--twe-font-mono);
+  font-size: var(--twe-text-helper);
   white-space: pre-wrap;
 }
 
-/* The library's sc-ai-chat-page class is a full-page shell (height: 100vh). Inside the panel that
-   pushed the title and the first messages out of view once a reply arrived. Bound it to the panel. */
-.twe-agent-ask ::deep .sc-ai-chat-page {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-  max-height: min(28rem, 60dvh);
-}
-
-.twe-agent-ask__expired {
-  margin: 0;
-  color: var(--twe-ink-2);
-}
-
+/* ---------- Composer ---------- */
 /* MessageInput renders one flex row: leading actions, .sc-ai-input__body, then send.
    Grid areas put the body on the first row and send on the footer row; the lead area stays
    for leading actions (task 346's element pick).
@@ -142,12 +330,15 @@
   gap: var(--twe-space-2);
   padding: var(--twe-space-3);
   background: var(--twe-paper);
-  border-color: var(--twe-rule);
+  border: 1px solid var(--twe-rule);
   border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow-sm);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .twe-agent-ask ::deep .sc-ai-input:focus-within {
   border-color: var(--twe-primary);
+  box-shadow: var(--twe-shadow);
 }
 
 .twe-agent-ask ::deep .sc-ai-input__body {
@@ -166,6 +357,7 @@
   max-height: 10rem;
   overflow-y: auto;
   padding-inline: 0;
+  padding-block: 2px;
 }
 
 .twe-agent-ask__lead {
@@ -174,8 +366,64 @@
   align-items: center;
 }
 
+.twe-agent-ask__lead ::deep fluent-button::part(control) {
+  border-radius: 999px;
+  border-color: var(--twe-rule);
+  color: var(--twe-ink-2);
+}
+
 .twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {
   grid-area: send;
   justify-self: end;
   align-self: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+/* ---------- Edit behavior: a quiet row under the composer ---------- */
+.twe-agent-ask__edit {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-2) var(--twe-ask-inset);
+  border-top: 1px solid var(--twe-rule);
+  background: var(--twe-paper);
+}
+
+.twe-agent-ask__edit-label {
+  margin: 0;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}
+
+.twe-agent-ask__segments {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-wrap: nowrap;
+  max-width: 20rem;
+}
+
+.twe-agent-ask__segments ::deep > fluent-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.twe-agent-ask__segments ::deep > fluent-button::part(control) {
+  width: 100%;
+  justify-content: center;
+  border-radius: 0;
+  font-size: var(--twe-text-helper);
+}
+
+.twe-agent-ask__segments ::deep > fluent-button:first-child::part(control) {
+  border-start-start-radius: var(--twe-radius-sm);
+  border-end-start-radius: var(--twe-radius-sm);
+}
+
+.twe-agent-ask__segments ::deep > fluent-button:last-child::part(control) {
+  border-start-end-radius: var(--twe-radius-sm);
+  border-end-end-radius: var(--twe-radius-sm);
 }
