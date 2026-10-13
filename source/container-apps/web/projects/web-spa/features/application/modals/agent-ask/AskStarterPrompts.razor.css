@@ -1,4 +1,4 @@
-.twe-agent-ask__suggestions {
+.twe-ask-starters {
   display: flex;
   flex-direction: column;
   gap: var(--twe-space-2);
@@ -6,15 +6,17 @@
 }
 
 /* FluentButton's root is the child component, so the card styles anchor on this div. */
-.twe-agent-ask__suggestions ::deep > fluent-button {
+.twe-ask-starters ::deep > fluent-button {
   width: 100%;
 }
 
-.twe-agent-ask__suggestions ::deep > fluent-button::part(control) {
+.twe-ask-starters ::deep > fluent-button::part(control) {
   width: 100%;
   height: auto;
   min-height: 44px;
   justify-content: flex-start;
+  align-items: center;
+  gap: var(--twe-space-3);
   text-align: start;
   white-space: normal;
   padding: var(--twe-space-3);
@@ -23,4 +25,19 @@
   background: var(--twe-paper-2);
   color: var(--twe-ink);
   cursor: pointer;
+}
+
+.twe-ask-starters__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.twe-ask-starters__title {
+  font-weight: 600;
+}
+
+.twe-ask-starters__subtitle {
+  color: var(--twe-ink-2);
+  font-size: 0.875em;
 }

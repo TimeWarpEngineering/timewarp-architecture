@@ -49,6 +49,8 @@
   change cancel pick mode; every request re-renders the instructions, so page_context.tags in
   them is current.
   Closing the panel also closes the reference picker.
+  The empty state is AskStarterPrompts (task 348): the configured XAI:StarterPrompts cards, or the
+  template defaults.
   AskPrivacyBanner (task 347) sits first in the footer, directly above the composer. The first
   render restores its local-storage dismissal before the agent (and so the footer) is built.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
@@ -62,13 +64,6 @@
 @code {
   private const string AskPlaceholder =
     "Tell the app what you want. Type @ to reference a resource.";
-
-  private static readonly string[] Suggestions =
-  [
-    "What can I do here?",
-    "Explain this page",
-    "What would need my approval?",
-  ];
 
   [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
   [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
@@ -536,7 +531,7 @@
             <EmptyContent>
               <div class="twe-agent-ask__welcome">
                 <p class="twe-agent-ask__greeting">What should we do on this page?</p>
-                <AskSuggestions Suggestions="Suggestions" />
+                <AskStarterPrompts />
               </div>
             </EmptyContent>
           </Microsoft.AspNetCore.Components.AI.MessageList>
