@@ -1,5 +1,6 @@
 #region Purpose
-// On-demand import of ask-ai.js: insert an @ token and copy answer text.
+// On-demand import of ask-ai.js: insert an @ token, check an @ starts a word, refocus the
+// composer, and copy answer text.
 #endregion
 
 #region Design
@@ -22,6 +23,32 @@ internal static class AskAiJsModule
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(token);
     await InvokeAsync(jsRuntime, "InsertReference", token);
+  }
+
+  /// <summary>On the @ keydown: true when the caret starts a word (nothing or whitespace before it).</summary>
+  internal static async Task<bool> AtStartsWordAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    try
+    {
+      await using IJSObjectReference module = await jsRuntime.InvokeAsync<IJSObjectReference>
+      (
+        "import",
+        CancellationToken.None,
+        Specifier
+      );
+      return await module.InvokeAsync<bool>("AtStartsWord");
+    }
+    catch (JSDisconnectedException)
+    {
+      return false;
+    }
+  }
+
+  internal static Task FocusComposerAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "FocusComposer");
   }
 
   internal static async Task CopyTextAsync(IJSRuntime jsRuntime, string text)

@@ -1,0 +1,53 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using Ai = Microsoft.AspNetCore.Components.AI
+
+@*
+  Purpose: Empty-state starter prompt cards for the Ask panel (task 348).
+
+  Design: The list is AgentSurfaceState.StarterPrompts: XAI:StarterPrompts normalized by
+  AgentChatStarterPrompts (at most six), or the template defaults for Ask's primary uses. Each
+  card shows the icon (AskStarterPromptIcons), the title, and the one-line subtitle, and a click
+  sends the prompt text through the cascaded conversation. The prompts are about this app and
+  page, not a product catalog the template does not have. With no conversation context the click
+  does nothing. Look (task 349): a left-aligned card with a soft icon tile, a medium-weight title
+  and a muted subtitle, centered in the empty state at a readable width.
+*@
+
+@code {
+  [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
+
+  private IReadOnlyList<AgentChatStarterPrompt> Prompts => AgentSurfaceState.StarterPrompts;
+
+  private Task SendAsync(string prompt)
+  {
+    if (Conversation is null)
+    {
+      return Task.CompletedTask;
+    }
+
+    return Conversation.SendMessageAsync(prompt);
+  }
+}
+
+<div class="twe-ask-starters" data-qa="AskStarterPrompts">
+  @foreach (AgentChatStarterPrompt prompt in Prompts)
+  {
+    <FluentButton Appearance="ButtonAppearance.Outline"
+                  Class="twe-ask-starters__card"
+                  data-qa="AskStarterPrompt"
+                  data-prompt="@prompt.Prompt"
+                  OnClick="() => SendAsync(prompt.Prompt)">
+      <span class="twe-ask-starters__icon" aria-hidden="true">
+        <FluentIcon Value="@AskStarterPromptIcons.For(prompt.Icon)" Color="Color.Custom" CustomColor="var(--twe-ink-2)" />
+      </span>
+      <span class="twe-ask-starters__text">
+        <span class="twe-ask-starters__title" data-qa="AskStarterPromptTitle">@prompt.Title</span>
+        @if (prompt.Subtitle is { } subtitle)
+        {
+          <span class="twe-ask-starters__subtitle" data-qa="AskStarterPromptSubtitle">@subtitle</span>
+        }
+      </span>
+    </FluentButton>
+  }
+</div>

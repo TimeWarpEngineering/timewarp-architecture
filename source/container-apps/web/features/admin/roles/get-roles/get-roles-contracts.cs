@@ -21,6 +21,8 @@
 // tests. PermissionIds policies have no AddAuthenticationSchemes; Policies(...) alone would
 // authenticate only the default identity-session scheme and non-admin mock principals would
 // fall through as 401 instead of 403. See AuthenticationSchemeNames' Design region.
+// Task 345: Search keeps roles whose name contains the term (case-insensitive), and
+// [ReferenceableResource] makes this the "role" @ type in Ask, labelled by name.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -34,20 +36,25 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
   Policy = PermissionIds.AdminRolesRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
+[ReferenceableResource("role", "Roles", IdProperty = nameof(GetRoles.RoleDto.RoleId), LabelProperty = nameof(GetRoles.RoleDto.Name))]
 public static partial class GetRoles
 {
+  public const int MaxSearchLength = 200;
 
   [ApiRoute("api/Roles", HttpVerb.Get)]
   [OpenDataQueryParameters]
   [AuthApiRequest]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
+    public string? Search { get; set; }
+
     public string GetRouteWithQueryString()
     {
       var collection = new NameValueCollection
       {
         GetAuthQueryParameters(),
-        GetOpenDataQueryParameters()
+        GetOpenDataQueryParameters(),
+        { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
       };
       return $"{GetRoute()}?{this.GetQueryString(collection)}";
     }
@@ -58,6 +65,7 @@ public static partial class GetRoles
     public Validator()
     {
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+      RuleFor(x => x.Search).MaximumLength(MaxSearchLength);
     }
   }
 
@@ -135,6 +143,13 @@ public static partial class GetRoles
         ]),
     ];
 
-    return _ => new Response(totalCount: items.Length, items);
+    return request =>
+    {
+      string? search = (request as Query)?.Search?.Trim();
+      RoleDto[] matches = string.IsNullOrEmpty(search)
+        ? items
+        : [.. items.Where(role => role.Name.Contains(search, StringComparison.OrdinalIgnoreCase))];
+      return new Response(totalCount: matches.Length, matches);
+    };
   }
 }

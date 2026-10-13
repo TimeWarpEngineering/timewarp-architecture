@@ -8,6 +8,9 @@
 // and does not ask the filer to add an address.
 // Items omit the body; opening an item loads it. Status (task 314) is the item's current
 // triage status, so the filer's list shows where each filing stands.
+// Task 345: Search keeps the filer's items whose title contains the term (case-insensitive);
+// the query string carries it, and [ReferenceableResource] makes this the "my-feedback" @ type
+// in Ask, so a filer can reference their own filings and nothing else.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -18,12 +21,41 @@ namespace TimeWarp.Architecture.Features.Feedback;
   Policy = PermissionIds.FeedbackFileSelf,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
+[ReferenceableResource(ListMyFeedback.ReferencePrefix, "My feedback", IdProperty = nameof(ListMyFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListMyFeedback.Item.Title))]
 public static partial class ListMyFeedback
 {
-  [ApiRoute("api/Feedback", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  /// <summary>The @ prefix of the caller's own feedback item (task 345); pages mark rows with it (AskTagMark, task 346).</summary>
+  public const string ReferencePrefix = "my-feedback";
 
-  public sealed class Validator : AbstractValidator<Query>;
+  public const int MaxSearchLength = 200;
+
+  [ApiRoute("api/Feedback", HttpVerb.Get)]
+  public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  {
+    public string? Search { get; set; }
+
+    public string GetRouteWithQueryString()
+    {
+      if (string.IsNullOrWhiteSpace(Search))
+      {
+        return GetRoute();
+      }
+
+      var parameters = new NameValueCollection
+      {
+        { nameof(Search), Search.Trim() },
+      };
+      return $"{GetRoute()}?{this.GetQueryString(parameters)}";
+    }
+  }
+
+  public sealed class Validator : AbstractValidator<Query>
+  {
+    public Validator()
+    {
+      RuleFor(query => query.Search).MaximumLength(MaxSearchLength);
+    }
+  }
 
   public sealed class Item : ICloneable
   {
@@ -79,16 +111,23 @@ public static partial class ListMyFeedback
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
     var feedbackItemId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-    return _ => new Response(
-      [
-        new Item(
-          feedbackItemId,
-          $"/Feedback/{feedbackItemId:D}",
-          FeedbackKind.Complaint,
-          "Mock complaint",
-          DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
-          FeedbackStatus.UnderReview)
-      ],
-      emailCopyAvailable: false);
+    Item[] items =
+    [
+      new Item(
+        feedbackItemId,
+        $"/Feedback/{feedbackItemId:D}",
+        FeedbackKind.Complaint,
+        "Mock complaint",
+        DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
+        FeedbackStatus.UnderReview)
+    ];
+    return request =>
+    {
+      string? search = (request as Query)?.Search?.Trim();
+      Item[] matches = string.IsNullOrEmpty(search)
+        ? items
+        : [.. items.Where(item => item.Title.Contains(search, StringComparison.OrdinalIgnoreCase))];
+      return new Response(matches, emailCopyAvailable: false);
+    };
   }
 }

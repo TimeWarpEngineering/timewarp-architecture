@@ -6,10 +6,14 @@
 // Status is unauthenticated-only plus the upstream predicate. It does not take an admission slot:
 // the palette probes on every shell load, and that must not consume the completion budget.
 // A missing principal is 401 even though the endpoint policy already requires one.
+// The notice settings are read from XaiChatOptions per request. A blank notice falls back to
+// XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
+// goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
 
+using Microsoft.Extensions.Options;
 using static TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration;
 
 /// <summary>Handles <see cref="Query"/>.</summary>
@@ -20,12 +24,19 @@ public sealed class GetAgentChatConfiguration
   {
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IAgentChatUpstream Upstream;
+    private readonly IOptions<XaiChatOptions> Options;
 
     /// <summary>Creates the handler.</summary>
-    public Handler(ICurrentPrincipalAccessor currentPrincipalAccessor, IAgentChatUpstream upstream)
+    public Handler
+    (
+      ICurrentPrincipalAccessor currentPrincipalAccessor,
+      IAgentChatUpstream upstream,
+      IOptions<XaiChatOptions> options
+    )
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       Upstream = upstream;
+      Options = options;
     }
 
     /// <summary>Returns configured, the setup command, and the model id.</summary>
@@ -44,15 +55,20 @@ public sealed class GetAgentChatConfiguration
       }
 
       bool configured = Upstream.IsConfigured;
+      XaiChatOptions options = Options.Value;
       return new Response
       {
         Configured = configured,
         SetupCommand = XaiChatDefaults.SetupCommand,
         Model = configured ? Upstream.Model : null,
-        RecordChats = XaiChatDefaults.RecordChats,
-        PrivacyNotice = XaiChatDefaults.PrivacyNotice,
+        RecordChats = options.RecordChats,
+        PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)
+          ? XaiChatDefaults.PrivacyNotice
+          : options.PrivacyNotice.Trim(),
+        PrivacyUrl = string.IsNullOrWhiteSpace(options.PrivacyUrl) ? null : options.PrivacyUrl.Trim(),
         SupportUrl = XaiChatDefaults.SupportUrl,
-        CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes
+        CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes,
+        StarterPrompts = AgentChatStarterPrompts.Normalize(options.StarterPrompts)
       };
     }
   }

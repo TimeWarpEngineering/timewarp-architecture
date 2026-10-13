@@ -283,6 +283,23 @@ namespace TimeWarp.Architecture.Features.Feedback
       page2.Items.Select(item => item.Title).ShouldBe(["banana", "cherry"], "the sort spans every page");
     }
 
+    public static async Task List_Should_SearchTitlesAcrossEveryOwner()
+    {
+      TriageWorld world = new();
+      FeedbackItem printer = await world.AddTitledAsync("Printer jams", DomainKind.BugReport, day: 1);
+      FeedbackItem printerToo = await world.AddTitledAsync("Old PRINTER driver", DomainKind.Complaint, day: 2);
+      await world.AddTitledAsync("Login is slow", DomainKind.Complaint, day: 3);
+
+      AdminListContract.Response found = await world.ListAsync(new AdminListContract.Query { Search = " printer " });
+      found.TotalCount.ShouldBe(2);
+      found.Items.Select(item => item.FeedbackItemId).ShouldBe([printerToo.Id.Value, printer.Id.Value]);
+      (await world.ListAsync(new AdminListContract.Query { Search = "" })).TotalCount.ShouldBe(3);
+      new AdminListContract.Query { Search = " jam " }.GetRouteWithQueryString().ShouldContain("Search=jam");
+      new AdminListContract.Validator()
+        .Validate(new AdminListContract.Query { Search = new string('x', AdminListContract.MaxSearchLength + 1) })
+        .IsValid.ShouldBeFalse();
+    }
+
     public static Task ListValidator_Should_RejectBadPagingAndBackwardsDates()
     {
       AdminListContract.Validator validator = new();

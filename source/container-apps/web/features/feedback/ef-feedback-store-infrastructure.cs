@@ -17,6 +17,11 @@
 // order by name. No index was added for the new sorts: the admin list filters by status first
 // (the (Status, FiledAt) index), a feedback table stays small enough for an in-memory sort of
 // the match set, and an index per sortable column would tax every filing for a rare view.
+// Search (task 345) is a parameterized lower(title) LIKE '%term%' with the term lower-cased by
+// ToLowerInvariant on the client. Postgres lower() folds by the database collation while
+// InMemoryFeedbackStore uses OrdinalIgnoreCase, so non-ASCII titles (Turkish dotted I, sharp s)
+// can match differently between the two stores. Accepted: Search narrows an @ picker or an admin
+// list, not an authorization or uniqueness check, and ASCII titles match the same in both.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -99,6 +104,16 @@ public sealed class EfFeedbackStore : IFeedbackStore
     if (filter.FiledTo is { } to)
     {
       query = query.Where(item => item.FiledAt < to);
+    }
+
+    if (!string.IsNullOrWhiteSpace(filter.Search))
+    {
+      string lowered = filter.Search.Trim().ToLowerInvariant();
+      // CA1862 wants a StringComparison overload, which EF cannot translate to SQL; lower-cased
+      // contains is the translatable form (lower(x) LIKE '%term%').
+#pragma warning disable CA1862
+      query = query.Where(item => item.Title.ToLower().Contains(lowered));
+#pragma warning restore CA1862
     }
 
     int total = await query.CountAsync(cancellationToken).ConfigureAwait(false);

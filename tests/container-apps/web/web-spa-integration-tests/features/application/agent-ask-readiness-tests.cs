@@ -11,7 +11,7 @@
 // off ModalController) and renders AgentAsk with HtmlRenderer, then checks the markup: the
 // user-secrets command appears only when the server said there is no key, a 401 asks the user to
 // sign in, and an error shows its status and detail with Retry. A server answer copies the panel
-// settings (RecordChats, notice, normalized SupportUrl, credential lifetime) and a failure puts
+// settings (RecordChats, notice, PrivacyUrl, normalized SupportUrl, credential lifetime) and a failure puts
 // those back to XaiChatDefaults. HtmlRenderer does not run OnAfterRenderAsync, so a configured probe
 // renders "Starting Ask…" here; the Playwright test proves the chat itself.
 #endregion
@@ -183,6 +183,7 @@ public class AgentAskReadiness_Should_
     applied.ChatReadiness.ShouldBe(CatalogAgentReadiness.Configured);
     applied.RecordChats.ShouldBeTrue();
     applied.PrivacyNotice.ShouldBe("Kept for this deployment.");
+    applied.PrivacyUrl.ShouldBe("/Privacy");
     applied.SupportUrl.ShouldBe(XaiChatDefaults.SupportUrl);
     applied.CredentialLifetimeMinutes.ShouldBe(15);
 
@@ -192,6 +193,7 @@ public class AgentAskReadiness_Should_
     reset.ChatReadiness.ShouldBe(CatalogAgentReadiness.Unauthenticated);
     reset.RecordChats.ShouldBe(XaiChatDefaults.RecordChats);
     reset.PrivacyNotice.ShouldBe(XaiChatDefaults.PrivacyNotice);
+    reset.PrivacyUrl.ShouldBeNull();
     reset.SupportUrl.ShouldBe(XaiChatDefaults.SupportUrl);
     reset.CredentialLifetimeMinutes.ShouldBe(XaiChatDefaults.CredentialLifetimeMinutes);
 
@@ -220,6 +222,7 @@ public class AgentAskReadiness_Should_
       Model = "grok-4.7",
       RecordChats = recordChats,
       PrivacyNotice = "Kept for this deployment.",
+      PrivacyUrl = "/Privacy",
       SupportUrl = supportUrl,
       CredentialLifetimeMinutes = lifetimeMinutes,
     };

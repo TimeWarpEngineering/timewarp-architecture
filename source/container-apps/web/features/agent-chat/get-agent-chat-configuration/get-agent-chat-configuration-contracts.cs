@@ -7,8 +7,10 @@
 // true when a key is present, or when the Development/Testing fake upstream is explicitly on.
 // SetupCommand is always the same pwsh line so a failed probe can fall back to the constant.
 // Model is the configured id when Configured is true, and null otherwise.
-// RecordChats, PrivacyNotice, SupportUrl, and CredentialLifetimeMinutes are template settings.
-// The notice is shown only when RecordChats is true. The key is still never returned.
+// RecordChats, PrivacyNotice, and PrivacyUrl come from XAI configuration (task 347); SupportUrl and
+// CredentialLifetimeMinutes are template settings. The notice is shown only when RecordChats is
+// true, and PrivacyUrl is null when the app has no privacy page. StarterPrompts (task 348) is the
+// normalized XAI:StarterPrompts list, or the template defaults. The key is still never returned.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -43,10 +45,18 @@ public static partial class GetAgentChatConfiguration
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
       "Design",
       "CA1056:URI-like properties should not be strings",
+      Justification = "PrivacyUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+    public string? PrivacyUrl { get; set; }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+      "Design",
+      "CA1056:URI-like properties should not be strings",
       Justification = "SupportUrl is a relative app path or an absolute href, copied as text into the anchor.")]
     public string SupportUrl { get; set; } = XaiChatDefaults.SupportUrl;
 
     public int CredentialLifetimeMinutes { get; set; } = XaiChatDefaults.CredentialLifetimeMinutes;
+
+    public IReadOnlyList<AgentChatStarterPrompt> StarterPrompts { get; set; } = AgentChatStarterPrompts.Defaults;
   }
 
   public sealed class Validator : AbstractValidator<Query>
@@ -64,7 +74,9 @@ public static partial class GetAgentChatConfiguration
       Model = null,
       RecordChats = XaiChatDefaults.RecordChats,
       PrivacyNotice = XaiChatDefaults.PrivacyNotice,
+      PrivacyUrl = null,
       SupportUrl = XaiChatDefaults.SupportUrl,
-      CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes
+      CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes,
+      StarterPrompts = AgentChatStarterPrompts.Defaults
     };
 }

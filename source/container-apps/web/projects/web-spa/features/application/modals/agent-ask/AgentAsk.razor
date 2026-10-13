@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @using Ai = Microsoft.AspNetCore.Components.AI
 @using TimeWarp.Architecture.Components
+@using TimeWarp.Architecture.Services
 
 @*
   Purpose: Ask panel. A person describes what they want and the in-app model runs a page catalog tool.
@@ -34,9 +35,33 @@
   navigation (TimeWarpPage remounts), and rebuilds. New conversation bumps the generation and
   gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
   MessageInput stays the library component. Scoped CSS turns its flex row into a two-row
-  grid: the textarea spans the full width and grows with field-sizing up to 10rem, and Tag
-  and send sit on the footer row. Tag opens the resource menu, the same menu a typed @ opens,
-  and choosing a row inserts that page resource's @ token at the caret.
+  grid: the textarea spans the full width and grows with field-sizing up to 10rem, and send
+  sits on the footer row. Typing @ at the start of a word in the composer (not mid-word, as in
+  an email address) opens AskReferencePicker (task 345): the
+  site-wide resource types the person may list, then a search of the chosen type's list query;
+  choosing an item inserts its @prefix:id token at the caret. The Tag button in the composer's
+  lead slot (task 346) dispatches AskTagState.StartPick for the current route: pick mode
+  highlights the app's marked elements (AskTagMark) and the chosen one becomes a chip
+  (AskTagChips) above the composer. The agent's client is AskTagChatClient over the tool-invoking
+  client, so the chips go out with the next message and then move to page_context.tags.
+  The panel shows "Picking" from AskTagState.IsPicking (StartPick is not a tracked action, so it
+  does not raise the app-wide busy signal). Closing the panel, disposing it, and any location
+  change cancel pick mode; every request re-renders the instructions, so page_context.tags in
+  them is current.
+  Closing the panel also closes the reference picker.
+  The empty state is AskStarterPrompts (task 348): the configured XAI:StarterPrompts cards, or the
+  template defaults.
+  Look (task 349, after the Cloudflare dashboard chat): a compact one-row header (brand mark, Ask,
+  the conversation name, icon actions) over a hairline; a dotted canvas body; a centered empty
+  state of CSS gradient orbs in the brand colors, a greeting, a tagline and the cards; and a
+  footer pinned to the bottom with the notice, chips, a raised composer and the edit-behavior row.
+  The body fills the panel between header and footer and scrolls on its own. AskAnswerBar sits
+  first in the footer, right under the latest answer: MessageList renders its ChildContent above
+  the turns, so inside the list the bar would land at the top of the transcript. Every color is a
+  --twe-* token, and the library's --sc-ai-* tokens are mapped onto them on the panel root, so the
+  transcript follows the template theme.
+  AskPrivacyBanner (task 347) sits in the footer, directly above the composer. The first
+  render restores its local-storage dismissal before the agent (and so the footer) is built.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
@@ -47,16 +72,7 @@
 
 @code {
   private const string AskPlaceholder =
-    "Tell the app what you want. Type @ to tag something on this page.";
-
-  private const string TagHelp = "Tag a resource on this page (@)";
-
-  private static readonly string[] Suggestions =
-  [
-    "What can I do here?",
-    "Explain this page",
-    "What would need my approval?",
-  ];
+    "Tell the app what you want. Type @ to reference a resource.";
 
   [Inject] private IServiceProvider ServiceProvider { get; set; } = null!;
   [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
@@ -71,10 +87,10 @@
   private AskConversationThread? Thread;
   private IDisposable? StatusSubscription;
   private FunctionInvokingChatClient? InvokingClient;
+  private AskTagChatClient? TagClient;
   private CatalogAgentFunctions? Functions;
   private bool Building;
   private bool Disposed;
-  private bool ResourceMenuOpen;
   private int DeclinedGeneration = -1;
   private string? BuiltPath;
   private AgentEditMode BuiltMode;
@@ -94,19 +110,29 @@
   private bool TurnInProgress =>
     Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
 
-  private IReadOnlyList<AskResourceReference> References =>
-    AskResourceReferences.FromPageContext(PageAgentContext.Describe(ScopedStore, CurrentPath()));
+  protected override void OnInitialized()
+  {
+    base.OnInitialized();
+    NavigationManager.LocationChanged += OnLocationChanged;
+  }
 
-  private bool ShowPrivacy => AskPrivacyNotice.ShouldShow
-  (
-    AgentSurfaceState.RecordChats,
-    AgentSurfaceState.PrivacyNoticeDismissed,
-    AgentSurfaceState.PrivacyNotice
-  );
+  // Pick mode belongs to the page it started on; CancelPick is a no-op when nothing is picking.
+  private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+  {
+    if (!Disposed)
+    {
+      _ = InvokeAsync(() => AskTagState.CancelPick());
+    }
+  }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
+    if (firstRender)
+    {
+      await AgentSurfaceState.LoadPrivacyNoticeDismissal();
+    }
+
     PageAgentRoute.Observe(NavigationManager, JsRuntime);
     await IssueConversationAsync();
     Ai.UIAgent? previous = Agent;
@@ -236,21 +262,29 @@
       }
 
       toolNames.Add(PageAgentContext.ToolName);
-      string instructions = AgentAskInstructions.For
+      // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far.
+      string RenderInstructions() => AgentAskInstructions.For
       (
         PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
       );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
+      TagClient = new AskTagChatClient
+      (
+        InvokingClient,
+        () => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration),
+        ids => InvokeAsync(() => AskTagState.MarkSent(ids)),
+        RenderInstructions
+      );
       AskConversationThread thread = Threads.For(generation);
       Ai.UIAgent agent = new
       (
-        InvokingClient,
+        TagClient,
         options =>
         {
           options.ChatOptions = new ChatOptions
           {
             Tools = [.. Functions.Tools],
-            Instructions = instructions,
+            Instructions = RenderInstructions(),
           };
           options.Thread = thread;
         }
@@ -308,7 +342,9 @@
     Thread = null;
     Agent?.Dispose();
     Agent = null;
-    InvokingClient?.Dispose();
+    // TagClient owns InvokingClient (DelegatingChatClient disposes its inner client).
+    TagClient?.Dispose();
+    TagClient = null;
     InvokingClient = null;
     Functions?.Dispose();
     Functions = null;
@@ -325,25 +361,34 @@
     };
   }
 
-  private void OpenResources() => ResourceMenuOpen = true;
-
-  private void CloseResources() => ResourceMenuOpen = false;
-
-  private void OnKeyDown(KeyboardEventArgs args)
+  [DirectComponentSideEffect("Reads the library textarea's caret to open the @ picker only when @ starts a word; the caret is DOM state, and opening is still the Open action.")]
+  private async Task OnComposerKeyDownAsync(KeyboardEventArgs args)
   {
-    if (args.Key == "@")
+    if (args.Key != "@" || AskReferenceState.IsOpen)
     {
-      ResourceMenuOpen = true;
+      return;
+    }
+
+    if (await AskAiJsModule.AtStartsWordAsync(JsRuntime))
+    {
+      await AskReferenceState.Open();
     }
   }
 
-  private Task CloseAsync() => AgentSurfaceState.CloseAskPanel();
+  private Task TagAsync() => AskTagState.StartPick(CurrentPath());
+
+  private bool Picking => AskTagState.IsPicking;
+
+  private async Task CloseAsync()
+  {
+    await AskTagState.CancelPick();
+    await AskReferenceState.Close();
+    await AgentSurfaceState.CloseAskPanel();
+  }
 
   private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
 
   private Task NewConversationAsync() => AgentSurfaceState.NewConversation();
-
-  private Task DismissPrivacyAsync() => AgentSurfaceState.DismissPrivacyNotice();
 
   private Task AskBeforeAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AskBeforeEditing);
 
@@ -372,20 +417,27 @@
   public override void Dispose()
   {
     Disposed = true;
+    NavigationManager.LocationChanged -= OnLocationChanged;
+    if (AskTagState.IsPicking)
+    {
+      _ = AskTagState.CancelPick();
+    }
+
     ReleaseAgent();
     base.Dispose();
   }
 }
 
-<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())" @onkeydown="OnKeyDown">
+<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
-      <h2 class="twe-agent-ask__title">Ask</h2>
-      <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
-      @if (ConversationExpired)
-      {
-        <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
-      }
+      <span class="twe-agent-ask__mark" aria-hidden="true">
+        <FluentIcon Value="@(new Icons.Filled.Size16.Sparkle())" Color="Color.Custom" CustomColor="var(--twe-on-primary)" />
+      </span>
+      <div class="twe-agent-ask__titles">
+        <h2 class="twe-agent-ask__title">Ask</h2>
+        <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
+      </div>
     </div>
     <div class="twe-agent-ask__header-actions">
       <FluentButton Appearance="ButtonAppearance.Subtle"
@@ -414,44 +466,51 @@
                     OnClick="CloseAsync" />
     </div>
   </header>
-
-  @if (ShowPrivacy)
-  {
-    <div class="twe-agent-ask__privacy" data-qa="AskPrivacyNotice">
-      <p>@AgentSurfaceState.PrivacyNotice</p>
-      <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskPrivacyDismiss" OnClick="DismissPrivacyAsync">Dismiss</FluentButton>
-    </div>
-  }
+  <div class="twe-agent-ask__status" role="status">
+    @if (ConversationExpired)
+    {
+      <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
+    }
+  </div>
 
   @if (Readiness == CatalogAgentReadiness.NotConfigured)
   {
-    <p data-qa="AgentAskNotConfigured">AI not configured</p>
-    <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskNotConfigured">AI not configured</p>
+      <p class="twe-agent-ask__state-text">Run this to add the xAI key, then reload:</p>
+      <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+    </div>
   }
   else if (Readiness == CatalogAgentReadiness.Unauthenticated)
   {
-    <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
-    <div class="twe-agent-ask__actions">
-      <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskSignIn">Sign in to use Ask</p>
+      <div class="twe-agent-ask__actions">
+        <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+      </div>
     </div>
   }
   else if (Readiness == CatalogAgentReadiness.Error)
   {
-    <p data-qa="AgentAskError">Ask could not load its configuration</p>
-    <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
-    <div class="twe-agent-ask__actions">
-      <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskError">Ask could not load its configuration</p>
+      <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
+      <div class="twe-agent-ask__actions">
+        <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+      </div>
     </div>
   }
   else if (Agent is null || Conversation is null)
   {
-    <p data-qa="AgentAskStarting">Starting Ask…</p>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-text" data-qa="AgentAskStarting">Starting Ask…</p>
+    </div>
   }
   else
   {
-    @if (ResourceMenuOpen)
+    @if (AskReferenceState.IsOpen)
     {
-      <AskResourceMenu References="References" OnClose="CloseResources" />
+      <AskReferencePicker />
     }
     @* Mirrors ChatPage, with the panel's own AgentContext so the restored turns render. *@
     <div class="sc-ai-root sc-ai-chat-page" @key="Conversation">
@@ -492,28 +551,39 @@
                   }
                 </div>
               </Microsoft.AspNetCore.Components.AI.BlockRenderer>
-              <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
             </ChildContent>
             <EmptyContent>
               <div class="twe-agent-ask__welcome">
-                <p class="twe-agent-ask__greeting">What should we do on this page?</p>
-                <AskSuggestions Suggestions="Suggestions" />
+                <div class="twe-agent-ask__hero" aria-hidden="true">
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--back"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--side"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--front"></span>
+                </div>
+                <p class="twe-agent-ask__greeting" data-qa="AskGreeting">What can I help with?</p>
+                <p class="twe-agent-ask__tagline">Ask about this page, or tell the app what to do.</p>
+                <AskStarterPrompts />
               </div>
             </EmptyContent>
           </Microsoft.AspNetCore.Components.AI.MessageList>
         </div>
         <div class="sc-ai-chat-page__footer">
-          <div class="sc-ai-chat-page__input-container">
+          <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
+          <AskPrivacyBanner />
+          <AskTagChips />
+          <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
             <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
               <LeadingActions>
-                <FluentButton Appearance="ButtonAppearance.Subtle"
-                              Class="twe-agent-ask__tag"
-                              IconStart="@(new Icons.Regular.Size16.Tag())"
-                              Title="@TagHelp"
-                              Tooltip="@TagHelp"
-                              aria-label="@TagHelp"
-                              data-qa="AskTagResource"
-                              OnClick="OpenResources">Tag</FluentButton>
+                <div class="twe-agent-ask__lead">
+                  <FluentButton Appearance="ButtonAppearance.Outline"
+                                Size="ButtonSize.Small"
+                                IconStart="@(new Icons.Regular.Size16.Tag())"
+                                Title="Tag an element on the page"
+                                Tooltip="Tag an element on the page"
+                                aria-pressed="@(Picking ? "true" : "false")"
+                                Disabled="Picking"
+                                data-qa="AskTag"
+                                OnClick="TagAsync">Tag</FluentButton>
+                </div>
               </LeadingActions>
             </Microsoft.AspNetCore.Components.AI.MessageInput>
           </div>
@@ -525,8 +595,8 @@
   <footer class="twe-agent-ask__edit">
     <p class="twe-agent-ask__edit-label" id="@EditBehaviorLabelId">Edit behavior</p>
     <div class="twe-agent-ask__segments" role="group" aria-labelledby="@EditBehaviorLabelId" data-qa="AskEditMode">
-      <FluentButton Appearance="@AskBeforeAppearance" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
-      <FluentButton Appearance="@AutoEditAppearance" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
+      <FluentButton Appearance="@AskBeforeAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
+      <FluentButton Appearance="@AutoEditAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
     </div>
   </footer>
 </div>

@@ -1,0 +1,94 @@
+.twe-ask-reference {
+  display: flex;
+  flex-direction: column;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper);
+}
+
+.twe-ask-reference__heading {
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-ask-reference__prefix,
+.twe-ask-reference__name {
+  font-family: var(--twe-font-mono);
+  color: var(--twe-ink-2);
+}
+
+.twe-ask-reference__input {
+  width: 100%;
+  padding: var(--twe-space-2);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  font: inherit;
+}
+
+.twe-ask-reference__input:focus {
+  outline: 2px solid var(--twe-primary);
+  outline-offset: -1px;
+}
+
+.twe-ask-reference__list {
+  display: flex;
+  flex-direction: column;
+  max-height: min(40vh, 280px);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.twe-ask-reference__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--twe-space-3);
+  padding: var(--twe-space-2);
+  border-radius: var(--twe-radius-sm);
+  cursor: pointer;
+}
+
+.twe-ask-reference__row--active {
+  background: var(--twe-paper-2);
+}
+
+.twe-ask-reference__label,
+.twe-ask-reference__row > .twe-ask-reference__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The label wins the row; the token or prefix gives way and ellipsizes. */
+.twe-ask-reference__label {
+  flex: 0 0 auto;
+  max-width: 65%;
+}
+
+.twe-ask-reference__row > .twe-ask-reference__name {
+  flex: 1 1 0;
+  text-align: right;
+  font-size: 0.8125rem;
+}
+
+.twe-ask-reference__empty,
+.twe-ask-reference__more,
+.twe-ask-reference__hint {
+  margin: 0;
+  color: var(--twe-ink-2);
+  font-size: 0.875rem;
+}
+
+.twe-ask-reference__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+}

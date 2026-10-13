@@ -16,3 +16,14 @@
   color: inherit;
   cursor: pointer;
 }
+
+.twe-agent-ask__answer-bar a {
+  margin-inline-start: auto;
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-helper);
+  text-underline-offset: 2px;
+}
+
+.twe-agent-ask__answer-bar ::deep fluent-button {
+  color: var(--twe-muted);
+}

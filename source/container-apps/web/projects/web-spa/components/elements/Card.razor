@@ -2,6 +2,9 @@
 @*
   Design-system content card (Tier-1 leaf, native root). Styled by Card.razor.css
   using the --twe-* tokens. Unmatched attributes (data-qa) splat onto the section.
+  Every card is pickable by Ask's Tag (task 346): the root carries AskTagMark's Card kind with
+  the title as its label, so every Section is pickable too. Unmatched attributes win, so a caller
+  can override the kind or label, or add data-ask-tag-private.
   See skills/blazor-css-strategy.
 *@
 
@@ -11,9 +14,26 @@
   [Parameter] public string? Class { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private Dictionary<string, object> RootAttributes
+  {
+    get
+    {
+      Dictionary<string, object> attributes = new(AskTagMark.For(AskTagMark.CardKind, Title));
+      if (AdditionalAttributes is not null)
+      {
+        foreach (KeyValuePair<string, object> attribute in AdditionalAttributes)
+        {
+          attributes[attribute.Key] = attribute.Value;
+        }
+      }
+
+      return attributes;
+    }
+  }
 }
 
-<section class="twe-card @Class" @attributes="AdditionalAttributes">
+<section class="twe-card @Class" @attributes="RootAttributes">
   @if (!string.IsNullOrWhiteSpace(Title))
   {
     <h2 class="twe-card__title" data-qa="@TitleDataQa">@Title</h2>

@@ -143,26 +143,6 @@ public partial class CatalogAgent_Should
     AskPrivacyNotice.ShouldShow(recordChats: true, dismissed: true, "Chats are recorded.").ShouldBeFalse();
     AskPrivacyNotice.ShouldShow(recordChats: true, dismissed: false, "  ").ShouldBeFalse();
 
-    IReadOnlyList<AskResourceReference> references = AskResourceReferences.FromPageContext
-    (
-      """{"credentials":[{"id":"abc","nickname":"Laptop"}],"profile":{"alias":"ada"},"siteSettings":{"version":3}}"""
-    );
-    references.ShouldContain(item => item.Token == "@credential:abc" && item.Label == "Laptop");
-    references.ShouldContain(item => item.Token == "@profile:ada");
-    references.ShouldContain(item => item.Token == "@siteSettingsVersion:3");
-    AskResourceReferences.FromPageContext("not json").ShouldBeEmpty();
-    AskResourceReferences.FromPageContext("""{"path":"/"}""").ShouldBeEmpty();
-
-    // Token values drop whitespace and control characters; labels keep the text.
-    IReadOnlyList<AskResourceReference> messy = AskResourceReferences.FromPageContext
-    (
-      """{"credentials":[{"id":" a b\tc "},{"id":" \n "}],"profile":{"alias":" a d\na\u0007 "},"siteSettings":{"version":" 4 "}}"""
-    );
-    messy.Select(item => item.Token).ShouldBe(["@credential:abc", "@profile:ada", "@siteSettingsVersion:4"]);
-    messy.Single(item => item.Token == "@profile:ada").Label.ShouldBe("a d\na\u0007");
-    AskResourceReferences.TokenValue(" x\r\ny\u0000 ").ShouldBe("xy");
-    AskResourceReferences.TokenValue(null).ShouldBe("");
-
     // The Support href accepts an app-relative path or http/https, else the default.
     AskSupportLink.Normalize("/Help").ShouldBe("/Help");
     AskSupportLink.Normalize("https://example.com/help").ShouldBe("https://example.com/help");
@@ -230,7 +210,7 @@ public partial class CatalogAgent_Should
     scope.Store.GetState<CounterState>().Count.ShouldBe(10);
   }
 
-  public static async Task Dismiss_Privacy_Notice_Hides_It_For_The_Session()
+  public static async Task Dismiss_Privacy_Notice_Hides_It_Across_New_Conversations()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
     AgentSurfaceState surface = scope.Store.GetState<AgentSurfaceState>();

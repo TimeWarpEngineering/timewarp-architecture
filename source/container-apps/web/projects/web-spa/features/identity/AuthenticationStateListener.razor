@@ -23,6 +23,12 @@
 
   private async Task HandleUserAuthentication(ClaimsPrincipal user)
   {
+    // Task 345: the Ask @ picker's types and chosen references belong to the principal; drop them
+    // when it changes so a sign-out or a different sign-in never sees the previous user's labels.
+    await NoSubAskReferenceState.SessionChanged(AskReferenceState.PrincipalIdOf(user));
+    // Task 346: the same for Ask's tag chips and sent tags.
+    await NoSubAskTagState.SessionChanged(AskReferenceState.PrincipalIdOf(user));
+
     if (user.Identity?.IsAuthenticated == true)
     {
       await NoSubProfileState.FetchProfileData();

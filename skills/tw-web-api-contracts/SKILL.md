@@ -394,6 +394,11 @@ and registers it in a `Dictionary<Type, Delegate>`; some solutions instead use s
 `*MockFactory` classes inside the SPA. Copying the wrong shape into a repo is a common agent
 error. See the `tw-mock-response-factory` skill.
 
+### 11. Referenceable resources (Ask `@` references)
+
+A list query people should `@`-reference in Ask carries `[ReferenceableResource]`; the `@` registry
+is generated from it. Shape, rules and the analyzer: [references/referenceable-resources.md](references/referenceable-resources.md).
+
 ## Validation checklist
 
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
@@ -414,6 +419,8 @@ error. See the `tw-mock-response-factory` skill.
 - [ ] Mutability matches binding intent (`set` vs `init`/get-only)
 - [ ] Serialization round-trip test in the contracts test project (prioritize non-trivial shapes)
 - [ ] `GetMockResponseFactory()` registered if SPA mock mode exercises this endpoint
+- [ ] A list query people should `@`-reference in Ask carries `[ReferenceableResource]` and a
+      `string? Search` (TWA0033/TWA0034)
 
 ## Common pitfalls
 

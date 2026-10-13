@@ -83,7 +83,8 @@ public sealed class ListFeedback
             (page - 1) * pageSize,
             pageSize,
             request.SortBy,
-            request.SortDescending),
+            request.SortDescending,
+            request.Search),
           cancellationToken)
         .ConfigureAwait(false);
 

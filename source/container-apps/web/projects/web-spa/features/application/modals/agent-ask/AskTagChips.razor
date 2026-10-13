@@ -1,0 +1,74 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+
+@*
+  Purpose: The Ask composer's tag chips and the pick-mode status line (task 346).
+
+  Design: Shows AskTagState's chips for the current conversation above the composer. Each chip is a
+  disclosure: the summary is the chip text ("Feedback row: Dark theme broken") and the open chip
+  lists every field that will be sent with the next message (AskTagPayload), so the chip shows
+  exactly what leaves the page. Remove dispatches Remove. While AskTagState.IsPicking a status line
+  says pick mode is on and offers Cancel (CancelPick); the overlay itself is ask-tag.ts. Nothing
+  here touches the DOM.
+*@
+
+@code {
+  private IReadOnlyList<AskTag> Tags => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration);
+
+  private bool Picking => AskTagState.IsPicking;
+
+  private Task RemoveAsync(int id) => AskTagState.Remove(id);
+
+  private Task CancelAsync() => AskTagState.CancelPick();
+}
+
+@if (Picking)
+{
+  <div class="twe-ask-tags__picking" role="status" data-qa="AskTagPicking">
+    <span>Pick an element on the page. Tab or arrows to move, Enter to choose, Esc to cancel.</span>
+    <FluentButton Appearance="ButtonAppearance.Subtle" Size="ButtonSize.Small" data-qa="AskTagCancel" OnClick="CancelAsync">Cancel</FluentButton>
+  </div>
+}
+@if (Tags.Count > 0)
+{
+  <ul class="twe-ask-tags" aria-label="Tagged elements" data-qa="AskTagChips">
+    @foreach (AskTag tag in Tags)
+    {
+      int id = tag.Id;
+      <li @key="tag.Id" class="twe-ask-tags__chip" data-qa="AskTagChip" data-tag-id="@tag.Id">
+        <details class="twe-ask-tags__details">
+          <summary class="twe-ask-tags__summary" data-qa="AskTagChipText">@tag.ChipText</summary>
+          <dl class="twe-ask-tags__fields" data-qa="AskTagChipFields">
+            <dt>Text</dt>
+            <dd>@(tag.Text.Length == 0 ? "(none)" : tag.Text)</dd>
+            <dt>Page</dt>
+            <dd>@tag.Route</dd>
+            @if (tag.Landmark is { } landmark)
+            {
+              <dt>In</dt>
+              <dd>@landmark</dd>
+            }
+            @if (tag.DataQa is { } dataQa)
+            {
+              <dt>data-qa</dt>
+              <dd>@dataQa</dd>
+            }
+            @if (tag.Reference is { } reference)
+            {
+              <dt>Reference</dt>
+              <dd data-qa="AskTagChipReference">@reference.Token</dd>
+            }
+          </dl>
+        </details>
+        <FluentButton Appearance="ButtonAppearance.Subtle"
+                      Size="ButtonSize.Small"
+                      IconOnly="true"
+                      IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                      Title="@("Remove " + tag.ChipText)"
+                      aria-label="@("Remove " + tag.ChipText)"
+                      data-qa="AskTagRemove"
+                      OnClick="@(() => RemoveAsync(id))" />
+      </li>
+    }
+  </ul>
+}

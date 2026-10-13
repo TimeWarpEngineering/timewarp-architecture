@@ -18,13 +18,34 @@
 // opening Ask, so it does not read the store while it still holds the signed-out answer. The configured pass uses the fake upstream (no request leaves the
 // process); the no-key pass has no XAI:ApiKey. Screenshots go to test output (PlaywrightScreenshot),
 // which CI uploads.
+// Task 345: signed in (the first passkey account is Administrator), Settings' Ask types @ in the
+// composer: Enter chooses the first permitted type, Backspace returns to the types, Enter again,
+// and Enter on the highlighted item inserts its @prefix:id token in place of the @. The list
+// query is the real in-memory API as that user. The sent message carries the token and the fake
+// upstream's page_context answer lists it under references.
+// Task 346: on /Feedback the account files one item, so "Your filings" has a row. Ask's Tag
+// turns on pick mode; Esc cancels it with no chip. Tag again, hovering the row outlines it with
+// its chip text, and clicking it picks it (the click does not follow the row's link). The chip
+// shows "Feedback row: <title>" and its @my-feedback:<id> reference; the message sent with it
+// moves it to page_context.tags, which the fake upstream's answer prints. The browser's own
+// completion request is recorded: the user message must carry AskTagPayload's heading and the
+// token, and the next turn's instructions must name the sent tag. A probe element marked
+// data-ask-tag-private or aria-hidden is injected into the page body and must never be a Tab or
+// hover candidate. Tab reaches the row and Enter chooses it; Enter on the panel's Cancel button
+// (focus in the panel) cancels, because the panel keeps its native keys.
 #endregion
 
 namespace AskSignInPlaywright_;
 
+using System.Text.Json;
+using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Features.Applications;
+using TimeWarp.Architecture.Features.Feedback;
+
 public class AskSignIn_Given_Wasm
 {
   private const string ConfigurationPath = "/api/agent-chat/configuration";
+  private const string CompletionsPath = "/api/agent-chat/completions";
 
   private const string AnyAskState =
     "[data-qa=AgentAskNotConfigured], [data-qa=AgentAskSignIn], [data-qa=AgentAskError], .sc-ai-input__textarea";
@@ -93,9 +114,15 @@ public class AskSignIn_Given_Wasm
     }
     else
     {
+      // Task 345: @ -> types -> search -> choose, then send; page_context resolves the token.
       ILocator input = session.Page.Locator(".sc-ai-input__textarea");
-      await input.FillAsync("What is on this page?");
+      string token = await AssertAtReferencePickerAsync(session.Page);
+      await input.PressSequentiallyAsync(" What is on this page?");
       await session.Page.Locator(".sc-ai-input__send").ClickAsync();
+      await session.Page.Locator(".sc-ai-message--user").GetByText(token).WaitForAsync(new LocatorWaitForOptions
+      {
+        Timeout = 30_000,
+      });
       ILocator answer = session.Page.Locator(".sc-ai-root").GetByText("page_context:");
       await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
       await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
@@ -113,6 +140,12 @@ public class AskSignIn_Given_Wasm
         failures.Add($"Settings: page_context did not report /Settings. Answer: {settingsAnswer}");
       }
 
+      if (!settingsAnswer.Contains("\"references\"", StringComparison.Ordinal)
+        || !settingsAnswer.Contains("\"token\":\"" + token + "\"", StringComparison.Ordinal))
+      {
+        failures.Add($"Settings: page_context.references did not resolve {token}. Answer: {settingsAnswer}");
+      }
+
       await AssertReasoningOmitsDictionaryAsync(session, failures, "Settings");
 
       string feedbackUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Feedback";
@@ -123,6 +156,7 @@ public class AskSignIn_Given_Wasm
       });
       await session.Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
       await session.Page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      await FileFeedbackAsync(session.Page, feedbackUrl);
       string feedbackState = await session.OpenAskAsync();
       if (feedbackState != "Configured")
       {
@@ -130,11 +164,21 @@ public class AskSignIn_Given_Wasm
       }
       else
       {
+        string tagReference = await AssertTagPicksTheFeedbackRowAsync(session.Page);
         ILocator feedbackInput = session.Page.Locator(".sc-ai-input__textarea");
         await feedbackInput.FillAsync("Explain this page");
+        int completionsBefore = session.Completions.Count;
         await session.Page.Locator(".sc-ai-input__send").ClickAsync();
         ILocator feedbackAnswer = session.Page.Locator(".sc-ai-root").GetByText("page_context:");
         await feedbackAnswer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+        // The outgoing user message itself carries the payload, not just the live page_context.
+        string firstUserText = LastUserText(session.Completions[completionsBefore]);
+        if (!firstUserText.Contains(AskTagPayload.MessageHeading, StringComparison.Ordinal)
+          || !firstUserText.Contains(tagReference, StringComparison.Ordinal))
+        {
+          failures.Add($"Feedback: the outgoing user message did not carry the tag payload and {tagReference}. Text: {firstUserText}");
+        }
+
         string feedbackText = await session.Page.Locator(".sc-ai-root").InnerTextAsync();
         await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
         {
@@ -149,6 +193,47 @@ public class AskSignIn_Given_Wasm
           || !feedbackText.Contains("\"page\":\"Feedback\"", StringComparison.Ordinal))
         {
           failures.Add($"Feedback: page_context did not describe /Feedback. Answer: {feedbackText}");
+        }
+
+        if (!feedbackText.Contains("\"tags\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"kind\":\"Feedback row\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"label\":\"" + TaggedFeedbackTitle + "\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"token\":\"" + tagReference + "\"", StringComparison.Ordinal))
+        {
+          failures.Add($"Feedback: page_context.tags did not carry the picked row {tagReference}. Answer: {feedbackText}");
+        }
+
+        if (await session.Page.Locator("[data-qa=AskTagChip]").CountAsync() != 0)
+        {
+          failures.Add("Feedback: the tag chip stayed in the composer after the message was sent.");
+        }
+
+        // A later turn: the chip is not sent again, but the request's instructions still name it.
+        int secondTurn = session.Completions.Count;
+        await feedbackInput.FillAsync("And again?");
+        await session.Page.Locator(".sc-ai-input__send").ClickAsync();
+        await session.Page.Locator(".sc-ai-root").GetByText("And again?").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+        for (int wait = 0; wait < 100 && session.Completions.Count <= secondTurn; wait++)
+        {
+          await Task.Delay(100);
+        }
+
+        if (session.Completions.Count <= secondTurn)
+        {
+          failures.Add("Feedback: the second message sent no completion request.");
+        }
+        else
+        {
+          string secondBody = session.Completions[secondTurn];
+          if (LastUserText(secondBody).Contains(AskTagPayload.MessageHeading, StringComparison.Ordinal))
+          {
+            failures.Add("Feedback: the second message sent the tag payload again.");
+          }
+
+          if (!InstructionsOf(secondBody).Contains(tagReference, StringComparison.Ordinal))
+          {
+            failures.Add($"Feedback: the second turn's instructions did not carry the sent tag {tagReference}.");
+          }
         }
 
         await AssertReasoningOmitsDictionaryAsync(session, failures, "Feedback");
@@ -196,6 +281,7 @@ public class AskSignIn_Given_Wasm
     private readonly IBrowserContext Context;
     private readonly ConcurrentQueue<string> Console = new();
     private readonly ConcurrentQueue<int> Configuration = new();
+    private readonly ConcurrentQueue<string> CompletionBodies = new();
 
     private Session(IPlaywright playwright, IBrowser browser, IBrowserContext context, IPage page)
     {
@@ -208,6 +294,9 @@ public class AskSignIn_Given_Wasm
     public IPage Page { get; }
 
     public List<int> ConfigurationStatuses => [.. Configuration];
+
+    /// <summary>The JSON body of every completion request the browser sent, in order.</summary>
+    public List<string> Completions => [.. CompletionBodies];
 
     public string Statuses => string.Join(", ", Configuration);
 
@@ -225,6 +314,15 @@ public class AskSignIn_Given_Wasm
       Session session = new(playwright, browser, context, page);
       page.Console += (_, message) => session.Console.Enqueue($"{message.Type}: {message.Text}");
       page.PageError += (_, error) => session.Console.Enqueue(error);
+      page.Request += (_, request) =>
+      {
+        if (request.Method == "POST"
+          && new Uri(request.Url).AbsolutePath.Equals(CompletionsPath, StringComparison.OrdinalIgnoreCase)
+          && request.PostData is { } body)
+        {
+          session.CompletionBodies.Enqueue(body);
+        }
+      };
       page.Response += (_, response) =>
       {
         if (new Uri(response.Url).AbsolutePath.Equals(ConfigurationPath, StringComparison.OrdinalIgnoreCase))
@@ -355,6 +453,215 @@ public class AskSignIn_Given_Wasm
       await Browser.DisposeAsync();
       Playwright.Dispose();
     }
+  }
+
+  private const string TaggedFeedbackTitle = "Dark theme broken";
+
+  /// <summary>The text of the last user turn in a completion request body.</summary>
+  private static string LastUserText(string body)
+  {
+    using JsonDocument document = JsonDocument.Parse(body);
+    string text = "";
+    foreach (JsonElement turn in document.RootElement.GetProperty("messages").EnumerateArray())
+    {
+      if (string.Equals(turn.GetProperty("role").GetString(), "user", StringComparison.OrdinalIgnoreCase)
+        && turn.TryGetProperty("text", out JsonElement turnText))
+      {
+        text = turnText.GetString() ?? "";
+      }
+    }
+
+    return text;
+  }
+
+  private static string InstructionsOf(string body)
+  {
+    using JsonDocument document = JsonDocument.Parse(body);
+    return document.RootElement.TryGetProperty("instructions", out JsonElement instructions)
+      ? instructions.GetString() ?? ""
+      : "";
+  }
+
+  /// <summary>Tab cycles the candidates; returns every hint it showed.</summary>
+  private static async Task<List<string>> CycleHintsAsync(IPage page, int steps)
+  {
+    List<string> hints = [];
+    for (int step = 0; step < steps; step++)
+    {
+      await page.Keyboard.PressAsync("Tab");
+      hints.Add(await page.Locator("[data-qa=AskTagHint]").InnerTextAsync());
+    }
+
+    return hints;
+  }
+
+  /// <summary>Files one item, then reloads /Feedback: "Your filings" loads when the page opens.</summary>
+  private static async Task FileFeedbackAsync(IPage page, string feedbackUrl)
+  {
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(TaggedFeedbackTitle);
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Text is unreadable in dark mode.");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    // Submit is disabled while any action runs (blurring Details dispatches one). Click once,
+    // after it has stayed enabled for 500ms, as FeedbackAttachment_Given_Wasm does.
+    await page.WaitForFunctionAsync(
+      """
+      () => {
+        const button = document.querySelector('[data-qa=FeedbackSubmit]');
+        const enabled = button && !button.hasAttribute('disabled');
+        if (!enabled) { window.feedbackSubmitEnabledSince = undefined; return false; }
+        window.feedbackSubmitEnabledSince ??= performance.now();
+        return performance.now() - window.feedbackSubmitEnabledSince >= 500;
+      }
+      """,
+      null,
+      new PageWaitForFunctionOptions { Timeout = 30_000, PollingInterval = 50 });
+    await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
+    await page.Locator("[data-qa=FeedbackReceiptId]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+
+    await page.GotoAsync(feedbackUrl, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    await page.Locator("[data-qa=FeedbackList]").GetByText(TaggedFeedbackTitle).WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 60_000,
+    });
+  }
+
+  /// <summary>Tag → Esc cancels; Tag → hover → click the filing row adds its chip. Returns the row's token.</summary>
+  private static async Task<string> AssertTagPicksTheFeedbackRowAsync(IPage page)
+  {
+    ILocator tag = page.Locator("[data-qa=AskTag]");
+    ILocator picking = page.Locator("[data-qa=AskTagPicking]");
+    ILocator outline = page.Locator("[data-qa=AskTagOutline]");
+    ILocator chip = page.Locator("[data-qa=AskTagChip]");
+
+    // Keyboard start: Enter on the focused Tag button; pick mode takes focus out of the panel, so
+    // Tab drives the pick without a blur.
+    await tag.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await outline.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    // Privacy: marked elements the person cannot see are never candidates (private, aria-hidden).
+    await page.EvaluateAsync(
+      """
+      () => {
+        const body = document.querySelector('.twe-page__body');
+        const add = (attributes, label) => {
+          const element = document.createElement('div');
+          element.setAttribute('data-ask-tag', 'Probe');
+          element.setAttribute('data-ask-tag-label', label);
+          for (const [name, value] of attributes) element.setAttribute(name, value);
+          element.textContent = label;
+          element.style.cssText = 'min-height:40px;min-width:40px';
+          body.prepend(element);
+        };
+        add([['data-ask-tag-private', '']], 'PRIVATE-PROBE');
+        add([['aria-hidden', 'true']], 'HIDDEN-PROBE');
+      }
+      """);
+    List<string> hints = await CycleHintsAsync(page, 40);
+    hints.ShouldNotContain(static hint => hint.Contains("PROBE", StringComparison.Ordinal));
+    hints.ShouldContain(static hint => hint.Contains(AskTagMark.FeedbackRowKind, StringComparison.Ordinal));
+    await page.Locator("text=PRIVATE-PROBE").HoverAsync(new LocatorHoverOptions { Force = true });
+    await page.Locator("text=HIDDEN-PROBE").HoverAsync(new LocatorHoverOptions { Force = true });
+    (await page.Locator("[data-qa=AskTagHint]").InnerTextAsync()).ShouldNotContain("PROBE");
+    await page.EvaluateAsync("() => document.querySelectorAll('[data-ask-tag=Probe]').forEach(element => element.remove())");
+
+    // Keyboard path: Tab to the filing row and Enter chooses it; Remove drops the chip again.
+    string hint = "";
+    for (int step = 0; step < 40 && !hint.StartsWith(AskTagMark.FeedbackRowKind, StringComparison.Ordinal); step++)
+    {
+      await page.Keyboard.PressAsync("Tab");
+      hint = await page.Locator("[data-qa=AskTagHint]").InnerTextAsync();
+    }
+
+    hint.ShouldStartWith(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle);
+    await page.Keyboard.PressAsync("Enter");
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    await chip.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Locator("[data-qa=AskTagRemove]").ClickAsync();
+    await chip.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Detached, Timeout = 30_000 });
+
+    // Esc cancels with no chip, and focus inside the panel keeps Tab (Cancel is keyboard reachable).
+    await tag.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Locator("[data-qa=AskTagCancel]").FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    (await outline.CountAsync()).ShouldBe(0);
+    (await chip.CountAsync()).ShouldBe(0);
+
+    await tag.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Keyboard.PressAsync("Escape");
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    (await outline.CountAsync()).ShouldBe(0);
+    (await chip.CountAsync()).ShouldBe(0);
+
+    await tag.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    ILocator row = page.Locator("[data-qa=FeedbackList]").GetByText(TaggedFeedbackTitle);
+    await row.HoverAsync();
+    await page.Locator(".twe-ask-tag-badge").GetByText(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle)
+      .WaitForAsync(new LocatorWaitForOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-tag-hover-row.png") });
+    await row.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    page.Url.ShouldEndWith("/Feedback");
+
+    await chip.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    (await page.Locator("[data-qa=AskTagChipText]").InnerTextAsync()).Trim()
+      .ShouldBe(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle);
+    await page.Locator("[data-qa=AskTagChipText]").ClickAsync();
+    string reference = (await page.Locator("[data-qa=AskTagChipReference]").InnerTextAsync()).Trim();
+    reference.ShouldStartWith("@" + ListMyFeedback.ReferencePrefix + ":");
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-tag-chip.png"),
+    });
+    return reference;
+  }
+
+  private static async Task<string> AssertAtReferencePickerAsync(IPage page)
+  {
+    ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
+    await textarea.ClickAsync();
+    await textarea.PressSequentiallyAsync("@");
+    ILocator picker = page.Locator("[data-qa=AskReferencePicker]");
+    await picker.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    ILocator types = page.Locator("[data-qa=AskReferenceType]");
+    await types.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    (await page.EvaluateAsync<string?>("() => document.activeElement?.getAttribute('data-qa')"))
+      .ShouldBe("AskReferenceInput");
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-types.png") });
+
+    // Enter chooses the highlighted (first) type; Backspace on the empty term goes back.
+    string? prefix = await types.First.GetAttributeAsync("data-prefix");
+    prefix.ShouldNotBeNull();
+    await page.Keyboard.PressAsync("Enter");
+    await page.Locator("[data-qa=AskReferencePrefix]").GetByText("@" + prefix + ":").WaitForAsync();
+    await page.Keyboard.PressAsync("Backspace");
+    await types.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Keyboard.PressAsync("Enter");
+
+    ILocator item = page.Locator("[data-qa=AskReferenceItem][aria-selected=true]");
+    await item.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    string? token = await item.GetAttributeAsync("data-token");
+    token.ShouldNotBeNull();
+    token.ShouldStartWith("@" + prefix + ":");
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-items.png") });
+    await page.Keyboard.PressAsync("Enter");
+    await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+
+    // The token replaced the typed @, one space follows it, and focus is back in the textarea.
+    string draft = await textarea.InputValueAsync();
+    draft.ShouldBe(token + " ");
+    (await page.EvaluateAsync<bool>(
+      "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
+    return token;
   }
 
   private static async Task AssertReasoningOmitsDictionaryAsync(Session session, List<string> failures, string pageName)

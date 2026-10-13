@@ -1,14 +1,21 @@
 // #region Purpose
-// Inserts an @ resource token into the Ask textarea and copies the last answer's text.
+// Inserts an @ resource token into the Ask textarea, says whether an @ starts a word, refocuses
+// the textarea, and copies the last answer's text.
 // #endregion
 //
 // #region Design
 // The library MessageInput owns the draft. InsertReference splices at the caret and dispatches
-// a bubbling input event so Blazor sees the change. Typing @ is what opens the menu, so when the
-// token starts with @ and the character just before the caret is @, that @ is replaced instead of
-// doubled. CopyText writes the text C# passes: the same last-answer text the thumbs file, not the
-// whole transcript. A denied clipboard stays quiet: copy is presentational and must not break
-// the panel. Imported on demand (AskAiJsModule), not via window.Spa.
+// a bubbling input event so Blazor sees the change. Typing @ is what opens the picker, so when
+// the token starts with @ and the character just before the caret is @, that @ is replaced
+// instead of doubled. One space follows the token unless the next character is already
+// whitespace, so text typed after it never joins the id. AtStartsWord answers, for the @ keydown,
+// whether that @ starts a word: nothing or whitespace before it. The Blazor handler is async, so
+// the @ has usually landed by the time this runs; an @ just before the caret is skipped. A mid-
+// word @ (ada@example.com) stays plain text and does not open the picker or steal focus.
+// FocusComposer returns focus to the textarea when the @ picker closes.
+// CopyText writes the text C# passes: the same last-answer text the thumbs file, not the whole
+// transcript. A denied clipboard stays quiet: copy is presentational and must not break the
+// panel. Imported on demand (AskAiJsModule), not via window.Spa.
 // #endregion
 
 export function InsertReference(token: string): void {
@@ -23,12 +30,32 @@ export function InsertReference(token: string): void {
     start -= 1;
   }
 
-  area.value = area.value.slice(0, start) + token + area.value.slice(end);
-  const caret = start + token.length;
+  const after = area.value.slice(end);
+  const inserted = after.length > 0 && /^\s/.test(after) ? token : token + " ";
+  area.value = area.value.slice(0, start) + inserted + after;
+  const caret = start + inserted.length;
   area.selectionStart = caret;
   area.selectionEnd = caret;
   area.dispatchEvent(new Event("input", { bubbles: true }));
   area.focus();
+}
+
+export function AtStartsWord(): boolean {
+  const area = document.querySelector<HTMLTextAreaElement>(".twe-agent-ask .sc-ai-input__textarea");
+  if (area === null) {
+    return false;
+  }
+
+  let start = area.selectionStart ?? area.value.length;
+  if (start > 0 && area.value[start - 1] === "@") {
+    start -= 1;
+  }
+
+  return start === 0 || /\s/.test(area.value[start - 1]);
+}
+
+export function FocusComposer(): void {
+  document.querySelector<HTMLTextAreaElement>(".twe-agent-ask .sc-ai-input__textarea")?.focus();
 }
 
 export async function CopyText(text: string): Promise<void> {

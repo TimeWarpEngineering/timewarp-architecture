@@ -7,6 +7,8 @@
 // app-relative path ("/x", not the protocol-relative "//host" or "/\host") or an absolute http or
 // https url is accepted. Anything else (javascript:, data:, a bare word, empty) falls back to
 // XaiChatDefaults.SupportUrl. LoadChatConfiguration applies this once, so the component trusts state.
+// The privacy notice link (task 347) uses the same check through NormalizeOptional, which returns
+// null instead of a fallback: an app without a privacy page shows no link.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -14,18 +16,22 @@ namespace TimeWarp.Architecture.Features.Applications;
 /// <summary>Scheme check for the Ask Support link.</summary>
 public static class AskSupportLink
 {
-  public static string Normalize(string? configured)
+  public static string Normalize(string? configured) =>
+    NormalizeOptional(configured) ?? XaiChatDefaults.SupportUrl;
+
+  /// <summary>The trimmed url when it is safe for an href; otherwise null.</summary>
+  public static string? NormalizeOptional(string? configured)
   {
     if (string.IsNullOrWhiteSpace(configured))
     {
-      return XaiChatDefaults.SupportUrl;
+      return null;
     }
 
     string value = configured.Trim();
     if (value.StartsWith('/', StringComparison.Ordinal))
     {
       bool protocolRelative = value.Length > 1 && (value[1] == '/' || value[1] == '\\');
-      return protocolRelative ? XaiChatDefaults.SupportUrl : value;
+      return protocolRelative ? null : value;
     }
 
     if (Uri.TryCreate(value, UriKind.Absolute, out Uri? uri)
@@ -34,6 +40,6 @@ public static class AskSupportLink
       return value;
     }
 
-    return XaiChatDefaults.SupportUrl;
+    return null;
   }
 }

@@ -1,0 +1,40 @@
+.twe-ask-privacy {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+  padding: var(--twe-space-2) var(--twe-space-2) var(--twe-space-2) var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  background: var(--twe-paper);
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-helper);
+  line-height: 1.5;
+  box-shadow: var(--twe-shadow-sm);
+}
+
+.twe-ask-privacy__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--twe-space-2);
+  min-width: 0;
+  margin: 0;
+  padding-block: 2px;
+}
+
+.twe-ask-privacy__text a {
+  color: var(--twe-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.twe-ask-privacy ::deep fluent-button {
+  flex: none;
+  color: var(--twe-muted);
+  cursor: pointer;
+}
+
+/* Keep the 16px dismiss icon; app.css max-width: 100% collapses it in the start slot. */
+.twe-ask-privacy ::deep fluent-button > svg {
+  max-width: none;
+}

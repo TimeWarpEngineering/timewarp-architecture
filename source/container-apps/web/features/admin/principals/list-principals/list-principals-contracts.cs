@@ -16,6 +16,9 @@
 // (403 without it). Search MaximumLength 254 is Profile.MaxEmailLength; contracts cannot
 // reference the domain, so the literal is duplicated here. Defaults are CreatedAt ascending,
 // the store order.
+// Task 345: [ReferenceableResource] makes this the "principal" @ type in Ask, labelled by
+// DisplayName (the id when the caller cannot read profiles). Typing a search term needs
+// admin.profiles.read like any other search here.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -29,6 +32,7 @@ using TimeWarp.Identity;
   Policy = PermissionIds.AdminPrincipalsRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
+[ReferenceableResource("principal", "Principals", IdProperty = nameof(ListPrincipals.PrincipalSummaryDto.PrincipalId), LabelProperty = nameof(ListPrincipals.PrincipalSummaryDto.DisplayName))]
 public static partial class ListPrincipals
 {
   [ApiRoute("api/admin/principals", HttpVerb.Get)]

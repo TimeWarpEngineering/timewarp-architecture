@@ -16,6 +16,10 @@
   private static string StatusLabel(string value) => value.Length == 0 ? "Open (default)" : value;
   private static string KindLabel(string value) => value.Length == 0 ? "All kinds" : value;
 
+  // Task 346: a grid row is pickable by Ask's Tag and resolves to its @feedback:<id>.
+  private static IReadOnlyDictionary<string, object> RowMark(ListFeedback.Item item) =>
+    AskTagMark.Resource(AskTagMark.FeedbackRowKind, ListFeedback.ReferencePrefix, item.FeedbackItemId.ToString("D"), item.Title);
+
   protected override async Task OnInitializedAsync()
   {
     if (!RendererInfo.IsInteractive)
@@ -131,7 +135,7 @@
             <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
               Sortable="true" SortBy="@TitleSort"
               IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
-              <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow">@context.Title</FluentLink>
+              <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
             </TemplateColumn>
             <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)" Width="9rem"
               Sortable="true" SortBy="@KindSort"

@@ -79,3 +79,46 @@ fluent-button.twe-button-danger {
   --colorNeutralStroke1Pressed: var(--twe-danger);
   --colorNeutralStroke1Selected: var(--twe-danger);
 }
+
+/* Ask Tag pick mode (task 346). ask-tag.ts creates these elements on <body>, so scoped CSS
+   cannot reach them. The outline never takes the pointer: elementFromPoint must see the page. */
+.twe-ask-tag-outline {
+  position: fixed;
+  z-index: 10000;
+  display: none;
+  pointer-events: none;
+  outline: 2px solid var(--twe-primary);
+  outline-offset: 2px;
+  border-radius: var(--twe-radius-sm);
+  background: color-mix(in srgb, var(--twe-primary) 8%, transparent);
+}
+
+.twe-ask-tag-badge {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  max-width: 32rem;
+  margin-bottom: 6px;
+  padding: 2px var(--twe-space-2);
+  overflow: hidden;
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-primary);
+  color: var(--twe-on-primary);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.twe-ask-tag-hint {
+  position: fixed;
+  z-index: 10001;
+  bottom: var(--twe-space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(40rem, 90vw);
+  padding: var(--twe-space-2) var(--twe-space-3);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-ink);
+  color: var(--twe-on-primary);
+  pointer-events: none;
+}

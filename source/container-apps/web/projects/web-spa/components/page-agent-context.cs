@@ -25,6 +25,16 @@
 // not included. tools is the names the caller is offering, or, when omitted, navigate plus the
 // page-bound names (including human-only) plus page_context. Live callers pass the offered names.
 // page_context is not a catalog action and does not require approval.
+// references (task 345) lists the @ references the person chose in this conversation
+// (AskReferenceState, current ConversationGeneration only): token, type prefix, idType, id, and
+// label (capped at 120 characters). It is what resolves an @prefix:id token in a message to a
+// typed id the agent can pass to a tool parameter of that type. It names, it does not grant:
+// every tool call is re-authorized by the server. It is a page fact and is not dropped by the cap.
+// tags (task 346) lists the elements the person tagged with Ask's Tag and already sent in this
+// conversation (AskTagState.SentFor, current ConversationGeneration only), in the AskTagPayload
+// shape: kind, label, text, dataQa, landmark, route, and the 345 reference when the element is a
+// referenceable resource. Chips not yet sent are not listed; they travel with their message.
+// tags is a page fact too and is not dropped by the cap.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
@@ -76,6 +86,8 @@ public static class PageAgentContext
   private const int ItemIdCap = 80;
 
   private const int ItemTextCap = 200;
+
+  private const int ReferenceLabelCap = 120;
 
   public static string Describe(IStore store, string? path) => Describe(store, path, toolNames: null);
 
@@ -141,10 +153,31 @@ public static class PageAgentContext
       ["buttons"] = new JsonArray(),
       ["items"] = new JsonArray(),
       ["tools"] = ToolNames(path, toolNames),
+      ["references"] = References(store),
+      ["tags"] = AskTagPayload.Json(store.GetState<AskTagState>().SentFor(store.GetState<AgentSurfaceState>().ConversationGeneration)),
       ["screenshot"] = JsonNode.Parse("null"),
     };
     MergeSurface(document, SurfaceFor(store.GetState<AgentSurfaceState>(), path, liveSurfaceJson));
     return document;
+  }
+
+  private static JsonArray References(IStore store)
+  {
+    int generation = store.GetState<AgentSurfaceState>().ConversationGeneration;
+    JsonArray references = [];
+    foreach (ResourceReferenceItem item in store.GetState<AskReferenceState>().ChosenFor(generation))
+    {
+      references.Add(new JsonObject
+      {
+        ["token"] = item.Token,
+        ["type"] = item.Prefix,
+        ["idType"] = item.IdTypeName,
+        ["id"] = item.Id,
+        ["label"] = item.Label.Length <= ReferenceLabelCap ? item.Label : item.Label[..ReferenceLabelCap],
+      });
+    }
+
+    return references;
   }
 
   private static (string Title, string Purpose) Identity(string path)

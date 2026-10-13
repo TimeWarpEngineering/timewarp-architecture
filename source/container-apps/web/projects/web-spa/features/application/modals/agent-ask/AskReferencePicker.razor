@@ -1,0 +1,228 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using TimeWarp.Architecture.Services
+@attribute [DirectComponentSideEffect("Inserts the chosen @ token into the library chat textarea at the caret and hands focus back to it. The draft is owned by that input, not by store state; choosing is still the Choose action.")]
+
+@*
+  Purpose: The Ask "Reference a resource" picker opened by typing @ in the composer.
+
+  Design: Task 345, after Cloudflare's dashboard AI. Typing @ opens the type list (the
+  generated ResourceReferenceRegistry filtered by what the user may list); choosing a type
+  searches that type's list query as the user, debounced in AskReferenceState.Filter. Keys in
+  the picker's own input: Up/Down move, Enter chooses, Esc closes, Backspace on an empty term
+  goes back to the type list. Typing "prefix:" chooses that type. All of that is actions on
+  AskReferenceState; this component only binds them. Choosing an item inserts its @prefix:id
+  token at the textarea caret (AskAiJsModule.InsertReference, which replaces the typed @), then
+  dispatches Choose, which records the reference for page_context. Esc returns focus to the
+  textarea. Those two JS calls are the TWA0026 opt-out above: the textarea belongs to the
+  library MessageInput, so the caret is DOM state, not store state.
+  The input is a native combobox (as in CommandPalette): it needs @onkeydown on the focused
+  element and FocusAsync on open, which FluentTextInput does not give directly. Clicks on the
+  list keep focus in the input (mousedown preventDefault). The term box is reset from state when
+  the chosen type changes, so "feedback:" becomes an empty search box.
+*@
+
+@code {
+  [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+
+  private ElementReference SearchInput;
+  private string TermText = "";
+  private string? ShownPrefix;
+  private bool FocusPending = true;
+
+  private ResourceReferenceTypeRow? SelectedType => AskReferenceState.SelectedType;
+  private IReadOnlyList<ResourceReferenceTypeRow> VisibleTypes => AskReferenceState.VisibleTypes;
+  private IReadOnlyList<ResourceReferenceItem> Items => AskReferenceState.Items;
+  private int HighlightedIndex => AskReferenceState.HighlightedIndex;
+  private string? ActiveDescendant => HighlightedIndex >= 0 ? RowId(HighlightedIndex) : null;
+  private int RowCount => AskReferenceState.RowCount;
+
+  private string Placeholder => SelectedType is null
+    ? "Reference a resource"
+    : "Search " + SelectedType.DisplayName.ToLowerInvariant();
+
+  private static string RowId(int index) => $"twe-ask-reference-row-{index}";
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    SyncTerm();
+  }
+
+  // A state change re-renders without new parameters; ShouldRender runs before every render.
+  protected override bool ShouldRender()
+  {
+    SyncTerm();
+    return base.ShouldRender();
+  }
+
+  private void SyncTerm()
+  {
+    string? prefix = SelectedType?.Prefix;
+    if (prefix != ShownPrefix)
+    {
+      ShownPrefix = prefix;
+      TermText = AskReferenceState.Term;
+      FocusPending = true;
+    }
+  }
+
+  private Task FilterAsync() => AskReferenceState.Filter(TermText);
+
+  private async Task OnKeyDownAsync(KeyboardEventArgs keyboardEvent)
+  {
+    switch (keyboardEvent.Key)
+    {
+      case "ArrowDown":
+        await AskReferenceState.MoveHighlight(1);
+        break;
+      case "ArrowUp":
+        await AskReferenceState.MoveHighlight(-1);
+        break;
+      case "Enter":
+        await ChooseIndexAsync(HighlightedIndex);
+        break;
+      case "Escape":
+        await CloseAsync();
+        break;
+      case "Backspace" when TermText.Length == 0 && SelectedType is not null:
+        await AskReferenceState.Back();
+        break;
+    }
+  }
+
+  private Task HighlightAsync(int index) =>
+    index == HighlightedIndex ? Task.CompletedTask : AskReferenceState.Highlight(index);
+
+  private async Task ChooseIndexAsync(int index)
+  {
+    if (index < 0 || index >= RowCount)
+    {
+      return;
+    }
+
+    if (SelectedType is null)
+    {
+      TermText = "";
+      await AskReferenceState.ChooseType(VisibleTypes[index].Prefix);
+      return;
+    }
+
+    ResourceReferenceItem item = Items[index];
+    await AskAiJsModule.InsertReferenceAsync(JsRuntime, item.Token);
+    await AskReferenceState.Choose(item);
+  }
+
+  private async Task CloseAsync()
+  {
+    await AskReferenceState.Close();
+    await AskAiJsModule.FocusComposerAsync(JsRuntime);
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (FocusPending && RendererInfo.IsInteractive)
+    {
+      FocusPending = false;
+      await SearchInput.FocusAsync();
+    }
+  }
+}
+
+<div class="twe-ask-reference" data-qa="AskReferencePicker">
+  <div class="twe-ask-reference__heading">
+    @if (SelectedType is not null)
+    {
+      <span class="twe-ask-reference__prefix" data-qa="AskReferencePrefix">@("@" + SelectedType.Prefix + ":")</span>
+    }
+    else
+    {
+      <span class="twe-ask-reference__title">Reference a resource</span>
+    }
+  </div>
+  <input @ref=SearchInput
+         class="twe-ask-reference__input"
+         type="text"
+         role="combobox"
+         aria-label="@Placeholder"
+         aria-expanded=@(RowCount > 0 ? "true" : "false")
+         aria-controls=@(RowCount > 0 ? "twe-ask-reference-list" : null)
+         aria-autocomplete="list"
+         aria-activedescendant=@ActiveDescendant
+         placeholder="@Placeholder"
+         autocomplete="off"
+         spellcheck="false"
+         data-qa="AskReferenceInput"
+         @bind=TermText
+         @bind:event="oninput"
+         @bind:after=FilterAsync
+         @onkeydown=OnKeyDownAsync />
+  @if (SelectedType is null)
+  {
+    @if (VisibleTypes.Count == 0)
+    {
+      <p class="twe-ask-reference__empty" data-qa="AskReferenceNoTypes">No resource types you can reference match.</p>
+    }
+    else
+    {
+      <ul id="twe-ask-reference-list" class="twe-ask-reference__list" role="listbox" aria-label="Resource types" @onmousedown:preventDefault>
+        @for (int index = 0; index < VisibleTypes.Count; index++)
+        {
+          int rowIndex = index;
+          ResourceReferenceTypeRow type = VisibleTypes[rowIndex];
+          <li @key=type.Prefix
+              id=@RowId(rowIndex)
+              class=@(rowIndex == HighlightedIndex ? "twe-ask-reference__row twe-ask-reference__row--active" : "twe-ask-reference__row")
+              role="option"
+              aria-selected=@(rowIndex == HighlightedIndex ? "true" : "false")
+              data-qa="AskReferenceType"
+              data-prefix="@type.Prefix"
+              @onmouseenter=@(() => HighlightAsync(rowIndex))
+              @onclick=@(() => ChooseIndexAsync(rowIndex))>
+            <span class="twe-ask-reference__label">@type.DisplayName</span>
+            <span class="twe-ask-reference__name">@(type.Prefix + ":")</span>
+          </li>
+        }
+      </ul>
+    }
+  }
+  else if (AskReferenceState.Problem is { } problem)
+  {
+    <p class="twe-ask-reference__empty" data-qa="AskReferenceProblem">@problem</p>
+  }
+  else if (Items.Count == 0)
+  {
+    <p class="twe-ask-reference__empty" data-qa="AskReferenceNoItems">@(AskReferenceState.IsSearching ? "Searching…" : "Nothing found.")</p>
+  }
+  else
+  {
+    <ul id="twe-ask-reference-list" class="twe-ask-reference__list" role="listbox" aria-label="@SelectedType.DisplayName" @onmousedown:preventDefault>
+      @for (int index = 0; index < Items.Count; index++)
+      {
+        int rowIndex = index;
+        ResourceReferenceItem item = Items[rowIndex];
+        <li @key=item.Token
+            id=@RowId(rowIndex)
+            class=@(rowIndex == HighlightedIndex ? "twe-ask-reference__row twe-ask-reference__row--active" : "twe-ask-reference__row")
+            role="option"
+            aria-selected=@(rowIndex == HighlightedIndex ? "true" : "false")
+            data-qa="AskReferenceItem"
+            data-token="@item.Token"
+            @onmouseenter=@(() => HighlightAsync(rowIndex))
+            @onclick=@(() => ChooseIndexAsync(rowIndex))>
+          <span class="twe-ask-reference__label">@item.Label</span>
+          <span class="twe-ask-reference__name">@item.Token</span>
+        </li>
+      }
+    </ul>
+    @if (AskReferenceState.HasMore)
+    {
+      <p class="twe-ask-reference__more" data-qa="AskReferenceMore">More match. Type to narrow the list.</p>
+    }
+  }
+  <div class="twe-ask-reference__footer" @onmousedown:preventDefault>
+    <span class="twe-ask-reference__hint">↑ ↓ to move · Enter to choose · Backspace for types · Esc to close</span>
+    <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskReferenceClose" OnClick="CloseAsync">Close</FluentButton>
+  </div>
+</div>

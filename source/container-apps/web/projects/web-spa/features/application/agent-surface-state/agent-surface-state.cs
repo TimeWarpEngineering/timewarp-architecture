@@ -18,6 +18,10 @@
 // ConversationGeneration. EditMode is shared by the in-app chat and WebMCP; closing the panel
 // resets it to AskBeforeEditing. Listing tools does not read the credential. New conversation
 // clears it and bumps ConversationGeneration so the panel rebuilds on an empty thread.
+// PrivacyNoticeDismissed mirrors a browser local-storage flag (task 347): DismissPrivacyNotice
+// writes it and LoadPrivacyNoticeDismissal reads it back when Ask first renders, so a dismissed
+// notice stays dismissed across reloads in this browser. StarterPrompts (task 348) is the Ask
+// empty-state list; it holds the template defaults until a server answer replaces it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -66,12 +70,20 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   [SuppressMessage(
     "Design",
     "CA1056:URI-like properties should not be strings",
+    Justification = "PrivacyUrl is a relative app path or an absolute href, copied as text into the anchor.")]
+  public string? PrivacyUrl { get; private set; }
+
+  [SuppressMessage(
+    "Design",
+    "CA1056:URI-like properties should not be strings",
     Justification = "SupportUrl is a relative app path or an absolute href, copied as text into the anchor.")]
   public string SupportUrl { get; private set; } = XaiChatDefaults.SupportUrl;
 
   public int CredentialLifetimeMinutes { get; private set; } = XaiChatDefaults.CredentialLifetimeMinutes;
 
   public bool PrivacyNoticeDismissed { get; private set; }
+
+  public IReadOnlyList<AgentChatStarterPrompt> StarterPrompts { get; private set; } = AgentChatStarterPrompts.Defaults;
 
   /// <summary>Bounded JSON from the page-body walk, or null when the walk has not run.</summary>
   public string? PageSurfaceJson { get; private set; }
@@ -120,9 +132,11 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ConversationGeneration = 0;
     RecordChats = false;
     PrivacyNotice = XaiChatDefaults.PrivacyNotice;
+    PrivacyUrl = null;
     SupportUrl = XaiChatDefaults.SupportUrl;
     CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
     PrivacyNoticeDismissed = false;
+    StarterPrompts = AgentChatStarterPrompts.Defaults;
     PageSurfaceJson = null;
     PageSurfacePath = null;
   }

@@ -14,6 +14,8 @@
 // holds admin.profiles.read and the owner has a profile row (null otherwise). Owner stays
 // unsortable: the store pages in the database and the name lives in another slice, so a name
 // sort would have to load every match; the 403 rule of task 328 would apply if it is added.
+// Task 345: Search keeps items whose title contains the term (case-insensitive), and
+// [ReferenceableResource] makes the list the "feedback" @ type in Ask, labelled by title.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -26,10 +28,15 @@ using System.Globalization;
   Policy = PermissionIds.AdminFeedbackRead,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
 )]
+[ReferenceableResource(ListFeedback.ReferencePrefix, "Feedback items", IdProperty = nameof(ListFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListFeedback.Item.Title))]
 public static partial class ListFeedback
 {
+  /// <summary>The @ prefix of a feedback item (task 345); pages mark rows with it (AskTagMark, task 346).</summary>
+  public const string ReferencePrefix = "feedback";
+
   public const int DefaultPageSize = 25;
   public const int MaxPageSize = 100;
+  public const int MaxSearchLength = 200;
 
   /// <summary>Largest Page whose row offset, (Page - 1) * MaxPageSize, still fits in an int.</summary>
   public const int MaxPage = (int.MaxValue / MaxPageSize) + 1;
@@ -46,6 +53,7 @@ public static partial class ListFeedback
     public int PageSize { get; set; } = DefaultPageSize;
     public FeedbackListSortColumn SortBy { get; set; } = FeedbackListSortColumn.FiledAt;
     public bool SortDescending { get; set; } = true;
+    public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
     {
@@ -60,6 +68,7 @@ public static partial class ListFeedback
         { nameof(PageSize), PageSize.ToString(CultureInfo.InvariantCulture) },
         { nameof(SortBy), SortBy.ToString() },
         { nameof(SortDescending), SortDescending ? "true" : "false" },
+        { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
       };
       return $"{GetRoute()}?{this.GetQueryString(parameters)}";
     }
@@ -74,6 +83,7 @@ public static partial class ListFeedback
       RuleFor(query => query.Page).InclusiveBetween(1, MaxPage);
       RuleFor(query => query.PageSize).InclusiveBetween(1, MaxPageSize);
       RuleFor(query => query.SortBy).IsInEnum();
+      RuleFor(query => query.Search).MaximumLength(MaxSearchLength);
       RuleFor(query => query.FiledTo)
         .GreaterThan(query => query.FiledFrom)
         .When(query => query.FiledFrom is not null && query.FiledTo is not null);
@@ -156,6 +166,13 @@ public static partial class ListFeedback
         DateTimeOffset.Parse("2026-10-08T00:00:00Z"),
         "Ada Lovelace"),
     ];
-    return _ => new Response(items.Length, items, page: 1, DefaultPageSize);
+    return request =>
+    {
+      string? search = (request as Query)?.Search?.Trim();
+      Item[] matches = string.IsNullOrEmpty(search)
+        ? items
+        : [.. items.Where(item => item.Title.Contains(search, StringComparison.OrdinalIgnoreCase))];
+      return new Response(matches.Length, matches, page: 1, DefaultPageSize);
+    };
   }
 }
