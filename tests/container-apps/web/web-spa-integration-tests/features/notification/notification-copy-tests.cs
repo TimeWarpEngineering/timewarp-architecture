@@ -174,9 +174,7 @@ public class CopyMessage_Should_
       services.AddTimeWarpStateBlazor();
       services.AddAuthorizationCore();
 
-      services.AddScoped<
-        TimeWarp.Features.Persistence.IPersistenceService,
-        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddTimeWarpStatePersistence();
       services.AddScoped<AuthenticationStateProvider, AnonymousAuthenticationStateProvider>();
       services.AddSingleton<IJSRuntime>(JsRuntime);
       services.AddScoped<NavigationManager, TestNavigationManager>();

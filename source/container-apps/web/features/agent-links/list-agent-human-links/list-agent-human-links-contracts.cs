@@ -22,8 +22,11 @@ public static partial class ListAgentHumanLinks
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class LinkSummary
+  public sealed class LinkSummary : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid LinkId { get; }
     public Guid AgentPrincipalId { get; }
     public Guid HumanPrincipalId { get; }

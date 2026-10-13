@@ -33,8 +33,11 @@ public static partial class GetFeedback
     }
   }
 
-  public sealed class Response : BaseResponse
+  public sealed class Response : BaseResponse, ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid FeedbackItemId { get; }
     public string Permalink { get; }
     public FeedbackKind Kind { get; }
@@ -78,8 +81,11 @@ public static partial class GetFeedback
     }
   }
 
-  public sealed class Attachment
+  public sealed class Attachment : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid AttachmentId { get; }
     public string FileName { get; }
     public string ContentType { get; }

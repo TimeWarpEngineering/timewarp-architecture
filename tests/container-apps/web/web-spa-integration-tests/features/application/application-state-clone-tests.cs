@@ -34,7 +34,7 @@ public class Clone_Should
 
     applicationState.Initialize(name: "TestName", logo: "SomeUrl", isMenuExpanded: false);
 
-    ApplicationState clone = applicationState.Clone();
+    ApplicationState clone = applicationState.Clone()!;
 
     applicationState.ShouldNotBeSameAs(clone);
     applicationState.Name.ShouldBe(clone.Name);

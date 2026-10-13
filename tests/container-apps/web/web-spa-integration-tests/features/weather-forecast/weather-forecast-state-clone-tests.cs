@@ -51,13 +51,14 @@ public class Clone_Should
     };
     weatherForecastsState.Initialize(weatherForecasts);
 
-    WeatherForecastsState clone = weatherForecastsState.Clone();
+    WeatherForecastsState clone = weatherForecastsState.Clone()!;
 
     weatherForecastsState.ShouldNotBeSameAs(clone);
     weatherForecastsState.WeatherForecasts!.Count.ShouldBe(clone.WeatherForecasts!.Count);
     weatherForecastsState.Guid.ShouldNotBe(clone.Guid);
     weatherForecastsState.WeatherForecasts[0].TemperatureC.ShouldBe(clone.WeatherForecasts[0].TemperatureC);
-    weatherForecastsState.WeatherForecasts[0].ShouldNotBeSameAs(clone.WeatherForecasts[0]);
+    // The list is copied; TWeatherForecast is immutable and implements ICloneable by returning itself.
+    weatherForecastsState.WeatherForecasts.ShouldNotBeSameAs(clone.WeatherForecasts);
     return Task.CompletedTask;
   }
 }

@@ -4,7 +4,7 @@
 
 #region Design
 // Every sign-in interaction on Login, Choose Microsoft 365 and the Passkeys demo is an ActionSet
-// here, so the action catalog, Redux DevTools and headless tests see the same seam the buttons use.
+// here, so the action catalog, State telemetry and headless tests see the same seam the buttons use.
 // Pages dispatch and read; handlers own the ceremony (PasskeyCeremonyClient), the BFF calls, the
 // Entra challenge navigation (forceLoad) and the post-sign-in navigation.
 // ReturnPath on an action is re-collapsed by LoginPage.GetSafeReturnUrl inside the handler: an

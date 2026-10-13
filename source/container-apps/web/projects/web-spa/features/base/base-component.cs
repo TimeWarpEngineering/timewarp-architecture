@@ -1,10 +1,10 @@
 #region Purpose
-// Root partial of the shared component base: TimeWarp.State access plus Redux DevTools support.
+// Root partial of the shared component base: TimeWarp.State access.
 #endregion
 
 #region Design
-// Inherits the DevTools-enabled state component so the template demonstrates time-travel
-// debugging out of the box; a production app would swap to the plain base (see remarks).
+// Inherits TimeWarpStateComponent (Redux DevTools and its dev component were removed in
+// TimeWarp.State 12.0.0-beta.11; observe state through the telemetry package instead).
 // The class is split into partials by concern (auth, css, state accessors) so each aspect can
 // be read and maintained in isolation; this file carries only cross-cutting members.
 // No Send wrapper: components dispatch through the generated ActionSet methods, which wire
@@ -15,15 +15,13 @@
 namespace TimeWarp.Architecture.Features;
 
 /// <summary>
-/// Makes access to the State a little easier and by inheriting from
-/// TimeWarpStateDevToolsComponent it allows for ReduxDevTools operation.
+/// Makes access to the State a little easier by inheriting from TimeWarpStateComponent.
 /// </summary>
 /// <remarks>
-/// In production one would NOT be required to use these base components
-/// But would be required to properly implement the required interfaces.
-/// one could conditionally inherit from BaseComponent for production build.
+/// One is not required to use this base component, but would then have to implement the
+/// required interfaces.
 /// </remarks>
-public abstract partial class BaseComponent : TimeWarpStateDevComponent, IAttributeComponent
+public abstract partial class BaseComponent : TimeWarpStateComponent, IAttributeComponent
 {
   protected bool IsAnyActive(params Type[] actions) => ActionTrackingState.IsAnyActive(actions);
 }

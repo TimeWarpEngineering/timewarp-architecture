@@ -50,7 +50,7 @@ The work lives in the action's handler:
 - state changes
 
 Why: an action is the one seam that the action catalog (`[CatalogAction]` — the Ctrl-K palette
-and agent tools), Redux DevTools, and headless tests all see. A method on a page is invisible to
+and agent tools), State telemetry, and headless tests all see. A method on a page is invisible to
 all of them: it cannot be run from the palette, replayed, or dispatched in a test without a
 renderer. A button whose handler does the work itself is a feature nobody else can reach.
 

@@ -25,8 +25,11 @@ public static partial class ListMyFeedback
 
   public sealed class Validator : AbstractValidator<Query>;
 
-  public sealed class Item
+  public sealed class Item : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid FeedbackItemId { get; }
     public string Permalink { get; }
     public FeedbackKind Kind { get; }

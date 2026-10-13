@@ -121,9 +121,7 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.
-    services.AddScoped<
-      TimeWarp.Features.Persistence.IPersistenceService,
-      TimeWarp.Features.Persistence.PersistenceService>();
+    services.AddTimeWarpStatePersistence();
 
     // Named client the SPA uses for api-server. Base address is ingress, which routes
     // /api/weatherforecast to api-server. MockAccessTokenProvider attaches Bearer dummy-token.

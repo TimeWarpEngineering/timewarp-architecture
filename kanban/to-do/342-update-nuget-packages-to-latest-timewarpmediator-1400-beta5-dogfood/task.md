@@ -31,17 +31,18 @@ Filed by Claude (timewarp-mediator cockpit session) at Steven's request.
 
 ## Checklist
 
-- [ ] `ganda nuget outdated` re-run; Mediator 14.0.0-beta.5 and the State prerelease from 119 visible
-- [ ] Bump `Directory.Packages.props` (Mediator x3, State x3, the rest)
-- [ ] Build net10.0 + net11.0: no CS errors; TWM005-TWM011 output reviewed and triaged
-- [ ] Tests green
-- [ ] Breakages from the Mediator bump filed on timewarp-mediator (link issue numbers in Results)
-- [ ] Results: before/after versions table, TWM findings, verdict for Mediator 14.0.0 stable readiness
+- [x] `ganda nuget outdated` re-run; Mediator 14.0.0-beta.5 visible (no State build on beta.5 yet; took State 12.0.0-beta.12 per cockpit note)
+- [x] Bump `Directory.Packages.props` (Mediator x3, State x3, the rest; Microsoft.OpenApi held)
+- [x] Build: no CS errors; zero TWM diagnostics (solution targets net11.0 only, see Results)
+- [x] Tests green
+- [x] Breakages from the Mediator bump filed on timewarp-mediator (none; State findings filed on timewarp-state, see Results)
+- [x] Results: before/after versions table, TWM findings, verdict for Mediator 14.0.0 stable readiness
 - [ ] `ganda repo audit` clean; PR merged
 
 ## Session
 
 - Created: 1014986 (2026-10-13)
+- Implemented: ganda task work implement oracle (Claude Opus 5.5), 2026-10-13
 
 ## Notes
 
@@ -62,3 +63,83 @@ block on state 119:
   was built against Mediator beta.4. If State breaks at runtime or compile time against beta.5, that is
   a finding for timewarp-state 119: file it there with a repro, and hold the State pin with the reason
   recorded here.
+
+## Results
+
+### Versions
+
+| Package | Before | After |
+|---------|--------|-------|
+| TimeWarp.Mediator.Contracts / .Generators / .Analyzers | 14.0.0-beta.4 | 14.0.0-beta.5 |
+| TimeWarp.State / .Blazor / .Plus | 12.0.0-beta.10 | 12.0.0-beta.12 (built on Mediator beta.4) |
+| FluentValidation / .DependencyInjectionExtensions | 12.1.1 | 12.2.0 |
+| libphonenumber-csharp | 9.0.40 | 9.0.41 |
+| MessagePack | 3.1.10 | 3.1.12 |
+| Testcontainers.PostgreSql | 4.15.0 | 4.16.0 |
+| Scalar.AspNetCore | 2.17.11 | 2.18.0 |
+| Microsoft.Extensions.AI.OpenAI | 10.10.0 | 10.10.1 |
+| Microsoft.Playwright | 1.55.0 | 1.63.0 |
+| timewarp-simple-icons | 16.32.0 | 16.35.0 |
+| Roslynator.Analyzers / .CodeAnalysis / .Formatting | 5.0.0 | 5.0.1 |
+| Microsoft.OpenApi | 2.12.2 | **held at 2.12.2** |
+
+The Microsoft.OpenApi hold is the same one recorded in `Directory.Packages.props`. FastEndpoints.OpenApi 8.3.0 (latest stable) and 8.4.0-beta.24 still depend on Microsoft.AspNetCore.OpenApi 10.0.11, which caps Microsoft.OpenApi below 3.0.
+
+Every `project.assets.json` resolves only `TimeWarp.Mediator.*/14.0.0-beta.5`. The direct central pin overrides State's transitive beta.4, and no beta.4 remains anywhere in the graph.
+
+### TWM findings and Mediator verdict
+
+- I built the Mediator bump alone first, with State held at beta.10 (commit `chore(deps)`): 0 warnings, 0 errors, 0 TWM005-TWM011 diagnostics.
+- With State beta.12, the build and the full suite also show 0 TWM diagnostics and no runtime failure attributable to Mediator. State beta.12, compiled against Mediator beta.4, runs on beta.5 without problems.
+- Nothing was filed on timewarp-mediator.
+- **Verdict: from this consumer, Mediator 14.0.0-beta.5 is ready for 14.0.0 stable.**
+- TFMs: `Directory.Build.props` sets `TargetFramework` to net11.0 only. There is no net10.0 TFM to build. Mediator's net10.0-only runtime and Contracts load fine under net11.0.
+
+### TimeWarp.State 12.0.0-beta.10 → beta.12 migration (beta.11 breaking changes)
+
+- Removed Redux DevTools:
+  - Deleted `UseReduxDevTools`, `<ReduxDevTools />`, the `ReduxDevToolsInterop` init, the `ReduxDevToolsEnabled` DefineConstants group, the `TimeWarp.Features.ReduxDevTools` usings, the `Hydrate` overrides, and `redux-dev-tools.d.ts`.
+  - `BaseComponent` now derives from `TimeWarpStateComponent`.
+- Persistence is registered with `AddTimeWarpStatePersistence()`. That applies to the SPA host and to the nine SPA test hosts.
+- `ApiHandler` now owns its per-state `SemaphoreSlim`, keyed by store in a `ConditionalWeakTable`, because `IStore.GetSemaphore` was removed.
+  - Behavior change: an action that races a `RemoveState` now runs. Before, it was skipped.
+- Generated clones (TWSG002):
+  - `web-contracts` and `api-contracts` set `ProduceReferenceAssembly=false`.
+  - 14 immutable contract DTOs implement `ICloneable` by returning `this`. The generated clone otherwise calls their guarded constructors with default arguments and throws at runtime.
+- Tests:
+  - `StateTestOptions.Enable()` is called from a module initializer in `SpaSessionFixture`.
+  - The clone tests were updated for the nullable `Clone()` return.
+
+### Upstream findings (timewarp-state)
+
+- https://github.com/TimeWarpEngineering/timewarp-state/issues/646: the generated clone calls guarded DTO constructors with default arguments. The build is clean (TWSG002 says nothing) and the action throws at runtime.
+- https://github.com/TimeWarpEngineering/timewarp-state/issues/647: local-feed packs poisoned the global NuGet cache under the release version.
+  - On this machine `timewarp.state{,.blazor,.telemetry}/12.0.0-beta.12` came from a task-117 `artifacts/packages` folder. The result was `TypeLoadException: PipelineBehaviorRegistry` in 207 of 215 SPA tests.
+  - I deleted those three cache entries so restore pulled the nuget.org packages.
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors (after `dev clean`).
+- `dev test`: 22 projects, all passed, 0 failed. web-server-integration-tests has 1 skipped. Counts include web-spa-integration 215, web-spa-playwright 11, web-jaribu 329, and web-server-integration 331.
+- `dev template-smoke`: SUCCEEDED.
+- `dev check-version`: 2.0.0-beta.20 is ahead of nuget.org 2.0.0-beta.19, so no bump was needed.
+
+### How to validate
+
+**Smoke**
+
+```bash
+grep -E 'TimeWarp\.(Mediator|State)' Directory.Packages.props
+find . -name project.assets.json -path '*obj*' | xargs grep -ohE '"TimeWarp\.Mediator[A-Za-z.]*/[^"]*"' | sort -u
+./bin/dev clean && ./bin/dev build
+./bin/dev test
+```
+
+**Expect**
+
+- Mediator x3 pinned at `14.0.0-beta.5`; State x3 at `12.0.0-beta.12`.
+- Assets list only `14.0.0-beta.5` Mediator entries (no `beta.4`).
+- Build prints `0 Warning(s)` / `0 Error(s)` with no TWM diagnostics.
+- Every test project reports `passed` with `x0` failures.
+- If SPA tests throw `TypeLoadException ... PipelineBehaviorRegistry`, the local NuGet cache is poisoned (timewarp-state #647). Delete `~/.nuget/packages/timewarp.state*/12.0.0-beta.12` and restore again.
+

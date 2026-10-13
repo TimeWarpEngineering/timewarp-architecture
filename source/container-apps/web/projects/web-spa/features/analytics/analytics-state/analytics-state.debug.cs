@@ -5,7 +5,7 @@
 #region Design
 // CorrelationId is otherwise minted once in Initialize(); tests that assert a specific id
 // need a bypass gated by State's ThrowIfNotTestAssembly so production code stays on
-// app-load init (case-insensitive since 12.0.0-beta.5 — timewarp-state#607).
+// app-load init (open only after the test host calls StateTestOptions.Enable(), 12.0.0-beta.11).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Analytics;

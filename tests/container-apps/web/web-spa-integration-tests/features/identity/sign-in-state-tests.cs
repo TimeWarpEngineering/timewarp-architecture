@@ -271,9 +271,7 @@ public class SignInActions_Should_
       );
       services.AddTimeWarpStateBlazor();
 
-      services.AddScoped<
-        TimeWarp.Features.Persistence.IPersistenceService,
-        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddTimeWarpStatePersistence();
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);
       services.AddScoped<AuthenticationStateProvider, SignedInAuthenticationStateProvider>();
       services.AddSingleton(A.Fake<IJSRuntime>());

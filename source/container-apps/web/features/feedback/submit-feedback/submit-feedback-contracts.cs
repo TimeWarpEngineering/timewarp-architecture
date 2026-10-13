@@ -57,8 +57,11 @@ public static partial class SubmitFeedback
     }
   }
 
-  public sealed class Response : BaseResponse
+  public sealed class Response : BaseResponse, ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid FeedbackItemId { get; }
     public string Permalink { get; }
     public FeedbackKind Kind { get; }

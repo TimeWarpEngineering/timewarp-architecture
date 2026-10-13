@@ -144,9 +144,7 @@ public class SignOut_Should_
       );
       services.AddTimeWarpStateBlazor();
 
-      services.AddScoped<
-        TimeWarp.Features.Persistence.IPersistenceService,
-        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddTimeWarpStatePersistence();
       services.AddSingleton(ApiService);
       services.AddScoped<AuthenticationStateProvider, SignedInAuthenticationStateProvider>();
       services.AddSingleton<IJSRuntime>(JsRuntime);

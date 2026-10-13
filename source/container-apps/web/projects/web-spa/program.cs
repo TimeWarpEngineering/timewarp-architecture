@@ -33,13 +33,12 @@
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
 //
-// TimeWarp.State 12.0.0-beta.10 registers Blazor services with AddTimeWarpStateBlazor.
+// TimeWarp.State 12.0.0-beta.12 registers Blazor services with AddTimeWarpStateBlazor.
 // Call it after AddTimeWarpState so RenderSubscriptionsPostProcessor can be constructed.
 // Task 278: JavaScript dispatch is opt-in since TimeWarp.State 12.0.0-beta.8. AllowJavaScriptDispatch
 // is the allow-list (today only the Counter demo's IncrementCounter, under the
 // IncrementCounterActionSet.JavaScriptAlias wire name so counter.ts never spells the CLR type name);
-// it is public so SPA test hosts register the same list instead of copying it. Redux DevTools needs
-// no entry: TimeWarp.State allows its own messages when DevTools is enabled.
+// it is public so SPA test hosts register the same list instead of copying it.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
@@ -131,15 +130,6 @@ public static class Program
     (
       timeWarpStateOptions =>
       {
-        // Always register. TimeWarp.State's generated mediator links CommitHandler, which
-        // requires ReduxDevToolsInterop / IReduxDevToolsStore / ReduxDevToolsOptions.
-        // Development ValidateOnBuild (in-proc test hosts and `dotnet run` Development)
-        // fails without them. The <ReduxDevTools/> component and InitAsync stay
-        // ReduxDevToolsEnabled (Debug) so Release prerender does not render the
-        // component; without InitAsync, Interop.IsEnabled stays false and dispatch is a
-        // no-op.
-        timeWarpStateOptions.UseReduxDevTools(reduxDevToolsOptions => reduxDevToolsOptions.Trace = false);
-
         timeWarpStateOptions.Assemblies =
           new[]
           {
@@ -168,7 +158,7 @@ public static class Program
 
     // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and
     // StateInitializedNotificationHandler, which require IPersistenceService.
-    serviceCollection.AddScoped<TimeWarp.Features.Persistence.IPersistenceService, TimeWarp.Features.Persistence.PersistenceService>();
+    serviceCollection.AddTimeWarpStatePersistence();
 
     // Form validation uses Blazilla (FluentValidation for EditForm). Components pass an explicit
     // validator instance (e.g. <FluentValidator Validator="new RoleDetailsValidator()"/>), so no
