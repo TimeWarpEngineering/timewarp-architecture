@@ -59,7 +59,9 @@ group, reads the connection string from the Key Vault secret `connectionstrings-
 below; without the role it refuses with the pwsh grant), takes your IPv4 from `--client-ip` or
 `https://api.ipify.org`, creates the `operator-migrate` rule, runs the bundle with `--connection`
 (the password is never printed), and deletes the rule in a `finally` — on failure and Ctrl+C too; if
-the delete itself fails it prints the delete command. What it runs, by hand:
+the delete itself fails it prints the delete command. It then reports from the bundle's own
+`Applying migration '…'` lines: `Applied N migration(s):` with the ids and `Database now at <id>`, or
+`Up to date: no pending migrations`. `--verbose` passes the bundle's `--verbose`. What it runs, by hand:
 
 ```bash
 dev publish aca                             # writes artifacts/aspire-output/aca/efmigrations/web-migrations (the bundle)

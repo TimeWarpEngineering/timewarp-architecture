@@ -150,11 +150,16 @@ public class Kubernetes_Given_
 
   public static Task Migrate_Should_ExecPsqlInThePostgresStatefulSetWithStdin()
   {
-    DeployOperate.BuildKubectlMigrateArguments("kind-app", "my-app").ShouldBe(
+    DeployOperate.BuildKubectlMigrateArguments("kind-app", "my-app", DeployOperate.PsqlScriptCommand(verbose: true)).ShouldBe(
     [
       "--context", "kind-app", "exec", "-i", "--namespace", "my-app", "statefulset/postgres-statefulset", "--", "sh", "-c",
       "PGPASSWORD=\"$POSTGRES_PASSWORD\" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1",
     ]);
+    DeployOperate.BuildKubectlMigrateArguments("kind-app", "my-app", DeployOperate.PsqlScriptCommand(verbose: false))[^1].ShouldBe(
+      "PGPASSWORD=\"$POSTGRES_PASSWORD\" PGOPTIONS='-c client_min_messages=warning' psql -U postgres -d postgres-db -q -v ON_ERROR_STOP=1");
+    DeployOperate.BuildKubectlMigrateArguments("kind-app", "my-app", DeployOperate.PsqlHistoryCommand)[^1].ShouldBe(
+      "PGPASSWORD=\"$POSTGRES_PASSWORD\" psql -U postgres -d postgres-db -At -v VERBOSITY=sqlstate "
+      + "-c 'SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\"'");
     DeployOperate.MigrationArtifact(AspireDeploy.Kubernetes).ShouldBe("efmigrations/web-migrations.sql");
     DeployOperate.PublishedOutputDirectory(AspireDeploy.Kubernetes).ShouldBe("artifacts/aspire-output/kubernetes");
     return Task.CompletedTask;
@@ -240,14 +245,17 @@ public class Compose_Given_
   public static Task Migrate_Should_ExecPsqlInThePostgresServiceThroughTheRuntime()
   {
     ComposeProject project = new("aspire-abc", "running(5)", ["/repo/aspire-output/docker-compose.yaml"]);
-    DeployOperate.BuildComposeMigrateArguments(project).ShouldBe(
+    DeployOperate.BuildComposeMigrateArguments(project, DeployOperate.PsqlQuietCommand).ShouldBe(
     [
       "compose", "--project-name", "aspire-abc", "--file", "/repo/aspire-output/docker-compose.yaml",
-      "exec", "-T", "postgres", "sh", "-c", "PGPASSWORD=\"$POSTGRES_PASSWORD\" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1",
+      "exec", "-T", "postgres", "sh", "-c",
+      "PGPASSWORD=\"$POSTGRES_PASSWORD\" PGOPTIONS='-c client_min_messages=warning' psql -U postgres -d postgres-db -q -v ON_ERROR_STOP=1",
     ]);
+    DeployOperate.BuildComposeMigrateArguments(project, DeployOperate.PsqlHistoryCommand)[^1].ShouldContain("-At ");
+    DeployOperate.BuildComposeMigrateArguments(project, DeployOperate.PsqlHistoryCommand)[^1].ShouldContain("FROM \"__EFMigrationsHistory\"");
 
     // The runtime is the executable the command chooses (ASPIRE_CONTAINER_RUNTIME); the arguments never name one.
-    DeployOperate.BuildComposeMigrateArguments(project).ShouldNotContain("docker");
+    DeployOperate.BuildComposeMigrateArguments(project, DeployOperate.PsqlQuietCommand).ShouldNotContain("docker");
     DeployOperate.MigrationArtifact(AspireDeploy.Compose).ShouldBe("efmigrations/web-migrations.sql");
     return Task.CompletedTask;
   }
@@ -348,9 +356,9 @@ public class ContainerApps_Given_
     string display = DeployOperate.BuildPipedCommandDisplay(
       "/repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql",
       "kubectl",
-      DeployOperate.BuildKubectlMigrateArguments("kind-x", "ns"));
+      DeployOperate.BuildKubectlMigrateArguments("kind-x", "ns", DeployOperate.PsqlQuietCommand));
     display.ShouldStartWith("Get-Content -Raw /repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql | kubectl --context kind-x exec -i");
-    display.ShouldEndWith("-- sh -c 'PGPASSWORD=\"$POSTGRES_PASSWORD\" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1'");
+    display.ShouldEndWith("-- sh -c 'PGPASSWORD=\"$POSTGRES_PASSWORD\" PGOPTIONS=''-c client_min_messages=warning'' psql -U postgres -d postgres-db -q -v ON_ERROR_STOP=1'");
     display.ShouldNotContain(" < ");
     DeployOperate.PwshQuote("it's here").ShouldBe("'it''s here'");
     DeployOperate.PwshQuote("--file").ShouldBe("--file");
@@ -364,7 +372,7 @@ public class FirewallCleanup_Given_
   internal static void Register() => RegisterTests<FirewallCleanup_Given_>();
 
   private static readonly ProcessStep Create = new("az", ["create"]);
-  private static readonly ProcessStep Bundle = new("bundle", ["--connection", "x"], Terminal: true);
+  private static readonly ProcessStep Bundle = new("bundle", ["--connection", "x"], Capture: true);
   private static readonly ProcessStep Delete = new("az", ["delete"]);
   private static readonly Action<string> NoReport = _ => { };
 
@@ -500,6 +508,88 @@ public class Migrate_Given_
       .ShouldBe("dev deploy migrate: applied web-migrations.sql with psql to kubernetes (context kind-app, namespace my-app).");
     DeployOperate.BuildMigrateSummary(AspireDeploy.Compose, "web-migrations.sql with psql", "Compose project p", 3)
       .ShouldBe("dev deploy migrate: web-migrations.sql with psql against compose (Compose project p) failed (exit 3).");
+    return Task.CompletedTask;
+  }
+
+  public static Task History_Should_ReadTheIdsAndTreatAMissingTableAsNoneApplied()
+  {
+    DeployOperate.ParseMigrationHistory(0, "20260101_Init\n20260201_Todo\n", "").ShouldBe(["20260101_Init", "20260201_Todo"]);
+    DeployOperate.ParseMigrationHistory(0, "", "").ShouldBeEmpty();
+    DeployOperate.ParseMigrationHistory(1, "", "ERROR:  42P01\n").ShouldNotBeNull().ShouldBeEmpty();
+    DeployOperate.ParseMigrationHistory(2, "", "psql: error: connection to server failed").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task NewlyApplied_Should_BeTheAfterIdsNotInBefore()
+  {
+    DeployOperate.NewlyAppliedMigrations(["a", "b"], ["a", "b", "c", "d"]).ShouldBe(["c", "d"]);
+    DeployOperate.NewlyAppliedMigrations(["a", "b"], ["a", "b"]).ShouldBeEmpty();
+    DeployOperate.NewlyAppliedMigrations([], ["a"]).ShouldBe(["a"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Report_Should_ListTheAppliedMigrations()
+  {
+    DeployOperate.BuildMigrationReport(["20260101_Init"], ["20260101_Init", "20260201_Todo", "20260301_Roles"], 0).ShouldBe(
+    [
+      "Applied 2 migration(s):",
+      "  20260201_Todo",
+      "  20260301_Roles",
+      "Already applied: 1 · Database now at 20260301_Roles",
+    ]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Report_Should_SayUpToDateWhenNothingApplied()
+  {
+    DeployOperate.BuildMigrationReport(["20260101_Init", "20260201_Todo"], ["20260101_Init", "20260201_Todo"], 0)
+      .ShouldBe(["Up to date: no pending migrations (2 applied, latest 20260201_Todo)"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Report_Should_ApplyEverythingOnAFreshDatabase()
+  {
+    string[]? fresh = DeployOperate.ParseMigrationHistory(1, "", "ERROR:  42P01");
+    DeployOperate.BuildMigrationReport(fresh, ["20260101_Init", "20260201_Todo"], 0).ShouldBe(
+    [
+      "Applied 2 migration(s):",
+      "  20260101_Init",
+      "  20260201_Todo",
+      "Already applied: 0 · Database now at 20260201_Todo",
+    ]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Report_Should_SayWhereAFailureStopped()
+  {
+    DeployOperate.BuildMigrationReport(["a"], ["a", "b"], 3).ShouldBe(
+    [
+      "Applied 1 migration(s):",
+      "  b",
+      "Failed while applying migrations after b",
+    ]);
+    DeployOperate.BuildMigrationReport(["a"], ["a"], 3).ShouldBe(["Failed while applying migrations after a"]);
+    DeployOperate.BuildMigrationReport([], [], 3).ShouldBe(["Failed before any migration was applied"]);
+    DeployOperate.BuildMigrationReport(["a"], null, 3).Single().ShouldContain("could not be read after the failure");
+    DeployOperate.BuildMigrationReport(null, ["a"], 0).Single().ShouldContain("could not be read before the run");
+    return Task.CompletedTask;
+  }
+
+  public static Task BundleReport_Should_ComeFromTheBundlesApplyingLines()
+  {
+    const string applied = "Build started...\nApplying migration '20260201_Todo'.\nApplying migration '20260301_Roles'.\nDone.\n";
+    DeployOperate.BuildBundleReport(applied, 0).ShouldBe(
+    [
+      "Applied 2 migration(s):",
+      "  20260201_Todo",
+      "  20260301_Roles",
+      "Database now at 20260301_Roles",
+    ]);
+    DeployOperate.BuildBundleReport("No migrations were applied. The database is already up to date.\nDone.\n", 0)
+      .ShouldBe(["Up to date: no pending migrations"]);
+    DeployOperate.BuildBundleReport(applied, 1).ShouldBe(["Failed while applying 20260301_Roles"]);
+    DeployOperate.BuildBundleArguments("cs", verbose: true).ShouldBe(["--connection", "cs", "--verbose"]);
+    DeployOperate.BuildBundleArguments("cs").ShouldBe(["--connection", "cs"]);
     return Task.CompletedTask;
   }
 }

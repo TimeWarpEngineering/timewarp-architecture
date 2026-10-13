@@ -51,17 +51,55 @@ psql's `DO` lines or reconstruct EF internals (070-006 / 284 rule).
 
 ## Checklist
 
-- [ ] Before/after `__EFMigrationsHistory` read via the same exec path; quiet psql run
-- [ ] Summary (applied / up to date / failure) + `--verbose`
-- [ ] ACA summary line
-- [ ] Tests + skill update
-- [ ] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`
+- [x] Before/after `__EFMigrationsHistory` read via the same exec path; quiet psql run
+- [x] Summary (applied / up to date / failure) + `--verbose`
+- [x] ACA summary line
+- [x] Tests + skill update
+- [x] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`
 
 ## Notes
 
 - Workers must not touch the maintainer's kind cluster or any database. The maintainer re-runs
   `dev deploy migrate --target kubernetes` after merge. It should print "Up to date" now that
   everything is applied.
+
+## Results
+
+- `tools/dev-cli/services/deploy-operate.cs`: `PsqlQuietCommand` (`-q`, `PGOPTIONS='-c client_min_messages=warning'`),
+  `PsqlTranscriptCommand` (today's command, `--verbose`), `PsqlHistoryCommand`
+  (`psql -At -v VERBOSITY=sqlstate -c 'SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY "MigrationId"'`).
+  `BuildKubectlMigrateArguments` / `BuildComposeMigrateArguments` take the psql command, so the history read uses the
+  run's exec path. `ParseMigrationHistory` maps SQLSTATE 42P01 (missing table) to "none applied" and other failures to
+  unreadable; `NewlyAppliedMigrations` diffs; `BuildMigrationReport` prints applied / up to date / failure lines;
+  `BuildBundleReport` does the ACA summary from the bundle's `Applying migration '…'` lines.
+- `tools/dev-cli/endpoints/deploy-migrate-command.cs`: `--verbose` option; history read before and after the quiet
+  run; report before the existing summary line. The header and the prompt are unchanged. ACA: the bundle step streams and
+  captures (`RunAndCaptureAsync` instead of a TTY) to build the report. `--verbose` passes the bundle's `--verbose`.
+  The firewall-rule handling is unchanged.
+- Tests (`deploy-operate-tests.cs`): history parsing (ids / empty / 42P01 / unreadable), diff, reports for applied, up to
+  date, fresh database and failure, the ACA bundle report, and the built quiet, transcript and history commands.
+- Skill: `tw-deploy` SKILL.md (migrate bullet with example output, `--verbose`, the history query note), and both references.
+- Gates: dev-cli-tests 218/0, `dev build` 0 warnings / 0 errors, the dev CLI compiles (`deploy migrate --help` lists
+  `--verbose`), `ganda repo audit` passes, and `dev check-version` passes (2.0.0-beta.20 is ahead of nuget).
+- Not run live. Workers must not touch the kind cluster or a database. Psql's `-q` / `client_min_messages` behavior
+  against a real script is still unverified.
+
+### How to validate
+
+Smoke:
+```bash
+dotnet run --project tests/tools/dev-cli-tests        # Migrate_Given_ report/history tests pass
+dotnet run --file tools/dev-cli/dev.cs -- deploy migrate --help   # lists --verbose
+# Maintainer, after merge, against the live kind deployment:
+dev deploy migrate --target kubernetes --yes
+dev deploy migrate --target kubernetes --yes --verbose
+```
+
+Expect:
+- Tests: 0 failed.
+- On the already-migrated kind deployment, the header and `Runs:` line, then no `DO`, `COMMIT` or NOTICE lines, then
+  `Up to date: no pending migrations (N applied, latest <id>)` and the green summary line. Exit code 0.
+- `--verbose`: today's full psql transcript, then the same `Up to date` report.
 
 ## Session
 
