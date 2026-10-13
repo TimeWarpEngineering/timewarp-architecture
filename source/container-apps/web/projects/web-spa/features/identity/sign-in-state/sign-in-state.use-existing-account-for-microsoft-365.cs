@@ -7,7 +7,8 @@
 // browser assertion → CompleteEntraBootstrapExisting, so the Entra attach and the session happen
 // together, and notifies the identity-session auth state provider on success. Failures follow
 // CreateAccountFromMicrosoft365 (expired flips Microsoft365ChoiceValid); a JSException publishes
-// the ceremony Error outcome.
+// the ceremony Error outcome. Task 350: the completion goes out from the browser (the session cookie
+// lands there) and the navigation is forceLoad so the next request carries it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -45,7 +46,7 @@ partial class SignInState
           }
 
           SignInState.IsAuthenticated = true;
-          navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(result.AsT0.Destination));
+          navigationManager.NavigateTo(LoginPage.GetSafeReturnUrl(result.AsT0.Destination), forceLoad: true);
         }
         catch (JSException jsException)
         {

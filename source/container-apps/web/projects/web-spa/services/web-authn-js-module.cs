@@ -12,6 +12,8 @@
 // the unfingerprinted path (and a fingerprinted twin). No <ImportMap /> in App.razor.
 // The Counter demo's JS button (onclick → Spa.Counter.*) still uses the initializer; this helper
 // is passkey-only.
+// Task 350: SendJsonAsync is the browser fetch leg BrowserFetchHttpMessageHandler uses for
+// session-issuing ceremony completions, so the Set-Cookie lands in the browser in every render mode.
 // Dispose the module reference after each call — the ES module stays cached in the browser.
 // [SideEffectService] (task 265): components never call this directly — TWA0026; action handlers do.
 #endregion
@@ -28,21 +30,29 @@ internal static class WebAuthnJsModule
     string optionsJson,
     bool preferHybrid,
     CancellationToken cancellationToken) =>
-    InvokeAsync(jsRuntime, "CreateCredential", optionsJson, preferHybrid, cancellationToken);
+    InvokeAsync(jsRuntime, "CreateCredential", cancellationToken, optionsJson, preferHybrid);
 
   internal static Task<string> GetCredentialAsync(
     IJSRuntime jsRuntime,
     string optionsJson,
     bool preferHybrid,
     CancellationToken cancellationToken) =>
-    InvokeAsync(jsRuntime, "GetCredential", optionsJson, preferHybrid, cancellationToken);
+    InvokeAsync(jsRuntime, "GetCredential", cancellationToken, optionsJson, preferHybrid);
+
+  /// <summary>Browser fetch with credentials; returns the JSON { status, contentType, body } envelope.</summary>
+  internal static Task<string> SendJsonAsync(
+    IJSRuntime jsRuntime,
+    string method,
+    string url,
+    string? bodyJson,
+    CancellationToken cancellationToken) =>
+    InvokeAsync(jsRuntime, "SendJson", cancellationToken, method, url, bodyJson);
 
   private static async Task<string> InvokeAsync(
     IJSRuntime jsRuntime,
     string exportName,
-    string optionsJson,
-    bool preferHybrid,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+    params object?[] arguments)
   {
     IJSObjectReference? module = null;
     try
@@ -54,8 +64,7 @@ internal static class WebAuthnJsModule
       return await module.InvokeAsync<string>(
         exportName,
         cancellationToken,
-        optionsJson,
-        preferHybrid);
+        arguments);
     }
     catch (JSDisconnectedException exception)
     {

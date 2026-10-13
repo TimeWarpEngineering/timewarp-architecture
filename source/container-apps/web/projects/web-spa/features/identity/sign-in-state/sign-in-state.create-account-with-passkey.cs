@@ -8,6 +8,9 @@
 // (literal path: Settings is another slice). ReturnPath StayOnPage (empty): stay and publish "Passkey registered."
 // (Developer demo), which then sequences FetchCredentials + SetPendingNickname from
 // LastRegisteredCredentialId / LastRegisteredProviderLabel — handlers do not dispatch.
+// Task 350: the ReturnPath navigation is forceLoad. The session cookie was issued to the browser
+// (PasskeyCeremonyClient completes through the browser), but an InteractiveServer circuit keeps the
+// principal it started with; a full load starts a request (and circuit) that carries the cookie.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -64,7 +67,7 @@ partial class SignInState
           if (action.ReturnPath.Length > 0)
           {
             string destination = LoginPage.GetSafeReturnUrl(action.ReturnPath);
-            navigationManager.NavigateTo(destination == "/" ? PostCreateDestination : destination);
+            navigationManager.NavigateTo(destination == "/" ? PostCreateDestination : destination, forceLoad: true);
             return;
           }
 

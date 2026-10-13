@@ -14,6 +14,13 @@
 // calls the named exports. That path does not require window.Spa. The WebAuthn object remains
 // on Spa for Counter-style string identifiers; the host JS initializer still must list Web.Spa
 // for Spa.Counter.* (asserted on web-server).
+// Task 350: SendJson is the browser leg for ceremony completions that issue the session. Under
+// InteractiveServer the handler runs in the circuit and its HttpClient call is server→server, so
+// the session Set-Cookie never reached the browser (same hole as task 251 sign-out). fetch here runs
+// in the browser in every render mode, so the response's Set-Cookie lands in the browser's own jar.
+// It is a raw transport (method, url, body in; status, content type, body out): the C# side
+// (BrowserFetchHttpMessageHandler under HttpApiService) owns routes, serialization and problem
+// mapping, so this file holds no route strings or contract shapes. Bodies are never logged.
 // #endregion
 
 function base64UrlToBuffer(value: string): ArrayBuffer {
@@ -129,6 +136,31 @@ export async function GetCredential(
     authenticatorData: bufferToBase64Url(response.authenticatorData),
     signature: bufferToBase64Url(response.signature),
     userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
+  });
+}
+
+// Returns a JSON string: { status, contentType, body } — the response for
+// BrowserFetchHttpMessageHandler to rebuild. credentials: "include" so the request carries the
+// browser's cookies and the response's Set-Cookie is stored by the browser (task 350).
+export async function SendJson(
+  method: string,
+  url: string,
+  bodyJson: string | null,
+): Promise<string> {
+  const response = await fetch(url, {
+    method,
+    credentials: "include",
+    cache: "no-store",
+    headers: bodyJson === null
+      ? { Accept: "application/json" }
+      : { Accept: "application/json", "Content-Type": "application/json; charset=utf-8" },
+    body: bodyJson,
+  });
+
+  return JSON.stringify({
+    status: response.status,
+    contentType: response.headers.get("Content-Type"),
+    body: await response.text(),
   });
 }
 
