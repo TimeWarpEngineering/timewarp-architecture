@@ -19,6 +19,9 @@
 // tw-aggregate-pattern). The explicit UsePropertyAccessMode(PropertyAccessMode.Property) call below is
 // redundant with the convention's own pin but stays as a local exemplar. Private setters elsewhere
 // stay PreferFieldDuringConstruction.
+// Task 328: no index on DisplayName/Email. The admin directory search is a leading-wildcard
+// contains, which a btree index cannot serve; the list is small, and a pg_trgm GIN index is the
+// upgrade path if it grows.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Profiles.Infrastructure;

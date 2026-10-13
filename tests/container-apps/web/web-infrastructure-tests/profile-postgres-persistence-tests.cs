@@ -91,6 +91,51 @@ public class Round_Trip
     reloaded.Version.ShouldBe(1);
   }
 
+  public static async Task Store_FindMany_returns_only_existing_ids()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using PostgresDbContext write = await CreateContextAsync();
+    await write.Database.MigrateAsync();
+    Profile ada = Profile.Create("Ada FindMany", "en-US", "US", "dark");
+    Profile grace = Profile.Create("Grace FindMany", "en-US", "US", "dark");
+    Profile unrelated = Profile.Create("Unrelated FindMany", "en-US", "US", "dark");
+    write.Profiles.AddRange(ada, grace, unrelated);
+    await write.SaveChangesAsync();
+
+    await using PostgresDbContext read = await CreateContextAsync();
+    EfProfileStore store = new(read);
+    IReadOnlyList<Profile> found = await store.FindManyAsync([ada.Id, grace.Id, ProfileId.New(), ada.Id]);
+
+    found.Select(profile => profile.Id).OrderBy(id => id.Value).ShouldBe(new[] { ada.Id, grace.Id }.OrderBy(id => id.Value));
+    (await store.FindManyAsync([])).ShouldBeEmpty();
+  }
+
+  public static async Task Store_Search_matches_name_or_email_ignoring_case_and_treats_wildcards_literally()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    string token = Guid.NewGuid().ToString("N");
+    await using PostgresDbContext write = await CreateContextAsync();
+    await write.Database.MigrateAsync();
+    Profile byName = Profile.Create($"Searchable {token} Name", "en-US", "US", "dark");
+    Profile byEmail = Profile.Create("Plain Person", "en-US", "US", "dark");
+    byEmail.SetEmail($"Mail.{token}@Example.com");
+    Profile other = Profile.Create("Somebody Else", "en-US", "US", "dark");
+    other.SetEmail("else@example.com");
+    write.Profiles.AddRange(byName, byEmail, other);
+    await write.SaveChangesAsync();
+
+    await using PostgresDbContext read = await CreateContextAsync();
+    EfProfileStore store = new(read);
+
+    (await store.SearchAsync(token.ToUpperInvariant())).Select(profile => profile.Id).OrderBy(id => id.Value)
+      .ShouldBe(new[] { byName.Id, byEmail.Id }.OrderBy(id => id.Value));
+    (await store.SearchAsync($"mail.{token}@")).Select(profile => profile.Id).ShouldBe([byEmail.Id]);
+    (await store.SearchAsync("%")).ShouldBeEmpty("a percent sign is a literal, not a LIKE wildcard");
+    await Should.ThrowAsync<ArgumentException>(() => store.SearchAsync("  "));
+  }
+
   private static async Task<bool> SkipIfUnavailableAsync()
   {
     PostgresTestAvailability availability = await Availability.Value;

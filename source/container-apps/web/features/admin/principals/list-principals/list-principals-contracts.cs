@@ -9,6 +9,13 @@
 // uses admin.principals.manage. GetMockResponseFactory serves SPA MockWebApiService offline.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
+// Task 328: rows gain DisplayName and Email from the profile, populated only when the caller
+// holds admin.profiles.read (null otherwise; agents and principals without a profile are null).
+// Search (contains, case-insensitive, on display name or email), SortBy, and SortDescending
+// order the whole list server-side; search and profile-field sorts need admin.profiles.read
+// (403 without it). Search MaximumLength 254 is Profile.MaxEmailLength; contracts cannot
+// reference the domain, so the literal is duplicated here. Defaults are CreatedAt ascending,
+// the store order.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -28,11 +35,18 @@ public static partial class ListPrincipals
   [AuthApiRequest]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
+    public string? Search { get; set; }
+    public PrincipalListSortColumn SortBy { get; set; } = PrincipalListSortColumn.CreatedAt;
+    public bool SortDescending { get; set; }
+
     public string GetRouteWithQueryString()
     {
       var collection = new NameValueCollection
       {
-        GetAuthQueryParameters()
+        GetAuthQueryParameters(),
+        { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
+        { nameof(SortBy), SortBy.ToString() },
+        { nameof(SortDescending), SortDescending ? "true" : "false" },
       };
       return $"{GetRoute()}?{this.GetQueryString(collection)}";
     }
@@ -43,6 +57,9 @@ public static partial class ListPrincipals
     public Validator()
     {
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+      RuleFor(x => x.SortBy).IsInEnum();
+      // 254 = Profile.MaxEmailLength (contracts cannot reference the domain).
+      RuleFor(x => x.Search).MaximumLength(254);
     }
   }
 
@@ -59,6 +76,8 @@ public static partial class ListPrincipals
     public bool IsActive { get; }
     public bool IsQuarantined { get; }
     public List<Guid> RoleIds { get; }
+    public string? DisplayName { get; }
+    public string? Email { get; }
 
     public PrincipalSummaryDto(
       PrincipalId principalId,
@@ -66,7 +85,9 @@ public static partial class ListPrincipals
       TrustTier trustTier,
       bool isActive,
       bool isQuarantined,
-      List<Guid> roleIds)
+      List<Guid> roleIds,
+      string? displayName = null,
+      string? email = null)
     {
       PrincipalId = principalId;
       Kind = kind;
@@ -74,6 +95,8 @@ public static partial class ListPrincipals
       IsActive = isActive;
       IsQuarantined = isQuarantined;
       RoleIds = roleIds ?? [];
+      DisplayName = displayName;
+      Email = email;
     }
   }
 
@@ -87,14 +110,18 @@ public static partial class ListPrincipals
         TrustTier.Keyed,
         isActive: true,
         isQuarantined: false,
-        roleIds: [RoleIds.Member, RoleIds.Administrator]),
+        roleIds: [RoleIds.Member, RoleIds.Administrator],
+        displayName: "Ada Lovelace",
+        email: "ada@example.com"),
       new(
         PrincipalId.From(Guid.Parse("22222222-2222-2222-2222-222222222222")),
         PrincipalKind.Human,
         TrustTier.Keyed,
         isActive: true,
         isQuarantined: false,
-        roleIds: [RoleIds.Member]),
+        roleIds: [RoleIds.Member],
+        displayName: "Grace Hopper",
+        email: "grace@example.com"),
     ];
 
     return _ => new Response(totalCount: items.Length, items);

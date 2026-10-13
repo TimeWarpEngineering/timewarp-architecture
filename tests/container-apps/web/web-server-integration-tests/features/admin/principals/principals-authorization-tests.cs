@@ -6,6 +6,9 @@
 // Mirrors roles-authorization-tests: real HTTP, isolated clients, passkey cookie mint, grant via
 // IPrincipalRoleStore, then assert 403 → 200. Read-without-manage: shrink Administrator permission
 // set to principals.read only → List 200, Set 403. Agent bearer remains 401 (cookie-scheme policy).
+// Task 328: GetPrincipal shares admin.principals.read (401 anonymous, 403 Member, 200 Administrator
+// with the profile). An Administrator role set that lacks admin.profiles.read still gets 200 from
+// List and Get, but no display name or email (PII gating).
 #endregion
 
 namespace PrincipalsAuthorization_;
@@ -20,6 +23,8 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Features.Profiles.Application;
+using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
 
@@ -240,6 +245,124 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
     }
+  }
+
+  public static async Task Unauthorized_Given_Anonymous_GetPrincipal()
+  {
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    HttpResponseMessage response = await client.GetAsync($"api/admin/principals/{Guid.NewGuid()}");
+    response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+
+  public static async Task Forbidden_GetPrincipal_Given_Passkey_Member_Only_Session()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await ForceMemberOnlyAsync(principalId);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    HttpResponseMessage response = await client.GetAsync($"api/admin/principals/{principalId}");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
+  public static async Task Ok_GetPrincipal_Given_Administrator_Includes_Profile()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    string email = await EnsureProfileAsync(scope, principalId);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+    HttpResponseMessage response = await client.GetAsync($"api/admin/principals/{principalId}");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    GetPrincipal.Response detail = await ReadAsync<GetPrincipal.Response>(response);
+    detail.Principal.PrincipalId.Value.ShouldBe(principalId.Value);
+    detail.Principal.RoleIds.ShouldContain(RoleIds.Administrator);
+    detail.Principal.Profile.ShouldNotBeNull();
+    detail.Principal.Profile.DisplayName.ShouldBe("Integration Admin");
+    detail.Principal.Profile.Email.ShouldBe(email);
+
+    ListPrincipals.Response list = await ReadAsync<ListPrincipals.Response>(
+      await client.GetAsync(new ListPrincipals.Query { UserId = Guid.NewGuid(), Search = "integration admin" }.GetRouteWithQueryString()));
+    list.Items.Select(item => item.PrincipalId.Value).ShouldContain(principalId.Value);
+    list.Items.Single(item => item.PrincipalId.Value == principalId.Value).Email.ShouldBe(email);
+  }
+
+  public static async Task Ok_Administrator_Without_Profiles_Read_Sees_No_Profile_Fields()
+  {
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    string email = await EnsureProfileAsync(scope, principalId);
+
+    IReadOnlyList<string> originalAdminPermissions =
+      await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
+    try
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(
+        RoleIds.Administrator,
+        [.. originalAdminPermissions.Where(static id => id != PermissionIds.AdminProfilesRead)]);
+
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+
+      HttpResponseMessage listResponse = await client.GetAsync(
+        new ListPrincipals.Query { UserId = Guid.NewGuid() }.GetRouteWithQueryString());
+      listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+      string listJson = await listResponse.Content.ReadAsStringAsync();
+      listJson.ShouldNotContain(email);
+      listJson.ShouldNotContain("Integration Admin");
+      ListPrincipals.Response list = JsonSerializer
+        .Deserialize<ListPrincipals.Response>(listJson, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull();
+      list.Items.ShouldAllBe(item => item.DisplayName == null && item.Email == null);
+
+      HttpResponseMessage searchResponse = await client.GetAsync(
+        new ListPrincipals.Query { UserId = Guid.NewGuid(), Search = "integration" }.GetRouteWithQueryString());
+      searchResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+      HttpResponseMessage getResponse = await client.GetAsync($"api/admin/principals/{principalId}");
+      getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+      string getJson = await getResponse.Content.ReadAsStringAsync();
+      getJson.ShouldNotContain(email);
+      JsonSerializer.Deserialize<GetPrincipal.Response>(getJson, ContractSerializationDefaults.Options)
+        .ShouldNotBeNull().Principal.Profile.ShouldBeNull();
+    }
+    finally
+    {
+      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
+    }
+  }
+
+  private static async Task<string> EnsureProfileAsync(AsyncServiceScope scope, PrincipalId principalId)
+  {
+    IProfileStore profiles = scope.ServiceProvider.GetRequiredService<IProfileStore>();
+    string email = $"admin-{principalId.Value:N}@example.com";
+    ProfileId profileId = ProfileId.From(principalId.Value);
+    if (await profiles.FindAsync(profileId) is null)
+    {
+      TimeWarp.Architecture.Features.Profiles.Domain.Profile profile = TimeWarp.Architecture.Features.Profiles.Domain.Profile.Create(
+        profileId, "Integration Admin", "en-US", "US", "system");
+      profile.SetEmail(email);
+      await profiles.AddAsync(profile);
+    }
+
+    return email;
+  }
+
+  private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
+  {
+    string json = await response.Content.ReadAsStringAsync();
+    return JsonSerializer.Deserialize<T>(json, ContractSerializationDefaults.Options)
+      ?? throw new InvalidOperationException($"{typeof(T).Name} deserialized to null.");
   }
 
   public static async Task Unauthorized_Given_Agent_Bearer_Token_No_Cookie()

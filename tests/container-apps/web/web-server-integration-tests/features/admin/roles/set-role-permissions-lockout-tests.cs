@@ -66,6 +66,7 @@ public class Returns_
       PermissionIds.AdminRolesRead,
       PermissionIds.AdminPrincipalsRead,
       PermissionIds.AdminPrincipalsManage,
+      PermissionIds.AdminProfilesRead,
       PermissionIds.ProfileRead,
       PermissionIds.SettingsRead,
     ];

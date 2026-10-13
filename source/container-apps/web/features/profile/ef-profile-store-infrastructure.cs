@@ -10,6 +10,9 @@
 //   - Update: load tracked row, copy named-mutation state, SaveChanges (aggregate Version bump)
 // Scoped lifetime: depends on scoped PostgresDbContext. InMemoryProfileStoresModule registers
 // singleton InMemoryProfileStore; PostgresDbModule replaces when connected.
+// Task 328: FindMany is AsNoTracking WHERE Id IN (...). Search is a lower-cased contains on
+// DisplayName or Email. No index: a leading-wildcard LIKE cannot use a btree index, the admin
+// list is small, and a pg_trgm GIN index is the upgrade path if it grows.
 // Profile is IAggregateRoot — AggregateDbContext owns Version + DomainInvariantsGuard on SaveChanges.
 #endregion
 
@@ -36,6 +39,40 @@ public sealed class EfProfileStore : IProfileStore
     return await Db.Profiles.AsNoTracking()
       .FirstOrDefaultAsync(profile => profile.Id == id, cancellationToken)
       .ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyList<Profile>> FindManyAsync(
+    IReadOnlyCollection<ProfileId> ids,
+    CancellationToken cancellationToken = default)
+  {
+    ArgumentNullException.ThrowIfNull(ids);
+    cancellationToken.ThrowIfCancellationRequested();
+    ProfileId[] wanted = [.. ids.Distinct()];
+    if (wanted.Length == 0)
+    {
+      return [];
+    }
+
+    return await Db.Profiles.AsNoTracking()
+      .Where(profile => wanted.Contains(profile.Id))
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyList<Profile>> SearchAsync(string term, CancellationToken cancellationToken = default)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(term);
+    cancellationToken.ThrowIfCancellationRequested();
+    string lowered = term.ToLowerInvariant();
+    // CA1862 wants a StringComparison overload, which EF cannot translate to SQL; lower-cased
+    // contains is the translatable form (lower(x) LIKE '%term%').
+#pragma warning disable CA1862
+    return await Db.Profiles.AsNoTracking()
+      .Where(profile => profile.DisplayName.ToLower().Contains(lowered)
+        || (profile.Email != null && profile.Email.ToLower().Contains(lowered)))
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+#pragma warning restore CA1862
   }
 
   public async Task AddAsync(Profile profile, CancellationToken cancellationToken = default)

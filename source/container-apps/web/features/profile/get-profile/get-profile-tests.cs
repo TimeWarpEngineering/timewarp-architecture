@@ -138,6 +138,78 @@ namespace TimeWarp.Architecture.Features.Profiles
     }
   }
 
+  [TestTag("Application")]
+  public class ProfileDirectory_Given_
+  {
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<ProfileDirectory_Given_>();
+
+    public static async Task StoreFindMany_Should_ReturnOnlyExistingIds()
+    {
+      InMemoryProfileStore store = new();
+      ProfileId ada = ProfileId.From(Guid.NewGuid());
+      ProfileId grace = ProfileId.From(Guid.NewGuid());
+      await store.AddAsync(DomainProfile.Create(ada, "Ada", "en-US", "US", "system"));
+      await store.AddAsync(DomainProfile.Create(grace, "Grace", "en-US", "US", "system"));
+
+      IReadOnlyList<DomainProfile> found = await store.FindManyAsync([ada, ProfileId.From(Guid.NewGuid()), ada]);
+
+      found.Select(profile => profile.Id).ShouldBe([ada]);
+      (await store.FindManyAsync([])).ShouldBeEmpty();
+    }
+
+    public static async Task StoreSearch_Should_MatchNameOrEmailIgnoringCase()
+    {
+      InMemoryProfileStore store = new();
+      DomainProfile ada = DomainProfile.Create(ProfileId.From(Guid.NewGuid()), "Ada Lovelace", "en-US", "US", "system");
+      DomainProfile grace = DomainProfile.Create(ProfileId.From(Guid.NewGuid()), "Grace", "en-US", "US", "system");
+      grace.SetEmail("Navy.Hopper@Example.com");
+      await store.AddAsync(ada);
+      await store.AddAsync(grace);
+
+      (await store.SearchAsync("LOVE")).Select(profile => profile.Id).ShouldBe([ada.Id]);
+      (await store.SearchAsync("hopper@EXAMPLE")).Select(profile => profile.Id).ShouldBe([grace.Id]);
+      (await store.SearchAsync("zzz")).ShouldBeEmpty();
+      await Should.ThrowAsync<ArgumentException>(async () => await store.SearchAsync("  "));
+    }
+
+    public static async Task Directory_Should_MapEntriesAndIgnoreEmptyAndMissingIds()
+    {
+      InMemoryProfileStore store = new();
+      var principalId = Guid.NewGuid();
+      DomainProfile profile = DomainProfile.Create(ProfileId.From(principalId), "Ada", "en-GB", "GB", "dark");
+      profile.SetEmail("ada@example.com");
+      profile.EnableNotifications();
+      await store.AddAsync(profile);
+      ProfileDirectory directory = new(store);
+
+      IReadOnlyDictionary<Guid, ProfileDirectoryEntry> entries =
+        await directory.FindManyAsync([principalId, Guid.Empty, Guid.NewGuid()]);
+
+      entries.Count.ShouldBe(1);
+      ProfileDirectoryEntry entry = entries[principalId];
+      entry.PrincipalId.ShouldBe(principalId);
+      entry.DisplayName.ShouldBe("Ada");
+      entry.Email.ShouldBe("ada@example.com");
+      entry.Language.ShouldBe("en-GB");
+      entry.Region.ShouldBe("GB");
+      entry.Theme.ShouldBe("dark");
+      entry.Notifications.ShouldBeTrue();
+      (await directory.FindManyAsync([Guid.Empty])).ShouldBeEmpty();
+    }
+
+    public static async Task Directory_Search_Should_ReturnPrincipalIdsAndRejectBlank()
+    {
+      InMemoryProfileStore store = new();
+      var principalId = Guid.NewGuid();
+      await store.AddAsync(DomainProfile.Create(ProfileId.From(principalId), "Ada Lovelace", "en-US", "US", "system"));
+      ProfileDirectory directory = new(store);
+
+      (await directory.SearchAsync(" lovelace ")).ShouldBe([principalId]);
+      await Should.ThrowAsync<ArgumentException>(async () => await directory.SearchAsync(""));
+    }
+  }
+
   [TestTag("Handler")]
   public class GetProfileHandler_Given_
   {

@@ -44,6 +44,7 @@ public static class RolePermissionSeed
     PermissionIds.AdminRolesManage,
     PermissionIds.AdminPrincipalsRead,
     PermissionIds.AdminPrincipalsManage,
+    PermissionIds.AdminProfilesRead,
     PermissionIds.AdminFeedbackRead,
     PermissionIds.AdminFeedbackManage,
   ];

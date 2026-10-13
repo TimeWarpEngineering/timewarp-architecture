@@ -62,13 +62,138 @@ Following the 314 practice: these are recorded choices, open to revision with hi
 
 ## Checklist
 
-- [ ] Platform port for profile lookup/search (TWA0009-clean) + EF/in-memory implementations
-- [ ] `admin.profiles.read` (PermissionIds, policy, seed, migration)
-- [ ] `ListPrincipals` profile columns + search/sort; `GetPrincipal` detail
-- [ ] SPA list columns/search/sort + principal detail page
-- [ ] Tests incl. PII gating
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Platform port for profile lookup/search (TWA0009-clean) + EF/in-memory implementations
+- [x] `admin.profiles.read` (PermissionIds, policy, seed, migration)
+- [x] `ListPrincipals` profile columns + search/sort; `GetPrincipal` detail
+- [x] SPA list columns/search/sort + principal detail page
+- [x] Tests incl. PII gating
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-12 (cockpit, per Steve)
+- 2026-10-13: implemented under `ganda task work` (implement oracle). Gates re-run in this
+  worktree after the implementation pass (see Results).
+
+## Results
+
+### What changed
+
+All paths are under `source/container-apps/web/` unless noted.
+
+- **Platform port (TWA0009).** `platform/profile/i-profile-directory-application.cs` adds
+  `IProfileDirectory`, with `FindManyAsync(principalIds)` (batch, missing ids absent) and
+  `SearchAsync(term)` (principal ids whose display name or email contains the term,
+  case-insensitive). Rows are `ProfileDirectoryEntry` (`profile-directory-entry-application.cs`).
+  The profile slice implements it in `features/profile/profile-directory-application.cs`
+  (scoped, never creates a profile). `InMemoryProfileStoresModule` registers it. Admin.Principals
+  references only the port.
+- **Store.** `IProfileStore` gains `FindManyAsync` and `SearchAsync`. `InMemoryProfileStore`
+  uses `OrdinalIgnoreCase`. `EfProfileStore` uses `AsNoTracking`, `ids.Contains`, and
+  lower-cased `Contains` (the translatable form; there is a local CA1862 pragma with a reason).
+  **No EF index.** A leading-wildcard contains cannot use a btree index, and the admin list is
+  small. The upgrade path is a pg_trgm GIN index. This is recorded in `EfProfileStore` and the
+  Profile entity configuration Design regions.
+- **Permission `admin.profiles.read`.** `PermissionIds.AdminProfilesRead` comes after
+  `AdminPrincipalsManage` in `All`, so the server and SPA policies register automatically. It is
+  in `RolePermissionSeed.AdminPermissions` (Administrator only, protected core). Migration
+  `20261013120000_AddAdminProfilesReadPermission` inserts the Administrator grant, and Down
+  deletes it. The model snapshot only moves its migration id. The role mock lists in get-role,
+  get-roles and set-role-permissions include the new id.
+- **ListPrincipals.** Rows gain `DisplayName?` / `Email?`. The query gains `Search`, `SortBy`
+  (`PrincipalListSortColumn`: CreatedAt, DisplayName, Email, Kind; default CreatedAt) and
+  `SortDescending` (default false), all in the query string. The validator checks `SortBy`
+  IsInEnum and caps `Search` at 254 characters. The handler checks the caller's
+  `admin.profiles.read` through `IPermissionEvaluator`. Without it, the profile fields are null.
+  A search, or a sort by display name or email, returns **403** (`PrincipalProblems.ProfileAccessRequired`),
+  so the ordering cannot leak PII. Sorting runs in memory over the whole list (the list has no
+  paging). Display name and email sort with nulls last in both directions, and ties break by
+  store order.
+- **GetPrincipal (new).** `GET api/admin/principals/{PrincipalId}` uses the same
+  `[EndpointAuthorize]` as the list (`admin.principals.read`, identity-session + mock). It
+  returns `PrincipalDetailDto` (status, effective roles, `Profile?`). The profile is filled only
+  with `admin.profiles.read` and is never created. A missing principal is 404.
+- **SPA.**
+  - `/Admin/Principals` is now a `FluentDataGrid` with the task 327 server-sort pattern
+    (`RefreshItems` → `SetSort` → `FetchPrincipals`). Columns: Principal (link to detail),
+    Display name, Email, Kind, Trust, Active. "—" shows when there is no value. The search box
+    (`SetSearch` → `FetchPrincipals`) sits in an `AuthorizeView` on `admin.profiles.read`, and
+    Display name / Email are sortable only with that permission.
+  - The new `/Admin/Principals/{id}` page (`PrincipalDetailPage`, not navigable) shows status
+    and roles. The profile card sits in an `AuthorizeView` on `admin.profiles.read`. The role
+    editor sits in an `AuthorizeView` on `admin.principals.manage`.
+  - **Choice: role editing moved to the detail page.** Per-row checkbox grids do not fit a data
+    grid, and one edit surface is easier to keep correct. This is recorded in the
+    `PrincipalsPage.razor.cs` Design region.
+  - `OpenPrincipal` seeds the role drafts, so refetching the list cannot clobber an edit.
+  - `FetchPrincipals` failure clears the rows and sets `ListLoadError`, like the feedback list.
+  - All interactions are State actions. Problems surface through the `DefaultApiHandler`
+    notification path. There are no textareas.
+
+### Tests
+
+- `features/admin/principals/list-principals/list-principals-tests.cs` (extended) covers:
+  - the profile columns with the permission, and null without it (no PII);
+  - agents and rows with no profile;
+  - case-insensitive search on name and email;
+  - 403 for a search or a profile sort without the permission;
+  - each sort column in both directions;
+  - the validator, the query string, the `[EndpointAuthorize]` policy, and the seed
+    (Administrator has it, Member does not).
+- `features/admin/principals/get-principal/get-principal-tests.cs` (new) covers:
+  - the happy path with a profile, and a null profile when none exists;
+  - no profile without the permission;
+  - 404, the validator, the JSON round-trip, and the endpoint policy.
+- `features/profile/get-profile/get-profile-tests.cs` covers the in-memory `FindManyAsync`,
+  `SearchAsync` and `ProfileDirectory`.
+- `tests/.../web-infrastructure-tests/profile-postgres-persistence-tests.cs` covers EF
+  `FindManyAsync` and `SearchAsync` on live Postgres.
+- `tests/.../web-server-integration-tests/.../principals-authorization-tests.cs` covers, over
+  HTTP:
+  - GetPrincipal: anonymous gets 401, Member gets 403, and an admin gets 200 with the profile;
+  - an admin whose Administrator grants lack `admin.profiles.read` sees no display name or email
+    in the list or the detail, and their search gets 403.
+- `tests/.../web-spa-integration-tests/features/admin/principal-state-tests.cs` (new) checks
+  that SetSort and SetSearch reach the fetch query, and that a 404 from OpenPrincipal sets
+  LoadError.
+- The permission-set tests (permission-ids, permission-evaluator, set-role-permissions-lockout)
+  include the new id.
+
+### Gates (2026-10-13, this worktree)
+
+- `dev build`: 0 warnings, 0 errors
+- `dev test`: all projects passed (exit 0)
+- `dev template-smoke`: SUCCEEDED (web-jaribu aggregate 324/324)
+- `ganda repo audit`: passes all checks
+- `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet beta.19, so no bump is needed
+
+### Follow-up (not done here; for the cockpit to file)
+
+- The admin feedback list's Owner column (task 327) can show the owner's display name instead of
+  the raw principal id by using `IProfileDirectory.FindManyAsync`, gated on `admin.profiles.read`.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dotnet run source/container-apps/web/features/admin/principals/list-principals/list-principals-tests.cs
+dotnet run source/container-apps/web/features/admin/principals/get-principal/get-principal-tests.cs
+./bin/dev build && ./bin/dev test -q
+```
+
+Manually: sign in as Administrator and open `/Admin/Principals`. Type part of a display name or
+email into the search box, then click the Display name header twice. Open a row.
+
+**Expect:**
+
+- Both runfiles report all tests passed. `dev build` shows 0 warnings and 0 errors, and
+  `dev test` ends with "Tests completed successfully!".
+- The grid shows Display name and Email columns, with "—" for agents and principals without a
+  profile. Search narrows the rows case-insensitively, and the header click toggles ascending and
+  descending order.
+- The detail page shows status, roles, the full profile card (display name, email, language,
+  region, theme, notifications) and the role editor with Save.
+- If `admin.profiles.read` is removed from Administrator in `/Admin/Roles`, the profile columns
+  show "—", the search box and profile sorting disappear, and the profile card is hidden. The
+  pages still load.

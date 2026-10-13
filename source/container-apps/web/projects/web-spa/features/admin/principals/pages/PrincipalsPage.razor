@@ -6,81 +6,128 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonAccounts();
   public static string Title => "Principals";
 
-  private async Task OnRoleSelected(Guid principalId, Guid roleId, bool selected) =>
-    await PrincipalState.SetRoleSelected(principalId, roleId, selected);
+  // The grid never sorts rows itself (RefreshItems is set); a column needs a SortBy to be sortable.
+  private static readonly GridSort<ListPrincipals.PrincipalSummaryDto> DisplayNameSort =
+    GridSort<ListPrincipals.PrincipalSummaryDto>.ByAscending(static row => row.DisplayName);
+  private static readonly GridSort<ListPrincipals.PrincipalSummaryDto> EmailSort =
+    GridSort<ListPrincipals.PrincipalSummaryDto>.ByAscending(static row => row.Email);
+  private static readonly GridSort<ListPrincipals.PrincipalSummaryDto> KindSort =
+    GridSort<ListPrincipals.PrincipalSummaryDto>.ByAscending(static row => row.Kind);
 
-  private async Task OnSave(Guid principalId)
+  private bool CanReadProfiles;
+
+  protected override async Task OnInitializedAsync()
   {
-    await PrincipalState.SetPrincipalRoles(principalId);
-    if (!PrincipalState.LastSetPrincipalRolesSucceeded)
+    if (!RendererInfo.IsInteractive)
     {
       return;
     }
 
+    CanReadProfiles = await CheckAuthorization(PermissionIds.AdminProfilesRead);
     await PrincipalState.FetchPrincipals();
   }
 
-  protected override async Task OnInitializedAsync() => await PrincipalState.FetchPrincipals();
+  private async Task OnSearchChanged(string? value)
+  {
+    await PrincipalState.SetSearch(value ?? "");
+    await PrincipalState.FetchPrincipals();
+  }
+
+  private bool IsListLoading => IsAnyActive(typeof(PrincipalState.FetchPrincipalsActionSet.Action));
+
+  private IQueryable<ListPrincipals.PrincipalSummaryDto>? GridItems => PrincipalState.Principals?.AsQueryable();
+
+  private bool IsSortColumn(PrincipalListSortColumn column) => PrincipalState.SortBy == column;
+
+  private DataGridSortDirection SortDirection =>
+    PrincipalState.SortDescending ? DataGridSortDirection.Descending : DataGridSortDirection.Ascending;
+
+  private static string OrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+  private async Task OnGridRefreshAsync(GridItemsProviderRequest<ListPrincipals.PrincipalSummaryDto> request)
+  {
+    (PrincipalListSortColumn sortBy, bool sortDescending) =
+      request.SortColumns is [DataGridSortColumn<ListPrincipals.PrincipalSummaryDto> primary, ..]
+        && Enum.TryParse(primary.Column.ColumnId, out PrincipalListSortColumn column)
+        ? (column, !primary.Ascending)
+        : (PrincipalListSortColumn.CreatedAt, false);
+    if (sortBy == PrincipalState.SortBy && sortDescending == PrincipalState.SortDescending)
+    {
+      return;
+    }
+
+    await PrincipalState.SetSort(sortBy, sortDescending);
+    await PrincipalState.FetchPrincipals();
+  }
 }
 
 <TimeWarpPage Title="Principals">
   <div class="twe-stack">
     <p class="sg-subtitle">
-      Assign product roles to principals. Empty assignment resolves to Member. Bootstrap config
+      Inspect principals and open one to see its profile and assign product roles. Empty assignment
+      resolves to Member. Bootstrap config
       (<code>Authentication:BootstrapAdministratorPrincipalIds</code>) can grant Administrator without
       a store write (host restart after change). Removing the last principal who can manage principals
       is rejected (409 last-admin) so Admin cannot lock itself out.
     </p>
-    <Section Title="Principals" LoadingActionType="typeof(PrincipalState.FetchPrincipalsActionSet.Action)">
-      @if (PrincipalState.Principals is null || PrincipalState.Principals.Count == 0)
+    <AuthorizeView Policy="@PermissionIds.AdminProfilesRead">
+      <Authorized>
+        <FormField Label="Search by name or email">
+          <FluentTextInput Value="@PrincipalState.Search"
+            ValueChanged="@OnSearchChanged"
+            AriaLabel="Search by name or email"
+            Placeholder="Name or email"
+            Width="100%"
+            data-qa="AdminPrincipalsSearch" />
+        </FormField>
+      </Authorized>
+    </AuthorizeView>
+    <Section Title="Principals">
+      @if (PrincipalState.ListLoadError is not null)
       {
-        <p>No principals registered yet. Complete a passkey registration to create one.</p>
+        <p data-qa="AdminPrincipalsLoadError">@PrincipalState.ListLoadError</p>
       }
       else
       {
-        <table class="twe-table" data-qa="PrincipalsTable">
-          <thead>
-            <tr>
-              <TableHeader>Principal</TableHeader>
-              <TableHeader>Kind</TableHeader>
-              <TableHeader>Trust</TableHeader>
-              <TableHeader>Active</TableHeader>
-              <TableHeader>Roles</TableHeader>
-              <TableHeader></TableHeader>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach (ListPrincipals.PrincipalSummaryDto row in PrincipalState.Principals)
-            {
-              Guid principalGuid = row.PrincipalId.Value;
-              <tr @key="principalGuid">
-                <Cell><code>@principalGuid</code></Cell>
-                <Cell>@row.Kind</Cell>
-                <Cell>@row.TrustTier</Cell>
-                <Cell>@(row.IsActive ? "yes" : "no")</Cell>
-                <Cell>
-                  <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
-                    @foreach (Guid roleId in RoleIds.All)
-                    {
-                      <FluentCheckbox
-                        Label="@RoleIds.GetRoleNameByGuid(roleId)"
-                        Value="@PrincipalState.IsRoleSelected(principalGuid, roleId)"
-                        ValueChanged="@(async (bool value) => await OnRoleSelected(principalGuid, roleId, value))" />
-                    }
-                  </FluentStack>
-                </Cell>
-                <Cell>
-                  <FluentButton
-                    Appearance="ButtonAppearance.Primary"
-                    data-qa="SavePrincipalRoles"
-                    OnClick="@(async () => await OnSave(principalGuid))">
-                    Save
-                  </FluentButton>
-                </Cell>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <FluentDataGrid TGridItem="ListPrincipals.PrincipalSummaryDto"
+          Items="@GridItems"
+          RefreshItems="@OnGridRefreshAsync"
+          Loading="@IsListLoading"
+          ItemKey="@(static row => row.PrincipalId.Value)"
+          DisplayMode="DataGridDisplayMode.Table"
+          data-qa="PrincipalsTable">
+          <ChildContent>
+            <TemplateColumn Title="Principal" Width="22rem">
+              <FluentLink Href="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
+                <code>@context.PrincipalId.Value</code>
+              </FluentLink>
+            </TemplateColumn>
+            <TemplateColumn Title="Display name" ColumnId="@nameof(PrincipalListSortColumn.DisplayName)"
+              Sortable="@CanReadProfiles" SortBy="@DisplayNameSort"
+              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.DisplayName)" InitialSortDirection="@SortDirection">
+              @OrDash(context.DisplayName)
+            </TemplateColumn>
+            <TemplateColumn Title="Email" ColumnId="@nameof(PrincipalListSortColumn.Email)"
+              Sortable="@CanReadProfiles" SortBy="@EmailSort"
+              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Email)" InitialSortDirection="@SortDirection">
+              @OrDash(context.Email)
+            </TemplateColumn>
+            <TemplateColumn Title="Kind" ColumnId="@nameof(PrincipalListSortColumn.Kind)" Width="8rem"
+              Sortable="true" SortBy="@KindSort"
+              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Kind)" InitialSortDirection="@SortDirection">
+              @context.Kind
+            </TemplateColumn>
+            <TemplateColumn Title="Trust" Width="8rem">
+              @context.TrustTier
+            </TemplateColumn>
+            <TemplateColumn Title="Active" Width="6rem">
+              @(context.IsActive ? "yes" : "no")
+            </TemplateColumn>
+          </ChildContent>
+          <EmptyContent>
+            <p data-qa="AdminPrincipalsEmpty">No principals match. Complete a passkey registration to create one.</p>
+          </EmptyContent>
+        </FluentDataGrid>
       }
     </Section>
   </div>

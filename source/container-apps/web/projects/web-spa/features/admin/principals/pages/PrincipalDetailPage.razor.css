@@ -1,0 +1,10 @@
+.admin-principal-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.admin-principal-facts dd {
+  margin: 0;
+}

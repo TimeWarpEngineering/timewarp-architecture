@@ -22,5 +22,6 @@ public sealed class InMemoryProfileStoresModule : IModule
     _ = configuration;
     serviceCollection.AddSingleton<IProfileStore, InMemoryProfileStore>();
     serviceCollection.AddScoped<IProfileEmailLookup, ProfileEmailLookup>();
+    serviceCollection.AddScoped<IProfileDirectory, ProfileDirectory>();
   }
 }

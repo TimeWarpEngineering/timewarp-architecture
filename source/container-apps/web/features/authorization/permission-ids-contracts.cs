@@ -30,6 +30,9 @@
 // out Admin. The Admin nav category (admin.access) is the audience lock.
 // Task 314: admin.feedback.read / admin.feedback.manage follow the same read/manage split and,
 // being admin.*, join Administrator's protected core. Operator does not receive them (118).
+// Task 328: admin.profiles.read gates other users' profile fields (email is PII) in ListPrincipals and
+// GetPrincipal. It is separate from admin.principals.read so seeing who exists does not imply
+// seeing their personal data; being admin.*, it is protected core and Administrator-only by seed.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -48,6 +51,8 @@ public static class PermissionIds
   public const string AdminRolesManage = "admin.roles.manage";
   public const string AdminPrincipalsRead = "admin.principals.read";
   public const string AdminPrincipalsManage = "admin.principals.manage";
+  /// <summary>Read other users' profiles (display name, email, preferences) in the Principals admin area (task 328). PII, so separate from <see cref="AdminPrincipalsRead"/>.</summary>
+  public const string AdminProfilesRead = "admin.profiles.read";
   /// <summary>List and open every principal's feedback, and download its attachments (task 314).</summary>
   public const string AdminFeedbackRead = "admin.feedback.read";
   /// <summary>Change feedback status, reply to the filer, and add internal notes (task 314).</summary>
@@ -79,6 +84,7 @@ public static class PermissionIds
     AdminRolesManage,
     AdminPrincipalsRead,
     AdminPrincipalsManage,
+    AdminProfilesRead,
     AdminFeedbackRead,
     AdminFeedbackManage,
     DeveloperAccess,
