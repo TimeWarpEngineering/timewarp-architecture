@@ -47,6 +47,7 @@ show the filer as a raw principal id (`OwnerPrincipalId`). Task 328 added the pl
 - Created: 2026-10-13 (cockpit; follow-up suggested by the 328 worker, approved by Steve)
 - 2026-10-13: implemented under `ganda task work` (implement oracle).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T03:21:15Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-13T03:22:48Z
 
 ## Results
 
