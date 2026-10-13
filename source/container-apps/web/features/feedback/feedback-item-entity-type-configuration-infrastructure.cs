@@ -7,7 +7,8 @@
 // as the enum name so a numeric reorder cannot change meaning. Version's concurrency token comes
 // from AggregateVersionConvention; this configuration does not call IsConcurrencyToken.
 // The owner index serves the filer's list. The (Status, FiledAt) index serves the admin
-// cross-owner list, which filters by status and orders newest first (task 314). Status is
+// cross-owner list, which filters by status and orders newest first (task 314); the other
+// admin sorts (Title, Kind, Status, task 327) add no index, see EfFeedbackStore. Status is
 // stored as the enum name like Kind; existing rows default to New in the migration.
 // The thread is OwnsMany into "feedback_activity", keyed by (FeedbackItemId, Sequence) so two
 // writers appending the same position collide. Field access on ActivityList because the

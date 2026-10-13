@@ -8,7 +8,8 @@
 // answers per request type. States are re-read from the Store after Send (clone-on-dispatch
 // replaces instances). Covers the filter-to-query path, mutations storing the returned item,
 // the reply/note success flags, the non-revealing 404, paging (a filter change resets Page),
-// opening another item clearing the previous one, and a failed fetch clearing the rows.
+// opening another item clearing the previous one, a failed fetch clearing the rows, and the
+// task 327 sort (SetSort lands on the query and resets Page).
 #endregion
 
 namespace FeedbackAdminState_;
@@ -116,6 +117,37 @@ public class FeedbackAdminActions_Should_
     await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
     seen.Page.ShouldBe(1);
     scope.Store.GetState<FeedbackAdminState>().HasPreviousPage.ShouldBeFalse();
+  }
+
+  public static async Task Sort_Dispatch_Carries_SortBy_And_Direction_And_Resets_Page()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ListFeedback.Query? seen = null;
+    spa.Api.Answer<ListFeedback.Query>(query =>
+    {
+      seen = query;
+      return new ListFeedback.Response(totalCount: (2 * query.PageSize) + 1, [], query.Page, query.PageSize);
+    });
+
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.ShouldNotBeNull().SortBy.ShouldBe(FeedbackListSortColumn.FiledAt);
+    seen.SortDescending.ShouldBeTrue();
+
+    await scope.Send(new FeedbackAdminState.SetPageActionSet.Action(2));
+    await scope.Send(new FeedbackAdminState.SetSortActionSet.Action(FeedbackListSortColumn.Title, sortDescending: false));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+
+    seen.SortBy.ShouldBe(FeedbackListSortColumn.Title);
+    seen.SortDescending.ShouldBeFalse();
+    seen.Page.ShouldBe(1);
+    FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
+    state.SortBy.ShouldBe(FeedbackListSortColumn.Title);
+    state.SortDescending.ShouldBeFalse();
+
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(null, FeedbackKind.BugReport, includeClosed: false));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.SortBy.ShouldBe(FeedbackListSortColumn.Title, "a filter change keeps the sort");
   }
 
   public static async Task Failed_Fetch_Clears_The_Rows_And_Sets_A_List_Error()

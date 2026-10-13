@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// The request reads Status, Kind, IncludeClosed, and Page from state, so the action carries no
-// parameters. [TrackAction] drives the Section spinner. Not a catalog action: admin actions in
+// The request reads Status, Kind, IncludeClosed, Page, and the sort from state, so the action carries no
+// parameters. [TrackAction] drives the grid's Loading state. Not a catalog action: admin actions in
 // this app are page-bound human controls. A failed fetch clears the rows and sets ListLoadError,
 // so the table never shows the previous query's rows under the new filter.
 #endregion
@@ -36,6 +36,8 @@ partial class FeedbackAdminState
           IncludeClosed = FeedbackAdminState.IncludeClosed,
           Page = FeedbackAdminState.Page,
           PageSize = FeedbackAdminState.PageSize,
+          SortBy = FeedbackAdminState.SortBy,
+          SortDescending = FeedbackAdminState.SortDescending,
         });
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)

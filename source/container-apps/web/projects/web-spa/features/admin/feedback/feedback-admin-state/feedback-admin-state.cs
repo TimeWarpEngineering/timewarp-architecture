@@ -4,7 +4,8 @@
 
 #region Design
 // Items null = no snapshot yet (or the last fetch failed: ListLoadError); empty = loaded with zero rows. Filter fields (Status, Kind,
-// IncludeClosed, Page) are State actions; the page dispatches FetchFeedbackList afterwards.
+// IncludeClosed, Page) and the sort (SortBy, SortDescending, task 327) are State actions; the
+// page dispatches FetchFeedbackList afterwards. The sort defaults to FiledAt descending.
 // Status null with IncludeClosed false is the server's default "open items" view.
 // Current is the open item. Every mutation stores the returned Item here, so the thread never
 // needs a re-fetch. LastReplySucceeded and LastNoteSucceeded are false at request start and true
@@ -28,6 +29,8 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
   public FeedbackStatus? Status { get; private set; }
   public FeedbackKind? Kind { get; private set; }
   public bool IncludeClosed { get; private set; }
+  public FeedbackListSortColumn SortBy { get; private set; } = FeedbackListSortColumn.FiledAt;
+  public bool SortDescending { get; private set; } = true;
   public FeedbackAdminView? Current { get; private set; }
   public string? LoadError { get; private set; }
   public string? ListLoadError { get; private set; }
@@ -46,6 +49,8 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
     Status = null;
     Kind = null;
     IncludeClosed = false;
+    SortBy = FeedbackListSortColumn.FiledAt;
+    SortDescending = true;
     Current = null;
     LoadError = null;
     ListLoadError = null;

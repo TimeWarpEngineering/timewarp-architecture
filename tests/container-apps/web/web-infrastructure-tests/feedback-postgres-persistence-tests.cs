@@ -4,12 +4,13 @@ using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Testing;
+using FeedbackListSortColumn = TimeWarp.Architecture.Features.Feedback.FeedbackListSortColumn;
 
 /// <summary>
 /// Live Postgres round-trip for a feedback filing, the attachment store's conditional link,
 /// unlink-by-item, and pending-expiry statements, and the triage paths of EfFeedbackStore (task 314):
 /// UpdateAsync inserting only new thread entries, a stale copy returning false, and a filtered,
-/// paged ListAllAsync. Prefers an explicit connection string, else an
+/// paged ListAllAsync, and its SQL sort before paging (task 327). Prefers an explicit connection string, else an
 /// ephemeral Testcontainers Postgres. When neither is available the test is skipped, same as Profile.
 /// </summary>
 public class Round_Trip
@@ -178,6 +179,48 @@ public class Round_Trip
     FeedbackPage closedOnly = await store.ListAllAsync(
       new FeedbackListFilter([FeedbackStatus.Completed], null, start, start.AddMinutes(10), Skip: 0, Take: 10));
     closedOnly.Items.ShouldHaveSingleItem().Id.ShouldBe(closed.Id);
+  }
+
+  public static async Task ListAll_sorts_in_sql_before_paging_with_an_id_tiebreaker()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using PostgresDbContext db = await CreateContextAsync();
+    await db.Database.MigrateAsync();
+    EfFeedbackStore store = new(db);
+    DateTimeOffset start = new DateTimeOffset(2091, 1, 1, 0, 0, 0, TimeSpan.Zero)
+      .AddMinutes(System.Security.Cryptography.RandomNumberGenerator.GetInt32(0, 5_000_000) * 10);
+    Guid owner = Guid.NewGuid();
+    // Capitalized ASCII titles order the same under any collation.
+    FeedbackItem alpha = FeedbackItem.File(owner, FeedbackKind.Other, "Alpha", "Body", start.AddMinutes(2));
+    FeedbackItem bravo = FeedbackItem.File(owner, FeedbackKind.BugReport, "Bravo", "Body", start.AddMinutes(3));
+    FeedbackItem charlie = FeedbackItem.File(owner, FeedbackKind.Complaint, "Charlie", "Body", start.AddMinutes(1));
+    FeedbackItem charlieTwin = FeedbackItem.File(owner, FeedbackKind.Complaint, "Charlie", "Body", start.AddMinutes(1));
+    foreach (FeedbackItem item in new[] { alpha, bravo, charlie, charlieTwin })
+    {
+      await store.AddAsync(item);
+    }
+
+    // Postgres uuid order is byte order, which differs from .NET Guid order, so the test reads
+    // the tiebreak from the store and only checks it is the same both times and both directions.
+    async Task<string[]> TitlesAsync(FeedbackListSortColumn sortBy, bool descending, int skip = 0, int take = 10) =>
+      [
+        .. (await store.ListAllAsync(new FeedbackListFilter(
+            null, null, start, start.AddMinutes(10), skip, take, sortBy, descending)))
+          .Items.Select(item => item.Title)
+      ];
+
+    (await TitlesAsync(FeedbackListSortColumn.Title, descending: false)).ShouldBe(["Alpha", "Bravo", "Charlie", "Charlie"]);
+    (await TitlesAsync(FeedbackListSortColumn.Title, descending: true)).ShouldBe(["Charlie", "Charlie", "Bravo", "Alpha"]);
+    // Kind orders by its stored name: BugReport, Complaint, Other.
+    (await TitlesAsync(FeedbackListSortColumn.Kind, descending: false)).ShouldBe(["Bravo", "Charlie", "Charlie", "Alpha"]);
+    (await TitlesAsync(FeedbackListSortColumn.FiledAt, descending: false)).ShouldBe(["Charlie", "Charlie", "Alpha", "Bravo"]);
+    (await TitlesAsync(FeedbackListSortColumn.Title, descending: false, skip: 2, take: 2)).ShouldBe(["Charlie", "Charlie"]);
+
+    FeedbackListFilter twins = new(null, null, start, start.AddMinutes(10), 0, 10, FeedbackListSortColumn.Title, SortDescending: true);
+    FeedbackItemId[] first = [.. (await store.ListAllAsync(twins)).Items.Take(2).Select(item => item.Id)];
+    FeedbackItemId[] ascending = [.. (await store.ListAllAsync(twins with { SortDescending = false })).Items.Skip(2).Select(item => item.Id)];
+    first.ShouldBe(ascending, "the id tiebreaker is ascending in both directions");
   }
 
   private static async Task<bool> SkipIfUnavailableAsync()

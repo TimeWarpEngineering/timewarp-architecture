@@ -6,6 +6,7 @@
 // Status filter: an explicit Status wins; otherwise closed statuses are excluded unless
 // IncludeClosed (FeedbackStatusRules.IsClosed is the one copy of "closed"). Enums map by name
 // onto the domain. The page window is computed here; the store returns the matching total.
+// SortBy and SortDescending pass through to the store, which sorts before it pages.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -70,7 +71,15 @@ public sealed class ListFeedback
       int page = Math.Clamp(request.Page, 1, MaxPage);
       FeedbackPage result = await FeedbackStore
         .ListAllAsync(
-          new FeedbackListFilter(statuses, kind, request.FiledFrom, request.FiledTo, (page - 1) * pageSize, pageSize),
+          new FeedbackListFilter(
+            statuses,
+            kind,
+            request.FiledFrom,
+            request.FiledTo,
+            (page - 1) * pageSize,
+            pageSize,
+            request.SortBy,
+            request.SortDescending),
           cancellationToken)
         .ConfigureAwait(false);
 

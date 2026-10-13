@@ -11,7 +11,8 @@
 
 #region Purpose
 // Jaribu runfile for task 314: the FeedbackItem status and thread mutations and their
-// invariants, the admin list (cross-owner, closed hidden by default, filters, paging), the
+// invariants, the admin list (cross-owner, closed hidden by default, filters, paging, and the
+// task 327 sort: each column both ways, before paging, id tiebreaker), the
 // admin detail, status changes (never back to New, 409 on the current status, email only for
 // Planned/Completed/Declined), admin replies (always emailed when an address is known),
 // internal notes (never shown to the filer, never emailed), filer replies (own items only),
@@ -242,6 +243,43 @@ namespace TimeWarp.Architecture.Features.Feedback
       page2.Items.Select(item => item.FiledAt).ShouldBe([TriageWorld.Day(3), TriageWorld.Day(2)]);
     }
 
+    public static async Task List_Should_SortEachColumnBothWaysBeforePaging()
+    {
+      TriageWorld world = new();
+      FeedbackItem apple = await world.AddTitledAsync("Apple", DomainKind.BugReport, day: 1);
+      FeedbackItem appleTwin = await world.AddTitledAsync("Apple", DomainKind.BugReport, day: 1, DomainStatus.Planned);
+      FeedbackItem banana = await world.AddTitledAsync("banana", DomainKind.FeatureRequest, day: 3);
+      FeedbackItem cherry = await world.AddTitledAsync("cherry", DomainKind.Complaint, day: 2, DomainStatus.UnderReview);
+      // apple and appleTwin share Title, Kind, and FiledAt, so only the id tiebreaker orders them.
+      (Guid low, Guid high) = apple.Id.Value.CompareTo(appleTwin.Id.Value) < 0
+        ? (apple.Id.Value, appleTwin.Id.Value)
+        : (appleTwin.Id.Value, apple.Id.Value);
+      Guid a = apple.Id.Value, b = banana.Id.Value, c = cherry.Id.Value, t = appleTwin.Id.Value;
+
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Title, descending: false)).ShouldBe([low, high, b, c]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Title, descending: true)).ShouldBe([c, b, low, high]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Kind, descending: false)).ShouldBe([low, high, c, b]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Kind, descending: true)).ShouldBe([b, c, low, high]);
+      // By name: New, Planned, UnderReview. Inside New, newest first.
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Status, descending: false)).ShouldBe([b, a, t, c]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.Status, descending: true)).ShouldBe([c, t, b, a]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.FiledAt, descending: false)).ShouldBe([low, high, c, b]);
+      (await world.SortedIdsAsync(FeedbackListSortColumn.FiledAt, descending: true)).ShouldBe([b, c, low, high]);
+      (await world.ListAsync(new AdminListContract.Query { IncludeClosed = true }))
+        .Items.Select(item => item.FeedbackItemId).ShouldBe([b, c, low, high], "default is FiledAt descending");
+
+      AdminListContract.Response page2 = await world.ListAsync(new AdminListContract.Query
+      {
+        IncludeClosed = true,
+        SortBy = FeedbackListSortColumn.Title,
+        SortDescending = false,
+        Page = 2,
+        PageSize = 2,
+      });
+      page2.TotalCount.ShouldBe(4);
+      page2.Items.Select(item => item.Title).ShouldBe(["banana", "cherry"], "the sort spans every page");
+    }
+
     public static Task ListValidator_Should_RejectBadPagingAndBackwardsDates()
     {
       AdminListContract.Validator validator = new();
@@ -252,6 +290,9 @@ namespace TimeWarp.Architecture.Features.Feedback
       validator.Validate(new AdminListContract.Query { Page = AdminListContract.MaxPage, PageSize = AdminListContract.MaxPageSize }).IsValid.ShouldBeTrue();
       validator.Validate(new AdminListContract.Query { FiledFrom = TriageWorld.Day(3), FiledTo = TriageWorld.Day(2) })
         .IsValid.ShouldBeFalse();
+      validator.Validate(new AdminListContract.Query { SortBy = (FeedbackListSortColumn)99 }).IsValid.ShouldBeFalse();
+      validator.Validate(new AdminListContract.Query { SortBy = FeedbackListSortColumn.Title, SortDescending = false })
+        .IsValid.ShouldBeTrue();
       return Task.CompletedTask;
     }
 
@@ -264,6 +305,8 @@ namespace TimeWarp.Architecture.Features.Feedback
         IncludeClosed = true,
         Page = 3,
         PageSize = 10,
+        SortBy = FeedbackListSortColumn.Title,
+        SortDescending = false,
       }.GetRouteWithQueryString();
       route.ShouldStartWith("api/admin/feedback?");
       route.ShouldContain("Status=Planned");
@@ -271,6 +314,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       route.ShouldContain("IncludeClosed=true");
       route.ShouldContain("Page=3");
       route.ShouldContain("PageSize=10");
+      route.ShouldContain("SortBy=Title");
+      route.ShouldContain("SortDescending=false");
       return Task.CompletedTask;
     }
 
@@ -577,6 +622,28 @@ namespace TimeWarp.Architecture.Features.Feedback
       await Feedback.AddAsync(item);
       return item;
     }
+
+    public async Task<FeedbackItem> AddTitledAsync(
+      string title,
+      DomainKind kind,
+      int day,
+      DomainStatus status = DomainStatus.New)
+    {
+      FeedbackItem item = FeedbackItem.File(Guid.NewGuid(), kind, title, "Body", Day(day));
+      if (status != DomainStatus.New)
+      {
+        item.ChangeStatus(status, Admin.Value, Day(day));
+      }
+
+      await Feedback.AddAsync(item);
+      return item;
+    }
+
+    public async Task<Guid[]> SortedIdsAsync(FeedbackListSortColumn sortBy, bool descending) =>
+      [
+        .. (await ListAsync(new AdminListContract.Query { IncludeClosed = true, SortBy = sortBy, SortDescending = descending }))
+          .Items.Select(item => item.FeedbackItemId)
+      ];
 
     public async Task SetFilerEmailAsync(string email)
     {

@@ -5,8 +5,12 @@
 #region Design
 // Statuses null means every status; an empty set matches nothing. FiledFrom is inclusive and
 // FiledTo exclusive, so a day range is [day, day + 1). Skip/Take are the page window the
-// handler computes from the contract's 1-based page; stores order by FiledAt descending, then
-// id, so pages are stable. TotalCount counts every match, not just the page.
+// handler computes from the contract's 1-based page. Stores order the whole match set by
+// SortBy/SortDescending before taking the window (task 327), then by FiledAt descending when
+// SortBy is another column, then by id ascending, so every page is stable. Kind and Status
+// order by enum name, which is how EF stores them. The default is FiledAt descending (newest
+// first). The sort column is the wire enum: it is a closed list of columns, not domain data.
+// TotalCount counts every match, not just the page.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -19,6 +23,8 @@ public sealed record FeedbackListFilter(
   DateTimeOffset? FiledFrom,
   DateTimeOffset? FiledTo,
   int Skip,
-  int Take);
+  int Take,
+  FeedbackListSortColumn SortBy = FeedbackListSortColumn.FiledAt,
+  bool SortDescending = true);
 
 public sealed record FeedbackPage(IReadOnlyList<FeedbackItem> Items, int TotalCount);

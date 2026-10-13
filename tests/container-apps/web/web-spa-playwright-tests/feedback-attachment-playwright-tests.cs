@@ -20,6 +20,9 @@
 // The reply and note boxes have no Title beside them, so they measure part=root against the
 // content box of the element that holds the shared TextArea (task 326). The first passkey
 // account on a fresh host claims Administrator, so the same session opens /Admin/Feedback/{id}.
+// The admin list sort proof (task 327) files two items, opens /Admin/Feedback, clicks the
+// Title header's sort button, and checks the rows re-order (server-side sort) and aria-sort
+// toggles ascending then descending.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -217,6 +220,73 @@ public class FeedbackAttachment_Given_Wasm
     }
 
     await AssertBoxesFillTheirFieldAsync(page, "admin", ["AdminFeedbackReply", "AdminFeedbackNote"]);
+  }
+
+  public static async Task AdminListHeaderClick_Should_ReorderRows_And_ToggleDirection()
+  {
+    InstallChromium();
+
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    using IPlaywright playwright = await Playwright.CreateAsync();
+    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+    });
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    // Alpha is filed first, so the default newest-first order is Zulu, Alpha.
+    foreach (string title in new[] { "Alpha sort", "Zulu sort" })
+    {
+      await OpenFeedbackAsync(page, console);
+      await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(title);
+      await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Sort me.");
+      await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+      await SubmitFeedbackAsync(page);
+    }
+
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    ILocator rows = page.Locator("[data-qa=AdminFeedbackRow]");
+    try
+    {
+      await Assertions.Expect(rows).ToHaveTextAsync(["Zulu sort", "Alpha sort"], new LocatorAssertionsToHaveTextOptions { Timeout = 120_000 });
+    }
+    catch (PlaywrightException exception)
+    {
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-sort-failed.png"), FullPage = true });
+      string text = await page.Locator("body").InnerTextAsync();
+      string log = string.Join('\n', console);
+      throw new TimeoutException($"Admin feedback list did not render newest first at {page.Url}. Page:\n{text}\nConsole:\n{log}", exception);
+    }
+
+    ILocator grid = page.Locator("[data-qa=AdminFeedbackTable]");
+    ILocator titleHeader = grid.GetByRole(AriaRole.Columnheader).Filter(new LocatorFilterOptions { HasText = "Title" });
+    ILocator filedHeader = grid.GetByRole(AriaRole.Columnheader).Filter(new LocatorFilterOptions { HasText = "Filed" });
+    await Assertions.Expect(filedHeader).ToHaveAttributeAsync("aria-sort", "descending");
+
+    await titleHeader.Locator("[col-sort-button]").ClickAsync();
+    await Assertions.Expect(rows).ToHaveTextAsync(["Alpha sort", "Zulu sort"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await Assertions.Expect(titleHeader).ToHaveAttributeAsync("aria-sort", "ascending");
+    await Assertions.Expect(filedHeader).Not.ToHaveAttributeAsync("aria-sort", "descending");
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-sort-title-ascending.png"), FullPage = true });
+
+    await titleHeader.Locator("[col-sort-button]").ClickAsync();
+    await Assertions.Expect(titleHeader).ToHaveAttributeAsync("aria-sort", "descending", new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
+    await Assertions.Expect(rows).ToHaveTextAsync(["Zulu sort", "Alpha sort"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-sort-title-descending.png"), FullPage = true });
   }
 
   // The submit button is Disabled while any action is active, and blurring Details dispatches the
