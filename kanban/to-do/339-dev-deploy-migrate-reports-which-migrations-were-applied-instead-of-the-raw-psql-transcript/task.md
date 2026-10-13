@@ -114,3 +114,4 @@ Expect:
 - Created: 2026-10-13 (cockpit, per Steve)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T04:12:48Z
 - Review oracle: claude (claude-opus-5-5), effort 2, disposition clean — 2026-10-13
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-13T04:15:22Z
