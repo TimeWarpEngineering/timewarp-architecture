@@ -38,6 +38,7 @@ Keep it simple. No design work here (visual polish is 349).
 - 2026-10-13: implemented under `ganda task work` (implement oracle).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T15:28:52Z
 - Review oracle: claude-opus-5-5, effort 2, general reviewer subagent a08274bbceb2e36f0 — accepted-exceptions, 2026-10-13
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-13T15:31:19Z
 
 ## Results
 
