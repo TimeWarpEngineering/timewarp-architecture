@@ -1,6 +1,6 @@
 #region Purpose
 // End-to-end tests for the roles read/update/delete endpoints: real host, real pipeline,
-// query-string auth for GET/DELETE, 404 problem details for missing ids.
+// query-string auth for GET/DELETE, 404 problem details for missing ids, and the list Search.
 #endregion
 
 namespace RolesEndpoints_;
@@ -47,6 +47,26 @@ public class GetRoles_Returns
       {
         response.TotalCount.ShouldBeGreaterThanOrEqualTo(2);
         response.Items.ShouldContain(dto => dto.RoleId == RoleIds.Administrator);
+      },
+      problemDetails => problemDetails.ShouldBeNull("GetRoles returned SharedProblemDetails.")
+    );
+  }
+
+  public static async Task Roles_Matching_Search()
+  {
+    // Task 345: Search crosses the wire in the query string and filters by name, ignoring case.
+    var query = new GetRoles.Query { UserId = Guid.NewGuid(), Search = " ADMIN " };
+
+    OneOf<GetRoles.Response, SharedProblemDetails> result = await Web.Send(query);
+
+    result.Switch
+    (
+      response =>
+      {
+        response.Items.ShouldNotBeEmpty();
+        response.Items.ShouldAllBe(dto => dto.Name.Contains("admin", StringComparison.OrdinalIgnoreCase));
+        response.Items.ShouldContain(dto => dto.RoleId == RoleIds.Administrator);
+        response.Items.ShouldNotContain(dto => dto.RoleId == RoleIds.Member);
       },
       problemDetails => problemDetails.ShouldBeNull("GetRoles returned SharedProblemDetails.")
     );

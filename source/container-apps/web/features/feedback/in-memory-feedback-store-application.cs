@@ -65,7 +65,9 @@ public sealed class InMemoryFeedbackStore : IFeedbackStore
       .Where(item => filter.Statuses?.Contains(item.Status) != false)
       .Where(item => filter.Kind is null || item.Kind == filter.Kind)
       .Where(item => filter.FiledFrom is null || item.FiledAt >= filter.FiledFrom)
-      .Where(item => filter.FiledTo is null || item.FiledAt < filter.FiledTo);
+      .Where(item => filter.FiledTo is null || item.FiledAt < filter.FiledTo)
+      .Where(item => string.IsNullOrWhiteSpace(filter.Search)
+        || item.Title.Contains(filter.Search.Trim(), StringComparison.OrdinalIgnoreCase));
     List<FeedbackItem> sorted = [.. Sort(matches, filter)];
     List<FeedbackItem> page = [.. sorted.Skip(filter.Skip).Take(filter.Take)];
     return Task.FromResult(new FeedbackPage(page, sorted.Count));

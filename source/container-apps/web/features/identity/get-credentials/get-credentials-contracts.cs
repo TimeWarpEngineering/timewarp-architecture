@@ -52,6 +52,11 @@
 // are computed over the ACTIVE credentials whatever IncludeRevoked asks for (a revoked row is never
 // revocable or renameable), and default to false so an old or partial payload shows no action.
 // Add passkey has no flag: no server rule gates it.
+// Task 345: Search narrows the list (CredentialSummary.Matches, case-insensitive over the display
+// name, label, nickname, account hint and fingerprint). DisplayName is the row's display text
+// (nickname, else provider label, else "Passkey <fingerprint>"); it is derived, so it is not on
+// the wire. [ReferenceableResource] makes this the "credential" @ type in Ask: only the caller's
+// own credentials, as the IDOR rule above already guarantees.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -62,20 +67,32 @@ namespace TimeWarp.Architecture.Features.Identity;
   Policy = PermissionIds.CredentialManageSelf,
   AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
+[ReferenceableResource
+(
+  "credential",
+  "Credentials",
+  ItemsProperty = nameof(GetCredentials.Response.Credentials),
+  IdProperty = nameof(GetCredentials.CredentialSummary.Id),
+  LabelProperty = nameof(GetCredentials.CredentialSummary.DisplayName)
+)]
 public static partial class GetCredentials
 {
+  public const int MaxSearchLength = 200;
+
   [ApiRoute("api/identity/credentials", HttpVerb.Get)]
   [AuthApiRequest]
   public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public bool IncludeRevoked { get; set; }
+    public string? Search { get; set; }
 
     public string GetRouteWithQueryString()
     {
       var collection = new NameValueCollection
       {
         GetAuthQueryParameters(),
-        { nameof(IncludeRevoked), IncludeRevoked.ToString() }
+        { nameof(IncludeRevoked), IncludeRevoked.ToString() },
+        { nameof(Search), string.IsNullOrWhiteSpace(Search) ? null : Search.Trim() },
       };
       return $"{GetRoute()}?{this.GetQueryString(collection)}";
     }
@@ -86,6 +103,7 @@ public static partial class GetCredentials
     public Validator()
     {
       RuleFor(x => x).SetValidator(new AuthApiRequestValidator());
+      RuleFor(x => x.Search).MaximumLength(MaxSearchLength);
     }
   }
 
@@ -129,6 +147,33 @@ public static partial class GetCredentials
     /// <summary>True when renaming this credential applies (active).</summary>
     public bool CanRename { get; }
 
+    /// <summary>Display text: the nickname, else the provider label, else "Passkey" and the fingerprint.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string DisplayName =>
+      !string.IsNullOrWhiteSpace(Nickname) ? Nickname
+      : !string.IsNullOrWhiteSpace(Label) ? Label
+      : "Passkey " + Fingerprint;
+
+    /// <summary>True when <paramref name="search"/> is blank or a display field contains it, ignoring case.</summary>
+    public static bool Matches(CredentialSummary summary, string? search)
+    {
+      ArgumentNullException.ThrowIfNull(summary);
+      if (string.IsNullOrWhiteSpace(search))
+      {
+        return true;
+      }
+
+      string term = search.Trim();
+      return Contains(summary.DisplayName, term)
+        || Contains(summary.Label, term)
+        || Contains(summary.Nickname, term)
+        || Contains(summary.AccountHint, term)
+        || Contains(summary.Fingerprint, term);
+    }
+
+    private static bool Contains(string? text, string term) =>
+      text?.Contains(term, StringComparison.OrdinalIgnoreCase) == true;
+
     public CredentialSummary
     (
       CredentialId id,
@@ -169,41 +214,44 @@ public static partial class GetCredentials
 
   public static MockResponseFactory<Response> GetMockResponseFactory()
   {
-    return _ =>
+    return request =>
     {
+      string? search = (request as Query)?.Search;
+      CredentialSummary[] rows =
+      [
+        new CredentialSummary
+        (
+          CredentialId.New(),
+          CredentialType.Passkey,
+          "1Password",
+          "Work laptop",
+          DateTimeOffset.UtcNow.AddDays(-30),
+          revokedAt: null,
+          isActive: true,
+          new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
+          "3f9a1c2e",
+          lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2),
+          canRevoke: true,
+          canRename: true
+        ),
+        new CredentialSummary
+        (
+          CredentialId.New(),
+          CredentialType.Passkey,
+          "1Password",
+          nickname: null,
+          DateTimeOffset.UtcNow.AddDays(-7),
+          revokedAt: null,
+          isActive: true,
+          new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
+          "b71e04dd",
+          canRevoke: true,
+          canRename: true
+        )
+      ];
       return new Response
       (
-        [
-          new CredentialSummary
-          (
-            CredentialId.New(),
-            CredentialType.Passkey,
-            "1Password",
-            "Work laptop",
-            DateTimeOffset.UtcNow.AddDays(-30),
-            revokedAt: null,
-            isActive: true,
-            new RegisteredWith(AuthenticatorAttachment.Platform, "Chrome", "Windows"),
-            "3f9a1c2e",
-            lastUsedAt: DateTimeOffset.UtcNow.AddHours(-2),
-            canRevoke: true,
-            canRename: true
-          ),
-          new CredentialSummary
-          (
-            CredentialId.New(),
-            CredentialType.Passkey,
-            "1Password",
-            nickname: null,
-            DateTimeOffset.UtcNow.AddDays(-7),
-            revokedAt: null,
-            isActive: true,
-            new RegisteredWith(AuthenticatorAttachment.CrossPlatform, "Safari", "iOS"),
-            "b71e04dd",
-            canRevoke: true,
-            canRename: true
-          )
-        ],
+        [.. rows.Where(summary => CredentialSummary.Matches(summary, search))],
         canLinkMicrosoft365: false
       );
     };

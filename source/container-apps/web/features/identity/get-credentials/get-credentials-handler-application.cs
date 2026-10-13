@@ -29,6 +29,9 @@
 // checks and the types EntraTicketProcessor checks — plus EntraSignInOffer (the same answer
 // GetEntraSignInOffered gives the login page). With IncludeRevoked=true the revoked rows are listed
 // but never counted, and get both flags false.
+// Search (task 345) narrows the returned rows to those whose DisplayName, label, nickname, account
+// hint or fingerprint contains the term, ignoring case. It runs after the flags, so availability
+// is still computed over every active credential.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -89,6 +92,7 @@ public sealed partial class GetCredentials
           credential.AccountHint,
           canRevoke: canRevoke && !credential.IsRevoked,
           canRename: !credential.IsRevoked))
+        .Where(summary => CredentialSummary.Matches(summary, query.Search))
         .ToList();
 
       bool microsoft365Offered = await EntraSignInOffer.IsOfferedAsync(EntraOptions.Value, SiteSettingsStore, cancellationToken);

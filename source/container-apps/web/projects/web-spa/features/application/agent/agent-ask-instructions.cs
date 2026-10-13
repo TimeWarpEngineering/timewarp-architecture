@@ -8,6 +8,7 @@
 // drops surface text whole so the JSON stays valid. For still clips the result under MaxLength as a
 // last guard (page facts are not dropped by Describe), so a long page cannot fail the request. The
 // copy is from the last SyncWebMcp walk; the page_context tool walks the page again when called.
+// The preface explains @prefix:id tokens (task 345): page_context.references resolves them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -27,7 +28,10 @@ public static class AgentAskInstructions
     + "On its own page the action runs, and edit mode decides whether it needs approval. "
     + "page_context describes the page on screen, including its title, purpose, headings, and controls; "
     + "call it for the current text. The copy below may be older than the page. "
-    + "Human-only commands are not tools. ";
+    + "Human-only commands are not tools. "
+    + "A token like @feedback:<id> in a message is a resource the person referenced; "
+    + "page_context.references gives each token's label, type, idType and id. "
+    + "Pass that id to a tool parameter of the same id type. A reference does not grant access. ";
 
   public static string For(string pageContext)
   {

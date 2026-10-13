@@ -7,6 +7,7 @@
 // UI and tests. PermissionIds per row come from IRolePermissionStore (task 182-004 / 206 list
 // summary + RoleDetailPage drafts). TotalCount equals the full store size — the demo does not implement
 // the contract's OpenData paging parameters; a real repository-backed handler would.
+// Search (task 345) keeps roles whose name contains the trimmed term, ignoring case.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
@@ -30,8 +31,14 @@ public sealed partial class GetRoles
       CancellationToken cancellationToken)
     {
       List<RoleDto> items = [];
+      string? search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
       foreach ((Guid roleId, (string Name, string Description) role) in RoleStore.Roles.OrderBy(pair => pair.Value.Name))
       {
+        if (search is not null && !role.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+        {
+          continue;
+        }
+
         IReadOnlyList<string> permissionIds = await RolePermissionStore
           .GetPermissionIdsForRoleAsync(roleId, cancellationToken)
           .ConfigureAwait(false);

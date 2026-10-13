@@ -18,6 +18,11 @@
 // opening Ask, so it does not read the store while it still holds the signed-out answer. The configured pass uses the fake upstream (no request leaves the
 // process); the no-key pass has no XAI:ApiKey. Screenshots go to test output (PlaywrightScreenshot),
 // which CI uploads.
+// Task 345: signed in (the first passkey account is Administrator), Settings' Ask types @ in the
+// composer: Enter chooses the first permitted type, Backspace returns to the types, Enter again,
+// and Enter on the highlighted item inserts its @prefix:id token in place of the @. The list
+// query is the real in-memory API as that user. The sent message carries the token and the fake
+// upstream's page_context answer lists it under references.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -93,9 +98,15 @@ public class AskSignIn_Given_Wasm
     }
     else
     {
+      // Task 345: @ -> types -> search -> choose, then send; page_context resolves the token.
       ILocator input = session.Page.Locator(".sc-ai-input__textarea");
-      await input.FillAsync("What is on this page?");
+      string token = await AssertAtReferencePickerAsync(session.Page);
+      await input.PressSequentiallyAsync(" What is on this page?");
       await session.Page.Locator(".sc-ai-input__send").ClickAsync();
+      await session.Page.Locator(".sc-ai-message--user").GetByText(token).WaitForAsync(new LocatorWaitForOptions
+      {
+        Timeout = 30_000,
+      });
       ILocator answer = session.Page.Locator(".sc-ai-root").GetByText("page_context:");
       await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
       await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
@@ -111,6 +122,12 @@ public class AskSignIn_Given_Wasm
       if (!settingsAnswer.Contains("/Settings", StringComparison.Ordinal))
       {
         failures.Add($"Settings: page_context did not report /Settings. Answer: {settingsAnswer}");
+      }
+
+      if (!settingsAnswer.Contains("\"references\"", StringComparison.Ordinal)
+        || !settingsAnswer.Contains("\"token\":\"" + token + "\"", StringComparison.Ordinal))
+      {
+        failures.Add($"Settings: page_context.references did not resolve {token}. Answer: {settingsAnswer}");
       }
 
       await AssertReasoningOmitsDictionaryAsync(session, failures, "Settings");
@@ -355,6 +372,45 @@ public class AskSignIn_Given_Wasm
       await Browser.DisposeAsync();
       Playwright.Dispose();
     }
+  }
+
+  private static async Task<string> AssertAtReferencePickerAsync(IPage page)
+  {
+    ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
+    await textarea.ClickAsync();
+    await textarea.PressSequentiallyAsync("@");
+    ILocator picker = page.Locator("[data-qa=AskReferencePicker]");
+    await picker.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    ILocator types = page.Locator("[data-qa=AskReferenceType]");
+    await types.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    (await page.EvaluateAsync<string?>("() => document.activeElement?.getAttribute('data-qa')"))
+      .ShouldBe("AskReferenceInput");
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-types.png") });
+
+    // Enter chooses the highlighted (first) type; Backspace on the empty term goes back.
+    string? prefix = await types.First.GetAttributeAsync("data-prefix");
+    prefix.ShouldNotBeNull();
+    await page.Keyboard.PressAsync("Enter");
+    await page.Locator("[data-qa=AskReferencePrefix]").GetByText("@" + prefix + ":").WaitForAsync();
+    await page.Keyboard.PressAsync("Backspace");
+    await types.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Keyboard.PressAsync("Enter");
+
+    ILocator item = page.Locator("[data-qa=AskReferenceItem][aria-selected=true]");
+    await item.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    string? token = await item.GetAttributeAsync("data-token");
+    token.ShouldNotBeNull();
+    token.ShouldStartWith("@" + prefix + ":");
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-items.png") });
+    await page.Keyboard.PressAsync("Enter");
+    await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+
+    // The token replaced the typed @, one space follows it, and focus is back in the textarea.
+    string draft = await textarea.InputValueAsync();
+    draft.ShouldBe(token + " ");
+    (await page.EvaluateAsync<bool>(
+      "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
+    return token;
   }
 
   private static async Task AssertReasoningOmitsDictionaryAsync(Session session, List<string> failures, string pageName)

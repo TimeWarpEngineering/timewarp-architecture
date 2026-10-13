@@ -32,3 +32,5 @@ TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls naviga
 TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason
 TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclass member is not a public static readonly field
 TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea outside the shared components/forms/TextArea.razor
+TWA0033 | Design | Warning | ReferenceableResourceAnalyzer: [ReferenceableResource] contract lacks a Search query, a typed-id or Guid item id, or a string label
+TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableResource] contracts share an @ prefix

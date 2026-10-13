@@ -149,6 +149,31 @@ namespace TimeWarp.Architecture.Features.Feedback
       list.EmailCopyAvailable.ShouldBeFalse();
     }
 
+    public static async Task ListSearch_Should_MatchOnlyTheOwnersTitles()
+    {
+      World world = new();
+      PrincipalId other = PrincipalId.New();
+      DateTimeOffset filedAt = new(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+      FeedbackItem printer = FeedbackItem.File(world.Owner.Value, DomainKind.BugReport, "Printer jams", "body", filedAt);
+      FeedbackItem login = FeedbackItem.File(world.Owner.Value, DomainKind.Complaint, "Login is slow", "body", filedAt);
+      FeedbackItem foreign = FeedbackItem.File(other.Value, DomainKind.BugReport, "Printer on fire", "body", filedAt);
+      await world.Feedback.AddAsync(printer);
+      await world.Feedback.AddAsync(login);
+      await world.Feedback.AddAsync(foreign);
+
+      ListContract.Response list = (await world.ListAs(world.Owner)
+          .Handle(new ListContract.Query { Search = "  PRINTER " }, CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected list success"));
+      list.Items.Select(item => item.FeedbackItemId).ShouldBe([printer.Id.Value]);
+
+      ListContract.Response blank = (await world.ListAs(world.Owner)
+          .Handle(new ListContract.Query { Search = " " }, CancellationToken.None))
+        .Match(ok => ok, _ => throw new InvalidOperationException("Expected list success"));
+      blank.Items.Count.ShouldBe(2);
+      new ListContract.Query { Search = "printer" }.GetRouteWithQueryString().ShouldBe("api/Feedback?Search=printer");
+      new ListContract.Query().GetRouteWithQueryString().ShouldBe("api/Feedback");
+    }
+
     public static async Task EmailCopy_Should_SendOnceWhenOptedInAndEmailIsOnFile()
     {
       World world = new();
