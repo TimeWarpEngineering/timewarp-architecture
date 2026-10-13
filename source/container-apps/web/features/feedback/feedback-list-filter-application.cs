@@ -10,7 +10,8 @@
 // SortBy is another column, then by id ascending, so every page is stable. Kind and Status
 // order by enum name, which is how EF stores them. The default is FiledAt descending (newest
 // first). The sort column is the wire enum: it is a closed list of columns, not domain data.
-// TotalCount counts every match, not just the page.
+// TotalCount counts every match, not just the page. Search (task 345) keeps items whose title
+// contains the trimmed term, ignoring case; null or blank matches every title.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -25,6 +26,7 @@ public sealed record FeedbackListFilter(
   int Skip,
   int Take,
   FeedbackListSortColumn SortBy = FeedbackListSortColumn.FiledAt,
-  bool SortDescending = true);
+  bool SortDescending = true,
+  string? Search = null);
 
 public sealed record FeedbackPage(IReadOnlyList<FeedbackItem> Items, int TotalCount);

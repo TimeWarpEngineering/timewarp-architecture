@@ -19,8 +19,11 @@
 // Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
 // viewport. Shots go to test output (PlaywrightScreenshot).
 // Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
-// .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and Tag
-// and send sit below it. The Tag chip's left edge is within 4px of the textarea text start. Shift+Enter grows the field; Enter sends.
+// .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and send
+// sits below it. There is no Tag button (task 345). Shift+Enter grows the field; Enter sends.
+// @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
+// The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
+// and returns focus to the textarea. The signed-in choose-and-send flow is AskSignIn_Given_Wasm.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -161,8 +164,7 @@ public class AskSurface_Given_Wasm
       (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
       await AssertComposerLayoutAsync(page);
-      await page.Locator("[data-qa=AskTagResource]").ClickAsync();
-      await page.Locator("[data-qa=AskResourceEmpty]").WaitForAsync();
+      await AssertAtPickerWithNoTypesAsync(page);
       await input.FillAsync("What is on this page?");
       await page.Locator(".sc-ai-input__send").ClickAsync();
       // Enter already produced one answer. The click send is the second turn.
@@ -243,38 +245,24 @@ public class AskSurface_Given_Wasm
   {
     const string areaSelector = "textarea.sc-ai-input__textarea";
     const string composerSelector = ".twe-agent-ask .sc-ai-input";
-    const string tagName = "Tag a resource on this page (@)";
     ILocator textarea = page.Locator(areaSelector);
     ILocator composer = page.Locator(composerSelector);
-    ILocator tag = page.Locator("[data-qa=AskTagResource]");
     string? placeholder = await textarea.GetAttributeAsync("placeholder");
     placeholder.ShouldNotBeNull();
-    placeholder.ShouldContain("Type @ to tag");
-    (await tag.GetAttributeAsync("aria-label")).ShouldBe(tagName);
-    (await tag.GetAttributeAsync("title")).ShouldBe(tagName);
+    placeholder.ShouldContain("Type @ to tag a resource");
+    (await page.Locator("[data-qa=AskTagResource]").CountAsync()).ShouldBe(0);
 
     LocatorBoundingBoxResult composerBox = await BoxAsync(page, composerSelector);
     LocatorBoundingBoxResult areaBox = await BoxAsync(page, areaSelector);
-    LocatorBoundingBoxResult tagBox = await BoxAsync(page, "[data-qa=AskTagResource]");
     LocatorBoundingBoxResult sendBox = await BoxAsync(page, ".twe-agent-ask .sc-ai-input__send");
     double inset = areaBox.X - composerBox.X;
     inset.ShouldBeGreaterThanOrEqualTo(4);
     inset.ShouldBeLessThanOrEqualTo(20);
     ((double)areaBox.Width).ShouldBeGreaterThanOrEqualTo(composerBox.Width * 0.9);
-    ((double)tagBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
     ((double)sendBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
-    ((double)(tagBox.X - composerBox.X)).ShouldBeGreaterThanOrEqualTo(0);
-    ((double)(tagBox.X - composerBox.X)).ShouldBeLessThanOrEqualTo(24);
-    double textStart = areaBox.X + await textarea.EvaluateAsync<double>(
-      "element => parseFloat(getComputedStyle(element).paddingLeft)");
-    Math.Abs(tagBox.X - textStart).ShouldBeLessThanOrEqualTo(4);
     double sendInset = composerBox.X + composerBox.Width - (sendBox.X + sendBox.Width);
     sendInset.ShouldBeGreaterThanOrEqualTo(0);
     sendInset.ShouldBeLessThanOrEqualTo(24);
-    ((double)sendBox.X).ShouldBeGreaterThan(tagBox.X + tagBox.Width);
-    LocatorBoundingBoxResult? icon = await tag.Locator("svg").BoundingBoxAsync();
-    icon.ShouldNotBeNull();
-    ((double)icon.Width).ShouldBeGreaterThanOrEqualTo(12);
 
     await composer.ScreenshotAsync(new LocatorScreenshotOptions
     {
@@ -314,6 +302,25 @@ public class AskSurface_Given_Wasm
     await WaitUntilInputEnabledAsync(page);
   }
 
+  private static async Task AssertAtPickerWithNoTypesAsync(IPage page)
+  {
+    // The SPA is signed out here (the mock principal header authenticates API calls only), so
+    // the picker opens with no types. AskSignIn_Given_Wasm proves the signed-in flow.
+    ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
+    await textarea.ClickAsync();
+    await textarea.PressSequentiallyAsync("@");
+    ILocator picker = page.Locator("[data-qa=AskReferencePicker]");
+    await picker.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Locator("[data-qa=AskReferenceNoTypes]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    (await page.EvaluateAsync<string?>("() => document.activeElement?.getAttribute('data-qa')"))
+      .ShouldBe("AskReferenceInput");
+    await page.Keyboard.PressAsync("Escape");
+    await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    (await textarea.InputValueAsync()).ShouldBe("@");
+    (await page.EvaluateAsync<bool>(
+      "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
+  }
+
   private static async Task WaitUntilInputEnabledAsync(IPage page)
   {
     ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
@@ -332,13 +339,12 @@ public class AskSurface_Given_Wasm
 
   private static async Task AssertDockedPanelAsync(IPage page)
   {
-    // The configured pass opens the tag menu before geometry. Close it so the state shots
-    // show the docked panel, not the resource list.
-    ILocator resourceMenu = page.Locator("[data-qa=AskResourceMenu]");
-    if (await resourceMenu.CountAsync() > 0 && await resourceMenu.IsVisibleAsync())
+    // Close the @ picker if it is still open, so the state shots show the docked panel.
+    ILocator picker = page.Locator("[data-qa=AskReferencePicker]");
+    if (await picker.CountAsync() > 0 && await picker.IsVisibleAsync())
     {
-      await page.Locator("[data-qa=AskResourceClose]").ClickAsync();
-      await resourceMenu.WaitForAsync(new LocatorWaitForOptions
+      await page.Locator("[data-qa=AskReferenceClose]").ClickAsync();
+      await picker.WaitForAsync(new LocatorWaitForOptions
       {
         State = WaitForSelectorState.Hidden,
         Timeout = 30_000,

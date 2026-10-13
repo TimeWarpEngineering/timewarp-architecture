@@ -1,5 +1,5 @@
 #region Purpose
-// On-demand import of ask-ai.js: insert an @ token and copy answer text.
+// On-demand import of ask-ai.js: insert an @ token, refocus the composer, and copy answer text.
 #endregion
 
 #region Design
@@ -22,6 +22,12 @@ internal static class AskAiJsModule
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(token);
     await InvokeAsync(jsRuntime, "InsertReference", token);
+  }
+
+  internal static Task FocusComposerAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "FocusComposer");
   }
 
   internal static async Task CopyTextAsync(IJSRuntime jsRuntime, string text)

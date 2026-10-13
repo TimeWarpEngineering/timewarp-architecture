@@ -34,9 +34,11 @@
   navigation (TimeWarpPage remounts), and rebuilds. New conversation bumps the generation and
   gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
   MessageInput stays the library component. Scoped CSS turns its flex row into a two-row
-  grid: the textarea spans the full width and grows with field-sizing up to 10rem, and Tag
-  and send sit on the footer row. Tag opens the resource menu, the same menu a typed @ opens,
-  and choosing a row inserts that page resource's @ token at the caret.
+  grid: the textarea spans the full width and grows with field-sizing up to 10rem, and send
+  sits on the footer row. Typing @ in the composer opens AskReferencePicker (task 345): the
+  site-wide resource types the person may list, then a search of the chosen type's list query;
+  choosing an item inserts its @prefix:id token at the caret. There is no Tag button: the lead
+  slot is left for task 346's element pick. Closing the panel closes the picker.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
@@ -47,9 +49,7 @@
 
 @code {
   private const string AskPlaceholder =
-    "Tell the app what you want. Type @ to tag something on this page.";
-
-  private const string TagHelp = "Tag a resource on this page (@)";
+    "Tell the app what you want. Type @ to tag a resource.";
 
   private static readonly string[] Suggestions =
   [
@@ -74,7 +74,6 @@
   private CatalogAgentFunctions? Functions;
   private bool Building;
   private bool Disposed;
-  private bool ResourceMenuOpen;
   private int DeclinedGeneration = -1;
   private string? BuiltPath;
   private AgentEditMode BuiltMode;
@@ -93,9 +92,6 @@
 
   private bool TurnInProgress =>
     Conversation?.Status is Ai.ConversationStatus.Streaming or Ai.ConversationStatus.AwaitingInput;
-
-  private IReadOnlyList<AskResourceReference> References =>
-    AskResourceReferences.FromPageContext(PageAgentContext.Describe(ScopedStore, CurrentPath()));
 
   private bool ShowPrivacy => AskPrivacyNotice.ShouldShow
   (
@@ -325,19 +321,14 @@
     };
   }
 
-  private void OpenResources() => ResourceMenuOpen = true;
+  private Task OnComposerKeyDownAsync(KeyboardEventArgs args) =>
+    args.Key == "@" && !AskReferenceState.IsOpen ? AskReferenceState.Open() : Task.CompletedTask;
 
-  private void CloseResources() => ResourceMenuOpen = false;
-
-  private void OnKeyDown(KeyboardEventArgs args)
+  private async Task CloseAsync()
   {
-    if (args.Key == "@")
-    {
-      ResourceMenuOpen = true;
-    }
+    await AskReferenceState.Close();
+    await AgentSurfaceState.CloseAskPanel();
   }
-
-  private Task CloseAsync() => AgentSurfaceState.CloseAskPanel();
 
   private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
 
@@ -377,7 +368,7 @@
   }
 }
 
-<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())" @onkeydown="OnKeyDown">
+<div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
       <h2 class="twe-agent-ask__title">Ask</h2>
@@ -449,9 +440,9 @@
   }
   else
   {
-    @if (ResourceMenuOpen)
+    @if (AskReferenceState.IsOpen)
     {
-      <AskResourceMenu References="References" OnClose="CloseResources" />
+      <AskReferencePicker />
     }
     @* Mirrors ChatPage, with the panel's own AgentContext so the restored turns render. *@
     <div class="sc-ai-root sc-ai-chat-page" @key="Conversation">
@@ -503,19 +494,8 @@
           </Microsoft.AspNetCore.Components.AI.MessageList>
         </div>
         <div class="sc-ai-chat-page__footer">
-          <div class="sc-ai-chat-page__input-container">
-            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
-              <LeadingActions>
-                <FluentButton Appearance="ButtonAppearance.Subtle"
-                              Class="twe-agent-ask__tag"
-                              IconStart="@(new Icons.Regular.Size16.Tag())"
-                              Title="@TagHelp"
-                              Tooltip="@TagHelp"
-                              aria-label="@TagHelp"
-                              data-qa="AskTagResource"
-                              OnClick="OpenResources">Tag</FluentButton>
-              </LeadingActions>
-            </Microsoft.AspNetCore.Components.AI.MessageInput>
+          <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
+            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder" />
           </div>
         </div>
       </CascadingValue>

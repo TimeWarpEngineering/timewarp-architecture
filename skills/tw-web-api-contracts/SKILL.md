@@ -394,6 +394,39 @@ and registers it in a `Dictionary<Type, Delegate>`; some solutions instead use s
 `*MockFactory` classes inside the SPA. Copying the wrong shape into a repo is a common agent
 error. See the `tw-mock-response-factory` skill.
 
+### 11. Referenceable resources (Ask `@` references)
+
+A list or search query can be a resource type that people reference in Ask by typing `@`
+(`@prefix:id`). Mark the outer contract class:
+
+```csharp
+[ApiEndpoint]
+[EndpointAuthorize(Policy = PermissionIds.AdminFeedbackRead, AuthenticationSchemes = ...)]
+[ReferenceableResource("feedback", "Feedback items",
+  IdProperty = nameof(ListFeedback.Item.FeedbackItemId),
+  LabelProperty = nameof(ListFeedback.Item.Title))]
+public static partial class ListFeedback { ... }
+```
+
+The shape, which **TWA0033** enforces:
+
+- `[ApiEndpoint]` + `[EndpointAuthorize]`. The query runs as the signed-in user, and its
+  `Policy` decides who sees the type in the `@` list. A null `Policy` means any signed-in user.
+- The nested `Query` has a public settable `string? Search`. Match case-insensitively, treat a
+  blank term as "everything", carry it in `GetRouteWithQueryString()`, and cap its length in
+  the `Validator`.
+- The nested `Response` has an enumerable items property (`Items` by default; set
+  `ItemsProperty` otherwise).
+- Each item has `IdProperty` (a `[TypedId]` struct, or `Guid` when the slice's typed id lives
+  in its domain project) and a string `LabelProperty`. A blank label shows the id. When no
+  single field reads well, add a derived `[JsonIgnore]` display property.
+- `Prefix` is lowercase letters, digits and `-`, starting with a letter, and unique (**TWA0034**).
+
+Do not register the type anywhere. The SPA's `ResourceReferenceRegistry` is generated from the
+marked contracts. The token names a resource and grants nothing: every action that later
+receives the id is re-authorized by its own endpoint. If the contract has a
+`GetMockResponseFactory()`, make it honour `Search` so mock mode filters too.
+
 ## Validation checklist
 
 - [ ] `public static partial class` with nested `Query`/`Command`, `Response`, `Validator`
@@ -414,6 +447,8 @@ error. See the `tw-mock-response-factory` skill.
 - [ ] Mutability matches binding intent (`set` vs `init`/get-only)
 - [ ] Serialization round-trip test in the contracts test project (prioritize non-trivial shapes)
 - [ ] `GetMockResponseFactory()` registered if SPA mock mode exercises this endpoint
+- [ ] A list query people should `@`-reference in Ask carries `[ReferenceableResource]` and a
+      `string? Search` (TWA0033/TWA0034)
 
 ## Common pitfalls
 

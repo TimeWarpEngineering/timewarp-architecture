@@ -131,7 +131,8 @@
 }
 
 /* MessageInput renders one flex row: leading actions, .sc-ai-input__body, then send.
-   Grid areas put the body on the first row and Tag / send on the footer row.
+   Grid areas put the body on the first row and send on the footer row; the lead area stays
+   for leading actions (task 346's element pick).
    field-sizing grows the textarea with its content; min and max height cap it. */
 .twe-agent-ask ::deep .sc-ai-input {
   display: grid;
@@ -168,31 +169,6 @@
   max-height: 10rem;
   overflow-y: auto;
   padding-inline: 0;
-}
-
-/* Fluent v5 fluent-button styles its :host (min-width 96px, centered content) and has no
-   control part, so the pill is styled on the host. min-width 0 and flex-start keep the
-   chip's left edge on the textarea's text start. */
-.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag {
-  grid-area: lead;
-  justify-self: start;
-  align-self: center;
-  min-width: 0;
-  min-height: 2rem;
-  justify-content: flex-start;
-  column-gap: var(--twe-space-2);
-  padding-inline: var(--twe-space-3);
-  border: 1px solid var(--twe-rule);
-  border-radius: 999px;
-  background: var(--twe-paper);
-  color: var(--twe-ink);
-  cursor: pointer;
-}
-
-.twe-agent-ask ::deep .sc-ai-input > .twe-agent-ask__tag > svg {
-  max-width: none;
-  width: 16px;
-  height: 16px;
 }
 
 .twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {

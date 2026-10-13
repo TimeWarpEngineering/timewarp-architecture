@@ -101,6 +101,16 @@ public sealed class EfFeedbackStore : IFeedbackStore
       query = query.Where(item => item.FiledAt < to);
     }
 
+    if (!string.IsNullOrWhiteSpace(filter.Search))
+    {
+      string lowered = filter.Search.Trim().ToLowerInvariant();
+      // CA1862 wants a StringComparison overload, which EF cannot translate to SQL; lower-cased
+      // contains is the translatable form (lower(x) LIKE '%term%').
+#pragma warning disable CA1862
+      query = query.Where(item => item.Title.ToLower().Contains(lowered));
+#pragma warning restore CA1862
+    }
+
     int total = await query.CountAsync(cancellationToken).ConfigureAwait(false);
     List<FeedbackItem> page = await Sort(query, filter)
       .Skip(filter.Skip)
