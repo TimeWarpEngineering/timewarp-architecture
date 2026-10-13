@@ -36,6 +36,8 @@ Keep it simple. No design work here (visual polish is 349).
 
 - Created: 1440097 (2026-10-13)
 - 2026-10-13: implemented under `ganda task work` (implement oracle).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T15:28:52Z
+- Review oracle: claude-opus-5-5, effort 2, general reviewer subagent a08274bbceb2e36f0 — accepted-exceptions, 2026-10-13
 
 ## Results
 
@@ -90,3 +92,10 @@ dotnet run --project tests/container-apps/web/web-spa-integration-tests -- --fil
   directly above the Ask input; the link goes to `/Privacy`. After X it disappears and stays
   gone after a reload (local storage key `twe.ask.privacy-notice-dismissed` = `true`). With
   `RecordChats` unset (template default) no banner shows.
+
+### Review disposition
+
+- Rounds: 1 · effort 2 · roster: general
+- Counts (final): bug 0 · suggestion 1 wontfix · nit 3 wontfix · open 0
+- Disposition: **accepted-exceptions**. M1: the server mapping test needs the Aspire lane. M2: HtmlRenderer cannot click. M3: re-showing after a copy change was not requested. M4: default off is correct and XAI stays out of appsettings.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
