@@ -7,7 +7,7 @@
 // Task 236: the per-state semaphore covers GetRequest → network only, then releases before
 // HandleApiResponseAsync. Nested dispatch on the same state used to deadlock (Principals
 // Save). This probe's Update HandleSuccess Sends Fetch; both are ApiHandler subclasses
-// sharing IStore.GetSemaphore. Completing within the timeout means the lock is no longer
+// sharing ApiHandler's per-store state semaphore. Completing within the timeout means the lock is no longer
 // held across HandleSuccess. Handlers in product code still must not nest; pages sequence.
 #endregion
 

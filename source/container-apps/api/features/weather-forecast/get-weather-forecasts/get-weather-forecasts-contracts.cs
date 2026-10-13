@@ -46,8 +46,11 @@ public static partial class GetWeatherForecasts
   /// <summary>
   /// The weather forecast
   /// </summary>
-  public sealed class TWeatherForecast
+  public sealed class TWeatherForecast : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     /// <summary>
     /// The forecast for this Date
     /// </summary>

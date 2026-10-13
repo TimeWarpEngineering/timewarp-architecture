@@ -287,9 +287,7 @@ public class AgentAskReadiness_Should_
       );
       services.AddTimeWarpStateBlazor();
       services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
-      services.AddScoped<
-        TimeWarp.Features.Persistence.IPersistenceService,
-        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddTimeWarpStatePersistence();
       services.AddAuthorizationCore(PolicyRegistration.AddPolicies);
       services.AddScoped<AuthenticationStateProvider>(_ => new AnonymousAuthenticationStateProvider());
       services.AddScoped(_ => A.Fake<IJSRuntime>());

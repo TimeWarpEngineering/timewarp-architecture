@@ -66,8 +66,11 @@ public static partial class GetRoles
     public Response(int totalCount, RoleDto[] items) : base(totalCount, items) { }
   }
 
-  public sealed class RoleDto
+  public sealed class RoleDto : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid RoleId { get; }
     public string Name { get; }
     public string Description { get; }

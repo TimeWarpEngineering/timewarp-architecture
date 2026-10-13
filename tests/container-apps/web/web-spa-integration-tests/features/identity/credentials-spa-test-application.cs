@@ -53,9 +53,7 @@ internal sealed class CredentialsSpaTestApplication : ISpaTestApplication, IDisp
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.
-    services.AddScoped<
-      TimeWarp.Features.Persistence.IPersistenceService,
-      TimeWarp.Features.Persistence.PersistenceService>();
+    services.AddTimeWarpStatePersistence();
 
     // Fully qualified: TimeWarp.Architecture.Services is a global using only when the api
     // template flag is on; IWebServerApiService is the BFF client and exists without api.

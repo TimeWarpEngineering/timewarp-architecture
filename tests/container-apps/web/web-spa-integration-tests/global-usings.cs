@@ -28,6 +28,7 @@ global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using OneOf;
 global using TimeWarp.Mediator;
 global using TimeWarp.State;
+global using TimeWarp.State.Plus.Extensions;
 global using TimeWarp.Jaribu;
 global using TimeWarp.Foundation.Types;
 global using static TimeWarp.Jaribu.TestRunner;

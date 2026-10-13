@@ -80,8 +80,11 @@ public static partial class ListFeedback
     }
   }
 
-  public sealed class Item
+  public sealed class Item : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public Guid FeedbackItemId { get; }
     public Guid OwnerPrincipalId { get; }
     public FeedbackKind Kind { get; }

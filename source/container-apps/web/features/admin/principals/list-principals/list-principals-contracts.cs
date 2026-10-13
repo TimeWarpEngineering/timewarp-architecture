@@ -68,8 +68,11 @@ public static partial class ListPrincipals
     public Response(int totalCount, PrincipalSummaryDto[] items) : base(totalCount, items) { }
   }
 
-  public sealed class PrincipalSummaryDto
+  public sealed class PrincipalSummaryDto : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public PrincipalId PrincipalId { get; }
     public PrincipalKind Kind { get; }
     public TrustTier TrustTier { get; }

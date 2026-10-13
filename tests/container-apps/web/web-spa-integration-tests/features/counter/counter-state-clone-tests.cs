@@ -34,10 +34,10 @@ public class Clone_Should
 
     counterState.Initialize(count: 15);
 
-    CounterState clone = counterState.Clone();
+    CounterState clone = counterState.Clone()!;
 
     counterState.ShouldNotBeSameAs(clone);
-    counterState.Count.ShouldBe(clone!.Count);
+    counterState.Count.ShouldBe(clone.Count);
     counterState.Guid.ShouldNotBe(clone.Guid);
     return Task.CompletedTask;
   }

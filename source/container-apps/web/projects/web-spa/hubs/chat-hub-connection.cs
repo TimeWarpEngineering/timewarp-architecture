@@ -4,7 +4,7 @@
 
 #region Design
 // Inbound hub messages never touch state directly; they are re-dispatched as ChatState actions
-// so every mutation flows through the mediator pipeline (logging, DevTools, behaviors).
+// so every mutation flows through the mediator pipeline (logging, telemetry, behaviors).
 // Dispatch goes through the generated ChatState.ServerToClientMessage(command) ActionSet method
 // (via IStore) rather than a raw ISender.Send — TWA0022 bans direct mediator Send in SPA client
 // code, and the generated method wires the CancellationToken and is awaited, so an inbound

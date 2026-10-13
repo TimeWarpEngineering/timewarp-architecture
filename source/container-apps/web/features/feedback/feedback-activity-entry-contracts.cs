@@ -12,8 +12,11 @@
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
-public sealed class FeedbackActivityEntry
+public sealed class FeedbackActivityEntry : ICloneable
 {
+  /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+  public object Clone() => this;
+
   public int Sequence { get; }
   public FeedbackActivityKind Kind { get; }
   public Guid? AuthorPrincipalId { get; }

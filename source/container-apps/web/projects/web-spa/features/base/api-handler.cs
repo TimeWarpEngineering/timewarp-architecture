@@ -3,13 +3,13 @@
 #endregion
 
 #region Design
-// A per-state semaphore (from IStore) serializes the request + network phase only
+// A per-state semaphore serializes the request + network phase only
 // (GetRequest → ValidateRequestAsync → ApiService.GetResponse). HandleApiResponseAsync
 // (HandleSuccess / HandleError / HandleFileResponse) runs after release so an accidental
 // nested dispatch on the same state waits instead of deadlocking. Handlers still must not
 // dispatch another action (pages sequence); the narrowed lock makes a miss slow, not fatal.
-// The guard tolerates disposal by RemoveState mid-flight, hence the swallowed
-// ObjectDisposedException. Authentication is opt-in via the nullable
+// The semaphore is one per (store, state type), shared across every handler type through
+// ApiHandlerSemaphores. Authentication is opt-in via the nullable
 // AuthenticationStateProvider: when supplied, actions from anonymous users are silently
 // dropped rather than surfacing a 401 round-trip. GetRequest returning null is the
 // sanctioned "skip this action" signal for derived handlers. Cancellation maps to a
@@ -92,13 +92,7 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
 
   private async Task<SemaphoreGuard> AcquireSemaphoreAsync(Type stateType, CancellationToken cancellationToken)
   {
-    SemaphoreSlim? semaphore = Store.GetSemaphore(stateType);
-
-    if (semaphore == null)
-    {
-      // State has been removed, no need to proceed
-      return new SemaphoreGuard(null, false);
-    }
+    SemaphoreSlim semaphore = ApiHandlerSemaphores.Get(Store, stateType);
 
     try
     {
@@ -158,9 +152,7 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
         }
         catch (ObjectDisposedException)
         {
-          // Log or handle the case where the semaphore was disposed
-          // This means the semaphore was already disposed by RemoveState.
-          // swallow the exception
+          // Defensive: ApiHandlerSemaphores never disposes its semaphores today.
         }
       }
     }

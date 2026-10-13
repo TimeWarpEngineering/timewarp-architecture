@@ -39,16 +39,6 @@
     <NoWarn>$(NoWarn);CA1848;CA1873;CA2254</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <!-- ReduxDevToolsEnabled is the SINGLE symbol gating Redux DevTools (task 119): service
-         registration (program.cs UseReduxDevTools), the <ReduxDevTools/> component, its inject,
-         and its InitAsync all compile under this symbol. It must be Debug-only: web-server
-         composes these same services for prerendering, so a Release build that rendered the
-         component without the registration 500'd every SPA-shell request. Do not gate any of
-         those sites on #if DEBUG directly — one symbol, one truth. -->
-    <DefineConstants>$(DefineConstants);ReduxDevToolsEnabled</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="BlazorComponentUtilities"/>
@@ -77,7 +67,7 @@
          Static web assets stay (they are not contentFiles). Avoid percent-delimited template
          tokens in this csproj — they are stripped by dotnet new. -->
     <PackageReference Include="TimeWarp.State" ExcludeAssets="contentFiles" />
-    <!-- Blazor components, JS interop, Redux DevTools, and render subscriptions moved here in
+    <!-- Blazor components, JS interop, and render subscriptions moved here in
          12.0.0-beta.10. Same contentFiles exclusion as TimeWarp.State: do not feed a package
          tsconfig to TypeScript.MSBuild. Static web assets stay under /_content/TimeWarp.State/. -->
     <PackageReference Include="TimeWarp.State.Blazor" ExcludeAssets="contentFiles" />

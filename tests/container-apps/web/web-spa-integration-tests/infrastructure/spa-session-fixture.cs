@@ -40,6 +40,11 @@ public sealed class SpaSessionFixture : SessionHostFixture<DistributedApplicatio
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterSessionFixture<SpaSessionFixture>();
 
+  // TimeWarp.State 12.0.0-beta.11: test-only state Initialize overloads need an explicit
+  // process-wide opt-in; the assembly-name check is gone.
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void EnableStateTestEntryPoints() => StateTestOptions.Enable();
+
   public static async Task<SpaSessionFixture> CreateAsync()
   {
     DistributedApplication app = await SpaIntegrationHost.StartAsync().ConfigureAwait(false);

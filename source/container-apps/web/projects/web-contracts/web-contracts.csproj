@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <RootNamespace>TimeWarp.Architecture</RootNamespace>
+    <!-- TimeWarp.State generates state clones at compile time (TWSG002). A ProjectReference
+         compiles against a reference assembly that hides non-public fields, so the generator
+         cannot prove this project's DTOs (held in State lists) are cloneable. Emit the full
+         assembly for reference instead. -->
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
 
   <!-- Friend assemblies for Web.Contracts internals (SPA + server + their integration tests).

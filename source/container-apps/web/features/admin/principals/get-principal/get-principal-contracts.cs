@@ -46,8 +46,11 @@ public static partial class GetPrincipal
     }
   }
 
-  public sealed class PrincipalDetailDto
+  public sealed class PrincipalDetailDto : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public PrincipalId PrincipalId { get; }
     public PrincipalKind Kind { get; }
     public TrustTier TrustTier { get; }
@@ -75,8 +78,11 @@ public static partial class GetPrincipal
     }
   }
 
-  public sealed class PrincipalProfileDto
+  public sealed class PrincipalProfileDto : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public string DisplayName { get; }
     public string? Email { get; }
     public string Language { get; }

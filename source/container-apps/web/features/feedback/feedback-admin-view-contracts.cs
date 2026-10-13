@@ -16,8 +16,11 @@
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
-public sealed class FeedbackAdminView
+public sealed class FeedbackAdminView : ICloneable
 {
+  /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+  public object Clone() => this;
+
   public Guid FeedbackItemId { get; }
   public Guid OwnerPrincipalId { get; }
   public FeedbackKind Kind { get; }

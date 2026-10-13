@@ -211,9 +211,7 @@ public class CredentialAvailability_Should_
       );
       services.AddTimeWarpStateBlazor();
       services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
-      services.AddScoped<
-        TimeWarp.Features.Persistence.IPersistenceService,
-        TimeWarp.Features.Persistence.PersistenceService>();
+      services.AddTimeWarpStatePersistence();
       services.AddAuthorizationCore(PolicyRegistration.AddPolicies);
       services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
       services.AddSingleton<TimeWarp.Architecture.Services.IWebServerApiService>(Api);

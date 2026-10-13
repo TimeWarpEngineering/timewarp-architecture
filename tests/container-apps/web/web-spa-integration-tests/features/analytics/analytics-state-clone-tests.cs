@@ -40,7 +40,7 @@ public class Clone_Should
     Guid correlationId = Guid.NewGuid();
     analyticsState.Initialize(correlationId);
 
-    AnalyticsState clone = analyticsState.Clone();
+    AnalyticsState clone = analyticsState.Clone()!;
 
     analyticsState.ShouldNotBeSameAs(clone);
     analyticsState.CorrelationId.ShouldBe(clone.CorrelationId);

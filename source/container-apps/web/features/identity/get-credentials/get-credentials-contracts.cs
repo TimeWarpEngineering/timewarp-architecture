@@ -102,8 +102,11 @@ public static partial class GetCredentials
     }
   }
 
-  public sealed class CredentialSummary
+  public sealed class CredentialSummary : ICloneable
   {
+    /// <summary>Immutable (get-only members), so a State clone can share the instance.</summary>
+    public object Clone() => this;
+
     public CredentialId Id { get; }
     public CredentialType Type { get; }
     /// <summary>Provider label (AAGUID / "Microsoft 365"); null when unknown.</summary>
