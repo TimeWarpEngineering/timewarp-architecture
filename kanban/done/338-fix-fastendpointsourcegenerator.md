@@ -37,3 +37,5 @@ Need expert help to understand:
 - The source generator sees the assembly references but not the source files
 - Diagnostic output shows 389 referenced assemblies but only Api.Server source files
 - Current approach is not working despite multiple attempts at fixes
+
+> Renumbered 001 → 338 on 2026-10-13 (task 337): id 001 was shared with `001-navlink-encapsulation-implementation.md` (older, 2025-01-24), which keeps 001.
