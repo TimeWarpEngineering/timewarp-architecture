@@ -10,6 +10,8 @@
   (fluent-text-input, fluent-dropdown, fluent-select, fluent-combobox,
   fluent-field). Multi-line text uses TextArea.razor, which sizes itself.
   Avatar and checkbox hosts are left to intrinsic size. Pages still pass Width="100%" on text/select/combobox controls.
+  A labelled field is pickable by Ask's Tag (task 346) as AskTagMark's Field kind. The visible
+  text is the label and hint; input values are never read. Unmatched attributes win.
 *@
 
 @code {
@@ -21,9 +23,28 @@
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
   private int ResolvedSpan => Span < 1 ? 1 : Span > 12 ? 12 : Span;
+
+  private Dictionary<string, object> RootAttributes
+  {
+    get
+    {
+      Dictionary<string, object> attributes = string.IsNullOrWhiteSpace(Label)
+        ? []
+        : new(AskTagMark.For(AskTagMark.FieldKind, Label));
+      if (AdditionalAttributes is not null)
+      {
+        foreach (KeyValuePair<string, object> attribute in AdditionalAttributes)
+        {
+          attributes[attribute.Key] = attribute.Value;
+        }
+      }
+
+      return attributes;
+    }
+  }
 }
 
-<div class="twe-form-field twe-form-field--span-@ResolvedSpan @Class" @attributes="AdditionalAttributes">
+<div class="twe-form-field twe-form-field--span-@ResolvedSpan @Class" @attributes="RootAttributes">
   @if (!string.IsNullOrWhiteSpace(Label))
   {
     <div class="twe-form-field__label">@Label</div>

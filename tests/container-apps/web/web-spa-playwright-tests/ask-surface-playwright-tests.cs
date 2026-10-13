@@ -21,7 +21,7 @@
 // viewport. Shots go to test output (PlaywrightScreenshot).
 // Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
 // .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and send
-// sits below it. There is no Tag button (task 345). Shift+Enter grows the field; Enter sends.
+// sits below it. The Tag button (task 346) sits in the lead slot. Shift+Enter grows the field; Enter sends.
 // @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
 // The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
 // and returns focus to the textarea. A mid-word @ (ada@example.com) opens nothing. The
@@ -251,7 +251,7 @@ public class AskSurface_Given_Wasm
     ILocator composer = page.Locator(composerSelector);
     string? placeholder = await textarea.GetAttributeAsync("placeholder");
     placeholder.ShouldNotBeNull();
-    placeholder.ShouldContain("Type @ to tag a resource");
+    placeholder.ShouldContain("Type @ to reference a resource");
     (await page.Locator("[data-qa=AskTagResource]").CountAsync()).ShouldBe(0);
 
     LocatorBoundingBoxResult composerBox = await BoxAsync(page, composerSelector);
@@ -265,6 +265,10 @@ public class AskSurface_Given_Wasm
     double sendInset = composerBox.X + composerBox.Width - (sendBox.X + sendBox.Width);
     sendInset.ShouldBeGreaterThanOrEqualTo(0);
     sendInset.ShouldBeLessThanOrEqualTo(24);
+    // Task 346: Tag sits in the lead slot, on the send row, below the textarea.
+    LocatorBoundingBoxResult tagBox = await BoxAsync(page, ".twe-agent-ask [data-qa=AskTag]");
+    ((double)tagBox.Y).ShouldBeGreaterThanOrEqualTo(areaBox.Y + areaBox.Height - 2);
+    ((double)tagBox.X).ShouldBeLessThan(sendBox.X);
 
     await composer.ScreenshotAsync(new LocatorScreenshotOptions
     {

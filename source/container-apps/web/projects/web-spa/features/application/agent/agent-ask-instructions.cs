@@ -8,7 +8,9 @@
 // drops surface text whole so the JSON stays valid. For still clips the result under MaxLength as a
 // last guard (page facts are not dropped by Describe), so a long page cannot fail the request. The
 // copy is from the last SyncWebMcp walk; the page_context tool walks the page again when called.
-// The preface explains @prefix:id tokens (task 345): page_context.references resolves them.
+// The preface explains @prefix:id tokens (task 345): page_context.references resolves them. It
+// also explains tagged elements (task 346): a message may end with the elements the person picked
+// on the page, and page_context.tags lists the ones sent earlier.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -31,7 +33,10 @@ public static class AgentAskInstructions
     + "Human-only commands are not tools. "
     + "A token like @feedback:<id> in a message is a resource the person referenced; "
     + "page_context.references gives each token's label, type, idType and id. "
-    + "Pass that id to a tool parameter of the same id type. A reference does not grant access. ";
+    + "Pass that id to a tool parameter of the same id type. A reference does not grant access. "
+    + "A message may end with elements the person tagged on the page (kind, label, visible text, route, "
+    + "and a reference when the element is a resource); page_context.tags lists the ones sent earlier. "
+    + "Treat a tagged element as what the person means by this or that. ";
 
   public static string For(string pageContext)
   {

@@ -39,8 +39,12 @@
   sits on the footer row. Typing @ at the start of a word in the composer (not mid-word, as in
   an email address) opens AskReferencePicker (task 345): the
   site-wide resource types the person may list, then a search of the chosen type's list query;
-  choosing an item inserts its @prefix:id token at the caret. There is no Tag button: the lead
-  slot is left for task 346's element pick. Closing the panel closes the picker.
+  choosing an item inserts its @prefix:id token at the caret. The Tag button in the composer's
+  lead slot (task 346) dispatches AskTagState.StartPick for the current route: pick mode
+  highlights the app's marked elements (AskTagMark) and the chosen one becomes a chip
+  (AskTagChips) above the composer. The agent's client is AskTagChatClient over the tool-invoking
+  client, so the chips go out with the next message and then move to page_context.tags.
+  Closing the panel closes the picker and cancels pick mode.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
   copy of every permission claim the principal holds now, a null credential means unbounded, and
@@ -51,7 +55,7 @@
 
 @code {
   private const string AskPlaceholder =
-    "Tell the app what you want. Type @ to tag a resource.";
+    "Tell the app what you want. Type @ to reference a resource.";
 
   private static readonly string[] Suggestions =
   [
@@ -73,6 +77,7 @@
   private AskConversationThread? Thread;
   private IDisposable? StatusSubscription;
   private FunctionInvokingChatClient? InvokingClient;
+  private AskTagChatClient? TagClient;
   private CatalogAgentFunctions? Functions;
   private bool Building;
   private bool Disposed;
@@ -239,10 +244,16 @@
         PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
       );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
+      TagClient = new AskTagChatClient
+      (
+        InvokingClient,
+        () => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration),
+        () => InvokeAsync(() => AskTagState.MarkSent())
+      );
       AskConversationThread thread = Threads.For(generation);
       Ai.UIAgent agent = new
       (
-        InvokingClient,
+        TagClient,
         options =>
         {
           options.ChatOptions = new ChatOptions
@@ -306,7 +317,9 @@
     Thread = null;
     Agent?.Dispose();
     Agent = null;
-    InvokingClient?.Dispose();
+    // TagClient owns InvokingClient (DelegatingChatClient disposes its inner client).
+    TagClient?.Dispose();
+    TagClient = null;
     InvokingClient = null;
     Functions?.Dispose();
     Functions = null;
@@ -337,8 +350,13 @@
     }
   }
 
+  private Task TagAsync() => AskTagState.StartPick(CurrentPath());
+
+  private bool Picking => ActionTrackingState.IsAnyActive(typeof(AskTagState.StartPickActionSet.Action));
+
   private async Task CloseAsync()
   {
+    await AskTagState.CancelPick();
     await AskReferenceState.Close();
     await AgentSurfaceState.CloseAskPanel();
   }
@@ -507,8 +525,22 @@
           </Microsoft.AspNetCore.Components.AI.MessageList>
         </div>
         <div class="sc-ai-chat-page__footer">
+          <AskTagChips />
           <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
-            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder" />
+            <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
+              <LeadingActions>
+                <div class="twe-agent-ask__lead">
+                  <FluentButton Appearance="ButtonAppearance.Subtle"
+                                IconStart="@(new Icons.Regular.Size20.Tag())"
+                                Title="Tag an element on the page"
+                                Tooltip="Tag an element on the page"
+                                aria-pressed="@(Picking ? "true" : "false")"
+                                Disabled="Picking"
+                                data-qa="AskTag"
+                                OnClick="TagAsync">Tag</FluentButton>
+                </div>
+              </LeadingActions>
+            </Microsoft.AspNetCore.Components.AI.MessageInput>
           </div>
         </div>
       </CascadingValue>

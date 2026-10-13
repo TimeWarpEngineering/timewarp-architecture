@@ -23,9 +23,17 @@
 // and Enter on the highlighted item inserts its @prefix:id token in place of the @. The list
 // query is the real in-memory API as that user. The sent message carries the token and the fake
 // upstream's page_context answer lists it under references.
+// Task 346: on /Feedback the account files one item, so "Your filings" has a row. Ask's Tag
+// turns on pick mode; Esc cancels it with no chip. Tag again, hovering the row outlines it with
+// its chip text, and clicking it picks it (the click does not follow the row's link). The chip
+// shows "Feedback row: <title>" and its @my-feedback:<id> reference; the message sent with it
+// moves it to page_context.tags, which the fake upstream's answer prints.
 #endregion
 
 namespace AskSignInPlaywright_;
+
+using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Features.Feedback;
 
 public class AskSignIn_Given_Wasm
 {
@@ -140,6 +148,7 @@ public class AskSignIn_Given_Wasm
       });
       await session.Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
       await session.Page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      await FileFeedbackAsync(session.Page, feedbackUrl);
       string feedbackState = await session.OpenAskAsync();
       if (feedbackState != "Configured")
       {
@@ -147,6 +156,7 @@ public class AskSignIn_Given_Wasm
       }
       else
       {
+        string tagReference = await AssertTagPicksTheFeedbackRowAsync(session.Page);
         ILocator feedbackInput = session.Page.Locator(".sc-ai-input__textarea");
         await feedbackInput.FillAsync("Explain this page");
         await session.Page.Locator(".sc-ai-input__send").ClickAsync();
@@ -166,6 +176,19 @@ public class AskSignIn_Given_Wasm
           || !feedbackText.Contains("\"page\":\"Feedback\"", StringComparison.Ordinal))
         {
           failures.Add($"Feedback: page_context did not describe /Feedback. Answer: {feedbackText}");
+        }
+
+        if (!feedbackText.Contains("\"tags\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"kind\":\"Feedback row\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"label\":\"" + TaggedFeedbackTitle + "\"", StringComparison.Ordinal)
+          || !feedbackText.Contains("\"token\":\"" + tagReference + "\"", StringComparison.Ordinal))
+        {
+          failures.Add($"Feedback: page_context.tags did not carry the picked row {tagReference}. Answer: {feedbackText}");
+        }
+
+        if (await session.Page.Locator("[data-qa=AskTagChip]").CountAsync() != 0)
+        {
+          failures.Add("Feedback: the tag chip stayed in the composer after the message was sent.");
         }
 
         await AssertReasoningOmitsDictionaryAsync(session, failures, "Feedback");
@@ -372,6 +395,84 @@ public class AskSignIn_Given_Wasm
       await Browser.DisposeAsync();
       Playwright.Dispose();
     }
+  }
+
+  private const string TaggedFeedbackTitle = "Dark theme broken";
+
+  /// <summary>Files one item, then reloads /Feedback: "Your filings" loads when the page opens.</summary>
+  private static async Task FileFeedbackAsync(IPage page, string feedbackUrl)
+  {
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(TaggedFeedbackTitle);
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Text is unreadable in dark mode.");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    // Submit is disabled while any action runs (blurring Details dispatches one). Click once,
+    // after it has stayed enabled for 500ms, as FeedbackAttachment_Given_Wasm does.
+    await page.WaitForFunctionAsync(
+      """
+      () => {
+        const button = document.querySelector('[data-qa=FeedbackSubmit]');
+        const enabled = button && !button.hasAttribute('disabled');
+        if (!enabled) { window.feedbackSubmitEnabledSince = undefined; return false; }
+        window.feedbackSubmitEnabledSince ??= performance.now();
+        return performance.now() - window.feedbackSubmitEnabledSince >= 500;
+      }
+      """,
+      null,
+      new PageWaitForFunctionOptions { Timeout = 30_000, PollingInterval = 50 });
+    await page.Locator("[data-qa=FeedbackSubmit]").ClickAsync();
+    await page.Locator("[data-qa=FeedbackReceiptId]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+
+    await page.GotoAsync(feedbackUrl, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    await page.Locator("[data-qa=FeedbackList]").GetByText(TaggedFeedbackTitle).WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 60_000,
+    });
+  }
+
+  /// <summary>Tag → Esc cancels; Tag → hover → click the filing row adds its chip. Returns the row's token.</summary>
+  private static async Task<string> AssertTagPicksTheFeedbackRowAsync(IPage page)
+  {
+    ILocator tag = page.Locator("[data-qa=AskTag]");
+    ILocator picking = page.Locator("[data-qa=AskTagPicking]");
+    ILocator outline = page.Locator("[data-qa=AskTagOutline]");
+    ILocator chip = page.Locator("[data-qa=AskTagChip]");
+
+    await tag.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await outline.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.Keyboard.PressAsync("Tab");
+    await page.Keyboard.PressAsync("Escape");
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    (await outline.CountAsync()).ShouldBe(0);
+    (await chip.CountAsync()).ShouldBe(0);
+
+    await tag.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    ILocator row = page.Locator("[data-qa=FeedbackList]").GetByText(TaggedFeedbackTitle);
+    await row.HoverAsync();
+    await page.Locator(".twe-ask-tag-badge").GetByText(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle)
+      .WaitForAsync(new LocatorWaitForOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-tag-hover-row.png") });
+    await row.ClickAsync();
+    await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    page.Url.ShouldEndWith("/Feedback");
+
+    await chip.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    (await page.Locator("[data-qa=AskTagChipText]").InnerTextAsync()).Trim()
+      .ShouldBe(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle);
+    await page.Locator("[data-qa=AskTagChipText]").ClickAsync();
+    string reference = (await page.Locator("[data-qa=AskTagChipReference]").InnerTextAsync()).Trim();
+    reference.ShouldStartWith("@" + ListMyFeedback.ReferencePrefix + ":");
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-tag-chip.png"),
+    });
+    return reference;
   }
 
   private static async Task<string> AssertAtReferencePickerAsync(IPage page)

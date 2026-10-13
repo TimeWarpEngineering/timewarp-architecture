@@ -24,6 +24,10 @@
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
+  // Task 346: a filing row is pickable by Ask's Tag and resolves to its @my-feedback:<id>.
+  private static IReadOnlyDictionary<string, object> RowMark(ListMyFeedback.Item item) =>
+    AskTagMark.Resource(AskTagMark.FeedbackRowKind, ListMyFeedback.ReferencePrefix, item.FeedbackItemId.ToString("D"), item.Title);
+
   protected override async Task OnInitializedAsync()
   {
     if (!RendererInfo.IsInteractive)
@@ -391,7 +395,7 @@
         <ul class="twe-stack">
           @foreach (ListMyFeedback.Item item in FeedbackState.Items)
           {
-            <li>
+            <li @attributes="RowMark(item)">
               <FluentLink Href="@item.Permalink" data-qa="FeedbackList">@item.Title</FluentLink>
               <span>@item.Kind</span>
               <span data-qa="FeedbackListStatus">@item.Status</span>

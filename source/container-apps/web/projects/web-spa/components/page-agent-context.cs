@@ -30,6 +30,11 @@
 // label (capped at 120 characters). It is what resolves an @prefix:id token in a message to a
 // typed id the agent can pass to a tool parameter of that type. It names, it does not grant:
 // every tool call is re-authorized by the server. It is a page fact and is not dropped by the cap.
+// tags (task 346) lists the elements the person tagged with Ask's Tag and already sent in this
+// conversation (AskTagState.SentFor, current ConversationGeneration only), in the AskTagPayload
+// shape: kind, label, text, dataQa, landmark, route, and the 345 reference when the element is a
+// referenceable resource. Chips not yet sent are not listed; they travel with their message.
+// tags is a page fact too and is not dropped by the cap.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
@@ -149,6 +154,7 @@ public static class PageAgentContext
       ["items"] = new JsonArray(),
       ["tools"] = ToolNames(path, toolNames),
       ["references"] = References(store),
+      ["tags"] = AskTagPayload.Json(store.GetState<AskTagState>().SentFor(store.GetState<AgentSurfaceState>().ConversationGeneration)),
       ["screenshot"] = JsonNode.Parse("null"),
     };
     MergeSurface(document, SurfaceFor(store.GetState<AgentSurfaceState>(), path, liveSurfaceJson));

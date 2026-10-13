@@ -21,6 +21,8 @@
   // "Copied" until the ExpireMessages timer clears it (NextExpiry includes CopiedUntil).
   // Spacing: MessageBars.razor.css owns the bar gap and bottom margin via tokens; the
   // fluent-message-bar actions slot spaces Copy and Dismiss itself.
+  // Ask Tag (task 346): each bar is pickable as AskTagMark.MessageBarKind(intent) ("Error bar")
+  // with its title as the label.
   // No INotificationService and no FluentMessageBarProvider — headless tests never render this.
 
   private bool ShowAll;
@@ -111,7 +113,8 @@
                         Intent="@message.Intent"
                         Title="@message.Title"
                         AllowDismiss="false"
-                        Layout="@(message.Body is null ? MessageBarLayout.Notification : MessageBarLayout.MultiLine)">
+                        Layout="@(message.Body is null ? MessageBarLayout.Notification : MessageBarLayout.MultiLine)"
+                        @attributes="AskTagMark.For(AskTagMark.MessageBarKind(message.Intent), message.Title)">
         <ChildContent>
           @if (message.Body is not null)
           {
