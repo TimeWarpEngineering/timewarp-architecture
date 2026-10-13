@@ -31,6 +31,7 @@
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 
+using Blazored.LocalStorage;
 using FakeItEasy;
 using global::Aspire.Hosting;
 using global::Aspire.Hosting.Testing;
@@ -122,6 +123,9 @@ public class AspireSpaTestApplication : ISpaTestApplication
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.
     services.AddTimeWarpStatePersistence();
+    // DismissPrivacyNotice and LoadPrivacyNoticeDismissal (task 347) remember the Ask notice in
+    // local storage, as Web.Spa.Program registers it.
+    services.AddBlazoredLocalStorage();
 
     // Named client the SPA uses for api-server. Base address is ingress, which routes
     // /api/weatherforecast to api-server. MockAccessTokenProvider attaches Bearer dummy-token.

@@ -10,7 +10,8 @@
   card shows the icon (AskStarterPromptIcons), the title, and the one-line subtitle, and a click
   sends the prompt text through the cascaded conversation. The prompts are about this app and
   page, not a product catalog the template does not have. With no conversation context the click
-  does nothing. Visual polish belongs to the chat panel redesign (task 349).
+  does nothing. Look (task 349): a left-aligned card with a soft icon tile, a medium-weight title
+  and a muted subtitle, centered in the empty state at a readable width.
 *@
 
 @code {
@@ -34,10 +35,12 @@
   {
     <FluentButton Appearance="ButtonAppearance.Outline"
                   Class="twe-ask-starters__card"
-                  IconStart="@AskStarterPromptIcons.For(prompt.Icon)"
                   data-qa="AskStarterPrompt"
                   data-prompt="@prompt.Prompt"
                   OnClick="() => SendAsync(prompt.Prompt)">
+      <span class="twe-ask-starters__icon" aria-hidden="true">
+        <FluentIcon Value="@AskStarterPromptIcons.For(prompt.Icon)" Color="Color.Custom" CustomColor="var(--twe-ink-2)" />
+      </span>
       <span class="twe-ask-starters__text">
         <span class="twe-ask-starters__title" data-qa="AskStarterPromptTitle">@prompt.Title</span>
         @if (prompt.Subtitle is { } subtitle)

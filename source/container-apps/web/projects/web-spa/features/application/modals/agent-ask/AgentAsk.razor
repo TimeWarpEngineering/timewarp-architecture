@@ -51,7 +51,16 @@
   Closing the panel also closes the reference picker.
   The empty state is AskStarterPrompts (task 348): the configured XAI:StarterPrompts cards, or the
   template defaults.
-  AskPrivacyBanner (task 347) sits first in the footer, directly above the composer. The first
+  Look (task 349, after the Cloudflare dashboard chat): a compact one-row header (brand mark, Ask,
+  the conversation name, icon actions) over a hairline; a dotted canvas body; a centered empty
+  state of CSS gradient orbs in the brand colors, a greeting, a tagline and the cards; and a
+  footer pinned to the bottom with the notice, chips, a raised composer and the edit-behavior row.
+  The body fills the panel between header and footer and scrolls on its own. AskAnswerBar sits
+  first in the footer, right under the latest answer: MessageList renders its ChildContent above
+  the turns, so inside the list the bar would land at the top of the transcript. Every color is a
+  --twe-* token, and the library's --sc-ai-* tokens are mapped onto them on the panel root, so the
+  transcript follows the template theme.
+  AskPrivacyBanner (task 347) sits in the footer, directly above the composer. The first
   render restores its local-storage dismissal before the agent (and so the footer) is built.
   It mints one short-lived credential for the signed-in principal when a conversation has none.
   The credential is an advisory client-side guardrail, not a security boundary: its scopes are a
@@ -422,12 +431,13 @@
 <div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
-      <h2 class="twe-agent-ask__title">Ask</h2>
-      <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
-      @if (ConversationExpired)
-      {
-        <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
-      }
+      <span class="twe-agent-ask__mark" aria-hidden="true">
+        <FluentIcon Value="@(new Icons.Filled.Size16.Sparkle())" Color="Color.Custom" CustomColor="var(--twe-on-primary)" />
+      </span>
+      <div class="twe-agent-ask__titles">
+        <h2 class="twe-agent-ask__title">Ask</h2>
+        <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
+      </div>
     </div>
     <div class="twe-agent-ask__header-actions">
       <FluentButton Appearance="ButtonAppearance.Subtle"
@@ -456,30 +466,45 @@
                     OnClick="CloseAsync" />
     </div>
   </header>
+  <div class="twe-agent-ask__status" role="status">
+    @if (ConversationExpired)
+    {
+      <p class="twe-agent-ask__expired" data-qa="AskConversationExpired">This conversation has expired, so page actions are refused. Choose New to start another.</p>
+    }
+  </div>
 
   @if (Readiness == CatalogAgentReadiness.NotConfigured)
   {
-    <p data-qa="AgentAskNotConfigured">AI not configured</p>
-    <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskNotConfigured">AI not configured</p>
+      <p class="twe-agent-ask__state-text">Run this to add the xAI key, then reload:</p>
+      <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+    </div>
   }
   else if (Readiness == CatalogAgentReadiness.Unauthenticated)
   {
-    <p data-qa="AgentAskSignIn">Sign in to use Ask</p>
-    <div class="twe-agent-ask__actions">
-      <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskSignIn">Sign in to use Ask</p>
+      <div class="twe-agent-ask__actions">
+        <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
+      </div>
     </div>
   }
   else if (Readiness == CatalogAgentReadiness.Error)
   {
-    <p data-qa="AgentAskError">Ask could not load its configuration</p>
-    <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
-    <div class="twe-agent-ask__actions">
-      <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskError">Ask could not load its configuration</p>
+      <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
+      <div class="twe-agent-ask__actions">
+        <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
+      </div>
     </div>
   }
   else if (Agent is null || Conversation is null)
   {
-    <p data-qa="AgentAskStarting">Starting Ask…</p>
+    <div class="twe-agent-ask__state">
+      <p class="twe-agent-ask__state-text" data-qa="AgentAskStarting">Starting Ask…</p>
+    </div>
   }
   else
   {
@@ -526,25 +551,32 @@
                   }
                 </div>
               </Microsoft.AspNetCore.Components.AI.BlockRenderer>
-              <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
             </ChildContent>
             <EmptyContent>
               <div class="twe-agent-ask__welcome">
-                <p class="twe-agent-ask__greeting">What should we do on this page?</p>
+                <div class="twe-agent-ask__hero" aria-hidden="true">
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--back"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--side"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--front"></span>
+                </div>
+                <p class="twe-agent-ask__greeting" data-qa="AskGreeting">What can I help with?</p>
+                <p class="twe-agent-ask__tagline">Ask about this page, or tell the app what to do.</p>
                 <AskStarterPrompts />
               </div>
             </EmptyContent>
           </Microsoft.AspNetCore.Components.AI.MessageList>
         </div>
         <div class="sc-ai-chat-page__footer">
+          <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
           <AskPrivacyBanner />
           <AskTagChips />
           <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
             <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
               <LeadingActions>
                 <div class="twe-agent-ask__lead">
-                  <FluentButton Appearance="ButtonAppearance.Subtle"
-                                IconStart="@(new Icons.Regular.Size20.Tag())"
+                  <FluentButton Appearance="ButtonAppearance.Outline"
+                                Size="ButtonSize.Small"
+                                IconStart="@(new Icons.Regular.Size16.Tag())"
                                 Title="Tag an element on the page"
                                 Tooltip="Tag an element on the page"
                                 aria-pressed="@(Picking ? "true" : "false")"
@@ -563,8 +595,8 @@
   <footer class="twe-agent-ask__edit">
     <p class="twe-agent-ask__edit-label" id="@EditBehaviorLabelId">Edit behavior</p>
     <div class="twe-agent-ask__segments" role="group" aria-labelledby="@EditBehaviorLabelId" data-qa="AskEditMode">
-      <FluentButton Appearance="@AskBeforeAppearance" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
-      <FluentButton Appearance="@AutoEditAppearance" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
+      <FluentButton Appearance="@AskBeforeAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
+      <FluentButton Appearance="@AutoEditAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
     </div>
   </footer>
 </div>
