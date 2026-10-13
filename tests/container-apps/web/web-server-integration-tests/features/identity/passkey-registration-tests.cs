@@ -129,6 +129,31 @@ public class Returns_
     result.AsT2.Status.ShouldBe(400);
   }
 
+  public static async Task Ok_Given_Http_Localhost_Origin_With_Empty_AllowedOrigins()
+  {
+    // The browser origin of `dev open --target kubernetes` (a plain-http kubectl port-forward). The
+    // host's AllowedOrigins is empty, so the loopback-http fallback must accept it (task 340).
+    CompletePasskeyRegistration.Command completeCommand =
+      await BuildValidCompleteCommand(new IntegrationSoftwareAuthenticator(), origin: "http://localhost:36371");
+
+    OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> result =
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
+
+    result.IsT0.ShouldBeTrue("http://localhost completion should succeed with an empty AllowedOrigins.");
+  }
+
+  public static async Task BadRequest_Given_Http_Non_Loopback_Origin()
+  {
+    CompletePasskeyRegistration.Command completeCommand =
+      await BuildValidCompleteCommand(new IntegrationSoftwareAuthenticator(), origin: "http://evil.example");
+
+    OneOf<CompletePasskeyRegistration.Response, FileResponse, SharedProblemDetails> result =
+      await Web.GetResponse<CompletePasskeyRegistration.Response>(completeCommand, CancellationToken.None);
+
+    result.IsT2.ShouldBeTrue("http on a non-loopback host should fail.");
+    result.AsT2.Status.ShouldBe(400);
+  }
+
   public static async Task ValidationError_Given_Empty_CredentialId()
   {
     var command = new CompletePasskeyRegistration.Command
@@ -176,13 +201,17 @@ public class Returns_
     second.AsT2.Status.ShouldBe(409);
   }
 
-  private static async Task<CompletePasskeyRegistration.Command> BuildValidCompleteCommand(IntegrationSoftwareAuthenticator authenticator)
+  private static async Task<CompletePasskeyRegistration.Command> BuildValidCompleteCommand
+  (
+    IntegrationSoftwareAuthenticator authenticator,
+    string? origin = null
+  )
   {
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
       await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
 
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    origin ??= Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData(RpId, includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);

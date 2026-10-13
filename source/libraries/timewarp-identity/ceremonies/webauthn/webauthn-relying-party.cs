@@ -8,11 +8,14 @@
 // platform's passkey UI.
 // Origins is the allow-list of exact browser origins (scheme+host+port) the RP accepts. An empty
 // list is a deliberate dev fallback, not an error: WebAuthnRegistration/WebAuthnAuthentication treat
-// it as "accept any https origin whose host equals Id" — this covers the in-proc test-host origin
-// (https://localhost:<InProcTestPorts base>; the port varies, never the host) and
-// the dev origin (https://localhost:63611) without hand-listing every
-// port a developer might run on, while still requiring https and the correct host. Production
-// configuration should supply an explicit Origins list.
+// it as "accept any https origin whose host equals Id, and http only when that host is loopback"
+// (localhost, 127.0.0.1, [::1]) — this covers the in-proc test-host origin
+// (https://localhost:<InProcTestPorts base>; the port varies, never the host), the dev origin
+// (https://localhost:63611) and a plain-http kubectl port-forward (http://localhost:<ingress-port>)
+// without hand-listing every port, while still requiring the correct host. The http allowance
+// mirrors the browser secure-context rule (browsers run WebAuthn on http://localhost); a
+// non-loopback host still needs https. Production configuration should supply an explicit Origins
+// list; a non-empty list is an exact, ordinal match with no fallback.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -22,11 +25,11 @@ namespace TimeWarp.Identity;
 /// </summary>
 /// <param name="Id">RP ID (typically the registrable domain) hashed into authenticator data.</param>
 /// <param name="Name">Human-readable name shown by the platform passkey UI.</param>
-/// <param name="Origins">Exact origin allow-list; empty accepts any https origin whose host equals <paramref name="Id"/>.</param>
+/// <param name="Origins">Exact origin allow-list; empty accepts an https origin whose host equals <paramref name="Id"/>, or http when that host is loopback.</param>
 public sealed record WebAuthnRelyingParty(
   /// <summary>RP ID (typically the registrable domain) hashed into authenticator data.</summary>
   string Id,
   /// <summary>Human-readable name shown by the platform passkey UI.</summary>
   string Name,
-  /// <summary>Exact origin allow-list; empty accepts any https origin whose host equals <see cref="Id"/>.</summary>
+  /// <summary>Exact origin allow-list; empty accepts an https origin whose host equals <see cref="Id"/>, or http when that host is loopback.</summary>
   IReadOnlyList<string> Origins);

@@ -49,17 +49,61 @@ stricter than the platform.
 
 ## Checklist
 
-- [ ] Loopback-http allowance in the empty-allowlist fallback (single shared loopback predicate)
-- [ ] Design regions updated
-- [ ] Library + integration tests
-- [ ] Release-note mention; tw-deploy note
-- [ ] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Loopback-http allowance in the empty-allowlist fallback (single shared loopback predicate)
+- [x] Design regions updated
+- [x] Library + integration tests
+- [x] Release-note mention; tw-deploy note
+- [x] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Notes
 
 - Interim workaround (maintainer, until redeploy):
   `kubectl -n timewarp-architecture set env deployment/web-server-deployment WebAuthnOptions__AllowedOrigins__0=http://localhost:36371`
 
+## Results
+
+- `WebAuthnOrigin.IsAllowed` (empty `Origins`): the host must equal the RP id; then https is accepted,
+  and http only when `LoopbackHost.IsLoopback(host)` is true. A non-empty `Origins` list is still an
+  exact ordinal match.
+- **One shared predicate:** new public `TimeWarp.Identity.LoopbackHost.IsLoopback`
+  (`source/libraries/timewarp-identity/ceremonies/loopback-host.cs`) accepts `localhost` (any case),
+  `127.0.0.1`, `[::1]`, and `::1`. TimeWarp.Identity is the lowest layer both callers share. The
+  web host's Entra `PublicOrigin` validator now uses it instead of its private `IsLocalhost`, so
+  that validator also accepts `http://[::1]` now. The HTTP host accessor's loopback check is a
+  different rule (it trusts loopback *peer IP addresses* for forwarded headers), so it was left
+  alone. This is recorded in `overview.md`.
+- Design regions and XML docs updated: `webauthn-origin.cs`, `webauthn-relying-party.cs`,
+  `web-authn-options-application.cs`, and `entra-authentication-options-validator-application.cs`.
+- Tests: `tests/libraries/timewarp-identity-tests/ceremonies/webauthn-origin-tests.cs` (10) and
+  `loopback-host-tests.cs` (2). The web-server integration tests in `passkey-registration-tests.cs`
+  check that `http://localhost:36371` succeeds with an empty AllowedOrigins and that
+  `http://evil.example` returns 400.
+- `tw-deploy`: the `dev open` bullet now says plain-http localhost works, and that other hosts need
+  https or an explicit `AllowedOrigins`.
+- **Release notes (TimeWarp.Identity):** "WebAuthn: with an empty `Origins` list, `http` origins are
+  now accepted on loopback hosts (`localhost`, `127.0.0.1`, `[::1]`) matching the RP id, mirroring
+  the browser secure-context rule. New public `LoopbackHost.IsLoopback`." No pin change in this PR,
+  because the repo dogfoods identity through ProjectReference (the 124 policy applies at release).
+- Gates: `dev build` 0/0, `dev test` green (identity 269/0 failed; web-server integration 331
+  succeeded, 0 failed), `ganda repo audit` clean.
+
+### How to validate
+
+**Smoke:**
+```bash
+./bin/dev build
+dotnet run --project tests/libraries/timewarp-identity-tests
+dotnet run --project tests/container-apps/web/web-server-integration-tests
+```
+Then do a manual check on kind. Remove the interim env override
+(`kubectl -n timewarp-architecture set env deployment/web-server-deployment WebAuthnOptions__AllowedOrigins__0-`),
+redeploy, run `dev open --target kubernetes`, and create an account at `http://localhost:<ingress-port>`.
+
+**Expect:** both test runs report `failed: 0`, and the list includes `Fallback_accepts_http_localhost_with_port`
+and `Ok_Given_Http_Localhost_Origin_With_Empty_AllowedOrigins`. On kind, passkey registration
+completes and does not show "OriginMismatch".
+
 ## Session
 
 - Created: 2026-10-13 (cockpit, from Steve's kind sign-up failure)
+- 2026-10-13: implemented (ganda task work, implementer); gates green.

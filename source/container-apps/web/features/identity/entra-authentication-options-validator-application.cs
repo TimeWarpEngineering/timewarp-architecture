@@ -11,7 +11,8 @@
 // a valid *string* at bind time (template placeholder when Enabled is false); ticket policy
 // refuses those authorities with Untrusted tenant.
 // PublicOrigin is optional (empty = request-derived redirect_uri). When set it must be an absolute
-// https URI, or http only for localhost — never a non-https public host, and never a path/query
+// https URI, or http only for a loopback host (TimeWarp.Identity's LoopbackHost, shared with the
+// WebAuthn origin fallback) — never a non-https public host, and never a path/query
 // (it is an origin, not the full redirect URI). Validated even when Enabled is false so a bad
 // value cannot sit dormant until Entra is turned on.
 #endregion
@@ -102,12 +103,8 @@ public sealed class EntraAuthenticationOptionsValidator : AbstractValidator<Entr
       return true;
     }
 
-    return uri.Scheme == Uri.UriSchemeHttp && IsLocalhost(uri.Host);
+    return uri.Scheme == Uri.UriSchemeHttp && LoopbackHost.IsLoopback(uri.Host);
   }
-
-  private static bool IsLocalhost(string host) =>
-    string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
-    || string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
