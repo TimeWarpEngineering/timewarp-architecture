@@ -48,3 +48,17 @@ Filed by Claude (timewarp-mediator cockpit session) at Steven's request.
 - Upstream: timewarp-state 119 (same Mediator bump). Start this after a State prerelease with that bump
   is on nuget.org, or pin State last if the rest of the bumps should not wait.
 - Mediator release notes: documentation/release-notes/release-notes-v14.0.0.md in timewarp-mediator.
+
+## Cockpit note (2026-10-13, per Steve)
+
+Mediator `14.0.0-beta.5` is on nuget.org; **no TimeWarp.State release is built on it yet** (latest
+`12.0.0-beta.12` depends on Mediator `14.0.0-beta.4`; state 119 not yet filed/merged). Do **not**
+block on state 119:
+- Pin all three Mediator packages to `14.0.0-beta.5` directly. Central package management makes that
+  direct pin win over State's transitive `beta.4`, so exactly one Mediator version resolves. Verify
+  with `dotnet list package --include-transitive` (or `project.assets.json`) that no `beta.4` remains
+  anywhere in the graph.
+- Move TimeWarp.State to the latest available prerelease (`12.0.0-beta.12` or newer) and record that it
+  was built against Mediator beta.4. If State breaks at runtime or compile time against beta.5, that is
+  a finding for timewarp-state 119: file it there with a repro, and hold the State pin with the reason
+  recorded here.
