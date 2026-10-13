@@ -614,7 +614,12 @@ internal static partial class DeployOperate
     ];
     if (exitCode != 0)
     {
-      return [applying.Length == 0 ? "Failed before any migration was applied" : $"Failed while applying {applying[^1]}"];
+      // The last "Applying migration" is the one that failed (each runs in its own transaction); the ones before it applied.
+      if (applying.Length == 0) return ["Failed before any migration was applied"];
+      string[] appliedBeforeFailure = applying[..^1];
+      return appliedBeforeFailure.Length == 0
+        ? [$"Failed while applying {applying[^1]}"]
+        : [$"Applied {appliedBeforeFailure.Length} migration(s):", .. appliedBeforeFailure.Select(id => $"  {id}"), $"Failed while applying {applying[^1]}"];
     }
 
     return applying.Length == 0

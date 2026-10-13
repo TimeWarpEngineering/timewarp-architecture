@@ -587,7 +587,14 @@ public class Migrate_Given_
     ]);
     DeployOperate.BuildBundleReport("No migrations were applied. The database is already up to date.\nDone.\n", 0)
       .ShouldBe(["Up to date: no pending migrations"]);
-    DeployOperate.BuildBundleReport(applied, 1).ShouldBe(["Failed while applying 20260301_Roles"]);
+    DeployOperate.BuildBundleReport(applied, 1).ShouldBe(
+    [
+      "Applied 1 migration(s):",
+      "  20260201_Todo",
+      "Failed while applying 20260301_Roles",
+    ]);
+    DeployOperate.BuildBundleReport("Applying migration '20260201_Todo'.\n", 1).ShouldBe(["Failed while applying 20260201_Todo"]);
+    DeployOperate.BuildBundleReport("error\n", 1).ShouldBe(["Failed before any migration was applied"]);
     DeployOperate.BuildBundleArguments("cs", verbose: true).ShouldBe(["--connection", "cs", "--verbose"]);
     DeployOperate.BuildBundleArguments("cs").ShouldBe(["--connection", "cs"]);
     return Task.CompletedTask;

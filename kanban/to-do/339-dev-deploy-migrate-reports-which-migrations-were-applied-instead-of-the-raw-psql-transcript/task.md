@@ -84,6 +84,14 @@ psql's `DO` lines or reconstruct EF internals (070-006 / 284 rule).
 - Not run live. Workers must not touch the kind cluster or a database. Psql's `-q` / `client_min_messages` behavior
   against a real script is still unverified.
 
+### Review
+
+- Implementation review (`tw-implementation-review`): effort 2, roster general (review oracle, claude-opus-5-5), 2 rounds.
+- Final counts: bug 0, suggestion 1 fixed, nit 0. Open 0, wontfix 0.
+- M1 (suggestion, fixed): the ACA failure report now lists the migrations that committed before the failing one, then
+  `Failed while applying <id>`. Tests were added. dev-cli-tests 218/0.
+- Disposition: **clean**. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -104,3 +112,5 @@ Expect:
 ## Session
 
 - Created: 2026-10-13 (cockpit, per Steve)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T04:12:48Z
+- Review oracle: claude (claude-opus-5-5), effort 2, disposition clean — 2026-10-13
