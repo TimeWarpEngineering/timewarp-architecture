@@ -154,7 +154,7 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   never creates a cluster, installs an ingress controller or switches context.
 - **`dev deploy migrate`** applies the published idempotent migrations (safe to re-run) for the
   target, after a confirmation (`--yes` skips it; without a terminal and without `--yes` it
-  refuses), prints one summary line, and exits with the underlying tool's exit code. It runs the
+  refuses), reports which migrations it applied, and exits with the underlying tool's exit code. It runs the
   file `dev publish <target>` wrote under `artifacts/aspire-output/<target>/efmigrations/`; when that
   is missing it **refuses with the exact `dev publish <target>` command** rather than publishing for
   you (publishing is its own gated step, and you should know which script runs). Per target it runs
@@ -164,6 +164,25 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   parameter's namespace on the current context (same preflight as `dev deploy`, minus Helm and the
   registry); aca — the bundle through a temporary firewall rule that is **always deleted**, even on
   failure (Azure Container Apps below).
+  compose and kubernetes read EF's `__EFMigrationsHistory` table before and after the run, through
+  the same `exec` path (a missing table is a fresh database: none applied), and run the script
+  quietly (`psql -q`, `PGOPTIONS='-c client_min_messages=warning'`), so only errors and WARNINGs
+  print. The idempotent script's transcript looks the same whether ten migrations applied or none;
+  the report says what changed. `--verbose` prints psql's full transcript instead (on aca, the
+  bundle's `--verbose`); the report still follows. aca reports from the bundle's own
+  `Applying migration '…'` lines.
+
+  ```text
+  Applied 2 migration(s):
+    20261001120000_AddTodoItems
+    20261012090000_AddRoles
+  Already applied: 5 · Database now at 20261012090000_AddRoles
+  dev deploy migrate: applied web-migrations.sql with psql to kubernetes (context kind-app, namespace app).
+  ```
+
+  Nothing pending prints `Up to date: no pending migrations (7 applied, latest 20261012090000_AddRoles)`.
+  A failure prints psql's error, then `Failed while applying migrations after <last applied id>`,
+  and exits with psql's code.
 - **`dev open`** opens the deployed app in the browser (`--no-browser` prints the URL; with no
   opener on PATH it prints it too — on WSL it uses `wslview`, then `explorer.exe`). kubernetes: if
   the ingress controller's Service has an external (LoadBalancer) address, it opens that;
@@ -288,7 +307,10 @@ or `podman`; `dev deploy migrate` passes the running project's `--project-name` 
 | Azure Container Apps | Azure Database for PostgreSQL Flexible Server (managed storage and backups); the Bicep creates `postgres-db` | the published bundle from the operator's machine, through a temporary firewall rule — see Azure Container Apps below |
 
 The script is piped on stdin (`< efmigrations/web-migrations.sql` in bash; in pwsh
-`Get-Content -Raw efmigrations/web-migrations.sql | <command>`).
+`Get-Content -Raw efmigrations/web-migrations.sql | <command>`). `dev deploy migrate` adds `-q` and
+`PGOPTIONS='-c client_min_messages=warning'` unless `--verbose`, and reads
+`psql -At -c 'SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY "MigrationId"'` before and
+after for its report.
 
 - Run the script after the database is up and before (or right after) the app starts serving.
 - Compose also publishes the self-contained migration bundle; it is a host binary, not an image,

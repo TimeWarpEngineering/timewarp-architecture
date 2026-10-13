@@ -25,12 +25,15 @@
 //      operator's IPv4 (--client-ip, else api.ipify.org).
 //   4. The plan (the command in pwsh form, the script piped with Get-Content -Raw) is printed and
 //      confirmed unless --yes; with stdin redirected and no --yes it refuses.
-//   5. compose / kubernetes pipe the script into psql inside the postgres container (PGPASSWORD from the
-//      container's environment) — stdin is the script, so plain passthrough, not a TTY. aca runs
+//   5. compose / kubernetes read __EFMigrationsHistory, pipe the script into psql inside the postgres
+//      container (PGPASSWORD from the container's environment; quiet unless --verbose) — stdin is the
+//      script, so plain passthrough, not a TTY — and read the history again. aca runs
 //      DeployOperate.RunAcaBundleAsync: create the operator-migrate firewall rule, run the bundle with
-//      --connection on a real TTY, and delete the rule in finally; a failed delete is reported from the finally with the command to
-//      run by hand, so it is printed even when Ctrl+C propagates.
-//   6. One summary line: what ran against which target; the exit code is the tool's.
+//      --connection (output streamed and captured for the summary), and delete the rule in finally; a failed
+//      delete is reported from the finally with the command to run by hand, so it is printed even when
+//      Ctrl+C propagates.
+//   6. The report (DeployOperate.BuildMigrationReport / BuildBundleReport: applied ids, "Up to date", or
+//      where it failed), then one summary line: what ran against which target; the exit code is the tool's.
 // The script and the bundle are idempotent (only pending migrations apply), so re-running is safe.
 #endregion
 
@@ -41,6 +44,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("deploy migrate --target kubernetes", Description = "kubectl exec psql in statefulset/postgres-statefulset of the k8s-namespace parameter")]
 [NuruRouteExample("deploy migrate --target aca --resource-group my-rg", Description = "Run the bundle through a temporary operator-migrate firewall rule (always deleted)")]
 [NuruRouteExample("deploy migrate --target kubernetes --yes", Description = "Migrate without prompting")]
+[NuruRouteExample("deploy migrate --target kubernetes --verbose", Description = "Show psql's full transcript instead of only errors and the summary")]
 internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
 {
   [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
@@ -55,6 +59,9 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
   [Option("resource-group", "g", Description = "aca: resource group (default: Azure__ResourceGroup, else the AppHost user secret Azure:ResourceGroup)")]
   public string? ResourceGroup { get; set; }
 
+  [Option("verbose", Description = "Show the full transcript: psql's statement tags and NOTICEs (compose/kubernetes), the bundle's --verbose (aca)")]
+  public bool Verbose { get; set; }
+
   [Option("client-ip", Description = "aca: your public IPv4 for the temporary firewall rule (default: what https://api.ipify.org reports)")]
   public string? ClientIp { get; set; }
 
@@ -62,6 +69,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
   {
     private const string Verb = "dev deploy migrate";
     private readonly ITerminal Terminal;
+    private string BundleOutput = "";
 
     public Handler(ITerminal terminal)
     {
@@ -95,12 +103,14 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
 
       string executable;
       string[] arguments;
+      string[] historyArguments;
       string against;
       if (preflight.Target == AspireDeploy.Kubernetes)
       {
         string kubernetesNamespace = preflight.Parameters.First(parameter => parameter.Name == AspireDeploy.KubernetesNamespaceParameter).Value;
         executable = "kubectl";
-        arguments = DeployOperate.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace);
+        arguments = DeployOperate.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployOperate.PsqlScriptCommand(command.Verbose));
+        historyArguments = DeployOperate.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployOperate.PsqlHistoryCommand);
         against = $"context {preflight.KubectlContext}, namespace {kubernetesNamespace}";
       }
       else
@@ -124,7 +134,8 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         }
 
         executable = runtime;
-        arguments = DeployOperate.BuildComposeMigrateArguments(choice.Project);
+        arguments = DeployOperate.BuildComposeMigrateArguments(choice.Project, DeployOperate.PsqlScriptCommand(command.Verbose));
+        historyArguments = DeployOperate.BuildComposeMigrateArguments(choice.Project, DeployOperate.PsqlHistoryCommand);
         against = $"Compose project {choice.Project.Name}";
       }
 
@@ -134,13 +145,16 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal.WriteLine($"  Runs:    {DeployOperate.BuildPipedCommandDisplay(artifact, executable, arguments)}");
       if (!Confirmed(command.Yes)) return Unit.Value;
 
+      string[]? before = await ReadMigrationHistoryAsync(executable, historyArguments, preflight.RepoRoot, ct);
       CommandOutput result = await Shell.Builder(executable)
         .WithArguments(arguments)
         .WithStandardInput(await File.ReadAllTextAsync(artifact, ct))
         .WithWorkingDirectory(preflight.RepoRoot)
         .WithNoValidation()
         .PassthroughAsync(ct);
+      string[]? after = await ReadMigrationHistoryAsync(executable, historyArguments, preflight.RepoRoot, ct);
 
+      Report(DeployOperate.BuildMigrationReport(before, after, result.ExitCode), result.ExitCode);
       Summarize(preflight.Target, $"{Path.GetFileName(artifact)} with psql", against, result.ExitCode);
       return Unit.Value;
     }
@@ -197,7 +211,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       }
 
       ProcessStep create = new("az", DeployOperate.BuildFirewallRuleCreateArguments(group, server, subscription, clientIp));
-      ProcessStep run = new(bundle, DeployOperate.BuildBundleArguments(connectionString), Terminal: true);
+      ProcessStep run = new(bundle, DeployOperate.BuildBundleArguments(connectionString, command.Verbose), Capture: true);
       ProcessStep delete = new("az", DeployOperate.BuildFirewallRuleDeleteArguments(group, server, subscription));
 
       Terminal.WriteLine($"{Verb} → aca");
@@ -213,6 +227,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         reason => Terminal.WriteErrorLine(DeployOperate.FirewallCleanupFailedMessage(group, server, subscription, reason).Red()),
         ct);
 
+      Report(DeployOperate.BuildBundleReport(BundleOutput, result.ExitCode), result.ExitCode);
       Summarize(AspireDeploy.ContainerApps, "the web-migrations bundle", $"server {server} in {group}", result.ExitCode);
     }
 
@@ -222,8 +237,36 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       ShellBuilder builder = Shell.Builder(step.Executable)
         .WithArguments([.. step.Arguments])
         .WithNoValidation();
-      CommandOutput output = step.Terminal ? await builder.TtyPassthroughAsync(ct) : await builder.PassthroughAsync(ct);
+      if (!step.Capture)
+      {
+        return (await builder.PassthroughAsync(ct)).ExitCode;
+      }
+
+      CommandOutput output = await builder.RunAndCaptureAsync(ct);
+      BundleOutput = output.Stdout;
       return output.ExitCode;
+    }
+
+    /// <summary>__EFMigrationsHistory through the run's own exec path; null when it cannot be read (empty on a fresh database).</summary>
+    private static async Task<string[]?> ReadMigrationHistoryAsync(string executable, string[] arguments, string repoRoot, CancellationToken ct)
+    {
+      CommandOutput output = await Shell.Builder(executable)
+        .WithArguments(arguments)
+        .WithWorkingDirectory(repoRoot)
+        .WithTimeout(AspireDeploy.ProbeTimeout)
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      return DeployOperate.ParseMigrationHistory(output.ExitCode, output.Stdout, output.Stderr);
+    }
+
+    private void Report(string[] lines, int exitCode)
+    {
+      Terminal.WriteLine("");
+      foreach (string line in lines)
+      {
+        if (exitCode == 0) Terminal.WriteLine(line);
+        else Terminal.WriteErrorLine(line.Red());
+      }
     }
 
     private static async Task<string?> ProbeClientIpAsync(CancellationToken ct)
@@ -264,11 +307,11 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       string line = DeployOperate.BuildMigrateSummary(target, ran, against, exitCode);
       if (exitCode == 0)
       {
-        Terminal.WriteLine($"\n{line}".Green());
+        Terminal.WriteLine(line.Green());
         return;
       }
 
-      Terminal.WriteErrorLine($"\n{line}".Red());
+      Terminal.WriteErrorLine(line.Red());
       Environment.ExitCode = exitCode;
     }
 
