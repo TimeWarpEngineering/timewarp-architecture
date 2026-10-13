@@ -9,7 +9,9 @@
 // server's [EndpointAuthorize] decides what comes back. The search term is trimmed and blank is
 // null (list everything the query allows). At most ResultCap items are kept and HasMore says the
 // list was cut, so the picker asks for a narrower term instead of paging through a long list. A
-// blank label falls back to the id. A problem answer becomes a failed search with its title.
+// blank label falls back to the id. A problem answer becomes a failed search with its title; so
+// does a transport (HttpRequestException) or JSON failure, so a keystroke never throws through the
+// action pipeline and the picker's searching flag always clears. Null items read as empty.
 // Store state never holds this type (it carries delegates); it holds ResourceReferenceTypeRow.
 #endregion
 
@@ -87,11 +89,23 @@ public sealed class ResourceReferenceType
       policy,
       async (apiService, term, cancellationToken) =>
       {
-        OneOf<TResponse, FileResponse, SharedProblemDetails> result =
-          await apiService.GetResponse<TResponse>(query(term), cancellationToken);
+        OneOf<TResponse, FileResponse, SharedProblemDetails> result;
+        try
+        {
+          result = await apiService.GetResponse<TResponse>(query(term), cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+          return ResourceReferenceSearch.Failed("The list could not be reached.");
+        }
+        catch (System.Text.Json.JsonException)
+        {
+          return ResourceReferenceSearch.Failed("The list answer could not be read.");
+        }
+
         return result.Match
         (
-          response => Found(prefix, idTypeName, items(response), id, label),
+          response => Found(prefix, idTypeName, items(response) ?? [], id, label),
           _ => ResourceReferenceSearch.Failed("The list returned a file."),
           problem => ResourceReferenceSearch.Failed(problem.Title ?? "The list could not be loaded.")
         );

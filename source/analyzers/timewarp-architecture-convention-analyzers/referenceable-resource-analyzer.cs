@@ -35,7 +35,7 @@ public sealed class ReferenceableResourceAnalyzer : DiagnosticAnalyzer
       Category,
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "A referenceable resource is a list query the Ask composer calls as the user: [ApiEndpoint] + [EndpointAuthorize], a nested Query with a settable string Search, a nested Response with an enumerable items property, and items carrying a [TypedId] or Guid IdProperty and a string LabelProperty."
+      description: "A referenceable resource is a list query the Ask composer calls as the user: [ApiEndpoint] + [EndpointAuthorize(Policy = ...)], a public nested IApiRequest Query with a public parameterless constructor, a settable string Search and no other required member, a public nested Response class with an enumerable items property of a public item type, and items carrying a [TypedId] or Guid IdProperty and a string LabelProperty."
     );
 
   private static readonly DiagnosticDescriptor DuplicatePrefix =

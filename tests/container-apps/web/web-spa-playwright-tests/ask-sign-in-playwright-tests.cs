@@ -405,9 +405,9 @@ public class AskSignIn_Given_Wasm
     await page.Keyboard.PressAsync("Enter");
     await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
 
-    // The token replaced the typed @ and focus is back in the textarea.
+    // The token replaced the typed @, one space follows it, and focus is back in the textarea.
     string draft = await textarea.InputValueAsync();
-    draft.ShouldBe(token);
+    draft.ShouldBe(token + " ");
     (await page.EvaluateAsync<bool>(
       "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
     return token;

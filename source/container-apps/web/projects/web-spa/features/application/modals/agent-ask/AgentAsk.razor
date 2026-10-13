@@ -2,6 +2,7 @@
 @inherits BaseComponent
 @using Ai = Microsoft.AspNetCore.Components.AI
 @using TimeWarp.Architecture.Components
+@using TimeWarp.Architecture.Services
 
 @*
   Purpose: Ask panel. A person describes what they want and the in-app model runs a page catalog tool.
@@ -35,7 +36,8 @@
   gets an empty thread. The markup mirrors ChatPage (sc-ai-chat-page body and footer).
   MessageInput stays the library component. Scoped CSS turns its flex row into a two-row
   grid: the textarea spans the full width and grows with field-sizing up to 10rem, and send
-  sits on the footer row. Typing @ in the composer opens AskReferencePicker (task 345): the
+  sits on the footer row. Typing @ at the start of a word in the composer (not mid-word, as in
+  an email address) opens AskReferencePicker (task 345): the
   site-wide resource types the person may list, then a search of the chosen type's list query;
   choosing an item inserts its @prefix:id token at the caret. There is no Tag button: the lead
   slot is left for task 346's element pick. Closing the panel closes the picker.
@@ -321,8 +323,19 @@
     };
   }
 
-  private Task OnComposerKeyDownAsync(KeyboardEventArgs args) =>
-    args.Key == "@" && !AskReferenceState.IsOpen ? AskReferenceState.Open() : Task.CompletedTask;
+  [DirectComponentSideEffect("Reads the library textarea's caret to open the @ picker only when @ starts a word; the caret is DOM state, and opening is still the Open action.")]
+  private async Task OnComposerKeyDownAsync(KeyboardEventArgs args)
+  {
+    if (args.Key != "@" || AskReferenceState.IsOpen)
+    {
+      return;
+    }
+
+    if (await AskAiJsModule.AtStartsWordAsync(JsRuntime))
+    {
+      await AskReferenceState.Open();
+    }
+  }
 
   private async Task CloseAsync()
   {

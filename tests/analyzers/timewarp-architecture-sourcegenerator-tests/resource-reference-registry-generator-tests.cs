@@ -68,7 +68,7 @@ public class ResourceReferenceRegistryGenerator_Tests
       }
 
       [ApiEndpoint]
-      [EndpointAuthorize]
+      [EndpointAuthorize(Policy = "gadgets.read")]
       [ReferenceableResource("gadget", "Gadgets", ItemsProperty = "Gadgets", IdProperty = "Id", LabelProperty = "Title")]
       public static class ListGadgets
       {
@@ -145,8 +145,8 @@ public class ResourceReferenceRegistryGenerator_Tests
     generated.ShouldContain("static item => item.WidgetId.ToString(),");
     generated.ShouldContain("static item => item.Name");
 
-    // No policy means any signed-in user; an IAuthApiRequest query gets the mock UserId stamp.
-    generated.ShouldContain("\"gadget\",\n      \"Gadgets\",\n      \"Guid\",\n      null,");
+    // An IAuthApiRequest query gets a stamped UserId (its handler must not rely on it).
+    generated.ShouldContain("\"gadget\",\n      \"Gadgets\",\n      \"Guid\",\n      \"gadgets.read\",");
     generated.ShouldContain("{ Search = search, UserId = global::System.Guid.NewGuid() }");
     generated.ShouldContain("static response => response.Gadgets,");
 

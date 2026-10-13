@@ -12,8 +12,18 @@
 // Guid Value and a static From(Guid)), the same fallback TypedIdSourceGenerator uses.
 // Ids may be Guid because a slice's [TypedId] can live in its domain project, which contracts
 // cannot reference; IdTypeName records which it is for the agent.
-// The query must carry [EndpointAuthorize]: the list runs as the signed-in user, and its Policy
-// is how the SPA filters the type list. A null Policy means any signed-in user.
+// The query must carry [EndpointAuthorize(Policy = ...)]: the list runs as the signed-in user, and
+// its Policy is how the SPA filters the type list. Roles alone is rejected because the SPA filter
+// reads only Policy, so a Roles-gated type would be offered to users the server then refuses.
+// Read also rejects every shape the generated ResourceReferenceType.Create call cannot compile:
+// Query, Response and item type must be public (with public containing types), Query must
+// implement IApiRequest, have a public parameterless constructor and no required member besides
+// Search (and a stamped UserId), Response must be a reference type, and a stamped UserId needs a
+// public setter.
+// UserId: for an IAuthApiRequest query the generator stamps a fresh Guid, not the signed-in
+// user's id (FetchCredentials resolves the real one; the generated search does not). The handler
+// of a referenceable IAuthApiRequest query must therefore not rely on the request UserId; it must
+// resolve the user from the authenticated principal, as GetCredentials does.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -77,10 +87,37 @@ internal sealed class ReferenceableResourceShape
       return null;
     }
 
+    string? policy = authorize.NamedArguments.FirstOrDefault(static n => n.Key == "Policy").Value.Value as string;
+    if (string.IsNullOrWhiteSpace(policy))
+    {
+      problem = "[EndpointAuthorize] has no Policy; the SPA filters referenceable types by Policy, so set Policy (Roles alone is not read)";
+      return null;
+    }
+
     INamedTypeSymbol? query = contract.GetTypeMembers("Query").FirstOrDefault();
     if (query is null)
     {
       problem = "the contract has no nested Query";
+      return null;
+    }
+
+    if (!IsPublic(query))
+    {
+      problem = "Query (and every containing type) must be public";
+      return null;
+    }
+
+    if (!query.AllInterfaces.Any(static i => i.Name == "IApiRequest"))
+    {
+      problem = "Query does not implement IApiRequest";
+      return null;
+    }
+
+    if (!query.IsValueType
+      && (query.IsAbstract
+        || !query.InstanceConstructors.Any(static c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public)))
+    {
+      problem = "Query has no public parameterless constructor";
       return null;
     }
 
@@ -93,10 +130,38 @@ internal sealed class ReferenceableResourceShape
       return null;
     }
 
+    bool isAuthRequest = query.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest");
+    IPropertySymbol? userId = isAuthRequest ? FindProperty(query, "UserId") : null;
+    if (userId is { SetMethod: not { DeclaredAccessibility: Accessibility.Public } })
+    {
+      problem = "Query is an IAuthApiRequest whose UserId has no public setter";
+      return null;
+    }
+
+    string? required = RequiredMembers(query)
+      .FirstOrDefault(name => name != "Search" && !(userId is not null && name == "UserId"));
+    if (required is not null)
+    {
+      problem = $"Query has required member '{required}'; only Search may be required";
+      return null;
+    }
+
     INamedTypeSymbol? response = contract.GetTypeMembers("Response").FirstOrDefault();
     if (response is null)
     {
       problem = "the contract has no nested Response";
+      return null;
+    }
+
+    if (!response.IsReferenceType)
+    {
+      problem = "Response must be a class or record class";
+      return null;
+    }
+
+    if (!IsPublic(response))
+    {
+      problem = "Response (and every containing type) must be public";
       return null;
     }
 
@@ -105,6 +170,12 @@ internal sealed class ReferenceableResourceShape
     if (itemType is null)
     {
       problem = $"Response has no public enumerable '{itemsProperty}' property (set ItemsProperty)";
+      return null;
+    }
+
+    if (!IsPublic(itemType))
+    {
+      problem = $"item type {itemType.Name} (and every containing type) must be public";
       return null;
     }
 
@@ -132,7 +203,7 @@ internal sealed class ReferenceableResourceShape
     {
       Prefix = prefix,
       DisplayName = displayName,
-      Policy = authorize.NamedArguments.FirstOrDefault(static n => n.Key == "Policy").Value.Value as string,
+      Policy = policy,
       ContractType = contract.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
       QueryType = query.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
       ResponseType = response.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -141,8 +212,7 @@ internal sealed class ReferenceableResourceShape
       IdProperty = idProperty,
       IdTypeName = id.Type.Name,
       LabelProperty = labelProperty,
-      QuerySetsUserId = query.AllInterfaces.Any(static i => i.Name == "IAuthApiRequest")
-        && FindProperty(query, "UserId") is { SetMethod: not null },
+      QuerySetsUserId = userId is not null,
     };
   }
 
@@ -163,6 +233,50 @@ internal sealed class ReferenceableResourceShape
     }
 
     return true;
+  }
+
+  private static bool IsPublic(ITypeSymbol type)
+  {
+    if (type is IArrayTypeSymbol array)
+    {
+      return IsPublic(array.ElementType);
+    }
+
+    if (type is ITypeParameterSymbol)
+    {
+      return false;
+    }
+
+    for (ITypeSymbol? current = type; current is not null; current = current.ContainingType)
+    {
+      if (current.DeclaredAccessibility != Accessibility.Public)
+      {
+        return false;
+      }
+    }
+
+    return type is not INamedTypeSymbol { IsGenericType: true } generic
+      || generic.TypeArguments.All(IsPublic);
+  }
+
+  private static IEnumerable<string> RequiredMembers(INamedTypeSymbol type)
+  {
+    for (INamedTypeSymbol? current = type; current is not null; current = current.BaseType)
+    {
+      foreach (ISymbol member in current.GetMembers())
+      {
+        bool isRequired = member switch
+        {
+          IPropertySymbol property => property.IsRequired,
+          IFieldSymbol field => field.IsRequired,
+          _ => false,
+        };
+        if (isRequired)
+        {
+          yield return member.Name;
+        }
+      }
+    }
   }
 
   private static string? Named(AttributeData attribute, string name) =>

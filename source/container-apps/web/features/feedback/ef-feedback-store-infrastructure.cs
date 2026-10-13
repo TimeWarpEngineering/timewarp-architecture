@@ -17,6 +17,11 @@
 // order by name. No index was added for the new sorts: the admin list filters by status first
 // (the (Status, FiledAt) index), a feedback table stays small enough for an in-memory sort of
 // the match set, and an index per sortable column would tax every filing for a rare view.
+// Search (task 345) is a parameterized lower(title) LIKE '%term%' with the term lower-cased by
+// ToLowerInvariant on the client. Postgres lower() folds by the database collation while
+// InMemoryFeedbackStore uses OrdinalIgnoreCase, so non-ASCII titles (Turkish dotted I, sharp s)
+// can match differently between the two stores. Accepted: Search narrows an @ picker or an admin
+// list, not an authorization or uniqueness check, and ASCII titles match the same in both.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;

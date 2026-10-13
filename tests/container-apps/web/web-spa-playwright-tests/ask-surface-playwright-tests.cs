@@ -12,7 +12,8 @@
 // checked for the TimeWarp.State SemaphoreSlim.Wait failure noted on 2026-10-09.
 // The configured pass also proves the review-round-1 behaviours a fake upstream can reach: the
 // edit-mode buttons toggle aria-pressed; the transcript survives an edit-mode rebuild and Close
-// plus reopen; Close resets the mode to Ask before editing; @ insertion does not double the @;
+// plus reopen; Close resets the mode to Ask before editing; @ insertion does not double the @
+// and adds one space unless whitespace already follows;
 // Copy writes the last answer (not the whole panel) to the clipboard.
 // Geometry (task 296): at 1280 the aside is the right 450px — panel x about 830, its right
 // edge on the viewport, the layout wider than 800, and FluentLayout has no mobile attribute.
@@ -23,7 +24,8 @@
 // sits below it. There is no Tag button (task 345). Shift+Enter grows the field; Enter sends.
 // @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
 // The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
-// and returns focus to the textarea. The signed-in choose-and-send flow is AskSignIn_Given_Wasm.
+// and returns focus to the textarea. A mid-word @ (ada@example.com) opens nothing. The
+// signed-in choose-and-send flow is AskSignIn_Given_Wasm.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -319,6 +321,13 @@ public class AskSurface_Given_Wasm
     (await textarea.InputValueAsync()).ShouldBe("@");
     (await page.EvaluateAsync<bool>(
       "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
+
+    // A mid-word @ (an email address) stays text: no picker, focus stays in the textarea.
+    await textarea.FillAsync("");
+    await textarea.PressSequentiallyAsync("ada@example.com");
+    (await textarea.InputValueAsync()).ShouldBe("ada@example.com");
+    (await picker.IsVisibleAsync()).ShouldBeFalse();
+    await textarea.FillAsync("");
   }
 
   private static async Task WaitUntilInputEnabledAsync(IPage page)
@@ -512,13 +521,19 @@ public class AskSurface_Given_Wasm
         area.selectionEnd = area.value.length;
         module.InsertReference("@profile:ada");
         const appended = area.value;
+        area.value = "see @ now";
+        area.selectionStart = 5;
+        area.selectionEnd = 5;
+        module.InsertReference("@profile:ada");
+        const beforeSpace = area.value;
         area.value = "";
         area.dispatchEvent(new Event("input", { bubbles: true }));
-        return replaced + "|" + appended;
+        return replaced + "|" + appended + "|" + beforeSpace;
       }
       """;
     string result = await page.EvaluateAsync<string>(script);
-    result.ShouldBe("see @profile:ada|see @profile:ada");
+    // One space follows the token unless whitespace already does.
+    result.ShouldBe("see @profile:ada |see @profile:ada |see @profile:ada now");
   }
 
   private static async Task<LocatorBoundingBoxResult> BoxAsync(IPage page, string selector)

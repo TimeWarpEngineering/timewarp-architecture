@@ -9,8 +9,9 @@
 // gated on the compilation declaring the hand-written ResourceReferenceType (the SPA), and the
 // generated list lives in that type's namespace. Each entry calls ResourceReferenceType.Create
 // with the prefix, display name, id type name, the [EndpointAuthorize] Policy, and lambdas that
-// build the Query (Search set; UserId stamped when the query is an IAuthApiRequest, the mock
-// identity signal the SPA's other handlers stamp too), list the Response items, and read the id
+// build the Query (Search set; UserId stamped with a fresh Guid when the query is an
+// IAuthApiRequest, so such a handler must not rely on it; see ReferenceableResourceShape), list
+// the Response items, and read the id
 // and label. Contracts whose shape is wrong (ReferenceableResourceShape, TWA0033 in contracts)
 // are skipped. A repeated prefix keeps the first contract by name; TWA0034 reports it in
 // contracts. Entries are sorted by prefix for deterministic output.

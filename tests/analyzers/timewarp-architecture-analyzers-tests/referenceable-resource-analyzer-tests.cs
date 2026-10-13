@@ -28,7 +28,10 @@ public class Should_Enforce_Referenceable_Resource_Shape
       public sealed class EndpointAuthorizeAttribute : System.Attribute
       {
         public string? Policy { get; set; }
+        public string? Roles { get; set; }
       }
+
+      public interface IApiRequest { }
 
       public sealed class ReferenceableResourceAttribute : System.Attribute
       {
@@ -67,7 +70,10 @@ public class Should_Enforce_Referenceable_Resource_Shape
     string search = "public string? Search { get; set; }",
     string id = "System.Guid",
     string label = "string",
-    string authorize = "[EndpointAuthorize(Policy = \"widgets.read\")]"
+    string authorize = "[EndpointAuthorize(Policy = \"widgets.read\")]",
+    string queryMembers = "",
+    string queryBase = " : IApiRequest",
+    string response = "public sealed class Response"
   ) =>
     $$"""
     [ApiEndpoint]
@@ -75,12 +81,13 @@ public class Should_Enforce_Referenceable_Resource_Shape
     {{attribute}}
     public static class {{name}}
     {
-      public sealed class Query
+      public sealed class Query{{queryBase}}
       {
         {{search}}
+        {{queryMembers}}
       }
 
-      public sealed class Response
+      {{response}}
       {
         public System.Collections.Generic.IReadOnlyList<Item> Items { get; } = new Item[0];
       }
@@ -150,6 +157,36 @@ public class Should_Enforce_Referenceable_Resource_Shape
   public static async Task Given_No_EndpointAuthorize_Flags_TWA0033()
   {
     await Test(Feature(Contract(Flagged("TWA0033"), authorize: ""))).RunAsync();
+  }
+
+  public static async Task Given_Roles_Only_EndpointAuthorize_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), authorize: "[EndpointAuthorize(Roles = \"Administrator\")]"))).RunAsync();
+  }
+
+  public static async Task Given_Struct_Response_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), response: "public record struct Response()"))).RunAsync();
+  }
+
+  public static async Task Given_Query_Extra_Required_Member_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), queryMembers: "public required int Page { get; set; }"))).RunAsync();
+  }
+
+  public static async Task Given_Query_Not_IApiRequest_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), queryBase: ""))).RunAsync();
+  }
+
+  public static async Task Given_Query_Without_Parameterless_Constructor_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), queryMembers: "public Query(int page) { }"))).RunAsync();
+  }
+
+  public static async Task Given_Internal_Response_Flags_TWA0033()
+  {
+    await Test(Feature(Contract(Flagged("TWA0033"), response: "internal sealed class Response"))).RunAsync();
   }
 
   public static async Task Given_Duplicate_Prefix_Flags_TWA0034_On_Both()

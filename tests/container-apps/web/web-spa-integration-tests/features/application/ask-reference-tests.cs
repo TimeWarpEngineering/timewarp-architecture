@@ -209,6 +209,47 @@ public class AskReference_Should_
     }
   }
 
+  public static async Task Forget_Types_And_Chosen_References_When_The_Principal_Changes()
+  {
+    using ReferenceSpa spa = new(Administrator);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    string principalId = AskReferenceState.PrincipalIdOf(spa.User);
+    principalId.ShouldNotBeNullOrEmpty();
+    await scope.Send(new AskReferenceState.SessionChangedActionSet.Action(principalId));
+
+    await scope.Send(new AskReferenceState.OpenActionSet.Action());
+    await scope.Send(new AskReferenceState.ChooseTypeActionSet.Action("principal"));
+    ResourceReferenceItem ada = scope.Store.GetState<AskReferenceState>().Items
+      .Single(static item => item.Label == "Ada Lovelace");
+    await scope.Send(new AskReferenceState.ChooseActionSet.Action(ada));
+    await scope.Send(new AskReferenceState.OpenActionSet.Action());
+
+    // A change notification for the same principal keeps the conversation's references.
+    await scope.Send(new AskReferenceState.SessionChangedActionSet.Action(principalId));
+    AskReferenceState state = scope.Store.GetState<AskReferenceState>();
+    state.Chosen.ShouldBe([ada]);
+    state.IsOpen.ShouldBeTrue();
+
+    // Sign-out: the picker closes and the previous user's types and labels are gone.
+    await scope.Send(new AskReferenceState.SessionChangedActionSet.Action(AskReferenceState.PrincipalIdOf(new ClaimsPrincipal(new ClaimsIdentity()))));
+    state = scope.Store.GetState<AskReferenceState>();
+    state.IsOpen.ShouldBeFalse();
+    state.Types.ShouldBeEmpty();
+    state.Chosen.ShouldBeEmpty();
+    state.SessionPrincipalId.ShouldBeEmpty();
+    using (JsonDocument document = JsonDocument.Parse(PageAgentContext.Describe(scope.Store, "/")))
+    {
+      document.RootElement.GetProperty("references").GetArrayLength().ShouldBe(0);
+    }
+
+    // Sign-in as someone else also starts clean.
+    await scope.Send(new AskReferenceState.OpenActionSet.Action());
+    await scope.Send(new AskReferenceState.SessionChangedActionSet.Action(Guid.NewGuid().ToString()));
+    state = scope.Store.GetState<AskReferenceState>();
+    state.IsOpen.ShouldBeFalse();
+    state.Types.ShouldBeEmpty();
+  }
+
   private sealed class ReferenceSpa : ISpaTestApplication, IDisposable
   {
     public IServiceProvider ServiceProvider { get; }

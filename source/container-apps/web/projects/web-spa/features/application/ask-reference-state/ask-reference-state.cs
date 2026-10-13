@@ -12,7 +12,9 @@
 // ChooseType runs the first search at once; Back returns to the type list; Choose records the
 // item in Chosen and closes. Chosen is per conversation: it is kept with the ConversationGeneration
 // it was chosen in, and a reference from an older generation is dropped on the next Choose and
-// ignored by page_context. Rows are strings only (ResourceReferenceTypeRow, ResourceReferenceItem)
+// ignored by page_context. Types and Chosen also belong to the signed-in principal: SessionChanged
+// (dispatched by AuthenticationStateListener) clears them and closes the picker when the principal
+// changes, so one user's labels never reach the next. Rows are strings only (ResourceReferenceTypeRow, ResourceReferenceItem)
 // so the state clones without delegates. Inserting the token at the caret is the component's
 // presentational JS; handlers do not touch the DOM.
 #endregion
@@ -83,6 +85,7 @@ public sealed partial class AskReferenceState : State<AskReferenceState>
     Chosen = [];
     ChosenGeneration = 0;
     SearchGeneration = 0;
+    SessionPrincipalId = "";
     ResetPicker();
   }
 
