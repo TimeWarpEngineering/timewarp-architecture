@@ -90,8 +90,24 @@ So a resource type is an **explicit list/search action**, not an ad-hoc page fac
 - Created: 2026-10-13 (cockpit, from a design conversation with Steve; do this before 346)
 - 2026-10-13 implement oracle (ganda task work): marker, analyzer, generator, state, picker,
   page_context resolution, tests, skill note; gates below.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T14:03:36Z
+- Review oracle (tw-implementation-review, effort 3, roster general): claude-opus-5-5 orchestrator + general reviewer subagents (session ids not reported); 2 rounds; fixes 4181c4291 + round-2 fix — 2026-10-13
 
 ## Results
+
+### Review disposition
+
+- **Outcome:** accepted-exceptions. 0 open after 2 rounds. Effort 3; reviewer roster: general.
+- **Final counts:** bug 0; suggestion 5 fixed / 1 wontfix; nit 4 fixed / 3 wontfix.
+- **Fixed:** analyzer rejects shapes the generator can't compile, and Policy is required (TWA0033); search transport, JSON and null-body failures become a failed search; picker state resets when the principal changes; `@` opens the picker only at the start of a word; the inserted token gets a trailing space; Design notes on the stamped UserId and on case folding.
+- **Wontfix:**
+  - M3: cross-assembly duplicate prefixes, because the template has one contracts assembly.
+  - M10: the race test and the remaining analyzer branches are not covered.
+  - M12: a fast keystroke after `@` can keep the picker from opening.
+  - M13: Open has no guard if the principal changes mid-flight.
+  - Rationale for each is in disposition.md.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/{general,merged}.md`,
+  `review/round-2/{general,merged}.md`, `review/disposition.md`.
 
 ### Settled shape (recorded)
 

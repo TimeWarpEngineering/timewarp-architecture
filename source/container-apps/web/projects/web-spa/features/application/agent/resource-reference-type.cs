@@ -10,7 +10,8 @@
 // null (list everything the query allows). At most ResultCap items are kept and HasMore says the
 // list was cut, so the picker asks for a narrower term instead of paging through a long list. A
 // blank label falls back to the id. A problem answer becomes a failed search with its title; so
-// does a transport (HttpRequestException) or JSON failure, so a keystroke never throws through the
+// does a transport (HttpRequestException) or JSON failure (JsonException, or the
+// InvalidOperationException a literal null body raises), so a keystroke never throws through the
 // action pipeline and the picker's searching flag always clears. Null items read as empty.
 // Store state never holds this type (it carries delegates); it holds ResourceReferenceTypeRow.
 #endregion
@@ -99,6 +100,10 @@ public sealed class ResourceReferenceType
           return ResourceReferenceSearch.Failed("The list could not be reached.");
         }
         catch (System.Text.Json.JsonException)
+        {
+          return ResourceReferenceSearch.Failed("The list answer could not be read.");
+        }
+        catch (InvalidOperationException)
         {
           return ResourceReferenceSearch.Failed("The list answer could not be read.");
         }
