@@ -46,6 +46,7 @@ show the filer as a raw principal id (`OwnerPrincipalId`). Task 328 added the pl
 
 - Created: 2026-10-13 (cockpit; follow-up suggested by the 328 worker, approved by Steve)
 - 2026-10-13: implemented under `ganda task work` (implement oracle).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-13T03:21:15Z
 
 ## Results
 
@@ -121,3 +122,11 @@ feedback at `/Feedback`, then open `/Admin/Feedback`.
 - In the browser, the Owner column shows your display name ("Member" by default), not a GUID.
   Clicking it opens `/Admin/Principals/{id}`. The item detail page shows the same link.
 - A caller without `admin.profiles.read` sees the raw id, still linked, and no "(no profile)".
+
+### Review disposition
+
+- Rounds: 1. Effort 2, roster: general (subagent ae31e2d3b3e3aafcb, sonnet).
+- Final counts: bug 0, suggestion 0, nit 1 (fixed). 0 open.
+- Disposition: **clean**. M1 re-wrapped the Design comment in `feedback-list-sort-column-contracts.cs`.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
