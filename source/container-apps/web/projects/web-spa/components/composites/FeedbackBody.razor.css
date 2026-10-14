@@ -1,0 +1,12 @@
+.feedback-body-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-body-attachments ::deep .markdown-image {
+  max-width: 16rem;
+}

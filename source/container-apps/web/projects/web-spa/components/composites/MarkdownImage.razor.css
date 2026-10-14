@@ -1,0 +1,13 @@
+.markdown-image {
+  max-width: min(100%, 32rem);
+  height: auto;
+}
+
+.markdown-image-unavailable {
+  display: inline-block;
+  padding: var(--twe-space-2) var(--twe-space-3);
+  border: 1px dashed var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+}
