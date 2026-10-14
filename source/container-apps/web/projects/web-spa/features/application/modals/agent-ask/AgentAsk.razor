@@ -60,6 +60,10 @@
   shows the conversation credential's status and links to Agent links, also renders in the lead
   slot: MessageInput's TrailingActions replaces the send button, so the composer grid places it in
   a trail area just left of send instead. Its tab stop therefore comes before the textarea.
+  AskSendButton (task 357) is a leading action too: it draws the FluentUI arrow-up glyph over the
+  library send button, which stays the send action, and swaps in a Stop button while an answer
+  streams. This file's CSS gives the round button its muted (empty or in flight) and solid
+  (sendable) states.
   The body fills the panel between header and footer and scrolls on its own. AskAnswerBar sits
   first in the footer, right under the latest answer: MessageList renders its ChildContent above
   the turns, so inside the list the bar would land at the top of the transcript. Every color is a
@@ -591,6 +595,8 @@
                 <div class="twe-agent-ask__trail">
                   <AskSettingsMenu />
                 </div>
+                @* The arrow-up glyph over the library send button, and Stop while an answer streams. *@
+                <AskSendButton />
               </LeadingActions>
             </Microsoft.AspNetCore.Components.AI.MessageInput>
           </div>

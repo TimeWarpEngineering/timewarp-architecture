@@ -398,4 +398,38 @@
   align-self: center;
   width: 2rem;
   height: 2rem;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+/* Task 357: AskSendButton draws the arrow-up glyph over the button, so the library's paper plane
+   hides. Solid primary when there is text to send; muted while nothing is typed (the textarea
+   shows its placeholder) or a turn is in progress (the library disables the button). */
+.twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send svg {
+  visibility: hidden;
+}
+
+.twe-agent-ask ::deep .sc-ai-input:has(.sc-ai-input__textarea:placeholder-shown) > .sc-ai-input__send,
+.twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send:disabled {
+  background: var(--twe-paper-2);
+  cursor: default;
+  opacity: 1;
+}
+
+.twe-agent-ask ::deep .sc-ai-input:has(.sc-ai-input__textarea:placeholder-shown) > .twe-ask-send__glyph,
+.twe-agent-ask ::deep .sc-ai-input:has(> .sc-ai-input__send:disabled) > .twe-ask-send__glyph {
+  color: var(--twe-muted);
+}
+
+/* While an answer streams, AskSendButton's Stop takes the send cell. */
+.twe-agent-ask ::deep .sc-ai-input:has(> .twe-ask-send__stop) > .sc-ai-input__send {
+  display: none;
+}
+
+.twe-agent-ask ::deep .sc-ai-input > .twe-ask-send__stop {
+  grid-area: send;
+  justify-self: end;
+  align-self: center;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
 }

@@ -36,6 +36,9 @@
 // The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
 // and returns focus to the textarea. A mid-word @ (ada@example.com) opens nothing. The
 // signed-in choose-and-send flow is AskSignIn_Given_Wasm.
+// Send (task 357): the library send button keeps its "Send message" name and click, its paper
+// plane is hidden, and AskSendButton's arrow-up glyph sits over it. Empty, the button is muted
+// (not the brand primary); once text is typed it is solid primary, and the click sends.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -179,7 +182,7 @@ public class AskSurface_Given_Wasm
       (await page.GetByText("Edit behavior").CountAsync()).ShouldBe(0);
       await AssertComposerLayoutAsync(page);
       await AssertAtPickerWithNoTypesAsync(page);
-      await input.FillAsync("What is on this page?");
+      await AssertSendMutedThenSolidAsync(page, input, "What is on this page?");
       await page.Locator(".sc-ai-input__send").ClickAsync();
       // Enter already produced one answer. The click send is the second turn.
       ILocator answer = page.Locator(".sc-ai-root").GetByText("page_context:").Nth(1);
@@ -266,6 +269,45 @@ public class AskSurface_Given_Wasm
 
   private static string ScreenshotPath(string fileName) =>
     PlaywrightScreenshot.PathFor<AskSurface_Given_Wasm>(fileName);
+
+  private static async Task AssertSendMutedThenSolidAsync(IPage page, ILocator input, string prompt)
+  {
+    const string sendSelector = ".twe-agent-ask .sc-ai-input__send";
+    ILocator send = page.Locator(sendSelector);
+    (await send.GetAttributeAsync("aria-label")).ShouldBe("Send message");
+    (await send.Locator("svg").EvaluateAsync<string>("svg => getComputedStyle(svg).visibility")).ShouldBe("hidden");
+    await page.Locator(".twe-agent-ask [data-qa=AskSendGlyph]").WaitForAsync();
+    LocatorBoundingBoxResult sendBox = await BoxAsync(page, sendSelector);
+    LocatorBoundingBoxResult glyphBox = await BoxAsync(page, ".twe-agent-ask [data-qa=AskSendGlyph]");
+    Math.Abs(glyphBox.X - sendBox.X).ShouldBeLessThanOrEqualTo(1);
+    Math.Abs(glyphBox.Y - sendBox.Y).ShouldBeLessThanOrEqualTo(1);
+    (await input.InputValueAsync()).ShouldBeEmpty();
+
+    // The background transitions, so wait for the end color rather than reading it once.
+    const string isPrimary = """
+      ([selector, wanted]) => {
+        const send = document.querySelector(selector);
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--twe-primary)';
+        send.parentElement.appendChild(probe);
+        const primary = getComputedStyle(probe).color;
+        probe.remove();
+        return (getComputedStyle(send).backgroundColor === primary) === wanted;
+      }
+      """;
+    await page.WaitForFunctionAsync(isPrimary, new object[] { sendSelector, false });
+    await page.Locator(".twe-agent-ask").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-send-muted.png"),
+    });
+    await input.FillAsync(prompt);
+    await page.WaitForFunctionAsync(isPrimary, new object[] { sendSelector, true });
+    (await send.IsEnabledAsync()).ShouldBeTrue();
+    await page.Locator(".twe-agent-ask .sc-ai-input").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-send-solid.png"),
+    });
+  }
 
   private static async Task AssertComposerLayoutAsync(IPage page)
   {
