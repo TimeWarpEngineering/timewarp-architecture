@@ -1,0 +1,42 @@
+.twe-ask-edit-mode {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The pill matches the Tag button beside it (AgentAsk.razor.css .twe-agent-ask__lead). */
+.twe-ask-edit-mode ::deep fluent-button {
+  border-radius: 999px;
+  border-color: var(--twe-rule);
+  color: var(--twe-ink-2);
+  cursor: pointer;
+}
+
+.twe-ask-edit-mode ::deep fluent-button > svg {
+  max-width: none;
+}
+
+.twe-ask-edit-mode ::deep fluent-menu-list {
+  min-width: 16rem;
+}
+
+.twe-ask-edit-mode ::deep fluent-menu-item {
+  align-items: start;
+  padding-block: var(--twe-space-2);
+  cursor: pointer;
+}
+
+.twe-ask-edit-mode__option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.twe-ask-edit-mode__title {
+  color: var(--twe-ink);
+  font-weight: 600;
+}
+
+.twe-ask-edit-mode__subtitle {
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-helper);
+}

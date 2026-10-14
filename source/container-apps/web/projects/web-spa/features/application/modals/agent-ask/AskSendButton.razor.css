@@ -1,0 +1,17 @@
+/* The glyph shares the composer grid's send cell with the library send button: it is drawn over
+   that button and lets clicks through to it. The Stop FluentButton has no element of this
+   component around it for ::deep to anchor on, so AgentAsk.razor.css styles it. */
+.twe-ask-send__glyph {
+  grid-area: send;
+  justify-self: end;
+  align-self: center;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  pointer-events: none;
+  color: var(--twe-on-primary);
+  transition: color 120ms ease;
+}

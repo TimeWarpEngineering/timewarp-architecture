@@ -11,8 +11,8 @@
 // store action ran in WASM. Console text is
 // checked for the TimeWarp.State SemaphoreSlim.Wait failure noted on 2026-10-09.
 // The configured pass also proves the review-round-1 behaviours a fake upstream can reach: the
-// edit-mode buttons toggle aria-pressed; the transcript survives an edit-mode rebuild and Close
-// plus reopen; Close resets the mode to Ask before editing; @ insertion does not double the @
+// transcript survives an edit-mode rebuild and Close plus reopen; Close resets the mode to Ask
+// before editing; @ insertion does not double the @
 // and adds one space unless whitespace already follows;
 // Copy writes the last answer (not the whole panel) to the clipboard.
 // Geometry (task 296): at 1280 the aside is the right 450px — panel x about 830, its right
@@ -22,10 +22,23 @@
 // Composer (task 307): the inner textarea.sc-ai-input__textarea starts inside the
 // .sc-ai-input padding (12px, --twe-space-3), its width is at least 90% of that box, and send
 // sits below it. The Tag button (task 346) sits in the lead slot. Shift+Enter grows the field; Enter sends.
+// Edit mode (task 355): the pill sits on Tag's row, right of it, and the old "Edit behavior" row is
+// gone. The pill's data-mode is the state's mode. With the mouse, clicking the pill opens the radio
+// menu and clicking Automatically edit switches the mode and closes it. With the keyboard, Enter
+// or Space opens it (aria-expanded true, focus in the menu), the arrows move, Enter chooses, and Esc closes
+// it without a change; focus returns to the pill. Not configured, there is no composer, so no pill.
+// Settings (task 356): the sliders button sits on the footer row left of send and is a menu trigger.
+// Enter opens it with the credential status first (disabled), Esc closes it and focus returns to
+// the button. The SPA is signed out here, so no credential is minted and the status is Absent.
+// Choosing Configure permissions closes the panel and routes to Agent links (or to Login with
+// Agent links as the return path, since the SPA is signed out).
 // @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
 // The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
 // and returns focus to the textarea. A mid-word @ (ada@example.com) opens nothing. The
 // signed-in choose-and-send flow is AskSignIn_Given_Wasm.
+// Send (task 357): the library send button keeps its "Send message" name and click, its paper
+// plane is hidden, and AskSendButton's arrow-up glyph sits over it. Empty, the button is muted
+// (not the brand primary); once text is typed it is solid primary, and the click sends.
 // Chromium install retries with the ubuntu24.04 build when the host distro is newer than
 // Playwright 1.55's platform list.
 #endregion
@@ -165,9 +178,11 @@ public class AskSurface_Given_Wasm
       (await page.Locator("[data-qa=AskStarterPrompt]").CountAsync()).ShouldBeGreaterThanOrEqualTo(3);
       (await page.Locator("[data-qa=AskPrivacyNotice]").CountAsync()).ShouldBe(0);
       await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      (await page.Locator(".twe-agent-ask__edit").CountAsync()).ShouldBe(0);
+      (await page.GetByText("Edit behavior").CountAsync()).ShouldBe(0);
       await AssertComposerLayoutAsync(page);
       await AssertAtPickerWithNoTypesAsync(page);
-      await input.FillAsync("What is on this page?");
+      await AssertSendMutedThenSolidAsync(page, input, "What is on this page?");
       await page.Locator(".sc-ai-input__send").ClickAsync();
       // Enter already produced one answer. The click send is the second turn.
       ILocator answer = page.Locator(".sc-ai-root").GetByText("page_context:").Nth(1);
@@ -193,10 +208,19 @@ public class AskSurface_Given_Wasm
       await AssertCopyWritesTheLastAnswerAsync(page);
       await AssertReferenceInsertReplacesTypedAtAsync(page);
 
-      await PressedShouldBeAsync(page, "AskBeforeEditing", "true");
-      await page.Locator("[data-qa=AskAutomaticallyEdit]").ClickAsync();
-      await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "true");
-      await PressedShouldBeAsync(page, "AskBeforeEditing", "false");
+      await ModeShouldBeAsync(page, "AskBeforeEditing");
+      await page.Locator("[data-qa=AskEditMode]").ClickAsync();
+      ILocator autoEdit = page.Locator("[data-qa=AskAutomaticallyEdit]");
+      await autoEdit.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+      (await page.Locator("[data-qa=AskBeforeEditing]").EvaluateAsync<bool>("item => item.checked")).ShouldBeTrue();
+      (await autoEdit.EvaluateAsync<bool>("item => item.checked")).ShouldBeFalse();
+      await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+      {
+        Path = ScreenshotPath("ask-edit-mode-menu.png"),
+      });
+      await autoEdit.ClickAsync();
+      await ModeShouldBeAsync(page, "AutomaticallyEdit");
+      await autoEdit.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
       // The mode change rebuilds the agent; the turn must still be on screen afterwards.
       await page.Locator("[data-qa=AgentAsk][data-built-mode=AutomaticallyEdit]").WaitForAsync(new LocatorWaitForOptions
       {
@@ -208,13 +232,15 @@ public class AskSurface_Given_Wasm
 
       // Close + reopen: the transcript is restored and the edit mode is back to Ask before editing.
       await page.Locator(".sc-ai-root").GetByText("page_context:").Nth(1).WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-      await PressedShouldBeAsync(page, "AskBeforeEditing", "true");
-      await PressedShouldBeAsync(page, "AskAutomaticallyEdit", "false");
+      await ModeShouldBeAsync(page, "AskBeforeEditing");
+      await AssertEditModeKeyboardAsync(page);
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
         Path = ScreenshotPath("ctrl-k-ask-result.png"),
       });
       await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-result-page.png") });
+      // Last: Configure permissions navigates away and closes the panel.
+      await AssertSettingsMenuAsync(page);
     }
     else
     {
@@ -223,7 +249,8 @@ public class AskSurface_Given_Wasm
       (await missing.InnerTextAsync()).ShouldBe("AI not configured");
       string command = await page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync();
       command.ShouldBe(XaiChatDefaults.SetupCommand);
-      await page.Locator("[data-qa=AskEditMode]").WaitForAsync();
+      (await page.Locator("[data-qa=AskEditMode]").CountAsync()).ShouldBe(0);
+      (await page.Locator("[data-qa=AskSettings]").CountAsync()).ShouldBe(0);
       await AssertIconButtonAsync(page, "AskNewConversation", "New conversation");
       await AssertIconButtonAsync(page, "AskExpand", "Expand");
       await AssertIconButtonAsync(page, "AgentAskClose", "Close");
@@ -242,6 +269,45 @@ public class AskSurface_Given_Wasm
 
   private static string ScreenshotPath(string fileName) =>
     PlaywrightScreenshot.PathFor<AskSurface_Given_Wasm>(fileName);
+
+  private static async Task AssertSendMutedThenSolidAsync(IPage page, ILocator input, string prompt)
+  {
+    const string sendSelector = ".twe-agent-ask .sc-ai-input__send";
+    ILocator send = page.Locator(sendSelector);
+    (await send.GetAttributeAsync("aria-label")).ShouldBe("Send message");
+    (await send.Locator("svg").EvaluateAsync<string>("svg => getComputedStyle(svg).visibility")).ShouldBe("hidden");
+    await page.Locator(".twe-agent-ask [data-qa=AskSendGlyph]").WaitForAsync();
+    LocatorBoundingBoxResult sendBox = await BoxAsync(page, sendSelector);
+    LocatorBoundingBoxResult glyphBox = await BoxAsync(page, ".twe-agent-ask [data-qa=AskSendGlyph]");
+    Math.Abs(glyphBox.X - sendBox.X).ShouldBeLessThanOrEqualTo(1);
+    Math.Abs(glyphBox.Y - sendBox.Y).ShouldBeLessThanOrEqualTo(1);
+    (await input.InputValueAsync()).ShouldBeEmpty();
+
+    // The background transitions, so wait for the end color rather than reading it once.
+    const string isPrimary = """
+      ([selector, wanted]) => {
+        const send = document.querySelector(selector);
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--twe-primary)';
+        send.parentElement.appendChild(probe);
+        const primary = getComputedStyle(probe).color;
+        probe.remove();
+        return (getComputedStyle(send).backgroundColor === primary) === wanted;
+      }
+      """;
+    await page.WaitForFunctionAsync(isPrimary, new object[] { sendSelector, false });
+    await page.Locator(".twe-agent-ask").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-send-muted.png"),
+    });
+    await input.FillAsync(prompt);
+    await page.WaitForFunctionAsync(isPrimary, new object[] { sendSelector, true });
+    (await send.IsEnabledAsync()).ShouldBeTrue();
+    await page.Locator(".twe-agent-ask .sc-ai-input").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-send-solid.png"),
+    });
+  }
 
   private static async Task AssertComposerLayoutAsync(IPage page)
   {
@@ -369,7 +435,7 @@ public class AskSurface_Given_Wasm
     await AssertIconButtonAsync(page, "AskExpand", "Expand");
     await AssertIconButtonAsync(page, "AgentAskClose", "Close");
     await AssertHeaderActionsSitBesideTheTitleAsync(page);
-    await AssertSegmentsShareARowAsync(page);
+    await AssertEditModePillBesideTagAsync(page);
 
     double width = page.ViewportSize!.Width;
     LocatorBoundingBoxResult panel = await WaitForBoxAsync(page, "[data-qa=AgentAsk]", box =>
@@ -447,13 +513,119 @@ public class AskSurface_Given_Wasm
     actions.X.ShouldBeGreaterThan(title.X + title.Width);
   }
 
-  private static async Task AssertSegmentsShareARowAsync(IPage page)
+  private static async Task AssertEditModePillBesideTagAsync(IPage page)
   {
-    LocatorBoundingBoxResult askFirst = await BoxAsync(page, "[data-qa=AskBeforeEditing]");
-    LocatorBoundingBoxResult automatic = await BoxAsync(page, "[data-qa=AskAutomaticallyEdit]");
-    ((double)askFirst.Y).ShouldBe(automatic.Y, 4);
-    automatic.X.ShouldBeGreaterThan(askFirst.X + askFirst.Width - 2);
+    LocatorBoundingBoxResult tag = await BoxAsync(page, ".twe-agent-ask [data-qa=AskTag]");
+    LocatorBoundingBoxResult pill = await BoxAsync(page, ".twe-agent-ask [data-qa=AskEditMode]");
+    ((double)pill.Y).ShouldBe(tag.Y, 4);
+    pill.X.ShouldBeGreaterThan(tag.X + tag.Width - 2);
   }
+
+  // Enter or Space opens, ArrowDown moves, Enter chooses; Esc closes without a change. Focus returns to the pill.
+  private static async Task AssertEditModeKeyboardAsync(IPage page)
+  {
+    ILocator pill = page.Locator("[data-qa=AskEditMode]");
+    (await pill.GetAttributeAsync("aria-haspopup")).ShouldNotBeNull();
+    (await pill.GetAttributeAsync("aria-label")).ShouldBe("Edit mode: Ask before editing");
+
+    await pill.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "true");
+    await ActiveShouldBeAsync(page, "AskBeforeEditing");
+    await page.Keyboard.PressAsync("ArrowDown");
+    await ActiveShouldBeAsync(page, "AskAutomaticallyEdit");
+    await page.Keyboard.PressAsync("Enter");
+    await ModeShouldBeAsync(page, "AutomaticallyEdit");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "false");
+    await ActiveShouldBeAsync(page, "AskEditMode");
+    (await pill.GetAttributeAsync("aria-label")).ShouldBe("Edit mode: Automatically edit");
+
+    await page.Keyboard.PressAsync("Enter");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "true");
+    await page.Keyboard.PressAsync("Escape");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "false");
+    await ActiveShouldBeAsync(page, "AskEditMode");
+    await ModeShouldBeAsync(page, "AutomaticallyEdit");
+
+    await page.Keyboard.PressAsync("Space");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "true");
+    await page.Keyboard.PressAsync("Escape");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "false");
+    await ActiveShouldBeAsync(page, "AskEditMode");
+
+    await page.Keyboard.PressAsync("Enter");
+    await AttributeShouldBeAsync(pill, "aria-expanded", "true");
+    await page.Keyboard.PressAsync("Home");
+    await ActiveShouldBeAsync(page, "AskBeforeEditing");
+    await page.Keyboard.PressAsync("Enter");
+    await ModeShouldBeAsync(page, "AskBeforeEditing");
+    await page.Locator("[data-qa=AgentAsk][data-built-mode=AskBeforeEditing]").WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 30_000,
+    });
+  }
+
+  private static async Task AssertSettingsMenuAsync(IPage page)
+  {
+    ILocator settings = page.Locator("[data-qa=AskSettings]");
+    LocatorBoundingBoxResult button = await BoxAsync(page, ".twe-agent-ask [data-qa=AskSettings]");
+    LocatorBoundingBoxResult send = await BoxAsync(page, ".twe-agent-ask .sc-ai-input__send");
+    (button.X + button.Width).ShouldBeLessThanOrEqualTo(send.X + 1);
+    ((double)(button.Y + (button.Height / 2))).ShouldBe(send.Y + (send.Height / 2), 6);
+    (await settings.GetAttributeAsync("aria-haspopup")).ShouldNotBeNull();
+    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Ask settings");
+    (await settings.GetAttributeAsync("data-status")).ShouldBe("Absent");
+
+    await settings.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await AttributeShouldBeAsync(settings, "aria-expanded", "true");
+    ILocator status = page.Locator("[data-qa=AskAgentAccessStatus]");
+    await status.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+    (await status.InnerTextAsync()).ShouldContain("No agent credential");
+    ILocator configure = page.Locator("[data-qa=AskConfigurePermissions]");
+    (await configure.IsVisibleAsync()).ShouldBeTrue();
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-settings-menu.png"),
+    });
+    await page.Keyboard.PressAsync("Escape");
+    await AttributeShouldBeAsync(settings, "aria-expanded", "false");
+    await ActiveShouldBeAsync(page, "AskSettings");
+
+    await settings.ClickAsync();
+    await configure.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+    await configure.ClickAsync();
+    await page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions
+    {
+      State = WaitForSelectorState.Detached,
+      Timeout = 30_000,
+    });
+    await page.WaitForURLAsync(url => url.Contains("AgentLinks", StringComparison.OrdinalIgnoreCase), new PageWaitForURLOptions
+    {
+      Timeout = 30_000,
+    });
+  }
+
+  private static async Task ActiveShouldBeAsync(IPage page, string qa)
+  {
+    const string script = "() => document.activeElement?.getAttribute('data-qa')";
+    string? active = null;
+    for (int attempt = 0; attempt < 50; attempt++)
+    {
+      active = await page.EvaluateAsync<string?>(script);
+      if (active == qa)
+      {
+        return;
+      }
+
+      await Task.Delay(100);
+    }
+
+    active.ShouldBe(qa);
+  }
+
+  private static async Task ModeShouldBeAsync(IPage page, string mode) =>
+    await AttributeShouldBeAsync(page.Locator("[data-qa=AskEditMode]"), "data-mode", mode);
 
   private static async Task<LocatorBoundingBoxResult> WaitForBoxAsync(
     IPage page,
@@ -478,12 +650,11 @@ public class AskSurface_Given_Wasm
     throw new TimeoutException($"{selector} did not reach the expected box ({detail})");
   }
 
-  private static async Task PressedShouldBeAsync(IPage page, string qa, string expected)
+  private static async Task AttributeShouldBeAsync(ILocator element, string attribute, string expected)
   {
-    ILocator button = page.Locator($"[data-qa={qa}]");
     for (int attempt = 0; attempt < 50; attempt++)
     {
-      if (await button.GetAttributeAsync("aria-pressed") == expected)
+      if (await element.GetAttributeAsync(attribute) == expected)
       {
         return;
       }
@@ -491,7 +662,7 @@ public class AskSurface_Given_Wasm
       await Task.Delay(100);
     }
 
-    (await button.GetAttributeAsync("aria-pressed")).ShouldBe(expected, qa);
+    (await element.GetAttributeAsync(attribute)).ShouldBe(expected, attribute);
   }
 
   private static async Task AssertCopyWritesTheLastAnswerAsync(IPage page)
