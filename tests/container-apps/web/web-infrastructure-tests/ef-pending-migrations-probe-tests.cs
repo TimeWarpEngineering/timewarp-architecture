@@ -1,17 +1,21 @@
 #region Purpose
-// EfSiteSettingsTableProbe against real Postgres: false on an unmigrated database without any EF Error, true once migrated.
+// EfPendingMigrationsProbe against real Postgres: fresh, partially migrated, and fully migrated databases, with no EF Error.
 #endregion
 
 #region Design
-// Task 270: the probe exists so a first run against an empty database logs no Error. The proof is
-// the EF logger itself — every log entry the context emits is captured, and the unmigrated probe
-// must produce none at Error or above (a plain EfSiteSettingsStore read in the same state produces
-// two, which the control case pins so the capture cannot pass vacuously). Database names are
-// minted per test (probe_<guid>) on the shared PostgresTestAvailability server.
+// Task 363 (was task 270's table probe): the probe exists so a boot racing web-migrations logs no
+// Error. The proof is the EF logger itself — every log entry the context emits is captured, and
+// the probe must produce none at Error or above on a fresh database (no __EFMigrationsHistory). A
+// plain EfSiteSettingsStore read on a fresh database produces Error entries, which the control
+// case pins so the capture cannot pass vacuously. Partial migration uses IMigrator with the
+// second-to-last compiled migration as target. Database names are minted per test
+// (probe_<guid>) on the shared PostgresTestAvailability server.
 #endregion
 
-namespace SiteSettingsTableProbe_.Ef;
+namespace PendingMigrationsProbe_.Ef;
 
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Collections.Concurrent;
@@ -36,11 +40,11 @@ file sealed class ProbeDatabase
       if (PostgresTestAvailability.IsCiEnvironment())
       {
         throw new InvalidOperationException(
-          "EfSiteSettingsTableProbe tests require a connection string or Docker under CI. " +
+          "EfPendingMigrationsProbe tests require a connection string or Docker under CI. " +
           (availability.SkipReason ?? "no connection"));
       }
 
-      Console.WriteLine($"[SKIP] SiteSettingsTableProbe_.Ef: {availability.SkipReason ?? "no connection"}");
+      Console.WriteLine($"[SKIP] PendingMigrationsProbe_.Ef: {availability.SkipReason ?? "no connection"}");
       return false;
     }
   }
@@ -94,12 +98,12 @@ file sealed class CapturingLoggerProvider : ILoggerProvider
   }
 }
 
-public class Unmigrated_Database
+public class Probe_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<Unmigrated_Database>();
+  internal static void Register() => RegisterTests<Probe_Given_>();
 
-  public static async Task Probe_Should_Report_Missing_Without_Error_Then_Present_After_Migrate()
+  public static async Task Fresh_Database_Should_Report_Every_Migration_Without_Error()
   {
     if (!ProbeDatabase.IsAvailable)
     {
@@ -108,17 +112,59 @@ public class Unmigrated_Database
 
     CapturingLoggerProvider logs = new();
     await using PostgresDbContext db = ProbeDatabase.CreateEmpty(logs);
-    EfSiteSettingsTableProbe probe = new(db);
+    EfPendingMigrationsProbe probe = new(db);
 
-    (await probe.ExistsAsync()).ShouldBeFalse();
+    IReadOnlyList<string> pending = await probe.GetPendingMigrationsAsync();
+
+    pending.ShouldBe([.. db.Database.GetMigrations()]);
+    pending.ShouldNotBeEmpty();
     logs.ErrorsAndAbove.ShouldBeEmpty(string.Join(Environment.NewLine, logs.ErrorsAndAbove));
-
-    await db.Database.MigrateAsync();
-
-    (await probe.ExistsAsync()).ShouldBeTrue();
   }
 
-  public static async Task Store_Read_Should_Log_Error_Control()
+  public static async Task Partially_Migrated_Database_Should_Report_Only_The_Latest_Migration()
+  {
+    if (!ProbeDatabase.IsAvailable)
+    {
+      return;
+    }
+
+    CapturingLoggerProvider logs = new();
+    await using PostgresDbContext db = ProbeDatabase.CreateEmpty(logs);
+    string[] migrations = [.. db.Database.GetMigrations()];
+    await db.GetService<IMigrator>().MigrateAsync(migrations[^2]);
+    logs.Entries.Clear(); // MigrateAsync's own history read on the fresh database is not the probe's.
+    EfPendingMigrationsProbe probe = new(db);
+
+    IReadOnlyList<string> pending = await probe.GetPendingMigrationsAsync();
+
+    pending.ShouldBe([migrations[^1]]);
+    logs.ErrorsAndAbove.ShouldBeEmpty(string.Join(Environment.NewLine, logs.ErrorsAndAbove));
+  }
+
+  public static async Task Fully_Migrated_Database_Should_Report_None()
+  {
+    if (!ProbeDatabase.IsAvailable)
+    {
+      return;
+    }
+
+    CapturingLoggerProvider logs = new();
+    await using PostgresDbContext db = ProbeDatabase.CreateEmpty(logs);
+    await db.Database.MigrateAsync();
+    logs.Entries.Clear(); // MigrateAsync's own history read on the fresh database is not the probe's.
+    EfPendingMigrationsProbe probe = new(db);
+
+    (await probe.GetPendingMigrationsAsync()).ShouldBeEmpty();
+    logs.ErrorsAndAbove.ShouldBeEmpty(string.Join(Environment.NewLine, logs.ErrorsAndAbove));
+  }
+}
+
+public class Store_Read_Control
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Store_Read_Control>();
+
+  public static async Task Fresh_Database_Read_Should_Log_Error()
   {
     if (!ProbeDatabase.IsAvailable)
     {

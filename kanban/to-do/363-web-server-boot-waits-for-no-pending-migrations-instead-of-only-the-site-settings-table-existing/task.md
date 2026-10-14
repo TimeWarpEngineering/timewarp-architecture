@@ -58,11 +58,11 @@ migrations finished.
 
 ## Checklist
 
-- [ ] Pending-migrations probe replaces table probe (decision recorded)
-- [ ] Quiet wait + bounded timeout with clear message
-- [ ] Design regions (AppHost, probe, seed) updated
-- [ ] Regression test (partially migrated DB + late migration) + existing first-run fact green
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Pending-migrations probe replaces table probe (decision recorded)
+- [x] Quiet wait + bounded timeout with clear message
+- [x] Design regions (AppHost, probe, seed) updated
+- [x] Regression test (partially migrated DB + late migration) + existing first-run fact green
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
 ## Notes
 
@@ -71,3 +71,67 @@ migrations finished.
 ## Session
 
 - Created: 2026-10-14 (cockpit, from the Aspire MCP diagnosis; first in the next stack per Steve)
+- 2026-10-14 implementer (ganda task work, headless): pending-migrations probe, seed wait, tests, gates.
+
+## Results
+
+**Decision:** `IPendingMigrationsProbe` (`platform/persistence/`, namespace
+`TimeWarp.Architecture.Persistence`) with `EfPendingMigrationsProbe` (`platform/postgres/`) built
+on `Database.GetPendingMigrationsAsync()`. It was picked over "is the latest migration id in
+`__EFMigrationsHistory`" because it also catches an older migration that was never applied, and EF
+owns the history table's name and schema. Logging: EF 11 / Npgsql reads `__EFMigrationsHistory`
+**without** checking it exists, so on a fresh database EF logs "Failed executing DbCommand" at
+Error (the first test run showed this). The probe therefore runs a `to_regclass` check on the
+history table first, using the name and schema from the context's relational options. While the
+table is missing, the probe reports every compiled migration (`GetMigrations()`, no query).
+
+**Seed wait** (`SiteSettingsSeedHostedService`): each attempt asks the probe. While migrations are
+pending it logs Information, "waiting for web-migrations: N pending migration(s) (latest X)". From
+attempt 121 it logs the same at Warning. After 180 attempts it throws `InvalidOperationException`
+naming every pending migration and the `ef-database-update` remedy, instead of a raw 42P01 or 42703.
+The 42P01 catch stays for the probe-then-`dev db reset` race. In-memory builds register no probe,
+so they don't wait.
+
+**Changed:** probe port and adapter renamed and moved (old `ISiteSettingsTableProbe` and
+`EfSiteSettingsTableProbe` removed); `PostgresDbModule` registration; Design regions in AppHost
+`program.cs` (Design region and the inline web-migrations comment), the probe, the seed and the
+Postgres module; `tw-aggregate-pattern` skill; `.template.config/template.json` `!postgres` excludes.
+
+**Tests:**
+- `web-infrastructure-tests/ef-pending-migrations-probe-tests.cs`: fresh DB (reports every
+  migration, no Error), partially migrated to the second-to-last migration (reports only the
+  latest), fully migrated (reports none), plus the existing control that a fresh-DB store read
+  does log Error.
+- `web-server-integration-tests/features/settings/site-settings-boot-pending-migrations-tests.cs`
+  (regression): migrates a fresh DB to the second-to-last migration and boots a real Web.Server
+  against it. The test asserts the boot is still blocked after 3s and the pending-migration log
+  names the latest migration. It then applies the latest migration and asserts the host starts,
+  `GET api/settings/assistant` returns 200, and no Error-or-above entry was logged. Before this
+  change the host started at once because the table existed, so the "still blocked" assertion
+  failed.
+
+**Gates (this worktree):** `dev build` 0 warnings / 0 errors; `dev test` all suites passed,
+including aspire-tests 51/51 (`FirstRunOnEmptyDatabase`), web-infrastructure-tests 78/78 and
+web-server-integration-tests 341/341; `dev template-smoke` passed; `ganda repo audit` passed. The
+AppHost user-secrets file was hashed before and after `dev test` and was unchanged. No `dev run` was
+started, and the maintainer's database was not touched (tests use Testcontainers).
+
+### How to validate
+
+**Smoke:**
+```bash
+./bin/dev build
+dotnet build tests/container-apps/web/web-infrastructure-tests && tests/container-apps/web/web-infrastructure-tests/bin/Release/net11.0/web-infrastructure-tests
+tests/container-apps/web/web-server-integration-tests/bin/Release/net11.0/web-server-integration-tests --ansi off | grep -E "pending migration|total:|failed:"
+```
+Manual: with `dev run` up, add a trivial migration (`dev db add-migration Probe363`), restart
+web-server from the dashboard before running `ef-database-update` on web-migrations, then run it.
+
+**Expect:**
+- Infrastructure suite `failed: 0`; the `Probe_Given_` cases pass with no captured EF Error.
+- Web.Server integration suite `failed: 0`. Its log shows "Site settings seed is waiting for
+  web-migrations: 1 pending migration(s) (latest <newest migration id>)" for a few attempts, then
+  the host starts.
+- Manual: web-server stays in startup, logs the Information wait lines (no `fail:` and no 42703 or
+  42P01), and reaches Running within about a second of the migration finishing. Without migrating,
+  it fails after 180s with "Site settings seed gave up after 180 attempts ... missing N migration(s)".
