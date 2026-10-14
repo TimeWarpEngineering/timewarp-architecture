@@ -145,7 +145,12 @@ public class AskSignIn_Given_Wasm
         ILocator expiry = session.Page.Locator("[data-qa=AskAgentAccessExpiry]");
         await expiry.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
         (await session.Page.Locator("[data-qa=AskAgentAccessStatus]").InnerTextAsync()).ShouldContain("Agent access active");
+
+        // The menu content shows before fluent-menu syncs aria-expanded on the trigger; an Escape sent in that
+        // gap is ignored and the menu then settles open. A person cannot beat it, so wait for the synced state.
+        await Assertions.Expect(askSettings).ToHaveAttributeAsync("aria-expanded", "true");
         await session.Page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(askSettings).ToHaveAttributeAsync("aria-expanded", "false");
         await expiry.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
       }
 
