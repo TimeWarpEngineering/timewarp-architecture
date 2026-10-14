@@ -601,6 +601,142 @@ public class Migrate_Given_
   }
 }
 
+public class StaleScript_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<StaleScript_Given_>();
+
+  // EF's idempotent script output for two migrations (Npgsql provider).
+  private const string Script = """
+    CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+        "MigrationId" character varying(150) NOT NULL,
+        "ProductVersion" character varying(32) NOT NULL,
+        CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+    );
+
+    START TRANSACTION;
+    DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260804154245_InitialPostgresModel') THEN
+        CREATE TABLE "Todo" ("Id" uuid NOT NULL);
+        END IF;
+    END $EF$;
+
+    DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260804154245_InitialPostgresModel') THEN
+        INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+        VALUES ('20260804154245_InitialPostgresModel', '11.0.0');
+        END IF;
+    END $EF$;
+
+    DO $EF$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260923180147_AddCredentialAccountHint') THEN
+        INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+        VALUES ('20260923180147_AddCredentialAccountHint', '11.0.0');
+        END IF;
+    END $EF$;
+    COMMIT;
+    """;
+
+  private static readonly string[] Folder =
+  [
+    "20260804154245_InitialPostgresModel.cs",
+    "20260804154245_InitialPostgresModel.Designer.cs",
+    "20260923180147_AddCredentialAccountHint.cs",
+    "20260923180147_AddCredentialAccountHint.Designer.cs",
+    "20261010075816_AddFeedbackAttachments.cs",
+    "20261010075816_AddFeedbackAttachments.Designer.cs",
+    "PostgresDbContextModelSnapshot.cs",
+  ];
+
+  public static Task ScriptIds_Should_ComeFromTheHistoryInserts()
+  {
+    DeployOperate.ParseScriptMigrationIds(Script)
+      .ShouldBe(["20260804154245_InitialPostgresModel", "20260923180147_AddCredentialAccountHint"]);
+    DeployOperate.ParseScriptMigrationIds("").ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task SourceIds_Should_SkipDesignerFilesAndTheSnapshot()
+  {
+    DeployOperate.ParseSourceMigrationIds(Folder).ShouldBe(
+    [
+      "20260804154245_InitialPostgresModel",
+      "20260923180147_AddCredentialAccountHint",
+      "20261010075816_AddFeedbackAttachments",
+    ]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Stale_Should_ListTheSourceIdsTheScriptLacks()
+  {
+    string[] missing = DeployOperate.MigrationsMissingFromScript(
+      DeployOperate.ParseSourceMigrationIds(Folder), DeployOperate.ParseScriptMigrationIds(Script));
+    missing.ShouldBe(["20261010075816_AddFeedbackAttachments"]);
+    string warning = DeployOperate.StaleScriptWarning(AspireDeploy.Kubernetes, missing);
+    warning.ShouldStartWith("⚠ Published script is stale: source has 1 migration(s) the script does not");
+    warning.ShouldContain("(20261010075816_AddFeedbackAttachments)");
+    warning.ShouldContain("Run `dev publish kubernetes` first");
+    warning.ShouldContain("then redeploy so the app and schema match.");
+    return Task.CompletedTask;
+  }
+
+  public static Task Current_Should_HaveNothingMissing()
+  {
+    DeployOperate.MigrationsMissingFromScript(DeployOperate.ParseSourceMigrationIds(Folder[..4]), DeployOperate.ParseScriptMigrationIds(Script))
+      .ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task Yes_Should_RefuseAStaleScriptUnlessAllowStale()
+  {
+    DeployOperate.RefuseStaleUnattended(stale: true, yes: true, allowStale: false).ShouldBeTrue();
+    DeployOperate.RefuseStaleUnattended(stale: true, yes: true, allowStale: true).ShouldBeFalse();
+    DeployOperate.RefuseStaleUnattended(stale: true, yes: false, allowStale: false).ShouldBeFalse();
+    DeployOperate.RefuseStaleUnattended(stale: false, yes: true, allowStale: false).ShouldBeFalse();
+    string refusal = DeployOperate.StaleUnattendedRefusal(AspireDeploy.Compose);
+    refusal.ShouldContain("dev publish compose");
+    refusal.ShouldContain("--allow-stale");
+    return Task.CompletedTask;
+  }
+
+  public static Task Report_Should_SayRelativeToThePublishedScript()
+  {
+    DeployOperate.QualifyRelativeToPublishedScript(["Up to date: no pending migrations (2 applied, latest b)"])
+      .ShouldBe(["Up to date relative to the published script: no pending migrations (2 applied, latest b)"]);
+    DeployOperate.QualifyRelativeToPublishedScript(["Applied 1 migration(s):", "  b", "Already applied: 1 · Database now at b"])
+      .ShouldBe(["Applied 1 migration(s) relative to the published script:", "  b", "Already applied: 1 · Database now at b"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task SourceFolders_Should_ComeFromTheAppHostsSiblingApps()
+  {
+    string root = Path.Combine(Path.GetTempPath(), "stale-script-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+      string appHost = Path.Combine(root, "source", "container-apps", "aspire", "projects", "aspire-app-host", "aspire-app-host.csproj");
+      Directory.CreateDirectory(Path.GetDirectoryName(appHost)!);
+      File.WriteAllText(appHost, "");
+      Directory.CreateDirectory(Path.Combine(root, "source", "container-apps", "web", "platform"));
+
+      // No postgres flag: no migrations folder, so the check is skipped.
+      DeployOperate.FindSourceMigrationFolders(appHost, root).ShouldBeEmpty();
+
+      string migrations = Path.Combine(root, "source", "container-apps", "web", DeployOperate.SourceMigrationsSubpath);
+      Directory.CreateDirectory(migrations);
+      DeployOperate.FindSourceMigrationFolders(appHost, root).ShouldBe([migrations]);
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
+    return Task.CompletedTask;
+  }
+}
+
 public class Browser_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -663,6 +799,20 @@ public partial class AppHostAgreement_Given_
     string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
     program.ShouldContain("builder.Configuration[$\"Parameters:{IngressPortParameterName}\"]");
     IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("program.cs passes a literal to AddParameter(IngressPortParameterName, …)");
+    return Task.CompletedTask;
+  }
+
+  public static Task SourceMigrations_Should_BeTheFolderTheAppHostTellsEfToWriteTo()
+  {
+    string appHost = AppHostDirectory();
+    string repoRoot = Path.GetFullPath(Path.Combine(appHost, "..", "..", "..", "..", ".."));
+    string[] folders = DeployOperate.FindSourceMigrationFolders(Path.Combine(appHost, "aspire-app-host.csproj"), repoRoot);
+
+    // program.cs: WithMigrationsProject(web-infrastructure) + WithMigrationOutputDirectory("../../platform/postgres/migrations").
+    string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
+    program.ShouldContain(".WithMigrationOutputDirectory(\"../../platform/postgres/migrations\")");
+    folders.ShouldBe([Path.GetFullPath(Path.Combine(appHost, "..", "..", "..", "web", DeployOperate.SourceMigrationsSubpath))]);
+    DeployOperate.ParseSourceMigrationIds(Directory.EnumerateFiles(folders[0])).ShouldNotBeEmpty();
     return Task.CompletedTask;
   }
 

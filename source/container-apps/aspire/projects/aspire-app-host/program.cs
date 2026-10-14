@@ -51,10 +51,13 @@
 // '/ef-tool-web-migrations-…' specification is not produced by this Executable". web-server
 // then listens on the Kestrel default http://localhost:5000 instead of its allocated port, the
 // ingress health check times out, and aspire-tests fails 6 of 11 (11 of 11 without the edge).
-// So the first-boot window stays; web-server is what tolerates it. SiteSettingsSeedHostedService
-// probes identity.site_settings with a catalog query (EfSiteSettingsTableProbe, to_regclass) and
-// waits before Kestrel starts, so a first run against an empty database logs no Error (guarded
-// by aspire-tests' FirstRunOnEmptyDatabase fact, which boots an ephemeral Postgres). Restart
+// So the migration window stays; web-server is what tolerates it. SiteSettingsSeedHostedService
+// asks EfPendingMigrationsProbe whether any migration this build was compiled with is missing
+// from the database and waits before Kestrel starts (task 363; task 270 only checked that the
+// site-settings table existed, so a new column on an existing table still crashed boot with
+// 42703). A first run against an empty database, or a boot racing a new migration, logs no Error
+// (guarded by aspire-tests' FirstRunOnEmptyDatabase fact, which boots an ephemeral Postgres, and
+// web-server-integration-tests' boot-waits-for-pending-migrations regression). Restart
 // never deadlocks because there is no edge to wait on, and Aspire.Hosting.Testing suites stay
 // green.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
@@ -486,10 +489,10 @@ internal class Program
     // Task 155 / 270: no wait edge between web-server and web-migrations. Without a wait edge, a
     // dashboard restart/rebuild of web-server can never deadlock on the migration resource's
     // terminal Finished snapshot. WaitForCompletion still breaks DCP endpoint wiring on Aspire
-    // 13.6 (see the Design region). On a fresh volume web-server's boot seed waits for the
-    // site-settings table itself (EfSiteSettingsTableProbe, up to 180s — EF Core 11's verbose
-    // tool startup streams the MSBuild item graph for about 90s before it migrates), so the
-    // first run logs no Error.
+    // 13.6 (see the Design region). web-server's boot seed waits until no migration is pending
+    // (EfPendingMigrationsProbe, up to 180s — EF Core 11's verbose tool startup streams the
+    // MSBuild item graph for about 90s before it migrates), so a first run or a new migration
+    // logs no Error.
     // Re-run on demand via the ef-database-update dashboard command on the web-migrations resource.
 #endif
     // Self-reference for the web server

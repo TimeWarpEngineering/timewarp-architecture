@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deploy migrate [--target compose|kubernetes|aca] [--yes]`: apply the published idempotent EF
+// `dev deploy migrate [--target compose|kubernetes|aca] [--yes] [--allow-stale]`: apply the published idempotent EF
 // migrations to the database of a deployment `dev deploy` made. Operator-run, never CI.
 #endregion
 
@@ -23,6 +23,9 @@
 //      Azure:ResourceGroup), the one Flexible Server in it, the connection string from the postgres-kv
 //      Key Vault secret (never printed; a missing role is refused with the pwsh grant), and the
 //      operator's IPv4 (--client-ip, else api.ipify.org).
+//   3a. Stale check (task 341, DeployOperate Design region): source migration ids vs the published script's;
+//      missing ones print the warning before the prompt, --yes refuses on them unless --allow-stale, and the
+//      report then says "relative to the published script". aca reads the script beside the bundle, else skips.
 //   4. The plan (the command in pwsh form, the script piped with Get-Content -Raw) is printed and
 //      confirmed unless --yes; with stdin redirected and no --yes it refuses.
 //   5. compose / kubernetes read __EFMigrationsHistory, pipe the script into psql inside the postgres
@@ -53,6 +56,9 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
   [Option("yes", "y", Description = "Confirm without prompting")]
   public bool Yes { get; set; }
 
+  [Option("allow-stale", Description = "With --yes: apply the published script even when the source has migrations it lacks (default: refuse)")]
+  public bool AllowStale { get; set; }
+
   [Option("project-name", Description = "compose: the Compose project to migrate (default: the running project from this checkout, else the only one)")]
   public string? ProjectName { get; set; }
 
@@ -70,6 +76,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
     private const string Verb = "dev deploy migrate";
     private readonly ITerminal Terminal;
     private string BundleOutput = "";
+    private bool Stale;
 
     public Handler(ITerminal terminal)
     {
@@ -94,6 +101,11 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         Fail(DeployOperate.MissingPublishedOutputMessage(preflight.Target, artifact));
         return Unit.Value;
       }
+
+      string script = preflight.Target == AspireDeploy.ContainerApps
+        ? Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), DeployOperate.MigrationScript)
+        : artifact;
+      if (!await CheckStaleAsync(command, preflight, script, ct)) return Unit.Value;
 
       if (preflight.Target == AspireDeploy.ContainerApps)
       {
@@ -259,8 +271,40 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       return DeployOperate.ParseMigrationHistory(output.ExitCode, output.Stdout, output.Stderr);
     }
 
+    /// <summary>
+    /// Compares the source migration ids with <paramref name="script"/>'s and warns when the script lacks some; false
+    /// (after printing the refusal) when --yes without --allow-stale must not apply a stale script.
+    /// </summary>
+    private async Task<bool> CheckStaleAsync(DeployMigrateCommand command, DeployPreflight preflight, string script, CancellationToken ct)
+    {
+      string[] folders = DeployOperate.FindSourceMigrationFolders(preflight.AppHostProject, preflight.RepoRoot);
+      if (folders.Length == 0) return true;
+
+      if (!File.Exists(script))
+      {
+        Terminal.WriteLine(DeployOperate.BundleStaleCheckUnavailable);
+        return true;
+      }
+
+      string[] missing = DeployOperate.MigrationsMissingFromScript(
+        DeployOperate.ParseSourceMigrationIds(folders.SelectMany(Directory.EnumerateFiles)),
+        DeployOperate.ParseScriptMigrationIds(await File.ReadAllTextAsync(script, ct)));
+      if (missing.Length == 0) return true;
+
+      Stale = true;
+      Terminal.WriteErrorLine(DeployOperate.StaleScriptWarning(preflight.Target, missing).Yellow());
+      if (DeployOperate.RefuseStaleUnattended(Stale, command.Yes, command.AllowStale))
+      {
+        Fail(DeployOperate.StaleUnattendedRefusal(preflight.Target));
+        return false;
+      }
+
+      return true;
+    }
+
     private void Report(string[] lines, int exitCode)
     {
+      if (Stale && exitCode == 0) lines = DeployOperate.QualifyRelativeToPublishedScript(lines);
       Terminal.WriteLine("");
       foreach (string line in lines)
       {

@@ -154,7 +154,8 @@ public partial class CatalogAgent_Should
     );
     Names(counter).ShouldBe(await ExpectedNamesAsync(everyone, authorization, catalog, "/Counter?from=palette"));
     counter.Single(tool => tool.Name == "Counter.IncrementCounter").RequiresApproval.ShouldBeTrue();
-    counter.ShouldContain(tool => tool.Name == AgentNavigate.ToolName && !tool.RequiresApproval);
+    counter.ShouldContain(tool => tool.Name == AgentNavigate.ToolName && tool.RequiresApproval);
+    counter.ShouldContain(tool => tool.Name == AgentSiteMap.ToolName && !tool.RequiresApproval);
     counter.Single(tool => tool.Name == "Credentials.AddPasskey").OffPageRoute.ShouldBe("/Settings");
 
     IReadOnlyList<CatalogAgentTool> settings = await CatalogAgentToolSet.SelectAsync
@@ -182,7 +183,7 @@ public partial class CatalogAgent_Should
     (
       developer, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
     );
-    Names(developerNewRole).ShouldBe([AgentNavigate.ToolName]);
+    Names(developerNewRole).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName]);
     developerNewRole.ShouldNotContain(tool => tool.Name == "Role.CreateRole");
 
     Names
@@ -198,14 +199,14 @@ public partial class CatalogAgent_Should
       (
         anonymous, authorization, catalog.Entries, "/", CancellationToken.None
       )
-    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
+    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName]);
 
     (
       await CatalogAgentToolSet.SelectAsync
       (
         anonymous, authorization, catalog.Entries, "/Counter", CancellationToken.None
       )
-    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName]);
+    ).Select(tool => tool.Name).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName]);
   }
 
   public static async Task Fake_Client_Dispatches_Increment_Only_After_Approval()
@@ -216,7 +217,8 @@ public partial class CatalogAgent_Should
     using CatalogAgentFunctions functions = CatalogAgentFunctions.Create(await SelectForSessionAsync(scope));
     ChatOptions options = new() { Tools = [.. functions.Tools] };
     functions.Tools.Single(tool => tool.Name == "Counter.IncrementCounter").ShouldBeOfType<ApprovalRequiredAIFunction>();
-    functions.Tools.Single(tool => tool.Name == AgentNavigate.ToolName).ShouldNotBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools.Single(tool => tool.Name == AgentNavigate.ToolName).ShouldBeOfType<ApprovalRequiredAIFunction>();
+    functions.Tools.Single(tool => tool.Name == AgentSiteMap.ToolName).ShouldNotBeOfType<ApprovalRequiredAIFunction>();
     functions.Tools.Single(tool => tool.Name == PageAgentContext.ToolName).ShouldNotBeOfType<ApprovalRequiredAIFunction>();
 
     using ScriptedChatClient rejecting = new();
@@ -297,12 +299,13 @@ public partial class CatalogAgent_Should
     Names(home).ShouldBe(await ExpectedWebMcpNamesAsync(everyone, authorization, catalog, "/"));
     home.ShouldContain(tool => tool.Name == "Credentials.AddPasskey");
     home.ShouldContain(tool => tool.Name == AgentNavigate.ToolName);
+    home.ShouldContain(tool => tool.Name == AgentSiteMap.ToolName);
     home.ShouldContain(tool => tool.Name == PageAgentContext.ToolName);
     home.ShouldNotContain(tool => tool.Name == "Profile.SignOut");
     home.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
     // A literal, not the selection algorithm again: the tool list on / that the task promises.
     Names(home).ShouldBe(
-      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", AgentNavigate.ToolName, PageAgentContext.ToolName]);
+      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Console.WriteLine($"WEBMCP-PROOF path=/ tools={string.Join(",", Names(home))}");
 
     IReadOnlyList<WebMcpToolDescriptor> settings = await WebMcpPublisher.DescribeAsync
@@ -321,7 +324,7 @@ public partial class CatalogAgent_Should
       "/StyleGuide",
       CancellationToken.None
     );
-    Names(styleGuide).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
+    Names(styleGuide).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
 
     Names
     (
@@ -336,14 +339,14 @@ public partial class CatalogAgent_Should
       (
         Principal(PermissionIds.DeveloperAccess), authorization, catalog, "/Admin/Roles/New", CancellationToken.None
       )
-    ).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
+    ).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Names
     (
       await WebMcpPublisher.DescribeAsync
       (
         Principal(), authorization, catalog, "/Profile", CancellationToken.None
       )
-    ).ShouldBe([AgentNavigate.ToolName, PageAgentContext.ToolName]);
+    ).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
 
     WebMcpApplyResult absent = await WebMcpRegistration.ApplyAsync(null, counter, CancellationToken.None);
     absent.Available.ShouldBeFalse();
@@ -766,7 +769,7 @@ public partial class CatalogAgent_Should
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
   }
 
-  public static async Task Navigate_Matches_Palette_Pages_And_Refuses_The_Rest()
+  public static async Task Navigate_Matches_Menu_Destinations_And_Refuses_The_Rest()
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
     IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
@@ -779,7 +782,7 @@ public partial class CatalogAgent_Should
     tools.ShouldNotContain(tool => tool.Name == "Credentials.AddPasskey");
     tools.ShouldNotContain(tool => tool.Name == "Feedback.ListMyFeedback");
     CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
-    navigate.RequiresApproval.ShouldBeFalse();
+    navigate.RequiresApproval.ShouldBeTrue();
     navigate.InputSchema.ShouldContain("\"/Settings\"");
     navigate.InputSchema.ShouldContain("\"/Profile\"");
     navigate.InputSchema.ShouldContain("\"/\"");
@@ -793,7 +796,6 @@ public partial class CatalogAgent_Should
     (
       member,
       authorization,
-      catalog.Entries,
       scope.Store,
       "/",
       new Dictionary<string, object?> { ["url"] = "/Admin/Roles" },
@@ -807,7 +809,6 @@ public partial class CatalogAgent_Should
     (
       member,
       authorization,
-      catalog.Entries,
       scope.Store,
       "/",
       new Dictionary<string, object?> { ["url"] = "/Settings" },
@@ -815,6 +816,7 @@ public partial class CatalogAgent_Should
     );
     allowed.Navigated.ShouldBeTrue();
     allowed.Destination.ShouldBe("/Settings");
+    allowed.Title.ShouldBe("Settings");
     navigation.Uri.ShouldContain("/Settings");
 
     navigation.NavigateTo("/");
@@ -822,6 +824,27 @@ public partial class CatalogAgent_Should
     string missing = await dispatcher.InvokeTool("navigate", """{"url":"/not-a-page"}""").WaitAsync(Timeout);
     missing.ShouldContain(AgentNavigate.Refusal);
     missing.ShouldContain("\"navigated\":false");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+
+    // Ask before editing: a permitted url waits for approval, a rejection does not move.
+    Task<string> pending = dispatcher.InvokeTool("navigate", """{"url":"/Settings"}""");
+    Guid callId = await WaitForPendingAsync(scope, pending);
+    await scope.Store.GetState<AgentSurfaceState>().ResolveApproval(callId, approved: false);
+    (await pending.WaitAsync(Timeout)).ShouldContain("\"approved\":false");
+    navigation.Uri.ShouldNotContain("/Settings");
+
+    pending = dispatcher.InvokeTool("navigate", """{"url":"/Settings"}""");
+    callId = await WaitForPendingAsync(scope, pending);
+    await scope.Store.GetState<AgentSurfaceState>().ResolveApproval(callId, approved: true);
+    (await pending.WaitAsync(Timeout)).ShouldContain("\"navigated\":true");
+    navigation.Uri.ShouldContain("/Settings");
+
+    // Automatically edit: navigate runs without a prompt.
+    navigation.NavigateTo("/");
+    await scope.Send(new AgentSurfaceState.SetEditModeActionSet.Action(AgentEditMode.AutomaticallyEdit));
+    (await dispatcher.InvokeTool("navigate", """{"url":"/Settings"}""").WaitAsync(Timeout))
+      .ShouldContain("\"navigated\":true");
+    scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
   }
 
   public static async Task AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs()
@@ -897,8 +920,18 @@ public partial class CatalogAgent_Should
     text.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.MaxLength);
     text.Length.ShouldBeLessThan(CompleteAgentChat.MaxInstructionsLength);
     text.ShouldStartWith("You are Akili, the assistant built into this app.");
-    text.ShouldContain("You can run global actions and navigate from any page");
+    text.ShouldContain("You can answer about, and move to, any page in the site map");
     AgentAskInstructions.Preface.ShouldNotContain("Drive this page only");
+    AgentAskInstructions.Preface.ShouldNotContain("this page only");
+
+    // With a full site map the page copy gets what is left, and the whole stays under the cap.
+    string siteMap = new('m', AgentAskInstructions.SiteMapCap);
+    int cap = AgentAskInstructions.ContextCapFor("Akili", siteMap);
+    cap.ShouldBeGreaterThanOrEqualTo(AgentAskInstructions.MinContextCap);
+    string mapped = AgentAskInstructions.For("Akili", siteMap, new string('p', cap));
+    mapped.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.MaxLength);
+    mapped.ShouldContain(AgentAskInstructions.SiteMapHeading);
+    mapped.ShouldEndWith(new string('p', 10));
     return Task.CompletedTask;
   }
 
@@ -1225,15 +1258,8 @@ public partial class CatalogAgent_Should
 
     List<string> names = [];
     HashSet<string> seen = [];
-    bool anyPage = false;
     foreach (CommandPaletteRow row in rows)
     {
-      if (row.Kind == CommandPaletteRowKind.Page)
-      {
-        anyPage = true;
-        continue;
-      }
-
       if (row.Kind != CommandPaletteRowKind.Command
         || !byName.TryGetValue(row.Target, out ActionCatalogEntry? entry)
         || !entry.Visibility.HasFlag(ActionVisibility.Agent)
@@ -1245,29 +1271,25 @@ public partial class CatalogAgent_Should
       names.Add(entry.Name);
     }
 
-    foreach (string name in PageAgentScope.ActionNamesFor(normalized))
+    IReadOnlyList<Type> pageActions = user.Identity?.IsAuthenticated == true
+      ? PageAgentScope.ActionTypesFor(normalized)
+      : [];
+    foreach (Type actionType in pageActions)
     {
-      if (!seen.Add(name) || !byName.TryGetValue(name, out ActionCatalogEntry? entry))
-      {
-        continue;
-      }
-
-      if (!entry.Visibility.HasFlag(ActionVisibility.Agent))
+      ActionCatalogEntry? entry = catalog.Entries.FirstOrDefault(candidate => candidate.ActionType == actionType);
+      if (entry is null || !seen.Add(entry.Name) || !entry.Visibility.HasFlag(ActionVisibility.Agent))
       {
         continue;
       }
 
       if (await CommandPaletteRoster.IsPermittedAsync(user, authorization, entry))
       {
-        names.Add(name);
+        names.Add(entry.Name);
       }
     }
 
-    if (anyPage)
-    {
-      names.Add(AgentNavigate.ToolName);
-    }
-
+    names.Add(AgentNavigate.ToolName);
+    names.Add(AgentSiteMap.ToolName);
     return [.. names];
   }
 

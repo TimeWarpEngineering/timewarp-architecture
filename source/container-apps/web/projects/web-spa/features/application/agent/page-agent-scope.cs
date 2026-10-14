@@ -1,104 +1,76 @@
 #region Purpose
-// Names which catalog actions are bound to a page, and which route executes them.
+// Names which catalog actions are bound to the page on screen, and which page executes them.
 #endregion
 
 #region Design
-// The map is the reverse of "which buttons this page dispatches". PrimaryPage is the first route
-// in insertion order (Settings before Passkeys, so FetchCredentials executes on Settings).
-// Serves is true when the action is not page-bound, or the current path is one of its routes.
-// /Feedback is the one prefix: /Feedback/{id} serves the Feedback actions. The match requires a
-// following slash, so /FeedbackExtra does not. Other routes stay exact.
+// Derived, not hand-written (task 300). A page declares the actions its own controls dispatch
+// with [Page(AgentActions = [typeof(...Action)])], and the [Page] generator emits every such page
+// as a PageRegistry.ActionScopes row with all its route templates (primary and aliases,
+// parameterized or not). This type matches the current path against those templates; it holds no
+// route or page list of its own, and the guard test fails if one reappears under agent/.
+// A template matches segment by segment, case-insensitive. A {Name} token matches one non-empty
+// segment, and a {Name:guid|int|long|bool} token only a value of that type, so /Feedback/{id:Guid}
+// serves the Feedback actions on a filing and /Feedback/item or /FeedbackExtra serves none. Any
+// other constraint (and optional or catch-all tokens) never matches: fail closed.
+// PrimaryPage is the static route of the first scope that lists the action, taking navigable
+// pages in menu order (PageRegistry.All) first, so FetchCredentials executes on Settings before
+// Passkeys. Serves is true when the action is not page-bound, or a scope listing it matches path.
 // CatalogAgentToolSet uses this to decide execution versus a navigate offer. It is not the agent
 // tool list: palette commands whose visibility includes Agent are offered on every page.
-// Human-only names stay in the map so the visibility filter, not a second copy of the page, drops
-// them. Profile.UpdateProfile and SiteSettings.UpdateSiteSettings replace whole records (the latter
-// with a Version token), so page_context on those routes carries the current values the agent
-// must echo (PageAgentContext); there is no separate read tool on those pages.
+// Human-only actions may be listed; the visibility filter, not this type, drops them.
+// StateTypesFor gives the states that own the page's actions; PageAgentContext asks each one that
+// implements IAgentPageFacts for its facts, so page_context has no per-route cases either.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
+/// <summary>Page-bound agent actions, from the generated <see cref="PageRegistry.ActionScopes"/>.</summary>
 public static class PageAgentScope
 {
-  private static readonly Dictionary<string, string[]> Actions = new(StringComparer.OrdinalIgnoreCase)
+  /// <summary>Static routes of pages that declare agent actions.</summary>
+  public static IReadOnlyCollection<string> KnownRoutes
   {
-    ["/Counter"] = ["Counter.IncrementCounter"],
-    ["/Settings"] =
-    [
-      "Credentials.FetchCredentials",
-      "Credentials.AddPasskey",
-      "Credentials.AddExistingPasskey",
-      "Credentials.RevokeCredential",
-      "Credentials.RenameCredential",
-      "Credentials.LinkMicrosoft365",
-    ],
-    ["/Passkeys"] =
-    [
-      "Credentials.FetchCredentials",
-      "Credentials.RevokeCredential",
-      "Credentials.RenameCredential",
-    ],
-    ["/Profile"] = ["Profile.UpdateProfile"],
-    ["/Admin/Roles/New"] = ["Role.CreateRole"],
-    ["/Admin/Authentication"] = ["SiteSettings.UpdateSiteSettings"],
-    ["/Feedback"] =
-    [
-      "Feedback.SubmitFeedback",
-      "Feedback.ListMyFeedback",
-      "Feedback.OpenFeedback",
-    ],
-  };
-
-  private static readonly string[] PrefixRoutes = ["/Feedback"];
-
-  /// <summary>Routes that name page-bound catalog actions.</summary>
-  public static IReadOnlyCollection<string> KnownRoutes => Actions.Keys;
-
-  /// <summary>Routes that execute <paramref name="actionName"/>, in map insertion order.</summary>
-  public static IReadOnlyList<string> PagesFor(string actionName)
-  {
-    List<string> pages = [];
-    foreach (KeyValuePair<string, string[]> pair in Actions)
+    get
     {
-      foreach (string name in pair.Value)
+      List<string> routes = [];
+      foreach (PageActionScope scope in PageRegistry.ActionScopes)
       {
-        if (string.Equals(name, actionName, StringComparison.Ordinal))
+        foreach (string template in scope.RouteTemplates)
         {
-          pages.Add(pair.Key);
-          break;
+          if (!template.Contains('{', StringComparison.Ordinal))
+          {
+            routes.Add(template);
+          }
         }
       }
-    }
 
-    return pages;
+      return routes;
+    }
   }
 
-  /// <summary>The route that executes <paramref name="actionName"/>, or null when it is not page-bound.</summary>
-  public static string? PrimaryPage(string actionName)
+  /// <summary>True when some page declares <paramref name="actionType"/>.</summary>
+  public static bool IsPageBound(Type actionType) => PrimaryScope(actionType, requireStatic: false) is not null;
+
+  /// <summary>The static route that executes <paramref name="actionType"/>, or null when it is not page-bound.</summary>
+  public static string? PrimaryPage(Type actionType)
   {
-    IReadOnlyList<string> pages = PagesFor(actionName);
-    return pages.Count == 0 ? null : pages[0];
+    PageActionScope? scope = PrimaryScope(actionType, requireStatic: true);
+    return scope is null ? null : StaticRoute(scope);
   }
 
   /// <summary>True when the action may run on <paramref name="path"/>.</summary>
-  public static bool Serves(string? path, string actionName)
+  public static bool Serves(string? path, Type actionType)
   {
-    IReadOnlyList<string> pages = PagesFor(actionName);
-    if (pages.Count == 0)
+    ArgumentNullException.ThrowIfNull(actionType);
+    if (!IsPageBound(actionType))
     {
       return true;
     }
 
     string normalized = Normalize(path);
-    foreach (string page in pages)
+    foreach (PageActionScope scope in PageRegistry.ActionScopes)
     {
-      if (string.Equals(normalized, page, StringComparison.OrdinalIgnoreCase))
-      {
-        return true;
-      }
-
-      if (IsPrefixRoute(page)
-        && normalized.StartsWith(page + "/", StringComparison.OrdinalIgnoreCase))
+      if (scope.ActionTypes.Contains(actionType) && MatchesAny(scope, normalized))
       {
         return true;
       }
@@ -107,17 +79,51 @@ public static class PageAgentScope
     return false;
   }
 
-  private static bool IsPrefixRoute(string page)
+  /// <summary>Action types the page on <paramref name="path"/> declares, in declaration order.</summary>
+  public static IReadOnlyList<Type> ActionTypesFor(string? path)
   {
-    foreach (string prefix in PrefixRoutes)
+    string normalized = Normalize(path);
+    List<Type> types = [];
+    foreach (PageActionScope scope in PageRegistry.ActionScopes)
     {
-      if (string.Equals(prefix, page, StringComparison.OrdinalIgnoreCase))
+      if (!MatchesAny(scope, normalized))
       {
-        return true;
+        continue;
+      }
+
+      foreach (Type type in scope.ActionTypes)
+      {
+        if (!types.Contains(type))
+        {
+          types.Add(type);
+        }
       }
     }
 
-    return false;
+    return types;
+  }
+
+  /// <summary>The state types that own the page's actions on <paramref name="path"/>.</summary>
+  public static IReadOnlyList<Type> StateTypesFor(string? path)
+  {
+    List<Type> states = [];
+    foreach (Type action in ActionTypesFor(path))
+    {
+      for (Type? owner = action.DeclaringType; owner is not null; owner = owner.DeclaringType)
+      {
+        if (typeof(IState).IsAssignableFrom(owner))
+        {
+          if (!states.Contains(owner))
+          {
+            states.Add(owner);
+          }
+
+          break;
+        }
+      }
+    }
+
+    return states;
   }
 
   public static string Normalize(string? path)
@@ -160,23 +166,113 @@ public static class PageAgentScope
     return Normalize(string.IsNullOrEmpty(relative) ? "/" : relative);
   }
 
-  public static IReadOnlyList<string> ActionNamesFor(string? path)
+  /// <summary>True when <paramref name="template"/> (a [Page] route template) matches the normalized <paramref name="path"/>.</summary>
+  public static bool Matches(string template, string path)
   {
-    string normalized = Normalize(path);
-    if (Actions.TryGetValue(normalized, out string[]? names))
+    ArgumentNullException.ThrowIfNull(template);
+    string[] expected = Normalize(template).Split('/');
+    string[] actual = Normalize(path).Split('/');
+    if (expected.Length != actual.Length)
     {
-      return names;
+      return false;
     }
 
-    foreach (string prefix in PrefixRoutes)
+    for (int index = 0; index < expected.Length; index++)
     {
-      if (normalized.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase)
-        && Actions.TryGetValue(prefix, out string[]? prefixed))
+      string segment = expected[index];
+      bool token = segment.StartsWith('{', StringComparison.Ordinal) && segment.EndsWith('}', StringComparison.Ordinal);
+      if (token ? !TokenAccepts(segment, actual[index]) : !string.Equals(segment, actual[index], StringComparison.OrdinalIgnoreCase))
       {
-        return prefixed;
+        return false;
       }
     }
 
-    return [];
+    return true;
+  }
+
+  private static bool TokenAccepts(string token, string value)
+  {
+    if (value.Length == 0)
+    {
+      return false;
+    }
+
+    int colon = token.IndexOf(':', StringComparison.Ordinal);
+    string constraint = colon < 0 ? "" : token[(colon + 1)..^1].Trim().ToLowerInvariant();
+    return constraint switch
+    {
+      "guid" => Guid.TryParse(value, out _),
+      "int" => int.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out _),
+      "long" => long.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out _),
+      "bool" => bool.TryParse(value, out _),
+      "" or "string" => true,
+      // An unknown constraint never matches, so actions are never offered on a path Blazor would not route.
+      _ => false,
+    };
+  }
+
+  private static bool MatchesAny(PageActionScope scope, string normalizedPath)
+  {
+    foreach (string template in scope.RouteTemplates)
+    {
+      if (Matches(template, normalizedPath))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static string? StaticRoute(PageActionScope scope)
+  {
+    foreach (string template in scope.RouteTemplates)
+    {
+      if (!template.Contains('{', StringComparison.Ordinal))
+      {
+        return Normalize(template);
+      }
+    }
+
+    return null;
+  }
+
+  private static PageActionScope? PrimaryScope(Type actionType, bool requireStatic)
+  {
+    ArgumentNullException.ThrowIfNull(actionType);
+    PageActionScope? fallback = null;
+    int best = int.MaxValue;
+    PageActionScope? chosen = null;
+    foreach (PageActionScope scope in PageRegistry.ActionScopes)
+    {
+      if (!scope.ActionTypes.Contains(actionType) || (requireStatic && StaticRoute(scope) is null))
+      {
+        continue;
+      }
+
+      int rank = MenuRank(scope.PageType);
+      if (rank < best)
+      {
+        best = rank;
+        chosen = scope;
+      }
+
+      fallback ??= scope;
+    }
+
+    return chosen ?? fallback;
+  }
+
+  private static int MenuRank(Type pageType)
+  {
+    for (int index = 0; index < PageRegistry.All.Count; index++)
+    {
+      if (PageRegistry.All[index].PageType == pageType)
+      {
+        return index;
+      }
+    }
+
+    return int.MaxValue - 1;
   }
 }

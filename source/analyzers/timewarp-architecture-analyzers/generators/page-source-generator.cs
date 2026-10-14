@@ -22,11 +22,11 @@
 //   true/false only (syntax-keyed like Policy); anything else is TWE009.
 // - Only static routes qualify: a parameterized route needs arguments, so Navigable on one is
 //   TWE009 (fail-closed, never a silent omission). v1 has no parameterized destinations.
-// - An opt-in page also gets INavigationDestination. TimeWarpNavLink constrains TPage to it, so
-//   a NavMenu link to a page outside the registry is a compile error — the menu keeps its hand
-//   markup (categories, AuthorizeView groups, template-flag regions) and still cannot drift.
+// - An opt-in page also gets INavigationDestination, the marker the registry test checks both
+//   ways. NavMenu renders the registry itself (categories from NavGroup, gates from each page's
+//   Policy), so it has no page list of its own to drift.
 // - Entries are a generated array of static member reads (typeof + GetPageUrl/Title/NavIcon/
-//   Policy): reflection-free, AOT/trim safe. Sorted by route (ordinal) for stable output.
+//   Policy): reflection-free, AOT/trim safe. Sorted by NavOrder, then route (ordinal).
 // - The registry is emitted only when the assembly declares at least one [Page], so assemblies
 //   that merely carry the generator never need INavigableComponent's Icon type.
 // Multi-route pages (task 096) — one [Page] with params additional routes, not stacked [Page]:
@@ -50,6 +50,17 @@
 //   optional ({id?}) and parameterized-constraint tokens are not [Page] route grammar (no
 //   [Parameter] is generated for them) and compare as literal text.
 // - Errors (TWE005/010/011) are fail-closed: reported, and no page surface is emitted.
+// Menu and agent metadata (task 300) — one declaration feeds NavMenu, Ctrl-K, Ask and WebMCP:
+// - NavGroup (string constant, "" = top level) is the menu category; NavOrder (int constant) is
+//   the menu position. PageRegistry.All is sorted by NavOrder, then route, so the registry order
+//   IS the menu order and NavMenu starts a category whenever NavGroup changes; the registry test
+//   requires each NavGroup to be one contiguous run. Description, NavGroup and NavOrder accept
+//   any compile-time constant (a const field reads like a literal).
+// - AgentActions (typeof list) names the catalog actions the agent may execute while this page is
+//   on screen. Types are resolved with the semantic model and emitted fully qualified, so the
+//   generated file needs none of the page file's usings. Every page that declares any (navigable
+//   or not, parameterized or not) is a PageRegistry.ActionScopes row with all its route templates,
+//   so the agent matches the current path to its page without a hand-written route list.
 // Incremental caching: PageModel is a value-equatable record (arrays by sequence) holding
 // location-free PageDiagnostic values; the Diagnostic is built in RegisterSourceOutput. A held
 // Diagnostic/Location pins old SyntaxTrees and never compares equal, which made every edit re-run
@@ -86,7 +97,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
     IncrementalValuesProvider<PageModel> pages = context.SyntaxProvider.CreateSyntaxProvider(
       predicate: static (node, _) => node is ClassDeclarationSyntax c && c.AttributeLists.Any(),
-      transform: static (ctx, _) => GetPage((ClassDeclarationSyntax)ctx.Node))
+      transform: static (ctx, _) => GetPage((ClassDeclarationSyntax)ctx.Node, ctx.SemanticModel))
       .Where(static p => p is not null)
       .Select(static (p, _) => p!);
 
@@ -131,7 +142,11 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     string RouteTemplate,
     bool Navigable, // valid opt-in only (static primary route): INavigationDestination + registry membership
     PageDiagnostic? NavigableDiagnostic,
-    string Description)
+    string Description,
+    ImmutableArray<string> RouteTemplates,
+    string NavGroup,
+    int NavOrder,
+    ImmutableArray<string> AgentActions)
   {
     public bool Equals(PageModel? other) =>
       other is not null
@@ -148,7 +163,11 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       && RouteTemplate == other.RouteTemplate
       && Navigable == other.Navigable
       && Equals(NavigableDiagnostic, other.NavigableDiagnostic)
-      && Description == other.Description;
+      && Description == other.Description
+      && RouteTemplates.SequenceEqual(other.RouteTemplates)
+      && NavGroup == other.NavGroup
+      && NavOrder == other.NavOrder
+      && AgentActions.SequenceEqual(other.AgentActions);
 
     public override int GetHashCode()
     {
@@ -159,6 +178,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         hash = (hash * 397) ^ Parameters.Length;
         hash = (hash * 397) ^ Errors.Length;
         hash = (hash * 397) ^ Navigable.GetHashCode();
+        hash = (hash * 397) ^ NavOrder;
+        hash = (hash * 397) ^ AgentActions.Length;
         return (hash * 397) ^ StringComparer.Ordinal.GetHashCode(Description);
       }
     }
@@ -178,7 +199,11 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         RouteTemplate: route,
         Navigable: false,
         NavigableDiagnostic: null,
-        Description: "");
+        Description: "",
+        RouteTemplates: [],
+        NavGroup: "",
+        NavOrder: 0,
+        AgentActions: []);
   }
 
   /// <summary>Location-free diagnostic payload; the Diagnostic is built in RegisterSourceOutput.</summary>
@@ -209,7 +234,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     public List<(string Type, string Name)> Parameters { get; } = [];
   }
 
-  private static PageModel? GetPage(ClassDeclarationSyntax cls)
+  private static PageModel? GetPage(ClassDeclarationSyntax cls, SemanticModel semanticModel)
   {
     AttributeSyntax[] pageAttributes =
     [
@@ -230,6 +255,9 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     bool navigableRequested = false;
     ExpressionSyntax? invalidNavigable = null;
     string description = "";
+    string navGroup = "";
+    int navOrder = 0;
+    var agentActions = new List<string>();
 
     foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
     {
@@ -255,8 +283,35 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
       if (argName == "Description")
       {
-        if (arg.Expression is LiteralExpressionSyntax described && described.Token.Value is string text)
+        if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: string text })
           description = text;
+        continue;
+      }
+
+      if (argName == "NavGroup")
+      {
+        if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: string group })
+          navGroup = group;
+        continue;
+      }
+
+      if (argName == "NavOrder")
+      {
+        if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: int order })
+          navOrder = order;
+        continue;
+      }
+
+      if (argName == "AgentActions")
+      {
+        foreach (TypeOfExpressionSyntax typeOf in arg.Expression.DescendantNodesAndSelf().OfType<TypeOfExpressionSyntax>())
+        {
+          ITypeSymbol? type = semanticModel.GetTypeInfo(typeOf.Type).Type;
+          agentActions.Add(type is null or IErrorTypeSymbol
+            ? typeOf.Type.WithoutTrivia().ToString()
+            : type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+        }
+
         continue;
       }
 
@@ -375,7 +430,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     return new PageModel(
       ns, className, hint, primary.RouteAttribute, [.. additionalAttributes], signature, primary.Format, [.. parameters], policy,
       Errors: [], RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic,
-      Description: description);
+      Description: description, RouteTemplates: [route, .. additionalRoutes.Select(static r => r.Route)],
+      NavGroup: navGroup, NavOrder: navOrder, AgentActions: [.. agentActions]);
   }
 
   /// <summary>
@@ -514,15 +570,23 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    string Title,\n");
     sb.Append("    Icon? NavIcon,\n");
     sb.Append("    string Policy,\n");
-    sb.Append("    string Description);\n\n");
-    sb.Append("  /// <summary>Every navigation destination in this assembly, generated from [Page(Navigable = true)] (sorted by route).</summary>\n");
+    sb.Append("    string Description,\n");
+    sb.Append("    string NavGroup,\n");
+    sb.Append("    int NavOrder);\n\n");
+    sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates and the actions the agent may run on it.</summary>\n");
+    sb.Append("  public sealed record PageActionScope(\n");
+    sb.Append("    global::System.Type PageType,\n");
+    sb.Append("    global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates,\n");
+    sb.Append("    global::System.Collections.Generic.IReadOnlyList<global::System.Type> ActionTypes);\n\n");
+    sb.Append("  /// <summary>Every navigation destination in this assembly, generated from [Page(Navigable = true)] (sorted by NavOrder, then route: the menu order).</summary>\n");
     sb.Append("  public static class PageRegistry\n  {\n");
     sb.Append("    public static global::System.Collections.Generic.IReadOnlyList<PageRegistryEntry> All { get; } =\n");
     sb.Append("    [\n");
 
     foreach (PageModel page in pages
       .Where(static p => p.Errors.IsEmpty && p.Navigable)
-      .OrderBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
+      .OrderBy(static p => p.NavOrder)
+      .ThenBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
       .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
     {
       string type = "global::" + page.Namespace + "." + page.ClassName;
@@ -531,7 +595,25 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         .Append(type).Append(".Title, ")
         .Append(type).Append(".NavIcon, ")
         .Append(type).Append(".Policy, ")
-        .Append(CSharpString(page.Description)).Append("),\n");
+        .Append(CSharpString(page.Description)).Append(", ")
+        .Append(CSharpString(page.NavGroup)).Append(", ")
+        .Append(page.NavOrder.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append("),\n");
+    }
+
+    sb.Append("    ];\n\n");
+    sb.Append("    /// <summary>Pages that declare AgentActions, generated from [Page(AgentActions = ...)] (sorted by route).</summary>\n");
+    sb.Append("    public static global::System.Collections.Generic.IReadOnlyList<PageActionScope> ActionScopes { get; } =\n");
+    sb.Append("    [\n");
+    foreach (PageModel page in pages
+      .Where(static p => p.Errors.IsEmpty && !p.AgentActions.IsEmpty)
+      .OrderBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
+      .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
+    {
+      sb.Append("      new(typeof(global::").Append(page.Namespace).Append('.').Append(page.ClassName).Append("), [");
+      sb.Append(string.Join(", ", page.RouteTemplates.Select(CSharpString)));
+      sb.Append("], [");
+      sb.Append(string.Join(", ", page.AgentActions.Select(static type => "typeof(" + type + ")")));
+      sb.Append("]),\n");
     }
 
     sb.Append("    ];\n  }\n}\n");
@@ -552,6 +634,12 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("        public bool Navigable { get; set; }\n");
     sb.Append("        /// <summary>One line saying what this page is for. Navigable pages set it.</summary>\n");
     sb.Append("        public string Description { get; set; }\n");
+    sb.Append("        /// <summary>Menu category title; omit for the top level. A string literal.</summary>\n");
+    sb.Append("        public string NavGroup { get; set; }\n");
+    sb.Append("        /// <summary>Menu position: PageRegistry.All is sorted by NavOrder, then route. An int literal.</summary>\n");
+    sb.Append("        public int NavOrder { get; set; }\n");
+    sb.Append("        /// <summary>Catalog Action types the agent may execute while this page is on screen.</summary>\n");
+    sb.Append("        public System.Type[] AgentActions { get; set; }\n");
     sb.Append("        /// <summary>Extra routes emitted as [Route] aliases; GetPageUrl and PageRegistry use RouteTemplate (the primary route) only.</summary>\n");
     sb.Append("        public string[] AdditionalRoutes { get; }\n");
     sb.Append("        public PageAttribute(string RouteTemplate, params string[] AdditionalRoutes) { this.RouteTemplate = RouteTemplate; this.AdditionalRoutes = AdditionalRoutes; }\n");
@@ -560,8 +648,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
   }
 
   // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as
-  // a newline, so any literal Description compiles in the registry. Description is read only as a
-  // string literal; any other expression emits "" and the registry guard test reports it.
+  // a newline, so any constant Description compiles in the registry. A non-constant expression
+  // emits ""; the destinations test requires a Description on every menu destination.
   private static string CSharpString(string value) =>
     Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(value, quote: true);
 

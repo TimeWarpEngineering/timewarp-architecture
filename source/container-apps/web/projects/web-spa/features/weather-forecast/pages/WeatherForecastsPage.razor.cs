@@ -8,6 +8,6 @@
 
 namespace TimeWarp.Architecture.Features.WeatherForecasts;
 
-[Page("/WeatherForecasts", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Sample weather forecast list.")]
+[Page("/WeatherForecasts", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Sample weather forecast list.", NavGroup = "Demos", NavOrder = 220)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class WeatherForecastsPage;

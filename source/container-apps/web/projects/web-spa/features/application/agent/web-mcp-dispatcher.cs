@@ -5,11 +5,15 @@
 #region Design
 // The browser agent is not trusted. InvokeTool selects the tools again for the current principal
 // and route, so a stale registration cannot call an action the person can no longer run.
-// page_context and navigate are not catalog actions. page_context walks the page body again
-// (PageSurfaceJsModule) so the text matches the page on screen when the tool is called, returns
-// the page facts, and does not ask for approval. navigate rebuilds the palette and calls RouteState.ChangeRoute, and it
-// does not ask for approval. A page-bound palette tool invoked off its page returns the navigate
-// offer and does not bind or execute. A page-only tool is refused off its page.
+// page_context, site_map and navigate are not catalog actions. page_context walks the page body
+// again (PageSurfaceJsModule) so the text matches the page on screen when the tool is called,
+// returns the page facts, and does not ask for approval. site_map returns the menu's destinations
+// for the principal and does not ask for approval. navigate takes the approval gate when the edit
+// mode asks before editing (task 300); a missing or unknown url is refused before the prompt. It
+// keeps waiting across navigation like any tool that is not page-bound, then rebuilds the
+// destinations on the path now showing and calls RouteState.ChangeRoute. A page-bound palette
+// tool invoked off its page returns the navigate offer and does not bind or execute. A page-only
+// tool is refused off its page.
 // The route is the shell's PageAgentRoute when one has been observed.
 // Arguments are parsed and bound before anything is shown: a call that cannot bind returns
 // {action, error} without a prompt, and the banner shows the canonical rendering of the bound
@@ -94,20 +98,23 @@ public sealed class WebMcpDispatcher
       return PageAgentContext.Describe(Store, path, offered, surface, PageAgentContext.DocumentCap);
     }
 
-    if (string.Equals(name, AgentNavigate.ToolName, StringComparison.Ordinal))
+    if (string.Equals(name, AgentSiteMap.ToolName, StringComparison.Ordinal))
     {
       AuthenticationState authentication = await AuthenticationAsync();
-      AgentNavigate.Result navigated = await AgentNavigate.InvokeAsync
+      AgentSiteMap.Result map = await AgentSiteMap.InvokeAsync
       (
         authentication.User,
         AuthorizationService,
-        Catalog.Entries,
         Store,
         path,
-        ParseArguments(argumentsJson),
         CancellationToken.None
       );
-      return Serialize(navigated);
+      return Serialize(map);
+    }
+
+    if (string.Equals(name, AgentNavigate.ToolName, StringComparison.Ordinal))
+    {
+      return await NavigateAsync(path, argumentsJson);
     }
 
     CatalogAgentTool? tool = await FindOfferedAsync(path, name);
@@ -159,7 +166,7 @@ public sealed class WebMcpDispatcher
         return Error(name, BusyError);
       }
 
-      bool pageBound = PageAgentScope.PrimaryPage(tool.Name) is not null;
+      bool pageBound = PageAgentScope.IsPageBound(tool.Entry.ActionType);
       (bool approved, bool navigated) = await WaitForApprovalAsync
       (
         callId,
@@ -229,6 +236,66 @@ public sealed class WebMcpDispatcher
     AgentCallOutcome.Clear();
     await tool.Entry.Execute(Store, bound, CancellationToken.None);
     return Serialize(new WebMcpCompleted(tool.Name, Completed: true, AgentCallOutcome.Result));
+  }
+
+  private async Task<string> NavigateAsync(string path, string? argumentsJson)
+  {
+    CatalogAgentTool? tool = await FindOfferedAsync(path, AgentNavigate.ToolName);
+    if (tool is null)
+    {
+      return Error(AgentNavigate.ToolName, UnavailableError);
+    }
+
+    Dictionary<string, object?> arguments;
+    try
+    {
+      arguments = ParseArguments(argumentsJson);
+    }
+    catch (JsonException exception)
+    {
+      return Error(AgentNavigate.ToolName, exception.Message);
+    }
+
+    if (tool.RequiresApproval)
+    {
+      string? destination = AgentNavigate.ReadDestination(arguments);
+      if (string.IsNullOrWhiteSpace(destination))
+      {
+        return Serialize(new AgentNavigate.Result(Navigated: false, Destination: null, AgentNavigate.UrlRequired));
+      }
+
+      AuthenticationState asking = await AuthenticationAsync();
+      if (await AgentNavigate.FindAsync(asking.User, AuthorizationService, path, destination) is null)
+      {
+        return Serialize(new AgentNavigate.Result(Navigated: false, Destination: null, AgentNavigate.Refusal));
+      }
+
+      if (!Gate.TryBegin(out Guid callId, out Task<bool> decision))
+      {
+        return Error(AgentNavigate.ToolName, BusyError);
+      }
+
+      string rendered = new System.Text.Json.Nodes.JsonObject { ["url"] = destination }.ToJsonString();
+      (bool approved, _) = await WaitForApprovalAsync(callId, decision, AgentNavigate.ToolName, rendered, pageBound: false);
+      if (!approved)
+      {
+        return Serialize(new WebMcpRejected(AgentNavigate.ToolName, Approved: false));
+      }
+
+      path = Route.PathOr(Navigation);
+    }
+
+    AuthenticationState authentication = await AuthenticationAsync();
+    AgentNavigate.Result navigated = await AgentNavigate.InvokeAsync
+    (
+      authentication.User,
+      AuthorizationService,
+      Store,
+      path,
+      arguments,
+      CancellationToken.None
+    );
+    return Serialize(navigated);
   }
 
   private async Task<IReadOnlyList<string>> OfferedNamesAsync(string path)

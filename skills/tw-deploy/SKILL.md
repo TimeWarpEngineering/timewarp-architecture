@@ -183,6 +183,24 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   Nothing pending prints `Up to date: no pending migrations (7 applied, latest 20261012090000_AddRoles)`.
   A failure prints psql's error, then `Failed while applying migrations after <last applied id>`,
   and exits with psql's code.
+
+  **Publish, then deploy, then migrate.** "Up to date" is measured against the published script,
+  not the source. Before the prompt the verb compares the migration ids in the source (the
+  `<app>/platform/postgres/migrations/` folders beside the AppHost; none — no `postgres` — skips
+  the check) with the ids in the script's `__EFMigrationsHistory` inserts. When the source has
+  migrations the script lacks, it warns:
+
+  ```text
+  ⚠ Published script is stale: source has 3 migration(s) the script does not
+    (20261010075816_AddFeedbackAttachments, …). Run `dev publish <target>` first,
+    then redeploy so the app and schema match.
+  ```
+
+  Interactively you can still confirm; with `--yes` it **refuses** unless `--allow-stale` is
+  passed, and the report then reads `Up to date relative to the published script: …` /
+  `Applied N migration(s) relative to the published script:`. aca checks the
+  `web-migrations.sql` the same publish writes beside the bundle (the bundle's own migration list
+  is compiled in); with no script there it says the check is unavailable and skips it.
 - **`dev open`** opens the deployed app in the browser (`--no-browser` prints the URL; with no
   opener on PATH it prints it too — on WSL it uses `wslview`, then `explorer.exe`). kubernetes: if
   the ingress controller's Service has an external (LoadBalancer) address, it opens that;

@@ -4,9 +4,10 @@
 #endregion
 
 #region Design
-// Sources (task 239): pages come from the generated PageRegistry (the same [Page(Navigable = true)]
-// set NavMenu links to). Commands are derived (task 301): every *ActionSet.Action in web-spa, from the
-// generated ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
+// Sources (task 239): pages come from NavigationDestinations (task 300), the policy-filtered
+// PageRegistry that NavMenu, Ask and WebMCP read too, so the palette lists exactly the menu's
+// pages. Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
+// ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
 // command. No attribute opts an action in. Nothing is hand-listed.
 // Exclusion is explicit: [CommandPaletteOptOut("reason")] on the Action. A blank reason does not opt
 // out (the derivation guard test fails on one). The palette has no argument UI, so an action with a
@@ -14,9 +15,8 @@
 // [CatalogAction] is optional metadata, matched by Action type: DisplayName, Description, Visibility
 // and Permissions override the defaults (Human, no permissions, generated label). Visibility must
 // include Human, so Agent-only catalog entries stay out and an uncatalogued action is Human-only.
-// Permissions stay in code, through IAuthorizationService — the policies NavMenu's AuthorizeView
-// and the page [Authorize] use (policy name == PermissionIds). Pages without a Policy carry the
-// Anonymous policy (Home), which always succeeds; an empty policy string is treated the same. A
+// Permissions stay in code, through IAuthorizationService — the policies the page [Authorize] uses
+// (policy name == PermissionIds). Page filtering is NavigationDestinations'. A
 // command needs every one of its Permissions; a command with none still needs a signed-in principal,
 // because every command acts on the user's own session and must not be offered to an anonymous
 // visitor (task 301 kept this rule for derived commands).
@@ -129,12 +129,9 @@ public static class CommandPaletteRoster
       rows.Add(SignInRow(currentPath));
     }
 
-    foreach (PageRegistryEntry page in pages)
+    foreach (PageRegistryEntry page in await NavigationDestinations.ForAsync(user, authorizationService, pages))
     {
-      if (await IsAuthorizedAsync(user, authorizationService, page.Policy))
-      {
-        rows.Add(new CommandPaletteRow(page.Title, $"Go to {page.Url}", CommandPaletteRowKind.Page, page.Url));
-      }
+      rows.Add(new CommandPaletteRow(page.Title, $"Go to {page.Url}", CommandPaletteRowKind.Page, page.Url));
     }
 
     if (!isAuthenticated)
@@ -237,23 +234,12 @@ public static class CommandPaletteRoster
   {
     foreach (string permission in permissions)
     {
-      if (!await IsAuthorizedAsync(user, authorizationService, permission))
+      if (!await NavigationDestinations.IsAuthorizedAsync(user, authorizationService, permission))
       {
         return false;
       }
     }
 
     return true;
-  }
-
-  private static async Task<bool> IsAuthorizedAsync(ClaimsPrincipal user, IAuthorizationService authorizationService, string policy)
-  {
-    if (string.IsNullOrEmpty(policy))
-    {
-      return true;
-    }
-
-    AuthorizationResult result = await authorizationService.AuthorizeAsync(user, policy);
-    return result.Succeeded;
   }
 }

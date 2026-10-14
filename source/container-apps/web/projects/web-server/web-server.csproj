@@ -45,6 +45,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Oakton" />
+    <!-- Task 344: the extended [LoggerMessage] generator records [PersonalData] / [SensitiveData]
+         on parameters so service-defaults redaction can erase them. Analyzers do not flow from
+         aspire-service-defaults' package references, so the generator needs this direct reference. -->
+    <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
     <!-- Server-side xAI chat completions. The key stays in this project. The WASM client never references it. -->
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
   </ItemGroup>
