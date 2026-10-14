@@ -30,12 +30,56 @@ widths the same way.
 
 ## Checklist
 
-- [ ] Primary column min + grow; flexible secondary columns; ellipsis headers
-- [ ] Horizontal scroll below min width; shared rule for all grids
-- [ ] Feedback + principals grids updated; tw-blazor note
-- [ ] Playwright narrow/panel-open checks
-- [ ] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Primary column min + grow; flexible secondary columns; ellipsis headers
+- [x] Horizontal scroll below min width; shared rule for all grids
+- [x] Feedback + principals grids updated; tw-blazor note
+- [x] Playwright narrow/panel-open checks
+- [x] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-14 (cockpit, from Steve's screenshot)
+- 2026-10-14 implementer (ganda task work): implemented, gates green.
+
+## Results
+
+- **Shared rule:** new `web-spa/components/composites/DataGridFrame.razor` (+ `.razor.css`). A
+  native root with `overflow-x: auto` so the grid scrolls inside its card below its minimum
+  width; anchored `::deep` rules give header/body cells `min-width: 0`, clip header cells, and
+  drop Fluent's 75px sort-button floor so header text ends in an ellipsis instead of spilling
+  into the neighbour.
+- **Column sizing:** both grids switch from `DisplayMode.Table` + per-column `Width` to
+  `DisplayMode.Grid` + `GridTemplateColumns` minmax tracks (Fluent forbids mixing the two):
+  - Feedback: `minmax(14rem, 2fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(11rem, 1fr) minmax(8rem, 1fr)`
+  - Principals: `minmax(14rem, 2fr) minmax(8rem, 1fr) minmax(10rem, 1.2fr) minmax(6rem, 0.5fr) minmax(6rem, 0.5fr) minmax(5rem, 0.4fr)`
+  These are the only two `FluentDataGrid`s in the app.
+- **Build check:** `web-spa-integration-tests/.../data-grid-frame-guard-tests.cs` fails when a
+  `FluentDataGrid` under web-spa is not inside `DataGridFrame`, lacks Grid mode +
+  `GridTemplateColumns`, or a column sets `Width`.
+- **Docs:** `tw-blazor` "Server-sorted FluentDataGrid" gains item 7; `components/overview.md`
+  lists `DataGridFrame`.
+- **Playwright:** `FeedbackAttachment_Given_Wasm.AdminGrids_Should_KeepThePrimaryColumn_WhenNarrow_Or_AskIsOpen`
+  checks /Admin/Feedback at 1280 with the Ask panel docked, then both admin grids at 640 wide:
+  header cells ≥ 40px and non-overlapping, header content clipped to its cell, primary cells
+  ≥ 200px with a visible link that opens the item, and the frame scrolls (principals at 640:
+  frame 534/784px scrolled 250) while the page itself does not.
+- **Gates:** `dev build` 0 warnings 0 errors; `dev test` passed (all suites, incl. the new
+  guard and Playwright proof); `ganda repo audit` clean.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dev build
+cd tests/container-apps/web/web-spa-integration-tests && dotnet bin/Release/net11.0/web-spa-integration-tests.dll --filter-class DataGridFrameGuard
+cd ../web-spa-playwright-tests && dotnet bin/Release/net11.0/web-spa-playwright-tests.dll --filter-method AdminGrids
+```
+
+Or by hand: `dev run`, sign in as an admin, open `/Admin/Feedback`, open Ask, then narrow the
+window to ~640px; repeat on `/Admin/Principals`.
+
+**Expect:** both test runs pass. By hand, the Title / Principal column stays at least 14rem wide
+with clickable links, header labels never overlap (long ones end in "…"), and below the grid's
+minimum the grid scrolls sideways inside its card while the page does not. Screenshots land in
+`web-spa-playwright-tests/bin/Release/net11.0/playwright-screenshots/FeedbackAttachment_Given_Wasm/admin-grid-*.png`.

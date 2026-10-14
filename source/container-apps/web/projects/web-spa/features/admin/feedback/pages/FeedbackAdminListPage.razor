@@ -63,6 +63,10 @@
 
   private bool IsListLoading => IsAnyActive(typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action));
 
+  // Title, Kind, Status, Filed, Owner. Title keeps 14rem and takes the largest share (task 354).
+  private const string GridColumns =
+    "minmax(14rem, 2fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(11rem, 1fr) minmax(8rem, 1fr)";
+
   private IQueryable<ListFeedback.Item>? GridItems => FeedbackAdminState.Items?.AsQueryable();
 
   private bool IsSortColumn(FeedbackListSortColumn column) => FeedbackAdminState.SortBy == column;
@@ -124,42 +128,45 @@
       }
       else
       {
-        <FluentDataGrid TGridItem="ListFeedback.Item"
-          Items="@GridItems"
-          RefreshItems="@OnGridRefreshAsync"
-          Loading="@IsListLoading"
-          ItemKey="@(static row => row.FeedbackItemId)"
-          DisplayMode="DataGridDisplayMode.Table"
-          data-qa="AdminFeedbackTable">
-          <ChildContent>
-            <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
-              Sortable="true" SortBy="@TitleSort"
-              IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
-              <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
-            </TemplateColumn>
-            <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)" Width="9rem"
-              Sortable="true" SortBy="@KindSort"
-              IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Kind)" InitialSortDirection="@SortDirection">
-              @context.Kind
-            </TemplateColumn>
-            <TemplateColumn Title="Status" ColumnId="@nameof(FeedbackListSortColumn.Status)" Width="9rem"
-              Sortable="true" SortBy="@StatusSort"
-              IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Status)" InitialSortDirection="@SortDirection">
-              @context.Status
-            </TemplateColumn>
-            <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)" Width="13rem"
-              Sortable="true" SortBy="@FiledSort"
-              IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
-              @context.FiledAt.ToString("u")
-            </TemplateColumn>
-            <TemplateColumn Title="Owner" Width="14rem" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
-              <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />
-            </TemplateColumn>
-          </ChildContent>
-          <EmptyContent>
-            <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
-          </EmptyContent>
-        </FluentDataGrid>
+        <DataGridFrame>
+          <FluentDataGrid TGridItem="ListFeedback.Item"
+            Items="@GridItems"
+            RefreshItems="@OnGridRefreshAsync"
+            Loading="@IsListLoading"
+            ItemKey="@(static row => row.FeedbackItemId)"
+            DisplayMode="DataGridDisplayMode.Grid"
+            GridTemplateColumns="@GridColumns"
+            data-qa="AdminFeedbackTable">
+            <ChildContent>
+              <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
+                Sortable="true" SortBy="@TitleSort"
+                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
+                <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
+              </TemplateColumn>
+              <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)"
+                Sortable="true" SortBy="@KindSort"
+                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Kind)" InitialSortDirection="@SortDirection">
+                @context.Kind
+              </TemplateColumn>
+              <TemplateColumn Title="Status" ColumnId="@nameof(FeedbackListSortColumn.Status)"
+                Sortable="true" SortBy="@StatusSort"
+                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Status)" InitialSortDirection="@SortDirection">
+                @context.Status
+              </TemplateColumn>
+              <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)"
+                Sortable="true" SortBy="@FiledSort"
+                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
+                @context.FiledAt.ToString("u")
+              </TemplateColumn>
+              <TemplateColumn Title="Owner" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
+                <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />
+              </TemplateColumn>
+            </ChildContent>
+            <EmptyContent>
+              <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
+            </EmptyContent>
+          </FluentDataGrid>
+        </DataGridFrame>
       }
       @if (FeedbackAdminState.TotalCount > 0 || FeedbackAdminState.HasPreviousPage)
       {

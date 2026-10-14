@@ -24,6 +24,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
 - `TextArea.razor` (forms) — the only multi-line text field: fills its field, 9rem default height, vertical resize; raw `FluentTextArea` elsewhere is TWA0032
 - `Section.razor` (composites) — Card + `FluentSpinner` while `ActionTrackingState.IsAnyActive(LoadingActionType)`
+- `DataGridFrame.razor` (composites) — frame around every `FluentDataGrid`: scrolls sideways below the grid's minimum width, ellipsis headers; columns use `GridTemplateColumns` minmax tracks (tw-blazor)
 
 **Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.
 
