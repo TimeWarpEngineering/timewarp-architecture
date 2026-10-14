@@ -52,6 +52,19 @@ already wait for `aria-expanded="true"` before Escape and pass; the sign-in test
 
 ## Checklist
 
-- [ ] Test waits for the menu's open state before Escape and asserts it closed
-- [ ] Repro before / pass after recorded (repeated runs)
-- [ ] Gates: `dev build` 0/0, the web-spa Playwright AskSignIn and AskSurface classes, `ganda repo audit`
+- [x] Test waits for the menu's open state before Escape and asserts it closed
+- [x] Repro before / pass after recorded (repeated runs)
+- [x] Gates: `dev build` 0/0, the web-spa Playwright AskSignIn and AskSurface classes, `ganda repo audit`
+
+## Resolution (2026-10-14, cockpit)
+
+Already fixed; closed without new work. The cockpit's subagent fixed this race on
+`feature/ask-composer` in commit **`ef27f338f`** ("fix(ask): Escape closes the Ask settings menu
+(356 follow-up)"):
+- **Root cause:** the test pressed Escape in the gap where fluent-menu had shown the popover but
+  not yet set `aria-expanded=true`, so the keypress was ignored. The product was fine; Escape closes
+  the menu once it is armed.
+- **Fix:** the test waits for `aria-expanded=true`, presses Escape, then expects
+  `aria-expanded=false` before checking that the expiry line is hidden.
+- **Proof:** 10/10 in a loop, and 10/10 under CPU load. PR #491 CI went green on `ef27f338f`, and
+  #491 merged to master (`ae03c2774`).
