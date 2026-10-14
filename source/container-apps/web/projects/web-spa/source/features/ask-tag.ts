@@ -52,11 +52,12 @@ interface AskTagCandidate {
 
 let active: PickSession | null = null;
 let latest: { token: string; answer: Promise<string> } | null = null;
-let cancelledToken: string | null = null;
+// Tokens cancelled before their Start arrived; Start refuses (and forgets) them.
+const refused = new Set<string>();
 
 /** Arms pick mode for token; false when that pick was already cancelled. */
 export function Start(rootSelector: string, token: string): boolean {
-  if (token === cancelledToken) {
+  if (refused.delete(token)) {
     return false;
   }
 
@@ -74,9 +75,10 @@ export function Answer(token: string): Promise<string> {
 }
 
 export function CancelPick(token: string): void {
-  cancelledToken = token;
   if (active?.token === token) {
     active.finish(null);
+  } else if (latest?.token !== token) {
+    refused.add(token);
   }
 }
 

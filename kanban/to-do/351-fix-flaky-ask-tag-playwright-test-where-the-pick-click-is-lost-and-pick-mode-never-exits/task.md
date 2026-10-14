@@ -48,6 +48,9 @@ Never "fix" this with retries, longer timeouts or `Thread.Sleep`-style waits.
 
 - Created: 2026-10-14 (cockpit; flake seen on #487 CI)
 - 2026-10-14 implement (ganda task work): reproduced, fixed in product, 50/50 loop green, gates green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T07:18:25Z
+
+- 2026-10-14 review oracle (claude, claude-opus-5-5, session not reported): effort 2, general, 2 rounds, clean.
 
 ## Results
 
@@ -104,6 +107,15 @@ card pick test exists yet. Those marks run through the same `Start`/`Answer` pat
 - Playwright suite: 14/14. web-spa integration tests: 257/257 (AskTag 10/10). Analyzer tests 222/222,
   source generator tests 108/108.
 - `ganda repo audit`: passes. `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet (no bump needed).
+
+### Review disposition
+
+- **Rounds:** 2. **Roster:** general. **Effort:** 2 (by-diff, 348 lines).
+- **Final counts:** bug 0. Suggestion 1 fixed. Nit 1 fixed. 0 open, 0 wontfix.
+- **Disposition:** `clean`. M1: the JS `cancelledToken` slot became a bounded `refused` token set, so
+  interleaved cancels can't let a late Start arm and end a newer pick. M2: comment rewrap in
+  AgentAsk.razor. After the fix: `dev build` 0/0, and the Playwright sign-in test passed 3/3.
+- **Artifacts:** `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

@@ -46,9 +46,9 @@
   client, so the chips go out with the next message and then move to page_context.tags.
   The panel shows "Picking" from AskTagState.IsPicking, which turns on only once ask-tag.ts has
   armed the pick (task 351), and Tag stays disabled while a pick is arming or armed (IsPickPending).
-  StartPick is not a tracked action, so it does not raise the app-wide busy signal. Closing the panel, disposing it, and any location
-  change cancel pick mode; every request re-renders the instructions, so page_context.tags in
-  them is current.
+  StartPick is not a tracked action, so it does not raise the app-wide busy signal. Closing the
+  panel, disposing it, and any location change cancel pick mode; every request re-renders the
+  instructions, so page_context.tags in them is current.
   Closing the panel also closes the reference picker.
   The empty state is AskStarterPrompts (task 348): the configured XAI:StarterPrompts cards, or the
   template defaults.
