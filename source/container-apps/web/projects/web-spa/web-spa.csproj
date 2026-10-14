@@ -62,6 +62,7 @@
     </PackageReference>
     <PackageReference Include="Morris.Blazor.ControlFlow"/>
     <PackageReference Include="Blazilla"/>
+    <PackageReference Include="Markdig"/>
     <!-- contentFiles is only the package tsconfig.json (tsc 6 options). TypeScript.MSBuild 7
          compiles every Content tsconfig; do not ship that file into generated apps.
          Static web assets stay (they are not contentFiles). Avoid percent-delimited template

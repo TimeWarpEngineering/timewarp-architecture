@@ -25,7 +25,9 @@
 // toggles ascending then descending. The owner proof (task 336) files one item as that
 // Administrator, opens /Admin/Feedback, and checks the Owner cell links to
 // /Admin/Principals/{id} and shows the display name IProfileDirectory holds for that id, not the
-// raw id; following the link lands on the principal detail page.
+// raw id; following the link lands on the principal detail page. The permalink proof (task 353)
+// checks the pasted image renders once, inline in the safe-markdown body, and that attachments
+// the body references are not listed again under it.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -122,12 +124,18 @@ public class FeedbackAttachment_Given_Wasm
       Timeout = 30_000,
     });
     await page.Locator("[data-qa=FeedbackPermalink]").ClickAsync();
-    await page.Locator("[data-qa=FeedbackItemAttachment]").First.WaitForAsync(new LocatorWaitForOptions
+    // Task 353: the body is safe markdown. The composer wrote ![name](path) for both uploads:
+    // the pasted image renders once, inline; the text file renders as an inline link. Both are
+    // referenced inline, so neither is listed again under the body.
+    await page.Locator("[data-qa=FeedbackItemBody] img").First.WaitForAsync(new LocatorWaitForOptions
     {
       Timeout = 30_000,
     });
-    (await page.Locator("[data-qa=FeedbackItemAttachment] img").CountAsync()).ShouldBeGreaterThan(0);
-    (await page.Locator("[data-qa=FeedbackItemAttachment] a").CountAsync()).ShouldBeGreaterThan(0);
+    (await page.Locator("[data-qa=FeedbackItemBody] img").CountAsync()).ShouldBe(1);
+    (await page.Locator("img[src*='/api/Feedback/attachments/']").CountAsync()).ShouldBe(1);
+    (await page.Locator("[data-qa=FeedbackItemBody] a", new PageLocatorOptions { HasText = "notes.txt" }).CountAsync()).ShouldBe(1);
+    (await page.Locator("[data-qa=FeedbackItemBody]").InnerTextAsync()).ShouldNotContain("![");
+    (await page.Locator("[data-qa=FeedbackItemAttachment]").CountAsync()).ShouldBe(0);
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-item-attachments.png") });
   }
 

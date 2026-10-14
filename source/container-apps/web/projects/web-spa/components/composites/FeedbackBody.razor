@@ -1,0 +1,55 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One feedback body as safe markdown, then the attachments the body does not show
+  inline. Shared by the filer permalink and the admin detail page.
+
+  Design: Only this item's image attachments may render inline; SafeMarkdown refuses every
+  other image source. An attachment the body shows inline, as an image or as a link (the
+  composer writes ![name](path) for every upload, and a non-image renders as a link), is left
+  out of the list below, so each attachment appears once. Listed images go through
+  MarkdownImage for the same "image unavailable" placeholder. AttachmentDataQa keeps each page's existing test hook.
+  Rendering is client-side (task 353): the server stores and returns the raw markdown.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Body { get; set; } = null!;
+  [Parameter] public IReadOnlyList<GetFeedback.Attachment> Attachments { get; set; } = [];
+  [Parameter] public string? BodyDataQa { get; set; }
+  [Parameter] public string? AttachmentDataQa { get; set; }
+
+  private IReadOnlySet<string> InlineImages = new HashSet<string>();
+  private IReadOnlyList<GetFeedback.Attachment> Listed = [];
+
+  protected override void OnParametersSet()
+  {
+    InlineImages = Attachments
+      .Where(static attachment => attachment.IsImage)
+      .Select(static attachment => attachment.DownloadPath)
+      .ToHashSet(StringComparer.Ordinal);
+    IReadOnlySet<string> referenced = SafeMarkdownPolicy.ReferencedSources(
+      Body,
+      Attachments.Select(static attachment => attachment.DownloadPath).ToHashSet(StringComparer.Ordinal));
+    Listed = [.. Attachments.Where(attachment => !referenced.Contains(attachment.DownloadPath))];
+  }
+}
+
+<SafeMarkdown Markdown="@Body" AllowedImageSources="@InlineImages" DataQa="@BodyDataQa" />
+@if (Listed.Count > 0)
+{
+  <ul class="feedback-body-attachments">
+    @foreach (GetFeedback.Attachment attachment in Listed)
+    {
+      <li @key="attachment.AttachmentId" data-qa="@AttachmentDataQa">
+        @if (attachment.IsImage)
+        {
+          <MarkdownImage Src="@attachment.DownloadPath" Alt="@attachment.FileName" />
+        }
+        else
+        {
+          <a href="@attachment.DownloadPath">@attachment.FileName</a>
+        }
+      </li>
+    }
+  </ul>
+}

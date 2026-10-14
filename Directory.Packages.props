@@ -168,6 +168,9 @@
     <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="7.0.1" />
     <PackageVersion Include="Morris.Blazor.ControlFlow" Version="2.2.0" />
     <PackageVersion Include="Blazilla" Version="2.4.1" />
+    <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
+         itself, so no HTML string from Markdig reaches the DOM. -->
+    <PackageVersion Include="Markdig" Version="1.4.0" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.13" />
     <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.13" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.13" />

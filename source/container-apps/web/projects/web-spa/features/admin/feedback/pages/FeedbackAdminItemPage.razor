@@ -92,25 +92,8 @@
           <dt>Owner</dt>
           <dd><FeedbackOwnerLink OwnerPrincipalId="@item.OwnerPrincipalId" OwnerDisplayName="@item.OwnerDisplayName" /></dd>
         </dl>
-        <p>@item.Body</p>
-        @if (item.Attachments.Count > 0)
-        {
-          <ul class="admin-feedback-attachments">
-            @foreach (GetFeedback.Attachment attachment in item.Attachments)
-            {
-              <li data-qa="AdminFeedbackAttachment">
-                @if (attachment.IsImage)
-                {
-                  <img src="@attachment.DownloadPath" alt="@attachment.FileName" />
-                }
-                else
-                {
-                  <a href="@attachment.DownloadPath">@attachment.FileName</a>
-                }
-              </li>
-            }
-          </ul>
-        }
+        <FeedbackBody Body="@item.Body" Attachments="@item.Attachments"
+          BodyDataQa="AdminFeedbackBody" AttachmentDataQa="AdminFeedbackAttachment" />
       }
     </Section>
 
