@@ -16,6 +16,7 @@ partial class CredentialsState
 {
   public static class ClaimPendingNicknameForPromptActionSet
   {
+    [CommandPaletteOptOut("Passkey ceremony plumbing for the soft prompt.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>

@@ -19,6 +19,7 @@ partial class SuperheroState
   public static class FetchSuperheroActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>

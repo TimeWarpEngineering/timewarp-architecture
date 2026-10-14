@@ -104,17 +104,17 @@ from a runtime, admin-set `SiteSettings.AssistantName` (default **Akili**). So:
 
 ## Checklist
 
-- [ ] Catalog/roster derived from TimeWarp.State action registration; no required opt-in attribute
-- [ ] Convention-based display name/owner/icon; optional metadata override
-- [ ] Explicit, justified opt-out for internal actions, guarded by a test
-- [ ] Policy/permission, visibility, parameterless and signed-in filtering kept; signed-out decision recorded
-- [ ] OpenAskPanel row appears with no per-action attribute; runs and opens the panel
-- [ ] Runtime display-name override supported by the derived catalog (for 361)
-- [ ] Footer "Ask" button removed
-- [ ] Pinned command-set test replaced by derivation assertion
-- [ ] Real-browser (Playwright) test: Ctrl-K, type "ask", Enter, palette closes and `[data-qa=AgentAsk]` is open
-- [ ] Skill/docs note
-- [ ] Screenshot in the PR (palette filtered to "ask" showing the row; panel open after)
+- [x] Catalog/roster derived from TimeWarp.State action registration; no required opt-in attribute
+- [x] Convention-based display name/owner/icon; optional metadata override
+- [x] Explicit, justified opt-out for internal actions, guarded by a test
+- [x] Policy/permission, visibility, parameterless and signed-in filtering kept; signed-out decision recorded
+- [x] OpenAskPanel row appears with no per-action attribute; runs and opens the panel
+- [x] Runtime display-name override supported by the derived catalog (for 361)
+- [x] Footer "Ask" button removed
+- [x] Pinned command-set test replaced by derivation assertion
+- [x] Real-browser (Playwright) test: Ctrl-K, type "ask", Enter, palette closes and `[data-qa=AgentAsk]` is open
+- [x] Skill/docs note
+- [ ] Screenshot in the PR (palette filtered to "ask" showing the row; panel open after) — CI artifact `ctrl-k-ask-row.png` / `ctrl-k-ask-panel-open.png` from AskSignIn_Given_Wasm; attach at PR time (app not run on TWE-001)
 
 ## Notes
 
@@ -125,11 +125,76 @@ from a runtime, admin-set `SiteSettings.AssistantName` (default **Akili**). So:
   registered action automatically, excluding internal ones only by explicit, justified opt-out,
   and the hand-coded footer "Ask" button goes away.
 - Related: task 300 (Ask app-wide page context).
+- Derivation source (2026-10-14, implementer): TimeWarp.State's `AddActionCatalog` is opt-in only
+  (it reads the `[CatalogAction]` generator's assembly attribute). Instead of changing TimeWarp.State,
+  this repo's generators package gained `ActionRosterSourceGenerator`: it lists every
+  `*ActionSet.Action` implementing `TimeWarp.Mediator.IAction` (the same discovery rule TimeWarp.State's
+  ActionSet method generator uses) as `ActionRoster.All`, with a reflection-free `Execute` that calls the
+  generated `State.Method(externalCancellationToken:)` for actions without required constructor
+  parameters. Scope is the app's own assembly (web-spa); TimeWarp.State.Plus actions (RouteState etc.)
+  are not listed. Possible follow-up (not filed): an opt-out-capable "all actions" mode in
+  TimeWarp.State itself so other hosts get the roster without this generator.
+- Opt-out shape: `[CommandPaletteOptOut("reason")]` on the Action class (attribute emitted by the
+  generator, like `[Page]`). 36 web-spa actions opted out, each with a reason (loads, state resets,
+  ceremony/prompt steps, Ask composer internals, the palette's own Open, CloseModal, demos, ResetStore).
+  A blank reason does not opt out; the guard test `Opt_Out_Only_Explicitly_With_A_Reason` fails on one
+  and on an action that is both opted out and a Human `[CatalogAction]`.
+- `[CatalogAction]` stays optional metadata, joined by Action type: DisplayName, Description,
+  Visibility, Permissions override the defaults (Human-only, no permissions, generated label). The agent
+  tool set keeps its catalog-only view of the palette (`CommandPaletteRoster.BuildAsync` catalog overload).
+- Runtime override shape (for 361): `IActionDisplayOverride.Find(ActionRosterEntry) → ActionDisplay?`
+  (`ActionDisplay(Name, Description?)`), registered as scoped services; the palette asks each in
+  registration order, first non-null wins; Name replaces the whole label (no owner prefix). None
+  registered in 301. Convention label for OpenAskPanel is the placeholder "Agent surface: Open ask panel".
+- Signed-out decision: kept the signed-in-only rule for all commands (including derived ones). Signed
+  out, Ask opens from the app-bar Ask AI button; the Playwright signed-out paths use that button.
+- Icons: not added. Pages have `NavIcon` but actions have no cheap convention icon, and a FluentUI
+  `Icon` on the cloned row record is not free. Follow-up candidate: page-row icons only.
 - Acceptance: full ganda walk via `ganda task work 301 --yes` (implement, review, audit,
   done-move commit, PR), CI green, merge only via `ganda pr merge` after Steven approves.
   Don't run the app on TWE-001; browser proof comes from CI.
+
+## Results
+
+- New `ActionRosterSourceGenerator` (`source/analyzers/timewarp-architecture-analyzers/generators/action-roster-source-generator.cs`)
+  emits `ActionRoster`/`ActionRosterEntry` and `[CommandPaletteOptOut]`; 6 generator tests.
+- `CommandPaletteRoster` builds commands from `ActionRoster.All` + optional catalog metadata +
+  `IActionDisplayOverride`s; `CommandPaletteRunner` executes `ActionRosterEntry.Execute`.
+- Footer "Ask" button (`data-qa="CommandPaletteAsk"`) removed; the derived
+  `AgentSurface.OpenAskPanel` row ("Agent surface: Open ask panel") replaces it.
+- Palette commands now: AgentSurface.CloseAskPanel, AgentSurface.NewConversation,
+  AgentSurface.OpenAskPanel, Credentials.AddExistingPasskey, Credentials.AddPasskey,
+  Credentials.LinkMicrosoft365, Feedback.ListMyFeedback, Profile.SignOut (permission-filtered).
+- Tests: pinned list replaced by derivation assertion; opt-out guard; Ask row ranks first for "ask"
+  and opens the panel; runtime override; probe-based exclusion test. Playwright: AskSignIn signed-in
+  path is Ctrl-K → "ask" → Enter → palette hidden → `[data-qa=AgentAsk]`; AskSurface (signed out)
+  asserts the footer button is gone and opens Ask from the app bar.
+- Gates run locally: `dev build` (0 warnings), sourcegenerator tests 114/114, web-spa-integration-tests
+  264/264, `dev check-version` OK (2.0.0-beta.20 already ahead of nuget), `dev template-smoke` SUCCEEDED,
+  `ganda repo audit` pass. Playwright tests compiled, not run (browser proof from CI per Notes).
+- Skill: `skills/tw-blazor/SKILL.md` documents derivation, explicit opt-out with a reason, metadata, overrides.
+
+### How to validate
+
+Smoke:
+```bash
+dev build
+cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -- --filter-class ActionRosterSourceGenerator_Tests
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -- --filter-class CommandPalette_Should_
+# CI: web-spa-playwright-tests AskSignIn_Given_Wasm + AskSurface
+```
+
+Expect:
+- Build 0 warnings/0 errors; ActionRoster generator tests pass; CommandPalette_Should_ passes.
+- Signed in, Ctrl-K → type "ask" → the highlighted row is "Agent surface: Open ask panel"; Enter closes
+  the palette and the docked `[data-qa=AgentAsk]` panel is open (CI screenshots `ctrl-k-ask-row.png`,
+  `ctrl-k-ask-panel-open.png`).
+- No `data-qa="CommandPaletteAsk"` anywhere in the palette.
+- Adding a new parameterless ActionSet makes it appear in Ctrl-K with no attribute; adding
+  `[CommandPaletteOptOut("")]` fails `Opt_Out_Only_Explicitly_With_A_Reason`.
 
 ## Session
 
 - Created: 309324 (2026-10-11 ICT)
 - 2026-10-14: amended for 361 (runtime display-name override; no hard-coded "Ask AI"). Stacked 301 → 361 → 352–354.
+- 2026-10-14: implement oracle (ganda task work): generator-derived roster, opt-outs, override seam, tests, skill note; gates green locally.

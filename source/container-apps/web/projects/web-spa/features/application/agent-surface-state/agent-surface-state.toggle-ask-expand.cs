@@ -13,6 +13,7 @@ partial class AgentSurfaceState
 {
   public static class ToggleAskExpandActionSet
   {
+    [CommandPaletteOptOut("Panel chrome: the open Ask panel owns its expand control; offering it with the panel closed does nothing visible.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

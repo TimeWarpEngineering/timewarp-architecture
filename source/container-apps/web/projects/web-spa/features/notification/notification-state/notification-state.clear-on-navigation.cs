@@ -15,6 +15,7 @@ partial class NotificationState
 {
   public static class ClearOnNavigationActionSet
   {
+    [CommandPaletteOptOut("Navigation plumbing that clears the shell message region on route change.")]
     public sealed class Action : IBaseAction;
 
     internal class Handler

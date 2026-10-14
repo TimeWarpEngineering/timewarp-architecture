@@ -16,6 +16,7 @@ partial class ApplicationState
   public static class CloseModalActionSet
   {
 
+    [CommandPaletteOptOut("Running any palette row already closes the palette, the only modal open while it is shown.")]
     public class Action() : IBaseAction;
 
     internal class Handler

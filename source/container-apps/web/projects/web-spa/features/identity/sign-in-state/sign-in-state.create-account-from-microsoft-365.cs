@@ -22,6 +22,7 @@ partial class SignInState
   public static class CreateAccountFromMicrosoft365ActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Microsoft 365 sign-in ceremony choice; only valid on the choice page mid-ceremony.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

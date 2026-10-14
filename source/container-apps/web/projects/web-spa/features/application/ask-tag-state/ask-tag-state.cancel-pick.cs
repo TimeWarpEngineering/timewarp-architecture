@@ -17,6 +17,7 @@ partial class AskTagState
 {
   public static class CancelPickActionSet
   {
+    [CommandPaletteOptOut("Ask tag-pick mode step; only meaningful while a pick is in progress.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

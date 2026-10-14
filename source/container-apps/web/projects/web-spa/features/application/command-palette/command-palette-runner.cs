@@ -1,15 +1,16 @@
 #region Purpose
-// Runs one Ctrl-K palette row: navigate to a page through RouteState, or execute a catalog command through the store.
+// Runs one Ctrl-K palette row: navigate to a page through RouteState, or execute a derived command through the store.
 #endregion
 
 #region Design
 // Called by the CommandPalette component after it closes the modal (pages sequence dispatches;
 // handlers do not nest). Navigation goes through RouteState.ChangeRoute — the same state path
 // NavMenu-driven pages use — so breadcrumbs and NotificationState's clear-on-navigation apply.
-// Commands go through ActionCatalogEntry.Execute(store, [], ct): the generated, reflection-free
-// dispatcher, which runs the action through the normal pipeline. Outcomes therefore land where
-// that action already reports them — the shell NotificationState region (TWA0025) — and a
-// command the catalog no longer knows is reported there too, never in a palette-local bar.
+// Commands go through ActionRosterEntry.Execute(store, ct) (task 301): the generated, reflection-free
+// call of the action's State.Method, which runs the action through the normal pipeline. Outcomes
+// therefore land where that action already reports them — the shell NotificationState region
+// (TWA0025) — and a command the roster no longer knows (or can no longer run without arguments) is
+// reported there too, never in a palette-local bar.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -20,7 +21,7 @@ public static class CommandPaletteRunner
   (
     CommandPaletteRow row,
     IStore store,
-    IActionCatalog actionCatalog,
+    IEnumerable<ActionRosterEntry> actions,
     CancellationToken cancellationToken
   )
   {
@@ -31,8 +32,8 @@ public static class CommandPaletteRunner
         break;
 
       case CommandPaletteRowKind.Command:
-        ActionCatalogEntry? entry = actionCatalog.Find(row.Target);
-        if (entry is null)
+        ActionRosterEntry? entry = actions.FirstOrDefault(action => action.Name == row.Target);
+        if (entry?.Execute is null)
         {
           await store.GetState<NotificationState>().AddNotification
           (
@@ -43,7 +44,7 @@ public static class CommandPaletteRunner
           return;
         }
 
-        await entry.Execute(store, [], cancellationToken);
+        await entry.Execute(store, cancellationToken);
         break;
       default:
         break;

@@ -16,6 +16,7 @@ partial class SignInState
 {
   public static class FetchMicrosoft365OfferedActionSet
   {
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler(IStore store, IWebServerApiService apiService) : BaseHandler<Action>(store)
