@@ -246,6 +246,10 @@ Expect:
   "Take me there" shows an approval card for navigate with `/Settings`, and Approve lands on
   Settings.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Steven, 2026-10-11 00:19 ICT: "the AI should have context of all the damn pages like Ctrl-K
@@ -284,3 +288,4 @@ Expect:
 - Created: 307060 (2026-10-11 ICT)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T17:12:21Z
 - Review oracle: claude (claude-opus-5-5), session not reported; effort 3, roster general, 2 rounds, accepted-exceptions — 2026-10-15
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-14T17:23:20Z
