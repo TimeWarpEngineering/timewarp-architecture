@@ -216,6 +216,26 @@ display-name override** for derived rows. Therefore:
   "Ask Zawadi", the header read Zawadi with its avatar, and the greeting read "Hi, I'm Zawadi". No
   "Akili" is left in the panel. Screenshots: `assistant-rename-{admin,ctrl-k,panel}.png`.
 
+### Review disposition
+
+- **Outcome:** clean. 2 rounds, effort 3, roster: general (claude reviewer sub-agents, review oracle claude-opus-5-5).
+- **Final counts:** bug 0 open / 2 fixed / 0 wontfix; suggestion 0 / 5 / 0; nit 0 / 6 / 0.
+- Round 1 (M1–M10) fixed in bc1066749. Round 2 (N1–N3) fixed in d15c3f227. No wontfix, no escalations.
+- **Gates after the fixes:**
+  - `dev build`: 0/0.
+  - web-jaribu: 358/358.
+  - timewarp-identity: 284/284.
+  - web-server-integration: 335 pass, 1 skip.
+  - web-spa Unit: 153/153.
+  - Playwright: 15/15.
+  - `ganda repo audit`: clean.
+  - Not captured: web-spa Integration-tagged tests.
+- **Artifacts:**
+  - `review/review-framework.md`
+  - `review/round-1/{general,merged}.md`
+  - `review/round-2/{general,merged}.md`
+  - `review/disposition.md`
+
 ### How to validate
 
 **Smoke:**
