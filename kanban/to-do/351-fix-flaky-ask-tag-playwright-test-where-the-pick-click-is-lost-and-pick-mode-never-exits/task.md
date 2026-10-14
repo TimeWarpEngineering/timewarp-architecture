@@ -51,6 +51,7 @@ Never "fix" this with retries, longer timeouts or `Thread.Sleep`-style waits.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T07:18:25Z
 
 - 2026-10-14 review oracle (claude, claude-opus-5-5, session not reported): effort 2, general, 2 rounds, clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T07:22:03Z
 
 ## Results
 
