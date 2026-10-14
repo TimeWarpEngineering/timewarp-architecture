@@ -1,0 +1,78 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+@using Ai = Microsoft.AspNetCore.Components.AI
+
+@*
+  Purpose: The Ask composer's send look (task 357): the arrow-up glyph over the library send button,
+  and the Stop button that replaces send while an answer streams.
+
+  Design: MessageInput keeps its own send button, so the send action, the "Send message" name and
+  the Enter / Shift+Enter keys stay the library's (TrailingActions would replace that button, and
+  the typed text is private to MessageInput). This component renders as leading actions, so both
+  of its elements are direct children of the composer grid and sit in its send cell. The glyph is
+  the FluentUI ArrowUp icon, aria-hidden and click-through, drawn over the library button whose
+  paper-plane AgentAsk's CSS hides. AgentAsk's CSS mutes the button while the textarea shows its
+  placeholder (nothing typed) or the library disables it (a turn in progress), and makes it solid
+  in the brand primary when there is text to send. While the conversation streams, the Stop button
+  takes the cell and the send button and glyph hide. Stop calls AgentContext.CancelAsync on the
+  cascaded conversation, the same library-owned conversation the send button and the starter
+  prompts call; the library then clears the partial answer and returns to Idle. AwaitingInput (an
+  approval card waiting) shows the muted send, not Stop: the card is the way out of that state.
+  The component subscribes to status changes itself because AgentAsk re-renders only when a turn
+  ends.
+*@
+
+@code {
+  [CascadingParameter] private Ai.AgentContext? Conversation { get; set; }
+
+  private Ai.AgentContext? Subscribed;
+  private IDisposable? StatusSubscription;
+
+  private bool Streaming => Conversation?.Status == Ai.ConversationStatus.Streaming;
+
+  protected override void OnParametersSet()
+  {
+    base.OnParametersSet();
+    if (ReferenceEquals(Subscribed, Conversation))
+    {
+      return;
+    }
+
+    StatusSubscription?.Dispose();
+    StatusSubscription = Conversation?.RegisterOnStatusChanged(OnStatusChanged);
+    Subscribed = Conversation;
+  }
+
+  private void OnStatusChanged(Ai.ConversationStatus status) => _ = InvokeAsync(StateHasChanged);
+
+  private Task StopAsync() => Conversation?.CancelAsync() ?? Task.CompletedTask;
+
+  public override void Dispose()
+  {
+    StatusSubscription?.Dispose();
+    StatusSubscription = null;
+    base.Dispose();
+  }
+}
+
+@if (Streaming)
+{
+  <FluentButton Appearance="ButtonAppearance.Primary"
+                Shape="ButtonShape.Circular"
+                BackgroundColor="var(--twe-ink)"
+                Color="var(--twe-paper)"
+                Class="twe-ask-send__stop"
+                IconOnly="true"
+                IconStart="@(new Icons.Filled.Size16.Stop())"
+                Title="Stop"
+                Tooltip="Stop"
+                aria-label="Stop"
+                data-qa="AskStop"
+                OnClick="StopAsync" />
+}
+else
+{
+  <span class="twe-ask-send__glyph" aria-hidden="true" data-qa="AskSendGlyph">
+    <FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" Color="Color.Custom" CustomColor="currentColor" />
+  </span>
+}
