@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261014110100_AddSiteSettingsAssistantName";
+    public override string LastMigrationId => "20261014121541_AddFeedbackAttachmentBytes";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -160,6 +160,21 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasIndex("Status", "FiledAt");
 
                 b.ToTable("feedback_items", "feedback");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Infrastructure.FeedbackAttachmentBytes", b =>
+            {
+                b.Property<string>("StorageKey")
+                    .HasMaxLength(80)
+                    .HasColumnType("character varying(80)");
+
+                b.Property<byte[]>("Content")
+                    .IsRequired()
+                    .HasColumnType("bytea");
+
+                b.HasKey("StorageKey");
+
+                b.ToTable("feedback_attachment_bytes", "feedback");
             });
 
         modelBuilder.Entity("TimeWarp.Architecture.Features.PrincipalRoleAssignment", b =>

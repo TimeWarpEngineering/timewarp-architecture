@@ -8,28 +8,36 @@ features should follow the same shape.
 Azure Blob Storage is the real byte store. Cloudflare R2 is not used: the template already
 deploys to Azure, and an S3 client would be a second object stack nothing else uses.
 
-`FeedbackAttachmentBlobModule` chooses the implementation:
+The store is chosen Azure, then Postgres, then in-memory:
 
-| `FeedbackAttachments:ConnectionString` | Store |
-| --- | --- |
-| empty or missing | `InMemoryFeedbackAttachmentBlobStore` (tests, mock mode, unconfigured hosts) |
-| set | `AzureFeedbackAttachmentBlobStore` |
+| `FeedbackAttachments:ConnectionString` | Postgres configured | Store |
+| --- | --- | --- |
+| set | either | `AzureFeedbackAttachmentBlobStore` |
+| empty or missing | yes | `EfFeedbackAttachmentBlobStore` (`feedback.feedback_attachment_bytes`, `bytea`) |
+| empty or missing | no | `InMemoryFeedbackAttachmentBlobStore` (tests, mock mode, apps without `postgres`) |
+
+`FeedbackAttachmentBlobModule` registers Azure or in-memory. `PostgresDbModule` runs after it
+and replaces the in-memory store with the Postgres one when a connection string is present.
 
 `FeedbackAttachments:ContainerName` defaults to `feedback-attachments`. The name must be 3–63
 characters, lowercase letters, digits, and single hyphens, and must not start or end with a
 hyphen. The container is private and is created on first use. AppHost does not add Azurite.
 
 Set the connection string in the environment as `FeedbackAttachments__ConnectionString`. The
-committed `appsettings.json` leaves it empty so a developer host stays in memory.
+committed `appsettings.json` leaves it empty, so a host with Postgres keeps the bytes in the
+database.
 
-In-memory bytes are lost on restart. When the in-memory blob store runs next to the Postgres
-row store, or in any environment other than Development, the host logs a startup warning:
-the rows survive a restart but every older download returns 404. Set the connection string on
-any deployed host.
+The Postgres store keeps the bytes beside the rows, in its own table keyed by storage key.
+Upload writes the bytes before the row, and remove deletes the row before the bytes, so a
+row always has bytes. Reads load the column (at most 5 MiB) into a `MemoryStream` rather than
+streaming from the reader.
 
-Rows are separate from bytes. `IFeedbackAttachmentStore` is in-memory until Postgres is
-configured, then `EfFeedbackAttachmentStore`. The blob registration does not follow the
-Postgres flag.
+In-memory bytes are lost on restart. When the in-memory blob store runs next to a durable row
+store, or in any environment other than Development, the host logs a startup warning.
+
+A row whose bytes are gone (uploaded while the bytes were in memory, before the Postgres
+store existed) is left in place. Its download is HTTP 404 with the title "Attachment no
+longer available", after the normal access check.
 
 Object keys are `{owner:N}/{attachment:N}` with no leading slash.
 

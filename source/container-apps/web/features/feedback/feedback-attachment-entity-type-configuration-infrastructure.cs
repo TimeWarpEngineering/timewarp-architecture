@@ -17,6 +17,9 @@ public sealed class FeedbackAttachmentEntityTypeConfiguration : IEntityTypeConfi
 {
   public const string TableName = "feedback_attachments";
 
+  /// <summary>Column bound for StorageKey, shared with the bytes table key.</summary>
+  public const int StorageKeyMaxLength = 80;
+
   public void Configure(EntityTypeBuilder<FeedbackAttachment> builder)
   {
     builder.ToTable(TableName, FeedbackItemEntityTypeConfiguration.SchemaName);
@@ -53,7 +56,7 @@ public sealed class FeedbackAttachmentEntityTypeConfiguration : IEntityTypeConfi
     builder.Property(attachment => attachment.Size).IsRequired();
 
     builder.Property(attachment => attachment.StorageKey)
-      .HasMaxLength(80)
+      .HasMaxLength(StorageKeyMaxLength)
       .IsRequired();
 
     builder.Property(attachment => attachment.UploadedAt).IsRequired();

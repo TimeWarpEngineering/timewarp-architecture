@@ -1,20 +1,26 @@
 #region Purpose
-// Registers the feedback attachment blob store: Azure when configured, in-memory otherwise.
+// Registers the feedback attachment blob store: Azure when configured, in-memory otherwise
+// (PostgresDbModule may then swap in the Postgres store).
 #endregion
 
 #region Design
-// Azure Blob Storage is the real backing store. Cloudflare R2 is not: the template already
+// Mode selection is Azure, then Postgres, then in-memory (task 352).
+// Azure Blob Storage is the production store. Cloudflare R2 is not: the template already
 // deploys to Azure, and an S3 client would be a second object stack nothing else uses.
-// FeedbackAttachments:ConnectionString selects the mode. Empty (the committed appsettings
-// value) keeps InMemoryFeedbackAttachmentBlobStore, which is what tests, mock mode, and an
-// unconfigured host use. No Azurite resource is added to AppHost.
+// FeedbackAttachments:ConnectionString selects Azure (IsAzureConfigured). When it is empty
+// (the committed appsettings value) this module registers InMemoryFeedbackAttachmentBlobStore,
+// and PostgresDbModule, which runs after it, replaces that with EfFeedbackAttachmentBlobStore
+// when a Postgres connection string is present. So the bytes live in the same database as the
+// attachment rows, and a restart keeps both. The in-memory store remains for tests, mock mode,
+// and apps generated without the postgres flag. No Azurite resource is added to AppHost.
 // FeedbackAttachments:ContainerName defaults to "feedback-attachments". The name is checked
 // here so a bad value fails at startup instead of on the first upload. The container stays
-// private. Postgres swaps the row store only; this registration does not follow that flag.
-// The in-memory fallback loses bytes on restart while EF rows survive, so every older
-// download would 404. InMemoryBlobWarning logs a startup warning when the in-memory blob
-// store runs next to a durable row store or outside Development. It only warns: tests and
-// mock mode keep the fallback, and a host may knowingly run without durable files.
+// private.
+// Only the in-memory store loses bytes on restart while rows may survive, so only then would
+// every older download 404. InMemoryBlobWarning resolves the final registration at startup
+// and logs a warning when it is still in-memory and either the row store is durable or the
+// environment is not Development. It only warns: tests and mock mode keep the fallback, and a
+// host may knowingly run without durable files.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
@@ -27,10 +33,11 @@ public sealed class FeedbackAttachmentBlobModule : IModule
 {
   public const string DefaultContainerName = "feedback-attachments";
 
+  private const string ConnectionStringKey = "FeedbackAttachments:ConnectionString";
+
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
-    string? connectionString = configuration["FeedbackAttachments:ConnectionString"];
-    if (string.IsNullOrWhiteSpace(connectionString))
+    if (!IsAzureConfigured(configuration))
     {
       serviceCollection.AddSingleton<IFeedbackAttachmentBlobStore, InMemoryFeedbackAttachmentBlobStore>();
       serviceCollection.AddHostedService<InMemoryBlobWarning>();
@@ -44,9 +51,14 @@ public sealed class FeedbackAttachmentBlobModule : IModule
     }
 
     ValidateContainerName(containerName);
+    string connectionString = configuration[ConnectionStringKey]!;
     serviceCollection.AddSingleton<IFeedbackAttachmentBlobStore>(
       _ => new AzureFeedbackAttachmentBlobStore(connectionString, containerName));
   }
+
+  /// <summary>True when Azure Blob Storage holds the bytes; other stores must not replace it.</summary>
+  public static bool IsAzureConfigured(IConfiguration configuration) =>
+    !string.IsNullOrWhiteSpace(configuration[ConnectionStringKey]);
 
   private static void ValidateContainerName(string name)
   {
@@ -103,6 +115,12 @@ public sealed class FeedbackAttachmentBlobModule : IModule
     public Task StartAsync(CancellationToken cancellationToken)
     {
       using IServiceScope scope = ScopeFactory.CreateScope();
+      IFeedbackAttachmentBlobStore blobStore = scope.ServiceProvider.GetRequiredService<IFeedbackAttachmentBlobStore>();
+      if (blobStore is not InMemoryFeedbackAttachmentBlobStore)
+      {
+        return Task.CompletedTask;
+      }
+
       IFeedbackAttachmentStore rowStore = scope.ServiceProvider.GetRequiredService<IFeedbackAttachmentStore>();
       bool durableRows = rowStore is not InMemoryFeedbackAttachmentStore;
       if (durableRows || !HostEnvironment.IsDevelopment())

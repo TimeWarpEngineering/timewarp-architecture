@@ -18,7 +18,9 @@
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006),
 // IRolePermissionStore → EfRolePermissionStore (task 182-001), IProfileStore → EfProfileStore
-// (task 148 D4), and IFeedbackStore → EfFeedbackStore. Challenge/token stores stay in-memory either way.
+// (task 148 D4), and IFeedbackStore → EfFeedbackStore. IFeedbackAttachmentBlobStore → EfFeedbackAttachmentBlobStore
+// only when FeedbackAttachments:ConnectionString is empty (Azure wins; task 352). Challenge/token
+// stores stay in-memory either way.
 // Schema: AppHost AddEFMigrations applies committed migrations (platform/postgres/migrations/)
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
@@ -105,6 +107,13 @@ public sealed partial class PostgresDbModule : IModule
 
     serviceCollection.RemoveAll<IFeedbackAttachmentStore>();
     serviceCollection.AddScoped<IFeedbackAttachmentStore, EfFeedbackAttachmentStore>();
+
+    // Task 352: attachment bytes live next to their rows unless Azure Blob Storage is configured.
+    if (!FeedbackAttachmentBlobModule.IsAzureConfigured(configuration))
+    {
+      serviceCollection.RemoveAll<IFeedbackAttachmentBlobStore>();
+      serviceCollection.AddScoped<IFeedbackAttachmentBlobStore, EfFeedbackAttachmentBlobStore>();
+    }
 
     serviceCollection.RemoveAll<IAgentHumanLinkStore>();
     serviceCollection.AddScoped<IAgentHumanLinkStore, EfAgentHumanLinkStore>();

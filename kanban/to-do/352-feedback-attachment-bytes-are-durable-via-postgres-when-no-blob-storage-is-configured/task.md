@@ -40,11 +40,78 @@ requests `/api/Feedback/attachments/01a126d4-…` and gets 404.
 
 ## Checklist
 
-- [ ] Postgres byte store + migration; mode selection Azure → Postgres → in-memory
-- [ ] Orphan 404 handling; Design regions
-- [ ] Tests (persistence across host restart, selection, delete)
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke` (flag-off apps still build), `ganda repo audit`
+- [x] Postgres byte store + migration; mode selection Azure → Postgres → in-memory
+- [x] Orphan 404 handling; Design regions
+- [x] Tests (persistence across host restart, selection, delete)
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke` (flag-off apps still build), `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-14 (cockpit, from Steve's broken-image screenshot)
+- 2026-10-14 implementer (ganda task work): Postgres byte store, migration, mode selection, orphan 404, tests, docs; gates green.
+
+## Results
+
+**Store.** `EfFeedbackAttachmentBlobStore` (scoped, `PostgresDbContext`) implements the existing
+`IFeedbackAttachmentBlobStore` port over a new table `feedback.feedback_attachment_bytes`
+(`StorageKey varchar(80)` PK, `Content bytea`), entity `FeedbackAttachmentBytes` + its EF
+configuration. Migration `20261014121541_AddFeedbackAttachmentBytes` (create table only).
+
+**Mode selection** is Azure → Postgres → in-memory. `FeedbackAttachmentBlobModule` registers
+Azure when `FeedbackAttachments:ConnectionString` is set (new `IsAzureConfigured`), else
+in-memory; `PostgresDbModule` (runs after it) replaces in-memory with the EF store when a
+Postgres connection string exists and Azure is not configured. `InMemoryBlobWarning` now
+resolves the final blob store and only warns when it is still in-memory.
+
+**Unit of work.** Not one transaction: each store call commits on its own. The upload handler
+already writes bytes before the row (deleting them if the row insert throws) and remove deletes
+the row before the bytes, so "row exists ⇒ bytes exist" holds; the worst failure leaves
+unreferenced bytes, never a row without bytes. No FK from bytes to row for that reason.
+
+**Streaming.** Reads are not streamed: EF materializes `bytea` as `byte[]`; real streaming needs a
+raw `NpgsqlDataReader` with `SequentialAccess` and a reader-owning stream. With the 5 MiB cap
+(`FeedbackAttachmentRules.MaxBytes`, enforced before any store write) the store loads the column
+untracked into a read-only `MemoryStream`. Recorded in the store's Design region.
+
+**Orphans.** Rows whose bytes are gone stay. Download returns 404 `Attachment no longer
+available` (`FeedbackProblems.AttachmentGone`) after the access check — never 500. The optional
+UI placeholder was not done; the `<img>` already carries `alt=FileName`.
+
+**Docs.** Design regions updated (blob module, port, in-memory store, download handler, problems,
+DbContext, PostgresDbModule). `tw-deploy` gets one bullet on where bytes live per mode;
+`documentation/developer/guides/feedback-attachments.md` table updated. Template `(!postgres)`
+excludes the three new Postgres files and the mode test.
+
+**Tests.**
+- `web-infrastructure-tests/feedback-postgres-persistence-tests.cs` (Testcontainers): upload via
+  handler → fresh context download returns the same bytes → remove handler → fresh context shows
+  row and bytes gone; put replaces / delete no-op and leaves nothing tracked; orphan row → 404.
+- `web-server-integration-tests/features/feedback/feedback-attachment-blob-mode-tests.cs`:
+  nothing → in-memory; Postgres only → EF; Azure + Postgres → Azure; Azure only → Azure.
+- `features/feedback/feedback-attachment-tests.cs` runfile: in-memory orphan → 404 title.
+
+**Gates (this worktree):** `dev build` 0/0; `dev test` all suites passed (web-infrastructure-tests
+76/76); `dev template-smoke` SmokeDefault / SmokeNoPostgres / SmokeNoApi OK; `ganda repo audit`
+passes; `dev check-version` 2.0.0-beta.20 ahead of NuGet beta.19.
+
+Note: `dotnet ef migrations add` (via `dev db add-migration`) emitted the class as
+`_20261014121541_AddFeedbackAttachmentBytes` and wrote the snapshot under
+`projects/web-infrastructure/TimeWarp/...`; both were corrected by hand to the repo layout.
+
+### How to validate
+
+**Smoke:**
+1. `cd tests/container-apps/web/web-infrastructure-tests && dotnet test` (Docker up).
+2. `cd tests/container-apps/web/web-server-integration-tests && dotnet run -- --filter-class FeedbackAttachmentBlobMode_`
+3. `dotnet run source/container-apps/web/features/feedback/feedback-attachment-tests.cs`
+4. Optional live: `dev run`, paste an image into feedback, file it, restart `dev run`, open the item.
+
+**Expect:**
+1. All pass, including `Attachment_bytes_survive_a_fresh_context_and_go_with_remove`,
+   `Blob_store_put_replaces_and_delete_of_a_missing_key_is_a_no_op`,
+   `Download_of_a_row_without_bytes_is_a_404_no_longer_available` (no `[SKIP]` line).
+2. 4/4 passed.
+3. 21/21 passed, including `Download_Should_Return404WhenTheBytesAreGone`.
+4. The image still renders after restart; no in-memory warning in web-server logs; items filed
+   before this change show the alt text and their download returns 404 "Attachment no longer
+   available".
