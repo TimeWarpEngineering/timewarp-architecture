@@ -24,6 +24,11 @@
 - Created: 2026-10-14
 - 2026-10-14: implementer (ganda task work) bumped RC1 -> RC2; build, tests, check-version, template-smoke green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T16:16:04Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-14T16:18:02Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
