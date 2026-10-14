@@ -28,6 +28,8 @@
 // greeting, the answer-bar feedback titles and the instructions. They come from the anonymous
 // GetAssistantIdentity query (LoadAssistantIdentity). The name starts as the default, Akili, and
 // the avatar as null (the header then shows its fallback mark) until the server answers.
+// AssistantIdentityRefreshHandler reloads them after a successful UpdateSiteSettings and after
+// ResetStore, whose Store.Reset puts them back to those defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

@@ -83,6 +83,9 @@ namespace TimeWarp.Architecture.Features.Settings
     [Input("Ak<ili")]
     [Input("Ak\u0007ili")]
     [Input("Akili\nZawadi")]
+    [Input("Ak\u2028ili")]
+    [Input("Ak\u202Eili")]
+    [Input("Ak\u200Bili")]
     public static Task Invalid_Assistant_Name_Should_Fail_Validation(string name)
     {
       ValidationResult result = new Validator().Validate(ValidCommand(name));

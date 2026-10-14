@@ -21,9 +21,10 @@
   Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
   after a successful save; there is no cheap unused reset on the command.
   Task 361: an Assistant section edits AssistantName on the same command (same Version, same
-  settings.write policy). After a successful save the page reloads the public assistant identity
-  (AgentSurfaceState.LoadAssistantIdentity) so the button, Ctrl-K row and panel show the new
-  name and avatar without a reload.
+  settings.write policy). The page only dispatches UpdateSiteSettings: after a successful save
+  AgentSurfaceState's AssistantIdentityRefreshHandler reloads the public assistant identity, so the
+  button, Ctrl-K row and panel show the new name and avatar without a reload, whether this page or
+  the agent saved.
 *@
 
 @code {
@@ -92,7 +93,6 @@
     if (!SiteSettingsState.SaveFailed)
     {
       SyncDraftFromState();
-      await NoSubAgentSurfaceState.LoadAssistantIdentity();
     }
   }
 }
@@ -143,7 +143,7 @@
         </FormGrid>
       </FormSection>
       <FormSection Title="Assistant"
-                   Description="The name the in-app assistant goes by on the Ask button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
+                   Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
                    data-qa="AssistantSettings">
         <FormGrid>
           <FormField Label="Assistant name">

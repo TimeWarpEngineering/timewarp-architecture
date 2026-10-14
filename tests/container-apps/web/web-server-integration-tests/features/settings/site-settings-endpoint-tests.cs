@@ -7,7 +7,8 @@
 // Real HTTP through the ASP.NET pipeline (not in-process mediator). First passkey claims
 // Administrator so SettingsWrite is present; ForceMemberOnly strips it for the write-403 case.
 // Anonymous offered read is a boolean only. Task 361: GetAssistantIdentity is anonymous and carries
-// only name and avatar; the rename test restores Akili so test order does not matter.
+// only name and avatar (the exact JSON property set); the rename test restores the name it read
+// first, in a finally, so test order and a failed assertion do not matter.
 #endregion
 
 namespace SiteSettingsEndpoints_;
@@ -181,10 +182,13 @@ public class Returns_
     HttpResponseMessage response = await client.GetAsync("api/settings/assistant");
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
-    json.ShouldNotContain("entra", Case.Insensitive);
-    json.ShouldNotContain("passkey", Case.Insensitive);
-    json.ShouldNotContain("version", Case.Insensitive);
-    json.ShouldNotContain("tenant", Case.Insensitive);
+    using (JsonDocument document = JsonDocument.Parse(json))
+    {
+      document.RootElement.ValueKind.ShouldBe(JsonValueKind.Object);
+      string[] properties = [.. document.RootElement.EnumerateObject().Select(static property => property.Name).Order(StringComparer.Ordinal)];
+      properties.ShouldBe(["avatar", "name"]);
+    }
+
     GetAssistantIdentity.Response? parsed =
       JsonSerializer.Deserialize<GetAssistantIdentity.Response>(json, ContractSerializationDefaults.Options);
     parsed.ShouldNotBeNull();
@@ -201,15 +205,21 @@ public class Returns_
     using HttpClient anonymous = new() { BaseAddress = Web.HttpClient.BaseAddress };
     GetAssistantIdentity.Response before = await ReadIdentityAsync(anonymous);
 
-    UpdateSiteSettings.Response renamed = await PutAssistantNameAsync(client, "  Zawadi  ");
-    renamed.AssistantName.ShouldBe("Zawadi");
-    GetAssistantIdentity.Response after = await ReadIdentityAsync(anonymous);
-    after.Name.ShouldBe("Zawadi");
-    after.Avatar.ShouldNotBe(before.Avatar);
-    (await ReadIdentityAsync(anonymous)).Avatar.ShouldBe(after.Avatar);
-
-    UpdateSiteSettings.Response restored = await PutAssistantNameAsync(client, AssistantNameRules.Default);
-    restored.AssistantName.ShouldBe(AssistantNameRules.Default);
+    // The host is shared by the class: restore the name read first even when an assertion fails.
+    try
+    {
+      UpdateSiteSettings.Response renamed = await PutAssistantNameAsync(client, "  Zawadi  ");
+      renamed.AssistantName.ShouldBe("Zawadi");
+      GetAssistantIdentity.Response after = await ReadIdentityAsync(anonymous);
+      after.Name.ShouldBe("Zawadi");
+      after.Avatar.ShouldNotBe(before.Avatar);
+      (await ReadIdentityAsync(anonymous)).Avatar.ShouldBe(after.Avatar);
+    }
+    finally
+    {
+      UpdateSiteSettings.Response restored = await PutAssistantNameAsync(client, before.Name);
+      restored.AssistantName.ShouldBe(before.Name);
+    }
   }
 
   public static async Task Administrator_Put_Markup_Name_Should_400()

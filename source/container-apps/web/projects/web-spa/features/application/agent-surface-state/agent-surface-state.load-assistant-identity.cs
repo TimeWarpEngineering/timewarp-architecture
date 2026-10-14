@@ -4,8 +4,9 @@
 
 #region Design
 // GetAssistantIdentity is anonymous, so this runs for signed-out visitors too: the top-bar button
-// shows on every page. AuthenticationStateListener dispatches it once at startup, and the Admin
-// Authentication page dispatches it again after a save so a rename shows at once. Not a
+// shows on every page. AuthenticationStateListener dispatches it once at startup (after the auth work),
+// AssistantIdentityRefreshHandler runs it again after a successful UpdateSiteSettings (so a rename
+// shows at once, whether the admin page or the agent saved) and after ResetStore. Not a
 // DefaultApiHandler: a failure keeps the current name (the default until the first answer) and
 // must not toast on pages that never asked for it. The name goes through AssistantNameRules again
 // because every label trusts state; an invalid answer keeps the current one.
@@ -20,7 +21,7 @@ partial class AgentSurfaceState
 {
   public static class LoadAssistantIdentityActionSet
   {
-    [CommandPaletteOptOut("Startup data load; the shell and the admin page run it, a person never needs to.")]
+    [CommandPaletteOptOut("Startup data load; the shell, a site-settings save and a store reset run it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : ApiHandler<Action, Query, Response>

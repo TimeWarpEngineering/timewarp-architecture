@@ -31,6 +31,9 @@ public class SiteSettings_Given_
   [Input("123456789012345678901234567890123")]
   [Input("<script>")]
   [Input("Ak\u0000ili")]
+  [Input("Ak\u2028ili")]
+  [Input("Ak\u202Eili")]
+  [Input("Ak\u200Bili")]
   public static Task Rename_Should_Reject_Invalid_Names(string name)
   {
     SiteSettings settings = SiteSettings.Create();

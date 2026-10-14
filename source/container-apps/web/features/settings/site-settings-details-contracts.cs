@@ -9,7 +9,8 @@
 // PasskeyPromptMode uses the TimeWarp.Identity enum (JsonStringEnumConverter). Validator:
 // PasskeyPromptMode must be defined. Task 227 dropped trusted-tenant GUIDs from this shape;
 // trust is Authentication:Entra:TenantId. Task 361 added AssistantName: required, and trimmed it
-// must be 1-32 plain-text characters (AssistantNameRules, the same rules SiteSettings enforces).
+// must be 1-32 plain-text characters. Beyond NotEmpty (the required message) the validator calls
+// AssistantNameRules.IsValid, the same check SiteSettings.RenameAssistant runs, so they cannot drift.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -34,10 +35,12 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
       .NotEmpty()
       .WithMessage("Assistant name is required.");
     RuleFor(details => details.AssistantName)
-      .Must(static name => name is null || name.Trim().Length <= AssistantNameRules.MaxLength)
-      .WithMessage($"Assistant name must be {AssistantNameRules.MaxLength} characters or fewer.");
-    RuleFor(details => details.AssistantName)
-      .Must(static name => name is null || AssistantNameRules.IsPlainText(name))
-      .WithMessage("Assistant name must be plain text, without markup or control characters.");
+      .Must(AssistantNameRules.IsValid)
+      .When(static details => !string.IsNullOrWhiteSpace(details.AssistantName))
+      .WithMessage
+      (
+        $"Assistant name must be 1-{AssistantNameRules.MaxLength} characters of plain text, "
+        + "without markup, control, format or line-separator characters."
+      );
   }
 }

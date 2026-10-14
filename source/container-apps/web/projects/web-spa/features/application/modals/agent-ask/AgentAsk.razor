@@ -80,7 +80,10 @@
   @ insertion are presentational JS on child components.
   Identity (task 361): every label here is AgentSurfaceState.AssistantName (default Akili, admin-set
   on SiteSettings): the header title, the sign-in and error states, the greeting "Hi, I'm {name}",
-  the conversation credential's label and the instructions' first line. The avatar is the
+  the conversation credential's label and the instructions' first line. The instructions read the
+  name on every request, so a rename while an agent is built reaches the model at its next turn.
+  The credential's label is fixed when it is issued: an open conversation keeps the name it began
+  with until New conversation, while the header shows the current one. The avatar is the
   server-made Multiavatar for the name. The header shows it (alt is the name) in place of 349's
   gradient mark, which stays as the fallback until the identity loads; the empty state shows it
   in front of the orbs; and each assistant turn shows it through --twe-assistant-avatar, which
@@ -302,11 +305,11 @@
       }
 
       toolNames.Add(PageAgentContext.ToolName);
-      // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far.
-      string assistantName = AssistantName;
+      // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far
+      // and the first line names the assistant's current name, even after a rename mid-conversation.
       string RenderInstructions() => AgentAskInstructions.For
       (
-        assistantName,
+        ScopedStore.GetState<AgentSurfaceState>().AssistantName,
         PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
       );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
