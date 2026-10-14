@@ -98,6 +98,16 @@ Expect: all tests pass (226, including `StaleScript_Given_`); help lists `--allo
 `--allow-stale`; without `--yes` it warns, then asks `Migrate? [y/N]` (operator-only; workers must not run it
 against a cluster).
 
+### Review
+
+- Rounds: 1; roster: general; effort 2 (by-diff, 372 lines).
+- Final counts: bug 0; suggestion 1 wontfix; nit 0; 0 open.
+- Disposition: **accepted-exceptions**. M1 (a second postgres app would see a false stale) is wontfix: the template
+  has one postgres app and migrate applies one hard-coded script, so pairing scripts with folders belongs to a
+  future multi-database migrate.
+- Re-verified in the worktree: dev-cli-tests 226/226; `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Notes
 
 - Workers must not touch the maintainer's kind cluster or any database.
@@ -106,3 +116,5 @@ against a cluster).
 
 - Created: 2026-10-13 (cockpit, per Steve; found in the live 339 check)
 - 2026-10-15: implemented under `ganda task work` (implement node); no cluster or database touched.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T18:49:25Z
+- Review oracle: review-claude (claude, model claude-opus-5-5), 1 round, accepted-exceptions — 2026-10-15
