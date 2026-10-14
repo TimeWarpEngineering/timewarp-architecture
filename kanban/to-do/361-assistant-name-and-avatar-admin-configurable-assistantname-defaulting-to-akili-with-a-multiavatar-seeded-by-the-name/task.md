@@ -97,6 +97,7 @@ display-name override** for derived rows. Therefore:
   web-jaribu-tests 355/355; web-server-integration-tests 335 passed, 1 skipped; timewarp-identity-tests
   280/280; web-spa-integration-tests Unit lane 153/153; web-spa-playwright-tests 15/15;
   `ganda repo audit` pass.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-14T11:56:43Z
 
 ## Results
 
