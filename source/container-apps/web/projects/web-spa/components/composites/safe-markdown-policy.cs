@@ -71,12 +71,27 @@ public static class SafeMarkdownPolicy
 
     foreach (LinkInline link in Parse(markdown).Descendants<LinkInline>())
     {
-      if (link.Url is { } destination && sources.Contains(destination) && IsSafeLink(destination))
+      if (link.Url is { } destination && sources.Contains(destination) && IsSafeLink(destination) &&
+        !IsInsideImage(link))
       {
         referenced.Add(destination);
       }
     }
 
     return referenced;
+  }
+
+  // SafeMarkdown flattens an image description to alt text, so a link nested in it never renders.
+  private static bool IsInsideImage(Inline inline)
+  {
+    for (ContainerInline? parent = inline.Parent; parent is not null; parent = parent.Parent)
+    {
+      if (parent is LinkInline { IsImage: true })
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

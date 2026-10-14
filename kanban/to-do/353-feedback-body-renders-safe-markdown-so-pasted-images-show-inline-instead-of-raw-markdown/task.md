@@ -39,6 +39,7 @@ text** and then the same image again from the separate attachments list.
 
 - Created: 2026-10-14 (cockpit, from Steve's screenshot)
 - 2026-10-14 implementer (ganda task work): renderer, shared component, both views, tests, gates.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T13:17:44Z
 
 ## Results
 
@@ -79,6 +80,16 @@ text** and then the same image again from the separate attachments list.
   `FillAsync` into Details before an upload was replaced by the appended markdown. The body
   held only the two `![…]` lines. The composer's `AppendMarkdown` reads `Draft.Body`, which may
   not have picked up the typed value yet. Worth a follow-up check with real typing.
+
+### Implementation review
+
+- Rounds: 1 · effort 2 · roster: general (review oracle, claude-opus-5-5)
+- Final counts: bug 0 · suggestion 0 · nit 3 fixed · 0 open · 0 wontfix
+- Disposition: **clean**. The review found no security issues. The nits were fixed on this task:
+  dedupe ignores links nested in image alt text (with a test), and two Design comments were
+  corrected or reflowed. Post-fix: `dev build` 0/0, SafeMarkdown suite 9/9, `ganda repo audit` pass.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`
 
 ### How to validate
 

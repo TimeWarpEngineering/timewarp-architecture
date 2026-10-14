@@ -148,6 +148,7 @@ public class SafeMarkdown_Should_
     SafeMarkdownPolicy.ReferencedSources($"![a]({Own}) ![b]({Other})", sources).ShouldBe([Own]);
     SafeMarkdownPolicy.ReferencedSources($"[link only]({Own})", sources).ShouldBe([Own]);
     SafeMarkdownPolicy.ReferencedSources($"`![code]({Own})`", sources).ShouldBeEmpty();
+    SafeMarkdownPolicy.ReferencedSources($"![see [log]({Own})](/x)", sources).ShouldBeEmpty();
     await Task.CompletedTask;
   }
 

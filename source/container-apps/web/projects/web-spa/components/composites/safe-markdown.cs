@@ -6,7 +6,8 @@
 #region Design
 // The component walks the Markdig AST into the render tree. Text always goes through
 // AddContent and URLs through AddAttribute, so Blazor escapes both. There is no MarkupString.
-// Raw HTML is off at parse time; an HtmlInline or HtmlBlock that still appears renders as text.
+// Raw HTML is off at parse time; an HtmlInline that still appears renders as text, and an
+// HtmlBlock renders nothing.
 // A refused link renders its text only. A refused image renders as a plain link when the URL
 // is a safe link, else as its alt text. An allowed image is a MarkdownImage, which swaps to an
 // "image unavailable" placeholder when the load fails. Soft line breaks render as <br> because
