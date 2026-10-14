@@ -193,8 +193,21 @@ Expect:
 - Adding a new parameterless ActionSet makes it appear in Ctrl-K with no attribute; adding
   `[CommandPaletteOptOut("")]` fails `Opt_Out_Only_Explicitly_With_A_Reason`.
 
+### Review disposition
+
+- Rounds: 2; roster: general; effort 3 (by-diff budget, 1040 lines).
+- Final counts: bug 1 fixed; suggestion 5 fixed; nit 1 fixed, 1 wontfix; 0 open.
+- Disposition: **accepted-exceptions**. M8 (generated `CommandPaletteOptOutAttribute` lands in
+  action-less assemblies) is wontfix: it is harmless and follows the `[Page]` / `[StateAccess]` pattern.
+- Review fixes in 5e1dd6dba: Playwright Ctrl-K wait keyed on the filtered Command row; roster completeness
+  reflection check; CloseAskPanel opted out; empty fallback description; const/partial opt-out reasons;
+  permission rule in tw-blazor skill; generator tests for private/generic/const/partial (118/118).
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 309324 (2026-10-11 ICT)
 - 2026-10-14: amended for 361 (runtime display-name override; no hard-coded "Ask AI"). Stacked 301 → 361 → 352–354.
 - 2026-10-14: implement oracle (ganda task work): generator-derived roster, opt-outs, override seam, tests, skill note; gates green locally.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T10:28:24Z
+- Review oracle (claude-opus-5-5): effort 3, general reviewer + fix loop, 2 rounds, accepted-exceptions — 2026-10-14
