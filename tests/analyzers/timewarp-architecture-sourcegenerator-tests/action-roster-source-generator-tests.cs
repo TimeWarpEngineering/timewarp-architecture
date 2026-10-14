@@ -1,12 +1,15 @@
+#region Purpose
+// Verifies the ActionRoster generator (task 301): every nested *ActionSet.Action that implements
+// TimeWarp.Mediator.IAction is listed with no opt-in attribute; [CommandPaletteOptOut] reasons are
+// carried verbatim; only actions without a required constructor parameter get an Execute delegate.
+#endregion
+
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
 using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Linq;
 
-// Verifies the ActionRoster generator (task 301): every nested *ActionSet.Action that implements
-// TimeWarp.Mediator.IAction is listed with no opt-in attribute; [CommandPaletteOptOut] reasons are
-// carried verbatim; only actions without a required constructor parameter get an Execute delegate.
 public class ActionRosterSourceGenerator_Tests
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -42,15 +45,61 @@ public class ActionRosterSourceGenerator_Tests
         {
           public sealed class Action { }
         }
+
+        public static class HiddenActionSet
+        {
+          private sealed class Action : TimeWarp.Mediator.IAction;
+        }
+
+        public static class GenericActionSet<T>
+        {
+          public sealed class Action : TimeWarp.Mediator.IAction;
+        }
+
+        public static class GenericActionActionSet
+        {
+          public sealed class Action<T> : TimeWarp.Mediator.IAction;
+        }
+
+        public static class ConstReasonActionSet
+        {
+          [CommandPaletteOptOut(OptOutReasons.StartupLoad)]
+          public sealed class Action : TimeWarp.Mediator.IAction;
+        }
+
+        public static partial class PartialReasonActionSet
+        {
+          public sealed partial class Action : TimeWarp.Mediator.IAction;
+        }
+      }
+
+      internal static class OptOutReasons
+      {
+        public const string StartupLoad = "Startup load (const).";
       }
     }
     """;
 
-  private static string RunAndConcat(string source)
+  // The second partial declaration of PartialReasonActionSet.Action, in its own file.
+  private const string PartialSource = """
+    namespace Test.Features.Applications
+    {
+      public partial class AgentSurfaceState
+      {
+        public static partial class PartialReasonActionSet
+        {
+          [CommandPaletteOptOut("Opted out on another partial.")]
+          public sealed partial class Action;
+        }
+      }
+    }
+    """;
+
+  private static string RunAndConcat(params string[] sources)
   {
     var compilation = CSharpCompilation.Create(
       "Test.WebSpa",
-      new[] { CSharpSyntaxTree.ParseText(source) },
+      sources.Select(static source => CSharpSyntaxTree.ParseText(source)),
       new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -121,6 +170,40 @@ public class ActionRosterSourceGenerator_Tests
       .ShouldBeLessThan(generated.IndexOf("AgentSurface.OpenAskPanel", StringComparison.Ordinal));
     generated.IndexOf("AgentSurface.OpenAskPanel", StringComparison.Ordinal)
       .ShouldBeLessThan(generated.IndexOf("AgentSurface.SetEditMode", StringComparison.Ordinal));
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Skip_A_Private_Action()
+  {
+    string generated = RunAndConcat(Source);
+
+    generated.ShouldNotContain("AgentSurface.Hidden");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Skip_Generic_ActionSets_And_Actions()
+  {
+    string generated = RunAndConcat(Source);
+
+    generated.ShouldNotContain("AgentSurface.Generic\"");
+    generated.ShouldNotContain("GenericActionSet");
+    generated.ShouldNotContain("AgentSurface.GenericAction");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Honor_A_Const_Opt_Out_Reason()
+  {
+    string generated = RunAndConcat(Source);
+
+    generated.ShouldContain("ConstReasonActionSet.Action), 0, \"Startup load (const).\", static");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Honor_An_Opt_Out_On_Another_Partial_Declaration()
+  {
+    string generated = RunAndConcat(Source, PartialSource);
+
+    generated.ShouldContain("PartialReasonActionSet.Action), 0, \"Opted out on another partial.\", static");
     return Task.CompletedTask;
   }
 }

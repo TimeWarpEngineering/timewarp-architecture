@@ -417,9 +417,13 @@ public class AskSignIn_Given_Wasm
 
         opened.ShouldBeTrue("Ctrl-K did not open the palette");
         await input.FillAsync("ask");
+        // With an empty query row 0 (a Page row) is already active, so wait on the filtered state: the
+        // active row must be a Command whose name contains "ask" before the screenshot and Enter.
         ILocator active = Page.Locator(".twe-palette__row--active");
-        await active.WaitForAsync(new LocatorWaitForOptions { Timeout = 10_000 });
-        (await active.Locator(".twe-palette__name").InnerTextAsync()).ShouldContain("ask", Case.Insensitive);
+        await Assertions.Expect(active.Locator(".twe-palette__kind"))
+          .ToHaveTextAsync("Command", new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+        await Assertions.Expect(active.Locator(".twe-palette__name"))
+          .ToContainTextAsync("ask", new LocatorAssertionsToContainTextOptions { IgnoreCase = true, Timeout = 10_000 });
         await Page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-row.png") });
         await input.PressAsync("Enter");
         await Page.Locator("[data-qa=CommandPalette]").WaitForAsync(new LocatorWaitForOptions

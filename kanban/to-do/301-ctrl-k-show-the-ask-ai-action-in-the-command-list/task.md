@@ -162,9 +162,9 @@ from a runtime, admin-set `SiteSettings.AssistantName` (default **Akili**). So:
   `IActionDisplayOverride`s; `CommandPaletteRunner` executes `ActionRosterEntry.Execute`.
 - Footer "Ask" button (`data-qa="CommandPaletteAsk"`) removed; the derived
   `AgentSurface.OpenAskPanel` row ("Agent surface: Open ask panel") replaces it.
-- Palette commands now: AgentSurface.CloseAskPanel, AgentSurface.NewConversation,
-  AgentSurface.OpenAskPanel, Credentials.AddExistingPasskey, Credentials.AddPasskey,
-  Credentials.LinkMicrosoft365, Feedback.ListMyFeedback, Profile.SignOut (permission-filtered).
+- Palette commands now: AgentSurface.NewConversation, AgentSurface.OpenAskPanel,
+  Credentials.AddExistingPasskey, Credentials.AddPasskey, Credentials.LinkMicrosoft365,
+  Feedback.ListMyFeedback, Profile.SignOut (permission-filtered).
 - Tests: pinned list replaced by derivation assertion; opt-out guard; Ask row ranks first for "ask"
   and opens the panel; runtime override; probe-based exclusion test. Playwright: AskSignIn signed-in
   path is Ctrl-K → "ask" → Enter → palette hidden → `[data-qa=AgentAsk]`; AskSurface (signed out)

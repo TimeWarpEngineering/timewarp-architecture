@@ -28,6 +28,8 @@
 // IActionDisplayOverride is asked per command, first non-null wins; its Name replaces the whole label
 // (no owner prefix) and its Description, when set, the description. It never changes the target,
 // visibility or permissions. The convention label stays the placeholder; no literal is baked in here.
+// An uncatalogued command has an empty description (the row omits the line): the catalog name is a
+// code identifier, so it stays the Target and never becomes user-visible text or ranker input.
 // The ranker matches the shown label and the description; the stable catalog name stays the Target.
 // Sign in (task 259): an explicit, typed signed-out entry built from LoginPage.Title and
 // LoginPage.GetPageUrl() — not a registry concept. Login stays out of PageRegistry.All (NavMenu
@@ -79,7 +81,7 @@ public static class CommandPaletteRoster
         (
           pair.Action.Name,
           display?.Name ?? Label(pair.Action, pair.Metadata),
-          display?.Description ?? pair.Metadata?.Description ?? $"Run {pair.Action.Name}",
+          display?.Description ?? pair.Metadata?.Description ?? "",
           pair.Metadata?.Permissions ?? []
         );
       });

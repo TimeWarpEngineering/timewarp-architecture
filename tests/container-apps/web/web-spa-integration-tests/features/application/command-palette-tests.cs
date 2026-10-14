@@ -18,8 +18,9 @@
 // ActionRosterEntry through the runner so the test observes exactly one Execute.
 // The command set is not a hand list (task 301): it is asserted against ActionRoster.All — every
 // action that is not opted out, has no required parameter and is Human-visible is a row, and every
-// other is absent. The guard test fails on an opt-out without a reason, and on an action that is both
-// opted out and authored as a Human [CatalogAction] (two contradicting decisions).
+// other is absent. The guard test fails on an opt-out without a reason, on an action that is both
+// opted out and authored as a Human [CatalogAction] (two contradicting decisions), and on any
+// *ActionSet.Action in web-spa (found by test-only reflection) that ActionRoster.All does not list.
 // Manual browser check (Ctrl-K / Cmd-K, search-field trigger, focus return, mobile viewport) is not
 // automated here — it needs a running AppHost.
 #endregion
@@ -117,14 +118,18 @@ public class CommandPalette_Should_
       }
     }
 
-    // Every action is accounted for: shown, opted out with a reason, needs arguments, or Agent-only metadata.
-    foreach (ActionRosterEntry action in ActionRoster.All)
+    // The roster is complete: every *ActionSet.Action in web-spa that is a TimeWarp.Mediator.IAction is
+    // listed, so no action can leave the palette by being silently skipped by the generator.
+    HashSet<Type> listed = [.. ActionRoster.All.Select(static action => action.ActionType)];
+    Type[] declared = [.. typeof(ActionRoster).Assembly.GetTypes()
+      .Where(static type => type.Name == "Action"
+        && type.DeclaringType is { } actionSet
+        && actionSet.Name.EndsWith("ActionSet", StringComparison.Ordinal)
+        && typeof(TimeWarp.Mediator.IAction).IsAssignableFrom(type))];
+    declared.ShouldNotBeEmpty();
+    foreach (Type action in declared)
     {
-      bool shown = CommandPaletteRoster.IsPaletteCommand(action, catalog.GetValueOrDefault(action.ActionType));
-      bool excluded = CommandPaletteRoster.IsOptedOut(action)
-        || action.Execute is null
-        || catalog.GetValueOrDefault(action.ActionType)?.Visibility == ActionVisibility.Agent;
-      (shown ^ excluded).ShouldBeTrue($"{action.Name} must be exactly one of shown or excluded.");
+      listed.ShouldContain(action, $"{action.FullName} is an ActionSet action missing from ActionRoster.All.");
     }
 
     return Task.CompletedTask;
@@ -302,7 +307,7 @@ public class CommandPalette_Should_
       spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], [runTwice, runOnce, openPanel], catalog.Entries, [], "/");
 
     roster.Single(static row => row.Target == "Probe.RunTwice").Name.ShouldBe("Probe: Run twice");
-    roster.Single(static row => row.Target == "Probe.RunTwice").Description.ShouldBe("Run Probe.RunTwice");
+    roster.Single(static row => row.Target == "Probe.RunTwice").Description.ShouldBeEmpty();
     roster.Single(static row => row.Target == "Probe.RunOnce").Name.ShouldBe("Probe: Run once now");
     roster.Single(static row => row.Target == "Probe.RunOnce").Description.ShouldBe("Run the probe.");
     roster.Single(static row => row.Target == "AgentSurface.OpenAskPanel").Name.ShouldBe("Agent surface: Open ask panel");

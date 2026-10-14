@@ -93,7 +93,10 @@ When an action is something an agent should run, or the palette needs better cop
 tag it `[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers
 it, and `Visibility` (`Human`, `Agent`, `Both`). Its `DisplayName`, `Description`, `Visibility` and
 `Permissions` override the palette defaults (Human, no permissions, generated label); an
-Agent-only entry stays out of the palette. An action that takes a URL or path re-validates it in
+Agent-only entry stays out of the palette. A derived command with no
+`[CatalogAction(Permissions = …)]` is offered to every signed-in user, so an action behind a
+permission must carry `[CatalogAction(Permissions = …)]` or opt out with
+`[CommandPaletteOptOut("reason")]`. An action that takes a URL or path re-validates it in
 the handler (for example `LoginPage.GetSafeReturnUrl`): the page is not the only caller.
 
 Reference: `features/identity/sign-in-state/` (ceremonies, challenge navigation, post-sign-in

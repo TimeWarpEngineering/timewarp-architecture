@@ -262,7 +262,10 @@
                 @onclick=@(() => RunIndexAsync(rowIndex))>
               <span class="twe-palette__name">@row.Name</span>
               <span class="twe-palette__kind">@(row.Kind == CommandPaletteRowKind.Page ? "Page" : "Command")</span>
-              <span class="twe-palette__description">@row.Description</span>
+              @if (!string.IsNullOrEmpty(row.Description))
+              {
+                <span class="twe-palette__description">@row.Description</span>
+              }
             </li>
           }
         </ul>

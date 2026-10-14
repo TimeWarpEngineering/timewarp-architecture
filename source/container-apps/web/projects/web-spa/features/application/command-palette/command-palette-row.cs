@@ -21,7 +21,7 @@ public enum CommandPaletteRowKind
 }
 
 /// <param name="Name">Display name the user types against.</param>
-/// <param name="Description">One line shown under the name; also searched.</param>
+/// <param name="Description">One line shown under the name (omitted when empty); also searched.</param>
 /// <param name="Kind">Navigate or execute.</param>
 /// <param name="Target">Page URL for <see cref="CommandPaletteRowKind.Page"/>; roster name for
 /// <see cref="CommandPaletteRowKind.Command"/>.</param>
