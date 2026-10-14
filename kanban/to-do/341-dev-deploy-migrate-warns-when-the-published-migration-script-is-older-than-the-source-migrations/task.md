@@ -108,6 +108,10 @@ against a cluster).
 - Re-verified in the worktree: dev-cli-tests 226/226; `ganda repo audit` passes.
 - Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Workers must not touch the maintainer's kind cluster or any database.
@@ -118,3 +122,4 @@ against a cluster).
 - 2026-10-15: implemented under `ganda task work` (implement node); no cluster or database touched.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T18:49:25Z
 - Review oracle: review-claude (claude, model claude-opus-5-5), 1 round, accepted-exceptions — 2026-10-15
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T18:50:50Z
