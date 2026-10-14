@@ -1,0 +1,46 @@
+.twe-ask-settings {
+  display: inline-flex;
+  align-items: center;
+}
+
+.twe-ask-settings ::deep fluent-button {
+  color: var(--twe-ink-2);
+  cursor: pointer;
+}
+
+.twe-ask-settings ::deep fluent-menu-list {
+  min-width: 17rem;
+}
+
+.twe-ask-settings ::deep fluent-menu-item {
+  align-items: start;
+  padding-block: var(--twe-space-2);
+  cursor: pointer;
+}
+
+/* The status item is disabled so it cannot be chosen; keep it readable, not greyed out. */
+.twe-ask-settings ::deep fluent-menu-item[data-qa="AskAgentAccessStatus"] {
+  cursor: default;
+  opacity: 1;
+}
+
+.twe-ask-settings ::deep fluent-menu-item[data-status="Active"] > svg {
+  color: var(--twe-positive);
+}
+
+.twe-ask-settings__option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.twe-ask-settings__title {
+  color: var(--twe-ink);
+  font-weight: 600;
+}
+
+.twe-ask-settings__subtitle {
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-helper);
+  white-space: normal;
+}

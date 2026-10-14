@@ -27,6 +27,11 @@
 // menu and clicking Automatically edit switches the mode and closes it. With the keyboard, Enter
 // or Space opens it (aria-expanded true, focus in the menu), the arrows move, Enter chooses, and Esc closes
 // it without a change; focus returns to the pill. Not configured, there is no composer, so no pill.
+// Settings (task 356): the sliders button sits on the footer row left of send and is a menu trigger.
+// Enter opens it with the credential status first (disabled), Esc closes it and focus returns to
+// the button. The SPA is signed out here, so no credential is minted and the status is Absent.
+// Choosing Configure permissions closes the panel and routes to Agent links (or to Login with
+// Agent links as the return path, since the SPA is signed out).
 // @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
 // The SPA itself is signed out here, so it lists no types; Esc closes it, keeps the typed @,
 // and returns focus to the textarea. A mid-word @ (ada@example.com) opens nothing. The
@@ -231,6 +236,8 @@ public class AskSurface_Given_Wasm
         Path = ScreenshotPath("ctrl-k-ask-result.png"),
       });
       await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-result-page.png") });
+      // Last: Configure permissions navigates away and closes the panel.
+      await AssertSettingsMenuAsync(page);
     }
     else
     {
@@ -240,6 +247,7 @@ public class AskSurface_Given_Wasm
       string command = await page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync();
       command.ShouldBe(XaiChatDefaults.SetupCommand);
       (await page.Locator("[data-qa=AskEditMode]").CountAsync()).ShouldBe(0);
+      (await page.Locator("[data-qa=AskSettings]").CountAsync()).ShouldBe(0);
       await AssertIconButtonAsync(page, "AskNewConversation", "New conversation");
       await AssertIconButtonAsync(page, "AskExpand", "Expand");
       await AssertIconButtonAsync(page, "AgentAskClose", "Close");
@@ -510,6 +518,47 @@ public class AskSurface_Given_Wasm
     await page.Keyboard.PressAsync("Enter");
     await ModeShouldBeAsync(page, "AskBeforeEditing");
     await page.Locator("[data-qa=AgentAsk][data-built-mode=AskBeforeEditing]").WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 30_000,
+    });
+  }
+
+  private static async Task AssertSettingsMenuAsync(IPage page)
+  {
+    ILocator settings = page.Locator("[data-qa=AskSettings]");
+    LocatorBoundingBoxResult button = await BoxAsync(page, ".twe-agent-ask [data-qa=AskSettings]");
+    LocatorBoundingBoxResult send = await BoxAsync(page, ".twe-agent-ask .sc-ai-input__send");
+    (button.X + button.Width).ShouldBeLessThanOrEqualTo(send.X + 1);
+    ((double)(button.Y + (button.Height / 2))).ShouldBe(send.Y + (send.Height / 2), 6);
+    (await settings.GetAttributeAsync("aria-haspopup")).ShouldNotBeNull();
+    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Ask settings");
+    (await settings.GetAttributeAsync("data-status")).ShouldBe("Absent");
+
+    await settings.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await AttributeShouldBeAsync(settings, "aria-expanded", "true");
+    ILocator status = page.Locator("[data-qa=AskAgentAccessStatus]");
+    await status.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+    (await status.InnerTextAsync()).ShouldContain("No agent credential");
+    ILocator configure = page.Locator("[data-qa=AskConfigurePermissions]");
+    (await configure.IsVisibleAsync()).ShouldBeTrue();
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-settings-menu.png"),
+    });
+    await page.Keyboard.PressAsync("Escape");
+    await AttributeShouldBeAsync(settings, "aria-expanded", "false");
+    await ActiveShouldBeAsync(page, "AskSettings");
+
+    await settings.ClickAsync();
+    await configure.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+    await configure.ClickAsync();
+    await page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions
+    {
+      State = WaitForSelectorState.Detached,
+      Timeout = 30_000,
+    });
+    await page.WaitForURLAsync(url => url.Contains("AgentLinks", StringComparison.OrdinalIgnoreCase), new PageWaitForURLOptions
     {
       Timeout = 30_000,
     });

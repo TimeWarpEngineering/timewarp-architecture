@@ -329,14 +329,15 @@
 /* ---------- Composer ---------- */
 /* MessageInput renders one flex row: leading actions, .sc-ai-input__body, then send.
    Grid areas put the body on the first row and send on the footer row; the lead area stays
-   for leading actions (task 346's element pick).
+   for leading actions (task 346's element pick). The settings button (task 356) is a leading
+   action too, because TrailingActions replaces send; the trail area puts it just left of send.
    field-sizing grows the textarea with its content; min and max height cap it. */
 .twe-agent-ask ::deep .sc-ai-input {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   grid-template-areas:
-    "body body body"
-    "lead . send";
+    "body body body body"
+    "lead . trail send";
   align-items: center;
   width: 100%;
   gap: var(--twe-space-2);
@@ -383,6 +384,12 @@
   border-radius: 999px;
   border-color: var(--twe-rule);
   color: var(--twe-ink-2);
+}
+
+.twe-agent-ask__trail {
+  grid-area: trail;
+  display: flex;
+  align-items: center;
 }
 
 .twe-agent-ask ::deep .sc-ai-input > .sc-ai-input__send {

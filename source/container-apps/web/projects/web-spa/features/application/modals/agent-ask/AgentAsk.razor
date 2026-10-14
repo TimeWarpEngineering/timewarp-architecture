@@ -56,7 +56,10 @@
   state of CSS gradient orbs in the brand colors, a greeting, a tagline and the cards; and a
   footer pinned to the bottom with the notice, chips and a raised composer. The composer's lead slot
   holds Tag and AskEditModePill (task 355), the pill that shows and switches the edit mode, so the
-  edit mode is set only once the agent is built.
+  edit mode is set only once the agent is built. AskSettingsMenu (task 356), the sliders button that
+  shows the conversation credential's status and links to Agent links, also renders in the lead
+  slot: MessageInput's TrailingActions replaces the send button, so the composer grid places it in
+  a trail area just left of send instead. Its tab stop therefore comes before the textarea.
   The body fills the panel between header and footer and scrolls on its own. AskAnswerBar sits
   first in the footer, right under the latest answer: MessageList renders its ChildContent above
   the turns, so inside the list the bar would land at the top of the transcript. Every color is a
@@ -583,6 +586,10 @@
                   <AskEditModePill RestoreFocus="EditModeFocusPending"
                                    Chose="EditModeChose"
                                    FocusRestored="EditModeFocusRestored" />
+                </div>
+                @* TrailingActions would replace send; the grid moves this to the trail area. *@
+                <div class="twe-agent-ask__trail">
+                  <AskSettingsMenu />
                 </div>
               </LeadingActions>
             </Microsoft.AspNetCore.Components.AI.MessageInput>
