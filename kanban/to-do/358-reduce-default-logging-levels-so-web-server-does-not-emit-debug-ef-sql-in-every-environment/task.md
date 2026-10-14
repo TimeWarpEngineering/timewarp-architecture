@@ -181,3 +181,4 @@ dev publish compose
 - 2026-10-14: implemented under `ganda task work` (implement node); results above.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T07:33:17Z
 - 2026-10-14: review oracle (claude-opus-5-5), effort 2, 1 round, accepted-exceptions (M1 nit wontfix).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T07:34:29Z
