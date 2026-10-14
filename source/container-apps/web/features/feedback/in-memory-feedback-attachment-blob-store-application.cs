@@ -1,5 +1,5 @@
 #region Purpose
-// Process-local blob store for tests and hosts without Azure Blob Storage.
+// Process-local blob store for tests, mock mode, and hosts with neither Azure Blob Storage nor Postgres.
 #endregion
 
 #region Design

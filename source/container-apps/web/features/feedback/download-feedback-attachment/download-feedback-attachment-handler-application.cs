@@ -7,7 +7,9 @@
 // 404. After Link, the item owner or a principal with admin.feedback.read on either human
 // scheme may read (task 314: the read permission covers attachment download; admin.access
 // alone opens the Admin area, not other people's files). Agent-token is not a human scheme and is not consulted. The stream is the blob
-// object; the endpoint writes it with the safe headers.
+// object; the endpoint writes it with the safe headers. A row whose bytes are gone (written
+// before task 352 while bytes were in memory) is a 404 "attachment no longer available" for
+// a caller who passed the access check; the row is left as it is.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -74,7 +76,7 @@ public sealed class DownloadFeedbackAttachment
         .ConfigureAwait(false);
       if (content is null)
       {
-        return FeedbackProblems.NotFound();
+        return FeedbackProblems.AttachmentGone();
       }
 
       return new Response(content, attachment.ContentType, attachment.FileName);

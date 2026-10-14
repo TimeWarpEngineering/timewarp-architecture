@@ -328,6 +328,9 @@ after for its report.
   chart files over 5 MiB.
 - `-T` / `-i` with `PGPASSWORD` from the container's own environment is required: the image
   enforces password auth even on the in-container socket, and a piped session cannot prompt.
+- Feedback attachment bytes live in Azure Blob Storage when `FeedbackAttachments__ConnectionString`
+  is set, otherwise in Postgres (`feedback.feedback_attachment_bytes`, backed up with the
+  database), and in process memory only in apps generated without `postgres` (lost on restart).
 
 ## Ingress topology
 

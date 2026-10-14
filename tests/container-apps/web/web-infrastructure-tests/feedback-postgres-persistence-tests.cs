@@ -1,16 +1,28 @@
 namespace Feedback_Postgres_Persistence_;
 
+using Microsoft.Extensions.Logging.Abstractions;
+using TimeWarp.Architecture.Abstractions;
+using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Testing;
+using TimeWarp.Foundation.Types;
+using TimeWarp.Identity;
+using DownloadQuery = TimeWarp.Architecture.Features.Feedback.DownloadFeedbackAttachment.Query;
+using DownloadResponse = TimeWarp.Architecture.Features.Feedback.DownloadFeedbackAttachment.Response;
 using FeedbackListSortColumn = TimeWarp.Architecture.Features.Feedback.FeedbackListSortColumn;
+using RemoveCommand = TimeWarp.Architecture.Features.Feedback.RemoveFeedbackAttachment.Command;
+using UploadCommand = TimeWarp.Architecture.Features.Feedback.UploadFeedbackAttachment.Command;
+using UploadResponse = TimeWarp.Architecture.Features.Feedback.UploadFeedbackAttachment.Response;
 
 /// <summary>
 /// Live Postgres round-trip for a feedback filing, the attachment store's conditional link,
 /// unlink-by-item, and pending-expiry statements, and the triage paths of EfFeedbackStore (task 314):
 /// UpdateAsync inserting only new thread entries, a stale copy returning false, and a filtered,
-/// paged ListAllAsync, and its SQL sort before paging (task 327). Prefers an explicit connection string, else an
+/// paged ListAllAsync, and its SQL sort before paging (task 327). Attachment bytes in Postgres
+/// (task 352): an upload read back through a fresh context, remove deleting the bytes, and a row
+/// whose bytes are gone downloading as a 404, not a 500. Prefers an explicit connection string, else an
 /// ephemeral Testcontainers Postgres. When neither is available the test is skipped, same as Profile.
 /// </summary>
 public class Round_Trip
@@ -221,6 +233,141 @@ public class Round_Trip
     FeedbackItemId[] first = [.. (await store.ListAllAsync(twins)).Items.Take(2).Select(item => item.Id)];
     FeedbackItemId[] ascending = [.. (await store.ListAllAsync(twins with { SortDescending = false })).Items.Skip(2).Select(item => item.Id)];
     first.ShouldBe(ascending, "the id tiebreaker is ascending in both directions");
+  }
+
+  public static async Task Attachment_bytes_survive_a_fresh_context_and_go_with_remove()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using (PostgresDbContext setup = await CreateContextAsync())
+    {
+      await setup.Database.MigrateAsync();
+    }
+
+    PrincipalId owner = PrincipalId.New();
+    byte[] content = "durable attachment bytes"u8.ToArray();
+    Guid attachmentId;
+    string storageKey;
+    await using (PostgresDbContext uploadDb = await CreateContextAsync())
+    {
+      UploadFeedbackAttachment.Handler upload = new(
+        new StubCurrentPrincipalAccessor(owner),
+        new EfFeedbackAttachmentStore(uploadDb),
+        new EfFeedbackAttachmentBlobStore(uploadDb),
+        NullLogger<UploadFeedbackAttachment.Handler>.Instance);
+      UploadResponse response = (await upload.Handle(
+          new UploadCommand { FileName = "notes.txt", ContentType = "text/plain", Content = new MemoryStream(content) },
+          CancellationToken.None))
+        .Match(ok => ok, problem => throw new InvalidOperationException(problem.Detail));
+      attachmentId = response.AttachmentId;
+      storageKey = (await new EfFeedbackAttachmentStore(uploadDb).FindAsync(FeedbackAttachmentId.From(attachmentId)))!
+        .StorageKey;
+    }
+
+    await using (PostgresDbContext downloadDb = await CreateContextAsync())
+    {
+      DownloadResponse download = (await DownloadHandler(downloadDb, owner).Handle(
+          new DownloadQuery { AttachmentId = attachmentId },
+          CancellationToken.None))
+        .Match(ok => ok, problem => throw new InvalidOperationException(problem.Detail));
+      await using Stream stream = download.Content;
+      await using MemoryStream copy = new();
+      await stream.CopyToAsync(copy);
+      copy.ToArray().ShouldBe(content);
+      download.ContentType.ShouldBe("text/plain");
+    }
+
+    await using (PostgresDbContext removeDb = await CreateContextAsync())
+    {
+      RemoveFeedbackAttachment.Handler remove = new(
+        new StubCurrentPrincipalAccessor(owner),
+        new EfFeedbackAttachmentStore(removeDb),
+        new EfFeedbackAttachmentBlobStore(removeDb));
+      (await remove.Handle(new RemoveCommand { AttachmentId = attachmentId }, CancellationToken.None)).IsT0.ShouldBeTrue();
+    }
+
+    await using PostgresDbContext readDb = await CreateContextAsync();
+    (await new EfFeedbackAttachmentStore(readDb).FindAsync(FeedbackAttachmentId.From(attachmentId))).ShouldBeNull();
+    (await new EfFeedbackAttachmentBlobStore(readDb).OpenReadAsync(storageKey)).ShouldBeNull();
+    (await readDb.FeedbackAttachmentBytes.CountAsync(row => row.StorageKey == storageKey)).ShouldBe(0);
+  }
+
+  public static async Task Blob_store_put_replaces_and_delete_of_a_missing_key_is_a_no_op()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using PostgresDbContext db = await CreateContextAsync();
+    await db.Database.MigrateAsync();
+    EfFeedbackAttachmentBlobStore blobs = new(db);
+    string key = $"{Guid.NewGuid():N}/{Guid.NewGuid():N}";
+
+    await blobs.PutAsync(key, [1, 2, 3], "image/png");
+    await blobs.PutAsync(key, [4, 5], "image/png");
+    db.ChangeTracker.Entries().ShouldBeEmpty("put leaves no bytes tracked on a scoped context");
+
+    await using PostgresDbContext readDb = await CreateContextAsync();
+    await using (Stream? stream = await new EfFeedbackAttachmentBlobStore(readDb).OpenReadAsync(key))
+    {
+      stream.ShouldNotBeNull();
+      await using MemoryStream copy = new();
+      await stream.CopyToAsync(copy);
+      copy.ToArray().ShouldBe(new byte[] { 4, 5 });
+    }
+
+    await blobs.DeleteAsync(key);
+    await blobs.DeleteAsync(key);
+    (await new EfFeedbackAttachmentBlobStore(readDb).OpenReadAsync(key)).ShouldBeNull();
+  }
+
+  public static async Task Download_of_a_row_without_bytes_is_a_404_no_longer_available()
+  {
+    if (await SkipIfUnavailableAsync()) return;
+
+    await using PostgresDbContext db = await CreateContextAsync();
+    await db.Database.MigrateAsync();
+    PrincipalId owner = PrincipalId.New();
+    // A row written while bytes were in memory: the host restarted and the bytes are gone.
+    var orphan = FeedbackAttachment.Create(owner.Value, "pasted.png", "image/png", 10, DateTimeOffset.UtcNow);
+    await new EfFeedbackAttachmentStore(db).AddAsync(orphan);
+
+    SharedProblemDetails problem = (await DownloadHandler(db, owner).Handle(
+        new DownloadQuery { AttachmentId = orphan.Id.Value },
+        CancellationToken.None))
+      .Match(_ => throw new InvalidOperationException("Expected a problem"), problem => problem);
+    problem.Status.ShouldBe(404);
+    problem.Title.ShouldBe("Attachment no longer available");
+    (await new EfFeedbackAttachmentStore(db).FindAsync(orphan.Id)).ShouldNotBeNull("the orphan row is left as it is");
+  }
+
+  private static DownloadFeedbackAttachment.Handler DownloadHandler(PostgresDbContext db, PrincipalId principal) =>
+    new(
+      new StubCurrentPrincipalAccessor(principal),
+      new EfFeedbackAttachmentStore(db),
+      new EfFeedbackAttachmentBlobStore(db),
+      new NoPermissions());
+
+  private sealed class StubCurrentPrincipalAccessor : ICurrentPrincipalAccessor
+  {
+    private readonly PrincipalId PrincipalId;
+
+    public StubCurrentPrincipalAccessor(PrincipalId principalId) => PrincipalId = principalId;
+
+    public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
+      Task.FromResult<PrincipalId?>(PrincipalId);
+  }
+
+  private sealed class NoPermissions : IPermissionEvaluator
+  {
+    public Task<bool> HasPermissionAsync(
+      PrincipalId principalId,
+      string? authenticationScheme,
+      string permissionId,
+      CancellationToken cancellationToken = default) => Task.FromResult(false);
+
+    public Task<IReadOnlyList<string>> GetPermissionsAsync(
+      PrincipalId principalId,
+      string? authenticationScheme,
+      CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<string>>([]);
   }
 
   private static async Task<bool> SkipIfUnavailableAsync()
