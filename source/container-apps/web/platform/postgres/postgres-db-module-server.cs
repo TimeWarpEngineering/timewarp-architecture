@@ -25,9 +25,9 @@
 // via RunDatabaseUpdateOnStart (task 147-007). There is NO wait edge between web-server and the
 // migration resource (task 155 — WaitFor deadlocked dashboard restarts, WaitForCompletion broke
 // DCP under Aspire.Hosting.Testing; re-confirmed on Aspire 13.6 by task 270). On a fresh volume
-// the boot seed waits instead: this module registers EfSiteSettingsTableProbe, which
-// SiteSettingsSeedHostedService asks before its first EF read, and that seed runs before Kestrel
-// starts. This module never EnsureCreated / Migrate at startup.
+// or after a new migration the boot seed waits instead: this module registers
+// EfPendingMigrationsProbe (task 363), which SiteSettingsSeedHostedService asks before its first
+// EF read, and that seed runs before Kestrel starts. This module never EnsureCreated / Migrate at startup.
 // Tests call Database.Migrate() against ephemeral DBs.
 // The connection string is read once and reused for both Configure<PostgresDbOptions> (the
 // environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
@@ -53,7 +53,6 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
 using TimeWarp.Architecture.Features.AgentLinks.Application;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
-using TimeWarp.Architecture.Features.Identity.Application;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Application;
 using TimeWarp.Architecture.Features.Feedback.Application;
@@ -121,8 +120,8 @@ public sealed partial class PostgresDbModule : IModule
     // Task 219-006: durable site settings (same connection gate).
     serviceCollection.RemoveAll<ISiteSettingsStore>();
     serviceCollection.AddScoped<ISiteSettingsStore, EfSiteSettingsStore>();
-    // Task 270: lets the boot seed wait for web-migrations without a failing (Error-logging) query.
-    serviceCollection.AddScoped<ISiteSettingsTableProbe, EfSiteSettingsTableProbe>();
+    // Task 363: lets the boot seed wait for web-migrations without a failing (Error-logging) query.
+    serviceCollection.AddScoped<IPendingMigrationsProbe, EfPendingMigrationsProbe>();
 
     IHealthChecksBuilder healthChecksBuilder = serviceCollection.AddHealthChecks();
     healthChecksBuilder.AddDbContextCheck<PostgresDbContext>
