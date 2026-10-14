@@ -6,12 +6,20 @@ name: CI/CD
 #   - template-smoke: pack → install → generate → build (former template-smoke.yml)
 # Path semantics from the former separate workflows are preserved via detect-paths
 # + job-level if conditions (not separate workflow files).
+#
+# Triggers (task 359): push and pull_request cover master and feature/** so stacked child PRs
+# (ganda task work-set merges each child onto its feature branch) get real checks. `edited` is
+# not a pull_request type: a description edit changes no code. A base retarget also fires
+# `edited`, so retargeting no longer re-runs CI; work-set opens children against the feature
+# branch directly, and after a manual retarget push a commit or close/reopen the PR.
+# Publishing is release-only: push/pull_request run `dev workflow` in Pr/Merge mode (build,
+# test, `dev publish` file outputs) with no NuGet login, pack, or push on any branch.
 
 on:
   push:
     branches:
       - master
-      - feature/overnight
+      - 'feature/**'
     paths:
       - 'source/**'
       - 'tests/**'
@@ -33,10 +41,9 @@ on:
       - opened
       - synchronize
       - reopened
-      - edited
     branches:
       - master
-      - feature/overnight
+      - 'feature/**'
     paths:
       - 'source/**'
       - 'tests/**'
