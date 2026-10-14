@@ -34,7 +34,9 @@
 // token, and the next turn's instructions must name the sent tag. A probe element marked
 // data-ask-tag-private or aria-hidden is injected into the page body and must never be a Tab or
 // hover candidate. Tab reaches the row and Enter chooses it; Enter on the panel's Cancel button
-// (focus in the panel) cancels, because the panel keeps its native keys.
+// (focus in the panel) cancels, because the panel keeps its native keys. Task 351: the "picking"
+// status line appears only once the browser has armed the pick, so every step that waits for it
+// may press a key or click at once.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -620,9 +622,9 @@ public class AskSignIn_Given_Wasm
     (await chip.CountAsync()).ShouldBe(0);
 
     await tag.ClickAsync();
+    // The status line renders only once ask-tag.ts has armed the pick (task 351), so it is the
+    // readiness signal: the next key or click is caught.
     await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-    // The status line renders before ask-tag.ts attaches its key listener; the outline marks it live.
-    await outline.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 30_000 });
     await page.Keyboard.PressAsync("Escape");
     await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
     (await outline.CountAsync()).ShouldBe(0);
