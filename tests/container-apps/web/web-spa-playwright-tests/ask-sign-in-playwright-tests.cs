@@ -596,6 +596,8 @@ public class AskSignIn_Given_Wasm
 
     await tag.ClickAsync();
     await picking.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    // The status line renders before ask-tag.ts attaches its key listener; the outline marks it live.
+    await outline.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Attached, Timeout = 30_000 });
     await page.Keyboard.PressAsync("Escape");
     await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
     (await outline.CountAsync()).ShouldBe(0);

@@ -108,8 +108,7 @@
   max-width: none;
 }
 
-.twe-agent-ask__header ::deep fluent-button,
-.twe-agent-ask__edit ::deep fluent-button {
+.twe-agent-ask__header ::deep fluent-button {
   cursor: pointer;
 }
 
@@ -175,7 +174,7 @@
 /* ---------- Body: dotted canvas between header and footer ---------- */
 /* The library's sc-ai-chat-page class is a full-page shell (height: 100vh). Inside the panel that
    pushed the title and the first messages out of view once a reply arrived. It fills the space
-   between header and edit row instead, and the body scrolls inside it. */
+   below the header instead, and the body scrolls inside it. */
 .twe-agent-ask ::deep .sc-ai-chat-page {
   flex: 1 1 auto;
   min-height: 0;
@@ -377,6 +376,7 @@
   grid-area: lead;
   display: flex;
   align-items: center;
+  gap: var(--twe-space-2);
 }
 
 .twe-agent-ask__lead ::deep fluent-button {
@@ -391,48 +391,4 @@
   align-self: center;
   width: 2rem;
   height: 2rem;
-}
-
-/* ---------- Edit behavior: a quiet row under the composer ---------- */
-.twe-agent-ask__edit {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--twe-space-2);
-  padding: var(--twe-space-2) var(--twe-ask-inset);
-  border-top: 1px solid var(--twe-rule);
-  background: var(--twe-paper);
-}
-
-.twe-agent-ask__edit-label {
-  margin: 0;
-  color: var(--twe-ink-2);
-  font-size: var(--twe-text-helper);
-}
-
-.twe-agent-ask__segments {
-  display: flex;
-  flex: 1 1 16rem;
-  flex-wrap: nowrap;
-  max-width: 20rem;
-}
-
-.twe-agent-ask__segments ::deep > fluent-button {
-  flex: 1 1 0;
-  min-width: 0;
-  justify-content: center;
-  border-radius: 0;
-  font-size: var(--twe-text-helper);
-}
-
-.twe-agent-ask__segments ::deep > fluent-button:first-child {
-  border-start-start-radius: var(--twe-radius-sm);
-  border-end-start-radius: var(--twe-radius-sm);
-}
-
-.twe-agent-ask__segments ::deep > fluent-button:last-child {
-  border-start-end-radius: var(--twe-radius-sm);
-  border-end-end-radius: var(--twe-radius-sm);
 }

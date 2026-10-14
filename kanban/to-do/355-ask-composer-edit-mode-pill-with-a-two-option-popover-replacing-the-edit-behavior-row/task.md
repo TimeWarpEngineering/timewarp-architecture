@@ -31,11 +31,62 @@ label and record it.
 
 ## Checklist
 
-- [ ] Pill + popover replacing the segmented row; label decision recorded
-- [ ] Keyboard + ARIA; existing action reused
-- [ ] Tests (component + Playwright)
-- [ ] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Pill + popover replacing the segmented row; label decision recorded
+- [x] Keyboard + ARIA; existing action reused
+- [x] Tests (component + Playwright)
+- [x] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-14 (cockpit, per Steve's Cloudflare screenshot)
+- 2026-10-14 implementer (ganda task work): pill + menu built, tests and gates green.
+
+## Results
+
+**Label decision:** the pill shows the current mode, not a fixed word: ✎ **Ask first** (Edit icon)
+or ⏩ **Auto-edit** (FastForward icon). Its accessible name and title are "Edit mode: Ask before
+editing" / "Edit mode: Automatically edit". "Ask" was rejected because it reads as the panel's name.
+Recorded in the Design region of `AskEditModePill.razor`.
+
+- New `AskEditModePill.razor` (+ scoped `.razor.css`) in the composer lead slot beside Tag. It is a
+  FluentUI v5 `FluentMenu` with the pill as the trigger slot and two `MenuItemRole.Radio` items
+  (icon, title, subtitle; the current mode is checked). The fluent-menu web component supplies
+  `aria-haspopup` / `aria-expanded`, Enter/Space to open, the arrow keys to move, Enter to choose,
+  and Esc to close with focus back on the pill.
+- Choosing a mode dispatches the existing `AgentSurfaceState.SetEditMode` (radio items raise
+  `CheckedChanged`, not `OnClick`). No behaviour change.
+- Focus after a choice: a mode change rebuilds the agent, and the composer (keyed on the
+  conversation) mounts a new pill. The pill raises `Chose`, and AgentAsk passes `RestoreFocus` to
+  the next pill, which focuses itself once with `ElementReference.FocusAsync` (not flagged by TWA0026).
+- The old "Edit behavior" footer row and its CSS are gone. The pill exists only when the composer
+  does, so the not-configured / sign-in / error states no longer show an edit-mode control (they
+  have no agent to edit with).
+- `data-qa`: `AskEditMode` on the pill (with `data-mode` = current mode); options `AskBeforeEditing`
+  and `AskAutomaticallyEdit`.
+- Tests: `ask-edit-mode-pill-tests.cs` (HtmlRenderer: default Ask first + both options; after
+  SetEditMode the label, aria-label, data-mode and checked item follow). `AskSurface_Given_Wasm`
+  now covers mouse switching (menu screenshot `ask-edit-mode-menu.png`), keyboard Enter/Space/arrows/
+  Enter/Esc with focus returning to the pill, the pill sitting on Tag's row, and the old row gone.
+- Boyscout: `AskSignIn_Given_Wasm` pressed Esc as soon as the "Picking" status rendered, before
+  `ask-tag.ts` attached its key listener. The extra menu render widened that race, so the test
+  failed with the pill and passed without it. It now waits for the pick outline first.
+- Gates: `dev build` 0 warnings / 0 errors; `dev test` all projects passed; `ganda repo audit` passed.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dev build
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -- --filter-class AskEditModePill_Should_
+cd ../web-spa-playwright-tests && dotnet test -- --filter-class AskSurface_Given_Wasm
+dotnet test -- --filter-class AskSignIn_Given_Wasm
+```
+
+Manual: `dev run`, open Ask (Ctrl-K → Ask), click the "Ask first" pill next to Tag, choose
+"Automatically edit"; then Tab to the pill, Enter, ↓, Enter; Esc closes it.
+
+**Expect:** build 0/0; `AskEditModePill_Should_` 2/2; `AskSurface_Given_Wasm` 1/1; `AskSignIn_Given_Wasm`
+2/2. In the app, no "Edit behavior" row under the composer; the pill opens a menu with two options
+(icon, title, subtitle, a check on the current one); choosing switches the pill to "Auto-edit"
+(the panel root's `data-built-mode` becomes `AutomaticallyEdit`) and focus is back on the pill.
