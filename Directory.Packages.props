@@ -9,10 +9,10 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0-beta.80" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0-beta.80" />
-    <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="3.0.0" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="3.0.0" />
+    <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
+    <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
     <PackageVersion Include="TimeWarp.Build.Tasks" Version="1.0.0" />
     <PackageVersion Include="TimeWarp.Components" Version="1.0.0-beta.2" />
@@ -182,8 +182,10 @@
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.10.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />

@@ -5,8 +5,9 @@
 #region Design
 // Registered only when Mail:Sender is "Development" (MailModule). No network and no secrets.
 // Logging: To and Subject at Information, the body only at Debug so feedback text stays out of
-// default telemetry. A non-empty Mail:PickupDirectory is created if needed and receives one .eml
-// file per send with a fixed "From: no-reply@localhost" line. IO failures propagate so a
+// default telemetry. To is [PersonalData] and Body [SensitiveData] (task 344), so service-defaults
+// redaction erases both before any provider or OTel export; read the pickup file for the real
+// values. A non-empty Mail:PickupDirectory is created if needed and receives one .eml file per send with a fixed "From: no-reply@localhost" line. IO failures propagate so a
 // misconfigured pickup is visible; the feedback handler turns them into EmailCopySent=false.
 // A production provider replaces this registration; it needs a host, a credential, and a from-address.
 #endregion
@@ -14,26 +15,11 @@
 namespace TimeWarp.Architecture.Mail;
 
 using Microsoft.Extensions.Logging;
+using TimeWarp.Architecture.Compliance;
 
-public sealed class DevelopmentEmailSender : IEmailSender
+public sealed partial class DevelopmentEmailSender : IEmailSender
 {
   private const string FromAddress = "no-reply@localhost";
-
-  private static readonly Action<ILogger, string, string, Exception?> LogMail =
-    LoggerMessage.Define<string, string>
-    (
-      LogLevel.Information,
-      new EventId(1, nameof(LogMail)),
-      "Development mail to {To} subject {Subject}"
-    );
-
-  private static readonly Action<ILogger, string, Exception?> LogMailBody =
-    LoggerMessage.Define<string>
-    (
-      LogLevel.Debug,
-      new EventId(2, nameof(LogMailBody)),
-      "Development mail body {Body}"
-    );
 
   private readonly ILogger<DevelopmentEmailSender> Logger;
   private readonly MailOptions Options;
@@ -48,8 +34,8 @@ public sealed class DevelopmentEmailSender : IEmailSender
   {
     ArgumentNullException.ThrowIfNull(message);
     cancellationToken.ThrowIfCancellationRequested();
-    LogMail(Logger, message.To, message.Subject, null);
-    LogMailBody(Logger, message.Body, null);
+    LogMail(Logger, message.To, message.Subject);
+    LogMailBody(Logger, message.Body);
 
     if (string.IsNullOrWhiteSpace(Options.PickupDirectory))
     {
@@ -70,4 +56,10 @@ public sealed class DevelopmentEmailSender : IEmailSender
       """;
     await File.WriteAllTextAsync(path, content, cancellationToken).ConfigureAwait(false);
   }
+
+  [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Development mail to {To} subject {Subject}")]
+  private static partial void LogMail(ILogger logger, [PersonalData] string to, string subject);
+
+  [LoggerMessage(EventId = 2, Level = LogLevel.Debug, Message = "Development mail body {Body}")]
+  private static partial void LogMailBody(ILogger logger, [SensitiveData] string body);
 }
