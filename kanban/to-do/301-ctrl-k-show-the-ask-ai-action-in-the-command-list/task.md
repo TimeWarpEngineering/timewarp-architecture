@@ -84,13 +84,32 @@ separate hand-written opt-in step: any action without the attribute is invisible
 - **Acceptance.** Full ganda walk via `ganda task work 301 --yes`, CI green, merge only via
   `ganda pr merge` after Steven approves.
 
+## Amendment (2026-10-14, cockpit per Steve): coordinate with task 361 (assistant name)
+
+301 and 361 run as one stack, **301 → 361** (then 352–354). 361 makes every assistant label come
+from a runtime, admin-set `SiteSettings.AssistantName` (default **Akili**). So:
+
+- **Runtime display-name override.** The derived catalog/palette row must support a **runtime**
+  display-name (and optionally description/icon) override per action, in addition to the
+  compile-time convention and optional `[CatalogAction]` metadata. Shape suggestion: a small
+  `IActionDisplayOverride` / provider the roster consults per entry. Record the shape.
+- **No hard-coded "Ask AI".** Do **not** bake "Ask AI" (or any literal) into the convention or
+  metadata for `AgentSurfaceState.OpenAskPanel`. The convention default (humanised "Open Ask
+  Panel" or similar) is fine as a placeholder. 361 supplies "Ask {AssistantName}" through the
+  override.
+- Requirements change accordingly: "Ask AI appears with no per-action attribute" now reads
+  "**the OpenAskPanel row appears** with no per-action attribute". The Playwright check types
+  "ask", which matches either name.
+- The removal of the footer "Ask" button stays in 301. The top-bar button label is 361's.
+
 ## Checklist
 
 - [ ] Catalog/roster derived from TimeWarp.State action registration; no required opt-in attribute
 - [ ] Convention-based display name/owner/icon; optional metadata override
 - [ ] Explicit, justified opt-out for internal actions, guarded by a test
 - [ ] Policy/permission, visibility, parameterless and signed-in filtering kept; signed-out decision recorded
-- [ ] "Ask AI" row appears with no per-action attribute; runs and opens the panel
+- [ ] OpenAskPanel row appears with no per-action attribute; runs and opens the panel
+- [ ] Runtime display-name override supported by the derived catalog (for 361)
 - [ ] Footer "Ask" button removed
 - [ ] Pinned command-set test replaced by derivation assertion
 - [ ] Real-browser (Playwright) test: Ctrl-K, type "ask", Enter, palette closes and `[data-qa=AgentAsk]` is open
@@ -113,3 +132,4 @@ separate hand-written opt-in step: any action without the attribute is invisible
 ## Session
 
 - Created: 309324 (2026-10-11 ICT)
+- 2026-10-14: amended for 361 (runtime display-name override; no hard-coded "Ask AI"). Stacked 301 → 361 → 352–354.
