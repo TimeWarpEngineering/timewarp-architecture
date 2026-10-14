@@ -40,6 +40,7 @@ text** and then the same image again from the separate attachments list.
 - Created: 2026-10-14 (cockpit, from Steve's screenshot)
 - 2026-10-14 implementer (ganda task work): renderer, shared component, both views, tests, gates.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T13:17:44Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T13:20:19Z
 
 ## Results
 
