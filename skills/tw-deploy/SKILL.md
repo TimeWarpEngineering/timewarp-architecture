@@ -256,6 +256,12 @@ extend the suite when you add a new publish-mode branch.
 | Aspire dashboard in the deployment | a second, unauthenticated UI and port | `WithDashboard(false)` on every environment — point `OTEL_EXPORTER_OTLP_ENDPOINT` at your own collector. ACA deploys it as a public `dotNetComponents` resource unless disabled |
 | Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: only the ingress container app has `external: true`; web, api and grpc are internal |
 | Secret literals | literals end up in images, repos and logs | secrets are parameters (below) |
+| Debug/Trace logging, EF Core SQL, sensitive-data logging | per-query SQL and parameter values fill disks and leak data | every host's base `appsettings.json` is `Default: Information` with EF Core (and `.Database.Command`), HTTP client, Polly, YARP and gRPC at Warning; only `appsettings.Development.json` adds Debug, for the app's own namespaces. `EnableSensitiveDataLogging` is gated on `IsDevelopment()`. A guard test checks the committed files; the publish suites reject any `Logging__LogLevel__*` at Debug/Trace |
+
+To see EF Core SQL locally, opt in per machine instead of committing a level:
+`dotnet user-secrets set "Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command" "Information"`
+in the web-server project, or set `Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Information`
+in the environment. Remove it when done; `dev run` logs grow without bound.
 
 Rules for new code:
 
