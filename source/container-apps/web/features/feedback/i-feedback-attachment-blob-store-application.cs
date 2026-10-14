@@ -3,10 +3,12 @@
 #endregion
 
 #region Design
-// Azure Blob Storage is the real backing store when FeedbackAttachments:ConnectionString
-// is set. Otherwise the in-memory implementation is the process store for tests, mock
-// mode, and hosts that have not configured a container. Keys are opaque strings produced
-// by FeedbackAttachment.Create. OpenRead returns a stream the caller owns.
+// Three implementations, selected Azure, then Postgres, then in-memory (task 352): Azure Blob
+// Storage when FeedbackAttachments:ConnectionString is set; Postgres (a bytea table beside the
+// attachment rows) when only a database is configured; otherwise the in-memory store for tests,
+// mock mode, and apps generated without postgres. Keys are opaque strings produced by
+// FeedbackAttachment.Create. OpenRead returns a stream the caller owns, or null when the bytes
+// are gone; the download handler reports that as a 404, never a 500.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;

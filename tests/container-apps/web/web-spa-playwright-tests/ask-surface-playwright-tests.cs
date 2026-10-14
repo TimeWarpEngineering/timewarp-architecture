@@ -1,5 +1,5 @@
 #region Purpose
-// Browser proof that Ctrl-K Ask renders in WebAssembly, with and without an xAI key.
+// Browser proof that Ask renders in WebAssembly, with and without an xAI key.
 #endregion
 
 #region Design
@@ -7,8 +7,8 @@
 // prerender off) and strips secrets.json. PostConfigure clears any machine XAI__ApiKey.
 // The configured pass sets UseFakeUpstream so no request leaves the process. The mock
 // principal header lets the relay's identity-session policy succeed. Opening Ctrl-K dispatches
-// ApplicationState.SetActiveModal through StateTransactionBehavior, so a visible Ask proves a
-// store action ran in WASM. Console text is
+// ApplicationState.SetActiveModal through StateTransactionBehavior, so a visible palette proves a
+// store action ran in WASM. The SPA is signed out, so Ask opens from the app-bar button. Console text is
 // checked for the TimeWarp.State SemaphoreSlim.Wait failure noted on 2026-10-09.
 // The configured pass also proves the review-round-1 behaviours a fake upstream can reach: the
 // transcript survives an edit-mode rebuild and Close plus reopen; Close resets the mode to Ask
@@ -139,15 +139,15 @@ public class AskSurface_Given_Wasm
     await page.Locator("[data-qa=AskAiButton]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
 
     // The palette listener is attached on the shell's first interactive render, after the app bar
-    // is already in the document. Retry Ctrl-K until Ask is visible.
-    ILocator ask = page.Locator("[data-qa=CommandPaletteAsk]");
+    // is already in the document. Retry Ctrl-K until the palette input is visible.
+    ILocator paletteInput = page.Locator("[data-qa=CommandPaletteInput]");
     bool opened = false;
     for (int attempt = 0; attempt < 15 && !opened; attempt++)
     {
       await page.Keyboard.PressAsync("Control+k");
       try
       {
-        await ask.WaitForAsync(new LocatorWaitForOptions
+        await paletteInput.WaitForAsync(new LocatorWaitForOptions
         {
           Timeout = 2_000,
           State = WaitForSelectorState.Visible,
@@ -160,17 +160,22 @@ public class AskSurface_Given_Wasm
       }
     }
 
-    opened.ShouldBeTrue("Ctrl-K did not show Ask");
-    await ask.ScreenshotAsync(new LocatorScreenshotOptions
-    {
-      Path = ScreenshotPath(useFakeUpstream ? "ctrl-k-ask-configured.png" : "ctrl-k-ask.png"),
-    });
+    opened.ShouldBeTrue("Ctrl-K did not open the palette");
+    (await page.Locator("[data-qa=CommandPaletteAsk]").CountAsync()).ShouldBe(0, "The footer Ask button was replaced by the derived row (task 301)");
     await page.ScreenshotAsync(new PageScreenshotOptions
     {
       Path = ScreenshotPath(useFakeUpstream ? "ctrl-k-palette-configured-page.png" : "ctrl-k-palette-page.png"),
     });
+    await page.Keyboard.PressAsync("Escape");
+    await page.Locator("[data-qa=CommandPalette]").WaitForAsync(new LocatorWaitForOptions
+    {
+      Timeout = 30_000,
+      State = WaitForSelectorState.Hidden,
+    });
 
-    await ask.ClickAsync();
+    // Signed out, the palette lists no commands (task 301 kept the signed-in-only rule), so the
+    // app-bar button opens Ask here; AskSignIn_Given_Wasm proves the Ctrl-K row signed in.
+    await page.Locator("[data-qa=AskAiButton]").ClickAsync();
     if (useFakeUpstream)
     {
       ILocator input = page.Locator(".sc-ai-input__textarea");
@@ -576,7 +581,7 @@ public class AskSurface_Given_Wasm
     (button.X + button.Width).ShouldBeLessThanOrEqualTo(send.X + 1);
     ((double)(button.Y + (button.Height / 2))).ShouldBe(send.Y + (send.Height / 2), 6);
     (await settings.GetAttributeAsync("aria-haspopup")).ShouldNotBeNull();
-    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Ask settings");
+    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Akili settings");
     (await settings.GetAttributeAsync("data-status")).ShouldBe("Absent");
 
     await settings.FocusAsync();

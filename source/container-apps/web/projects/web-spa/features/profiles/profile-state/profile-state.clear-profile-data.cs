@@ -14,6 +14,7 @@ partial class ProfileState
 
   public static class ClearProfileDataActionSet
   {
+    [CommandPaletteOptOut("State reset run by sign-out and session changes.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

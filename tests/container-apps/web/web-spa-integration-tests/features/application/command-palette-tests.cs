@@ -1,7 +1,8 @@
 #region Purpose
-// Ctrl-K command palette (task 239-003): roster from PageRegistry + IActionCatalog, permission
-// filter, ranking order, keyboard highlight, Enter navigating / executing, and the overlay open/close render;
-// plus the signed-out Sign in row (task 259) and authored [CatalogAction(DisplayName)] labels with the generated fallback (task 268).
+// Ctrl-K command palette (task 239-003): roster from PageRegistry + the generated ActionRoster (task 301),
+// permission filter, ranking order, keyboard highlight, Enter navigating / executing, and the overlay open/close render;
+// plus the signed-out Sign in row (task 259), authored [CatalogAction(DisplayName)] labels with the generated
+// fallback (task 268), and derived commands with explicit [CommandPaletteOptOut] and runtime label overrides (task 301).
 #endregion
 
 #region Design
@@ -14,8 +15,12 @@
 // Highlighted, then CommandPaletteRunner — what Enter does): there is no bUnit and the JS hotkey
 // needs a browser. Open/close is a static HtmlRenderer render of ModalController with and without
 // ActiveModalId == CommandPalette.ModalId. "Enter executes a parameterless command" runs a probe
-// ActionCatalogEntry (public ctor) through the runner so the test observes exactly one zero-argument
-// Execute; the real roster's parameterless commands are pinned by the roster test.
+// ActionRosterEntry through the runner so the test observes exactly one Execute.
+// The command set is not a hand list (task 301): it is asserted against ActionRoster.All — every
+// action that is not opted out, has no required parameter and is Human-visible is a row, and every
+// other is absent. The guard test fails on an opt-out without a reason, on an action that is both
+// opted out and authored as a Human [CatalogAction] (two contradicting decisions), and on any
+// *ActionSet.Action in web-spa (found by test-only reflection) that ActionRoster.All does not list.
 // Manual browser check (Ctrl-K / Cmd-K, search-field trigger, focus return, mobile viewport) is not
 // automated here — it needs a running AppHost.
 #endregion
@@ -55,9 +60,21 @@ public class CommandPalette_Should_
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Page).Select(static row => row.Target)
       .ShouldBe(PageRegistry.All.Select(static page => page.Url), ignoreOrder: true);
 
+    // Derived, not hand-listed (task 301): every eligible roster action is a row, every other is absent.
+    Dictionary<Type, ActionCatalogEntry> catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>().Entries
+      .ToDictionary(static entry => entry.ActionType);
+    string[] expected =
+    [
+      .. ActionRoster.All
+        .Where(action => string.IsNullOrWhiteSpace(action.OptOutReason)
+          && action.RequiredParameterCount == 0
+          && (catalog.GetValueOrDefault(action.ActionType)?.Visibility ?? ActionVisibility.Human).HasFlag(ActionVisibility.Human))
+        .Select(static action => action.Name)
+    ];
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Command).Select(static row => row.Target)
-      .OrderBy(static name => name, StringComparer.Ordinal)
-      .ShouldBe(["Credentials.AddExistingPasskey", "Credentials.AddPasskey", "Credentials.LinkMicrosoft365", "Feedback.ListMyFeedback", "Profile.SignOut"]);
+      .ShouldBe(expected, ignoreOrder: true);
+    expected.ShouldContain("AgentSurface.OpenAskPanel");
+    expected.ShouldContain("Profile.SignOut");
 
     // Task 260: the Settings "Link Microsoft 365" button is a palette command too; task 268: its
     // label is the authored [CatalogAction(DisplayName)], so the brand casing survives.
@@ -78,6 +95,86 @@ public class CommandPalette_Should_
     palette.HighlightedIndex.ShouldBe(0);
   }
 
+  public static Task Opt_Out_Only_Explicitly_With_A_Reason()
+  {
+    using PaletteSpa spa = new(Everything);
+    Dictionary<Type, ActionCatalogEntry> catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>().Entries
+      .ToDictionary(static entry => entry.ActionType);
+
+    ActionRoster.All.ShouldNotBeEmpty();
+    foreach (ActionRosterEntry action in ActionRoster.All)
+    {
+      if (action.OptOutReason is null)
+      {
+        continue;
+      }
+
+      action.OptOutReason.ShouldNotBeNullOrWhiteSpace($"{action.Name}: [CommandPaletteOptOut] needs a reason.");
+      ActionCatalogEntry? metadata = catalog.GetValueOrDefault(action.ActionType);
+      if (metadata is not null)
+      {
+        metadata.Visibility.HasFlag(ActionVisibility.Human)
+          .ShouldBeFalse($"{action.Name} is a Human [CatalogAction] and also opted out of the palette.");
+      }
+    }
+
+    // The roster is complete: every *ActionSet.Action in web-spa that is a TimeWarp.Mediator.IAction is
+    // listed, so no action can leave the palette by being silently skipped by the generator.
+    HashSet<Type> listed = [.. ActionRoster.All.Select(static action => action.ActionType)];
+    Type[] declared = [.. typeof(ActionRoster).Assembly.GetTypes()
+      .Where(static type => type.Name == "Action"
+        && type.DeclaringType is { } actionSet
+        && actionSet.Name.EndsWith("ActionSet", StringComparison.Ordinal)
+        && typeof(TimeWarp.Mediator.IAction).IsAssignableFrom(type))];
+    declared.ShouldNotBeEmpty();
+    foreach (Type action in declared)
+    {
+      listed.ShouldContain(action, $"{action.FullName} is an ActionSet action missing from ActionRoster.All.");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static async Task List_Open_Ask_Panel_With_No_Attribute_And_Open_The_Panel()
+  {
+    using PaletteSpa spa = new(Everything);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ActionRosterEntry openAsk = ActionRoster.All.Single(static action => action.Name == "AgentSurface.OpenAskPanel");
+    openAsk.OptOutReason.ShouldBeNull();
+    scope.ServiceProvider.GetRequiredService<IActionCatalog>().Entries
+      .ShouldNotContain(static entry => entry.ActionType == typeof(AgentSurfaceState.OpenAskPanelActionSet.Action));
+
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action("ask"));
+    CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
+    highlighted.Target.ShouldBe("AgentSurface.OpenAskPanel");
+    highlighted.Name.ShouldBe("Agent surface: Open ask panel");
+
+    await CommandPaletteRunner.RunAsync(highlighted, scope.Store, ActionRoster.All, CancellationToken.None);
+
+    scope.Store.GetState<AgentSurfaceState>().IsPanelOpen.ShouldBeTrue();
+  }
+
+  public static async Task Apply_A_Runtime_Display_Override_Without_Changing_The_Target()
+  {
+    using PaletteSpa spa = new(Everything);
+    IActionDisplayOverride assistantName = new AskOverride();
+
+    IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync(
+      spa.User,
+      spa.ServiceProvider.GetRequiredService<IAuthorizationService>(),
+      [],
+      ActionRoster.All,
+      spa.ServiceProvider.GetRequiredService<IActionCatalog>().Entries,
+      [assistantName],
+      "/");
+
+    CommandPaletteRow ask = roster.Single(static row => row.Target == "AgentSurface.OpenAskPanel");
+    ask.Name.ShouldBe("Ask Akili");
+    ask.Description.ShouldBe("Open the docked assistant panel.");
+    roster.Single(static row => row.Target == "Profile.SignOut").Name.ShouldBe("Profile: Sign out");
+  }
+
   [Input("Counter.IncrementCounter")]
   [Input("Credentials.RenameCredential")]
   [Input("Credentials.RevokeCredential")]
@@ -92,6 +189,9 @@ public class CommandPalette_Should_
   [Input("Feedback.OpenFeedback")]
   [Input("Credentials.FetchCredentials")]
   [Input("Theme.Update")]
+  [Input("CommandPalette.Open")]
+  [Input("Application.CloseModal")]
+  [Input("AgentSurface.LoadChatConfiguration")]
   public static async Task Exclude_Agent_Parameterized_And_Internal_Actions(string name)
   {
     using PaletteSpa spa = new(Everything);
@@ -198,13 +298,39 @@ public class CommandPalette_Should_
   public static async Task Label_Commands_With_DisplayName_Else_The_Generated_Name()
   {
     using PaletteSpa spa = new(Everything);
-    ActionCatalog catalog = new([new ActionCatalogSource([Probe("Probe.RunTwice", displayName: null), Probe("Probe.RunOnce", "Run once now")])]);
+    ActionRosterEntry runTwice = Probe("Probe.RunTwice", typeof(ProbeTwice));
+    ActionRosterEntry runOnce = Probe("Probe.RunOnce", typeof(ProbeOnce));
+    ActionRosterEntry openPanel = Probe("AgentSurface.OpenAskPanel", typeof(ProbeTwice[]));
+    ActionCatalog catalog = new([new ActionCatalogSource([Metadata("Probe.RunOnce", typeof(ProbeOnce), "Run once now")])]);
 
     IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync(
-      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], catalog.Entries, "/");
+      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], [runTwice, runOnce, openPanel], catalog.Entries, [], "/");
 
     roster.Single(static row => row.Target == "Probe.RunTwice").Name.ShouldBe("Probe: Run twice");
+    roster.Single(static row => row.Target == "Probe.RunTwice").Description.ShouldBeEmpty();
     roster.Single(static row => row.Target == "Probe.RunOnce").Name.ShouldBe("Probe: Run once now");
+    roster.Single(static row => row.Target == "Probe.RunOnce").Description.ShouldBe("Run the probe.");
+    roster.Single(static row => row.Target == "AgentSurface.OpenAskPanel").Name.ShouldBe("Agent surface: Open ask panel");
+  }
+
+  public static async Task Exclude_Opted_Out_Parameterized_And_Agent_Only_Probes()
+  {
+    using PaletteSpa spa = new(Everything);
+    ActionRosterEntry optedOut = Probe("Probe.OptedOut", typeof(ProbeOnce)) with { OptOutReason = "Plumbing." };
+    ActionRosterEntry blankReason = Probe("Probe.BlankReason", typeof(ProbeTwice)) with { OptOutReason = " " };
+    ActionRosterEntry needsArgument = Probe("Probe.NeedsArgument", typeof(ProbeOnce[])) with { RequiredParameterCount = 1, Execute = null };
+    ActionRosterEntry agentOnly = Probe("Probe.AgentOnly", typeof(ProbeTwice[]));
+    ActionCatalog catalog = new([new ActionCatalogSource([Metadata("Probe.AgentOnly", typeof(ProbeTwice[]), null, ActionVisibility.Agent)])]);
+
+    string[] targets =
+    [
+      .. (await CommandPaletteRoster.BuildAsync(
+        spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [],
+        [optedOut, blankReason, needsArgument, agentOnly], catalog.Entries, [], "/"))
+        .Select(static row => row.Target)
+    ];
+
+    targets.ShouldBe(["Probe.BlankReason"], "A blank opt-out reason does not opt out.");
   }
 
   public static async Task Enter_On_Sign_In_Navigates_To_Login_With_The_Current_Path_As_Return_Url()
@@ -222,7 +348,7 @@ public class CommandPalette_Should_
     await CommandPaletteRunner.RunAsync(
       highlighted,
       scope.Store,
-      scope.ServiceProvider.GetRequiredService<IActionCatalog>(),
+      ActionRoster.All,
       CancellationToken.None);
 
     navigationManager.Uri.ShouldBe("http://localhost/Login?returnUrl=%2FCounter");
@@ -311,7 +437,7 @@ public class CommandPalette_Should_
     await CommandPaletteRunner.RunAsync(
       highlighted,
       scope.Store,
-      scope.ServiceProvider.GetRequiredService<IActionCatalog>(),
+      ActionRoster.All,
       CancellationToken.None);
 
     scope.ServiceProvider.GetRequiredService<NavigationManager>().Uri.ShouldBe("http://localhost/Counter");
@@ -321,34 +447,24 @@ public class CommandPalette_Should_
   {
     using PaletteSpa spa = new(Everything);
     using SpaTestScope scope = SpaTestScope.Create(spa);
-    List<object?[]> executions = [];
-    ActionCatalogEntry probe = new
-    (
-      "Probe.Run",
-      "Run the probe.",
-      [],
-      ActionVisibility.Human,
-      typeof(CounterState),
-      typeof(CounterState),
-      [],
-      "{}",
-      (_, arguments, _) =>
+    int executions = 0;
+    ActionRosterEntry probe = Probe("Probe.Run", typeof(ProbeOnce)) with
+    {
+      Execute = (_, _) =>
       {
-        executions.Add(arguments);
+        executions++;
         return Task.CompletedTask;
-      }
-    );
-    ActionCatalog catalog = new([new ActionCatalogSource([probe])]);
+      },
+    };
 
     IReadOnlyList<CommandPaletteRow> roster = await CommandPaletteRoster.BuildAsync(
-      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], catalog.Entries, "/");
+      spa.User, spa.ServiceProvider.GetRequiredService<IAuthorizationService>(), [], [probe], [], [], "/");
     CommandPaletteRow row = CommandPaletteRanker.Rank(roster, "probe")[0];
     row.Kind.ShouldBe(CommandPaletteRowKind.Command);
 
-    await CommandPaletteRunner.RunAsync(row, scope.Store, catalog, CancellationToken.None);
+    await CommandPaletteRunner.RunAsync(row, scope.Store, [probe], CancellationToken.None);
 
-    executions.Count.ShouldBe(1);
-    executions[0].ShouldBeEmpty();
+    executions.ShouldBe(1);
     scope.ServiceProvider.GetRequiredService<NavigationManager>().Uri.ShouldBe("http://localhost/");
   }
 
@@ -359,7 +475,7 @@ public class CommandPalette_Should_
     CommandPaletteRow stale = new("Gone: Away", "", CommandPaletteRowKind.Command, "Gone.Away");
 
     await CommandPaletteRunner.RunAsync(
-      stale, scope.Store, scope.ServiceProvider.GetRequiredService<IActionCatalog>(), CancellationToken.None);
+      stale, scope.Store, ActionRoster.All, CancellationToken.None);
 
     scope.Store.GetState<NotificationState>().Messages
       .ShouldContain(message => message.Title == "Gone: Away is no longer available.");
@@ -381,6 +497,8 @@ public class CommandPalette_Should_
     open.ShouldContain("role=\"combobox\"");
     open.ShouldContain(">Counter<");
     open.ShouldContain(">Profile: Sign out<");
+    open.ShouldContain(">Agent surface: Open ask panel<");
+    open.ShouldNotContain("CommandPaletteAsk");
     open.ShouldContain("aria-activedescendant=\"twe-palette-row-0\"");
 
     await scope.Send(new ApplicationState.CloseModalActionSet.Action());
@@ -405,20 +523,34 @@ public class CommandPalette_Should_
     });
   }
 
-  private static ActionCatalogEntry Probe(string name, string? displayName) =>
+  private static ActionRosterEntry Probe(string name, Type actionType) =>
+    new(name, typeof(CounterState), actionType, 0, null, static (_, _) => Task.CompletedTask);
+
+  private static ActionCatalogEntry Metadata(string name, Type actionType, string? displayName, ActionVisibility visibility = ActionVisibility.Human) =>
     new
     (
       name,
       "Run the probe.",
       [],
-      ActionVisibility.Human,
+      visibility,
       typeof(CounterState),
-      typeof(CounterState),
+      actionType,
       [],
       "{}",
       static (_, _, _) => Task.CompletedTask,
       displayName
     );
+
+  // Distinct probe Action types: roster rows join catalog metadata by Action type.
+  private sealed class ProbeOnce;
+
+  private sealed class ProbeTwice;
+
+  private sealed class AskOverride : IActionDisplayOverride
+  {
+    public ActionDisplay? Find(ActionRosterEntry action) =>
+      action.Name == "AgentSurface.OpenAskPanel" ? new ActionDisplay("Ask Akili", "Open the docked assistant panel.") : null;
+  }
 
   private static CommandPaletteRow Row(string name, string description) =>
     new(name, description, CommandPaletteRowKind.Page, "/" + name);

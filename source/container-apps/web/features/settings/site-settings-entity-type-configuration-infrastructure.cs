@@ -8,7 +8,9 @@
 // .IsConcurrencyToken() like Principal. Task 227 dropped the trusted-tenants jsonb column; trust
 // is Authentication:Entra:TenantId. Slice placement: mapping lives under
 // features/settings/*-infrastructure.cs (settings product slice) even though the CLR type is
-// TimeWarp.Identity — TWA0009 does not apply across assemblies.
+// TimeWarp.Identity — TWA0009 does not apply across assemblies. AssistantName (task 361) is a
+// required varchar(AssistantNameRules.MaxLength); the AddSiteSettingsAssistantName migration fills
+// existing rows with Akili, and new rows get it from SiteSettings.Create.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Infrastructure;
@@ -37,6 +39,9 @@ public sealed class SiteSettingsEntityTypeConfiguration : IEntityTypeConfigurati
     builder.Property(settings => settings.EntraSignInEnabled).IsRequired();
     builder.Property(settings => settings.EntraAllowBootstrap).IsRequired();
     builder.Property(settings => settings.PasskeyPromptMode).IsRequired();
+    builder.Property(settings => settings.AssistantName)
+      .IsRequired()
+      .HasMaxLength(AssistantNameRules.MaxLength);
 
     builder.Property(settings => settings.Version)
       .IsConcurrencyToken()

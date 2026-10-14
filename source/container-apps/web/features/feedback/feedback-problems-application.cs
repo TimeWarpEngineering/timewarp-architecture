@@ -5,6 +5,8 @@
 #region Design
 // Unauthenticated is defense in depth behind [EndpointAuthorize]. A missing item and an item
 // owned by someone else share one 404 so a read does not reveal that the id exists.
+// AttachmentGone is the 404 for a reader who may see the row but whose bytes are missing
+// (an in-memory store that restarted, task 352); it is only returned after the access check.
 // StatusUnchanged and Changed are the triage conflicts (task 314): choosing the current status,
 // and another writer saving the item between this request's read and write.
 #endregion
@@ -28,6 +30,13 @@ internal static class FeedbackProblems
     Title = "Feedback not found",
     Status = 404,
     Detail = "This feedback item is not available."
+  };
+
+  public static SharedProblemDetails AttachmentGone() => new()
+  {
+    Title = "Attachment no longer available",
+    Status = 404,
+    Detail = "The file for this attachment is no longer stored."
   };
 
   public static SharedProblemDetails EmptyFile() => new()

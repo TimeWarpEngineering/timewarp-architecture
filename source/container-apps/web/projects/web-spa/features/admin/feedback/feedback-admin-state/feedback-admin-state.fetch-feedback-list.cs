@@ -18,6 +18,7 @@ partial class FeedbackAdminState
   public static class FetchFeedbackListActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal class Handler

@@ -35,6 +35,7 @@ public static partial class GetSiteSettings
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
+    public string AssistantName { get; set; }
     public long Version { get; }
     public string? ConfigurationTenantId { get; }
     public string? ConfigurationTenantDisplayName { get; }
@@ -46,6 +47,7 @@ public static partial class GetSiteSettings
       bool entraSignInEnabled,
       bool entraAllowBootstrap,
       PasskeyPromptMode passkeyPromptMode,
+      string assistantName,
       long version,
       string? configurationTenantId = null,
       string? configurationTenantDisplayName = null,
@@ -56,6 +58,7 @@ public static partial class GetSiteSettings
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
       PasskeyPromptMode = passkeyPromptMode;
+      AssistantName = assistantName;
       Version = version;
       ConfigurationTenantId = configurationTenantId;
       ConfigurationTenantDisplayName = configurationTenantDisplayName;
@@ -71,6 +74,7 @@ public static partial class GetSiteSettings
       entraSignInEnabled: false,
       entraAllowBootstrap: false,
       passkeyPromptMode: PasskeyPromptMode.Soft,
+      assistantName: AssistantNameRules.Default,
       version: 0);
   }
 }

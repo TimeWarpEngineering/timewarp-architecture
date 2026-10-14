@@ -1,5 +1,6 @@
 #region Purpose
-// Shell state for a WebMCP confirmation and for whether Ask can call a model.
+// Shell state for a WebMCP confirmation, for whether Ask can call a model, and for the assistant's
+// name and avatar.
 #endregion
 
 #region Design
@@ -22,9 +23,18 @@
 // writes it and LoadPrivacyNoticeDismissal reads it back when Ask first renders, so a dismissed
 // notice stays dismissed across reloads in this browser. StarterPrompts (task 348) is the Ask
 // empty-state list; it holds the template defaults until a server answer replaces it.
+// AssistantName and AssistantAvatar (task 361) are the one source for every assistant label: the
+// top-bar button, the derived Ctrl-K row (AskAssistantDisplayOverride), the panel header, the
+// greeting, the answer-bar feedback titles and the instructions. They come from the anonymous
+// GetAssistantIdentity query (LoadAssistantIdentity). The name starts as the default, Akili, and
+// the avatar as null (the header then shows its fallback mark) until the server answers.
+// AssistantIdentityRefreshHandler reloads them after a successful UpdateSiteSettings and after
+// ResetStore, whose Store.Reset puts them back to those defaults.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
+
+using TimeWarp.Identity;
 
 [StateAccess]
 public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
@@ -85,6 +95,15 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public IReadOnlyList<AgentChatStarterPrompt> StarterPrompts { get; private set; } = AgentChatStarterPrompts.Defaults;
 
+  /// <summary>The admin-set assistant name every assistant label uses.</summary>
+  public string AssistantName { get; private set; } = AssistantNameRules.Default;
+
+  /// <summary>The assistant's Multiavatar data URI, or null until GetAssistantIdentity answers.</summary>
+  public string? AssistantAvatar { get; private set; }
+
+  /// <summary>The label of every Ask entry point: "Ask {AssistantName}".</summary>
+  public string AskLabel => $"Ask {AssistantName}";
+
   /// <summary>Bounded JSON from the page-body walk, or null when the walk has not run.</summary>
   public string? PageSurfaceJson { get; private set; }
 
@@ -137,6 +156,8 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     CredentialLifetimeMinutes = XaiChatDefaults.CredentialLifetimeMinutes;
     PrivacyNoticeDismissed = false;
     StarterPrompts = AgentChatStarterPrompts.Defaults;
+    AssistantName = AssistantNameRules.Default;
+    AssistantAvatar = null;
     PageSurfaceJson = null;
     PageSurfacePath = null;
   }

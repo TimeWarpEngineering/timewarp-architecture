@@ -1,0 +1,28 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One image from an allow-listed source. When the load fails (404, bytes gone) it
+  shows a small "image unavailable" placeholder instead of a broken image.
+
+  Design: Used by SafeMarkdown for inline images and by feedback pages for listed attachments.
+  The failed flag is component-local presentational state, exempt from the State-action rule.
+  It resets when Src changes.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Src { get; set; } = null!;
+  [Parameter] public string? Alt { get; set; }
+
+  private string? FailedSrc;
+
+  private bool Unavailable => FailedSrc is not null && FailedSrc == Src;
+}
+
+@if (Unavailable)
+{
+  <span class="markdown-image-unavailable" role="img" aria-label="@Alt" data-qa="MarkdownImageUnavailable">image unavailable</span>
+}
+else
+{
+  <img class="markdown-image" src="@Src" alt="@Alt" data-qa="MarkdownImage" @onerror="@(() => FailedSrc = Src)" />
+}

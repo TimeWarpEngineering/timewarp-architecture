@@ -14,6 +14,8 @@
   The bar renders only once the conversation has an answer, so the empty state shows no Copy or
   thumbs (task 349). The bar subscribes to the conversation status: the cascade is fixed, so a
   finished turn would not otherwise re-render it.
+  Feedback titles carry the assistant name (task 361): "{AssistantName} answer" and
+  "{AssistantName} thumbs up/down", read from AgentSurfaceState when filed.
 *@
 
 @code {
@@ -27,7 +29,7 @@
 
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
-  private const string NoAnswer = "Ask AI answer";
+  private string NoAnswer => $"{AgentSurfaceState.AssistantName} answer";
 
   private IDisposable? StatusSubscription;
 
@@ -48,9 +50,9 @@
 
   private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer() ?? NoAnswer);
 
-  private Task HelpfulAsync() => FileAsync("Ask AI thumbs up");
+  private Task HelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs up");
 
-  private Task UnhelpfulAsync() => FileAsync("Ask AI thumbs down");
+  private Task UnhelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs down");
 
   private async Task FileAsync(string title)
   {

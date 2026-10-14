@@ -16,6 +16,7 @@ partial class SiteSettingsState
   public static class FetchSiteSettingsActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>
@@ -42,6 +43,7 @@ partial class SiteSettingsState
         SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
+        SiteSettingsState.AssistantName = response.AssistantName;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
         SiteSettingsState.ConfigurationTenantId = response.ConfigurationTenantId;

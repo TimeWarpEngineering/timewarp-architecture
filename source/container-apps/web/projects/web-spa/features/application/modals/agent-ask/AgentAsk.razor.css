@@ -71,6 +71,14 @@
   background: linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue));
 }
 
+.twe-agent-ask__avatar {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--twe-paper-2);
+}
+
 .twe-agent-ask__titles {
   display: flex;
   align-items: baseline;
@@ -260,6 +268,17 @@
   box-shadow: var(--twe-shadow);
 }
 
+/* The assistant's Multiavatar (task 361) sits in front of the orbs, centred on the front one. */
+.twe-agent-ask__hero-avatar {
+  position: absolute;
+  top: 10px;
+  left: 40px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  box-shadow: var(--twe-shadow);
+}
+
 .twe-agent-ask__greeting {
   margin: 0;
   font-size: var(--twe-text-section-title);
@@ -432,4 +451,21 @@
   width: 2rem;
   min-width: 2rem;
   height: 2rem;
+}
+
+/* Each assistant turn the library renders starts with the avatar. ApplyAvatarAsync sets
+   --twe-assistant-avatar on the document root; until then the brand gradient stands in. */
+.twe-agent-ask ::deep .sc-ai-message--assistant {
+  align-items: flex-start;
+  gap: var(--twe-space-2);
+}
+
+.twe-agent-ask ::deep .sc-ai-message--assistant::before {
+  content: "";
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: calc(var(--twe-space-2) / 2);
+  border-radius: 50%;
+  background: var(--twe-assistant-avatar, linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue))) center / cover no-repeat;
 }

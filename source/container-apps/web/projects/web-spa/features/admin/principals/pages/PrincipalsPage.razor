@@ -35,6 +35,11 @@
 
   private bool IsListLoading => IsAnyActive(typeof(PrincipalState.FetchPrincipalsActionSet.Action));
 
+  // Principal, Display name, Email, Kind, Trust, Active. Principal keeps 14rem and takes the
+  // largest share (task 354).
+  private const string GridColumns =
+    "minmax(14rem, 2fr) minmax(8rem, 1fr) minmax(10rem, 1.2fr) minmax(6rem, 0.5fr) minmax(6rem, 0.5fr) minmax(5rem, 0.4fr)";
+
   private IQueryable<ListPrincipals.PrincipalSummaryDto>? GridItems => PrincipalState.Principals?.AsQueryable();
 
   private bool IsSortColumn(PrincipalListSortColumn column) => PrincipalState.SortBy == column;
@@ -89,45 +94,48 @@
       }
       else
       {
-        <FluentDataGrid TGridItem="ListPrincipals.PrincipalSummaryDto"
-          Items="@GridItems"
-          RefreshItems="@OnGridRefreshAsync"
-          Loading="@IsListLoading"
-          ItemKey="@(static row => row.PrincipalId.Value)"
-          DisplayMode="DataGridDisplayMode.Table"
-          data-qa="PrincipalsTable">
-          <ChildContent>
-            <TemplateColumn Title="Principal" Width="22rem">
-              <FluentLink Href="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
-                <code>@context.PrincipalId.Value</code>
-              </FluentLink>
-            </TemplateColumn>
-            <TemplateColumn Title="Display name" ColumnId="@nameof(PrincipalListSortColumn.DisplayName)"
-              Sortable="@CanReadProfiles" SortBy="@DisplayNameSort"
-              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.DisplayName)" InitialSortDirection="@SortDirection">
-              @OrDash(context.DisplayName)
-            </TemplateColumn>
-            <TemplateColumn Title="Email" ColumnId="@nameof(PrincipalListSortColumn.Email)"
-              Sortable="@CanReadProfiles" SortBy="@EmailSort"
-              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Email)" InitialSortDirection="@SortDirection">
-              @OrDash(context.Email)
-            </TemplateColumn>
-            <TemplateColumn Title="Kind" ColumnId="@nameof(PrincipalListSortColumn.Kind)" Width="8rem"
-              Sortable="true" SortBy="@KindSort"
-              IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Kind)" InitialSortDirection="@SortDirection">
-              @context.Kind
-            </TemplateColumn>
-            <TemplateColumn Title="Trust" Width="8rem">
-              @context.TrustTier
-            </TemplateColumn>
-            <TemplateColumn Title="Active" Width="6rem">
-              @(context.IsActive ? "yes" : "no")
-            </TemplateColumn>
-          </ChildContent>
-          <EmptyContent>
-            <p data-qa="AdminPrincipalsEmpty">No principals match. Complete a passkey registration to create one.</p>
-          </EmptyContent>
-        </FluentDataGrid>
+        <DataGridFrame>
+          <FluentDataGrid TGridItem="ListPrincipals.PrincipalSummaryDto"
+            Items="@GridItems"
+            RefreshItems="@OnGridRefreshAsync"
+            Loading="@IsListLoading"
+            ItemKey="@(static row => row.PrincipalId.Value)"
+            DisplayMode="DataGridDisplayMode.Grid"
+            GridTemplateColumns="@GridColumns"
+            data-qa="PrincipalsTable">
+            <ChildContent>
+              <TemplateColumn Title="Principal" Tooltip="true" TooltipText="@(static row => row.PrincipalId.Value.ToString())">
+                <FluentLink Href="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
+                  <code>@context.PrincipalId.Value</code>
+                </FluentLink>
+              </TemplateColumn>
+              <TemplateColumn Title="Display name" ColumnId="@nameof(PrincipalListSortColumn.DisplayName)"
+                Sortable="@CanReadProfiles" SortBy="@DisplayNameSort"
+                IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.DisplayName)" InitialSortDirection="@SortDirection">
+                @OrDash(context.DisplayName)
+              </TemplateColumn>
+              <TemplateColumn Title="Email" ColumnId="@nameof(PrincipalListSortColumn.Email)"
+                Sortable="@CanReadProfiles" SortBy="@EmailSort"
+                IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Email)" InitialSortDirection="@SortDirection">
+                @OrDash(context.Email)
+              </TemplateColumn>
+              <TemplateColumn Title="Kind" ColumnId="@nameof(PrincipalListSortColumn.Kind)"
+                Sortable="true" SortBy="@KindSort"
+                IsDefaultSortColumn="@IsSortColumn(PrincipalListSortColumn.Kind)" InitialSortDirection="@SortDirection">
+                @context.Kind
+              </TemplateColumn>
+              <TemplateColumn Title="Trust">
+                @context.TrustTier
+              </TemplateColumn>
+              <TemplateColumn Title="Active">
+                @(context.IsActive ? "yes" : "no")
+              </TemplateColumn>
+            </ChildContent>
+            <EmptyContent>
+              <p data-qa="AdminPrincipalsEmpty">No principals match. Complete a passkey registration to create one.</p>
+            </EmptyContent>
+          </FluentDataGrid>
+        </DataGridFrame>
       }
     </Section>
   </div>

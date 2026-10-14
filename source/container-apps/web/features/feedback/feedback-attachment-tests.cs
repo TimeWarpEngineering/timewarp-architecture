@@ -14,7 +14,7 @@
 // owner-or-admin download rule, safe download headers and X-File-Name decoding, and filing
 // that links only the caller's pending uploads, lists unavailable ids, and rolls back when a
 // link loses a race, commits then throws, or the rollback's unlink step fails. Expiry survives
-// a blob delete that throws.
+// a blob delete that throws. A row whose bytes are gone downloads as a 404, not a 500.
 #endregion
 
 //-:cnd:noEmit
@@ -245,6 +245,18 @@ namespace TimeWarp.Architecture.Features.Feedback
       SharedProblemDetails problem = await world.RemoveProblemAsync(world.Owner, foreign);
       problem.Status.ShouldBe(404);
       (await world.Attachments.FindAsync(FeedbackAttachmentId.From(foreign))).ShouldNotBeNull();
+    }
+
+    public static async Task Download_Should_Return404WhenTheBytesAreGone()
+    {
+      World world = new();
+      Guid id = await world.UploadAsync(world.Owner, "notes.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+      FeedbackAttachment row = (await world.Attachments.FindAsync(FeedbackAttachmentId.From(id))).ShouldNotBeNull();
+      await world.Blobs.DeleteAsync(row.StorageKey);
+      SharedProblemDetails problem = await world.DownloadProblemAsync(world.Owner, id);
+      problem.Status.ShouldBe(404);
+      problem.Title.ShouldBe("Attachment no longer available");
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(id))).ShouldNotBeNull();
     }
 
     public static async Task Link_Should_SucceedOnceAndOnlyForTheOwner()

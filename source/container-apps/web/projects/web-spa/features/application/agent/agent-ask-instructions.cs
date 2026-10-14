@@ -11,6 +11,8 @@
 // The preface explains @prefix:id tokens (task 345): page_context.references resolves them. It
 // also explains tagged elements (task 346): a message may end with the elements the person picked
 // on the page, and page_context.tags lists the ones sent earlier.
+// The first line names the assistant (task 361): AssistantName from SiteSettings, so the model
+// introduces itself by the name the person sees on the button and header.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -38,10 +40,15 @@ public static class AgentAskInstructions
     + "and a reference when the element is a resource); page_context.tags lists the ones sent earlier. "
     + "Treat a tagged element as what the person means by this or that. ";
 
-  public static string For(string pageContext)
+  /// <summary>The line that names the assistant, ahead of the preface.</summary>
+  public static string Identity(string assistantName) =>
+    $"You are {assistantName}, the assistant built into this app. When you introduce yourself, use that name. ";
+
+  public static string For(string assistantName, string pageContext)
   {
+    ArgumentException.ThrowIfNullOrWhiteSpace(assistantName);
     ArgumentNullException.ThrowIfNull(pageContext);
-    string text = Preface + pageContext;
+    string text = Identity(assistantName) + Preface + pageContext;
     return text.Length <= MaxLength ? text : text[..MaxLength];
   }
 }

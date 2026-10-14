@@ -28,6 +28,8 @@
   The query box is a native input (combobox + listbox with aria-activedescendant) rather than
   FluentTextInput: the palette needs @onkeydown on the focused element and ElementReference
   FocusAsync on open, which the web-component input does not give directly.
+  Every entry point is a row (task 301): Ask is the derived AgentSurface.OpenAskPanel command, not
+  a footer button, so it is typed, ranked and run like any other action.
   Mobile: the modal panel is width 100% up to its max, so the palette fills a narrow viewport
   (16px gutters); the list scrolls inside min(60vh, 420px) and the input uses 16px text so
   mobile browsers do not zoom on focus.
@@ -36,7 +38,6 @@
 @code {
   public const string ModalId = nameof(CommandPalette);
 
-  [Inject] private IActionCatalog ActionCatalog { get; set; } = null!;
   [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
   // TimeWarpStateComponent keeps its Store private; the runner needs the circuit/tab store.
   [Inject] private IStore ScopedStore { get; set; } = null!;
@@ -56,11 +57,6 @@
 
   private bool IsActive => ApplicationState.ActiveModalId == ModalId;
 
-  private async Task OpenAskAsync()
-  {
-    await ApplicationState.CloseModal();
-    await AgentSurfaceState.OpenAskPanel();
-  }
   private IReadOnlyList<CommandPaletteRow> Matches => CommandPaletteState.Matches;
   private int HighlightedIndex => CommandPaletteState.HighlightedIndex;
   private string? ActiveDescendant => HighlightedIndex >= 0 ? RowId(HighlightedIndex) : null;
@@ -143,7 +139,7 @@
     }
 
     await ApplicationState.CloseModal();
-    await CommandPaletteRunner.RunAsync(row, ScopedStore, ActionCatalog, CancellationToken);
+    await CommandPaletteRunner.RunAsync(row, ScopedStore, ActionRoster.All, CancellationToken);
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -266,7 +262,10 @@
                 @onclick=@(() => RunIndexAsync(rowIndex))>
               <span class="twe-palette__name">@row.Name</span>
               <span class="twe-palette__kind">@(row.Kind == CommandPaletteRowKind.Page ? "Page" : "Command")</span>
-              <span class="twe-palette__description">@row.Description</span>
+              @if (!string.IsNullOrEmpty(row.Description))
+              {
+                <span class="twe-palette__description">@row.Description</span>
+              }
             </li>
           }
         </ul>
@@ -275,6 +274,5 @@
   </MainContent>
   <ActionContent>
     <span class="twe-palette__hint" @onmousedown:preventDefault>↑ ↓ to move · Enter to run · Esc to close</span>
-    <FluentButton Appearance="ButtonAppearance.Outline" data-qa="CommandPaletteAsk" OnClick="OpenAskAsync">Ask</FluentButton>
   </ActionContent>
 </ModalContainer>

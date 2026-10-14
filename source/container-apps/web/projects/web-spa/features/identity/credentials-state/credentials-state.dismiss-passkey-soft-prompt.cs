@@ -18,6 +18,7 @@ partial class CredentialsState
 {
   public static class DismissPasskeySoftPromptActionSet
   {
+    [CommandPaletteOptOut("Answers the passkey soft prompt; only meaningful from the prompt itself.")]
     public sealed class Action : IBaseAction
     {
       public Action(bool rememberForSession = false)

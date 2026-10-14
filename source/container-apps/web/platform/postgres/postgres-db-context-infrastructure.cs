@@ -15,6 +15,8 @@
 // FeedbackAttachment (same schema, table
 // "feedback_attachments") is the file row for that filing. It is not an aggregate: Version is
 // mapped and is not a concurrency token. FeedbackItemId stays null until submit links it.
+// FeedbackAttachmentBytes (same schema, table "feedback_attachment_bytes", task 352) holds the
+// file bytes when no Azure Blob connection string is set; it is keyed by storage key.
 // Identity Principal/Credential are also mapped here (schema "identity") as the first
 // port-backed durable consumer (task 104-032); they are NOT IAggregateRoot — store-CAS lives in
 // EfPrincipalStore, not AggregateDbContext's Version hook.
@@ -52,6 +54,7 @@ using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentLinks.Domain;
 using TimeWarp.Architecture.Features.Feedback.Domain;
+using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
@@ -63,6 +66,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext
   public DbSet<Profile> Profiles => Set<Profile>();
   public DbSet<FeedbackItem> FeedbackItems => Set<FeedbackItem>();
   public DbSet<FeedbackAttachment> FeedbackAttachments => Set<FeedbackAttachment>();
+  public DbSet<FeedbackAttachmentBytes> FeedbackAttachmentBytes => Set<FeedbackAttachmentBytes>();
   public DbSet<AgentHumanLink> AgentHumanLinks => Set<AgentHumanLink>();
   public DbSet<Principal> Principals => Set<Principal>();
   public DbSet<Credential> Credentials => Set<Credential>();

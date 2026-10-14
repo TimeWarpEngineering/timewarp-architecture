@@ -18,6 +18,7 @@ partial class AgentSurfaceState
 {
   public static class CloseAskPanelActionSet
   {
+    [CommandPaletteOptOut("Panel chrome: the open Ask panel owns its close control and Esc; offering it with the panel closed does nothing visible.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

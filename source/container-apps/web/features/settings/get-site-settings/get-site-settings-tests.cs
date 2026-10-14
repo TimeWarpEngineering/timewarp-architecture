@@ -53,6 +53,7 @@ namespace TimeWarp.Architecture.Features.Settings
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Required,
+        assistantName: "Zawadi",
         version: 3,
         configurationTenantId: configured.ToString("D"),
         configurationTenantDisplayName: "TimeWarp Enterprises LLC",
@@ -67,6 +68,7 @@ namespace TimeWarp.Architecture.Features.Settings
       parsed.EntraSignInEnabled.ShouldBeTrue();
       parsed.EntraAllowBootstrap.ShouldBeTrue();
       parsed.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+      parsed.AssistantName.ShouldBe("Zawadi");
       parsed.Version.ShouldBe(3);
       parsed.ConfigurationTenantId.ShouldBe(configured.ToString("D"));
       parsed.ConfigurationTenantDisplayName.ShouldBe("TimeWarp Enterprises LLC");
@@ -108,6 +110,7 @@ namespace TimeWarp.Architecture.Features.Settings
       result.AsT0.EntraSignInEnabled.ShouldBeTrue();
       result.AsT0.EntraAllowBootstrap.ShouldBeTrue();
       result.AsT0.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
+      result.AsT0.AssistantName.ShouldBe(AssistantNameRules.Default);
       result.AsT0.Version.ShouldBe(0);
       (await inner.GetAsync()).ShouldNotBeNull();
     }

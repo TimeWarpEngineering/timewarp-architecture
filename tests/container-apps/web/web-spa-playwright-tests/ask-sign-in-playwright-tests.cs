@@ -37,6 +37,13 @@
 // (focus in the panel) cancels, because the panel keeps its native keys. Task 351: the "picking"
 // status line appears only once the browser has armed the pick, so every step that waits for it
 // may press a key or click at once.
+// Task 301: signed in, Ask opens through Ctrl-K: "ask" highlights the derived OpenAskPanel row,
+// Enter closes the palette and opens [data-qa=AgentAsk] (screenshots ctrl-k-ask-row.png and
+// ctrl-k-ask-panel-open.png). Signed out the palette has no commands, so the app-bar button opens Ask.
+// Task 361: signed in as the first (Administrator) account, /Admin/Authentication renames the
+// assistant to Zawadi. Without a reload the top-bar button reads "Ask Zawadi", the derived Ctrl-K
+// row reads "Ask Zawadi", and the panel it opens has the header Zawadi with its avatar and the
+// greeting "Hi, I'm Zawadi"; no "Akili" is left in the panel (assistant-rename-*.png).
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -72,7 +79,7 @@ public class AskSignIn_Given_Wasm
 
     // Signed out. The server must answer 401 and Ask must say so, not "AI not configured".
     await session.GoHomeAsync();
-    string signedOut = await session.OpenAskAsync();
+    string signedOut = await session.OpenAskAsync(signedIn: false);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-signed-out.png"),
@@ -99,7 +106,7 @@ public class AskSignIn_Given_Wasm
     }
 
     await session.WaitForConfigurationProbeAsync(signedOutProbes);
-    string signedIn = await session.OpenAskAsync();
+    string signedIn = await session.OpenAskAsync(signedIn: true);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath(signedIn == "Configured" ? "ask-signed-in-configured.png" : "ask-signed-in-stale.png"),
@@ -184,7 +191,7 @@ public class AskSignIn_Given_Wasm
       await session.Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
       await session.Page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
       await FileFeedbackAsync(session.Page, feedbackUrl);
-      string feedbackState = await session.OpenAskAsync();
+      string feedbackState = await session.OpenAskAsync(signedIn: true);
       if (feedbackState != "Configured")
       {
         failures.Add($"Feedback: Ask showed {feedbackState} ('{await session.AskTextAsync()}').");
@@ -288,7 +295,7 @@ public class AskSignIn_Given_Wasm
     int signedOutProbes = session.ConfigurationStatuses.Count;
     await session.SignInWithNewPasskeyAsync();
     await session.WaitForConfigurationProbeAsync(signedOutProbes);
-    string state = await session.OpenAskAsync();
+    string state = await session.OpenAskAsync(signedIn: true);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-signed-in-no-key.png"),
@@ -298,6 +305,80 @@ public class AskSignIn_Given_Wasm
     session.ConfigurationStatuses.ShouldContain(200);
     (await session.Page.Locator("[data-qa=AgentAskNotConfigured]").InnerTextAsync()).ShouldBe("AI not configured");
     (await session.Page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync()).ShouldBe(XaiChatDefaults.SetupCommand);
+    session.AssertNoWasmFailures();
+  }
+
+  public static async Task AdminRename_Should_Relabel_Every_Ask_Entry_Point()
+  {
+    InstallChromium();
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.PostConfigure<XaiChatOptions>(options =>
+      {
+        options.UseFakeUpstream = true;
+        options.ApiKey = "playwright-placeholder-key";
+      }));
+
+    await using Session session = await Session.StartAsync();
+    IPage page = session.Page;
+    await session.GoHomeAsync();
+    ILocator askButton = page.Locator("[data-qa=AskAiButton]");
+    await Assertions.Expect(askButton).ToHaveTextAsync("Ask Akili", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await session.SignInWithNewPasskeyAsync();
+
+    // Rename through the admin form (same UpdateSiteSettings flow and Version token).
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    ILocator nameInput = page.Locator("[data-qa=AssistantName]").Locator("input");
+    await nameInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    await Assertions.Expect(nameInput).ToHaveValueAsync("Akili", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
+    await nameInput.FillAsync("Zawadi");
+    await nameInput.PressAsync("Tab");
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("assistant-rename-admin.png") });
+    await page.Locator("[data-qa=AuthenticationSave]").ClickAsync();
+
+    // Top bar: the page reloads the public identity after a successful save, so no page load.
+    await Assertions.Expect(askButton).ToHaveTextAsync("Ask Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+
+    // Ctrl-K: the derived AgentSurface.OpenAskPanel row carries the runtime override.
+    ILocator paletteInput = page.Locator("[data-qa=CommandPaletteInput]");
+    bool opened = false;
+    for (int attempt = 0; attempt < 20 && !opened; attempt++)
+    {
+      await page.Keyboard.PressAsync("Control+k");
+      try
+      {
+        await paletteInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
+        opened = true;
+      }
+      catch (TimeoutException)
+      {
+        await page.Keyboard.PressAsync("Escape");
+      }
+    }
+
+    opened.ShouldBeTrue("Ctrl-K did not open the palette");
+    await paletteInput.FillAsync("zawadi");
+    ILocator active = page.Locator(".twe-palette__row--active");
+    await Assertions.Expect(active.Locator(".twe-palette__name"))
+      .ToHaveTextAsync("Ask Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("assistant-rename-ctrl-k.png") });
+    await paletteInput.PressAsync("Enter");
+
+    // Panel: header name and avatar, and the empty-state greeting once the agent is built.
+    ILocator panel = page.Locator("[data-qa=AgentAsk]");
+    await panel.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskTitle]"))
+      .ToHaveTextAsync("Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskAvatar]"))
+      .ToHaveAttributeAsync("alt", "Zawadi", new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskGreeting]"))
+      .ToContainTextAsync("Hi, I'm Zawadi", new LocatorAssertionsToContainTextOptions { Timeout = 60_000 });
+    (await page.Locator("[data-qa=AskEmptyAvatar]").GetAttributeAsync("alt")).ShouldBe("Zawadi");
+    await panel.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("assistant-rename-panel.png") });
+    (await panel.InnerTextAsync()).ShouldNotContain("Akili");
     session.AssertNoWasmFailures();
   }
 
@@ -386,27 +467,56 @@ public class AskSignIn_Given_Wasm
       await Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
     }
 
-    public async Task<string> OpenAskAsync()
+    /// <summary>
+    /// Opens Ask. Signed in, through Ctrl-K (task 301): type "ask" and Enter on the derived
+    /// AgentSurface.OpenAskPanel row; the palette must close and the docked panel open. Signed out the
+    /// palette lists no commands (signed-in-only rule), so the app-bar Ask button opens it.
+    /// </summary>
+    public async Task<string> OpenAskAsync(bool signedIn)
     {
-      // The palette listener attaches on the shell's first interactive render. Retry Ctrl-K.
-      ILocator ask = Page.Locator("[data-qa=CommandPaletteAsk]");
-      bool opened = false;
-      for (int attempt = 0; attempt < 20 && !opened; attempt++)
+      if (signedIn)
       {
-        await Page.Keyboard.PressAsync("Control+k");
-        try
+        // The palette listener attaches on the shell's first interactive render. Retry Ctrl-K.
+        ILocator input = Page.Locator("[data-qa=CommandPaletteInput]");
+        bool opened = false;
+        for (int attempt = 0; attempt < 20 && !opened; attempt++)
         {
-          await ask.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
-          opened = true;
+          await Page.Keyboard.PressAsync("Control+k");
+          try
+          {
+            await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
+            opened = true;
+          }
+          catch (TimeoutException)
+          {
+            await Page.Keyboard.PressAsync("Escape");
+          }
         }
-        catch (TimeoutException)
+
+        opened.ShouldBeTrue("Ctrl-K did not open the palette");
+        await input.FillAsync("ask");
+        // With an empty query row 0 (a Page row) is already active, so wait on the filtered state: the
+        // active row must be a Command whose name contains "ask" before the screenshot and Enter.
+        ILocator active = Page.Locator(".twe-palette__row--active");
+        await Assertions.Expect(active.Locator(".twe-palette__kind"))
+          .ToHaveTextAsync("Command", new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+        await Assertions.Expect(active.Locator(".twe-palette__name"))
+          .ToContainTextAsync("ask", new LocatorAssertionsToContainTextOptions { IgnoreCase = true, Timeout = 10_000 });
+        await Page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-row.png") });
+        await input.PressAsync("Enter");
+        await Page.Locator("[data-qa=CommandPalette]").WaitForAsync(new LocatorWaitForOptions
         {
-          await Page.Keyboard.PressAsync("Escape");
-        }
+          Timeout = 30_000,
+          State = WaitForSelectorState.Hidden,
+        });
+        await Page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+        await Page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-panel-open.png") });
+      }
+      else
+      {
+        await Page.Locator("[data-qa=AskAiButton]").ClickAsync();
       }
 
-      opened.ShouldBeTrue("Ctrl-K did not show Ask");
-      await ask.ClickAsync();
       ILocator state = Page.Locator(AnyAskState).First;
       await state.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000, State = WaitForSelectorState.Visible });
       foreach (string qa in new[] { "AgentAskNotConfigured", "AgentAskSignIn", "AgentAskError" })

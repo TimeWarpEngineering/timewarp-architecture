@@ -17,6 +17,7 @@ partial class AgentSurfaceState
 {
   public static class DismissPrivacyNoticeActionSet
   {
+    [CommandPaletteOptOut("Answers the Ask privacy notice; only meaningful from the notice inside the open panel.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

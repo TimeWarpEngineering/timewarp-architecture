@@ -180,7 +180,7 @@ class PickSession {
     this.current = target;
     if (target === null) {
       this.outline.style.display = "none";
-      this.hint.textContent = "Pick an element for Ask. Tab or arrows to move, Enter to choose, Esc to cancel.";
+      this.hint.textContent = "Pick an element to reference. Tab or arrows to move, Enter to choose, Esc to cancel.";
       return;
     }
 

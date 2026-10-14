@@ -16,8 +16,9 @@
   hard-coded. Active shows a check, "Agent access active", and the expiry time. Expired shows
   "Agent access expired" plus a "New conversation" item that dispatches NewConversation, the only
   renewal there is: the panel mints a fresh credential for the new conversation. Absent (no
-  credential: the panel has not minted one, or the session has no principal id) says Ask runs
-  under the session without one. "Configure permissions" opens Agent links, the one self-service
+  credential: the panel has not minted one, or the session has no principal id) says the assistant
+  runs under the session without one. The button name and subtitles use AgentSurfaceState.AssistantName
+  (task 361), never a literal. "Configure permissions" opens Agent links, the one self-service
   page about agent access. The credential's scopes are a copy of the person's own permissions,
   which an admin manages under Roles, so no page edits a conversation's scope. Like Sign in, it
   closes the panel and dispatches RouteState.ChangeRoute (TWA0026). The Applications to
@@ -28,7 +29,9 @@
   /// <summary>Where Configure permissions goes: the person's Agent links page.</summary>
   public static string ConfigurePermissionsRoute => TimeWarp.Architecture.Features.AgentLinks.AgentLinksPage.GetPageUrl();
 
-  private const string ButtonName = "Ask settings";
+  private string AssistantName => AgentSurfaceState.AssistantName;
+
+  private string ButtonName => $"{AssistantName} settings";
 
   private AgentConversationCredential? Credential => AgentSurfaceState.Conversation;
 
@@ -41,8 +44,10 @@
     : Expired ? "Agent access expired" : "Agent access active";
 
   private string StatusSubtitle => Credential is null
-    ? "Ask runs under your session without a conversation credential"
-    : Expired ? "Ask can no longer act on this app. Start a new conversation to renew it." : "Ask can act on this app as you";
+    ? $"{AssistantName} runs under your session without a conversation credential"
+    : Expired
+      ? $"{AssistantName} can no longer act on this app. Start a new conversation to renew it."
+      : $"{AssistantName} can act on this app as you";
 
   private Icon StatusIcon => Credential is null
     ? new Icons.Regular.Size20.ShieldQuestion()

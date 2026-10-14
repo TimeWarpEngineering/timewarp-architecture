@@ -893,10 +893,11 @@ public partial class CatalogAgent_Should
 
   public static Task Instructions_Stay_Under_The_Contract_Cap()
   {
-    string text = AgentAskInstructions.For(new string('x', 20_000));
+    string text = AgentAskInstructions.For("Akili", new string('x', 20_000));
     text.Length.ShouldBeLessThanOrEqualTo(AgentAskInstructions.MaxLength);
     text.Length.ShouldBeLessThan(CompleteAgentChat.MaxInstructionsLength);
-    text.ShouldStartWith("You can run global actions and navigate from any page");
+    text.ShouldStartWith("You are Akili, the assistant built into this app.");
+    text.ShouldContain("You can run global actions and navigate from any page");
     AgentAskInstructions.Preface.ShouldNotContain("Drive this page only");
     return Task.CompletedTask;
   }
