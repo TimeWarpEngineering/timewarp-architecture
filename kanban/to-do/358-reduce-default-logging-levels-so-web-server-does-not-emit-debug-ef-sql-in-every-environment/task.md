@@ -165,7 +165,19 @@ dev publish compose
   `Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command=Information` in web-server user
   secrets brings it back.
 
+### Review disposition
+
+- Rounds: 1; effort 2; roster: general (review oracle, claude-opus-5-5).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the sensitive-data guard is a file-level text
+  check, not a call-site check. Accepted because no call site exists and the spec asked for a
+  cheap check; an analyzer is future work.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: 2026-10-14 (cockpit, per Steve, after /tmp filled)
 - 2026-10-14: implemented under `ganda task work` (implement node); results above.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T07:33:17Z
+- 2026-10-14: review oracle (claude-opus-5-5), effort 2, 1 round, accepted-exceptions (M1 nit wontfix).
