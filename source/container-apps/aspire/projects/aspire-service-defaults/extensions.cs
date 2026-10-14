@@ -11,6 +11,8 @@
 // AddMeter(AnalyticsMeters.MeterName) is the one deliberate deviation: this project must register
 // the analytics meter for OTLP export without referencing a web feature. The name constant lives
 // in TimeWarp.Foundation.Configuration (same home as ServiceNames).
+// AddLogRedaction is the second deliberate deviation (task 344): it lives in its own file
+// (log-redaction-extensions.cs) so this one stays diffable; AddServiceDefaults calls it first.
 #endregion
 
 namespace Microsoft.Extensions.Hosting;
@@ -19,6 +21,8 @@ public static class Extensions
 {
   public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
   {
+    builder.AddLogRedaction();
+
     builder.ConfigureOpenTelemetry();
 
     builder.AddDefaultHealthChecks();
