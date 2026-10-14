@@ -4,7 +4,8 @@
 #endregion
 
 #region Design
-// Task 346. Tag (StartPick) turns pick mode on and waits for ask-tag.ts; the chosen element
+// Task 346. Tag (StartPick) arms pick mode in ask-tag.ts, turns IsPicking on once it is armed
+// (task 351), and waits for the answer; the chosen element
 // becomes an AskTag chip (Choose runs the same Attach). Remove drops a chip before sending.
 // MarkSent runs when a message carrying the chips is sent (AskTagChatClient): they move to Sent,
 // which page_context.tags publishes so later turns can still refer to them. Attached and Sent
@@ -40,10 +41,14 @@ public sealed partial class AskTagState : State<AskTagState>
 
   public const int ReferenceIdCap = 80;
 
+  /// <summary>Pick mode is armed in the browser: a click or key now picks (the panel's "picking" line).</summary>
   public bool IsPicking { get; private set; }
 
-  /// <summary>Bumped by every StartPick and CancelPick; a pick applies only while its generation is current.</summary>
-  public int PickGeneration { get; private set; }
+  /// <summary>The token of the pick in flight (arming or armed), or null; a pick applies only while its token is current.</summary>
+  public string? PickToken { get; private set; }
+
+  /// <summary>A pick is arming or armed, so Tag cannot start another.</summary>
+  public bool IsPickPending => PickToken is not null;
 
   /// <summary>Chips waiting for the next message in conversation <see cref="Generation"/>.</summary>
   public IReadOnlyList<AskTag> Attached { get; private set; } = [];
@@ -69,7 +74,7 @@ public sealed partial class AskTagState : State<AskTagState>
   public override void Initialize()
   {
     IsPicking = false;
-    PickGeneration = 0;
+    PickToken = null;
     Attached = [];
     Sent = [];
     Generation = 0;
