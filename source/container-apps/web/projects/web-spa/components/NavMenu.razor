@@ -12,8 +12,9 @@
   // pages is permitted. Template flags need no markup here: a page excluded by a flag (api's
   // Weather, grpc's Superheros) is not compiled, so it is not in the registry. Login is not a
   // registry page (the profile menu and the palette's Sign in row reach it). The External
-  // category is plain links to other sites, not app pages. Destinations are re-read whenever
-  // the cascaded authentication state changes (sign-in and sign-out).
+  // category is plain links to other sites, not app pages. Destinations are re-read only when
+  // the cascaded authentication state task is replaced (sign-in and sign-out), not on every
+  // parent render.
 
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
@@ -21,8 +22,19 @@
 
   private List<(string Group, List<PageRegistryEntry> Pages)> Groups = [];
 
+  private Task<AuthenticationState>? LoadedAuthenticationState;
+
+  private bool Loaded;
+
   protected override async Task OnParametersSetAsync()
   {
+    if (Loaded && ReferenceEquals(LoadedAuthenticationState, AuthenticationState))
+    {
+      return;
+    }
+
+    Loaded = true;
+    LoadedAuthenticationState = AuthenticationState;
     ClaimsPrincipal user = AuthenticationState is null
       ? new ClaimsPrincipal(new ClaimsIdentity())
       : (await AuthenticationState).User;

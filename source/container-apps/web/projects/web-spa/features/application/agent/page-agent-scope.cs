@@ -10,7 +10,8 @@
 // route or page list of its own, and the guard test fails if one reappears under agent/.
 // A template matches segment by segment, case-insensitive. A {Name} token matches one non-empty
 // segment, and a {Name:guid|int|long|bool} token only a value of that type, so /Feedback/{id:Guid}
-// serves the Feedback actions on a filing and /Feedback/item or /FeedbackExtra serves none.
+// serves the Feedback actions on a filing and /Feedback/item or /FeedbackExtra serves none. Any
+// other constraint (and optional or catch-all tokens) never matches: fail closed.
 // PrimaryPage is the static route of the first scope that lists the action, taking navigable
 // pages in menu order (PageRegistry.All) first, so FetchCredentials executes on Settings before
 // Passkeys. Serves is true when the action is not page-bound, or a scope listing it matches path.
@@ -204,7 +205,9 @@ public static class PageAgentScope
       "int" => int.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out _),
       "long" => long.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out _),
       "bool" => bool.TryParse(value, out _),
-      _ => true,
+      "" or "string" => true,
+      // An unknown constraint never matches, so actions are never offered on a path Blazor would not route.
+      _ => false,
     };
   }
 

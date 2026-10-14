@@ -26,7 +26,7 @@
 //   ways. NavMenu renders the registry itself (categories from NavGroup, gates from each page's
 //   Policy), so it has no page list of its own to drift.
 // - Entries are a generated array of static member reads (typeof + GetPageUrl/Title/NavIcon/
-//   Policy): reflection-free, AOT/trim safe. Sorted by route (ordinal) for stable output.
+//   Policy): reflection-free, AOT/trim safe. Sorted by NavOrder, then route (ordinal).
 // - The registry is emitted only when the assembly declares at least one [Page], so assemblies
 //   that merely carry the generator never need INavigableComponent's Icon type.
 // Multi-route pages (task 096) — one [Page] with params additional routes, not stacked [Page]:
@@ -51,10 +51,11 @@
 //   [Parameter] is generated for them) and compare as literal text.
 // - Errors (TWE005/010/011) are fail-closed: reported, and no page surface is emitted.
 // Menu and agent metadata (task 300) — one declaration feeds NavMenu, Ctrl-K, Ask and WebMCP:
-// - NavGroup (string literal, "" = top level) is the menu category; NavOrder (int literal) is the
-//   menu position. PageRegistry.All is sorted by NavOrder, then route, so the registry order IS
-//   the menu order and NavMenu starts a category whenever NavGroup changes. Like Description, a
-//   non-literal value is read as the default ("" / 0); the registry guard tests report it.
+// - NavGroup (string constant, "" = top level) is the menu category; NavOrder (int constant) is
+//   the menu position. PageRegistry.All is sorted by NavOrder, then route, so the registry order
+//   IS the menu order and NavMenu starts a category whenever NavGroup changes; the registry test
+//   requires each NavGroup to be one contiguous run. Description, NavGroup and NavOrder accept
+//   any compile-time constant (a const field reads like a literal).
 // - AgentActions (typeof list) names the catalog actions the agent may execute while this page is
 //   on screen. Types are resolved with the semantic model and emitted fully qualified, so the
 //   generated file needs none of the page file's usings. Every page that declares any (navigable
@@ -282,14 +283,14 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
       if (argName == "Description")
       {
-        if (arg.Expression is LiteralExpressionSyntax described && described.Token.Value is string text)
+        if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: string text })
           description = text;
         continue;
       }
 
       if (argName == "NavGroup")
       {
-        if (arg.Expression is LiteralExpressionSyntax grouped && grouped.Token.Value is string group)
+        if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: string group })
           navGroup = group;
         continue;
       }
@@ -647,8 +648,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
   }
 
   // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as
-  // a newline, so any literal Description compiles in the registry. Description is read only as a
-  // string literal; any other expression emits "" and the registry guard test reports it.
+  // a newline, so any constant Description compiles in the registry. A non-constant expression
+  // emits ""; the destinations test requires a Description on every menu destination.
   private static string CSharpString(string value) =>
     Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(value, quote: true);
 

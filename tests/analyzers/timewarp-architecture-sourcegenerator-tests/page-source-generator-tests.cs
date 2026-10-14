@@ -260,6 +260,20 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Read_NavGroup_And_Description_From_Constants()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      public static class Groups { public const string Admin = "Admin"; public const string About = "Admin page."; }
+      [Page("/Alpha", Navigable = true, NavGroup = Groups.Admin, Description = Groups.About, NavOrder = 200)]
+      public partial class AlphaPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200),");
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Emit_AgentActions_Fully_Qualified_With_Every_Route()
   {
     (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""

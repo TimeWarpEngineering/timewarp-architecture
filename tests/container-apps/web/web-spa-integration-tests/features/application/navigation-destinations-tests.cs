@@ -12,9 +12,14 @@
 // navigate enum and site_map rows on Home (less Sign in), in the same order. Signed out, Sign in
 // is the one extra row on the palette, navigate and site_map, as on Ctrl-K. Every registry page
 // the principal may not open, Login while signed in, and an unknown url are refused by navigate.
-// The guard reads the agent sources: outside comments, no string literal may start with a route
-// ("/Letter") and no typeof(...Page) may appear, so page knowledge stays on [Page] and the
-// generated registry. The registry itself is checked for strictly increasing NavOrder and for
+// Each principal's set is also pinned: anonymous sees only Home, the plain user exactly Home,
+// Settings, Profile, AgentLinks and Feedback, the developer no Admin page and no Settings, and the
+// administrator every registry page, so a filter that lets everything through fails.
+// The guard reads the agent sources (agent/** and page-agent-context.cs): outside comments, no
+// string literal may start with a route ("/Letter"), and no typeof(...Page), nameof(...Page) or
+// XPage.GetPageUrl/Title/NavIcon/Policy read may appear, so page knowledge stays on [Page] and
+// the generated registry. The registry itself is checked for strictly increasing NavOrder, for
+// each NavGroup being one contiguous run (else NavMenu draws the category twice), and for
 // AgentActions that name catalog actions.
 #endregion
 
@@ -52,18 +57,36 @@ public partial class Destinations_Should_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Destinations_Should_>();
 
-  public static Task Match_Across_Menu_Palette_And_Agent_For_Administrator() => AssertSameDestinationsAsync([.. PermissionIds.All], "Administrator");
+  public static async Task Match_Across_Menu_Palette_And_Agent_For_Administrator()
+  {
+    string[] destinations = await AssertSameDestinationsAsync([.. PermissionIds.All], "Administrator");
+    destinations.ShouldBe([.. PageRegistry.All.Select(static page => page.Url)]);
+  }
 
-  public static Task Match_Across_Menu_Palette_And_Agent_For_Plain_User() => AssertSameDestinationsAsync(PlainUser, "PlainUser");
+  public static async Task Match_Across_Menu_Palette_And_Agent_For_Plain_User()
+  {
+    string[] destinations = await AssertSameDestinationsAsync(PlainUser, "PlainUser");
+    destinations.ShouldBe(["/", "/Settings", "/Profile", "/AgentLinks", "/Feedback"]);
+  }
 
-  public static Task Match_Across_Menu_Palette_And_Agent_For_Developer() => AssertSameDestinationsAsync(Developer, "Developer");
+  public static async Task Match_Across_Menu_Palette_And_Agent_For_Developer()
+  {
+    string[] destinations = await AssertSameDestinationsAsync(Developer, "Developer");
+    destinations.ShouldContain("/");
+    destinations.ShouldNotContain("/Settings");
+    destinations.ShouldAllBe(static url => !url.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase));
+  }
 
-  public static Task Match_Across_Menu_Palette_And_Agent_For_Anonymous() => AssertSameDestinationsAsync(null, "Anonymous");
+  public static async Task Match_Across_Menu_Palette_And_Agent_For_Anonymous()
+  {
+    string[] destinations = await AssertSameDestinationsAsync(null, "Anonymous");
+    destinations.ShouldBe(["/"]);
+  }
 
   public static Task Keep_Page_Knowledge_Out_Of_The_Agent_Sources()
   {
     string agent = RepoFile("source", "container-apps", "web", "projects", "web-spa", "features", "application", "agent");
-    List<string> files = [.. Directory.GetFiles(agent, "*.cs")];
+    List<string> files = [.. Directory.GetFiles(agent, "*.cs", SearchOption.AllDirectories)];
     files.Add(RepoFile("source", "container-apps", "web", "projects", "web-spa", "components", "page-agent-context.cs"));
     files.Count.ShouldBeGreaterThan(10);
     List<string> offenders = [];
@@ -79,7 +102,7 @@ public partial class Destinations_Should_
           continue;
         }
 
-        if (RouteLiteral().IsMatch(code) || PageTypeOf().IsMatch(code))
+        if (RouteLiteral().IsMatch(code) || PageTypeOf().IsMatch(code) || PageNameOf().IsMatch(code) || PageMember().IsMatch(code))
         {
           offenders.Add($"{Path.GetFileName(file)}:{number}: {code}");
         }
@@ -97,6 +120,22 @@ public partial class Destinations_Should_
     {
       entry.NavOrder.ShouldBeGreaterThan(previous, entry.PageType.Name);
       previous = entry.NavOrder;
+    }
+
+    HashSet<string> closed = [];
+    string? current = null;
+    foreach (PageRegistryEntry entry in PageRegistry.All)
+    {
+      if (entry.NavGroup != current)
+      {
+        if (current is { Length: > 0 })
+        {
+          closed.Add(current);
+        }
+
+        closed.ShouldNotContain(entry.NavGroup, $"{entry.PageType.Name}: NavOrder splits the {entry.NavGroup} menu category");
+        current = entry.NavGroup;
+      }
     }
 
     using DestinationSpa spa = new(null);
@@ -119,7 +158,7 @@ public partial class Destinations_Should_
     return Task.CompletedTask;
   }
 
-  private static async Task AssertSameDestinationsAsync(string[]? permissions, string because)
+  private static async Task<string[]> AssertSameDestinationsAsync(string[]? permissions, string because)
   {
     using DestinationSpa spa = new(permissions);
     using SpaTestScope scope = SpaTestScope.Create(spa);
@@ -178,6 +217,7 @@ public partial class Destinations_Should_
     }
 
     Console.WriteLine($"DESTINATIONS-PROOF {because} menu={string.Join(",", menu)}");
+    return destinations;
   }
 
   private static async Task<string[]> MenuHrefsAsync(IServiceProvider services, ClaimsPrincipal user)
@@ -225,6 +265,12 @@ public partial class Destinations_Should_
 
   [GeneratedRegex(@"typeof\(\s*[\w.]*Page\s*\)")]
   private static partial Regex PageTypeOf();
+
+  [GeneratedRegex(@"nameof\(\s*[\w.]*Page\s*\)")]
+  private static partial Regex PageNameOf();
+
+  [GeneratedRegex(@"\b\w+Page\.(GetPageUrl|Title|NavIcon|Policy)\b")]
+  private static partial Regex PageMember();
 
   /// <summary>In-proc SPA container for one principal (null = signed out).</summary>
   private sealed class DestinationSpa : ISpaTestApplication, IDisposable
