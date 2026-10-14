@@ -63,6 +63,7 @@ public sealed class GetSiteSettings
         entraSignInEnabled: settings.EntraSignInEnabled,
         entraAllowBootstrap: settings.EntraAllowBootstrap,
         passkeyPromptMode: settings.PasskeyPromptMode,
+        assistantName: settings.AssistantName,
         version: settings.Version,
         configurationTenantId: tenantId,
         configurationTenantDisplayName: displayName,

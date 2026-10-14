@@ -40,6 +40,10 @@
 // Task 301: signed in, Ask opens through Ctrl-K: "ask" highlights the derived OpenAskPanel row,
 // Enter closes the palette and opens [data-qa=AgentAsk] (screenshots ctrl-k-ask-row.png and
 // ctrl-k-ask-panel-open.png). Signed out the palette has no commands, so the app-bar button opens Ask.
+// Task 361: signed in as the first (Administrator) account, /Admin/Authentication renames the
+// assistant to Zawadi. Without a reload the top-bar button reads "Ask Zawadi", the derived Ctrl-K
+// row reads "Ask Zawadi", and the panel it opens has the header Zawadi with its avatar and the
+// greeting "Hi, I'm Zawadi"; no "Akili" is left in the panel (assistant-rename-*.png).
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -301,6 +305,80 @@ public class AskSignIn_Given_Wasm
     session.ConfigurationStatuses.ShouldContain(200);
     (await session.Page.Locator("[data-qa=AgentAskNotConfigured]").InnerTextAsync()).ShouldBe("AI not configured");
     (await session.Page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync()).ShouldBe(XaiChatDefaults.SetupCommand);
+    session.AssertNoWasmFailures();
+  }
+
+  public static async Task AdminRename_Should_Relabel_Every_Ask_Entry_Point()
+  {
+    InstallChromium();
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.PostConfigure<XaiChatOptions>(options =>
+      {
+        options.UseFakeUpstream = true;
+        options.ApiKey = "playwright-placeholder-key";
+      }));
+
+    await using Session session = await Session.StartAsync();
+    IPage page = session.Page;
+    await session.GoHomeAsync();
+    ILocator askButton = page.Locator("[data-qa=AskAiButton]");
+    await Assertions.Expect(askButton).ToHaveTextAsync("Ask Akili", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await session.SignInWithNewPasskeyAsync();
+
+    // Rename through the admin form (same UpdateSiteSettings flow and Version token).
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    ILocator nameInput = page.Locator("[data-qa=AssistantName]").Locator("input");
+    await nameInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    await Assertions.Expect(nameInput).ToHaveValueAsync("Akili", new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
+    await nameInput.FillAsync("Zawadi");
+    await nameInput.PressAsync("Tab");
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("assistant-rename-admin.png") });
+    await page.Locator("[data-qa=AuthenticationSave]").ClickAsync();
+
+    // Top bar: the page reloads the public identity after a successful save, so no page load.
+    await Assertions.Expect(askButton).ToHaveTextAsync("Ask Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+
+    // Ctrl-K: the derived AgentSurface.OpenAskPanel row carries the runtime override.
+    ILocator paletteInput = page.Locator("[data-qa=CommandPaletteInput]");
+    bool opened = false;
+    for (int attempt = 0; attempt < 20 && !opened; attempt++)
+    {
+      await page.Keyboard.PressAsync("Control+k");
+      try
+      {
+        await paletteInput.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
+        opened = true;
+      }
+      catch (TimeoutException)
+      {
+        await page.Keyboard.PressAsync("Escape");
+      }
+    }
+
+    opened.ShouldBeTrue("Ctrl-K did not open the palette");
+    await paletteInput.FillAsync("zawadi");
+    ILocator active = page.Locator(".twe-palette__row--active");
+    await Assertions.Expect(active.Locator(".twe-palette__name"))
+      .ToHaveTextAsync("Ask Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("assistant-rename-ctrl-k.png") });
+    await paletteInput.PressAsync("Enter");
+
+    // Panel: header name and avatar, and the empty-state greeting once the agent is built.
+    ILocator panel = page.Locator("[data-qa=AgentAsk]");
+    await panel.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskTitle]"))
+      .ToHaveTextAsync("Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskAvatar]"))
+      .ToHaveAttributeAsync("alt", "Zawadi", new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
+    await Assertions.Expect(page.Locator("[data-qa=AskGreeting]"))
+      .ToContainTextAsync("Hi, I'm Zawadi", new LocatorAssertionsToContainTextOptions { Timeout = 60_000 });
+    (await page.Locator("[data-qa=AskEmptyAvatar]").GetAttributeAsync("alt")).ShouldBe("Zawadi");
+    await panel.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("assistant-rename-panel.png") });
+    (await panel.InnerTextAsync()).ShouldNotContain("Akili");
     session.AssertNoWasmFailures();
   }
 

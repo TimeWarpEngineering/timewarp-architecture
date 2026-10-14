@@ -12,7 +12,8 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator, emptied store re-seeds at Version 0, 409, successful update.
+// Jaribu runfile: UpdateSiteSettings validator (passkey mode, assistant name), emptied store re-seeds at
+// Version 0, 409, successful update, assistant rename stored trimmed.
 #endregion
 
 //-:cnd:noEmit
@@ -49,6 +50,7 @@ namespace TimeWarp.Architecture.Features.Settings
       Command command = new()
       {
         PasskeyPromptMode = (PasskeyPromptMode)99,
+        AssistantName = AssistantNameRules.Default,
         Version = 0
       };
 
@@ -64,6 +66,7 @@ namespace TimeWarp.Architecture.Features.Settings
         EntraSignInEnabled = true,
         EntraAllowBootstrap = true,
         PasskeyPromptMode = PasskeyPromptMode.Required,
+        AssistantName = AssistantNameRules.Default,
         Version = 0
       };
 
@@ -71,6 +74,49 @@ namespace TimeWarp.Architecture.Features.Settings
       result.IsValid.ShouldBeTrue();
       return Task.CompletedTask;
     }
+
+    // Task 361: AssistantName is required, and trimmed it is 1-32 plain-text characters.
+    [Input("")]
+    [Input("   ")]
+    [Input("123456789012345678901234567890123")]
+    [Input("<b>Akili</b>")]
+    [Input("Ak<ili")]
+    [Input("Ak\u0007ili")]
+    [Input("Akili\nZawadi")]
+    public static Task Invalid_Assistant_Name_Should_Fail_Validation(string name)
+    {
+      ValidationResult result = new Validator().Validate(ValidCommand(name));
+      result.IsValid.ShouldBeFalse(name);
+      result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
+      return Task.CompletedTask;
+    }
+
+    public static Task Null_Assistant_Name_Should_Fail_Validation()
+    {
+      ValidationResult result = new Validator().Validate(ValidCommand(null!));
+      result.IsValid.ShouldBeFalse();
+      return Task.CompletedTask;
+    }
+
+    [Input("Akili")]
+    [Input("Zawadi")]
+    [Input("  Zawadi  ")]
+    [Input("Q&A Helper")]
+    [Input("12345678901234567890123456789012")]
+    public static Task Valid_Assistant_Name_Should_Pass_Validation(string name)
+    {
+      ValidationResult result = new Validator().Validate(ValidCommand(name));
+      result.IsValid.ShouldBeTrue(name);
+      return Task.CompletedTask;
+    }
+
+    private static Command ValidCommand(string assistantName) =>
+      new()
+      {
+        PasskeyPromptMode = PasskeyPromptMode.Soft,
+        AssistantName = assistantName,
+        Version = 0
+      };
   }
 
   [TestTag("Application")]
@@ -95,6 +141,7 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
+          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -123,6 +170,7 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = false,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
+          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -145,6 +193,7 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
+          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -153,6 +202,25 @@ namespace TimeWarp.Architecture.Features.Settings
       result.AsT0.EntraSignInEnabled.ShouldBeTrue();
       result.AsT0.EntraAllowBootstrap.ShouldBeTrue();
       result.AsT0.Version.ShouldBe(1);
+    }
+
+    public static async Task Rename_Should_Store_The_Trimmed_Name_And_Echo_It()
+    {
+      InMemorySiteSettingsStore store = new();
+      await store.AddAsync(SiteSettings.Create());
+      UpdateHandler handler = new(store);
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(
+        new Command
+        {
+          PasskeyPromptMode = PasskeyPromptMode.Soft,
+          AssistantName = "  Zawadi  ",
+          Version = 0
+        },
+        default);
+
+      result.IsT0.ShouldBeTrue();
+      result.AsT0.AssistantName.ShouldBe("Zawadi");
+      (await store.GetAsync())!.AssistantName.ShouldBe("Zawadi");
     }
   }
 }

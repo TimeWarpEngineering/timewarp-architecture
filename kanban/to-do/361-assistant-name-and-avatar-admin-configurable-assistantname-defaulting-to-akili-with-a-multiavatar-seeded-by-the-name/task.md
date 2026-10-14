@@ -78,15 +78,138 @@ display-name override** for derived rows. Therefore:
 
 ## Checklist
 
-- [ ] `AssistantName` in SiteSettings (+ validator, migration default `Akili`, admin field)
-- [ ] Public, cache-friendly name/avatar delivery to the SPA (no other settings leaked)
-- [ ] All labels from one source (button, Ctrl-K row via 301's override, header, greeting, feedback titles)
-- [ ] Multiavatar seeded by the name; header, turns, empty state
-- [ ] System prompt uses the name
-- [ ] Tests (validator, authz, avatar determinism, labels, Playwright rename)
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] `AssistantName` in SiteSettings (+ validator, migration default `Akili`, admin field)
+- [x] Public, cache-friendly name/avatar delivery to the SPA (no other settings leaked)
+- [x] All labels from one source (button, Ctrl-K row via 301's override, header, greeting, feedback titles)
+- [x] Multiavatar seeded by the name; header, turns, empty state
+- [x] System prompt uses the name
+- [x] Tests (validator, authz, avatar determinism, labels, Playwright rename)
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-14 (cockpit, per Steve; default name Akili chosen per "use Swahili")
 - 2026-10-14: amended to build on 301 (Ctrl-K via 301's runtime override; footer button gone). Stacked 301 → 361 → 352–354.
+- 2026-10-14: implemented (ganda task work, implement oracle). Gates green: `dev build` 0/0,
+  `dev test`, `dev template-smoke`, `ganda repo audit`.
+
+## Results
+
+### What shipped
+
+- **Domain:** `SiteSettings.AssistantName` (stored trimmed) with `RenameAssistant`, separate from
+  `ReplacePolicy` so the seeder's Development reseed never resets an admin-set name.
+  `AssistantNameRules` (TimeWarp.Identity) owns the rules: default **Akili**, 1-32 characters
+  after trimming, no control characters, no `<` or `>`. The aggregate and
+  `SiteSettingsDetailsValidator` both use it, so they can't disagree. `AssistantName` is
+  non-nullable `= null!` on the command (TWA0002/0003 clean).
+- **Persistence:** `identity.site_settings.AssistantName varchar(32) not null`. Migration
+  `20261014110100_AddSiteSettingsAssistantName` fills existing rows with `Akili`.
+  New rows get it from `SiteSettings.Create`.
+- **Update flow:** `ISiteSettingsDetails` / `UpdateSiteSettings` / `GetSiteSettings` carry
+  `AssistantName`. Version concurrency and `[EndpointAuthorize] settings.write` are unchanged. The
+  Admin Authentication page has a new **Assistant** section with an "Assistant name" field. After a
+  successful save it re-reads the public identity, so the labels change without a reload.
+- **Delivery (recorded decision):** a new anonymous query, `GetAssistantIdentity`
+  (`GET api/settings/assistant`). Its payload is **only** `{ name, avatar }`. `GetSiteSettings`
+  needs `settings.read` and carries Entra policy, so it was not reused. The SPA reads the identity
+  once per app load (`AuthenticationStateListener` → `AgentSurfaceState.LoadAssistantIdentity`) and
+  again after an admin save. It's small and the same for every caller, so nothing per-user is
+  cached. If the store is unmigrated, the name falls back to Akili instead of a 503.
+- **Avatar:** generated server-side with `MultiavatarGenerator.Generate(name)` and returned as an
+  SVG data URI, the same way `GetProfile` makes profile avatars. It is deterministic per name and
+  changes on rename. It appears in three places:
+  - the panel header, `<img alt="{name}">` at 24px, replacing 349's gradient Sparkle mark (the mark
+    stays as the fallback until the identity loads);
+  - the empty state, 56px in front of 349's orbs;
+  - beside every assistant turn, through the `--twe-assistant-avatar` CSS property. Inline styles
+    are banned, so `ask-ai.ts` `SetAssistantAvatar` sets that property on the document root, and it
+    accepts only base64 SVG data URIs.
+
+  `GetAssistantIdentity.MockAvatar` is the precomputed Akili URI (web-contracts does not reference
+  Multiavatar). A test checks it against the generator.
+- **One label source:** every label below reads `AgentSurfaceState.AssistantName` / `AskLabel`:
+  - top-bar button: **"Ask {name}"**;
+  - Ctrl-K: `AskAssistantDisplayOverride` feeds 301's `IActionDisplayOverride`, so the derived
+    `AgentSurface.OpenAskPanel` row reads **"Ask {name}"** with description "Open the {name} panel…".
+    301's `ActionDisplay` is text-only, so the row has no avatar icon;
+  - panel header: **"{name}"** with the avatar. The conversation label is "{name} conversation";
+  - greeting: **"Hi, I'm {name} — what can I help with?"** in 349's styling;
+  - signed-out, error and starting states: "Sign in to use {name}", "{name} could not load…",
+    "Starting {name}…";
+  - answer-bar feedback titles: **"{name} answer"**, **"{name} thumbs up"**, **"{name} thumbs down"**.
+
+  The "Ask" and "Ask AI" literals are gone. The credential fallback label is "Assistant conversation".
+- **Prompt:** `AgentAskInstructions.For(assistantName, pageContext)` starts with "You are {name},
+  the assistant built into this app. When you introduce yourself, use that name."
+- **For 343 (not built here):** the WebMCP / agent card identity should read the same source.
+  Server-side, read `ISiteSettingsStore` → `SiteSettings.AssistantName` and
+  `Settings.Application.GetAssistantIdentity.AvatarFor(name)`. Client-side, read
+  `AgentSurfaceState.AssistantName` / `AssistantAvatar`.
+- **Docs:** the `tw-blazor` skill now says assistant labels come from `AssistantName` and must
+  never be hard-coded.
+- **Not in scope (follow-up if wanted):** an admin-uploaded avatar override.
+
+### Tests
+
+- `update-site-settings-tests.cs` (co-located Jaribu):
+  - validator rejects empty, whitespace, 33 characters, `<b>…</b>`, `<`, a control character, a
+    newline, and null;
+  - validator accepts Akili, Zawadi, a padded name, `Q&A Helper`, and 32 characters;
+  - the handler stores the rename trimmed.
+- `get-assistant-identity-tests.cs`:
+  - JSON round-trip, with no policy fields in the payload;
+  - the mock is Akili, and `MockAvatar` equals the generator output;
+  - the avatar is deterministic and changes on rename;
+  - an empty store falls back to Akili.
+- `site-settings-endpoint-tests.cs` (HTTP):
+  - anonymous `GET api/settings/assistant` returns 200 with name and avatar only;
+  - an Administrator renaming to "  Zawadi  " gets 200 and the public identity shows Zawadi with a
+    new avatar (the test restores Akili afterwards);
+  - a markup name gets 400;
+  - a Member PUT gets 403.
+- `timewarp-identity-tests/site-settings-assistant-name-tests.cs`: default, trim, invalid names
+  throw, and a rename survives the store.
+- `assistant-identity-tests.cs` (SPA in-proc):
+  - state defaults to Akili / "Ask Akili";
+  - a server answer applies the name and avatar;
+  - an invalid answer or a failure keeps the current name;
+  - the Ctrl-K override gives "Ask Zawadi";
+  - the panel header, avatar alt text and sign-in text say Zawadi.
+- Playwright `AdminRename_Should_Relabel_Every_Ask_Entry_Point`: renaming to Zawadi on
+  /Admin/Authentication makes the top bar read "Ask Zawadi", the derived Ctrl-K row read
+  "Ask Zawadi", the header read Zawadi with its avatar, and the greeting read "Hi, I'm Zawadi". No
+  "Akili" is left in the panel. Screenshots: `assistant-rename-{admin,ctrl-k,panel}.png`.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dev build
+dev test
+dev template-smoke
+# focused:
+dotnet test --project tests/container-apps/web/web-jaribu-tests
+dotnet test --project tests/container-apps/web/web-spa-playwright-tests   # includes AdminRename_Should_Relabel_Every_Ask_Entry_Point
+```
+
+To check by hand with `dev run`, sign in with the first passkey (Administrator). Open
+/Admin/Authentication, set "Assistant name" to `Zawadi`, and choose Save. Then press Ctrl-K, type
+`zawadi`, and press Enter. With an existing database, `dev db update` applies the migration.
+
+**Expect:**
+
+- `dev build`: 0 warnings, 0 errors.
+- `dev test` and `dev template-smoke`: succeed.
+- Before the rename, the top bar reads "Ask Akili".
+- After Save, without a reload:
+  - the top bar reads "Ask Zawadi";
+  - the Ctrl-K row reads "Ask Zawadi";
+  - the panel header reads "Zawadi" with a Multiavatar face that differs from Akili's;
+  - the empty state reads "Hi, I'm Zawadi — what can I help with?";
+  - assistant answers show the same face beside them.
+- `GET /api/settings/assistant` (anonymous) returns `{"name":"Zawadi","avatar":"data:image/svg+xml;base64,…"}`
+  and nothing else.
+- Saving `<b>x</b>` or a 33-character name fails validation.
+

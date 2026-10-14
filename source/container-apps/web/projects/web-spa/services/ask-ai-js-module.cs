@@ -1,6 +1,6 @@
 #region Purpose
 // On-demand import of ask-ai.js: insert an @ token, check an @ starts a word, refocus the
-// composer, and copy answer text.
+// composer, copy answer text, and set the assistant avatar the turns show.
 #endregion
 
 #region Design
@@ -56,6 +56,13 @@ internal static class AskAiJsModule
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(text);
     await InvokeAsync(jsRuntime, "CopyText", text);
+  }
+
+  /// <summary>Sets the avatar drawn beside assistant turns; null or a non-data-URI clears it.</summary>
+  internal static Task SetAssistantAvatarAsync(IJSRuntime jsRuntime, string? dataUri)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "SetAssistantAvatar", dataUri);
   }
 
   private static async Task InvokeAsync(IJSRuntime jsRuntime, string export, params object?[] arguments)

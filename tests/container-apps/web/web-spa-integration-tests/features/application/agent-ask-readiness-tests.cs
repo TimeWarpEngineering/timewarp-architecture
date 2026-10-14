@@ -13,7 +13,8 @@
 // sign in, and an error shows its status and detail with Retry. A server answer copies the panel
 // settings (RecordChats, notice, PrivacyUrl, normalized SupportUrl, credential lifetime) and a failure puts
 // those back to XaiChatDefaults. HtmlRenderer does not run OnAfterRenderAsync, so a configured probe
-// renders "Starting Ask…" here; the Playwright test proves the chat itself.
+// renders "Starting Akili…" here (the default assistant name, task 361); the Playwright test
+// proves the chat itself.
 #endregion
 
 namespace AgentAskReadiness_;
@@ -117,7 +118,7 @@ public class AgentAskReadiness_Should_
   {
     string html = await ProbeAndRenderAsync(new SharedProblemDetails { Status = 401, Title = "Unauthorized" }, CatalogAgentReadiness.Unauthenticated);
 
-    html.ShouldContain("Sign in to use Ask");
+    html.ShouldContain("Sign in to use Akili");
     html.ShouldContain("data-qa=\"AgentAskSignInButton\"");
     html.ShouldNotContain("AI not configured");
     html.ShouldNotContain("user-secrets");
@@ -149,7 +150,7 @@ public class AgentAskReadiness_Should_
 
     html.ShouldContain("data-qa=\"AgentAskStarting\"");
     html.ShouldNotContain("AI not configured");
-    html.ShouldNotContain("Sign in to use Ask");
+    html.ShouldNotContain("Sign in to use Akili");
     html.ShouldNotContain("data-qa=\"AgentAskError\"");
   }
 

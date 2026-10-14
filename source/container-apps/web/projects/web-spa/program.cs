@@ -154,6 +154,8 @@ public static class Program
     serviceCollection.AddScoped<WebMcpPublisher>();
     // The Ask transcript outlives the panel and page remounts; one thread per conversation generation.
     serviceCollection.AddScoped<AskConversationThreads>();
+    // Task 361: the derived Ctrl-K Ask row reads "Ask {AssistantName}".
+    serviceCollection.AddScoped<IActionDisplayOverride, AskAssistantDisplayOverride>();
     serviceCollection.AddJavaScriptDispatch(AllowJavaScriptDispatch);
 
     // Plus [assembly: MediatorAssembly] links LoadPersistentStateRequestHandler and

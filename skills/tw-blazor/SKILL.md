@@ -166,7 +166,11 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   not run. Approval
   does not grant a permission the principal lacks.
 - The ask UI is the derived Ctrl-K `AgentSurface.OpenAskPanel` command (signed in) and the top-bar
-  Ask AI button (always shown).
+  "Ask {AssistantName}" button (always shown). `AssistantName` is the admin-set `SiteSettings` name
+  (default Akili), read anonymously through `GetAssistantIdentity` with its Multiavatar. Every
+  assistant label (button, Ctrl-K row via `AskAssistantDisplayOverride`, panel header, greeting,
+  feedback titles) and the instructions' first line read `AgentSurfaceState.AssistantName`; never
+  hard-code "Ask" or "Ask AI".
   It opens the `AgentAsk` side panel in `TimeWarpPage`'s FluentLayout aside
   (`UIAgent` over a `FunctionInvokingChatClient` whose inner client is the browser relay).
   The page reflows beside the 450px panel. Below 880px, and when expanded, the panel covers

@@ -105,7 +105,7 @@
             </FluentTextInput>
           </div>
           <div class="twe-appbar__actions">
-            <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">Ask AI</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">@AgentSurfaceState.AskLabel</FluentButton>
             <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
               <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
             </FluentButton>

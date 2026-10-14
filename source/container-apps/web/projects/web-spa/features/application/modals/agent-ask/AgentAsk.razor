@@ -8,7 +8,7 @@
   Purpose: Ask panel. A person describes what they want and the in-app model runs a page catalog tool.
 
   Design: Docked in TimeWarpPage's FluentLayout aside (450px), not a modal and not a flex
-  sibling of the layout. The top-bar Ask AI button and the Ctrl-K Ask action both open it.
+  sibling of the layout. The top-bar "Ask {AssistantName}" button and the Ctrl-K Ask row both open it.
   The page reflows beside it; below 880px and when expanded the aside item covers the viewport.
   It renders the probe's state (task 293): only when the server answered "no key" does it show
   "AI not configured" and the pwsh user-secrets command. Signed out (401) shows "Sign in to use
@@ -52,7 +52,7 @@
   Closing the panel also closes the reference picker.
   The empty state is AskStarterPrompts (task 348): the configured XAI:StarterPrompts cards, or the
   template defaults.
-  Look (task 349, after the Cloudflare dashboard chat): a compact one-row header (brand mark, Ask,
+  Look (task 349, after the Cloudflare dashboard chat): a compact one-row header (avatar, assistant name,
   the conversation name, icon actions) over a hairline; a dotted canvas body; a centered empty
   state of CSS gradient orbs in the brand colors, a greeting, a tagline and the cards; and a
   footer pinned to the bottom with the notice, chips and a raised composer. The composer's lead slot
@@ -78,6 +78,14 @@
   server [EndpointAuthorize] remains the boundary. When it has expired the header says so and
   points at New conversation. Outcomes of dispatched actions stay on NotificationState. Copy and
   @ insertion are presentational JS on child components.
+  Identity (task 361): every label here is AgentSurfaceState.AssistantName (default Akili, admin-set
+  on SiteSettings): the header title, the sign-in and error states, the greeting "Hi, I'm {name}",
+  the conversation credential's label and the instructions' first line. The avatar is the
+  server-made Multiavatar for the name. The header shows it (alt is the name) in place of 349's
+  gradient mark, which stays as the fallback until the identity loads; the empty state shows it
+  in front of the orbs; and each assistant turn shows it through --twe-assistant-avatar, which
+  ApplyAvatarAsync sets on the document root because the library renders the turns and inline
+  styles are banned.
 *@
 
 @code {
@@ -105,6 +113,11 @@
   private string? BuiltPath;
   private AgentEditMode BuiltMode;
   private int BuiltGeneration = -1;
+  private bool AvatarApplied;
+  private string? AppliedAvatar;
+
+  private string AssistantName => AgentSurfaceState.AssistantName;
+  private string Greeting => $"Hi, I'm {AssistantName} \u2014 what can I help with?";
 
   private CatalogAgentReadiness Readiness => CatalogAgentAvailability.Readiness(AgentSurfaceState);
   private string SetupCommand => CatalogAgentAvailability.SetupCommand(AgentSurfaceState);
@@ -143,6 +156,8 @@
       await AgentSurfaceState.LoadPrivacyNoticeDismissal();
     }
 
+    await ApplyAvatarAsync();
+
     PageAgentRoute.Observe(NavigationManager, JsRuntime);
     await IssueConversationAsync();
     Ai.UIAgent? previous = Agent;
@@ -154,6 +169,20 @@
   }
 
   private string CurrentPath() => PageAgentRoute.PathOr(NavigationManager);
+
+  [DirectComponentSideEffect("Sets the --twe-assistant-avatar CSS property the library-rendered assistant turns draw; presentational, and inline styles are banned.")]
+  private async Task ApplyAvatarAsync()
+  {
+    string? avatar = AgentSurfaceState.AssistantAvatar;
+    if (AvatarApplied && avatar == AppliedAvatar)
+    {
+      return;
+    }
+
+    AvatarApplied = true;
+    AppliedAvatar = avatar;
+    await AskAiJsModule.SetAssistantAvatarAsync(JsRuntime, avatar);
+  }
 
   private async Task IssueConversationAsync()
   {
@@ -196,7 +225,8 @@
       principalId,
       scopes,
       DateTimeOffset.UtcNow,
-      lifetime
+      lifetime,
+      $"{AssistantName} conversation"
     );
     await AgentSurfaceState.SetConversation
     (
@@ -273,8 +303,10 @@
 
       toolNames.Add(PageAgentContext.ToolName);
       // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far.
+      string assistantName = AssistantName;
       string RenderInstructions() => AgentAskInstructions.For
       (
+        assistantName,
         PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
       );
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
@@ -436,11 +468,18 @@
 <div class="twe-agent-ask" data-qa="AgentAsk" data-built-mode="@(Agent is null ? null : BuiltMode.ToString())">
   <header class="twe-agent-ask__header">
     <div class="twe-agent-ask__heading">
-      <span class="twe-agent-ask__mark" aria-hidden="true">
-        <FluentIcon Value="@(new Icons.Filled.Size16.Sparkle())" Color="Color.Custom" CustomColor="var(--twe-on-primary)" />
-      </span>
+      @if (AgentSurfaceState.AssistantAvatar is { } avatar)
+      {
+        <img class="twe-agent-ask__avatar" src="@avatar" alt="@AssistantName" width="24" height="24" data-qa="AskAvatar" />
+      }
+      else
+      {
+        <span class="twe-agent-ask__mark" aria-hidden="true">
+          <FluentIcon Value="@(new Icons.Filled.Size16.Sparkle())" Color="Color.Custom" CustomColor="var(--twe-on-primary)" />
+        </span>
+      }
       <div class="twe-agent-ask__titles">
-        <h2 class="twe-agent-ask__title">Ask</h2>
+        <h2 class="twe-agent-ask__title" data-qa="AskTitle">@AssistantName</h2>
         <p class="twe-agent-ask__conversation" data-qa="AskConversationTitle">@ConversationTitle</p>
       </div>
     </div>
@@ -489,7 +528,7 @@
   else if (Readiness == CatalogAgentReadiness.Unauthenticated)
   {
     <div class="twe-agent-ask__state">
-      <p class="twe-agent-ask__state-title" data-qa="AgentAskSignIn">Sign in to use Ask</p>
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskSignIn">Sign in to use @AssistantName</p>
       <div class="twe-agent-ask__actions">
         <FluentButton Appearance="ButtonAppearance.Primary" data-qa="AgentAskSignInButton" OnClick="SignInAsync">Sign in</FluentButton>
       </div>
@@ -498,7 +537,7 @@
   else if (Readiness == CatalogAgentReadiness.Error)
   {
     <div class="twe-agent-ask__state">
-      <p class="twe-agent-ask__state-title" data-qa="AgentAskError">Ask could not load its configuration</p>
+      <p class="twe-agent-ask__state-title" data-qa="AgentAskError">@AssistantName could not load its configuration</p>
       <pre class="twe-agent-ask__setup" data-qa="AgentAskErrorDetail">@Problem</pre>
       <div class="twe-agent-ask__actions">
         <FluentButton Appearance="ButtonAppearance.Outline" data-qa="AgentAskRetry" OnClick="RetryAsync">Retry</FluentButton>
@@ -508,7 +547,7 @@
   else if (Agent is null || Conversation is null)
   {
     <div class="twe-agent-ask__state">
-      <p class="twe-agent-ask__state-text" data-qa="AgentAskStarting">Starting Ask…</p>
+      <p class="twe-agent-ask__state-text" data-qa="AgentAskStarting">Starting @(AssistantName)…</p>
     </div>
   }
   else
@@ -559,12 +598,16 @@
             </ChildContent>
             <EmptyContent>
               <div class="twe-agent-ask__welcome">
-                <div class="twe-agent-ask__hero" aria-hidden="true">
-                  <span class="twe-agent-ask__orb twe-agent-ask__orb--back"></span>
-                  <span class="twe-agent-ask__orb twe-agent-ask__orb--side"></span>
-                  <span class="twe-agent-ask__orb twe-agent-ask__orb--front"></span>
+                <div class="twe-agent-ask__hero">
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--back" aria-hidden="true"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--side" aria-hidden="true"></span>
+                  <span class="twe-agent-ask__orb twe-agent-ask__orb--front" aria-hidden="true"></span>
+                  @if (AgentSurfaceState.AssistantAvatar is { } heroAvatar)
+                  {
+                    <img class="twe-agent-ask__hero-avatar" src="@heroAvatar" alt="@AssistantName" width="56" height="56" data-qa="AskEmptyAvatar" />
+                  }
                 </div>
-                <p class="twe-agent-ask__greeting" data-qa="AskGreeting">What can I help with?</p>
+                <p class="twe-agent-ask__greeting" data-qa="AskGreeting">@Greeting</p>
                 <p class="twe-agent-ask__tagline">Ask about this page, or tell the app what to do.</p>
                 <AskStarterPrompts />
               </div>

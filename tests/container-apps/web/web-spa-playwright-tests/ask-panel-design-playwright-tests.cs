@@ -5,7 +5,7 @@
 
 #region Design
 // Same host as AskSurface_Given_Wasm (in-process Web.Server, fake upstream, mock principal), with
-// XAI:RecordChats on and a PrivacyUrl so the notice and its link render. The top-bar Ask AI
+// XAI:RecordChats on and a PrivacyUrl so the notice and its link render. The top-bar Ask
 // button opens the panel. The checks are layout facts, not pixels: the greeting sits above the
 // cards, every card has its icon tile, title and subtitle, the notice sits directly above the
 // composer, and the composer is the last block of the panel body. Shots go to test output
@@ -79,7 +79,7 @@ public class AskPanelDesign_Given_Wasm
       }
     }
 
-    opened.ShouldBeTrue("Ask AI did not open the panel with a composer");
+    opened.ShouldBeTrue("The top-bar Ask button did not open the panel with a composer");
     ILocator notice = page.Locator("[data-qa=AskPrivacyNotice]");
     await notice.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
     await page.Locator("[data-qa=AskPrivacyLink]").WaitForAsync();
