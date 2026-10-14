@@ -201,6 +201,24 @@ Gates run locally on 2026-10-15:
 - The Aspire-backed `CatalogAgent_Should` suite and the Playwright suites were not run here.
   Workers must not start an AppHost, so CI runs them.
 
+### Review disposition
+
+- Rounds: 2. Reviewer: general, effort 3 (budget by diff, 2532 lines).
+- Final counts: bug 0; suggestion 4 fixed; nit 5 fixed, 1 wontfix; 0 open.
+- Outcome: **accepted-exceptions**. M7 is wontfix: the off-page `navigateTo` ignores the
+  principal's access to that page, but `navigate` refuses the url (see Notes).
+- Fixes (273115a53 and the round-2 follow-up):
+  - per-principal destination sets are pinned;
+  - the guard is recursive and also catches `nameof`/`XPage.Member`;
+  - each `NavGroup` must be one contiguous run;
+  - the generator reads `NavGroup`/`Description` as constants;
+  - unknown route constraints fail closed;
+  - NavMenu recomputes only when the auth task changes.
+- Gates after the fixes: `dev build` 0/0, `NavigationDestinations_` 6/6, generator 121/121,
+  web-spa Unit 169/169.
+- Artifacts: `review/review-framework.md`, `review/round-1/` (general, merged),
+  `review/round-2/` (general, merged), `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -256,7 +274,13 @@ Expect:
   palette-row navigate behaves the same way. The Playwright test asserts the landing on
   /Settings, not a follow-up answer.
 
+- Review M7 (wontfix): `PageAgentScope.PrimaryScope`/`PrimaryPage` pick an action's off-page
+  `navigateTo` by menu rank, not by what the principal may open. A principal with
+  `credential.manage.self` but not `settings.read` is offered `/Settings`, and `navigate`
+  refuses it. A follow-up could pass the principal's destinations into the scope choice.
+
 ## Session
 
 - Created: 307060 (2026-10-11 ICT)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T17:12:21Z
+- Review oracle: claude (claude-opus-5-5), session not reported; effort 3, roster general, 2 rounds, accepted-exceptions — 2026-10-15

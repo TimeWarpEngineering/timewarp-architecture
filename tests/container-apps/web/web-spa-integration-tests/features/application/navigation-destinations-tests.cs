@@ -122,6 +122,7 @@ public partial class Destinations_Should_
       previous = entry.NavOrder;
     }
 
+    // Top-level ("") pages draw no category header, so only named groups must be contiguous.
     HashSet<string> closed = [];
     string? current = null;
     foreach (PageRegistryEntry entry in PageRegistry.All)
@@ -269,7 +270,7 @@ public partial class Destinations_Should_
   [GeneratedRegex(@"nameof\(\s*[\w.]*Page\s*\)")]
   private static partial Regex PageNameOf();
 
-  [GeneratedRegex(@"\b\w+Page\.(GetPageUrl|Title|NavIcon|Policy)\b")]
+  [GeneratedRegex(@"\b[A-Z]\w*Page\.(GetPageUrl|Title|NavIcon|Policy)\b")]
   private static partial Regex PageMember();
 
   /// <summary>In-proc SPA container for one principal (null = signed out).</summary>
