@@ -18,6 +18,8 @@
 // opening Ask, so it does not read the store while it still holds the signed-out answer. The configured pass uses the fake upstream (no request leaves the
 // process); the no-key pass has no XAI:ApiKey. Screenshots go to test output (PlaywrightScreenshot),
 // which CI uploads.
+// Task 356: signed in, Ask's settings button reports the minted credential as Active and the menu
+// shows its expiry.
 // Task 345: signed in (the first passkey account is Administrator), Settings' Ask types @ in the
 // composer: Enter chooses the first permitted type, Backspace returns to the types, Enter again,
 // and Enter on the highlighted item inserts its @prefix:id token in place of the @. The list
@@ -129,6 +131,24 @@ public class AskSignIn_Given_Wasm
       {
         Path = ScreenshotPath("ask-signed-in-configured-answer.png"),
       });
+      // Task 356: signed in, the panel minted a credential, so settings reports it active with an expiry.
+      ILocator askSettings = session.Page.Locator("[data-qa=AskSettings]");
+      string? credentialStatus = await askSettings.GetAttributeAsync("data-status");
+      if (credentialStatus != "Active")
+      {
+        failures.Add($"Signed in: Ask settings showed credential status '{credentialStatus}', not Active.");
+      }
+      else
+      {
+        await askSettings.FocusAsync();
+        await session.Page.Keyboard.PressAsync("Enter");
+        ILocator expiry = session.Page.Locator("[data-qa=AskAgentAccessExpiry]");
+        await expiry.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        (await session.Page.Locator("[data-qa=AskAgentAccessStatus]").InnerTextAsync()).ShouldContain("Agent access active");
+        await session.Page.Keyboard.PressAsync("Escape");
+        await expiry.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
+      }
+
       string settingsAnswer = await session.Page.Locator(".sc-ai-root").InnerTextAsync();
       if (settingsAnswer.Contains("System.Collections.Generic", StringComparison.Ordinal))
       {

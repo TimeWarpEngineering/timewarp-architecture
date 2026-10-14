@@ -1,0 +1,101 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+
+@*
+  Purpose: The Ask composer's settings button (task 356): a sliders icon before send that opens a
+  menu showing whether the conversation's agent credential is active and links to agent access.
+
+  Design: Renders in MessageInput's lead slot (TrailingActions would replace send); AgentAsk's grid puts it on the footer row just left of send.
+  The icon button is the FluentMenu trigger slot. The fluent-menu web component owns the popover
+  as it does for AskEditModePill: aria-haspopup and aria-expanded on the trigger; click, Enter or
+  Space opens it; the arrows move; Esc or a choice closes it and focus returns to the button.
+  The first item is the status. It is a disabled menu item, so a screen reader reads it in the menu
+  but it cannot be chosen. Its state comes from AgentSurfaceState.Conversation through
+  AgentConversationAuthority.IsExpired, the same test the panel header uses, and is never
+  hard-coded. Active shows a check, "Agent access active", and the expiry time. Expired shows
+  "Agent access expired" plus a "New conversation" item that dispatches NewConversation, the only
+  renewal there is: the panel mints a fresh credential for the new conversation. Absent (no
+  credential: the panel has not minted one, or the session has no principal id) says Ask runs
+  under the session without one. "Configure permissions" opens Agent links, the one self-service
+  page about agent access. The credential's scopes are a copy of the person's own permissions,
+  which an admin manages under Roles, so no page edits a conversation's scope. Like Sign in, it
+  closes the panel and dispatches RouteState.ChangeRoute (TWA0026). The Applications to
+  AgentLinks edge is declared in AskSettingsMenu.razor.cs.
+*@
+
+@code {
+  /// <summary>Where Configure permissions goes: the person's Agent links page.</summary>
+  public static string ConfigurePermissionsRoute => TimeWarp.Architecture.Features.AgentLinks.AgentLinksPage.GetPageUrl();
+
+  private const string ButtonName = "Ask settings";
+
+  private AgentConversationCredential? Credential => AgentSurfaceState.Conversation;
+
+  private bool Expired => AgentConversationAuthority.IsExpired(Credential, DateTimeOffset.UtcNow);
+
+  private string Status => Credential is null ? "Absent" : Expired ? "Expired" : "Active";
+
+  private string StatusTitle => Credential is null
+    ? "No agent credential"
+    : Expired ? "Agent access expired" : "Agent access active";
+
+  private string StatusSubtitle => Credential is null
+    ? "Ask runs under your session without a conversation credential"
+    : Expired ? "Ask can no longer act on this app. Start a new conversation to renew it." : "Ask can act on this app as you";
+
+  private Icon StatusIcon => Credential is null
+    ? new Icons.Regular.Size20.ShieldQuestion()
+    : Expired ? new Icons.Regular.Size20.Warning() : new Icons.Regular.Size20.CheckmarkCircle();
+
+  private static string ExpiryText(DateTimeOffset expiresAt) =>
+    "Expires at " + expiresAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
+
+  private Task RenewAsync() => AgentSurfaceState.NewConversation();
+
+  private async Task ConfigurePermissionsAsync()
+  {
+    await AgentSurfaceState.CloseAskPanel();
+    await NoSubRouteState.ChangeRoute(newRoute: ConfigurePermissionsRoute);
+  }
+}
+
+<div class="twe-ask-settings">
+  <FluentMenu>
+    <FluentButton slot="@FluentSlot.Trigger"
+                  Appearance="ButtonAppearance.Subtle"
+                  Size="ButtonSize.Small"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size20.Options())"
+                  Title="@ButtonName"
+                  aria-label="@ButtonName"
+                  data-qa="AskSettings"
+                  data-status="@Status" />
+    <FluentMenuList>
+      <FluentMenuItem Disabled="true"
+                      IconStart="@StatusIcon"
+                      data-qa="AskAgentAccessStatus"
+                      data-status="@Status">
+        <span class="twe-ask-settings__option">
+          <span class="twe-ask-settings__title">@StatusTitle</span>
+          <span class="twe-ask-settings__subtitle">@StatusSubtitle</span>
+          @if (Credential is { } credential && !Expired)
+          {
+            <time class="twe-ask-settings__subtitle"
+                  datetime="@credential.ExpiresAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)"
+                  data-qa="AskAgentAccessExpiry">@ExpiryText(credential.ExpiresAt)</time>
+          }
+        </span>
+      </FluentMenuItem>
+      <FluentDivider />
+      @if (Expired)
+      {
+        <FluentMenuItem IconStart="@(new Icons.Regular.Size20.ChatAdd())"
+                        data-qa="AskRenewAgentAccess"
+                        OnClick="RenewAsync">New conversation</FluentMenuItem>
+      }
+      <FluentMenuItem IconStart="@(new Icons.Regular.Size20.Settings())"
+                      data-qa="AskConfigurePermissions"
+                      OnClick="ConfigurePermissionsAsync">Configure permissions</FluentMenuItem>
+    </FluentMenuList>
+  </FluentMenu>
+</div>
