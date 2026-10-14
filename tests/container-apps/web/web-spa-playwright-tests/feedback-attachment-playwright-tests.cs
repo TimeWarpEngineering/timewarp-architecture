@@ -27,7 +27,10 @@
 // /Admin/Principals/{id} and shows the display name IProfileDirectory holds for that id, not the
 // raw id; following the link lands on the principal detail page. The permalink proof (task 353)
 // checks the pasted image renders once, inline in the safe-markdown body, and that attachments
-// the body references are not listed again under it.
+// the body references are not listed again under it. The narrow-grid proof (task 354) opens
+// /Admin/Feedback at 1280 with the Ask panel docked, then both admin grids at 640: header cells
+// never overlap, the primary column keeps its width and its link opens the item, and below the
+// grid's minimum the DataGridFrame scrolls while the page does not.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -364,6 +367,167 @@ public class FeedbackAttachment_Given_Wasm
     await owner.ClickAsync();
     await page.WaitForURLAsync($"**/Admin/Principals/{ownerId}", new PageWaitForURLOptions { Timeout = 30_000 });
     await page.Locator("[data-qa=AdminPrincipalStatus]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+  }
+
+  public static async Task AdminGrids_Should_KeepThePrimaryColumn_WhenNarrow_Or_AskIsOpen()
+  {
+    InstallChromium();
+
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    using IPlaywright playwright = await Playwright.CreateAsync();
+    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+    });
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    await OpenFeedbackAsync(page, console);
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("A long feedback title that must stay visible beside the Ask panel");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Narrow grid.");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    await SubmitFeedbackAsync(page);
+
+    // The reported case: 1280 wide with the Ask panel docked beside the content.
+    await OpenAdminGridAsync(page, console, "/Admin/Feedback", "AdminFeedbackRow");
+    await OpenAskPanelAsync(page);
+    await AssertGridLayoutAsync(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-ask-open-1280");
+    await page.Locator("[data-qa=AdminFeedbackRow]").First.ClickAsync();
+    await page.WaitForURLAsync("**/Admin/Feedback/*", new PageWaitForURLOptions { Timeout = 30_000 });
+
+    // Narrow viewports: the grid keeps its minimum and scrolls inside its card.
+    await page.SetViewportSizeAsync(640, 900);
+    await OpenAdminGridAsync(page, console, "/Admin/Feedback", "AdminFeedbackRow");
+    await AssertGridLayoutAsync(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-640");
+    await AssertGridScrollsAsync(page, "AdminFeedbackTable");
+    await page.Locator("[data-qa=AdminFeedbackRow]").First.ClickAsync();
+    await page.WaitForURLAsync("**/Admin/Feedback/*", new PageWaitForURLOptions { Timeout = 30_000 });
+
+    await OpenAdminGridAsync(page, console, "/Admin/Principals", "AdminPrincipalRow");
+    await AssertGridLayoutAsync(page, "PrincipalsTable", "AdminPrincipalRow", "principals-640");
+    await AssertGridScrollsAsync(page, "PrincipalsTable");
+    await page.Locator("[data-qa=AdminPrincipalRow]").First.ClickAsync();
+    await page.WaitForURLAsync("**/Admin/Principals/*", new PageWaitForURLOptions { Timeout = 30_000 });
+  }
+
+  private static async Task OpenAdminGridAsync(IPage page, ConcurrentQueue<string> console, string path, string rowQa)
+  {
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + path, new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    try
+    {
+      await page.Locator($"[data-qa={rowQa}]").First.WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath($"admin-grid-{rowQa}-failed.png"), FullPage = true });
+      string text = await page.Locator("body").InnerTextAsync();
+      string log = string.Join('\n', console);
+      throw new TimeoutException($"{path} showed no {rowQa}. Page:\n{text}\nConsole:\n{log}", exception);
+    }
+  }
+
+  // The Ask button is interactive after the shell's first WebAssembly render. Retry until Ask opens.
+  private static async Task OpenAskPanelAsync(IPage page)
+  {
+    ILocator button = page.Locator("[data-qa=AskAiButton]");
+    ILocator panel = page.Locator("[data-qa=AgentAsk]");
+    for (int attempt = 0; attempt < 15; attempt++)
+    {
+      await button.ClickAsync();
+      try
+      {
+        await panel.WaitForAsync(new LocatorWaitForOptions { Timeout = 4_000 });
+        return;
+      }
+      catch (TimeoutException)
+      {
+      }
+    }
+
+    throw new TimeoutException("The top-bar Ask button did not open the Ask panel.");
+  }
+
+  // Header cells have width, never overlap, and clip anything wider than the cell. The primary
+  // column's cells keep a usable width (task 354: Title collapsed to zero and read "Kitld").
+  private static async Task AssertGridLayoutAsync(IPage page, string gridQa, string rowQa, string shot)
+  {
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath($"admin-grid-{shot}.png"), FullPage = true });
+    string[] problems = await page.EvaluateAsync<string[]>(
+      """
+      ([gridQa, rowQa]) => {
+        const problems = [];
+        const grid = document.querySelector(`[data-qa=${gridQa}]`);
+        if (!grid) { return [`no grid ${gridQa}`]; }
+        const headers = [...grid.querySelectorAll('th[cell-type=columnheader]')];
+        if (headers.length < 2) { problems.push(`only ${headers.length} header cells`); }
+        headers.forEach((th, index) => {
+          const box = th.getBoundingClientRect();
+          const label = th.innerText.trim() || `#${index}`;
+          if (box.width < 40) { problems.push(`header ${label} is ${box.width}px wide`); }
+          const next = headers[index + 1];
+          if (next && box.right > next.getBoundingClientRect().left + 1) {
+            problems.push(`header ${label} (right ${box.right}) overlaps the next (left ${next.getBoundingClientRect().left})`);
+          }
+          const clips = ['hidden', 'clip'].includes(getComputedStyle(th).overflowX);
+          for (const child of th.querySelectorAll('[col-sort-button], [col-title]')) {
+            const childBox = child.getBoundingClientRect();
+            if (!clips && childBox.right > box.right + 1) {
+              problems.push(`header ${label} content (right ${childBox.right}) spills past its cell (right ${box.right})`);
+            }
+          }
+        });
+        const links = [...grid.querySelectorAll(`[data-qa=${rowQa}]`)];
+        if (links.length === 0) { problems.push(`no ${rowQa} links`); }
+        for (const link of links) {
+          const cell = link.closest('td');
+          const cellBox = cell.getBoundingClientRect();
+          const linkBox = link.getBoundingClientRect();
+          if (cellBox.width < 200) { problems.push(`primary cell is ${cellBox.width}px wide`); }
+          if (linkBox.width <= 0 || linkBox.height <= 0) { problems.push(`${rowQa} link has no box`); }
+        }
+        return problems;
+      }
+      """,
+      new[] { gridQa, rowQa });
+    problems.ShouldBeEmpty($"{gridQa} at {shot}: {string.Join("; ", problems)}");
+  }
+
+  // Below the grid's minimum total width the frame around it scrolls; the page does not.
+  private static async Task AssertGridScrollsAsync(IPage page, string gridQa)
+  {
+    int[] widths = await page.EvaluateAsync<int[]>(
+      """
+      (gridQa) => {
+        const frame = document.querySelector(`[data-qa=${gridQa}]`).closest('.twe-data-grid-frame');
+        if (!frame) { return []; }
+        const before = frame.scrollLeft;
+        frame.scrollLeft = 10000;
+        const scrolled = frame.scrollLeft;
+        frame.scrollLeft = before;
+        const root = document.documentElement;
+        return [frame.clientWidth, frame.scrollWidth, Math.round(scrolled), root.clientWidth, root.scrollWidth];
+      }
+      """,
+      gridQa);
+    widths.Length.ShouldBe(5, $"{gridQa} is not inside DataGridFrame");
+    string report = $"{gridQa} frame={widths[0]}/{widths[1]} scrolled={widths[2]} page={widths[3]}/{widths[4]}";
+    Console.WriteLine(report);
+    widths[1].ShouldBeGreaterThan(widths[0], report);
+    widths[2].ShouldBeGreaterThan(0, report);
+    widths[4].ShouldBeLessThanOrEqualTo(widths[3] + 1, report);
   }
 
   // The submit button is Disabled while any action is active, and blurring Details dispatches the

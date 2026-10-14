@@ -1,0 +1,23 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Frame around every FluentDataGrid. Below the grid's minimum total width the grid
+  scrolls sideways inside the frame instead of crushing a column to zero; header text
+  truncates with an ellipsis inside its own cell.
+
+  Design: Task 354. The grid inside uses DisplayMode Grid and a GridTemplateColumns of minmax
+  tracks: the primary column (the one with the row link) keeps a minimum and grows with the
+  largest fr share, the others take smaller minimums. No column sets Width, because a fixed
+  width per column leaves the unsized column whatever is left over, which is zero at narrow
+  widths. A native root anchors the ::deep rules (tw-blazor-css-strategy, Wall A). The
+  integration test DataGridFrameGuard enforces the rule for every FluentDataGrid.
+*@
+
+@code {
+  [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<div class="twe-data-grid-frame" @attributes="AdditionalAttributes">
+  @ChildContent
+</div>

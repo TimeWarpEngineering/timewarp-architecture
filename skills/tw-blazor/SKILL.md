@@ -229,9 +229,16 @@ shows the wrong order across pages. The pattern is grid sort â†’ State action â†
    `LoadingActionType`: `Section` swaps its content for a spinner, which would destroy the grid.
 6. Enum and date cells use `TemplateColumn` (`@context.Kind`). `PropertyColumn` renders enums
    lowercased.
+7. Narrow widths: wrap the grid in `DataGridFrame` and size columns with
+   `DisplayMode="DataGridDisplayMode.Grid"` plus `GridTemplateColumns` of `minmax` tracks. The
+   primary column (the one with the row link) gets `minmax(14rem, 2fr)`; the others get smaller
+   minimums and `fr` shares. No column sets `Width`: fixed widths leave an unsized column the
+   leftover, which is zero at a narrow viewport or with the Ask panel open. Below the minimum
+   total, the grid scrolls inside the frame and header text ends in an ellipsis. The integration
+   test `DataGridFrameGuard` enforces this for every `FluentDataGrid`.
 
 Reference: `web-spa/features/admin/feedback/pages/FeedbackAdminListPage.razor` with
-`ListFeedback.Query` and `FeedbackAdminState.SetSort`.
+`ListFeedback.Query` and `FeedbackAdminState.SetSort`; `web-spa/components/composites/DataGridFrame.razor`.
 
 # Operation outcomes
 

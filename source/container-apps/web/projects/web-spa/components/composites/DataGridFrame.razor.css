@@ -1,0 +1,21 @@
+/* DataGridFrame — CSS isolation, native anchor + ::deep to the Fluent grid (tw-blazor-css-strategy). */
+.twe-data-grid-frame {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Cells never grow past their track; content clips and the title shows an ellipsis. */
+.twe-data-grid-frame ::deep .fluent-data-grid th,
+.twe-data-grid-frame ::deep .fluent-data-grid td {
+  min-width: 0;
+}
+
+.twe-data-grid-frame ::deep .fluent-data-grid th[cell-type=columnheader] {
+  overflow: hidden;
+}
+
+/* Fluent gives the sort button a 75px floor, which overflows a narrow track into its neighbour. */
+.twe-data-grid-frame ::deep .fluent-data-grid [col-sort-button] {
+  min-width: 0;
+  max-width: 100%;
+}
