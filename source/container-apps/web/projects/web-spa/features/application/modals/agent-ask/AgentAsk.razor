@@ -54,7 +54,9 @@
   Look (task 349, after the Cloudflare dashboard chat): a compact one-row header (brand mark, Ask,
   the conversation name, icon actions) over a hairline; a dotted canvas body; a centered empty
   state of CSS gradient orbs in the brand colors, a greeting, a tagline and the cards; and a
-  footer pinned to the bottom with the notice, chips, a raised composer and the edit-behavior row.
+  footer pinned to the bottom with the notice, chips and a raised composer. The composer's lead slot
+  holds Tag and AskEditModePill (task 355), the pill that shows and switches the edit mode, so the
+  edit mode is set only once the agent is built.
   The body fills the panel between header and footer and scrolls on its own. AskAnswerBar sits
   first in the footer, right under the latest answer: MessageList renders its ChildContent above
   the turns, so inside the list the bar would land at the top of the transcript. Every color is a
@@ -388,31 +390,26 @@
 
   private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
 
-  private Task NewConversationAsync() => AgentSurfaceState.NewConversation();
+  private Task NewConversationAsync()
+  {
+    EditModeFocusPending = false;
+    return AgentSurfaceState.NewConversation();
+  }
 
-  private Task AskBeforeAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AskBeforeEditing);
+  // The pill that chose a mode is replaced by the rebuild; its successor takes focus once. A turn in
+  // progress defers the rebuild and the menu has already returned focus to the same pill, so nothing
+  // waits: a later rebuild must not pull focus from wherever the person went.
+  private bool EditModeFocusPending;
 
-  private Task AutoEditAsync() => AgentSurfaceState.SetEditMode(AgentEditMode.AutomaticallyEdit);
+  private void EditModeChose() => EditModeFocusPending = !TurnInProgress;
 
-  private string AskBeforePressed =>
-    AgentSurfaceState.EditMode == AgentEditMode.AskBeforeEditing ? "true" : "false";
-
-  private string AutoEditPressed =>
-    AgentSurfaceState.EditMode == AgentEditMode.AutomaticallyEdit ? "true" : "false";
+  private void EditModeFocusRestored() => EditModeFocusPending = false;
 
   private string ExpandLabel => AgentSurfaceState.IsPanelExpanded ? "Collapse" : "Expand";
 
   private Icon ExpandIcon => AgentSurfaceState.IsPanelExpanded
     ? new Icons.Regular.Size20.FullScreenMinimize()
     : new Icons.Regular.Size20.FullScreenMaximize();
-
-  private ButtonAppearance AskBeforeAppearance =>
-    AskBeforePressed == "true" ? ButtonAppearance.Primary : ButtonAppearance.Outline;
-
-  private ButtonAppearance AutoEditAppearance =>
-    AutoEditPressed == "true" ? ButtonAppearance.Primary : ButtonAppearance.Outline;
-
-  private string EditBehaviorLabelId => $"{Id}-edit-behavior";
 
   public override void Dispose()
   {
@@ -583,6 +580,9 @@
                                 Disabled="Picking"
                                 data-qa="AskTag"
                                 OnClick="TagAsync">Tag</FluentButton>
+                  <AskEditModePill RestoreFocus="EditModeFocusPending"
+                                   Chose="EditModeChose"
+                                   FocusRestored="EditModeFocusRestored" />
                 </div>
               </LeadingActions>
             </Microsoft.AspNetCore.Components.AI.MessageInput>
@@ -591,12 +591,4 @@
       </CascadingValue>
     </div>
   }
-
-  <footer class="twe-agent-ask__edit">
-    <p class="twe-agent-ask__edit-label" id="@EditBehaviorLabelId">Edit behavior</p>
-    <div class="twe-agent-ask__segments" role="group" aria-labelledby="@EditBehaviorLabelId" data-qa="AskEditMode">
-      <FluentButton Appearance="@AskBeforeAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskBeforeEditing" aria-pressed="@AskBeforePressed" OnClick="AskBeforeAsync">Ask before editing</FluentButton>
-      <FluentButton Appearance="@AutoEditAppearance" Size="ButtonSize.Small" Class="twe-agent-ask__segment" data-qa="AskAutomaticallyEdit" aria-pressed="@AutoEditPressed" OnClick="AutoEditAsync">Automatically edit</FluentButton>
-    </div>
-  </footer>
 </div>

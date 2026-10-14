@@ -1,0 +1,109 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+
+@*
+  Purpose: The Ask composer's edit-mode pill (task 355): shows the conversation's edit mode and
+  switches it from a two-option menu.
+
+  Design: Sits in the composer's lead slot beside Tag, replacing the old full-width "Edit behavior"
+  segmented row. The pill shows the current mode as an icon and a short label ("Ask first" or
+  "Auto-edit"). Its accessible name is "Edit mode: " plus the mode's full title. A bare "Ask" would
+  read as the panel's name, so the label names the mode instead. The pill is the FluentMenu trigger slot. The fluent-menu web component owns the popover: it sets aria-haspopup
+  and aria-expanded on the trigger, opens on click, Enter or Space, moves with the arrow keys, closes
+  on Esc or a choice, and returns focus to the pill. Each option is a radio menu item with an icon,
+  a title and a subtitle, checked when it is the current mode. Choosing one dispatches
+  AgentSurfaceState.SetEditMode, so no behavior changed with the look. A mode change rebuilds the
+  agent, and the composer (keyed on the conversation) mounts a new pill, so the menu cannot hand
+  focus back to it. The pill raises Chose after a change; AgentAsk passes RestoreFocus to the pill
+  it mounts next, which focuses its button on first render and raises FocusRestored so it happens
+  once. A turn in progress defers the rebuild, so AgentAsk does not ask for focus then. The native
+  root anchors the ::deep rules for the menu's light-DOM children (tw-blazor-css-strategy).
+*@
+
+@code {
+  /// <summary>Focus the pill on its first render (the person chose a mode on the pill it replaces).</summary>
+  [Parameter] public bool RestoreFocus { get; set; }
+
+  /// <summary>Raised after a choice changed the mode.</summary>
+  [Parameter] public EventCallback Chose { get; set; }
+
+  /// <summary>Raised once RestoreFocus has moved focus to the pill.</summary>
+  [Parameter] public EventCallback FocusRestored { get; set; }
+
+  private const string AskBeforeTitle = "Ask before editing";
+  private const string AutoEditTitle = "Automatically edit";
+
+  private bool AskFirst => AgentSurfaceState.EditMode == AgentEditMode.AskBeforeEditing;
+
+  private string PillLabel => AskFirst ? "Ask first" : "Auto-edit";
+
+  private string PillName => $"Edit mode: {(AskFirst ? AskBeforeTitle : AutoEditTitle)}";
+
+  private Icon PillIcon => AskFirst
+    ? new Icons.Regular.Size16.Edit()
+    : new Icons.Regular.Size16.FastForward();
+
+  private FluentButton? Pill;
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (firstRender && RestoreFocus && Pill is not null)
+    {
+      await Pill.Element.FocusAsync();
+      await FocusRestored.InvokeAsync();
+    }
+  }
+
+  // Radio items raise CheckedChanged, not OnClick. Only the newly checked item dispatches.
+  private Task AskBeforeAsync(bool? isChecked) => ChooseAsync(isChecked, AgentEditMode.AskBeforeEditing);
+
+  private Task AutoEditAsync(bool? isChecked) => ChooseAsync(isChecked, AgentEditMode.AutomaticallyEdit);
+
+  private async Task ChooseAsync(bool? isChecked, AgentEditMode mode)
+  {
+    if (isChecked != true || AgentSurfaceState.EditMode == mode)
+    {
+      return;
+    }
+
+    await AgentSurfaceState.SetEditMode(mode);
+    await Chose.InvokeAsync();
+  }
+}
+
+<div class="twe-ask-edit-mode">
+  <FluentMenu>
+    <FluentButton @ref="Pill"
+                  slot="@FluentSlot.Trigger"
+                  Appearance="ButtonAppearance.Outline"
+                  Size="ButtonSize.Small"
+                  IconStart="@PillIcon"
+                  Title="@PillName"
+                  aria-label="@PillName"
+                  data-qa="AskEditMode"
+                  data-mode="@AgentSurfaceState.EditMode.ToString()">@PillLabel</FluentButton>
+    <FluentMenuList>
+      <FluentMenuItem Role="MenuItemRole.Radio"
+                      Checked="AskFirst"
+                      IconStart="@(new Icons.Regular.Size20.Edit())"
+                      data-qa="AskBeforeEditing"
+                      CheckedChanged="AskBeforeAsync">
+        <span class="twe-ask-edit-mode__option">
+          <span class="twe-ask-edit-mode__title">@AskBeforeTitle</span>
+          <span class="twe-ask-edit-mode__subtitle">Review and approve each change</span>
+        </span>
+      </FluentMenuItem>
+      <FluentMenuItem Role="MenuItemRole.Radio"
+                      Checked="!AskFirst"
+                      IconStart="@(new Icons.Regular.Size20.FastForward())"
+                      data-qa="AskAutomaticallyEdit"
+                      CheckedChanged="AutoEditAsync">
+        <span class="twe-ask-edit-mode__option">
+          <span class="twe-ask-edit-mode__title">@AutoEditTitle</span>
+          <span class="twe-ask-edit-mode__subtitle">Always allow edits for this conversation</span>
+        </span>
+      </FluentMenuItem>
+    </FluentMenuList>
+  </FluentMenu>
+</div>
