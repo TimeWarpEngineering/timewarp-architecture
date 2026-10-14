@@ -36,6 +36,11 @@
 // the next request instead of surfacing 57P01. Bounds and the concurrency-exception carve-out are
 // recorded on PostgresRetryPolicy; explicit transactions must run inside the execution strategy
 // (EfPrincipalRoleStore.TryClaimFirstAdministratorAsync).
+// Logging (task 358): this module never calls LogTo or EnableSensitiveDataLogging. EF Core SQL
+// (Microsoft.EntityFrameworkCore.Database.Command) is Warning in every committed appsettings file;
+// a developer opts in per machine with Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command
+// =Information in user secrets or the environment. Sensitive-data logging, if ever added, must be
+// gated on IsDevelopment() (LoggingBaseline guard in aspire-tests).
 #endregion
 
 namespace TimeWarp.Architecture.Modules;

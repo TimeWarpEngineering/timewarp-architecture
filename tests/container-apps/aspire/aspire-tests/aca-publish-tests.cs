@@ -150,6 +150,21 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_NotLogBelowInformation()
+  {
+    // Task 358: a published app never logs at Debug/Trace (EF Core SQL per query fills disks).
+    foreach (ContainerApp app in ContainerApps)
+    {
+      foreach (EnvironmentEntry entry in app.Environment.Where(entry => entry.Name.StartsWith("Logging__LogLevel__", StringComparison.OrdinalIgnoreCase)))
+      {
+        new[] { "'Debug'", "'Trace'" }.ShouldNotContain(
+          level => string.Equals(level, entry.Expression, StringComparison.OrdinalIgnoreCase), $"{app.Name}:{entry.Name}={entry.Expression}");
+      }
+    }
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Publish_Should_KeepSecretsInSecrets()
   {
     foreach (ContainerApp app in ContainerApps)

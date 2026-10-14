@@ -169,6 +169,18 @@ public partial class KubernetesPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_NotLogBelowInformation()
+  {
+    // Task 358: a published workload never logs at Debug/Trace (EF Core SQL per query fills disks).
+    foreach ((string owner, string key, string value) in EnvironmentEntries().Where(entry => entry.Key.StartsWith("Logging__LogLevel__", StringComparison.OrdinalIgnoreCase)))
+    {
+      new[] { "Debug", "Trace" }.ShouldNotContain(
+        level => string.Equals(level, value, StringComparison.OrdinalIgnoreCase), $"{owner}:{key}={value}");
+    }
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Publish_Should_KeepSecretsInSecretObjects()
   {
     // Nothing secret-shaped is a ConfigMap entry or an inline container env value.

@@ -149,6 +149,21 @@ public partial class ComposePublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_NotLogBelowInformation()
+  {
+    // Task 358: a published service never logs at Debug/Trace (EF Core SQL per query fills disks).
+    foreach (string service in ServiceNames())
+    {
+      foreach ((string key, string value) in ServiceEnvironment(service).Where(entry => entry.Key.StartsWith("Logging__LogLevel__", StringComparison.OrdinalIgnoreCase)))
+      {
+        new[] { "Debug", "Trace" }.ShouldNotContain(
+          level => string.Equals(level, value, StringComparison.OrdinalIgnoreCase), $"{service}:{key}={value}");
+      }
+    }
+
+    await Task.CompletedTask;
+  }
+
   public static async Task Publish_Should_KeepSecretsAsEnvParameters()
   {
     foreach (string service in ServiceNames())

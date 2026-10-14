@@ -389,8 +389,11 @@ public class AskSurface_Given_Wasm
     await page.Keyboard.PressAsync("Escape");
     await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
     (await textarea.InputValueAsync()).ShouldBe("@");
-    (await page.EvaluateAsync<bool>(
-      "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true")).ShouldBeTrue();
+    // Close renders the picker away first; FocusComposerAsync refocuses the textarea after, so wait for it.
+    await page.WaitForFunctionAsync(
+      "() => document.activeElement?.classList.contains('sc-ai-input__textarea') === true",
+      null,
+      new PageWaitForFunctionOptions { Timeout = 10_000 });
 
     // A mid-word @ (an email address) stays text: no picker, focus stays in the textarea.
     await textarea.FillAsync("");
