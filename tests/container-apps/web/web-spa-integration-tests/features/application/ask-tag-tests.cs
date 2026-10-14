@@ -6,8 +6,9 @@
 #region Design
 // C-create in-proc SPA ServiceProvider per test (no Aspire), like the @ reference tests: a
 // controllable principal decides which resource references survive. The browser is a FakeItEasy
-// IJSRuntime whose ask-tag.js module answers Pick from the test (a candidate's JSON, "" for a
-// cancel, or a pending task the test completes after CancelPick). Choose is driven directly for
+// IJSRuntime whose ask-tag.js module arms on Start (or when the test says, task 351) and answers
+// from the test (a candidate's JSON, "" for a cancel, or a pending task the test completes after
+// CancelPick). Choose is driven directly for
 // the chip and payload rules. The chat client is exercised over a recording inner client, so the
 // payload test sees exactly what would reach the model. Privacy has two halves: the state refuses
 // a reference the user may not list, and AuthorizeView content the user cannot see is never
@@ -103,6 +104,54 @@ public class AskTag_Should_
       state.IsPicking.ShouldBeFalse();
       state.Attached.ShouldBeEmpty();
     }
+  }
+
+  public static async Task Say_Picking_Only_Once_The_Browser_Has_Armed_The_Pick()
+  {
+    // Task 351: the "picking" line means a click or key is caught, so it waits for Start.
+    TaskCompletionSource<bool> start = new();
+    TaskCompletionSource<string?> answer = new();
+    using TagSpa spa = new(Administrator, () => new ValueTask<string?>(answer.Task), () => new ValueTask<bool>(start.Task));
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+    AskTagState state = scope.Store.GetState<AskTagState>();
+    state.IsPicking.ShouldBeFalse();
+    state.IsPickPending.ShouldBeTrue();
+
+    start.SetResult(true);
+    scope.Store.GetState<AskTagState>().IsPicking.ShouldBeTrue();
+    answer.SetResult(RowJson(ListFeedback.ReferencePrefix));
+    await pick;
+    state = scope.Store.GetState<AskTagState>();
+    state.IsPicking.ShouldBeFalse();
+    state.IsPickPending.ShouldBeFalse();
+    state.AttachedFor(0).ShouldHaveSingleItem();
+  }
+
+  public static async Task Cancel_A_Pick_That_Is_Still_Arming()
+  {
+    // Task 351: Cancel (or a location change) while Start is on its way names that pick, so the
+    // browser refuses or ends it, and the panel never says "picking" for it.
+    TaskCompletionSource<bool> start = new();
+    using TagSpa spa = new(Administrator, () => new ValueTask<string?>(RowJson(ListFeedback.ReferencePrefix)), () => new ValueTask<bool>(start.Task));
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+    string? token = scope.Store.GetState<AskTagState>().PickToken;
+    token.ShouldNotBeNull();
+    await scope.Send(new AskTagState.CancelPickActionSet.Action());
+    spa.ModuleCalls("CancelPick").ShouldBe([token]);
+
+    // Start lands after the cancel and arms anyway (a reordered call): the stale pick disarms itself.
+    start.SetResult(true);
+    await pick;
+    AskTagState state = scope.Store.GetState<AskTagState>();
+    state.IsPicking.ShouldBeFalse();
+    state.IsPickPending.ShouldBeFalse();
+    state.Attached.ShouldBeEmpty();
+    spa.ModuleCalls("CancelPick").ShouldBe([token, token]);
+    spa.ModuleCalls("Answer").ShouldBeEmpty();
   }
 
   public static async Task Add_And_Remove_Chips_Per_Conversation()
@@ -426,7 +475,18 @@ public class AskTag_Should_
     public IServiceProvider ServiceProvider { get; }
     public ClaimsPrincipal User { get; }
 
-    public TagSpa(string[]? permissions, Func<ValueTask<string?>>? pick = null)
+    // The fake ask-tag.js module, kept only to read its recorded calls.
+    private readonly object ModuleFake;
+
+    /// <summary>The first argument of every ask-tag.js call to <paramref name="identifier"/>, in order.</summary>
+    public IReadOnlyList<object?> ModuleCalls(string identifier) =>
+    [
+      .. Fake.GetCalls(ModuleFake)
+        .Where(call => Equals(call.Arguments.FirstOrDefault(), identifier))
+        .Select(static call => call.Arguments.OfType<object?[]>().FirstOrDefault()?.FirstOrDefault()),
+    ];
+
+    public TagSpa(string[]? permissions, Func<ValueTask<string?>>? pick = null, Func<ValueTask<bool>>? start = null)
     {
       User = permissions is null
         ? new ClaimsPrincipal(new ClaimsIdentity())
@@ -437,10 +497,14 @@ public class AskTag_Should_
           ],
           authenticationType: "test"));
 
-      // ask-tag.js: Pick answers what the test says; every other module call is a no-op.
+      // ask-tag.js: Start arms when the test says (at once by default), Answer answers what the test
+      // says; every other module call is a no-op and is recorded.
       IJSObjectReference module = A.Fake<IJSObjectReference>();
+      ModuleFake = module;
       Func<ValueTask<string?>> answer = pick ?? (static () => new ValueTask<string?>(""));
+      Func<ValueTask<bool>> armed = start ?? (static () => new ValueTask<bool>(true));
       A.CallTo(module).WithReturnType<ValueTask<string?>>().ReturnsLazily(answer);
+      A.CallTo(module).WithReturnType<ValueTask<bool>>().ReturnsLazily(armed);
       IJSRuntime jsRuntime = A.Fake<IJSRuntime>();
       A.CallTo(jsRuntime).WithReturnType<ValueTask<IJSObjectReference>>().Returns(new ValueTask<IJSObjectReference>(module));
 

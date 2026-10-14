@@ -4,7 +4,12 @@
 // #endregion
 //
 // #region Design
-// Task 346. Pick resolves with JSON for the chosen element, or "" when cancelled. Only elements
+// Task 346. A pick is named by the token StartPick mints. Start arms pick mode (the overlay and
+// every listener are live when it returns, task 351), so the panel says "picking" only once a click
+// or key is caught. Answer resolves with JSON for the chosen element, or "" when cancelled; a pick
+// chosen between Start and Answer keeps its answer. CancelPick(token) ends only that pick, and when
+// it arrives before that pick's Start, Start refuses it, so a cancel that overtakes the start never
+// leaves an armed pick nobody waits for. A newer Start ends the older pick. Only elements
 // the app marked with data-ask-tag (AskTagMark) inside the page body are candidates, never any
 // <div>. A candidate must be visible to the person: it is skipped inside data-ask-tag-private,
 // [hidden], [aria-hidden=true] or [inert], when it has no box, or when checkVisibility says it is
@@ -46,19 +51,37 @@ interface AskTagCandidate {
 }
 
 let active: PickSession | null = null;
+let latest: { token: string; answer: Promise<string> } | null = null;
+let cancelledToken: string | null = null;
 
-export function Pick(rootSelector: string): Promise<string> {
+/** Arms pick mode for token; false when that pick was already cancelled. */
+export function Start(rootSelector: string, token: string): boolean {
+  if (token === cancelledToken) {
+    return false;
+  }
+
   active?.finish(null);
-  return new Promise<string>(resolve => {
-    active = new PickSession(rootSelector, resolve);
+  const answer = new Promise<string>(resolve => {
+    active = new PickSession(rootSelector, token, resolve);
   });
+  latest = { token, answer };
+  return true;
 }
 
-export function CancelPick(): void {
-  active?.finish(null);
+/** The chosen element's JSON for token's pick, or "" when it was cancelled or replaced. */
+export function Answer(token: string): Promise<string> {
+  return latest?.token === token ? latest.answer : Promise.resolve("");
+}
+
+export function CancelPick(token: string): void {
+  cancelledToken = token;
+  if (active?.token === token) {
+    active.finish(null);
+  }
 }
 
 class PickSession {
+  readonly token: string;
   private readonly rootSelector: string;
   private readonly resolve: (json: string) => void;
   private readonly outline: HTMLDivElement;
@@ -67,7 +90,8 @@ class PickSession {
   private current: Element | null = null;
   private done = false;
 
-  constructor(rootSelector: string, resolve: (json: string) => void) {
+  constructor(rootSelector: string, token: string, resolve: (json: string) => void) {
+    this.token = token;
     this.rootSelector = rootSelector;
     this.resolve = resolve;
     this.outline = element("twe-ask-tag-outline");
