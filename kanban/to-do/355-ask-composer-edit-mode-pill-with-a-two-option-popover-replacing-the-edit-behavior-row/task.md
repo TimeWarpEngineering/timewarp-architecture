@@ -40,6 +40,8 @@ label and record it.
 
 - Created: 2026-10-14 (cockpit, per Steve's Cloudflare screenshot)
 - 2026-10-14 implementer (ganda task work): pill + menu built, tests and gates green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T02:06:29Z
+- 2026-10-14 review oracle (claude-opus-5-5, tw-implementation-review effort 2): general reviewer subagent afd88d563babaf134 (Sonnet); 1 round; fix applied on this id.
 
 ## Results
 
@@ -71,6 +73,21 @@ Recorded in the Design region of `AskEditModePill.razor`.
   `ask-tag.ts` attached its key listener. The extra menu render widened that race, so the test
   failed with the pill and passed without it. It now waits for the pick outline first.
 - Gates: `dev build` 0 warnings / 0 errors; `dev test` all projects passed; `ganda repo audit` passed.
+
+### Review disposition
+
+- Rounds: 1; effort 2; roster: general (Sonnet subagent) + review-oracle verification.
+- Final counts: bug 1 fixed; suggestion 1 wontfix; nit 1 fixed, 1 wontfix; 0 open.
+- Disposition: **accepted-exceptions**.
+  - M1 (bug, fixed): a mode change mid-turn defers the rebuild, which left the focus-restore flag set
+    so a later pill stole focus. AgentAsk now asks for focus only when no turn defers the rebuild,
+    and New conversation clears the flag.
+  - M2 (nit, fixed): Design-region wording.
+  - M3 (wontfix): a deferred-turn test needs a streaming stub the WASM lane lacks.
+  - M4 (wontfix): the `aria-expanded` risk was disproved by a green Playwright run.
+- After fix: `dev build` 0/0; `AskEditModePill_Should_` 2/2; `AskSurface_Given_Wasm` 1/1.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 

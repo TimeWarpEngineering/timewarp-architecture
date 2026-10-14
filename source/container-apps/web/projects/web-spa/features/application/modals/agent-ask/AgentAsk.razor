@@ -390,12 +390,18 @@
 
   private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
 
-  private Task NewConversationAsync() => AgentSurfaceState.NewConversation();
+  private Task NewConversationAsync()
+  {
+    EditModeFocusPending = false;
+    return AgentSurfaceState.NewConversation();
+  }
 
-  // The pill that chose a mode is replaced by the rebuild; its successor takes focus once.
+  // The pill that chose a mode is replaced by the rebuild; its successor takes focus once. A turn in
+  // progress defers the rebuild and the menu has already returned focus to the same pill, so nothing
+  // waits: a later rebuild must not pull focus from wherever the person went.
   private bool EditModeFocusPending;
 
-  private void EditModeChose() => EditModeFocusPending = true;
+  private void EditModeChose() => EditModeFocusPending = !TurnInProgress;
 
   private void EditModeFocusRestored() => EditModeFocusPending = false;
 

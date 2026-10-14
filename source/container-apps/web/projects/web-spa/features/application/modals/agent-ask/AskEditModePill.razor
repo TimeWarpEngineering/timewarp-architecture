@@ -7,9 +7,8 @@
 
   Design: Sits in the composer's lead slot beside Tag, replacing the old full-width "Edit behavior"
   segmented row. The pill shows the current mode as an icon and a short label ("Ask first" or
-  "Auto-edit"). Its accessible name is "Edit mode: " plus the mode's full title. Cloudflare's pill
-  says "Ask", which reads as the panel's name here, so the label names the mode instead. The pill is
-  the FluentMenu trigger slot. The fluent-menu web component owns the popover: it sets aria-haspopup
+  "Auto-edit"). Its accessible name is "Edit mode: " plus the mode's full title. A bare "Ask" would
+  read as the panel's name, so the label names the mode instead. The pill is the FluentMenu trigger slot. The fluent-menu web component owns the popover: it sets aria-haspopup
   and aria-expanded on the trigger, opens on click, Enter or Space, moves with the arrow keys, closes
   on Esc or a choice, and returns focus to the pill. Each option is a radio menu item with an icon,
   a title and a subtitle, checked when it is the current mode. Choosing one dispatches
@@ -17,8 +16,8 @@
   agent, and the composer (keyed on the conversation) mounts a new pill, so the menu cannot hand
   focus back to it. The pill raises Chose after a change; AgentAsk passes RestoreFocus to the pill
   it mounts next, which focuses its button on first render and raises FocusRestored so it happens
-  once. The native root anchors the
-  ::deep rules for the menu's light-DOM children (tw-blazor-css-strategy).
+  once. A turn in progress defers the rebuild, so AgentAsk does not ask for focus then. The native
+  root anchors the ::deep rules for the menu's light-DOM children (tw-blazor-css-strategy).
 *@
 
 @code {
