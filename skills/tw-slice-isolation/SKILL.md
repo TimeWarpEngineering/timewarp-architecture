@@ -193,7 +193,8 @@ is 0/0.
 Deleting a SPA demo touches, at minimum:
 
 1. The slice folder (`web-spa/features/counter/`, `web-spa/features/analytics/`).
-2. `components/NavMenu.razor` — its nav link.
+2. Nothing in `components/NavMenu.razor`: the menu renders the generated page registry, so a
+   deleted page leaves the menu with it.
 3. `global-usings.cs` / `_Imports.razor` — its namespace usings.
 4. Tests under `tests/container-apps/web/web-spa-integration-tests/` plus shared pipeline
    tests that exercise its state (e.g. `CloneStateBehavior` uses `CounterState`).

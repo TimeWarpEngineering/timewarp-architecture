@@ -27,6 +27,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Feedback;
 
-[Page("/Admin/Feedback", Policy = PermissionIds.AdminFeedbackRead, Navigable = true, Description = "Review and manage user feedback.")]
+[Page("/Admin/Feedback", Policy = PermissionIds.AdminFeedbackRead, Navigable = true, Description = "Review and manage user feedback.", NavGroup = "Admin", NavOrder = 130)]
 [Authorize(Policy = PermissionIds.AdminFeedbackRead)]
 partial class FeedbackAdminListPage;

@@ -54,7 +54,7 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-[Page("/Settings", Policy = PermissionIds.SettingsRead, Navigable = true, Description = "Manage passkeys and linked accounts for the signed-in person.")]
+[Page("/Settings", Policy = PermissionIds.SettingsRead, Navigable = true, Description = "Manage passkeys and linked accounts for the signed-in person.", NavOrder = 20, AgentActions = [typeof(CredentialsState.FetchCredentialsActionSet.Action), typeof(CredentialsState.AddPasskeyActionSet.Action), typeof(CredentialsState.AddExistingPasskeyActionSet.Action), typeof(CredentialsState.RevokeCredentialActionSet.Action), typeof(CredentialsState.RenameCredentialActionSet.Action), typeof(CredentialsState.LinkMicrosoft365ActionSet.Action)])]
 [Authorize(Policy = PermissionIds.SettingsRead)]
 [CrossSliceReference(typeof(CredentialsState), "Settings is Applications chrome; credentials list/create/revoke live on Identity CredentialsState.")]
 [CrossSliceReference(typeof(CredentialList), "Settings composes the Identity credential list; Applications owns the page chrome.")]

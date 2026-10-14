@@ -30,6 +30,6 @@
 namespace TimeWarp.Architecture.Features.Identity;
 
 // Technical ceremony demo — product CTA is /Login. Nav + route gated to Developer (147-001).
-[Page("/Passkeys", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Developer view of the signed-in person's passkeys.")]
+[Page("/Passkeys", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Developer view of the signed-in person's passkeys.", NavGroup = "Demos", NavOrder = 250, AgentActions = [typeof(CredentialsState.FetchCredentialsActionSet.Action), typeof(CredentialsState.RevokeCredentialActionSet.Action), typeof(CredentialsState.RenameCredentialActionSet.Action)])]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class PasskeysPage;

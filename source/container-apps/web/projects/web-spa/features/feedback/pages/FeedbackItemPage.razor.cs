@@ -9,6 +9,6 @@
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
-[Page("/Feedback/{FeedbackItemId:Guid}", Policy = PermissionIds.FeedbackFileSelf)]
+[Page("/Feedback/{FeedbackItemId:Guid}", Policy = PermissionIds.FeedbackFileSelf, AgentActions = [typeof(FeedbackState.SubmitFeedbackActionSet.Action), typeof(FeedbackState.ListMyFeedbackActionSet.Action), typeof(FeedbackState.OpenFeedbackActionSet.Action)])]
 [Authorize(Policy = PermissionIds.FeedbackFileSelf)]
 partial class FeedbackItemPage;

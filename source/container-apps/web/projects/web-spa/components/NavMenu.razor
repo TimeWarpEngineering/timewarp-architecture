@@ -1,57 +1,66 @@
 @namespace TimeWarp.Architecture.Components
-@*
-  Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
-  Uses FluentUI v5 FluentNav. Page links go through TimeWarpNavLink<TPage>.
-  TimeWarpNavLink requires INavigationDestination, i.e. [Page(..., Navigable = true)], so every link
-  here is a generated PageRegistry entry (the Ctrl-K palette's source) — the menu cannot drift from it.
-  Grouping and AuthorizeView gates stay hand markup; a new nav page opts in on its [Page] first.
+@using TimeWarp.Architecture.Features.Applications
 
-  Demo / developer tooling is nav-gated by developer.access (task 147-001 / 182-003).
-  Admin section requires admin.access (Roles, Principals, Feedback review, Authentication). Product entry points: Home, Settings; Login is profile-menu.
-*@
+@code {
+  // Purpose: Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
+  // Design: Rendered from NavigationDestinations (task 300): the generated PageRegistry
+  // ([Page(Navigable = true)]) filtered by each page's own Policy for the signed-in principal,
+  // in NavOrder. The same list is the Ctrl-K palette's pages and the agent's navigate and
+  // site_map destinations, so the menu cannot drift from them. A page's [Page] NavGroup names
+  // its FluentNavCategory; consecutive pages with the same group share one category and "" is
+  // the top level. There is no category gate: Admin, Demos and Developer show when one of their
+  // pages is permitted. Template flags need no markup here: a page excluded by a flag (api's
+  // Weather, grpc's Superheros) is not compiled, so it is not in the registry. Login is not a
+  // registry page (the profile menu and the palette's Sign in row reach it). The External
+  // category is plain links to other sites, not app pages. Destinations are re-read whenever
+  // the cascaded authentication state changes (sign-in and sign-out).
+
+  [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+  [Inject] private IAuthorizationService AuthorizationService { get; set; } = null!;
+
+  private List<(string Group, List<PageRegistryEntry> Pages)> Groups = [];
+
+  protected override async Task OnParametersSetAsync()
+  {
+    ClaimsPrincipal user = AuthenticationState is null
+      ? new ClaimsPrincipal(new ClaimsIdentity())
+      : (await AuthenticationState).User;
+    List<(string Group, List<PageRegistryEntry> Pages)> groups = [];
+    foreach (PageRegistryEntry destination in await NavigationDestinations.ForAsync(user, AuthorizationService))
+    {
+      if (groups.Count == 0 || !string.Equals(groups[^1].Group, destination.NavGroup, StringComparison.Ordinal))
+      {
+        groups.Add((destination.NavGroup, []));
+      }
+
+      groups[^1].Pages.Add(destination);
+    }
+
+    Groups = groups;
+  }
+}
+
 <FluentNav Class="twe-nav">
-  <TimeWarpNavLink TPage=HomePage />
-  <TimeWarpNavLink TPage=SettingsPage />
-  <TimeWarpNavLink TPage=AgentLinksPage />
-  <TimeWarpNavLink TPage=FeedbackListPage />
-
-  <AuthorizeView Policy=@PermissionIds.AdminAccess>
-    <Authorized>
-      <FluentNavCategory Title="Admin">
-        <TimeWarpNavLink TPage=RolesListPage />
-        <TimeWarpNavLink TPage=PrincipalsPage />
-        <AuthorizeView Policy=@PermissionIds.AdminFeedbackRead Context="feedbackAccess">
-          <Authorized Context="feedbackAccess">
-            <TimeWarpNavLink TPage=FeedbackAdminListPage />
-          </Authorized>
-        </AuthorizeView>
-        <TimeWarpNavLink TPage=AuthenticationPage />
+  @foreach ((string group, List<PageRegistryEntry> pages) in Groups)
+  {
+    if (group.Length == 0)
+    {
+      foreach (PageRegistryEntry destination in pages)
+      {
+        <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All>@destination.Title</FluentNavItem>
+      }
+    }
+    else
+    {
+      <FluentNavCategory Title=@group>
+        @foreach (PageRegistryEntry destination in pages)
+        {
+          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All>@destination.Title</FluentNavItem>
+        }
       </FluentNavCategory>
-    </Authorized>
-  </AuthorizeView>
-
-  <AuthorizeView Policy=@PermissionIds.DeveloperAccess>
-    <Authorized>
-      <FluentNavCategory Title="Demos">
-        <TimeWarpNavLink TPage=CounterPage />
-        @*#if (api)*@
-        <TimeWarpNavLink TPage=WeatherForecastsPage />
-        @*#endif*@
-        @*#if (grpc)*@
-        <TimeWarpNavLink TPage=SuperheroPage />
-        @*#endif*@
-        <TimeWarpNavLink TPage=ChatPage />
-        <TimeWarpNavLink TPage=PasskeysPage />
-      </FluentNavCategory>
-
-      <FluentNavCategory Title="Developer">
-        <TimeWarpNavLink TPage=StyleGuidePage />
-        <TimeWarpNavLink TPage=TestPage />
-        <TimeWarpNavLink TPage=ServicesPage />
-        <TimeWarpNavLink TPage=UserClaimsPage />
-      </FluentNavCategory>
-    </Authorized>
-  </AuthorizeView>
+    }
+  }
 
   <FluentNavCategory Title="External">
     <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank">The Freeze Team</FluentNavItem>
