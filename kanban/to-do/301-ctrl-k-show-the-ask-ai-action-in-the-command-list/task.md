@@ -211,3 +211,4 @@ Expect:
 - 2026-10-14: implement oracle (ganda task work): generator-derived roster, opt-outs, override seam, tests, skill note; gates green locally.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T10:28:24Z
 - Review oracle (claude-opus-5-5): effort 3, general reviewer + fix loop, 2 rounds, accepted-exceptions — 2026-10-14
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-14T10:39:50Z
