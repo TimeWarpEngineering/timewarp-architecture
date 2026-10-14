@@ -40,6 +40,8 @@ widths the same way.
 
 - Created: 2026-10-14 (cockpit, from Steve's screenshot)
 - 2026-10-14 implementer (ganda task work): implemented, gates green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T13:53:28Z
+- Review oracle (claude, claude-opus-5-5): round 1 general, disposition clean — 2026-10-14
 
 ## Results
 
@@ -83,3 +85,12 @@ window to ~640px; repeat on `/Admin/Principals`.
 with clickable links, header labels never overlap (long ones end in "…"), and below the grid's
 minimum the grid scrolls sideways inside its card while the page does not. Screenshots land in
 `web-spa-playwright-tests/bin/Release/net11.0/playwright-screenshots/FeedbackAttachment_Given_Wasm/admin-grid-*.png`.
+
+### Review disposition
+
+- **Rounds:** 1. **Roster:** general. **Effort:** 2 (by diff).
+- **Final counts:** bug 0; suggestion 1 fixed; nit 0. Open 0, wontfix 0.
+- **Disposition:** `clean`. M1 added a tooltip to the Principal column so the truncated GUID can
+  still be read. Re-verified with `dev build` 0/0, `DataGridFrameGuard` 1/1, and Playwright
+  `AdminGrids` 1/1.
+- **Paths:** `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.

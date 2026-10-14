@@ -104,7 +104,7 @@
             GridTemplateColumns="@GridColumns"
             data-qa="PrincipalsTable">
             <ChildContent>
-              <TemplateColumn Title="Principal">
+              <TemplateColumn Title="Principal" Tooltip="true" TooltipText="@(static row => row.PrincipalId.Value.ToString())">
                 <FluentLink Href="@($"/Admin/Principals/{context.PrincipalId.Value:D}")" data-qa="AdminPrincipalRow">
                   <code>@context.PrincipalId.Value</code>
                 </FluentLink>
