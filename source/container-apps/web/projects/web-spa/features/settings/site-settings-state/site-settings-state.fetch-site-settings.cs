@@ -16,6 +16,7 @@ partial class SiteSettingsState
   public static class FetchSiteSettingsActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : DefaultApiHandler<Action, Query, Response>

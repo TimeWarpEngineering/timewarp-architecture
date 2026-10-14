@@ -37,6 +37,9 @@
 // (focus in the panel) cancels, because the panel keeps its native keys. Task 351: the "picking"
 // status line appears only once the browser has armed the pick, so every step that waits for it
 // may press a key or click at once.
+// Task 301: signed in, Ask opens through Ctrl-K: "ask" highlights the derived OpenAskPanel row,
+// Enter closes the palette and opens [data-qa=AgentAsk] (screenshots ctrl-k-ask-row.png and
+// ctrl-k-ask-panel-open.png). Signed out the palette has no commands, so the app-bar button opens Ask.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -72,7 +75,7 @@ public class AskSignIn_Given_Wasm
 
     // Signed out. The server must answer 401 and Ask must say so, not "AI not configured".
     await session.GoHomeAsync();
-    string signedOut = await session.OpenAskAsync();
+    string signedOut = await session.OpenAskAsync(signedIn: false);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-signed-out.png"),
@@ -99,7 +102,7 @@ public class AskSignIn_Given_Wasm
     }
 
     await session.WaitForConfigurationProbeAsync(signedOutProbes);
-    string signedIn = await session.OpenAskAsync();
+    string signedIn = await session.OpenAskAsync(signedIn: true);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath(signedIn == "Configured" ? "ask-signed-in-configured.png" : "ask-signed-in-stale.png"),
@@ -184,7 +187,7 @@ public class AskSignIn_Given_Wasm
       await session.Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
       await session.Page.Locator("[data-qa=FeedbackBody]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
       await FileFeedbackAsync(session.Page, feedbackUrl);
-      string feedbackState = await session.OpenAskAsync();
+      string feedbackState = await session.OpenAskAsync(signedIn: true);
       if (feedbackState != "Configured")
       {
         failures.Add($"Feedback: Ask showed {feedbackState} ('{await session.AskTextAsync()}').");
@@ -288,7 +291,7 @@ public class AskSignIn_Given_Wasm
     int signedOutProbes = session.ConfigurationStatuses.Count;
     await session.SignInWithNewPasskeyAsync();
     await session.WaitForConfigurationProbeAsync(signedOutProbes);
-    string state = await session.OpenAskAsync();
+    string state = await session.OpenAskAsync(signedIn: true);
     await session.Page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-signed-in-no-key.png"),
@@ -386,27 +389,56 @@ public class AskSignIn_Given_Wasm
       await Page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
     }
 
-    public async Task<string> OpenAskAsync()
+    /// <summary>
+    /// Opens Ask. Signed in, through Ctrl-K (task 301): type "ask" and Enter on the derived
+    /// AgentSurface.OpenAskPanel row; the palette must close and the docked panel open. Signed out the
+    /// palette lists no commands (signed-in-only rule), so the app-bar Ask button opens it.
+    /// </summary>
+    public async Task<string> OpenAskAsync(bool signedIn)
     {
-      // The palette listener attaches on the shell's first interactive render. Retry Ctrl-K.
-      ILocator ask = Page.Locator("[data-qa=CommandPaletteAsk]");
-      bool opened = false;
-      for (int attempt = 0; attempt < 20 && !opened; attempt++)
+      if (signedIn)
       {
-        await Page.Keyboard.PressAsync("Control+k");
-        try
+        // The palette listener attaches on the shell's first interactive render. Retry Ctrl-K.
+        ILocator input = Page.Locator("[data-qa=CommandPaletteInput]");
+        bool opened = false;
+        for (int attempt = 0; attempt < 20 && !opened; attempt++)
         {
-          await ask.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
-          opened = true;
+          await Page.Keyboard.PressAsync("Control+k");
+          try
+          {
+            await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
+            opened = true;
+          }
+          catch (TimeoutException)
+          {
+            await Page.Keyboard.PressAsync("Escape");
+          }
         }
-        catch (TimeoutException)
+
+        opened.ShouldBeTrue("Ctrl-K did not open the palette");
+        await input.FillAsync("ask");
+        // With an empty query row 0 (a Page row) is already active, so wait on the filtered state: the
+        // active row must be a Command whose name contains "ask" before the screenshot and Enter.
+        ILocator active = Page.Locator(".twe-palette__row--active");
+        await Assertions.Expect(active.Locator(".twe-palette__kind"))
+          .ToHaveTextAsync("Command", new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+        await Assertions.Expect(active.Locator(".twe-palette__name"))
+          .ToContainTextAsync("ask", new LocatorAssertionsToContainTextOptions { IgnoreCase = true, Timeout = 10_000 });
+        await Page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-row.png") });
+        await input.PressAsync("Enter");
+        await Page.Locator("[data-qa=CommandPalette]").WaitForAsync(new LocatorWaitForOptions
         {
-          await Page.Keyboard.PressAsync("Escape");
-        }
+          Timeout = 30_000,
+          State = WaitForSelectorState.Hidden,
+        });
+        await Page.Locator("[data-qa=AgentAsk]").WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+        await Page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ctrl-k-ask-panel-open.png") });
+      }
+      else
+      {
+        await Page.Locator("[data-qa=AskAiButton]").ClickAsync();
       }
 
-      opened.ShouldBeTrue("Ctrl-K did not show Ask");
-      await ask.ClickAsync();
       ILocator state = Page.Locator(AnyAskState).First;
       await state.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000, State = WaitForSelectorState.Visible });
       foreach (string qa in new[] { "AgentAskNotConfigured", "AgentAskSignIn", "AgentAskError" })

@@ -20,6 +20,7 @@ partial class AgentSurfaceState
 {
   public static class SyncWebMcpActionSet
   {
+    [CommandPaletteOptOut("WebMCP publishing plumbing driven by navigation and sign-in changes.")]
     public sealed class Action : IBaseAction;
     internal sealed class Handler
     (

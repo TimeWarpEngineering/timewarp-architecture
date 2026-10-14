@@ -49,8 +49,9 @@ The work lives in the action's handler:
 - API calls (`IWebServerApiService` / `IApiServerApiService`, ceremony clients)
 - state changes
 
-Why: an action is the one seam that the action catalog (`[CatalogAction]` — the Ctrl-K palette
-and agent tools), State telemetry, and headless tests all see. A method on a page is invisible to
+Why: an action is the one seam that the Ctrl-K palette (every action, by derivation), the action
+catalog (`[CatalogAction]` — agent tools and palette metadata), State telemetry, and headless tests
+all see. A method on a page is invisible to
 all of them: it cannot be run from the palette, replayed, or dispatched in a test without a
 renderer. A button whose handler does the work itself is a feature nobody else can reach.
 
@@ -79,9 +80,23 @@ ActionSet (`IncrementCounterActionSet.JavaScriptAlias`), so the script never spe
 Anything not allowed is rejected and nothing is sent. Use the `fluent-button` web component for
 that, not `FluentButton`, whose `OnClick` parameter claims the `onclick` attribute.
 
-When an action is something a person or agent would meaningfully run on its own, tag it
-`[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers it,
-and `Visibility` (`Human`, `Agent`, `Both`). An action that takes a URL or path re-validates it in
+Every `*ActionSet.Action` is a Ctrl-K command by derivation: the generated `ActionRoster` lists
+it, and the palette shows it when it takes no required constructor argument and the user is signed
+in. The label comes from the names (`AgentSurfaceState.OpenAskPanelActionSet` → "Agent surface:
+Open ask panel"). Nothing opts an action in. Plumbing (loads, resets, ceremony steps, the palette's
+own actions) opts out explicitly with `[CommandPaletteOptOut("reason")]` on the `Action` class; a
+blank reason does not opt out, and a guard test fails on one. A label known only at run time (an
+admin-set assistant name) comes from a registered `IActionDisplayOverride`, never from a literal
+baked into the convention.
+
+When an action is something an agent should run, or the palette needs better copy or a permission,
+tag it `[CatalogAction]` with a real `Description`, the same `Permissions` as the page that offers
+it, and `Visibility` (`Human`, `Agent`, `Both`). Its `DisplayName`, `Description`, `Visibility` and
+`Permissions` override the palette defaults (Human, no permissions, generated label); an
+Agent-only entry stays out of the palette. A derived command with no
+`[CatalogAction(Permissions = …)]` is offered to every signed-in user, so an action behind a
+permission must carry `[CatalogAction(Permissions = …)]` or opt out with
+`[CommandPaletteOptOut("reason")]`. An action that takes a URL or path re-validates it in
 the handler (for example `LoginPage.GetSafeReturnUrl`): the page is not the only caller.
 
 Reference: `features/identity/sign-in-state/` (ceremonies, challenge navigation, post-sign-in
@@ -150,7 +165,8 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   refused off its page. A page-bound palette tool off its page returns a navigate offer and does
   not run. Approval
   does not grant a permission the principal lacks.
-- The ask UI is the Ctrl-K **Ask** button and the top-bar Ask AI button. It is always shown.
+- The ask UI is the derived Ctrl-K `AgentSurface.OpenAskPanel` command (signed in) and the top-bar
+  Ask AI button (always shown).
   It opens the `AgentAsk` side panel in `TimeWarpPage`'s FluentLayout aside
   (`UIAgent` over a `FunctionInvokingChatClient` whose inner client is the browser relay).
   The page reflows beside the 450px panel. Below 880px, and when expanded, the panel covers

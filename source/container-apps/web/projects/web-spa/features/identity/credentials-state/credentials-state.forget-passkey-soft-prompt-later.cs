@@ -14,6 +14,7 @@ partial class CredentialsState
 {
   public static class ForgetPasskeySoftPromptLaterActionSet
   {
+    [CommandPaletteOptOut("Answers the passkey soft prompt; only meaningful from the prompt itself.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler(IStore store, ISessionStorageService sessionStorage) : BaseHandler<Action>(store)

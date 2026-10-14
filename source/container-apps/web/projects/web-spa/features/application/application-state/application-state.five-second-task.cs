@@ -20,6 +20,7 @@ partial class ApplicationState
   public static class FiveSecondTaskActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Busy-indicator demo driven by its own page button.")]
     public sealed class Action : IAction;
 
     internal sealed class Handler : StateActionHandler<Action>

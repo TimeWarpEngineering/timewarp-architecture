@@ -14,6 +14,7 @@ partial class AskReferenceState
 {
   public static class OpenActionSet
   {
+    [CommandPaletteOptOut("Ask composer reference-picker step; only meaningful from the composer.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler

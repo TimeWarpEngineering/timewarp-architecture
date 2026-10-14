@@ -8,6 +8,7 @@ partial class SiteSettingsState
 {
   public static class ClearSiteSettingsActionSet
   {
+    [CommandPaletteOptOut("State reset run by sign-out and session changes.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler(IStore store) : BaseHandler<Action>(store)

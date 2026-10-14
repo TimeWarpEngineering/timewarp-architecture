@@ -14,6 +14,7 @@ partial class ApplicationState
 {
   public static class ResetStoreActionSet
   {
+    [CommandPaletteOptOut("Wipes all client state; a test and debugging reset, not a user command.")]
     public class Action : IBaseAction;
 
     internal class Handler : BaseHandler<Action>

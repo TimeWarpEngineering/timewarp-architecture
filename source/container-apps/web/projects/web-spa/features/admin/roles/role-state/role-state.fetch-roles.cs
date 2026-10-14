@@ -17,6 +17,7 @@ partial class RoleState
   public static class FetchRolesActionSet
   {
     [TrackAction]
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal class Handler

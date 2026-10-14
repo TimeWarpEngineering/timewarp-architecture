@@ -14,6 +14,7 @@ partial class AuthorizationState
 {
   public static class ClearCurrentUserActionSet
   {
+    [CommandPaletteOptOut("Session plumbing; sign-out and session changes run it.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler : BaseHandler<Action>

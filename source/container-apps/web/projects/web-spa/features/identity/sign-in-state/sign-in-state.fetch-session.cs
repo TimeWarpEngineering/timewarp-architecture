@@ -10,6 +10,7 @@ partial class SignInState
 {
   public static class FetchSessionActionSet
   {
+    [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
 
     internal sealed class Handler(IStore store, PasskeyCeremonyClient ceremony) : BaseHandler<Action>(store)
