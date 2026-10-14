@@ -6,8 +6,8 @@
 // Registered only when Mail:Sender is "Development" (MailModule). No network and no secrets.
 // Logging: To and Subject at Information, the body only at Debug so feedback text stays out of
 // default telemetry. To is [PersonalData] and Body [SensitiveData] (task 344), so service-defaults
-// redaction erases both before any provider or OTel export; read the pickup file for the real values. A non-empty Mail:PickupDirectory is created if needed and receives one .eml
-// file per send with a fixed "From: no-reply@localhost" line. IO failures propagate so a
+// redaction erases both before any provider or OTel export; read the pickup file for the real
+// values. A non-empty Mail:PickupDirectory is created if needed and receives one .eml file per send with a fixed "From: no-reply@localhost" line. IO failures propagate so a
 // misconfigured pickup is visible; the feedback handler turns them into EmailCopySent=false.
 // A production provider replaces this registration; it needs a host, a credential, and a from-address.
 #endregion
