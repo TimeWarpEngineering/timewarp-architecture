@@ -42,6 +42,7 @@ own principal through a **per-conversation, short-lived, scoped credential** (ta
 - 2026-10-14 implement (ganda task work): AskSettingsMenu, component + Playwright tests, gates green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T02:55:35Z
 - 2026-10-14 review oracle (claude-opus-5-5, tw-implementation-review, effort 2, general): 1 round, clean (1 nit fixed).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T02:56:51Z
 
 ## Results
 
