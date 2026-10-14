@@ -23,6 +23,7 @@
 
 - Created: 2026-10-14
 - 2026-10-14: implementer (ganda task work) bumped RC1 -> RC2; build, tests, check-version, template-smoke green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T16:16:04Z
 
 ## Notes
 
@@ -46,6 +47,11 @@
 - Existing migration `ProductVersion` annotations stay RC1. They are history, not pins.
 - Gates: `dev build --clean` 0 warnings / 0 errors; `dev test` all green; `dev check-version` OK
   (2.0.0-beta.20 ahead of nuget); `dev template-smoke` SUCCEEDED.
+
+- Review: 1 round, effort 1, roster `general`. Final counts: 0 bug, 0 suggestion, 0 nit; 0 open,
+  0 fixed, 0 wontfix. Disposition: **clean**. The reviewer re-ran `./bin/dev build` (0 warnings,
+  0 errors) and confirmed the only leftover rc.1 pins are the EF Core family. Artifacts:
+  `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
