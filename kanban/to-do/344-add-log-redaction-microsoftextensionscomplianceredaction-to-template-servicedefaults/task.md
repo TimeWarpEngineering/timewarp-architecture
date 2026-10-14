@@ -29,6 +29,7 @@ Motivation: CrunchIt (financial firm portal) handles client data.
   classified, TWA0001 generated-partial fix, Nuru 3.0.0 audit boy-scout. Gates green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T17:53:29Z
 - 2026-10-15 review oracle (claude, claude-opus-5-5, ganda task work): effort 2, roster general, 1 round, clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T17:55:49Z
 
 ## Results
 
@@ -83,6 +84,10 @@ passes: FakeLogger structured state has `To` and `Body` as empty strings, `Subje
 OTel capturing exporter saw the subject but never `client.person@example.com` or the body text.
 Commenting out `builder.AddLogRedaction();` in `extensions.cs` makes it fail on `To`. Analyzer
 suite passes 224/224, including `Given_SingleAuthoredFileWithGeneratedPartial`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
