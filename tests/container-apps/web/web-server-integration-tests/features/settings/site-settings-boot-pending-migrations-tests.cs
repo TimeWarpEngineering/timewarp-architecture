@@ -65,15 +65,21 @@ public class Boot_Given_
       configureWeb: services => services.AddSingleton<ILoggerProvider>(logs),
       serviceEndpoints: configuration));
 
-    await Task.Delay(TimeSpan.FromSeconds(3));
+    // Poll for the wait log rather than a fixed delay: host construction time varies by machine.
+    DateTime deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+    while (!boot.IsCompleted && !HasPendingLog(logs.Messages, latestMigration) && DateTime.UtcNow < deadline)
+    {
+      await Task.Delay(TimeSpan.FromMilliseconds(100));
+    }
+
+    await Task.Delay(TimeSpan.FromSeconds(2));
     if (boot.IsCompleted)
     {
       await using HostGraph early = await boot;
       throw new ShouldAssertException($"web-server started while {latestMigration} was still pending.");
     }
 
-    logs.Messages.ShouldContain(message => message.Contains("pending migration", StringComparison.Ordinal)
-      && message.Contains(latestMigration, StringComparison.Ordinal));
+    HasPendingLog(logs.Messages, latestMigration).ShouldBeTrue($"no pending-migration wait log naming {latestMigration}");
 
     await using (PostgresDbContext db = CreateContext(connectionString))
     {
@@ -86,6 +92,10 @@ public class Boot_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     logs.ErrorsAndAbove.ShouldBeEmpty(string.Join(Environment.NewLine, logs.ErrorsAndAbove));
   }
+
+  private static bool HasPendingLog(IReadOnlyList<string> messages, string latestMigration) =>
+    messages.Any(message => message.Contains("pending migration", StringComparison.Ordinal)
+      && message.Contains(latestMigration, StringComparison.Ordinal));
 
   private static async Task<string> CreateDatabaseAsync(string adminConnectionString)
   {

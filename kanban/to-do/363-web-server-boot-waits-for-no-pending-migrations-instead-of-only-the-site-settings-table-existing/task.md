@@ -72,6 +72,8 @@ migrations finished.
 
 - Created: 2026-10-14 (cockpit, from the Aspire MCP diagnosis; first in the next stack per Steve)
 - 2026-10-14 implementer (ganda task work, headless): pending-migrations probe, seed wait, tests, gates.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T15:41:51Z
+- Review oracle (claude, claude-opus-5-5, effort 2, roster general), session not reported: 2 rounds, disposition clean.
 
 ## Results
 
@@ -135,3 +137,15 @@ web-server from the dashboard before running `ef-database-update` on web-migrati
 - Manual: web-server stays in startup, logs the Information wait lines (no `fail:` and no 42703 or
   42P01), and reaches Running within about a second of the migration finishing. Without migrating,
   it fails after 180s with "Site settings seed gave up after 180 attempts ... missing N migration(s)".
+
+### Review disposition
+
+- **Rounds:** 2. **Effort:** 2. **Roster:** general.
+- **Final counts:** bug 0, suggestion 1 fixed, nit 0. 0 open, 0 wontfix.
+- **Disposition:** `clean`.
+- **M1 (suggestion, fixed):** the boot regression waited a fixed 3s before asserting the wait log,
+  so a slow host build could fail it. It now polls up to 30s for the log, waits 2s more and asserts
+  the boot is still blocked. After the fix, `dev build` was 0/0 and web-server-integration-tests
+  passed 341/341.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/` and `review/round-2/` (`general.md`,
+  `merged.md`), `review/disposition.md`.
