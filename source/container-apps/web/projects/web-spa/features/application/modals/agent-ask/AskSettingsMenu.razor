@@ -5,7 +5,8 @@
   Purpose: The Ask composer's settings button (task 356): a sliders icon before send that opens a
   menu showing whether the conversation's agent credential is active and links to agent access.
 
-  Design: Renders in MessageInput's lead slot (TrailingActions would replace send); AgentAsk's grid puts it on the footer row just left of send.
+  Design: Renders in MessageInput's lead slot (TrailingActions would replace send); AgentAsk's
+  grid puts it on the footer row just left of send.
   The icon button is the FluentMenu trigger slot. The fluent-menu web component owns the popover
   as it does for AskEditModePill: aria-haspopup and aria-expanded on the trigger; click, Enter or
   Space opens it; the arrows move; Esc or a choice closes it and focus returns to the button.
