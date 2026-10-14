@@ -64,6 +64,10 @@ migrations finished.
 - [x] Regression test (partially migrated DB + late migration) + existing first-run fact green
 - [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Workers must not touch the maintainer's running `dev run` or database.
@@ -74,6 +78,7 @@ migrations finished.
 - 2026-10-14 implementer (ganda task work, headless): pending-migrations probe, seed wait, tests, gates.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T15:41:51Z
 - Review oracle (claude, claude-opus-5-5, effort 2, roster general), session not reported: 2 rounds, disposition clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-14T15:45:06Z
 
 ## Results
 
