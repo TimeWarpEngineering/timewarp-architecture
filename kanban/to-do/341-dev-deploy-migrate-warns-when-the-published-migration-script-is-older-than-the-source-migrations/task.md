@@ -53,11 +53,50 @@ That was true only relative to the **published script**
 
 ## Checklist
 
-- [ ] Source vs script migration id comparison; warning text
-- [ ] `--yes` refuses on stale unless `--allow-stale`; summary qualifier
-- [ ] ACA bundle handling decision recorded
-- [ ] Tests + skill note
-- [ ] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`
+- [x] Source vs script migration id comparison; warning text
+- [x] `--yes` refuses on stale unless `--allow-stale`; summary qualifier
+- [x] ACA bundle handling decision recorded
+- [x] Tests + skill note
+- [x] Gates: `dev build` 0/0, dev-cli-tests, `ganda repo audit`
+
+## Results
+
+- `dev deploy migrate` compares the source migration ids with the published script's before the plan.
+  - Source: `<app>/platform/postgres/migrations/*.cs` file names (no `.Designer.cs`, no snapshot), from the
+    AppHost's sibling app folders (`DeployOperate.FindSourceMigrationFolders`, nearest ancestor of the AppHost
+    with an app holding one). No folder (no `postgres`) skips the check.
+  - Script: the `'<MigrationId>'` of each `INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES (…)` (checked against a real published kubernetes script: 10 ids, latest `20260923180147_AddCredentialAccountHint`).
+  - Stale prints the warning (yellow, stderr) before the prompt.
+- **Decision (`--yes`):** interactive runs warn and continue only when confirmed; `--yes` refuses (exit 1) on a
+  stale script unless the new `--allow-stale` is passed; redirected stdin without `--yes` still refuses as before.
+- After a stale warning, a successful report reads `Up to date relative to the published script: …` /
+  `Applied N migration(s) relative to the published script:`.
+- **Decision (aca bundle):** the bundle's migrations are compiled in and not listable without EF internals, but
+  the AppHost calls `PublishAsMigrationScript()` for every target, so the same publish writes
+  `efmigrations/web-migrations.sql` beside the bundle; the check reads that script. With no script beside the
+  bundle it prints "Stale check not available for the bundle …; skipped." and continues.
+- Recorded in the `DeployOperate` and `DeployMigrateCommand` Design regions and in `tw-deploy` (publish → deploy →
+  migrate order, the warning, `--allow-stale`).
+- Tests (`tests/tools/dev-cli-tests/deploy-operate-tests.cs`, `StaleScript_Given_` + one AppHost agreement test):
+  script id extraction, folder listing (Designer/snapshot excluded), stale vs current, `--yes` refusal vs
+  `--allow-stale`, report qualifier, no-migrations-folder skip, and the real AppHost resolving the web folder.
+- Gates: `dev build` 0 warnings / 0 errors; dev-cli-tests 226/226; `ganda repo audit` passes; `dev check-version` OK.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run --project tests/tools/dev-cli-tests/dev-cli-tests.csproj
+dotnet run tools/dev-cli/dev.cs -- deploy migrate --help
+```
+
+Expect: all tests pass (226, including `StaleScript_Given_`); help lists `--allow-stale`. With an older
+`artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql` than the source, `dev deploy migrate
+--target kubernetes --yes` prints `⚠ Published script is stale: source has N migration(s) …` and exits 1 naming
+`--allow-stale`; without `--yes` it warns, then asks `Migrate? [y/N]` (operator-only; workers must not run it
+against a cluster).
 
 ## Notes
 
@@ -66,3 +105,4 @@ That was true only relative to the **published script**
 ## Session
 
 - Created: 2026-10-13 (cockpit, per Steve; found in the live 339 check)
+- 2026-10-15: implemented under `ganda task work` (implement node); no cluster or database touched.
