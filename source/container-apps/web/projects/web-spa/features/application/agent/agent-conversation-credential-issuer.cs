@@ -7,7 +7,7 @@
 // opened late in the day cannot outlive that day. The scope list is copied; the caller decides
 // what goes in it (the panel passes every current permission claim), so the scopes are advisory,
 // not a boundary (server [EndpointAuthorize] is). The display name is a label: the panel passes
-// none, so it is DefaultDisplayName. It is not derived from the first prompt. A caller-supplied
+// "{AssistantName} conversation" (task 361); a caller that passes none gets DefaultDisplayName. It is not derived from the first prompt. A caller-supplied
 // name is trimmed and truncated to MaxDisplayNameLength.
 #endregion
 
@@ -18,7 +18,7 @@ public static class AgentConversationCredentialIssuer
 {
   public const int MaxDisplayNameLength = 80;
 
-  public const string DefaultDisplayName = "Ask AI conversation";
+  public const string DefaultDisplayName = "Assistant conversation";
 
   public static readonly TimeSpan DefaultLifetime = TimeSpan.FromHours(12);
 

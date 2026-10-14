@@ -9,7 +9,8 @@
 // and AuthenticationStateListener (Identity) take CrossSliceReference. Configuration* is the
 // bound Entra section from GetSiteSettings, used for the Admin app-registration tenant line.
 // Task 227 dropped persisted trusted tenants; Enabled/AllowBootstrap drift is still on this
-// snapshot for the seeder/admin copy, not a tenant allowlist.
+// snapshot for the seeder/admin copy, not a tenant allowlist. AssistantName (task 361) is the
+// admin form's copy; the labels read AgentSurfaceState.AssistantName from the public query.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -22,6 +23,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public bool? EntraSignInEnabled { get; private set; }
   public bool? EntraAllowBootstrap { get; private set; }
   public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
+  public string AssistantName { get; private set; } = AssistantNameRules.Default;
   public long Version { get; private set; }
   /// <summary>True when the last UpdateSiteSettings failed; the problem itself is on NotificationState.</summary>
   public bool SaveFailed { get; private set; }
@@ -50,6 +52,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     EntraSignInEnabled = null;
     EntraAllowBootstrap = null;
     PasskeyPromptMode = PasskeyPromptMode.Soft;
+    AssistantName = AssistantNameRules.Default;
     Version = 0;
     SaveFailed = false;
     ConfigurationTenantId = null;

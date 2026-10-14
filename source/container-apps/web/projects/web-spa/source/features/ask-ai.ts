@@ -1,6 +1,6 @@
 // #region Purpose
 // Inserts an @ resource token into the Ask textarea, says whether an @ starts a word, refocuses
-// the textarea, and copies the last answer's text.
+// the textarea, copies the last answer's text, and sets the assistant avatar for the turns.
 // #endregion
 //
 // #region Design
@@ -16,6 +16,11 @@
 // CopyText writes the text C# passes: the same last-answer text the thumbs file, not the whole
 // transcript. A denied clipboard stays quiet: copy is presentational and must not break the
 // panel. Imported on demand (AskAiJsModule), not via window.Spa.
+// SetAssistantAvatar (task 361) puts the avatar on --twe-assistant-avatar on the document root, so
+// AgentAsk.razor.css can draw it beside each assistant turn the library renders. Inline style
+// attributes are banned (strict CSP), but the CSSOM is not. Only a base64 SVG data URI is
+// accepted, so the value cannot break out of url(); anything else removes the property and the
+// turns fall back to the brand gradient.
 // #endregion
 
 export function InsertReference(token: string): void {
@@ -64,4 +69,17 @@ export async function CopyText(text: string): Promise<void> {
   } catch {
     // The browser denied the clipboard. The answer stays on screen.
   }
+}
+
+const AvatarPrefix = "data:image/svg+xml;base64,";
+
+export function SetAssistantAvatar(dataUri: string | null): void {
+  const root = document.documentElement.style;
+  const body = dataUri?.startsWith(AvatarPrefix) ? dataUri.slice(AvatarPrefix.length) : null;
+  if (body === null || body === undefined || !/^[A-Za-z0-9+/]+={0,2}$/.test(body)) {
+    root.removeProperty("--twe-assistant-avatar");
+    return;
+  }
+
+  root.setProperty("--twe-assistant-avatar", `url("${AvatarPrefix}${body}")`);
 }

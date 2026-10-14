@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261013120000_AddAdminProfilesReadPermission";
+    public override string LastMigrationId => "20261014110100_AddSiteSettingsAssistantName";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -313,6 +313,11 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
             {
                 b.Property<Guid>("Id")
                     .HasColumnType("uuid");
+
+                b.Property<string>("AssistantName")
+                    .IsRequired()
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)");
 
                 b.Property<bool>("EntraAllowBootstrap")
                     .HasColumnType("boolean");

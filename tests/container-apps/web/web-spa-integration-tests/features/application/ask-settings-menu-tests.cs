@@ -39,7 +39,7 @@ public partial class AskSettingsMenu_Should_
     string html = await RenderAsync(scope);
 
     string button = TagOf(html, "AskSettings");
-    button.ShouldContain("aria-label=\"Ask settings\"");
+    button.ShouldContain("aria-label=\"Akili settings\"");
     button.ShouldContain("data-status=\"Absent\"");
     TagOf(html, "AskAgentAccessStatus").ShouldContain("data-status=\"Absent\"");
     html.ShouldContain("No agent credential");
@@ -61,7 +61,7 @@ public partial class AskSettingsMenu_Should_
     TagOf(html, "AskSettings").ShouldContain("data-status=\"Active\"");
     TagOf(html, "AskAgentAccessStatus").ShouldContain("data-status=\"Active\"");
     html.ShouldContain("Agent access active");
-    html.ShouldContain("Ask can act on this app as you");
+    html.ShouldContain("Akili can act on this app as you");
     TagOf(html, "AskAgentAccessExpiry")
       .ShouldContain($"datetime=\"{expiresAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)}\"");
     html.ShouldContain("Expires at ");

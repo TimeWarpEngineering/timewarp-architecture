@@ -486,6 +486,7 @@ public static class PageAgentContext
       ["entraSignInEnabled"] = settings.EntraSignInEnabled,
       ["entraAllowBootstrap"] = settings.EntraAllowBootstrap,
       ["passkeyPromptMode"] = settings.PasskeyPromptMode.ToString(),
+      ["assistantName"] = settings.AssistantName,
       ["version"] = settings.Version,
     };
   }

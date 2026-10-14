@@ -581,7 +581,7 @@ public class AskSurface_Given_Wasm
     (button.X + button.Width).ShouldBeLessThanOrEqualTo(send.X + 1);
     ((double)(button.Y + (button.Height / 2))).ShouldBe(send.Y + (send.Height / 2), 6);
     (await settings.GetAttributeAsync("aria-haspopup")).ShouldNotBeNull();
-    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Ask settings");
+    (await settings.GetAttributeAsync("aria-label")).ShouldBe("Akili settings");
     (await settings.GetAttributeAsync("data-status")).ShouldBe("Absent");
 
     await settings.FocusAsync();

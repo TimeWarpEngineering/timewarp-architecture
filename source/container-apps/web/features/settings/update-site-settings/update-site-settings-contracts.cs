@@ -7,7 +7,8 @@
 // concurrency token from GetSiteSettings; mismatch is 409. Validator composes
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
 // implements so the Settings form binds once. Task 227 dropped trusted tenants from this
-// command; trust is Authentication:Entra:TenantId.
+// command; trust is Authentication:Entra:TenantId. Task 361: AssistantName rides the same
+// command; the handler stores it trimmed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -28,6 +29,7 @@ public static partial class UpdateSiteSettings
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
+    public string AssistantName { get; set; } = null!;
     public long Version { get; set; }
   }
 
@@ -45,17 +47,20 @@ public static partial class UpdateSiteSettings
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
+    public string AssistantName { get; set; }
     public long Version { get; }
 
     public Response(
       bool entraSignInEnabled,
       bool entraAllowBootstrap,
       PasskeyPromptMode passkeyPromptMode,
+      string assistantName,
       long version)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
       PasskeyPromptMode = passkeyPromptMode;
+      AssistantName = assistantName;
       Version = version;
     }
   }
@@ -66,6 +71,7 @@ public static partial class UpdateSiteSettings
       entraSignInEnabled: false,
       entraAllowBootstrap: false,
       passkeyPromptMode: PasskeyPromptMode.Soft,
+      assistantName: AssistantNameRules.Default,
       version: 1);
   }
 }

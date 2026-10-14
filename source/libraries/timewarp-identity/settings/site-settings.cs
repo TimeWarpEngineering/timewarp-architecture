@@ -1,5 +1,6 @@
 #region Purpose
-// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap, passkey prompt).
+// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap, passkey prompt)
+// and the assistant's display name.
 #endregion
 
 #region Design
@@ -10,7 +11,10 @@
 // not AggregateDbContext. IAggregateRoot is deliberately not implemented (same rationale as
 // Principal). Entity<SiteSettingsId> with a well-known Singleton id rather than a dedicated
 // singleton type so the store port stays Get/Add/Update like principals.
-// Defaults: EntraSignInEnabled false, EntraAllowBootstrap false, PasskeyPromptMode Soft.
+// Defaults: EntraSignInEnabled false, EntraAllowBootstrap false, PasskeyPromptMode Soft,
+// AssistantName Akili (task 361). AssistantName is stored trimmed; AssistantNameRules owns its
+// rules so the contract validator agrees. RenameAssistant is separate from ReplacePolicy because
+// the seeder's reseed rewrites policy from configuration and must keep the admin-set name.
 // Task 227: trust is Authentication:Entra:TenantId (token tid GUID-equals the configured tenant).
 // This aggregate does not store a tenant allowlist. Do not fold PublicOrigin / client id /
 // secret / authority tenant into this type.
@@ -19,7 +23,8 @@
 namespace TimeWarp.Identity;
 
 /// <summary>
-/// Singleton runtime admin policy for Entra offer/bootstrap and the post-Entra passkey prompt.
+/// Singleton runtime admin policy for Entra offer/bootstrap, the post-Entra passkey prompt, and the
+/// assistant's display name.
 /// </summary>
 public sealed class SiteSettings : Entity<SiteSettingsId>
 {
@@ -34,12 +39,14 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     bool entraSignInEnabled,
     bool entraAllowBootstrap,
     PasskeyPromptMode passkeyPromptMode,
+    string assistantName,
     long version)
     : base(id, version)
   {
     EntraSignInEnabled = entraSignInEnabled;
     EntraAllowBootstrap = entraAllowBootstrap;
     PasskeyPromptMode = passkeyPromptMode;
+    AssistantName = assistantName;
   }
 
   /// <summary>Whether Entra sign-in is offered at runtime (separate from configured client secrets).</summary>
@@ -51,13 +58,18 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   /// <summary>Soft versus required post-Entra passkey prompt policy.</summary>
   public PasskeyPromptMode PasskeyPromptMode { get; private set; }
 
+  /// <summary>The assistant's display name (trimmed, 1-32 plain-text characters; default Akili).</summary>
+  public string AssistantName { get; private set; }
+
   /// <summary>
-  /// Creates the singleton row at version 0 with the given policy (defaults: Entra off, Soft prompt).
+  /// Creates the singleton row at version 0 with the given policy (defaults: Entra off, Soft prompt,
+  /// assistant Akili).
   /// </summary>
   public static SiteSettings Create(
     bool entraSignInEnabled = false,
     bool entraAllowBootstrap = false,
-    PasskeyPromptMode passkeyPromptMode = PasskeyPromptMode.Soft)
+    PasskeyPromptMode passkeyPromptMode = PasskeyPromptMode.Soft,
+    string assistantName = AssistantNameRules.Default)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
     return new SiteSettings(
@@ -65,6 +77,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       entraSignInEnabled,
       entraAllowBootstrap,
       passkeyPromptMode,
+      NormalizeAssistantName(assistantName),
       version: 0);
   }
 
@@ -77,6 +90,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       EntraSignInEnabled,
       EntraAllowBootstrap,
       PasskeyPromptMode,
+      AssistantName,
       version);
 
   /// <summary>Replaces the whole runtime policy surface in one mutation.</summary>
@@ -89,6 +103,23 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     EntraSignInEnabled = entraSignInEnabled;
     EntraAllowBootstrap = entraAllowBootstrap;
     PasskeyPromptMode = passkeyPromptMode;
+  }
+
+  /// <summary>Renames the assistant; the name is trimmed and must pass <see cref="AssistantNameRules.IsValid"/>.</summary>
+  public void RenameAssistant(string assistantName) =>
+    AssistantName = NormalizeAssistantName(assistantName);
+
+  private static string NormalizeAssistantName(string assistantName)
+  {
+    ArgumentNullException.ThrowIfNull(assistantName);
+    if (!AssistantNameRules.IsValid(assistantName))
+    {
+      throw new ArgumentException(
+        $"AssistantName must be 1-{AssistantNameRules.MaxLength} plain-text characters.",
+        nameof(assistantName));
+    }
+
+    return assistantName.Trim();
   }
 
   private static void EnsurePasskeyPromptMode(PasskeyPromptMode passkeyPromptMode)

@@ -19,7 +19,7 @@ partial class SiteSettingsState
   {
     [CatalogAction
     (
-      Description = "Save the site authentication policy settings.",
+      Description = "Save the site authentication policy settings and the assistant name.",
       Permissions = [PermissionIds.SettingsWrite],
       Visibility = ActionVisibility.Agent
     )]
@@ -56,6 +56,7 @@ partial class SiteSettingsState
         SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
+        SiteSettingsState.AssistantName = response.AssistantName;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
         return Publisher.Publish

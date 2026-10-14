@@ -6,7 +6,7 @@
 // GetAsync through the registered SeedOnReadSiteSettingsStore (task 254) seeds an empty store, so
 // an update after the row was deleted applies against the freshly seeded row; a null read means
 // the table is not migrated yet (Unavailable 503). Compare Command.Version to stored Version, 409
-// on mismatch. On match, ReplacePolicy then UpdateAsync. Concurrent Update throws
+// on mismatch. On match, ReplacePolicy and RenameAssistant (task 361) then UpdateAsync. Concurrent Update throws
 // ConcurrencyConflictException → same 409. Does not reference Identity.Application (TWA0009).
 #endregion
 
@@ -46,6 +46,7 @@ public sealed class UpdateSiteSettings
         command.EntraSignInEnabled,
         command.EntraAllowBootstrap,
         command.PasskeyPromptMode);
+      settings.RenameAssistant(command.AssistantName);
 
       try
       {
@@ -66,5 +67,6 @@ public sealed class UpdateSiteSettings
       entraSignInEnabled: settings.EntraSignInEnabled,
       entraAllowBootstrap: settings.EntraAllowBootstrap,
       passkeyPromptMode: settings.PasskeyPromptMode,
+      assistantName: settings.AssistantName,
       version: settings.Version);
 }

@@ -63,7 +63,7 @@ public static class ChatReadinessProbe
       CatalogAgentReadiness.Error,
       XaiChatDefaults.SetupCommand,
       null,
-      "The server returned a file instead of the Ask configuration."
+      "The server returned a file instead of the assistant configuration."
     );
 
   /// <summary>"401 Unauthorized: detail" style text for a problem. Never empty.</summary>
