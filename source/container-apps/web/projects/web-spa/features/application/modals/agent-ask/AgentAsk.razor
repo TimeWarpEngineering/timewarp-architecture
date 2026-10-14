@@ -15,9 +15,11 @@
   Ask" and a button that closes the panel and goes to Login with the current page as the return
   path. Any other failure shows the status, title and detail and a Retry that runs the probe
   again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
-  Tools are the palette's agent-visible commands, navigate, the current page's tools, and
-  page_context, the same list WebMCP publishes, including the approval bit for the conversation's
-  edit mode. Global actions and navigate run from any page. A page-bound action off its page
+  Tools are the palette's agent-visible commands, the current page's tools, navigate, site_map,
+  and page_context, the same list WebMCP publishes, including the approval bit for the
+  conversation's edit mode. Global actions, site_map and navigate work from any page, including
+  Home: the instructions carry the menu's site map for this principal (task 300), so Ask answers
+  about any permitted page, links it, and navigates there (with approval in Ask before editing). A page-bound action off its page
   returns a navigate offer and does not run. The route is PageAgentRoute, which
   this panel refreshes from the browser location on WebAssembly before it rebuilds. Tool arguments
   render as JSON. An empty argument dictionary is omitted: Razor would print its CLR type name,
@@ -291,6 +293,11 @@
         mode,
         CancellationToken.None
       );
+      string siteMap = AgentSiteMap.Summary
+      (
+        await AgentSiteMap.DestinationsAsync(authentication.User, AuthorizationService, path),
+        AgentAskInstructions.SiteMapCap
+      );
       if (Disposed)
       {
         return;
@@ -307,11 +314,23 @@
       toolNames.Add(PageAgentContext.ToolName);
       // Rebuilt on every request (AskTagChatClient), so page_context.tags names the tags sent so far
       // and the first line names the assistant's current name, even after a rename mid-conversation.
-      string RenderInstructions() => AgentAskInstructions.For
-      (
-        ScopedStore.GetState<AgentSurfaceState>().AssistantName,
-        PageAgentContext.Describe(ScopedStore, path, toolNames, liveSurfaceJson: null, AgentAskInstructions.ContextCap)
-      );
+      string RenderInstructions()
+      {
+        string assistantName = ScopedStore.GetState<AgentSurfaceState>().AssistantName;
+        return AgentAskInstructions.For
+        (
+          assistantName,
+          siteMap,
+          PageAgentContext.Describe
+          (
+            ScopedStore,
+            path,
+            toolNames,
+            liveSurfaceJson: null,
+            AgentAskInstructions.ContextCapFor(assistantName, siteMap)
+          )
+        );
+      }
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
       TagClient = new AskTagChatClient
       (

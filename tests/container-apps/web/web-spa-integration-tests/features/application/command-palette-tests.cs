@@ -9,7 +9,7 @@
 // C-create in-proc SPA ServiceProvider per test (no Aspire): the palette never calls a server, and
 // the permission filter needs a controllable principal. Authorization is the SPA's own
 // PolicyRegistration (claim policies keyed by PermissionIds), so the rows a principal sees are
-// decided by the same policies NavMenu's AuthorizeView uses. The principal is a fixed
+// decided by the same policies NavMenu filters its pages with (NavigationDestinations). The principal is a fixed
 // AuthenticationStateProvider carrying PermissionIds.ClaimType claims.
 // Keyboard behaviour is pinned at the state seam the component binds to (Filter / MoveHighlight /
 // Highlighted, then CommandPaletteRunner — what Enter does): there is no bUnit and the JS hotkey

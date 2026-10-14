@@ -12,6 +12,6 @@
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
 
-[Page("/Admin/Roles", Policy = PermissionIds.AdminRolesRead, Navigable = true, Description = "List the roles an administrator can open.")]
+[Page("/Admin/Roles", Policy = PermissionIds.AdminRolesRead, Navigable = true, Description = "List the roles an administrator can open.", NavGroup = "Admin", NavOrder = 110)]
 [Authorize(Policy = PermissionIds.AdminRolesRead)]
 partial class RolesListPage;

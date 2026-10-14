@@ -153,9 +153,20 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
 
 - `CatalogAgentToolSet.SelectAsync` reads `CommandPaletteRoster` (the Ctrl-K filter). A command
   whose visibility includes Agent is a tool on every page. Human-only commands are never tools.
-  Every permitted page row is one `navigate` tool (a URL enum). `PageAgentScope` adds the current
-  page's button actions and decides which palette commands only execute on their page. An
-  anonymous principal gets the palette's anonymous pages: Home and Sign in, as `navigate`.
+- The agent knows the whole app, not only the page on screen. `site_map` (read-only, never
+  approval-wrapped) returns every destination the person's navigation menu shows: title, URL,
+  menu group, icon and the `[Page]` Description, plus Sign in while signed out.
+  `navigate` takes one of those URLs (a URL enum) and refuses anything else; it goes through
+  `RouteState.ChangeRoute` like the palette and asks for approval in Ask before editing. Both read
+  `NavigationDestinations`, the list NavMenu and Ctrl-K render, so the four surfaces cannot drift;
+  a guard test fails if a route literal or `typeof(…Page)` appears in the agent code. Ask's
+  instructions carry the same site map, so it answers "where is X" from Home with a page link.
+- A page's own executable actions come from its declaration:
+  `[Page(…, AgentActions = [typeof(CredentialsState.AddPasskeyActionSet.Action), …])]`. The
+  generator emits `PageRegistry.ActionScopes` (every route template of each such page), and
+  `PageAgentScope` matches the current path against them and decides which palette commands only
+  execute on their page. There is no hand-written route list. An anonymous principal gets
+  `navigate` and `site_map` only.
 - Read-only tools are an explicit allow-list of catalog names in `CatalogAgentApproval` (never a
   name-prefix rule). Every other tool is wrapped in `ApprovalRequiredAIFunction`. WebMCP uses the
   same split: the shell's confirmation bar (`AgentSurfaceState`) gates dispatch, one call at a time,
@@ -183,13 +194,14 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   ```
 
   The template registers the relay, not a key. WebMCP does not need a client.
-- WebMCP registers the same tools, plus `page_context`, through `document.modelContext.registerTool`
+- WebMCP registers the same tools (including `site_map` and `navigate`), plus `page_context`, through `document.modelContext.registerTool`
   (falling back to `navigator.modelContext`, then `provideContext`). A missing API registers nothing.
   Both paths execute with `ActionCatalogEntry.Execute`. Endpoints keep `[EndpointAuthorize]`.
 - Page facts live in `PageAgentContext` on every route: path, title, purpose (the `[Page]`
-  Description), a bounded text summary of the page body, and the offered tool names. Settings,
-  Passkeys, Profile, authentication settings, and Feedback keep their ids, flags, and records
-  (including the Version concurrency token where the command carries one).
+  Description), a bounded text summary of the page body, and the offered tool names. A state that
+  owns the page's `AgentActions` adds its own facts by implementing `IAgentPageFacts` (ids, server
+  flags, and the records a replace-whole command must echo, including a Version token); there
+  are no per-route cases.
   Components dispatch `SyncWebMcp` and `ResolveApproval`. They do not call the JS module.
 
 Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.
@@ -271,7 +283,7 @@ Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.ra
 # Actions, navigation, and forms
 
 Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Subtle /
-Transparent; danger via `--twe-danger`). Navigation is `FluentAnchor` / `TimeWarpNavLink`.
+Transparent; danger via `--twe-danger`). Navigation is `FluentAnchor`; the menu is `NavMenu` over the page registry.
 Persisting a model is `EditForm` + `FluentButton` submit (RoleForm). Never raw `<button>` or
 page-local button/link classes; reuse `components/elements` and existing feature components
 before writing markup. Multi-line text is the shared `TextArea` (`components/forms/TextArea.razor`),

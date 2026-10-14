@@ -5,8 +5,9 @@ ship a `documentation/` tree — this file is for operators of the template repo
 itself. WebMCP was built in task 271
 (`kanban/done/271-net-11-agentic-ui-over-the-timewarpstate-action-catalog/`):
 the same permission-filtered tools the in-app AI uses: every Ctrl-K command the
-agent may run, a `navigate` tool for the pages that person may open, the
-current page's own tools, and `page_context`. They are registered with the browser.
+agent may run, the current page's own tools, `site_map` and `navigate` over the
+pages that person's navigation menu shows, and `page_context`. They are
+registered with the browser.
 
 ## WebMCP is not a server endpoint
 
@@ -32,14 +33,19 @@ directly; an agent or inspector running inside the same browser calls them.
    **Sign in**, because tools are filtered by your permissions.
 4. **Inspect and call tools.** Open any page, including Home. Click the extension
    icon to open its side panel. A signed-in person sees the same agent-visible
-   Ctrl-K commands on every page, plus `navigate` (an enum of the pages they may
-   open) and `page_context`. The current page adds its own tools on top.
+   Ctrl-K commands on every page, plus `site_map` (every page their menu shows,
+   with its group and description), `navigate` (an enum of those same URLs) and
+   `page_context`. Signed out, the list is Home and Sign in. The current page
+   adds its own tools on top (the actions its `[Page]` declares in `AgentActions`).
    `page_context` includes the route, the page title, a one-line purpose, and a
    short text summary of the page body. Run a tool by giving it arguments as
    JSON. The extension can also let Gemini drive the tools if you want a real
    AI in the loop.
 5. **Approve and verify.** Any tool that changes data on its own page shows the
-   in-app confirm bar first. `navigate` does not: opening a page is not an edit.
+   in-app confirm bar first. `navigate` does too while the edit mode is **Ask
+   before editing** (it shows the target URL); in **Automatically edit** it runs
+   at once. A URL that is not in `site_map` is refused without a prompt.
+   `site_map` and `page_context` never ask.
    The bar asks `Allow <tool>?` and offers **Approve** and **Reject**. Approve
    it there, then check that the change actually happened (counter value, role,
    and so on). A page-bound action such as Add passkey, called from another
@@ -60,12 +66,16 @@ bug.
   `navigator.modelContext` as the fallback. When neither API is present the
   call reports the context unavailable and registers nothing.
 - `source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-publisher.cs` —
-  permission-filtered tool list (palette agent commands, `navigate`, page tools)
-  plus `page_context`. The publisher asks the browser to replace the previous list.
+  permission-filtered tool list (palette agent commands, page tools, `navigate`,
+  `site_map`) plus `page_context`. The publisher asks the browser to replace the previous list.
 - `source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-dispatcher.cs` —
   runs a tool call through the same page, permission, approval, and store path
   as the in-app ask UI. `page_context` returns the page facts and does not ask
   for approval.
+- `source/container-apps/web/projects/web-spa/features/application/agent/agent-site-map.cs` and
+  `agent-navigate.cs` — the destinations both tools share, from
+  `features/application/navigation/navigation-destinations.cs` (the list NavMenu and
+  Ctrl-K render).
 - `source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-approval-gate.cs` —
   in-app confirmation. Holds one mutating call until the person approves or
   rejects that exact call in the shell.

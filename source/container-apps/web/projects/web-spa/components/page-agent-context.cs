@@ -20,10 +20,12 @@
 // buttons, headings, so the JSON stays valid. Page facts are bounded by their own caps and are
 // not dropped. Text is always present; an empty walk yields empty arrays and an empty summary.
 // screenshot is null: pixel capture is a later opt-in, not this document.
-// Settings, Passkeys, Profile, Admin/Authentication, and Feedback keep their fact fields (ids,
-// flags, the records a replace-whole command must echo, filings capped at 20). The draft body is
-// not included. tools is the names the caller is offering, or, when omitted, navigate plus the
-// page-bound names (including human-only) plus page_context. Live callers pass the offered names.
+// Page facts have no per-route cases (task 300): the states that own the actions the page
+// declares ([Page(AgentActions = ...)], via PageAgentScope.StateTypesFor) add their own when they
+// implement IAgentPageFacts (credentials, profile, site settings, feedback): ids, flags, the
+// records a replace-whole command must echo, filings capped at 20. A page with no agent actions
+// gets the envelope only. tools is the names the caller is offering, or, when omitted, navigate,
+// site_map and page_context. Live callers pass the offered names.
 // page_context is not a catalog action and does not require approval.
 // references (task 345) lists the @ references the person chose in this conversation
 // (AskReferenceState, current ConversationGeneration only): token, type prefix, idType, id, and
@@ -41,8 +43,6 @@ namespace TimeWarp.Architecture.Components;
 
 using System.Text.Json.Nodes;
 using TimeWarp.Architecture.Features.Applications;
-using TimeWarp.Architecture.Features.Feedback;
-using TimeWarp.Architecture.Features.Identity;
 
 /// <summary>Page facts supplied to the ask UI and to WebMCP.</summary>
 public static class PageAgentContext
@@ -62,8 +62,6 @@ public static class PageAgentContext
   public const int SummaryCap = 2_000;
 
   public const int DocumentCap = 12_000;
-
-  private const int FilingCap = 20;
 
   private const int HeadingCap = 40;
 
@@ -107,27 +105,12 @@ public static class PageAgentContext
     ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxLength);
     string normalized = PageAgentScope.Normalize(path);
     JsonObject document = Envelope(store, normalized, toolNames, liveSurfaceJson);
-    if (normalized.Equals("/Settings", StringComparison.OrdinalIgnoreCase)
-      || normalized.Equals("/Passkeys", StringComparison.OrdinalIgnoreCase))
+    foreach (Type stateType in PageAgentScope.StateTypesFor(normalized))
     {
-      AddCredentials(document, store);
-    }
-    else if (normalized.Equals("/Profile", StringComparison.OrdinalIgnoreCase))
-    {
-      AddProfile(document, store);
-    }
-    else if (normalized.Equals("/Admin/Authentication", StringComparison.OrdinalIgnoreCase))
-    {
-      AddSiteSettings(document, store);
-    }
-    else if (normalized.Equals("/Feedback", StringComparison.OrdinalIgnoreCase))
-    {
-      AddFeedback(document, store, openFeedbackId: null);
-    }
-    else if (TryOpenFeedbackId(normalized, out Guid openFeedbackId))
-    {
-      document["purpose"] = "One feedback item you filed.";
-      AddFeedback(document, store, openFeedbackId);
+      if (store.GetState(stateType) is IAgentPageFacts facts)
+      {
+        facts.AddAgentPageFacts(document, normalized);
+      }
     }
 
     return Bound(document, maxLength);
@@ -152,7 +135,7 @@ public static class PageAgentContext
       ["forms"] = new JsonArray(),
       ["buttons"] = new JsonArray(),
       ["items"] = new JsonArray(),
-      ["tools"] = ToolNames(path, toolNames),
+      ["tools"] = ToolNames(toolNames),
       ["references"] = References(store),
       ["tags"] = AskTagPayload.Json(store.GetState<AskTagState>().SentFor(store.GetState<AgentSurfaceState>().ConversationGeneration)),
       ["screenshot"] = JsonNode.Parse("null"),
@@ -215,7 +198,7 @@ public static class PageAgentContext
   private static string PurposeOf(PageRegistryEntry entry) =>
     string.IsNullOrWhiteSpace(entry.Description) ? UnknownPurpose : entry.Description;
 
-  private static JsonArray ToolNames(string path, IReadOnlyList<string>? toolNames)
+  private static JsonArray ToolNames(IReadOnlyList<string>? toolNames)
   {
     JsonArray names = [];
     if (toolNames is not null)
@@ -229,11 +212,7 @@ public static class PageAgentContext
     }
 
     names.Add(AgentNavigate.ToolName);
-    foreach (string name in PageAgentScope.ActionNamesFor(path))
-    {
-      names.Add(name);
-    }
-
+    names.Add(AgentSiteMap.ToolName);
     names.Add(ToolName);
     return names;
   }
@@ -386,134 +365,5 @@ public static class PageAgentContext
     }
 
     return json;
-  }
-
-  private static bool TryOpenFeedbackId(string normalized, out Guid feedbackItemId)
-  {
-    const string prefix = "/Feedback/";
-    if (normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-      && Guid.TryParse(normalized[prefix.Length..], out feedbackItemId))
-    {
-      return true;
-    }
-
-    feedbackItemId = default;
-    return false;
-  }
-
-  private static void AddFeedback(JsonObject document, IStore store, Guid? openFeedbackId)
-  {
-    FeedbackState feedback = store.GetState<FeedbackState>();
-    document["page"] = "Feedback";
-    AddFilings(document, feedback);
-    document["emailCopyAvailable"] = feedback.EmailCopyAvailable;
-    document["draftAttachmentCount"] = feedback.DraftAttachments.Count;
-    if (feedback.ComposerActive)
-    {
-      document["draft"] = new JsonObject
-      {
-        ["kind"] = feedback.DraftKind,
-        ["hasTitle"] = feedback.DraftHasTitle,
-        ["hasBody"] = feedback.DraftHasBody,
-      };
-    }
-
-    if (openFeedbackId is Guid openId)
-    {
-      document["openFeedbackId"] = openId.ToString("D");
-      GetFeedback.Response? current = feedback.Current;
-      if (current is not null && current.FeedbackItemId == openId)
-      {
-        document["openItem"] = new JsonObject
-        {
-          ["id"] = current.FeedbackItemId.ToString("D"),
-          ["title"] = current.Title,
-          ["kind"] = current.Kind.ToString(),
-        };
-      }
-    }
-  }
-
-  private static void AddFilings(JsonObject document, FeedbackState feedback)
-  {
-    JsonArray filings = [];
-    int shown = 0;
-    foreach (ListMyFeedback.Item item in feedback.Items)
-    {
-      if (shown == FilingCap)
-      {
-        break;
-      }
-
-      shown++;
-      filings.Add
-      (
-        new JsonObject
-        {
-          ["id"] = item.FeedbackItemId.ToString("D"),
-          ["title"] = item.Title,
-          ["kind"] = item.Kind.ToString(),
-        }
-      );
-    }
-
-    document["filingsLoaded"] = feedback.FilingsLoaded;
-    document["filingCount"] = feedback.Items.Count;
-    document["filings"] = filings;
-  }
-
-  private static void AddProfile(JsonObject document, IStore store)
-  {
-    ProfileState profile = store.GetState<ProfileState>();
-    document["hasSnapshot"] = profile.Alias is not null;
-    document["profile"] = new JsonObject
-    {
-      ["alias"] = profile.Alias,
-      ["email"] = profile.Email,
-      ["language"] = profile.Language,
-      ["region"] = profile.Region,
-      ["theme"] = profile.Theme,
-      ["notifications"] = profile.Notifications,
-    };
-  }
-
-  private static void AddSiteSettings(JsonObject document, IStore store)
-  {
-    SiteSettingsState settings = store.GetState<SiteSettingsState>();
-    document["hasSnapshot"] = settings.HasSnapshot;
-    document["siteSettings"] = new JsonObject
-    {
-      ["entraSignInEnabled"] = settings.EntraSignInEnabled,
-      ["entraAllowBootstrap"] = settings.EntraAllowBootstrap,
-      ["passkeyPromptMode"] = settings.PasskeyPromptMode.ToString(),
-      ["assistantName"] = settings.AssistantName,
-      ["version"] = settings.Version,
-    };
-  }
-
-  private static void AddCredentials(JsonObject document, IStore store)
-  {
-    CredentialsState credentialsState = store.GetState<CredentialsState>();
-    JsonArray credentials = [];
-    IReadOnlyList<GetCredentials.CredentialSummary> rows = credentialsState.Credentials ?? [];
-    foreach (GetCredentials.CredentialSummary credential in rows)
-    {
-      credentials.Add
-      (
-        new JsonObject
-        {
-          ["id"] = credential.Id.Value.ToString("D"),
-          ["type"] = credential.Type.ToString(),
-          ["nickname"] = credential.Nickname,
-          ["label"] = credential.Label,
-          ["isActive"] = credential.IsActive,
-          ["canRevoke"] = credential.CanRevoke,
-          ["canRename"] = credential.CanRename,
-        }
-      );
-    }
-
-    document["canLinkMicrosoft365"] = credentialsState.CanLinkMicrosoft365;
-    document["credentials"] = credentials;
   }
 }

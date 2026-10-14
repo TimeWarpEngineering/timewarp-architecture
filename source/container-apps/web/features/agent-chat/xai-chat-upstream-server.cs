@@ -10,8 +10,13 @@
 // Tools are AIFunctionDeclaration instances. Invoke on a declaration throws, so this process
 // cannot run a catalog action on the model's behalf. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
-// The fake asks for page_context, the read-only tool PageAgentContext registers. A later turn
-// that already contains a tool result is answered with text that includes that result.
+// The fake scripts from the messages after the last user message. By default it calls
+// page_context, then answers "page_context: {result}".
+// "take me" or "go there" with a markdown link in an earlier assistant turn calls navigate
+// with that url, when navigate is offered. "where" calls site_map, when site_map is offered.
+// A site_map result is matched against the user's words (5+ letters) and answered with a
+// markdown link to the first matching destination. Any other tool result is echoed as
+// "{tool}: {result}".
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -206,26 +211,149 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       CancellationToken cancellationToken = default
     )
     {
-      FunctionResultContent? result = messages
+      var all = messages.ToList();
+      int lastUser = all.FindLastIndex(message => message.Role == ChatRole.User);
+      string userText = lastUser < 0 ? string.Empty : all[lastUser].Text ?? string.Empty;
+      FunctionResultContent? result = all
+        .Skip(lastUser + 1)
         .SelectMany(message => message.Contents)
         .OfType<FunctionResultContent>()
         .LastOrDefault();
+
       if (result is not null)
       {
         string rendered = result.Result as string ?? JsonSerializer.Serialize(result.Result);
-        ChatMessage answer = new(ChatRole.Assistant, $"page_context: {rendered}");
-        return Task.FromResult(new ChatResponse(answer));
+        string name = all
+          .SelectMany(message => message.Contents)
+          .OfType<FunctionCallContent>()
+          .FirstOrDefault(call => call.CallId == result.CallId)?.Name ?? "page_context";
+        string text = name == "site_map"
+          ? AnswerSiteMap(userText, rendered)
+          : $"{name}: {rendered}";
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, text)));
       }
 
-      FunctionCallContent call = new
-      (
-        "call-1",
-        "page_context",
-        new Dictionary<string, object?>()
-      );
-      ChatMessage toolTurn = new(ChatRole.Assistant, [call]);
-      return Task.FromResult(new ChatResponse(toolTurn));
+      bool Offers(string toolName) =>
+        options?.Tools?.Any(tool => tool.Name == toolName) == true;
+
+      if (userText.Contains("take me", StringComparison.OrdinalIgnoreCase) ||
+          userText.Contains("go there", StringComparison.OrdinalIgnoreCase))
+      {
+        string? url = all
+          .Take(Math.Max(lastUser, 0))
+          .Where(message => message.Role == ChatRole.Assistant)
+          .Select(message => LastLinkTarget(message.Text ?? string.Empty))
+          .LastOrDefault(target => target is not null);
+        if (url is not null && Offers("navigate"))
+        {
+          return Task.FromResult(ToolTurn("call-navigate", "navigate", new Dictionary<string, object?> { ["url"] = url }));
+        }
+      }
+      else if (userText.Contains("where", StringComparison.OrdinalIgnoreCase) && Offers("site_map"))
+      {
+        return Task.FromResult(ToolTurn("call-site-map", "site_map", new Dictionary<string, object?>()));
+      }
+
+      return Task.FromResult(ToolTurn("call-1", "page_context", new Dictionary<string, object?>()));
     }
+
+    private static ChatResponse ToolTurn(string callId, string name, Dictionary<string, object?> arguments) =>
+      new(new ChatMessage(ChatRole.Assistant, [new FunctionCallContent(callId, name, arguments)]));
+
+    private static string AnswerSiteMap(string userText, string rendered)
+    {
+      List<string> keywords = [];
+      foreach (string word in Words(userText))
+      {
+        if (word.Length < 5)
+        {
+          continue;
+        }
+
+        keywords.Add(word);
+        if (word.EndsWith('s', StringComparison.Ordinal))
+        {
+          keywords.Add(word[..^1]);
+        }
+      }
+
+      try
+      {
+        using var document = JsonDocument.Parse(rendered);
+        if (document.RootElement.TryGetProperty("destinations", out JsonElement destinations) &&
+            destinations.ValueKind == JsonValueKind.Array)
+        {
+          foreach (JsonElement destination in destinations.EnumerateArray())
+          {
+            string title = ReadString(destination, "title");
+            string url = ReadString(destination, "url");
+            string haystack = $"{title} {ReadString(destination, "description")}";
+            if (url.Length > 0 &&
+                keywords.Any(keyword => haystack.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+              return $"You can do that on the [{title}]({url}) page. Say \"take me there\" and I will open it.";
+            }
+          }
+        }
+      }
+      catch (JsonException)
+      {
+        // Not JSON: fall through to the echo.
+      }
+
+      return $"site_map: {rendered}";
+    }
+
+    // The url of the last markdown link to an app path ("](/...)") in text, or null.
+    private static string? LastLinkTarget(string text)
+    {
+      int start = text.LastIndexOf("](/", StringComparison.Ordinal);
+      if (start < 0)
+      {
+        return null;
+      }
+
+      start += 2;
+      int end = start;
+      while (end < text.Length && text[end] != ')' && !char.IsWhiteSpace(text[end]))
+      {
+        end++;
+      }
+
+      return end < text.Length && text[end] == ')' ? text[start..end] : null;
+    }
+
+    // Lower-case runs of ASCII letters.
+    private static IEnumerable<string> Words(string text)
+    {
+      var word = new System.Text.StringBuilder();
+      foreach (char character in text.ToLowerInvariant())
+      {
+        if (character is >= 'a' and <= 'z')
+        {
+          word.Append(character);
+          continue;
+        }
+
+        if (word.Length > 0)
+        {
+          yield return word.ToString();
+          word.Clear();
+        }
+      }
+
+      if (word.Length > 0)
+      {
+        yield return word.ToString();
+      }
+    }
+
+    private static string ReadString(JsonElement element, string property) =>
+      element.ValueKind == JsonValueKind.Object &&
+      element.TryGetProperty(property, out JsonElement value) &&
+      value.ValueKind == JsonValueKind.String
+        ? value.GetString() ?? string.Empty
+        : string.Empty;
 
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync
     (

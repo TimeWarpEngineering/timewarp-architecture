@@ -3,16 +3,20 @@
 #endregion
 
 #region Design
-// The list is the Ctrl-K roster plus the current page's tools. CommandPaletteRoster stays the
-// filter for pages and commands; this type only reads it, so the palette rows do not change.
+// The list is the Ctrl-K commands, the current page's own actions, navigate, and site_map.
+// CommandPaletteRoster stays the filter for commands; this type only reads it.
 // A palette command becomes a tool when its visibility includes Agent. Human-only commands stay
-// in the palette and never become tools. Page-bound commands (PageAgentScope) are executable on
-// their page and, off that page, are still listed: invoking one returns a navigate offer and does
-// not run. Actions that are not palette commands stay executable only on their page, and only for
-// a signed-in principal, matching the palette's sign-in rule for commands, so an anonymous
-// visitor gets navigate alone.
-// navigate is one tool. Its enum is the palette's Page rows for this principal, including Sign in
-// while signed out. It is not an edit, so RequiresApproval is false in both edit modes.
+// in the palette and never become tools. Page-bound commands (PageAgentScope, derived from
+// [Page(AgentActions = ...)]) are executable on their page and, off that page, are still listed:
+// invoking one returns a navigate offer and does not run. A page-bound command whose pages all
+// have parameterized routes has no page to offer, so it is not listed off them. Actions that are
+// not palette commands stay executable only on their page, and only for a signed-in principal,
+// matching the palette's sign-in rule for commands, so an anonymous visitor gets navigate and
+// site_map alone.
+// navigate and site_map share AgentSiteMap.DestinationsAsync, the menu's destinations for this
+// principal (Sign in included while signed out), so both answer and move across the whole app
+// from every page, including Home (task 300). site_map is read-only and never needs approval.
+// navigate needs approval in Ask before editing and runs at once in Automatically edit.
 // FindOfferedAsync re-checks permission for the principal at call time. A global tool survives
 // navigation. A page-only tool does not. A page-bound palette tool survives as a discovery offer.
 // Edit mode changes only the approval bit of tools that will actually run. The conversation
@@ -21,7 +25,7 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-/// <summary>Palette tools, navigate, and the current page's tools.</summary>
+/// <summary>Palette tools, the current page's tools, navigate, and site_map.</summary>
 public static class CatalogAgentToolSet
 {
   public static async Task<IReadOnlyList<CatalogAgentTool>> SelectAsync
@@ -76,15 +80,8 @@ public static class CatalogAgentToolSet
 
     List<CatalogAgentTool> tools = [];
     HashSet<string> seen = [];
-    bool anyPage = false;
     foreach (CommandPaletteRow row in rows)
     {
-      if (row.Kind == CommandPaletteRowKind.Page)
-      {
-        anyPage = true;
-        continue;
-      }
-
       if (row.Kind != CommandPaletteRowKind.Command)
       {
         continue;
@@ -100,18 +97,26 @@ public static class CatalogAgentToolSet
         continue;
       }
 
-      string? offPage = PageAgentScope.Serves(normalized, entry.Name)
-        ? null
-        : PageAgentScope.PrimaryPage(entry.Name);
+      string? offPage = null;
+      if (!PageAgentScope.Serves(normalized, entry.ActionType))
+      {
+        offPage = PageAgentScope.PrimaryPage(entry.ActionType);
+        if (offPage is null)
+        {
+          continue;
+        }
+      }
+
       tools.Add(ToTool(entry, editMode, offPage));
     }
 
-    IReadOnlyList<string> pageNames = user.Identity?.IsAuthenticated == true
-      ? PageAgentScope.ActionNamesFor(normalized)
+    IReadOnlyList<Type> pageActions = user.Identity?.IsAuthenticated == true
+      ? PageAgentScope.ActionTypesFor(normalized)
       : [];
-    foreach (string name in pageNames)
+    foreach (Type actionType in pageActions)
     {
-      if (!seen.Add(name) || !byName.TryGetValue(name, out ActionCatalogEntry? entry))
+      ActionCatalogEntry? entry = entryList.Find(candidate => candidate.ActionType == actionType);
+      if (entry is null || !seen.Add(entry.Name))
       {
         continue;
       }
@@ -129,20 +134,14 @@ public static class CatalogAgentToolSet
       tools.Add(ToTool(entry, editMode, offPageRoute: null));
     }
 
-    if (anyPage)
+    IReadOnlyList<AgentSiteMap.Destination> destinations =
+      await AgentSiteMap.DestinationsAsync(user, authorizationService, normalized);
+    if (destinations.Count > 0)
     {
-      List<CommandPaletteRow> pages = [];
-      foreach (CommandPaletteRow row in rows)
-      {
-        if (row.Kind == CommandPaletteRowKind.Page)
-        {
-          pages.Add(row);
-        }
-      }
-
-      tools.Add(AgentNavigate.Create(pages));
+      tools.Add(AgentNavigate.Create(destinations, editMode));
     }
 
+    tools.Add(AgentSiteMap.Create());
     return tools;
   }
 

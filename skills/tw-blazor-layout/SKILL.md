@@ -118,10 +118,15 @@ Concrete instance of the pattern in this repo:
   one is the *styling* (`TimeWarpPage.razor.css`, anchored on the native `.twe-shell` root).
 - **Slice boundary:** chrome/shell lives **outside** SliceRoot (e.g. `…Components`); product
   pages and state live in product slice namespaces (`…Features.<Id>`). See skill `tw-slice-isolation`.
-- **Navigation registry:** `[Page("/route", Policy = …, Navigable = true)]` lists a static-route
-  page in the generated `PageRegistry.All` (`PageRegistryEntry`: type, route template, URL, title,
-  icon, policy) and adds `INavigationDestination`; `components/elements/TimeWarpNavLink.razor`
-  constrains `TPage` to it, so every `components/NavMenu.razor` link is a registry entry.
+- **Navigation registry:** `[Page("/route", Policy = …, Navigable = true, Description = "…",
+  NavGroup = "Admin", NavOrder = 140)]` lists a static-route page in the generated
+  `PageRegistry.All` (`PageRegistryEntry`: type, route template, URL, title, icon, policy,
+  description, menu group, menu order), sorted by `NavOrder`, and adds `INavigationDestination`.
+  `components/NavMenu.razor` has no page links of its own: it renders
+  `NavigationDestinations.ForAsync` (the registry filtered by each page's own `Policy`) and starts
+  a `FluentNavCategory` whenever `NavGroup` changes (`""` is the top level). There is no category
+  gate; a category shows when one of its pages is permitted. The Ctrl-K palette, Ask's `navigate`
+  and `site_map` tools, and WebMCP read the same list, so a new menu page is one `[Page]` edit.
   `Navigable = true` on a parameterized route (or a non-literal value) is **TWE009**.
 - **Multi-route (multi-tab) pages:** one `[Page]` takes the primary route first and alias routes
   after it — `[Page("/clients", "/clients/revenue", "/clients/me-close", Policy = …)]`. The

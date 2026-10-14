@@ -1,18 +1,20 @@
 #region Purpose
-// One navigate tool whose destinations are the Ctrl-K page rows the principal may open.
+// One navigate tool whose destinations are the navigation menu's pages the principal may open.
 #endregion
 
 #region Design
-// A single tool with a JSON-schema enum of permitted URLs stays short and maps 1:1 to palette
-// Page rows, including the signed-out Sign in row. One tool per destination was rejected: it
-// would duplicate every page row and drift from the palette's ordering.
-// The enum is a hint. Invoke rebuilds CommandPaletteRoster and refuses any url that is not a
-// Page-kind target for this principal, then calls RouteState.ChangeRoute, the palette's path.
-// Navigation is not an edit. RequiresApproval is false in both edit modes; the palette's page
-// rows also run without a confirm step. A page-bound catalog action that is invoked off its
-// page does not run: OfferFor tells the agent to call navigate.
-// Anonymous principals get the palette's anonymous pages (Home) plus Sign in. Signed-in
-// principals get every page row the palette would show them, and no Sign in row.
+// Destinations are AgentSiteMap.DestinationsAsync: NavigationDestinations (the policy-filtered
+// PageRegistry that NavMenu and Ctrl-K read) plus the palette's Sign in row while signed out
+// (task 300). site_map lists the same rows, so every site_map URL is a navigate target and
+// nothing else is. A single tool with a JSON-schema enum of permitted URLs stays short. One tool
+// per destination was rejected: it would duplicate every menu row.
+// The enum is a hint. Invoke rebuilds the destinations for the principal on the current path and
+// refuses any url that is not one of them, then calls RouteState.ChangeRoute, the palette's path.
+// Approval follows the edit mode (task 300): in Ask before editing the tool is approval-wrapped
+// (Ask) or takes the approval gate (WebMCP), in Automatically edit it runs at once. The result
+// carries the page title, so the answer can link the page. After it runs, the shell's
+// rebuild-on-path-change picks up the new page's tools. A page-bound catalog action invoked off
+// its page does not run: OfferFor tells the agent to call navigate.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -21,7 +23,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-/// <summary>Palette page rows as one agent tool.</summary>
+/// <summary>Menu destinations as one agent tool.</summary>
 public static class AgentNavigate
 {
   public const string ToolName = "navigate";
@@ -42,32 +44,38 @@ public static class AgentNavigate
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [property: JsonPropertyName("url")] string? Destination,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [property: JsonPropertyName("error")] string? Error);
+    [property: JsonPropertyName("error")] string? Error,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [property: JsonPropertyName("title")] string? Title = null);
 
-  public static CatalogAgentTool Create(IReadOnlyList<CommandPaletteRow> pageRows)
+  public static CatalogAgentTool Create(IReadOnlyList<AgentSiteMap.Destination> destinations, AgentEditMode editMode)
   {
-    ArgumentNullException.ThrowIfNull(pageRows);
+    ArgumentNullException.ThrowIfNull(destinations);
+    bool approval = editMode == AgentEditMode.AskBeforeEditing;
     JsonArray urls = [];
     HashSet<string> seen = [];
-    StringBuilder described = new("Go to a page this person may open. ");
+    StringBuilder described = new("Go to a page this person may open (the site_map destinations). ");
     described.Append("Pass url as one permitted destination. ");
-    described.Append("Navigation is not an edit and does not ask for approval. Destinations: ");
+    described.Append(approval
+      ? "The person approves the move first. "
+      : "It runs without a prompt in this conversation. ");
+    described.Append("Destinations: ");
     bool first = true;
-    foreach (CommandPaletteRow row in pageRows)
+    foreach (AgentSiteMap.Destination destination in destinations)
     {
-      if (row.Kind != CommandPaletteRowKind.Page || !seen.Add(row.Target))
+      if (!seen.Add(destination.Route))
       {
         continue;
       }
 
-      urls.Add(row.Target);
+      urls.Add(destination.Route);
       if (!first)
       {
         described.Append("; ");
       }
 
       first = false;
-      described.Append(row.Target).Append(" (").Append(row.Name).Append(')');
+      described.Append(destination.Route).Append(" (").Append(destination.Title).Append(')');
     }
 
     JsonObject schema = new()
@@ -91,7 +99,7 @@ public static class AgentNavigate
       ToolName,
       described.ToString(),
       schema.ToJsonString(),
-      RequiresApproval: false,
+      approval,
       Entry: null
     );
   }
@@ -114,7 +122,6 @@ public static class AgentNavigate
   (
     ClaimsPrincipal user,
     IAuthorizationService authorizationService,
-    IEnumerable<ActionCatalogEntry> entries,
     IStore store,
     string? path,
     IReadOnlyDictionary<string, object?>? arguments,
@@ -123,7 +130,6 @@ public static class AgentNavigate
   {
     ArgumentNullException.ThrowIfNull(user);
     ArgumentNullException.ThrowIfNull(authorizationService);
-    ArgumentNullException.ThrowIfNull(entries);
     ArgumentNullException.ThrowIfNull(store);
     cancellationToken.ThrowIfCancellationRequested();
 
@@ -142,32 +148,34 @@ public static class AgentNavigate
       return new Result(Navigated: false, Destination: null, UrlRequired);
     }
 
-    string current = PageAgentScope.Normalize(path);
-    IReadOnlyList<CommandPaletteRow> rows = await CommandPaletteRoster.BuildAsync
-    (
-      user,
-      authorizationService,
-      PageRegistry.All,
-      entries,
-      current
-    );
-    bool permitted = false;
-    foreach (CommandPaletteRow row in rows)
-    {
-      if (row.Kind == CommandPaletteRowKind.Page && string.Equals(row.Target, destination, StringComparison.Ordinal))
-      {
-        permitted = true;
-        break;
-      }
-    }
-
-    if (!permitted)
+    AgentSiteMap.Destination? permitted = await FindAsync(user, authorizationService, path, destination);
+    if (permitted is null)
     {
       return new Result(Navigated: false, Destination: null, Refusal);
     }
 
     await store.GetState<RouteState>().ChangeRoute(destination, externalCancellationToken: cancellationToken);
-    return new Result(Navigated: true, destination, Error: null);
+    return new Result(Navigated: true, destination, Error: null, permitted.Title);
+  }
+
+  /// <summary>The permitted destination whose url is <paramref name="route"/>, or null.</summary>
+  public static async Task<AgentSiteMap.Destination?> FindAsync
+  (
+    ClaimsPrincipal user,
+    IAuthorizationService authorizationService,
+    string? path,
+    string route
+  )
+  {
+    foreach (AgentSiteMap.Destination candidate in await AgentSiteMap.DestinationsAsync(user, authorizationService, path))
+    {
+      if (string.Equals(candidate.Route, route, StringComparison.Ordinal))
+      {
+        return candidate;
+      }
+    }
+
+    return null;
   }
 
   public static string? ReadDestination(IReadOnlyDictionary<string, object?>? arguments)

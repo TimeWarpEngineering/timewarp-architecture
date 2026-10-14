@@ -10,6 +10,6 @@
 
 namespace TimeWarp.Architecture.Features.Debugger;
 
-[Page("/Debugger/Test", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Debugger page for exercising template actions.")]
+[Page("/Debugger/Test", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Debugger page for exercising template actions.", NavGroup = "Developer", NavOrder = 320)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 partial class TestPage;

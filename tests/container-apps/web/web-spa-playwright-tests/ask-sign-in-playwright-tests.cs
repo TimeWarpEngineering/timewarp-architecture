@@ -44,6 +44,13 @@
 // assistant to Zawadi. Without a reload the top-bar button reads "Ask Zawadi", the derived Ctrl-K
 // row reads "Ask Zawadi", and the panel it opens has the header Zawadi with its avatar and the
 // greeting "Hi, I'm Zawadi"; no "Akili" is left in the panel (assistant-rename-*.png).
+// Task 300: signed in, back on Home, Ask answers "Where can I add a passkey?" through site_map:
+// the fake upstream links the first site map page whose title or description names a passkey,
+// which is Settings, and the request carried site_map, navigate and a site map naming /Settings
+// in its instructions. "Take me there" calls navigate; in Ask before editing the approval card
+// shows navigate and /Settings and the page stays on Home until Approve, then the app lands on
+// /Settings without a reload (ask-home-where-passkey*.png, ask-navigate-approval.png,
+// ask-navigate-landed-settings.png).
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -379,6 +386,77 @@ public class AskSignIn_Given_Wasm
     (await page.Locator("[data-qa=AskEmptyAvatar]").GetAttributeAsync("alt")).ShouldBe("Zawadi");
     await panel.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("assistant-rename-panel.png") });
     (await panel.InnerTextAsync()).ShouldNotContain("Akili");
+    session.AssertNoWasmFailures();
+  }
+
+  public static async Task Home_Should_Point_Passkeys_To_Settings_And_Navigate_After_Approval()
+  {
+    InstallChromium();
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.PostConfigure<XaiChatOptions>(options =>
+      {
+        options.UseFakeUpstream = true;
+        options.ApiKey = "playwright-placeholder-key";
+      }));
+
+    await using Session session = await Session.StartAsync();
+    IPage page = session.Page;
+    await session.GoHomeAsync();
+    await session.WaitForConfigurationProbeAsync(0);
+    int signedOutProbes = session.ConfigurationStatuses.Count;
+    await session.SignInWithNewPasskeyAsync();
+    await session.WaitForConfigurationProbeAsync(signedOutProbes);
+
+    // Back to Home: the page Steven asked from, with no passkey controls of its own.
+    await session.GoHomeAsync();
+    new Uri(page.Url).AbsolutePath.ShouldBe("/");
+    string state = await session.OpenAskAsync(signedIn: true);
+    state.ShouldBe("Configured", $"Ask text: {await session.AskTextAsync()}");
+    await Assertions.Expect(page.Locator("[data-qa=AskEditMode]"))
+      .ToHaveAttributeAsync("data-mode", nameof(AgentEditMode.AskBeforeEditing), new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
+
+    // The fake upstream calls site_map for a "where" question and links the matching page.
+    int completionsBefore = session.Completions.Count;
+    ILocator input = page.Locator(".sc-ai-input__textarea");
+    await input.FillAsync("Where can I add a passkey?");
+    await page.Locator(".sc-ai-input__send").ClickAsync();
+    ILocator answer = page.Locator(".sc-ai-root").GetByText("You can do that on the");
+    await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    string answered = await page.Locator(".sc-ai-root").InnerTextAsync();
+    answered.ShouldContain("Settings");
+    answered.ShouldNotContain("doesn't expose");
+    session.Completions.Count.ShouldBeGreaterThan(completionsBefore);
+    string firstRequest = session.Completions[completionsBefore];
+    firstRequest.ShouldContain("\"site_map\"");
+    firstRequest.ShouldContain("\"navigate\"");
+    InstructionsOf(firstRequest).ShouldContain("/Settings");
+    InstructionsOf(firstRequest).ShouldNotContain("this page only");
+    // The link is the page's url, whether the answer renders markdown or shows it as text.
+    bool linked = await page.Locator(".sc-ai-root a[href$='/Settings']").CountAsync() > 0;
+    (linked || answered.Contains("](/Settings)", StringComparison.Ordinal)).ShouldBeTrue($"Answer: {answered}");
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-home-where-passkey.png"),
+    });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-home-where-passkey-page.png") });
+
+    // "take me there": navigate asks first in Ask before editing, and nothing moves until approved.
+    await input.FillAsync("Take me there");
+    await page.Locator(".sc-ai-input__send").ClickAsync();
+    ILocator approval = page.Locator("[data-qa=AgentApproval]").Last;
+    await approval.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
+    (await approval.InnerTextAsync()).ShouldContain("navigate");
+    (await page.Locator("[data-qa=AgentApprovalArguments]").Last.InnerTextAsync()).ShouldContain("/Settings");
+    new Uri(page.Url).AbsolutePath.ShouldBe("/");
+    await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
+    {
+      Path = ScreenshotPath("ask-navigate-approval.png"),
+    });
+
+    await approval.Locator("[data-qa=AgentApprove]").ClickAsync();
+    await page.WaitForURLAsync("**/Settings", new PageWaitForURLOptions { Timeout = 60_000 });
+    await page.Locator("[data-qa=CreatePasskey], .twe-appbar").First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-navigate-landed-settings.png") });
     session.AssertNoWasmFailures();
   }
 

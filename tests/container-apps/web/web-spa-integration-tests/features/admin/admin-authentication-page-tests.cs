@@ -4,8 +4,8 @@
 
 #region Design
 // Pure generated page accessors — no SPA host. Policy is settings.write (same as UpdateSiteSettings).
-// Non-admin cannot see the nav entry because TimeWarpNavLink authorizes TPage.Policy and the Admin
-// category is gated by admin.access.
+// Only a principal with settings.write sees the nav entry: NavMenu renders NavigationDestinations,
+// which keeps a page only when its own Policy authorizes the principal.
 #endregion
 
 namespace AdminAuthenticationPage_;

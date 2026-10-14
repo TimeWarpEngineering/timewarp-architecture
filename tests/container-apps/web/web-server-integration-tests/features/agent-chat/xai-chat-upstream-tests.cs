@@ -4,8 +4,10 @@
 
 #region Design
 // UseFakeUpstream is honored in Development and ignored in Production. The fake returns a
-// page_context function call and, on the next turn, text that includes the tool result. Tool
-// declarations are AIFunctionDeclaration, not AIFunction, so the server has no InvokeAsync.
+// page_context function call and, on the next turn, text that includes the tool result. When
+// site_map or navigate is offered it also scripts "where" -> site_map, a site_map result ->
+// a markdown link answer, and "take me there" -> navigate. Tool declarations are
+// AIFunctionDeclaration, not AIFunction, so the server has no InvokeAsync.
 #endregion
 
 namespace XaiChatUpstream_;
@@ -49,6 +51,85 @@ public class XaiChatUpstream_Given_
     answered.AsT0.Text!.ShouldContain("route=/Counter");
   }
 
+  public static async Task Where_With_Site_Map_Offered_Calls_Site_Map()
+  {
+    await using ServiceProvider provider = Build("Development", useFake: true, apiKey: null);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+    Command command = UserTurn("Where can I add a passkey?", "page_context", "site_map", "navigate");
+
+    OneOf<Response, SharedProblemDetails> response = await upstream.CompleteAsync(command, CancellationToken.None);
+
+    response.IsT0.ShouldBeTrue();
+    response.AsT0.ToolCalls.Single().Name.ShouldBe("site_map");
+  }
+
+  public static async Task Where_Without_Site_Map_Still_Calls_Page_Context()
+  {
+    await using ServiceProvider provider = Build("Development", useFake: true, apiKey: null);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+    Command command = UserTurn("Where can I add a passkey?", "page_context");
+
+    OneOf<Response, SharedProblemDetails> response = await upstream.CompleteAsync(command, CancellationToken.None);
+
+    response.IsT0.ShouldBeTrue();
+    response.AsT0.ToolCalls.Single().Name.ShouldBe("page_context");
+  }
+
+  public static async Task Site_Map_Result_Is_Answered_With_A_Link()
+  {
+    await using ServiceProvider provider = Build("Development", useFake: true, apiKey: null);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+    Command command = UserTurn("Where can I add a passkey?", "site_map", "navigate");
+    command.Messages.Add(SiteMapCall());
+    command.Messages.Add(SiteMapResult());
+
+    OneOf<Response, SharedProblemDetails> response = await upstream.CompleteAsync(command, CancellationToken.None);
+
+    response.IsT0.ShouldBeTrue();
+    response.AsT0.Text.ShouldNotBeNull();
+    response.AsT0.Text!.ShouldContain("[Settings](/Settings)");
+  }
+
+  public static async Task Take_Me_There_Calls_Navigate_With_The_Linked_Url()
+  {
+    await using ServiceProvider provider = Build("Development", useFake: true, apiKey: null);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+    Command command = UserTurn("Where can I add a passkey?", "site_map", "navigate");
+    command.Messages.Add(new Turn
+    {
+      Role = "assistant",
+      Text = "You can do that on the [Settings](/Settings) page."
+    });
+    command.Messages.Add(new Turn { Role = "user", Text = "Take me there" });
+
+    OneOf<Response, SharedProblemDetails> response = await upstream.CompleteAsync(command, CancellationToken.None);
+
+    response.IsT0.ShouldBeTrue();
+    ToolCall call = response.AsT0.ToolCalls.Single();
+    call.Name.ShouldBe("navigate");
+    using JsonDocument arguments = JsonDocument.Parse(call.ArgumentsJson);
+    arguments.RootElement.GetProperty("url").GetString().ShouldBe("/Settings");
+  }
+
+  public static async Task Navigate_Result_Is_Echoed_With_The_Tool_Name()
+  {
+    await using ServiceProvider provider = Build("Development", useFake: true, apiKey: null);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+    Command command = UserTurn("Take me there", "site_map", "navigate");
+    command.Messages.Add(new Turn
+    {
+      Role = "assistant",
+      ToolCalls = [new ToolCall { Name = "navigate", CallId = "call-navigate", ArgumentsJson = """{"url":"/Settings"}""" }]
+    });
+    command.Messages.Add(new Turn { Role = "tool", ToolCallId = "call-navigate", ToolResult = "navigated" });
+
+    OneOf<Response, SharedProblemDetails> response = await upstream.CompleteAsync(command, CancellationToken.None);
+
+    response.IsT0.ShouldBeTrue();
+    response.AsT0.Text.ShouldNotBeNull();
+    response.AsT0.Text!.ShouldStartWith("navigate: ");
+  }
+
   public static async Task Production_Ignores_The_Fake_And_A_Missing_Key()
   {
     await using ServiceProvider provider = Build("Production", useFake: true, apiKey: null);
@@ -78,6 +159,32 @@ public class XaiChatUpstream_Given_
     declaration.JsonSchema.ValueKind.ShouldBe(JsonValueKind.Object);
     return Task.CompletedTask;
   }
+
+  private static Turn SiteMapCall() => new()
+  {
+    Role = "assistant",
+    ToolCalls = [new ToolCall { Name = "site_map", CallId = "call-site-map", ArgumentsJson = "{}" }]
+  };
+
+  private static Turn SiteMapResult() => new()
+  {
+    Role = "tool",
+    ToolCallId = "call-site-map",
+    ToolResult = """
+      {"destinations":[
+        {"title":"Counter","url":"/Counter","group":"","icon":"x","description":"Count things."},
+        {"title":"Settings","url":"/Settings","group":"","icon":"x","description":"Manage passkeys and linked accounts."}
+      ]}
+      """
+  };
+
+  private static Command UserTurn(string text, params string[] toolNames) => new()
+  {
+    Messages = [new Turn { Role = "user", Text = text }],
+    Tools = toolNames
+      .Select(name => new ToolDefinition { Name = name, ParametersJson = """{"type":"object","properties":{}}""" })
+      .ToList()
+  };
 
   private static Command UserTurn() => new()
   {

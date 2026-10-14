@@ -15,8 +15,9 @@
 // the current principal and route and returns a failed result (not an exception, so the model
 // sees why) when the tool is no longer offered. A global palette tool is still offered after
 // navigation. A page-only tool is not. A page-bound palette tool offered off its page returns
-// AgentNavigate.Offer and does not Execute. navigate is checked by name and calls
-// AgentNavigate.InvokeAsync. A catalog tool executes the re-selected entry.
+// AgentNavigate.Offer and does not Execute. site_map and navigate are checked by name and call
+// AgentSiteMap.InvokeAsync and AgentNavigate.InvokeAsync; navigate is wrapped for approval in Ask
+// before editing like any edit (task 300). A catalog tool executes the re-selected entry.
 // The wrapper is chosen at Create from the edit mode then; each function remembers whether it was
 // wrapped. If the re-selected tool now requires approval (the person switched back to Ask before
 // editing mid-run) and this function was built unwrapped, it refuses with ApprovalRequiredError
@@ -132,13 +133,29 @@ public sealed class CatalogAgentFunctions : IDisposable
         return new CatalogAgentCallResult(Tool.Name, Completed: false, "The action is not available on this page.");
       }
 
+      if (string.Equals(current.Name, AgentSiteMap.ToolName, StringComparison.Ordinal))
+      {
+        return await AgentSiteMap.InvokeAsync
+        (
+          authentication.User,
+          authorizationService,
+          store,
+          PageAgentRoute.Current(services, navigation),
+          cancellationToken
+        );
+      }
+
       if (string.Equals(current.Name, AgentNavigate.ToolName, StringComparison.Ordinal))
       {
+        if (current.RequiresApproval && !Wrapped)
+        {
+          return new CatalogAgentCallResult(Tool.Name, Completed: false, ApprovalRequiredError);
+        }
+
         return await AgentNavigate.InvokeAsync
         (
           authentication.User,
           authorizationService,
-          catalog.Entries,
           store,
           PageAgentRoute.Current(services, navigation),
           arguments,

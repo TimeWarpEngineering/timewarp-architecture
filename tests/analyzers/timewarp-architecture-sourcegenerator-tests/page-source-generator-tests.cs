@@ -210,11 +210,11 @@ public class PageSourceGenerator_Tests
     string registry = RegistryOf(generated);
     registry.ShouldContain(
       "new(typeof(global::Test.Pages.CounterPage), \"/Counter\", global::Test.Pages.CounterPage.GetPageUrl(), "
-      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\"),");
+      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\", \"\", 0),");
     registry.ShouldContain("new(typeof(global::Test.Pages.SettingsPage), \"/settings\"");
     registry.ShouldNotContain("LoginPage");
     registry.ShouldNotContain("LogoutPage");
-    // Ordinal route sort: "/Counter" before "/settings".
+    // Equal NavOrder (0), so ordinal route sort: "/Counter" before "/settings".
     registry.IndexOf("CounterPage", StringComparison.Ordinal)
       .ShouldBeLessThan(registry.IndexOf("SettingsPage", StringComparison.Ordinal));
 
@@ -238,6 +238,80 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Sort_The_Registry_By_NavOrder_And_Emit_NavGroup()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      [Page("/Alpha", Navigable = true, NavGroup = "Admin", NavOrder = 200)]
+      public partial class AlphaPage { }
+      [Page("/Zulu", Navigable = true, NavOrder = 10)]
+      public partial class ZuluPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("public string NavGroup { get; set; }");
+    generated.ShouldContain("public int NavOrder { get; set; }");
+    string registry = RegistryOf(generated);
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Admin\", 200),");
+    registry.ShouldContain("global::Test.Pages.ZuluPage.Policy, \"\", \"\", 10),");
+    // NavOrder wins over the route: "/Zulu" (10) before "/Alpha" (200).
+    registry.IndexOf("ZuluPage", StringComparison.Ordinal)
+      .ShouldBeLessThan(registry.IndexOf("AlphaPage", StringComparison.Ordinal));
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Read_NavGroup_And_Description_From_Constants()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages;
+      public static class Groups { public const string Admin = "Admin"; public const string About = "Admin page."; }
+      [Page("/Alpha", Navigable = true, NavGroup = Groups.Admin, Description = Groups.About, NavOrder = 200)]
+      public partial class AlphaPage { }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200),");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_AgentActions_Fully_Qualified_With_Every_Route()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.States
+      {
+        public partial class CounterState
+        {
+          public static class IncrementActionSet
+          {
+            public sealed class Action { }
+          }
+        }
+      }
+
+      namespace Test.Pages
+      {
+        using Test.States;
+
+        [Page("/Counter", "/Counter/{Amount:int}", AgentActions = [typeof(CounterState.IncrementActionSet.Action)])]
+        public partial class CounterPage { }
+
+        [Page("/Plain", Navigable = true)]
+        public partial class PlainPage { }
+      }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("public System.Type[] AgentActions { get; set; }");
+    string registry = RegistryOf(generated);
+    registry.ShouldContain(
+      "new(typeof(global::Test.Pages.CounterPage), [\"/Counter\", \"/Counter/{Amount:int}\"], "
+      + "[typeof(global::Test.States.CounterState.IncrementActionSet.Action)]),");
+    // A page without AgentActions is not an action scope; a non-navigable page with them is.
+    string scopes = registry.Substring(registry.IndexOf("ActionScopes", StringComparison.Ordinal));
+    scopes.ShouldNotContain("PlainPage");
+    return Task.CompletedTask;
+  }
+
   public static Task Should_Escape_A_Description_With_Quotes_And_A_Newline()
   {
     (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
@@ -248,7 +322,7 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     RegistryOf(generated).ShouldContain("""
-      "Line one.\nSay \"hi\" \\ done.")
+      "Line one.\nSay \"hi\" \\ done.", "", 0)
       """.Trim());
     return Task.CompletedTask;
   }
@@ -267,7 +341,7 @@ public class PageSourceGenerator_Tests
 
     // The entry reads the page's generated Policy member, which is the const expression.
     generated.ShouldContain("public static string Policy { get; } = Policies.SettingsEdit;");
-    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\")");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\", \"\", 0)");
     return Task.CompletedTask;
   }
 
