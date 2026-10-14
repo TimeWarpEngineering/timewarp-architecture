@@ -37,11 +37,74 @@ Consequences seen this week:
 
 ## Checklist
 
-- [ ] `feature/**` on push + pull_request; `edited` dropped
-- [ ] Release/publish jobs verified not to fire on feature branches
-- [ ] Proof: feature-branch PR ran CI; body edit didn't
-- [ ] Gates: `ganda repo audit`
+- [x] `feature/**` on push + pull_request; `edited` dropped
+- [x] Release/publish jobs verified not to fire on feature branches
+- [x] Proof: feature-branch PR ran CI; body edit didn't
+- [x] Gates: `ganda repo audit`
 
 ## Session
 
 - Created: 2026-10-14 (cockpit, per Steve)
+- 2026-10-14: implemented under `ganda task work` (implement oracle, Claude Opus 5.5).
+
+## Results
+
+`.github/workflows/workflow.yml`:
+- `push.branches` and `pull_request.branches` are `master` + `'feature/**'` (the glob covers
+  `feature/overnight`, so the explicit entry is gone). `paths:` filters unchanged.
+- `pull_request.types` is `opened, synchronize, reopened` (`edited` removed).
+- Header comment records the trigger policy and that publishing is release-only.
+
+### What runs where
+
+| Event | Jobs | Publishes? |
+|-------|------|------------|
+| `push` to master / `feature/**` | detect-paths; `ci` (if ci paths); template-smoke (if template paths) | No. `dev workflow` auto-detects `push` → Merge mode: clean, build, test, `dev publish compose/kubernetes/aca` (file outputs only). NuGet login step is `release`/probe-only. |
+| `pull_request` into master / `feature/**` | detect-paths; `ci`; skill-lint (PR only); template-smoke | No. Pr mode, same as above. |
+| `release: published` | `ci` only | Yes: NuGet OIDC login → `dev workflow --api-key` (Release: pack, push, template-publish-smoke). Not branch-scoped by the new globs. |
+| `workflow_dispatch` (merge / probe) | `ci` (+ template-smoke unless probe) | probe: OIDC login only. merge: `dev workflow` Release mode with no key → pack-only, no push. Unchanged. |
+
+No job condition keys on branch name, so widening the branch globs cannot reach the publish path;
+the publish path is gated on `github.event_name == 'release'` alone.
+
+### Base retarget (`edited`) and the stacked workflow
+
+Retargeting a PR's base fires `edited`; it no longer re-runs CI. `ganda task work-set` opens
+nested children with `--base <feature branch>` from the start (`task-work-compute.cs`, "no
+retarget is needed"), so the work-set path does not rely on a re-run. The one path that does
+retarget is `ganda pr merge --into` on a PR opened against another base: its
+`WaitForCiAfterRetargetAsync` waits for a new rollup fingerprint and, with no new run, treats
+the stale green as Unknown at timeout and **refuses** the merge (fails safe, not open). Remedy
+there: push a commit or close/reopen the PR (`reopened` still triggers). If that path becomes
+routine, ganda should re-request checks itself after retarget (ganda follow-up, not this repo).
+
+Side effect: a PR from `feature/x` into master now also gets a `push` run on `feature/x` when
+that branch is pushed (same as `feature/overnight` before). Accepted.
+
+### Proof (2026-10-14)
+
+Throwaway branches `feature/359-ci-proof` (from master) and `proof/359-head` (= task commit
+e40e81afd), PR #492 into the feature branch:
+- `pull_request` into `feature/**` ran: run 38523204068 (created 06:36:30Z).
+- PR body edited at 06:36:50Z; 90 s later the branch still had exactly that one run.
+- Fast-forwarding `feature/359-ci-proof` to e40e81afd started `push` run 38523400579; its `ci`
+  job showed `NuGet login (OIDC Trusted Publishing)=skipped`, `Trusted publishing probe result=skipped`.
+- Both runs cancelled and both branches deleted. GitHub marked #492 "merged" because the
+  head landed on its throwaway base; nothing reached master (comment on #492 records this).
+
+Gates: `ganda repo audit` passes.
+
+### How to validate
+
+**Smoke:**
+```bash
+git push origin origin/master:refs/heads/feature/ci-check
+git push origin HEAD:refs/heads/proof/ci-check-head   # any branch whose diff touches a CI path
+gh pr create --base feature/ci-check --head proof/ci-check-head --title "throwaway" --body "x"
+gh run list --workflow workflow.yml --branch proof/ci-check-head    # one pull_request run
+gh pr edit <n> --body "edited"; gh run list --workflow workflow.yml --branch proof/ci-check-head
+# clean up: gh run cancel, gh pr close, git push origin --delete feature/ci-check proof/ci-check-head
+```
+
+**Expect:** the PR into `feature/ci-check` starts one `pull_request` run; after the body edit the
+run count stays at one. In any push/PR run, the `ci` job's `NuGet login` step is `skipped`.
