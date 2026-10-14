@@ -63,11 +63,24 @@ name with Multiavatar, the way profiles get theirs.
   - SPA: labels and header use the configured name;
   - Playwright: rename to "Zawadi", and the top bar, Ctrl-K, header and greeting all say Zawadi.
 
+## Amendment (2026-10-14, cockpit per Steve): builds on task 301
+
+Stacked **after 301** (301 → 361 → 352–354). 301 derives Ctrl-K from the action system, removes
+the hand-wired palette footer "Ask" button (`data-qa="CommandPaletteAsk"`), and adds a **runtime
+display-name override** for derived rows. Therefore:
+
+- **Ctrl-K:** don't relabel a footer button, because it no longer exists. Feed "Ask {AssistantName}"
+  into 301's runtime override for the `AgentSurfaceState.OpenAskPanel` row (also its icon/avatar,
+  if 301's row supports an icon).
+- Surfaces owned here: the top-bar button (`TimeWarpPage.razor:108`), the derived Ctrl-K row (via the
+  override), the panel header, the greeting, and the answer-bar feedback titles.
+- The Playwright rename check ("Zawadi") asserts on the derived Ctrl-K row, not the old footer button.
+
 ## Checklist
 
 - [ ] `AssistantName` in SiteSettings (+ validator, migration default `Akili`, admin field)
 - [ ] Public, cache-friendly name/avatar delivery to the SPA (no other settings leaked)
-- [ ] All labels from one source (button, Ctrl-K, header, greeting, feedback titles)
+- [ ] All labels from one source (button, Ctrl-K row via 301's override, header, greeting, feedback titles)
 - [ ] Multiavatar seeded by the name; header, turns, empty state
 - [ ] System prompt uses the name
 - [ ] Tests (validator, authz, avatar determinism, labels, Playwright rename)
@@ -76,3 +89,4 @@ name with Multiavatar, the way profiles get theirs.
 ## Session
 
 - Created: 2026-10-14 (cockpit, per Steve; default name Akili chosen per "use Swahili")
+- 2026-10-14: amended to build on 301 (Ctrl-K via 301's runtime override; footer button gone). Stacked 301 → 361 → 352–354.
