@@ -30,6 +30,8 @@ the input is empty and solid when there is text to send.
 
 - Created: 2026-10-14 (cockpit, per Steve's Cloudflare screenshot)
 - 2026-10-14: implemented by ganda task work (implement oracle)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-14T03:24:34Z
+- Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, session not reported) — 2026-10-14
 
 ## Results
 
@@ -63,6 +65,15 @@ the input is empty and solid when there is text to send.
   Enter send checks still pass.
 - Gates: `dev build` 0 warnings 0 errors; `dev test` passed; `ganda repo audit` passes;
   `dev check-version` passes (source already ahead of the latest NuGet).
+
+### Review disposition
+
+- **Rounds:** 1 · **Effort:** 2 · **Roster:** general
+- **Final counts:** bug 0 · suggestion 0 · nit 1 (wontfix) · open 0
+- **Disposition:** `accepted-exceptions`. M1 (nit): keyboard Stop unmounts itself so focus drops
+  to `body`; wontfix because the composer textarea/send are library-private and restoring focus
+  needs JS interop into library DOM, outside this task's scope.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`
 
 ### How to validate
 
