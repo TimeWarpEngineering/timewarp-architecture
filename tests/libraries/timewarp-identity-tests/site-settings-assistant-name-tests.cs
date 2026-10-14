@@ -34,11 +34,33 @@ public class SiteSettings_Given_
   [Input("Ak\u2028ili")]
   [Input("Ak\u202Eili")]
   [Input("Ak\u200Bili")]
+  [Input("Ak\U000E0041ili")]
   public static Task Rename_Should_Reject_Invalid_Names(string name)
   {
     SiteSettings settings = SiteSettings.Create();
     Should.Throw<ArgumentException>(() => settings.RenameAssistant(name));
     settings.AssistantName.ShouldBe("Akili");
+    return Task.CompletedTask;
+  }
+
+  // A lone surrogate cannot be an [Input] argument: attribute strings are stored as UTF-8 and the
+  // surrogate becomes U+FFFD, so the string is built here.
+  public static Task Rename_Should_Reject_Lone_Surrogate()
+  {
+    SiteSettings settings = SiteSettings.Create();
+    string name = "Ak" + (char)0xD800 + "ili";
+    Should.Throw<ArgumentException>(() => settings.RenameAssistant(name));
+    settings.AssistantName.ShouldBe("Akili");
+    return Task.CompletedTask;
+  }
+
+  [Input("Akili \U0001F916")]
+  [Input("Q&A Helper")]
+  public static Task Rename_Should_Accept_Valid_Names(string name)
+  {
+    SiteSettings settings = SiteSettings.Create();
+    settings.RenameAssistant(name);
+    settings.AssistantName.ShouldBe(name);
     return Task.CompletedTask;
   }
 

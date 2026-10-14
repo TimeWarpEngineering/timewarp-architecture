@@ -86,10 +86,21 @@ namespace TimeWarp.Architecture.Features.Settings
     [Input("Ak\u2028ili")]
     [Input("Ak\u202Eili")]
     [Input("Ak\u200Bili")]
+    [Input("Ak\U000E0041ili")]
     public static Task Invalid_Assistant_Name_Should_Fail_Validation(string name)
     {
       ValidationResult result = new Validator().Validate(ValidCommand(name));
       result.IsValid.ShouldBeFalse(name);
+      result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
+      return Task.CompletedTask;
+    }
+
+    // A lone surrogate cannot be an [Input] argument: attribute strings are stored as UTF-8 and the
+    // surrogate becomes U+FFFD, so the string is built here.
+    public static Task Lone_Surrogate_Assistant_Name_Should_Fail_Validation()
+    {
+      ValidationResult result = new Validator().Validate(ValidCommand(LoneSurrogateName()));
+      result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
       return Task.CompletedTask;
     }
@@ -106,12 +117,15 @@ namespace TimeWarp.Architecture.Features.Settings
     [Input("  Zawadi  ")]
     [Input("Q&A Helper")]
     [Input("12345678901234567890123456789012")]
+    [Input("Akili \U0001F916")]
     public static Task Valid_Assistant_Name_Should_Pass_Validation(string name)
     {
       ValidationResult result = new Validator().Validate(ValidCommand(name));
       result.IsValid.ShouldBeTrue(name);
       return Task.CompletedTask;
     }
+
+    private static string LoneSurrogateName() => "Ak" + (char)0xD800 + "ili";
 
     private static Command ValidCommand(string assistantName) =>
       new()

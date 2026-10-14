@@ -110,6 +110,10 @@ display-name override** for derived rows. Therefore:
   both call `AssistantNameRules.IsValid` (the validator adds only `NotEmpty` for the required
   message), so they can't disagree. `AssistantName` is
   non-nullable `= null!` on the command (TWA0002/0003 clean).
+- **Plain-text rule is rune-based (review round 2):** `IsPlainText` decodes Unicode scalars
+  with `Rune.DecodeFromUtf16`, so astral format characters (the U+E0000 tag block) and lone
+  surrogates are rejected. ZWJ emoji sequences are disallowed (U+200D is Cf); single emoji
+  such as U+1F916 are allowed.
 - **Persistence:** `identity.site_settings.AssistantName varchar(32) not null`. Migration
   `20261014110100_AddSiteSettingsAssistantName` fills existing rows with `Akili`.
   New rows get it from `SiteSettings.Create`.
