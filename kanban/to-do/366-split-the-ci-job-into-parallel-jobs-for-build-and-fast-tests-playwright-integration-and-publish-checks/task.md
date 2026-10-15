@@ -37,6 +37,8 @@ of phases; it should be the **max**.
 ## Session
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
 - 2026-10-15: implemented (headless implementer, ganda task work).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T08:50:20Z
+- Review oracle: general reviewer (claude, claude-opus-5-5), effort 2, round 1 clean — 2026-10-15
 
 ## Results
 
@@ -103,6 +105,13 @@ of phases; it should be the **max**.
   `ci (publish)`, plus the roll-up `ci`, which keeps the old name. If protection should require
   CI, require `ci`: it covers all four groups. On release/dispatch the job is now `release`
   (previously `ci`).
+
+### Review disposition
+- 1 round, effort 2, roster: general (review oracle, claude-opus-5-5).
+- Final counts: 0 bug, 0 suggestion, 0 nit; 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. Re-verified: dev-cli-tests 235/235, `ganda repo audit` passes.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 - Smoke: `dotnet run tools/dev-cli/dev.cs -- workflow --phase test --group fast`
