@@ -187,12 +187,20 @@ public static class HostGraphFactory
   /// concurrent checkout whose derived base landed on the same slot. <c>dev test</c> runs projects
   /// in parallel and gives each running project its own <see cref="InProcTestPorts"/> base; set
   /// <see cref="InProcTestPorts.EnvironmentVariableName"/> to move this process to another base.
+  /// Checks IPv4 and IPv6 loopback: Kestrel binds <c>localhost</c> on both (task 372).
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
   {
+    EnsurePortIsFree(IPAddress.Loopback, port, hostLabel);
+    if (Socket.OSSupportsIPv6)
+      EnsurePortIsFree(IPAddress.IPv6Loopback, port, hostLabel);
+  }
+
+  private static void EnsurePortIsFree(IPAddress address, int port, string hostLabel)
+  {
     try
     {
-      using TcpListener listener = new(IPAddress.Loopback, port);
+      using TcpListener listener = new(address, port);
       listener.Start();
       listener.Stop();
     }
