@@ -494,3 +494,7 @@ task-work.progress.log
 
 # Aspire publish output (task 070-003: CI-only artifact, never committed)
 aspire-output/
+
+# Review-round markers beside kitchens (local; not product)
+**/review/round-*/base.sha
+**/review/round-*/closed
