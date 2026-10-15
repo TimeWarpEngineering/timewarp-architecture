@@ -12,6 +12,13 @@
          follow the package's style. Our own CLI files do not emit these ids under `dotnet build dev.cs`. -->
     <NoWarn>$(NoWarn);CA1031;CA1034;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;CA5399;RCS1046;IDE0005;IDE0022;IDE0046;IDE0055;IDE0058;IDE0065;IDE0066;IDE0078;IDE0160;IDE0211;IDE0290</NoWarn>
 
+    <!-- No XML documentation file. The root props turn GenerateDocumentationFile on only so IDE0005
+         (unnecessary usings) can run during build (Roslyn #41640); IDE0005 is in NoWarn above, so the
+         dev CLI has no use for the file. On the .NET 11 RC2 SDK the runfile's AOT publish
+         (`dev self-install`) failed with MSB3030: it looked for bin/release/dev.xml, which the build
+         only wrote under obj/release (task 364). -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
     <!-- AOT Support -->
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
