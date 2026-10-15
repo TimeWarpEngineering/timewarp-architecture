@@ -32,3 +32,7 @@ publish step tries to copy the doc file from `bin/release`.
 ## Session
 
 - Created: 2026-10-15 (cockpit, from Steve's self-install failure)
+
+## Results
+
+- Boyscout: `ganda repo audit --fix` added the root `.gitignore` lines for the new `kanban-porcelain-gitignore` and `routine-journals-gitignore` checks.
