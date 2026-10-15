@@ -47,6 +47,7 @@ This is part of the CI speed-up stack: it runs as a child of `feature/ci-speed`,
 - 2026-10-15 implement oracle (ganda task work): lane, port range, Postgres start hardening, 10× proof.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T14:21:41Z
 - Review oracle (claude, claude-opus-5-5, effort 2, general): round 1, accepted-exceptions — 2026-10-15
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-15T14:29:56Z
 
 ## Results
 
@@ -162,3 +163,7 @@ AppHost serialization in its log.
   - `dev test -g fast`: 14 of 14 passed.
 - Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
