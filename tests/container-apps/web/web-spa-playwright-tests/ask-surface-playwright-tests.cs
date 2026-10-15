@@ -39,8 +39,7 @@
 // Send (task 357): the library send button keeps its "Send message" name and click, its paper
 // plane is hidden, and AskSendButton's arrow-up glyph sits over it. Empty, the button is muted
 // (not the brand primary); once text is typed it is solid primary, and the click sends.
-// Chromium install retries with the ubuntu24.04 build when the host distro is newer than
-// Playwright 1.55's platform list.
+// Each pass opens its own context on the suite's shared browser (PlaywrightBrowserSession).
 #endregion
 
 namespace AskSurfacePlaywright_;
@@ -54,24 +53,8 @@ public class AskSurface_Given_Wasm
 
   public static async Task CtrlK_Should_ShowAsk_And_TheKeyState()
   {
-    InstallChromium();
-
     await RunAsync(useFakeUpstream: false);
     await RunAsync(useFakeUpstream: true);
-  }
-
-  private static void InstallChromium()
-  {
-    int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    if (install == 0)
-    {
-      return;
-    }
-
-    // Playwright 1.55 has no ubuntu26.04 browser build. The 24.04 build is the fallback.
-    Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-    install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    install.ShouldBe(0, "Playwright chromium install failed");
   }
 
   private static async Task RunAsync(bool useFakeUpstream)
@@ -87,11 +70,7 @@ public class AskSurface_Given_Wasm
       });
     });
 
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,

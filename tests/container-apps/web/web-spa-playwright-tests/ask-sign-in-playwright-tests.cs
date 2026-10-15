@@ -73,7 +73,6 @@ public class AskSignIn_Given_Wasm
 
   public static async Task SignIn_Should_ReprobeAsk_And_NeverShowA401AsNotConfigured()
   {
-    InstallChromium();
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
       services.PostConfigure<XaiChatOptions>(options =>
       {
@@ -288,7 +287,6 @@ public class AskSignIn_Given_Wasm
 
   public static async Task SignedIn_WithoutKey_Should_ShowTheSetupCommand()
   {
-    InstallChromium();
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
       services.PostConfigure<XaiChatOptions>(options =>
       {
@@ -317,7 +315,6 @@ public class AskSignIn_Given_Wasm
 
   public static async Task AdminRename_Should_Relabel_Every_Ask_Entry_Point()
   {
-    InstallChromium();
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
       services.PostConfigure<XaiChatOptions>(options =>
       {
@@ -391,7 +388,6 @@ public class AskSignIn_Given_Wasm
 
   public static async Task Home_Should_Point_Passkeys_To_Settings_And_Navigate_After_Approval()
   {
-    InstallChromium();
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
       services.PostConfigure<XaiChatOptions>(options =>
       {
@@ -462,17 +458,13 @@ public class AskSignIn_Given_Wasm
 
   private sealed class Session : IAsyncDisposable
   {
-    private readonly IPlaywright Playwright;
-    private readonly IBrowser Browser;
     private readonly IBrowserContext Context;
     private readonly ConcurrentQueue<string> Console = new();
     private readonly ConcurrentQueue<int> Configuration = new();
     private readonly ConcurrentQueue<string> CompletionBodies = new();
 
-    private Session(IPlaywright playwright, IBrowser browser, IBrowserContext context, IPage page)
+    private Session(IBrowserContext context, IPage page)
     {
-      Playwright = playwright;
-      Browser = browser;
       Context = context;
       Page = page;
     }
@@ -488,8 +480,7 @@ public class AskSignIn_Given_Wasm
 
     public static async Task<Session> StartAsync()
     {
-      IPlaywright playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-      IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+      IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
       IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
       {
         IgnoreHTTPSErrors = true,
@@ -497,7 +488,7 @@ public class AskSignIn_Given_Wasm
         Locale = "en-US",
       });
       IPage page = await context.NewPageAsync();
-      Session session = new(playwright, browser, context, page);
+      Session session = new(context, page);
       page.Console += (_, message) => session.Console.Enqueue($"{message.Type}: {message.Text}");
       page.PageError += (_, error) => session.Console.Enqueue(error);
       page.Request += (_, request) =>
@@ -662,12 +653,8 @@ public class AskSignIn_Given_Wasm
       log.ShouldNotContain("Unhandled exception rendering component");
     }
 
-    public async ValueTask DisposeAsync()
-    {
-      await Context.DisposeAsync();
-      await Browser.DisposeAsync();
-      Playwright.Dispose();
-    }
+    // The browser is session-owned (PlaywrightBrowserSession); only this test's context is closed.
+    public ValueTask DisposeAsync() => Context.DisposeAsync();
   }
 
   private const string TaggedFeedbackTitle = "Dark theme broken";
@@ -895,20 +882,6 @@ public class AskSignIn_Given_Wasm
     {
       failures.Add($"{pageName}: empty page_context arguments were shown.");
     }
-  }
-
-  private static void InstallChromium()
-  {
-    int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    if (install == 0)
-    {
-      return;
-    }
-
-    // Playwright 1.55 has no ubuntu26.04 browser build. The 24.04 build is the fallback.
-    Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-    install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    install.ShouldBe(0, "Playwright chromium install failed");
   }
 
   private static string ScreenshotPath(string fileName) =>
