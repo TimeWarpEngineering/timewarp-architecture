@@ -9,6 +9,8 @@
 // output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
 // for the Helm chart and helm-lints it (Helm ships on the runner); publish aca (task 070-007) does the
 // same for the Azure Container Apps Bicep (no Azure credentials: publishing only writes files).
+// The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
+// solution-listed test projects skip their own build/restore check.
 // workflow.yml uploads all three outputs. No mode deploys anything (deploying is operator-run).
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
@@ -129,7 +131,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
-      if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand(), Ct))) return;
+      if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true }, Ct))) return;
       if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return;
       if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return;
       if (!await RunStepAsync("Publish aca", new PublishAcaCommand.Handler(Terminal).Handle(new PublishAcaCommand(), Ct))) return;

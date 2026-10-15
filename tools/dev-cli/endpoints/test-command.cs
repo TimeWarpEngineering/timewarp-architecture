@@ -17,6 +17,10 @@
 // TIMEWARP_TEST_PORT_BASE if set, else derived from this checkout's root) and exported to every
 // child `dotnet test`, so a suite and anything it spawns agree on one port set and two worktrees
 // running `dev test` at once get different bases.
+// Task 365: default builds every project so a developer never runs stale binaries. --no-build is
+// for a caller that just ran the Release solution build (`dev workflow`): .slnx-listed projects
+// get --no-build --no-restore; the out-of-solution aggregators and timewarp-testing-tests still
+// build inside their own `dotnet test` (DotNetTestArguments).
 #endregion
 
 namespace DevCli.Commands;
@@ -27,6 +31,9 @@ internal sealed class TestCommand : ICommand<Unit>
   [Option("quiet", "q", Description = "Hide test output unless a project fails")]
   public bool Quiet { get; set; }
 
+  [Option("no-build", Description = "Skip build/restore for projects the Release solution build already built")]
+  public bool NoBuild { get; set; }
+
   internal sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -34,6 +41,7 @@ internal sealed class TestCommand : ICommand<Unit>
     private CancellationToken Ct;
     private string RepoRoot = null!;
     private string PortBase = null!;
+    private HashSet<string> SolutionProjects = [];
 
     public Handler(ITerminal terminal)
     {
@@ -86,6 +94,12 @@ internal sealed class TestCommand : ICommand<Unit>
       PortBase = basePort.ToString(System.Globalization.CultureInfo.InvariantCulture);
       Terminal.WriteLine($"In-proc test ports: {InProcTestPorts.Describe(basePort, source, checkoutRoot)}");
 
+      if (Command.NoBuild)
+      {
+        string solutionFile = Path.Combine(RepoRoot, "timewarp-architecture.slnx");
+        SolutionProjects = DotNetTestArguments.SolutionProjects(await File.ReadAllTextAsync(solutionFile, Ct), RepoRoot);
+      }
+
       bool allPassed = true;
       foreach (string project in projects)
       {
@@ -109,7 +123,8 @@ internal sealed class TestCommand : ICommand<Unit>
     /// <summary>
     /// All suite-shaped projects are Microsoft.Testing.Platform (Jaribu): bare
     /// <c>dotnet test -c Release</c> with cwd = project directory so project-local
-    /// global.json supplies the MTP runner (task 145-007).
+    /// global.json supplies the MTP runner (task 145-007). --no-build applies only to projects
+    /// the solution build covered (task 365).
     /// </summary>
     private CommandResult BuildTestCommand(string project)
     {
@@ -117,7 +132,7 @@ internal sealed class TestCommand : ICommand<Unit>
         ?? throw new InvalidOperationException($"No directory for project path: {project}");
 
       return Shell.Builder("dotnet")
-        .WithArguments("test", "-c", "Release")
+        .WithArguments(DotNetTestArguments.For(Command.NoBuild, SolutionProjects.Contains(Path.GetFullPath(project))))
         .WithWorkingDirectory(projectDir)
         .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, PortBase)
         .WithNoValidation()

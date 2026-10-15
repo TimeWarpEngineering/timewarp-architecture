@@ -18,10 +18,55 @@ about 5–8s of fixed overhead each, roughly 2–2.5 min in CI.
 - Before/after timing of `dev test` in CI, in the PR.
 
 ## Checklist
-- [ ] `--no-build`/`--no-restore` path used by `dev workflow`; default `dev test` still builds
-- [ ] Out-of-solution test projects built first (or added to .slnx)
-- [ ] dev-cli tests for argument construction; CI timing before/after
-- [ ] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] `--no-build`/`--no-restore` path used by `dev workflow`; default `dev test` still builds
+- [x] Out-of-solution test projects built first (or added to .slnx)
+- [x] dev-cli tests for argument construction; CI timing before (after = this PR's CI run)
+- [x] Gates: `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Session
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
+- 2026-10-15 implementer (ganda task work): option, workflow wiring, argument helper + tests, timings.
+
+## Results
+
+### Decisions
+- **Opt-in flag.** `dev test` builds every project by default (`dotnet test -c Release`), so a
+  developer never runs stale binaries. `dev test --no-build` passes `--no-build --no-restore`.
+  `dev workflow` (Pr/Merge) calls it with `NoBuild = true` right after the Release solution build.
+- **Out-of-solution projects keep building; the .slnx is unchanged.** `api-jaribu-tests`,
+  `web-jaribu-tests` and `timewarp-testing-tests` stay out of the .slnx on purpose: the solution
+  build never compiles co-located runfiles (`tw-feature-placement`). `dev test --no-build` reads
+  the .slnx `Project Path` list. A test project that is not listed there runs without
+  `--no-build`, so its own `dotnet test` builds it first.
+- Argument construction is a pure helper, `tools/dev-cli/services/dotnet-test-arguments.cs`
+  (`DotNetTestArguments`). It is compiled into `dev-cli-tests` and covered there by
+  `dotnet-test-arguments-tests.cs`.
+
+### Timing
+- **Before (CI, master push run 38699376705):** the `dev test` step took 7m15s (07:34:29 →
+  07:41:44) and the whole `Run CI Pipeline` step took 10m33s. Small suites already finish in
+  1.2–1.7s each in CI (for example web-contracts-tests 1.7s and foundation-contracts-tests 1.4s),
+  so the per-project build re-check is about 1s or less on the runner, not 5–8s.
+- **Local (warm build server):** `dev test --no-build` took 7m10s for all 23 projects, all
+  passing. Per project, `dotnet test` takes about 4.7s with `--no-build --no-restore` and 3–5s with
+  the default build. Locally the difference is within noise.
+- **After (CI):** read the `Testing …` timestamps for the `dev test` step in this PR's `ci` job.
+  Expect a saving of tens of seconds at most, not the 2–2.5 min this task estimated.
+
+### How to validate
+**Smoke:**
+```bash
+dotnet run tools/dev-cli/dev.cs -- build
+dotnet run tools/dev-cli/dev.cs -- test --no-build
+(cd tests/tools/dev-cli-tests && dotnet test -c Release)
+dotnet run tools/dev-cli/dev.cs -- test --help
+```
+**Expect:**
+- The build reports 0 warnings and 0 errors.
+- `test --no-build` ends with "Tests completed successfully!". The out-of-solution
+  aggregators (`api-jaribu-tests`, `web-jaribu-tests`, `timewarp-testing-tests`) still compile
+  inside their own `dotnet test`. The solution projects do not rebuild.
+- `dev-cli-tests` passes 231/231, including `DotNetTestArguments_.*`.
+- `test --help` lists `--no-build`.
+- In the CI log, the `ci` job's "Testing …" lines appear right after "Build completed
+  successfully!", with no MSBuild output for the solution test projects.
