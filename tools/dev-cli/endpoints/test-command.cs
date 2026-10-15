@@ -21,6 +21,9 @@
 // for a caller that just ran the Release solution build (`dev workflow`): .slnx-listed projects
 // get --no-build --no-restore; the out-of-solution aggregators and timewarp-testing-tests still
 // build inside their own `dotnet test` (DotNetTestArguments).
+// Task 366: --group <fast|playwright|integration> runs one convention-derived group (TestGroups)
+// so CI runs the groups as parallel jobs. With --group, any project that matches no group or
+// several fails the run before a test starts.
 #endregion
 
 namespace DevCli.Commands;
@@ -33,6 +36,9 @@ internal sealed class TestCommand : ICommand<Unit>
 
   [Option("no-build", Description = "Skip build/restore for projects the Release solution build already built")]
   public bool NoBuild { get; set; }
+
+  [Option("group", "g", Description = "Run one test group: fast, playwright, or integration (default: all)")]
+  public string? Group { get; set; }
 
   internal sealed class Handler : ICommandHandler<TestCommand, Unit>
   {
@@ -88,6 +94,13 @@ internal sealed class TestCommand : ICommand<Unit>
         .OrderBy(p => p, StringComparer.Ordinal)
         .ToArray();
 
+      if (Command.Group is not null)
+      {
+        string[]? grouped = SelectGroup(projects);
+        if (grouped is null) return false;
+        projects = grouped;
+      }
+
       string? overrideValue = Environment.GetEnvironmentVariable(InProcTestPorts.EnvironmentVariableName);
       string? checkoutRoot = InProcTestPorts.FindCheckoutRoot([RepoRoot]);
       (int basePort, InProcTestPorts.BaseSource source) = InProcTestPorts.ResolveBase(overrideValue, checkoutRoot);
@@ -118,6 +131,43 @@ internal sealed class TestCommand : ICommand<Unit>
       }
 
       return true;
+    }
+
+    // Null when the group is unknown or a project does not belong to exactly one group.
+    private string[]? SelectGroup(string[] projects)
+    {
+      if (!TestGroups.IsGroup(Command.Group!))
+      {
+        Terminal.WriteErrorLine($"Unknown test group '{Command.Group}'. Groups: {string.Join(", ", TestGroups.Names)}".Red());
+        Environment.ExitCode = 1;
+        return null;
+      }
+
+      List<string> selected = [];
+      bool wellFormed = true;
+      foreach (string project in projects)
+      {
+        string relative = Path.GetRelativePath(RepoRoot, project);
+        string[] groups = TestGroups.GroupsOf(relative);
+        if (groups.Length != 1)
+        {
+          Terminal.WriteErrorLine($"{relative} must belong to exactly one test group; it matches [{string.Join(", ", groups)}]. See TestGroups.".Red());
+          wellFormed = false;
+        }
+        else if (groups[0] == Command.Group)
+        {
+          selected.Add(project);
+        }
+      }
+
+      if (!wellFormed)
+      {
+        Environment.ExitCode = 1;
+        return null;
+      }
+
+      Terminal.WriteLine($"Test group '{Command.Group}': {selected.Count} of {projects.Length} projects");
+      return [.. selected];
     }
 
     /// <summary>
