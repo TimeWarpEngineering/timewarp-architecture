@@ -180,7 +180,7 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow --phase publish` runs `dev publish compose`, `dev publish kubernetes` and `dev publish aca`, which need the Aspire CLI. Pinned to the
+      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes and aca), which needs the Aspire CLI. Pinned to the
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
         if: matrix.name == 'publish'

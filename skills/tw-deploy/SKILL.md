@@ -56,6 +56,9 @@ aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=kubernetes   # hel
 dev publish aca                             # publish to artifacts/aspire-output/aca + safety suite
 aspire publish --apphost <apphost.csproj> --output-path out/aca -- --Publish:Target=aca
 aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=aca   # provisions + pushes images, az CLI credential
+
+# Every target — what CI runs
+dev publish all                             # all three publishes, then one safety-suite run + helm lint
 ```
 
 - **Kubernetes prerequisites:** Helm ≥ 4.2, a kubectl context pointing at the cluster, a
@@ -65,6 +68,7 @@ aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=aca   # provisions
   CI uploads the output as a workflow artifact. Regenerate, do not hand-edit.
 - **`dev publish <target>` is the gate.** It runs the target's production-safety suite in
   aspire-tests against the generated files. Run it after any change to publish-mode wiring.
+  `dev publish all` publishes every target and checks them in one aspire-tests run.
 - **Deploying is a deliberate, operator-run action — never automated in CI.** CI publishes and
   runs the production-safety suites only; it never runs `aspire deploy`, `helm upgrade` or
   `docker compose up` against a real environment. A deploy is run by an operator who has chosen
