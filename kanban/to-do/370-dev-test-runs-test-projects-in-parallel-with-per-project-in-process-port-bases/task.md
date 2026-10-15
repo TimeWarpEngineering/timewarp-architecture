@@ -30,6 +30,7 @@ InProcTestPorts base"). Task 330 made the base overridable and slot-based (20000
 - 2026-10-15: implemented (ganda task work, implement node).
 - Review oracle: claude (claude-opus-5-5), tw-implementation-review round 1, clean — 2026-10-15
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T11:24:28Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-15T11:30:29Z
 
 ## Results
 
@@ -115,3 +116,6 @@ Expect:
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/disposition.md`.
 
+## Review
+
+- Round 1: Done
