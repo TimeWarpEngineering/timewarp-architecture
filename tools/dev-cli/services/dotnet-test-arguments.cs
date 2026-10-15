@@ -4,13 +4,14 @@
 
 #region Design
 // Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file.
-// Default `dev test` builds every project (`dotnet test -c Release`) so a developer never runs
-// stale binaries. `dev test --no-build` is for callers that just built the solution in Release
-// (`dev workflow`, task 365): projects listed in the .slnx get `--no-build --no-restore`.
-// Projects under tests/ that the .slnx does not list are the Jaribu family aggregators and
-// timewarp-testing-tests. They stay out of the .slnx on purpose (the solution build never
-// compiles co-located runfiles), so the solution build did not build them; they keep building
-// inside their own `dotnet test` even under --no-build.
+// Task 370: `dev test` runs projects in parallel, and concurrent `dotnet test` builds would race on
+// the obj/ and bin/ folders of projects they share. So nothing builds inside `dotnet test`: a build
+// phase runs first, one build at a time, and every `dotnet test` gets --no-build --no-restore.
+// Build phase: default `dev test` builds the Release solution (a developer never runs stale
+// binaries). `dev test --no-build` skips that for callers that just built the solution in Release
+// (`dev workflow`, task 365). Either way, the selected projects under tests/ that the .slnx does not
+// list are built one at a time: the Jaribu family aggregators and timewarp-testing-tests. They stay
+// out of the .slnx on purpose (the solution build never compiles co-located runfiles).
 #endregion
 
 namespace DevCli.Services;
@@ -33,10 +34,9 @@ internal static class DotNetTestArguments
       .ToHashSet(StringComparer.Ordinal);
   }
 
-  internal static string[] For(bool noBuild, bool builtBySolution)
-  {
-    return noBuild && builtBySolution
-      ? ["test", "-c", "Release", "--no-build", "--no-restore"]
-      : ["test", "-c", "Release"];
-  }
+  /// <summary>Build arguments for one project the solution build does not cover (cwd = project directory).</summary>
+  internal static string[] Build() => ["build", "-c", "Release"];
+
+  /// <summary>Test arguments: the build phase already built and restored every project.</summary>
+  internal static string[] Test() => ["test", "-c", "Release", "--no-build", "--no-restore"];
 }

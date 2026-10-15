@@ -185,7 +185,7 @@ public static class HostGraphFactory
   /// <summary>
   /// Fails if an in-proc test port is already bound — usually another suite, a leaked host, or a
   /// concurrent checkout whose derived base landed on the same slot. <c>dev test</c> runs projects
-  /// one at a time because they share one <see cref="InProcTestPorts"/> base; set
+  /// in parallel and gives each running project its own <see cref="InProcTestPorts"/> base; set
   /// <see cref="InProcTestPorts.EnvironmentVariableName"/> to move this process to another base.
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
@@ -207,6 +207,6 @@ public static class HostGraphFactory
     $"In-proc test port {port} for {hostLabel} is already in use ({baseDescription}). " +
     "Stop the other process (or finish its CleanUpOnce/DisposeAsync), or set " +
     $"{InProcTestPorts.EnvironmentVariableName} to a free base (the set spans base..base+{InProcTestPorts.PortSpan}). " +
-    "`dev test` runs test projects serially so ports are not shared across projects; " +
+    "`dev test` gives each concurrently running test project its own base; " +
     "within a project each Jaribu class must own and dispose its HostGraph (C-create).";
 }
