@@ -185,16 +185,29 @@ public static class HostGraphFactory
   /// <summary>
   /// Fails if an in-proc test port is already bound — usually another suite, a leaked host, or a
   /// concurrent checkout whose derived base landed on the same slot. <c>dev test</c> runs projects
-  /// one at a time because they share one <see cref="InProcTestPorts"/> base; set
+  /// in parallel and gives each running project its own <see cref="InProcTestPorts"/> base; set
   /// <see cref="InProcTestPorts.EnvironmentVariableName"/> to move this process to another base.
+  /// Checks IPv4 and IPv6 loopback: Kestrel binds <c>localhost</c> on both (task 372). A host whose
+  /// IPv6 loopback cannot be bound at all (IPv6 disabled in a container) skips the IPv6 check.
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
   {
+    EnsurePortIsFree(IPAddress.Loopback, port, hostLabel, required: true);
+    if (Socket.OSSupportsIPv6)
+      EnsurePortIsFree(IPAddress.IPv6Loopback, port, hostLabel, required: false);
+  }
+
+  private static void EnsurePortIsFree(IPAddress address, int port, string hostLabel, bool required)
+  {
     try
     {
-      using TcpListener listener = new(IPAddress.Loopback, port);
+      using TcpListener listener = new(address, port);
       listener.Start();
       listener.Stop();
+    }
+    catch (SocketException exception) when (!required && exception.SocketErrorCode == SocketError.AddressNotAvailable)
+    {
+      // No IPv6 loopback on this host, so nothing can hold the port there.
     }
     catch (SocketException exception)
     {
@@ -207,6 +220,6 @@ public static class HostGraphFactory
     $"In-proc test port {port} for {hostLabel} is already in use ({baseDescription}). " +
     "Stop the other process (or finish its CleanUpOnce/DisposeAsync), or set " +
     $"{InProcTestPorts.EnvironmentVariableName} to a free base (the set spans base..base+{InProcTestPorts.PortSpan}). " +
-    "`dev test` runs test projects serially so ports are not shared across projects; " +
+    "`dev test` gives each concurrently running test project its own base; " +
     "within a project each Jaribu class must own and dispose its HostGraph (C-create).";
 }

@@ -3,13 +3,23 @@
 #endregion
 #region Design
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
-//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish compose -> publish kubernetes -> publish aca (tests are the gate)
+//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish all (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
 // publish compose (task 070-003) runs `aspire publish` for the Docker Compose target and gates the
 // output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
 // for the Helm chart and helm-lints it (Helm ships on the runner); publish aca (task 070-007) does the
 // same for the Azure Container Apps Bicep (no Azure credentials: publishing only writes files).
+// Task 367: the workflow runs `dev publish all --no-build` — the three publishes, then their three
+// safety suites in ONE aspire-tests run against the Release build that just ran, then helm lint.
+// The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
+// solution-listed test projects skip their own build/restore check.
 // workflow.yml uploads all three outputs. No mode deploys anything (deploying is operator-run).
+// Task 366: Pr/Merge splits into phases so workflow.yml runs them as parallel jobs, each on its
+// own runner that builds what it needs (no shared build artifact: bin/obj is far larger than the
+// org's 500 MB Actions storage cap). --phase test [--group <name>] is clean -> build -> test
+// (one TestGroups group, or all); --phase publish is clean -> build -> publish all. No
+// --phase runs everything in order, as before. Release mode accepts no --phase/--group: packing
+// and pushing stay one job and one pass.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
@@ -32,6 +42,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
+
+  [Option("phase", "p", Description = "Pr/merge only: run one phase, test or publish (default: all)")]
+  public string? Phase { get; set; }
+
+  [Option("group", "g", Description = "With --phase test: run one test group, fast, playwright, or integration (default: all)")]
+  public string? Group { get; set; }
 
   // The publishable set — single repo version (source/Directory.Build.props). libraries (modules,
   // identity, 402) ship as leaf product packages; foundation-application depends on modules; analyzers/
@@ -75,10 +91,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       CiMode mode = DetermineMode(command.Mode);
       Terminal.WriteLine($"\nCI/CD Pipeline — Mode: {mode}\n".Cyan());
 
+      if (!ValidatePhase(command, mode)) return Unit.Value;
+
       if (mode == CiMode.Release)
         await RunReleaseAsync(command.ApiKey);
       else
-        await RunPrAsync();
+        await RunPrAsync(command.Phase ?? PhaseAll, command.Group);
 
       return Unit.Value;
     }
@@ -95,6 +113,29 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       RepoRoot = root;
       return true;
+    }
+
+    private const string PhaseAll = "all";
+    private const string PhaseTest = "test";
+    private const string PhasePublish = "publish";
+
+    private bool ValidatePhase(WorkflowCommand command, CiMode mode)
+    {
+      string? error = null;
+      if (mode == CiMode.Release && (command.Phase is not null || command.Group is not null))
+        error = "--phase and --group apply to pr/merge only; release runs as one job.";
+      else if (command.Phase is not null && command.Phase is not (PhaseTest or PhasePublish))
+        error = $"Unknown phase '{command.Phase}'. Phases: {PhaseTest}, {PhasePublish}.";
+      else if (command.Group is not null && command.Phase != PhaseTest)
+        error = "--group requires --phase test.";
+      else if (command.Group is not null && !TestGroups.IsGroup(command.Group))
+        error = $"Unknown test group '{command.Group}'. Groups: {string.Join(", ", TestGroups.Names)}.";
+
+      if (error is null) return true;
+
+      Terminal.WriteErrorLine($"Error: {error}".Red());
+      Environment.ExitCode = 1;
+      return false;
     }
 
     private CiMode DetermineMode(string? explicitMode)
@@ -122,17 +163,24 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     // PR / merge: tests gate here.
-    private async Task RunPrAsync()
+    private async Task RunPrAsync(string phase, string? group)
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test -> publish compose -> publish kubernetes -> publish aca\n");
+      bool test = phase is PhaseAll or PhaseTest;
+      bool publish = phase is PhaseAll or PhasePublish;
+      const string publishSteps = "publish all";
+      string steps = phase switch
+      {
+        PhaseTest => group is null ? "test" : $"test ({group})",
+        PhasePublish => publishSteps,
+        _ => $"test -> {publishSteps}",
+      };
+      Terminal.WriteLine($"Pipeline: clean -> build -> {steps}\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
-      if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand(), Ct))) return;
-      if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return;
-      if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return;
-      if (!await RunStepAsync("Publish aca", new PublishAcaCommand.Handler(Terminal).Handle(new PublishAcaCommand(), Ct))) return;
+      if (test && !await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true, Group = group }, Ct))) return;
+      if (publish && !await RunStepAsync("Publish all", new PublishAllCommand.Handler(Terminal).Handle(new PublishAllCommand { NoBuild = true }, Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
     }

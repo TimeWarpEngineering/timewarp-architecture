@@ -1,7 +1,10 @@
 name: CI/CD
 
 # Single canonical workflow. Jobs:
-#   - ci: main build/test/publish pipeline (former sole workflow.yml job)
+#   - ci-group: PR/merge build/test/publish pipeline as parallel `dev workflow` phase/group jobs
+#     (task 366): ci (fast), ci (playwright), ci (integration), ci (publish)
+#   - ci: one status over ci-group (the stable required-check name)
+#   - release: release/workflow_dispatch pipeline (pack, OIDC push) — one job, never parallel
 #   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
 #   - template-smoke: pack → install → generate → build (former template-smoke.yml)
 # Path semantics from the former separate workflows are preserved via detect-paths
@@ -14,6 +17,20 @@ name: CI/CD
 # branch directly, and after a manual retarget push a commit or close/reopen the PR.
 # Publishing is release-only: push/pull_request run `dev workflow` in Pr/Merge mode (build,
 # test, `dev publish` file outputs) with no NuGet login, pack, or push on any branch.
+#
+# Checkout and NuGet cache (task 368):
+#   - Every job checks out shallow (fetch-depth: 1). Nothing in CI reads history or tags: SourceLink
+#     and TimeWarp.Build.Tasks' GitMetadataTask read only HEAD (`git rev-parse HEAD`,
+#     `git log -1`), `dev check-version` compares <Version> against nuget.org, and `dev release`
+#     (the only tag writer) runs locally, not here. detect-paths fetches its one base commit by SHA.
+#   - Jobs that restore cache ~/.nuget/packages under an exact content-hash key (every
+#     Directory.Packages.props, msbuild/*.props, global.json). No restore-keys: a CPM change starts
+#     a clean cache instead of layering onto an old one. Restored packages all come from nuget.org
+#     (immutable per version); the only locally packed version is template-smoke's 2.0.0-smoke,
+#     which is evicted before its cache is saved. release restores read-only and never saves.
+#   - The dev CLI runfile build is not cached: its up-to-date check compares file times, and every
+#     checkout writes fresh ones, so a restored build would just recompile. Its package restore is
+#     covered by the NuGet cache.
 
 on:
   push:
@@ -83,7 +100,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Classify changed paths
         id: filter
@@ -102,6 +119,16 @@ jobs:
             echo "skill=true" >> "$GITHUB_OUTPUT"
             echo "template=true" >> "$GITHUB_OUTPUT"
             echo "No usable base SHA — enabling all path-gated jobs."
+            exit 0
+          fi
+          # Shallow checkout (task 368): fetch just the two commits to compare. `git diff` of two
+          # commits compares their trees, so no history between them is needed. A base that can no
+          # longer be fetched (force push) is treated like an unknown base.
+          if ! git fetch --no-tags --depth=1 origin "$BASE" "$HEAD"; then
+            echo "ci=true" >> "$GITHUB_OUTPUT"
+            echo "skill=true" >> "$GITHUB_OUTPUT"
+            echo "template=true" >> "$GITHUB_OUTPUT"
+            echo "Could not fetch base $BASE — enabling all path-gated jobs."
             exit 0
           fi
           changed=$(git diff --name-only "$BASE" "$HEAD" || true)
@@ -129,24 +156,38 @@ jobs:
           echo "template=$template" >> "$GITHUB_OUTPUT"
           echo "ci=$ci skill=$skill template=$template"
 
-  ci:
+  ci-group:
+    # Task 366: PR/merge CI as parallel jobs, one per `dev workflow` phase/group. Groups are defined
+    # once, by convention, in tools/dev-cli/services/test-groups.cs; this matrix names them and
+    # never lists projects. Each job builds what it needs on its own runner (a shared build artifact
+    # would be bin/obj for the whole solution, far over the org's 500 MB Actions storage cap).
     needs: [detect-paths]
     if: |
-      always() && !cancelled() && (
-        github.event_name == 'release' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-paths.outputs.ci == 'true'
-      )
+      always() && !cancelled() &&
+      (github.event_name == 'push' || github.event_name == 'pull_request') &&
+      needs.detect-paths.outputs.ci == 'true'
+    name: ci (${{ matrix.name }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fast
+            args: --phase test --group fast
+          - name: playwright
+            args: --phase test --group playwright
+          - name: integration
+            args: --phase test --group integration
+          - name: publish
+            args: --phase publish
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for SourceLink / version metadata
+          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -155,48 +196,39 @@ jobs:
           dotnet-version: '11.0.x'
           dotnet-quality: 'preview'
 
+      # One key for every group: each job builds the whole solution, so they restore the same set.
+      # The first group to finish saves it; the others skip the save.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
       # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
       # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
       # already trusts it). On Linux, `--trust` writes the cert to ~/.aspnet/dev-certs/trust and exits
       # 4 ("trusted by some clients") — OpenSSL (HttpClient) only honours it once that dir is on
       # SSL_CERT_DIR (set on the Run CI Pipeline step below). See https://aka.ms/dev-certs-trust.
       - name: Trust HTTPS dev certificate
-        if: github.event_name != 'release'
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow` (PR/merge) runs `dev publish compose`, `dev publish kubernetes` and `dev publish aca`, which need the Aspire CLI. Pinned to the
+      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes and aca), which needs the Aspire CLI. Pinned to the
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
-        if: github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.mode != 'probe')
+        if: matrix.name == 'publish'
         run: dotnet tool install --global Aspire.Cli --version 13.6.1
 
-      - name: NuGet login (OIDC Trusted Publishing)
-        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
-        id: nuget-login
-        uses: nuget/login@v1
-        with:
-          user: TimeWarp.Enterprises
-
-      - name: Trusted publishing probe result
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
-        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
-
       - name: Run CI Pipeline
-        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
         run: |
           # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          if [ "${{ github.event_name }}" == "release" ]; then
-            dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          else
-            dotnet run tools/dev-cli/dev.cs -- workflow
-          fi
+          dotnet run tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
 
       # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
       # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).
       # Diagnostic upload, so retention-days: 1.
       - name: Upload Playwright screenshots
-        if: always() && github.event_name != 'release'
+        if: always() && matrix.name == 'playwright'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-${{ github.run_number }}
@@ -208,7 +240,7 @@ jobs:
       # a ~100 MB self-contained binary and is left out; the idempotent SQL script is the
       # documented migration path for Compose (see the AppHost Design region).
       - name: Upload Compose publish output
-        if: always() && github.event_name != 'release'
+        if: always() && matrix.name == 'publish'
         uses: actions/upload-artifact@v4
         with:
           name: aspire-compose-${{ github.run_number }}
@@ -224,7 +256,7 @@ jobs:
       # ships on ubuntu runners). CI-only, never committed; the chart directory carries the migration
       # SQL script and no bundle, so the whole directory is the artifact.
       - name: Upload Helm chart
-        if: always() && github.event_name != 'release'
+        if: always() && matrix.name == 'publish'
         uses: actions/upload-artifact@v4
         with:
           name: aspire-helm-${{ github.run_number }}
@@ -236,7 +268,7 @@ jobs:
       # CI has no Azure credentials and never deploys. The ~100 MB migration bundle is left out; the
       # Bicep modules and the idempotent SQL script are the reviewable output.
       - name: Upload Azure Container Apps publish output
-        if: always() && github.event_name != 'release'
+        if: always() && matrix.name == 'publish'
         uses: actions/upload-artifact@v4
         with:
           name: aspire-aca-${{ github.run_number }}
@@ -245,6 +277,74 @@ jobs:
             artifacts/aspire-output/aca/efmigrations/*.sql
           if-no-files-found: ignore
           retention-days: 1
+
+  ci:
+    # Task 366: one stable check name over the ci-group matrix, so a branch-protection rule that
+    # requires `ci` keeps working. Skipped groups (no ci paths changed) pass, as the single `ci`
+    # job's skip did before; a failed or cancelled group fails it.
+    needs: [ci-group]
+    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
+    runs-on: ubuntu-latest
+    steps:
+      - name: All CI groups passed
+        run: |
+          echo "ci-group: ${{ needs.ci-group.result }}"
+          [ "${{ needs.ci-group.result }}" = "success" ] || [ "${{ needs.ci-group.result }}" = "skipped" ]
+
+  release:
+    # Release (`release: published`) and workflow_dispatch: one job, one `dev workflow` pass in
+    # Release mode (clean -> build -> pack -> push -> template-publish-smoke). Never a matrix:
+    # packing and pushing must not run in parallel copies. NuGet Trusted Publishing binds to this
+    # repo + workflow.yml, not the job name.
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for NuGet Trusted Publishing (OIDC)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
+
+      # Read-only: the release run reuses the ci cache for the same CPM inputs but never saves one,
+      # so nothing a release run restores or packs can seed a later run.
+      - name: Restore NuGet package cache
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
+      - name: NuGet login (OIDC Trusted Publishing)
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
+        id: nuget-login
+        uses: nuget/login@v1
+        with:
+          user: TimeWarp.Enterprises
+
+      - name: Trusted publishing probe result
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
+        run: echo "Trusted publishing OK — OIDC exchange succeeded for this repo + workflow.yml. (A failure of the NuGet login step above means the policy is missing or misconfigured on NuGet.org.)"
+
+      - name: Run CI Pipeline
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        run: |
+          # Unchanged from the single-job pipeline (no dev-cert trust step on release: the dir is absent).
+          export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
+          if [ "${{ github.event_name }}" == "release" ]; then
+            dotnet run tools/dev-cli/dev.cs -- workflow --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          else
+            dotnet run tools/dev-cli/dev.cs -- workflow
+          fi
 
       - name: Upload Artifacts
         if: always()
@@ -309,6 +409,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -317,8 +419,15 @@ jobs:
           dotnet-version: '11.0.x'
           dotnet-quality: 'preview'
 
+      # Own key: the smoke restores the generated app's set, not the monorepo solution's.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-template-smoke-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
       # Generated-app Jaribu aggregators hit HTTPS with the ASP.NET dev certificate (same as the
-      # main `ci` job). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
+      # `ci-group` jobs). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
       # not fail with UntrustedRoot on Linux runners. See https://aka.ms/dev-certs-trust.
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
@@ -327,3 +436,10 @@ jobs:
         run: |
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           dotnet run tools/dev-cli/dev.cs -- template-smoke
+
+      # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
+      # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries
+      # one branch's local bits into another run.
+      - name: Evict smoke packages from NuGet cache
+        if: always()
+        run: rm -rf ~/.nuget/packages/*/2.0.0-smoke

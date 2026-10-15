@@ -19,13 +19,13 @@ source version newer than the latest GitHub release tag before a cut.
 ## Normal flow
 
 1. Merge the version-bump PR. Master `push` runs `.github/workflows/workflow.yml`
-   (`dev workflow`: clean → build → test). That path does **not** pack. The
-   `Upload Artifacts` step uses `if-no-files-found: ignore`, so a `Packages-*`
-   blob is created only when `artifacts/packages/*.nupkg` already exists.
+   (`dev workflow --phase test|publish` as the parallel `ci (…)` jobs, rolled
+   up into the `ci` check). That path does **not** pack and uploads no
+   `Packages-*` blob.
 2. From a **clean, synced master** worktree: `dev release --dry-run`, then
    `dev release`. That tags `v{Version}` and creates the GitHub Release.
-3. The `release:published` event runs the same workflow in release mode
-   (`dev workflow` with the OIDC NuGet API key): clean → build → **pack** →
+3. The `release:published` event runs the same workflow's single `release` job
+   in release mode (`dev workflow` with the OIDC NuGet API key): clean → build → **pack** →
    push → template-publish-smoke. Pack writes `.nupkg` files to
    `artifacts/packages/`; the upload step then stores them as
    `Packages-${{ github.run_number }}`. This repo **rebuilds and packs** on

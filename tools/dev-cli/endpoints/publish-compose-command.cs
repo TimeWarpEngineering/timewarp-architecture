@@ -4,9 +4,10 @@
 #endregion
 
 #region Design
-// The publish + check pipeline is shared with `dev publish kubernetes` (services/aspire-publish.cs);
-// this command names the target (Publish:Target=compose), its output directory and its safety suite
-// (aspire-tests ComposePublish_Given_, pointed at the CLI output via TIMEWARP_COMPOSE_OUTPUT).
+// The publish + check pipeline is shared with the other `dev publish` commands (services/aspire-publish.cs).
+// The target, AspirePublishTargets.Compose (services/aspire-publish-targets.cs), names Publish:Target=compose,
+// its output directory and its safety suite (aspire-tests ComposePublish_Given_, pointed at the CLI
+// output via TIMEWARP_COMPOSE_OUTPUT). `dev publish all` publishes it alongside the other targets.
 // Building/running the stack is the operator's `aspire deploy` / `aspire do prepare-compose`, which
 // honour ASPIRE_CONTAINER_RUNTIME (task 277); nothing here calls a container CLI.
 #endregion
@@ -17,12 +18,6 @@ namespace DevCli.Commands;
 [NuruRouteExample("publish compose", Description = "Generate docker-compose.yaml + .env + migration script, then run the safety checks")]
 internal sealed class PublishComposeCommand : PublishGroup, ICommand<Unit>
 {
-  internal static readonly AspirePublishTarget Target = new(
-    Name: "compose",
-    OutputDirectory: "artifacts/aspire-output/compose",
-    SafetySuiteClass: "ComposePublish_Given_",
-    OutputEnvironmentVariable: "TIMEWARP_COMPOSE_OUTPUT");
-
   internal sealed class Handler : ICommandHandler<PublishComposeCommand, Unit>
   {
     private readonly ITerminal Terminal;
@@ -36,7 +31,7 @@ internal sealed class PublishComposeCommand : PublishGroup, ICommand<Unit>
     {
       Environment.ExitCode = 0;
 
-      string? outputDirectory = await AspirePublish.PublishAndCheckAsync(Terminal, Target, ct);
+      string? outputDirectory = (await AspirePublish.PublishAndCheckAsync(Terminal, [AspirePublishTargets.Compose], noBuild: false, ct))?[0];
       if (outputDirectory is not null)
       {
         Terminal.WriteLine($"\nCompose publish output is production-safe: {outputDirectory}".Green());

@@ -17,6 +17,10 @@
 // Authentication:UseMock is turned off for this host (the project appsettings turn it on): with it
 // on, the circuit's auth state is the fixed mock principal, which the server permission store does
 // not know, so /Settings renders 403 whatever the cookie says.
+// Both tests need the same forced InteractiveServer host and neither depends on a fresh one (no
+// Administrator claim, no list counts), so the class boots it once in SetupOnce and disposes it in
+// CleanUpOnce (C-create per class). Each test still gets its own browser context, and with it its
+// own virtual authenticator, from the suite's shared browser (PlaywrightBrowserSession).
 #endregion
 
 namespace PasskeySessionInteractiveServerPlaywright_;
@@ -31,10 +35,21 @@ public class PasskeySession_Given_InteractiveServer
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<PasskeySession_Given_InteractiveServer>();
 
+  private static HostGraph? Graph;
+
+  public static async Task SetupOnce() => Graph = await CreateInteractiveServerHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
+
   public static async Task CreateAccount_Should_SignInTheBrowser()
   {
-    InstallChromium();
-    await using HostGraph graph = await CreateInteractiveServerHostAsync();
     await using Session session = await Session.StartAsync();
 
     await session.CreateAccountAsync();
@@ -44,8 +59,6 @@ public class PasskeySession_Given_InteractiveServer
 
   public static async Task SignIn_Should_SignInTheBrowser()
   {
-    InstallChromium();
-    await using HostGraph graph = await CreateInteractiveServerHostAsync();
     await using Session session = await Session.StartAsync();
 
     await session.CreateAccountAsync();
@@ -78,14 +91,10 @@ public class PasskeySession_Given_InteractiveServer
 
   private sealed class Session : IAsyncDisposable
   {
-    private readonly IPlaywright Playwright;
-    private readonly IBrowser Browser;
     private readonly ConcurrentQueue<string> Console = new();
 
-    private Session(IPlaywright playwright, IBrowser browser, IBrowserContext context, IPage page)
+    private Session(IBrowserContext context, IPage page)
     {
-      Playwright = playwright;
-      Browser = browser;
       Context = context;
       Page = page;
     }
@@ -96,15 +105,14 @@ public class PasskeySession_Given_InteractiveServer
 
     public static async Task<Session> StartAsync()
     {
-      IPlaywright playwright = await Microsoft.Playwright.Playwright.CreateAsync();
-      IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+      IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
       IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
       {
         IgnoreHTTPSErrors = true,
         Locale = "en-US",
       });
       IPage page = await context.NewPageAsync();
-      Session session = new(playwright, browser, context, page);
+      Session session = new(context, page);
       page.Console += (_, message) => session.Console.Enqueue($"{message.Type}: {message.Text}");
       page.PageError += (_, error) => session.Console.Enqueue(error);
 
@@ -174,25 +182,7 @@ public class PasskeySession_Given_InteractiveServer
       log.ShouldNotContain("Unhandled exception rendering component");
     }
 
-    public async ValueTask DisposeAsync()
-    {
-      await Context.DisposeAsync();
-      await Browser.DisposeAsync();
-      Playwright.Dispose();
-    }
-  }
-
-  private static void InstallChromium()
-  {
-    int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    if (install == 0)
-    {
-      return;
-    }
-
-    // Playwright 1.55 has no ubuntu26.04 browser build. The 24.04 build is the fallback.
-    Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-    install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    install.ShouldBe(0, "Playwright chromium install failed");
+    // The browser is session-owned (PlaywrightBrowserSession); only this test's context is closed.
+    public ValueTask DisposeAsync() => Context.DisposeAsync();
   }
 }

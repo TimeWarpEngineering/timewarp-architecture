@@ -71,6 +71,9 @@ namespace TimeWarp.Architecture.Testing.InProcTestPortsTests
       }
 
       InProcTestPorts.DerivedStep.ShouldBeGreaterThan(InProcTestPorts.PortSpan);
+      // Task 372: below the Linux default ephemeral range (32768–60999), so the OS never hands a
+      // derived port to another socket.
+      InProcTestPorts.DerivedRangeEnd.ShouldBeLessThanOrEqualTo(32768);
       bases.Distinct().Count().ShouldBe(InProcTestPorts.DerivedSlotCount);
       return Task.CompletedTask;
     }

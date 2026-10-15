@@ -23,13 +23,6 @@ public class AskPanelDesign_Given_Wasm
 
   public static async Task EmptyState_Should_ShowGreetingCardsNoticeAndComposer()
   {
-    if (Microsoft.Playwright.Program.Main(["install", "chromium"]) != 0)
-    {
-      // Playwright 1.55 has no ubuntu26.04 browser build. The 24.04 build is the fallback.
-      Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-      Microsoft.Playwright.Program.Main(["install", "chromium"]).ShouldBe(0, "Playwright chromium install failed");
-    }
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
     {
       services.PostConfigure<XaiChatOptions>(options =>
@@ -41,8 +34,7 @@ public class AskPanelDesign_Given_Wasm
       });
     });
 
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,

@@ -67,7 +67,6 @@ public partial class FirstPaint_Given_PrerenderedShell
 
   public static async Task FirstPaint_Should_MatchTheSettledShell()
   {
-    InstallChromium();
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
       services.AddSingleton<IOptions<BlazorSettings>>(Options.Create(new BlazorSettings
       {
@@ -75,13 +74,13 @@ public partial class FirstPaint_Given_PrerenderedShell
         Prerender = true,
       })));
 
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    string html = await FetchPrerenderedHtmlAsync(playwright);
+    PlaywrightBrowserSession session = await PlaywrightBrowserSession.GetAsync();
+    string html = await FetchPrerenderedHtmlAsync(session.Playwright);
     await File.WriteAllTextAsync(ScreenshotPath("prerendered.html"), html);
     AssertStyleElementsAreNotEncoded(html);
     html.ShouldContain("data-theme-color=\"#55409c\"");
 
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+    IBrowser browser = session.Inner;
 
     ShellMetrics jsOff = await MeasureAsync(browser, javaScriptEnabled: false, blockBlazor: false, "first-paint-js-off.png");
     ShellMetrics preInteractive = await MeasureAsync(browser, javaScriptEnabled: true, blockBlazor: true, "first-paint-pre-interactive.png");
@@ -219,20 +218,6 @@ public partial class FirstPaint_Given_PrerenderedShell
   }
 
   private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
-  private static void InstallChromium()
-  {
-    int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    if (install == 0)
-    {
-      return;
-    }
-
-    // Playwright 1.55 has no ubuntu26.04 browser build. The 24.04 build is the fallback.
-    Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-    install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    install.ShouldBe(0, "Playwright chromium install failed");
-  }
 
   private static bool IsBuildOutput(string path)
   {
