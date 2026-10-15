@@ -26,6 +26,7 @@ starts the test host three times. That takes about 2 min in CI.
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
 - 2026-10-15 implementer (ganda task work): `dev publish all [--no-build]`; `dev workflow` uses it.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T09:25:14Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-15T09:26:50Z
 
 ## Results
 
@@ -83,3 +84,7 @@ Expect:
 - Disposition: **accepted-exceptions** — M1 nit (`AspirePublish.Fail` return type) wontfix, cosmetic.
 - dev-cli-tests re-run by reviewer: 239/239.
 - Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
