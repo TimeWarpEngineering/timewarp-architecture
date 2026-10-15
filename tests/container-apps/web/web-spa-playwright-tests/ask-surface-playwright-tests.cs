@@ -202,6 +202,10 @@ public class AskSurface_Given_Wasm
       {
         Path = ScreenshotPath("ask-edit-mode-menu.png"),
       });
+      // On a loaded machine (`dev test` runs suites in parallel, task 370) the menu can close
+      // between the screenshot and the click; reopen it rather than wait 30s on a hidden item.
+      if (!await autoEdit.IsVisibleAsync())
+        await page.Locator("[data-qa=AskEditMode]").ClickAsync();
       await autoEdit.ClickAsync();
       await ModeShouldBeAsync(page, "AutomaticallyEdit");
       await autoEdit.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10_000 });

@@ -1,32 +1,23 @@
 #region Purpose
-// Pins `dev test` argument construction: --no-build only for projects the solution build built.
+// Pins `dev test` argument construction: a serial build phase, then --no-build tests.
 #endregion
 
 namespace DotNetTestArguments_;
 
-public class For_Given_
+public class Arguments_Given_
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<For_Given_>();
+  internal static void Register() => RegisterTests<Arguments_Given_>();
 
-  public static Task Default_Should_Build()
+  public static Task Build_Should_BuildRelease()
   {
-    DotNetTestArguments.For(noBuild: false, builtBySolution: true)
-      .ShouldBe(["test", "-c", "Release"]);
+    DotNetTestArguments.Build().ShouldBe(["build", "-c", "Release"]);
     return Task.CompletedTask;
   }
 
-  public static Task NoBuildSolutionProject_Should_SkipBuildAndRestore()
+  public static Task Test_Should_SkipBuildAndRestore()
   {
-    DotNetTestArguments.For(noBuild: true, builtBySolution: true)
-      .ShouldBe(["test", "-c", "Release", "--no-build", "--no-restore"]);
-    return Task.CompletedTask;
-  }
-
-  public static Task NoBuildOutOfSolutionProject_Should_Build()
-  {
-    DotNetTestArguments.For(noBuild: true, builtBySolution: false)
-      .ShouldBe(["test", "-c", "Release"]);
+    DotNetTestArguments.Test().ShouldBe(["test", "-c", "Release", "--no-build", "--no-restore"]);
     return Task.CompletedTask;
   }
 }
