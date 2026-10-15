@@ -36,3 +36,4 @@ publish step tries to copy the doc file from `bin/release`.
 ## Results
 
 - Boyscout: `ganda repo audit --fix` added the root `.gitignore` lines for the new `kanban-porcelain-gitignore` and `routine-journals-gitignore` checks.
+- Boyscout: untracked the review-round markers (`kanban/done/{300,341,344,362,363}-*/review/round-1/closed`) the new checks flag; the files stay on disk, ignored.
