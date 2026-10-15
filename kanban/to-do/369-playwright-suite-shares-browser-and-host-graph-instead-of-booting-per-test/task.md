@@ -33,6 +33,7 @@ host.
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
 - 2026-10-15 implement (ganda task work, Claude): shared browser session fixture, per-class host
   for the passkey class, timing and 5× loop, gates.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T10:22:28Z
 
 ## Results
 
@@ -79,3 +80,10 @@ passkey flows in each fresh context, which per-test isolation requires.
   `grep -rn "Chromium.LaunchAsync\|Playwright.CreateAsync" tests/container-apps/web/web-spa-playwright-tests/*.cs`
 - Expect: 17/17 pass. The grep finds only `playwright-browser-session.cs`, so Chromium is
   launched once per session and every test opens its own context.
+
+### Review disposition
+- Rounds: 1. Roster: general. Effort: 2 (by-diff budget).
+- Final counts: bug 0, suggestion 0, nit 2 fixed (0 open, 0 wontfix).
+- Disposition: **clean**. Both nits were comment-only Design-region fixes
+  (feedback-attachment wrap; playwright-browser-session host-ownership wording).
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.

@@ -13,7 +13,8 @@
 // an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
 // /Feedback. A new account's role includes feedback.file.self. Shots go to test output
 // (PlaywrightScreenshot). Each test boots its own host (the admin proofs need a fresh one) and
-// opens its own context on the suite's shared browser (PlaywrightBrowserSession). Layout measures fluent-textarea's shadow part=root and part=control against Title's
+// opens its own context on the suite's shared browser (PlaywrightBrowserSession). Layout
+// measures fluent-textarea's shadow part=root and part=control against Title's
 // shadow part=root and input. The host element can be full width while the visible box stays
 // at the component's 18rem inline size, so a host BoundingBox check does not prove the fix.
 // The reply and note boxes have no Title beside them, so they measure part=root against the

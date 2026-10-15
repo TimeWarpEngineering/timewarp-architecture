@@ -15,7 +15,7 @@
 // Hosts are NOT shared here. HostGraphFactory binds fixed in-proc ports, so only one host can be up
 // at a time, and nearly every test depends on a fresh host: the first passkey account on a host
 // claims Administrator, the admin feedback list asserts exact rows, and the rename test changes
-// site settings. Each class still owns its HostGraph (C-create).
+// site settings. Each test (or, for the passkey class, each class) owns its HostGraph (C-create).
 #endregion
 
 namespace WebSpaPlaywright_;
