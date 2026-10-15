@@ -34,6 +34,7 @@ host.
 - 2026-10-15 implement (ganda task work, Claude): shared browser session fixture, per-class host
   for the passkey class, timing and 5× loop, gates.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T10:22:28Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-15T10:24:25Z
 
 ## Results
 
@@ -87,3 +88,7 @@ passkey flows in each fresh context, which per-test isolation requires.
 - Disposition: **clean**. Both nits were comment-only Design-region fixes
   (feedback-attachment wrap; playwright-browser-session host-ownership wording).
 - Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
