@@ -39,6 +39,7 @@ of phases; it should be the **max**.
 - 2026-10-15: implemented (headless implementer, ganda task work).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T08:50:20Z
 - Review oracle: general reviewer (claude, claude-opus-5-5), effort 2, round 1 clean — 2026-10-15
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-15T08:52:06Z
 
 ## Results
 
@@ -130,3 +131,7 @@ of phases; it should be the **max**.
   `aspire-aca-N` artifacts are uploaded. Wall time is ~6 min, versus 10m12s before.
 - Gates: `ganda repo audit` passes; the dev CLI runfile builds with 0 warnings; the solution
   build has 0 warnings and 0 errors.
+
+## Review
+
+- Round 1: Done
