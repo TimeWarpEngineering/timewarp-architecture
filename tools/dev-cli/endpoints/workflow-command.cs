@@ -3,19 +3,21 @@
 #endregion
 #region Design
 // Mode is auto-detected from GITHUB_EVENT_NAME (or forced with --mode):
-//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish compose -> publish kubernetes -> publish aca (tests are the gate)
+//   pull_request / push  -> Pr/Merge:  clean -> build -> test -> publish all (tests are the gate)
 //   release / dispatch   -> Release:   clean -> build -> pack -> push -> template-publish-smoke
 // publish compose (task 070-003) runs `aspire publish` for the Docker Compose target and gates the
 // output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
 // for the Helm chart and helm-lints it (Helm ships on the runner); publish aca (task 070-007) does the
 // same for the Azure Container Apps Bicep (no Azure credentials: publishing only writes files).
+// Task 367: the workflow runs `dev publish all --no-build` — the three publishes, then their three
+// safety suites in ONE aspire-tests run against the Release build that just ran, then helm lint.
 // The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
 // solution-listed test projects skip their own build/restore check.
 // workflow.yml uploads all three outputs. No mode deploys anything (deploying is operator-run).
 // Task 366: Pr/Merge splits into phases so workflow.yml runs them as parallel jobs, each on its
 // own runner that builds what it needs (no shared build artifact: bin/obj is far larger than the
 // org's 500 MB Actions storage cap). --phase test [--group <name>] is clean -> build -> test
-// (one TestGroups group, or all); --phase publish is clean -> build -> the three publishes. No
+// (one TestGroups group, or all); --phase publish is clean -> build -> publish all. No
 // --phase runs everything in order, as before. Release mode accepts no --phase/--group: packing
 // and pushing stay one job and one pass.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
@@ -165,7 +167,7 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     {
       bool test = phase is PhaseAll or PhaseTest;
       bool publish = phase is PhaseAll or PhasePublish;
-      const string publishSteps = "publish compose -> publish kubernetes -> publish aca";
+      const string publishSteps = "publish all";
       string steps = phase switch
       {
         PhaseTest => group is null ? "test" : $"test ({group})",
@@ -178,16 +180,9 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
       if (test && !await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true, Group = group }, Ct))) return;
-      if (publish && !await PublishAsync()) return;
+      if (publish && !await RunStepAsync("Publish all", new PublishAllCommand.Handler(Terminal).Handle(new PublishAllCommand { NoBuild = true }, Ct))) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
-    }
-
-    private async Task<bool> PublishAsync()
-    {
-      if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return false;
-      if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return false;
-      return await RunStepAsync("Publish aca", new PublishAcaCommand.Handler(Terminal).Handle(new PublishAcaCommand(), Ct));
     }
 
     // Release: NO test step — publish as long as it builds; post-push template-publish-smoke blocks on real publish.
