@@ -45,6 +45,8 @@ This is part of the CI speed-up stack: it runs as a child of `feature/ci-speed`,
 
 - Created: 2026-10-15 (cockpit; #515 push-run failure)
 - 2026-10-15 implement oracle (ganda task work): lane, port range, Postgres start hardening, 10× proof.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T14:21:41Z
+- Review oracle (claude, claude-opus-5-5, effort 2, general): round 1, accepted-exceptions — 2026-10-15
 
 ## Results
 
@@ -142,3 +144,21 @@ guard) and `Order_Should_StartAppHostSuitesFirstWithinTheirGroup`.
 **Smoke:** after merge into `feature/ci-speed`, push to #515.
 **Expect:** `ci (integration)` is green on both the push and PR runs, with the same three-suite
 AppHost serialization in its log.
+
+### Review disposition
+
+- Rounds: 1. Effort 2, roster: general (review oracle, claude-opus-5-5).
+- Final counts: bug 1 fixed · suggestion 1 fixed · nit 1 wontfix · **0 open**.
+- Disposition: **accepted-exceptions**.
+  - M1 fixed: the IPv6 port probe no longer reports "in use" when `::1` cannot be bound.
+  - M2 fixed: the Postgres port probe has a per-connect timeout, and the container is disposed
+    after the final failed attempt.
+  - M3 wontfix: the regex also matches a commented-out PackageReference. That false positive only
+    serializes a suite.
+- Gates after the fixes:
+  - `dev build`: 0 warnings, 0 errors.
+  - `dev test -q`: 23 of 23 projects passed.
+  - `dev test -g integration`: 8 of 8 passed on a fresh build.
+  - `dev test -g fast`: 14 of 14 passed.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.

@@ -113,10 +113,11 @@ public sealed class PostgresTestAvailability
         await WaitForHostPortAsync(container.Hostname, container.GetMappedPublicPort(PostgreSqlBuilder.PostgreSqlPort));
         return container;
       }
-      catch (Exception exception) when (attempt < attempts && exception is ResourceReaperException or TimeoutException)
+      catch (Exception exception) when (exception is ResourceReaperException or TimeoutException)
       {
-        Console.WriteLine($"[RETRY] Postgres container start (attempt {attempt} of {attempts}): {exception.Message}");
         await container.DisposeAsync();
+        if (attempt >= attempts) throw;
+        Console.WriteLine($"[RETRY] Postgres container start (attempt {attempt} of {attempts}): {exception.Message}");
       }
     }
   }
@@ -129,15 +130,16 @@ public sealed class PostgresTestAvailability
     {
       try
       {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
         using TcpClient client = new();
-        await client.ConnectAsync(host, port);
+        await client.ConnectAsync(host, port, timeout.Token);
         return;
       }
-      catch (SocketException) when (DateTime.UtcNow < deadline)
+      catch (Exception exception) when ((exception is SocketException or OperationCanceledException) && DateTime.UtcNow < deadline)
       {
         await Task.Delay(TimeSpan.FromMilliseconds(200));
       }
-      catch (SocketException exception)
+      catch (Exception exception) when (exception is SocketException or OperationCanceledException)
       {
         throw new TimeoutException($"Postgres container port {host}:{port} did not accept connections within 30s.", exception);
       }

@@ -187,22 +187,27 @@ public static class HostGraphFactory
   /// concurrent checkout whose derived base landed on the same slot. <c>dev test</c> runs projects
   /// in parallel and gives each running project its own <see cref="InProcTestPorts"/> base; set
   /// <see cref="InProcTestPorts.EnvironmentVariableName"/> to move this process to another base.
-  /// Checks IPv4 and IPv6 loopback: Kestrel binds <c>localhost</c> on both (task 372).
+  /// Checks IPv4 and IPv6 loopback: Kestrel binds <c>localhost</c> on both (task 372). A host whose
+  /// IPv6 loopback cannot be bound at all (IPv6 disabled in a container) skips the IPv6 check.
   /// </summary>
   public static void EnsurePortIsFree(int port, string hostLabel)
   {
-    EnsurePortIsFree(IPAddress.Loopback, port, hostLabel);
+    EnsurePortIsFree(IPAddress.Loopback, port, hostLabel, required: true);
     if (Socket.OSSupportsIPv6)
-      EnsurePortIsFree(IPAddress.IPv6Loopback, port, hostLabel);
+      EnsurePortIsFree(IPAddress.IPv6Loopback, port, hostLabel, required: false);
   }
 
-  private static void EnsurePortIsFree(IPAddress address, int port, string hostLabel)
+  private static void EnsurePortIsFree(IPAddress address, int port, string hostLabel, bool required)
   {
     try
     {
       using TcpListener listener = new(address, port);
       listener.Start();
       listener.Stop();
+    }
+    catch (SocketException exception) when (!required && exception.SocketErrorCode == SocketError.AddressNotAvailable)
+    {
+      // No IPv6 loopback on this host, so nothing can hold the port there.
     }
     catch (SocketException exception)
     {
