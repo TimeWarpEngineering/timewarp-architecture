@@ -12,9 +12,8 @@
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
 // an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
 // /Feedback. A new account's role includes feedback.file.self. Shots go to test output
-// (PlaywrightScreenshot). Chromium install
-// retries with the ubuntu24.04 build when the host distro is newer than Playwright's platform
-// list. Layout measures fluent-textarea's shadow part=root and part=control against Title's
+// (PlaywrightScreenshot). Each test boots its own host (the admin proofs need a fresh one) and
+// opens its own context on the suite's shared browser (PlaywrightBrowserSession). Layout measures fluent-textarea's shadow part=root and part=control against Title's
 // shadow part=root and input. The host element can be full width while the visible box stays
 // at the component's 18rem inline size, so a host BoundingBox check does not prove the fix.
 // The reply and note boxes have no Title beside them, so they measure part=root against the
@@ -45,14 +44,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task PasteAndUpload_Should_ShowAttachmentsOnTheItem()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -144,14 +137,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task VisibleDetailsBox_Should_MatchTitle_And_Resize()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -182,14 +169,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task ReplyAndNoteBoxes_Should_FillTheirField_And_Resize()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -238,14 +219,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task AdminListHeaderClick_Should_ReorderRows_And_ToggleDirection()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -305,14 +280,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task AdminListOwnerCell_Should_ShowTheDisplayName_And_LinkToThePrincipal()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -371,14 +340,8 @@ public class FeedbackAttachment_Given_Wasm
 
   public static async Task AdminGrids_Should_KeepThePrimaryColumn_WhenNarrow_Or_AskIsOpen()
   {
-    InstallChromium();
-
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
-    using IPlaywright playwright = await Playwright.CreateAsync();
-    await using IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-    {
-      Headless = true,
-    });
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
     await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
       IgnoreHTTPSErrors = true,
@@ -737,19 +700,6 @@ public class FeedbackAttachment_Given_Wasm
     await page.Locator("[data-qa=CreatePasskey]").ClickAsync();
     await page.WaitForURLAsync("**/Settings", new PageWaitForURLOptions { Timeout = 60_000 });
     await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-  }
-
-  private static void InstallChromium()
-  {
-    int install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    if (install == 0)
-    {
-      return;
-    }
-
-    Environment.SetEnvironmentVariable("PLAYWRIGHT_HOST_PLATFORM_OVERRIDE", "ubuntu24.04-x64");
-    install = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-    install.ShouldBe(0, "Playwright chromium install failed");
   }
 
   private static string ScreenshotPath(string fileName) =>
