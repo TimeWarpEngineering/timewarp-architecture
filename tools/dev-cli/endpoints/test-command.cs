@@ -19,6 +19,8 @@
 // most --max-integration integration-group projects at once. Each worker owns one port base from
 // TestParallelism.PortBases (the resolved base first) and exports it to its child `dotnet test`,
 // so a suite and anything it spawns agree on one port set and concurrent suites never share one.
+// Task 372: projects that boot an Aspire AppHost (TestParallelism.BootsAppHost) share one exclusive
+// lane, so at most one runs at a time; the rest stay parallel with them.
 // Task 365 / 370: a serial build phase runs first (DotNetTestArguments): the Release solution build
 // unless --no-build, then each selected out-of-solution project. Every `dotnet test` is
 // --no-build --no-restore, so concurrent tests never race on shared obj/ and bin/ folders.
@@ -130,11 +132,15 @@ internal sealed class TestCommand : ICommand<Unit>
       if (!await BuildAsync(solutionFile, projects)) return false;
 
       int[] portBases = TestParallelism.PortBases(basePort, source, maxParallel);
+      HashSet<string> appHostSuites = [.. projects
+        .Where(p => TestParallelism.BootsAppHost(p, path => File.Exists(path) ? File.ReadAllText(path) : null))];
       Terminal.WriteLine(
         $"Running {projects.Length} test projects, up to {maxParallel} at once " +
         $"(integration: {maxIntegration}); port bases {string.Join(", ", portBases)}");
+      if (appHostSuites.Count > 0)
+        Terminal.WriteLine($"AppHost suites run one at a time: {string.Join(", ", appHostSuites.Select(Path.GetFileNameWithoutExtension))}");
 
-      ProjectResult[] results = await RunAllAsync(projects, portBases, maxIntegration);
+      ProjectResult[] results = await RunAllAsync(projects, appHostSuites, portBases, maxIntegration);
       WriteSummary(results);
 
       if (results.Any(r => !r.Passed))
@@ -187,13 +193,16 @@ internal sealed class TestCommand : ICommand<Unit>
     }
 
     // Dispatcher: whenever a worker's port base is free, start the first pending project in start
-    // order (TestParallelism.Order) whose group cap has room, so the order holds under the caps.
-    private async Task<ProjectResult[]> RunAllAsync(string[] projects, int[] portBases, int maxIntegration)
+    // order (TestParallelism.Order) whose group cap has room and, for an AppHost suite, while no other
+    // AppHost suite runs, so the order holds under the caps and the AppHost lane stays exclusive.
+    private async Task<ProjectResult[]> RunAllAsync(string[] projects, HashSet<string> appHostSuites, int[] portBases, int maxIntegration)
     {
-      List<(string Project, string Group)> pending = [.. TestParallelism.Order(projects.Select(p => (p, GroupOf(p))))];
+      List<(string Project, string Group, bool BootsAppHost)> pending = [.. TestParallelism.Order(
+        projects.Select(p => (p, GroupOf(p), appHostSuites.Contains(p))))];
       Queue<int> freeBases = new(portBases);
       Dictionary<string, int> runningPerGroup = [];
-      Dictionary<Task<ProjectResult>, (int PortBase, string Group)> running = [];
+      bool appHostRunning = false;
+      Dictionary<Task<ProjectResult>, (int PortBase, string Group, bool BootsAppHost)> running = [];
       List<ProjectResult> results = [];
 
       while (pending.Count > 0 || running.Count > 0)
@@ -201,22 +210,25 @@ internal sealed class TestCommand : ICommand<Unit>
         while (freeBases.Count > 0)
         {
           int next = pending.FindIndex(p =>
-            TestParallelism.GroupCap(p.Group, maxIntegration) is not int cap
-            || runningPerGroup.GetValueOrDefault(p.Group) < cap);
+            (!p.BootsAppHost || !appHostRunning)
+            && (TestParallelism.GroupCap(p.Group, maxIntegration) is not int cap
+              || runningPerGroup.GetValueOrDefault(p.Group) < cap));
           if (next < 0) break;
 
-          (string project, string group) = pending[next];
+          (string project, string group, bool bootsAppHost) = pending[next];
           pending.RemoveAt(next);
           int portBase = freeBases.Dequeue();
           runningPerGroup[group] = runningPerGroup.GetValueOrDefault(group) + 1;
-          running[RunOneAsync(project, group, portBase)] = (portBase, group);
+          appHostRunning |= bootsAppHost;
+          running[RunOneAsync(project, group, portBase)] = (portBase, group, bootsAppHost);
         }
 
         Task<ProjectResult> finished = await Task.WhenAny(running.Keys);
-        (int finishedBase, string finishedGroup) = running[finished];
+        (int finishedBase, string finishedGroup, bool finishedAppHost) = running[finished];
         running.Remove(finished);
         freeBases.Enqueue(finishedBase);
         runningPerGroup[finishedGroup]--;
+        if (finishedAppHost) appHostRunning = false;
         results.Add(await finished);
       }
 

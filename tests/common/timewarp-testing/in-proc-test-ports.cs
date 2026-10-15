@@ -11,13 +11,15 @@
 //   2. Otherwise derive from the checkout root — the nearest directory holding a *.slnx — with a
 //      stable FNV-1a hash of the normalized absolute path (Derived). Bases land in
 //      [DerivedRangeStart, DerivedRangeEnd) on DerivedStep boundaries, so two different bases never
-//      share a port (step ≥ the 1444 spread) and the whole set stays below 40000, clear of the
-//      7000-range defaults other tools pick and of the Windows ephemeral range (49152+). The top
-//      slots (32000+) overlap Linux's default ephemeral range (32768–60999); that keeps 13 slots
-//      instead of 8, and a port an outbound socket happens to hold fails loudly like any collision.
+//      share a port (step ≥ the 1444 spread) and the whole set stays below 32768, clear of the
+//      7000-range defaults other tools pick and of every default ephemeral range (Linux
+//      32768–60999, Windows and macOS 49152+). Task 372: the ring once reached 40000 for 13 slots;
+//      under parallel `dev test` a worker on base 35000 lost [::1]:35000 to a socket the OS handed
+//      a concurrent AppHost run. Only 8 slots fit below 32768, and that is the price of ports no
+//      other process is given at random.
 //   3. No *.slnx found → LegacyBase 7000 (Fallback).
 // Why per checkout: parallel workers each run `dev test` in their own worktree; a fixed 7000 made
-// two worktrees collide. Different checkouts get different bases (13 slots — not a guarantee, so
+// two worktrees collide. Different checkouts get different bases (8 slots — not a guarantee, so
 // HostGraphFactory.EnsurePortIsFree fails loudly with Describe() and the override variable rather
 // than silently moving a port that child processes must agree on).
 // Root search starts at the runfile's source directory (EntryPointFileDirectoryPath — Jaribu
@@ -51,8 +53,11 @@ public static class InProcTestPorts
   /// <summary>Lowest derived base.</summary>
   public const int DerivedRangeStart = 20000;
 
-  /// <summary>Every derived port (base + <see cref="PortSpan"/>) stays below this.</summary>
-  public const int DerivedRangeEnd = 40000;
+  /// <summary>
+  /// Every derived port (base + <see cref="PortSpan"/>) stays below this: the start of the Linux
+  /// default ephemeral range, so the OS never hands a derived port to another socket.
+  /// </summary>
+  public const int DerivedRangeEnd = 32768;
 
   /// <summary>Derived bases are DerivedRangeStart + n * DerivedStep; step exceeds the spread.</summary>
   public const int DerivedStep = 1500;
