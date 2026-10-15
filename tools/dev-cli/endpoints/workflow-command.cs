@@ -12,6 +12,12 @@
 // The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
 // solution-listed test projects skip their own build/restore check.
 // workflow.yml uploads all three outputs. No mode deploys anything (deploying is operator-run).
+// Task 366: Pr/Merge splits into phases so workflow.yml runs them as parallel jobs, each on its
+// own runner that builds what it needs (no shared build artifact: bin/obj is far larger than the
+// org's 500 MB Actions storage cap). --phase test [--group <name>] is clean -> build -> test
+// (one TestGroups group, or all); --phase publish is clean -> build -> the three publishes. No
+// --phase runs everything in order, as before. Release mode accepts no --phase/--group: packing
+// and pushing stay one job and one pass.
 // The release path deliberately does not run tests — they already ran on the PR/merge that
 // produced master. A release publishes as long as it builds. Publishing is gated only by an
 // API key being supplied (--api-key, from OIDC Trusted Publishing); without one, pack-only
@@ -34,6 +40,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
   [Option("api-key", "k", Description = "NuGet API key for publishing (from OIDC Trusted Publishing)")]
   public string? ApiKey { get; set; }
+
+  [Option("phase", "p", Description = "Pr/merge only: run one phase, test or publish (default: all)")]
+  public string? Phase { get; set; }
+
+  [Option("group", "g", Description = "With --phase test: run one test group, fast, playwright, or integration (default: all)")]
+  public string? Group { get; set; }
 
   // The publishable set — single repo version (source/Directory.Build.props). libraries (modules,
   // identity, 402) ship as leaf product packages; foundation-application depends on modules; analyzers/
@@ -77,10 +89,12 @@ internal sealed class WorkflowCommand : ICommand<Unit>
       CiMode mode = DetermineMode(command.Mode);
       Terminal.WriteLine($"\nCI/CD Pipeline — Mode: {mode}\n".Cyan());
 
+      if (!ValidatePhase(command, mode)) return Unit.Value;
+
       if (mode == CiMode.Release)
         await RunReleaseAsync(command.ApiKey);
       else
-        await RunPrAsync();
+        await RunPrAsync(command.Phase ?? PhaseAll, command.Group);
 
       return Unit.Value;
     }
@@ -97,6 +111,29 @@ internal sealed class WorkflowCommand : ICommand<Unit>
 
       RepoRoot = root;
       return true;
+    }
+
+    private const string PhaseAll = "all";
+    private const string PhaseTest = "test";
+    private const string PhasePublish = "publish";
+
+    private bool ValidatePhase(WorkflowCommand command, CiMode mode)
+    {
+      string? error = null;
+      if (mode == CiMode.Release && (command.Phase is not null || command.Group is not null))
+        error = "--phase and --group apply to pr/merge only; release runs as one job.";
+      else if (command.Phase is not null && command.Phase is not (PhaseTest or PhasePublish))
+        error = $"Unknown phase '{command.Phase}'. Phases: {PhaseTest}, {PhasePublish}.";
+      else if (command.Group is not null && command.Phase != PhaseTest)
+        error = "--group requires --phase test.";
+      else if (command.Group is not null && !TestGroups.IsGroup(command.Group))
+        error = $"Unknown test group '{command.Group}'. Groups: {string.Join(", ", TestGroups.Names)}.";
+
+      if (error is null) return true;
+
+      Terminal.WriteErrorLine($"Error: {error}".Red());
+      Environment.ExitCode = 1;
+      return false;
     }
 
     private CiMode DetermineMode(string? explicitMode)
@@ -124,19 +161,33 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     }
 
     // PR / merge: tests gate here.
-    private async Task RunPrAsync()
+    private async Task RunPrAsync(string phase, string? group)
     {
-      Terminal.WriteLine("Pipeline: clean -> build -> test -> publish compose -> publish kubernetes -> publish aca\n");
+      bool test = phase is PhaseAll or PhaseTest;
+      bool publish = phase is PhaseAll or PhasePublish;
+      const string publishSteps = "publish compose -> publish kubernetes -> publish aca";
+      string steps = phase switch
+      {
+        PhaseTest => group is null ? "test" : $"test ({group})",
+        PhasePublish => publishSteps,
+        _ => $"test -> {publishSteps}",
+      };
+      Terminal.WriteLine($"Pipeline: clean -> build -> {steps}\n");
       Environment.ExitCode = 0;
 
       if (!await RunStepAsync("Clean", new CleanCommand.Handler(Terminal, RepoCleanService).Handle(new CleanCommand(), Ct))) return;
       if (!await RunStepAsync("Build", new BuildCommand.Handler(Terminal).Handle(new BuildCommand(), Ct))) return;
-      if (!await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true }, Ct))) return;
-      if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return;
-      if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return;
-      if (!await RunStepAsync("Publish aca", new PublishAcaCommand.Handler(Terminal).Handle(new PublishAcaCommand(), Ct))) return;
+      if (test && !await RunStepAsync("Test", new TestCommand.Handler(Terminal).Handle(new TestCommand { NoBuild = true, Group = group }, Ct))) return;
+      if (publish && !await PublishAsync()) return;
 
       Terminal.WriteLine("\nPipeline SUCCEEDED".Green());
+    }
+
+    private async Task<bool> PublishAsync()
+    {
+      if (!await RunStepAsync("Publish compose", new PublishComposeCommand.Handler(Terminal).Handle(new PublishComposeCommand(), Ct))) return false;
+      if (!await RunStepAsync("Publish kubernetes", new PublishKubernetesCommand.Handler(Terminal).Handle(new PublishKubernetesCommand(), Ct))) return false;
+      return await RunStepAsync("Publish aca", new PublishAcaCommand.Handler(Terminal).Handle(new PublishAcaCommand(), Ct));
     }
 
     // Release: NO test step — publish as long as it builds; post-push template-publish-smoke blocks on real publish.
