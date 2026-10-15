@@ -28,6 +28,8 @@ InProcTestPorts base"). Task 330 made the base overridable and slot-based (20000
 ## Session
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
 - 2026-10-15: implemented (ganda task work, implement node).
+- Review oracle: claude (claude-opus-5-5), tw-implementation-review round 1, clean — 2026-10-15
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T11:24:28Z
 
 ## Results
 
@@ -101,3 +103,15 @@ Expect:
   shows `FAILED`, prints its output, and the run exits 1.
 - The whole suite takes about 2.5–3 min locally, against about 7 min serial.
 - `-j 0` prints `--max-parallel must be 1..13 ...` and exits 1.
+
+### Review disposition
+- Rounds: 1. Roster: general. Effort: 2 (by-diff, 562 lines).
+- Final counts: bug 0, suggestion 1 fixed (M1), nit 0. Open: 0.
+- Disposition: **clean**. M1: `RunAllAsync` is now a dispatcher loop. Whenever a port base is
+  free it starts the first pending project in start order whose group cap has room. Before this,
+  integration projects waiting on the cap could queue behind every fast project.
+- After the fix: `dev build` 0/0; `dev test --no-build -j 4 --quiet` 23/23 (163s), with every
+  integration project started before any fast one.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+

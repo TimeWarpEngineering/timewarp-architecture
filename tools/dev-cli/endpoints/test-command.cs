@@ -29,7 +29,6 @@
 
 namespace DevCli.Commands;
 
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -187,64 +186,52 @@ internal sealed class TestCommand : ICommand<Unit>
       return false;
     }
 
+    // Dispatcher: whenever a worker's port base is free, start the first pending project in start
+    // order (TestParallelism.Order) whose group cap has room, so the order holds under the caps.
     private async Task<ProjectResult[]> RunAllAsync(string[] projects, int[] portBases, int maxIntegration)
     {
-      (string Project, string Group)[] ordered = TestParallelism.Order(projects.Select(p => (p, GroupOf(p))));
-      using SemaphoreSlim workers = new(portBases.Length);
-      ConcurrentQueue<int> freeBases = new(portBases);
-      var groupCaps = TestGroups.Names
-        .Select(name => (name, cap: TestParallelism.GroupCap(name, maxIntegration)))
-        .Where(g => g.cap is not null)
-        .ToDictionary(g => g.name, g => new SemaphoreSlim(g.cap!.Value));
+      List<(string Project, string Group)> pending = [.. TestParallelism.Order(projects.Select(p => (p, GroupOf(p))))];
+      Queue<int> freeBases = new(portBases);
+      Dictionary<string, int> runningPerGroup = [];
+      Dictionary<Task<ProjectResult>, (int PortBase, string Group)> running = [];
+      List<ProjectResult> results = [];
 
-      try
+      while (pending.Count > 0 || running.Count > 0)
       {
-        // Ordered start: each task asks for its group cap, then a worker; the semaphores queue
-        // waiters FIFO-ish, so playwright and integration projects tend to start first.
-        Task<ProjectResult>[] runs = ordered
-          .Select(p => RunOneAsync(p.Project, p.Group, workers, freeBases, groupCaps.GetValueOrDefault(p.Group)))
-          .ToArray();
-        return await Task.WhenAll(runs);
+        while (freeBases.Count > 0)
+        {
+          int next = pending.FindIndex(p =>
+            TestParallelism.GroupCap(p.Group, maxIntegration) is not int cap
+            || runningPerGroup.GetValueOrDefault(p.Group) < cap);
+          if (next < 0) break;
+
+          (string project, string group) = pending[next];
+          pending.RemoveAt(next);
+          int portBase = freeBases.Dequeue();
+          runningPerGroup[group] = runningPerGroup.GetValueOrDefault(group) + 1;
+          running[RunOneAsync(project, group, portBase)] = (portBase, group);
+        }
+
+        Task<ProjectResult> finished = await Task.WhenAny(running.Keys);
+        (int finishedBase, string finishedGroup) = running[finished];
+        running.Remove(finished);
+        freeBases.Enqueue(finishedBase);
+        runningPerGroup[finishedGroup]--;
+        results.Add(await finished);
       }
-      finally
-      {
-        foreach (SemaphoreSlim cap in groupCaps.Values) cap.Dispose();
-      }
+
+      return [.. results];
     }
 
-    private async Task<ProjectResult> RunOneAsync(
-      string project,
-      string group,
-      SemaphoreSlim workers,
-      ConcurrentQueue<int> freeBases,
-      SemaphoreSlim? groupCap)
+    private async Task<ProjectResult> RunOneAsync(string project, string group, int portBase)
     {
       string name = Path.GetFileNameWithoutExtension(project);
-      if (groupCap is not null) await groupCap.WaitAsync(Ct);
-      try
-      {
-        await workers.WaitAsync(Ct);
-        // A worker slot is held, so a base is free: there are exactly as many bases as workers.
-        freeBases.TryDequeue(out int portBase);
-        try
-        {
-          lock (OutputLock) Terminal.WriteLine($"Started  {name} (port base {portBase})");
-          var stopwatch = Stopwatch.StartNew();
-          CommandOutput output = await BuildTestCommand(project, portBase).CaptureAsync(Ct);
-          ProjectResult result = new(name, group, output.Success, stopwatch.Elapsed, portBase);
-          WriteProjectOutput(result, output);
-          return result;
-        }
-        finally
-        {
-          freeBases.Enqueue(portBase);
-          workers.Release();
-        }
-      }
-      finally
-      {
-        groupCap?.Release();
-      }
+      lock (OutputLock) Terminal.WriteLine($"Started  {name} (port base {portBase})");
+      var stopwatch = Stopwatch.StartNew();
+      CommandOutput output = await BuildTestCommand(project, portBase).CaptureAsync(Ct);
+      ProjectResult result = new(name, group, output.Success, stopwatch.Elapsed, portBase);
+      WriteProjectOutput(result, output);
+      return result;
     }
 
     private void WriteProjectOutput(ProjectResult result, CommandOutput output)
