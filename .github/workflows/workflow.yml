@@ -17,6 +17,20 @@ name: CI/CD
 # branch directly, and after a manual retarget push a commit or close/reopen the PR.
 # Publishing is release-only: push/pull_request run `dev workflow` in Pr/Merge mode (build,
 # test, `dev publish` file outputs) with no NuGet login, pack, or push on any branch.
+#
+# Checkout and NuGet cache (task 368):
+#   - Every job checks out shallow (fetch-depth: 1). Nothing in CI reads history or tags: SourceLink
+#     and TimeWarp.Build.Tasks' GitMetadataTask read only HEAD (`git rev-parse HEAD`,
+#     `git log -1`), `dev check-version` compares <Version> against nuget.org, and `dev release`
+#     (the only tag writer) runs locally, not here. detect-paths fetches its one base commit by SHA.
+#   - Jobs that restore cache ~/.nuget/packages under an exact content-hash key (every
+#     Directory.Packages.props, msbuild/*.props, global.json). No restore-keys: a CPM change starts
+#     a clean cache instead of layering onto an old one. Restored packages all come from nuget.org
+#     (immutable per version); the only locally packed version is template-smoke's 2.0.0-smoke,
+#     which is evicted before its cache is saved. release restores read-only and never saves.
+#   - The dev CLI runfile build is not cached: its up-to-date check compares file times, and every
+#     checkout writes fresh ones, so a restored build would just recompile. Its package restore is
+#     covered by the NuGet cache.
 
 on:
   push:
@@ -86,7 +100,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Classify changed paths
         id: filter
@@ -105,6 +119,16 @@ jobs:
             echo "skill=true" >> "$GITHUB_OUTPUT"
             echo "template=true" >> "$GITHUB_OUTPUT"
             echo "No usable base SHA — enabling all path-gated jobs."
+            exit 0
+          fi
+          # Shallow checkout (task 368): fetch just the two commits to compare. `git diff` of two
+          # commits compares their trees, so no history between them is needed. A base that can no
+          # longer be fetched (force push) is treated like an unknown base.
+          if ! git fetch --no-tags --depth=1 origin "$BASE" "$HEAD"; then
+            echo "ci=true" >> "$GITHUB_OUTPUT"
+            echo "skill=true" >> "$GITHUB_OUTPUT"
+            echo "template=true" >> "$GITHUB_OUTPUT"
+            echo "Could not fetch base $BASE — enabling all path-gated jobs."
             exit 0
           fi
           changed=$(git diff --name-only "$BASE" "$HEAD" || true)
@@ -163,7 +187,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for SourceLink / version metadata
+          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -171,6 +195,14 @@ jobs:
           # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
           dotnet-version: '11.0.x'
           dotnet-quality: 'preview'
+
+      # One key for every group: each job builds the whole solution, so they restore the same set.
+      # The first group to finish saves it; the others skip the save.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
 
       # Integration tests hit the servers over HTTPS with the ASP.NET dev certificate; trust it so the
       # runner's HttpClient doesn't fail with UntrustedRoot (passes locally only because the dev box
@@ -274,7 +306,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for SourceLink / version metadata
+          fetch-depth: 1  # SourceLink and commit metadata read HEAD only (task 368)
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -282,6 +314,15 @@ jobs:
           # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
           dotnet-version: '11.0.x'
           dotnet-quality: 'preview'
+
+      # Read-only: the release run reuses the ci cache for the same CPM inputs but never saves one,
+      # so nothing a release run restores or packs can seed a later run.
+      - name: Restore NuGet package cache
+        if: github.event_name != 'workflow_dispatch' || inputs.mode != 'probe'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-ci-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
 
       - name: NuGet login (OIDC Trusted Publishing)
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'probe')
@@ -368,6 +409,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -375,6 +418,13 @@ jobs:
           # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
           dotnet-version: '11.0.x'
           dotnet-quality: 'preview'
+
+      # Own key: the smoke restores the generated app's set, not the monorepo solution's.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-template-smoke-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
 
       # Generated-app Jaribu aggregators hit HTTPS with the ASP.NET dev certificate (same as the
       # `ci-group` jobs). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
@@ -386,3 +436,10 @@ jobs:
         run: |
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           dotnet run tools/dev-cli/dev.cs -- template-smoke
+
+      # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
+      # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries
+      # one branch's local bits into another run.
+      - name: Evict smoke packages from NuGet cache
+        if: always()
+        run: rm -rf ~/.nuget/packages/*/2.0.0-smoke
