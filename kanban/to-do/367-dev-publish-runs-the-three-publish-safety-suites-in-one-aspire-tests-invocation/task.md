@@ -25,6 +25,7 @@ starts the test host three times. That takes about 2 min in CI.
 ## Session
 - Created: 2026-10-15 (cockpit, CI speed-up analysis per Steve)
 - 2026-10-15 implementer (ganda task work): `dev publish all [--no-build]`; `dev workflow` uses it.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-15T09:25:14Z
 
 ## Results
 
@@ -74,3 +75,11 @@ Expect:
 - `dev publish kubernetes` still publishes only the chart, runs only `KubernetesPublish_Given_`
   (10 facts) and helm-lints it; exit 0.
 - `dev workflow --phase publish` shows `Pipeline: clean -> build -> publish all`.
+
+### Review disposition
+
+- Rounds: 1; roster: general (review oracle, claude-opus-5-5); effort 2 (by-diff, 453 lines).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix); 0 open.
+- Disposition: **accepted-exceptions** — M1 nit (`AspirePublish.Fail` return type) wontfix, cosmetic.
+- dev-cli-tests re-run by reviewer: 239/239.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
