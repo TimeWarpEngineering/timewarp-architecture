@@ -246,7 +246,9 @@ Compile coverage for co-located runfiles comes from:
    `TestingPlatformDotnetTestSupport` property alone is NOT detected, and an aggregator missing
    the file silently falls to the unsupported VSTest path and fails at `dev test` time.
 3. **`dev template-smoke`** tiers 1–3 for the two exemplars (guard text, standalone run, aggregator
-   MTP: zero failures and at least one discovered test).
+   MTP: zero failures and at least one discovered test). It smokes `SmokeDefault` only;
+   `--matrix` adds each flag-off variant and `--app-tests` runs every generated test project
+   (CI runs both nightly; see `references/co-located-jaribu-runfiles.md`).
 
 A broken or misnamed co-located test that is never run standalone and is not yet under an
 aggregator's glob can still sit undetected by `dev build` alone — prefer `dev test` (or

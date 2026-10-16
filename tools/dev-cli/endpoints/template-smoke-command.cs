@@ -38,13 +38,27 @@
 // without paying for another restore/build.
 // Task 373: the web family's mock-auth surfaces exist only with web on, so a web-off entry skips
 // AssertMockAuthFailClosedSurfaces.
+// Task 375: the shared pack, install and dotted-name asserts run once; the SmokeMatrix loop runs
+// SmokeDefault alone unless --matrix selects every entry. Each flag adds a variant and minutes,
+// so PR/push CI runs SmokeDefault only and a nightly CI run (schedule, or workflow_dispatch
+// mode nightly) runs `--matrix --app-tests`. Local default matches the PR gate; pass --matrix
+// when a change touches `#if flag` regions or template.json symbols. --app-tests adds
+// Harness.AssertGeneratedAppTestSuitesAsync per variant (needs Docker). The loop runs every
+// selected variant even after one fails and reports them together, so one nightly names every
+// broken flag.
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build generated apps (defaults + each flag off)")]
+[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build the default generated app (--matrix: each flag off too)")]
 internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 {
+  [Option("matrix", "m", Description = "Smoke every SmokeMatrix variant (defaults + each flag off), not only SmokeDefault")]
+  public bool Matrix { get; set; }
+
+  [Option("app-tests", Description = "Also run each generated app's test projects (aspire, integration, Playwright; needs Docker)")]
+  public bool AppTests { get; set; }
+
   private const string TemplateProject =
     "timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj";
 
@@ -125,6 +139,7 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
   internal sealed class Handler : ICommandHandler<TemplateSmokeCommand, Unit>
   {
     private readonly ITerminal Terminal;
+    private TemplateSmokeCommand Command = null!;
     private CancellationToken Ct;
     private string RepoRoot = null!;
     private string SmokeRoot = null!;
@@ -140,6 +155,7 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 
     public async Task<Unit> Handle(TemplateSmokeCommand command, CancellationToken ct)
     {
+      Command = command;
       Ct = ct;
 
       if (!FindRepoRoot()) return Unit.Value;
@@ -158,14 +174,27 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       if (!await InstallTemplateAsync()) return Unit.Value;
       if (!await AssertDottedNameKebabsAsync()) return Unit.Value;
 
-      foreach ((string name, string[] extraArgs, string[] excludedFamilies) in SmokeMatrix)
+      (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] variants = Command.Matrix ? SmokeMatrix : SmokeMatrix[..1];
+      Terminal.WriteLine(
+        $"Variants: {string.Join(", ", variants.Select(v => v.Name))}" +
+        (Command.Matrix ? "" : " (--matrix adds each flag off)") +
+        (Command.AppTests ? "; generated-app test projects included" : ""));
+
+      List<string> failedVariants = [];
+      foreach ((string name, string[] extraArgs, string[] excludedFamilies) in variants)
       {
         if (!await SmokeOneAsync(name, extraArgs, excludedFamilies))
         {
           Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {name}".Red());
-          Environment.ExitCode = 1;
-          return Unit.Value;
+          failedVariants.Add(name);
         }
+      }
+
+      if (failedVariants.Count > 0)
+      {
+        Terminal.WriteErrorLine($"\nTemplate smoke FAILED — {string.Join(", ", failedVariants)}".Red());
+        Environment.ExitCode = 1;
+        return Unit.Value;
       }
 
       if (!AssertIngressPortsRegenerated()) return Unit.Value;
@@ -436,7 +465,11 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       // `dotnet test` from each project dir. Not in .slnx. TIMEWARP_TEST_PORT_BASE isolates
       // generated-app hosts from monorepo `dev test` (task 245). Flag-off entries assert
       // excluded families' aggregators are absent (review R2-1).
-      return await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct);
+      if (!await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct))
+        return false;
+
+      // Task 375: opt-in generated-app test projects (nightly CI).
+      return !Command.AppTests || await Harness.AssertGeneratedAppTestSuitesAsync(outputDirForTier2, Ct);
     }
 
     private void WriteLocalNuGetConfig(string outputDir)
