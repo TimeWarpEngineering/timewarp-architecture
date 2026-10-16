@@ -1,7 +1,10 @@
 namespace TimeWarp.Architecture.Testing;
+#if(web)
 
 // global:: — TimeWarp.Architecture.Yarp is this repo's gateway namespace, not the YARP package.
+// Only the web-only YarpWebClusterHttpAddressFilter below uses it.
 using global::Yarp.ReverseProxy.Configuration;
+#endif
 
 #region Purpose
 // In-proc host for the standalone YARP gateway used by C-create HostGraphFactory.

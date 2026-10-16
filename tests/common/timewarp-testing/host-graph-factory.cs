@@ -26,6 +26,9 @@ using System.Net.Sockets;
 // Per-family conditional-compilation guards (task 145-002 R2-1 fix follow-up, template-smoke SmokeNoApi regression):
 // same reasoning as HostGraph — this file ships unconditionally, so each Create* method that
 // names a family-specific type must be guarded to the family combination it needs.
+// EnsureYarpPortsAreFree is web && yarp: its only callers (CreateWebApiYarpAsync,
+// CreateWebYarpAsync) need web, so a yarp-only guard leaves it unused under --web false (RCS1213).
+// Each guarded block opens with its own blank line so stripped regions never leave two (IDE2000).
 // CreateWebAsync (task 145-004 R2-1): added because web-server-integration-tests' 19 classes
 // (21 call sites) all call CreateWebWithApiAsync but NONE of them actually touch Graph.Api or
 // any Api-backed HttpClient (verified: zero `.Api` references, zero HttpClient/ApiServiceName
@@ -165,16 +168,16 @@ public static class HostGraphFactory
     }
   }
 #endif
+#if(web && yarp)
 
-#if(yarp)
   private static void EnsureYarpPortsAreFree()
   {
     EnsurePortIsFree(YarpTestServerApplication.YarpPort, "Yarp (YarpTestServerApplication)");
     EnsurePortIsFree(YarpTestServerApplication.YarpHttpPort, "Yarp HTTP (YarpTestServerApplication)");
   }
 #endif
-
 #if(web)
+
   private static void EnsureWebPortsAreFree()
   {
     EnsurePortIsFree(WebTestServerApplication.WebPort, "Web.Server (WebTestServerApplication)");
