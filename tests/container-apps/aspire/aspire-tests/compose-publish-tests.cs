@@ -24,7 +24,8 @@
 // the files: `aspire publish` leaves every .env value blank, and the ingress-port default the deploy
 // step writes there must be the committed Parameters:ingress-port.
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
-// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output.
+// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
+// variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
 #endregion
 
 namespace Aspire.Tests;
@@ -129,6 +130,9 @@ public partial class ComposePublish_Given_
     {
       service.ShouldNotContain(StateDevToolsResource);
       ServiceEnvironment(service).Keys.ShouldNotContain(StateDevToolsEndpointVariable, $"service '{service}' points at State DevTools");
+      // Task 335-002: no inspector CORS variable either (run-mode ingress origins).
+      ServiceEnvironment(service).Keys.ShouldNotContain(key => key.Contains("DEVTOOLS", StringComparison.OrdinalIgnoreCase),
+        $"service '{service}' carries a State DevTools variable");
     }
 
     EnvFile.Keys.ShouldNotContain(key => key.Contains("DEVTOOLS", StringComparison.OrdinalIgnoreCase));

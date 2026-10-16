@@ -69,8 +69,11 @@
 // calls sit in the IsRunMode block: the package already keeps the inspector out of the manifest, and the
 // explicit gate keeps publish models from ever resolving the inspector path. compose/kubernetes/aca
 // publish suites assert neither the resource nor the variable appears. Inside the web block: no
-// web-server, no TimeWarp.State app to inspect. Only server-side stores (prerender, InteractiveServer) are
-// exported; the WASM store has no tracer provider.
+// web-server, no TimeWarp.State app to inspect. Server-side stores (prerender, InteractiveServer) export
+// from web-server. Task 335-002: browser (WASM) stores export from web-spa (Debug builds, Development)
+// to the inspector's POST /ingest/spans, which allows only listed CORS origins. WithTimeWarpStateDevTools
+// lists web-server's endpoints; with yarp on, the run-mode ingress block adds the ingress origins through
+// TimeWarp__State__DevTools__CorsOrigins on the inspector, because the browser loads the SPA from there.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
 // WebServerApiRoutePrefixes.All from the hosted web-contracts ApiRoute templates (outer ApiEndpoint + nested
@@ -352,13 +355,15 @@ internal class Program
 
     // External in run mode only (dashboard links straight to Web.Server). Published, the ingress is
     // the single host-exposed service; an external web-server would publish its own host port.
+    // Task 335-002: null in publish mode; the ingress block adds its origins to the inspector's CORS list.
+    IResourceBuilder<ExecutableResource>? stateDevTools = null;
     if (builder.ExecutionContext.IsRunMode)
     {
       webServer = webServer.WithExternalHttpEndpoints();
 
       // Task 335-001: the packaged TimeWarp.State DevTools inspector, run mode only (see Design).
       // web-server gets TIMEWARP_STATE_DEVTOOLS_ENDPOINT and waits for the inspector.
-      IResourceBuilder<ExecutableResource> stateDevTools = builder.AddTimeWarpStateDevTools();
+      stateDevTools = builder.AddTimeWarpStateDevTools();
       webServer = webServer.WithTimeWarpStateDevTools(stateDevTools);
     }
 
@@ -588,6 +593,18 @@ internal class Program
       // with web excluded that route does not exist, so neither does the check.
       yarpProject = yarpProject.WithReference(webServer);
       yarpProject = yarpProject.WithHttpHealthCheck(global::TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath, endpointName: "http");
+
+      // Task 335-002: the browser loads the SPA from the ingress, so the WASM exporter's span posts
+      // carry the ingress origin. WithTimeWarpStateDevTools allows only web-server's own endpoints;
+      // add the ingress https and http origins (and the public display URL when set) to the
+      // inspector's CORS list. stateDevTools is always set here (run mode, web on).
+      if (stateDevTools is not null)
+      {
+        ReferenceExpression ingressOrigins = string.IsNullOrWhiteSpace(ingressPublicUrl)
+          ? ReferenceExpression.Create($"{yarpProject.GetEndpoint("https")},{yarpProject.GetEndpoint("http")}")
+          : ReferenceExpression.Create($"{yarpProject.GetEndpoint("https")},{yarpProject.GetEndpoint("http")},{ingressPublicUrl}");
+        stateDevTools.WithEnvironment(StateDevToolsCorsOriginsEnvironmentVariable, ingressOrigins);
+      }
 #endif
     }
     else

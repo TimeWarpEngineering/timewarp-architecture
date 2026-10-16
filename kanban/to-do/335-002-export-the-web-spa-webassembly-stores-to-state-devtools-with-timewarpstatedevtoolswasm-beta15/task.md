@@ -100,16 +100,133 @@ Source: `timewarp-state/master/source/timewarp-state-devtools-wasm/` (`timewarp-
   never ships); remove the "WASM not exported" statements left by 335-001.
 - No new template flags (flags are the architecture axis only).
 
+## Goal (implementer restatement)
+
+When the maintainer runs `dev run`, the State DevTools inspector must also receive action spans
+from the browser (the WASM half of InteractiveAuto), stamped `timewarp.state.runtime=wasm`, next to
+the server prerender spans 335-001 already exports. Nothing of it may reach a Release build, a
+published WASM bundle, or any publish manifest.
+
+Acceptance:
+
+1. Every `TimeWarp.State*` pin is 12.0.0-beta.15 and `TimeWarp.State.DevTools.Wasm` 12.0.0-beta.15 is
+   added; the graph resolves one State version.
+2. web-spa `Main` resolves the inspector origin with the package's two-step API (Development only),
+   turns on snapshots only when an origin resolves, and registers the browser exporter. The package
+   reference is Debug-only and the call sits under `#if DEBUG`.
+3. web-server maps `MapTimeWarpStateDevToolsClientConfig()` (the package's Development-only discovery
+   route) so the browser learns the origin.
+4. The inspector's CORS list covers the origins the browser uses in `dev run`: web-server direct
+   (the package adds it) and the YARP ingress (added by the AppHost).
+5. Publish suites still prove no DevTools resource or variable leaks; a Release web-spa build has
+   no DevTools.Wasm assembly.
+6. An automated browser test proves a WASM store action reaches an inspector ingest as a `wasm`
+   span. No `dev run`.
+7. Design regions and `tw-deploy` say what is exported and what never ships; the
+   "WASM not exported" statements are gone. Gates green.
+
 ## Checklist
 
-- [ ] All `TimeWarp.State*` pins -> 12.0.0-beta.15; DevTools.Wasm added; one resolved version
-- [ ] web-spa registers the WASM exporter (Development only, endpoint-gated, Debug-only reference, `#if DEBUG`)
-- [ ] web-server maps `MapTimeWarpStateDevToolsClientConfig()` (Development, gated)
-- [ ] Inspector CORS covers the dev origins (ingress and direct) or the gap is recorded and fixed
-- [ ] Publish safety facts hold; no DevTools code in a Release/production WASM bundle (what the package supports recorded)
-- [ ] Automated check that a browser store appears as `live` (wasm runtime span) in the inspector
-- [ ] Design regions and `tw-deploy` note updated; flag combinations + `dev template-smoke`
-- [ ] Gates: `dev check-version` (bump template `<Version>` and platform pins in the same commit if it says so), `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] All `TimeWarp.State*` pins -> 12.0.0-beta.15; DevTools.Wasm added; one resolved version
+- [x] web-spa registers the WASM exporter (Development only, endpoint-gated, Debug-only reference, `#if DEBUG`)
+- [x] web-server maps `MapTimeWarpStateDevToolsClientConfig()` (Development, gated)
+- [x] Inspector CORS covers the dev origins (ingress and direct) or the gap is recorded and fixed
+- [x] Publish safety facts hold; no DevTools code in a Release/production WASM bundle (what the package supports recorded)
+- [x] Automated check that a browser store appears as `live` (wasm runtime span) in the inspector
+- [x] Design regions and `tw-deploy` note updated; flag combinations + `dev template-smoke`
+- [x] Gates: `dev check-version` (bump template `<Version>` and platform pins in the same commit if it says so), `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+
+## Results
+
+### What changed
+
+- **Pins:** every `TimeWarp.State*` pin is 12.0.0-beta.15 and `TimeWarp.State.DevTools.Wasm`
+  12.0.0-beta.15 is added (`Directory.Packages.props`). No package split affects existing references.
+  The restore graphs of web-server, the AppHost and the Playwright tests resolve only beta.15
+  (State, Blazor, Plus, Telemetry, DevTools.Export, DevTools.Wasm, DevTools.Hosting, DevTools.App).
+- **web-spa:** `Program.Main` calls `AddStateDevToolsExportAsync` (two-step form:
+  `ResolveEndpointAsync`, then `AddTimeWarpStateTelemetry` with snapshots, then
+  `AddTimeWarpStateDevToolsWasmExporter`). It is Development-gated by the package and returns when no
+  origin resolves. The PackageReference has `Condition="'$(Configuration)' == 'Debug'"`. The usings,
+  call and method compile only with the DEBUG symbol. Each DEBUG block is inside the
+  `//-:cnd:noEmit` … `//+:cnd:noEmit` escape. Without it, dotnet new treats `DEBUG` as an undefined
+  template symbol and strips the block (TWA0008 caught this). I generated an app and confirmed the
+  blocks survive. Snapshots use `DefaultJsonTypeInfoResolver`. IL2026 and IL3050 are suppressed with
+  a justification: Debug WASM is not trimmed. `ConfigureServices` is not touched, because
+  web-server prerender has its own server exporter.
+- **web-server:** `ConfigureEndpoints` calls `MapTimeWarpStateDevToolsClientConfig()`. The package
+  maps the route only in Development and returns 204 when `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` is unset.
+  The YARP `{**catch-all}` web route reaches it, and there is no fallback auth policy.
+- **CORS:** `WithTimeWarpStateDevTools` lists only web-server's own http and https endpoints. In
+  `dev run` the browser loads the SPA from the ingress, so the ingress origin was **not** covered. The
+  fix is in the AppHost's yarp run-mode block, under the web flag. It sets
+  `TimeWarp__State__DevTools__CorsOrigins` (the inspector's supported configuration key, unioned with
+  the package variable) on the inspector to the ingress https and http endpoints, plus
+  `Ingress:PublicUrl` when set. No upstream change was needed.
+- **Publish safety:** the compose, kubernetes and aca `Publish_Should_HaveNoStateDevTools` facts now
+  also reject any DevTools CORS variable. A Release `dotnet publish` of web-spa has
+  `TimeWarp.State.Telemetry.*.wasm` but no `TimeWarp.State.DevTools.Wasm.*` in `_framework`. A
+  string scan of webcil `.wasm` files did not work: the positive controls also failed to match, so I
+  am not claiming anything from it. The package has no trimming switch. Its supported shape is
+  exactly the Debug-only reference plus a DEBUG-only call, and that is what web-spa now uses.
+- **Proof (automated):** new
+  `tests/container-apps/web/web-spa-playwright-tests/state-dev-tools-wasm-playwright-tests.cs`. It runs
+  an in-process stand-in inspector with the real ingest contract: `POST /ingest/spans` behind CORS for
+  the web origin and Content-Type only. It sets `TIMEWARP_STATE_DEVTOOLS_ENDPOINT`, hosts web-server
+  in-proc (Development, InteractiveWebAssembly) and drives headless Chromium. No AppHost is started.
+  Both configurations assert that the discovery route returns the origin.
+  - **Debug** (web-spa's `AssemblyConfiguration` is Debug): a span must arrive with
+    `timewarp.state.runtime=wasm`, `timewarp.state.render=interactive` and a `timewarp.state.action`.
+    Observed: `ApplicationState.Initialized` with a `state.snapshot` event.
+  - **Release:** the browser must not request `/_timewarp/state-devtools` or any `DevTools.Wasm`
+    asset, and the inspector must receive nothing.
+  - **Limitation:** `dev test` and CI build Release, so the gate runs only the Release branch. The live
+    Debug branch runs with `dotnet run -c Debug` (see How to validate). This is a consequence of the
+    Debug-only package requirement.
+- **AppHost model:** new fact `RunMode_Should_AllowIngressOriginsOnInspector`. With yarp on, the
+  inspector's CORS variable is built from the ingress https and http endpoints. With yarp off the
+  variable is absent.
+- **Docs:** Design regions in the AppHost, web-server and web-spa, the web-spa.csproj comments and
+  the `tw-deploy` "never ships" row are updated. The 335-001 "WASM not exported" statements are gone.
+- A Debug start in Development with no inspector costs one discovery GET, which returns 204.
+
+### Gates
+
+- `dev check-version`: source 2.0.0-beta.20 is ahead of NuGet 2.0.0-beta.19, so no bump is needed.
+- `dev build` (Release): 0 warnings, 0 errors. Debug build of the web-spa → web-server →
+  Playwright-tests graph: 0 warnings, 0 errors.
+- `dev test --group fast`: 14/14 projects passed. `dev test --group playwright`: passed, including the
+  new test's Release branch.
+- `dev test --group integration` did not finish inside the 10-minute foreground limit (3-way
+  parallel), so I ran each integration project alone with `dotnet test -c Release --no-build`:
+  aspire-tests 63/63, yarp-integration 17/17, web-infrastructure 78/78, web-jaribu 359/359,
+  api-jaribu 9/9, api-server-integration 1/1, web-spa-integration 289/289, web-server-integration
+  346 passed, 1 skipped, 0 failed.
+- Debug browser proof (`dotnet run -c Debug -- --filter-class StateDevToolsWasm`): 1/1.
+- `dev template-smoke`: SUCCEEDED. `dev template-smoke --matrix`: SUCCEEDED (Default, NoPostgres,
+  NoApi, NoWeb, NoGrpc, NoYarp).
+- `ganda repo audit`: passes all checks.
+
+### How to validate
+
+Smoke:
+
+```bash
+cd tests/container-apps/web/web-spa-playwright-tests
+dotnet run -c Debug -- --filter-class StateDevToolsWasm
+dotnet run -c Release -- --filter-class StateDevToolsWasm
+cd ../../aspire/aspire-tests && dotnet run -c Release -- --filter-class StateDevToolsModel
+```
+
+Expect:
+
+- Debug: `succeeded: 1`, plus a `[335-002] wasm span from the browser:` line whose attributes include
+  `"timewarp.state.runtime":"wasm"` and `"timewarp.state.render":"interactive"`.
+- Release: `succeeded: 1`. No discovery request is made and no span is posted.
+- StateDevToolsModel: `succeeded: 3`.
+- Maintainer, after merge: in `dev run`, open the dashboard link **TimeWarp.State DevTools**, then load
+  the app through the ingress. The inspector shows `live` rows with the `wasm` badge next to the `pre`
+  (server) rows.
 
 ## Notes
 
@@ -119,3 +236,4 @@ Source: `timewarp-state/master/source/timewarp-state-devtools-wasm/` (`timewarp-
 ## Session
 
 - Created: 2026-10-16 (cockpit follow-up to 335-001; unblocked by timewarp-state 121 / v12.0.0-beta.15)
+- 2026-10-16 implement (ganda task work): wiring, ingress CORS, Playwright proof (Debug live / Release absent), publish facts, docs; gates above.

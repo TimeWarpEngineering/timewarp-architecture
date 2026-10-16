@@ -33,18 +33,34 @@
 // No new template.json feature flag for identity/x402 (they ship with the template); Entra is a
 // runtime config switch, not a compile-time DefineConstants symbol (avoids TWA0008/0010 dual paths).
 //
-// TimeWarp.State 12.0.0-beta.13 registers Blazor services with AddTimeWarpStateBlazor.
+// TimeWarp.State 12.0.0-beta.15 registers Blazor services with AddTimeWarpStateBlazor.
 // Call it after AddTimeWarpState so RenderSubscriptionsPostProcessor can be constructed.
 // Task 278: JavaScript dispatch is opt-in since TimeWarp.State 12.0.0-beta.8. AllowJavaScriptDispatch
 // is the allow-list (today only the Counter demo's IncrementCounter, under the
 // IncrementCounterActionSet.JavaScriptAlias wire name so counter.ts never spells the CLR type name);
 // it is public so SPA test hosts register the same list instead of copying it.
+// Task 335-002: AddStateDevToolsExportAsync (Main only, never ConfigureServices: web-server prerender
+// has its own server exporter) posts browser store spans to the State DevTools inspector. In
+// Development it asks web-server for the inspector origin (GET /_timewarp/state-devtools, mapped by
+// Web.Server.Program.ConfigureEndpoints) and registers the exporter only when an origin resolves;
+// snapshots turn on only then. The package reference is Debug-only and the call compiles only with
+// the DEBUG symbol, so a Release build or publish has neither the assembly nor the call. Each DEBUG
+// block sits inside the cnd:noEmit escape so dotnet new keeps it: DEBUG is not a template symbol.
+// Snapshots use a reflection resolver: Debug WebAssembly is not trimmed, and a failed snapshot never
+// fails the action. A Development Debug start without an inspector costs one discovery GET (204).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
 
 using System.Globalization;
 using TimeWarp.Features.JavaScriptInterop;
+//-:cnd:noEmit
+#if DEBUG
+using System.Text.Json.Serialization.Metadata;
+using TimeWarp.State.DevTools.Wasm;
+using TimeWarp.State.Telemetry;
+#endif
+//+:cnd:noEmit
 
 public static class Program
 {
@@ -55,6 +71,11 @@ public static class Program
     builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
     ConfigureServices(builder.Services, builder.Configuration, builder.HostEnvironment.Environment);
+//-:cnd:noEmit
+#if DEBUG
+    await AddStateDevToolsExportAsync(builder);
+#endif
+//+:cnd:noEmit
     builder.Services.AddTransient<BrowserRequestCredentialsHandler>();
     builder.Services.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
       .AddHttpMessageHandler<BrowserRequestCredentialsHandler>();
@@ -70,6 +91,42 @@ public static class Program
     await using WebAssemblyHost host = builder.Build();
     await host.RunAsync();
   }
+
+//-:cnd:noEmit
+#if DEBUG
+  /// <summary>
+  /// Task 335-002: exports browser TimeWarp.State action spans to the State DevTools inspector.
+  /// Development only, and only when web-server's discovery route returns an origin (the AppHost set
+  /// TIMEWARP_STATE_DEVTOOLS_ENDPOINT in run mode). Otherwise nothing is registered.
+  /// </summary>
+  [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Debug-only DevTools snapshots; Debug WebAssembly is not trimmed.")]
+  [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Debug-only DevTools snapshots; Debug WebAssembly is not AOT-compiled.")]
+  private static async Task AddStateDevToolsExportAsync(WebAssemblyHostBuilder builder)
+  {
+    string? endpoint = await TimeWarpStateDevToolsWasm.ResolveEndpointAsync
+    (
+      builder.HostEnvironment.IsDevelopment(),
+      builder.Configuration[TimeWarpStateDevToolsWasm.EndpointConfigurationKey],
+      builder.HostEnvironment.BaseAddress
+    );
+    if (endpoint is null)
+    {
+      return;
+    }
+
+    builder.Services.AddTimeWarpStateTelemetry
+    (
+      options =>
+      {
+        options.IncludeSnapshots = true;
+        options.JsonSerializerOptions =
+          new JsonSerializerOptions(JsonSerializerDefaults.Web) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
+      }
+    );
+    builder.Services.AddTimeWarpStateDevToolsWasmExporter(endpoint);
+  }
+#endif
+//+:cnd:noEmit
 
   private static void SetIsoCulture()
   {

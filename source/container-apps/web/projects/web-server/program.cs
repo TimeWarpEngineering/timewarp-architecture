@@ -68,8 +68,11 @@
 // cleared once instead of re-validated on every request.
 // Task 335-001: AddStateDevToolsExport adds the TimeWarp.State ActivitySource and the DevTools
 // exporter to tracing in Development when the AppHost published TIMEWARP_STATE_DEVTOOLS_ENDPOINT.
-// It covers server-side stores (prerender, InteractiveServer). WASM stores are not exported: the
-// browser has no tracer provider, and the inspector origin is not the SPA origin.
+// It covers server-side stores (prerender, InteractiveServer).
+// Task 335-002: browser (WASM) stores export from Web.Spa.Program.Main. The browser never sees the
+// variable, so ConfigureEndpoints maps MapTimeWarpStateDevToolsClientConfig: GET
+// /_timewarp/state-devtools returns the inspector origin, 204 when the variable is unset. The package
+// maps it in Development only; every other environment has no route. The ingress catch-all reaches it.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -580,7 +583,8 @@ public partial class Program : IAspNetProgram
 
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
-
+    // Task 335-002: Development-only discovery route the WASM DevTools exporter reads (see Design).
+    webApplication.MapTimeWarpStateDevToolsClientConfig();
   }
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)

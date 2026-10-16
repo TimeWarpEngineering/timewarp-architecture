@@ -1,6 +1,7 @@
 #region Purpose
 // AppHost model inspection (task 335-001): run mode adds the TimeWarp.State DevTools inspector and
-// points web-server at it; a publish model carries neither.
+// points web-server at it; a publish model carries neither. Task 335-002: with the ingress on, the
+// inspector's CORS list also names the ingress origins the browser loads the SPA from.
 #endregion
 
 #region Design
@@ -11,6 +12,9 @@
 // not TimeWarp.State.DevTools.Hosting constants: that package is absent with the web flag off, where
 // the facts assert there is no inspector at all. The publish-output half lives in the compose,
 // kubernetes and aca suites (Publish_Should_HaveNoStateDevTools).
+// Task 335-002: the inspector's TimeWarp__State__DevTools__CorsOrigins value is an unresolved
+// ReferenceExpression; the fact checks its value providers are the ingress https and http endpoints.
+// With yarp off there is no ingress origin to add, and the variable is absent.
 #endregion
 
 namespace Aspire.Tests;
@@ -22,6 +26,8 @@ public class StateDevToolsModel_Given_
   private const string DevToolsEndpointName = "http";
   private const string EndpointVariable = "TIMEWARP_STATE_DEVTOOLS_ENDPOINT";
   private const string WebServerResourceName = "web-server";
+  private const string IngressResourceName = "ingress";
+  private const string CorsOriginsVariable = "TimeWarp__State__DevTools__CorsOrigins";
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<StateDevToolsModel_Given_>();
@@ -49,6 +55,34 @@ public class StateDevToolsModel_Given_
     endpoint.EndpointName.ShouldBe(DevToolsEndpointName);
 
     webServer.Annotations.OfType<WaitAnnotation>().ShouldContain(wait => wait.Resource == devTools);
+  }
+
+  public static async Task RunMode_Should_AllowIngressOriginsOnInspector()
+  {
+    await using IDistributedApplicationTestingBuilder appHost =
+      await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>([]);
+
+    ExecutableResource? devTools = appHost.Resources.OfType<ExecutableResource>()
+      .SingleOrDefault(resource => resource.Name == DevToolsResourceName);
+    if (devTools is null)
+    {
+      // web off: no inspector.
+      return;
+    }
+
+    Dictionary<string, object> environment = await RunModeEnvironmentAsync(devTools);
+    IResource? ingress = appHost.Resources.SingleOrDefault(resource => resource.Name == IngressResourceName);
+    if (ingress is null)
+    {
+      // yarp off: the browser loads the SPA from web-server, whose origins the package adds.
+      environment.ShouldNotContainKey(CorsOriginsVariable);
+      return;
+    }
+
+    ReferenceExpression origins = environment[CorsOriginsVariable].ShouldBeOfType<ReferenceExpression>();
+    List<EndpointReference> endpoints = origins.ValueProviders.OfType<EndpointReference>().ToList();
+    endpoints.ShouldAllBe(endpoint => endpoint.Resource == ingress);
+    endpoints.Select(endpoint => endpoint.EndpointName).ShouldBe(["https", "http"], ignoreOrder: true);
   }
 
   public static async Task PublishMode_Should_HaveNoDevTools()
