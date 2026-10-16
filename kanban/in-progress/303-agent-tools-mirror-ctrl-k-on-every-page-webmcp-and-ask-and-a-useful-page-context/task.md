@@ -138,6 +138,8 @@ current page. This replaces task 282's "executable tools are page-scoped" rule.
 
 ## Notes
 
+- 2026-10-16: reopened — parent stays in-progress until child 303-001 is done (Steve's rule).
+
 - 2026-10-11 01:30 ICT, Steven: this is the **parent** WebMCP overhaul task (global routing
   matching Ctrl-K with Ctrl-K unchanged; page-state actions off-page only offer navigation;
   text page_context; optional screenshot supplement, text first). Child **303-001** (moved from
