@@ -4,10 +4,6 @@
 
 303
 
-## Depends on
-
-- 303
-
 ## Spec refresh 2026-10-16 (Steve approved)
 
 This section overrides any older text below (Requirements, Checklist, Acceptance, Notes).
@@ -111,7 +107,7 @@ Builds on task 295 (done) and 352: captures are attached to feedback through the
 - Filed from Steven's voice call, 2026-10-10 as task 297. Moved under parent 303 as 303-001 on
   2026-10-11 (Steven: split the WebMCP overhaul into parent 303 + this child). 297 is archived
   with a pointer here.
-- Depends on parent 303 landing first (page_context shape, WebMCP tool list).
+- Parent 303's implementation merged in PR #461 (page_context shape, WebMCP tool list); the explicit Depends-on line was removed 2026-10-16 because ganda claim did not recognise that merge.
 - Related: 295 (done), 352 (done), 271/292 (Cloudflare-style Ask AI, WebMCP parity).
 
 ## Session
