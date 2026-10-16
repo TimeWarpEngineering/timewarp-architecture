@@ -186,6 +186,44 @@ Expect:
 - `CatalogAgent_Should` filtered to `Screenshot`: 4/4 passed, and the log prints
   `WEBMCP-PROOF invoke Screenshot.CaptureScreenshot approved result={...,"image":"data:image/png;base64,...}`.
 
+### Review disposition
+
+- **Outcome:** accepted-exceptions. 3 rounds, effort 3, roster `general` (one reviewer subagent in rounds 1 and 2; the orchestrator verified in round 3).
+- **Final counts:** bug 4 fixed / 0 open; suggestion 4 fixed, 1 wontfix; nit 5 fixed, 1 wontfix.
+- **Fixed:**
+  - Validator: null images, null turns, null tools and null tool calls no longer crash the relay with a 500, and image bytes must start with PNG or JPEG magic bytes.
+  - The relay client keeps each request within `MaxImagesPerRequest`.
+  - The BL0016 pragma and the FakeItEasy fake of a first-party service are removed from the tests.
+  - A refused capture now returns a `ScreenshotRefused` outcome to the agent.
+  - New actions `CaptureForAsk` and `CaptureForFeedback`: each click captures and attaches its own capture. They share `CaptureAsync`, which is still the only caller of the JS module. Feedback decides whether to offer a capture from the drafts.
+  - The PNG blobs waiting for .NET to collect them are capped at the newest 3.
+  - Commits: c1ac91125, a277ed678, f7e622e1b, ee91a4014, e03d334c9, aae4b0de7.
+- **Wontfix:**
+  - M7 image byte budget: each request is bounded, so a smaller image budget is a cost decision for Steve.
+  - M9 silent crop at 4096 px: an accepted spike limit; passing a selector works around it.
+- **Gates after the fixes:** `dev build` 0/0; `dev test` 23/23 projects (integration 294/294, playwright 19/19), as the implementer reported; the orchestrator re-ran `CatalogAgent_Should` 45/45, `Screenshot_Given_Wasm` 1/1 and `ganda repo audit`.
+- **Paths:**
+  - `review/review-framework.md`
+  - `review/round-1/{general,merged}.md`
+  - `review/round-2/{general,merged}.md`
+  - `review/round-3/general.md`
+  - `review/disposition.md`
+
+## Learnings
+
+- **Misread (restatement vs task), Feedback "page behind it":** Requirement 5 asks for a capture
+  of the page behind Feedback. The restatement narrows that to "the latest capture taken on another
+  page", because Feedback is a route, not a dialog. If the person opens Feedback without capturing
+  first, they cannot attach the page they came from. Steve should confirm this reading, or ask for
+  a shell entry point that captures before it navigates.
+- **Restatement softening, approval:** the restatement says agent captures need approval in Ask.
+  In auto-edit mode no approval is asked, and the only visible sign is the "Screenshot captured"
+  notification. That still meets "a tool call the user can see", but the task never said so.
+- **Dropped detail, ElementReference:** Requirements say "selector/ElementReference", but only a
+  CSS selector is supported. The agent and palette paths cannot pass an ElementReference anyway.
+- Analyzer BL0016 flags any call on a type that implements `IJSRuntime`. Test doubles avoid the
+  pragma by keeping their answers on a separate plain class.
+
 ## Notes
 
 - Filed from Steven's voice call, 2026-10-10 as task 297. Moved under parent 303 as 303-001 on
@@ -221,3 +259,5 @@ Expect:
 
 - Created: 269751 (2026-10-11 ICT), carried over from 297 (created 3467057, 2026-10-10)
 - Implemented 2026-10-16/17 (ganda task work, implement oracle): capture module, ScreenshotState, Ask and Feedback wiring, relay images, tests; all gates green.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T17:09:53Z
+- Review oracle 2026-10-17 (tw-implementation-review, effort 3, general): 3 rounds, accepted-exceptions; reviewer and fix-loop subagents (claude-opus-5-5) ran on this id.
