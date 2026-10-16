@@ -25,6 +25,9 @@
 // generated app's own path (what its tests would pick unset), bumped one slot if it equals this
 // checkout's base. The old fixed 17000 collided when two worktrees ran template-smoke at once.
 // Aggregators are not in .slnx, so the solution build is also blind to multi-mode compile.
+// Task 375: AssertGeneratedAppTestSuitesAsync runs every other generated test project (aspire-tests,
+// integration, Playwright, pure suites) under the tier-3 gate. Opt-in (`--app-tests`): the suites
+// need Docker and minutes per variant, so CI runs them nightly, not per PR.
 // AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must
 // not contain any analysis/ directory under skills/ (pack exclude).
 // Task 318: AssertKanbanSkeletonShipped — generated apps get the empty board skeleton (five
@@ -1134,6 +1137,77 @@ internal sealed partial class TemplateSmokeHarness
     }
 
     return ok;
+  }
+
+  /// <summary>
+  /// Task 375 (<c>template-smoke --app-tests</c>): bare <c>dotnet test -c Release</c> from every
+  /// generated test project directory under tests/, one at a time, with the same MTP summary gate
+  /// as tier 3. Skips tier-3 aggregators (already run) and projects declaring
+  /// <c>&lt;IsTestProject&gt;false&lt;/IsTestProject&gt;</c> (support libraries). Runs every
+  /// project even after a failure, so one run reports every broken suite.
+  /// </summary>
+  public async Task<bool> AssertGeneratedAppTestSuitesAsync(string outputDir, CancellationToken ct)
+  {
+    HashSet<string> aggregatorDirs = [.. JaribuFamilyAggregators
+      .Select(aggregator => Path.GetFullPath(Path.Combine(outputDir, aggregator.RelativeProjectDir)))];
+
+    string testsDir = Path.Combine(outputDir, "tests");
+    string[] projects = Directory.Exists(testsDir)
+      ? [.. Directory
+          .GetFiles(testsDir, "*.csproj", SearchOption.AllDirectories)
+          .Where(project => !TemplateSmokePaths.IsBinObjOrArtifacts(outputDir, project)
+                         && !aggregatorDirs.Contains(Path.GetDirectoryName(Path.GetFullPath(project))!)
+                         && !File.ReadAllText(project).Contains("<IsTestProject>false</IsTestProject>", StringComparison.Ordinal))
+          .Order(StringComparer.Ordinal)]
+      : [];
+
+    if (projects.Length == 0)
+    {
+      Terminal.WriteErrorLine($"No generated test projects found under {testsDir}.".Red());
+      return false;
+    }
+
+    List<string> failed = [];
+    foreach (string project in projects)
+    {
+      string projectDir = Path.GetDirectoryName(project)!;
+      string relativeProjectDir = Path.GetRelativePath(outputDir, projectDir).Replace('\\', '/');
+      Terminal.WriteLine($"Running generated test project (MTP bare dotnet test): {relativeProjectDir}...");
+
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      CommandOutput result = await Shell.Builder("dotnet")
+        .WithArguments("test", "-c", "Release")
+        .WithWorkingDirectory(projectDir)
+        .WithEnvironmentVariable(InProcTestPorts.EnvironmentVariableName, TemplateSmokeInProcTestPortBase(outputDir))
+        .WithNoValidation()
+        .CaptureAsync(ct);
+      string elapsed = stopwatch.Elapsed.TotalSeconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture) + "s";
+
+      string plain = AnsiEscape().Replace(result.Combined, "");
+      bool parsed = JaribuAggregatorSummaryGate.TryParseMtpSummary(plain, out MtpSummary mtpSummary);
+      AggregatorSummaryDecision decision = JaribuAggregatorSummaryGate.Decide(parsed ? mtpSummary : null);
+
+      if (!result.Success || !decision.Passed)
+      {
+        string reason = !result.Success ? $"exit {result.ExitCode}" : decision.Message;
+        Terminal.WriteErrorLine($"{relativeProjectDir}: FAILED in {elapsed} ({reason}).".Red());
+        Terminal.WriteErrorLine(result.Combined);
+        failed.Add(relativeProjectDir);
+        continue;
+      }
+
+      Terminal.WriteLine($"{relativeProjectDir}: {mtpSummary.Succeeded}/{mtpSummary.Total} succeeded in {elapsed}.".Green());
+    }
+
+    if (failed.Count > 0)
+    {
+      Terminal.WriteErrorLine(
+        $"{failed.Count} of {projects.Length} generated test projects failed: {string.Join(", ", failed)}".Red());
+      return false;
+    }
+
+    Terminal.WriteLine($"All {projects.Length} generated test projects passed.".Green());
+    return true;
   }
 
   /// <summary>
