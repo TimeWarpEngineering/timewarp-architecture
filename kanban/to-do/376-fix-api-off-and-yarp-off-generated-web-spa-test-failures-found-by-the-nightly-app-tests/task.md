@@ -17,6 +17,22 @@ Every other variant passes every generated test project. Run of 2026-10-16: Smok
 projects, SmokeNoPostgres 8/8, SmokeNoWeb 2/2, SmokeNoGrpc 9/9, locally and on the CI nightly
 (https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/38860602411).
 
+## Goal (implementer restatement)
+
+Make the generated web-spa test projects pass in the api-off and yarp-off variants, so the
+nightly `dev template-smoke --matrix --app-tests` run goes green.
+
+- yarp off: the SPA integration host must not wait for or resolve the `ingress` resource. It
+  waits for the resources that exist and points the api-server client straight at api-server.
+- api off: the catalog-agent tests read a `NameIdentifier` claim from the session. The product
+  ships mock auth in every variant; the test host's api-off stand-in provider is the gap. Decide
+  test vs product defect and fix the right side.
+- Playwright `CtrlK_Should_ShowAsk_And_TheKeyState` api-off timeout: confirm flaky or related.
+
+Acceptance: SmokeNoYarp and SmokeNoApi web-spa-integration-tests pass; SmokeNoApi playwright
+passes; `dev build` clean, `dev test` passes; `dev template-smoke --matrix --app-tests` passes;
+`ganda repo audit` clean; flag regions stay intact with no double blank lines in any variant.
+
 ## Requirements
 
 - Guard or adapt the flag-assuming code in the template source (`tests/container-apps/web/...`),
@@ -29,16 +45,71 @@ projects, SmokeNoPostgres 8/8, SmokeNoWeb 2/2, SmokeNoGrpc 9/9, locally and on t
 
 ## Checklist
 
-- [ ] SmokeNoYarp web-spa-integration-tests pass
-- [ ] SmokeNoApi web-spa-integration-tests pass
-- [ ] SmokeNoApi web-spa-playwright-tests pass (or the local timeout is shown to be flaky and fixed)
-- [ ] `dev build` 0 warnings and 0 errors; `dev test` passes
-- [ ] `dev template-smoke --matrix --app-tests` passes (Docker running)
+- [x] SmokeNoYarp web-spa-integration-tests pass
+- [x] SmokeNoApi web-spa-integration-tests pass
+- [x] SmokeNoApi web-spa-playwright-tests pass (or the local timeout is shown to be flaky and fixed)
+- [x] `dev build` 0 warnings and 0 errors; `dev test` passes
+- [x] `dev template-smoke --matrix --app-tests` passes (Docker running)
 - [ ] Dispatched nightly (`gh workflow run workflow.yml --ref <branch> -f mode=nightly`) passes
-- [ ] `ganda repo audit` clean
+- [x] `ganda repo audit` clean
 
 ## Notes
 
 - Repro: `dev template-smoke --matrix --app-tests`, then rerun one suite with
   `cd artifacts/template-smoke/work/SmokeNoYarp/tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release`.
 - Found by task 375's first full nightly run.
+
+## Results
+
+### What changed
+
+All edits are in `tests/container-apps/web/web-spa-integration-tests/` (template content).
+
+- **yarp off.** `infrastructure/base-test.cs`: the `ingress` health wait is inside `#if(yarp)`.
+  `infrastructure/aspire-spa-test-application.cs`: the api-server client's base address
+  comes from `BaseUrlResourceName`, which is `ingress` under yarp, `api-server` under `!yarp && api`
+  (api-server serves `api/...` routes itself), and `web-server` when both flags are off (nothing
+  calls that client then). The csproj defines `yarp` next to `api` (TWA0010).
+- **api off.** The api-off missing NameIdentifier was a **test assumption, not a product defect**.
+  The web-spa mock auth (`MockAuthenticationRegistration`, `MockAuthenticationStateProvider` with
+  `NameIdentifier`) ships in every variant. The test host skipped it under `!api` and used its own
+  `PermittedAuthenticationStateProvider`, which had permission claims only. The host now uses the
+  product mock registration in every variant, and the stand-in is deleted. `global-usings.cs`
+  makes `Microsoft.Extensions.Configuration` and `TimeWarp.Architecture.Services` unconditional.
+- **Playwright Ctrl+K (api off).** Not related: that test boots its own in-process web host
+  and does not use the integration suite's auth stand-in. It passed 17/17 for SmokeNoApi on
+  the local run below and on the earlier CI nightly. The earlier 30 s local timeout looks like a
+  flake under load. No change.
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors. `dev test`: exit 0. `dev check-version`: source 2.0.0-beta.20
+  is ahead of nuget 2.0.0-beta.19, so no bump is needed. `ganda repo audit`: pass.
+- `dev template-smoke --matrix --app-tests` (local, Docker): every project passed in SmokeDefault,
+  SmokeNoPostgres, SmokeNoApi (web-spa-integration 285/285, playwright 17/17), SmokeNoWeb, and
+  SmokeNoYarp (web-spa-integration 286/286, playwright 17/17).
+  One unrelated flake: SmokeNoGrpc aspire-tests
+  `FirstRunOnEmptyDatabase_Should_LogNoErrorFromWebServer` saw one EF `Database.Connection[20004]`
+  error. web-server's first postgres connect timed out after about 21 s while the machine was
+  loaded (that suite took 113 s, against about 57 s in the other variants). web-server already
+  `WaitFor`s postgres. Rerun alone, the same generated suite passed 57/57. This change does not
+  touch aspire-tests. If it recurs on the nightly, it needs its own task.
+- No generated variant has a double blank line in the three changed files.
+- Nightly dispatched on this branch:
+  https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/38877166403
+
+### How to validate
+
+Smoke:
+
+```bash
+dev template-smoke --matrix --app-tests
+cd artifacts/template-smoke/work/SmokeNoYarp/tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release
+cd ../../../../../SmokeNoApi/tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release
+```
+
+Expect: every variant ends with its projects green. SmokeNoYarp web-spa-integration-tests
+pass (no `ingress` wait; weather fetch reaches api-server directly). SmokeNoApi
+web-spa-integration-tests pass, including the four `CatalogAgent_Should` conversation tests that
+threw NullReferenceException before. In SmokeNoYarp, `aspire-spa-test-application.cs` has
+`BaseUrlResourceName = "api-server"`. In SmokeDefault it is `"ingress"`.
