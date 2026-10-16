@@ -49,6 +49,9 @@
          on parameters so service-defaults redaction can erase them. Analyzers do not flow from
          aspire-service-defaults' package references, so the generator needs this direct reference. -->
     <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" />
+    <!-- Task 335-001: dev-only span exporter to the State DevTools inspector. No-op unless the
+         AppHost set TIMEWARP_STATE_DEVTOOLS_ENDPOINT (run mode only). -->
+    <PackageReference Include="TimeWarp.State.DevTools.Export" />
     <!-- Server-side xAI chat completions. The key stays in this project. The WASM client never references it. -->
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
   </ItemGroup>

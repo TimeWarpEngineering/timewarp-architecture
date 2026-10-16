@@ -23,6 +23,8 @@
 // PublishedIngressPort_Should_DefaultToTheCommittedParameter (task 311) checks the publish model, not
 // the files: `aspire publish` leaves every .env value blank, and the ingress-port default the deploy
 // step writes there must be the committed Parameters:ingress-port.
+// State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
+// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output.
 #endregion
 
 namespace Aspire.Tests;
@@ -36,6 +38,9 @@ public partial class ComposePublish_Given_
   private const string IngressService = "ingress";
   private const string PostgresService = "postgres";
   private const string WebServerService = "web-server";
+  // Literals, not TimeWarp.State.DevTools.Hosting constants: that package is absent with web off.
+  private const string StateDevToolsResource = "timewarp-state-devtools";
+  private const string StateDevToolsEndpointVariable = "TIMEWARP_STATE_DEVTOOLS_ENDPOINT";
 
   private static string OutputDirectory = null!;
   private static bool OwnsOutputDirectory;
@@ -113,6 +118,20 @@ public partial class ComposePublish_Given_
       service.ShouldNotContain("dashboard");
       Scalar(Service(service), "image")?.ShouldNotContain("aspire-dashboard");
     }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoStateDevTools()
+  {
+    // Task 335-001: the TimeWarp.State DevTools inspector is a run-mode-only resource.
+    foreach (string service in ServiceNames())
+    {
+      service.ShouldNotContain(StateDevToolsResource);
+      ServiceEnvironment(service).Keys.ShouldNotContain(StateDevToolsEndpointVariable, $"service '{service}' points at State DevTools");
+    }
+
+    EnvFile.Keys.ShouldNotContain(key => key.Contains("DEVTOOLS", StringComparison.OrdinalIgnoreCase));
 
     await Task.CompletedTask;
   }

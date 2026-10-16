@@ -275,6 +275,7 @@ extend the suite when you add a new publish-mode branch.
 | Mock authentication (`Authentication__UseMock`) | it signs requests in as a fake principal | forwarded in run mode only; the server also fail-closes outside Development/Testing |
 | Browser-log forwarding | ships client telemetry to a dev dashboard | Development-only; publish runs as Production |
 | Dashboard Postgres REPL (`WithRepl`) | an authenticated psql shell for anyone with dashboard access | Development-only |
+| TimeWarp.State DevTools inspector (`timewarp-state-devtools`, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT`) | an unauthenticated UI showing every action and state snapshot of web-server | `AddTimeWarpStateDevTools()` / `WithTimeWarpStateDevTools()` run in the AppHost's `IsRunMode` block only, and web-server exports spans only in Development with the endpoint set. In `dev run` the dashboard links it as **TimeWarp.State DevTools** |
 | Aspire dashboard in the deployment | a second, unauthenticated UI and port | `WithDashboard(false)` on every environment — point `OTEL_EXPORTER_OTLP_ENDPOINT` at your own collector. ACA deploys it as a public `dotNetComponents` resource unless disabled |
 | Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: only the ingress container app has `external: true`; web, api and grpc are internal |
 | Secret literals | literals end up in images, repos and logs | secrets are parameters (below) |
@@ -289,7 +290,7 @@ Rules for new code:
 
 - Gate publish-only behavior on `builder.ExecutionContext.IsPublishMode` / `IsRunMode`, **never on a
   template flag** — every flag combination must publish.
-- Anything dev-convenient (REPL, mock auth, log forwarding, dashboard commands) is run-mode or
+- Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, dashboard commands) is run-mode or
   Development-only. Publish runs as Production.
 - Without the `yarp` flag there is no ingress: the published output exposes nothing, and the
   operator adds their own edge.

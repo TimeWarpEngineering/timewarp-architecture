@@ -15,6 +15,23 @@ a packaged app, following the Aspire dashboard pattern:
 Architecture's AppHost can now use it with one call. Every generated app then gets State DevTools in
 `dev run`.
 
+## Goal (implementer restatement)
+
+Every generated app's `dev run` starts the packaged TimeWarp.State DevTools inspector next to
+web-server and web-server sends its State action spans there, while nothing about it reaches
+Compose, Kubernetes or ACA publish output.
+
+Acceptance:
+- All `TimeWarp.State*` packages resolve to 12.0.0-beta.14 (one version); the AppHost references
+  `TimeWarp.State.DevTools.Hosting`.
+- Run mode: a `timewarp-state-devtools` resource exists; web-server carries
+  `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` (its http endpoint) and waits for it; web-server registers the
+  State ActivitySource + DevTools exporter in Development only.
+- Publish mode: no resource, no variable; a fact in each of the compose, kubernetes and aca suites.
+- `web` off: no DevTools wiring and still compiles (template-smoke).
+- Model test, closed-box "it runs and serves" fact, AppHost Design region, `tw-deploy` note.
+- `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit` green.
+
 ## Requirements
 
 - **Packages:** move every `TimeWarp.State*` pin (State, Blazor, Plus, and any others in use) from

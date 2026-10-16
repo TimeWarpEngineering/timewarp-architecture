@@ -174,9 +174,15 @@
     <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
          itself, so no HTML string from Markdig reaches the DOM. -->
     <PackageVersion Include="Markdig" Version="1.4.0" />
-    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.13" />
-    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.13" />
-    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.13" />
+    <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.14" />
+    <!-- Task 335-001: State DevTools. Telemetry weaves the action-span behavior into web-spa's
+         ClientPipeline; Export (web-server, Development) ships those spans to the inspector that
+         DevTools.Hosting starts from the AppHost in run mode. Same version as the State pins. -->
+    <PackageVersion Include="TimeWarp.State.Telemetry" Version="12.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Export" Version="12.0.0-beta.14" />
+    <PackageVersion Include="TimeWarp.State.DevTools.Hosting" Version="12.0.0-beta.14" />
     <PackageVersion Include="timewarp-heroicons" Version="2.2.0" />
     <PackageVersion Include="timewarp-simple-icons" Version="16.35.0" />
   </ItemGroup>

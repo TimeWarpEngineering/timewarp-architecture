@@ -73,6 +73,9 @@
          tsconfig to TypeScript.MSBuild. Static web assets stay under /_content/TimeWarp.State/. -->
     <PackageReference Include="TimeWarp.State.Blazor" ExcludeAssets="contentFiles" />
     <PackageReference Include="TimeWarp.State.Plus"/>
+    <!-- Task 335-001: [assembly: MediatorBehavior] weaves TelemetryBehavior into this assembly's
+         ClientPipeline, one Activity per action. No listener (WASM, production) means no span. -->
+    <PackageReference Include="TimeWarp.State.Telemetry"/>
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Timewarp.OptionsValidation"/>
