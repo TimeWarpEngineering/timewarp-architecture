@@ -94,6 +94,13 @@ Why it hid: `dev template-smoke` and the `template-smoke` CI job generate only t
 
 - Created: 3911527 (2026-10-16)
 - 2026-10-16: implementer (ganda task work, Claude Opus 5.5). Fixed, smoke matrix extended, follow-up 374 filed.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T04:37:58Z
+
+- Review oracle: tw-implementation-review round 1 (claude, model claude-opus-5-5), general reviewer, disposition clean — 2026-10-16
+
+## Learnings
+
+- Goal restatement matched the task; no misread.
 
 ## Results
 
@@ -124,6 +131,10 @@ Why it hid: `dev template-smoke` and the `template-smoke` CI job generate only t
   all six variants, each 0 Warning(s) / 0 Error(s); `dev check-version`: source 2.0.0-beta.20 is
   already ahead of NuGet beta.19, so no bump is needed. In the generated SmokeNoWeb app:
   api-server-integration-tests 1/1, aspire-tests 42/42, api-jaribu-tests 9/9.
+
+- Review: 1 round, roster general (effort 2), 0 findings (bug 0 / suggestion 0 / nit 0).
+  Disposition **clean**. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
