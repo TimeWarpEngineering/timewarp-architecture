@@ -11,8 +11,8 @@
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!-- Jaribu SUT_/Action_Given_ naming uses underscores (CA1707); static SetupOnce/CleanUpOnce. -->
     <NoWarn>$(NoWarn);CA1707;CA1849;IDE0021;IDE0058</NoWarn>
-    <!-- Template flag consumed by global-usings.cs (TWA0010: directive needs a matching constant). -->
-    <DefineConstants>$(DefineConstants);web</DefineConstants>
+    <!-- Template flags consumed by #if directives in this suite (TWA0010: directive needs a matching constant). -->
+    <DefineConstants>$(DefineConstants);api;postgres;web;yarp</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />

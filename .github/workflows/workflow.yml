@@ -6,7 +6,10 @@ name: CI/CD
 #   - ci: one status over ci-group (the stable required-check name)
 #   - release: release/workflow_dispatch pipeline (pack, OIDC push) — one job, never parallel
 #   - skill-lint: vally skill/eval lint (former skill-lint.yaml; PR + path filter)
-#   - template-smoke: pack → install → generate → build (former template-smoke.yml)
+#   - template-smoke: pack → install → generate → build (former template-smoke.yml). Push, PR
+#     and a merge dispatch smoke SmokeDefault only; the nightly (schedule, or dispatch with
+#     mode nightly) runs `dev template-smoke --matrix --app-tests`: every flag-off variant plus
+#     each generated app's test projects (task 375). A flag costs nightly time, not PR time.
 # Path semantics from the former separate workflows are preserved via detect-paths
 # + job-level if conditions (not separate workflow files).
 #
@@ -15,6 +18,9 @@ name: CI/CD
 # not a pull_request type: a description edit changes no code. A base retarget also fires
 # `edited`, so retargeting no longer re-runs CI; work-set opens children against the feature
 # branch directly, and after a manual retarget push a commit or close/reopen the PR.
+# The nightly `schedule` runs only template-smoke, from the default branch (GitHub fires a schedule
+# on the default branch only). GitHub emails a failed scheduled run to the user who last changed
+# the cron line; a human files the kanban task from it (ganda is private and never runs in CI).
 # Publishing is release-only: push/pull_request run `dev workflow` in Pr/Merge mode (build,
 # test, `dev publish` file outputs) with no NuGet login, pack, or push on any branch.
 #
@@ -79,14 +85,17 @@ on:
       - 'skills/**'
   release:
     types: [published]
+  schedule:
+    - cron: '17 7 * * *'  # nightly template-smoke flag-off matrix, 07:17 UTC (task 375)
   workflow_dispatch:
     inputs:
       mode:
-        description: 'merge = normal CI (default). probe = trusted-publishing check only (OIDC login, no build, no publish).'
+        description: 'merge = normal CI (default). probe = trusted-publishing check only (OIDC login, no build, no publish). nightly = template-smoke flag-off matrix + generated-app tests only (no release).'
         type: choice
         options:
           - merge
           - probe
+          - nightly
         default: merge
 
 jobs:
@@ -295,8 +304,8 @@ jobs:
     # Release (`release: published`) and workflow_dispatch: one job, one `dev workflow` pass in
     # Release mode (clean -> build -> pack -> push -> template-publish-smoke). Never a matrix:
     # packing and pushing must not run in parallel copies. NuGet Trusted Publishing binds to this
-    # repo + workflow.yml, not the job name.
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    # repo + workflow.yml, not the job name. A nightly dispatch is template-smoke only.
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'nightly')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -393,10 +402,11 @@ jobs:
           done
 
   template-smoke:
-    # Former template-smoke.yml — push/PR path filter + workflow_dispatch.
+    # Former template-smoke.yml — push/PR path filter, workflow_dispatch, and the nightly schedule.
     needs: [detect-paths]
     if: |
       always() && !cancelled() && (
+        github.event_name == 'schedule' ||
         (github.event_name == 'workflow_dispatch' && inputs.mode != 'probe') ||
         (
           (github.event_name == 'push' || github.event_name == 'pull_request') &&
@@ -426,16 +436,22 @@ jobs:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-template-smoke-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
 
-      # Generated-app Jaribu aggregators hit HTTPS with the ASP.NET dev certificate (same as the
-      # `ci-group` jobs). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
+      # Generated-app Jaribu aggregators and (nightly) test projects hit HTTPS with the ASP.NET dev
+      # certificate (same as the `ci-group` jobs). Trust it and put the trust dir on SSL_CERT_DIR so OpenSSL/HttpClient does
       # not fail with UntrustedRoot on Linux runners. See https://aka.ms/dev-certs-trust.
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
+      # Nightly: every flag-off variant plus each generated app's test projects (aspire-tests use the
+      # runner's Docker). Everything else: SmokeDefault only (task 375).
       - name: Template smoke (pack → install → generate → build)
         run: |
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
-          dotnet run tools/dev-cli/dev.cs -- template-smoke
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.mode }}" = "nightly" ]; then
+            dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
+          else
+            dotnet run tools/dev-cli/dev.cs -- template-smoke
+          fi
 
       # The smoke packs this branch's platform packages as 2.0.0-smoke and restores them into
       # ~/.nuget/packages. Evict them before the cache post-step saves, so a cache never carries

@@ -119,6 +119,14 @@ namespace Your.Slice.Namespace
   `failed == 0`, `total > 0`, and `total == succeeded + skipped`. That guards silent
   zero-discovery (co-located files excluded by template config). New family aggregators
   still need a `JaribuFamilyAggregators` entry (`RequiredFamilies` + `RelativeProjectDir`).
+- `dev template-smoke` smokes the `SmokeDefault` variant only, which is the PR and push CI gate.
+  `--matrix` adds every flag-off variant (`SmokeNoPostgres`, `SmokeNoApi`, `SmokeNoWeb`,
+  `SmokeNoGrpc`, `SmokeNoYarp`); run it locally when a change touches `#if flag` regions or
+  template symbols. `--app-tests` also runs each generated app's test projects (aspire-tests,
+  integration, Playwright) under the tier 3 gate, and the aspire-tests need Docker. CI runs
+  `--matrix --app-tests` nightly from `master`. To run that nightly against a branch without
+  waiting, dispatch it: `gh workflow run workflow.yml --ref <branch> -f mode=nightly`. A failed
+  nightly emails the user who last changed the workflow's cron line; file a kanban task from it.
 - `#region Purpose` is never suppressed (TWA0004) — write the real one-line reason, not a
   placeholder.
 
