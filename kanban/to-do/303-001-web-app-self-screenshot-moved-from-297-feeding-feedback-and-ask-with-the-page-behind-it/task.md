@@ -224,6 +224,10 @@ Expect:
 - Analyzer BL0016 flags any call on a type that implements `IJSRuntime`. Test doubles avoid the
   pragma by keeping their answers on a separate plain class.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Filed from Steven's voice call, 2026-10-10 as task 297. Moved under parent 303 as 303-001 on
@@ -261,3 +265,4 @@ Expect:
 - Implemented 2026-10-16/17 (ganda task work, implement oracle): capture module, ScreenshotState, Ask and Feedback wiring, relay images, tests; all gates green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T17:09:53Z
 - Review oracle 2026-10-17 (tw-implementation-review, effort 3, general): 3 rounds, accepted-exceptions; reviewer and fix-loop subagents (claude-opus-5-5) ran on this id.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-16T19:28:34Z
