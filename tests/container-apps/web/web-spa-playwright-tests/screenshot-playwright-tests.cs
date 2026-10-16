@@ -8,15 +8,15 @@
 // process) and a passkey account from a Chrome virtual authenticator, the same sign-in as
 // FeedbackAttachment_Given_Wasm. On /Settings the test puts two probe boxes at the top of the page
 // body: a red one and a blue one marked data-no-capture. Ask's camera button dispatches
-// ScreenshotState.CaptureScreenshot; the thumbnail's data: URI is the stored PNG. The test checks
+// ScreenshotState.CaptureForAsk; the thumbnail's data: URI is the stored PNG. The test checks
 // the PNG signature and IHDR size in .NET, then decodes it in the browser and counts pixels: red
 // must be there (the page really was drawn), blue must not (the mask held), and the mask grey must
 // cover the secret box. Remove takes the thumbnail away; a second capture puts it back, and the
 // message sent with it carries one image/png on the user turn of the recorded completion request,
 // which the fake upstream answers with "image: image/png WxH". The thumbnail is gone after send.
 // Feedback is reached by client-side navigation (Blazor.navigateTo), so the store keeps the
-// /Settings capture: "Attach capture of /Settings" (the page behind) and "Capture this page" each
-// add a removable preview through the normal upload action; one is removed, the item is filed, and
+// /Settings capture: "Attach capture of /Settings" (the page behind) and "Capture this page"
+// (CaptureForFeedback) each add a removable preview through the normal upload action; one is removed, the item is filed, and
 // its permalink shows exactly one attachment image whose size matches the capture. The PNG and the
 // panel and form shots go to test output (PlaywrightScreenshot).
 #endregion

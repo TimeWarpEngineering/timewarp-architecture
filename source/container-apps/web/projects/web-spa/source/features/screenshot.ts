@@ -1,5 +1,6 @@
 // #region Purpose
-// Draws the page body, or one element, to a PNG for ScreenshotState.CaptureScreenshot.
+// Draws the page body, or one element, to a PNG for ScreenshotState.CaptureAsync (the one .NET
+// caller, shared by CaptureScreenshot, CaptureForAsk, and CaptureForFeedback).
 // #endregion
 //
 // #region Design
@@ -18,6 +19,10 @@
 // capture returns the size and a token; takeBytes(token) hands the PNG to .NET once as a
 // Uint8Array, which .NET reads as an IJSStreamReference, so an InteractiveServer circuit
 // streams it instead of sending one SignalR message over the hub's size limit.
+// pending keeps only the newest MaxPending blobs: two captures can overlap (an agent capture
+// during a click), so a new capture must not drop a token whose takeBytes has not run yet, but a
+// blob whose takeBytes never runs (a cancelled or failed .NET side) is evicted by later captures
+// instead of being held for the session.
 // Limits: web fonts fall back to system fonts, ::before/::after and closed shadow roots are
 // not drawn, and CSS url() backgrounds stay empty. A tainted canvas reports "tainted".
 // #endregion
@@ -53,6 +58,7 @@ const InheritedAlways = [
   "direction",
 ];
 
+const MaxPending = 3;
 const pending = new Map<string, Blob>();
 let nextToken = 0;
 
@@ -63,9 +69,6 @@ interface CaptureContext {
 }
 
 export async function capture(selector: string, maxBytes: number): Promise<ScreenshotCapture> {
-  // Only one capture is ever pending: drop a blob whose takeBytes never ran (a cancelled or
-  // failed .NET side), so the module does not hold it for the session.
-  pending.clear();
   let target: Element | null;
   try {
     target = document.querySelector(selector);
@@ -101,6 +104,14 @@ export async function capture(selector: string, maxBytes: number): Promise<Scree
 
     const token = `shot-${++nextToken}`;
     pending.set(token, blob.data);
+    // A Map iterates in insertion order, so the first keys are the oldest tokens.
+    for (const old of pending.keys()) {
+      if (pending.size <= MaxPending) {
+        break;
+      }
+
+      pending.delete(old);
+    }
     return {
       token,
       width: blob.width,

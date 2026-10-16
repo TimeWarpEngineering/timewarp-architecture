@@ -208,7 +208,8 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   Mark anything a picture must never show with `data-no-capture` (password inputs are masked
   already); the capture draws a grey box in its place. Ask's camera button is
   `CaptureForAsk`, one action that captures the same way and attaches that capture to the next
-  message; Feedback uploads a capture through the normal attachment action. `page_context.screenshot` holds the
+  message; Feedback's Capture this page button is `CaptureForFeedback`, which records the capture
+  it took, and the page uploads that capture through the normal attachment action. `page_context.screenshot` holds the
   capture's metadata only, never the picture.
 
 Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.

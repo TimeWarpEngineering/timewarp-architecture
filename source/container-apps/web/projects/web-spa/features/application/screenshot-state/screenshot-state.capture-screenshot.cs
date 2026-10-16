@@ -3,16 +3,16 @@
 #endregion
 
 #region Design
-// Task 303-001. Every capture (Ask's Screenshot
-// button, Feedback's capture, the Ctrl-K command, the in-app model, a WebMCP agent) is this
-// action. Visibility Both with no required parameter: the palette lists it as a command and
+// Task 303-001. Every capture except the two composer buttons (the Ctrl-K command, the in-app
+// model, a WebMCP agent) is this action. Ask's camera button is CaptureForAsk and Feedback's
+// Capture this page button is CaptureForFeedback; all three go through CaptureAsync. Visibility Both with no required parameter: the palette lists it as a command and
 // CatalogAgentToolSet offers it as a tool from every page. It is not on the read-only allow-list,
 // so in Ask before editing an agent call shows the approval prompt first: the person sees every
 // capture an agent takes. The selector is optional; blank means PageAgentContext.SurfaceRootSelector,
 // the page body, which leaves out the app bar and the docked Ask panel (the page behind it).
 // A selector longer than SelectorCap is refused before the browser sees it.
 // The capture itself is ScreenshotState.CaptureAsync, the only caller of ScreenshotJsModule; this
-// handler and CaptureForAsk (Ask's camera button) are its two callers.
+// handler, CaptureForAsk and CaptureForFeedback are its three callers.
 // Success sets Latest (path from PageAgentRoute), clears LastError, publishes an Info
 // OutcomeNotification (the visible indicator; handlers never dispatch), and sets AgentCallOutcome
 // to ScreenshotCaptured, whose Image (a data: URI) the WebMCP caller receives. A refusal sets LastError,

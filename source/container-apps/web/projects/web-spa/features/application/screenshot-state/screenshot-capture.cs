@@ -14,7 +14,7 @@
 
 namespace TimeWarp.Architecture.Features.Applications;
 
-/// <summary>A capture taken by ScreenshotState.CaptureScreenshot.</summary>
+/// <summary>A capture taken by ScreenshotState.CaptureAsync.</summary>
 public sealed class ScreenshotCapture
 {
   public ScreenshotCapture

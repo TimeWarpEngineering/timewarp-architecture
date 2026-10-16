@@ -158,11 +158,13 @@
     return NotificationState.AddNotification(MessageBarIntent.Error, message);
   }
 
+  // CaptureForFeedback records the capture it took as ForFeedback, which only this button sets, so
+  // an agent capture landing meanwhile (it moves Latest) is never uploaded as "this page".
   private async Task CaptureThisPageAsync()
   {
-    int before = ScreenshotState.Latest?.Id ?? 0;
-    await ScreenshotState.CaptureScreenshot();
-    if (ScreenshotState.Latest is { } capture && capture.Id != before)
+    int before = ScreenshotState.ForFeedback?.Id ?? 0;
+    await ScreenshotState.CaptureForFeedback();
+    if (ScreenshotState.ForFeedback is { } capture && capture.Id != before)
     {
       await AttachCaptureAsync(capture);
     }

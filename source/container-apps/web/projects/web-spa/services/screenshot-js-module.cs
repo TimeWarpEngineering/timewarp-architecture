@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// [SideEffectService]: the only caller is ScreenshotState.CaptureAsync (the CaptureScreenshot and
-// CaptureForAsk handlers), so no component or other service captures the page. The JS returns
+// [SideEffectService]: the only caller is ScreenshotState.CaptureAsync (the CaptureScreenshot,
+// CaptureForAsk and CaptureForFeedback handlers), so no component or other service captures the page. The JS returns
 // the size and a token, then hands the PNG over as an IJSStreamReference read with
 // maxAllowedSize = maxBytes, the same reason feedback paste streams: one SignalR message on
 // InteractiveServer has a size cap.
