@@ -14,7 +14,8 @@
 #region Purpose
 // Proves the completion handler refuses an anonymous caller, a missing key, and the rate cap,
 // and that it forwards a fake upstream's function call without executing a tool. Also proves the
-// validator's image rules (task 303-001) reject each bad image shape.
+// validator's image rules (task 303-001) reject each bad image shape, and that null turns, tools,
+// and tool calls are rejected without throwing.
 #endregion
 
 //-:cnd:noEmit
@@ -263,6 +264,34 @@ namespace TimeWarp.Architecture.Features.AgentChats
       return Task.CompletedTask;
     }
 
+    public static Task Null_Turn_Is_Rejected()
+    {
+      Command command = new() { Messages = [null!] };
+
+      ShouldReject(command, "A turn must not be null.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Null_Tool_Is_Rejected()
+    {
+      Command command = WithImages(PngImage());
+      command.Tools = [null!];
+
+      ShouldReject(command, "A tool must not be null.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Null_Tool_Call_Is_Rejected()
+    {
+      Command command = new()
+      {
+        Messages = [new Turn { Role = "assistant", Text = "Calling.", ToolCalls = [null!] }]
+      };
+
+      ShouldReject(command, "A tool call must not be null.");
+      return Task.CompletedTask;
+    }
+
     public static Task Bytes_That_Do_Not_Match_The_Media_Type_Are_Rejected()
     {
       Command jpegAsPng = WithImages(new TurnImage { MediaType = "image/png", Data = Convert.ToBase64String(Jpeg) });
@@ -284,7 +313,8 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     private static void ShouldReject(Command command, string message)
     {
-      FluentValidation.Results.ValidationResult result = new Validator().Validate(command);
+      // Should.NotThrow: a null entry must surface as a validation error, never as an exception (a 500).
+      FluentValidation.Results.ValidationResult result = Should.NotThrow(() => new Validator().Validate(command));
       result.IsValid.ShouldBeFalse();
       result.Errors.Select(error => error.ErrorMessage).ShouldContain(message);
     }
