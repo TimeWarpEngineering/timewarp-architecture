@@ -113,3 +113,19 @@ pass (no `ingress` wait; weather fetch reaches api-server directly). SmokeNoApi
 web-spa-integration-tests pass, including the four `CatalogAgent_Should` conversation tests that
 threw NullReferenceException before. In SmokeNoYarp, `aspire-spa-test-application.cs` has
 `BaseUrlResourceName = "api-server"`. In SmokeDefault it is `"ingress"`.
+
+### Review disposition
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0, suggestion 1 fixed, nit 0. Open: 0.
+- Disposition: **clean**. M1 (comments still described an ingress-only base URL in `aspire-spa-test-application.cs`) was fixed on this task. It was a comment-only edit.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Learnings
+
+- Goal restatement vs original task: consistent; no misread.
+
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T09:45:20Z
+- Review oracle: tw-implementation-review by claude (claude-opus-5-5), effort 1, clean — 2026-10-16
