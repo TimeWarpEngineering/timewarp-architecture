@@ -22,7 +22,8 @@
 // hosting environment, so "absent" means no workload is configured as Development/Testing and the
 // chart carries no dashboard workload at all.
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
-// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output.
+// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
+// variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
 #endregion
 
 namespace Aspire.Tests;
@@ -157,6 +158,7 @@ public partial class KubernetesPublish_Given_
     foreach ((string owner, string key, string _) in EnvironmentEntries())
     {
       key.ShouldNotBe("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", $"{owner} points at State DevTools");
+      key.ShouldNotContain("DEVTOOLS", Case.Insensitive, $"{owner} carries a State DevTools variable");
     }
 
     await Task.CompletedTask;

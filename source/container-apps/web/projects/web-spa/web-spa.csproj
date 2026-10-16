@@ -74,8 +74,12 @@
     <PackageReference Include="TimeWarp.State.Blazor" ExcludeAssets="contentFiles" />
     <PackageReference Include="TimeWarp.State.Plus"/>
     <!-- Task 335-001: [assembly: MediatorBehavior] weaves TelemetryBehavior into this assembly's
-         ClientPipeline, one Activity per action. No listener (WASM, production) means no span. -->
+         ClientPipeline, one Activity per action. No listener (production, no inspector) means no span. -->
     <PackageReference Include="TimeWarp.State.Telemetry"/>
+    <!-- Task 335-002: browser exporter to the State DevTools inspector. Debug only, and Program.Main
+         compiles the call only with the DEBUG symbol, so a Release build or publish has neither
+         the assembly nor the call. -->
+    <PackageReference Include="TimeWarp.State.DevTools.Wasm" Condition="'$(Configuration)' == 'Debug'"/>
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
     <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Timewarp.OptionsValidation"/>

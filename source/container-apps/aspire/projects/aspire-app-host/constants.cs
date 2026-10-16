@@ -83,4 +83,9 @@ internal class Constants
   // Task 070-007: Azure Container Apps publish environment (Bicep). Its registry, Log Analytics workspace
   // and the Flexible Server's Key Vault are named by Aspire from this and the postgres resource name.
   public const string ContainerAppsEnvironmentResourceName = "aca-env";
+
+  // Task 335-002: the State DevTools inspector's configuration key TimeWarp:State:DevTools:CorsOrigins
+  // as an environment variable. The inspector unions it with TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS,
+  // which WithTimeWarpStateDevTools fills from web-server's endpoints; this adds the ingress origins.
+  public const string StateDevToolsCorsOriginsEnvironmentVariable = "TimeWarp__State__DevTools__CorsOrigins";
 }
