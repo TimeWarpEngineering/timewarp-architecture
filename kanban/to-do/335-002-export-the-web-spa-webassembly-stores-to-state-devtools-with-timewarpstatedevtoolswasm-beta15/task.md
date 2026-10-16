@@ -228,6 +228,20 @@ Expect:
   the app through the ingress. The inspector shows `live` rows with the `wasm` badge next to the `pre`
   (server) rows.
 
+### Review disposition
+
+- Rounds: 1. Roster: general (review oracle, claude-opus-5-5). Effort 2 (by-diff, 497 lines).
+- Final counts: bug 0, suggestion 1 wontfix, nit 0. Open: 0.
+- Disposition: **accepted-exceptions**. M1 (suggestion): no gate runs the Debug live wasm-span
+  branch, because `dev test` and CI build Release. It is accepted because the Debug-only reference
+  is a requirement and the scripted Debug run is recorded. Adding a Debug lane is a lane-policy
+  call for the maintainer (follow-up).
+- The reviewer re-ran the Debug browser proof (1/1, an `ApplicationState.Initialized` span with
+  `runtime=wasm`) and StateDevToolsModel (3/3). The implementer restatement matches the task, with
+  no misread.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ## Notes
 
 - Workers must not start the maintainer's AppHost (`dev run`); the maintainer opens the inspector after merge.
@@ -237,3 +251,4 @@ Expect:
 
 - Created: 2026-10-16 (cockpit follow-up to 335-001; unblocked by timewarp-state 121 / v12.0.0-beta.15)
 - 2026-10-16 implement (ganda task work): wiring, ingress CORS, Playwright proof (Debug live / Release absent), publish facts, docs; gates above.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T14:18:55Z
