@@ -28,7 +28,8 @@
 // Task 374: the ingress gates and every through-ingress fact compile only with the yarp flag.
 // With --yarp false the AppHost has no ingress resource; the class still boots the graph and runs
 // the facts that target web-server and the state dev tools directly (first-run log check, dev
-// tools UI). Likewise the api-server gate and the api-route fact compile only with the api flag.
+// tools UI). Likewise the api-server gate and the api-route fact compile only with the api flag, and the
+// web-migrations gate only with the postgres flag.
 #endregion
 
 namespace Aspire.Tests;
@@ -76,6 +77,7 @@ public partial class IngressSmoke_Given_
 #if yarp
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
 #endif
+#if postgres
 
     // Task 155: the AppHost deliberately carries NO wait edge between web-server and
     // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
@@ -102,6 +104,7 @@ public partial class IngressSmoke_Given_
       KnownResourceStates.Finished,
       $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
     );
+#endif
 #if yarp
 
     // Backstop only, as of task 058-001: the AppHost now gives the yarp resource an HTTP health
