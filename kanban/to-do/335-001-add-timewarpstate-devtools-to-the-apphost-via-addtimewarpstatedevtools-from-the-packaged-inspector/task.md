@@ -62,3 +62,4 @@ Architecture's AppHost can now use it with one call. Every generated app then ge
 ## Session
 
 - Created: 2026-10-16 (cockpit; unblocked by timewarp-state 118 / v12.0.0-beta.14)
+- Boyscout: removed the stale `kanban/to-do/372-*` copy (372 is done; its to-do copy survived the feature/ci-speed merge and tripped `kanban-duplicate-ids`).
