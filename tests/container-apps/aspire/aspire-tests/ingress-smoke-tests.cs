@@ -272,6 +272,19 @@ public partial class IngressSmoke_Given_
     body.ShouldContain("_framework/blazor.web.js");
   }
 
+  public static async Task WebServerAliveThroughIngress_Should_ReturnHealthy()
+  {
+    // Task 377: the ingress health check's own path. Healthy (status text only) proves the literal
+    // route reached web-server's /alive, not the SPA catch-all (which would return the shell HTML).
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+
+    HttpResponseMessage response = await httpClient.GetAsync(TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string body = await response.Content.ReadAsStringAsync();
+    body.ShouldBe("Healthy");
+  }
+
   public static async Task WebRouteThroughIngressWithForeignHost_Should_ReturnOk()
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
