@@ -85,17 +85,17 @@ still prove ingress to web-server connectivity, just without prerendering.
 
 ## Checklist
 
-- [ ] Confirm what the publish path emits for the ingress health check and who executes it
-- [ ] Choose the probe path and production exposure; record both in Design regions
-- [ ] Add the health route to the run-mode YARP config and the publish-mode `WithConfiguration`
-- [ ] Change both `WithHttpHealthCheck` calls and update both comments
-- [ ] Update publish-output tests for the new probe path
-- [ ] Add an aspire-test assertion on the ingress health-check URL path
-- [ ] `dev check-version` (bump version and pins if required)
-- [ ] `dev build` 0 warnings 0 errors
-- [ ] `dev test` passes
-- [ ] `dev template-smoke` passes
-- [ ] `ganda repo audit` clean
+- [x] Confirm what the publish path emits for the ingress health check and who executes it
+- [x] Choose the probe path and production exposure; record both in Design regions
+- [x] Add the health route to the run-mode YARP config and the publish-mode `WithConfiguration`
+- [x] Change both `WithHttpHealthCheck` calls and update both comments
+- [x] Update publish-output tests for the new probe path
+- [x] Add an aspire-test assertion on the ingress health-check URL path
+- [x] `dev check-version` (bump version and pins if required)
+- [x] `dev build` 0 warnings 0 errors
+- [x] `dev test` passes
+- [x] `dev template-smoke` passes
+- [x] `ganda repo audit` clean
 
 ## Proof gates
 
@@ -112,10 +112,80 @@ still prove ingress to web-server connectivity, just without prerendering.
 
 - Created: 228576 (2026-10-16)
 - Specified from Steve's approved direction (2026-10-16); read-only investigation of the AppHost,
-  YARP config, and service defaults. Not started.
+  YARP config, and service defaults.
+- 2026-10-16 implement oracle (ganda task work): implemented, all gates green; see Results.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T10:12:54Z
+- 2026-10-16 review oracle (claude-opus-5-5, session not reported): tw-implementation-review effort 2, roster general, 1 round, disposition clean.
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-16T10:15:44Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
 - No time estimates. Scope is the two probe sites, one route in each YARP configuration, the
   health-endpoint exposure decision, and tests.
 - Workers must not run the AppHost via `dev run`.
+
+## Results
+
+### What changed
+
+- **Probe path:** `IngressPaths.WebServerAlivePath` = `/web-server/alive` (new constant in
+  foundation-contracts). Both `WithHttpHealthCheck` calls (run mode yarp project, publish mode
+  `AddYarp`) now pass it; comments at both sites rewritten.
+- **Routes:** run mode `WebAliveRoute` in `source/container-apps/yarp/appsettings.Development.json`
+  (literal match, `PathSet: /alive`, cluster `Web.Server`); publish mode `AddRoute(WebServerAlivePath,
+  webServerHttp).WithTransformPathSet(HealthEndpointPaths.Alive)` in `WithConfiguration`. Both inside
+  the existing web flag regions; the literal outranks `{**catch-all}`.
+- **Production exposure:** `MapDefaultEndpoints` now maps `/alive` in every environment, anonymous,
+  liveness checks only, default writer (status text only). `/health` stays Development-only. The
+  Design region of `aspire-service-defaults/extensions.cs` records the reasoning in place of the
+  aka.ms caveat. New `HealthEndpointPaths` constants (`Alive`, `Health`).
+- **Publish output:** confirmed by decompiling Aspire.Hosting 13.6.1 that `WithHttpHealthCheck`
+  only adds a `HealthCheckAnnotation` plus an AppHost-process health check, and no
+  `EndpointProbeAnnotation`. Compose, Kubernetes, and ACA emit probes only from
+  `EndpointProbeAnnotation`, so deployed environments never ran the `/` probe. The publish-path
+  change keeps the model consistent.
+- **Tests:**
+  - `aspire-tests/ingress-health-check-model-tests.cs` checks the ingress health-check key
+    (`ingress_http_/web-server/alive_200_check`) and that the path is never `/`. It covers run mode
+    and the compose, kubernetes, and aca publish models. It tolerates the yarp and web flags being
+    off.
+  - `ingress-smoke-tests.cs` adds `WebServerAliveThroughIngress_Should_ReturnHealthy`, the
+    closed-box check that the route reaches web-server.
+  - `yarp-integration-tests/web-alive-route-ingress-path-tests.cs` checks that the JSON route
+    matches the constants.
+
+### Gates
+
+- `dev check-version`: source 2.0.0-beta.20 is already ahead of nuget beta.19, so no bump was
+  needed.
+- `dev build`: 0 warnings, 0 errors.
+- `dev test`: 23 of 23 projects passed. aspire-tests: 62 of 62, including the new facts. The
+  ingress reached Healthy through the new path.
+- `dev template-smoke` (default variant): SUCCEEDED. I did not run `--matrix`. No new `#if` regions
+  were added (edits sit inside existing web regions) and the new aspire model test is
+  flag-tolerant at runtime, so the nightly matrix covers the flag-off variants.
+- `ganda repo audit`: passes.
+
+### How to validate
+
+- **Smoke:** `cd tests/container-apps/aspire/aspire-tests && dotnet test` and
+  `cd tests/container-apps/yarp/yarp-integration-tests && dotnet test`.
+- **Expect:** both pass. `IngressHealthCheck_Given_` (4 facts),
+  `WebServerAliveThroughIngress_Should_ReturnHealthy` (body `Healthy`), and
+  `WebAliveRouteIngressPath_.DevelopmentConfig_` pass. Under `dev run`, web-server traces show
+  `GET /alive` every ~30s and no `GET /`, and the State DevTools Store list stops growing with
+  `pre <guid>` stores. Don't run `dev run` in a worker; this is for a human check.
+
+### Review disposition
+
+- **Rounds:** 1. **Effort:** 2. **Roster:** general.
+- **Final counts:** bug 0, suggestion 0, nit 0. No findings were raised, so none are open, fixed, or wontfix.
+- **Disposition:** clean.
+- **Reviewer re-ran the gates:** `./bin/dev build` green, yarp-integration-tests 17/17, aspire-tests 62/62.
+- **Goal restatement vs task:** they match. No misread found.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.

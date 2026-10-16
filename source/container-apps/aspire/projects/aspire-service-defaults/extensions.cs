@@ -13,6 +13,16 @@
 // in TimeWarp.Foundation.Configuration (same home as ServiceNames).
 // AddLogRedaction is the second deliberate deviation (task 344): it lives in its own file
 // (log-redaction-extensions.cs) so this one stays diffable; AddServiceDefaults calls it first.
+// MapDefaultEndpoints is the third deliberate deviation (task 377): upstream maps /health and
+// /alive only in Development. Here /alive is mapped in EVERY environment because the ingress
+// health route (IngressPaths.WebServerAlivePath) targets web-server's /alive, and a probe path
+// that 404s outside Development is no probe. Security reasoning: /alive runs only checks tagged
+// "live" (the constant "self" check), so it is cheap, touches no dependency, and cannot be used
+// to load a database or downstream service. It is anonymous by design and uses the default
+// response writer, which writes only the aggregate status text ("Healthy") — no check names,
+// descriptions, exception text, or dependency state. Do not add a custom ResponseWriter or a
+// dependency check tagged "live". /health (every check, including dependency checks) stays
+// Development-only. Paths are HealthEndpointPaths constants.
 #endregion
 
 namespace Microsoft.Extensions.Hosting;
@@ -104,18 +114,18 @@ public static class Extensions
 
   public static WebApplication MapDefaultEndpoints(this WebApplication app)
   {
-    // Adding health checks endpoints to applications in non-development environments has security implications.
-    // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
+    // Only health checks tagged with the "live" tag must pass for app to be considered alive.
+    // Every environment, anonymous, status text only (see Design).
+    app.MapHealthChecks(TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive, new HealthCheckOptions
+    {
+      Predicate = r => r.Tags.Contains("live")
+    }).AllowAnonymous();
+
+    // Dependency checks stay Development-only (see Design).
     if (app.Environment.IsDevelopment())
     {
       // All health checks must pass for app to be considered ready to accept traffic after starting
-      app.MapHealthChecks("/health");
-
-      // Only health checks tagged with the "live" tag must pass for app to be considered alive
-      app.MapHealthChecks("/alive", new HealthCheckOptions
-      {
-        Predicate = r => r.Tags.Contains("live")
-      });
+      app.MapHealthChecks(TimeWarp.Foundation.Configuration.HealthEndpointPaths.Health);
 
       // Uncomment the following line to enable the Prometheus endpoint (requires the OpenTelemetry.Exporter.Prometheus.AspNetCore package)
       // app.MapPrometheusScrapingEndpoint();

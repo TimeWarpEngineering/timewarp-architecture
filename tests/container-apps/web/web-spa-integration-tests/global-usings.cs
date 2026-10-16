@@ -4,10 +4,10 @@
 
 global using TimeWarp.Features.Cloning;
 global using Microsoft.Extensions.DependencyInjection;
-// Auth, configuration, options, and Services: weather + mock API surfaces excluded when api is off.
+global using Microsoft.Extensions.Configuration;
+// Auth and options: only the api-server client and weather surfaces use them.
 #if(api)
 global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Options;
 #endif
 global using Microsoft.FluentUI.AspNetCore.Components;
@@ -20,9 +20,7 @@ global using TimeWarp.Architecture.Features.Counters;
 global using TimeWarp.Architecture.Features.WeatherForecasts;
 #endif
 global using TimeWarp.Architecture.JsonSerializer.Tests;
-#if(api)
 global using TimeWarp.Architecture.Services;
-#endif
 global using TimeWarp.Architecture.Testing;
 global using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
 global using OneOf;
