@@ -16,6 +16,11 @@
 // answers a call made after the person's last message, its picture goes on one user turn placed
 // right after that run of tool turns, because a tool turn cannot carry an image. Older tool
 // pictures are not sent again, so each picture reaches the model in the turn it was taken.
+// The request stays within MaxImagesPerRequest: images the person attached count first (newest
+// kept), then the newest tool pictures that still fit. Each dropped picture is replaced by
+// OmittedPictureText so the model knows one existed. AskScreenshotChatClient sits outside the
+// tool loop, so the Ask attachment stays on the person's message for every loop iteration; without
+// this cap an Ask screenshot plus two capture calls in one turn would exceed it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -85,6 +90,8 @@ internal sealed class RelayChatClient : IChatClient
 
   public const string ToolPictureText = "The picture the tool returned:";
 
+  public const string OmittedPictureText = "An earlier picture was omitted.";
+
   private static Command ToCommand(IEnumerable<ChatMessage> messages, ChatOptions? options)
   {
     Command command = new()
@@ -100,6 +107,7 @@ internal sealed class RelayChatClient : IChatClient
   {
     int lastUser = messages.FindLastIndex(static message => message.Role == ChatRole.User);
     List<Turn> turns = [];
+    List<Turn> pictureTurns = [];
     List<TurnImage> pictures = [];
     for (int index = 0; index < messages.Count; index++)
     {
@@ -119,12 +127,49 @@ internal sealed class RelayChatClient : IChatClient
       bool runEnds = index + 1 == messages.Count || messages[index + 1].Role != ChatRole.Tool;
       if (pictures.Count > 0 && runEnds)
       {
-        turns.Add(new Turn { Role = ChatRole.User.Value, Text = ToolPictureText, Images = [.. pictures] });
+        Turn pictureTurn = new() { Role = ChatRole.User.Value, Text = ToolPictureText, Images = [.. pictures] };
+        turns.Add(pictureTurn);
+        pictureTurns.Add(pictureTurn);
         pictures.Clear();
       }
     }
 
+    int room = MaxImagesPerRequest;
+    for (int index = turns.Count - 1; index >= 0; index--)
+    {
+      if (!pictureTurns.Contains(turns[index]))
+      {
+        room = KeepNewest(turns[index], room);
+      }
+    }
+
+    for (int index = pictureTurns.Count - 1; index >= 0; index--)
+    {
+      room = KeepNewest(pictureTurns[index], room);
+    }
+
     return turns;
+  }
+
+  /// <summary>Keeps the newest images of <paramref name="turn"/> that fit in <paramref name="room"/>.</summary>
+  private static int KeepNewest(Turn turn, int room)
+  {
+    int count = turn.Images.Count;
+    if (count == 0)
+    {
+      return room;
+    }
+
+    int keep = Math.Min(count, room);
+    if (keep < count)
+    {
+      turn.Images.RemoveRange(0, count - keep);
+      string note = string.Join(" ", Enumerable.Repeat(OmittedPictureText, count - keep));
+      bool replaceText = string.IsNullOrEmpty(turn.Text) || (keep == 0 && turn.Text == ToolPictureText);
+      turn.Text = replaceText ? note : $"{turn.Text}\n{note}";
+    }
+
+    return room - keep;
   }
 
   private static TurnImage? ToImage(DataContent content)
