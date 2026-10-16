@@ -65,7 +65,7 @@ Acceptance:
 ## Checklist
 
 - [x] State pins → 12.0.0-beta.14; DevTools.Hosting added; single version resolved
-- [x] `AddTimeWarpStateDevTools()` + `WithTimeWarpStateDevTools()` in run mode; SPA endpoint wired end to end
+- [x] `AddTimeWarpStateDevTools()` + `WithTimeWarpStateDevTools()` in run mode; server-side stores exported end to end (WASM store out of scope, see Results)
 - [x] Not in any publish output (+ safety facts)
 - [x] Flag combinations + template-smoke
 - [x] Tests; Design region + skill note
@@ -105,9 +105,16 @@ Acceptance:
   (`ingress-smoke-tests` uses `WebServerApiRoutePrefixes`, and timewarp-testing has IDE0005/RCS1213).
   Those failures are not from this change and are not fixed here.
 
+- **Review:** 1 round, effort 2, roster `general`. Final counts: bug 0; suggestion 1 fixed + 1 wontfix;
+  nit 1 fixed; 0 open. Disposition **accepted-exceptions**. M2 (WASM store not inspected) is accepted
+  because it needs an upstream WASM-capable exporter. The reviewer re-ran the model tests (2/2), compose
+  (10/10), kubernetes (11/11) and aca (11/11) suites and `ganda repo audit` (pass). Paths:
+  `review/review-framework.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
-Smoke: `dotnet test --project tests/container-apps/aspire/aspire-tests/aspire-tests.csproj -- --filter-class StateDevToolsModel`,
+Smoke, from `tests/container-apps/aspire/aspire-tests/` (its global.json selects Microsoft.Testing.Platform; from the repo root
+`dotnet test` falls back to VSTest and rejects `--project`): `dotnet test --project aspire-tests.csproj -- --filter-class StateDevToolsModel_Given_`,
 then the full `aspire-tests` (publish suites + ingress smoke). After merge, the maintainer runs `dev run` and opens the
 dashboard, then clicks a few SPA actions while the page is still server-interactive.
 
@@ -118,11 +125,24 @@ server-side stores. `dev publish compose|kubernetes|aca` output has no DevTools 
 
 ## Notes
 
+- Follow-up (not filed): WASM-side State DevTools inspection needs a WASM-capable exporter plus
+  inspector CORS in timewarp-state (review M2). The maintainer decides whether to file it there.
+
 - Workers must not start the maintainer's AppHost (`dev run`). The maintainer checks the DevTools
   dashboard resource after merge.
+
+## Learnings
+
+- Misread (restatement vs task): the restatement narrowed "check how the SPA receives
+  `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` ... and wire it end to end" to "web-server sends its State action
+  spans there". The narrowing was a sound, documented decision (no WASM exporter upstream). But the
+  checklist still claimed "SPA endpoint wired end to end". When a restatement drops part of the task's
+  scope, say so in the restatement itself and word the checklist to match.
 
 ## Session
 
 - Created: 2026-10-16 (cockpit; unblocked by timewarp-state 118 / v12.0.0-beta.14)
 - Boyscout: removed the stale `kanban/to-do/372-*` copy (372 is done; its to-do copy survived the feature/ci-speed merge and tripped `kanban-duplicate-ids`).
 - 2026-10-16 implement (Claude Opus 5.5, ganda task work): wired DevTools in run mode with the server-side exporter; all gates green; WASM export is out of scope (see Results).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T03:21:45Z
+- 2026-10-16 review oracle (Claude Opus 5.5, ganda task work): tw-implementation-review round 1, general, accepted-exceptions (0 open).
