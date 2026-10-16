@@ -50,7 +50,7 @@ passes; `dev build` clean, `dev test` passes; `dev template-smoke --matrix --app
 - [x] SmokeNoApi web-spa-playwright-tests pass (or the local timeout is shown to be flaky and fixed)
 - [x] `dev build` 0 warnings and 0 errors; `dev test` passes
 - [x] `dev template-smoke --matrix --app-tests` passes (Docker running)
-- [ ] Dispatched nightly (`gh workflow run workflow.yml --ref <branch> -f mode=nightly`) passes
+- [x] Dispatched nightly (`gh workflow run workflow.yml --ref <branch> -f mode=nightly`) passes
 - [x] `ganda repo audit` clean
 
 ## Notes
@@ -95,7 +95,7 @@ All edits are in `tests/container-apps/web/web-spa-integration-tests/` (template
   `WaitFor`s postgres. Rerun alone, the same generated suite passed 57/57. This change does not
   touch aspire-tests. If it recurs on the nightly, it needs its own task.
 - No generated variant has a double blank line in the three changed files.
-- Nightly dispatched on this branch:
+- The nightly dispatched on this branch passed (every variant, including SmokeNoGrpc):
   https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/38877166403
 
 ### How to validate
