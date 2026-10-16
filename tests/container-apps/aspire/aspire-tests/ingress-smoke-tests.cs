@@ -25,6 +25,10 @@
 // Suite-shaped under tests/ per hybrid topology policy — not co-located under features/.
 // Web-only: every fact targets Web.Server and WebServerApiRoutePrefixes is generated only with
 // web on, so .template.config excludes this whole file under --web false (task 373).
+// Task 374: the ingress gates and every through-ingress fact compile only with the yarp flag.
+// With --yarp false the AppHost has no ingress resource; the class still boots the graph and runs
+// the facts that target web-server and the state dev tools directly (first-run log check, dev
+// tools UI).
 #endregion
 
 namespace Aspire.Tests;
@@ -67,7 +71,9 @@ public partial class IngressSmoke_Given_
     using CancellationTokenSource cts = new(TimeSpan.FromMinutes(4));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
+#if yarp
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
+#endif
 
     // Task 155: the AppHost deliberately carries NO wait edge between web-server and
     // web-migrations (a builder-graph WaitFor deadlocks dashboard restarts; WaitForCompletion
@@ -95,6 +101,7 @@ public partial class IngressSmoke_Given_
       $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
     );
 
+#if yarp
     // Backstop only, as of task 058-001: the AppHost now gives the yarp resource an HTTP health
     // check, so the Healthy wait above already means the http endpoint answered a request and
     // this poll returns on its first attempt. It predates that check —
@@ -104,6 +111,7 @@ public partial class IngressSmoke_Given_
     // (even a 5xx) proves the proxy is wired — a genuine regression still surfaces as a bad
     // status in the facts, never swallowed here.
     await WaitForIngressReachableAsync(cts.Token);
+#endif
   }
 
   public static async Task CleanUpOnce()
@@ -160,6 +168,7 @@ public partial class IngressSmoke_Given_
     }
   }
 
+#if yarp
   private static async Task WaitForIngressReachableAsync(CancellationToken cancellationToken)
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
@@ -190,6 +199,7 @@ public partial class IngressSmoke_Given_
       }
     }
   }
+#endif
 
   public static async Task FirstRunOnEmptyDatabase_Should_LogNoErrorFromWebServer()
   {
@@ -230,19 +240,6 @@ public partial class IngressSmoke_Given_
     errorLines.ShouldBeEmpty(string.Join(Environment.NewLine, errorLines));
   }
 
-  public static async Task RootThroughIngress_Should_ReturnSpaShell()
-  {
-    // ingress "http" endpoint: TLS terminates at the edge, so the test client needs no cert trust.
-    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
-
-    HttpResponseMessage response = await httpClient.GetAsync("/");
-
-    response.StatusCode.ShouldBe(HttpStatusCode.OK);
-    string body = await response.Content.ReadAsStringAsync();
-    // The Blazor bootstrap script proves the catch-all reached Web.Server's SPA shell, not just any 200.
-    body.ShouldContain("_framework/blazor.web.js");
-  }
-
   public static async Task StateDevTools_Should_RunAndServeItsUi()
   {
     // Task 335-001: web-server waits for the packaged inspector, so it is Running by now. Its http
@@ -254,6 +251,20 @@ public partial class IngressSmoke_Given_
     HttpResponseMessage response = await httpClient.GetAsync("/", cts.Token);
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
+  }
+
+#if yarp
+  public static async Task RootThroughIngress_Should_ReturnSpaShell()
+  {
+    // ingress "http" endpoint: TLS terminates at the edge, so the test client needs no cert trust.
+    HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
+
+    HttpResponseMessage response = await httpClient.GetAsync("/");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string body = await response.Content.ReadAsStringAsync();
+    // The Blazor bootstrap script proves the catch-all reached Web.Server's SPA shell, not just any 200.
+    body.ShouldContain("_framework/blazor.web.js");
   }
 
   public static async Task WebRouteThroughIngressWithForeignHost_Should_ReturnOk()
@@ -406,6 +417,7 @@ public partial class IngressSmoke_Given_
 
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
   }
+#endif
 }
 
 /// <summary>

@@ -22,6 +22,20 @@ Observed failures (`dotnet test -c Release` in the generated `aspire-tests` proj
 `--grpc false` aspire-tests pass (57/57). `--web false` is fixed by task 373, which excludes
 `ingress-smoke-tests.cs` under `!web`.
 
+## Goal (implementer restatement)
+
+A generated `--yarp false` app has no `ingress` resource, so the aspire-tests that wait on or
+read that resource must not compile into it. Guard every ingress-only gate and fact with
+`#if yarp` (ingress smoke class and the closed-box guard's ingress model facts). Keep the facts
+that do not need the ingress (web-server first-run log check, state dev tools UI) running when
+yarp is off and web is on. The default app's aspire-tests must stay the same and green. Decide
+whether `dev template-smoke` should run each variant's aspire-tests and record the decision with
+its cost.
+
+Acceptance: `--yarp false` aspire-tests green; default aspire-tests green and unchanged in
+coverage; decision recorded; `dev build` 0/0; `dev test` and `dev template-smoke` green;
+`ganda repo audit` clean.
+
 ## Requirements
 
 1. Make `--yarp false` aspire-tests pass. Exclude or guard the ingress-only facts under `!yarp`.

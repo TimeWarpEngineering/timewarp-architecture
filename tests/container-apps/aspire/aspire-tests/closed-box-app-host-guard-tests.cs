@@ -13,6 +13,8 @@
 // model-only boots never start. The model facts build (never start) the app with the helper's
 // arguments (and, for the `dev run` pins, the default arguments) and read the ingress endpoint
 // annotations, so no port is bound by this suite. This file holds the pattern and is skipped.
+// The ingress model facts compile only with the yarp flag: with --yarp false there is no ingress
+// resource (task 374).
 #endregion
 
 namespace ClosedBoxAppHostGuard_;
@@ -69,6 +71,7 @@ public partial class ClosedBoxAppHost_Should_
     return Task.CompletedTask;
   }
 
+#if yarp
   public static async Task Ingress_Endpoints_Should_Not_Use_DevRun_Ports()
   {
     await using IDistributedApplicationTestingBuilder appHost = await ClosedBoxAppHost.CreateAsync();
@@ -94,6 +97,7 @@ public partial class ClosedBoxAppHost_Should_
     endpoints["http"].Port.ShouldBe(63620);
     endpoints["http"].IsProxied.ShouldBeFalse();
   }
+#endif
 
   private static bool IsBuildOutput(string relativePath)
   {
