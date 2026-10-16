@@ -128,6 +128,13 @@
 // its X-Forwarded-Host is honored; the untrusted-peer case is the standalone yarp suite.
 // Ingress readiness (task 058-001): the yarp resource carries WithHttpHealthCheck so "Healthy"
 // means the http endpoint answered, not merely that the process or container started.
+// Probe path (task 377): IngressPaths.WebServerAlivePath, a literal ingress route (outranks the web
+// catch-all) rewritten to web-server's /alive. Healthy still means "YARP routed a request to a live
+// web-server", but a probe no longer prerenders the SPA shell (probing "/" every 30s created a
+// TimeWarp.State prerender store per probe). web-server maps /alive in every environment; see
+// MapDefaultEndpoints' Design region for why that exposure is safe. WithHttpHealthCheck emits no
+// probe into publish output (no EndpointProbeAnnotation; Compose, Kubernetes and ACA emit none), so
+// only the AppHost process ever runs it. Guarded by aspire-tests IngressHealthCheck_Given_.
 // AddYarp registers no health check of its own; see the inline note at the call site.
 // Container images (task 070-002): there are no hand-written Dockerfiles. `aspire publish` builds each
 // AddProject resource's image with the .NET SDK container build (Microsoft.NET.Sdk.Web enables it by
@@ -576,10 +583,11 @@ internal class Program
 #if web
       // Routes live in the yarp project's Development configuration (the same Set transform and
       // http://_http.web-server cluster the publish path builds below). WithReference injects
-      // services__web-server__* so that address resolves. The http health check is the catch-all
-      // SPA shell; with web excluded, "/" would 404.
+      // services__web-server__* so that address resolves. The http health check probes the
+      // WebAliveRoute (IngressPaths.WebServerAlivePath -> web-server /alive), not the SPA shell;
+      // with web excluded that route does not exist, so neither does the check.
       yarpProject = yarpProject.WithReference(webServer);
-      yarpProject = yarpProject.WithHttpHealthCheck(endpointName: "http");
+      yarpProject = yarpProject.WithHttpHealthCheck(global::TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath, endpointName: "http");
 #endif
     }
     else
@@ -663,12 +671,13 @@ internal class Program
       // Every Aspire.Hosting.Testing suite that waits for "ingress" then sends a request raced
       // that window. This HTTP check probes the SAME host-side endpoint URL those tests use, so
       // Healthy now means "the proxy is wired AND YARP routed a request to a live web-server".
-      // Path "/" (the default) is the web catch-all route -> SPA shell 200, which holds in every
-      // environment — unlike "/health", which aspire-service-defaults maps only in Development.
-      // Web-gated: with web excluded there is no catch-all, so "/" would 404 forever.
+      // Path (task 377): IngressPaths.WebServerAlivePath, the literal health route added below,
+      // rewritten to web-server's /alive — mapped in every environment and cheap, unlike "/" (the
+      // SPA shell, a full prerender per probe) or "/health" (Development-only).
+      // Web-gated: with web excluded there is no web-server, so the route and check are not emitted.
       // AppHost health checks run only while the AppHost runs the app (local dev + testing);
       // publish mode emits a manifest and never executes them, so deployments are unaffected.
-      yarp = yarp.WithHttpHealthCheck(endpointName: "http");
+      yarp = yarp.WithHttpHealthCheck(global::TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath, endpointName: "http");
 #endif
       yarp = yarp.WithConfiguration(yarpConfiguration =>
       {
@@ -698,6 +707,11 @@ internal class Program
         // (TWA0018 forbids bare `api` as a contracts prefix).
         ForwardPublicHost(yarpConfiguration.AddRoute("/api", webServerHttp));
         ForwardPublicHost(yarpConfiguration.AddRoute("/api/", webServerHttp));
+
+        // Ingress health route (task 377): the literal probe path outranks the catch-all below and is
+        // rewritten to web-server's liveness endpoint. Mirrors the Development WebAliveRoute.
+        yarpConfiguration.AddRoute(global::TimeWarp.Foundation.Configuration.IngressPaths.WebServerAlivePath, webServerHttp)
+          .WithTransformPathSet(global::TimeWarp.Foundation.Configuration.HealthEndpointPaths.Alive);
 
 #endif
 #if grpc
