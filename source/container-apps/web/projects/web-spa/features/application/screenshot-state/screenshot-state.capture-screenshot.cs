@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 303-001. The only caller of ScreenshotJsModule, so every capture (Ask's Screenshot
+// Task 303-001. Every capture (Ask's Screenshot
 // button, Feedback's capture, the Ctrl-K command, the in-app model, a WebMCP agent) is this
 // action. Visibility Both with no required parameter: the palette lists it as a command and
 // CatalogAgentToolSet offers it as a tool from every page. It is not on the read-only allow-list,
@@ -11,10 +11,13 @@
 // capture an agent takes. The selector is optional; blank means PageAgentContext.SurfaceRootSelector,
 // the page body, which leaves out the app bar and the docked Ask panel (the page behind it).
 // A selector longer than SelectorCap is refused before the browser sees it.
+// The capture itself is ScreenshotState.CaptureAsync, the only caller of ScreenshotJsModule; this
+// handler and CaptureForAsk (Ask's camera button) are its two callers.
 // Success sets Latest (path from PageAgentRoute), clears LastError, publishes an Info
 // OutcomeNotification (the visible indicator; handlers never dispatch), and sets AgentCallOutcome
 // to ScreenshotCaptured, whose Image (a data: URI) the WebMCP caller receives. A refusal sets LastError,
-// leaves Latest alone, and publishes an Error notification. Nothing is uploaded here.
+// leaves Latest alone, sets AgentCallOutcome to ScreenshotRefused (code and plain words, so an agent
+// learns why), and publishes an Error notification. Nothing is uploaded here.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -56,61 +59,89 @@ partial class ScreenshotState
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        string trimmed = action.Selector.Trim();
-        string? selector = trimmed.Length == 0 ? null : trimmed;
-        if (trimmed.Length > SelectorCap)
-        {
-          await FailAsync("selector-too-long", cancellationToken);
-          return;
-        }
-
-        ScreenshotJsModule.Result result = await ScreenshotJsModule.CaptureAsync
-        (
-          jsRuntime,
-          selector ?? PageAgentContext.SurfaceRootSelector,
-          MaxBytes,
-          cancellationToken
-        );
-        if (result.Error is not null)
-        {
-          await FailAsync(result.Error, cancellationToken);
-          return;
-        }
-
-        int id = ScreenshotState.NextId + 1;
-        ScreenshotCapture capture = new
-        (
-          id,
-          result.Png,
-          result.Width,
-          result.Height,
-          PageAgentScope.Normalize(route.PathOr(navigation)),
-          selector,
-          result.Masked,
-          DateTimeOffset.UtcNow
-        );
-        ScreenshotState.NextId = id;
-        ScreenshotState.Latest = capture;
-        ScreenshotState.LastError = null;
-        agentCallOutcome.Set(ScreenshotCaptured.From(capture));
-        string masked = capture.Masked == 0 ? "" : $" {capture.Masked} masked.";
-        await publisher.Publish
-        (
-          new OutcomeNotification(MessageBarIntent.Info, "Screenshot captured", $"{capture.Caption}.{masked} Nothing was uploaded."),
-          cancellationToken
-        );
-      }
-
-      private Task FailAsync(string error, CancellationToken cancellationToken)
-      {
-        ScreenshotState.LastError = error;
-        return publisher.Publish
-        (
-          new OutcomeNotification(MessageBarIntent.Error, "Screenshot not captured", Describe(error)),
-          cancellationToken
-        );
+        CaptureServices services = new(jsRuntime, route, navigation, agentCallOutcome, publisher);
+        await ScreenshotState.CaptureAsync(action.Selector, services, cancellationToken);
       }
     }
+  }
+
+  /// <summary>What a capture handler needs from the container.</summary>
+  internal sealed record CaptureServices
+  (
+    IJSRuntime JsRuntime,
+    PageAgentRoute Route,
+    NavigationManager Navigation,
+    AgentCallOutcome AgentCallOutcome,
+    IPublisher<ClientPipeline> Publisher
+  );
+
+  /// <summary>
+  /// Draws the page body (blank selector) or one element and keeps it as Latest. Returns the new
+  /// capture, or null after a refusal. The only caller of ScreenshotJsModule.
+  /// </summary>
+  private async Task<ScreenshotCapture?> CaptureAsync
+  (
+    string selectorText,
+    CaptureServices services,
+    CancellationToken cancellationToken
+  )
+  {
+    string trimmed = selectorText.Trim();
+    string? selector = trimmed.Length == 0 ? null : trimmed;
+    if (trimmed.Length > SelectorCap)
+    {
+      await FailAsync("selector-too-long", services, cancellationToken);
+      return null;
+    }
+
+    ScreenshotJsModule.Result result = await ScreenshotJsModule.CaptureAsync
+    (
+      services.JsRuntime,
+      selector ?? PageAgentContext.SurfaceRootSelector,
+      MaxBytes,
+      cancellationToken
+    );
+    if (result.Error is not null)
+    {
+      await FailAsync(result.Error, services, cancellationToken);
+      return null;
+    }
+
+    int id = NextId + 1;
+    ScreenshotCapture capture = new
+    (
+      id,
+      result.Png,
+      result.Width,
+      result.Height,
+      PageAgentScope.Normalize(services.Route.PathOr(services.Navigation)),
+      selector,
+      result.Masked,
+      DateTimeOffset.UtcNow
+    );
+    NextId = id;
+    Latest = capture;
+    LastError = null;
+    services.AgentCallOutcome.Set(ScreenshotCaptured.From(capture));
+    string masked = capture.Masked == 0 ? "" : $" {capture.Masked} masked.";
+    await services.Publisher.Publish
+    (
+      new OutcomeNotification(MessageBarIntent.Info, "Screenshot captured", $"{capture.Caption}.{masked} Nothing was uploaded."),
+      cancellationToken
+    );
+    return capture;
+  }
+
+  private Task FailAsync(string error, CaptureServices services, CancellationToken cancellationToken)
+  {
+    LastError = error;
+    string description = Describe(error);
+    services.AgentCallOutcome.Set(new ScreenshotRefused(error, description));
+    return services.Publisher.Publish
+    (
+      new OutcomeNotification(MessageBarIntent.Error, "Screenshot not captured", description),
+      cancellationToken
+    );
   }
 
   /// <summary>Plain words for a capture refusal code.</summary>
@@ -123,6 +154,9 @@ partial class ScreenshotState
     "tainted" => "This browser does not allow the page to be drawn.",
     _ => "The browser could not draw the page.",
   };
+
+  /// <summary>What an agent receives when a capture is refused: the refusal code and plain words.</summary>
+  public sealed record ScreenshotRefused(string Error, string Description);
 
   /// <summary>What an agent receives after a capture: the size, route, and Image, the PNG as a data: URI.</summary>
   public sealed record ScreenshotCaptured

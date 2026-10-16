@@ -8,6 +8,8 @@
 // "the page behind" Feedback and page_context.screenshot can tell which page it shows.
 // The constructor does not throw on null: the generated state cloner (StateTransactionBehavior)
 // calls it with default arguments and then copies every field from the source. Selector is null for the page body.
+// FileName is unique per capture: Feedback matches it against its draft attachments to know
+// whether this capture is already attached.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -56,8 +58,8 @@ public sealed class ScreenshotCapture
 
   public string ImageSource { get; }
 
-  /// <summary>The attachment name Feedback uploads it under.</summary>
-  public string FileName => $"screenshot-{CapturedAt.UtcDateTime:yyyyMMdd-HHmmss}.png";
+  /// <summary>The attachment name Feedback uploads it under; the id keeps two captures in one second apart.</summary>
+  public string FileName => $"screenshot-{CapturedAt.UtcDateTime:yyyyMMdd-HHmmss}-{Id}.png";
 
   /// <summary>Short text for a thumbnail caption: size and route.</summary>
   public string Caption => $"{Width}×{Height} of {Path}";

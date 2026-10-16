@@ -12,7 +12,6 @@
 
   private readonly SubmitFeedback.Command Draft = new() { Kind = FeedbackKind.Complaint };
   private readonly Dictionary<Guid, string> Previews = new();
-  private readonly HashSet<int> AttachedCaptures = [];
 
   private ElementReference DetailsHost;
   private DotNetObjectReference<FeedbackListPage>? HostReference;
@@ -27,9 +26,11 @@
 
   // Task 303-001: Feedback is a route, so "the page behind it" is the latest capture taken on the
   // page the person came from (Ask's Screenshot button or the Ctrl-K Capture screenshot command).
+  // It is offered until a draft attachment carries its file name, so removing that attachment
+  // offers it again.
   private ScreenshotCapture? PageBehind =>
     ScreenshotState.Latest is { } capture
-      && !AttachedCaptures.Contains(capture.Id)
+      && FeedbackState.DraftAttachments.All(draft => !string.Equals(draft.FileName, capture.FileName, StringComparison.Ordinal))
       && !string.Equals(capture.Path, PageAgentScope.Normalize(GetPageUrl()), StringComparison.OrdinalIgnoreCase)
       ? capture
       : null;
@@ -168,15 +169,8 @@
   }
 
   // The capture goes through the same checks and UploadFeedbackAttachment action as a picked file.
-  private async Task AttachCaptureAsync(ScreenshotCapture capture)
-  {
-    int count = FeedbackState.DraftAttachments.Count;
-    await UploadOneAsync(capture.FileName, ScreenshotState.ContentType, capture.Png);
-    if (FeedbackState.DraftAttachments.Count > count)
-    {
-      AttachedCaptures.Add(capture.Id);
-    }
-  }
+  private Task AttachCaptureAsync(ScreenshotCapture capture) =>
+    UploadOneAsync(capture.FileName, ScreenshotState.ContentType, capture.Png);
 
   private async Task OnFilesAsync(InputFileChangeEventArgs change)
   {

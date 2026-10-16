@@ -63,6 +63,9 @@ interface CaptureContext {
 }
 
 export async function capture(selector: string, maxBytes: number): Promise<ScreenshotCapture> {
+  // Only one capture is ever pending: drop a blob whose takeBytes never ran (a cancelled or
+  // failed .NET side), so the module does not hold it for the session.
+  pending.clear();
   let target: Element | null;
   try {
     target = document.querySelector(selector);

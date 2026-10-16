@@ -3,11 +3,11 @@
 #endregion
 
 #region Design
-// Task 303-001. CaptureScreenshot is the only way a picture is taken, so Latest is the only
-// place one appears. Latest is the newest capture, with the route it was taken on; Feedback
+// Task 303-001. CaptureScreenshot and CaptureForAsk (Ask's camera button) share one capture
+// path, so Latest is the only place a picture appears. Latest is the newest capture, with the route it was taken on; Feedback
 // offers it as "the page behind it" when it came from another page, and page_context.screenshot
 // describes it (metadata only) on its own route. AskAttached is the capture the Ask panel's
-// Screenshot button put on the composer for conversation AskGeneration. AskScreenshotChatClient
+// Screenshot button (CaptureForAsk) put on the composer for conversation AskGeneration. AskScreenshotChatClient
 // sends it with the next message as image content, then MarkAskSent clears it and records
 // AskSentId. A new conversation or a removed thumbnail drops it. Nothing here uploads:
 // Feedback uploads through its own UploadFeedbackAttachment action when the person clicks attach.

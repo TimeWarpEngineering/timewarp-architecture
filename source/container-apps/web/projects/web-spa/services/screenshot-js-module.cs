@@ -3,10 +3,11 @@
 #endregion
 
 #region Design
-// [SideEffectService]: the only caller is ScreenshotState.CaptureScreenshot's handler, so no
-// component or other service captures the page. The JS returns the size and a token, then
-// hands the PNG over as an IJSStreamReference read with maxAllowedSize = maxBytes, the same
-// reason feedback paste streams: one SignalR message on InteractiveServer has a size cap.
+// [SideEffectService]: the only caller is ScreenshotState.CaptureAsync (the CaptureScreenshot and
+// CaptureForAsk handlers), so no component or other service captures the page. The JS returns
+// the size and a token, then hands the PNG over as an IJSStreamReference read with
+// maxAllowedSize = maxBytes, the same reason feedback paste streams: one SignalR message on
+// InteractiveServer has a size cap.
 // A refusal from the browser (no element, a bad selector, a PNG that cannot fit maxBytes, a
 // tainted canvas) comes back as Error with no bytes. A missing runtime or a disconnected circuit
 // is Error "unavailable".

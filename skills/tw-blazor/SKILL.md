@@ -206,8 +206,9 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
 - Screenshots: `ScreenshotState.CaptureScreenshot(selector)` is the only way the app draws its own
   page (DOM to PNG, `screenshot.ts`). It is a Ctrl-K command and an approval-gated agent tool.
   Mark anything a picture must never show with `data-no-capture` (password inputs are masked
-  already); the capture draws a grey box in its place. Ask attaches it to the next message;
-  Feedback uploads it through the normal attachment action. `page_context.screenshot` holds the
+  already); the capture draws a grey box in its place. Ask's camera button is
+  `CaptureForAsk`, one action that captures the same way and attaches that capture to the next
+  message; Feedback uploads a capture through the normal attachment action. `page_context.screenshot` holds the
   capture's metadata only, never the picture.
 
 Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpAgentSurface.razor`.
