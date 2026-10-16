@@ -28,7 +28,7 @@
 // Task 374: the ingress gates and every through-ingress fact compile only with the yarp flag.
 // With --yarp false the AppHost has no ingress resource; the class still boots the graph and runs
 // the facts that target web-server and the state dev tools directly (first-run log check, dev
-// tools UI).
+// tools UI). Likewise the api-server gate and the api-route fact compile only with the api flag.
 #endregion
 
 namespace Aspire.Tests;
@@ -70,7 +70,9 @@ public partial class IngressSmoke_Given_
     // for about 90s before it migrates; the boot seed waits up to 180s for the table.
     using CancellationTokenSource cts = new(TimeSpan.FromMinutes(4));
     await App.ResourceNotifications.WaitForResourceHealthyAsync("web-server", cts.Token);
+#if api
     await App.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
+#endif
 #if yarp
     await App.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
 #endif
@@ -357,6 +359,7 @@ public partial class IngressSmoke_Given_
     using System.Text.Json.JsonDocument options = System.Text.Json.JsonDocument.Parse(optionsJson);
     return options.RootElement.GetProperty("rpId").GetString()!;
   }
+#if api
 
   public static async Task ApiRouteThroughIngress_Should_ReturnOk()
   {
@@ -368,6 +371,7 @@ public partial class IngressSmoke_Given_
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
+#endif
 
   public static async Task IdentitySessionThroughIngress_Should_ReachWebServer()
   {
