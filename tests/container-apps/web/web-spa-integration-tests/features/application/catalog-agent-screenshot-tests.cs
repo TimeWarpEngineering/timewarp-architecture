@@ -12,7 +12,10 @@
 // product code. The relay proof drives RelayChatClient and AskScreenshotChatClient over the
 // recording API: a waiting Ask screenshot becomes the user turn's Images, and a tool result that
 // carries a picture becomes a user turn after the tool turns. The limit test is the build check
-// that keeps ScreenshotState.MaxBytes equal to FeedbackAttachmentRules.MaxBytes.
+// that keeps ScreenshotState.MaxBytes equal to FeedbackAttachmentRules.MaxBytes. The cap proof
+// sends an Ask screenshot plus two tool pictures in one turn and checks the command stays within
+// CompleteAgentChat.MaxImagesPerRequest and validates. CaptureSpa registers no API service:
+// nothing in these proofs calls web-server.
 #endregion
 
 namespace CatalogAgent_;
@@ -139,6 +142,12 @@ public partial class CatalogAgent_Should
     browser.Took.ShouldBeFalse();
     scope.Store.GetState<NotificationState>().Messages
       .ShouldContain(message => message.Title == "Screenshot not captured");
+    using (JsonDocument document = JsonDocument.Parse(json))
+    {
+      JsonElement result = document.RootElement.GetProperty("result");
+      result.GetProperty("error").GetString().ShouldBe("not-found", "the agent learns why nothing was captured");
+      result.GetProperty("description").GetString().ShouldBe(ScreenshotState.Describe("not-found"));
+    }
   }
 
   public static Task Screenshot_Limit_Matches_The_Feedback_Attachment_Rules()
@@ -209,11 +218,83 @@ public partial class CatalogAgent_Should
     api.Command.ShouldNotBeNull().Messages.ShouldAllBe(turn => turn.Images.Count == 0);
   }
 
+  public static async Task Relay_Keeps_The_Ask_Screenshot_And_The_Newest_Tool_Picture_Within_The_Cap()
+  {
+    CapturingChatApi api = new();
+    byte[] older = [.. FakePng, 0xA1];
+    byte[] newer = [.. FakePng, 0xB2];
+    ScreenshotCapture capture = new(9, FakePng, 640, 480, "/Settings", selector: null, masked: 0, DateTimeOffset.UtcNow);
+    using RelayChatClient client = new(api);
+
+    // One Ask turn: the person attached a screenshot, then the model captured twice (page, then
+    // element). AskScreenshotChatClient sits outside the tool loop, so every loop iteration hands
+    // the relay the person's message with the screenshot still on it.
+    ChatMessage user = AskScreenshotChatClient.WithScreenshot([new ChatMessage(ChatRole.User, "What is wrong here?")], capture)
+      .ShouldNotBeNull()
+      .ShouldHaveSingleItem();
+    ChatMessage firstCall = new(ChatRole.Assistant, [new FunctionCallContent("call-1", CaptureTool, new Dictionary<string, object?>())]);
+    ChatMessage firstResult = new
+    (
+      ChatRole.Tool,
+      [new FunctionResultContent("call-1", new PictureResult("""{"width":640}""", new DataContent(older, "image/png")))]
+    );
+    ChatMessage secondCall = new
+    (
+      ChatRole.Assistant,
+      [new FunctionCallContent("call-2", CaptureTool, new Dictionary<string, object?> { ["selector"] = "#main" })]
+    );
+    ChatMessage secondResult = new
+    (
+      ChatRole.Tool,
+      [new FunctionResultContent("call-2", new PictureResult("""{"width":320}""", new DataContent(newer, "image/png")))]
+    );
+    await client.GetResponseAsync([user, firstCall, firstResult, secondCall, secondResult]);
+
+    CompleteAgentChat.Command command = api.Command.ShouldNotBeNull();
+    command.Messages.Sum(turn => turn.Images.Count).ShouldBeLessThanOrEqualTo(CompleteAgentChat.MaxImagesPerRequest);
+    new CompleteAgentChat.Validator().Validate(command).IsValid.ShouldBeTrue();
+    command.Messages[0].Images.ShouldHaveSingleItem("the person's own screenshot counts first")
+      .Data.ShouldBe(Convert.ToBase64String(FakePng));
+    List<CompleteAgentChat.TurnImage> toolPictures = [.. command.Messages.Skip(1).SelectMany(turn => turn.Images)];
+    toolPictures.ShouldHaveSingleItem("only the newest tool picture fits").Data.ShouldBe(Convert.ToBase64String(newer));
+    command.Messages.ShouldContain
+    (
+      turn => turn.Role == "user" && turn.Images.Count == 0 && turn.Text == RelayChatClient.OmittedPictureText
+    );
+  }
+
   /// <summary>A tool result that carries a picture, as CatalogAgentFunctions returns for a capture.</summary>
   private sealed record PictureResult(string Summary, [property: JsonIgnore] DataContent? Image) : IToolResultImage;
 
   /// <summary>Stands in for the browser: import returns a module whose capture and takeBytes answer the fixture.</summary>
+  /// <remarks>Both overloads read <see cref="CaptureExports"/>, a plain type, so no call here is to a JS runtime.</remarks>
   private sealed class CaptureJsRuntime(ScreenshotJsModule.BrowserCapture capture) : IJSRuntime, IJSObjectReference
+  {
+    private readonly CaptureExports Exports = new(capture);
+
+    public string? Selector => Exports.Selector;
+
+    public int MaxBytes => Exports.MaxBytes;
+
+    public bool Took => Exports.Took;
+
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+    {
+      object answer = identifier == "import" ? this : Exports.Answer(identifier, args);
+      return ValueTask.FromResult((TValue)answer);
+    }
+
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    {
+      object answer = identifier == "import" ? this : Exports.Answer(identifier, args);
+      return ValueTask.FromResult((TValue)answer);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+  }
+
+  /// <summary>What screenshot.js's capture and takeBytes answer, and what they were asked.</summary>
+  private sealed class CaptureExports(ScreenshotJsModule.BrowserCapture capture)
   {
     public string? Selector { get; private set; }
 
@@ -221,31 +302,21 @@ public partial class CatalogAgent_Should
 
     public bool Took { get; private set; }
 
-    // Test double: this forwards to the other overload. It is not a browser interop call.
-#pragma warning disable BL0016
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
-      InvokeAsync<TValue>(identifier, CancellationToken.None, args);
-#pragma warning restore BL0016
-
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+    public object Answer(string export, object?[]? args)
     {
-      switch (identifier)
+      switch (export)
       {
-        case "import":
-          return ValueTask.FromResult((TValue)(object)this);
         case ScreenshotJsModule.CaptureExport:
           Selector = args?[0] as string;
           MaxBytes = args?[1] is int max ? max : 0;
-          return ValueTask.FromResult((TValue)(object)capture);
+          return capture;
         case ScreenshotJsModule.TakeBytesExport:
           Took = true;
-          return ValueTask.FromResult((TValue)(object)new PngStream(FakePng));
+          return new PngStream(FakePng);
         default:
-          throw new InvalidOperationException($"Unexpected identifier '{identifier}'.");
+          throw new InvalidOperationException($"Unexpected identifier '{export}'.");
       }
     }
-
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
   }
 
   private sealed class PngStream(byte[] bytes) : IJSStreamReference
@@ -295,7 +366,6 @@ public partial class CatalogAgent_Should
       services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
       ClaimsPrincipal user = User;
       services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
-      services.AddSingleton(FakeItEasy.A.Fake<IWebServerApiService>());
       // An instance registration: the container does not own (or dispose) the stand-in browser.
       services.AddSingleton<IJSRuntime>(browser);
       services.AddScoped<NavigationManager, TestNavigationManager>();
