@@ -97,6 +97,7 @@ Why it hid: `dev template-smoke` and the `template-smoke` CI job generate only t
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T04:37:58Z
 
 - Review oracle: tw-implementation-review round 1 (claude, model claude-opus-5-5), general reviewer, disposition clean — 2026-10-16
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-16T04:39:27Z
 
 ## Learnings
 
@@ -143,6 +144,10 @@ Why it hid: `dev template-smoke` and the `template-smoke` CI job generate only t
   SmokeNoGrpc and SmokeNoYarp each building 0 Warning(s) / 0 Error(s).
 - Smoke: `cd artifacts/template-smoke/work/SmokeNoWeb/tests/container-apps/aspire/aspire-tests && dotnet test -c Release`
 - Expect: `Test run summary: Passed!` (42 tests).
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
