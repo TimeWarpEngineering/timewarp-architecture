@@ -12,7 +12,9 @@
 // Images (task 303-001) ride only on user turns: the Ask screenshot the person attached, or the
 // picture a capture tool returned, which the browser sends on a user turn after the tool turns.
 // They have their own caps (MaxImagesPerRequest, MaxImageDataLength, ImageMediaTypes) and are not
-// counted in MaxRequestCharacters. Data is base64 without a data: prefix.
+// counted in MaxRequestCharacters. Data is base64 without a data: prefix, and the decoded bytes
+// must start with the PNG or JPEG signature that matches MediaType. Images and image elements
+// must not be null; the upstream mapping relies on that.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -130,6 +132,10 @@ public static partial class CompleteAgentChat
         tool.RuleFor(item => item.ParametersJson).NotEmpty().MaximumLength(MaxParametersJsonLength);
       });
 
+      RuleForEach(command => command.Messages)
+        .NotNull()
+        .WithMessage("A turn must not be null.");
+
       RuleForEach(command => command.Messages).ChildRules(turn =>
       {
         turn.RuleFor(item => item.Role)
@@ -148,6 +154,12 @@ public static partial class CompleteAgentChat
         turn.RuleFor(item => item)
           .Must(item => item.Images is not { Count: > 0 } || item.Role == "user")
           .WithMessage("Only a user turn can carry images.");
+        turn.RuleFor(item => item.Images)
+          .NotNull()
+          .WithMessage("Images must not be null.");
+        turn.RuleForEach(item => item.Images)
+          .NotNull()
+          .WithMessage("An image must not be null.");
         turn.RuleForEach(item => item.Images).ChildRules(image =>
         {
           image.RuleFor(item => item.MediaType)
@@ -159,6 +171,10 @@ public static partial class CompleteAgentChat
             .MaximumLength(MaxImageDataLength)
             .Must(IsBase64)
             .WithMessage("Image data must be base64.");
+          image.RuleFor(item => item)
+            .Must(MatchesSignature)
+            .When(item => item.MediaType is not null && item.Data is not null && IsBase64(item.Data))
+            .WithMessage("Image bytes must match the declared media type.");
         });
         turn.RuleForEach(item => item.ToolCalls).ChildRules(call =>
         {
@@ -169,7 +185,7 @@ public static partial class CompleteAgentChat
       });
 
       RuleFor(command => command.Messages)
-        .Must(messages => messages is null || messages.Sum(turn => turn.Images?.Count ?? 0) <= MaxImagesPerRequest)
+        .Must(messages => messages is null || messages.Sum(turn => turn?.Images?.Count ?? 0) <= MaxImagesPerRequest)
         .WithMessage($"A request can carry at most {MaxImagesPerRequest} images.");
 
       RuleFor(command => command)
@@ -179,6 +195,33 @@ public static partial class CompleteAgentChat
 
     private static bool IsBase64(string data) =>
       data.Length % 4 == 0 && Convert.TryFromBase64String(data, new byte[data.Length / 4 * 3], out _);
+
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+    private static ReadOnlySpan<byte> JpegSignature => [0xFF, 0xD8, 0xFF];
+
+    private static bool MatchesSignature(TurnImage image)
+    {
+      // The first 12 base64 characters decode to 9 bytes, enough for either signature.
+      if (image.Data.Length < 12)
+      {
+        return false;
+      }
+
+      Span<byte> head = stackalloc byte[9];
+      if (!Convert.TryFromBase64String(image.Data[..12], head, out int written))
+      {
+        return false;
+      }
+
+      ReadOnlySpan<byte> bytes = head[..written];
+      return image.MediaType switch
+      {
+        "image/png" => bytes.StartsWith(PngSignature),
+        "image/jpeg" => bytes.StartsWith(JpegSignature),
+        _ => false
+      };
+    }
 
     private static bool IsEmpty(Turn turn)
     {

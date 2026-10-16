@@ -13,7 +13,8 @@
 
 #region Purpose
 // Proves the completion handler refuses an anonymous caller, a missing key, and the rate cap,
-// and that it forwards a fake upstream's function call without executing a tool.
+// and that it forwards a fake upstream's function call without executing a tool. Also proves the
+// validator's image rules (task 303-001) reject each bad image shape.
 #endregion
 
 //-:cnd:noEmit
@@ -159,6 +160,133 @@ namespace TimeWarp.Architecture.Features.AgentChats
         LastCommand = command;
         return Task.FromResult<OneOf<Response, SharedProblemDetails>>(Reply!);
       }
+    }
+  }
+
+  [TestTag("Unit")]
+  public class CompleteAgentChatValidator_Given_
+  {
+    private static readonly byte[] Png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13];
+    private static readonly byte[] Jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0, 16, 0x4A, 0x46, 0x49];
+
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    internal static void Register() => RegisterTests<CompleteAgentChatValidator_Given_>();
+
+    public static Task Png_And_Jpeg_On_A_User_Turn_Are_Valid()
+    {
+      Command command = WithImages(PngImage(), new TurnImage { MediaType = "image/jpeg", Data = Convert.ToBase64String(Jpeg) });
+
+      new Validator().Validate(command).IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task Image_On_A_Non_User_Turn_Is_Rejected()
+    {
+      Command command = new()
+      {
+        Messages = [new Turn { Role = "assistant", Text = "Here it is.", Images = [PngImage()] }]
+      };
+
+      ShouldReject(command, "Only a user turn can carry images.");
+      return Task.CompletedTask;
+    }
+
+    public static Task More_Than_Max_Images_Is_Rejected()
+    {
+      Command command = WithImages([.. Enumerable.Range(0, MaxImagesPerRequest + 1).Select(_ => PngImage())]);
+
+      ShouldReject(command, $"A request can carry at most {MaxImagesPerRequest} images.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Max_Images_Across_Turns_Is_Counted_Per_Request()
+    {
+      Command command = new()
+      {
+        Messages =
+        [
+          new Turn { Role = "user", Text = "first", Images = [.. Enumerable.Range(0, MaxImagesPerRequest).Select(_ => PngImage())] },
+          new Turn { Role = "user", Text = "second", Images = [PngImage()] },
+        ]
+      };
+
+      ShouldReject(command, $"A request can carry at most {MaxImagesPerRequest} images.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Disallowed_Media_Type_Is_Rejected()
+    {
+      Command command = WithImages(new TurnImage { MediaType = "image/gif", Data = Convert.ToBase64String(Png) });
+
+      ShouldReject(command, "An image must be image/png or image/jpeg.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Data_Over_The_Max_Length_Is_Rejected()
+    {
+      // Valid base64 of a PNG signature, padded with "A" blocks past MaxImageDataLength.
+      string head = Convert.ToBase64String(Png);
+      int blocks = (MaxImageDataLength - head.Length) / 4 + 1;
+      string data = head + new string('A', blocks * 4);
+      data.Length.ShouldBeGreaterThan(MaxImageDataLength);
+      Command command = WithImages(new TurnImage { MediaType = "image/png", Data = data });
+
+      new Validator().Validate(command).Errors
+        .ShouldContain(error => error.PropertyName.EndsWith(".Data", StringComparison.Ordinal) && error.ErrorCode == "MaximumLengthValidator");
+      return Task.CompletedTask;
+    }
+
+    public static Task Non_Base64_Data_Is_Rejected()
+    {
+      Command command = WithImages(new TurnImage { MediaType = "image/png", Data = "not base64!!" });
+
+      ShouldReject(command, "Image data must be base64.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Null_Images_Are_Rejected()
+    {
+      Command command = new()
+      {
+        Messages = [new Turn { Role = "user", Text = "hi", Images = null! }]
+      };
+
+      ShouldReject(command, "Images must not be null.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Null_Image_Element_Is_Rejected()
+    {
+      Command command = WithImages([null!]);
+
+      ShouldReject(command, "An image must not be null.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Bytes_That_Do_Not_Match_The_Media_Type_Are_Rejected()
+    {
+      Command jpegAsPng = WithImages(new TurnImage { MediaType = "image/png", Data = Convert.ToBase64String(Jpeg) });
+      Command pngAsJpeg = WithImages(new TurnImage { MediaType = "image/jpeg", Data = Convert.ToBase64String(Png) });
+      Command text = WithImages(new TurnImage { MediaType = "image/png", Data = Convert.ToBase64String("hello, world"u8.ToArray()) });
+
+      ShouldReject(jpegAsPng, "Image bytes must match the declared media type.");
+      ShouldReject(pngAsJpeg, "Image bytes must match the declared media type.");
+      ShouldReject(text, "Image bytes must match the declared media type.");
+      return Task.CompletedTask;
+    }
+
+    private static TurnImage PngImage() => new() { MediaType = "image/png", Data = Convert.ToBase64String(Png) };
+
+    private static Command WithImages(params TurnImage[] images) => new()
+    {
+      Messages = [new Turn { Role = "user", Text = "What is wrong here?", Images = [.. images] }]
+    };
+
+    private static void ShouldReject(Command command, string message)
+    {
+      FluentValidation.Results.ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.Select(error => error.ErrorMessage).ShouldContain(message);
     }
   }
 
