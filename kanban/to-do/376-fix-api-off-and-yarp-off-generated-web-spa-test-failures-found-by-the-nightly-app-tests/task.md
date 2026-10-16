@@ -53,6 +53,10 @@ passes; `dev build` clean, `dev test` passes; `dev template-smoke --matrix --app
 - [x] Dispatched nightly (`gh workflow run workflow.yml --ref <branch> -f mode=nightly`) passes
 - [x] `ganda repo audit` clean
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Repro: `dev template-smoke --matrix --app-tests`, then rerun one suite with
@@ -129,3 +133,4 @@ threw NullReferenceException before. In SmokeNoYarp, `aspire-spa-test-applicatio
 
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T09:45:20Z
 - Review oracle: tw-implementation-review by claude (claude-opus-5-5), effort 1, clean — 2026-10-16
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-16T09:47:14Z
