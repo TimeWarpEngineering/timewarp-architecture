@@ -64,12 +64,57 @@ Acceptance:
 
 ## Checklist
 
-- [ ] State pins → 12.0.0-beta.14; DevTools.Hosting added; single version resolved
-- [ ] `AddTimeWarpStateDevTools()` + `WithTimeWarpStateDevTools()` in run mode; SPA endpoint wired end to end
-- [ ] Not in any publish output (+ safety facts)
-- [ ] Flag combinations + template-smoke
-- [ ] Tests; Design region + skill note
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] State pins → 12.0.0-beta.14; DevTools.Hosting added; single version resolved
+- [x] `AddTimeWarpStateDevTools()` + `WithTimeWarpStateDevTools()` in run mode; SPA endpoint wired end to end
+- [x] Not in any publish output (+ safety facts)
+- [x] Flag combinations + template-smoke
+- [x] Tests; Design region + skill note
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+
+## Results
+
+- **Packages:** `TimeWarp.State`, `.Blazor`, `.Plus` → 12.0.0-beta.14; added `TimeWarp.State.Telemetry`,
+  `TimeWarp.State.DevTools.Export`, `TimeWarp.State.DevTools.Hosting` at 12.0.0-beta.14. Resolved
+  graphs (aspire-app-host, web-server, web-spa `project.assets.json`) contain only beta.14 State packages.
+  The App package stamps `timewarpstatedevtoolspath` onto the AppHost assembly (checked in AssemblyInfo).
+- **AppHost:** `AddTimeWarpStateDevTools()` + `webServer.WithTimeWarpStateDevTools(...)` inside the
+  existing `IsRunMode` block in the `#if web` section; Hosting package reference and global using are
+  web-gated. The Design region has the full explanation.
+- **End-to-end path:** web-spa references `TimeWarp.State.Telemetry`, so `TelemetryBehavior` is
+  woven into its `ClientPipeline`. With no listener (WASM, production) it emits no spans. web-server
+  (`AddStateDevToolsExport`) registers `AddTimeWarpStateTelemetry` (snapshots on, reflection JSON
+  resolver) and the `TimeWarp.State` source + `AddTimeWarpStateDevToolsExporter()`, only in
+  **Development and only when `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` is set**. That covers the server-side
+  stores (prerender + InteractiveServer, i.e. the server half of InteractiveAuto).
+- **Decision / limit:** the WASM store is **not** exported. The browser has no tracer provider, and
+  the inspector is a different origin (it would need CORS and a WASM exporter). The variable stays on
+  web-server, and the SPA receives nothing. If WASM-side inspection is wanted, that is a follow-up
+  that needs an upstream WASM-capable exporter in timewarp-state.
+- **Tests:** `state-dev-tools-model-tests.cs` (run mode: the resource has an `http` endpoint,
+  web-server's `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` is that EndpointReference, and web-server waits on it.
+  Publish model: no resource and no wait). `Publish_Should_HaveNoStateDevTools` is in the compose,
+  kubernetes and aca suites. `IngressSmoke_Given_.StateDevTools_Should_RunAndServeItsUi` is the closed-box check
+  that the inspector reaches Running and serves `/` with 200.
+- **Docs:** AppHost Design region, web-server Design region, publish-suite Design regions, and the
+  `tw-deploy` "Never ships" table row plus the dev-convenient rule list.
+- **Gates:** `dev build` 0 warnings/0 errors; `dev test` 23/23 projects passed (aspire-tests 57/57);
+  `dev template-smoke` SUCCEEDED (Default, NoPostgres, NoApi); `ganda repo audit` passes;
+  `dev check-version` shows 2.0.0-beta.20 is already ahead of NuGet beta.19, so no bump.
+- **web off:** template-smoke has no web-off variant. I generated `--web false` by hand. The AppHost
+  builds with 0 errors and has no DevTools code. That solution's test projects already fail
+  (`ingress-smoke-tests` uses `WebServerApiRoutePrefixes`, and timewarp-testing has IDE0005/RCS1213).
+  Those failures are not from this change and are not fixed here.
+
+### How to validate
+
+Smoke: `dotnet test --project tests/container-apps/aspire/aspire-tests/aspire-tests.csproj -- --filter-class StateDevToolsModel`,
+then the full `aspire-tests` (publish suites + ingress smoke). After merge, the maintainer runs `dev run` and opens the
+dashboard, then clicks a few SPA actions while the page is still server-interactive.
+
+Expect: 2/2 model facts pass and aspire-tests 57/57. In `dev run` the dashboard lists a
+`timewarp-state-devtools` resource with a **TimeWarp.State DevTools** link, and web-server shows
+`TIMEWARP_STATE_DEVTOOLS_ENDPOINT` in its environment. The inspector shows `pre`/`live` rows for
+server-side stores. `dev publish compose|kubernetes|aca` output has no DevTools resource or variable.
 
 ## Notes
 
@@ -80,3 +125,4 @@ Acceptance:
 
 - Created: 2026-10-16 (cockpit; unblocked by timewarp-state 118 / v12.0.0-beta.14)
 - Boyscout: removed the stale `kanban/to-do/372-*` copy (372 is done; its to-do copy survived the feature/ci-speed merge and tripped `kanban-duplicate-ids`).
+- 2026-10-16 implement (Claude Opus 5.5, ganda task work): wired DevTools in run mode with the server-side exporter; all gates green; WASM export is out of scope (see Results).
