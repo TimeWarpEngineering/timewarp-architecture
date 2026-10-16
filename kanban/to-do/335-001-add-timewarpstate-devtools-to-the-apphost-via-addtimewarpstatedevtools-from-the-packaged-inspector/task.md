@@ -123,6 +123,10 @@ Expect: 2/2 model facts pass and aspire-tests 57/57. In `dev run` the dashboard 
 `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` in its environment. The inspector shows `pre`/`live` rows for
 server-side stores. `dev publish compose|kubernetes|aca` output has no DevTools resource or variable.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Follow-up (not filed): WASM-side State DevTools inspection needs a WASM-capable exporter plus
@@ -146,3 +150,4 @@ server-side stores. `dev publish compose|kubernetes|aca` output has no DevTools 
 - 2026-10-16 implement (Claude Opus 5.5, ganda task work): wired DevTools in run mode with the server-side exporter; all gates green; WASM export is out of scope (see Results).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T03:21:45Z
 - 2026-10-16 review oracle (Claude Opus 5.5, ganda task work): tw-implementation-review round 1, general, accepted-exceptions (0 open).
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-16T03:25:00Z
