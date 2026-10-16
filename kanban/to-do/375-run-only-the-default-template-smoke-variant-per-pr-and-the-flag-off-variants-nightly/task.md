@@ -111,6 +111,8 @@ aggregators (tiers 1 to 3), but does not run the generated app's Aspire/host tes
 - Created: 4014695 (2026-10-16)
 - Decision recorded 2026-10-16 (Steve): PR/push CI runs `SmokeDefault` only; nightly runs the
   full flag-off matrix, with generated-app tests where feasible.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T07:07:20Z
+- Review oracle: tw-implementation-review, effort 2, roster general (claude, model claude-opus-5-5), session not reported — 2026-10-16
 
 ## Notes
 
@@ -199,6 +201,16 @@ host opens the PR. Expect about 3 to 4 minutes based on the local 142s.
 Gates: `dev build` (runfile) passed with 0 warnings and 0 errors. `dev check-version` passed
 (2.0.0-beta.20 is unreleased, so no bump is needed). `ganda repo audit` passed.
 
+### Review disposition
+
+- Rounds: 1. Effort 2, roster: general.
+- Final counts: bug 0, suggestion 0, nit 1 fixed (M1: default-only selection was positional
+  `SmokeMatrix[..1]`; now the entry with no extra template args). Open 0, wontfix 0.
+- Disposition: **clean**. Re-verified after the fix: `dev template-smoke` prints
+  `Variants: SmokeDefault` and `Template smoke SUCCEEDED`.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 **Smoke:**
@@ -221,3 +233,6 @@ gh workflow run workflow.yml --ref <branch> -f mode=nightly      # CI nightly on
   with `Template smoke FAILED — SmokeNoApi, SmokeNoYarp`.
 - On the PR for this branch, the `template-smoke` job log shows `Variants: SmokeDefault` only.
 
+## Learnings
+
+- Review found no misread: the implementer's Goal restatement matches the task's Description and Requirements.

@@ -174,7 +174,9 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
       if (!await InstallTemplateAsync()) return Unit.Value;
       if (!await AssertDottedNameKebabsAsync()) return Unit.Value;
 
-      (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] variants = Command.Matrix ? SmokeMatrix : SmokeMatrix[..1];
+      (string Name, string[] ExtraArgs, string[] ExcludedFamilies)[] variants = Command.Matrix
+        ? SmokeMatrix
+        : [.. SmokeMatrix.Where(variant => variant.ExtraArgs.Length == 0)];
       Terminal.WriteLine(
         $"Variants: {string.Join(", ", variants.Select(v => v.Name))}" +
         (Command.Matrix ? "" : " (--matrix adds each flag off)") +
