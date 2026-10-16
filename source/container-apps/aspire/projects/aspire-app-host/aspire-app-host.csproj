@@ -44,6 +44,11 @@
     <!--#if (yarp) -->
     <PackageReference Include="Aspire.Hosting.Yarp" />
     <!--#endif -->
+    <!--#if (web) -->
+    <!-- Task 335-001: AddTimeWarpStateDevTools (run mode only). Brings TimeWarp.State.DevTools.App,
+         whose targets stamp the packaged inspector path onto this assembly. -->
+    <PackageReference Include="TimeWarp.State.DevTools.Hosting" />
+    <!--#endif -->
     <!--#if (postgres) -->
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <!-- Task 070-007: Azure Database for PostgreSQL Flexible Server for the aca publish target. -->

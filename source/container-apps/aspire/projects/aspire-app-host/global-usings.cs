@@ -7,6 +7,8 @@
 global using Aspire.Customization.AppHost;
 #endif
 #if(web)
+// Task 335-001: AddTimeWarpStateDevTools / WithTimeWarpStateDevTools (web-server is the inspected app).
+global using TimeWarp.State.DevTools.Hosting;
 #if(postgres)
 // IsDevelopment gates the Postgres WithRepl dashboard command; Postgres is declared only inside the
 // web block (program.cs), so the using is nested the same way to stay IDE0005-clean in every combination.

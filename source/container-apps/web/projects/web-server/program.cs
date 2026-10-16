@@ -66,6 +66,10 @@
 // Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
 // merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
 // cleared once instead of re-validated on every request.
+// Task 335-001: AddStateDevToolsExport adds the TimeWarp.State ActivitySource and the DevTools
+// exporter to tracing in Development when the AppHost published TIMEWARP_STATE_DEVTOOLS_ENDPOINT.
+// It covers server-side stores (prerender, InteractiveServer). WASM stores are not exported: the
+// browser has no tracer provider, and the inspector origin is not the SPA origin.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -86,6 +90,10 @@ using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using TimeWarp.State.DevTools.Export;
+using TimeWarp.State.Telemetry;
 
 public partial class Program : IAspNetProgram
 {
@@ -138,6 +146,40 @@ public partial class Program : IAspNetProgram
   private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
   {
     builder.AddServiceDefaults();
+    AddStateDevToolsExport(builder);
+  }
+
+  /// <summary>
+  /// Task 335-001: ships server-side TimeWarp.State action spans (prerender and InteractiveServer
+  /// circuits) to the State DevTools inspector. Development only, and only when the AppHost set
+  /// TIMEWARP_STATE_DEVTOOLS_ENDPOINT (WithTimeWarpStateDevTools, run mode). Production and every
+  /// published target register nothing. Snapshots use a reflection resolver: this is a
+  /// non-trimmed server process and a failed snapshot never fails the action.
+  /// </summary>
+  private static void AddStateDevToolsExport(IHostApplicationBuilder builder)
+  {
+    if (!builder.Environment.IsDevelopment()
+      || string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(TimeWarpStateDevToolsExport.EndpointEnvironmentVariable)))
+    {
+      return;
+    }
+
+    builder.Services.AddTimeWarpStateTelemetry
+    (
+      options =>
+      {
+        options.IncludeSnapshots = true;
+        options.JsonSerializerOptions =
+          new JsonSerializerOptions(JsonSerializerDefaults.Web) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
+      }
+    );
+    builder.Services.AddOpenTelemetry()
+      .WithTracing
+      (
+        tracing => tracing
+          .AddSource(TimeWarpStateTelemetry.ActivitySourceName)
+          .AddTimeWarpStateDevToolsExporter()
+      );
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)

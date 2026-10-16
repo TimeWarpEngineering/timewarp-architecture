@@ -37,6 +37,8 @@
 // Ingress: each container app's `ingress: { … }` block is sliced and its `external` field read; an
 // ingress block without `external` fails rather than defaulting to internal.
 // Every rule is conditional on what the template flags emitted (no web/postgres → their rules skip).
+// State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
+// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output.
 #endregion
 
 namespace Aspire.Tests;
@@ -120,6 +122,19 @@ public partial class AcaPublish_Given_
     }
 
     ContainerApps.ShouldNotContain(app => app.Name.Contains("dashboard", StringComparison.OrdinalIgnoreCase));
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoStateDevTools()
+  {
+    // Task 335-001: the TimeWarp.State DevTools inspector is a run-mode-only resource.
+    // Literals: TimeWarp.State.DevTools.Hosting is absent with web off.
+    foreach ((string module, string text) in Modules)
+    {
+      text.ShouldNotContain("timewarp-state-devtools", Case.Insensitive, $"{module} declares State DevTools");
+      text.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", Case.Insensitive, $"{module} points at State DevTools");
+    }
 
     await Task.CompletedTask;
   }

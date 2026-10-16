@@ -241,6 +241,19 @@ public partial class IngressSmoke_Given_
     body.ShouldContain("_framework/blazor.web.js");
   }
 
+  public static async Task StateDevTools_Should_RunAndServeItsUi()
+  {
+    // Task 335-001: web-server waits for the packaged inspector, so it is Running by now. Its http
+    // endpoint answering proves the AppHost found and started the inspector dll, not only declared it.
+    using CancellationTokenSource cts = new(TimeSpan.FromMinutes(1));
+    await App!.ResourceNotifications.WaitForResourceAsync("timewarp-state-devtools", KnownResourceStates.Running, cts.Token);
+    HttpClient httpClient = App.CreateHttpClient("timewarp-state-devtools", "http");
+
+    HttpResponseMessage response = await httpClient.GetAsync("/", cts.Token);
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+  }
+
   public static async Task WebRouteThroughIngressWithForeignHost_Should_ReturnOk()
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");

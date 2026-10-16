@@ -21,6 +21,8 @@
 // not apply. Browser-log forwarding (task 261) and the dashboard REPL (task 262) are gated on the
 // hosting environment, so "absent" means no workload is configured as Development/Testing and the
 // chart carries no dashboard workload at all.
+// State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
+// TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output.
 #endregion
 
 namespace Aspire.Tests;
@@ -138,6 +140,23 @@ public partial class KubernetesPublish_Given_
       {
         Scalar(container, "image")?.ShouldNotContain("aspire-dashboard");
       }
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoStateDevTools()
+  {
+    // Task 335-001: the TimeWarp.State DevTools inspector is a run-mode-only resource.
+    // Literals: TimeWarp.State.DevTools.Hosting is absent with web off.
+    foreach (YamlMappingNode manifest in Manifests)
+    {
+      Name(manifest).ShouldNotContain("timewarp-state-devtools");
+    }
+
+    foreach ((string owner, string key, string _) in EnvironmentEntries())
+    {
+      key.ShouldNotBe("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", $"{owner} points at State DevTools");
     }
 
     await Task.CompletedTask;

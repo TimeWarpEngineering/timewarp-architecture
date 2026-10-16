@@ -61,6 +61,16 @@
 // never deadlocks because there is no edge to wait on, and Aspire.Hosting.Testing suites stay
 // green.
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
+// TimeWarp.State DevTools (task 335-001): AddTimeWarpStateDevTools (package TimeWarp.State.DevTools.Hosting)
+// adds the packaged inspector (TimeWarp.State.DevTools.App, a framework-dependent dll the package targets
+// stamp onto this assembly) as the timewarp-state-devtools executable resource; the dashboard links it as
+// "TimeWarp.State DevTools". WithTimeWarpStateDevTools sets TIMEWARP_STATE_DEVTOOLS_ENDPOINT on web-server
+// and waits for the inspector; web-server (Development only) exports its State action spans there. Both
+// calls sit in the IsRunMode block: the package already keeps the inspector out of the manifest, and the
+// explicit gate keeps publish models from ever resolving the inspector path. compose/kubernetes/aca
+// publish suites assert neither the resource nor the variable appears. Inside the web block: no
+// web-server, no TimeWarp.State app to inspect. Only server-side stores (prerender, InteractiveServer) are
+// exported; the WASM store has no tracer provider.
 // YARP literal /api routes owned by Web.Server beat the Api.Server catch-all by route precedence, not declaration order.
 // The Web.Server /api carve-outs are GENERATED, not hand-maintained (task 107): IngressRoutePrefixGenerator emits
 // WebServerApiRoutePrefixes.All from the hosted web-contracts ApiRoute templates (outer ApiEndpoint + nested
@@ -338,6 +348,11 @@ internal class Program
     if (builder.ExecutionContext.IsRunMode)
     {
       webServer = webServer.WithExternalHttpEndpoints();
+
+      // Task 335-001: the packaged TimeWarp.State DevTools inspector, run mode only (see Design).
+      // web-server gets TIMEWARP_STATE_DEVTOOLS_ENDPOINT and waits for the inspector.
+      IResourceBuilder<ExecutableResource> stateDevTools = builder.AddTimeWarpStateDevTools();
+      webServer = webServer.WithTimeWarpStateDevTools(stateDevTools);
     }
 
     // Task 070-003: published Entra settings are .env parameters, never literals. Defaults keep
