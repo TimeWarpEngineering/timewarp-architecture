@@ -23,7 +23,9 @@ namespace ClosedBoxAppHostGuard_;
 public partial class ClosedBoxAppHost_Should_
 {
   private const string DirectBoot = "DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>";
+#if yarp
   private static readonly int[] DevRunIngressPorts = [63610, 63620];
+#endif
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<ClosedBoxAppHost_Should_>();
@@ -70,8 +72,8 @@ public partial class ClosedBoxAppHost_Should_
     args[^1].ShouldBe("--Authentication:UseMock=true");
     return Task.CompletedTask;
   }
-
 #if yarp
+
   public static async Task Ingress_Endpoints_Should_Not_Use_DevRun_Ports()
   {
     await using IDistributedApplicationTestingBuilder appHost = await ClosedBoxAppHost.CreateAsync();

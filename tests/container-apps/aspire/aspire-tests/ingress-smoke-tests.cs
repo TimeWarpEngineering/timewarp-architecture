@@ -100,8 +100,8 @@ public partial class IngressSmoke_Given_
       KnownResourceStates.Finished,
       $"web-migrations ended in '{migrationState}', not Finished — schema is not applied."
     );
-
 #if yarp
+
     // Backstop only, as of task 058-001: the AppHost now gives the yarp resource an HTTP health
     // check, so the Healthy wait above already means the http endpoint answered a request and
     // this poll returns on its first attempt. It predates that check —
@@ -167,8 +167,8 @@ public partial class IngressSmoke_Given_
       }
     }
   }
-
 #if yarp
+
   private static async Task WaitForIngressReachableAsync(CancellationToken cancellationToken)
   {
     HttpClient httpClient = App!.CreateHttpClient("ingress", "http");
@@ -252,8 +252,8 @@ public partial class IngressSmoke_Given_
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
-
 #if yarp
+
   public static async Task RootThroughIngress_Should_ReturnSpaShell()
   {
     // ingress "http" endpoint: TLS terminates at the edge, so the test client needs no cert trust.
