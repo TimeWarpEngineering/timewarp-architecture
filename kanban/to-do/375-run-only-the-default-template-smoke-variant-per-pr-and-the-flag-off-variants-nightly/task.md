@@ -84,19 +84,19 @@ aggregators (tiers 1 to 3), but does not run the generated app's Aspire/host tes
 
 ## Checklist
 
-- [ ] Confirm task 373 is merged and rebase on it
-- [ ] Add the variant-set option to `dev template-smoke`; update its route description and Design region
-- [ ] Edit `workflow.yml`: `schedule:` cron, nightly dispatch, default-only on push/PR, full matrix on nightly; keep the `release` job unaffected
-- [ ] Assess per-variant test execution on the CI runner (Docker/Aspire); record findings in Notes
-- [ ] Implement nightly test execution per variant, or record build-only as the floor and file the follow-up
-- [ ] Confirm failed-nightly notification; record in Notes
-- [ ] Update the skills that document template-smoke and the CI gates
-- [ ] `dev build` 0 warnings and 0 errors
-- [ ] `dev template-smoke` default-only passes
-- [ ] Full-matrix `dev template-smoke` passes locally (run from a fresh `bin/dev`)
-- [ ] PR CI run shows `template-smoke` running one variant; record the job duration
-- [ ] Manually dispatched nightly run passes, or each failure is tied to a known task such as 374
-- [ ] `ganda repo audit` clean
+- [x] Confirm task 373 is merged and rebase on it (373 = PR #518 and 374 = PR #519 are on master; merged origin/master)
+- [x] Add the variant-set option to `dev template-smoke`; update its route description and Design region
+- [x] Edit `workflow.yml`: `schedule:` cron, nightly dispatch, default-only on push/PR, full matrix on nightly; keep the `release` job unaffected
+- [x] Assess per-variant test execution on the CI runner (Docker/Aspire); record findings in Notes
+- [x] Implement nightly test execution per variant, or record build-only as the floor and file the follow-up
+- [x] Confirm failed-nightly notification; record in Notes
+- [x] Update the skills that document template-smoke and the CI gates
+- [x] `dev build` 0 warnings and 0 errors
+- [x] `dev template-smoke` default-only passes
+- [x] Full-matrix `dev template-smoke` passes locally (run from a fresh `bin/dev`): every variant builds and passes tiers 1 to 3; `--app-tests` failures are tied to task 376
+- [ ] PR CI run shows `template-smoke` running one variant; record the job duration (PR not open yet; the host opens it after this node)
+- [x] Manually dispatched nightly run passes, or each failure is tied to a known task such as 374 (failures tied to task 376)
+- [x] `ganda repo audit` clean
 
 ## Proof gates
 
@@ -116,3 +116,108 @@ aggregators (tiers 1 to 3), but does not run the generated app's Aspire/host tes
 
 - `dev template-smoke` already runs co-located Jaribu family aggregators (tier 3). The gap is the
   generated app's Aspire/host test projects, which task 374 shows breaking under yarp-off.
+- Options: `--matrix` (`-m`) runs every `SmokeMatrix` entry; without it the loop runs
+  `SmokeDefault` only. `--app-tests` runs each generated app's test projects under the tier 3 MTP
+  gate. The two options are independent. Pack, install, the dotted-name assert and the ingress-port
+  assert run once either way. Default-only still makes two generations (Contoso.Shop plus
+  SmokeDefault), so the ingress-port regeneration assert still has something to compare.
+- Local default is default-only, on purpose: `dev template-smoke` with no options is the PR CI
+  gate, so a local pass predicts the PR check. The full matrix costs several times longer, and the
+  nightly covers it. AGENTS.md and the skill say to add `--matrix` when a change touches `#if flag`
+  regions or template symbols.
+- With `--matrix`, a failing variant no longer stops the loop. Every selected variant runs and the
+  failures are reported together, so one nightly names every broken flag.
+- `--app-tests` scope: every `tests/**/*.csproj` in the generated app, except tier 3 aggregators
+  (already run) and `<IsTestProject>false</IsTestProject>` libraries (`timewarp-testing`). Runs one
+  project at a time with the smoke port base, and runs all of them even after a failure.
+- `dev workflow`: no nightly mode added. The `template-smoke` job calls `dev template-smoke`
+  directly, and the nightly is that job alone, so a `dev workflow` mode would add nothing. One
+  workflow file.
+- workflow.yml: `schedule` cron `17 7 * * *` (07:17 UTC, off the top of the hour, when GitHub
+  delays scheduled runs). New dispatch mode `nightly`. `release` skips on `mode == nightly`. `probe`
+  is unchanged. A `merge` dispatch runs release as before and template-smoke default-only, the same
+  as push. `detect-paths`, `ci-group`, `ci` and `skill-lint` are already restricted to
+  push/pull_request, so a schedule runs only template-smoke. The NuGet cache key and the
+  `2.0.0-smoke` eviction step are unchanged.
+- CI runner feasibility for `--app-tests`: ubuntu-latest has Docker (the monorepo integration group
+  already runs aspire-tests and Testcontainers there). The dev cert trust step and SSL_CERT_DIR are
+  already in the job. Playwright installs its browser at run time (`playwright-browser-session.cs`),
+  as the monorepo playwright group does without an install step. Measured run time is in Results.
+- Notification: GitHub emails a failed scheduled run to the user who last changed the workflow's
+  cron line, so committing this change makes Steve the recipient. That is enough. The repo is
+  public, so GitHub disables a schedule after 60 days with no repository activity; that is not a
+  risk at the current commit rate, and the email when it happens says so. CI cannot file kanban
+  tasks (ganda is private), so a human files the task from the failure email.
+- First full `--matrix --app-tests` run found new flag-off failures in generated web-spa test
+  projects (SmokeNoApi: web-spa-integration and Playwright; SmokeNoYarp: web-spa-integration).
+  They are template defects of the task 374 kind and out of this task's scope. Filed as task 376
+  (id reserved with `ganda kanban reserve`, kitchen added on this branch). The nightly stays red
+  until 376 lands.
+- Task 374 agreement: task 374 fixed the yarp/api/postgres-off aspire-tests and decided that
+  template-smoke would not run them per PR, leaving them to "the nightly flag-off matrix job". That
+  is `--matrix --app-tests`.
+- Pack scope: `tools/`, `.github/` and AGENTS.md are not in the template pack. `skills/` is packed,
+  so the two `tw-feature-placement` edits reach generated apps (doc text only). `dev check-version`
+  result is in Results.
+
+## Results
+
+PR and push CI now smoke `SmokeDefault` only. A nightly run smokes the full flag-off matrix and
+also runs every generated app's test projects. The first nightly found new flag-off defects,
+filed as task 376.
+
+Changes:
+- `tools/dev-cli/endpoints/template-smoke-command.cs`: `--matrix` / `-m` runs every `SmokeMatrix`
+  entry; without it only `SmokeDefault` runs. `--app-tests` adds the generated-app test projects.
+  The loop now runs every selected variant and reports all failures together. Route description
+  and Design region updated.
+- `tools/dev-cli/services/template-smoke-harness.cs`: `AssertGeneratedAppTestSuitesAsync` runs
+  bare `dotnet test -c Release` in every generated `tests/**` project (not the tier 3 aggregators
+  or `IsTestProject=false` libraries), one at a time, under the tier 3 MTP summary gate.
+- `.github/workflows/workflow.yml`: `schedule` cron `17 7 * * *`; dispatch mode `nightly`;
+  template-smoke runs `--matrix --app-tests` on schedule/nightly and default-only otherwise;
+  `release` skips a nightly dispatch. Header comment updated.
+- Skills: `tw-feature-placement` SKILL.md and `references/co-located-jaribu-runfiles.md` (default,
+  options, PR versus nightly, dispatch command, failure email). AGENTS.md "Before a PR" row.
+- `kanban/to-do/376-*`: follow-up for the failures the nightly found.
+
+Measurements:
+
+| Run | Scope | Duration | Result |
+|-----|-------|----------|--------|
+| PR CI before (run 38858670394, PR #519) | 6 variants, build plus tiers 1 to 3 | 10m13s | pass |
+| Local `dev template-smoke` | SmokeDefault | 142s | pass |
+| Local `--matrix --app-tests` | 6 variants plus app tests | 2035s | SmokeNoApi, SmokeNoYarp fail (task 376) |
+| CI nightly dispatch [38860602411](https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/38860602411) | 6 variants plus app tests | 45m31s | SmokeNoApi, SmokeNoYarp fail (task 376); release skipped |
+
+Per-variant app tests on the CI nightly: SmokeDefault 9/9 projects, SmokeNoPostgres 8/8,
+SmokeNoWeb 2/2, SmokeNoGrpc 9/9 passed. SmokeNoApi and SmokeNoYarp each fail only
+web-spa-integration-tests (task 376). Every variant builds and passes tiers 1 to 3, so the matrix
+without `--app-tests` is green. The PR CI duration for the one-variant job is recorded once the
+host opens the PR. Expect about 3 to 4 minutes based on the local 142s.
+
+Gates: `dev build` (runfile) passed with 0 warnings and 0 errors. `dev check-version` passed
+(2.0.0-beta.20 is unreleased, so no bump is needed). `ganda repo audit` passed.
+
+### How to validate
+
+**Smoke:**
+
+```bash
+dotnet run tools/dev-cli/dev.cs -- template-smoke --help
+dotnet run tools/dev-cli/dev.cs -- template-smoke
+dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix      # build + tiers 1-3, all variants
+gh workflow run workflow.yml --ref <branch> -f mode=nightly      # CI nightly on demand
+```
+
+**Expect:**
+
+- `--help` lists `--matrix,-m` and `--app-tests`.
+- `template-smoke` prints `Variants: SmokeDefault (--matrix adds each flag off)` and
+  `Template smoke SUCCEEDED`.
+- `--matrix` prints all six variant names and `SmokeX OK` for each, then `Template smoke SUCCEEDED`.
+- The nightly dispatch runs only `template-smoke` (release, ci, detect-paths and skill-lint
+  skipped), and its step runs `template-smoke --matrix --app-tests`. Until task 376 lands, it fails
+  with `Template smoke FAILED — SmokeNoApi, SmokeNoYarp`.
+- On the PR for this branch, the `template-smoke` job log shows `Variants: SmokeDefault` only.
+
