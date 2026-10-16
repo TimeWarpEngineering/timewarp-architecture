@@ -106,21 +106,21 @@ Builds on task 295 (done) and 352: captures are attached to feedback through the
 
 ## Checklist
 
-- [ ] Spike both approaches; write the decision and trade-offs in Notes
-- [ ] JS capture module + C# service (whole page and element)
-- [ ] TimeWarp.State `CaptureScreenshot` action + handler; result in state
-- [ ] WebMCP tool dispatching the same action
-- [ ] Ask panel: capture button, removable thumbnail next to input, attachment sent with the prompt
-- [ ] Optional "Capture screenshot" palette command via the normal action catalog only (no palette UI changes)
-- [ ] Consent/indicator and sensitive-element masking
-- [ ] Playwright: dispatch capture returns a real non-empty PNG with dimensions
-- [ ] Playwright: `data-no-capture` element is masked
-- [ ] WebMCP tool invokes the same action (CatalogAgent pattern)
-- [ ] Playwright: Ask panel and Feedback form show a removable thumbnail and send the attachment
-- [ ] Feedback form and Ask panel: attach a capture of the page behind them (requirement 5)
-- [ ] Fill `page_context.screenshot` only on explicit opt-in; else null; text first
-- [ ] REQUIRED: attach a capture to feedback through the existing attachment pipeline (same limits, validation, storage; no parallel path)
-- [ ] Gates: dev check-version, dev build 0/0, dev test, dev template-smoke if template output changes, ganda repo audit
+- [x] Spike both approaches; write the decision and trade-offs in Notes
+- [x] JS capture module + C# service (whole page and element)
+- [x] TimeWarp.State `CaptureScreenshot` action + handler; result in state
+- [x] WebMCP tool dispatching the same action
+- [x] Ask panel: capture button, removable thumbnail next to input, attachment sent with the prompt
+- [x] Optional "Capture screenshot" palette command via the normal action catalog only (no palette UI changes)
+- [x] Consent/indicator and sensitive-element masking
+- [x] Playwright: dispatch capture returns a real non-empty PNG with dimensions
+- [x] Playwright: `data-no-capture` element is masked
+- [x] WebMCP tool invokes the same action (CatalogAgent pattern)
+- [x] Playwright: Ask panel and Feedback form show a removable thumbnail and send the attachment
+- [x] Feedback form and Ask panel: attach a capture of the page behind them (requirement 5)
+- [x] Fill `page_context.screenshot` only on explicit opt-in; else null; text first
+- [x] REQUIRED: attach a capture to feedback through the existing attachment pipeline (same limits, validation, storage; no parallel path)
+- [x] Gates: dev check-version, dev build 0/0, dev test, dev template-smoke if template output changes, ganda repo audit
 
 ## Acceptance criteria
 
@@ -128,6 +128,63 @@ Builds on task 295 (done) and 352: captures are attached to feedback through the
 - Calling the WebMCP tool runs that same action and returns the image.
 - In the Ask panel and Feedback form, a screenshot appears as a removable thumbnail and is sent with the prompt/feedback.
 - Masked elements are not visible in captures. Nothing is uploaded without a user action.
+
+## Results
+
+Implemented on this branch; every gate passed on 2026-10-17 in this worktree.
+
+- **Capture module**: `web-spa/source/features/screenshot.ts` (DOM-to-image, no vendored library;
+  decision and limits in Notes) and `web-spa/services/screenshot-js-module.cs` (`[SideEffectService]`,
+  PNG streamed as `IJSStreamReference`).
+- **State**: `web-spa/features/application/screenshot-state/` — `ScreenshotState`, `ScreenshotCapture`,
+  `CaptureScreenshot(selector = "")` (catalog action, Visibility Both, `[TrackAction]`, approval-gated
+  for agents, Info/Error `OutcomeNotification` as the visible indicator), `AttachToAsk`,
+  `RemoveFromAsk`, `MarkAskSent`. The handler is the only caller of the JS module.
+- **WebMCP / in-app agent**: the catalog makes it the `Screenshot.CaptureScreenshot` tool and the
+  Ctrl-K "Screenshot: Capture screenshot" command (no palette UI change). WebMCP returns
+  `{width,height,contentType,byteLength,path,masked,image:"data:image/png;base64,..."}`. The in-app
+  model gets the result without the picture plus the picture as image content
+  (`IAgentImageOutcome` / `IToolResultImage`, `RelayChatClient` adds a user turn after the tool turns).
+- **Relay contract**: `CompleteAgentChat.Turn.Images` (user turns only, max 2 per request, png/jpeg,
+  base64 cap 7,000,000, outside the character budget); server maps them to `DataContent`; the fake
+  upstream answers `image: {type} {w}x{h} {bytes} bytes` and calls the capture tool on "screenshot".
+- **Ask**: camera button (`AskCapture`) captures the page body behind the panel, `AskScreenshotChip`
+  shows the removable thumbnail, `AskScreenshotChatClient` sends it once with the next message.
+- **Feedback**: "Capture this page" and "Attach capture of {path}" (the page behind) upload through
+  the existing `UploadOneAsync` → `UploadFeedbackAttachment` path (same limits, validation, storage).
+- **page_context.screenshot**: null until a capture of that path exists, then metadata only.
+- **Masking**: `data-no-capture` and password inputs draw as a grey box. Documented in `skills/tw-blazor`.
+- **Tests**: `web-spa-integration-tests/features/application/catalog-agent-screenshot-tests.cs`
+  (WebMCP parity with approval, refusal path, limit agreement with `FeedbackAttachmentRules`, relay
+  images) and `web-spa-playwright-tests/screenshot-playwright-tests.cs` (real PNG + IHDR size,
+  masked probe, Ask thumbnail remove/send, Feedback page-behind attach/remove/file). Existing tool-list
+  expectations now include the global capture tool.
+- **Gates**: `dev check-version` (2.0.0-beta.20 already ahead of NuGet beta.19, no bump),
+  `dev build` 0 warnings / 0 errors, `dev test` fast 14/14, playwright 1/1, integration 8/8,
+  `dev template-smoke` succeeded (default variant; no `#if` regions changed), `ganda repo audit` passed.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+./bin/dev test --group integration
+dotnet run --project tests/container-apps/web/web-spa-playwright-tests/web-spa-playwright-tests.csproj -c Release --no-build -- --filter-class Screenshot_Given_Wasm
+dotnet run --project tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj -c Release --no-build -- --filter-class CatalogAgent_Should --filter-method Screenshot
+```
+
+Expect:
+
+- Build: 0 warnings, 0 errors.
+- `Screenshot_Given_Wasm`: 1/1 passed. Output folder
+  `tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/playwright-screenshots/Screenshot_Given_Wasm/`
+  holds `capture-settings.png` (the Settings page body with a red box drawn and a grey box where
+  the blue `data-no-capture` probe was), `ask-screenshot-thumbnail.png` (thumbnail above the
+  composer), `ask-screenshot-sent.png` (answer `image: image/png WxH`), `feedback-screenshots.png`
+  and `feedback-item-screenshot.png` (filed item shows one screenshot).
+- `CatalogAgent_Should` filtered to `Screenshot`: 4/4 passed, and the log prints
+  `WEBMCP-PROOF invoke Screenshot.CaptureScreenshot approved result={...,"image":"data:image/png;base64,...}`.
 
 ## Notes
 
@@ -163,3 +220,4 @@ Builds on task 295 (done) and 352: captures are attached to feedback through the
 ## Session
 
 - Created: 269751 (2026-10-11 ICT), carried over from 297 (created 3467057, 2026-10-10)
+- Implemented 2026-10-16/17 (ganda task work, implement oracle): capture module, ScreenshotState, Ask and Feedback wiring, relay images, tests; all gates green.
