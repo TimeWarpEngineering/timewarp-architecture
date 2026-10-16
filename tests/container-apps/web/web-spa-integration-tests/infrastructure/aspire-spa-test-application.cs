@@ -15,18 +15,20 @@
 // AddJavaScriptDispatch reuses Web.Spa.Program.AllowJavaScriptDispatch for the same reason (task 278).
 // Authorization policies and the WebMCP services mirror the same program so palette-backed tool
 // tests resolve IAuthorizationService and WebMcpDispatcher from the per-test scope (task 271).
-// JsWebMcpModelContext is fully qualified: TimeWarp.Architecture.Services is a global using
-// only when the api flag is on. Without api, a signed-in principal with every permission
-// stands in for the mock session so the dispatcher can be constructed. This host does not
-// register the production relay; Web.Spa.Program.ConfigureServices does (RelayChatClient, no key).
-// MockAuthenticationRegistration (Testing + Authentication:UseMock) and the
-// IApiServerApiService factory sit in the api conditional. A generated app with the api
-// flag off drops the Services import and the api-server client, so those names do not
-// resolve. The named HttpClient stays outside that conditional: it only names Foundation
-// ServiceNames. Message-bar handlers mutate NotificationState and do not need a
-// rendered FluentUI provider. NavigationManager is the headless TestNavigationManager so
-// RouteState.ChangeRoute and NotificationState.NavigationListener (both registered here as
-// in the SPA) can be exercised without a renderer (task 247).
+// This host does not register the production relay; Web.Spa.Program.ConfigureServices does
+// (RelayChatClient, no key).
+// MockAuthenticationRegistration (Testing + Authentication:UseMock) runs in every flag variant:
+// the web-spa mock providers ship whatever the flags, and the catalog-agent tests read the mock
+// session's NameIdentifier (task 376).
+// The IApiServerApiService factory sits in the api conditional: a generated app with the api
+// flag off drops the api-server client. The named HttpClient stays outside that conditional: it
+// only names Foundation ServiceNames. Its base address is the ingress when the yarp flag is on.
+// With yarp off there is no ingress, so it is api-server itself (which serves api/... routes
+// directly), or web-server when api is off too and nothing calls that client.
+// Message-bar handlers mutate NotificationState and do not need a rendered FluentUI provider.
+// NavigationManager is the headless TestNavigationManager so RouteState.ChangeRoute and
+// NotificationState.NavigationListener (both registered here as in the SPA) can be exercised
+// without a renderer (task 247).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -44,7 +46,13 @@ using Microsoft.JSInterop;
 /// </summary>
 public class AspireSpaTestApplication : ISpaTestApplication
 {
-  private const string YarpResourceName = "ingress";
+#if(yarp)
+  private const string BaseUrlResourceName = "ingress";
+#elif(api)
+  private const string BaseUrlResourceName = "api-server";
+#else
+  private const string BaseUrlResourceName = "web-server";
+#endif
 
   public IServiceProvider ServiceProvider { get; }
 
@@ -52,12 +60,13 @@ public class AspireSpaTestApplication : ISpaTestApplication
   {
     ServiceCollection services = new();
 
-    // Get the YARP HTTP client from Aspire - this will proxy to Web and API servers
-    using HttpClient yarpHttpClient = distributedApp.CreateHttpClient(YarpResourceName, "http");
-    string? rawBaseUrl = yarpHttpClient.BaseAddress?.ToString();
+    // The ingress proxies to the web and api servers. Without yarp, the client talks to the
+    // backend directly.
+    using HttpClient baseUrlHttpClient = distributedApp.CreateHttpClient(BaseUrlResourceName, "http");
+    string? rawBaseUrl = baseUrlHttpClient.BaseAddress?.ToString();
     if (string.IsNullOrWhiteSpace(rawBaseUrl))
     {
-      throw new InvalidOperationException("YARP HTTP base URL is not configured.");
+      throw new InvalidOperationException($"{BaseUrlResourceName} HTTP base URL is not configured.");
     }
 
     string baseUrl = rawBaseUrl.EndsWith('/', StringComparison.Ordinal) ? rawBaseUrl : rawBaseUrl + "/";
@@ -70,7 +79,6 @@ public class AspireSpaTestApplication : ISpaTestApplication
 
   private static void ConfigureServices(IServiceCollection services, string baseUrl)
   {
-#if(api)
     IConfiguration configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -83,7 +91,6 @@ public class AspireSpaTestApplication : ISpaTestApplication
       throw new InvalidOperationException(
         "SPA integration host requires MockAccessTokenProvider (Testing + Authentication:UseMock).");
     }
-#endif
 
     // API handlers take ILogger. The raw ServiceCollection does not register it.
     services.AddLogging();
@@ -111,14 +118,8 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddScoped<AgentCallOutcome>();
     services.AddScoped<WebMcpApprovalGate>();
     services.AddScoped<WebMcpDispatcher>();
-    services.AddScoped<TimeWarp.Architecture.Services.JsWebMcpModelContext>();
+    services.AddScoped<JsWebMcpModelContext>();
     services.AddScoped<WebMcpPublisher>();
-#if(!api)
-    // The api flag's mock session is absent. WebMcpDispatcher still requires a provider,
-    // and catalog tools are filtered by permission claims.
-    services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
-      _ => new PermittedAuthenticationStateProvider());
-#endif
 
     // Plus notification handlers (LoadPersistentState) are linked into the generated
     // mediator and require IPersistenceService when the pipeline resolves them.
@@ -156,39 +157,4 @@ public class AspireSpaTestApplication : ISpaTestApplication
     services.AddScoped<NavigationManager, TestNavigationManager>();
     services.AddScoped<TimeWarp.Architecture.Features.NotificationState.NavigationListener>();
   }
-
-#if(!api)
-  /// <summary>
-  /// Signed-in principal with every product permission. Generated apps without the api flag
-  /// have no mock session; WebMCP tests need the same grants that provider carries.
-  /// </summary>
-  private sealed class PermittedAuthenticationStateProvider
-    : Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider
-  {
-    public override Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> GetAuthenticationStateAsync()
-    {
-      List<System.Security.Claims.Claim> claims = [];
-      foreach (string permission in TimeWarp.Architecture.Features.PermissionIds.All)
-      {
-        claims.Add
-        (
-          new System.Security.Claims.Claim
-          (
-            TimeWarp.Architecture.Features.PermissionIds.ClaimType,
-            permission
-          )
-        );
-      }
-
-      System.Security.Claims.ClaimsIdentity identity = new(claims, authenticationType: "Test");
-      return Task.FromResult
-      (
-        new Microsoft.AspNetCore.Components.Authorization.AuthenticationState
-        (
-          new System.Security.Claims.ClaimsPrincipal(identity)
-        )
-      );
-    }
-  }
-#endif
 }
