@@ -30,7 +30,8 @@
 // so the one fact that sends a live request through the ingress
 // (FetchWeatherForecasts_Action_Should) intermittently saw HttpRequestException / "response
 // ended prematurely" instead of 5 forecasts. Do NOT add a retry/poll here: the gate belongs in
-// the app model, where every waiting suite gets it.
+// the app model, where every waiting suite gets it. With the yarp flag off there is no ingress
+// resource, so that wait sits in the yarp conditional (task 376).
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -58,7 +59,9 @@ public static class SpaIntegrationHost
 #if(api)
     await app.ResourceNotifications.WaitForResourceHealthyAsync("api-server", cts.Token);
 #endif
+#if(yarp)
     await app.ResourceNotifications.WaitForResourceHealthyAsync("ingress", cts.Token);
+#endif
 
     return app;
   }
