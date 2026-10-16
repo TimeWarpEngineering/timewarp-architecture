@@ -19,7 +19,11 @@
 // instructions. Over the cap, surface text is dropped whole, in order summary, items, forms,
 // buttons, headings, so the JSON stays valid. Page facts are bounded by their own caps and are
 // not dropped. Text is always present; an empty walk yields empty arrays and an empty summary.
-// screenshot is null: pixel capture is a later opt-in, not this document.
+// screenshot (task 303-001) is null until someone explicitly captures this path (a click or an
+// approved tool call; ScreenshotState.Latest). Then it is that capture's metadata only: width,
+// height, contentType, byteLength, masked, capturedAt, selector, and sentToAsk (Ask sent it in
+// this conversation). The picture itself never goes in this text document; it reaches a model as
+// image content or a WebMCP result. Text stays first and complete either way.
 // Page facts have no per-route cases (task 300): the states that own the actions the page
 // declares ([Page(AgentActions = ...)], via PageAgentScope.StateTypesFor) add their own when they
 // implement IAgentPageFacts (credentials, profile, site settings, feedback): ids, flags, the
@@ -138,10 +142,32 @@ public static class PageAgentContext
       ["tools"] = ToolNames(toolNames),
       ["references"] = References(store),
       ["tags"] = AskTagPayload.Json(store.GetState<AskTagState>().SentFor(store.GetState<AgentSurfaceState>().ConversationGeneration)),
-      ["screenshot"] = JsonNode.Parse("null"),
+      ["screenshot"] = Screenshot(store, path),
     };
     MergeSurface(document, SurfaceFor(store.GetState<AgentSurfaceState>(), path, liveSurfaceJson));
     return document;
+  }
+
+  private static JsonObject? Screenshot(IStore store, string path)
+  {
+    ScreenshotCapture? capture = store.GetState<ScreenshotState>().Latest;
+    if (capture is null || !string.Equals(capture.Path, path, StringComparison.OrdinalIgnoreCase))
+    {
+      return null;
+    }
+
+    int generation = store.GetState<AgentSurfaceState>().ConversationGeneration;
+    return new JsonObject
+    {
+      ["width"] = capture.Width,
+      ["height"] = capture.Height,
+      ["contentType"] = ScreenshotState.ContentType,
+      ["byteLength"] = capture.Png.Length,
+      ["masked"] = capture.Masked,
+      ["capturedAt"] = capture.CapturedAt.ToString("O", CultureInfo.InvariantCulture),
+      ["selector"] = capture.Selector,
+      ["sentToAsk"] = store.GetState<ScreenshotState>().AskSentFor(generation, capture.Id),
+    };
   }
 
   private static JsonArray References(IStore store)

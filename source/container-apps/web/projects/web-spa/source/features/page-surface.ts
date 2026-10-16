@@ -7,7 +7,8 @@
 // a clipped summary, forms, buttons, and items without a per-page list. Caps match
 // PageAgentContext: 40 headings, 2,000 summary characters, 30 buttons, 10 forms,
 // 20 fields, 40 items, and 500 elements visited. Card titles are h2 elements in light DOM.
-// screenshot is not produced here; the C# document reserves a null field for a later opt-in.
+// screenshot is not produced here: ScreenshotState.CaptureScreenshot (screenshot.ts) draws one only
+// when asked, and the C# document carries its metadata (task 303-001).
 // #endregion
 
 const maxHeadings = 40;

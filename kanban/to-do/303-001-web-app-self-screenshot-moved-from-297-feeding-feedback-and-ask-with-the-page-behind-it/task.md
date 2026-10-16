@@ -4,6 +4,33 @@
 
 303
 
+## Goal (implementer restatement)
+
+The SPA can take a PNG picture of its own page, on purpose, through one TimeWarp.State action.
+
+- One action, `ScreenshotState.CaptureScreenshot(selector?)`, is the only caller of the capture
+  JS module. It captures the page body (`.twe-page__body`, so the docked Ask panel and app chrome
+  are not in it) or the element a selector names, masks every `data-no-capture` element, stores
+  the PNG and its size in state, and shows a notification that a capture was taken.
+- The action is a catalog action with Visibility Both, so it is a Ctrl-K command and an agent
+  tool (WebMCP and in-app Ask) with no extra code path. It needs approval in Ask before editing.
+  The WebMCP result returns the image as a data URL; the in-app model gets the image as image
+  content, never as tool-result text.
+- Ask panel: a Screenshot button captures the page behind the panel and shows a removable
+  thumbnail above the composer. The next message carries it as image content (relay contract
+  gains user-turn images with their own caps), then the thumbnail clears.
+- Feedback form: "Capture this page" and, when a capture was taken on another page before
+  opening Feedback, "Attach capture of {path}" (the page behind it). Both go through the existing
+  upload action, limits and validation, and show the usual removable thumbnail.
+- `page_context.screenshot` stays null until a capture of that path exists; then it holds the
+  capture's metadata only (size, bytes, masked count, time, whether Ask sent it). Text first.
+- Nothing is captured or uploaded without a person's click or a visible (approved) tool call.
+
+Acceptance: Playwright proves a real non-empty PNG with width/height, that a `data-no-capture`
+element is masked, and that Ask and Feedback show a removable thumbnail and send it; an
+integration test proves the WebMCP tool runs the same action and returns the image. Gates
+(check-version, build 0/0, test, template-smoke, repo audit) pass.
+
 ## Spec refresh 2026-10-16 (Steve approved)
 
 This section overrides any older text below (Requirements, Checklist, Acceptance, Notes).
@@ -109,6 +136,29 @@ Builds on task 295 (done) and 352: captures are attached to feedback through the
   with a pointer here.
 - Parent 303's implementation merged in PR #461 (page_context shape, WebMCP tool list); the explicit Depends-on line was removed 2026-10-16 because ganda claim did not recognise that merge.
 - Related: 295 (done), 352 (done), 271/292 (Cloudflare-style Ask AI, WebMCP parity).
+- **Capture approach (spike decision, 2026-10-16): DOM-to-image, written in the repo's own
+  TypeScript (`source/features/screenshot.ts`), no vendored library.**
+  - `getDisplayMedia` rejected: a browser picker on every capture, the person must pick the tab,
+    the picture includes the Ask panel or dialog the capture is meant to leave out, element
+    capture needs cropping by guessed offsets, and headless tests need Chrome flags to auto-pick.
+    It is pixel-exact, which is its only win here.
+  - Vendoring `html-to-image` rejected: a pinned third-party file and its license for something
+    the app can do in ~300 lines, and FluentUI v5 web components need open-shadow-root flattening
+    the module has to get right for this app anyway.
+  - How it works: clone the target, flatten open shadow roots (slots take their assigned nodes),
+    inline each element's computed style, copy form values, replace `data-no-capture` elements
+    with a solid box of the same size, turn same-origin images and canvases into data URLs, wrap
+    the result in an SVG `foreignObject`, draw it on a canvas, and export PNG. It scales down
+    until the PNG fits `FeedbackAttachmentRules.MaxBytes`.
+  - Known limits (accepted): web fonts fall back to system fonts, cross-origin images and CSS
+    `url()` backgrounds render empty, `::before`/`::after` content and closed shadow roots are not
+    drawn, and iframes are blank. Safari taints SVG-foreignObject canvases, so capture reports an
+    error there instead of a picture.
+  - The bytes reach .NET as a JS stream reference (same reason as feedback paste: InteractiveServer's
+    SignalR message cap).
+- **Feedback is a route, not a dialog.** "The page behind it" is the latest capture taken on the
+  page the person came from (Ask's Screenshot button or the Ctrl-K "Capture screenshot" command),
+  offered as "Attach capture of {path}". "Capture this page" captures the Feedback page itself.
 
 ## Session
 

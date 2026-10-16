@@ -11,6 +11,11 @@
 // model request failed."). Dispose is a no-op; the API service is scoped
 // to the circuit and must outlive this client. CatalogAgentSession wraps it in a second
 // non-disposing client before FunctionInvokingChatClient.
+// Images (task 303-001): image DataContent on a user message becomes that turn's Images. A tool
+// result that carries a picture (IToolResultImage) keeps only its text in ToolResult; when it
+// answers a call made after the person's last message, its picture goes on one user turn placed
+// right after that run of tool turns, because a tool turn cannot carry an image. Older tool
+// pictures are not sent again, so each picture reaches the model in the turn it was taken.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -78,15 +83,58 @@ internal sealed class RelayChatClient : IChatClient
   {
   }
 
+  public const string ToolPictureText = "The picture the tool returned:";
+
   private static Command ToCommand(IEnumerable<ChatMessage> messages, ChatOptions? options)
   {
     Command command = new()
     {
       Instructions = options?.Instructions,
-      Messages = messages.Select(ToTurn).ToList(),
+      Messages = ToTurns([.. messages]),
       Tools = options?.Tools?.OfType<AIFunction>().Select(ToTool).ToList() ?? []
     };
     return command;
+  }
+
+  private static List<Turn> ToTurns(List<ChatMessage> messages)
+  {
+    int lastUser = messages.FindLastIndex(static message => message.Role == ChatRole.User);
+    List<Turn> turns = [];
+    List<TurnImage> pictures = [];
+    for (int index = 0; index < messages.Count; index++)
+    {
+      ChatMessage message = messages[index];
+      turns.Add(ToTurn(message));
+      if (index > lastUser)
+      {
+        foreach (FunctionResultContent result in message.Contents.OfType<FunctionResultContent>())
+        {
+          if (result.Result is IToolResultImage { Image: { } image } && ToImage(image) is { } picture)
+          {
+            pictures.Add(picture);
+          }
+        }
+      }
+
+      bool runEnds = index + 1 == messages.Count || messages[index + 1].Role != ChatRole.Tool;
+      if (pictures.Count > 0 && runEnds)
+      {
+        turns.Add(new Turn { Role = ChatRole.User.Value, Text = ToolPictureText, Images = [.. pictures] });
+        pictures.Clear();
+      }
+    }
+
+    return turns;
+  }
+
+  private static TurnImage? ToImage(DataContent content)
+  {
+    if (content.MediaType is null || !ImageMediaTypes.Contains(content.MediaType))
+    {
+      return null;
+    }
+
+    return new TurnImage { MediaType = content.MediaType, Data = Convert.ToBase64String(content.Data.Span) };
   }
 
   private static Turn ToTurn(ChatMessage message)
@@ -110,6 +158,10 @@ internal sealed class RelayChatClient : IChatClient
             ArgumentsJson = call.Arguments is null ? "{}" : JsonSerializer.Serialize(call.Arguments)
           }
         );
+      }
+      else if (content is DataContent data && message.Role == ChatRole.User && ToImage(data) is { } image)
+      {
+        turn.Images.Add(image);
       }
       else if (content is FunctionResultContent result)
       {

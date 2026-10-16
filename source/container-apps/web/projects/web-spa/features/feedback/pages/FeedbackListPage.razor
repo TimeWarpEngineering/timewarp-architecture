@@ -12,6 +12,7 @@
 
   private readonly SubmitFeedback.Command Draft = new() { Kind = FeedbackKind.Complaint };
   private readonly Dictionary<Guid, string> Previews = new();
+  private readonly HashSet<int> AttachedCaptures = [];
 
   private ElementReference DetailsHost;
   private DotNetObjectReference<FeedbackListPage>? HostReference;
@@ -23,6 +24,15 @@
   private bool NotedComposer;
 
   private bool IsBusy => ActionTrackingState.IsActive;
+
+  // Task 303-001: Feedback is a route, so "the page behind it" is the latest capture taken on the
+  // page the person came from (Ask's Screenshot button or the Ctrl-K Capture screenshot command).
+  private ScreenshotCapture? PageBehind =>
+    ScreenshotState.Latest is { } capture
+      && !AttachedCaptures.Contains(capture.Id)
+      && !string.Equals(capture.Path, PageAgentScope.Normalize(GetPageUrl()), StringComparison.OrdinalIgnoreCase)
+      ? capture
+      : null;
 
   // Task 346: a filing row is pickable by Ask's Tag and resolves to its @my-feedback:<id>.
   private static IReadOnlyDictionary<string, object> RowMark(ListMyFeedback.Item item) =>
@@ -145,6 +155,27 @@
       ? "The file is larger than the attachment limit."
       : "The pasted image could not be read.";
     return NotificationState.AddNotification(MessageBarIntent.Error, message);
+  }
+
+  private async Task CaptureThisPageAsync()
+  {
+    int before = ScreenshotState.Latest?.Id ?? 0;
+    await ScreenshotState.CaptureScreenshot();
+    if (ScreenshotState.Latest is { } capture && capture.Id != before)
+    {
+      await AttachCaptureAsync(capture);
+    }
+  }
+
+  // The capture goes through the same checks and UploadFeedbackAttachment action as a picked file.
+  private async Task AttachCaptureAsync(ScreenshotCapture capture)
+  {
+    int count = FeedbackState.DraftAttachments.Count;
+    await UploadOneAsync(capture.FileName, ScreenshotState.ContentType, capture.Png);
+    if (FeedbackState.DraftAttachments.Count > count)
+    {
+      AttachedCaptures.Add(capture.Id);
+    }
   }
 
   private async Task OnFilesAsync(InputFileChangeEventArgs change)
@@ -346,6 +377,23 @@
             </FormField>
             <FormField Label="Attachments">
               <InputFile OnChange="OnFilesAsync" multiple accept="@Accept" class="feedback-file" aria-label="Attachments" data-qa="FeedbackFile" />
+              <div class="feedback-capture">
+                <FluentButton Type="ButtonType.Button"
+                  Appearance="ButtonAppearance.Outline"
+                  IconStart="@(new Icons.Regular.Size16.Camera())"
+                  Disabled="@IsBusy"
+                  data-qa="FeedbackCaptureScreenshot"
+                  OnClick="CaptureThisPageAsync">Capture this page</FluentButton>
+                @if (PageBehind is { } behind)
+                {
+                  <FluentButton Type="ButtonType.Button"
+                    Appearance="ButtonAppearance.Outline"
+                    IconStart="@(new Icons.Regular.Size16.Image())"
+                    Disabled="@IsBusy"
+                    data-qa="FeedbackAttachPageBehind"
+                    OnClick="@(() => AttachCaptureAsync(behind))">Attach capture of @behind.Path</FluentButton>
+                }
+              </div>
               @if (FeedbackState.DraftAttachments.Count > 0)
               {
                 <ul class="feedback-attachments">

@@ -17,6 +17,10 @@
 // A site_map result is matched against the user's words (5+ letters) and answered with a
 // markdown link to the first matching destination. Any other tool result is echoed as
 // "{tool}: {result}".
+// Images (task 303-001): when the last user message carries an image and no tool has answered
+// since, the fake replies "image: {mediaType} {width}x{height} {bytes} bytes" (PNG size from the
+// IHDR chunk), so a test can see the picture arrived. "screenshot" calls the capture tool when it
+// is offered. Relay images map to DataContent, which the OpenAI adapter sends as image content.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -219,6 +223,13 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
         .SelectMany(message => message.Contents)
         .OfType<FunctionResultContent>()
         .LastOrDefault();
+      DataContent? picture = lastUser < 0
+        ? null
+        : all[lastUser].Contents.OfType<DataContent>().FirstOrDefault(content => content.HasTopLevelMediaType("image"));
+      if (picture is not null && result is null)
+      {
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, DescribeImage(picture))));
+      }
 
       if (result is not null)
       {
@@ -249,12 +260,27 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
           return Task.FromResult(ToolTurn("call-navigate", "navigate", new Dictionary<string, object?> { ["url"] = url }));
         }
       }
+      else if (userText.Contains("screenshot", StringComparison.OrdinalIgnoreCase) && Offers(CaptureToolName))
+      {
+        return Task.FromResult(ToolTurn("call-capture", CaptureToolName, new Dictionary<string, object?>()));
+      }
       else if (userText.Contains("where", StringComparison.OrdinalIgnoreCase) && Offers("site_map"))
       {
         return Task.FromResult(ToolTurn("call-site-map", "site_map", new Dictionary<string, object?>()));
       }
 
       return Task.FromResult(ToolTurn("call-1", "page_context", new Dictionary<string, object?>()));
+    }
+
+    public const string CaptureToolName = "Screenshot.CaptureScreenshot";
+
+    public static string DescribeImage(DataContent picture)
+    {
+      ReadOnlySpan<byte> data = picture.Data.Span;
+      string size = data.Length >= 24 && data[12..16].SequenceEqual("IHDR"u8)
+        ? $"{System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(data[16..20])}x{System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(data[20..24])}"
+        : "unknown-size";
+      return $"image: {picture.MediaType} {size} {data.Length} bytes";
     }
 
     private static ChatResponse ToolTurn(string callId, string name, Dictionary<string, object?> arguments) =>
@@ -410,6 +436,11 @@ internal static class XaiChatMapping
       if (!string.IsNullOrWhiteSpace(turn.ToolCallId))
       {
         contents.Add(new FunctionResultContent(turn.ToolCallId, turn.ToolResult ?? ""));
+      }
+
+      foreach (TurnImage image in turn.Images)
+      {
+        contents.Add(new DataContent(Convert.FromBase64String(image.Data), image.MediaType));
       }
 
       if (contents.Count == 0)

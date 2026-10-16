@@ -1,0 +1,29 @@
+.twe-ask-screenshot {
+  display: flex;
+  align-items: center;
+  gap: var(--twe-space-2);
+  max-width: 100%;
+  padding: calc(var(--twe-space-2) / 2) var(--twe-space-2);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+}
+
+.twe-ask-screenshot__thumb {
+  flex: none;
+  width: 4rem;
+  height: 3rem;
+  object-fit: cover;
+  object-position: top left;
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+}
+
+.twe-ask-screenshot__caption {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--twe-ink-2);
+}

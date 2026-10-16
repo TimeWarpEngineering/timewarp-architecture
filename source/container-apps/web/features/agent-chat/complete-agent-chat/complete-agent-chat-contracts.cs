@@ -9,6 +9,10 @@
 // not a valid model reply; the handler turns that into a problem.
 // Limits are the anti-proxy budget: message count, per-field lengths, and a summed character cap.
 // Roles are the four chat roles. A tool turn must name the call it answers.
+// Images (task 303-001) ride only on user turns: the Ask screenshot the person attached, or the
+// picture a capture tool returned, which the browser sends on a user turn after the tool turns.
+// They have their own caps (MaxImagesPerRequest, MaxImageDataLength, ImageMediaTypes) and are not
+// counted in MaxRequestCharacters. Data is base64 without a data: prefix.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -33,6 +37,10 @@ public static partial class CompleteAgentChat
   public const int MaxRequestCharacters = 256_000;
   public const int MaxConcurrentPerPrincipal = 2;
   public const int MaxRequestsPerMinute = 30;
+  public const int MaxImagesPerRequest = 2;
+  public const int MaxImageDataLength = 7_000_000;
+
+  public static readonly IReadOnlyList<string> ImageMediaTypes = ["image/png", "image/jpeg"];
 
   [ApiRoute("api/agent-chat/completions", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
@@ -55,6 +63,15 @@ public static partial class CompleteAgentChat
     public string? ToolResult { get; set; }
 
     public List<ToolCall> ToolCalls { get; set; } = [];
+
+    public List<TurnImage> Images { get; set; } = [];
+  }
+
+  public sealed class TurnImage
+  {
+    public string MediaType { get; set; } = null!;
+
+    public string Data { get; set; } = null!;
   }
 
   public sealed class ToolCall
@@ -128,6 +145,21 @@ public static partial class CompleteAgentChat
         turn.RuleFor(item => item)
           .Must(item => item.Role != "tool" || !string.IsNullOrWhiteSpace(item.ToolCallId))
           .WithMessage("A tool turn needs ToolCallId.");
+        turn.RuleFor(item => item)
+          .Must(item => item.Images is not { Count: > 0 } || item.Role == "user")
+          .WithMessage("Only a user turn can carry images.");
+        turn.RuleForEach(item => item.Images).ChildRules(image =>
+        {
+          image.RuleFor(item => item.MediaType)
+            .Must(mediaType => mediaType is not null && ImageMediaTypes.Contains(mediaType))
+            .WithMessage("An image must be image/png or image/jpeg.");
+          image.RuleFor(item => item.Data)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .MaximumLength(MaxImageDataLength)
+            .Must(IsBase64)
+            .WithMessage("Image data must be base64.");
+        });
         turn.RuleForEach(item => item.ToolCalls).ChildRules(call =>
         {
           call.RuleFor(item => item.Name).NotEmpty().MaximumLength(MaxToolNameLength);
@@ -136,14 +168,21 @@ public static partial class CompleteAgentChat
         });
       });
 
+      RuleFor(command => command.Messages)
+        .Must(messages => messages is null || messages.Sum(turn => turn.Images?.Count ?? 0) <= MaxImagesPerRequest)
+        .WithMessage($"A request can carry at most {MaxImagesPerRequest} images.");
+
       RuleFor(command => command)
         .Must(FitsBudget)
         .WithMessage($"The request exceeds {MaxRequestCharacters} characters.");
     }
 
+    private static bool IsBase64(string data) =>
+      data.Length % 4 == 0 && Convert.TryFromBase64String(data, new byte[data.Length / 4 * 3], out _);
+
     private static bool IsEmpty(Turn turn)
     {
-      bool hasText = !string.IsNullOrWhiteSpace(turn.Text);
+      bool hasText = !string.IsNullOrWhiteSpace(turn.Text) || turn.Images is { Count: > 0 };
       bool hasCalls = turn.ToolCalls is { Count: > 0 };
       bool hasResult = !string.IsNullOrWhiteSpace(turn.ToolResult) || !string.IsNullOrWhiteSpace(turn.ToolCallId);
       return !hasText && !hasCalls && !hasResult;
