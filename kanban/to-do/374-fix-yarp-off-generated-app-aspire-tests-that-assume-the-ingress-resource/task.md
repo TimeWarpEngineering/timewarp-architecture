@@ -116,3 +116,25 @@ Expect: `dev build` 0 warnings / 0 errors; template-smoke prints `OK` for all si
 each aspire-tests run ends `Test run summary: Passed!` (Default 57, NoYarp 46, NoApi 56, NoGrpc
 57, NoPostgres 54, NoWeb 42); `dev test` reports 23 of 23 projects passed; audit reports
 "Repository passes all audit checks." Docker must be running for the aspire-tests runs.
+
+### Review disposition
+
+- Rounds: 1. Effort 1, roster `general` (review oracle, claude-opus-5-5).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the Design and SetupOnce comments describe the
+  all-flags gate sequence. It is not fixed because the Task 374 Design paragraph already documents
+  which gates each flag guards.
+- Reviewer checked the generated SmokeNoYarp, NoApi, and NoPostgres output and re-ran
+  `ganda repo audit` (pass).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
+## Learnings
+
+- The goal restatement matches the task, so there was no misread. The api/postgres guards were
+  scope found by running every variant's aspire-tests, and Results records them.
+
+## Session
+
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T05:56:12Z
+- Review oracle: claude-opus-5-5, effort 1, round 1, accepted-exceptions — 2026-10-16
