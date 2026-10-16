@@ -48,13 +48,71 @@ coverage; decision recorded; `dev build` 0/0; `dev test` and `dev template-smoke
 
 ## Checklist
 
-- [ ] Generated `--yarp false` app: aspire-tests green
-- [ ] Generated default app: aspire-tests unchanged and green
-- [ ] Decide and record whether template-smoke runs aspire-tests
-- [ ] `dev build` 0/0, `dev test` green, `dev template-smoke` green
-- [ ] `ganda repo audit` clean
+- [x] Generated `--yarp false` app: aspire-tests green
+- [x] Generated default app: aspire-tests unchanged and green
+- [x] Decide and record whether template-smoke runs aspire-tests
+- [x] `dev build` 0/0, `dev test` green, `dev template-smoke` green
+- [x] `ganda repo audit` clean
 
 ## Notes
 
 Reproduce: run `dev template-smoke`, then `dotnet test -c Release` in
 `artifacts/template-smoke/work/SmokeNoYarp/tests/container-apps/aspire/aspire-tests`.
+
+## Results
+
+Generated aspire-tests now pass in every template-smoke variant. Running each variant's suite
+turned up the same bug for two more flags, so the fix covers `api` and `postgres` as well as
+`yarp`.
+
+| Variant | Before | After |
+|---------|--------|-------|
+| SmokeDefault | 57/57 | 57/57 |
+| SmokeNoYarp | 44/57 (13 failed) | 46/46 |
+| SmokeNoApi | 46/57 (11 failed) | 56/56 |
+| SmokeNoPostgres | 43/54 (11 failed, SetupOnce timed out after 4 min) | 54/54 |
+| SmokeNoGrpc | 57/57 | 57/57 |
+| SmokeNoWeb | 42/42 | 42/42 |
+
+Changes (all in `tests/container-apps/aspire/aspire-tests/`):
+- `ingress-smoke-tests.cs`: the `ingress` health gate, the ingress reachability poll, and every
+  through-ingress fact compile only under `#if yarp`. `FirstRunOnEmptyDatabase_...` and
+  `StateDevTools_...` stay outside the guard, so they still run with yarp off and web on (moved
+  `StateDevTools_...` above the guarded block). The `api-server` gate and
+  `ApiRouteThroughIngress_...` are under `#if api`. The `web-migrations` terminal-state gate is
+  under `#if postgres`; without postgres there is no such resource and `WaitForResourceAsync`
+  waits until the 4-minute budget cancels.
+- `closed-box-app-host-guard-tests.cs`: the two ingress model facts and `DevRunIngressPorts` are
+  under `#if yarp` (the field also has to be guarded, or the yarp-off build fails CA1823).
+- `aspire-tests.csproj`: `DefineConstants` adds `api;postgres;yarp` (TWA0010).
+- Guards put the blank line inside the `#if`, so no flag combination leaves a double blank line
+  (IDE2000 broke the first SmokeNoYarp build).
+
+### Decision: template-smoke does not run aspire-tests (yet)
+
+Measured cost, run in sequence on this machine against the generated apps: Default 60s, NoYarp
+57s, NoApi 59s, NoGrpc 59s, NoPostgres 24s, NoWeb 10s, so about 4.5 minutes extra for the full
+matrix. Every suite except NoWeb also needs Docker (Postgres container plus DCP). Today
+`dev template-smoke` needs only the SDK.
+
+Decision: do not add aspire-tests to `dev template-smoke` in this task. The CI policy is "default
+variant per PR, flag-off matrix nightly", and the bugs found here only show up in flag-off
+variants, so the default-only per-PR run would not have caught them. These suites belong in the
+nightly flag-off matrix job, not in the per-PR smoke. Open for Steve: wire that job (or an opt-in
+`dev template-smoke --aspire-tests` switch for local runs) as a follow-up task.
+
+### How to validate
+
+Smoke:
+```bash
+dev build && dev template-smoke
+for v in SmokeDefault SmokeNoYarp SmokeNoApi SmokeNoGrpc SmokeNoPostgres SmokeNoWeb; do
+  (cd artifacts/template-smoke/work/$v/tests/container-apps/aspire/aspire-tests && dotnet test -c Release)
+done
+dev test && ganda repo audit
+```
+
+Expect: `dev build` 0 warnings / 0 errors; template-smoke prints `OK` for all six variants;
+each aspire-tests run ends `Test run summary: Passed!` (Default 57, NoYarp 46, NoApi 56, NoGrpc
+57, NoPostgres 54, NoWeb 42); `dev test` reports 23 of 23 projects passed; audit reports
+"Repository passes all audit checks." Docker must be running for the aspire-tests runs.
