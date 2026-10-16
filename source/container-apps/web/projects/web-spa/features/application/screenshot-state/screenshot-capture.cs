@@ -5,7 +5,9 @@
 #region Design
 // Immutable. ImageSource (a data: URI for an img src) is built once, because every thumbnail
 // render reads it. Path is the normalized route the capture was taken on (PageAgentRoute), so
-// "the page behind" Feedback and page_context.screenshot can tell which page it shows. Selector is null for the page body.
+// "the page behind" Feedback and page_context.screenshot can tell which page it shows.
+// The constructor does not throw on null: the generated state cloner (StateTransactionBehavior)
+// calls it with default arguments and then copies every field from the source. Selector is null for the page body.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -25,8 +27,6 @@ public sealed class ScreenshotCapture
     DateTimeOffset capturedAt
   )
   {
-    ArgumentNullException.ThrowIfNull(png);
-    ArgumentNullException.ThrowIfNull(path);
     Id = id;
     Png = png;
     Width = width;
@@ -35,7 +35,7 @@ public sealed class ScreenshotCapture
     Selector = selector;
     Masked = masked;
     CapturedAt = capturedAt;
-    ImageSource = $"data:{ScreenshotState.ContentType};base64,{Convert.ToBase64String(png)}";
+    ImageSource = png is null ? "" : $"data:{ScreenshotState.ContentType};base64,{Convert.ToBase64String(png)}";
   }
 
   public int Id { get; }
