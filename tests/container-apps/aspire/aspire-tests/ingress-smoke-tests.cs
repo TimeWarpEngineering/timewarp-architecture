@@ -23,6 +23,8 @@
 // instance id, known only from the first resource notification; the backlog replays to a late
 // watcher) so a fact can assert that first boot logged no Error.
 // Suite-shaped under tests/ per hybrid topology policy — not co-located under features/.
+// Web-only: every fact targets Web.Server and WebServerApiRoutePrefixes is generated only with
+// web on, so .template.config excludes this whole file under --web false (task 373).
 #endregion
 
 namespace Aspire.Tests;

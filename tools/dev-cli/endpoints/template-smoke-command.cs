@@ -4,8 +4,9 @@
 #region Design
 // Regression gate for task 115: template sourceName is TimeWarp.Architecture, so package-id
 // literals TimeWarp.Architecture.* used to rewrite to SmokeDefault.* and break restore. Smoke
-// always generates with names ≠ sourceName (SmokeDefault, SmokeNoPostgres, SmokeNoApi) so rewrite bugs
-// surface. Matrix: defaults + --postgres false.
+// always generates with names ≠ sourceName (SmokeDefault, SmokeNoPostgres, …) so rewrite bugs
+// surface. Matrix: defaults plus each flag off on its own (task 373 added web, grpc and yarp —
+// a flag nobody generates off is a flag whose off output nobody builds).
 //
 // Shared rewrite asserts, props SSOT suffix derivation, pin matching, and generate/restore/build
 // skeleton live in TemplateSmokeHarness (task 131-003 / F-007). This command owns smoke-only
@@ -35,11 +36,13 @@
 // Task 288: every matrix entry asserts the AppHost's committed deploy parameters carry the app's
 // kebab name, and a generate-only Contoso.Shop proves the dotted-name → contoso-shop derivation
 // without paying for another restore/build.
+// Task 373: the web family's mock-auth surfaces exist only with web on, so a web-off entry skips
+// AssertMockAuthFailClosedSurfaces.
 #endregion
 
 namespace DevCli.Commands;
 
-[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build generated apps (defaults + --postgres false)")]
+[NuruRoute("template-smoke", Description = "Pack/install template and smoke-build generated apps (defaults + each flag off)")]
 internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 {
   private const string TemplateProject =
@@ -83,6 +86,9 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     ("SmokeDefault", [], []),
     ("SmokeNoPostgres", ["--postgres", "false"], []),
     ("SmokeNoApi", ["--api", "false"], ["api"]),
+    ("SmokeNoWeb", ["--web", "false"], ["web"]),
+    ("SmokeNoGrpc", ["--grpc", "false"], []),
+    ("SmokeNoYarp", ["--yarp", "false"], []),
   ];
 
   // Task 288: generate-only (no build) — a dotted name must reach the AppHost deploy parameters as a
@@ -391,7 +397,7 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
 
           // Task 145-009: Production appsettings must not enable mock auth; mock registration
           // type must exist so fail-closed is a product surface, not a missing feature.
-          if (!AssertMockAuthFailClosedSurfaces(name, outputDir))
+          if (!excludedFamilies.Contains("web") && !AssertMockAuthFailClosedSurfaces(name, outputDir))
             return Task.FromResult(false);
 
           // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —

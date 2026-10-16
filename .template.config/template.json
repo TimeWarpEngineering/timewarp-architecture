@@ -71,6 +71,7 @@
             "tests/common/timewarp-testing-tests/**",
             "tests/container-apps/web/**",
             "tests/container-apps/yarp/**",
+            "tests/container-apps/aspire/aspire-tests/ingress-smoke-tests.cs",
             "tests/container-apps/aspire/aspire-tests/postgres-volume-model-tests.cs"
           ]
         },
