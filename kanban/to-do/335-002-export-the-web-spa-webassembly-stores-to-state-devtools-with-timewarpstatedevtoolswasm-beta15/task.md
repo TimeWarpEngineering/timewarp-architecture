@@ -242,6 +242,10 @@ Expect:
 - Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/disposition.md`.
 
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Workers must not start the maintainer's AppHost (`dev run`); the maintainer opens the inspector after merge.
@@ -252,3 +256,4 @@ Expect:
 - Created: 2026-10-16 (cockpit follow-up to 335-001; unblocked by timewarp-state 121 / v12.0.0-beta.15)
 - 2026-10-16 implement (ganda task work): wiring, ingress CORS, Playwright proof (Debug live / Release absent), publish facts, docs; gates above.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-16T14:18:55Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-16T14:22:08Z
