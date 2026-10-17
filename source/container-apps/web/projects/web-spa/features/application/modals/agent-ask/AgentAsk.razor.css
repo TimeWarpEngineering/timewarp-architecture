@@ -469,3 +469,26 @@
   border-radius: 50%;
   background: var(--twe-assistant-avatar, linear-gradient(135deg, var(--twe-purple-2), var(--twe-blue))) center / cover no-repeat;
 }
+
+/* Assistant replies render through SafeMarkdown (task 380). The library's pre-wrap on the content
+   would keep the source newlines between blocks, so the markdown root uses normal white space;
+   code blocks keep theirs through <pre>. Block spacing matches the library's rich text. */
+.twe-agent-ask ::deep .sc-ai-message__content > .safe-markdown {
+  white-space: normal;
+}
+
+.twe-agent-ask ::deep .safe-markdown > :is(p, ul, ol, blockquote, pre, h3, h4, h5, h6) {
+  margin-block: 0 0.75em;
+}
+
+.twe-agent-ask ::deep .safe-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.twe-agent-ask ::deep .safe-markdown :is(ul, ol) {
+  padding-inline-start: 1.25em;
+}
+
+.twe-agent-ask ::deep .safe-markdown li > p {
+  margin: 0;
+}

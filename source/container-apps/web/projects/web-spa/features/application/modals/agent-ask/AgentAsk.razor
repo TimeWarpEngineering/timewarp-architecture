@@ -97,6 +97,23 @@
   AskScreenshotChip shows it as a removable thumbnail above the composer. The
   agent's client chain is AskTagChatClient over AskScreenshotChatClient over the tool-invoking
   client, so the next message carries the picture as image content and MarkAskSent clears it.
+  Replies (task 380): a BlockRenderer for RichContentBlock keeps the library's message bubble
+  markup and renders an assistant block's RawText through SafeMarkdown (CommonMark soft breaks,
+  no images, http(s) links in a new tab). A user block (Role is User) stays plain text. The
+  library re-renders the list on every streamed fragment, so the reply re-parses as it grows.
+  An app-relative link dispatches RouteState.ChangeRoute (TWA0026) and leaves the panel open.
+  Focus (task 381): MessageInput has no focus API, so focus goes through ask-ai.ts on the library
+  textarea. OpenAskPanel raises AgentSurfaceState.ComposerFocusPending on every open path. The
+  first render keeps the opener (CaptureOpener, which also claims the palette's focus return, so
+  the Ctrl-K row's palette close never lands on top of the composer). The request is consumed in
+  OnAfterRenderAsync once a render drew the built agent: the composer takes focus and the request
+  clears. Signed out, not configured and error have no composer, so the request is dropped there
+  and a later build does not pull focus. A navigation remount sees no request and does not
+  refocus; an edit-mode or route rebuild does not either. While an approval card waits
+  (AwaitingInput) nothing moves focus; the request waits for the turn to settle. A send (the
+  conversation going Streaming) and the expand toggle each ask for the soft form once the turn is
+  idle: the composer takes focus only if focus is in the panel or on nothing. Disposing a closed
+  panel returns focus to the opener, or to the page main region when the opener is gone.
 *@
 
 @code {
@@ -164,6 +181,11 @@
     await base.OnAfterRenderAsync(firstRender);
     if (firstRender)
     {
+      if (AgentSurfaceState.ComposerFocusPending)
+      {
+        await CaptureOpenerAsync();
+      }
+
       await AgentSurfaceState.LoadPrivacyNoticeDismissal();
     }
 
@@ -177,7 +199,57 @@
     {
       StateHasChanged();
     }
+
+    await SettleComposerFocusAsync(previous);
   }
+
+  // The composer is on screen only when the render that just ran drew the agent that is still built.
+  private async Task SettleComposerFocusAsync(Ai.UIAgent? rendered)
+  {
+    bool composerShown = rendered is not null && ReferenceEquals(rendered, Agent) && Conversation is not null;
+    if (AgentSurfaceState.ComposerFocusPending)
+    {
+      if (Readiness is CatalogAgentReadiness.NotConfigured or CatalogAgentReadiness.Unauthenticated or CatalogAgentReadiness.Error)
+      {
+        await AgentSurfaceState.ClearComposerFocus();
+        return;
+      }
+
+      if (!composerShown || Conversation?.Status == Ai.ConversationStatus.AwaitingInput)
+      {
+        return;
+      }
+
+      SendFocusPending = false;
+      ExpandFocusPending = false;
+      await FocusComposerOnOpenAsync();
+      await AgentSurfaceState.ClearComposerFocus();
+      return;
+    }
+
+    if (composerShown && !TurnInProgress && (SendFocusPending || ExpandFocusPending))
+    {
+      SendFocusPending = false;
+      ExpandFocusPending = false;
+      await FocusComposerInPanelAsync();
+    }
+  }
+
+  // Set when a turn starts streaming and when expand toggles; consumed once the turn is idle.
+  private bool SendFocusPending;
+  private bool ExpandFocusPending;
+
+  [DirectComponentSideEffect("Keeps the element focused when the panel opened, to hand focus back on close; focus is DOM state.")]
+  private Task CaptureOpenerAsync() => AskAiJsModule.CaptureOpenerAsync(JsRuntime);
+
+  [DirectComponentSideEffect("Focuses the library composer textarea on open; MessageInput has no focus API and focus is DOM state.")]
+  private Task FocusComposerOnOpenAsync() => AskAiJsModule.FocusComposerOnOpenAsync(JsRuntime);
+
+  [DirectComponentSideEffect("Returns focus to the library composer after a send or expand when focus is still in the panel; focus is DOM state.")]
+  private Task FocusComposerInPanelAsync() => AskAiJsModule.FocusComposerInPanelAsync(JsRuntime);
+
+  [DirectComponentSideEffect("Returns focus to the panel's opener when the closed panel goes away; focus is DOM state.")]
+  private void RestoreOpener() => _ = AskAiJsModule.RestoreOpenerAsync(JsRuntime);
 
   private string CurrentPath() => PageAgentRoute.PathOr(NavigationManager);
 
@@ -391,6 +463,10 @@
     }
   }
 
+  private static bool IsUserTurn(Ai.RichContentBlock block) => block.Role == Microsoft.Extensions.AI.ChatRole.User;
+
+  private async Task OpenAppLinkAsync(string url) => await NoSubRouteState.ChangeRoute(newRoute: url);
+
   private async Task SignInAsync()
   {
     string returnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
@@ -402,6 +478,11 @@
 
   private void OnStatusChanged(Ai.ConversationStatus status)
   {
+    if (!Disposed && status == Ai.ConversationStatus.Streaming)
+    {
+      SendFocusPending = true;
+    }
+
     if (!Disposed && status is Ai.ConversationStatus.Idle or Ai.ConversationStatus.Error)
     {
       // A rebuild may have been deferred while the turn ran.
@@ -478,7 +559,11 @@
     await AgentSurfaceState.CloseAskPanel();
   }
 
-  private Task ExpandAsync() => AgentSurfaceState.ToggleAskExpand();
+  private Task ExpandAsync()
+  {
+    ExpandFocusPending = true;
+    return AgentSurfaceState.ToggleAskExpand();
+  }
 
   private Task NewConversationAsync()
   {
@@ -511,6 +596,11 @@
     }
 
     ReleaseAgent();
+    if (!AgentSurfaceState.IsPanelOpen)
+    {
+      RestoreOpener();
+    }
+
     base.Dispose();
   }
 }
@@ -613,6 +703,22 @@
           <Microsoft.AspNetCore.Components.AI.MessageList>
             <ChildContent>
               <AskStatusLine />
+              <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.RichContentBlock" Context="text">
+                <div class="sc-ai-message sc-ai-message--@(IsUserTurn(text) ? "user" : "assistant")">
+                  <div class="sc-ai-message__bubble">
+                    <div class="@(text.LifecycleState == Ai.BlockLifecycleState.Active ? "sc-ai-message__content sc-ai-message__content--streaming" : "sc-ai-message__content")">
+                      @if (IsUserTurn(text))
+                      {
+                        @text.RawText
+                      }
+                      else
+                      {
+                        <SafeMarkdown Markdown="@text.RawText" DataQa="AskReplyMarkdown" OnAppLinkClick="OpenAppLinkAsync" ExternalLinksInNewTab="true" SoftBreaksAsSpaces="true" />
+                      }
+                    </div>
+                  </div>
+                </div>
+              </Microsoft.AspNetCore.Components.AI.BlockRenderer>
               <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionInvocationContentBlock" Context="call">
                 <details class="twe-agent-ask__reasoning" data-qa="AskReasoning">
                   <summary>See reasoning</summary>
