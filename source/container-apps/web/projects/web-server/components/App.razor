@@ -54,6 +54,8 @@
    Fluent components are purple from the first script tick, not blue until MainLayout went
    interactive. data-theme="light" keeps the light mode the app always used. *@
 <body data-theme-color="@MainLayout.BrandColor" data-theme="light">
+@* Page-load navigate: parser-blocking classic script before Routes and blazor.web.js. *@
+<WebMcpPageLoad />
 <Routes @rendermode=RenderMode />
 @* <div id="app">@(await Html.RenderComponentAsync<App>(RenderMode.Server))</div> *@
 <div id="blazor-error-ui">

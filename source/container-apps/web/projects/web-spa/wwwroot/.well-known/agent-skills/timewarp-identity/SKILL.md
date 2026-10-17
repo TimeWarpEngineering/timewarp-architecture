@@ -10,6 +10,7 @@ Algorithm: **ECDSA P-256** (ES256). Public key wire format: base64url **SPKI DER
 Signatures: **DER** (RFC 3279), not P1363. Key id = SHA-256(SPKI).
 
 Full auth story: [/auth.md](/auth.md). Discovery index: [/llms.txt](/llms.txt).
+Browser WebMCP tools are a separate transport from the MCP card: [/llms.txt](/llms.txt) and [/.well-known/webmcp.json](/.well-known/webmcp.json).
 
 ## Ceremony (no browser)
 

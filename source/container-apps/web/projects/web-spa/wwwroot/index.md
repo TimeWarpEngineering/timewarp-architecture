@@ -38,6 +38,7 @@ negotiation). Discovery index: [/llms.txt](/llms.txt). Auth story: [/auth.md](/a
 | x402 tip discovery alias | [/api](/api) |
 | Metered capability (agent + pay) | [/api/demo/metered-capability](/api/demo/metered-capability) |
 | MCP Server Card | [/.well-known/mcp/server-card.json](/.well-known/mcp/server-card.json) |
+| WebMCP (browser tools, not the MCP card) | [/.well-known/webmcp.json](/.well-known/webmcp.json) |
 | Agent Skills index | [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json) |
 | A2A Agent Card | [/.well-known/agent-card.json](/.well-known/agent-card.json) |
 

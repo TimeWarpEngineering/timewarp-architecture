@@ -117,6 +117,18 @@ curl -sS https://<host>/auth.md
 
 Browser requests (Accept: text/html) are unchanged — Blazor SPA hosting is not affected.
 
+## WebMCP (browser)
+
+Backend MCP (`/mcp`, card [`/.well-known/mcp/server-card.json`](/.well-known/mcp/server-card.json)) and frontend WebMCP are separate transports. The card stays honest: `capabilities.tools` is false, `tools` is empty, and `status` is `stub`. Do not call `/mcp` expecting `tools/list`.
+
+WebMCP registers tools in the browser through `document.modelContext.registerTool` (fallback `navigator.modelContext`). The generated document is [`/.well-known/webmcp.json`](/.well-known/webmcp.json), built from the page registry. `/` registers `navigate` during HTML parse (the site-wide page goto; the person approves first). `site_map` and `page_context` join it once the page is interactive. Route-scoped tools run only on the matching SPA route: `/Feedback` adds the feedback actions, and `/Settings` adds credential actions such as `Credentials.AddPasskey`. A call from any other route returns a navigate offer and does not run.
+
+Inspector steps: in the page, `typeof navigator.modelContext`. Use Chrome Canary with the flag `#enable-webmcp-testing`, or the MCP-B polyfill. In the inspector, Copy trace.
+
+```bash
+curl -sS https://<host>/.well-known/webmcp.json
+```
+
 ## Planned agent surfaces (not yet shipped)
 
 - Live streamable-HTTP MCP tools endpoint (card exists as stub until then)

@@ -20,7 +20,10 @@
 // XPage.GetPageUrl/Title/NavIcon/Policy read may appear, so page knowledge stays on [Page] and
 // the generated registry. The registry itself is checked for strictly increasing NavOrder, for
 // each NavGroup being one contiguous run (else NavMenu draws the category twice), and for
-// AgentActions that name catalog actions.
+// AgentActions that name catalog actions. The discovery document publishes a route row only for
+// actions whose visibility includes Agent, under the catalog name. WebMCP sections of llms.txt,
+// auth.md, and the discovery skill may cite a catalog tool, a short tool id, or a Pascal route
+// only when that name is in the document. Backtick words tools, status, and stub are prose.
 #endregion
 
 namespace NavigationDestinations_;
@@ -53,6 +56,8 @@ public partial class Destinations_Should_
   ];
 
   private static readonly string[] Developer = [PermissionIds.DeveloperAccess, PermissionIds.DeveloperClaimsRead];
+
+  private static readonly HashSet<string> ProseBackticks = ["tools", "status", "stub"];
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Destinations_Should_>();
@@ -113,7 +118,7 @@ public partial class Destinations_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Order_The_Registry_By_NavOrder_And_Name_Catalog_Actions()
+  public static async Task Order_The_Registry_By_NavOrder_And_Name_Catalog_Actions()
   {
     int previous = int.MinValue;
     foreach (PageRegistryEntry entry in PageRegistry.All)
@@ -141,13 +146,32 @@ public partial class Destinations_Should_
 
     using DestinationSpa spa = new(null);
     IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = spa.ServiceProvider.GetRequiredService<IAuthorizationService>();
     PageRegistry.ActionScopes.ShouldNotBeEmpty();
+    List<(string Route, string[] Tools)> expectedRoutes = [];
     foreach (PageActionScope scope in PageRegistry.ActionScopes)
     {
       scope.RouteTemplates.ShouldNotBeEmpty(scope.PageType.Name);
+      List<string> tools = [];
       foreach (Type action in scope.ActionTypes)
       {
-        catalog.Entries.ShouldContain(entry => entry.ActionType == action, $"{scope.PageType.Name} {action.FullName}");
+        ActionCatalogEntry entry = catalog.Entries.Single(candidate => candidate.ActionType == action);
+        WebMcpDiscoveryCatalog.CatalogName(action).ShouldBe(entry.Name, action.FullName);
+        if (entry.Visibility.HasFlag(ActionVisibility.Agent))
+        {
+          tools.Add(entry.Name);
+        }
+      }
+
+      if (tools.Count == 0)
+      {
+        continue;
+      }
+
+      string[] published = [.. tools];
+      foreach (string routeTemplate in scope.RouteTemplates)
+      {
+        expectedRoutes.Add((routeTemplate, published));
       }
     }
 
@@ -156,7 +180,136 @@ public partial class Destinations_Should_
     PageAgentScope.ActionTypesFor($"/Feedback/{Guid.NewGuid():D}").ShouldNotBeEmpty();
     PageAgentScope.ActionTypesFor("/Feedback/not-a-guid").ShouldBeEmpty();
     PageAgentScope.ActionTypesFor("/FeedbackExtra").ShouldBeEmpty();
-    return Task.CompletedTask;
+
+    string json = await WebMcpDiscoveryCatalog.DocumentJsonAsync(spa.User, authorization, catalog.Entries, "/");
+    JsonNode document = JsonNode.Parse(json).ShouldNotBeNull();
+    document["transport"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Transport);
+    document["backendMcp"]!["capabilitiesTools"]!.GetValue<bool>().ShouldBeFalse();
+    document["pageLoadTool"]!.GetValue<string>().ShouldBe(AgentNavigate.ToolName);
+    string[] everyPage = [.. document["everyPageTools"]!.AsArray().Select(static node => node!.GetValue<string>())];
+    everyPage.ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    document["inspector"]!["featureDetect"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.FeatureDetect);
+    document["inspector"]!["polyfill"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Polyfill);
+    document["inspector"]!["trace"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Trace);
+
+    JsonArray routes = document["routeScopedTools"]!.AsArray();
+    routes.Count.ShouldBe(expectedRoutes.Count);
+    for (int index = 0; index < expectedRoutes.Count; index++)
+    {
+      routes[index]!["routeTemplate"]!.GetValue<string>().ShouldBe(expectedRoutes[index].Route);
+      string[] documented = [.. routes[index]!["tools"]!.AsArray().Select(static node => node!.GetValue<string>())];
+      documented.ShouldBe(expectedRoutes[index].Tools, expectedRoutes[index].Route);
+    }
+
+    string[] publishedTools =
+    [
+      .. routes.SelectMany(static node => node!["tools"]!.AsArray().Select(static tool => tool!.GetValue<string>()))
+    ];
+    publishedTools.ShouldContain("Credentials.AddPasskey");
+    publishedTools.ShouldNotContain("Credentials.AddExistingPasskey");
+    publishedTools.ShouldNotContain("Credentials.LinkMicrosoft365");
+
+    IReadOnlyList<AgentSiteMap.Destination> destinations =
+      await AgentSiteMap.DestinationsAsync(spa.User, authorization, "/");
+    string[] documentedDestinations =
+      [.. document["anonymousDestinations"]!.AsArray().Select(static node => node!["url"]!.GetValue<string>())];
+    documentedDestinations.ShouldBe(destinations.Select(static destination => destination.Route).ToArray());
+
+    string pageLoad = await WebMcpDiscoveryCatalog.PageLoadJsonAsync(spa.User, authorization, "/");
+    JsonNode load = JsonNode.Parse(pageLoad).ShouldNotBeNull();
+    load["name"]!.GetValue<string>().ShouldBe(AgentNavigate.ToolName);
+    load["requiresApproval"]!.GetValue<bool>().ShouldBeTrue();
+    load["refusal"]!.GetValue<string>().ShouldBe(AgentNavigate.Refusal);
+    string[] enumerated = [.. load["inputSchema"]!["properties"]!["url"]!["enum"]!.AsArray().Select(static node => node!.GetValue<string>())];
+    enumerated.ShouldBe(documentedDestinations);
+  }
+
+  public static async Task WebMcp_Sections_Should_Cite_Only_Published_Tools_And_Routes()
+  {
+    using DestinationSpa spa = new(null);
+    IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = spa.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    string json = await WebMcpDiscoveryCatalog.DocumentJsonAsync(spa.User, authorization, catalog.Entries, "/");
+    JsonNode document = JsonNode.Parse(json).ShouldNotBeNull();
+    HashSet<string> tools = [document["pageLoadTool"]!.GetValue<string>()];
+    foreach (JsonNode? node in document["everyPageTools"]!.AsArray())
+    {
+      tools.Add(node!.GetValue<string>());
+    }
+
+    HashSet<string> routes = [];
+    foreach (JsonNode? node in document["routeScopedTools"]!.AsArray())
+    {
+      routes.Add(node!["routeTemplate"]!.GetValue<string>());
+      foreach (JsonNode? tool in node["tools"]!.AsArray())
+      {
+        tools.Add(tool!.GetValue<string>());
+      }
+    }
+
+    string[] markdownFiles =
+    [
+      RepoFile("source", "container-apps", "web", "projects", "web-spa", "wwwroot", "llms.txt"),
+      RepoFile("source", "container-apps", "web", "projects", "web-spa", "wwwroot", "auth.md"),
+      RepoFile
+      (
+        "source",
+        "container-apps",
+        "web",
+        "projects",
+        "web-spa",
+        "wwwroot",
+        ".well-known",
+        "agent-skills",
+        "timewarp-architecture-discovery",
+        "SKILL.md"
+      ),
+    ];
+
+    foreach (string markdownFile in markdownFiles)
+    {
+      string section = WebMcpSection(File.ReadAllText(markdownFile));
+      int citations = 0;
+      foreach (Match match in CatalogToolCitation().Matches(section))
+      {
+        citations++;
+        tools.ShouldContain(match.Groups[1].Value, markdownFile);
+      }
+
+      foreach (Match match in ShortToolCitation().Matches(section))
+      {
+        string name = match.Groups[1].Value;
+        if (ProseBackticks.Contains(name))
+        {
+          continue;
+        }
+
+        citations++;
+        tools.ShouldContain(name, markdownFile);
+      }
+
+      foreach (Match match in PascalRouteCitation().Matches(section))
+      {
+        citations++;
+        string cited = match.Groups[1].Value;
+        routes.Any
+        (
+          template => template.Equals(cited, StringComparison.Ordinal)
+            || template.StartsWith(cited + "/", StringComparison.Ordinal)
+        ).ShouldBeTrue($"{markdownFile} names {cited}");
+      }
+
+      citations.ShouldBeGreaterThan(0, markdownFile);
+    }
+  }
+
+  private static string WebMcpSection(string markdown)
+  {
+    const string heading = "## WebMCP";
+    int start = markdown.IndexOf(heading, StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0);
+    int next = markdown.IndexOf("\n## ", start + heading.Length, StringComparison.Ordinal);
+    return next < 0 ? markdown[start..] : markdown[start..next];
   }
 
   private static async Task<string[]> AssertSameDestinationsAsync(string[]? permissions, string because)
@@ -272,6 +425,15 @@ public partial class Destinations_Should_
 
   [GeneratedRegex(@"\b[A-Z]\w*Page\.(GetPageUrl|Title|NavIcon|Policy)\b")]
   private static partial Regex PageMember();
+
+  [GeneratedRegex("`([A-Z][A-Za-z0-9]*\\.[A-Z][A-Za-z0-9]*)`")]
+  private static partial Regex CatalogToolCitation();
+
+  [GeneratedRegex("`([a-z][a-z0-9_]*)`")]
+  private static partial Regex ShortToolCitation();
+
+  [GeneratedRegex(@"(?<![\w./])(/[A-Z][A-Za-z0-9]*)\b")]
+  private static partial Regex PascalRouteCitation();
 
   /// <summary>In-proc SPA container for one principal (null = signed out).</summary>
   private sealed class DestinationSpa : ISpaTestApplication, IDisposable
