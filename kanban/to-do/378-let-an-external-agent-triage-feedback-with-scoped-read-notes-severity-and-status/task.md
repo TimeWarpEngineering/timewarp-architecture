@@ -137,6 +137,8 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 
 - Created: 248635 (2026-10-16)
 - Implementation (2026-10-17): scoped pull triage. Four `feedback.*` permissions (not `admin.*`) on the agent token and on Administrator only. Severity is the review marker, default `Unset`, filer-invisible, and independent of status. Migration `20261017135945_AddFeedbackSeverity` adds the columns and the Administrator role grants. The explicit `Microsoft.Extensions.Options` package directive was removed from `permission-evaluator-tests.cs` because NU1510 treats it as already available through the project reference.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T14:12:40Z
+- Review oracle round 1 (2026-10-17): claude (claude-opus-5-5), session not reported. Effort 3, roster general. Found 1 bug (M1) and 2 suggestions (M2, M3), all open. A fix pass is requested. See `review/round-1/merged.md`.
 
 ## Results
 
@@ -145,6 +147,15 @@ An agent principal triages by listing `Severity=Unset`, appending an internal no
 `ganda repo audit`: 32 passed, 0 failed. Release builds of the SPA, server, and infrastructure test projects compiled the product with 0 warnings.
 
 The admin list and detail were not clicked in a browser. `FeedbackAdminState` and the compiled Razor cover the filter and the set-severity action. `dev template-smoke` was not run; the in-repo build is the template source with every feature flag on, and the PR CI default smoke is the generation gate.
+
+### Review
+
+- Round 1 (effort 3, roster general). Counts: bug 1 open, suggestion 2 open, nit 0. Disposition: pending, because a fix pass was requested for M1, M2, and M3.
+- M1: the download handler and `FeedbackOwnerNames` check human-scheme grants for agent-token callers.
+- M2: no HTTP test drives a real agent bearer token.
+- M3: the SPA status and note gates still use `admin.feedback.manage`.
+- The reviewer re-ran the triage (41/41), attachment (21/21), and permission evaluator (19/19) runfiles. All passed.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
 
