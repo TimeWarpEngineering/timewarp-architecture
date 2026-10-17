@@ -47,16 +47,20 @@ One item at a time across the three repos:
 11. timewarp-architecture: roles slice, info analyzer, skill and docs; promote `TimeWarp.Contracts` to 1.0.0
 12. timewarp-nuru 508-005 decided from step 1 timing
 
+## Scope of this task
+
+This task is step 2 only. The info analyzer, `IQuery`/`ICommand` adoption, roles slice, skill
+update and the 1.0.0 promotion are step 11 and live in child **384-001** (backlog). Do not do
+them here.
+
 ## Checklist
 
-- [ ] Home decision recorded
+- [ ] Home decision recorded (recommendation: (b) now, extract to (a) later)
 - [ ] Package scaffold: `[Operation]`, `SharedProblemDetails` (moved, type-forwarded), catalog DTOs, `IResponseRenderer`
-- [ ] Derivation rules document
+- [ ] Derivation rules documented (package Design region / README, not `documentation/`)
 - [ ] Contracts generator reads `[Operation]`; endpoint metadata carries it
-- [ ] Info analyzer for hosted contracts missing `[Operation]`
-- [ ] Roles slice annotated as the living example; skill and docs updated
-- [ ] 1.0.0-beta.1 published for Nuru 508-001
-- [ ] Promoted to 1.0.0 once proven (see Versioning)
+- [ ] Package versioned 1.0.0-beta.1 and packable; `dev build` clean
+- [ ] 1.0.0-beta.1 released for Nuru 508-001 (release cut is a human gate after merge, `tw-release`)
 
 ## Notes
 
@@ -68,3 +72,4 @@ One item at a time across the three repos:
 
 - Created: 1624988 (2026-10-17)
 - Versioning and serial order recorded: 1479989 (2026-10-17)
+- Step-11 items split to child 384-001: 2022499 (2026-10-18)
