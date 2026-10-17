@@ -10,7 +10,8 @@
 // The owner-or-read check is the handler's. The route has no policy. Schemes are the human
 // sessions and the agent token, so an anonymous caller never reaches it. A read-only feedback
 // admin is not stopped by the filer's feedback.file.self permission (task 314). feedback.read
-// (task 378) is the agent's grant and also a human grant; admin.feedback.read stays accepted.
+// (task 378) is the agent's grant and also a human grant. admin.feedback.read stays accepted
+// on a human session. An agent token is not evaluated under the human schemes.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;

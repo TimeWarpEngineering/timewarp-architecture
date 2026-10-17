@@ -4,13 +4,17 @@
 
 #region Design
 // A missing id, another principal, and an admin asking for an unlinked draft are the same
-// 404. After Link, the item owner may read, and so may a principal with admin.feedback.read on
-// either human scheme or feedback.read on a human scheme or the agent-token scheme (tasks 314
-// and 378). admin.access alone opens the Admin area, not other people's files. An unlinked
-// draft stays owner-only. The stream is the blob object; the endpoint writes it with the safe
-// headers. A row whose bytes are gone (written
-// before task 352 while bytes were in memory) is a 404 "attachment no longer available" for
-// a caller who passed the access check; the row is left as it is.
+// 404. After Link, the item owner may read. A cross-owner read is evaluated only under the
+// scheme that authenticated this request (task 378 review M1). IAgentPermissionScopeSource
+// returns the token scopes when the caller is that agent principal, and null otherwise.
+// An agent-token caller is checked for feedback.read on the agent-token scheme only, so a
+// human role assigned to the same principal cannot supply admin.feedback.read. A human
+// session is checked for admin.feedback.read or feedback.read on the identity-session and
+// mock-identity-session schemes only. admin.access alone opens the Admin area, not other
+// people's files. An unlinked draft stays owner-only. The stream is the blob object; the
+// endpoint writes it with the safe headers. A row whose bytes are gone (written before
+// task 352 while bytes were in memory) is a 404 "attachment no longer available" for a
+// caller who passed the access check; the row is left as it is.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -26,17 +30,20 @@ public sealed class DownloadFeedbackAttachment
     private readonly IFeedbackAttachmentStore AttachmentStore;
     private readonly IFeedbackAttachmentBlobStore BlobStore;
     private readonly IPermissionEvaluator PermissionEvaluator;
+    private readonly IAgentPermissionScopeSource AgentPermissionScopeSource;
 
     public Handler(
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IFeedbackAttachmentStore attachmentStore,
       IFeedbackAttachmentBlobStore blobStore,
-      IPermissionEvaluator permissionEvaluator)
+      IPermissionEvaluator permissionEvaluator,
+      IAgentPermissionScopeSource agentPermissionScopeSource)
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       AttachmentStore = attachmentStore;
       BlobStore = blobStore;
       PermissionEvaluator = permissionEvaluator;
+      AgentPermissionScopeSource = agentPermissionScopeSource;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -85,33 +92,29 @@ public sealed class DownloadFeedbackAttachment
 
     private async Task<bool> HasCrossOwnerReadAsync(PrincipalId principalId, CancellationToken cancellationToken)
     {
-      if (await HasAsync(principalId, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminFeedbackRead, cancellationToken)
-        .ConfigureAwait(false))
+      if (AgentPermissionScopeSource.GetHeldScopesFor(principalId) is not null)
       {
-        return true;
+        return await HasAsync(
+          principalId,
+          AuthenticationSchemeNames.AgentToken,
+          PermissionIds.FeedbackRead,
+          cancellationToken).ConfigureAwait(false);
       }
 
-      if (await HasAsync(principalId, AuthenticationSchemeNames.MockIdentitySession, PermissionIds.AdminFeedbackRead, cancellationToken)
-        .ConfigureAwait(false))
-      {
-        return true;
-      }
-
-      if (await HasAsync(principalId, AuthenticationSchemeNames.IdentitySession, PermissionIds.FeedbackRead, cancellationToken)
-        .ConfigureAwait(false))
-      {
-        return true;
-      }
-
-      if (await HasAsync(principalId, AuthenticationSchemeNames.MockIdentitySession, PermissionIds.FeedbackRead, cancellationToken)
-        .ConfigureAwait(false))
-      {
-        return true;
-      }
-
-      return await HasAsync(principalId, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackRead, cancellationToken)
-        .ConfigureAwait(false);
+      return await HasOnHumanSchemeAsync(principalId, PermissionIds.AdminFeedbackRead, cancellationToken)
+          .ConfigureAwait(false)
+        || await HasOnHumanSchemeAsync(principalId, PermissionIds.FeedbackRead, cancellationToken)
+          .ConfigureAwait(false);
     }
+
+    private async Task<bool> HasOnHumanSchemeAsync(
+      PrincipalId principalId,
+      string permissionId,
+      CancellationToken cancellationToken) =>
+      await HasAsync(principalId, AuthenticationSchemeNames.IdentitySession, permissionId, cancellationToken)
+        .ConfigureAwait(false)
+      || await HasAsync(principalId, AuthenticationSchemeNames.MockIdentitySession, permissionId, cancellationToken)
+        .ConfigureAwait(false);
 
     private Task<bool> HasAsync(
       PrincipalId principalId,

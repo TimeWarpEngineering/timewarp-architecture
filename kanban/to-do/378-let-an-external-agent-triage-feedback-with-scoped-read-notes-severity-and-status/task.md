@@ -2,15 +2,15 @@
 
 ## Goal (implementer restatement)
 
-An agent principal, authenticated only by a bearer token, can pull the feedback board and triage items. The token's scopes are the only grants. The agent is not an Administrator and does not inherit human roles.
+An agent principal, authenticated only by a bearer token, can pull the feedback board and triage items. The token's scopes are the only grants. Assigning that principal a human role does not add grants on an agent-token request.
 
 Four scopes each expand to one non-admin permission: `feedback:read` → `feedback.read` (list, open, thread including internal notes, attachment download), `feedback:note` → `feedback.note` (append an internal note), `feedback:severity` → `feedback.severity` (set severity), and `feedback:status` → `feedback.status` (change status under the existing rules, including the filer email on Planned, Completed, and Declined). Administrator receives all four beside the existing `admin.feedback.read` and `admin.feedback.manage`. Member and Operator do not. Reply to the filer stays on `admin.feedback.manage` and a human session. The agent does not receive `admin.profiles.read`, so the owner display name stays empty and only `OwnerPrincipalId` is visible.
 
 Severity is a closed enum (`Unset`, `Informational`, `Low`, `Medium`, `High`, `Critical`), default `Unset` at file time and for existing rows. The filer never sends it and never sees it. Setting severity is the review: a defined value other than the current one, never back to `Unset`, recorded as a filer-invisible `SeverityChange` activity. It does not change status, and a status change does not set severity. A severity change sends no email. `ListFeedback` treats an omitted severity as every item and `Severity=Unset` as only the unreviewed queue.
 
-The admin list and detail pages show severity, filter to `Unset`, and set it through `FeedbackAdminState`. Filer list and permalink do not render it.
+The admin list and detail pages show severity, filter to `Unset`, and set it through `FeedbackAdminState`. Filer list and permalink do not render it. On the detail page, change-status is gated on `feedback.status`, the internal note on `feedback.note`, and the reply on `admin.feedback.manage`.
 
-Done when the domain, scope seed, endpoint policies, list filter, admin UI, and the tests named in Requirements all hold, and `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes.
+Done when the domain, scope seed, endpoint policies, list filter, admin UI, and the tests named in Requirements all hold, `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes, and the round-1 findings are closed: a role-assigned agent is evaluated only under the agent-token scheme (a `feedback:note` token cannot download through `admin.feedback.read`, and a `feedback:read` token does not see owner names through `admin.profiles.read`); an HTTP test drives real bearer tokens through list, note, severity, status, and reply; and the detail page gates each section on that endpoint's policy.
 
 ## Description
 
@@ -103,6 +103,13 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 - [x] Admin list and detail show and set severity; filer pages do not
 - [x] Tests listed above
 - [x] `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes
+- [x] Cross-owner download and owner names follow the authenticated scheme
+- [x] Agent bearer HTTP matrix, including reply refused on the human schemes
+- [x] Detail page gates status on `feedback.status` and notes on `feedback.note`
+
+## Review
+
+- Round 1: fix pass implemented M1, M2, and M3. Round 2 has not run.
 
 ## Notes
 
@@ -139,22 +146,25 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 - Implementation (2026-10-17): scoped pull triage. Four `feedback.*` permissions (not `admin.*`) on the agent token and on Administrator only. Severity is the review marker, default `Unset`, filer-invisible, and independent of status. Migration `20261017135945_AddFeedbackSeverity` adds the columns and the Administrator role grants. The explicit `Microsoft.Extensions.Options` package directive was removed from `permission-evaluator-tests.cs` because NU1510 treats it as already available through the project reference.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T14:12:40Z
 - Review oracle round 1 (2026-10-17): claude (claude-opus-5-5), session not reported. Effort 3, roster general. Found 1 bug (M1) and 2 suggestions (M2, M3), all open. A fix pass is requested. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-17T14:16:30Z
+- Fix pass (2026-10-17): implement-fix-2. Download and owner-name checks use `IAgentPermissionScopeSource` so an agent-token caller is evaluated only on the agent-token scheme. HTTP tests drive real bearer tokens. The detail page gates status and notes on their endpoint policies. Reply stays on `admin.feedback.manage`.
 
 ## Results
 
 An agent principal triages by listing `Severity=Unset`, appending an internal note, setting severity, or changing status. Each of those is its own scope. Setting severity does not move status and does not email. A Completed status change still emails the filer. The filer JSON has no severity field. `admin.feedback.read` and `admin.feedback.manage` stay, and reply stays on a human session.
 
-`ganda repo audit`: 32 passed, 0 failed. Release builds of the SPA, server, and infrastructure test projects compiled the product with 0 warnings.
+A role assigned to the agent principal does not add grants on an agent-token request. Download and owner display names ask `IAgentPermissionScopeSource`: a non-null scope list means the agent-token scheme only, and null means the human session schemes only. A `feedback:note` token whose principal is Administrator cannot download another filer's attachment. A `feedback:read` token with that same role lists the item and leaves `OwnerDisplayName` null. On the detail page, change-status is `feedback.status`, the internal note is `feedback.note`, and reply stays `admin.feedback.manage`.
 
-The admin list and detail were not clicked in a browser. `FeedbackAdminState` and the compiled Razor cover the filter and the set-severity action. `dev template-smoke` was not run; the in-repo build is the template source with every feature flag on, and the PR CI default smoke is the generation gate.
+`ganda repo audit`: 32 passed, 0 failed. Release builds of the SPA, server, and infrastructure test projects compiled with 0 warnings.
+
+The admin detail page was not clicked in a browser. The Razor compile covers the three policy gates. An Administrator holds all three permissions, so the sections still render for that role. `dev template-smoke` was not run.
 
 ### Review
 
-- Round 1 (effort 3, roster general). Counts: bug 1 open, suggestion 2 open, nit 0. Disposition: pending, because a fix pass was requested for M1, M2, and M3.
-- M1: the download handler and `FeedbackOwnerNames` check human-scheme grants for agent-token callers.
-- M2: no HTTP test drives a real agent bearer token.
-- M3: the SPA status and note gates still use `admin.feedback.manage`.
-- The reviewer re-ran the triage (41/41), attachment (21/21), and permission evaluator (19/19) runfiles. All passed.
+- Round 1 (effort 3, roster general). Counts at review time: bug 1 open, suggestion 2 open, nit 0. The fix pass implements all three. Round 2 has not run.
+- M1: download and `FeedbackOwnerNames` evaluate only the authenticated scheme. A role-assigned agent is covered by the attachment runfile and by the HTTP test.
+- M2: `Scoped_Given_Agent_Bearer_Tokens` drives real bearer tokens. `feedback:read` lists (200) and is refused the three writes (403). Each write scope is refused the list and the other writes (403) and succeeds on its own write (200). Reply is 401 for every agent token, including one that holds all four feedback scopes, because the endpoint schemes are the human sessions.
+- M3: `FeedbackAdminItemPage` gates status and notes on `PermissionIds.FeedbackStatus` and `PermissionIds.FeedbackNote`. Reply stays on `PermissionIds.AdminFeedbackManage`.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
@@ -175,9 +185,9 @@ Run each `dotnet test` from that project directory so the local Microsoft.Testin
 
 **Expect:**
 
-- Triage runfile 41/41, including omitted severity returning every item, `Severity=Unset` returning only the unreviewed, a severity change sending no mail, a Completed change still mailing the filer, filer JSON with no severity field, and each new scope expanding to one permission and nothing in `AdminPermissions`.
-- Attachment runfile 21/21. The owner still downloads their own file. An agent with `feedback.read` can download after the file is linked. An agent with only `feedback.note` cannot. A human with `admin.feedback.read` still can. An unlinked draft stays owner-only.
-- Permission evaluator 19/19, including `AgentScopeSeed_Should_NotIntersectAdminPermissions`. Permission catalog 8/8. The four new ids are not `admin.*` and are not protected core.
-- SPA state 10/10. The severity filter reaches `ListFeedback.Query`, and set-severity stores the returned item. Ask references 9/9. `@feedback` stays on `feedback.read`, which Administrator holds.
-- HTTP admin feedback 7/7. An Administrator lists, notes, sets severity, and changes status. A session without `feedback.read` is forbidden on the list. Setting severity without `feedback.severity` is forbidden.
-- Postgres feedback 8/8 against Testcontainers. `MigrateAsync` applies the `Unset` default, and an update appends a severity activity without a status.
+- Triage runfile 42/42, including omitted severity returning every item, `Severity=Unset` returning only the unreviewed, a severity change sending no mail, a Completed change still mailing the filer, filer JSON with no severity field, each new scope expanding to one permission and nothing in `AdminPermissions`, and an Administrator-role agent token leaving the owner display name null.
+- Attachment runfile 22/22. The owner still downloads their own file. An agent with `feedback.read` can download after the file is linked. An agent with only `feedback.note` cannot. A human with `admin.feedback.read` still can. An unlinked draft stays owner-only. An Administrator-role principal authenticated as an agent with only `feedback:note` gets 404, and the same role on a human session still downloads.
+- Permission evaluator 19/19, including `AgentScopeSeed_Should_NotIntersectAdminPermissions`. Permission catalog 8/8. The four new ids are not `admin.*` and are not protected core. This fix pass did not re-run those two runfiles.
+- SPA state 10/10. The severity filter reaches `ListFeedback.Query`, and set-severity stores the returned item. Ask references 9/9. `@feedback` stays on `feedback.read`, which Administrator holds. This fix pass did not re-run the SPA suite. The SPA Release build is 0 warnings.
+- HTTP admin feedback 9/9. An Administrator lists, notes, sets severity, and changes status. A session without `feedback.read` is forbidden on the list. Setting severity without `feedback.severity` is forbidden. `feedback:read` lists and is refused note, severity, and status. Each write scope is refused the other writes. Reply is 401 for an agent token. A role-assigned `feedback:note` token cannot download, and a role-assigned `feedback:read` token sees no owner display name.
+- Postgres feedback 8/8 against Testcontainers. `MigrateAsync` applies the `Unset` default, and an update appends a severity activity without a status. This fix pass built the infrastructure test project and did not re-run the live Postgres suite.

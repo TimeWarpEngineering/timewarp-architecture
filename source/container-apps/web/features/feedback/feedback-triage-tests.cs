@@ -707,6 +707,25 @@ namespace TimeWarp.Architecture.Features.Feedback
       gated.Directory.Batches.ShouldBeEmpty();
     }
 
+    public static async Task AgentToken_WithAdministratorRole_Should_NotReadOwnerNames()
+    {
+      TriageWorld world = new();
+      await world.AddProfileAsync(world.Filer.Value, "Ada Lovelace");
+      PrincipalId agent = PrincipalId.New();
+      await world.AssignAdministratorAsync(agent);
+      world.HoldAgentScopes(agent, AgentScopes.FeedbackRead);
+
+      (await world.OwnerNames(agent).FindAsync(world.Filer.Value, CancellationToken.None)).ShouldBeNull();
+      world.Directory.Batches.ShouldBeEmpty();
+
+      // The same principal, evaluated as a human session, holds admin.profiles.read through
+      // the Administrator role. The agent-token path above must not have used that grant.
+      world.ReleaseAgentScopes(agent);
+      (await world.OwnerNames(agent).FindAsync(world.Filer.Value, CancellationToken.None))
+        .ShouldBe("Ada Lovelace");
+      world.Directory.Batches.Count.ShouldBe(1);
+    }
+
     public static async Task List_Should_TreatOmittedSeverityAsEveryItemAndUnsetAsUnreviewed()
     {
       TriageWorld world = new();
@@ -919,6 +938,8 @@ namespace TimeWarp.Architecture.Features.Feedback
     public PrincipalId Admin { get; } = PrincipalId.New();
     private readonly IEmailSender Sender;
     private readonly TriageBaseUrl BaseUrl = new(new Uri("https://app.example"));
+    private readonly InMemoryPrincipalRoleStore Roles = new();
+    private readonly TriageHeldAgentScopes HeldScopes = new();
     private readonly PermissionEvaluator Evaluator;
 
     /// <summary>Admin is an Administrator; grantProfilesRead false strips admin.profiles.read from that role.</summary>
@@ -927,8 +948,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       Lookup = new ProfileEmailLookup(Profiles);
       Directory = new TriageCountingDirectory(new ProfileDirectory(Profiles));
       Sender = sender ?? Mail;
-      InMemoryPrincipalRoleStore roles = new();
-      roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
+      Roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
       InMemoryRolePermissionStore permissions = new();
       if (!grantProfilesRead)
       {
@@ -939,10 +959,18 @@ namespace TimeWarp.Architecture.Features.Feedback
       }
 
       EffectiveRolesResolver resolver = new(
-        roles,
+        Roles,
         Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
-      Evaluator = new PermissionEvaluator(resolver, permissions, new TriageNoAgentScopes());
+      Evaluator = new PermissionEvaluator(resolver, permissions, HeldScopes);
     }
+
+    public Task AssignAdministratorAsync(PrincipalId principal) =>
+      Roles.SetRoleIdsAsync(principal, [RoleIds.Administrator]);
+
+    public void HoldAgentScopes(PrincipalId principal, params string[] scopes) =>
+      HeldScopes.Hold(principal, scopes);
+
+    public void ReleaseAgentScopes(PrincipalId principal) => HeldScopes.Release(principal);
 
     public static DateTimeOffset Day(int day) => new(2026, 10, day, 0, 0, 0, TimeSpan.Zero);
 
@@ -982,7 +1010,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     }
 
     public FeedbackOwnerNames OwnerNames(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Evaluator, Directory);
+      new(new TriagePrincipalAccessor(principal), Evaluator, Directory, HeldScopes);
 
     public async Task SetFilerEmailAsync(string email)
     {
@@ -1084,9 +1112,17 @@ namespace TimeWarp.Architecture.Features.Feedback
       Inner.SearchAsync(term, cancellationToken);
   }
 
-  internal sealed class TriageNoAgentScopes : IAgentPermissionScopeSource
+  internal sealed class TriageHeldAgentScopes : IAgentPermissionScopeSource
   {
-    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) => null;
+    private readonly Dictionary<Guid, IReadOnlyList<string>> Scopes = [];
+
+    public void Hold(PrincipalId principal, params string[] scopes) =>
+      Scopes[principal.Value] = scopes;
+
+    public void Release(PrincipalId principal) => Scopes.Remove(principal.Value);
+
+    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) =>
+      Scopes.TryGetValue(principalId.Value, out IReadOnlyList<string>? scopes) ? scopes : null;
   }
 
   internal sealed class TriageMailCapture : IEmailSender

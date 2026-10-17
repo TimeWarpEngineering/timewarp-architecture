@@ -174,7 +174,7 @@
           </Section>
         </Authorized>
       </AuthorizeView>
-      <AuthorizeView Policy="@PermissionIds.AdminFeedbackManage">
+      <AuthorizeView Policy="@PermissionIds.FeedbackStatus">
         <Authorized>
           <Section Title="Change status" LoadingActionType="typeof(FeedbackAdminState.ChangeFeedbackStatusActionSet.Action)">
             <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Bottom">
@@ -189,6 +189,10 @@
                 OnClick="@(() => ChangeStatusAsync(thread))">Change status</FluentButton>
             </FluentStack>
           </Section>
+        </Authorized>
+      </AuthorizeView>
+      <AuthorizeView Policy="@PermissionIds.AdminFeedbackManage">
+        <Authorized>
           <Section Title="Reply to filer" LoadingActionType="typeof(FeedbackAdminState.ReplyToFeedbackActionSet.Action)">
             <p data-qa="AdminFeedbackReplyHint">
               @(thread.FilerHasEmail
@@ -200,6 +204,10 @@
               data-qa="AdminFeedbackSendReply"
               OnClick="@(() => SendReplyAsync(thread))">Send reply</FluentButton>
           </Section>
+        </Authorized>
+      </AuthorizeView>
+      <AuthorizeView Policy="@PermissionIds.FeedbackNote">
+        <Authorized>
           <Section Title="Internal note" LoadingActionType="typeof(FeedbackAdminState.AddFeedbackNoteActionSet.Action)">
             <p>Internal notes are not visible to the filer.</p>
             <TextArea @bind-Value="NoteDraft" AriaLabel="Internal note" data-qa="AdminFeedbackNote" />

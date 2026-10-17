@@ -26,6 +26,7 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 namespace TimeWarp.Architecture.Features.Feedback
 {
   using Microsoft.Extensions.Logging.Abstractions;
+  using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
   using TimeWarp.Architecture.Abstractions;
@@ -119,6 +120,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       world.Permissions.Grant(adminAreaOnly, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess);
       world.Permissions.Grant(agentReader, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackRead);
       world.Permissions.Grant(agentNoteOnly, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackNote);
+      world.Agents.Mark(agentReader);
+      world.Agents.Mark(agentNoteOnly);
 
       (await world.DownloadAsync(world.Owner, attachmentId)).ContentType.ShouldBe(FeedbackAttachmentRules.Png);
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
@@ -138,6 +141,39 @@ namespace TimeWarp.Architecture.Features.Feedback
       byte[] bytes = new byte[Png.Length];
       (await content.ReadAsync(bytes)).ShouldBe(Png.Length);
       bytes.ShouldBe(Png);
+    }
+
+    public static async Task Download_Should_IgnoreHumanRolesWhenTheCallerIsAnAgentToken()
+    {
+      World world = new();
+      Guid attachmentId = await world.UploadAsync(world.Owner, "shot.png", FeedbackAttachmentRules.Png, Png);
+      (await world.Attachments.TryLinkAsync(
+          FeedbackAttachmentId.From(attachmentId),
+          world.Owner.Value,
+          FeedbackItemId.New()))
+        .ShouldBeTrue();
+
+      PrincipalId agent = PrincipalId.New();
+      PrincipalId humanAdmin = PrincipalId.New();
+      PrincipalId reader = PrincipalId.New();
+      InMemoryPrincipalRoleStore roles = new();
+      await roles.SetRoleIdsAsync(agent, [RoleIds.Administrator]);
+      await roles.SetRoleIdsAsync(humanAdmin, [RoleIds.Administrator]);
+      HeldScopes scopes = new();
+      scopes.Hold(agent, AgentScopes.FeedbackNote);
+      scopes.Hold(reader, AgentScopes.FeedbackRead);
+      PermissionEvaluator evaluator = new(
+        new EffectiveRolesResolver(
+          roles,
+          Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] })),
+        new InMemoryRolePermissionStore(),
+        scopes);
+
+      // The Administrator role includes admin.feedback.read. That grant is real for a human
+      // session and must not open the file for the agent token.
+      (await world.DownloadWithAsync(humanAdmin, attachmentId, evaluator, scopes)).FileName.ShouldBe("shot.png");
+      (await world.DownloadProblemWithAsync(agent, attachmentId, evaluator, scopes)).Status.ShouldBe(404);
+      (await world.DownloadWithAsync(reader, attachmentId, evaluator, scopes)).FileName.ShouldBe("shot.png");
     }
 
     public static Task Disposition_Should_NotBreakOutOfTheHeader()
@@ -419,6 +455,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       public InMemoryFeedbackAttachmentStore Attachments { get; } = new();
       public InMemoryFeedbackAttachmentBlobStore Blobs { get; } = new();
       public GrantingPermissionEvaluator Permissions { get; } = new();
+      public HeldAgentCallers Agents { get; } = new();
       public PrincipalId Owner { get; } = PrincipalId.New();
       public IFeedbackAttachmentBlobStore? UploadBlobs { get; set; }
 
@@ -463,6 +500,26 @@ namespace TimeWarp.Architecture.Features.Feedback
             CancellationToken.None))
           .Match(_ => throw new InvalidOperationException("Expected download problem"), problem => problem);
 
+      public async Task<DownloadFeedbackAttachment.Response> DownloadWithAsync(
+        PrincipalId principal,
+        Guid attachmentId,
+        IPermissionEvaluator evaluator,
+        IAgentPermissionScopeSource scopes) =>
+        (await DownloadAs(principal, evaluator, scopes).Handle(
+            new DownloadFeedbackAttachment.Query { AttachmentId = attachmentId },
+            CancellationToken.None))
+          .Match(ok => ok, _ => throw new InvalidOperationException("Expected download success"));
+
+      public async Task<SharedProblemDetails> DownloadProblemWithAsync(
+        PrincipalId principal,
+        Guid attachmentId,
+        IPermissionEvaluator evaluator,
+        IAgentPermissionScopeSource scopes) =>
+        (await DownloadAs(principal, evaluator, scopes).Handle(
+            new DownloadFeedbackAttachment.Query { AttachmentId = attachmentId },
+            CancellationToken.None))
+          .Match(_ => throw new InvalidOperationException("Expected download problem"), problem => problem);
+
       public async Task<SharedProblemDetails> RemoveProblemAsync(PrincipalId principal, Guid attachmentId) =>
         (await RemoveAs(principal).Handle(
             new RemoveFeedbackAttachment.Command { AttachmentId = attachmentId },
@@ -491,7 +548,13 @@ namespace TimeWarp.Architecture.Features.Feedback
         new(new StubCurrentPrincipalAccessor(principal), Attachments, UploadBlobs ?? Blobs, NullLogger<UploadHandler>.Instance);
 
       private DownloadHandler DownloadAs(PrincipalId principal) =>
-        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs, Permissions);
+        DownloadAs(principal, Permissions, Agents);
+
+      private DownloadHandler DownloadAs(
+        PrincipalId principal,
+        IPermissionEvaluator evaluator,
+        IAgentPermissionScopeSource scopes) =>
+        new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs, evaluator, scopes);
 
       private RemoveHandler RemoveAs(PrincipalId principal) =>
         new(new StubCurrentPrincipalAccessor(principal), Attachments, Blobs);
@@ -637,6 +700,27 @@ namespace TimeWarp.Architecture.Features.Feedback
         Remaining -= take;
         return take;
       }
+    }
+
+    private sealed class HeldAgentCallers : IAgentPermissionScopeSource
+    {
+      private readonly HashSet<Guid> Agents = [];
+
+      public void Mark(PrincipalId principal) => Agents.Add(principal.Value);
+
+      public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) =>
+        Agents.Contains(principalId.Value) ? [] : null;
+    }
+
+    private sealed class HeldScopes : IAgentPermissionScopeSource
+    {
+      private readonly Dictionary<Guid, IReadOnlyList<string>> Scopes = [];
+
+      public void Hold(PrincipalId principal, params string[] scopes) =>
+        Scopes[principal.Value] = scopes;
+
+      public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) =>
+        Scopes.TryGetValue(principalId.Value, out IReadOnlyList<string>? scopes) ? scopes : null;
     }
 
     private sealed class GrantingPermissionEvaluator : IPermissionEvaluator

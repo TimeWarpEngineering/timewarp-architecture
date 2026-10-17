@@ -350,7 +350,8 @@ public class Round_Trip
       new StubCurrentPrincipalAccessor(principal),
       new EfFeedbackAttachmentStore(db),
       new EfFeedbackAttachmentBlobStore(db),
-      new NoPermissions());
+      new NoPermissions(),
+      new NoAgentScopes());
 
   private sealed class StubCurrentPrincipalAccessor : ICurrentPrincipalAccessor
   {
@@ -360,6 +361,11 @@ public class Round_Trip
 
     public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
       Task.FromResult<PrincipalId?>(PrincipalId);
+  }
+
+  private sealed class NoAgentScopes : IAgentPermissionScopeSource
+  {
+    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) => null;
   }
 
   private sealed class NoPermissions : IPermissionEvaluator
