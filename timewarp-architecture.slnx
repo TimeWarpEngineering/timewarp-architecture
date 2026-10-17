@@ -4,6 +4,7 @@
   <!-- Monorepo-only: platform packages for solution membership; always stripped on generate
        (126-004 always package-mode). Do not reintroduce template *Packages symbols. -->
   <Folder Name="/source/foundation/">
+    <Project Path="source/foundation/timewarp-contracts/timewarp-contracts.csproj" />
     <Project Path="source/foundation/foundation-contracts/foundation-contracts.csproj" />
     <Project Path="source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
     <Project Path="source/foundation/foundation-domain/foundation-domain.csproj" />

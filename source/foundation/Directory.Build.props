@@ -33,6 +33,7 @@
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-domain'">TimeWarp.Foundation.Common.Domain</AssemblyMarkerNamespace>
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-application'">TimeWarp.Foundation.Common.Application</AssemblyMarkerNamespace>
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-contracts'">TimeWarp.Foundation.Common.Contracts</AssemblyMarkerNamespace>
+    <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'timewarp-contracts'">TimeWarp.Contracts</AssemblyMarkerNamespace>
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-infrastructure'">TimeWarp.Foundation.Common.Infrastructure</AssemblyMarkerNamespace>
     <AssemblyMarkerNamespace Condition="'$(MSBuildProjectName)' == 'foundation-server'">TimeWarp.Foundation.Common.Server</AssemblyMarkerNamespace>
     <TwGenerateAssemblyMarker Condition="'$(MSBuildProjectName)' == 'foundation-contracts-generators'">false</TwGenerateAssemblyMarker>

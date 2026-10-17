@@ -501,4 +501,114 @@ public class ContractsGenerator_Tests
     queryStringGenerated.ShouldNotContain("GetOpenDataQueryParameters()");
     return Task.CompletedTask;
   }
+
+  public static Task Should_Copy_Operation_Name_And_Description_Once()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace TimeWarp.Contracts
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { Name = name; }
+              public string Name { get; }
+              public string? Description { get; set; }
+          }
+      }
+
+      namespace TimeWarp.Foundation.Features
+      {
+          public interface IAuthApiRequest { }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              [AuthApiRequest]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.Split("public const string OperationName = \"roles.list\";").Length.ShouldBe(2);
+    generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    generated.ShouldContain("public global::System.Guid UserId { get; set; }");
+    AssertGeneratedCompilesWithoutErrors(source);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Escape_Operation_Literals()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace TimeWarp.Contracts
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { Name = name; }
+              public string Name { get; }
+              public string? Description { get; set; }
+          }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRole
+          {
+              [TimeWarp.Contracts.Operation("roles.\"quoted\"", Description = "line\nbreak")]
+              [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldContain("public const string OperationName = \"roles.\\\"quoted\\\"\";");
+    generated.ShouldContain("public const string OperationDescription = \"line\\nbreak\";");
+    AssertGeneratedCompilesWithoutErrors(source);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Ignore_Operation_Attribute_In_Another_Namespace()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Other
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { }
+          }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRole
+          {
+              [Other.Operation("roles.get")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldNotContain("OperationName");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
 }

@@ -53,13 +53,38 @@ This task is step 2 only. The info analyzer, `IQuery`/`ICommand` adoption, roles
 update and the 1.0.0 promotion are step 11 and live in child **384-001** (backlog). Do not do
 them here.
 
+## Goal (implementer restatement)
+
+Ship a runtime-free `TimeWarp.Contracts` package at `1.0.0-beta.1` that holds the
+transport-neutral operation surface, and make this template's contract pipeline consume it.
+The package defines `[Operation]` (canonical name and description; kind stays on the mediator
+interface), catalog DTOs (operation, kind, members, return type, HTTP/CLI/MCP bindings),
+`IResponseRenderer<TResponse>`, and `SharedProblemDetails` moved out of
+`TimeWarp.Foundation.Contracts` with a type forward so existing references keep compiling.
+Member metadata is documented for generators to derive (name, nullability/`required`,
+initializer, enum constants, `DescriptionAttribute`); this package does not reflect over
+requests. The contracts generator copies `[Operation]` onto the generated HTTP partial, and
+the FastEndpoint emit model stores the name and description. Endpoint class emission stays
+the same. The info analyzer, `IQuery`/`ICommand` adoption, the roles example, skill and docs,
+and the 1.0.0 promotion stay on child 384-001. Publishing the nupkg is the human `tw-release`
+gate after merge.
+
+## Home decision
+
+Option (b). The package lives at `source/foundation/timewarp-contracts` and publishes as
+`TimeWarp.Contracts` on its own `1.0.0-beta` line, separate from the repo version in
+`source/Directory.Build.props`. Nuru 508-001 can reference that package. A standalone
+`timewarp-contracts` repository (option a) is the later home, before a stable Nuru release
+takes the dependency. Colocating it with `TimeWarp.Mediator.Contracts` (option c) is
+rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediator primitive.
+
 ## Checklist
 
-- [ ] Home decision recorded (recommendation: (b) now, extract to (a) later)
-- [ ] Package scaffold: `[Operation]`, `SharedProblemDetails` (moved, type-forwarded), catalog DTOs, `IResponseRenderer`
-- [ ] Derivation rules documented (package Design region / README, not `documentation/`)
-- [ ] Contracts generator reads `[Operation]`; endpoint metadata carries it
-- [ ] Package versioned 1.0.0-beta.1 and packable; `dev build` clean
+- [x] Home decision recorded (recommendation: (b) now, extract to (a) later)
+- [x] Package scaffold: `[Operation]`, `SharedProblemDetails` (moved, type-forwarded), catalog DTOs, `IResponseRenderer`
+- [x] Derivation rules documented (package Design region / README, not `documentation/`)
+- [x] Contracts generator reads `[Operation]`; endpoint metadata carries it
+- [x] Package versioned 1.0.0-beta.1 and packable; `dev build` clean
 - [ ] 1.0.0-beta.1 released for Nuru 508-001 (release cut is a human gate after merge, `tw-release`)
 
 ## Notes
@@ -73,3 +98,46 @@ them here.
 - Created: 1624988 (2026-10-17)
 - Versioning and serial order recorded: 1479989 (2026-10-17)
 - Step-11 items split to child 384-001: 2022499 (2026-10-18)
+- Package, generator, and pack wiring implemented (2026-10-18)
+
+## Results
+
+`TimeWarp.Contracts` 1.0.0-beta.1 packs from `source/foundation/timewarp-contracts`.
+`SharedProblemDetails` now lives in that assembly, still in `TimeWarp.Foundation.Types`.
+`TimeWarp.Foundation.Contracts` type-forwards it. The contracts generator writes
+`OperationName` and, when the description is non-empty, `OperationDescription` on the
+HTTP partial. `EndpointEmitModel` stores both values. FastEndpoint class text leaves
+them out. Member derivation rules are in the package README. The info analyzer, roles
+slice, `IQuery`/`ICommand` adoption, skill, docs, and the 1.0.0 promotion stay on 384-001.
+
+`dev release` packs this project without `-p:Version`, so the nupkg stays `1.0.0-beta.1`
+while the rest of the repo stays on `source/Directory.Build.props` (`2.0.0-beta.20`).
+Template smoke passes `-p:Version=2.0.0-smoke`, which overrides the project version for
+the smoke feed. `dev check-version` reports that shared props version for every packable
+id, including `TimeWarp.Contracts`. It exited 0 because `2.0.0-beta.20` is one prerelease
+ahead of nuget `2.0.0-beta.19`. After the other packages publish as `2.0.0-beta.20`, a
+later check can report `TimeWarp.Contracts` unpublished at that version. The package that
+ships is `1.0.0-beta.1`.
+
+NuGet publish of `1.0.0-beta.1` is the human `tw-release` gate after merge. That checklist
+item stays open.
+
+### How to validate
+
+Smoke:
+
+```bash
+dev build
+cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release --no-build --no-restore
+cd tests/foundation/foundation-contracts-tests && dotnet test -c Release --no-build --no-restore
+dotnet pack source/foundation/timewarp-contracts/timewarp-contracts.csproj -c Release --no-build
+dotnet pack source/foundation/foundation-contracts/foundation-contracts.csproj -c Release --no-build
+```
+
+Expect:
+
+- `dev build` ends with 0 warnings and 0 errors. This run did (Release, 20.66s).
+- Source generator tests: 129 passed. Foundation contracts tests: 25 passed. Covered here: operation constants emitted once across `ApiRoute` and `AuthApiRequest`, escaped name and description literals, a foreign `OperationAttribute` ignored, FastEndpoint text unchanged when `[Operation]` is present, endpoint metadata carrying the name and description, and `SharedProblemDetails` resolving from the `timewarp-contracts` assembly.
+- `TimeWarp.Contracts.1.0.0-beta.1.nupkg` depends on `OneOf` 3.0.271 and `TimeWarp.Mediator.Contracts` 14.0.0-beta.5.
+- `TimeWarp.Foundation.Contracts.2.0.0-beta.20.nupkg` depends on `TimeWarp.Contracts` 1.0.0-beta.1.
+- `ganda repo audit`: 32 passed, 0 failed.

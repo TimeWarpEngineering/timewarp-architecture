@@ -455,4 +455,50 @@ public class FastEndpointSourceGenerator_Authorization_Tests
 
     return Task.CompletedTask;
   }
+
+  public static Task Should_Leave_Endpoint_Emission_Unchanged_When_Operation_Is_Present()
+  {
+    const string source = """
+      using TimeWarp.Architecture;
+      using TimeWarp.Architecture.Attributes;
+
+      namespace TimeWarp.Contracts
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { }
+              public string? Description { get; set; }
+          }
+      }
+
+      namespace Test.Features.WeatherForecast
+      {
+          [ApiEndpoint]
+          public static partial class GetWeatherForecasts
+          {
+              [TimeWarp.Contracts.Operation("weather.get", Description = "Forecast")]
+              [ApiRoute("api/weatherForecasts", HttpVerb.Get)]
+              public sealed partial class Query
+              {
+                  public int? Days { get; set; }
+              }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly(source);
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+    string generatedCode = runResult.Results
+      .SelectMany(r => r.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("""Get("api/weatherForecasts")""");
+    generatedCode.ShouldNotContain("weather.get");
+    generatedCode.ShouldNotContain("OperationName");
+    return Task.CompletedTask;
+  }
 }

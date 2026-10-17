@@ -3,8 +3,11 @@
 #endregion
 
 #region Design
+// Lives in this assembly so CLI and MCP hosts share it without referencing foundation HTTP types.
+// Namespace stays TimeWarp.Foundation.Types: TypeForwardedTo in TimeWarp.Foundation.Contracts
+// preserves that identity for callers already compiled against the foundation package.
 // Duplicates Microsoft.AspNetCore.Mvc.ProblemDetails because contracts must not reference
-// ASP.NET Core: this assembly is shared with the browser client and gRPC services.
+// ASP.NET Core: this assembly is shared with the browser client.
 // Serialization attributes mirror the framework type exactly (property order, null omission,
 // extension-data catch-all) so payloads written by server ProblemDetails deserialize here
 // losslessly — the "errors" dictionary of validation responses lands in Extensions.
