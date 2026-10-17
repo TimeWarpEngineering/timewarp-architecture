@@ -104,6 +104,8 @@ Done means:
 
 - Created: 1829706 (2026-10-17, cockpit, from Steve's screenshot)
 - 2026-10-17: implement oracle (ganda task work, headless Claude) — hook confirmed, renderer + SafeMarkdown params + tests; gates green
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-17T02:15:50Z
+- Review oracle: claude-opus-5-5 (headless ganda task work), effort 2, roster general, session not reported — 2026-10-17
 
 ## Notes
 
@@ -181,3 +183,17 @@ The screenshot
 `tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/playwright-screenshots/AskMarkdown_Given_Wasm/ask-markdown-reply.png`
 shows bold, a bullet list, two underlined links, and the raw `<b ...>raw</b>` as literal text,
 while the user bubble shows `**not bold**` literally.
+
+### Review disposition
+
+- Rounds: 1. Effort 2 (by-diff, 446 lines). Roster: general.
+- Final counts: bug 0, suggestion 0, nit 2 (both wontfix). Open: 0.
+- Disposition: **accepted-exceptions**.
+  - M1: the browser "no reload" check cannot tell State routing from Blazor's link
+    interception. The unit test covers the callback wiring.
+  - M2: Ctrl/Cmd+click on an in-app Ask link routes in place, because Blazor's preventDefault is
+    static.
+- The reviewer re-ran the gates: `ganda repo audit` passes, `dev build` 0/0, `dev test` 23/23,
+  `dev check-version` exit 0.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
