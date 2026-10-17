@@ -48,6 +48,8 @@ Do not expand to every generator in the repo.
 
 - Created: 785761 (2026-10-11)
 - Implement: ingress golden + fast-job diff. Offer-record generator stays removed (task 282).
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T15:12:43Z
+- Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, session not exposed in print mode). 1 round. Disposition accepted-exceptions — 2026-10-17
 
 ## Notes
 
@@ -114,3 +116,12 @@ Expect:
 - Changing one character of the staged golden (`api/tip` to `api/tiP`) makes `git diff --exit-code -- goldens/ingress` exit 1. Running the command again restores `api/tip` and a clean unstaged diff. Confirmed on this worktree.
 - `IngressRoutePrefixGenerator_` : 15 passed, including repeat-run exact source equality and case-spelling collapse that does not depend on reference order.
 - `GeneratedIngressPrefixes_` : 4 passed (LF and BOM normalization, the two host projects, agreeing copies succeed, disagreeing copies fail).
+
+### Review disposition
+
+- Rounds: 1. Effort 2, roster general (review oracle).
+- Final counts: bug 0, suggestion 0, nit 1. Open 0, fixed 0, wontfix 1.
+- Disposition: **accepted-exceptions**. M1 (nit) is wontfix: the CI drift failure prints a raw diff with no remedy echo, but the remedy is in the step comment, AGENTS.md, and the command Design region.
+- The reviewer re-ran and confirmed: generator tests 15/15, dev-cli tests 4/4, `ganda repo audit` clean, and the golden byte-identical to both host emits.
+- Restatement vs task: it matches, so no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
