@@ -93,4 +93,4 @@ Expect: the run passes. The edit-mode menu stays open when the Copy tooltip is s
 ## Review
 
 - Round 1: M1 fixed, M2 fixed. Re-review is round 2.
-- Round 2: no new findings. Disposition: clean (`review/disposition.md`).
+- Round 2: Done
