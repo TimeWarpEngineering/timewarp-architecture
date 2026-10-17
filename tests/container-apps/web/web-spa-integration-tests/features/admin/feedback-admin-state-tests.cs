@@ -48,6 +48,7 @@ public class FeedbackAdminActions_Should_
     seen.Status.ShouldBe(FeedbackStatus.Planned);
     seen.Kind.ShouldBe(FeedbackKind.BugReport);
     seen.IncludeClosed.ShouldBeTrue();
+    seen.Severity.ShouldBeNull();
     seen.Page.ShouldBe(1);
     FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
     state.Items.ShouldNotBeNull();
@@ -178,6 +179,31 @@ public class FeedbackAdminActions_Should_
     await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(null, FeedbackKind.BugReport, includeClosed: false));
     await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
     seen.SortBy.ShouldBe(FeedbackListSortColumn.Title, "a filter change keeps the sort");
+  }
+
+  public static async Task Severity_Filter_Reaches_The_Query_And_SetSeverity_Stores_The_Item()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ListFeedback.Query? seen = null;
+    spa.Api.Answer<ListFeedback.Query>(query =>
+    {
+      seen = query;
+      return ListFeedback.GetMockResponseFactory()(query);
+    });
+    spa.Api.Answer<SetFeedbackSeverity.Command>(command =>
+    {
+      FeedbackAdminView view = FeedbackAdminView.Sample(command.FeedbackItemId);
+      return new SetFeedbackSeverity.Response(view);
+    });
+
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(
+      null, null, includeClosed: true, FeedbackSeverity.Unset));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.ShouldNotBeNull().Severity.ShouldBe(FeedbackSeverity.Unset);
+
+    await scope.Send(new FeedbackAdminState.SetFeedbackSeverityActionSet.Action(ItemId, FeedbackSeverity.High));
+    scope.Store.GetState<FeedbackAdminState>().Current.ShouldNotBeNull().FeedbackItemId.ShouldBe(ItemId);
   }
 
   public static async Task Failed_Fetch_Clears_The_Rows_And_Sets_A_List_Error()

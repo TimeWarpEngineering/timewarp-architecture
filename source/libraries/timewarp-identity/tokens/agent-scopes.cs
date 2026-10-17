@@ -7,7 +7,8 @@
 // Plain string constants (not an enum) — scopes travel over the wire as strings in both the request
 // (CompleteAgentTokenIssuance.Command.Scopes) and the response/claims, and a string is what
 // RequireClaim/HasClaim compare against; an enum would need a string<->enum mapping layer for zero
-// benefit at Wave-1 scale (three scopes).
+// benefit. Feedback scopes (task 378) are one permission each: read, note, severity, status.
+// They are not admin.* and do not include a reply to the filer.
 // IdentityRead is this task's own protected endpoint (GetAgentIdentity, policy
 // AgentTokenDefaults.IdentityReadPolicy) — a real, exercised scope. DemoInvoke gates the metered
 // pay-for-capability demo (104-011, AgentTokenDefaults.DemoInvokePolicy); Agent_Protected_Endpoint_Tests
@@ -46,8 +47,29 @@ public static class AgentScopes
   /// <summary>List, add, and revoke credentials on the caller's own principal (write scope).</summary>
   public const string CredentialManage = "credential:manage";
 
+  /// <summary>List and open every feedback item, including internal notes and attachments.</summary>
+  public const string FeedbackRead = "feedback:read";
+
+  /// <summary>Append an internal note on a feedback item.</summary>
+  public const string FeedbackNote = "feedback:note";
+
+  /// <summary>Set a feedback item's review severity.</summary>
+  public const string FeedbackSeverity = "feedback:severity";
+
+  /// <summary>Change a feedback item's status.</summary>
+  public const string FeedbackStatus = "feedback:status";
+
   /// <summary>Every known scope string this library recognizes.</summary>
-  public static IReadOnlyList<string> All { get; } = [IdentityRead, DemoInvoke, CredentialManage];
+  public static IReadOnlyList<string> All { get; } =
+  [
+    IdentityRead,
+    DemoInvoke,
+    CredentialManage,
+    FeedbackRead,
+    FeedbackNote,
+    FeedbackSeverity,
+    FeedbackStatus,
+  ];
 
   /// <summary>True when <paramref name="scope"/> is one of <see cref="All"/> (ordinal).</summary>
   public static bool IsKnown(string scope) => All.Contains(scope, StringComparer.Ordinal);

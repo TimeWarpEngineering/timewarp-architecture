@@ -44,6 +44,18 @@ Browser `Accept: text/html` still serves the Blazor SPA.
 
 `ai-train=yes, search=yes, ai-input=yes` — see `/robots.txt`.
 
+## WebMCP (browser tools)
+
+Backend MCP (`/mcp`, card `/.well-known/mcp/server-card.json`) and frontend WebMCP are separate transports. The card stays a stub: `capabilities.tools` is false and `tools` is empty. Do not call `/mcp` expecting `tools/list`.
+
+WebMCP tools register in the browser with `document.modelContext.registerTool` (fallback `navigator.modelContext`). The generated list is `/.well-known/webmcp.json` (from the page registry, not a hand-written tool list). `/` registers `navigate` during HTML parse. `site_map` and `page_context` are on every page once it is interactive. Route-scoped tools run only on the matching SPA route: `/Feedback` and `/Settings` add their own actions, and a call from another route returns a navigate offer.
+
+Inspector: `typeof navigator.modelContext`. Chrome Canary flag `#enable-webmcp-testing`, or the MCP-B polyfill. Then Copy trace.
+
+```bash
+curl -sS https://<host>/.well-known/webmcp.json
+```
+
 ## What not to invent
 
 - Do not assume email/password registration exists.

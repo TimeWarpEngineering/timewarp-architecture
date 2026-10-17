@@ -33,6 +33,10 @@
 // Task 328: admin.profiles.read gates other users' profile fields (email is PII) in ListPrincipals and
 // GetPrincipal. It is separate from admin.principals.read so seeing who exists does not imply
 // seeing their personal data; being admin.*, it is protected core and Administrator-only by seed.
+// Task 378: feedback.read / feedback.note / feedback.severity / feedback.status are the agent
+// triage ids. They are not admin.*, so they are not protected core. admin.feedback.read and
+// admin.feedback.manage stay for the SPA admin gate and for ReplyToFeedback. feedback.file.self
+// stays off the agent scope list.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -75,6 +79,14 @@ public static class PermissionIds
   public const string DemoInvoke = "demo.invoke";
   /// <summary>File, list, and open the caller's own feedback. Not an agent-token scope.</summary>
   public const string FeedbackFileSelf = "feedback.file.self";
+  /// <summary>List and open every feedback item, including internal notes and attachment download.</summary>
+  public const string FeedbackRead = "feedback.read";
+  /// <summary>Append an internal note on a feedback item.</summary>
+  public const string FeedbackNote = "feedback.note";
+  /// <summary>Set a feedback item's review severity. Does not move status and sends no email.</summary>
+  public const string FeedbackSeverity = "feedback.severity";
+  /// <summary>Change a feedback item's status, including the filer email on Planned, Completed, and Declined.</summary>
+  public const string FeedbackStatus = "feedback.status";
 
   /// <summary>All product permission ids (stable catalog order).</summary>
   public static IReadOnlyList<string> All { get; } =
@@ -98,6 +110,10 @@ public static class PermissionIds
     CredentialManageSelf,
     DemoInvoke,
     FeedbackFileSelf,
+    FeedbackRead,
+    FeedbackNote,
+    FeedbackSeverity,
+    FeedbackStatus,
   ];
 
   /// <summary>

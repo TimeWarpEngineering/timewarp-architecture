@@ -10,6 +10,8 @@
 // cross-owner list, which filters by status and orders newest first (task 314); the other
 // admin sorts (Title, Kind, Status, task 327) add no index, see EfFeedbackStore. Status is
 // stored as the enum name like Kind; existing rows default to New in the migration.
+// Severity is stored as the enum name. Existing rows default to Unset ("not reviewed").
+// A severity activity row stores From/To severity and leaves status null; a status row does the reverse.
 // The thread is OwnsMany into "feedback_activity", keyed by (FeedbackItemId, Sequence) so two
 // writers appending the same position collide. Field access on ActivityList because the
 // Activity getter returns a sorted copy. IsVisibleToFiler is derived and not mapped.
@@ -18,6 +20,7 @@
 namespace TimeWarp.Architecture.Features.Feedback.Infrastructure;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
+using DomainSeverity = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackSeverity;
 
 public sealed class FeedbackItemEntityTypeConfiguration : IEntityTypeConfiguration<FeedbackItem>
 {
@@ -59,6 +62,11 @@ public sealed class FeedbackItemEntityTypeConfiguration : IEntityTypeConfigurati
       .HasConversion<string>()
       .HasMaxLength(32)
       .IsRequired();
+    builder.Property(item => item.Severity)
+      .HasConversion<string>()
+      .HasMaxLength(32)
+      .HasDefaultValue(DomainSeverity.Unset)
+      .IsRequired();
     builder.HasIndex(item => new { item.Status, item.FiledAt });
 
     builder.OwnsMany(item => item.Activity, activity =>
@@ -79,6 +87,8 @@ public sealed class FeedbackItemEntityTypeConfiguration : IEntityTypeConfigurati
       activity.Property(entry => entry.Body).HasMaxLength(FeedbackItem.MaxMessageLength);
       activity.Property(entry => entry.FromStatus).HasConversion<string>().HasMaxLength(32);
       activity.Property(entry => entry.ToStatus).HasConversion<string>().HasMaxLength(32);
+      activity.Property(entry => entry.FromSeverity).HasConversion<string>().HasMaxLength(32);
+      activity.Property(entry => entry.ToSeverity).HasConversion<string>().HasMaxLength(32);
       activity.Property(entry => entry.At).IsRequired();
       activity.Ignore(entry => entry.IsVisibleToFiler);
     });

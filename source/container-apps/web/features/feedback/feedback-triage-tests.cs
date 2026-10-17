@@ -59,9 +59,11 @@ namespace TimeWarp.Architecture.Features.Feedback
   using ChangeStatusHandler = TimeWarp.Architecture.Features.Feedback.Application.ChangeFeedbackStatus.Handler;
   using ContractActivityKind = TimeWarp.Architecture.Features.Feedback.FeedbackActivityKind;
   using ContractKind = TimeWarp.Architecture.Features.Feedback.FeedbackKind;
+  using ContractSeverity = TimeWarp.Architecture.Features.Feedback.FeedbackSeverity;
   using ContractStatus = TimeWarp.Architecture.Features.Feedback.FeedbackStatus;
   using DomainActivityKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackActivityKind;
   using DomainKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackKind;
+  using DomainSeverity = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackSeverity;
   using DomainStatus = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackStatus;
   using FilerGetContract = TimeWarp.Architecture.Features.Feedback.GetFeedback;
   using FilerGetHandler = TimeWarp.Architecture.Features.Feedback.Application.GetFeedback.Handler;
@@ -71,6 +73,8 @@ namespace TimeWarp.Architecture.Features.Feedback
   using FilerReplyHandler = TimeWarp.Architecture.Features.Feedback.Application.ReplyAsFiler.Handler;
   using ReplyContract = TimeWarp.Architecture.Features.Feedback.ReplyToFeedback;
   using ReplyHandler = TimeWarp.Architecture.Features.Feedback.Application.ReplyToFeedback.Handler;
+  using SetSeverityContract = TimeWarp.Architecture.Features.Feedback.SetFeedbackSeverity;
+  using SetSeverityHandler = TimeWarp.Architecture.Features.Feedback.Application.SetFeedbackSeverity.Handler;
 
   [TestTag("Domain")]
   public class FeedbackItemTriage_Given_
@@ -84,6 +88,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     {
       FeedbackItem item = Filed(Guid.NewGuid());
       item.Status.ShouldBe(DomainStatus.New);
+      item.Severity.ShouldBe(DomainSeverity.Unset);
       item.Activity.ShouldBeEmpty();
       return Task.CompletedTask;
     }
@@ -101,6 +106,55 @@ namespace TimeWarp.Architecture.Features.Feedback
       entry.At.ShouldBe(At);
       entry.Sequence.ShouldBe(1);
       entry.Body.ShouldBeNull();
+      entry.FromSeverity.ShouldBeNull();
+      entry.ToSeverity.ShouldBeNull();
+      item.Severity.ShouldBe(DomainSeverity.Unset);
+      return Task.CompletedTask;
+    }
+
+    public static Task SetSeverity_Should_RecordFromToWhoAndWhenWithoutMovingStatus()
+    {
+      FeedbackItem item = Filed(Guid.NewGuid());
+      var reviewer = Guid.NewGuid();
+      FeedbackActivity entry = item.SetSeverity(DomainSeverity.High, reviewer, At);
+      item.Status.ShouldBe(DomainStatus.New);
+      item.Severity.ShouldBe(DomainSeverity.High);
+      entry.Kind.ShouldBe(DomainActivityKind.SeverityChange);
+      entry.FromSeverity.ShouldBe(DomainSeverity.Unset);
+      entry.ToSeverity.ShouldBe(DomainSeverity.High);
+      entry.FromStatus.ShouldBeNull();
+      entry.ToStatus.ShouldBeNull();
+      entry.Body.ShouldBeNull();
+      entry.AuthorPrincipalId.ShouldBe(reviewer);
+      entry.At.ShouldBe(At);
+      entry.Sequence.ShouldBe(1);
+      entry.IsVisibleToFiler.ShouldBeFalse();
+
+      item.ChangeStatus(DomainStatus.Planned, reviewer, At.AddMinutes(1));
+      item.Severity.ShouldBe(DomainSeverity.High);
+      item.SetSeverity(DomainSeverity.Critical, reviewer, At.AddMinutes(2));
+      item.Status.ShouldBe(DomainStatus.Planned);
+      item.Severity.ShouldBe(DomainSeverity.Critical);
+      item.Activity.Count.ShouldBe(3);
+      item.Activity.Count(candidate => candidate.Kind == DomainActivityKind.SeverityChange).ShouldBe(2);
+      return Task.CompletedTask;
+    }
+
+    public static Task SetSeverity_Should_RefuseUnsetAndTheCurrentValue()
+    {
+      FeedbackItem item = Filed(Guid.NewGuid());
+      var reviewer = Guid.NewGuid();
+      Should.Throw<InvalidOperationException>(() => item.SetSeverity(DomainSeverity.Unset, reviewer, At));
+      item.SetSeverity(DomainSeverity.Low, reviewer, At);
+      Should.Throw<InvalidOperationException>(() => item.SetSeverity(DomainSeverity.Low, reviewer, At));
+      Should.Throw<InvalidOperationException>(() => item.SetSeverity(DomainSeverity.Unset, reviewer, At));
+      Should.Throw<ArgumentException>(() => item.SetSeverity((DomainSeverity)99, reviewer, At));
+      Should.Throw<ArgumentException>(() => item.SetSeverity(DomainSeverity.Medium, Guid.Empty, At));
+      item.CanSetSeverityTo(DomainSeverity.Low).ShouldBeFalse();
+      item.CanSetSeverityTo(DomainSeverity.Unset).ShouldBeFalse();
+      item.CanSetSeverityTo(DomainSeverity.High).ShouldBeTrue();
+      item.Status.ShouldBe(DomainStatus.New);
+      item.Activity.Count.ShouldBe(1);
       return Task.CompletedTask;
     }
 
@@ -162,6 +216,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     public static Task EnumNames_Should_MatchBetweenContractAndDomain()
     {
       Enum.GetNames<ContractStatus>().ShouldBe(Enum.GetNames<DomainStatus>());
+      Enum.GetNames<ContractSeverity>().ShouldBe(Enum.GetNames<DomainSeverity>());
       Enum.GetNames<ContractActivityKind>().ShouldBe(Enum.GetNames<DomainActivityKind>());
       return Task.CompletedTask;
     }
@@ -652,6 +707,93 @@ namespace TimeWarp.Architecture.Features.Feedback
       gated.Directory.Batches.ShouldBeEmpty();
     }
 
+    public static async Task AgentToken_WithAdministratorRole_Should_NotReadOwnerNames()
+    {
+      TriageWorld world = new();
+      await world.AddProfileAsync(world.Filer.Value, "Ada Lovelace");
+      PrincipalId agent = PrincipalId.New();
+      await world.AssignAdministratorAsync(agent);
+      world.HoldAgentScopes(agent, AgentScopes.FeedbackRead);
+
+      (await world.OwnerNames(agent).FindAsync(world.Filer.Value, CancellationToken.None)).ShouldBeNull();
+      world.Directory.Batches.ShouldBeEmpty();
+
+      // The same principal, evaluated as a human session, holds admin.profiles.read through
+      // the Administrator role. The agent-token path above must not have used that grant.
+      world.ReleaseAgentScopes(agent);
+      (await world.OwnerNames(agent).FindAsync(world.Filer.Value, CancellationToken.None))
+        .ShouldBe("Ada Lovelace");
+      world.Directory.Batches.Count.ShouldBe(1);
+    }
+
+    public static async Task List_Should_TreatOmittedSeverityAsEveryItemAndUnsetAsUnreviewed()
+    {
+      TriageWorld world = new();
+      FeedbackItem unreviewed = await world.AddAsync(world.Filer.Value, day: 1);
+      FeedbackItem reviewed = await world.AddAsync(Guid.NewGuid(), day: 2);
+      (await world.SetSeverityAsync(reviewed.Id.Value, ContractSeverity.Low)).Item.Status.ShouldBe(ContractStatus.New);
+
+      AdminListContract.Response all = await world.ListAsync(new AdminListContract.Query { IncludeClosed = true });
+      all.Items.Select(item => item.FeedbackItemId).ShouldBe([reviewed.Id.Value, unreviewed.Id.Value]);
+      all.Items.Single(item => item.FeedbackItemId == reviewed.Id.Value).Severity.ShouldBe(ContractSeverity.Low);
+      all.Items.Single(item => item.FeedbackItemId == unreviewed.Id.Value).Severity.ShouldBe(ContractSeverity.Unset);
+
+      AdminListContract.Response queue = await world.ListAsync(
+        new AdminListContract.Query { IncludeClosed = true, Severity = ContractSeverity.Unset });
+      queue.Items.Select(item => item.FeedbackItemId).ShouldBe([unreviewed.Id.Value]);
+
+      new AdminListContract.Query { Severity = ContractSeverity.Unset }.GetRouteWithQueryString()
+        .ShouldContain("Severity=Unset");
+      new AdminListContract.Query().GetRouteWithQueryString()
+        .Contains("Severity", StringComparison.Ordinal).ShouldBeFalse();
+    }
+
+    public static async Task SetSeverity_Should_LeaveStatusAndSendNoMail_AndCompletedStillEmails()
+    {
+      TriageWorld world = new();
+      await world.SetFilerEmailAsync("ada@example.com");
+      FeedbackItem item = await world.AddAsync(world.Filer.Value, day: 1);
+
+      SetSeverityContract.Response set = await world.SetSeverityAsync(item.Id.Value, ContractSeverity.Medium);
+      set.Item.Severity.ShouldBe(ContractSeverity.Medium);
+      set.Item.Status.ShouldBe(ContractStatus.New);
+      set.Item.Activity.ShouldContain(entry =>
+        entry.Kind == ContractActivityKind.SeverityChange
+        && entry.FromSeverity == ContractSeverity.Unset
+        && entry.ToSeverity == ContractSeverity.Medium
+        && entry.Body == null
+        && entry.FromStatus == null);
+      world.Mail.Messages.ShouldBeEmpty();
+
+      (await world.SetSeverityProblemAsync(item.Id.Value, ContractSeverity.Medium)).Status.ShouldBe(409);
+      (await world.SetSeverityProblemAsync(item.Id.Value, ContractSeverity.Unset)).Status.ShouldBe(400);
+      world.Mail.Messages.ShouldBeEmpty();
+
+      ChangeStatusContract.Response completed = await world.ChangeStatusAsync(item.Id.Value, ContractStatus.Completed);
+      completed.FilerEmailed.ShouldBeTrue();
+      completed.Item.Severity.ShouldBe(ContractSeverity.Medium);
+      completed.Item.Status.ShouldBe(ContractStatus.Completed);
+      world.Mail.Messages.Count.ShouldBe(1);
+      world.Mail.Messages[0].To.ShouldContain("ada@example.com");
+    }
+
+    public static async Task FilerJson_Should_OmitSeverityOnGetAndListMine()
+    {
+      TriageWorld world = new();
+      FeedbackItem item = await world.AddAsync(world.Filer.Value, day: 1);
+      await world.SetSeverityAsync(item.Id.Value, ContractSeverity.High);
+      await world.ChangeStatusAsync(item.Id.Value, ContractStatus.UnderReview);
+
+      FilerGetContract.Response get = await world.FilerGetAsync(item.Id.Value);
+      get.Activity.ShouldNotContain(entry => entry.Kind == ContractActivityKind.SeverityChange);
+      get.Activity.ShouldContain(entry => entry.Kind == ContractActivityKind.StatusChange);
+      string getJson = JsonSerializer.Serialize(get, ContractSerializationDefaults.Options);
+      getJson.Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
+
+      string listJson = JsonSerializer.Serialize(await world.FilerListAsync(), ContractSerializationDefaults.Options);
+      listJson.Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
+    }
+
     public static Task Contracts_Should_CarryOwnerDisplayNameThroughJson()
     {
       AdminListContract.Item row = new(
@@ -676,12 +818,29 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task Contracts_Should_RequireTheReadOrManagePermission()
     {
-      PolicyOf(typeof(AdminListContract)).ShouldBe(PermissionIds.AdminFeedbackRead);
-      PolicyOf(typeof(AdminGetContract)).ShouldBe(PermissionIds.AdminFeedbackRead);
-      PolicyOf(typeof(ChangeStatusContract)).ShouldBe(PermissionIds.AdminFeedbackManage);
+      PolicyOf(typeof(AdminListContract)).ShouldBe(PermissionIds.FeedbackRead);
+      PolicyOf(typeof(AdminGetContract)).ShouldBe(PermissionIds.FeedbackRead);
+      PolicyOf(typeof(AddNoteContract)).ShouldBe(PermissionIds.FeedbackNote);
+      PolicyOf(typeof(SetSeverityContract)).ShouldBe(PermissionIds.FeedbackSeverity);
+      PolicyOf(typeof(ChangeStatusContract)).ShouldBe(PermissionIds.FeedbackStatus);
       PolicyOf(typeof(ReplyContract)).ShouldBe(PermissionIds.AdminFeedbackManage);
-      PolicyOf(typeof(AddNoteContract)).ShouldBe(PermissionIds.AdminFeedbackManage);
       PolicyOf(typeof(FilerReplyContract)).ShouldBe(PermissionIds.FeedbackFileSelf);
+
+      foreach (Type agentContract in new[]
+      {
+        typeof(AdminListContract),
+        typeof(AdminGetContract),
+        typeof(AddNoteContract),
+        typeof(SetSeverityContract),
+        typeof(ChangeStatusContract),
+        typeof(DownloadFeedbackAttachment),
+      })
+      {
+        SchemesOf(agentContract).Split(',').ShouldContain(AuthenticationSchemeNames.AgentToken);
+      }
+
+      SchemesOf(typeof(ReplyContract)).Split(',').ShouldNotContain(AuthenticationSchemeNames.AgentToken);
+      SchemesOf(typeof(FilerReplyContract)).Split(',').ShouldNotContain(AuthenticationSchemeNames.AgentToken);
       return Task.CompletedTask;
     }
 
@@ -697,6 +856,57 @@ namespace TimeWarp.Architecture.Features.Feedback
         RolePermissionSeed.DefaultGrants[RoleIds.Operator].ShouldNotContain(permission);
       }
 
+      foreach (string permission in new[]
+      {
+        PermissionIds.FeedbackRead,
+        PermissionIds.FeedbackNote,
+        PermissionIds.FeedbackSeverity,
+        PermissionIds.FeedbackStatus,
+      })
+      {
+        PermissionIds.All.ShouldContain(permission);
+        RolePermissionSeed.AdminPermissions.ShouldNotContain(permission);
+        RolePermissionSeed.DefaultGrants[RoleIds.Administrator].ShouldContain(permission);
+        RolePermissionSeed.DefaultGrants[RoleIds.Member].ShouldNotContain(permission);
+        RolePermissionSeed.DefaultGrants[RoleIds.Developer].ShouldNotContain(permission);
+        RolePermissionSeed.DefaultGrants[RoleIds.Operator].ShouldNotContain(permission);
+      }
+
+      return Task.CompletedTask;
+    }
+
+    public static Task Scopes_Should_ExpandToOneFeedbackPermissionAndNothingAdmin()
+    {
+      (string Scope, string Permission)[] pairs =
+      [
+        (AgentScopes.FeedbackRead, PermissionIds.FeedbackRead),
+        (AgentScopes.FeedbackNote, PermissionIds.FeedbackNote),
+        (AgentScopes.FeedbackSeverity, PermissionIds.FeedbackSeverity),
+        (AgentScopes.FeedbackStatus, PermissionIds.FeedbackStatus),
+      ];
+      string[] writesAndReply =
+      [
+        PermissionIds.FeedbackNote,
+        PermissionIds.FeedbackSeverity,
+        PermissionIds.FeedbackStatus,
+        PermissionIds.AdminFeedbackManage,
+      ];
+
+      foreach ((string scope, string permission) in pairs)
+      {
+        IReadOnlyList<string> expanded = AgentScopePermissionSeed.Expand([scope]);
+        expanded.ShouldBe([permission]);
+        foreach (string adminPermission in RolePermissionSeed.AdminPermissions)
+        {
+          expanded.ShouldNotContain(adminPermission);
+        }
+
+        foreach (string other in writesAndReply.Where(candidate => candidate != permission))
+        {
+          expanded.ShouldNotContain(other);
+        }
+      }
+
       return Task.CompletedTask;
     }
 
@@ -706,6 +916,13 @@ namespace TimeWarp.Architecture.Features.Feedback
       Attribute attribute = contract.GetCustomAttributes()
         .Single(candidate => candidate.GetType().Name == "EndpointAuthorizeAttribute");
       return (string?)attribute.GetType().GetProperty("Policy")!.GetValue(attribute);
+    }
+
+    private static string SchemesOf(Type contract)
+    {
+      Attribute attribute = contract.GetCustomAttributes()
+        .Single(candidate => candidate.GetType().Name == "EndpointAuthorizeAttribute");
+      return ((string?)attribute.GetType().GetProperty("AuthenticationSchemes")!.GetValue(attribute))!;
     }
   }
 
@@ -721,6 +938,8 @@ namespace TimeWarp.Architecture.Features.Feedback
     public PrincipalId Admin { get; } = PrincipalId.New();
     private readonly IEmailSender Sender;
     private readonly TriageBaseUrl BaseUrl = new(new Uri("https://app.example"));
+    private readonly InMemoryPrincipalRoleStore Roles = new();
+    private readonly TriageHeldAgentScopes HeldScopes = new();
     private readonly PermissionEvaluator Evaluator;
 
     /// <summary>Admin is an Administrator; grantProfilesRead false strips admin.profiles.read from that role.</summary>
@@ -729,8 +948,7 @@ namespace TimeWarp.Architecture.Features.Feedback
       Lookup = new ProfileEmailLookup(Profiles);
       Directory = new TriageCountingDirectory(new ProfileDirectory(Profiles));
       Sender = sender ?? Mail;
-      InMemoryPrincipalRoleStore roles = new();
-      roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
+      Roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
       InMemoryRolePermissionStore permissions = new();
       if (!grantProfilesRead)
       {
@@ -741,10 +959,18 @@ namespace TimeWarp.Architecture.Features.Feedback
       }
 
       EffectiveRolesResolver resolver = new(
-        roles,
+        Roles,
         Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
-      Evaluator = new PermissionEvaluator(resolver, permissions, new TriageNoAgentScopes());
+      Evaluator = new PermissionEvaluator(resolver, permissions, HeldScopes);
     }
+
+    public Task AssignAdministratorAsync(PrincipalId principal) =>
+      Roles.SetRoleIdsAsync(principal, [RoleIds.Administrator]);
+
+    public void HoldAgentScopes(PrincipalId principal, params string[] scopes) =>
+      HeldScopes.Hold(principal, scopes);
+
+    public void ReleaseAgentScopes(PrincipalId principal) => HeldScopes.Release(principal);
 
     public static DateTimeOffset Day(int day) => new(2026, 10, day, 0, 0, 0, TimeSpan.Zero);
 
@@ -784,7 +1010,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     }
 
     public FeedbackOwnerNames OwnerNames(PrincipalId? principal) =>
-      new(new TriagePrincipalAccessor(principal), Evaluator, Directory);
+      new(new TriagePrincipalAccessor(principal), Evaluator, Directory, HeldScopes);
 
     public async Task SetFilerEmailAsync(string email)
     {
@@ -812,6 +1038,11 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public AddNoteHandler Note() => Note(Admin);
 
+    public SetSeverityHandler SetSeverity(PrincipalId? principal) =>
+      new(new TriagePrincipalAccessor(principal), Feedback, Attachments, Lookup, OwnerNames(principal));
+
+    public SetSeverityHandler SetSeverity() => SetSeverity(Admin);
+
     public FilerReplyHandler FilerReply(PrincipalId? principal) =>
       new(new TriagePrincipalAccessor(principal), Feedback);
 
@@ -830,6 +1061,14 @@ namespace TimeWarp.Architecture.Features.Feedback
     public async Task<AddNoteContract.Response> NoteAsync(Guid id, string body) =>
       (await Note().Handle(new AddNoteContract.Command { FeedbackItemId = id, Body = body }, CancellationToken.None))
         .Match(ok => ok, _ => throw new InvalidOperationException("Expected note success"));
+
+    public async Task<SetSeverityContract.Response> SetSeverityAsync(Guid id, ContractSeverity severity) =>
+      (await SetSeverity().Handle(new SetSeverityContract.Command { FeedbackItemId = id, Severity = severity }, CancellationToken.None))
+        .Match(ok => ok, problem => throw new InvalidOperationException($"Expected severity success: {problem.Detail}"));
+
+    public async Task<SharedProblemDetails> SetSeverityProblemAsync(Guid id, ContractSeverity severity) =>
+      (await SetSeverity().Handle(new SetSeverityContract.Command { FeedbackItemId = id, Severity = severity }, CancellationToken.None))
+        .Match(_ => throw new InvalidOperationException("Expected severity problem"), problem => problem);
 
     public async Task<FilerGetContract.Response> FilerGetAsync(Guid id) =>
       (await new FilerGetHandler(new TriagePrincipalAccessor(Filer), Feedback, Attachments)
@@ -873,9 +1112,17 @@ namespace TimeWarp.Architecture.Features.Feedback
       Inner.SearchAsync(term, cancellationToken);
   }
 
-  internal sealed class TriageNoAgentScopes : IAgentPermissionScopeSource
+  internal sealed class TriageHeldAgentScopes : IAgentPermissionScopeSource
   {
-    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) => null;
+    private readonly Dictionary<Guid, IReadOnlyList<string>> Scopes = [];
+
+    public void Hold(PrincipalId principal, params string[] scopes) =>
+      Scopes[principal.Value] = scopes;
+
+    public void Release(PrincipalId principal) => Scopes.Remove(principal.Value);
+
+    public IReadOnlyList<string>? GetHeldScopesFor(PrincipalId principalId) =>
+      Scopes.TryGetValue(principalId.Value, out IReadOnlyList<string>? scopes) ? scopes : null;
   }
 
   internal sealed class TriageMailCapture : IEmailSender

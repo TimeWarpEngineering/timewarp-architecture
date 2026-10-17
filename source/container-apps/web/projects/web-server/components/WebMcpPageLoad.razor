@@ -1,0 +1,36 @@
+@namespace TimeWarp.Architecture.Components
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using TimeWarp.Architecture.Features.Applications
+
+@code {
+  #region Purpose
+  // Emits the page-load navigate payload and its classic script before Blazor starts.
+  #endregion
+
+  #region Design
+  // Static SSR, first in the body. HttpContext is the static-SSR cascade; IHttpContextAccessor
+  // is the fallback for the same request. The JSON is the real navigate tool for this principal.
+  // The script src is parser-blocking and is not a module, so registerTool runs during HTML parse
+  // when a model context is already present. This component is not interactive.
+  #endregion
+
+  [Inject] private IAuthorizationService AuthorizationService { get; set; } = null!;
+
+  [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
+
+  [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+  private string Json { get; set; } = "";
+
+  protected override async Task OnInitializedAsync()
+  {
+    HttpContext context = HttpContext ?? HttpContextAccessor.HttpContext
+      ?? throw new InvalidOperationException("WebMcpPageLoad requires the current request.");
+    ClaimsPrincipal user = context.User ?? new ClaimsPrincipal(new ClaimsIdentity());
+    Json = await WebMcpDiscoveryCatalog.PageLoadJsonAsync(user, AuthorizationService, context.Request.Path.Value);
+  }
+}
+
+<script id="timewarp-webmcp-page-load" type="application/json">@((MarkupString)Json)</script>
+<script src="js/features/web-mcp-page-load.js"></script>

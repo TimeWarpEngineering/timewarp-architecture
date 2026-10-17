@@ -3,7 +3,9 @@
 #endregion
 
 #region Design
-// Task 314. admin.feedback.read on the human session schemes. Closed items (Completed,
+// Task 314, policy moved to feedback.read (task 378) on the human session schemes and the
+// agent-token scheme. Administrator holds feedback.read, so the admin UI keeps working.
+// Closed items (Completed,
 // Declined) are hidden unless IncludeClosed is true or Status names one explicitly. FiledFrom
 // is inclusive and FiledTo exclusive. Page is 1-based and capped at MaxPage so the row offset
 // cannot overflow; PageSize defaults to 25 and is capped at MaxPageSize. GET carries its filters in the query string (IQueryStringRouteProvider), so the
@@ -16,6 +18,11 @@
 // sort would have to load every match; the 403 rule of task 328 would apply if it is added.
 // Task 345: Search keeps items whose title contains the term (case-insensitive), and
 // [ReferenceableResource] makes the list the "feedback" @ type in Ask, labelled by title.
+// The @ picker authorizes feedback.read. An Administrator still sees it. The in-app Ask
+// agent is not granted a triage scope.
+// Severity (task 378) is optional. Omitted returns every severity. Unset is a real filter
+// (the unreviewed queue), so the property is nullable: a non-nullable enum would collapse
+// the two. Items include Severity. The filer's list does not.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -25,8 +32,8 @@ using System.Globalization;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = PermissionIds.AdminFeedbackRead,
-  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+  Policy = PermissionIds.FeedbackRead,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
 [ReferenceableResource(ListFeedback.ReferencePrefix, "Feedback items", IdProperty = nameof(ListFeedback.Item.FeedbackItemId), LabelProperty = nameof(ListFeedback.Item.Title))]
 public static partial class ListFeedback
@@ -45,6 +52,7 @@ public static partial class ListFeedback
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackStatus? Status { get; set; }
+    public FeedbackSeverity? Severity { get; set; }
     public FeedbackKind? Kind { get; set; }
     public DateTimeOffset? FiledFrom { get; set; }
     public DateTimeOffset? FiledTo { get; set; }
@@ -60,6 +68,7 @@ public static partial class ListFeedback
       var parameters = new NameValueCollection
       {
         { nameof(Status), Status?.ToString() },
+        { nameof(Severity), Severity?.ToString() },
         { nameof(Kind), Kind?.ToString() },
         { nameof(FiledFrom), FiledFrom?.ToString("O", CultureInfo.InvariantCulture) },
         { nameof(FiledTo), FiledTo?.ToString("O", CultureInfo.InvariantCulture) },
@@ -79,6 +88,7 @@ public static partial class ListFeedback
     public Validator()
     {
       RuleFor(query => query.Status).IsInEnum();
+      RuleFor(query => query.Severity).IsInEnum();
       RuleFor(query => query.Kind).IsInEnum();
       RuleFor(query => query.Page).InclusiveBetween(1, MaxPage);
       RuleFor(query => query.PageSize).InclusiveBetween(1, MaxPageSize);
@@ -99,6 +109,7 @@ public static partial class ListFeedback
     public Guid OwnerPrincipalId { get; }
     public FeedbackKind Kind { get; }
     public FeedbackStatus Status { get; }
+    public FeedbackSeverity Severity { get; }
     public string Title { get; }
     public DateTimeOffset FiledAt { get; }
     public string? OwnerDisplayName { get; }
@@ -110,7 +121,8 @@ public static partial class ListFeedback
       FeedbackStatus status,
       string title,
       DateTimeOffset filedAt,
-      string? ownerDisplayName = null)
+      string? ownerDisplayName = null,
+      FeedbackSeverity severity = FeedbackSeverity.Unset)
     {
       FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
       OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -124,8 +136,14 @@ public static partial class ListFeedback
         throw new ArgumentException("Status must be a defined feedback status.", nameof(status));
       }
 
+      if (!Enum.IsDefined(severity))
+      {
+        throw new ArgumentException("Severity must be a defined feedback severity.", nameof(severity));
+      }
+
       Kind = kind;
       Status = status;
+      Severity = severity;
       Title = Guard.Against.NullOrWhiteSpace(title);
       FiledAt = filedAt;
       OwnerDisplayName = ownerDisplayName;
@@ -156,7 +174,8 @@ public static partial class ListFeedback
         FeedbackStatus.UnderReview,
         "Mock bug report",
         DateTimeOffset.Parse("2026-10-09T00:00:00Z"),
-        "Ada Lovelace"),
+        "Ada Lovelace",
+        FeedbackSeverity.Medium),
       new(
         Guid.Parse("55555555-5555-5555-5555-555555555555"),
         owner,
@@ -164,7 +183,8 @@ public static partial class ListFeedback
         FeedbackStatus.New,
         "Mock feature request",
         DateTimeOffset.Parse("2026-10-08T00:00:00Z"),
-        "Ada Lovelace"),
+        "Ada Lovelace",
+        FeedbackSeverity.Unset),
     ];
     return request =>
     {

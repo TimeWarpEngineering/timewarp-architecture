@@ -9,6 +9,7 @@
 // SortBy and SortDescending pass through to the store, which sorts before it pages.
 // Task 336: owner display names come from FeedbackOwnerNames in one batch over the page's
 // distinct owners (never per row), and only with the caller's admin.profiles.read.
+// Severity null is every severity. Unset is passed through as a real filter (task 378).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -16,6 +17,7 @@ namespace TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using static TimeWarp.Architecture.Features.Feedback.ListFeedback;
 using ContractStatus = TimeWarp.Architecture.Features.Feedback.FeedbackStatus;
+using DomainSeverity = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackSeverity;
 using DomainStatus = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackStatus;
 
 public sealed class ListFeedback
@@ -71,6 +73,17 @@ public sealed class ListFeedback
         }
       }
 
+      DomainSeverity? severity = null;
+      if (request.Severity is { } requestedSeverity)
+      {
+        if (FeedbackContractMap.ToDomain(requestedSeverity) is not { } mappedSeverity)
+        {
+          return FeedbackProblems.InvalidSeverity();
+        }
+
+        severity = mappedSeverity;
+      }
+
       int pageSize = Math.Clamp(request.PageSize, 1, MaxPageSize);
       int page = Math.Clamp(request.Page, 1, MaxPage);
       FeedbackPage result = await FeedbackStore
@@ -84,7 +97,8 @@ public sealed class ListFeedback
             pageSize,
             request.SortBy,
             request.SortDescending,
-            request.Search),
+            request.Search,
+            severity),
           cancellationToken)
         .ConfigureAwait(false);
 
@@ -100,7 +114,8 @@ public sealed class ListFeedback
           FeedbackContractMap.ToContract(item.Status),
           item.Title,
           item.FiledAt,
-          ownerNames.GetValueOrDefault(item.OwnerPrincipalId)))
+          ownerNames.GetValueOrDefault(item.OwnerPrincipalId),
+          FeedbackContractMap.ToContract(item.Severity)))
       ];
       return new Response(result.TotalCount, items, page, pageSize);
     }

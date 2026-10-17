@@ -9,6 +9,32 @@ Content usage preferences: `ai-train=yes, search=yes, ai-input=yes`
 Agent skill for this ceremony: [timewarp-identity](/.well-known/agent-skills/timewarp-identity/SKILL.md)
 (index: [/.well-known/agent-skills/index.json](/.well-known/agent-skills/index.json)).
 
+You are an agent. Register by enrolling a public key. There is no email form.
+
+## Agent registration
+
+An agent registers itself. A human does not fill in an email form first. There is no email form.
+
+Registration endpoints:
+
+- `POST /api/identity/agent/register/options`
+- `POST /api/identity/agent/register`
+
+## Supported methods
+
+- **Agent key.** ECDSA P-256 public-key enrollment. No human sponsor and no email.
+- **Browser passkey.** A person enrolls a WebAuthn public key in the browser at [/Login](/Login).
+
+This host does not accept ID-JAG, verified-email, or anonymous OAuth claim registration. It does not publish an OAuth `agent_auth` block or a `register_uri`.
+
+## Credential use
+
+After agent-key enrollment, `POST /api/identity/agent/token/options` and `POST /api/identity/agent/token` return a short-lived opaque bearer token. Send it as `Authorization: Bearer <token>`. A completed browser passkey ceremony sets an HTTP-only session cookie instead. Read the session with `GET /api/identity/session` or the bearer with `GET /api/identity/agent/me` (scope `identity:read`).
+
+## WebMCP
+
+Browser WebMCP and backend MCP are separate transports. The MCP card at `/.well-known/mcp/server-card.json` stays a stub (`capabilities.tools` false). WebMCP tools register in the page with `document.modelContext` (fallback `navigator.modelContext`). The generated list is [`/.well-known/webmcp.json`](/.well-known/webmcp.json). `/` registers `navigate` on page load. `/Feedback` and `/Settings` add route-scoped tools that run only on that SPA route. Inspector: `typeof navigator.modelContext`, Chrome Canary flag `#enable-webmcp-testing` or the MCP-B polyfill, then Copy trace.
+
 ---
 
 ## Mental model
@@ -263,5 +289,4 @@ on bearer failures).
 - No email/password “register” or “forgot password” as the primary auth model.
 - No requirement that an agent find a human to create an account before calling APIs.
 - No blanket block of AI training crawlers (agent-welcome Content Signals).
-- No guarantee that MCP / A2A / skills cards exist yet — see [/llms.txt](/llms.txt)
-  “Planned” section rather than inventing cards.
+- MCP, A2A, and Agent Skills cards are published. The MCP card is a stub: `capabilities.tools` is false. Browser WebMCP is a separate transport; see the WebMCP section above and [/llms.txt](/llms.txt).

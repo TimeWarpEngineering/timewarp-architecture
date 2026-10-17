@@ -7,7 +7,9 @@
 // document.modelContext.registerTool is the current WebMCP entry, with an AbortSignal so the next
 // page replaces the previous tools. navigator.modelContext is the older alias. provideContext is
 // the earlier one-shot API. When none of those exist the call returns available false and
-// registered 0. execute posts the arguments to .NET InvokeTool and parses the JSON result.
+// registered 0. The page-load script may already have registered navigate; abort that handle
+// before registerTool, and retry a rejected call once, or the shared name throws. execute posts
+// the arguments to .NET InvokeTool and parses the JSON result.
 // The server still authorizes every endpoint the store handler calls.
 // #endregion
 
@@ -29,7 +31,7 @@ interface WebMcpRegisteredTool {
 }
 
 interface WebMcpModelContext {
-  registerTool?: (tool: WebMcpRegisteredTool, options?: { signal?: AbortSignal }) => void;
+  registerTool?: (tool: WebMcpRegisteredTool, options?: { signal?: AbortSignal }) => void | Promise<void>;
   provideContext?: (context: { tools: WebMcpRegisteredTool[] }) => void;
 }
 
@@ -46,13 +48,14 @@ export async function Replace(host: WebMcpHost, tools: WebMcpTool[]): Promise<We
     return { available: false, registered: 0 };
   }
 
+  abortPageLoad();
   const registeredTools = tools.map((tool) => toRegisteredTool(host, tool));
   if (typeof modelContext.registerTool === "function") {
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
     for (const tool of registeredTools) {
-      modelContext.registerTool(tool, { signal });
+      await registerOne(modelContext, tool, signal);
     }
 
     return { available: true, registered: registeredTools.length };
@@ -64,6 +67,29 @@ export async function Replace(host: WebMcpHost, tools: WebMcpTool[]): Promise<We
   }
 
   return { available: false, registered: 0 };
+}
+
+function abortPageLoad(): void {
+  const pageLoad = window.__timewarpWebMcpPageLoad;
+  if (!pageLoad) {
+    return;
+  }
+
+  pageLoad.abort();
+  window.__timewarpWebMcpPageLoad = undefined;
+}
+
+async function registerOne(
+  modelContext: WebMcpModelContext,
+  tool: WebMcpRegisteredTool,
+  signal: AbortSignal,
+): Promise<void> {
+  try {
+    await modelContext.registerTool?.(tool, { signal });
+  } catch {
+    abortPageLoad();
+    await modelContext.registerTool?.(tool, { signal });
+  }
 }
 
 function toRegisteredTool(host: WebMcpHost, tool: WebMcpTool): WebMcpRegisteredTool {

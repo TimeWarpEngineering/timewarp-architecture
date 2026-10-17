@@ -7,16 +7,28 @@
 
   private Guid RequestedId;
   private string? PendingStatus;
+  private string? PendingSeverity;
   private string ReplyDraft = "";
   private string NoteDraft = "";
 
   private IEnumerable<string> StatusChoices(FeedbackAdminView item) =>
     FeedbackStatusRules.Assignable.Where(status => status != item.Status).Select(static status => status.ToString());
 
+  private static IEnumerable<string> SeverityChoices(FeedbackAdminView item) =>
+    Enum.GetValues<FeedbackSeverity>()
+      .Where(severity => severity != FeedbackSeverity.Unset && severity != item.Severity)
+      .Select(static severity => severity.ToString());
+
   private string SelectedStatus(FeedbackAdminView item)
   {
     string[] choices = [.. StatusChoices(item)];
     return PendingStatus is not null && choices.Contains(PendingStatus) ? PendingStatus : choices.FirstOrDefault() ?? "";
+  }
+
+  private string SelectedSeverity(FeedbackAdminView item)
+  {
+    string[] choices = [.. SeverityChoices(item)];
+    return PendingSeverity is not null && choices.Contains(PendingSeverity) ? PendingSeverity : choices.FirstOrDefault() ?? "";
   }
 
   protected override async Task OnParametersSetAsync()
@@ -33,6 +45,7 @@
 
     RequestedId = FeedbackItemId;
     PendingStatus = null;
+    PendingSeverity = null;
     ReplyDraft = "";
     NoteDraft = "";
     await FeedbackAdminState.OpenFeedbackForAdmin(FeedbackItemId);
@@ -44,6 +57,15 @@
     {
       await FeedbackAdminState.ChangeFeedbackStatus(item.FeedbackItemId, status);
       PendingStatus = null;
+    }
+  }
+
+  private async Task SetSeverityAsync(FeedbackAdminView item)
+  {
+    if (Enum.TryParse(SelectedSeverity(item), out FeedbackSeverity severity))
+    {
+      await FeedbackAdminState.SetFeedbackSeverity(item.FeedbackItemId, severity);
+      PendingSeverity = null;
     }
   }
 
@@ -71,6 +93,7 @@
     FeedbackActivityKind.AdminReply => "Admin reply",
     FeedbackActivityKind.FilerReply => "Filer reply",
     FeedbackActivityKind.InternalNote => "Internal note — not visible to the filer",
+    FeedbackActivityKind.SeverityChange => "Severity — not visible to the filer",
     _ => kind.ToString(),
   };
 }
@@ -88,6 +111,7 @@
         <dl class="admin-feedback-facts">
           <dt>Kind</dt><dd>@item.Kind</dd>
           <dt>Status</dt><dd data-qa="AdminFeedbackStatusValue">@item.Status</dd>
+          <dt>Severity</dt><dd data-qa="AdminFeedbackSeverityValue">@item.Severity</dd>
           <dt>Filed</dt><dd>@item.FiledAt.ToString("u")</dd>
           <dt>Owner</dt>
           <dd><FeedbackOwnerLink OwnerPrincipalId="@item.OwnerPrincipalId" OwnerDisplayName="@item.OwnerDisplayName" /></dd>
@@ -110,13 +134,17 @@
             @foreach (FeedbackActivityEntry entry in thread.Activity)
             {
               <li @key="entry.Sequence"
-                class="@(entry.Kind == FeedbackActivityKind.InternalNote ? "admin-feedback-entry admin-feedback-note" : "admin-feedback-entry")"
+                class="@((entry.Kind is FeedbackActivityKind.InternalNote or FeedbackActivityKind.SeverityChange) ? "admin-feedback-entry admin-feedback-note" : "admin-feedback-entry")"
                 data-qa="@($"AdminFeedback{entry.Kind}")">
                 <strong>@ActivityLabel(entry.Kind)</strong>
                 <span class="admin-feedback-when">@entry.At.ToString("u")</span>
                 @if (entry.Kind == FeedbackActivityKind.StatusChange)
                 {
                   <p>@entry.FromStatus → @entry.ToStatus</p>
+                }
+                else if (entry.Kind == FeedbackActivityKind.SeverityChange)
+                {
+                  <p>@entry.FromSeverity → @entry.ToSeverity</p>
                 }
                 else
                 {
@@ -128,7 +156,25 @@
         }
       </Section>
 
-      <AuthorizeView Policy="@PermissionIds.AdminFeedbackManage">
+      <AuthorizeView Policy="@PermissionIds.FeedbackSeverity">
+        <Authorized>
+          <Section Title="Set severity" LoadingActionType="typeof(FeedbackAdminState.SetFeedbackSeverityActionSet.Action)">
+            <p>Severity is the review. The filer does not see it, and setting it does not email them or move the status.</p>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Bottom">
+              <FluentSelect TOption="string" TValue="string"
+                Items="SeverityChoices(thread)"
+                Value="@SelectedSeverity(thread)"
+                ValueChanged="@(value => PendingSeverity = value)"
+                AriaLabel="New severity"
+                data-qa="AdminFeedbackNewSeverity" />
+              <FluentButton Appearance="ButtonAppearance.Primary"
+                data-qa="AdminFeedbackSetSeverity"
+                OnClick="@(() => SetSeverityAsync(thread))">Set severity</FluentButton>
+            </FluentStack>
+          </Section>
+        </Authorized>
+      </AuthorizeView>
+      <AuthorizeView Policy="@PermissionIds.FeedbackStatus">
         <Authorized>
           <Section Title="Change status" LoadingActionType="typeof(FeedbackAdminState.ChangeFeedbackStatusActionSet.Action)">
             <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Bottom">
@@ -143,6 +189,10 @@
                 OnClick="@(() => ChangeStatusAsync(thread))">Change status</FluentButton>
             </FluentStack>
           </Section>
+        </Authorized>
+      </AuthorizeView>
+      <AuthorizeView Policy="@PermissionIds.AdminFeedbackManage">
+        <Authorized>
           <Section Title="Reply to filer" LoadingActionType="typeof(FeedbackAdminState.ReplyToFeedbackActionSet.Action)">
             <p data-qa="AdminFeedbackReplyHint">
               @(thread.FilerHasEmail
@@ -154,6 +204,10 @@
               data-qa="AdminFeedbackSendReply"
               OnClick="@(() => SendReplyAsync(thread))">Send reply</FluentButton>
           </Section>
+        </Authorized>
+      </AuthorizeView>
+      <AuthorizeView Policy="@PermissionIds.FeedbackNote">
+        <Authorized>
           <Section Title="Internal note" LoadingActionType="typeof(FeedbackAdminState.AddFeedbackNoteActionSet.Action)">
             <p>Internal notes are not visible to the filer.</p>
             <TextArea @bind-Value="NoteDraft" AriaLabel="Internal note" data-qa="AdminFeedbackNote" />

@@ -59,6 +59,7 @@ on:
       - '.vally.yaml'
       - 'evals/**'
       - 'skills/**'
+      - 'goldens/**'
   pull_request:
     types:
       - opened
@@ -83,6 +84,7 @@ on:
       - '.vally.yaml'
       - 'evals/**'
       - 'skills/**'
+      - 'goldens/**'
   release:
     types: [published]
   schedule:
@@ -148,7 +150,7 @@ jobs:
           skill=false
           template=false
 
-          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props)'; then
+          if echo "$changed" | grep -Eq '^(source/|tests/|timewarp-templates/|\.template\.config/|tools/|msbuild/|\.github/workflows/|Directory\.Build\.props|Directory\.Packages\.props|goldens/)'; then
             ci=true
           fi
 
@@ -232,6 +234,21 @@ jobs:
           # Make OpenSSL (the runner's HttpClient) honour the trusted dev cert (see Trust step above).
           export SSL_CERT_DIR="$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs:/etc/ssl/certs"
           dotnet run tools/dev-cli/dev.cs -- workflow ${{ matrix.args }}
+
+      # Task 308: rewrite the checked-in ingress prefix golden from the two host builds, then fail
+      # if that rewrite changed the tree. A hand-edited golden, or a contract change that skipped
+      # regenerate, shows up here. Scoped to goldens/ingress. The fast job is the one place it runs.
+      - name: Regenerate ingress prefixes and fail on diff
+        if: success() && matrix.name == 'fast'
+        run: |
+          set -euo pipefail
+          dotnet run tools/dev-cli/dev.cs -- regenerate-generated
+          git diff --exit-code -- goldens/ingress
+          if [ -n "$(git status --porcelain -- goldens/ingress)" ]; then
+            echo "goldens/ingress has unstaged or untracked changes after regenerate"
+            git status --porcelain -- goldens/ingress
+            exit 1
+          fi
 
       # Task 290: browser proof. The web-spa Playwright tests write screenshots and the prerendered
       # HTML to their test output, <test bin>/playwright-screenshots/<test class>/ (task 316).

@@ -3,11 +3,12 @@
 #endregion
 
 #region Design
-// Task 314 decisions 1 and 3. admin.feedback.manage. New is refused (400): nothing returns an
-// item to "nobody has looked yet". Choosing the current status is 409. The change is recorded
-// in the thread. FilerEmailed is true only when the new status is one FeedbackStatusRules
-// emails about (Planned, Completed, Declined), the filer's profile has an email, and the send
-// completed. The response carries the updated admin view.
+// Task 378. feedback.status on the human session schemes and the agent-token scheme. The rules
+// are the same as before: New is refused (400), the current status is 409, and the change is
+// recorded in the thread. It does not set severity. FilerEmailed is true only when the new
+// status is one FeedbackStatusRules emails about (Planned, Completed, Declined), the filer's
+// profile has an email, and the send completed — including when the caller is an agent. The
+// response carries the updated admin view.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -15,8 +16,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = PermissionIds.AdminFeedbackManage,
-  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+  Policy = PermissionIds.FeedbackStatus,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
 public static partial class ChangeFeedbackStatus
 {

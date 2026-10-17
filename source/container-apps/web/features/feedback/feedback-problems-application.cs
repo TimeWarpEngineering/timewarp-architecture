@@ -8,7 +8,8 @@
 // AttachmentGone is the 404 for a reader who may see the row but whose bytes are missing
 // (an in-memory store that restarted, task 352); it is only returned after the access check.
 // StatusUnchanged and Changed are the triage conflicts (task 314): choosing the current status,
-// and another writer saving the item between this request's read and write.
+// and another writer saving the item between this request's read and write. InvalidSeverity and
+// SeverityUnchanged are the same pair for review severity (task 378): Unset, and the current value.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
@@ -110,6 +111,20 @@ internal static class FeedbackProblems
     Title = "Status unchanged",
     Status = 409,
     Detail = $"The feedback item is already {status}."
+  };
+
+  public static SharedProblemDetails InvalidSeverity() => new()
+  {
+    Title = "Invalid severity",
+    Status = 400,
+    Detail = "Severity must be a defined feedback severity other than Unset."
+  };
+
+  public static SharedProblemDetails SeverityUnchanged(string severity) => new()
+  {
+    Title = "Severity unchanged",
+    Status = 409,
+    Detail = $"The feedback item is already {severity}."
   };
 
   public static SharedProblemDetails Changed() => new()

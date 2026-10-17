@@ -12,6 +12,9 @@
 // Task 336: OwnerDisplayName is the filer's profile display name, set only when the caller
 // holds admin.profiles.read and the filer has a profile row; every admin endpoint that returns
 // this view fills it the same way, so a mutation never blanks the name on the detail page.
+// An agent token is not granted admin.profiles.read, so OwnerDisplayName stays null and the
+// caller sees OwnerPrincipalId only. Severity (task 378) is on this view and not on the
+// filer's contracts.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -25,6 +28,7 @@ public sealed class FeedbackAdminView : ICloneable
   public Guid OwnerPrincipalId { get; }
   public FeedbackKind Kind { get; }
   public FeedbackStatus Status { get; }
+  public FeedbackSeverity Severity { get; }
   public string Title { get; }
   public string Body { get; }
   public DateTimeOffset FiledAt { get; }
@@ -44,7 +48,8 @@ public sealed class FeedbackAdminView : ICloneable
     bool filerHasEmail,
     IReadOnlyList<GetFeedback.Attachment>? attachments = null,
     IReadOnlyList<FeedbackActivityEntry>? activity = null,
-    string? ownerDisplayName = null)
+    string? ownerDisplayName = null,
+    FeedbackSeverity severity = FeedbackSeverity.Unset)
   {
     FeedbackItemId = Guard.Against.NullOrEmpty(feedbackItemId);
     OwnerPrincipalId = Guard.Against.NullOrEmpty(ownerPrincipalId);
@@ -58,8 +63,14 @@ public sealed class FeedbackAdminView : ICloneable
       throw new ArgumentException("Status must be a defined feedback status.", nameof(status));
     }
 
+    if (!Enum.IsDefined(severity))
+    {
+      throw new ArgumentException("Severity must be a defined feedback severity.", nameof(severity));
+    }
+
     Kind = kind;
     Status = status;
+    Severity = severity;
     Title = Guard.Against.NullOrWhiteSpace(title);
     Body = Guard.Against.NullOrWhiteSpace(body);
     FiledAt = filedAt;
