@@ -110,8 +110,7 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 ## Review
 
 - Round 1: fix pass implemented M1, M2, and M3.
-- Round 2: M1, M2, and M3 verified fixed. No new findings. Disposition `clean`.
-
+- Round 2: Done
 ## Notes
 
 ### Decisions (2026-10-16)
