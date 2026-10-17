@@ -32,3 +32,10 @@
   height: 4rem;
   object-fit: contain;
 }
+
+.feedback-capture {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}

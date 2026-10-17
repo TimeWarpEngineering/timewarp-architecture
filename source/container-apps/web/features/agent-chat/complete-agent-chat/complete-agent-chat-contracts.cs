@@ -9,6 +9,12 @@
 // not a valid model reply; the handler turns that into a problem.
 // Limits are the anti-proxy budget: message count, per-field lengths, and a summed character cap.
 // Roles are the four chat roles. A tool turn must name the call it answers.
+// Images (task 303-001) ride only on user turns: the Ask screenshot the person attached, or the
+// picture a capture tool returned, which the browser sends on a user turn after the tool turns.
+// They have their own caps (MaxImagesPerRequest, MaxImageDataLength, ImageMediaTypes) and are not
+// counted in MaxRequestCharacters. Data is base64 without a data: prefix, and the decoded bytes
+// must start with the PNG or JPEG signature that matches MediaType. Images and image elements
+// must not be null; the upstream mapping relies on that.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -33,6 +39,10 @@ public static partial class CompleteAgentChat
   public const int MaxRequestCharacters = 256_000;
   public const int MaxConcurrentPerPrincipal = 2;
   public const int MaxRequestsPerMinute = 30;
+  public const int MaxImagesPerRequest = 2;
+  public const int MaxImageDataLength = 7_000_000;
+
+  public static readonly IReadOnlyList<string> ImageMediaTypes = ["image/png", "image/jpeg"];
 
   [ApiRoute("api/agent-chat/completions", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
@@ -55,6 +65,15 @@ public static partial class CompleteAgentChat
     public string? ToolResult { get; set; }
 
     public List<ToolCall> ToolCalls { get; set; } = [];
+
+    public List<TurnImage> Images { get; set; } = [];
+  }
+
+  public sealed class TurnImage
+  {
+    public string MediaType { get; set; } = null!;
+
+    public string Data { get; set; } = null!;
   }
 
   public sealed class ToolCall
@@ -106,12 +125,20 @@ public static partial class CompleteAgentChat
         .Must(tools => tools.Count <= MaxTools)
         .WithMessage($"Tools must contain at most {MaxTools} declarations.");
 
+      RuleForEach(command => command.Tools)
+        .NotNull()
+        .WithMessage("A tool must not be null.");
+
       RuleForEach(command => command.Tools).ChildRules(tool =>
       {
         tool.RuleFor(item => item.Name).NotEmpty().MaximumLength(MaxToolNameLength);
         tool.RuleFor(item => item.Description).MaximumLength(MaxToolDescriptionLength);
         tool.RuleFor(item => item.ParametersJson).NotEmpty().MaximumLength(MaxParametersJsonLength);
       });
+
+      RuleForEach(command => command.Messages)
+        .NotNull()
+        .WithMessage("A turn must not be null.");
 
       RuleForEach(command => command.Messages).ChildRules(turn =>
       {
@@ -128,6 +155,34 @@ public static partial class CompleteAgentChat
         turn.RuleFor(item => item)
           .Must(item => item.Role != "tool" || !string.IsNullOrWhiteSpace(item.ToolCallId))
           .WithMessage("A tool turn needs ToolCallId.");
+        turn.RuleFor(item => item)
+          .Must(item => item.Images is not { Count: > 0 } || item.Role == "user")
+          .WithMessage("Only a user turn can carry images.");
+        turn.RuleFor(item => item.Images)
+          .NotNull()
+          .WithMessage("Images must not be null.");
+        turn.RuleForEach(item => item.Images)
+          .NotNull()
+          .WithMessage("An image must not be null.");
+        turn.RuleForEach(item => item.Images).ChildRules(image =>
+        {
+          image.RuleFor(item => item.MediaType)
+            .Must(mediaType => mediaType is not null && ImageMediaTypes.Contains(mediaType))
+            .WithMessage("An image must be image/png or image/jpeg.");
+          image.RuleFor(item => item.Data)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+            .MaximumLength(MaxImageDataLength)
+            .Must(IsBase64)
+            .WithMessage("Image data must be base64.");
+          image.RuleFor(item => item)
+            .Must(MatchesSignature)
+            .When(item => item.MediaType is not null && item.Data is not null && IsBase64(item.Data))
+            .WithMessage("Image bytes must match the declared media type.");
+        });
+        turn.RuleForEach(item => item.ToolCalls)
+          .NotNull()
+          .WithMessage("A tool call must not be null.");
         turn.RuleForEach(item => item.ToolCalls).ChildRules(call =>
         {
           call.RuleFor(item => item.Name).NotEmpty().MaximumLength(MaxToolNameLength);
@@ -136,14 +191,48 @@ public static partial class CompleteAgentChat
         });
       });
 
+      RuleFor(command => command.Messages)
+        .Must(messages => messages is null || messages.Sum(turn => turn?.Images?.Count ?? 0) <= MaxImagesPerRequest)
+        .WithMessage($"A request can carry at most {MaxImagesPerRequest} images.");
+
       RuleFor(command => command)
         .Must(FitsBudget)
         .WithMessage($"The request exceeds {MaxRequestCharacters} characters.");
     }
 
+    private static bool IsBase64(string data) =>
+      data.Length % 4 == 0 && Convert.TryFromBase64String(data, new byte[data.Length / 4 * 3], out _);
+
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+    private static ReadOnlySpan<byte> JpegSignature => [0xFF, 0xD8, 0xFF];
+
+    private static bool MatchesSignature(TurnImage image)
+    {
+      // The first 12 base64 characters decode to 9 bytes, enough for either signature.
+      if (image.Data.Length < 12)
+      {
+        return false;
+      }
+
+      Span<byte> head = stackalloc byte[9];
+      if (!Convert.TryFromBase64String(image.Data[..12], head, out int written))
+      {
+        return false;
+      }
+
+      ReadOnlySpan<byte> bytes = head[..written];
+      return image.MediaType switch
+      {
+        "image/png" => bytes.StartsWith(PngSignature),
+        "image/jpeg" => bytes.StartsWith(JpegSignature),
+        _ => false
+      };
+    }
+
     private static bool IsEmpty(Turn turn)
     {
-      bool hasText = !string.IsNullOrWhiteSpace(turn.Text);
+      bool hasText = !string.IsNullOrWhiteSpace(turn.Text) || turn.Images is { Count: > 0 };
       bool hasCalls = turn.ToolCalls is { Count: > 0 };
       bool hasResult = !string.IsNullOrWhiteSpace(turn.ToolResult) || !string.IsNullOrWhiteSpace(turn.ToolCallId);
       return !hasText && !hasCalls && !hasResult;
@@ -154,8 +243,14 @@ public static partial class CompleteAgentChat
       int size = command.Instructions?.Length ?? 0;
       if (command.Tools is not null)
       {
-        foreach (ToolDefinition tool in command.Tools)
+        // Null entries are reported by their own rules; the budget only counts what exists.
+        foreach (ToolDefinition? tool in command.Tools)
         {
+          if (tool is null)
+          {
+            continue;
+          }
+
           size += tool.Name?.Length ?? 0;
           size += tool.Description?.Length ?? 0;
           size += tool.ParametersJson?.Length ?? 0;
@@ -164,8 +259,13 @@ public static partial class CompleteAgentChat
 
       if (command.Messages is not null)
       {
-        foreach (Turn turn in command.Messages)
+        foreach (Turn? turn in command.Messages)
         {
+          if (turn is null)
+          {
+            continue;
+          }
+
           size += turn.Role?.Length ?? 0;
           size += turn.Text?.Length ?? 0;
           size += turn.ToolCallId?.Length ?? 0;
@@ -175,8 +275,13 @@ public static partial class CompleteAgentChat
             continue;
           }
 
-          foreach (ToolCall call in turn.ToolCalls)
+          foreach (ToolCall? call in turn.ToolCalls)
           {
+            if (call is null)
+            {
+              continue;
+            }
+
             size += call.Name?.Length ?? 0;
             size += call.CallId?.Length ?? 0;
             size += call.ArgumentsJson?.Length ?? 0;

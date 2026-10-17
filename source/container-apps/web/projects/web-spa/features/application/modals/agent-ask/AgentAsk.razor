@@ -91,6 +91,12 @@
   in front of the orbs; and each assistant turn shows it through --twe-assistant-avatar, which
   ApplyAvatarAsync sets on the document root because the library renders the turns and inline
   styles are banned.
+  Screenshot (task 303-001): the camera button in the lead slot dispatches
+  ScreenshotState.CaptureForAsk, which draws the page body (the page behind this panel, since the
+  panel lives in the layout aside) and attaches that capture in the same handler.
+  AskScreenshotChip shows it as a removable thumbnail above the composer. The
+  agent's client chain is AskTagChatClient over AskScreenshotChatClient over the tool-invoking
+  client, so the next message carries the picture as image content and MarkAskSent clears it.
 *@
 
 @code {
@@ -332,9 +338,15 @@
         );
       }
       InvokingClient = CatalogAgentSession.CreateInvokingClient(chatClient, ServiceProvider);
-      TagClient = new AskTagChatClient
+      AskScreenshotChatClient screenshotClient = new
       (
         InvokingClient,
+        () => ScreenshotState.AskAttachedFor(AgentSurfaceState.ConversationGeneration),
+        id => InvokeAsync(() => ScreenshotState.MarkAskSent(id))
+      );
+      TagClient = new AskTagChatClient
+      (
+        screenshotClient,
         () => AskTagState.AttachedFor(AgentSurfaceState.ConversationGeneration),
         ids => InvokeAsync(() => AskTagState.MarkSent(ids)),
         RenderInstructions
@@ -406,7 +418,8 @@
     Thread = null;
     Agent?.Dispose();
     Agent = null;
-    // TagClient owns InvokingClient (DelegatingChatClient disposes its inner client).
+    // TagClient owns the screenshot client, which owns InvokingClient (DelegatingChatClient
+    // disposes its inner client).
     TagClient?.Dispose();
     TagClient = null;
     InvokingClient = null;
@@ -440,6 +453,21 @@
   }
 
   private Task TagAsync() => AskTagState.StartPick(CurrentPath());
+
+  private bool Capturing;
+
+  private async Task CaptureAsync()
+  {
+    Capturing = true;
+    try
+    {
+      await ScreenshotState.CaptureForAsk();
+    }
+    finally
+    {
+      Capturing = false;
+    }
+  }
 
   private bool Picking => AskTagState.IsPicking;
 
@@ -640,6 +668,7 @@
           <AskAnswerBar SupportUrl="@AgentSurfaceState.SupportUrl" />
           <AskPrivacyBanner />
           <AskTagChips />
+          <AskScreenshotChip />
           <div class="sc-ai-chat-page__input-container" @onkeydown="OnComposerKeyDownAsync">
             <Microsoft.AspNetCore.Components.AI.MessageInput Placeholder="@AskPlaceholder">
               <LeadingActions>
@@ -653,6 +682,16 @@
                                 Disabled="AskTagState.IsPickPending"
                                 data-qa="AskTag"
                                 OnClick="TagAsync">Tag</FluentButton>
+                  <FluentButton Appearance="ButtonAppearance.Outline"
+                                Size="ButtonSize.Small"
+                                IconOnly="true"
+                                IconStart="@(new Icons.Regular.Size16.Camera())"
+                                Title="Attach a screenshot of the page"
+                                Tooltip="Attach a screenshot of the page"
+                                aria-label="Attach a screenshot of the page"
+                                Disabled="Capturing"
+                                data-qa="AskCapture"
+                                OnClick="CaptureAsync" />
                   <AskEditModePill RestoreFocus="EditModeFocusPending"
                                    Chose="EditModeChose"
                                    FocusRestored="EditModeFocusRestored" />

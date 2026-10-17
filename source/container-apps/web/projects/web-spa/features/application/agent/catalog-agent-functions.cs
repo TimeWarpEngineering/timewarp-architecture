@@ -28,6 +28,8 @@
 // called, like the WebMCP dispatcher, so its text matches the page on screen. The conversation credential is checked after the
 // approval wrapper has already run, and before Execute. A null credential is allowed.
 // The model never calls an HTTP endpoint itself. Store handlers keep [EndpointAuthorize].
+// An outcome that holds a picture (IAgentImageOutcome, task 303-001) is returned without it; the
+// picture rides on the call result's Image, which RelayChatClient sends as image content.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -204,7 +206,9 @@ public sealed class CatalogAgentFunctions : IDisposable
 
       outcome.Clear();
       await current.Entry.Execute(store, bound, cancellationToken);
-      return new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result);
+      return outcome.Result is IAgentImageOutcome image
+        ? new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, image.WithoutImage(), image.ToImage())
+        : new CatalogAgentCallResult(Tool.Name, Completed: true, Error: null, outcome.Result);
     }
   }
 
@@ -275,5 +279,6 @@ public sealed class CatalogAgentFunctions : IDisposable
     string Action,
     bool Completed,
     string? Error,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] object? Result = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] object? Result = null,
+    [property: JsonIgnore] DataContent? Image = null) : IToolResultImage;
 }

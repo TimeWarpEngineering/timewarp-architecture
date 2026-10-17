@@ -24,6 +24,17 @@
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
+  // Task 303-001: Feedback is a route, so "the page behind it" is the latest capture taken on the
+  // page the person came from (Ask's Screenshot button or the Ctrl-K Capture screenshot command).
+  // It is offered until a draft attachment carries its file name, so removing that attachment
+  // offers it again.
+  private ScreenshotCapture? PageBehind =>
+    ScreenshotState.Latest is { } capture
+      && FeedbackState.DraftAttachments.All(draft => !string.Equals(draft.FileName, capture.FileName, StringComparison.Ordinal))
+      && !string.Equals(capture.Path, PageAgentScope.Normalize(GetPageUrl()), StringComparison.OrdinalIgnoreCase)
+      ? capture
+      : null;
+
   // Task 346: a filing row is pickable by Ask's Tag and resolves to its @my-feedback:<id>.
   private static IReadOnlyDictionary<string, object> RowMark(ListMyFeedback.Item item) =>
     AskTagMark.Resource(AskTagMark.FeedbackRowKind, ListMyFeedback.ReferencePrefix, item.FeedbackItemId.ToString("D"), item.Title);
@@ -146,6 +157,22 @@
       : "The pasted image could not be read.";
     return NotificationState.AddNotification(MessageBarIntent.Error, message);
   }
+
+  // CaptureForFeedback records the capture it took as ForFeedback, which only this button sets, so
+  // an agent capture landing meanwhile (it moves Latest) is never uploaded as "this page".
+  private async Task CaptureThisPageAsync()
+  {
+    int before = ScreenshotState.ForFeedback?.Id ?? 0;
+    await ScreenshotState.CaptureForFeedback();
+    if (ScreenshotState.ForFeedback is { } capture && capture.Id != before)
+    {
+      await AttachCaptureAsync(capture);
+    }
+  }
+
+  // The capture goes through the same checks and UploadFeedbackAttachment action as a picked file.
+  private Task AttachCaptureAsync(ScreenshotCapture capture) =>
+    UploadOneAsync(capture.FileName, ScreenshotState.ContentType, capture.Png);
 
   private async Task OnFilesAsync(InputFileChangeEventArgs change)
   {
@@ -346,6 +373,23 @@
             </FormField>
             <FormField Label="Attachments">
               <InputFile OnChange="OnFilesAsync" multiple accept="@Accept" class="feedback-file" aria-label="Attachments" data-qa="FeedbackFile" />
+              <div class="feedback-capture">
+                <FluentButton Type="ButtonType.Button"
+                  Appearance="ButtonAppearance.Outline"
+                  IconStart="@(new Icons.Regular.Size16.Camera())"
+                  Disabled="@IsBusy"
+                  data-qa="FeedbackCaptureScreenshot"
+                  OnClick="CaptureThisPageAsync">Capture this page</FluentButton>
+                @if (PageBehind is { } behind)
+                {
+                  <FluentButton Type="ButtonType.Button"
+                    Appearance="ButtonAppearance.Outline"
+                    IconStart="@(new Icons.Regular.Size16.Image())"
+                    Disabled="@IsBusy"
+                    data-qa="FeedbackAttachPageBehind"
+                    OnClick="@(() => AttachCaptureAsync(behind))">Attach capture of @behind.Path</FluentButton>
+                }
+              </div>
               @if (FeedbackState.DraftAttachments.Count > 0)
               {
                 <ul class="feedback-attachments">

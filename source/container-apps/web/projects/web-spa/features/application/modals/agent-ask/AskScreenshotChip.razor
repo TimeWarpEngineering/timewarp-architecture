@@ -1,0 +1,33 @@
+@namespace TimeWarp.Architecture.Features.Applications
+@inherits BaseComponent
+
+@*
+  Purpose: The screenshot waiting on Ask's composer, as a removable thumbnail (task 303-001).
+
+  Design: Shows ScreenshotState.AskAttachedFor the current conversation above the composer: the
+  picture, its size and route, and Remove (RemoveFromAsk). The picture is exactly what the next
+  message sends; masked elements are already grey in it. Nothing here touches the DOM.
+*@
+
+@code {
+  private ScreenshotCapture? Capture => ScreenshotState.AskAttachedFor(AgentSurfaceState.ConversationGeneration);
+
+  private Task RemoveAsync(int id) => ScreenshotState.RemoveFromAsk(id);
+}
+
+@if (Capture is { } capture)
+{
+  int id = capture.Id;
+  <div class="twe-ask-screenshot" data-qa="AskScreenshot" data-capture-id="@capture.Id">
+    <img class="twe-ask-screenshot__thumb" src="@capture.ImageSource" alt="@("Screenshot, " + capture.Caption)" data-qa="AskScreenshotThumbnail" />
+    <span class="twe-ask-screenshot__caption" data-qa="AskScreenshotCaption">Screenshot @capture.Caption</span>
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  Size="ButtonSize.Small"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                  Title="Remove screenshot"
+                  aria-label="Remove screenshot"
+                  data-qa="AskScreenshotRemove"
+                  OnClick="@(() => RemoveAsync(id))" />
+  </div>
+}

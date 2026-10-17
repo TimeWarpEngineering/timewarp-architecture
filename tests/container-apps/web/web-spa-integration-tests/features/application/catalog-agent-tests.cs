@@ -183,7 +183,8 @@ public partial class CatalogAgent_Should
     (
       developer, authorization, catalog.Entries, "/Admin/Roles/New", CancellationToken.None
     );
-    Names(developerNewRole).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName]);
+    // Capture screenshot is a global palette command with no permission (task 303-001).
+    Names(developerNewRole).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName]);
     developerNewRole.ShouldNotContain(tool => tool.Name == "Role.CreateRole");
 
     Names
@@ -305,7 +306,7 @@ public partial class CatalogAgent_Should
     home.ShouldNotContain(tool => tool.Name == "Credentials.AddExistingPasskey");
     // A literal, not the selection algorithm again: the tool list on / that the task promises.
     Names(home).ShouldBe(
-      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+      ["Credentials.AddPasskey", "Feedback.ListMyFeedback", "Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Console.WriteLine($"WEBMCP-PROOF path=/ tools={string.Join(",", Names(home))}");
 
     IReadOnlyList<WebMcpToolDescriptor> settings = await WebMcpPublisher.DescribeAsync
@@ -324,7 +325,7 @@ public partial class CatalogAgent_Should
       "/StyleGuide",
       CancellationToken.None
     );
-    Names(styleGuide).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    Names(styleGuide).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
 
     Names
     (
@@ -339,14 +340,14 @@ public partial class CatalogAgent_Should
       (
         Principal(PermissionIds.DeveloperAccess), authorization, catalog, "/Admin/Roles/New", CancellationToken.None
       )
-    ).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    ).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Names
     (
       await WebMcpPublisher.DescribeAsync
       (
         Principal(), authorization, catalog, "/Profile", CancellationToken.None
       )
-    ).ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    ).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
 
     WebMcpApplyResult absent = await WebMcpRegistration.ApplyAsync(null, counter, CancellationToken.None);
     absent.Available.ShouldBeFalse();
