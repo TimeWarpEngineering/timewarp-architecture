@@ -26,6 +26,27 @@ What is neutral today is already here in spirit: the outer `public static partia
 
 Decision to record here before scaffolding. Options: (a) a new repo `timewarp-contracts`, cleanest since Nuru, this template and Roslynk are all consumers and none should depend on another; (b) `source/foundation/` in this repo, publishing `TimeWarp.Contracts` as its own PackageId, fastest to start, creates a Nuru dependency on a package built from this repo; (c) beside `TimeWarp.Mediator.Contracts` in timewarp-mediator, since it is the layer directly above it. Recommendation: start as (b) to get a version Nuru 508-001 can build against, extract to (a) before Nuru's first release that references it.
 
+## Versioning
+
+`TimeWarp.Contracts` ships as **1.0.0-beta.1** and stays prerelease until proven. Proven means: Roslynk consumes it for both its CLI and MCP surfaces, the template's roles slice consumes it, and neither needed a breaking change to the package. Then promote to 1.0.0 (step 11 of the serial order recorded on timewarp-nuru 508). Breaking changes during beta bump the beta number, not the major.
+
+## Implementation order (serial, decided 2026-10-17)
+
+One item at a time across the three repos:
+
+1. timewarp-nuru 506 spike (decision data for 507 and 508-005)
+2. timewarp-architecture 384: `TimeWarp.Contracts` 1.0.0-beta.1 published
+3. Roslynk: typed request/response/outcome refactor, no surface change
+4. timewarp-nuru 508-002 public catalog
+5. timewarp-nuru 508-003 public binder and invoke
+6. timewarp-nuru 508-001 consume the package, derive endpoints, handler placement, mediator dispatch
+7. Roslynk: CLI written directly with `[Operation]`, forwarding handlers, daemon over the existing loopback `tools/call`; CLI-first skill
+8. timewarp-nuru 508-004 McpHost
+9. Roslynk: host McpHost in the daemon, delete reflection registration and the `multi_query` binder
+10. timewarp-nuru 507 gate: archive or narrow
+11. timewarp-architecture: roles slice, info analyzer, skill and docs; promote `TimeWarp.Contracts` to 1.0.0
+12. timewarp-nuru 508-005 decided from step 1 timing
+
 ## Checklist
 
 - [ ] Home decision recorded
@@ -34,7 +55,8 @@ Decision to record here before scaffolding. Options: (a) a new repo `timewarp-co
 - [ ] Contracts generator reads `[Operation]`; endpoint metadata carries it
 - [ ] Info analyzer for hosted contracts missing `[Operation]`
 - [ ] Roles slice annotated as the living example; skill and docs updated
-- [ ] First package version published for Nuru 508-001
+- [ ] 1.0.0-beta.1 published for Nuru 508-001
+- [ ] Promoted to 1.0.0 once proven (see Versioning)
 
 ## Notes
 
@@ -45,3 +67,4 @@ Decision to record here before scaffolding. Options: (a) a new repo `timewarp-co
 ## Session
 
 - Created: 1624988 (2026-10-17)
+- Versioning and serial order recorded: 1479989 (2026-10-17)
