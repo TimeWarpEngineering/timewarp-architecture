@@ -97,6 +97,11 @@
   AskScreenshotChip shows it as a removable thumbnail above the composer. The
   agent's client chain is AskTagChatClient over AskScreenshotChatClient over the tool-invoking
   client, so the next message carries the picture as image content and MarkAskSent clears it.
+  Replies (task 380): a BlockRenderer for RichContentBlock keeps the library's message bubble
+  markup and renders an assistant block's RawText through SafeMarkdown (CommonMark soft breaks,
+  no images, http(s) links in a new tab). A user block (Role is User) stays plain text. The
+  library re-renders the list on every streamed fragment, so the reply re-parses as it grows.
+  An app-relative link dispatches RouteState.ChangeRoute (TWA0026) and leaves the panel open.
 *@
 
 @code {
@@ -391,6 +396,10 @@
     }
   }
 
+  private static bool IsUserTurn(Ai.RichContentBlock block) => block.Role == Microsoft.Extensions.AI.ChatRole.User;
+
+  private async Task OpenAppLinkAsync(string url) => await NoSubRouteState.ChangeRoute(newRoute: url);
+
   private async Task SignInAsync()
   {
     string returnPath = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
@@ -613,6 +622,22 @@
           <Microsoft.AspNetCore.Components.AI.MessageList>
             <ChildContent>
               <AskStatusLine />
+              <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.RichContentBlock" Context="text">
+                <div class="sc-ai-message sc-ai-message--@(IsUserTurn(text) ? "user" : "assistant")">
+                  <div class="sc-ai-message__bubble">
+                    <div class="@(text.LifecycleState == Ai.BlockLifecycleState.Active ? "sc-ai-message__content sc-ai-message__content--streaming" : "sc-ai-message__content")">
+                      @if (IsUserTurn(text))
+                      {
+                        @text.RawText
+                      }
+                      else
+                      {
+                        <SafeMarkdown Markdown="@text.RawText" DataQa="AskReplyMarkdown" OnAppLinkClick="OpenAppLinkAsync" ExternalLinksInNewTab="true" SoftBreaksAsSpaces="true" />
+                      }
+                    </div>
+                  </div>
+                </div>
+              </Microsoft.AspNetCore.Components.AI.BlockRenderer>
               <Microsoft.AspNetCore.Components.AI.BlockRenderer TBlock="Microsoft.AspNetCore.Components.AI.FunctionInvocationContentBlock" Context="call">
                 <details class="twe-agent-ask__reasoning" data-qa="AskReasoning">
                   <summary>See reasoning</summary>

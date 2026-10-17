@@ -9,6 +9,10 @@
 // handlers, so "onerror" in the output can only come from the markdown. Blazor always quotes an
 // attribute value, so the asserts look for ' onclick="' (a real attribute), while the escaped
 // text keeps &quot;.
+// The Ask parameters (task 380): HtmlRenderer drops handlers, so the app-link click is proven
+// with LinkClickRenderer, a bare Renderer that keeps the frames of the first render and
+// dispatches a real click to the onclick handler. Partial markdown is the streaming case: each
+// prefix of a reply must render without throwing.
 #endregion
 
 namespace SafeMarkdownRender_;
@@ -141,6 +145,90 @@ public class SafeMarkdown_Should_
     html.ShouldNotContain("data-qa=\"Listed\"");
   }
 
+  public static async Task Keep_Soft_Breaks_As_Br_By_Default()
+  {
+    string html = await RenderAsync("one\ntwo");
+
+    html.ShouldContain("one<br />two");
+  }
+
+  public static async Task Render_Soft_Breaks_As_Spaces_When_Asked()
+  {
+    string html = await RenderComponentAsync<SafeMarkdown>(new Dictionary<string, object?>
+    {
+      ["Markdown"] = "one\ntwo  \nthree",
+      ["SoftBreaksAsSpaces"] = true,
+    });
+
+    html.ShouldContain("one two<br />three");
+  }
+
+  public static async Task Open_External_Links_In_A_New_Tab_Only_When_Asked()
+  {
+    const string markdown = "[e](https://example.com) [a](/Login) [f](#top)";
+    string plain = await RenderAsync(markdown);
+    string ask = await RenderComponentAsync<SafeMarkdown>(new Dictionary<string, object?>
+    {
+      ["Markdown"] = markdown,
+      ["ExternalLinksInNewTab"] = true,
+    });
+
+    plain.ShouldNotContain("target=");
+    CountOf(ask, "target=\"_blank\"").ShouldBe(1);
+    ask.ShouldContain("<a href=\"https://example.com\" rel=\"nofollow noopener noreferrer\" target=\"_blank\">");
+    ask.ShouldContain("<a href=\"/Login\" rel=\"nofollow noopener noreferrer\">");
+  }
+
+  public static async Task Send_App_Link_Clicks_To_The_Callback()
+  {
+    List<string> clicked = [];
+    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
+    await using LinkClickRenderer renderer = new(services);
+    object receiver = new();
+    await renderer.RenderAsync(new Dictionary<string, object?>
+    {
+      ["Markdown"] = "[in](/Login) [out](https://example.com) [frag](#top)",
+      ["OnAppLinkClick"] = EventCallback.Factory.Create<string>(receiver, clicked.Add),
+    });
+
+    renderer.ClickHandlers.Count.ShouldBe(1);
+    await renderer.ClickAsync(renderer.ClickHandlers[0]);
+
+    clicked.ShouldBe(["/Login"]);
+  }
+
+  public static async Task Render_No_Click_Handler_Without_A_Callback()
+  {
+    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
+    await using LinkClickRenderer renderer = new(services);
+    await renderer.RenderAsync(new Dictionary<string, object?> { ["Markdown"] = "[in](/Login)" });
+
+    renderer.ClickHandlers.ShouldBeEmpty();
+  }
+
+  public static async Task Render_Every_Prefix_Of_A_Streaming_Reply()
+  {
+    const string reply = "Some **bold** and [Settings](/Settings).\n\n- one\n- two\n\n```cs\nvar x = 1;\n```\n<b>raw</b>";
+    for (int length = 0; length <= reply.Length; length++)
+    {
+      string html = await RenderComponentAsync<SafeMarkdown>(new Dictionary<string, object?>
+      {
+        ["Markdown"] = reply[..length],
+        ["SoftBreaksAsSpaces"] = true,
+      });
+
+      html.ShouldStartWith("<div class=\"safe-markdown\"", Case.Sensitive, $"prefix {length}");
+      html.ShouldNotContain("<b>", Case.Sensitive, $"prefix {length}");
+    }
+
+    string open = await RenderAsync("Some **bol");
+    open.ShouldContain("Some **bol");
+    string empty = await RenderAsync("```");
+    empty.ShouldContain("<pre><code></code></pre>");
+    string fence = await RenderAsync("```\nhalf a fence");
+    fence.ShouldContain("<pre><code>half a fence</code></pre>");
+  }
+
   public static async Task Policy_Reports_Only_Given_Sources()
   {
     HashSet<string> sources = new(StringComparer.Ordinal) { Own };
@@ -167,6 +255,45 @@ public class SafeMarkdown_Should_
     return await renderer.Dispatcher.InvokeAsync(async () =>
       (await renderer.RenderComponentAsync<TComponent>(ParameterView.FromDictionary(parameters))).ToHtmlString());
   }
+
+#pragma warning disable BL0006 // RenderTree types: the test reads the rendered frames to find the click handler.
+  private sealed class LinkClickRenderer(IServiceProvider services)
+    : Microsoft.AspNetCore.Components.RenderTree.Renderer(services, NullLoggerFactory.Instance)
+  {
+    public List<ulong> ClickHandlers { get; } = [];
+
+    public override Dispatcher Dispatcher { get; } = Dispatcher.CreateDefault();
+
+    public Task RenderAsync(Dictionary<string, object?> parameters) => Dispatcher.InvokeAsync(async () =>
+    {
+      int id = AssignRootComponentId(new SafeMarkdown());
+      await RenderRootComponentAsync(id, ParameterView.FromDictionary(parameters));
+    });
+
+    public Task ClickAsync(ulong handler) =>
+      Dispatcher.InvokeAsync(() => DispatchEventAsync(handler, null, new MouseEventArgs()));
+
+    protected override void HandleException(Exception exception) =>
+      System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
+
+    protected override Task UpdateDisplayAsync(in Microsoft.AspNetCore.Components.RenderTree.RenderBatch renderBatch)
+    {
+      Microsoft.AspNetCore.Components.RenderTree.ArrayRange<Microsoft.AspNetCore.Components.RenderTree.RenderTreeFrame> frames =
+        renderBatch.ReferenceFrames;
+      for (int index = 0; index < frames.Count; index++)
+      {
+        Microsoft.AspNetCore.Components.RenderTree.RenderTreeFrame frame = frames.Array[index];
+        if (frame.FrameType == Microsoft.AspNetCore.Components.RenderTree.RenderTreeFrameType.Attribute &&
+          frame.AttributeName == "onclick" && frame.AttributeEventHandlerId != 0)
+        {
+          ClickHandlers.Add(frame.AttributeEventHandlerId);
+        }
+      }
+
+      return Task.CompletedTask;
+    }
+  }
+#pragma warning restore BL0006
 
   private static int CountOf(string text, string value)
   {

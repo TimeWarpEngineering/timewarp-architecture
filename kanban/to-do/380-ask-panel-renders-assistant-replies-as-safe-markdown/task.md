@@ -66,25 +66,44 @@ assistant text, so the library's default text rendering shows the raw characters
 - Gates: `dev check-version` (bump `<Version>` and pins in the same commit), `dev build` 0
   warnings and 0 errors, `dev test`, `ganda repo audit`.
 
+## Goal (implementer restatement)
+
+Akili's answers in the Ask panel should read as formatted text, not raw Markdown symbols. Each
+assistant text block goes through the existing `SafeMarkdown` component (one Markdown pipeline,
+same safety rules). What the person typed stays plain text.
+
+Done means:
+
+- A `BlockRenderer<RichContentBlock>` in `AgentAsk.razor` renders assistant blocks with
+  `SafeMarkdown` and user blocks as plain text, keeping the library's message bubble markup.
+- `SafeMarkdown` gains opt-in parameters (feedback bodies keep today's output): an in-app link
+  callback (Ask dispatches `RouteState.ChangeRoute`, no reload), external links in a new tab with
+  `noopener noreferrer`, and a CommonMark soft-break switch. Ask passes no image allow-list.
+- A streaming or half-typed reply (open `**`, half link, open fence) renders without throwing.
+- Unit tests cover each new parameter; a Playwright test shows bold, list and link as elements,
+  an in-app link navigating without a reload, and raw HTML as text.
+- Gates pass: `dev check-version` (with bump), `dev build` 0/0, `dev test`, `ganda repo audit`.
+
 ## Checklist
 
-- [ ] Confirm the hook: `BlockRenderer<RichContentBlock>` inside `MessageList` replaces the default
+- [x] Confirm the hook: `BlockRenderer<RichContentBlock>` inside `MessageList` replaces the default
       text rendering, and whether user turns can be told apart. If there is no hook, STOP: record the
       finding here and file the upstream ask (no fork, no reflection)
-- [ ] Register the `RichContentBlock` renderer in `AgentAsk.razor` using `SafeMarkdown`; user
+- [x] Register the `RichContentBlock` renderer in `AgentAsk.razor` using `SafeMarkdown`; user
       messages stay plain text
-- [ ] `SafeMarkdown`: link-click hook for in-app links (State action), external links in a new tab
+- [x] `SafeMarkdown`: link-click hook for in-app links (State action), external links in a new tab
       with `noopener noreferrer` when the policy allows, images off
-- [ ] Decide and record soft-break behaviour; add a parameter if it differs from feedback
-- [ ] Streaming: partial and malformed Markdown render safely and update per token
-- [ ] Playwright test: bold, list and link as elements; in-app link navigates without reload; raw
+- [x] Decide and record soft-break behaviour; add a parameter if it differs from feedback
+- [x] Streaming: partial and malformed Markdown render safely and update per token
+- [x] Playwright test: bold, list and link as elements; in-app link navigates without reload; raw
       HTML shows as text
-- [ ] Unit tests for new parameters
-- [ ] Gates: `dev check-version`, `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Unit tests for new parameters
+- [x] Gates: `dev check-version`, `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Session
 
 - Created: 1829706 (2026-10-17, cockpit, from Steve's screenshot)
+- 2026-10-17: implement oracle (ganda task work, headless Claude) — hook confirmed, renderer + SafeMarkdown params + tests; gates green
 
 ## Notes
 
@@ -96,4 +115,69 @@ assistant text, so the library's default text rendering shows the raw characters
 
 ## Results
 
-(none yet)
+### Hook finding
+
+`BlockRenderer<RichContentBlock>` inside `MessageList` replaces the default text rendering:
+`MessageListContext.RenderBlock` checks registered renderers first. `MessageList` re-renders on
+every `ContentBlock.OnChanged`, so the fragment re-runs with the new `RawText` per token. User
+turns are told apart by `ContentBlock.Role` (`ChatRole.User`). No upstream ask was needed. The
+renderer keeps the library's `sc-ai-message--{user|assistant}` / `__bubble` / `__content` markup,
+so the existing avatar and bubble CSS still apply.
+
+### What changed
+
+- `AgentAsk.razor`: a `RichContentBlock` renderer. Assistant blocks go through `SafeMarkdown`
+  (`DataQa=AskReplyMarkdown`); user blocks render `RawText` as plain text. App-relative links call
+  `OpenAppLinkAsync`, which dispatches `RouteState.ChangeRoute` and leaves the panel open.
+  `AgentAsk.razor.css`: `white-space: normal` on the markdown root (the library's content box is
+  `pre-wrap`) plus block spacing.
+- `SafeMarkdown` (opt-in parameters, so feedback bodies render exactly as before):
+  - `OnAppLinkClick` (`EventCallback<string>`): `/path` anchors keep `href` and `rel`, the click is
+    `preventDefault`ed and the callback gets the URL.
+  - `ExternalLinksInNewTab`: `http(s)` anchors get `target="_blank"`. `rel` stays
+    `nofollow noopener noreferrer`. Policy-refused links still render as text.
+  - `SoftBreaksAsSpaces`: a soft break renders as a space; hard breaks stay `<br>`.
+  - Images: Ask passes no allow-list, so every image is refused (shown as a link or alt text).
+- Soft-break decision: Ask uses standard CommonMark (a soft break is a space) because model replies
+  are CommonMark. Feedback keeps `<br>`.
+- Streaming bug fixed: an open fence with no lines yet (a reply ending in a bare ```` ``` ````)
+  threw `ArgumentNullException` in `SafeMarkdown` (`code.Lines.Lines` is null). It now renders an
+  empty `<pre><code>`. The test renders every prefix of a reply.
+- Fake upstream: "markdown sample" answers with `MarkdownSample` (bold, list, `/Login` link,
+  external link, raw `<b>`), for the Playwright test.
+
+### Tests
+
+- `safe-markdown-render-tests.cs`: soft break default `<br>`, `SoftBreaksAsSpaces`,
+  `ExternalLinksInNewTab` (only http(s) gets `target`), `OnAppLinkClick` with a real click
+  dispatched through a bare `Renderer` (only the `/Login` link has a handler, and the callback gets
+  `/Login`), no handler without a callback, and every prefix of a streaming reply.
+- `ask-markdown-playwright-tests.cs` (`AskMarkdown_Given_Wasm`): `strong`, two `li`, and links
+  render as elements; the external link has `target=_blank` and `noopener noreferrer`; raw HTML is
+  text (no `[data-qa=AskRawHtml]` element); the user's `**not bold**` stays literal; clicking
+  `/Login` reaches `/Login` with a `window` marker intact (no reload).
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors.
+- `dev test`: 23 of 23 projects passed (web-spa-integration 300, web-spa-playwright 20).
+- `dev check-version`: source 2.0.0-beta.20 is already ahead of nuget.org 2.0.0-beta.19, so no
+  bump was needed.
+- `ganda repo audit`: clean before commit (see commit log).
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+./bin/dev test
+```
+
+Expect: the build shows 0 warnings and 0 errors, and all projects pass, including
+`SafeMarkdown_Should_` (web-spa-integration-tests) and
+`AskMarkdown_Given_Wasm.Reply_Should_RenderMarkdown_And_NavigateInApp` (web-spa-playwright-tests).
+The screenshot
+`tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/playwright-screenshots/AskMarkdown_Given_Wasm/ask-markdown-reply.png`
+shows bold, a bullet list, two underlined links, and the raw `<b ...>raw</b>` as literal text,
+while the user bubble shows `**not bold**` literally.
