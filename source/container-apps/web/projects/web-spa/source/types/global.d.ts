@@ -15,10 +15,15 @@ declare global {
     start(): Promise<void>;
   }
 
+  interface TimeWarpWebMcpPageLoad {
+    abort: () => void;
+  }
+
   interface Window {
     TimeWarpState: TimeWarpState;
     Blazor: Blazor;
     Spa: typeof Spa;
+    __timewarpWebMcpPageLoad?: TimeWarpWebMcpPageLoad;
   }
 }
 

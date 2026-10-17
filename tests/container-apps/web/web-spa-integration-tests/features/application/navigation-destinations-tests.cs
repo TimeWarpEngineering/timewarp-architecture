@@ -113,7 +113,7 @@ public partial class Destinations_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Order_The_Registry_By_NavOrder_And_Name_Catalog_Actions()
+  public static async Task Order_The_Registry_By_NavOrder_And_Name_Catalog_Actions()
   {
     int previous = int.MinValue;
     foreach (PageRegistryEntry entry in PageRegistry.All)
@@ -141,13 +141,22 @@ public partial class Destinations_Should_
 
     using DestinationSpa spa = new(null);
     IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = spa.ServiceProvider.GetRequiredService<IAuthorizationService>();
     PageRegistry.ActionScopes.ShouldNotBeEmpty();
+    List<(string Route, string[] Tools)> expectedRoutes = [];
     foreach (PageActionScope scope in PageRegistry.ActionScopes)
     {
       scope.RouteTemplates.ShouldNotBeEmpty(scope.PageType.Name);
+      string[] tools = [.. scope.ActionTypes.Select(WebMcpDiscoveryCatalog.CatalogName)];
       foreach (Type action in scope.ActionTypes)
       {
-        catalog.Entries.ShouldContain(entry => entry.ActionType == action, $"{scope.PageType.Name} {action.FullName}");
+        ActionCatalogEntry entry = catalog.Entries.Single(candidate => candidate.ActionType == action);
+        WebMcpDiscoveryCatalog.CatalogName(action).ShouldBe(entry.Name, action.FullName);
+      }
+
+      foreach (string routeTemplate in scope.RouteTemplates)
+      {
+        expectedRoutes.Add((routeTemplate, tools));
       }
     }
 
@@ -156,7 +165,40 @@ public partial class Destinations_Should_
     PageAgentScope.ActionTypesFor($"/Feedback/{Guid.NewGuid():D}").ShouldNotBeEmpty();
     PageAgentScope.ActionTypesFor("/Feedback/not-a-guid").ShouldBeEmpty();
     PageAgentScope.ActionTypesFor("/FeedbackExtra").ShouldBeEmpty();
-    return Task.CompletedTask;
+
+    string json = await WebMcpDiscoveryCatalog.DocumentJsonAsync(spa.User, authorization, "/");
+    JsonNode document = JsonNode.Parse(json).ShouldNotBeNull();
+    document["transport"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Transport);
+    document["backendMcp"]!["capabilitiesTools"]!.GetValue<bool>().ShouldBeFalse();
+    document["pageLoadTool"]!.GetValue<string>().ShouldBe(AgentNavigate.ToolName);
+    string[] everyPage = [.. document["everyPageTools"]!.AsArray().Select(static node => node!.GetValue<string>())];
+    everyPage.ShouldBe([AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    document["inspector"]!["featureDetect"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.FeatureDetect);
+    document["inspector"]!["polyfill"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Polyfill);
+    document["inspector"]!["trace"]!.GetValue<string>().ShouldBe(WebMcpDiscoveryCatalog.Trace);
+
+    JsonArray routes = document["routeScopedTools"]!.AsArray();
+    routes.Count.ShouldBe(expectedRoutes.Count);
+    for (int index = 0; index < expectedRoutes.Count; index++)
+    {
+      routes[index]!["routeTemplate"]!.GetValue<string>().ShouldBe(expectedRoutes[index].Route);
+      string[] documented = [.. routes[index]!["tools"]!.AsArray().Select(static node => node!.GetValue<string>())];
+      documented.ShouldBe(expectedRoutes[index].Tools, expectedRoutes[index].Route);
+    }
+
+    IReadOnlyList<AgentSiteMap.Destination> destinations =
+      await AgentSiteMap.DestinationsAsync(spa.User, authorization, "/");
+    string[] documentedDestinations =
+      [.. document["anonymousDestinations"]!.AsArray().Select(static node => node!["url"]!.GetValue<string>())];
+    documentedDestinations.ShouldBe(destinations.Select(static destination => destination.Route).ToArray());
+
+    string pageLoad = await WebMcpDiscoveryCatalog.PageLoadJsonAsync(spa.User, authorization, "/");
+    JsonNode load = JsonNode.Parse(pageLoad).ShouldNotBeNull();
+    load["name"]!.GetValue<string>().ShouldBe(AgentNavigate.ToolName);
+    load["requiresApproval"]!.GetValue<bool>().ShouldBeTrue();
+    load["refusal"]!.GetValue<string>().ShouldBe(AgentNavigate.Refusal);
+    string[] enumerated = [.. load["inputSchema"]!["properties"]!["url"]!["enum"]!.AsArray().Select(static node => node!.GetValue<string>())];
+    enumerated.ShouldBe(documentedDestinations);
   }
 
   private static async Task<string[]> AssertSameDestinationsAsync(string[]? permissions, string because)

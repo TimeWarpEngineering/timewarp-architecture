@@ -125,6 +125,81 @@ namespace TimeWarp.Architecture.AgentDiscovery
       body.ShouldContain("passkey");
     }
 
+    public static async Task WebMcpDiscovery_Should_BeReadableWithoutJavaScript()
+    {
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+
+      string llms = await ReadOkAsync(client, "/llms.txt");
+      llms.ShouldContain("WebMCP");
+      llms.ShouldContain("document.modelContext");
+      llms.ShouldContain("typeof navigator.modelContext");
+      llms.ShouldContain("MCP-B");
+      llms.ShouldContain("Copy trace");
+      llms.ShouldContain("navigate");
+      llms.ShouldContain("/Feedback");
+      llms.ShouldContain("/Settings");
+      llms.ShouldContain("/.well-known/webmcp.json");
+
+      string auth = await ReadOkAsync(client, "/auth.md");
+      auth.ShouldContain("You are an agent");
+      auth.ShouldContain("Agent registration");
+      auth.ShouldContain("Supported methods");
+      auth.ShouldContain("Credential use");
+      auth.ShouldContain("/api/identity/agent/register");
+      auth.ShouldContain("public key");
+      auth.ShouldContain("no email form");
+      auth.ShouldContain("WebMCP");
+      auth.ShouldContain("typeof navigator.modelContext");
+
+      string skill = await ReadOkAsync(client, "/.well-known/agent-skills/timewarp-architecture-discovery/SKILL.md");
+      skill.ShouldContain("WebMCP");
+      skill.ShouldContain("document.modelContext");
+      skill.ShouldContain("typeof navigator.modelContext");
+      skill.ShouldContain("MCP-B");
+      skill.ShouldContain("Copy trace");
+      skill.ShouldContain("/Feedback");
+      skill.ShouldContain("/Settings");
+
+      using HttpResponseMessage discovery = await client.GetAsync("/.well-known/webmcp.json");
+      discovery.StatusCode.ShouldBe(HttpStatusCode.OK);
+      discovery.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
+      string webMcp = await discovery.Content.ReadAsStringAsync();
+      webMcp.ShouldContain("\"transport\": \"webmcp\"");
+      webMcp.ShouldContain("\"capabilitiesTools\": false");
+      webMcp.ShouldContain("navigate");
+      webMcp.ShouldContain("document.modelContext");
+      webMcp.ShouldContain("typeof navigator.modelContext");
+      webMcp.ShouldContain("MCP-B");
+      webMcp.ShouldContain("Copy trace");
+      webMcp.ShouldContain("/Feedback");
+      webMcp.ShouldContain("/Settings");
+
+      string card = await ReadOkAsync(client, "/.well-known/mcp/server-card.json");
+      card.ShouldContain("\"tools\": false");
+      card.ShouldContain("\"tools\": []");
+      card.ShouldContain("\"status\": \"stub\"");
+
+      string html = await ReadOkAsync(client, "/");
+      html.ShouldContain("id=\"timewarp-webmcp-page-load\"");
+      html.ShouldContain("web-mcp-page-load.js");
+      int pageLoad = html.IndexOf("web-mcp-page-load.js", StringComparison.Ordinal);
+      int blazor = html.IndexOf("blazor.web.js", StringComparison.Ordinal);
+      pageLoad.ShouldBeGreaterThanOrEqualTo(0);
+      blazor.ShouldBeGreaterThan(pageLoad);
+
+      using HttpResponseMessage script = await client.GetAsync("/js/features/web-mcp-page-load.js");
+      script.StatusCode.ShouldBe(HttpStatusCode.OK);
+      string source = await script.Content.ReadAsStringAsync();
+      source.ShouldContain("registerTool");
+    }
+
+    private static async Task<string> ReadOkAsync(HttpClient client, string path)
+    {
+      using HttpResponseMessage response = await client.GetAsync(path);
+      response.StatusCode.ShouldBe(HttpStatusCode.OK, path);
+      return await response.Content.ReadAsStringAsync();
+    }
+
     public static async Task BrowserLikeAccept_Should_NotServeMarkdownBody()
     {
       using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };

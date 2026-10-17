@@ -67,20 +67,106 @@ or missing (confusion between backend MCP and WebMCP).
 
 ## Checklist
 
-- [ ] Confirm the inspector tool list and routes (`/`, `/Settings`, `/Feedback`, site_map goto)
-- [ ] Reproduce the scanner's `webMcp` fail headlessly; record the cause
-- [ ] Register an honest tool on `/` at page load; headless check passes
-- [ ] Update `llms.txt` / `auth.md` / discovery SKILL with a WebMCP section (generated or build-checked)
-- [ ] `auth.md` describes agent registration (public-key enrollment)
-- [ ] Add a `How to validate` smoke (`curl` discovery strings, no JS needed) to the in-repo readiness test
-- [ ] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
+- [x] Confirm the inspector tool list and routes (`/`, `/Settings`, `/Feedback`, site_map goto)
+- [x] Reproduce the scanner's `webMcp` fail headlessly; record the cause
+- [x] Register an honest tool on `/` at page load; headless check passes
+- [x] Update `llms.txt` / `auth.md` / discovery SKILL with a WebMCP section (generated or build-checked)
+- [x] `auth.md` describes agent registration (public-key enrollment)
+- [x] Add a `How to validate` smoke (`curl` discovery strings, no JS needed) to the in-repo readiness test
+- [x] Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`
 - [ ] After deploy: re-scan; `webMcp` and `authMd` pass (record in 343 `scan/`)
+
+## Goal (implementer restatement)
+
+The browser scanner and an HTTP-only agent both miss the tools this app already has. The scanner opens `/` for about six seconds and looks for tools on `document.modelContext` or `navigator.modelContext`. HTTP clients read `/llms.txt`, `/auth.md`, and the discovery skill, which only describe the backend MCP card. That card is a stub and must stay a stub.
+
+Done means:
+
+- A headless run that supplies a model context before page scripts shows why today's `/` reports no tools, and the cause is written down.
+- `/` registers the real `navigate` tool during HTML parse, before Blazor starts, when a model context is already there. Calling it goes to a real menu URL and asks the person first. It is the same destination list as the in-app tool. No placeholder tool.
+- After the interactive circuit starts, that early registration is replaced by the full page tool list, including `navigate`.
+- `/llms.txt`, `/auth.md`, and `timewarp-architecture-discovery` explain both transports: backend MCP (`/mcp`, card `capabilities.tools` false) and frontend WebMCP (route scoped: `/` has the site-wide goto; `/Feedback` and `/Settings` add their own actions). Inspector steps name `typeof navigator.modelContext`, the Chrome Canary flag or the MCP-B polyfill, and Copy trace.
+- Where those docs name tools or routes, the list comes from the `[Page]` registry (a generated JSON document), and a test fails if the document drifts from that registry.
+- `/auth.md` tells an agent how to register: enroll a public key (agent key or passkey). There is no email form. The wording matches the scanner's Auth.md registration markers (agent audience, registration endpoints, supported methods, credential use) and does not invent an OAuth `agent_auth` flow.
+- An in-repo HTTP test fetches the discovery URLs and checks those strings without running JavaScript.
+- The live re-scan of arch.timewarp.work waits until this ships. It is not part of this walk.
 
 ## Session
 
 - Created: 355282 (2026-10-17), folded from 382 (ses_eba2c9566ffdNojmwvFICuxvJm, 2026-10-16)
+- Implementer: grok session 01a1497f-378b-7860-9c50-5695793d5779 (2026-10-17)
 
 ## Notes
 
 - 382 was abandoned and its claim released in favour of this task. Its original kitchen was
   never published.
+- This branch also contains the seven task-371 commits through `ffc54646f`. Local `master` is
+  `f97007a61` (four kanban-383 commits after merge-base `6f19ce597`). Those were not merged here.
+
+## Results
+
+Backend MCP (`/mcp`, streamable HTTP, card `capabilities.tools` false) and frontend WebMCP
+(`document.modelContext.registerTool`, fallback `navigator.modelContext`) are separate transports.
+The card stays a stub. WebMCP is its own document at `/.well-known/webmcp.json`, generated from
+`PageRegistry.ActionScopes` and `AgentSiteMap`. A test fails if a catalog name or route row drifts.
+
+### Cause
+
+Headless probe of `https://arch.timewarp.work/` on 2026-10-17, with a recording `modelContext`
+installed on `document` and `navigator` before page scripts, then a 6 s wait:
+
+- HTTP 200. `DOMContentLoaded` at 218 ms. At 6 s, `window.Blazor` was an object and `readyState` was `complete`.
+- `navigate`, `site_map`, and `page_context` registered together at `performance.now()` 399 ms. Each had an execute function and an abort signal.
+- `hasPageLoadElement` was false. Nothing registered during HTML parse.
+
+`/` already has those three honest tools, but only after the interactive render (`WebMcpAgentSurface` → `web-mcp.ts` `Replace`), which is after `DOMContentLoaded`. A check at parse time sees an empty context. When the browser has no `modelContext`, `Replace` feature-detects and does nothing; the inspector extension supplies the API and a person waits. That matches the baseline `webMcp` fail (`check.webMcp.noToolsDetected`). The deployed page had no page-load registration. This change does not ship an MCP-B polyfill. A browser that never exposes `modelContext` still sees no tools; the docs name the Canary flag and the polyfill for that case.
+
+### What landed
+
+- `WebMcpPageLoad` is the first thing in `<body>`. It embeds the real `navigate` payload (`AgentNavigate.Create`, Ask before editing, so the person confirms) and a parser-blocking classic script. `execute` refuses a url outside the enum, calls `window.confirm`, and `location.assign` only for a same-origin URL.
+- When Blazor publishes, `web-mcp.ts` aborts `window.__timewarpWebMcpPageLoad` and registers the full list, including `navigate`, with the in-app approval bar.
+- `GET /.well-known/webmcp.json` is anonymous JSON. `routeScopedTools` comes from the page registry. `/Feedback` and `/Settings` are examples of routes whose extra tools run only on that SPA route.
+- `/llms.txt`, `/auth.md`, and `timewarp-architecture-discovery/SKILL.md` describe both transports, the route split, and inspector steps. `/auth.md` says an agent registers by enrolling a public key (agent key or browser passkey). There is no email form. It does not claim OAuth `agent_auth` or `register_uri`.
+- The server card description points at the WebMCP document. `capabilities.tools` stays false, `tools` stays `[]`, `status` stays `stub`.
+
+### Gates
+
+- `./bin/dev build`: 0 warnings, 0 errors.
+- `./bin/dev test --quiet`: 23 of 23 projects passed (includes `web-spa-playwright-tests` and `web-spa-integration-tests`).
+- `dotnet run source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs`: 6/6 passed, including `WebMcpDiscovery_Should_BeReadableWithoutJavaScript`.
+- `Destinations_Should_` (project directory, `--filter-class`): 6/6 passed. Catalog names match `IActionCatalog`.
+- `PageLoad_Given_ModelContext`: passed. The first `navigate` is recorded with `window.Blazor` still undefined, `hasExecute` true, and an abort signal. `web-mcp-page-load.js` precedes `blazor.web.js`.
+- `./bin/dev template-smoke`: succeeded (SmokeDefault build 0/0; generated web Jaribu 373/373, api 9/9, testing 14/14).
+- `ganda repo audit`: 32 passed, 0 failed.
+
+### How to validate
+
+#### Smoke
+
+No JavaScript. Replace `<host>` with the deployed origin (local proof uses the in-proc host from the readiness test).
+
+```bash
+curl -fsS "https://<host>/llms.txt"
+curl -fsS "https://<host>/auth.md"
+curl -fsS "https://<host>/.well-known/agent-skills/timewarp-architecture-discovery/SKILL.md"
+curl -fsS -D - "https://<host>/.well-known/webmcp.json" -o /tmp/webmcp.json
+curl -fsS "https://<host>/.well-known/mcp/server-card.json"
+curl -fsS "https://<host>/"
+curl -fsS "https://<host>/js/features/web-mcp-page-load.js"
+```
+
+The same strings are asserted by `WebMcpDiscovery_Should_BeReadableWithoutJavaScript` in `source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs`.
+
+#### Expect
+
+- `/llms.txt`, `/auth.md`, and the discovery skill contain `WebMCP`, `document.modelContext`, `typeof navigator.modelContext`, `MCP-B`, and `Copy trace`.
+- `/llms.txt` and the discovery skill also contain `/Feedback` and `/Settings`.
+- `/auth.md` contains `You are an agent`, `Agent registration`, `Supported methods`, `Credential use`, `/api/identity/agent/register`, `public key`, and `no email form`.
+- `/.well-known/webmcp.json` is `application/json` and contains `"transport": "webmcp"`, `"capabilitiesTools": false`, `navigate`, `document.modelContext`, `/Feedback`, and `/Settings`.
+- `/.well-known/mcp/server-card.json` still contains `"tools": false`, `"tools": []`, and `"status": "stub"`.
+- The HTML for `/` contains `id="timewarp-webmcp-page-load"`, and `web-mcp-page-load.js` appears before `blazor.web.js`. The script body contains `registerTool`.
+- Route-scoped tools (credential actions such as `Credentials.AddPasskey`, feedback actions) are listed under their route template in `webmcp.json`. They run only when the SPA is on that route. `/` registers `navigate` (site-wide goto; the person approves). `site_map` and `page_context` join after the page becomes interactive.
+
+### Not in this walk
+
+The live re-scan of arch.timewarp.work waits until this is deployed. Parent 343 records the result under `scan/`. The checklist item stays open.

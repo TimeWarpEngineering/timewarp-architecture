@@ -59,8 +59,18 @@ Our code feature-detects WebMCP and does nothing when the browser lacks it. In
 normal Chrome without the flag you will see no tools. That is expected, not a
 bug.
 
+## Page-load registration
+
+`/` embeds the real `navigate` tool in the first HTML response (`WebMcpPageLoad` in `App.razor`, payload `#timewarp-webmcp-page-load`, classic script `js/features/web-mcp-page-load.js`). When `document.modelContext` or `navigator.modelContext` already exists, that script calls `registerTool` during HTML parse, before `blazor.web.js`. The person still confirms the move (`window.confirm`). After the interactive circuit starts, `web-mcp.ts` aborts that registration and publishes the full list, including `navigate`. A browser with no model context still registers nothing. Do not install a polyfill to force a score.
+
+HTTP clients read `/.well-known/webmcp.json` (generated from the page registry) plus the WebMCP sections in `/llms.txt`, `/auth.md`, and the discovery skill. The MCP server card stays a stub.
+
 ## Where the code lives
 
+- `source/container-apps/web/projects/web-spa/source/features/web-mcp-page-load.ts` —
+  classic script that registers `navigate` during HTML parse.
+- `source/container-apps/web/projects/web-spa/features/application/agent/web-mcp-discovery-catalog.cs` —
+  page-load payload and `/.well-known/webmcp.json`.
 - `source/container-apps/web/projects/web-spa/source/features/web-mcp.ts` —
   browser registration. Uses `document.modelContext`, with
   `navigator.modelContext` as the fallback. When neither API is present the

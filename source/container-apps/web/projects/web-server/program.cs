@@ -567,6 +567,7 @@ public partial class Program : IAspNetProgram
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
     webApplication.MapStaticAssets();
+    WebMcpDiscoveryEndpoint.Map(webApplication);
     webApplication.MapRazorComponents<App>()
       .AddInteractiveServerRenderMode()
       .AddInteractiveWebAssemblyRenderMode()
