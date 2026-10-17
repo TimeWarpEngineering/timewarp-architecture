@@ -109,7 +109,8 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 
 ## Review
 
-- Round 1: fix pass implemented M1, M2, and M3. Round 2 has not run.
+- Round 1: fix pass implemented M1, M2, and M3.
+- Round 2: M1, M2, and M3 verified fixed. No new findings. Disposition `clean`.
 
 ## Notes
 
@@ -148,6 +149,7 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 - Review oracle round 1 (2026-10-17): claude (claude-opus-5-5), session not reported. Effort 3, roster general. Found 1 bug (M1) and 2 suggestions (M2, M3), all open. A fix pass is requested. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-17T14:16:30Z
 - Fix pass (2026-10-17): implement-fix-2. Download and owner-name checks use `IAgentPermissionScopeSource` so an agent-token caller is evaluated only on the agent-token scheme. HTTP tests drive real bearer tokens. The detail page gates status and notes on their endpoint policies. Reply stays on `admin.feedback.manage`.
+- Review oracle round 2 (2026-10-17): claude (claude-opus-5-5), session not reported. Effort 2, roster general, turn cap 120. Re-verified the fix delta `e3a18ed06..f6384d665`. M1, M2, and M3 are fixed, with no new findings. Disposition `clean`. Goal restatement matches the task, so no misread.
 
 ## Results
 
@@ -161,11 +163,12 @@ The admin detail page was not clicked in a browser. The Razor compile covers the
 
 ### Review
 
-- Round 1 (effort 3, roster general). Counts at review time: bug 1 open, suggestion 2 open, nit 0. The fix pass implements all three. Round 2 has not run.
+- Round 1 (effort 3, roster general). Counts at review time: bug 1 open, suggestion 2 open, nit 0. The fix pass implements all three.
+- Round 2 (effort 2, roster general). Final counts: bug 1 fixed, suggestion 2 fixed, nit 0, open 0, wontfix 0. **Disposition: clean.** The reviewer re-ran the attachment runfile (22/22), the triage runfile (42/42), and the HTTP `AdminFeedbackAuthorization` class (9/9, Release).
 - M1: download and `FeedbackOwnerNames` evaluate only the authenticated scheme. A role-assigned agent is covered by the attachment runfile and by the HTTP test.
 - M2: `Scoped_Given_Agent_Bearer_Tokens` drives real bearer tokens. `feedback:read` lists (200) and is refused the three writes (403). Each write scope is refused the list and the other writes (403) and succeeds on its own write (200). Reply is 401 for every agent token, including one that holds all four feedback scopes, because the endpoint schemes are the human sessions.
 - M3: `FeedbackAdminItemPage` gates status and notes on `PermissionIds.FeedbackStatus` and `PermissionIds.FeedbackNote`. Reply stays on `PermissionIds.AdminFeedbackManage`.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
