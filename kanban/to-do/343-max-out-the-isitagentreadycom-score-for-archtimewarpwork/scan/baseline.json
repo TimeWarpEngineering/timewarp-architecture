@@ -1,0 +1,1997 @@
+{
+    "url": "https://arch.timewarp.work",
+    "targetUrl": "https://arch.timewarp.work",
+    "scannedAt": "2026-10-17T08:39:37.796Z",
+    "level": 4,
+    "levelName": "Agent-Integrated",
+    "checks": {
+        "discoverability": {
+            "robotsTxt": {
+                "status": "pass",
+                "message": "robots.txt exists with valid format",
+                "messageRef": {
+                    "code": "check.robotsTxt.valid"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /robots.txt",
+                        "request": {
+                            "url": "https://arch.timewarp.work/robots.txt",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/plain",
+                                "cf-ray": "a4bdfe2b2b2bd036-BKK"
+                            },
+                            "bodyPreview": "# TimeWarp.Architecture template host \u2014 agent-welcome posture.\n# We do NOT block AI crawlers by default. Cloudflare (optional) is the outer\n# ring for volumetric abuse; app law is TimeWarp.Identity + TimeWarp.402.\n#\n# Content signals (per contentsignals.org / Content-Signal in robots):\n#   ai-train: training / fine-tuning AI models\n#   ai-input: using content as AI input / context (RAG, grounding)\n#   search:   building a search index\n#\n# Policy: welcome agents to train, index, and use public di..."
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received valid robots.txt (200, text/plain)"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Validate robots.txt structure",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Contains valid User-agent directive(s)"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "robots.txt exists with valid format"
+                        }
+                    }
+                ],
+                "durationMs": 0
+            },
+            "sitemap": {
+                "status": "pass",
+                "message": "sitemap.xml exists with valid structure",
+                "messageRef": {
+                    "code": "check.sitemap.valid"
+                },
+                "details": {
+                    "url": "https://arch.timewarp.work/sitemap.xml",
+                    "fromRobotsTxt": false,
+                    "format": "xml"
+                },
+                "evidence": [
+                    {
+                        "action": "parse",
+                        "label": "Extract Sitemap directives from robots.txt",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No Sitemap directives found in robots.txt"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /sitemap_index.xml",
+                        "request": {
+                            "url": "https://arch.timewarp.work/sitemap_index.xml",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2c8ba1d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "https://arch.timewarp.work/sitemap_index.xml returned 404"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /sitemap.xml",
+                        "request": {
+                            "url": "https://arch.timewarp.work/sitemap.xml",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/xml",
+                                "cf-ray": "a4bdfe2c8b9ed036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found valid xml sitemap at https://arch.timewarp.work/sitemap.xml"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /sitemap-index.xml",
+                        "request": {
+                            "url": "https://arch.timewarp.work/sitemap-index.xml",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2c8ba0d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "https://arch.timewarp.work/sitemap-index.xml returned 404"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /sitemap.xml.gz",
+                        "request": {
+                            "url": "https://arch.timewarp.work/sitemap.xml.gz",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/xml",
+                                "cf-ray": "a4bdfe2c9ba2d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found gzip-compressed sitemap at https://arch.timewarp.work/sitemap.xml.gz"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "sitemap.xml exists with valid structure"
+                        }
+                    }
+                ],
+                "durationMs": 211
+            },
+            "linkHeaders": {
+                "status": "fail",
+                "message": "No Link headers found on target page",
+                "messageRef": {
+                    "code": "check.linkHeaders.notFound"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /",
+                        "request": {
+                            "url": "https://arch.timewarp.work",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/html; charset=utf-8",
+                                "cf-ray": "a4bdfe2dec1dd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No Link header present in response"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No Link headers found on target page"
+                        }
+                    }
+                ],
+                "durationMs": 261
+            },
+            "dnsAid": {
+                "status": "fail",
+                "message": "DNS for AI Discovery (DNS-AID) well-known entrypoint records not found",
+                "messageRef": {
+                    "code": "check.dnsAid.notFound"
+                },
+                "details": {
+                    "domainsChecked": [
+                        "arch.timewarp.work"
+                    ],
+                    "queriesAttempted": [
+                        "SVCB _index._agents.arch.timewarp.work",
+                        "HTTPS _index._agents.arch.timewarp.work",
+                        "SVCB _a2a._agents.arch.timewarp.work",
+                        "HTTPS _a2a._agents.arch.timewarp.work",
+                        "SVCB _mcp._agents.arch.timewarp.work",
+                        "HTTPS _mcp._agents.arch.timewarp.work",
+                        "TXT _index._agents.arch.timewarp.work"
+                    ],
+                    "dnssecValidated": false,
+                    "serviceRecordCount": 0,
+                    "aliasRecordCount": 0,
+                    "txtIndexEntryCount": 0,
+                    "txtIndexEntries": [],
+                    "records": []
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "DoH SVCB _index._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_index._agents.arch.timewarp.work&type=SVCB&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_index._agents.arch.timewarp.work\",\"type\":64}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No SVCB answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH HTTPS _index._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_index._agents.arch.timewarp.work&type=HTTPS&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_index._agents.arch.timewarp.work\",\"type\":65}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No HTTPS answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH SVCB _a2a._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_a2a._agents.arch.timewarp.work&type=SVCB&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_a2a._agents.arch.timewarp.work\",\"type\":64}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No SVCB answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH HTTPS _a2a._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_a2a._agents.arch.timewarp.work&type=HTTPS&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_a2a._agents.arch.timewarp.work\",\"type\":65}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No HTTPS answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH SVCB _mcp._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_mcp._agents.arch.timewarp.work&type=SVCB&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_mcp._agents.arch.timewarp.work\",\"type\":64}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No SVCB answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH HTTPS _mcp._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_mcp._agents.arch.timewarp.work&type=HTTPS&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_mcp._agents.arch.timewarp.work\",\"type\":65}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No HTTPS answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH TXT _index._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_index._agents.arch.timewarp.work&type=TXT&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_index._agents.arch.timewarp.work\",\"type\":16}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No TXT answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Parse DNS for AI Discovery (DNS-AID) SVCB/HTTPS records",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No DNS for AI Discovery (DNS-AID) SVCB or HTTPS records found at well-known entrypoints"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "DNS for AI Discovery (DNS-AID) well-known entrypoint records not found"
+                        }
+                    }
+                ],
+                "durationMs": 38
+            }
+        },
+        "contentAccessibility": {
+            "markdownNegotiation": {
+                "status": "pass",
+                "message": "Site supports Markdown for Agents",
+                "messageRef": {
+                    "code": "check.markdownNegotiation.supported"
+                },
+                "details": {
+                    "contentType": "text/markdown"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET target page (Accept: text/markdown)",
+                        "request": {
+                            "url": "https://arch.timewarp.work",
+                            "method": "GET",
+                            "headers": {
+                                "accept": "text/markdown",
+                                "cache-control": "no-cache"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Response content-type is text/markdown -- site supports markdown negotiation"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/markdown"
+                            }
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Site supports Markdown for Agents"
+                        }
+                    }
+                ],
+                "durationMs": 1313
+            }
+        },
+        "botAccessControl": {
+            "robotsTxtAiRules": {
+                "status": "pass",
+                "message": "Found rules for AI bots: gptbot, chatgpt-user, oai-searchbot, google-extended, ccbot, anthropic-ai, claude-web, bytespider, perplexitybot, applebot-extended, amazonbot, claudebot",
+                "messageRef": {
+                    "code": "check.aiRules.rulesFound",
+                    "params": {
+                        "bots": [
+                            "gptbot",
+                            "chatgpt-user",
+                            "oai-searchbot",
+                            "google-extended",
+                            "ccbot",
+                            "anthropic-ai",
+                            "claude-web",
+                            "bytespider",
+                            "perplexitybot",
+                            "applebot-extended",
+                            "amazonbot",
+                            "claudebot"
+                        ]
+                    }
+                },
+                "details": {
+                    "targetPath": "/",
+                    "robotsStatus": "ok",
+                    "botPolicies": [
+                        {
+                            "userAgent": "gptbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "chatgpt-user",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "oai-searchbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "google-extended",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "ccbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "anthropic-ai",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "claude-web",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "bytespider",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "perplexitybot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "cohere-ai",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "applebot-extended",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "amazonbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "meta-externalagent",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "facebookbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "omgilibot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "diffbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "claudebot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "explicit",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "claude-searchbot",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "claude-user",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        },
+                        {
+                            "userAgent": "perplexity-user",
+                            "effectiveAccess": "allowed",
+                            "ruleSource": "wildcard",
+                            "rules": [
+                                {
+                                    "directive": "allow",
+                                    "pattern": "/"
+                                }
+                            ],
+                            "matchedRule": {
+                                "directive": "allow",
+                                "pattern": "/"
+                            }
+                        }
+                    ],
+                    "botsFound": [
+                        "gptbot",
+                        "chatgpt-user",
+                        "oai-searchbot",
+                        "google-extended",
+                        "ccbot",
+                        "anthropic-ai",
+                        "claude-web",
+                        "bytespider",
+                        "perplexitybot",
+                        "applebot-extended",
+                        "amazonbot",
+                        "claudebot"
+                    ]
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /robots.txt",
+                        "request": {
+                            "url": "https://arch.timewarp.work/robots.txt",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/plain",
+                                "cf-ray": "a4bdfe2b2b2bd036-BKK"
+                            },
+                            "bodyPreview": "# TimeWarp.Architecture template host \u2014 agent-welcome posture.\n# We do NOT block AI crawlers by default. Cloudflare (optional) is the outer\n# ring for volumetric abuse; app law is TimeWarp.Identity + TimeWarp.402.\n#\n# Content signals (per contentsignals.org / Content-Signal in robots):\n#   ai-train: training / fine-tuning AI models\n#   ai-input: using content as AI input / context (RAG, grounding)\n#   search:   building a search index\n#\n# Policy: welcome agents to train, index, and use public di..."
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received valid robots.txt (200, text/plain)"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Scan for AI bot User-agent directives",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found rules for AI bots: gptbot, chatgpt-user, oai-searchbot, google-extended, ccbot, anthropic-ai, claude-web, bytespider, perplexitybot, applebot-extended, amazonbot, claudebot"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found rules for 12 AI bots"
+                        }
+                    }
+                ],
+                "durationMs": 0
+            },
+            "contentSignals": {
+                "status": "pass",
+                "message": "Content Signals found in robots.txt",
+                "messageRef": {
+                    "code": "check.contentSignals.found"
+                },
+                "details": {
+                    "signals": [
+                        {
+                            "userAgent": "GPTBot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "OAI-SearchBot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "ChatGPT-User",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "ClaudeBot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "Claude-Web",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "anthropic-ai",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "Google-Extended",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "Applebot-Extended",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "Amazonbot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "PerplexityBot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "Bytespider",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "CCBot",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        },
+                        {
+                            "userAgent": "*",
+                            "path": null,
+                            "aiTrain": "yes",
+                            "search": "yes",
+                            "aiInput": "yes"
+                        }
+                    ],
+                    "signalCount": 13
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /robots.txt",
+                        "request": {
+                            "url": "https://arch.timewarp.work/robots.txt",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/plain",
+                                "cf-ray": "a4bdfe2b2b2bd036-BKK"
+                            },
+                            "bodyPreview": "# TimeWarp.Architecture template host \u2014 agent-welcome posture.\n# We do NOT block AI crawlers by default. Cloudflare (optional) is the outer\n# ring for volumetric abuse; app law is TimeWarp.Identity + TimeWarp.402.\n#\n# Content signals (per contentsignals.org / Content-Signal in robots):\n#   ai-train: training / fine-tuning AI models\n#   ai-input: using content as AI input / context (RAG, grounding)\n#   search:   building a search index\n#\n# Policy: welcome agents to train, index, and use public di..."
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received valid robots.txt (200, text/plain)"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Parse Content-Signal directives",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found 13 Content-Signal directive(s)"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Content Signals found in robots.txt"
+                        }
+                    }
+                ],
+                "durationMs": 0
+            },
+            "webBotAuth": {
+                "status": "neutral",
+                "message": "Web Bot Auth directory not found (informational only)",
+                "messageRef": {
+                    "code": "scanner.webBotAuthInformational",
+                    "params": {
+                        "original": {
+                            "code": "check.webBotAuth.notFound"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/http-message-signatures-directory",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/http-message-signatures-directory",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2c9ba4d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Server returned 404 -- Web Bot Auth directory not found"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Web Bot Auth directory not found"
+                        }
+                    }
+                ],
+                "durationMs": 101
+            }
+        },
+        "discovery": {
+            "apiCatalog": {
+                "status": "fail",
+                "message": "API Catalog not found",
+                "messageRef": {
+                    "code": "check.apiCatalog.notFound"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/api-catalog",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/api-catalog",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/linkset+json, application/json"
+                            }
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2d6bddd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Server returned 404 -- API Catalog not found"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "API Catalog not found"
+                        }
+                    }
+                ],
+                "durationMs": 229
+            },
+            "oauthDiscovery": {
+                "status": "fail",
+                "message": "No OAuth/OIDC discovery metadata found",
+                "messageRef": {
+                    "code": "check.oauthDiscovery.notFound"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/oauth-authorization-server",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/oauth-authorization-server",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2ccbb0d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "oauth-authorization-server returned 404"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/openid-configuration",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/openid-configuration",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2ccbafd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "openid-configuration returned 404"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No OAuth/OIDC discovery metadata found at either well-known path"
+                        }
+                    }
+                ],
+                "durationMs": 67
+            },
+            "oauthProtectedResource": {
+                "status": "fail",
+                "message": "No OAuth Protected Resource Metadata found",
+                "messageRef": {
+                    "code": "check.oauthProtectedResource.notFound"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /",
+                        "request": {
+                            "url": "https://arch.timewarp.work",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/html; charset=utf-8",
+                                "cf-ray": "a4bdfe2cfbb9d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "Target resource returned 200 (no WWW-Authenticate header)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/oauth-protected-resource",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/oauth-protected-resource",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2ccbb2d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Returned 404"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No OAuth Protected Resource Metadata found"
+                        }
+                    }
+                ],
+                "durationMs": 128
+            },
+            "authMd": {
+                "status": "fail",
+                "message": "auth.md exists but does not describe agent registration",
+                "messageRef": {
+                    "code": "check.authMd.registrationMissing"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /auth.md",
+                        "request": {
+                            "url": "https://arch.timewarp.work/auth.md",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "text/markdown, text/plain, */*"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/markdown",
+                                "cf-ray": "a4bdfe2cfbbad036-BKK"
+                            },
+                            "bodyPreview": "# auth.md \u2014 TimeWarp.Architecture template host\n\n**Honest agent/human auth story.** This host does **not** use email/password\nregistration. An account is an accepted public key (passkey or agent key), not a\nform filled with an email address.\n\nContent usage preferences: `ai-train=yes, search=yes, ai-input=yes`\n(see [/robots.txt](/robots.txt)). Discovery index: [/llms.txt](/llms.txt).\nAgent skill for this ceremony: [timewarp-identity](/.well-known/agent-skills/timewarp-identity/SKILL.md)\n(index: [..."
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received 200 response with content-type: text/markdown"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Detect Auth.md registration markers",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No Auth.md agent registration markers found"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "auth.md exists but does not describe agent registration"
+                        }
+                    }
+                ],
+                "durationMs": 161
+            },
+            "mcpServerCard": {
+                "status": "pass",
+                "message": "MCP Server Card found at /.well-known/mcp/server-card.json",
+                "messageRef": {
+                    "code": "check.mcpServerCard.found",
+                    "params": {
+                        "path": "/.well-known/mcp/server-card.json"
+                    }
+                },
+                "details": {
+                    "path": "/.well-known/mcp/server-card.json",
+                    "format": "sep",
+                    "name": "timewarp-architecture",
+                    "hasVersion": true,
+                    "hasTransport": true,
+                    "hasCapabilities": true,
+                    "hasTools": true,
+                    "hasDescription": true
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/mcp/server-card.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/mcp/server-card.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/json",
+                                "cf-ray": "a4bdfe2d2bc6d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found valid MCP Server Card (sep format) at /.well-known/mcp/server-card.json"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/mcp/server-cards.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/mcp/server-cards.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2d2bccd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "/.well-known/mcp/server-cards.json returned 404"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/mcp.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/mcp.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/json",
+                                "cf-ray": "a4bdfe2d4bd5d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found valid MCP Server Card (sep format) at /.well-known/mcp.json"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Validate Server Card",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "SEP-format card found at /.well-known/mcp/server-card.json"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "MCP Server Card found at /.well-known/mcp/server-card.json"
+                        }
+                    }
+                ],
+                "durationMs": 148
+            },
+            "a2aAgentCard": {
+                "status": "pass",
+                "message": "A2A Agent Card found: \"TimeWarp.Architecture Template Host\" (v2.0.0-beta.14)",
+                "messageRef": {
+                    "code": "check.a2aAgentCard.found",
+                    "params": {
+                        "name": "TimeWarp.Architecture Template Host",
+                        "version": "2.0.0-beta.14"
+                    }
+                },
+                "details": {
+                    "name": "TimeWarp.Architecture Template Host",
+                    "description": "Agent-ready .NET template host by TimeWarp Enterprises. Live: passkey and agent-key identity REST APIs, OpenAPI, discovery docs, and Agent Skills. Full A2A JSON-RPC task protocol is not hosted yet \u2014 this is an unsigned v1 discoverability card (signed cards later). Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and /.well-known/agent-skills/ for operational use.",
+                    "version": "2.0.0-beta.14",
+                    "providerName": "TimeWarp Enterprises",
+                    "skillCount": 4,
+                    "skillNames": [
+                        "Register agent public key",
+                        "Issue scoped agent bearer token",
+                        "Who am I (agent session)",
+                        "Read agent discovery surfaces"
+                    ],
+                    "hasStreaming": false,
+                    "hasPushNotifications": false,
+                    "hasExtensions": false,
+                    "interfaceCount": 2,
+                    "transportProtocols": [],
+                    "serviceUrl": "/openapi/v1.json",
+                    "hasSecurity": true,
+                    "inputModes": [
+                        "application/json",
+                        "text/plain"
+                    ],
+                    "outputModes": [
+                        "application/json",
+                        "text/markdown",
+                        "text/plain"
+                    ],
+                    "ap2Supported": false
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/agent-card.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/agent-card.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/json",
+                                "cf-ray": "a4bdfe2d5bdad036-BKK"
+                            },
+                            "bodyPreview": "{\"name\":\"TimeWarp.Architecture Template Host\",\"description\":\"Agent-ready .NET template host by TimeWarp Enterprises. Live: passkey and agent-key identity REST APIs, OpenAPI, discovery docs, and Agent Skills. Full A2A JSON-RPC task protocol is not hosted yet \u2014 this is an unsigned v1 discoverability card (signed cards later). Prefer REST identity ceremonies (/auth.md), OpenAPI (/openapi/v1.json), and /.well-known/agent-skills/ for operational use.\",\"supportedInterfaces\":[{\"url\":\"/openapi/v1.json\",..."
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received 200 with valid JSON response"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Validate AgentCard structure",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Valid AgentCard: \"TimeWarp.Architecture Template Host\", version 2.0.0-beta.14, 4 skills, 2 interfaces"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Check AP2 extension",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No AP2 extension declared"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "A2A Agent Card found: \"TimeWarp.Architecture Template Host\" (v2.0.0-beta.14)"
+                        }
+                    }
+                ],
+                "durationMs": 161
+            },
+            "agentSkills": {
+                "status": "pass",
+                "message": "Agent Skills index exists with valid JSON",
+                "messageRef": {
+                    "code": "check.agentSkills.valid"
+                },
+                "details": {
+                    "skillCount": 2,
+                    "specVersion": "0.2.0",
+                    "path": "/.well-known/agent-skills/index.json",
+                    "v2ValidEntries": true
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/agent-skills/index.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/agent-skills/index.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/json",
+                                "cf-ray": "a4bdfe2d5bdbd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Received 200 response with content-type: application/json"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Detect spec version",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Found $schema field \u2014 v0.2.0 format detected"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Count skills",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "Found \"skills\" array with 2 entries (2 with valid v0.2.0 fields)"
+                        }
+                    },
+                    {
+                        "action": "validate",
+                        "label": "Validate skill count",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Index contains 2 skills"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "positive",
+                            "summary": "Agent Skills index exists with valid JSON"
+                        }
+                    }
+                ],
+                "durationMs": 161
+            },
+            "webMcp": {
+                "status": "fail",
+                "message": "No WebMCP tools detected on page load",
+                "messageRef": {
+                    "code": "check.webMcp.noToolsDetected"
+                },
+                "evidence": [
+                    {
+                        "action": "parse",
+                        "label": "WebMCP detection",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "Checking page for WebMCP tool registrations"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "Navigate to https://arch.timewarp.work",
+                        "request": {
+                            "url": "https://arch.timewarp.work",
+                            "method": "GET"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "Loading page to detect WebMCP tool registrations"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Check imperative WebMCP API",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No tools registered via document.modelContext or navigator.modelContext"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "No WebMCP tools detected on page load"
+                        }
+                    }
+                ],
+                "durationMs": 5830
+            },
+            "ard": {
+                "status": "fail",
+                "message": "ARD capability manifest not found",
+                "messageRef": {
+                    "code": "check.ard.notFound"
+                },
+                "evidence": [
+                    {
+                        "action": "parse",
+                        "label": "Extract Agentmap directives from robots.txt",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No Agentmap directives found"
+                        }
+                    },
+                    {
+                        "action": "parse",
+                        "label": "Extract <link rel=\"ai-catalog\"> from page head",
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No catalog links found"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/ai-catalog.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/ai-catalog.json",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/json"
+                            }
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2c8b9dd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Server returned 404 -- ai-catalog.json not found"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH TXT _catalog._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_catalog._agents.arch.timewarp.work&type=TXT&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_catalog._agents.arch.timewarp.work\",\"type\":16}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No TXT answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "DoH SRV _search._agents.arch.timewarp.work",
+                        "request": {
+                            "url": "https://cloudflare-dns.com/dns-query?name=_search._agents.arch.timewarp.work&type=SRV&do=1",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/dns-json"
+                            }
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/dns-json"
+                            },
+                            "bodyPreview": "{\"Status\":0,\"TC\":false,\"RD\":true,\"RA\":true,\"AD\":false,\"CD\":false,\"Question\":[{\"name\":\"_search._agents.arch.timewarp.work\",\"type\":33}],\"Authority\":[{\"name\":\"timewarp.work\",\"type\":6,\"TTL\":1800,\"data\":\"bella.ns.cloudflare.com. dns.cloudflare.com. 2417629891 10000 2400 604800 1800\"}]}"
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "No SRV answers (NOERROR)"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "ARD capability manifest not found"
+                        }
+                    }
+                ],
+                "details": {
+                    "discoveryMechanisms": [],
+                    "searchEndpoints": []
+                },
+                "durationMs": 34
+            },
+            "personalAgentProtocol": {
+                "status": "fail",
+                "message": "Personal Agent Protocol manifest not found",
+                "messageRef": {
+                    "code": "check.personalAgentProtocol.notFound"
+                },
+                "details": {
+                    "manifestDetected": false,
+                    "issuerValidation": "notChecked"
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/poppy.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/poppy.json",
+                            "method": "GET",
+                            "headers": {
+                                "Accept": "application/json"
+                            }
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2b2b2ad036-BKK"
+                            }
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Personal Agent Protocol manifest not found"
+                        }
+                    }
+                ],
+                "durationMs": 135
+            }
+        },
+        "commerce": {
+            "x402": {
+                "status": "neutral",
+                "message": "x402 payment protocol not detected (not a commerce site)",
+                "messageRef": {
+                    "code": "scanner.commerceCheckNotApplicable",
+                    "params": {
+                        "check": "x402",
+                        "original": {
+                            "code": "check.x402.notDetected"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /api",
+                        "request": {
+                            "url": "https://arch.timewarp.work/api",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 500,
+                            "statusText": "Internal Server Error",
+                            "headers": {
+                                "content-type": "text/plain; charset=utf-8",
+                                "cf-ray": "a4bdfe2d9bf5d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "/api returned 500 (not 402)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /",
+                        "request": {
+                            "url": "https://arch.timewarp.work/",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "text/html; charset=utf-8",
+                                "cf-ray": "a4bdfe2d9bf3d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "/ returned 200 (not 402)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /api/v1",
+                        "request": {
+                            "url": "https://arch.timewarp.work/api/v1",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2dac03d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "/api/v1 returned 404 (not 402)"
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET /platform/v2/x402/discovery/resources",
+                        "request": {
+                            "url": "https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources?limit=500",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 200,
+                            "statusText": "OK",
+                            "headers": {
+                                "content-type": "application/json",
+                                "cf-ray": "a4bdfe2d8bf1d036-BKK"
+                            }
+                        }
+                    },
+                    {
+                        "action": "fetch",
+                        "label": "GET Bazaar discovery API",
+                        "request": {
+                            "url": "https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources?limit=500",
+                            "method": "GET"
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Network error querying Bazaar API"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "x402 payment protocol not detected"
+                        }
+                    }
+                ],
+                "durationMs": 5736
+            },
+            "mpp": {
+                "status": "neutral",
+                "message": "MPP payment discovery not detected (not a commerce site)",
+                "messageRef": {
+                    "code": "scanner.commerceCheckNotApplicable",
+                    "params": {
+                        "check": "mpp",
+                        "original": {
+                            "code": "check.mpp.notDetected"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /openapi.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/openapi.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2ddc17d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "neutral",
+                            "summary": "/openapi.json returned 404"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "MPP payment discovery not detected"
+                        }
+                    }
+                ],
+                "durationMs": 242
+            },
+            "ucp": {
+                "status": "neutral",
+                "message": "UCP profile not found (not a commerce site)",
+                "messageRef": {
+                    "code": "scanner.commerceCheckNotApplicable",
+                    "params": {
+                        "check": "ucp",
+                        "original": {
+                            "code": "check.ucp.notFound"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/ucp",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/ucp",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2d7bebd036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Server returned 404 -- UCP profile not found"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "UCP profile not found"
+                        }
+                    }
+                ],
+                "durationMs": 178
+            },
+            "acp": {
+                "status": "neutral",
+                "message": "ACP discovery document not found (not a commerce site)",
+                "messageRef": {
+                    "code": "scanner.commerceCheckNotApplicable",
+                    "params": {
+                        "check": "acp",
+                        "original": {
+                            "code": "check.acp.notFound"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "fetch",
+                        "label": "GET /.well-known/acp.json",
+                        "request": {
+                            "url": "https://arch.timewarp.work/.well-known/acp.json",
+                            "method": "GET"
+                        },
+                        "response": {
+                            "status": 404,
+                            "statusText": "Not Found",
+                            "headers": {
+                                "content-length": "0",
+                                "cf-ray": "a4bdfe2dec18d036-BKK"
+                            }
+                        },
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "Server returned 404 -- ACP discovery document not found"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "ACP discovery document not found"
+                        }
+                    }
+                ],
+                "durationMs": 243
+            },
+            "ap2": {
+                "status": "neutral",
+                "message": "AP2 not declared in A2A Agent Card (not a commerce site)",
+                "messageRef": {
+                    "code": "scanner.commerceCheckNotApplicable",
+                    "params": {
+                        "check": "ap2",
+                        "original": {
+                            "code": "check.ap2.notDeclared"
+                        }
+                    }
+                },
+                "evidence": [
+                    {
+                        "action": "validate",
+                        "label": "Check AP2 extension",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "A2A Agent Card found but no AP2 extension declared"
+                        }
+                    },
+                    {
+                        "action": "conclude",
+                        "label": "Conclusion",
+                        "finding": {
+                            "outcome": "negative",
+                            "summary": "AP2 not declared in A2A Agent Card extensions"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "nextLevel": {
+        "target": 5,
+        "name": "Agent-Native",
+        "requirements": [
+            {
+                "check": "authMd",
+                "description": "Publish Auth.md metadata for agent registration",
+                "shortPrompt": "Serve /auth.md and advertise agent_auth in OAuth Authorization Server metadata so agents can register securely.",
+                "specUrls": [
+                    "https://workos.com/auth-md",
+                    "https://github.com/workos/auth.md"
+                ],
+                "prompt": "Serve /auth.md at the site root with agent registration instructions, publish /.well-known/oauth-protected-resource, and include an agent_auth block in /.well-known/oauth-authorization-server with register_uri, supported identity types, credential types, and claim/revocation URLs where applicable.",
+                "skillUrl": "https://isitagentready.com/.well-known/agent-skills/auth-md/SKILL.md"
+            },
+            {
+                "check": "apiCatalog",
+                "description": "Publish an API catalog for automated API discovery (RFC 9727)",
+                "shortPrompt": "Create /.well-known/api-catalog returning application/linkset+json with a \"linkset\" array listing your APIs and their specs.",
+                "specUrls": [
+                    "https://www.rfc-editor.org/rfc/rfc9727",
+                    "https://www.rfc-editor.org/rfc/rfc9264"
+                ],
+                "prompt": "Create /.well-known/api-catalog returning application/linkset+json with a \"linkset\" array. Each entry should include an \"anchor\" URL for the API and link relations for service-desc (OpenAPI spec), service-doc (documentation), and status (health endpoint). See RFC 9727 Appendix A for examples.",
+                "skillUrl": "https://isitagentready.com/.well-known/agent-skills/api-catalog/SKILL.md"
+            }
+        ]
+    },
+    "isCommerce": false,
+    "commerceSignals": []
+}

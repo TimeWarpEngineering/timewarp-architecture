@@ -38,6 +38,20 @@ come from configuration, never literals.
 - Agent tokens and passkeys (TimeWarp.Identity). OAuth discovery / Protected Resource metadata may
   map onto the agent-token auth, so check what is honest to advertise.
 
+## Baseline (2026-10-17)
+
+`scan/baseline.json`: level 4 "Agent-Integrated", All Checks. The site is not flagged as commerce.
+
+| Result | Checks |
+|--------|--------|
+| pass | robotsTxt, sitemap, markdownNegotiation, robotsTxtAiRules, contentSignals, mcpServerCard, a2aAgentCard, agentSkills |
+| fail | linkHeaders, dnsAid, apiCatalog, oauthDiscovery, oauthProtectedResource, authMd (no agent-registration markers), webMcp (no tools on page load at `/`), ard, personalAgentProtocol |
+| neutral | webBotAuth (informational); x402, mpp, ucp, acp, ap2 (not a commerce site) |
+
+The cockpit inventory above predates the baseline: the MCP server card, A2A card and Agent Skills
+index already pass. The fail list is the remaining scope. `webMcp` and `authMd` are owned by
+**343-001**. The other fails stay on this task until split into children.
+
 ## Requirements
 
 1. **Measure.** Fetch the scanner's per-check results and recommendation text. Map each check to:
@@ -71,7 +85,9 @@ come from configuration, never literals.
 
 ## Checklist
 
-- [ ] Baseline scan saved (needs arch.timewarp.work up) + per-check plan
+- [x] Baseline scan saved (`scan/baseline.json`, 2026-10-17)
+- [ ] Per-check plan (`scan/plan.md`)
+- [ ] 343-001: WebMCP page-load registration + HTTP discoverability + auth.md registration (folded from 382)
 - [ ] Discoverability: robots/sitemap/Link headers (+ DNS-AID operator doc)
 - [ ] Bot access: AI bot rules, Content Signals, Web Bot Auth decision
 - [ ] Protocol discovery: well-known docs (generated), WebMCP verified, Agent Skills
@@ -83,3 +99,4 @@ come from configuration, never literals.
 ## Session
 
 - Created: 2026-10-13 (cockpit, per Steve). Scanner API discovered: POST /api/scan. Site returned 502 at filing.
+- Baseline: scan run 2026-10-17 (site back up), saved to `scan/baseline.json`. 382 folded in as child 343-001.
