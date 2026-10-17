@@ -13,8 +13,8 @@
 // rather than a silent skip.
 // Task 240: static `_content` specifiers must match the kebab-case files shipped by
 // TimeWarp.State / TimeWarp.State.Plus 12.0.0-beta.3 (a PascalCase miss 404s the whole module).
-// Task 371: tooltip-hint.js marks fluent-tooltip as a hint popover before the app renders, so a
-// tooltip cannot light-dismiss an open menu.
+// Task 371: tooltip-hint.js wraps fluent-tooltip showPopover so a tooltip shows as a hint
+// popover and cannot light-dismiss an open menu.
 // https://learn.microsoft.com/aspnet/core/blazor/fundamentals/startup
 // #endregion
 

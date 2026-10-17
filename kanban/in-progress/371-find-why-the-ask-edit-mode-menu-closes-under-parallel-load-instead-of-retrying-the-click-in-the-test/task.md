@@ -36,6 +36,16 @@ Done when:
 - The edit-mode menu path passes 50 times under load, and the settings menu and Tag were checked for the same cause.
 - `dev build` is 0 warnings and 0 errors, the Playwright suite passes, and `ganda repo audit` passes.
 
+Review round 1 left two open notes on the hint wrapper. The document observer and the `showPopover` wrap both set `popover="hint"`, and the popover type only matters when the tooltip is shown. FluentUI already shows every tooltip through `showPopover`, including the library's own `isConnected` override, which calls the method it captured. The extra observer is permanent work in every generated app and does not change the result. The microtask calls the wrap a second time after the prototype is already marked, so it returns immediately, and the Design text claims an order the library does not promise.
+
+This pass is done when:
+
+- `tooltip-hint.ts` keeps the `showPopover` wrapper and no longer watches the document.
+- The microtask re-wrap is gone.
+- The Design region says the wrapper composes with FluentUI's `isConnected` override in either order.
+- The Ask edit-mode menu and the settings menu still stay open when the Copy tooltip is shown.
+- `dev build` is 0 warnings and 0 errors, `AskSurface_Given_Wasm` passes, and `ganda repo audit` passes.
+
 ## Checklist
 
 - [x] Reproduce + root cause recorded (product vs test)
@@ -49,16 +59,22 @@ Done when:
 - Implementation: 2026-10-17. Product cause. The Copy tooltip's delayed `showPopover` closed the edit-mode menu. Hint popovers stop that. The reopen retry is gone.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T10:24:12Z
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 2, session not exposed — 2026-10-17. Found 0 bugs, 1 suggestion, and 1 nit, all open. A fix pass is requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T10:28:29Z
+- Fix pass (review round 1): 2026-10-17. Dropped the document observer and the microtask re-wrap. The hint is set inside `showPopover`, which composes with FluentUI's `isConnected` override in either order.
 
 ## Results
 
 **Cause: product.** Under 32 CPU burners the edit-mode menu closed with `beforetoggle` newState `closed` and no click, key, scroll, or `HTMLElement.prototype.showPopover`. The next `toggle` was `fluent-tooltip` anchored to `AskCopy` (`popover=""`, text "Copy"). FluentUI's tooltip calls `showPopover` on a timer (immediately on focus, 250ms on hover) and does not check that the pointer is still on the button. An auto popover show light-dismisses every other auto popover, including the edit-mode menu. A person who copies an answer and then opens the menu can see the menu shut itself. The same show closes the settings menu (task 356), which is the same FluentMenu. Tag is not a menu. It is a `fluent-tooltip` source (`Tooltip` on the Tag button), so the same hint fix covers it. Task 351's Tag races were a different cause (the pick armed before `IsPicking`).
 
-**Fix.** `tooltip-hint.ts`, imported by the SPA initializer, sets every `fluent-tooltip` to `popover="hint"` when it appears and again inside the component's `showPopover`. A hint can show beside an open menu, and opening the menu dismisses the hint. The test no longer reopens the menu. It shows the Copy tooltip while the edit-mode menu is open and again while the settings menu is open, and requires the chosen item to stay visible.
+**Fix.** `tooltip-hint.ts`, imported by the SPA initializer, wraps `fluent-tooltip`'s `showPopover` and sets `popover="hint"` immediately before the captured show. A hint can show beside an open menu, and opening the menu dismisses the hint. The test no longer reopens the menu. It shows the Copy tooltip while the edit-mode menu is open and again while the settings menu is open, and requires the chosen item to stay visible.
 
-**Proof.** `AskSurface_Given_Wasm` passed 50/50 under 32 CPU burners, with the Copy-tooltip assert on both menus. `./bin/dev build --quiet` succeeded (warnings are errors). `./bin/dev test --group playwright --no-build`: web-spa-playwright-tests 22/22. `ganda repo audit`: 32 passed, 0 failed.
+**Review fix (round 1).** M1: removed the document `MutationObserver` (`watchTooltips` / `markHint`). FluentUI 5.0.0 shows a tooltip only through `this.showPopover()`, and its `isConnected` override calls the prototype method it captured, so the wrapper is the show path. M2: removed `queueMicrotask(wrapWhenDefined)`. The Design region now says the wrapper composes with that override in either order. Ledger: `review/round-1/merged.md` (M1 fixed, M2 fixed). Round 2 has not run.
 
-**Review (round 1, in progress).** One general reviewer ran at effort 2. The reviewer confirmed the root cause against the FluentUI 5.0.0 bundle, where the tooltip sets `popover ??= "auto"` and shows from a timer. The reviewer re-ran `./bin/dev build` (passed) and `AskSurface_Given_Wasm` (1/1). The reviewer did not re-run the 50× load loop. Findings: 0 bugs, M1 (suggestion: the document-wide `MutationObserver` duplicates the `showPopover` wrapper), and M2 (nit: the `queueMicrotask` re-wrap does nothing, and a Design ordering claim is wrong). Both are open. There is no disposition yet. Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
+**Proof.** `AskSurface_Given_Wasm` passed 50/50 under 32 CPU burners, with the Copy-tooltip assert on both menus. That load loop was the first implementation pass. It was not repeated after the review fix.
+
+**Fix-pass proof.** `./bin/dev build --quiet` succeeded (warnings are errors). `ganda repo audit`: 32 passed, 0 failed. `AskSurface_Given_Wasm` passed 1/1 (`dotnet test -c Release --no-build --no-restore -- --filter-class AskSurface_Given_Wasm` from the Playwright project). `./bin/dev test --group playwright --no-build`: web-spa-playwright-tests 22/22.
+
+**Review (round 1).** One general reviewer ran at effort 2. The reviewer confirmed the root cause against the FluentUI 5.0.0 bundle, where the tooltip sets `popover ??= "auto"` and shows from a timer. The reviewer re-ran `./bin/dev build` (passed) and `AskSurface_Given_Wasm` (1/1). The reviewer did not re-run the 50× load loop. Findings: 0 bugs, M1 (suggestion), M2 (nit). Both are fixed on `review/round-1/merged.md`. There is no `review/disposition.md` yet; the host runs review round 2 next. Framework: `review/review-framework.md`.
 
 ### How to validate
 
@@ -70,3 +86,7 @@ dotnet test -c Release -- --filter-class AskSurface_Given_Wasm
 ```
 
 Expect: the run passes. The edit-mode menu stays open when the Copy tooltip is shown, and so does the settings menu. There is no second click on the edit-mode pill before "Automatically edit". To repeat the load proof, start one `python3 -c 'while True: pass'` per CPU, run that test 50 times, then stop the python processes. Expect 50 passes.
+
+## Review
+
+- Round 1: M1 fixed, M2 fixed. Re-review is round 2.
