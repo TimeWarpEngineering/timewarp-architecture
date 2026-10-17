@@ -1,6 +1,7 @@
 #region Purpose
 // On-demand import of ask-ai.js: insert an @ token, check an @ starts a word, refocus the
-// composer, copy answer text, and set the assistant avatar the turns show.
+// composer, keep and restore the panel's opener, copy answer text, and set the assistant avatar the
+// turns show.
 #endregion
 
 #region Design
@@ -49,6 +50,34 @@ internal static class AskAiJsModule
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
     return InvokeAsync(jsRuntime, "FocusComposer");
+  }
+
+  /// <summary>On open: keeps the focused element (or the palette's return target) to restore on close.</summary>
+  internal static Task CaptureOpenerAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "CaptureOpener");
+  }
+
+  /// <summary>On open: focuses the composer, waiting a few frames for the library to attach it.</summary>
+  internal static Task FocusComposerOnOpenAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "FocusComposerOnOpen");
+  }
+
+  /// <summary>Focuses the composer only when focus is in the panel or on nothing.</summary>
+  internal static Task FocusComposerInPanelAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "FocusComposerInPanel");
+  }
+
+  /// <summary>On close: focuses the opener, or the page main region when it is gone.</summary>
+  internal static Task RestoreOpenerAsync(IJSRuntime jsRuntime)
+  {
+    ArgumentNullException.ThrowIfNull(jsRuntime);
+    return InvokeAsync(jsRuntime, "RestoreOpener");
   }
 
   internal static async Task CopyTextAsync(IJSRuntime jsRuntime, string text)

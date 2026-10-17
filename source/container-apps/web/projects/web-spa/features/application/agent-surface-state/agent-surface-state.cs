@@ -28,6 +28,10 @@
 // greeting, the answer-bar feedback titles and the instructions. They come from the anonymous
 // GetAssistantIdentity query (LoadAssistantIdentity). The name starts as the default, Akili, and
 // the avatar as null (the header then shows its fallback mark) until the server answers.
+// ComposerFocusPending (task 381) is the open's focus request: OpenAskPanel sets it, CloseAskPanel
+// clears it, and AgentAsk clears it (ClearComposerFocus) once the composer took focus or the panel
+// settled in a state with no composer. It is state, not a panel field, because TimeWarpPage
+// remounts the panel on navigation and a remount must not refocus.
 // AssistantIdentityRefreshHandler reloads them after a successful UpdateSiteSettings and after
 // ResetStore, whose Store.Reset puts them back to those defaults.
 #endregion
@@ -58,6 +62,9 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   public bool IsPanelOpen { get; private set; }
 
   public bool IsPanelExpanded { get; private set; }
+
+  /// <summary>One-shot: the panel was just opened and the composer should take focus once it exists.</summary>
+  public bool ComposerFocusPending { get; private set; }
 
   public AgentEditMode EditMode { get; private set; }
 
@@ -142,6 +149,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ChatProblem = null;
     IsPanelOpen = false;
     IsPanelExpanded = false;
+    ComposerFocusPending = false;
     EditMode = AgentEditMode.AskBeforeEditing;
     ConversationId = null;
     ConversationPrincipalId = null;

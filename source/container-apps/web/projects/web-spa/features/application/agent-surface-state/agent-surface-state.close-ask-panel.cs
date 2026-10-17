@@ -9,7 +9,7 @@
 // AskBeforeEditing. EditMode is one value both drivers read (the in-app chat and WebMCP), so
 // Automatically edit would otherwise keep removing the WebMCP confirm bar after the person stopped
 // watching the panel. Automatic is bounded to an open panel. Expand is cleared so the next open
-// docks beside the page instead of covering it.
+// docks beside the page instead of covering it. An unconsumed composer focus request is dropped.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -30,6 +30,7 @@ partial class AgentSurfaceState
       {
         AgentSurfaceState.IsPanelOpen = false;
         AgentSurfaceState.IsPanelExpanded = false;
+        AgentSurfaceState.ComposerFocusPending = false;
         AgentSurfaceState.EditMode = AgentEditMode.AskBeforeEditing;
         return default;
       }

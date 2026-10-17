@@ -12,10 +12,14 @@
 // the trigger's own focusin is ignored so returning focus to the search field does not reopen the
 // palette. The same keydown listener suppresses ArrowUp/ArrowDown caret movement on the palette
 // input (inputSelector); .NET still receives the key and moves the highlight. ScrollIntoView keeps
-// the highlighted row visible. Register returns a handle (IJSObjectReference in C#) whose Dispose
+// the highlighted row visible. A surface the palette opened (Ask, task 381) may claim the return
+// target through FocusReturnClaimEvent; the palette then forgets it and RestoreFocus does nothing,
+// so that surface's own focus wins. Register returns a handle (IJSObjectReference in C#) whose Dispose
 // removes every listener — one handle per TimeWarpPage.
 // Imported on demand (CommandPaletteJsModule), not via window.Spa.
 // #endregion
+
+import { FocusReturnClaimEvent, type FocusReturnClaim } from "./focus-return-claim.js";
 
 interface CommandPaletteHost {
   invokeMethodAsync(methodName: string, ...args: unknown[]): Promise<unknown>;
@@ -61,7 +65,17 @@ export function Register(host: CommandPaletteHost, triggerSelector: string, inpu
     }
   };
 
+  const onClaim = (event: Event): void => {
+    const claim = (event as CustomEvent<FocusReturnClaim>).detail;
+    if (returnFocusTo !== null && returnFocusTo.isConnected && claim.target === null) {
+      claim.target = returnFocusTo;
+    }
+
+    returnFocusTo = null;
+  };
+
   document.addEventListener("keydown", onKeyDown);
+  document.addEventListener(FocusReturnClaimEvent, onClaim);
   trigger?.addEventListener("focusin", onTrigger);
   trigger?.addEventListener("click", onTrigger);
 
@@ -85,6 +99,7 @@ export function Register(host: CommandPaletteHost, triggerSelector: string, inpu
     },
     Dispose(): void {
       document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener(FocusReturnClaimEvent, onClaim);
       trigger?.removeEventListener("focusin", onTrigger);
       trigger?.removeEventListener("click", onTrigger);
       returnFocusTo = null;

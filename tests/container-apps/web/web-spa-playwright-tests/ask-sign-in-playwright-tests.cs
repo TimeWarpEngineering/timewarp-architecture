@@ -51,6 +51,10 @@
 // shows navigate and /Settings and the page stays on Home until Approve, then the app lands on
 // /Settings without a reload (ask-home-where-passkey*.png, ask-navigate-approval.png,
 // ask-navigate-landed-settings.png).
+// Task 381: Ask opened from the Ctrl-K row leaves the caret in the composer (the palette's own focus
+// return does not land on top of it), so the question is typed with the keyboard and no click. While
+// the navigate approval card waits, the composer does not take focus; the check waits a second
+// first so a late focus move would be seen.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -414,7 +418,9 @@ public class AskSignIn_Given_Wasm
     // The fake upstream calls site_map for a "where" question and links the matching page.
     int completionsBefore = session.Completions.Count;
     ILocator input = page.Locator(".sc-ai-input__textarea");
-    await input.FillAsync("Where can I add a passkey?");
+    await Assertions.Expect(input).ToBeFocusedAsync(new LocatorAssertionsToBeFocusedOptions { Timeout = 30_000 });
+    await page.Keyboard.TypeAsync("Where can I add a passkey?");
+    await Assertions.Expect(input).ToHaveValueAsync("Where can I add a passkey?");
     await page.Locator(".sc-ai-input__send").ClickAsync();
     ILocator answer = page.Locator(".sc-ai-root").GetByText("You can do that on the");
     await answer.WaitForAsync(new LocatorWaitForOptions { Timeout = 60_000 });
@@ -444,6 +450,8 @@ public class AskSignIn_Given_Wasm
     (await approval.InnerTextAsync()).ShouldContain("navigate");
     (await page.Locator("[data-qa=AgentApprovalArguments]").Last.InnerTextAsync()).ShouldContain("/Settings");
     new Uri(page.Url).AbsolutePath.ShouldBe("/");
+    await page.WaitForTimeoutAsync(1_000);
+    await Assertions.Expect(input).Not.ToBeFocusedAsync();
     await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-navigate-approval.png"),
