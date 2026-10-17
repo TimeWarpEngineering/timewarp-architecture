@@ -55,7 +55,7 @@ public class AskReference_Should_
     principal.IdTypeName.ShouldBe(nameof(PrincipalId));
     principal.Policy.ShouldBe(PermissionIds.AdminPrincipalsRead);
     ResourceReferenceRegistry.Find("credential")!.IdTypeName.ShouldBe(nameof(CredentialId));
-    ResourceReferenceRegistry.Find("feedback")!.Policy.ShouldBe(PermissionIds.AdminFeedbackRead);
+    ResourceReferenceRegistry.Find("feedback")!.Policy.ShouldBe(PermissionIds.FeedbackRead);
     ResourceReferenceRegistry.Find("my-feedback")!.Policy.ShouldBe(PermissionIds.FeedbackFileSelf);
     ResourceReferenceRegistry.Find("role")!.Policy.ShouldBe(PermissionIds.AdminRolesRead);
     ResourceReferenceRegistry.Find("nope").ShouldBeNull();

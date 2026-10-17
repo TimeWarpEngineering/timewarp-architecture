@@ -4,10 +4,11 @@
 
 #region Design
 // A missing id, another principal, and an admin asking for an unlinked draft are the same
-// 404. After Link, the item owner or a principal with admin.feedback.read on either human
-// scheme may read (task 314: the read permission covers attachment download; admin.access
-// alone opens the Admin area, not other people's files). Agent-token is not a human scheme and is not consulted. The stream is the blob
-// object; the endpoint writes it with the safe headers. A row whose bytes are gone (written
+// 404. After Link, the item owner may read, and so may a principal with admin.feedback.read on
+// either human scheme or feedback.read on a human scheme or the agent-token scheme (tasks 314
+// and 378). admin.access alone opens the Admin area, not other people's files. An unlinked
+// draft stays owner-only. The stream is the blob object; the endpoint writes it with the safe
+// headers. A row whose bytes are gone (written
 // before task 352 while bytes were in memory) is a 404 "attachment no longer available" for
 // a caller who passed the access check; the row is left as it is.
 #endregion
@@ -66,7 +67,7 @@ public sealed class DownloadFeedbackAttachment
           return FeedbackProblems.NotFound();
         }
       }
-      else if (!isOwner && !await IsAdminAsync(principalId.Value, cancellationToken).ConfigureAwait(false))
+      else if (!isOwner && !await HasCrossOwnerReadAsync(principalId.Value, cancellationToken).ConfigureAwait(false))
       {
         return FeedbackProblems.NotFound();
       }
@@ -82,22 +83,41 @@ public sealed class DownloadFeedbackAttachment
       return new Response(content, attachment.ContentType, attachment.FileName);
     }
 
-    private async Task<bool> IsAdminAsync(PrincipalId principalId, CancellationToken cancellationToken)
+    private async Task<bool> HasCrossOwnerReadAsync(PrincipalId principalId, CancellationToken cancellationToken)
     {
-      if (await PermissionEvaluator.HasPermissionAsync(
-        principalId,
-        AuthenticationSchemeNames.IdentitySession,
-        PermissionIds.AdminFeedbackRead,
-        cancellationToken).ConfigureAwait(false))
+      if (await HasAsync(principalId, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminFeedbackRead, cancellationToken)
+        .ConfigureAwait(false))
       {
         return true;
       }
 
-      return await PermissionEvaluator.HasPermissionAsync(
-        principalId,
-        AuthenticationSchemeNames.MockIdentitySession,
-        PermissionIds.AdminFeedbackRead,
-        cancellationToken).ConfigureAwait(false);
+      if (await HasAsync(principalId, AuthenticationSchemeNames.MockIdentitySession, PermissionIds.AdminFeedbackRead, cancellationToken)
+        .ConfigureAwait(false))
+      {
+        return true;
+      }
+
+      if (await HasAsync(principalId, AuthenticationSchemeNames.IdentitySession, PermissionIds.FeedbackRead, cancellationToken)
+        .ConfigureAwait(false))
+      {
+        return true;
+      }
+
+      if (await HasAsync(principalId, AuthenticationSchemeNames.MockIdentitySession, PermissionIds.FeedbackRead, cancellationToken)
+        .ConfigureAwait(false))
+      {
+        return true;
+      }
+
+      return await HasAsync(principalId, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackRead, cancellationToken)
+        .ConfigureAwait(false);
     }
+
+    private Task<bool> HasAsync(
+      PrincipalId principalId,
+      string scheme,
+      string permissionId,
+      CancellationToken cancellationToken) =>
+      PermissionEvaluator.HasPermissionAsync(principalId, scheme, permissionId, cancellationToken);
   }
 }

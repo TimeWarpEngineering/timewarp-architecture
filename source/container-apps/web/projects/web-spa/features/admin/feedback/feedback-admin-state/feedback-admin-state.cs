@@ -4,9 +4,10 @@
 
 #region Design
 // Items null = no snapshot yet (or the last fetch failed: ListLoadError); empty = loaded with zero rows. Filter fields (Status, Kind,
-// IncludeClosed, Page) and the sort (SortBy, SortDescending, task 327) are State actions; the
-// page dispatches FetchFeedbackList afterwards. The sort defaults to FiledAt descending.
-// Status null with IncludeClosed false is the server's default "open items" view.
+// IncludeClosed, Severity, Page) and the sort (SortBy, SortDescending, task 327) are State
+// actions; the page dispatches FetchFeedbackList afterwards. The sort defaults to FiledAt
+// descending. Status null with IncludeClosed false is the server's default "open items" view.
+// Severity null is every severity. Unset is the unreviewed queue (task 378).
 // Current is the open item. Every mutation stores the returned Item here, so the thread never
 // needs a re-fetch. LastReplySucceeded and LastNoteSucceeded are false at request start and true
 // in HandleSuccess, so the page clears a draft only after a write landed (DefaultApiHandler does
@@ -28,6 +29,7 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
   public int PageSize { get; private set; } = ListFeedback.DefaultPageSize;
   public FeedbackStatus? Status { get; private set; }
   public FeedbackKind? Kind { get; private set; }
+  public FeedbackSeverity? Severity { get; private set; }
   public bool IncludeClosed { get; private set; }
   public FeedbackListSortColumn SortBy { get; private set; } = FeedbackListSortColumn.FiledAt;
   public bool SortDescending { get; private set; } = true;
@@ -48,6 +50,7 @@ public sealed partial class FeedbackAdminState : State<FeedbackAdminState>
     PageSize = ListFeedback.DefaultPageSize;
     Status = null;
     Kind = null;
+    Severity = null;
     IncludeClosed = false;
     SortBy = FeedbackListSortColumn.FiledAt;
     SortDescending = true;

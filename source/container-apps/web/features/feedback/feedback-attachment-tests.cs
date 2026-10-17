@@ -113,12 +113,17 @@ namespace TimeWarp.Architecture.Features.Feedback
       PrincipalId other = PrincipalId.New();
       PrincipalId admin = PrincipalId.New();
       PrincipalId adminAreaOnly = PrincipalId.New();
+      PrincipalId agentReader = PrincipalId.New();
+      PrincipalId agentNoteOnly = PrincipalId.New();
       world.Permissions.Grant(admin, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminFeedbackRead);
       world.Permissions.Grant(adminAreaOnly, AuthenticationSchemeNames.IdentitySession, PermissionIds.AdminAccess);
+      world.Permissions.Grant(agentReader, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackRead);
+      world.Permissions.Grant(agentNoteOnly, AuthenticationSchemeNames.AgentToken, PermissionIds.FeedbackNote);
 
       (await world.DownloadAsync(world.Owner, attachmentId)).ContentType.ShouldBe(FeedbackAttachmentRules.Png);
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
       (await world.DownloadProblemAsync(admin, attachmentId)).Status.ShouldBe(404);
+      (await world.DownloadProblemAsync(agentReader, attachmentId)).Status.ShouldBe(404);
 
       (await world.Attachments.TryLinkAsync(FeedbackAttachmentId.From(attachmentId), world.Owner.Value, FeedbackItemId.New()))
         .ShouldBeTrue();
@@ -126,6 +131,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.DownloadAsync(world.Owner, attachmentId)).FileName.ShouldBe("shot.png");
       (await world.DownloadProblemAsync(other, attachmentId)).Status.ShouldBe(404);
       (await world.DownloadProblemAsync(adminAreaOnly, attachmentId)).Status.ShouldBe(404);
+      (await world.DownloadAsync(agentReader, attachmentId)).FileName.ShouldBe("shot.png");
+      (await world.DownloadProblemAsync(agentNoteOnly, attachmentId)).Status.ShouldBe(404);
       DownloadFeedbackAttachment.Response allowed = await world.DownloadAsync(admin, attachmentId);
       await using Stream content = allowed.Content;
       byte[] bytes = new byte[Png.Length];

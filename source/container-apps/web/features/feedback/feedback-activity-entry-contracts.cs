@@ -4,13 +4,18 @@
 
 #region Design
 // Shared by the filer's view (GetFeedback, ReplyAsFiler) and the admin view (FeedbackAdminView).
-// The server decides what each audience sees: the filer never receives InternalNote entries,
-// and AuthorPrincipalId is null on the filer's copy so an administrator's identity is not
-// disclosed (the kind already says "admin" or "you"). A status change has From/To and no
-// body; replies and notes have a body and no status.
+// The server decides what each audience sees: the filer never receives InternalNote or
+// SeverityChange entries, and AuthorPrincipalId is null on the filer's copy so an
+// administrator's identity is not disclosed (the kind already says "admin" or "you"). A status
+// change has From/To status and no body or severity. A severity change has From/To severity
+// and no body or status. Replies and notes have a body and neither. Null severity properties
+// are omitted from JSON, so a filer document, which never contains a severity entry, has no
+// severity field.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
+
+using System.Text.Json.Serialization;
 
 public sealed class FeedbackActivityEntry : ICloneable
 {
@@ -25,6 +30,12 @@ public sealed class FeedbackActivityEntry : ICloneable
   public FeedbackStatus? ToStatus { get; }
   public DateTimeOffset At { get; }
 
+  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+  public FeedbackSeverity? FromSeverity { get; }
+
+  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+  public FeedbackSeverity? ToSeverity { get; }
+
   public FeedbackActivityEntry(
     int sequence,
     FeedbackActivityKind kind,
@@ -32,7 +43,9 @@ public sealed class FeedbackActivityEntry : ICloneable
     string? body,
     FeedbackStatus? fromStatus,
     FeedbackStatus? toStatus,
-    DateTimeOffset at)
+    DateTimeOffset at,
+    FeedbackSeverity? fromSeverity = null,
+    FeedbackSeverity? toSeverity = null)
   {
     ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequence);
     if (!Enum.IsDefined(kind))
@@ -47,5 +60,7 @@ public sealed class FeedbackActivityEntry : ICloneable
     FromStatus = fromStatus;
     ToStatus = toStatus;
     At = at;
+    FromSeverity = fromSeverity;
+    ToSeverity = toSeverity;
   }
 }

@@ -7,7 +7,7 @@
 // connection string is present. Remove rolls back a filing whose attachments could not be
 // linked. A unique id violation becomes InvalidOperationException, matching
 // InMemoryFeedbackStore. Reads are AsNoTracking, so Update attaches the detached item: the
-// filing columns stay unchanged, Status is marked modified, and only thread entries whose
+// filing columns stay unchanged, Status and Severity are marked modified, and only thread entries whose
 // Sequence is above the stored maximum are inserted (the thread is append-only). The root is
 // Modified, so AggregateDbContext runs the invariants and the Version check; a concurrency
 // conflict or a duplicate (item, sequence) key from a racing writer returns false. Add and
@@ -96,6 +96,11 @@ public sealed class EfFeedbackStore : IFeedbackStore
       query = query.Where(item => item.Kind == kind);
     }
 
+    if (filter.Severity is { } severity)
+    {
+      query = query.Where(item => item.Severity == severity);
+    }
+
     if (filter.FiledFrom is { } from)
     {
       query = query.Where(item => item.FiledAt >= from);
@@ -172,6 +177,7 @@ public sealed class EfFeedbackStore : IFeedbackStore
     }
 
     Db.Entry(item).Property(row => row.Status).IsModified = true;
+    Db.Entry(item).Property(row => row.Severity).IsModified = true;
     try
     {
       await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

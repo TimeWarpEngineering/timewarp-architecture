@@ -7,16 +7,17 @@
 // stream. There is no [ApiEndpoint] because the generated endpoint JSON-serializes success.
 // A hand-written BaseFastEndpoint covers TWA0006. DownloadPath prefixes a slash: GetRoute
 // is app-relative without one, and a relative api/... link from /Feedback would miss.
-// The owner-or-admin.feedback.read check is the handler's. The route has no policy, only the
-// human schemes, so an anonymous caller never reaches it and a read-only feedback admin is not
-// stopped by the filer's feedback.file.self permission (task 314).
+// The owner-or-read check is the handler's. The route has no policy. Schemes are the human
+// sessions and the agent token, so an anonymous caller never reaches it. A read-only feedback
+// admin is not stopped by the filer's feedback.file.self permission (task 314). feedback.read
+// (task 378) is the agent's grant and also a human grant; admin.feedback.read stays accepted.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
 
 [EndpointAuthorize
 (
-  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
 public static partial class DownloadFeedbackAttachment
 {

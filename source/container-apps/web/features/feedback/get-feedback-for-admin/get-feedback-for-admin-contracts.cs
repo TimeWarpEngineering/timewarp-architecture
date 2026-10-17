@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Task 314. admin.feedback.read. Unlike GetFeedback there is no owner check, and the thread
-// includes internal notes. A missing id is 404.
+// Task 378. feedback.read on the human session schemes and the agent-token scheme. Unlike
+// GetFeedback there is no owner check, and the thread includes internal notes and severity
+// changes. A missing id is 404. Administrator holds feedback.read, so the admin UI keeps working.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -12,8 +13,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = PermissionIds.AdminFeedbackRead,
-  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+  Policy = PermissionIds.FeedbackRead,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
 public static partial class GetFeedbackForAdmin
 {

@@ -110,6 +110,11 @@ public class Returns_
     json.ShouldContain("\"status\":\"Planned\"");
     json.ShouldContain("On the roadmap.");
     json.ShouldNotContain("Secret triage note");
+    json.Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
+
+    (await PutSeverityAsync(admin, itemId, FeedbackSeverity.High)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    HttpResponseMessage afterReview = await filer.GetAsync($"api/Feedback/{itemId}");
+    (await afterReview.Content.ReadAsStringAsync()).Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
 
     (await PostAsync(filer, $"api/Feedback/{itemId}/replies", new { body = "Thank you!" }))
       .StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -137,12 +142,13 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(
         RoleIds.Administrator,
-        [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackFileSelf]);
+        [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead, PermissionIds.FeedbackFileSelf]);
 
       using HttpClient client = Client(cookie);
       (await client.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await client.GetAsync($"api/admin/feedback/{itemId}")).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await PutStatusAsync(client, itemId, FeedbackStatus.Declined)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutSeverityAsync(client, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PostAsync(client, $"api/admin/feedback/{itemId}/notes", new { body = "nope" }))
         .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -240,7 +246,7 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(
         RoleIds.Operator,
-        [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
+        [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead]);
 
       using HttpClient client = Client(cookie);
       HttpResponseMessage listResponse = await client.GetAsync(
@@ -328,6 +334,14 @@ public class Returns_
       $"api/admin/feedback/{itemId}/status",
       new StringContent(
         JsonSerializer.Serialize(new { status }, ContractSerializationDefaults.Options),
+        Encoding.UTF8,
+        "application/json"));
+
+  private static Task<HttpResponseMessage> PutSeverityAsync(HttpClient client, Guid itemId, FeedbackSeverity severity) =>
+    client.PutAsync(
+      $"api/admin/feedback/{itemId}/severity",
+      new StringContent(
+        JsonSerializer.Serialize(new { severity }, ContractSerializationDefaults.Options),
         Encoding.UTF8,
         "application/json"));
 

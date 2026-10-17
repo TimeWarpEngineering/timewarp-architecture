@@ -140,14 +140,20 @@ public class Round_Trip
     EfFeedbackStore append = new(appendDb);
     FeedbackItem reloaded = (await append.FindAsync(filed.Id)).ShouldNotBeNull();
     reloaded.Status.ShouldBe(FeedbackStatus.Planned);
+    reloaded.Severity.ShouldBe(FeedbackSeverity.Unset);
     reloaded.Activity.Select(entry => entry.Kind).ShouldBe(
       [FeedbackActivityKind.StatusChange, FeedbackActivityKind.AdminReply, FeedbackActivityKind.InternalNote]);
+    reloaded.SetSeverity(FeedbackSeverity.High, admin, now.AddMinutes(4));
     reloaded.AddFilerReply(owner, "Thank you!", now.AddMinutes(5));
     (await append.UpdateAsync(reloaded)).ShouldBeTrue();
 
     await using PostgresDbContext readDb = await CreateContextAsync();
     FeedbackItem final = (await new EfFeedbackStore(readDb).FindAsync(filed.Id)).ShouldNotBeNull();
-    final.Activity.Select(entry => entry.Sequence).ShouldBe([1, 2, 3, 4]);
+    final.Activity.Select(entry => entry.Sequence).ShouldBe([1, 2, 3, 4, 5]);
+    final.Status.ShouldBe(FeedbackStatus.Planned);
+    final.Severity.ShouldBe(FeedbackSeverity.High);
+    final.Activity.ShouldContain(entry =>
+      entry.Kind == FeedbackActivityKind.SeverityChange && entry.ToSeverity == FeedbackSeverity.High && entry.ToStatus == null);
     final.Activity[^1].Kind.ShouldBe(FeedbackActivityKind.FilerReply);
     final.Title.ShouldBe("Triage me");
   }

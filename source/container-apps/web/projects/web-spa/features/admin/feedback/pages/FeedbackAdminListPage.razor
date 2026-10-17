@@ -9,12 +9,16 @@
     ["", .. Enum.GetValues<FeedbackStatus>().Select(static status => status.ToString())];
   private static readonly string[] KindChoices =
     ["", .. Enum.GetValues<FeedbackKind>().Select(static kind => kind.ToString())];
+  private static readonly string[] SeverityChoices =
+    ["", .. Enum.GetValues<FeedbackSeverity>().Select(static severity => severity.ToString())];
 
   private string StatusValue => FeedbackAdminState.Status?.ToString() ?? "";
   private string KindValue => FeedbackAdminState.Kind?.ToString() ?? "";
+  private string SeverityValue => FeedbackAdminState.Severity?.ToString() ?? "";
 
   private static string StatusLabel(string value) => value.Length == 0 ? "Open (default)" : value;
   private static string KindLabel(string value) => value.Length == 0 ? "All kinds" : value;
+  private static string SeverityLabel(string value) => value.Length == 0 ? "All severities" : value;
 
   // Task 346: a grid row is pickable by Ask's Tag and resolves to its @feedback:<id>.
   private static IReadOnlyDictionary<string, object> RowMark(ListFeedback.Item item) =>
@@ -30,20 +34,39 @@
     await FeedbackAdminState.FetchFeedbackList();
   }
 
-  private async Task ApplyFilterAsync(FeedbackStatus? status, FeedbackKind? kind, bool includeClosed)
+  private async Task ApplyFilterAsync(
+    FeedbackStatus? status,
+    FeedbackKind? kind,
+    bool includeClosed,
+    FeedbackSeverity? severity)
   {
-    await FeedbackAdminState.SetFilter(status, kind, includeClosed);
+    await FeedbackAdminState.SetFilter(status, kind, includeClosed, severity);
     await FeedbackAdminState.FetchFeedbackList();
   }
 
   private Task OnStatusChanged(string value) =>
-    ApplyFilterAsync(Enum.TryParse(value, out FeedbackStatus status) ? status : null, FeedbackAdminState.Kind, FeedbackAdminState.IncludeClosed);
+    ApplyFilterAsync(
+      Enum.TryParse(value, out FeedbackStatus status) ? status : null,
+      FeedbackAdminState.Kind,
+      FeedbackAdminState.IncludeClosed,
+      FeedbackAdminState.Severity);
 
   private Task OnKindChanged(string value) =>
-    ApplyFilterAsync(FeedbackAdminState.Status, Enum.TryParse(value, out FeedbackKind kind) ? kind : null, FeedbackAdminState.IncludeClosed);
+    ApplyFilterAsync(
+      FeedbackAdminState.Status,
+      Enum.TryParse(value, out FeedbackKind kind) ? kind : null,
+      FeedbackAdminState.IncludeClosed,
+      FeedbackAdminState.Severity);
+
+  private Task OnSeverityChanged(string value) =>
+    ApplyFilterAsync(
+      FeedbackAdminState.Status,
+      FeedbackAdminState.Kind,
+      FeedbackAdminState.IncludeClosed,
+      Enum.TryParse(value, out FeedbackSeverity severity) ? severity : null);
 
   private Task OnIncludeClosedChanged(bool value) =>
-    ApplyFilterAsync(FeedbackAdminState.Status, FeedbackAdminState.Kind, value);
+    ApplyFilterAsync(FeedbackAdminState.Status, FeedbackAdminState.Kind, value, FeedbackAdminState.Severity);
 
   private async Task GoToPageAsync(int page)
   {
@@ -63,9 +86,9 @@
 
   private bool IsListLoading => IsAnyActive(typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action));
 
-  // Title, Kind, Status, Filed, Owner. Title keeps 14rem and takes the largest share (task 354).
+  // Title, Kind, Status, Severity, Filed, Owner. Title keeps 14rem and takes the largest share (task 354).
   private const string GridColumns =
-    "minmax(14rem, 2fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(11rem, 1fr) minmax(8rem, 1fr)";
+    "minmax(14rem, 2fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(7rem, 0.5fr) minmax(11rem, 1fr) minmax(8rem, 1fr)";
 
   private IQueryable<ListFeedback.Item>? GridItems => FeedbackAdminState.Items?.AsQueryable();
 
@@ -113,6 +136,15 @@
             AriaLabel="Kind"
             data-qa="AdminFeedbackKind" />
         </FormField>
+        <FormField Label="Severity">
+          <FluentSelect TOption="string" TValue="string"
+            Items="SeverityChoices"
+            OptionText="@(static value => SeverityLabel(value))"
+            Value="@SeverityValue"
+            ValueChanged="@OnSeverityChanged"
+            AriaLabel="Severity"
+            data-qa="AdminFeedbackSeverity" />
+        </FormField>
         <FormField Label="Show closed">
           <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
             ValueChanged="@OnIncludeClosedChanged"
@@ -152,6 +184,9 @@
                 Sortable="true" SortBy="@StatusSort"
                 IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Status)" InitialSortDirection="@SortDirection">
                 @context.Status
+              </TemplateColumn>
+              <TemplateColumn Title="Severity">
+                <span data-qa="AdminFeedbackRowSeverity">@context.Severity</span>
               </TemplateColumn>
               <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)"
                 Sortable="true" SortBy="@FiledSort"

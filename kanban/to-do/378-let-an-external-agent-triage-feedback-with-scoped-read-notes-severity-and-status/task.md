@@ -1,5 +1,17 @@
 # Let an external agent triage feedback with scoped read, notes, severity, and status
 
+## Goal (implementer restatement)
+
+An agent principal, authenticated only by a bearer token, can pull the feedback board and triage items. The token's scopes are the only grants. The agent is not an Administrator and does not inherit human roles.
+
+Four scopes each expand to one non-admin permission: `feedback:read` → `feedback.read` (list, open, thread including internal notes, attachment download), `feedback:note` → `feedback.note` (append an internal note), `feedback:severity` → `feedback.severity` (set severity), and `feedback:status` → `feedback.status` (change status under the existing rules, including the filer email on Planned, Completed, and Declined). Administrator receives all four beside the existing `admin.feedback.read` and `admin.feedback.manage`. Member and Operator do not. Reply to the filer stays on `admin.feedback.manage` and a human session. The agent does not receive `admin.profiles.read`, so the owner display name stays empty and only `OwnerPrincipalId` is visible.
+
+Severity is a closed enum (`Unset`, `Informational`, `Low`, `Medium`, `High`, `Critical`), default `Unset` at file time and for existing rows. The filer never sends it and never sees it. Setting severity is the review: a defined value other than the current one, never back to `Unset`, recorded as a filer-invisible `SeverityChange` activity. It does not change status, and a status change does not set severity. A severity change sends no email. `ListFeedback` treats an omitted severity as every item and `Severity=Unset` as only the unreviewed queue.
+
+The admin list and detail pages show severity, filter to `Unset`, and set it through `FeedbackAdminState`. Filer list and permalink do not render it.
+
+Done when the domain, scope seed, endpoint policies, list filter, admin UI, and the tests named in Requirements all hold, and `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes.
+
 ## Description
 
 A repo agent should pull feedback and triage it. It does not get a push, a webhook, or a kanban card. It is an agent principal with a bearer token. The token's scopes are the only grants. Agents do not inherit human roles (`PermissionEvaluator` expands agent tokens only through `AgentScopePermissionSeed`).
@@ -81,16 +93,16 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 
 ## Checklist
 
-- [ ] `AgentScopes` + `AgentScopePermissionSeed` + `PermissionIds` for the four scopes, not `admin.*`
-- [ ] Administrator role seed gains the four permissions; Member and Operator do not
-- [ ] Endpoints accept agent tokens on the new policies; reply stays human-only
-- [ ] Attachment download allows `feedback.read` without becoming world-readable
-- [ ] `FeedbackSeverity` on the item, migration default `Unset`, filer contracts omit it
-- [ ] `SetFeedbackSeverity` mutation, activity kind, filer-invisible, no status side effect, no email
-- [ ] `ListFeedback` filters `Unset` as a value distinct from omitted
-- [ ] Admin list and detail show and set severity; filer pages do not
-- [ ] Tests listed above
-- [ ] `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes
+- [x] `AgentScopes` + `AgentScopePermissionSeed` + `PermissionIds` for the four scopes, not `admin.*`
+- [x] Administrator role seed gains the four permissions; Member and Operator do not
+- [x] Endpoints accept agent tokens on the new policies; reply stays human-only
+- [x] Attachment download allows `feedback.read` without becoming world-readable
+- [x] `FeedbackSeverity` on the item, migration default `Unset`, filer contracts omit it
+- [x] `SetFeedbackSeverity` mutation, activity kind, filer-invisible, no status side effect, no email
+- [x] `ListFeedback` filters `Unset` as a value distinct from omitted
+- [x] Admin list and detail show and set severity; filer pages do not
+- [x] Tests listed above
+- [x] `AgentScopeSeed_Should_NotIntersectAdminPermissions` still passes
 
 ## Notes
 
@@ -124,7 +136,37 @@ Existing rows migrate to `Unset`. That means "not reviewed yet", which is honest
 ## Session
 
 - Created: 248635 (2026-10-16)
+- Implementation (2026-10-17): scoped pull triage. Four `feedback.*` permissions (not `admin.*`) on the agent token and on Administrator only. Severity is the review marker, default `Unset`, filer-invisible, and independent of status. Migration `20261017135945_AddFeedbackSeverity` adds the columns and the Administrator role grants. The explicit `Microsoft.Extensions.Options` package directive was removed from `permission-evaluator-tests.cs` because NU1510 treats it as already available through the project reference.
 
 ## Results
 
+An agent principal triages by listing `Severity=Unset`, appending an internal note, setting severity, or changing status. Each of those is its own scope. Setting severity does not move status and does not email. A Completed status change still emails the filer. The filer JSON has no severity field. `admin.feedback.read` and `admin.feedback.manage` stay, and reply stays on a human session.
+
+`ganda repo audit`: 32 passed, 0 failed. Release builds of the SPA, server, and infrastructure test projects compiled the product with 0 warnings.
+
+The admin list and detail were not clicked in a browser. `FeedbackAdminState` and the compiled Razor cover the filter and the set-severity action. `dev template-smoke` was not run; the in-repo build is the template source with every feature flag on, and the PR CI default smoke is the generation gate.
+
 ### How to validate
+
+**Smoke:**
+
+```bash
+dotnet run source/container-apps/web/features/feedback/feedback-triage-tests.cs
+dotnet run source/container-apps/web/features/feedback/feedback-attachment-tests.cs
+dotnet run source/container-apps/web/platform/authorization/permission-evaluator-tests.cs
+dotnet run source/container-apps/web/features/authorization/permission-ids-tests.cs
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release -- --filter-class FeedbackAdminActions && dotnet test -c Release --no-build -- --filter-class AskReference
+cd ../web-server-integration-tests && dotnet test -c Release -- --filter-class AdminFeedbackAuthorization
+cd ../web-infrastructure-tests && dotnet test -c Release -- --filter-class Feedback_Postgres
+```
+
+Run each `dotnet test` from that project directory so the local Microsoft.Testing.Platform runner is selected. Postgres needs Docker.
+
+**Expect:**
+
+- Triage runfile 41/41, including omitted severity returning every item, `Severity=Unset` returning only the unreviewed, a severity change sending no mail, a Completed change still mailing the filer, filer JSON with no severity field, and each new scope expanding to one permission and nothing in `AdminPermissions`.
+- Attachment runfile 21/21. The owner still downloads their own file. An agent with `feedback.read` can download after the file is linked. An agent with only `feedback.note` cannot. A human with `admin.feedback.read` still can. An unlinked draft stays owner-only.
+- Permission evaluator 19/19, including `AgentScopeSeed_Should_NotIntersectAdminPermissions`. Permission catalog 8/8. The four new ids are not `admin.*` and are not protected core.
+- SPA state 10/10. The severity filter reaches `ListFeedback.Query`, and set-severity stores the returned item. Ask references 9/9. `@feedback` stays on `feedback.read`, which Administrator holds.
+- HTTP admin feedback 7/7. An Administrator lists, notes, sets severity, and changes status. A session without `feedback.read` is forbidden on the list. Setting severity without `feedback.severity` is forbidden.
+- Postgres feedback 8/8 against Testcontainers. `MigrateAsync` applies the `Unset` default, and an update appends a severity activity without a status.

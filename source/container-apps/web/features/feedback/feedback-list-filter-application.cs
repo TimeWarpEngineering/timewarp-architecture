@@ -11,12 +11,14 @@
 // order by enum name, which is how EF stores them. The default is FiledAt descending (newest
 // first). The sort column is the wire enum: it is a closed list of columns, not domain data.
 // TotalCount counts every match, not just the page. Search (task 345) keeps items whose title
-// contains the trimmed term, ignoring case; null or blank matches every title.
+// contains the trimmed term, ignoring case; null or blank matches every title. Severity null
+// matches every severity. A present value, including Unset, matches that value only (task 378).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback.Application;
 
 using TimeWarp.Architecture.Features.Feedback.Domain;
+using DomainSeverity = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackSeverity;
 
 public sealed record FeedbackListFilter(
   IReadOnlyCollection<FeedbackStatus>? Statuses,
@@ -27,6 +29,7 @@ public sealed record FeedbackListFilter(
   int Take,
   FeedbackListSortColumn SortBy = FeedbackListSortColumn.FiledAt,
   bool SortDescending = true,
-  string? Search = null);
+  string? Search = null,
+  DomainSeverity? Severity = null);
 
 public sealed record FeedbackPage(IReadOnlyList<FeedbackItem> Items, int TotalCount);

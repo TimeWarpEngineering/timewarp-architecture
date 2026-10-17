@@ -17,16 +17,22 @@ partial class FeedbackAdminState
   {
     public sealed class Action : IBaseAction
     {
-      public Action(FeedbackStatus? status, FeedbackKind? kind, bool includeClosed)
+      public Action(
+        FeedbackStatus? status,
+        FeedbackKind? kind,
+        bool includeClosed,
+        FeedbackSeverity? severity = null)
       {
         Status = status;
         Kind = kind;
         IncludeClosed = includeClosed;
+        Severity = severity;
       }
 
       public FeedbackStatus? Status { get; }
       public FeedbackKind? Kind { get; }
       public bool IncludeClosed { get; }
+      public FeedbackSeverity? Severity { get; }
     }
 
     internal class Handler(IStore store) : BaseHandler<Action>(store)
@@ -36,6 +42,7 @@ partial class FeedbackAdminState
         FeedbackAdminState.Status = action.Status;
         FeedbackAdminState.Kind = action.Kind;
         FeedbackAdminState.IncludeClosed = action.IncludeClosed;
+        FeedbackAdminState.Severity = action.Severity;
         FeedbackAdminState.Page = 1;
         return default;
       }
