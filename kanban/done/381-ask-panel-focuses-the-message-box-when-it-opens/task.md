@@ -101,25 +101,50 @@ every open path.
 - Gates: `dev check-version` (bump `<Version>` and the platform pins in the same commit),
   `dev build` 0 warnings and 0 errors, `dev test`, `ganda repo audit`.
 
+## Goal (implementer restatement)
+
+Whenever the Ask panel opens (header button, Ctrl-K row, reopen), the caret lands in the
+composer textarea so the person types at once. Focus comes back to the composer after a send
+once the turn settles, and after the expand toggle. Close hands focus back to whatever opened
+the panel (or `main`/body when that element is gone). Focus is never pulled away from a pending
+approval card, from a deliberate move (route or edit-mode rebuild), or after a no-textarea state
+(signed out, not configured, error) settles. The request is one-shot State (`OpenAskPanel` sets
+it, `AgentAsk` consumes it once the textarea exists), and DOM focus goes through `ask-ai.ts`
+because the library `MessageInput` has no focus API.
+
+Acceptance: Playwright proves focus + keyboard typing for header open, Ctrl-K open, close and
+reopen, and expand; focus in the composer after a send; focus on `AskAiButton` after close; the
+composer does not take focus while an approval is pending. Gates: `dev check-version`,
+`dev build` 0/0, `dev test`, `ganda repo audit`.
+
 ## Checklist
 
-- [ ] Confirm `MessageInput` has no focus hook (public API only) and record it; reuse
+- [x] Confirm `MessageInput` has no focus hook (public API only) and record it; reuse
       `FocusComposer`
-- [ ] State: open action records the opener and a one-shot pending-focus request; close clears it
-- [ ] `AgentAsk.OnAfterRenderAsync` consumes the request once the textarea exists (handle the
+- [x] State: open action records the opener and a one-shot pending-focus request; close clears it
+- [x] `AgentAsk.OnAfterRenderAsync` consumes the request once the textarea exists (handle the
       late-mount and no-textarea states)
-- [ ] Palette ordering: Ask focus wins over the palette's focus return
-- [ ] Focus stays in the composer after send
-- [ ] Close returns focus to the opener, with a fallback when it is gone
-- [ ] Approval-pending: no focus steal; record the behaviour
-- [ ] Decide and record the expand-toggle behaviour
-- [ ] Playwright tests for each path, send, close and approval
-- [ ] Gates: `dev check-version`, `dev build` 0/0, `dev test`, `ganda repo audit`
+- [x] Palette ordering: Ask focus wins over the palette's focus return
+- [x] Focus stays in the composer after send
+- [x] Close returns focus to the opener, with a fallback when it is gone
+- [x] Approval-pending: no focus steal; record the behaviour
+- [x] Decide and record the expand-toggle behaviour
+- [x] Playwright tests for each path, send, close and approval
+- [x] Gates: `dev check-version`, `dev build` 0/0, `dev test`, `ganda repo audit`
 
 ## Session
 
 - Created: 1872794 (2026-10-16)
 - Specified: 2026-10-17 (cockpit request from Steve; read-only investigation, no code changed)
+- Implemented: 2026-10-17 (ganda task work, implement oracle; Claude Opus 5.5)
+- Review oracle: 2026-10-17, Claude Opus 5.5 (session not reported), effort 2, roster general;
+  disposition clean (1 bug fixed)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-17T02:56:29Z
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T03:13:43Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -132,4 +157,83 @@ every open path.
 
 ## Results
 
-(none yet)
+### What changed
+
+- `AgentSurfaceState.ComposerFocusPending` (new, one-shot): `OpenAskPanel` sets it on every open,
+  `CloseAskPanel` clears it, and the new `ClearComposerFocus` action (palette opt-out) lets the
+  panel drop it. It is state, not a panel field, because `TimeWarpPage` remounts `AgentAsk` on
+  navigation and a remount must not refocus.
+- `AgentAsk.razor`: first render with a pending request calls `CaptureOpener`.
+  `SettleComposerFocusAsync` (end of `OnAfterRenderAsync`) consumes the request only when the render
+  that just ran drew the agent that is still built (handles the late mount), then calls
+  `FocusComposerOnOpen` and clears it. The conversation going `Streaming` and the expand button
+  each set a local flag that focuses the composer softly once the turn is idle. Disposing a closed
+  panel calls `RestoreOpener`. All JS calls are `[DirectComponentSideEffect]` helpers.
+- `ask-ai.ts`: `CaptureOpener`, `FocusComposerOnOpen` (retries up to 30 animation frames),
+  `FocusComposerInPanel` (soft: only when focus is in the panel or on nothing), `RestoreOpener`
+  (opener if connected, else `main` with `tabindex=-1`, else blur a removed node).
+- Palette ordering: new `source/features/focus-return-claim.ts` defines one document event.
+  `CaptureOpener` raises it on every open. `command-palette.ts` hands over its pending return
+  target when Ask found nothing focused, and forgets it either way, so the palette's
+  `RestoreFocus` never lands on top of the composer, whichever OnAfterRender runs first. After the
+  Ctrl-K row, the Ask opener is the element focused before Ctrl-K.
+
+### Decisions (recorded)
+
+- **No library focus hook.** Confirmed from the public `Microsoft.AspNetCore.Components.AI` XML
+  (0.1.0-preview.1.26466.103): `MessageInput` exposes no `ElementReference`, `Focus` or autofocus.
+  Focus uses the existing `.twe-agent-ask .sc-ai-input__textarea` selector (now one constant in
+  `ask-ai.ts`). It has been stable since task 307. No upstream ask filed yet; file one if the
+  library renames the class.
+- **Approval pending:** nothing moves focus while the turn is `AwaitingInput`. The open request
+  waits, and the post-send focus waits for the turn to go idle. After the person decides, the turn
+  streams and goes idle, and the composer takes focus (soft form) unless the approved tool
+  navigated away (a remount, which never refocuses).
+- **Expand toggle:** returns focus to the composer (soft form; the expand button is in the panel).
+- **No-textarea states** (signed out, not configured, error): the request is dropped as soon as the
+  panel renders one of them, so a later Retry or sign-in does not pull focus. While the probe is
+  unknown or the agent is still starting, the request waits.
+- **Deliberate moves:** a route or edit-mode rebuild never refocuses (no pending request).
+  Post-send and expand use the soft form, so focus the person moved outside the panel is never
+  pulled back.
+- **Close:** focus returns to the opener captured on open, falling back to `main`. This runs from
+  `Dispose` when `IsPanelOpen` is false, so it covers the close button, the settings-menu close and
+  the sign-in close. A navigation remount (panel still open) does not restore.
+- Esc: the kitchen mentions Esc closing the panel, but `AgentAsk.razor` has no Esc handler today
+  (only the reference picker and tag pick mode handle Esc). Nothing was added for it.
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors.
+- `dev test`: 23 of 23 projects passed (web-spa-playwright-tests 21/21).
+- Negative control: with the `FocusComposerOnOpenAsync` call commented out, the new
+  `Composer_Should_HaveFocus_OnEveryOpen_AfterSend_And_ReturnItOnClose` and the updated
+  `Home_Should_Point_Passkeys_To_Settings_And_Navigate_After_Approval` both failed at their
+  open-focus assertions. Restored afterwards.
+- `dev check-version`: source 2.0.0-beta.20 is already ahead of NuGet 2.0.0-beta.19, no bump needed.
+- `dev template-smoke` (default variant): succeeded.
+- `ganda repo audit`: clean (see commit).
+
+### Review disposition
+
+- Rounds: 2 (effort 2 by diff, roster: general). Final counts: bug 1 fixed, 0 open; no
+  suggestions or nits. Outcome: **clean**.
+- M1 (bug, fixed): closing Ask reopened the command palette when the palette had been opened from
+  the appbar search field (Ask restored focus to the palette trigger outside the palette's
+  `restoring` guard; the palette's own `RestoreFocus` can also land there before Ask captures the
+  opener). The focus-return claim now carries a palette-owned guarded `restore` for a trigger
+  target. New Playwright test `Close_Should_Not_Reopen_Palette_When_Ask_Came_From_Search_Field`
+  failed before the fix; `dev test` 23/23 projects after it (web-spa-playwright-tests 22/22).
+- Paths: `review/review-framework.md`, `review/round-1/` (general, merged),
+  `review/round-2/merged.md`, `review/disposition.md`.
+
+### How to validate
+
+- Smoke: `dev build && dev test --no-build --group playwright` (runs
+  `ask-focus-playwright-tests.cs` and `ask-sign-in-playwright-tests.cs`). Or by hand (not in a
+  worker: `dev run` shares user secrets): open Ask with the top-bar button and type without
+  clicking; send with the arrow button; press Expand; close; reopen; sign in and open Ask via
+  Ctrl-K "ask"; ask "Where can I add a passkey?" then "Take me there".
+- Expect: the caret is in the message box after every open (button, Ctrl-K, reopen), after the
+  answer lands and after Expand; Close leaves focus on the "Ask {name}" top-bar button; while the
+  navigate approval card waits, the message box does not take focus.
