@@ -112,8 +112,7 @@ Done means:
 ## Review
 
 - Round 1: M1 and M2 implemented on this id.
-- Round 2: both re-verified as fixed and no new findings. Disposition: clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - 382 was abandoned and its claim released in favour of this task. Its original kitchen was
