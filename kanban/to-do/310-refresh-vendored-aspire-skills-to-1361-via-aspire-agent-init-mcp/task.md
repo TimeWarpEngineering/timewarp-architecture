@@ -59,6 +59,11 @@ Acceptance:
 - 2026-10-17: implement oracle (ganda task work) ran init, restored global side effects, hand-added MCP limits note.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-17T06:57:52Z
 - Review oracle: tw-implementation-review round 1 (general, claude-opus-5-5), disposition clean — 2026-10-17
+- Review oracle: review by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-17T06:59:11Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
