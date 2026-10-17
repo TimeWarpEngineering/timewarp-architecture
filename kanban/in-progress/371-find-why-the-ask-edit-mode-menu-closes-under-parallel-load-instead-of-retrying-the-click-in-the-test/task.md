@@ -61,6 +61,7 @@ This pass is done when:
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 2, session not exposed — 2026-10-17. Found 0 bugs, 1 suggestion, and 1 nit, all open. A fix pass is requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T10:28:29Z
 - Fix pass (review round 1): 2026-10-17. Dropped the document observer and the microtask re-wrap. The hint is set inside `showPopover`, which composes with FluentUI's `isConnected` override in either order.
+- Review oracle round 2: general reviewer (claude, model claude-opus-5-5), effort 1, session not exposed — 2026-10-17. M1 and M2 verified fixed, nothing new. Disposition: clean.
 
 ## Results
 
@@ -74,7 +75,9 @@ This pass is done when:
 
 **Fix-pass proof.** `./bin/dev build --quiet` succeeded (warnings are errors). `ganda repo audit`: 32 passed, 0 failed. `AskSurface_Given_Wasm` passed 1/1 (`dotnet test -c Release --no-build --no-restore -- --filter-class AskSurface_Given_Wasm` from the Playwright project). `./bin/dev test --group playwright --no-build`: web-spa-playwright-tests 22/22.
 
-**Review (round 1).** One general reviewer ran at effort 2. The reviewer confirmed the root cause against the FluentUI 5.0.0 bundle, where the tooltip sets `popover ??= "auto"` and shows from a timer. The reviewer re-ran `./bin/dev build` (passed) and `AskSurface_Given_Wasm` (1/1). The reviewer did not re-run the 50× load loop. Findings: 0 bugs, M1 (suggestion), M2 (nit). Both are fixed on `review/round-1/merged.md`. There is no `review/disposition.md` yet; the host runs review round 2 next. Framework: `review/review-framework.md`.
+**Review (round 1).** One general reviewer ran at effort 2. The reviewer confirmed the root cause against the FluentUI 5.0.0 bundle, where the tooltip sets `popover ??= "auto"` and shows from a timer. The reviewer re-ran `./bin/dev build` (passed) and `AskSurface_Given_Wasm` (1/1). The reviewer did not re-run the 50× load loop. Findings: 0 bugs, M1 (suggestion), M2 (nit). Both are fixed on `review/round-1/merged.md`. Framework: `review/review-framework.md`.
+
+**Review (round 2) and disposition: clean.** One general reviewer ran at effort 1 on the fix delta (`b1fe9f792..bffc9d4f6`). In the FluentUI 5.0.0 bundle, both the library override and this wrapper sit on the `fluent-tooltip` prototype and call the function they captured, so they compose in either order. No tooltip show goes through `togglePopover`. The reviewer re-ran `./bin/dev build --quiet` (succeeded) and `AskSurface_Given_Wasm` (1/1, Release, `--no-build`). The reviewer did not re-run the 50× load loop. Final counts over 2 rounds: bug 0; suggestion 1 fixed (M1); nit 1 fixed (M2); 0 open, 0 wontfix. Paths: `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -90,3 +93,4 @@ Expect: the run passes. The edit-mode menu stays open when the Copy tooltip is s
 ## Review
 
 - Round 1: M1 fixed, M2 fixed. Re-review is round 2.
+- Round 2: no new findings. Disposition: clean (`review/disposition.md`).
