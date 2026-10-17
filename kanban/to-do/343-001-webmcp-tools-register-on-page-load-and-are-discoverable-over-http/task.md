@@ -95,6 +95,11 @@ Done means:
 
 - Created: 355282 (2026-10-17), folded from 382 (ses_eba2c9566ffdNojmwvFICuxvJm, 2026-10-16)
 - Implementer: grok session 01a1497f-378b-7860-9c50-5695793d5779 (2026-10-17)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T11:40:03Z
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T11:42:28Z
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T12:02:34Z
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T12:06:51Z
+- Review round 1: reviewer-claude (claude-opus-5-5), effort 2, roster general, session not reported. Result: fix pass needed for M1 and M2 (2026-10-17)
 
 ## Notes
 
@@ -170,3 +175,14 @@ The same strings are asserted by `WebMcpDiscovery_Should_BeReadableWithoutJavaSc
 ### Not in this walk
 
 The live re-scan of arch.timewarp.work waits until this is deployed. Parent 343 records the result under `scan/`. The checklist item stays open.
+
+### Review
+
+- Round 1 (effort 2, roster: general): 1 bug open (M1), 1 suggestion open (M2), 0 nits. No disposition yet; fix pass requested.
+- M1: `webmcp.json` lists human-only `/Settings` actions (`Credentials.AddExistingPasskey`, `Credentials.LinkMicrosoft365`) as WebMCP tools.
+- M2: tool and route names in the markdown docs are not checked against the generated document.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
+
+## Blocked
+
+2026-10-17: the earlier kitchen write denial is resolved. The round-1 review rerun wrote `review/round-1/`. Open now: a fix pass for M1 and M2.
