@@ -26,10 +26,13 @@
 // gone. The pill's data-mode is the state's mode. With the mouse, clicking the pill opens the radio
 // menu and clicking Automatically edit switches the mode and closes it. With the keyboard, Enter
 // or Space opens it (aria-expanded true, focus in the menu), the arrows move, Enter chooses, and Esc closes
-// it without a change; focus returns to the pill. Not configured, there is no composer, so no pill.
+// it without a change; focus returns to the pill. Showing the Copy tooltip while that menu is open
+// leaves the menu open (task 371): the tooltip is a hint popover, and the test does not reopen a
+// menu that closed. Not configured, there is no composer, so no pill.
 // Settings (task 356): the sliders button sits on the footer row left of send and is a menu trigger.
 // Enter opens it with the credential status first (disabled), Esc closes it and focus returns to
-// the button. The SPA is signed out here, so no credential is minted and the status is Absent.
+// the button. The same Copy tooltip leaves this menu open. The SPA is signed out here, so no
+// credential is minted and the status is Absent.
 // Choosing Configure permissions closes the panel and routes to Agent links (or to Login with
 // Agent links as the return path, since the SPA is signed out).
 // @ references (task 345): typing @ in the textarea opens the picker with focus in its input.
@@ -198,14 +201,11 @@ public class AskSurface_Given_Wasm
       await autoEdit.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 10_000 });
       (await page.Locator("[data-qa=AskBeforeEditing]").EvaluateAsync<bool>("item => item.checked")).ShouldBeTrue();
       (await autoEdit.EvaluateAsync<bool>("item => item.checked")).ShouldBeFalse();
+      await ShowCopyTooltipMustKeepMenuOpenAsync(page, "AskAutomaticallyEdit");
       await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
       {
         Path = ScreenshotPath("ask-edit-mode-menu.png"),
       });
-      // On a loaded machine (`dev test` runs suites in parallel, task 370) the menu can close
-      // between the screenshot and the click; reopen it rather than wait 30s on a hidden item.
-      if (!await autoEdit.IsVisibleAsync())
-        await page.Locator("[data-qa=AskEditMode]").ClickAsync();
       await autoEdit.ClickAsync();
       await ModeShouldBeAsync(page, "AutomaticallyEdit");
       await autoEdit.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 10_000 });
@@ -575,6 +575,7 @@ public class AskSurface_Given_Wasm
     (await status.InnerTextAsync()).ShouldContain("No agent credential");
     ILocator configure = page.Locator("[data-qa=AskConfigurePermissions]");
     (await configure.IsVisibleAsync()).ShouldBeTrue();
+    await ShowCopyTooltipMustKeepMenuOpenAsync(page, "AskConfigurePermissions");
     await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
       Path = ScreenshotPath("ask-settings-menu.png"),
@@ -595,6 +596,30 @@ public class AskSurface_Given_Wasm
     {
       Timeout = 30_000,
     });
+  }
+
+  // Showing the Copy tooltip must leave the open menu item visible. The tooltip is a hint popover.
+  private static async Task ShowCopyTooltipMustKeepMenuOpenAsync(IPage page, string menuItemQa)
+  {
+    string mode = await page.EvaluateAsync<string>(
+      """
+      (menuItemQa) => {
+        const copy = document.querySelector("[data-qa=AskCopy]");
+        const tooltip = [...document.querySelectorAll("fluent-tooltip")]
+          .find((element) => element.getAttribute("anchor") === copy?.id);
+        if (!(tooltip instanceof HTMLElement) || copy === null) return "missing";
+        const item = document.querySelector(`[data-qa="${CSS.escape(menuItemQa)}"]`);
+        const list = item?.closest("[popover]");
+        if (!tooltip.matches(":popover-open")) tooltip.showPopover();
+        const menuOpen = !!(list && list.matches(":popover-open"));
+        if (tooltip.matches(":popover-open")) tooltip.hidePopover();
+        const popover = tooltip.getAttribute("popover") ?? "";
+        return menuOpen ? popover : popover + ":closed";
+      }
+      """,
+      menuItemQa);
+    mode.ShouldBe("hint");
+    (await page.Locator($"[data-qa={menuItemQa}]").IsVisibleAsync()).ShouldBeTrue();
   }
 
   private static async Task ActiveShouldBeAsync(IPage page, string qa)
