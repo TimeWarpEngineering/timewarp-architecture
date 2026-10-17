@@ -15,6 +15,12 @@
 // Task 336: an Administrator sees the filer's display name on the list row and the detail; an
 // Operator granted admin.access + admin.feedback.read without admin.profiles.read (the
 // reachable no-PII shape, as in principals-authorization-tests) sees ids only.
+// Task 378: a real agent bearer token is the only grant. feedback:read lists and is refused
+// the writes. Each write scope is refused the other writes and the list. Reply stays on the
+// human schemes, so an agent token is 401 even when it holds every feedback scope. A
+// principal who also holds Administrator is still evaluated as the agent token: a
+// feedback:note token cannot download, and a feedback:read token does not receive the
+// owner display name.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -110,6 +116,11 @@ public class Returns_
     json.ShouldContain("\"status\":\"Planned\"");
     json.ShouldContain("On the roadmap.");
     json.ShouldNotContain("Secret triage note");
+    json.Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
+
+    (await PutSeverityAsync(admin, itemId, FeedbackSeverity.High)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    HttpResponseMessage afterReview = await filer.GetAsync($"api/Feedback/{itemId}");
+    (await afterReview.Content.ReadAsStringAsync()).Contains("severity", StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
 
     (await PostAsync(filer, $"api/Feedback/{itemId}/replies", new { body = "Thank you!" }))
       .StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -137,12 +148,13 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(
         RoleIds.Administrator,
-        [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackFileSelf]);
+        [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead, PermissionIds.FeedbackFileSelf]);
 
       using HttpClient client = Client(cookie);
       (await client.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await client.GetAsync($"api/admin/feedback/{itemId}")).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await PutStatusAsync(client, itemId, FeedbackStatus.Declined)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutSeverityAsync(client, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
       (await PostAsync(client, $"api/admin/feedback/{itemId}/notes", new { body = "nope" }))
         .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
@@ -240,7 +252,7 @@ public class Returns_
     {
       await permissionStore.SetPermissionIdsForRoleAsync(
         RoleIds.Operator,
-        [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
+        [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead]);
 
       using HttpClient client = Client(cookie);
       HttpResponseMessage listResponse = await client.GetAsync(
@@ -267,6 +279,148 @@ public class Returns_
       await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Operator, original);
     }
   }
+
+  public static async Task Scoped_Given_Agent_Bearer_Tokens()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    Guid itemId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      itemId = await FileFeedbackAsync(filer, "Agent triage target");
+    }
+
+    string readToken = await IssueTokenAsync(AgentScopes.FeedbackRead);
+    string noteToken = await IssueTokenAsync(AgentScopes.FeedbackNote);
+    string severityToken = await IssueTokenAsync(AgentScopes.FeedbackSeverity);
+    string statusToken = await IssueTokenAsync(AgentScopes.FeedbackStatus);
+    string everyToken = await IssueTokenAsync(
+      AgentScopes.FeedbackRead,
+      AgentScopes.FeedbackNote,
+      AgentScopes.FeedbackSeverity,
+      AgentScopes.FeedbackStatus);
+
+    using (HttpClient reader = Bearer(readToken))
+    {
+      HttpResponseMessage list = await reader.GetAsync(new ListFeedback.Query().GetRouteWithQueryString());
+      list.StatusCode.ShouldBe(HttpStatusCode.OK);
+      (await list.Content.ReadAsStringAsync()).ShouldContain(itemId.ToString());
+      (await PostNoteAsync(reader, itemId, "from read")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutSeverityAsync(reader, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutStatusAsync(reader, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PostReplyAsync(reader, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    using (HttpClient note = Bearer(noteToken))
+    {
+      (await note.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
+        .ShouldBe(HttpStatusCode.Forbidden);
+      (await PutSeverityAsync(note, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutStatusAsync(note, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PostReplyAsync(note, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+      (await PostNoteAsync(note, itemId, "internal")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    using (HttpClient severity = Bearer(severityToken))
+    {
+      (await severity.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
+        .ShouldBe(HttpStatusCode.Forbidden);
+      (await PostNoteAsync(severity, itemId, "nope")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutStatusAsync(severity, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PostReplyAsync(severity, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+      (await PutSeverityAsync(severity, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    using (HttpClient status = Bearer(statusToken))
+    {
+      (await status.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
+        .ShouldBe(HttpStatusCode.Forbidden);
+      (await PostNoteAsync(status, itemId, "nope")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PutSeverityAsync(status, itemId, FeedbackSeverity.High)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+      (await PostReplyAsync(status, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+      (await PutStatusAsync(status, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    using HttpClient every = Bearer(everyToken);
+    (await PostReplyAsync(every, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+
+  public static async Task Role_Assigned_Agent_Should_Not_Inherit_Human_Grants()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(filerId);
+    Guid itemId;
+    Guid attachmentId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      attachmentId = await UploadAttachmentAsync(filer, "notes.txt", "attached by the filer"u8.ToArray());
+      itemId = await FileFeedbackAsync(filer, "Role assigned agent", attachmentId);
+    }
+
+    (PrincipalId notePrincipal, string noteToken) = await IssueTokenForPrincipalAsync(AgentScopes.FeedbackNote);
+    await SetRolesAsync(notePrincipal, RoleIds.Administrator);
+    using (HttpClient note = Bearer(noteToken))
+    {
+      (await note.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode
+        .ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    (PrincipalId readPrincipal, string readToken) = await IssueTokenForPrincipalAsync(AgentScopes.FeedbackRead);
+    await SetRolesAsync(readPrincipal, RoleIds.Administrator);
+    using HttpClient reader = Bearer(readToken);
+    HttpResponseMessage download = await reader.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId));
+    download.StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await download.Content.ReadAsStringAsync()).ShouldBe("attached by the filer");
+
+    HttpResponseMessage listResponse = await reader.GetAsync(
+      new ListFeedback.Query { PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString());
+    listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string listJson = await listResponse.Content.ReadAsStringAsync();
+    listJson.ShouldNotContain(displayName);
+    ListFeedback.Response list = JsonSerializer
+      .Deserialize<ListFeedback.Response>(listJson, ContractSerializationDefaults.Options)
+      .ShouldNotBeNull();
+    ListFeedback.Item row = list.Items.Single(item => item.FeedbackItemId == itemId);
+    row.OwnerPrincipalId.ShouldBe(filerId.Value);
+    row.OwnerDisplayName.ShouldBeNull();
+
+    HttpResponseMessage detailResponse = await reader.GetAsync($"api/admin/feedback/{itemId}");
+    detailResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string detailJson = await detailResponse.Content.ReadAsStringAsync();
+    detailJson.ShouldNotContain(displayName);
+    JsonSerializer.Deserialize<GetFeedbackForAdmin.Response>(detailJson, ContractSerializationDefaults.Options)
+      .ShouldNotBeNull().Item.OwnerDisplayName.ShouldBeNull();
+  }
+
+  private static async Task<string> IssueTokenAsync(params string[] scopes)
+  {
+    (PrincipalId _, string token) = await IssueTokenForPrincipalAsync(scopes);
+    return token;
+  }
+
+  private static async Task<(PrincipalId PrincipalId, string AccessToken)> IssueTokenForPrincipalAsync(params string[] scopes)
+  {
+    (PrincipalId principalId, string _, string accessToken) =
+      await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(
+        Web,
+        new IntegrationSoftwareAgentKey(),
+        [.. scopes]);
+    return (principalId, accessToken);
+  }
+
+  private static HttpClient Bearer(string accessToken)
+  {
+    HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+    return client;
+  }
+
+  private static Task<HttpResponseMessage> PostNoteAsync(HttpClient client, Guid itemId, string body) =>
+    PostAsync(client, $"api/admin/feedback/{itemId}/notes", new { body });
+
+  private static Task<HttpResponseMessage> PostReplyAsync(HttpClient client, Guid itemId) =>
+    PostAsync(client, $"api/admin/feedback/{itemId}/replies", new { body = "Hello filer" });
 
   private static async Task<string> EnsureProfileAsync(PrincipalId principalId)
   {
@@ -328,6 +482,14 @@ public class Returns_
       $"api/admin/feedback/{itemId}/status",
       new StringContent(
         JsonSerializer.Serialize(new { status }, ContractSerializationDefaults.Options),
+        Encoding.UTF8,
+        "application/json"));
+
+  private static Task<HttpResponseMessage> PutSeverityAsync(HttpClient client, Guid itemId, FeedbackSeverity severity) =>
+    client.PutAsync(
+      $"api/admin/feedback/{itemId}/severity",
+      new StringContent(
+        JsonSerializer.Serialize(new { severity }, ContractSerializationDefaults.Options),
         Encoding.UTF8,
         "application/json"));
 

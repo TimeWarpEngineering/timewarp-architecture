@@ -15,6 +15,9 @@
 // InMemoryRolePermissionStore copies this on construction; EF migration InsertData mirrors it
 // for postgres volumes. Admin UI (182-004) mutates grants via SetRolePermissions with
 // protected-core on Administrator (AdminPermissions cannot be stripped).
+// Task 378: Administrator also receives feedback.read / note / severity / status. Those ids are
+// not admin.*, so they stay out of AdminPermissions and are not protected core. Member,
+// Developer, and Operator do not receive them.
 // Platform cluster — same consumers as RoleIds / IRolePermissionStore without TWA0009.
 #endregion
 
@@ -67,6 +70,10 @@ public static class RolePermissionSeed
       [
         .. AdminPermissions,
         PermissionIds.SettingsWrite,
+        PermissionIds.FeedbackRead,
+        PermissionIds.FeedbackNote,
+        PermissionIds.FeedbackSeverity,
+        PermissionIds.FeedbackStatus,
         .. SelfServicePermissions,
       ],
       [RoleIds.Member] =

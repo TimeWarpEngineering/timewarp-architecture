@@ -12,6 +12,8 @@
 // identity:read also expands AgentLinkManageSelf (task 205): requesting/listing a human link and
 // fetching humanUx is the agent's identity graph, not credential material. A dedicated
 // human-link:manage AgentScope is deferred until a caller needs identity:read without linking.
+// Task 378: each feedback scope expands to exactly one feedback.* permission. None of them is
+// admin.*, so a triage token does not gain ReplyToFeedback or profile names.
 // Platform cluster — same consumers as PermissionIds / PermissionEvaluator without TWA0009.
 #endregion
 
@@ -43,6 +45,22 @@ public static class AgentScopePermissionSeed
       [AgentScopes.DemoInvoke] =
       [
         PermissionIds.DemoInvoke,
+      ],
+      [AgentScopes.FeedbackRead] =
+      [
+        PermissionIds.FeedbackRead,
+      ],
+      [AgentScopes.FeedbackNote] =
+      [
+        PermissionIds.FeedbackNote,
+      ],
+      [AgentScopes.FeedbackSeverity] =
+      [
+        PermissionIds.FeedbackSeverity,
+      ],
+      [AgentScopes.FeedbackStatus] =
+      [
+        PermissionIds.FeedbackStatus,
       ],
     };
 

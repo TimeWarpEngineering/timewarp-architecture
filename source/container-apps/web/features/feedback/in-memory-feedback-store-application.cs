@@ -64,6 +64,7 @@ public sealed class InMemoryFeedbackStore : IFeedbackStore
     IEnumerable<FeedbackItem> matches = Items.Values
       .Where(item => filter.Statuses?.Contains(item.Status) != false)
       .Where(item => filter.Kind is null || item.Kind == filter.Kind)
+      .Where(item => filter.Severity is null || item.Severity == filter.Severity)
       .Where(item => filter.FiledFrom is null || item.FiledAt >= filter.FiledFrom)
       .Where(item => filter.FiledTo is null || item.FiledAt < filter.FiledTo)
       .Where(item => string.IsNullOrWhiteSpace(filter.Search)

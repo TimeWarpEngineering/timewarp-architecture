@@ -7,9 +7,11 @@
 // read that. HandleAsync replaces the base writer. Problems stay application/problem+json
 // with the problem's own status, matching BaseFastEndpoint. Images are inline; other
 // allow-listed types are attachments. nosniff and a private cache header go on every success.
-// No route policy: any signed-in human reaches the handler, which allows the owner or
-// admin.feedback.read (task 314). A feedback.file.self route policy would 403 a read-only
-// feedback admin whose role lacks the filing permission.
+// No route policy: a signed-in human or an agent token reaches the handler, which allows the
+// owner. A human session may also hold admin.feedback.read or feedback.read. An agent token
+// may hold feedback.read, and a role on that principal is not consulted (tasks 314 and 378).
+// A feedback.file.self route policy would 403 a read-only feedback admin whose role lacks
+// the filing permission.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -26,7 +28,10 @@ public sealed class DownloadFeedbackAttachmentEndpoint
   public override void Configure()
   {
     Get(DownloadFeedbackAttachment.Query.RouteTemplate);
-    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.MockIdentitySession);
+    AuthSchemes(
+      AuthenticationSchemeNames.IdentitySession,
+      AuthenticationSchemeNames.MockIdentitySession,
+      AuthenticationSchemeNames.AgentToken);
   }
 
   /// <inheritdoc />

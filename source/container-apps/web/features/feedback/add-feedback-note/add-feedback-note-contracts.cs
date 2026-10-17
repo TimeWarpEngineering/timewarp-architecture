@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Task 314 decision 5. admin.feedback.manage. An internal note is a thread entry only
-// administrators see; the filer's view never includes it and no email is sent. The 4000
-// literal duplicates FeedbackItem.MaxMessageLength.
+// Task 378. feedback.note on the human session schemes and the agent-token scheme. An internal
+// note is a thread entry the filer never sees, and no email is sent. ReplyToFeedback stays on
+// admin.feedback.manage and the human schemes. The 4000 literal duplicates
+// FeedbackItem.MaxMessageLength.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -13,8 +14,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 [ApiEndpoint]
 [EndpointAuthorize
 (
-  Policy = PermissionIds.AdminFeedbackManage,
-  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession
+  Policy = PermissionIds.FeedbackNote,
+  AuthenticationSchemes = AuthenticationSchemeNames.IdentitySession + "," + AuthenticationSchemeNames.MockIdentitySession + "," + AuthenticationSchemeNames.AgentToken
 )]
 public static partial class AddFeedbackNote
 {

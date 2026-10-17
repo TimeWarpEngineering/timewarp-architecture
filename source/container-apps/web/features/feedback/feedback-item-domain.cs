@@ -6,12 +6,15 @@
 // Private constructor and a File factory: the filing (owner, kind, title, body, filed-at) is
 // complete at creation and never edited. Owner is the authenticated principal Guid, not a
 // ProfileId — filing must succeed when the principal has no profile row.
-// Task 314 adds triage. Status starts at New. The named mutations are the only writers:
-// ChangeStatus (admin; never back to New, never to the current status), AddAdminReply,
-// AddFilerReply (owner only) and AddInternalNote (admin, never shown to the filer). Each
-// appends one FeedbackActivity, so the thread is the item's history and Status always equals
-// the last status change's To (New when there is none). Assignee, tags, merging and kind
-// re-classification are deferred (decision 5), and nothing deletes thread entries.
+// Task 314 adds triage. Status starts at New. Severity starts at Unset (task 378) and means
+// "not reviewed", including rows filed before severity existed. The named mutations are the
+// only writers: ChangeStatus (never back to New, never to the current status), SetSeverity
+// (a defined value, never Unset, never the current value; does not move Status), AddAdminReply,
+// AddFilerReply (owner only) and AddInternalNote (never shown to the filer). Each appends one
+// FeedbackActivity. Status always equals the last status change's To (New when there is none).
+// Severity always equals the last severity change's To (Unset when there is none). A status
+// change does not set severity. Assignee, tags, merging and kind re-classification are
+// deferred (decision 5), and nothing deletes thread entries.
 // Who may call the admin mutations is the endpoint's permission check; the aggregate only
 // guards what it can know (owner identity for filer replies, non-empty principals).
 // Activity is ordered by Sequence; EF loads owned rows in no particular order, so the getter
@@ -56,6 +59,7 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
   public string Body { get; }
   public DateTimeOffset FiledAt { get; }
   public FeedbackStatus Status { get; private set; }
+  public FeedbackSeverity Severity { get; private set; } = FeedbackSeverity.Unset;
 
   /// <summary>The thread, oldest first.</summary>
   public IReadOnlyList<FeedbackActivity> Activity =>
@@ -104,6 +108,35 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
 
     var entry = FeedbackActivity.StatusChange(NextSequence(), adminPrincipalId, Status, status, at);
     Status = status;
+    ActivityList.Add(entry);
+    return entry;
+  }
+
+  /// <summary>True when <see cref="SetSeverity"/> would accept <paramref name="severity"/>.</summary>
+  public bool CanSetSeverityTo(FeedbackSeverity severity) =>
+    Enum.IsDefined(severity) && severity != FeedbackSeverity.Unset && severity != Severity;
+
+  /// <summary>Records a review severity. Does not move <see cref="Status"/>.</summary>
+  public FeedbackActivity SetSeverity(FeedbackSeverity severity, Guid principalId, DateTimeOffset at)
+  {
+    RequirePrincipal(principalId, nameof(principalId));
+    if (!Enum.IsDefined(severity))
+    {
+      throw new ArgumentException("Severity must be a defined feedback severity.", nameof(severity));
+    }
+
+    if (severity == FeedbackSeverity.Unset)
+    {
+      throw new InvalidOperationException("A feedback item cannot return to Unset.");
+    }
+
+    if (severity == Severity)
+    {
+      throw new InvalidOperationException($"The feedback item is already {severity}.");
+    }
+
+    var entry = FeedbackActivity.SeverityChange(NextSequence(), principalId, Severity, severity, at);
+    Severity = severity;
     ActivityList.Add(entry);
     return entry;
   }
@@ -163,12 +196,16 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
       RuleFor(item => item.Title).NotEmpty().MaximumLength(MaxTitleLength);
       RuleFor(item => item.Body).NotEmpty().MaximumLength(MaxBodyLength);
       RuleFor(item => item.Status).IsInEnum();
+      RuleFor(item => item.Severity).IsInEnum();
       RuleFor(item => item.Activity)
         .Must(HaveDenseSequences)
         .WithMessage("Activity sequences must run 1..n without gaps.");
       RuleFor(item => item)
         .Must(StatusMatchesLastChange)
         .WithMessage("Status must equal the last status change (New when there is none).");
+      RuleFor(item => item)
+        .Must(SeverityMatchesLastChange)
+        .WithMessage("Severity must equal the last severity change (Unset when there is none).");
       RuleForEach(item => item.Activity).ChildRules(entry =>
       {
         entry.RuleFor(activity => activity.Kind).IsInEnum();
@@ -178,12 +215,30 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
           entry.RuleFor(activity => activity.FromStatus).NotNull().IsInEnum();
           entry.RuleFor(activity => activity.ToStatus).NotNull().IsInEnum().NotEqual(FeedbackStatus.New);
           entry.RuleFor(activity => activity.Body).Null();
-        }).Otherwise(() =>
+          entry.RuleFor(activity => activity.FromSeverity).Null();
+          entry.RuleFor(activity => activity.ToSeverity).Null();
+        });
+        entry.When(activity => activity.Kind == FeedbackActivityKind.SeverityChange, () =>
         {
-          entry.RuleFor(activity => activity.Body).NotEmpty().MaximumLength(MaxMessageLength);
+          entry.RuleFor(activity => activity.FromSeverity).NotNull().IsInEnum();
+          entry.RuleFor(activity => activity.ToSeverity).NotNull().IsInEnum().NotEqual(FeedbackSeverity.Unset);
+          entry.RuleFor(activity => activity.ToSeverity).NotEqual(activity => activity.FromSeverity);
+          entry.RuleFor(activity => activity.Body).Null();
           entry.RuleFor(activity => activity.FromStatus).Null();
           entry.RuleFor(activity => activity.ToStatus).Null();
         });
+        entry.When(
+          activity => activity.Kind is FeedbackActivityKind.AdminReply
+            or FeedbackActivityKind.FilerReply
+            or FeedbackActivityKind.InternalNote,
+          () =>
+          {
+            entry.RuleFor(activity => activity.Body).NotEmpty().MaximumLength(MaxMessageLength);
+            entry.RuleFor(activity => activity.FromStatus).Null();
+            entry.RuleFor(activity => activity.ToStatus).Null();
+            entry.RuleFor(activity => activity.FromSeverity).Null();
+            entry.RuleFor(activity => activity.ToSeverity).Null();
+          });
       });
       RuleForEach(item => item.Activity)
         .Must((item, activity) =>
@@ -208,6 +263,12 @@ public sealed class FeedbackItem : Entity<FeedbackItemId>, IAggregateRoot
     {
       FeedbackActivity? last = item.Activity.LastOrDefault(entry => entry.Kind == FeedbackActivityKind.StatusChange);
       return item.Status == (last?.ToStatus ?? FeedbackStatus.New);
+    }
+
+    private static bool SeverityMatchesLastChange(FeedbackItem item)
+    {
+      FeedbackActivity? last = item.Activity.LastOrDefault(entry => entry.Kind == FeedbackActivityKind.SeverityChange);
+      return item.Severity == (last?.ToSeverity ?? FeedbackSeverity.Unset);
     }
   }
 }

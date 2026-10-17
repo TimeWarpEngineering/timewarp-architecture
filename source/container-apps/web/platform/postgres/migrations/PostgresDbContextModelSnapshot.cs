@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261014121541_AddFeedbackAttachmentBytes";
+    public override string LastMigrationId => "20261017135945_AddFeedbackSeverity";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -138,6 +138,13 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
 
                 b.Property<Guid>("OwnerPrincipalId")
                     .HasColumnType("uuid");
+
+                b.Property<string>("Severity")
+                    .IsRequired()
+                    .ValueGeneratedOnAdd()
+                    .HasMaxLength(32)
+                    .HasColumnType("character varying(32)")
+                    .HasDefaultValue("Unset");
 
                 b.Property<string>("Status")
                     .IsRequired()
@@ -380,12 +387,20 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                             .HasMaxLength(4000)
                             .HasColumnType("character varying(4000)");
 
+                        b1.Property<string>("FromSeverity")
+                            .HasMaxLength(32)
+                            .HasColumnType("character varying(32)");
+
                         b1.Property<string>("FromStatus")
                             .HasMaxLength(32)
                             .HasColumnType("character varying(32)");
 
                         b1.Property<string>("Kind")
                             .IsRequired()
+                            .HasMaxLength(32)
+                            .HasColumnType("character varying(32)");
+
+                        b1.Property<string>("ToSeverity")
                             .HasMaxLength(32)
                             .HasColumnType("character varying(32)");
 
