@@ -6,9 +6,11 @@
 // Backend MCP (the server card) and frontend WebMCP are separate transports. This type describes
 // only the browser transport. The card stays a stub; capabilities.tools is not set here.
 // Anonymous destinations are AgentSiteMap for the caller-supplied principal, the same list
-// navigate's enum uses. Route-scoped tools are PageRegistry.ActionScopes: one row per route
-// template, tool names derived from the action type (owner state + action set) so the document
-// is not a second hand-written list. CatalogName is checked against IActionCatalog entry names.
+// navigate's enum uses. Route-scoped tools are PageRegistry.ActionScopes rows whose IActionCatalog
+// visibility includes Agent. The published name is the catalog entry name, the same filter
+// CatalogAgentToolSet uses, so a human-only action stays on the page and out of this document.
+// A page action missing from the catalog fails the build of the document. CatalogName remains
+// the derivation the registry test checks against those entry names.
 // Page-load JSON is AgentNavigate.Create for that principal in Ask before editing, so the early
 // tool is the real navigate tool and the person approves. '<' is escaped so the JSON can sit in
 // an HTML script element. No page route literal belongs in this file; the guard test rejects one.
@@ -63,25 +65,60 @@ public static class WebMcpDiscoveryCatalog
     return ownerName + "." + actionName;
   }
 
-  /// <summary>Anonymous-or-caller WebMCP document. Route rows come from <see cref="PageRegistry.ActionScopes"/>.</summary>
+  /// <summary>
+  /// Anonymous-or-caller WebMCP document. Route rows come from <see cref="PageRegistry.ActionScopes"/>
+  /// kept to catalog entries whose visibility includes <see cref="ActionVisibility.Agent"/>.
+  /// </summary>
   public static async Task<string> DocumentJsonAsync
   (
     ClaimsPrincipal user,
     IAuthorizationService authorizationService,
+    IEnumerable<ActionCatalogEntry> entries,
     string? path
   )
   {
     ArgumentNullException.ThrowIfNull(user);
     ArgumentNullException.ThrowIfNull(authorizationService);
+    ArgumentNullException.ThrowIfNull(entries);
+    Dictionary<Type, ActionCatalogEntry> byType = [];
+    foreach (ActionCatalogEntry entry in entries)
+    {
+      byType[entry.ActionType] = entry;
+    }
+
     IReadOnlyList<AgentSiteMap.Destination> destinations =
       await AgentSiteMap.DestinationsAsync(user, authorizationService, path);
     List<WebMcpRouteTools> routes = [];
     foreach (PageActionScope scope in PageRegistry.ActionScopes)
     {
-      string[] tools = [.. scope.ActionTypes.Select(CatalogName)];
+      List<string> tools = [];
+      foreach (Type actionType in scope.ActionTypes)
+      {
+        if (!byType.TryGetValue(actionType, out ActionCatalogEntry? entry))
+        {
+          throw new InvalidOperationException
+          (
+            "PageRegistry action " + (actionType.FullName ?? actionType.Name) + " is not an IActionCatalog entry."
+          );
+        }
+
+        if (!entry.Visibility.HasFlag(ActionVisibility.Agent))
+        {
+          continue;
+        }
+
+        tools.Add(entry.Name);
+      }
+
+      if (tools.Count == 0)
+      {
+        continue;
+      }
+
+      string[] published = [.. tools];
       foreach (string routeTemplate in scope.RouteTemplates)
       {
-        routes.Add(new WebMcpRouteTools(routeTemplate, tools));
+        routes.Add(new WebMcpRouteTools(routeTemplate, published));
       }
     }
 

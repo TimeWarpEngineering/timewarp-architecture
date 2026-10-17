@@ -173,6 +173,9 @@ namespace TimeWarp.Architecture.AgentDiscovery
       webMcp.ShouldContain("Copy trace");
       webMcp.ShouldContain("/Feedback");
       webMcp.ShouldContain("/Settings");
+      webMcp.ShouldContain("\"Credentials.AddPasskey\"");
+      webMcp.ShouldNotContain("Credentials.AddExistingPasskey");
+      webMcp.ShouldNotContain("Credentials.LinkMicrosoft365");
 
       string card = await ReadOkAsync(client, "/.well-known/mcp/server-card.json");
       card.ShouldContain("\"tools\": false");

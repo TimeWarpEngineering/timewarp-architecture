@@ -80,6 +80,11 @@ or missing (confusion between backend MCP and WebMCP).
 
 The browser scanner and an HTTP-only agent both miss the tools this app already has. The scanner opens `/` for about six seconds and looks for tools on `document.modelContext` or `navigator.modelContext`. HTTP clients read `/llms.txt`, `/auth.md`, and the discovery skill, which only describe the backend MCP card. That card is a stub and must stay a stub.
 
+This fix pass keeps the discovery document honest and tied to the prose:
+
+- `/.well-known/webmcp.json` `routeScopedTools` lists only catalog actions whose visibility includes `Agent`, under the `IActionCatalog` name. `/Settings` includes `Credentials.AddPasskey` and omits `Credentials.AddExistingPasskey` and `Credentials.LinkMicrosoft365`.
+- A test fails when a WebMCP section in `/llms.txt`, `/auth.md`, or the discovery skill names a tool or Pascal route that the generated document does not publish.
+
 Done means:
 
 - A headless run that supplies a model context before page scripts shows why today's `/` reports no tools, and the cause is written down.
@@ -100,6 +105,12 @@ Done means:
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T12:02:34Z
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T12:06:51Z
 - Review round 1: reviewer-claude (claude-opus-5-5), effort 2, roster general, session not reported. Result: fix pass needed for M1 and M2 (2026-10-17)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T12:52:21Z
+- Implement-fix-2 oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17
+
+## Review
+
+- Round 1: M1 and M2 implemented on this id. Host runs review round 2.
 
 ## Notes
 
@@ -113,7 +124,9 @@ Done means:
 Backend MCP (`/mcp`, streamable HTTP, card `capabilities.tools` false) and frontend WebMCP
 (`document.modelContext.registerTool`, fallback `navigator.modelContext`) are separate transports.
 The card stays a stub. WebMCP is its own document at `/.well-known/webmcp.json`, generated from
-`PageRegistry.ActionScopes` and `AgentSiteMap`. A test fails if a catalog name or route row drifts.
+`PageRegistry.ActionScopes` and `AgentSiteMap`. Route rows keep only catalog entries whose
+visibility includes `Agent`, under the `IActionCatalog` name. A test fails if a catalog name,
+route row, or a tool or Pascal route named in a WebMCP markdown section drifts.
 
 ### Cause
 
@@ -130,17 +143,19 @@ installed on `document` and `navigator` before page scripts, then a 6 s wait:
 
 - `WebMcpPageLoad` is the first thing in `<body>`. It embeds the real `navigate` payload (`AgentNavigate.Create`, Ask before editing, so the person confirms) and a parser-blocking classic script. `execute` refuses a url outside the enum, calls `window.confirm`, and `location.assign` only for a same-origin URL.
 - When Blazor publishes, `web-mcp.ts` aborts `window.__timewarpWebMcpPageLoad` and registers the full list, including `navigate`, with the in-app approval bar.
-- `GET /.well-known/webmcp.json` is anonymous JSON. `routeScopedTools` comes from the page registry. `/Feedback` and `/Settings` are examples of routes whose extra tools run only on that SPA route.
+- `GET /.well-known/webmcp.json` is anonymous JSON. `routeScopedTools` comes from the page registry, filtered to `IActionCatalog` entries whose visibility includes `Agent`. Human-only `/Settings` actions (`Credentials.AddExistingPasskey`, `Credentials.LinkMicrosoft365`) are omitted. `Credentials.AddPasskey` stays. `/Feedback` and `/Settings` are examples of routes whose extra tools run only on that SPA route.
 - `/llms.txt`, `/auth.md`, and `timewarp-architecture-discovery/SKILL.md` describe both transports, the route split, and inspector steps. `/auth.md` says an agent registers by enrolling a public key (agent key or browser passkey). There is no email form. It does not claim OAuth `agent_auth` or `register_uri`.
 - The server card description points at the WebMCP document. `capabilities.tools` stays false, `tools` stays `[]`, `status` stays `stub`.
 
 ### Gates
 
+Re-run on the fix pass (2026-10-17):
+
 - `./bin/dev build`: 0 warnings, 0 errors.
 - `./bin/dev test --quiet`: 23 of 23 projects passed (includes `web-spa-playwright-tests` and `web-spa-integration-tests`).
-- `dotnet run source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs`: 6/6 passed, including `WebMcpDiscovery_Should_BeReadableWithoutJavaScript`.
-- `Destinations_Should_` (project directory, `--filter-class`): 6/6 passed. Catalog names match `IActionCatalog`.
-- `PageLoad_Given_ModelContext`: passed. The first `navigate` is recorded with `window.Blazor` still undefined, `hasExecute` true, and an abort signal. `web-mcp-page-load.js` precedes `blazor.web.js`.
+- `dotnet run source/container-apps/web/platform/agent-discovery/markdown-content-negotiation-tests.cs`: 6/6 passed, including `WebMcpDiscovery_Should_BeReadableWithoutJavaScript` (served JSON contains `Credentials.AddPasskey` and omits the two human-only names).
+- `Destinations_Should_` (project directory, `--filter-class`): 7/7 passed. Catalog names match `IActionCatalog`. The new case checks WebMCP markdown citations against the document.
+- `PageLoad_Given_ModelContext`: passed on the earlier implement walk. The first `navigate` is recorded with `window.Blazor` still undefined, `hasExecute` true, and an abort signal. `web-mcp-page-load.js` precedes `blazor.web.js`. This fix pass did not re-run that Playwright filter; the full `dev test` suite, which includes `web-spa-playwright-tests`, passed.
 - `./bin/dev template-smoke`: succeeded (SmokeDefault build 0/0; generated web Jaribu 373/373, api 9/9, testing 14/14).
 - `ganda repo audit`: 32 passed, 0 failed.
 
@@ -167,10 +182,12 @@ The same strings are asserted by `WebMcpDiscovery_Should_BeReadableWithoutJavaSc
 - `/llms.txt`, `/auth.md`, and the discovery skill contain `WebMCP`, `document.modelContext`, `typeof navigator.modelContext`, `MCP-B`, and `Copy trace`.
 - `/llms.txt` and the discovery skill also contain `/Feedback` and `/Settings`.
 - `/auth.md` contains `You are an agent`, `Agent registration`, `Supported methods`, `Credential use`, `/api/identity/agent/register`, `public key`, and `no email form`.
-- `/.well-known/webmcp.json` is `application/json` and contains `"transport": "webmcp"`, `"capabilitiesTools": false`, `navigate`, `document.modelContext`, `/Feedback`, and `/Settings`.
+- `/.well-known/webmcp.json` is `application/json` and contains `"transport": "webmcp"`, `"capabilitiesTools": false`, `navigate`, `document.modelContext`, `/Feedback`, `/Settings`, and `"Credentials.AddPasskey"`.
+- That document does not contain `Credentials.AddExistingPasskey` or `Credentials.LinkMicrosoft365`.
 - `/.well-known/mcp/server-card.json` still contains `"tools": false`, `"tools": []`, and `"status": "stub"`.
 - The HTML for `/` contains `id="timewarp-webmcp-page-load"`, and `web-mcp-page-load.js` appears before `blazor.web.js`. The script body contains `registerTool`.
 - Route-scoped tools (credential actions such as `Credentials.AddPasskey`, feedback actions) are listed under their route template in `webmcp.json`. They run only when the SPA is on that route. `/` registers `navigate` (site-wide goto; the person approves). `site_map` and `page_context` join after the page becomes interactive.
+- A tool id or Pascal route named in a `## WebMCP` section of `/llms.txt`, `/auth.md`, or the discovery skill is also a name in `webmcp.json`. `WebMcp_Sections_Should_Cite_Only_Published_Tools_And_Routes` fails when one is not.
 
 ### Not in this walk
 
@@ -178,11 +195,7 @@ The live re-scan of arch.timewarp.work waits until this is deployed. Parent 343 
 
 ### Review
 
-- Round 1 (effort 2, roster: general): 1 bug open (M1), 1 suggestion open (M2), 0 nits. No disposition yet; fix pass requested.
-- M1: `webmcp.json` lists human-only `/Settings` actions (`Credentials.AddExistingPasskey`, `Credentials.LinkMicrosoft365`) as WebMCP tools.
-- M2: tool and route names in the markdown docs are not checked against the generated document.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger).
-
-## Blocked
-
-2026-10-17: the earlier kitchen write denial is resolved. The round-1 review rerun wrote `review/round-1/`. Open now: a fix pass for M1 and M2.
+- Round 1 (effort 2, roster: general): M1 and M2 implemented on this id. Disposition waits for review round 2.
+- M1: `routeScopedTools` keeps catalog entries whose visibility includes `Agent`. `/Settings` publishes `Credentials.AddPasskey` and omits `Credentials.AddExistingPasskey` and `Credentials.LinkMicrosoft365`.
+- M2: `WebMcp_Sections_Should_Cite_Only_Published_Tools_And_Routes` reads the `## WebMCP` sections of `llms.txt`, `auth.md`, and the discovery skill and requires each cited catalog tool, short tool id, and Pascal route to appear in the generated document.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger). The host owns round-1 files; this walk did not edit them.
