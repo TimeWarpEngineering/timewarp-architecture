@@ -137,6 +137,9 @@ composer does not take focus while an approval is pending. Gates: `dev check-ver
 - Created: 1872794 (2026-10-16)
 - Specified: 2026-10-17 (cockpit request from Steve; read-only investigation, no code changed)
 - Implemented: 2026-10-17 (ganda task work, implement oracle; Claude Opus 5.5)
+- Review oracle: 2026-10-17, Claude Opus 5.5 (session not reported), effort 2, roster general;
+  disposition clean (1 bug fixed)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-17T02:56:29Z
 
 ## Notes
 
@@ -205,6 +208,19 @@ composer does not take focus while an approval is pending. Gates: `dev check-ver
 - `dev check-version`: source 2.0.0-beta.20 is already ahead of NuGet 2.0.0-beta.19, no bump needed.
 - `dev template-smoke` (default variant): succeeded.
 - `ganda repo audit`: clean (see commit).
+
+### Review disposition
+
+- Rounds: 2 (effort 2 by diff, roster: general). Final counts: bug 1 fixed, 0 open; no
+  suggestions or nits. Outcome: **clean**.
+- M1 (bug, fixed): closing Ask reopened the command palette when the palette had been opened from
+  the appbar search field (Ask restored focus to the palette trigger outside the palette's
+  `restoring` guard; the palette's own `RestoreFocus` can also land there before Ask captures the
+  opener). The focus-return claim now carries a palette-owned guarded `restore` for a trigger
+  target. New Playwright test `Close_Should_Not_Reopen_Palette_When_Ask_Came_From_Search_Field`
+  failed before the fix; `dev test` 23/23 projects after it (web-spa-playwright-tests 22/22).
+- Paths: `review/review-framework.md`, `review/round-1/` (general, merged),
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 

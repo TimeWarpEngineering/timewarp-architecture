@@ -22,7 +22,9 @@
 // the soft form for after a send and after expand: it moves focus only when focus is in the panel
 // or on nothing, so it never pulls focus back from somewhere the person went. RestoreOpener is
 // one-shot on close: the opener if it is still in the document, else the page main region, else
-// nothing focused, so focus never stays on a removed node.
+// nothing focused, so focus never stays on a removed node. An opener handed over by the palette is
+// restored through the palette's guarded restore, so focusing its search-field trigger does not
+// reopen the palette.
 // CopyText writes the text C# passes: the same last-answer text the thumbs file, not the whole
 // transcript. A denied clipboard stays quiet: copy is presentational and must not break the
 // panel. Imported on demand (AskAiJsModule), not via window.Spa.
@@ -80,6 +82,7 @@ const PanelSelector = ".twe-agent-ask";
 const OpenFocusFrames = 30;
 
 let opener: HTMLElement | null = null;
+let restoreOpener: (() => void) | null = null;
 
 export function CaptureOpener(): void {
   const active = document.activeElement;
@@ -87,9 +90,11 @@ export function CaptureOpener(): void {
     target: active instanceof HTMLElement && active !== document.body && active.closest(PanelSelector) === null
       ? active
       : null,
+    restore: null,
   };
   document.dispatchEvent(new CustomEvent<FocusReturnClaim>(FocusReturnClaimEvent, { detail: claim }));
   opener = claim.target;
+  restoreOpener = claim.restore;
 }
 
 export function FocusComposerOnOpen(): void {
@@ -118,9 +123,16 @@ export function FocusComposerInPanel(): void {
 
 export function RestoreOpener(): void {
   const target = opener;
+  const restore = restoreOpener;
   opener = null;
+  restoreOpener = null;
   if (target !== null && target.isConnected) {
-    target.focus();
+    if (restore !== null) {
+      restore();
+    } else {
+      target.focus();
+    }
+
     return;
   }
 
