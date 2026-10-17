@@ -49,6 +49,17 @@ and plain CSS (`tw-blazor-css-strategy`). Aspire. EF Core when `postgres` is on.
 | Diagnostics TWA / TWE / SG | The build message, plus `AnalyzerReleases.Unshipped.md` under `source/analyzers/timewarp-architecture-convention-analyzers/` and `source/analyzers/timewarp-architecture-analyzers/`. Retired ids are commented there. |
 | Platform NuGet vs project reference | Root `Directory.Build.props`, `Directory.Packages.props`, and `msbuild/timewarp-platform-packages.props`. |
 
+## Generated ingress prefixes
+
+`IngressRoutePrefixGenerator` emits `WebServerApiRoutePrefixes` when `yarp` and the Aspire AppHost
+compile. The checked-in copy is `goldens/ingress/WebServerApiRoutePrefixes.g.cs`. Refresh it with
+`dev regenerate-generated` (or `dotnet run tools/dev-cli/dev.cs -- regenerate-generated`) and commit
+the file. CI runs that command, then `git diff --exit-code -- goldens/ingress`. A failure means the
+golden was edited by hand, or a web-contracts `[ApiRoute]` changed and the golden was not
+regenerated: re-run the command and commit, or fix the generator if the new text is wrong. Ordering
+is in the generator Design region. The `[Offerable]` offer-record generator was removed in task 282
+and has nothing to regenerate.
+
 Repo skills under `skills/` ship in generated apps. `skills/*/analysis/` does not.
 `documentation/` is maintainer-only and is not packed. A live rule belongs in the skill that
 owns it or in a Design region.

@@ -35,6 +35,18 @@
 // Web.Server catch-all already serves everything non-api. Dedupe OrdinalIgnoreCase, sort Ordinal so
 // the emitted list (and therefore the ingress config) is deterministic.
 //
+// Byte-stable emit (task 308): the file does not depend on discovery order, the machine, or the
+// clock. Marked assemblies are walked by assembly name, ordinal. Routes inside that walk are sorted
+// by template, then assembly name, before diagnostics are reported. Case-only prefix spellings
+// collapse to the ordinal-least spelling (`api/Roles` wins over `api/roles`), then the distinct
+// prefixes are sorted ordinal (uppercase before lowercase) and emitted as one literal per line.
+// No timestamp, random id, or machine name is written. Configured assembly names and reserved
+// prefixes are sorted ordinal before diagnostics, and foreign routes are sorted by template then
+// assembly name, so a repeat run reports the same diagnostics in the same order.
+// The on-disk file is UTF-8 with no BOM and ends with one LF. A raw string omits the newline
+// before its closing quotes, so BuildSource adds that LF. The checked-in golden can then match
+// editorconfig (lf, insert_final_newline) without a machine-dependent preamble.
+//
 // Diagnostics (both Warning; declared in AnalyzerReleases.Unshipped.md):
 //   TWA0017 — a generated web prefix would shadow another server's route space: it equals or is a
 //             parent of a hosted route in another *contracts* assembly (the Api.Server set), or a
@@ -121,7 +133,7 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
           .Select(static assembly => assembly.Name)
           .ToImmutableHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string configured in options.SourceAssemblies)
+        foreach (string configured in options.SourceAssemblies.OrderBy(static name => name, StringComparer.Ordinal))
         {
           if (!markedNames.Contains(configured))
           {
@@ -134,7 +146,8 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       List<HostedRoute> webRoutes = [];
       List<HostedRoute> foreignRoutes = [];
 
-      foreach (IAssemblySymbol assembly in HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation))
+      foreach (IAssemblySymbol assembly in HostedRouteDiscovery.GetMarkedReferencedAssemblies(compilation)
+        .OrderBy(static assembly => assembly.Name, StringComparer.Ordinal))
       {
         bool isSource = options.SourceAssemblies.Count == 0
           || options.SourceAssemblies.Contains(assembly.Name);
@@ -153,10 +166,12 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       }
 
       // Collapse the web routes to top-level api/<segment> prefixes; TWA0018 on the non-derivable ones.
-      SortedSet<string> prefixes = new(StringComparer.Ordinal);
-      HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+      // Case-only duplicates keep the ordinal-least spelling, not whichever route was discovered first.
+      Dictionary<string, string> canonicalPrefixes = new(StringComparer.OrdinalIgnoreCase);
 
-      foreach (HostedRoute route in webRoutes)
+      foreach (HostedRoute route in webRoutes
+        .OrderBy(static route => route.Template, StringComparer.Ordinal)
+        .ThenBy(static route => route.AssemblyName, StringComparer.Ordinal))
       {
         string[] segments = route.Template.Trim('/').Split(SlashSeparator, StringSplitOptions.RemoveEmptyEntries);
 
@@ -179,15 +194,23 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
         }
 
         string prefix = ApiSegment + "/" + segments[1];
-        if (seen.Add(prefix))
+        if (canonicalPrefixes.TryGetValue(prefix, out string? existing)
+          && existing is not null
+          && string.CompareOrdinal(existing, prefix) <= 0)
         {
-          prefixes.Add(prefix);
+          continue;
         }
+
+        canonicalPrefixes[prefix] = prefix;
       }
+
+      SortedSet<string> prefixes = new(canonicalPrefixes.Values, StringComparer.Ordinal);
 
       ReportCollisions(spc, prefixes, foreignRoutes, webRoutes, options.ReservedPrefixes);
 
-      spc.AddSource("WebServerApiRoutePrefixes.g.cs", SourceText.From(BuildSource(prefixes), Encoding.UTF8));
+      spc.AddSource(
+        "WebServerApiRoutePrefixes.g.cs",
+        SourceText.From(BuildSource(prefixes), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)));
     }
     catch (Exception ex) // CA1031: a source generator must not throw into the compilation.
     {
@@ -211,7 +234,9 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     foreach (string prefix in prefixes)
     {
       string prefixSlash = prefix + "/";
-      foreach (HostedRoute foreign in foreignRoutes)
+      foreach (HostedRoute foreign in foreignRoutes
+        .OrderBy(static route => route.Template, StringComparer.Ordinal)
+        .ThenBy(static route => route.AssemblyName, StringComparer.Ordinal))
       {
         string template = foreign.Template.Trim('/');
         if (template.Equals(prefix, StringComparison.OrdinalIgnoreCase)
@@ -226,7 +251,9 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
     // ingress ahead of the reserved server's own route.
     if (reservedPrefixes.Length > 0)
     {
-      foreach (HostedRoute route in webRoutes)
+      foreach (HostedRoute route in webRoutes
+        .OrderBy(static route => route.Template, StringComparer.Ordinal)
+        .ThenBy(static route => route.AssemblyName, StringComparer.Ordinal))
       {
         string[] segments = route.Template.Trim('/').Split(SlashSeparator, StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0)
@@ -234,7 +261,7 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
           continue;
         }
 
-        foreach (string reserved in reservedPrefixes)
+        foreach (string reserved in reservedPrefixes.OrderBy(static prefix => prefix, StringComparer.Ordinal))
         {
           if (segments[0].Equals(reserved, StringComparison.OrdinalIgnoreCase))
           {
@@ -269,7 +296,7 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
       : "ImmutableArray.Create(\n"
         + string.Join(",\n", prefixes.Select(p => $"    \"{p}\"")) + ")";
 
-    return $$"""
+    string source = $$"""
       // <auto-generated/>
       #nullable enable
       using System.Collections.Immutable;
@@ -286,6 +313,8 @@ public class IngressRoutePrefixGenerator : IIncrementalGenerator
         public static readonly ImmutableArray<string> All = {{body}};
       }
       """;
+
+    return source.Length > 0 && source[^1] == '\n' ? source : source + "\n";
   }
 
   private readonly struct HostedRoute
