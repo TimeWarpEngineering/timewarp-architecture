@@ -50,6 +50,11 @@ Do not expand to every generator in the repo.
 - Implement: ingress golden + fast-job diff. Offer-record generator stays removed (task 282).
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T15:12:43Z
 - Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, session not exposed in print mode). 1 round. Disposition accepted-exceptions — 2026-10-17
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T15:16:38Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
