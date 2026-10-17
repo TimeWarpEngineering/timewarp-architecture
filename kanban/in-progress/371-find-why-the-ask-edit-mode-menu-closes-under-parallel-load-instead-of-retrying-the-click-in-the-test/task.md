@@ -47,6 +47,8 @@ Done when:
 
 - Created: 2026-10-15 (cockpit, per Steve; from 370's retry in #514)
 - Implementation: 2026-10-17. Product cause. The Copy tooltip's delayed `showPopover` closed the edit-mode menu. Hint popovers stop that. The reopen retry is gone.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17T10:24:12Z
+- Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 2, session not exposed — 2026-10-17. Found 0 bugs, 1 suggestion, and 1 nit, all open. A fix pass is requested.
 
 ## Results
 
@@ -55,6 +57,8 @@ Done when:
 **Fix.** `tooltip-hint.ts`, imported by the SPA initializer, sets every `fluent-tooltip` to `popover="hint"` when it appears and again inside the component's `showPopover`. A hint can show beside an open menu, and opening the menu dismisses the hint. The test no longer reopens the menu. It shows the Copy tooltip while the edit-mode menu is open and again while the settings menu is open, and requires the chosen item to stay visible.
 
 **Proof.** `AskSurface_Given_Wasm` passed 50/50 under 32 CPU burners, with the Copy-tooltip assert on both menus. `./bin/dev build --quiet` succeeded (warnings are errors). `./bin/dev test --group playwright --no-build`: web-spa-playwright-tests 22/22. `ganda repo audit`: 32 passed, 0 failed.
+
+**Review (round 1, in progress).** One general reviewer ran at effort 2. The reviewer confirmed the root cause against the FluentUI 5.0.0 bundle, where the tooltip sets `popover ??= "auto"` and shows from a timer. The reviewer re-ran `./bin/dev build` (passed) and `AskSurface_Given_Wasm` (1/1). The reviewer did not re-run the 50× load loop. Findings: 0 bugs, M1 (suggestion: the document-wide `MutationObserver` duplicates the `showPopover` wrapper), and M2 (nit: the `queueMicrotask` re-wrap does nothing, and a Design ordering claim is wrong). Both are open. There is no disposition yet. Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
 
 ### How to validate
 
