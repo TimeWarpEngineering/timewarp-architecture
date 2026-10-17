@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 785
+- Lines changed: 241
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -12,7 +12,7 @@
 
 **Date:** 2026-10-17
 **Host task:** kanban/to-do/343-001-webmcp-tools-register-on-page-load-and-are-discoverable-over-http/
-**Diff scope:** commit `b3a18de22` (`ffc54646f..b3a18de22`). The seven task-371 commits on this branch before `ffc54646f` are out of scope (reviewed under 371).
+**Diff scope:** round 1: commit `b3a18de22` (`ffc54646f..b3a18de22`). Round 2: fix delta `1cfb5960a..94133f633`. The seven task-371 commits on this branch before `ffc54646f` are out of scope (reviewed under 371).
 **Plan / brief:** `## Goal (implementer restatement)` and `## Requirements` in `task.md`. Page-load `navigate` registration, `/.well-known/webmcp.json` generated from the page registry, WebMCP sections in `/llms.txt`, `/auth.md`, and the discovery skill, and auth.md agent registration wording.
 **Effort:** 2
 **Reviewer roster:** general

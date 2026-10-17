@@ -107,10 +107,12 @@ Done means:
 - Review round 1: reviewer-claude (claude-opus-5-5), effort 2, roster general, session not reported. Result: fix pass needed for M1 and M2 (2026-10-17)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-17T12:52:21Z
 - Implement-fix-2 oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-17
+- Review round 2: reviewer-claude (claude-opus-5-5), effort 2, roster general, session not reported. Result: M1 and M2 fixed, nothing new, disposition clean (2026-10-17)
 
 ## Review
 
-- Round 1: M1 and M2 implemented on this id. Host runs review round 2.
+- Round 1: M1 and M2 implemented on this id.
+- Round 2: both re-verified as fixed and no new findings. Disposition: clean (`review/disposition.md`).
 
 ## Notes
 
@@ -195,7 +197,9 @@ The live re-scan of arch.timewarp.work waits until this is deployed. Parent 343 
 
 ### Review
 
-- Round 1 (effort 2, roster: general): M1 and M2 implemented on this id. Disposition waits for review round 2.
+- Rounds: 2 (effort 2, roster: general, reviewer-claude claude-opus-5-5).
+- Final counts: bug 1 fixed, suggestion 1 fixed, nit 0. Open 0, wontfix 0.
+- Disposition: **clean**. Round 2 re-verified M1 and M2 on `94133f633` and found nothing new. The reviewer re-ran the gates: `./bin/dev build` 0/0, the HTTP smoke runfile 6/6, and `web-spa-integration-tests` 301/301.
 - M1: `routeScopedTools` keeps catalog entries whose visibility includes `Agent`. `/Settings` publishes `Credentials.AddPasskey` and omits `Credentials.AddExistingPasskey` and `Credentials.LinkMicrosoft365`.
 - M2: `WebMcp_Sections_Should_Cite_Only_Published_Tools_And_Routes` reads the `## WebMCP` sections of `llms.txt`, `auth.md`, and the discovery skill and requires each cited catalog tool, short tool id, and Pascal route to appear in the generated document.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` (live ledger). The host owns round-1 files; this walk did not edit them.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md` (final ledger), `review/disposition.md`.
