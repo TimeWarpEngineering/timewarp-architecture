@@ -21,6 +21,8 @@
 // since, the fake replies "image: {mediaType} {width}x{height} {bytes} bytes" (PNG size from the
 // IHDR chunk), so a test can see the picture arrived. "screenshot" calls the capture tool when it
 // is offered. Relay images map to DataContent, which the OpenAI adapter sends as image content.
+// "markdown sample" (task 380) replies with MarkdownSample: bold, a list, an in-app link, an
+// external link and raw HTML, so a test can see how Ask renders a formatted reply.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -244,6 +246,11 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
         return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, text)));
       }
 
+      if (userText.Contains("markdown sample", StringComparison.OrdinalIgnoreCase))
+      {
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, MarkdownSample)));
+      }
+
       bool Offers(string toolName) =>
         options?.Tools?.Any(tool => tool.Name == toolName) == true;
 
@@ -273,6 +280,11 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     }
 
     public const string CaptureToolName = "Screenshot.CaptureScreenshot";
+
+    public const string MarkdownSample =
+      "Here is **bold** text.\n\n- first item\n- second item\n\n" +
+      "Open [Sign in](/Login) or [Example](https://example.com).\n\n" +
+      "<b data-qa=\"AskRawHtml\">raw</b>";
 
     public static string DescribeImage(DataContent picture)
     {
