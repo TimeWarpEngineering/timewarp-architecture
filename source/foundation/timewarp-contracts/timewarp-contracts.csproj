@@ -7,7 +7,23 @@
     <PackageTags>timewarp;contracts;mediator;cli;mcp</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- Root Directory.Build.props sets TargetFramework before this body. Clear it so
+         TargetFrameworks is the only TFM property (both set is NETSDK1013).
+         net10.0 is the asset net10 hosts restore; net11.0 stays the in-repo target.
+         netstandard2.0 is omitted: analyzers match Operation by metadata name and do not
+         reference this assembly. -->
+    <TargetFramework></TargetFramework>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
   </PropertyGroup>
+
+  <!-- Convention analyzers target net11.0. SetTargetFramework is the SDK escape hatch
+       (Microsoft.Common.CurrentVersion.targets) so this net10.0 inner build still runs them
+       instead of failing the upward TFM check. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Update="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj'))">
+      <SetTargetFramework>TargetFramework=net11.0</SetTargetFramework>
+    </ProjectReference>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="TimeWarp.Mediator.Contracts" />
