@@ -27,6 +27,12 @@
 // cross-compilation state (F-003). Equals/GetHashCode SequenceEqual Tags: ImmutableArray<T>'s
 // IEquatable is reference equality of the backing array, which would rebuild every
 // *Endpoint.g.cs on unrelated host edits even when tag content is unchanged.
+// [Operation] (TimeWarp.Contracts.OperationAttribute) on the nested request supplies
+// OperationName and OperationDescription. An absent attribute leaves both null. A
+// whitespace name leaves both null, matching the contracts generator: the attribute
+// constructor rejects that name, so the description is not an operation on its own.
+// A whitespace description leaves OperationDescription null. The FastEndpoint template
+// does not read either value, so HTTP endpoint emission is unchanged.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -50,8 +56,12 @@ internal sealed record EndpointEmitModel(
   bool IsEmptyRequest,
   bool MissingQueryOrCommand,
   bool VerbUnresolved,
-  string UnresolvedVerbDisplay)
+  string UnresolvedVerbDisplay,
+  string? OperationName,
+  string? OperationDescription)
 {
+  private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
+
   public bool Equals(EndpointEmitModel? other)
   {
     if (other is null)
@@ -79,7 +89,9 @@ internal sealed record EndpointEmitModel(
       && IsEmptyRequest == other.IsEmptyRequest
       && MissingQueryOrCommand == other.MissingQueryOrCommand
       && VerbUnresolved == other.VerbUnresolved
-      && UnresolvedVerbDisplay == other.UnresolvedVerbDisplay;
+      && UnresolvedVerbDisplay == other.UnresolvedVerbDisplay
+      && OperationName == other.OperationName
+      && OperationDescription == other.OperationDescription;
   }
 
   public override int GetHashCode()
@@ -105,6 +117,8 @@ internal sealed record EndpointEmitModel(
     hashCode.Add(MissingQueryOrCommand);
     hashCode.Add(VerbUnresolved);
     hashCode.Add(UnresolvedVerbDisplay);
+    hashCode.Add(OperationName);
+    hashCode.Add(OperationDescription);
     return hashCode.ToHashCode();
   }
 
@@ -138,7 +152,9 @@ internal sealed record EndpointEmitModel(
         IsEmptyRequest: false,
         MissingQueryOrCommand: true,
         VerbUnresolved: false,
-        UnresolvedVerbDisplay: string.Empty);
+        UnresolvedVerbDisplay: string.Empty,
+        OperationName: null,
+        OperationDescription: null);
     }
 
     string requestTypeName = requestClass.Name;
@@ -226,6 +242,7 @@ internal sealed record EndpointEmitModel(
     }
 
     ImmutableArray<string> tags = CollectTags(symbol);
+    (string? operationName, string? operationDescription) = ReadOperation(requestClass);
 
     return new EndpointEmitModel(
       Namespace: ns,
@@ -243,7 +260,30 @@ internal sealed record EndpointEmitModel(
       IsEmptyRequest: isEmptyRequest,
       MissingQueryOrCommand: false,
       VerbUnresolved: verbUnresolved,
-      UnresolvedVerbDisplay: unresolvedVerbDisplay);
+      UnresolvedVerbDisplay: unresolvedVerbDisplay,
+      OperationName: operationName,
+      OperationDescription: operationDescription);
+  }
+
+  private static (string? Name, string? Description) ReadOperation(INamedTypeSymbol requestClass)
+  {
+    AttributeData? operation = requestClass.GetAttributes()
+      .FirstOrDefault(static attr =>
+        HostedRouteDiscovery.HasMetadataName(attr.AttributeClass, OperationAttributeFullName));
+    if (operation is null)
+    {
+      return (null, null);
+    }
+
+    string? name = operation.ConstructorArguments.Length > 0
+      ? operation.ConstructorArguments[0].Value as string
+      : null;
+    if (string.IsNullOrWhiteSpace(name))
+    {
+      return (null, null);
+    }
+
+    return (name, GetNamedStringArgument(operation, "Description"));
   }
 
   private static ImmutableArray<string> CollectTags(INamedTypeSymbol symbol)

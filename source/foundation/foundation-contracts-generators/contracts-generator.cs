@@ -1,5 +1,6 @@
 #region Purpose
-// Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types.
+// Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types,
+// and copies [Operation] name/description onto that partial when the request carries one.
 // Marker attributes are public types in TimeWarp.Foundation.Features (same namespace as
 // IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovered with
 // ForAttributeWithMetadataName. FastEndpoint/ingress match the same FQN — not per-consumer
@@ -33,6 +34,11 @@
 //   omitted constraint → string.
 // Constraint args are the parenthesized-digits form only (`min(1)`, `minlength(3)`). Multiple
 // constraints, comma args, catch-alls, and `{name=default}` are not parsed.
+// [Operation] (TimeWarp.Contracts.OperationAttribute) on the same partial is copied as
+// OperationName and, when Description is not whitespace, OperationDescription. A whitespace
+// name supplies no operation, description included: the attribute constructor rejects that
+// name, and EndpointEmitModel uses the same rule. Kind is not copied.
+// The same type seen through more than one attribute pipeline keeps the first Operation part.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
@@ -58,6 +64,8 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
   private const string RouteName = "ApiRoute";
   private const string AuthName = "AuthApiRequest";
   private const string OpenDataName = "OpenDataQueryParameters";
+  private const string OperationPartKind = "Operation";
+  private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
   private const string Verb = "global::TimeWarp.Foundation.Features.HttpVerb";
   private const string Nvc = "global::System.Collections.Specialized.NameValueCollection";
 
@@ -169,9 +177,29 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     }
   }
 
+  private static ImmutableArray<Part> DedupeKind(ImmutableArray<Part> parts, string kind)
+  {
+    bool seen = false;
+    ImmutableArray<Part>.Builder builder = ImmutableArray.CreateBuilder<Part>(parts.Length);
+    foreach (Part part in parts)
+    {
+      if (part.Kind == kind)
+      {
+        if (seen)
+          continue;
+
+        seen = true;
+      }
+
+      builder.Add(part);
+    }
+
+    return builder.ToImmutable();
+  }
+
   private static Target OrderParts(Target target)
   {
-    ImmutableArray<Part> parts = WithAuthQueryHelperWhenOpenData(target.Parts);
+    ImmutableArray<Part> parts = DedupeKind(WithAuthQueryHelperWhenOpenData(target.Parts), OperationPartKind);
     if (parts.Length <= 1)
       return target with { Parts = parts };
 
@@ -202,7 +230,8 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     RouteName => 0,
     AuthName => 1,
     OpenDataName => 2,
-    _ => 3
+    OperationPartKind => 3,
+    _ => 4
   };
 
   private static Target? Transform(GeneratorAttributeSyntaxContext context, string kind)
@@ -230,8 +259,73 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     if (parts.Count == 0)
       return null;
 
+    AppendOperation(symbol, parts);
     return ToTarget(symbol, parts.ToImmutable());
   }
+
+  private static void AppendOperation(INamedTypeSymbol symbol, ImmutableArray<Part>.Builder parts)
+  {
+    AttributeData? operation = null;
+    foreach (AttributeData attribute in symbol.GetAttributes())
+    {
+      if (!IsOperationAttribute(attribute))
+        continue;
+
+      operation = attribute;
+      break;
+    }
+
+    if (operation is null)
+      return;
+
+    string? name = operation.ConstructorArguments.Length > 0
+      ? operation.ConstructorArguments[0].Value as string
+      : null;
+    if (string.IsNullOrWhiteSpace(name))
+      return;
+
+    string? description = null;
+    foreach (KeyValuePair<string, TypedConstant> named in operation.NamedArguments)
+    {
+      if (named.Key == "Description")
+        description = named.Value.Value as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(description))
+      description = null;
+
+    parts.Add(new Part(OperationPartKind, null, OperationBody(name, description)));
+  }
+
+  private static bool IsOperationAttribute(AttributeData attribute)
+  {
+    INamedTypeSymbol? type = attribute.AttributeClass;
+    if (type?.ContainingNamespace is not { IsGlobalNamespace: false } containingNamespace)
+      return false;
+
+    return containingNamespace.ToDisplayString() + "." + type.Name == OperationAttributeFullName;
+  }
+
+  private static string OperationBody(string name, string? description)
+  {
+    StringBuilder builder = new();
+    builder.Append("    public const string OperationName = \"").Append(EscapeLiteral(name)).Append("\";\n");
+    if (!string.IsNullOrWhiteSpace(description))
+    {
+      builder.Append("    public const string OperationDescription = \"")
+        .Append(EscapeLiteral(description))
+        .Append("\";\n");
+    }
+
+    return builder.ToString();
+  }
+
+  private static string EscapeLiteral(string value) =>
+    value
+      .Replace("\\", "\\\\", StringComparison.Ordinal)
+      .Replace("\"", "\\\"", StringComparison.Ordinal)
+      .Replace("\r", "\\r", StringComparison.Ordinal)
+      .Replace("\n", "\\n", StringComparison.Ordinal);
 
   private static Target? ToTarget(INamedTypeSymbol symbol, ImmutableArray<Part> parts)
   {

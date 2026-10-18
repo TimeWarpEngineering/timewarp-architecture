@@ -20,7 +20,8 @@
 // real HEAD; init alone still warns on empty repos.
 //
 // Two independent availability waits (task 130): flatcontainer (WaitForFlatcontainerAsync) gates
-// restore-path packages and is correct as a one-shot poll-then-proceed. `dotnet new install`
+// restore-path packages, including TimeWarp.Contracts (Foundation.Contracts depends on it; the id
+// is not TimeWarp.Foundation.*), and is correct as a one-shot poll-then-proceed. `dotnet new install`
 // resolves through nuget.org's search/registration index instead, which lags flatcontainer, so
 // InstallPublishedTemplateAsync retries the install itself with the same bounded-backoff shape —
 // the install call IS the availability probe for the index it uses, no second endpoint to model.
@@ -51,6 +52,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     "TimeWarp.Architecture.Generators",
     "TimeWarp.Architecture.Attributes",
     "TimeWarp.Foundation.Domain",
+    "TimeWarp.Contracts",
     "TimeWarp.Foundation.Contracts",
     "TimeWarp.Foundation.Application",
     "TimeWarp.Foundation.Infrastructure",

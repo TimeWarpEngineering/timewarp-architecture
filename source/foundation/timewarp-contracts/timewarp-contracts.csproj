@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>TimeWarp.Contracts</RootNamespace>
+    <PackageId>TimeWarp.Contracts</PackageId>
+    <Title>TimeWarp.Contracts</Title>
+    <Description>Transport-neutral operation contracts for HTTP, CLI, and MCP. One request type carries the canonical name; member metadata and kind are derived by each host's generator.</Description>
+    <PackageTags>timewarp;contracts;mediator;cli;mcp</PackageTags>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TimeWarp.Mediator.Contracts" />
+    <PackageReference Include="OneOf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="readme.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

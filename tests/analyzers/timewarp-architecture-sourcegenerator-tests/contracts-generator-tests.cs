@@ -45,15 +45,37 @@ public class ContractsGenerator_Tests
     }
     """;
 
-  private static CSharpCompilation CreateCompilation(string source)
+  private static MetadataReference[] RealOperationReferences()
   {
+    string runtime = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
+      .Split(Path.PathSeparator)
+      .First(static path => Path.GetFileName(path).Equals("System.Runtime.dll", StringComparison.OrdinalIgnoreCase));
+    return
+    [
+      MetadataReference.CreateFromFile(runtime),
+      MetadataReference.CreateFromFile(typeof(TimeWarp.Contracts.OperationAttribute).Assembly.Location)
+    ];
+  }
+
+  private static bool IsRealOperation(AttributeData attribute) =>
+    attribute.AttributeClass is { TypeKind: not TypeKind.Error } symbol
+    && symbol.ToDisplayString() == "TimeWarp.Contracts.OperationAttribute";
+
+  private static CSharpCompilation CreateCompilation(string source, MetadataReference[]? extraReferences = null)
+  {
+    List<MetadataReference> references = [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)];
+    if (extraReferences is not null)
+    {
+      references.AddRange(extraReferences);
+    }
+
     return CSharpCompilation.Create(
       "Test.Contracts",
       [
         CSharpSyntaxTree.ParseText(HttpVerbStub),
         CSharpSyntaxTree.ParseText(source)
       ],
-      [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+      references,
       new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
   }
 
@@ -68,15 +90,25 @@ public class ContractsGenerator_Tests
         : default);
   }
 
-  private static GeneratorDriverRunResult RunResult(string source, string rootNamespace = "TimeWarp.Architecture")
+  private static GeneratorDriverRunResult RunResult
+  (
+    string source,
+    string rootNamespace = "TimeWarp.Architecture",
+    MetadataReference[]? extraReferences = null
+  )
   {
     GeneratorDriver driver = CreateDriver(rootNamespace);
-    return driver.RunGenerators(CreateCompilation(source)).GetRunResult();
+    return driver.RunGenerators(CreateCompilation(source, extraReferences)).GetRunResult();
   }
 
-  private static string Run(string source, string rootNamespace = "TimeWarp.Architecture")
+  private static string Run
+  (
+    string source,
+    string rootNamespace = "TimeWarp.Architecture",
+    MetadataReference[]? extraReferences = null
+  )
   {
-    GeneratorDriverRunResult result = RunResult(source, rootNamespace);
+    GeneratorDriverRunResult result = RunResult(source, rootNamespace, extraReferences);
     return string.Join(
       Environment.NewLine,
       result.Results.SelectMany(static r => r.GeneratedSources).Select(static s => s.SourceText.ToString()));
@@ -499,6 +531,199 @@ public class ContractsGenerator_Tests
     string queryStringGenerated = Run(authAndQueryString);
     queryStringGenerated.ShouldContain("GetAuthQueryParameters()");
     queryStringGenerated.ShouldNotContain("GetOpenDataQueryParameters()");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_Operation_Name_And_Description_Once()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace TimeWarp.Contracts
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { Name = name; }
+              public string Name { get; }
+              public string? Description { get; set; }
+          }
+      }
+
+      namespace TimeWarp.Foundation.Features
+      {
+          public interface IAuthApiRequest { }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              [AuthApiRequest]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.Split("public const string OperationName = \"roles.list\";").Length.ShouldBe(2);
+    generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    generated.ShouldContain("public global::System.Guid UserId { get; set; }");
+    AssertGeneratedCompilesWithoutErrors(source);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Escape_Operation_Literals()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace TimeWarp.Contracts
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { Name = name; }
+              public string Name { get; }
+              public string? Description { get; set; }
+          }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRole
+          {
+              [TimeWarp.Contracts.Operation("roles.\"quoted\"", Description = "line\nbreak")]
+              [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldContain("public const string OperationName = \"roles.\\\"quoted\\\"\";");
+    generated.ShouldContain("public const string OperationDescription = \"line\\nbreak\";");
+    AssertGeneratedCompilesWithoutErrors(source);
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Ignore_Operation_Attribute_In_Another_Namespace()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Other
+      {
+          [System.AttributeUsage(System.AttributeTargets.Class)]
+          public sealed class OperationAttribute : System.Attribute
+          {
+              public OperationAttribute(string name) { }
+          }
+      }
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRole
+          {
+              [Other.Operation("roles.get")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source);
+
+    generated.ShouldNotContain("OperationName");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_Operation_From_The_Real_Attribute()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    CSharpCompilation compilation = CreateCompilation(source, operation);
+    INamedTypeSymbol? query = compilation.GetTypeByMetadataName("Test.Features.Admin.Roles.GetRoles+Query");
+    query.ShouldNotBeNull();
+    query.GetAttributes().Any(IsRealOperation).ShouldBeTrue();
+
+    string generated = Run(source, extraReferences: operation);
+    generated.ShouldContain("public const string OperationName = \"roles.list\";");
+    generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Omit_Operation_When_The_Real_Attribute_Name_Is_Whitespace()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation(" ", Description = "Lists roles.")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    CSharpCompilation compilation = CreateCompilation(source, operation);
+    INamedTypeSymbol query = compilation.GetTypeByMetadataName("Test.Features.Admin.Roles.GetRoles+Query")!;
+    query.GetAttributes().Any(IsRealOperation).ShouldBeTrue();
+
+    string generated = Run(source, extraReferences: operation);
+    generated.ShouldNotContain("OperationName");
+    generated.ShouldNotContain("OperationDescription");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Omit_A_Whitespace_Operation_Description()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "  ")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    INamedTypeSymbol query = CreateCompilation(source, operation)
+      .GetTypeByMetadataName("Test.Features.Admin.Roles.GetRoles+Query")!;
+    query.GetAttributes().Any(IsRealOperation).ShouldBeTrue();
+
+    string generated = Run(source, extraReferences: operation);
+    generated.ShouldContain("public const string OperationName = \"roles.list\";");
+    generated.ShouldNotContain("OperationDescription");
     return Task.CompletedTask;
   }
 }

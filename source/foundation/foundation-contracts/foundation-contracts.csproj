@@ -5,6 +5,10 @@
     <Description>Shared contracts, request/response markers, route/auth/query source generator, and common types for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\timewarp-contracts\timewarp-contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="libphonenumber-csharp" />
