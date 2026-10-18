@@ -46,13 +46,13 @@ One item at a time across the three repos:
 8. timewarp-nuru 508-004 McpHost
 9. Roslynk: host McpHost in the daemon, delete reflection registration and the `multi_query` binder
 10. timewarp-nuru 507 gate: archive or narrow
-11. timewarp-architecture: roles slice, info analyzer, skill and docs (384-001)
+11. timewarp-architecture: roles slice, info analyzer, skill and docs (386)
 12. timewarp-nuru 508-005 decided from step 1 timing
 
 ## Scope of this task
 
 This task is step 2 only. The info analyzer, `IQuery`/`ICommand` adoption, roles slice, skill
-update are step 11 and live in child **384-001** (backlog). Do not do
+update are step 11 and live in task **386** (backlog). Do not do
 them here.
 
 ## Goal (implementer restatement)
@@ -68,7 +68,7 @@ initializer, enum constants, `DescriptionAttribute`); this package does not refl
 requests. The contracts generator copies `[Operation]` onto the generated HTTP partial, and
 the FastEndpoint emit model stores the name and description. Endpoint class emission stays
 the same. The info analyzer, `IQuery`/`ICommand` adoption, the roles example, skill and docs
-stay on child 384-001. Publishing the nupkg is the human `tw-release`
+stay on task 386. Publishing the nupkg is the human `tw-release`
 gate after merge.
 
 Review round 1: M1 is fixed by removing the package's own `<Version>`, so it takes the repo
@@ -113,7 +113,7 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 
 - Created: 1624988 (2026-10-17)
 - Versioning and serial order recorded: 1479989 (2026-10-17)
-- Step-11 items split to child 384-001: 2022499 (2026-10-18)
+- Step-11 items split to child 384-001: 2022499 (2026-10-18); re-filed standalone as 386 (depends on 384) so this task can close: 2560486 (2026-10-18)
 - Package, generator, and pack wiring implemented (2026-10-18)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T01:45:33Z
 - Review oracle round 1: general reviewer (claude-opus-5-5, headless, session id not exposed), effort 3, turn cap 200. Findings M1 (bug) and M2 (suggestion) open, fix pass requested — 2026-10-18
@@ -131,7 +131,7 @@ same version. The contracts generator writes `OperationName` and, when the descr
 not whitespace, `OperationDescription` on the HTTP partial. `EndpointEmitModel` stores both
 values. FastEndpoint class text leaves them out. Member derivation rules are in the package
 README. The info analyzer, roles slice, `IQuery`/`ICommand` adoption, skill and docs stay
-on 384-001.
+on 386.
 
 Generated apps restore `TimeWarp.Contracts` because `TimeWarp.Foundation.Contracts` depends
 on it. Template smoke maps that id to the local feed (`TimeWarp.Foundation.*` does not match
