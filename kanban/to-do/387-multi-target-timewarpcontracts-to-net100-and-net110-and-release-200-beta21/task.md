@@ -39,6 +39,8 @@ The package is attributes, DTOs and one interface, so it has no reason to requir
 
 - Created: 3018120 (2026-10-18)
 - Implementation: 2026-10-18. Multi-target, version bump, gates, and the net10 consumer proof are on this branch. nuget.org publish stays the human `tw-release` step after merge.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T07:52:13Z
+- Review oracle: tw-implementation-review, effort 1, roster general (claude, model claude-opus-5-5), session not reported, max-turns 80, 1 round, disposition clean — 2026-10-18
 
 ## Results
 
@@ -59,6 +61,18 @@ A throwaway net10.0 console at `/tmp/tw-contracts-net10-proof` (not committed) r
 `dev template-smoke` packs `TimeWarp.Contracts.2.0.0-smoke.nupkg` with the same two `lib` folders, evicts the stale cache entry, and the generated SmokeDefault app restores `TimeWarp.Contracts/2.0.0-smoke` as `lib/net11.0/timewarp-contracts.dll`. Template smoke succeeded.
 
 nuget.org does not have 2.0.0-beta.21 yet. `dev check-version` reports source `2.0.0-beta.21` is one prerelease increment ahead of NuGet `2.0.0-beta.20` and lists `TimeWarp.Contracts`. The human release after merge is `dev release` from a clean synced master (`tw-release`). Record `https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.21` in this section when that package is live. Roslynk 002 and Nuru 508-001 take that version after the cut.
+
+### Review
+
+Disposition is **clean**: 1 round, effort 1, one `general` reviewer. Final counts are 0 for every severity (bug, suggestion, nit) and every status (open, fixed, wontfix). The reviewer re-ran these checks:
+
+- the nupkg `lib/` layout and the two nuspec dependency groups
+- a net10.0 `ResolveProjectReferences` that resolves the net11.0 convention analyzer
+- a fresh net10.0 consumer build against the local feed, which compiles `lib/net10.0`
+- foundation-contracts-tests (26 passed)
+- `dev check-version` (exit 0)
+
+`SharedProblemDetails` is in namespace `TimeWarp.Foundation.Types`, so the consumer proof needs that `using`. Artifacts are in `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` and `review/disposition.md`.
 
 ### How to validate
 
