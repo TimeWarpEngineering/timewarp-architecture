@@ -102,8 +102,7 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 ## Review
 
 - Round 1: Blocked — M1, M2; both fixed in fix pass 1
-- Round 2: M1 and M2 re-verified fixed, no new findings; disposition clean (`review/disposition.md`)
-
+- Round 2: Done
 ## Notes
 
 - Nuru side: timewarp-nuru 508 (parent), 508-001 (consume the package, derive endpoints, handler placement and mediator dispatch), 508-002/003 (public catalog and binder), 508-004 (MCP binding `TimeWarp.Nuru.McpHost`), 508-005 (daemon, backlog).
