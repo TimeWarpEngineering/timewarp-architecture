@@ -5,9 +5,9 @@ is the operation. Each host projects it: this template's contracts generator and
 pipeline for HTTP, TimeWarp.Nuru for CLI and MCP. There is no second schema.
 
 The package publishes from `source/foundation/` in TimeWarp.Architecture as its own package
-(`TimeWarp.Contracts`), versioned with the repository. A standalone repository is the home
-before a stable Nuru release takes the dependency. Dependencies are
-`TimeWarp.Mediator.Contracts` and `OneOf`.
+(`TimeWarp.Contracts`), versioned with the repository. It targets `net10.0` and `net11.0`.
+A standalone repository is the home before a stable Nuru release takes the dependency.
+Dependencies are `TimeWarp.Mediator.Contracts` and `OneOf`.
 
 ## `[Operation]`
 
