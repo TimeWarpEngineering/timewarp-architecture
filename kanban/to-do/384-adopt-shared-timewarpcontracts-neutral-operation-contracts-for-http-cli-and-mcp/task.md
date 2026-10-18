@@ -28,14 +28,16 @@ Decision to record here before scaffolding. Options: (a) a new repo `timewarp-co
 
 ## Versioning
 
-`TimeWarp.Contracts` ships as **1.0.0-beta.1** and stays prerelease until proven. Proven means: Roslynk consumes it for both its CLI and MCP surfaces, the template's roles slice consumes it, and neither needed a breaking change to the package. Then promote to 1.0.0 (step 11 of the serial order recorded on timewarp-nuru 508). Breaking changes during beta bump the beta number, not the major.
+`TimeWarp.Contracts` versions with this repository (`source/Directory.Build.props`), like every other foundation package, so the existing `dev check-version` covers it and no package-specific gate is needed. First release is **2.0.0-beta.20**. It stays prerelease with the repo until proven. Proven means: Roslynk consumes it for both its CLI and MCP surfaces, the template's roles slice consumes it, and neither needed a breaking change to the package. An independent version line is for when it moves to its own repository (option a).
+
+Decided 2026-10-18 (Steven) in review round 1 M1: use the repo version instead of the original 1.0.0-beta.1 line plus a new version check.
 
 ## Implementation order (serial, decided 2026-10-17)
 
 One item at a time across the three repos:
 
 1. timewarp-nuru 506 spike (decision data for 507 and 508-005)
-2. timewarp-architecture 384: `TimeWarp.Contracts` 1.0.0-beta.1 published
+2. timewarp-architecture 384: `TimeWarp.Contracts` 2.0.0-beta.20 published (originally 1.0.0-beta.1; see Versioning)
 3. Roslynk: typed request/response/outcome refactor, no surface change
 4. timewarp-nuru 508-002 public catalog
 5. timewarp-nuru 508-003 public binder and invoke
@@ -44,18 +46,18 @@ One item at a time across the three repos:
 8. timewarp-nuru 508-004 McpHost
 9. Roslynk: host McpHost in the daemon, delete reflection registration and the `multi_query` binder
 10. timewarp-nuru 507 gate: archive or narrow
-11. timewarp-architecture: roles slice, info analyzer, skill and docs; promote `TimeWarp.Contracts` to 1.0.0
+11. timewarp-architecture: roles slice, info analyzer, skill and docs (384-001)
 12. timewarp-nuru 508-005 decided from step 1 timing
 
 ## Scope of this task
 
 This task is step 2 only. The info analyzer, `IQuery`/`ICommand` adoption, roles slice, skill
-update and the 1.0.0 promotion are step 11 and live in child **384-001** (backlog). Do not do
+update are step 11 and live in child **384-001** (backlog). Do not do
 them here.
 
 ## Goal (implementer restatement)
 
-Ship a runtime-free `TimeWarp.Contracts` package at `1.0.0-beta.1` that holds the
+Ship a runtime-free `TimeWarp.Contracts` package at the repo version that holds the
 transport-neutral operation surface, and make this template's contract pipeline consume it.
 The package defines `[Operation]` (canonical name and description; kind stays on the mediator
 interface), catalog DTOs (operation, kind, members, return type, HTTP/CLI/MCP bindings),
@@ -65,15 +67,20 @@ Member metadata is documented for generators to derive (name, nullability/`requi
 initializer, enum constants, `DescriptionAttribute`); this package does not reflect over
 requests. The contracts generator copies `[Operation]` onto the generated HTTP partial, and
 the FastEndpoint emit model stores the name and description. Endpoint class emission stays
-the same. The info analyzer, `IQuery`/`ICommand` adoption, the roles example, skill and docs,
-and the 1.0.0 promotion stay on child 384-001. Publishing the nupkg is the human `tw-release`
+the same. The info analyzer, `IQuery`/`ICommand` adoption, the roles example, skill and docs
+stay on child 384-001. Publishing the nupkg is the human `tw-release`
 gate after merge.
+
+Review round 1: M1 is fixed by removing the package's own `<Version>`, so it takes the repo
+version and `dev check-version` covers it (human decision; no new check). M2: both
+`[Operation]` readers treat a whitespace name as no operation and a whitespace description as
+absent, and the generator and endpoint-metadata tests compile against the real
+`TimeWarp.Contracts.OperationAttribute`.
 
 ## Home decision
 
 Option (b). The package lives at `source/foundation/timewarp-contracts` and publishes as
-`TimeWarp.Contracts` on its own `1.0.0-beta` line, separate from the repo version in
-`source/Directory.Build.props`. Nuru 508-001 can reference that package. A standalone
+`TimeWarp.Contracts` at the repo version from `source/Directory.Build.props`. Nuru 508-001 can reference that package. A standalone
 `timewarp-contracts` repository (option a) is the later home, before a stable Nuru release
 takes the dependency. Colocating it with `TimeWarp.Mediator.Contracts` (option c) is
 rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediator primitive.
@@ -84,8 +91,14 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 - [x] Package scaffold: `[Operation]`, `SharedProblemDetails` (moved, type-forwarded), catalog DTOs, `IResponseRenderer`
 - [x] Derivation rules documented (package Design region / README, not `documentation/`)
 - [x] Contracts generator reads `[Operation]`; endpoint metadata carries it
-- [x] Package versioned 1.0.0-beta.1 and packable; `dev build` clean
-- [ ] 1.0.0-beta.1 released for Nuru 508-001 (release cut is a human gate after merge, `tw-release`)
+- [x] Package versioned with the repo (2.0.0-beta.20) and packable; `dev build` clean
+- [x] Review M1: repo version instead of an own line; `dev check-version` covers it
+- [x] Review M2: operation readers share the blank-value rule; tests use the real attribute
+- [ ] 2.0.0-beta.20 released for Nuru 508-001 (release cut is a human gate after merge, `tw-release`)
+
+## Review
+
+- Round 1: Blocked — M1, M2; both fixed in fix pass 1
 
 ## Notes
 
@@ -101,28 +114,22 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 - Package, generator, and pack wiring implemented (2026-10-18)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T01:45:33Z
 - Review oracle round 1: general reviewer (claude-opus-5-5, headless, session id not exposed), effort 3, turn cap 200. Findings M1 (bug) and M2 (suggestion) open, fix pass requested — 2026-10-18
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-18T01:53:33Z
+- Fix pass 1: Grok started an M1 version-check command against the human decision; stopped, check discarded, M1 and M2 finished by Claude (claude-opus-5-5) in the cockpit at Steven's request — 2026-10-18
 
 ## Results
 
-`TimeWarp.Contracts` 1.0.0-beta.1 packs from `source/foundation/timewarp-contracts`.
+`TimeWarp.Contracts` packs from `source/foundation/timewarp-contracts` at the repo version.
 `SharedProblemDetails` now lives in that assembly, still in `TimeWarp.Foundation.Types`.
 `TimeWarp.Foundation.Contracts` type-forwards it. The contracts generator writes
-`OperationName` and, when the description is non-empty, `OperationDescription` on the
+`OperationName` and, when the description is not whitespace, `OperationDescription` on the
 HTTP partial. `EndpointEmitModel` stores both values. FastEndpoint class text leaves
 them out. Member derivation rules are in the package README. The info analyzer, roles
-slice, `IQuery`/`ICommand` adoption, skill, docs, and the 1.0.0 promotion stay on 384-001.
+slice, `IQuery`/`ICommand` adoption, skill and docs stay on 384-001.
 
-`dev release` packs this project without `-p:Version`, so the nupkg stays `1.0.0-beta.1`
-while the rest of the repo stays on `source/Directory.Build.props` (`2.0.0-beta.20`).
-Template smoke passes `-p:Version=2.0.0-smoke`, which overrides the project version for
-the smoke feed. `dev check-version` reports that shared props version for every packable
-id, including `TimeWarp.Contracts`. It exited 0 because `2.0.0-beta.20` is one prerelease
-ahead of nuget `2.0.0-beta.19`. After the other packages publish as `2.0.0-beta.20`, a
-later check can report `TimeWarp.Contracts` unpublished at that version. The package that
-ships is `1.0.0-beta.1`.
-
-NuGet publish of `1.0.0-beta.1` is the human `tw-release` gate after merge. That checklist
-item stays open.
+`dev check-version` lists `TimeWarp.Contracts` with the other packages at `2.0.0-beta.20`
+(nuget latest `2.0.0-beta.19`) and passes. NuGet publish is the human `tw-release` gate after
+merge. That checklist item stays open.
 
 ### How to validate
 
@@ -139,17 +146,17 @@ dotnet pack source/foundation/foundation-contracts/foundation-contracts.csproj -
 Expect:
 
 - `dev build` ends with 0 warnings and 0 errors. This run did (Release, 20.66s).
-- Source generator tests: 129 passed. Foundation contracts tests: 25 passed. Covered here: operation constants emitted once across `ApiRoute` and `AuthApiRequest`, escaped name and description literals, a foreign `OperationAttribute` ignored, FastEndpoint text unchanged when `[Operation]` is present, endpoint metadata carrying the name and description, and `SharedProblemDetails` resolving from the `timewarp-contracts` assembly.
-- `TimeWarp.Contracts.1.0.0-beta.1.nupkg` depends on `OneOf` 3.0.271 and `TimeWarp.Mediator.Contracts` 14.0.0-beta.5.
-- `TimeWarp.Foundation.Contracts.2.0.0-beta.20.nupkg` depends on `TimeWarp.Contracts` 1.0.0-beta.1.
-- `ganda repo audit`: 32 passed, 0 failed.
+- Source generator tests: 135 passed. Foundation contracts tests: 26 passed (after fix pass 1). Covered here: operation constants emitted once across `ApiRoute` and `AuthApiRequest`, escaped name and description literals, a foreign `OperationAttribute` ignored, FastEndpoint text unchanged when `[Operation]` is present, endpoint metadata carrying the name and description, and `SharedProblemDetails` resolving from the `timewarp-contracts` assembly.
+- `TimeWarp.Contracts.2.0.0-beta.20.nupkg` depends on `OneOf` 3.0.271 and `TimeWarp.Mediator.Contracts` 14.0.0-beta.5.
+- `TimeWarp.Foundation.Contracts.2.0.0-beta.20.nupkg` depends on `TimeWarp.Contracts` 2.0.0-beta.20.
+- `ganda repo audit`: passes.
 
 ### Review
 
 Round 1, effort 3, roster general. The reviewer re-ran `dev build` (0 warnings, 0 errors),
 both test projects (129 and 25 passed), and `ganda repo audit` (pass); all matched the
-claims above. Final counts so far: bug 1 open, suggestion 1 open, nit 0. Disposition is
-pending; a fix pass is needed for M1 and M2.
+claims above. Counts: bug 1, suggestion 1, nit 0. Both fixed in fix pass 1
+(see Goal).
 
 - M1 (bug): the separate `TimeWarp.Contracts` version has no gate. Release pushes with
   `--skip-duplicate`, and `dev check-version` checks the package at the repo version.

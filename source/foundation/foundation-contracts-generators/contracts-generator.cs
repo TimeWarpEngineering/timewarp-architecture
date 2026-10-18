@@ -35,7 +35,9 @@
 // Constraint args are the parenthesized-digits form only (`min(1)`, `minlength(3)`). Multiple
 // constraints, comma args, catch-alls, and `{name=default}` are not parsed.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the same partial is copied as
-// OperationName and, when Description is non-empty, OperationDescription. Kind is not copied.
+// OperationName and, when Description is not whitespace, OperationDescription. A whitespace
+// name supplies no operation, description included: the attribute constructor rejects that
+// name, and EndpointEmitModel uses the same rule. Kind is not copied.
 // The same type seen through more than one attribute pipeline keeps the first Operation part.
 #endregion
 
@@ -279,7 +281,7 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     string? name = operation.ConstructorArguments.Length > 0
       ? operation.ConstructorArguments[0].Value as string
       : null;
-    if (string.IsNullOrEmpty(name))
+    if (string.IsNullOrWhiteSpace(name))
       return;
 
     string? description = null;
@@ -288,6 +290,9 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
       if (named.Key == "Description")
         description = named.Value.Value as string;
     }
+
+    if (string.IsNullOrWhiteSpace(description))
+      description = null;
 
     parts.Add(new Part(OperationPartKind, null, OperationBody(name, description)));
   }
@@ -305,7 +310,7 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
   {
     StringBuilder builder = new();
     builder.Append("    public const string OperationName = \"").Append(EscapeLiteral(name)).Append("\";\n");
-    if (!string.IsNullOrEmpty(description))
+    if (!string.IsNullOrWhiteSpace(description))
     {
       builder.Append("    public const string OperationDescription = \"")
         .Append(EscapeLiteral(description))

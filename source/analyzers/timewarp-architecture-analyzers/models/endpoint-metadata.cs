@@ -28,8 +28,11 @@
 // IEquatable is reference equality of the backing array, which would rebuild every
 // *Endpoint.g.cs on unrelated host edits even when tag content is unchanged.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the nested request supplies
-// OperationName and OperationDescription. An absent attribute leaves both null. The
-// FastEndpoint template does not read them, so HTTP endpoint emission is unchanged.
+// OperationName and OperationDescription. An absent attribute leaves both null. A
+// whitespace name leaves both null, matching the contracts generator: the attribute
+// constructor rejects that name, so the description is not an operation on its own.
+// A whitespace description leaves OperationDescription null. The FastEndpoint template
+// does not read either value, so HTTP endpoint emission is unchanged.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -277,7 +280,7 @@ internal sealed record EndpointEmitModel(
       : null;
     if (string.IsNullOrWhiteSpace(name))
     {
-      name = null;
+      return (null, null);
     }
 
     return (name, GetNamedStringArgument(operation, "Description"));

@@ -6,10 +6,6 @@
     <Description>Transport-neutral operation contracts for HTTP, CLI, and MCP. One request type carries the canonical name; member metadata and kind are derived by each host's generator.</Description>
     <PackageTags>timewarp;contracts;mediator;cli;mcp</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <!-- Independent of source/Directory.Build.props. Promotion to 1.0.0 is task 384-001.
-         dotnet pack without -p:Version emits this version. Template smoke passes
-         -p:Version=2.0.0-smoke, which overrides it for the smoke feed only. -->
-    <Version>1.0.0-beta.1</Version>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 

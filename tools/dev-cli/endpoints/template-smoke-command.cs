@@ -77,8 +77,6 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
     "source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj",
     "source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj",
     "source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj",
-    // Own <Version> 1.0.0-beta.1. Smoke's -p:Version=2.0.0-smoke overrides it so the
-    // foundation-contracts project reference resolves inside the smoke feed.
     "source/foundation/timewarp-contracts/timewarp-contracts.csproj",
     "source/foundation/foundation-domain/foundation-domain.csproj",
     "source/foundation/foundation-contracts/foundation-contracts.csproj",

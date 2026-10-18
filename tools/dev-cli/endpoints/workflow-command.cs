@@ -29,9 +29,7 @@
 // the release (task 126-003). Handlers are invoked directly (no ./bin/dev dependency) so this
 // runs in a clean CI checkout. PackableProjects includes source/libraries (TimeWarp.Modules,
 // TimeWarp.Identity, TimeWarp.402), foundation, TimeWarp.Architecture.{Attributes,Analyzers,Generators}
-// (task 092), and the template package. Repo packages take Version from
-// source/Directory.Build.props. TimeWarp.Contracts keeps its own Version: Pack does not
-// pass -p:Version, so that project is not rewritten to the repo version.
+// (task 092), and the template package; single Version from source/Directory.Build.props.
 #endregion
 
 namespace DevCli.Commands;
@@ -51,10 +49,10 @@ internal sealed class WorkflowCommand : ICommand<Unit>
   [Option("group", "g", Description = "With --phase test: run one test group, fast, playwright, or integration (default: all)")]
   public string? Group { get; set; }
 
-  // The publishable set. libraries (modules, identity, 402) ship as leaf product packages;
-  // foundation-application depends on modules; analyzers/generators/attributes ship as platform
-  // compile-time packages (task 092); the template is the dotnet-new package. TimeWarp.Contracts
-  // keeps the Version in its csproj; every other project uses source/Directory.Build.props.
+  // The publishable set — single repo version (source/Directory.Build.props). libraries (modules,
+  // identity, 402) ship as leaf product packages; foundation-application depends on modules; analyzers/
+  // generators/attributes ship as platform compile-time packages (task 092); the template is the
+  // dotnet-new package.
   internal static readonly string[] PackableProjects =
   [
     "source/libraries/timewarp-modules/timewarp-modules.csproj",

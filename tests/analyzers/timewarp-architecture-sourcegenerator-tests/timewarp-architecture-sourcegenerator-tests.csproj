@@ -21,6 +21,7 @@
          flows transitively for test code that uses TimeWarp.Architecture.Attributes. -->
     <ProjectReference Include="../../../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <ProjectReference Include="../../../source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
+    <ProjectReference Include="../../../source/foundation/timewarp-contracts/timewarp-contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="TimeWarp.Jaribu" />
