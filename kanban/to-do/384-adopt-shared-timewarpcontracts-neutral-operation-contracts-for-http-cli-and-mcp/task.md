@@ -75,7 +75,10 @@ Review round 1: M1 is fixed by removing the package's own `<Version>`, so it tak
 version and `dev check-version` covers it (human decision; no new check). M2: both
 `[Operation]` readers treat a whitespace name as no operation and a whitespace description as
 absent, and the generator and endpoint-metadata tests compile against the real
-`TimeWarp.Contracts.OperationAttribute`.
+`TimeWarp.Contracts.OperationAttribute`. Generated apps restore `TimeWarp.Contracts` as a
+dependency of `TimeWarp.Foundation.Contracts`. The smoke-local feed names that package id
+explicitly (`TimeWarp.Foundation.*` does not match it), and publish-smoke waits for it on
+nuget.org before restore.
 
 ## Home decision
 
@@ -116,20 +119,25 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 - Review oracle round 1: general reviewer (claude-opus-5-5, headless, session id not exposed), effort 3, turn cap 200. Findings M1 (bug) and M2 (suggestion) open, fix pass requested — 2026-10-18
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-18T01:53:33Z
 - Fix pass 1: Grok started an M1 version-check command against the human decision; stopped, check discarded, M1 and M2 finished by Claude (claude-opus-5-5) in the cockpit at Steven's request — 2026-10-18
+- Fix pass 2: implement-fix-2 (grok, model grok-4.7). M1 and M2 were already in the tree. The smoke-local feed and publish-smoke wait list now name `TimeWarp.Contracts`, because `TimeWarp.Foundation.*` does not match that id — 2026-10-18
 
 ## Results
 
 `TimeWarp.Contracts` packs from `source/foundation/timewarp-contracts` at the repo version.
 `SharedProblemDetails` now lives in that assembly, still in `TimeWarp.Foundation.Types`.
-`TimeWarp.Foundation.Contracts` type-forwards it. The contracts generator writes
-`OperationName` and, when the description is not whitespace, `OperationDescription` on the
-HTTP partial. `EndpointEmitModel` stores both values. FastEndpoint class text leaves
-them out. Member derivation rules are in the package README. The info analyzer, roles
-slice, `IQuery`/`ICommand` adoption, skill and docs stay on 384-001.
+`TimeWarp.Foundation.Contracts` type-forwards it and depends on `TimeWarp.Contracts` at the
+same version. The contracts generator writes `OperationName` and, when the description is
+not whitespace, `OperationDescription` on the HTTP partial. `EndpointEmitModel` stores both
+values. FastEndpoint class text leaves them out. Member derivation rules are in the package
+README. The info analyzer, roles slice, `IQuery`/`ICommand` adoption, skill and docs stay
+on 384-001.
 
-`dev check-version` lists `TimeWarp.Contracts` with the other packages at `2.0.0-beta.20`
-(nuget latest `2.0.0-beta.19`) and passes. NuGet publish is the human `tw-release` gate after
-merge. That checklist item stays open.
+Generated apps restore `TimeWarp.Contracts` because `TimeWarp.Foundation.Contracts` depends
+on it. Template smoke maps that id to the local feed (`TimeWarp.Foundation.*` does not match
+it). Publish-smoke waits for it on nuget.org before restore. `dev check-version` lists
+`TimeWarp.Contracts` with the other packages at `2.0.0-beta.20` (nuget latest
+`2.0.0-beta.19`) and passes. NuGet publish is the human `tw-release` gate after merge. That
+checklist item stays open.
 
 ### How to validate
 
@@ -141,26 +149,28 @@ cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c
 cd tests/foundation/foundation-contracts-tests && dotnet test -c Release --no-build --no-restore
 dotnet pack source/foundation/timewarp-contracts/timewarp-contracts.csproj -c Release --no-build
 dotnet pack source/foundation/foundation-contracts/foundation-contracts.csproj -c Release --no-build
+dev check-version
+dev template-smoke
+ganda repo audit
 ```
+
+`dotnet test` is run from the project directory. Passing the csproj path uses the VSTest target, which this SDK rejects.
 
 Expect:
 
-- `dev build` ends with 0 warnings and 0 errors. This run did (Release, 20.66s).
-- Source generator tests: 135 passed. Foundation contracts tests: 26 passed (after fix pass 1). Covered here: operation constants emitted once across `ApiRoute` and `AuthApiRequest`, escaped name and description literals, a foreign `OperationAttribute` ignored, FastEndpoint text unchanged when `[Operation]` is present, endpoint metadata carrying the name and description, and `SharedProblemDetails` resolving from the `timewarp-contracts` assembly.
+- `dev build` ends with 0 warnings and 0 errors. This run did (Release, 24.80s).
+- Source generator tests: 135 passed. Foundation contracts tests: 26 passed. Covered here: operation constants emitted once across `ApiRoute` and `AuthApiRequest`, escaped name and description literals, a whitespace name or description omitted, a foreign `OperationAttribute` ignored, FastEndpoint text unchanged when `[Operation]` is present, endpoint metadata carrying the name and description, and `SharedProblemDetails` resolving from the `timewarp-contracts` assembly.
 - `TimeWarp.Contracts.2.0.0-beta.20.nupkg` depends on `OneOf` 3.0.271 and `TimeWarp.Mediator.Contracts` 14.0.0-beta.5.
 - `TimeWarp.Foundation.Contracts.2.0.0-beta.20.nupkg` depends on `TimeWarp.Contracts` 2.0.0-beta.20.
-- `ganda repo audit`: passes.
+- `dev check-version` exits 0 and lists `TimeWarp.Contracts` among the packages checked at `2.0.0-beta.20`.
+- `dev template-smoke` ends with `Template smoke SUCCEEDED`. SmokeDefault built with 0 warnings and 0 errors and restored `TimeWarp.Contracts` `2.0.0-smoke` from the local feed.
+- `ganda repo audit`: passes (32 checks).
 
 ### Review
 
-Round 1, effort 3, roster general. The reviewer re-ran `dev build` (0 warnings, 0 errors),
-both test projects (129 and 25 passed), and `ganda repo audit` (pass); all matched the
-claims above. Counts: bug 1, suggestion 1, nit 0. Both fixed in fix pass 1
-(see Goal).
+Round 1, effort 3, roster general. Counts after fix pass 2: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0. Disposition waits for review round 2.
 
-- M1 (bug): the separate `TimeWarp.Contracts` version has no gate. Release pushes with
-  `--skip-duplicate`, and `dev check-version` checks the package at the repo version.
-- M2 (suggestion): the two `[Operation]` readers disagree on blank values, and no test
-  ties the attribute FQN to the real type.
+- M1 (bug, fixed): the package takes the repo version. `dev check-version` covers it. No new version check.
+- M2 (suggestion, fixed): both `[Operation]` readers use `IsNullOrWhiteSpace`, and the tests compile against the real attribute.
 
 Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

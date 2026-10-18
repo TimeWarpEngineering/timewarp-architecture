@@ -14,8 +14,8 @@
 // CPM pin rewrite, and package-mode checks (no vendored trees / removed symbols).
 //
 // Packs the template AND monorepo platform packages (foundation + analyzers/generators/attributes
-// + modules + identity) into a local feed. Published nuget.org pins lag monorepo API surface;
-// smoke validates "this branch's template + this branch's packages". Work dir:
+// + modules + identity + TimeWarp.Contracts) into a local feed. Published nuget.org pins lag
+// monorepo API surface; smoke validates "this branch's template + this branch's packages". Work dir:
 // artifacts/template-smoke/. Prefer `dotnet run tools/dev-cli/dev.cs -- template-smoke` (or
 // re-self-install) over a stale AOT `./bin/dev`; CI always uses the runfile path.
 //
@@ -494,6 +494,8 @@ internal sealed partial class TemplateSmokeCommand : ICommand<Unit>
               <package pattern="TimeWarp.Architecture" />
               <package pattern="TimeWarp.Architecture.*" />
               <package pattern="TimeWarp.Foundation.*" />
+              <!-- Not TimeWarp.Foundation.*; Foundation.Contracts depends on this id. -->
+              <package pattern="TimeWarp.Contracts" />
               <package pattern="TimeWarp.Modules" />
               <package pattern="TimeWarp.Identity" />
               <package pattern="TimeWarp.402" />
