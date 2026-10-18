@@ -99,6 +99,8 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 - Versioning and serial order recorded: 1479989 (2026-10-17)
 - Step-11 items split to child 384-001: 2022499 (2026-10-18)
 - Package, generator, and pack wiring implemented (2026-10-18)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-18T01:45:33Z
+- Review oracle round 1: general reviewer (claude-opus-5-5, headless, session id not exposed), effort 3, turn cap 200. Findings M1 (bug) and M2 (suggestion) open, fix pass requested — 2026-10-18
 
 ## Results
 
@@ -141,3 +143,17 @@ Expect:
 - `TimeWarp.Contracts.1.0.0-beta.1.nupkg` depends on `OneOf` 3.0.271 and `TimeWarp.Mediator.Contracts` 14.0.0-beta.5.
 - `TimeWarp.Foundation.Contracts.2.0.0-beta.20.nupkg` depends on `TimeWarp.Contracts` 1.0.0-beta.1.
 - `ganda repo audit`: 32 passed, 0 failed.
+
+### Review
+
+Round 1, effort 3, roster general. The reviewer re-ran `dev build` (0 warnings, 0 errors),
+both test projects (129 and 25 passed), and `ganda repo audit` (pass); all matched the
+claims above. Final counts so far: bug 1 open, suggestion 1 open, nit 0. Disposition is
+pending; a fix pass is needed for M1 and M2.
+
+- M1 (bug): the separate `TimeWarp.Contracts` version has no gate. Release pushes with
+  `--skip-duplicate`, and `dev check-version` checks the package at the repo version.
+- M2 (suggestion): the two `[Operation]` readers disagree on blank values, and no test
+  ties the attribute FQN to the real type.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
