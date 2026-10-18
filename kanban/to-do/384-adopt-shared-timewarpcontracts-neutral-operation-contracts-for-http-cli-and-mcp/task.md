@@ -102,6 +102,7 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 ## Review
 
 - Round 1: Blocked — M1, M2; both fixed in fix pass 1
+- Round 2: M1 and M2 re-verified fixed, no new findings; disposition clean (`review/disposition.md`)
 
 ## Notes
 
@@ -120,6 +121,7 @@ rejected: this layer is the shared contract for HTTP, CLI, and MCP, not a mediat
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-18T01:53:33Z
 - Fix pass 1: Grok started an M1 version-check command against the human decision; stopped, check discarded, M1 and M2 finished by Claude (claude-opus-5-5) in the cockpit at Steven's request — 2026-10-18
 - Fix pass 2: implement-fix-2 (grok, model grok-4.7). M1 and M2 were already in the tree. The smoke-local feed and publish-smoke wait list now name `TimeWarp.Contracts`, because `TimeWarp.Foundation.*` does not match that id — 2026-10-18
+- Review oracle round 2: general reviewer (claude-opus-5-5, headless, session id not exposed), effort 2, turn cap 120, on the fix delta 328f1acf9..04788f1d4. M1 and M2 fixed, no new findings, disposition clean — 2026-10-18
 
 ## Results
 
@@ -168,9 +170,10 @@ Expect:
 
 ### Review
 
-Round 1, effort 3, roster general. Counts after fix pass 2: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0. Disposition waits for review round 2.
+Two rounds, roster general: round 1 at effort 3, round 2 at effort 2 on the fix delta. Final counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0 open / 1 fixed / 0 wontfix, nit 0. **Disposition: clean.**
 
-- M1 (bug, fixed): the package takes the repo version. `dev check-version` covers it. No new version check.
+- M1 (bug, fixed): the package takes the repo version. `dev check-version` covers it. No new version check (Steven, 2026-10-18).
 - M2 (suggestion, fixed): both `[Operation]` readers use `IsNullOrWhiteSpace`, and the tests compile against the real attribute.
+- Round 2 re-ran the sourcegenerator tests (135/135), the foundation-contracts tests (26/26), and `dev check-version` (passes and lists `TimeWarp.Contracts`). It found nothing new.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
