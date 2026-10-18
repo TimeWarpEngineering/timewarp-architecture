@@ -27,7 +27,7 @@ The package is attributes, DTOs and one interface, so it has no reason to requir
 - [x] Version 2.0.0-beta.21 (+ equal pins); dev check-version passes
 - [x] dev build, both test projects, template-smoke, repo audit green
 - [x] net10.0 consumer proof recorded in Results
-- [ ] After merge: released; nuget.org URL recorded; Roslynk 002 unblocked
+- [x] After merge: released; nuget.org URL recorded; Roslynk 002 unblocked
 
 ## Review
 
@@ -48,6 +48,8 @@ The package is attributes, DTOs and one interface, so it has no reason to requir
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-18T07:56:53Z
 
 ## Results
+
+Released 2026-10-18: PR #537 merged, GitHub release https://github.com/TimeWarpEngineering/timewarp-architecture/releases/tag/v2.0.0-beta.21, package https://www.nuget.org/packages/TimeWarp.Contracts/2.0.0-beta.21 (lib/net10.0 and lib/net11.0 confirmed from the published nupkg). Roslynk 002 relaunched against it the same day.
 
 `TimeWarp.Contracts` builds and packs for `net10.0` and `net11.0` at repo version `2.0.0-beta.21`. `TimeWarp.Foundation.Contracts` stays `net11.0`. Its project reference still pulls `TimeWarp.Contracts` at that version, and `SharedProblemDetails` still resolves from `timewarp-contracts` (foundation-contracts-tests, including the type-forward test).
 
