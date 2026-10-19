@@ -669,6 +669,7 @@ public class ContractsGenerator_Tests
     string generated = Run(source, extraReferences: operation);
     generated.ShouldContain("public const string OperationName = \"roles.list\";");
     generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    generated.ShouldNotContain("OperationGroup");
     return Task.CompletedTask;
   }
 
@@ -724,6 +725,107 @@ public class ContractsGenerator_Tests
     string generated = Run(source, extraReferences: operation);
     generated.ShouldContain("public const string OperationName = \"roles.list\";");
     generated.ShouldNotContain("OperationDescription");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_Operation_Group_Without_Prefixing_The_Route()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetSymbol
+          {
+              [TimeWarp.Contracts.Operation("get_symbol", Description = "Resolve one symbol.", Group = "symbols")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    string generated = Run(source, extraReferences: operation);
+
+    generated.ShouldContain("public const string OperationName = \"get_symbol\";");
+    generated.ShouldContain("public const string OperationDescription = \"Resolve one symbol.\";");
+    generated.ShouldContain("public const string OperationGroup = \"symbols\";");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    generated.ShouldContain("public string GetRoute() => RouteTemplate;");
+    generated.ShouldNotContain("symbols get_symbol");
+    generated.ShouldNotContain("symbols/api");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_Dotted_And_Spaced_Operation_Groups()
+  {
+    const string dotted = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class RenameSymbol
+          {
+              [TimeWarp.Contracts.Operation("rename_symbol", Group = "edit.symbol")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    const string spaced = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class RenameParameter
+          {
+              [TimeWarp.Contracts.Operation("rename_parameter", Group = "edit symbol")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    string dottedGenerated = Run(dotted, extraReferences: operation);
+    string spacedGenerated = Run(spaced, extraReferences: operation);
+
+    dottedGenerated.ShouldContain("public const string OperationName = \"rename_symbol\";");
+    dottedGenerated.ShouldContain("public const string OperationGroup = \"edit.symbol\";");
+    dottedGenerated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    spacedGenerated.ShouldContain("public const string OperationName = \"rename_parameter\";");
+    spacedGenerated.ShouldContain("public const string OperationGroup = \"edit symbol\";");
+    spacedGenerated.ShouldNotContain("edit rename_parameter");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Omit_A_Whitespace_Operation_Group()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.", Group = "  ")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    INamedTypeSymbol query = CreateCompilation(source, operation)
+      .GetTypeByMetadataName("Test.Features.Admin.Roles.GetRoles+Query")!;
+    query.GetAttributes().Any(IsRealOperation).ShouldBeTrue();
+
+    string generated = Run(source, extraReferences: operation);
+    generated.ShouldContain("public const string OperationName = \"roles.list\";");
+    generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    generated.ShouldNotContain("OperationGroup");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
     return Task.CompletedTask;
   }
 }

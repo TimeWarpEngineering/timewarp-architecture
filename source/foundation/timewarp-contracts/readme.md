@@ -11,10 +11,14 @@ Dependencies are `TimeWarp.Mediator.Contracts` and `OneOf`.
 
 ## `[Operation]`
 
-Apply `[Operation(name, Description = ...)]` to the request class (`Query` or `Command`).
+Apply `[Operation(name, Description = ..., Group = ...)]` to the request class (`Query` or `Command`).
 
 - `name` is the canonical operation name. It is not an HTTP route, a CLI pattern, or an MCP tool name.
 - `Description` is the operation summary hosts show in `--capabilities`, OpenAPI, and MCP `tools/list`.
+- `Group` is the operation's purpose group. Segments are separated by `.` or space. Null, empty, and
+  whitespace mean ungrouped. CLI, MCP, and HTTP hosts read the same value from the catalog. The group
+  does not prefix the route pattern or the command name: the CLI command stays the operation name
+  (`get_symbol`, not `symbols get_symbol`).
 - Kind is not an attribute argument. Generators read it from the mediator interface on the request.
 
 ## Kind
@@ -52,6 +56,9 @@ projections of it, not separate schemas.
   is not repeated on each entry.
 - `OperationBindings` holds the transports a host actually binds: HTTP route and verb, CLI
   pattern, MCP tool name. A missing binding means that transport does not expose the operation.
+- `OperationDescriptor.Group` is the purpose group from `[Operation]`. Null when the operation is
+  ungrouped. A host reads it as metadata (CLI `groupPath`, MCP tool filtering). This package does
+  not prefix a route or a command name with it.
 
 ## `IResponseRenderer<TResponse>`
 

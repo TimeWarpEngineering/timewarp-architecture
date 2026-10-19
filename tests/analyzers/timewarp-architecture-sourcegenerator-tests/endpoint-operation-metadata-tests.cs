@@ -1,5 +1,5 @@
 #region Purpose
-// Endpoint emit metadata stores [Operation] name and description from the nested request.
+// Endpoint emit metadata stores [Operation] name, description, and group from the nested request.
 #endregion
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
@@ -59,6 +59,7 @@ public class EndpointOperationMetadata_Tests
     EndpointEmitModel model = EndpointEmitModel.FromSymbol(outer);
     model.OperationName.ShouldBe("roles.get");
     model.OperationDescription.ShouldBe("Get one role.");
+    model.OperationGroup.ShouldBeNull();
     model.RequestTypeName.ShouldBe("Query");
     return Task.CompletedTask;
   }
@@ -95,6 +96,7 @@ public class EndpointOperationMetadata_Tests
     EndpointEmitModel model = EndpointEmitModel.FromSymbol(outer);
     model.OperationName.ShouldBeNull();
     model.OperationDescription.ShouldBeNull();
+    model.OperationGroup.ShouldBeNull();
     return Task.CompletedTask;
   }
 
@@ -117,6 +119,8 @@ public class EndpointOperationMetadata_Tests
     EndpointEmitModel model = ModelFrom(source, "OperationMetadataReal");
     model.OperationName.ShouldBe("roles.get");
     model.OperationDescription.ShouldBe("Get one role.");
+    model.OperationGroup.ShouldBeNull();
+    model.Route.ShouldBe("api/Roles/{RoleId}");
     return Task.CompletedTask;
   }
 
@@ -139,6 +143,7 @@ public class EndpointOperationMetadata_Tests
     EndpointEmitModel model = ModelFrom(source, "OperationMetadataBlankName");
     model.OperationName.ShouldBeNull();
     model.OperationDescription.ShouldBeNull();
+    model.OperationGroup.ShouldBeNull();
     return Task.CompletedTask;
   }
 
@@ -161,6 +166,92 @@ public class EndpointOperationMetadata_Tests
     EndpointEmitModel model = ModelFrom(source, "OperationMetadataBlankDescription");
     model.OperationName.ShouldBe("roles.get");
     model.OperationDescription.ShouldBeNull();
+    model.OperationGroup.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Carry_Operation_Group_Without_Changing_The_Route()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("get_symbol", Description = "Resolve one symbol.", Group = "symbols")]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataGroup");
+    model.OperationName.ShouldBe("get_symbol");
+    model.OperationDescription.ShouldBe("Resolve one symbol.");
+    model.OperationGroup.ShouldBe("symbols");
+    model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Keep_Dotted_And_Spaced_Operation_Groups()
+  {
+    const string dotted = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("rename_symbol", Group = "edit.symbol")]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+          }
+      }
+      """;
+
+    const string spaced = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("rename_parameter", Group = "edit symbol")]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+          }
+      }
+      """;
+
+    EndpointEmitModel dottedModel = ModelFrom(dotted, "OperationMetadataDottedGroup");
+    EndpointEmitModel spacedModel = ModelFrom(spaced, "OperationMetadataSpacedGroup");
+    dottedModel.OperationName.ShouldBe("rename_symbol");
+    dottedModel.OperationGroup.ShouldBe("edit.symbol");
+    dottedModel.Route.ShouldBe("api/Roles");
+    spacedModel.OperationName.ShouldBe("rename_parameter");
+    spacedModel.OperationGroup.ShouldBe("edit symbol");
+    spacedModel.Route.ShouldBe("api/Roles");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Drop_A_Whitespace_Operation_Group()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("roles.get", Description = "Get one role.", Group = "  ")]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataBlankGroup");
+    model.OperationName.ShouldBe("roles.get");
+    model.OperationDescription.ShouldBe("Get one role.");
+    model.OperationGroup.ShouldBeNull();
+    model.Route.ShouldBe("api/Roles/{RoleId}");
     return Task.CompletedTask;
   }
 

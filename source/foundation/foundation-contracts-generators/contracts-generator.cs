@@ -35,9 +35,10 @@
 // Constraint args are the parenthesized-digits form only (`min(1)`, `minlength(3)`). Multiple
 // constraints, comma args, catch-alls, and `{name=default}` are not parsed.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the same partial is copied as
-// OperationName and, when Description is not whitespace, OperationDescription. A whitespace
-// name supplies no operation, description included: the attribute constructor rejects that
-// name, and EndpointEmitModel uses the same rule. Kind is not copied.
+// OperationName and, when the matching named argument is not whitespace, OperationDescription
+// and OperationGroup. A whitespace name supplies no operation, description and group included:
+// the attribute constructor rejects that name, and EndpointEmitModel uses the same rule.
+// Group is purpose metadata. It is not inserted into RouteTemplate or GetRoute. Kind is not copied.
 // The same type seen through more than one attribute pipeline keeps the first Operation part.
 #endregion
 
@@ -285,16 +286,26 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
       return;
 
     string? description = null;
+    string? group = null;
     foreach (KeyValuePair<string, TypedConstant> named in operation.NamedArguments)
     {
       if (named.Key == "Description")
+      {
         description = named.Value.Value as string;
+      }
+      else if (named.Key == "Group")
+      {
+        group = named.Value.Value as string;
+      }
     }
 
     if (string.IsNullOrWhiteSpace(description))
       description = null;
 
-    parts.Add(new Part(OperationPartKind, null, OperationBody(name, description)));
+    if (string.IsNullOrWhiteSpace(group))
+      group = null;
+
+    parts.Add(new Part(OperationPartKind, null, OperationBody(name, description, group)));
   }
 
   private static bool IsOperationAttribute(AttributeData attribute)
@@ -306,7 +317,7 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     return containingNamespace.ToDisplayString() + "." + type.Name == OperationAttributeFullName;
   }
 
-  private static string OperationBody(string name, string? description)
+  private static string OperationBody(string name, string? description, string? group)
   {
     StringBuilder builder = new();
     builder.Append("    public const string OperationName = \"").Append(EscapeLiteral(name)).Append("\";\n");
@@ -314,6 +325,13 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     {
       builder.Append("    public const string OperationDescription = \"")
         .Append(EscapeLiteral(description))
+        .Append("\";\n");
+    }
+
+    if (!string.IsNullOrWhiteSpace(group))
+    {
+      builder.Append("    public const string OperationGroup = \"")
+        .Append(EscapeLiteral(group))
         .Append("\";\n");
     }
 
