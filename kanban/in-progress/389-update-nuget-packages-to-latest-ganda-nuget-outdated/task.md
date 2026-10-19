@@ -9,6 +9,8 @@ older version, leave that pin and write the conflict evidence under Notes. Ship 
 this template in the same commit as the platform package pins, and prove the result with a clean
 build, tests, version check, template smoke, and repo audit.
 
+This fix pass only closes the two open round-1 comments. Package versions stay as they are.
+
 Acceptance:
 
 - `ganda nuget outdated --update --force` has been run in this worktree.
@@ -18,6 +20,10 @@ Acceptance:
 - `<Version>` and the platform package pins change in the same commit, and `dev check-version` passes.
 - `dev template-smoke` passes.
 - `ganda repo audit` is clean.
+- The TimeWarp.Nuru 4.0.0-beta.2 rationale is a comment directly above the Nuru pins, and that
+  sentence is gone from the Microsoft.OpenApi comment (M1).
+- The Microsoft.Extensions.AI.OpenAI comment records the tool-call TypeLoadException as observed on
+  adapter 10.10.0 and not re-checked on the current 10.11.0 pin (M2).
 
 ## Description
 
@@ -45,6 +51,8 @@ tests allow. On 2026-10-19 it reported 29 outdated packages:
 - [x] Bump `<Version>` and the platform package pins in the same commit; `dev check-version` passes
 - [x] `dev template-smoke` passes
 - [x] `ganda repo audit` is clean
+- [x] M1: Nuru 4.0.0-beta.2 rationale sits directly above the Nuru pins and is gone from the OpenApi comment
+- [x] M2: AI.OpenAI comment records the TypeLoadException as observed on adapter 10.10.0 and not re-checked on 10.11.0
 
 ## Session
 
@@ -53,6 +61,12 @@ tests allow. On 2026-10-19 it reported 29 outdated packages:
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-19T11:53:26Z
 - Review oracle round 1: claude-opus-5-5, effort 2, roster general (2026-10-19). Findings M1
   (suggestion) and M2 (nit) are open. A fix pass was requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-19T12:02:12Z
+- Fix pass (implement-fix-2): M1 and M2 are comment edits in `Directory.Packages.props`. Versions unchanged. 2026-10-19.
+
+## Review
+
+- Round 1: open M1 and M2. Fix pass addressed both as comment-only edits. Round 2 is the host review node.
 
 ## Notes
 
@@ -100,33 +114,50 @@ Gates:
 - `ganda repo audit`: 32 passed, 0 failed. The nuru check reports TimeWarp.Nuru up to date.
 - `bin/dev` self-install succeeded. `--capabilities` lists 32 commands. `db nuke` without `--yes` refuses and exits 1.
 
+### Fix pass (round 1 findings)
+
+M1 and M2 are comment-only. No package version changed.
+
+- M1: the Nuru 4.0.0-beta.2 signing rationale now sits in the comment immediately above
+  `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli`. That sentence is removed from the Microsoft.OpenApi
+  comment. The OpenApi block still records why 2.12.2 stayed.
+- M2: the Microsoft.Extensions.AI.OpenAI comment no longer states the tool-call TypeLoadException
+  as a property of adapter 10.10.0 while the pin is 10.11.0. It records that the exception was
+  observed on adapter 10.10.0 with OpenAI 2.14 (`GlobalMcpToolCallApprovalPolicy`) and was not
+  re-checked on 10.11.0. The "do not float onto the Responses API" guidance stays.
+
 ### How to validate
 
 Smoke:
 
 ```bash
-./bin/dev check-version
-./bin/dev build
-./bin/dev test --no-build
-./bin/dev template-smoke
+python3 - <<'PY'
+from pathlib import Path
+text = Path("Directory.Packages.props").read_text()
+nuru_head = text.split('Include="TimeWarp.Nuru"', 1)[0]
+nuru_comment = nuru_head.rsplit("<!--", 1)[1]
+assert "4.0.0-beta.2" in nuru_comment and "blocks signing on 3.0.0" in nuru_comment
+openapi = text.split('Include="FastEndpoints.OpenApi"', 1)[1].split('Include="Microsoft.OpenApi"', 1)[0]
+assert "TimeWarp.Nuru" not in openapi
+ai = text.split('Include="Microsoft.Extensions.AI.OpenAI"', 1)[0].rsplit("<!--", 1)[1]
+assert "observed on adapter 10.10.0" in ai and "not re-checked on 10.11.0" in ai
+assert 'Version="10.11.0"' in text.split('Include="Microsoft.Extensions.AI.OpenAI"', 1)[1][:80]
+print("comment placement ok")
+PY
 ganda repo audit
-./bin/dev db nuke
 ```
 
 Expect:
 
-- check-version prints source `2.0.0-beta.22`, latest NuGet `2.0.0-beta.21`, and "Version in source is new".
-- build prints 0 Warning(s) and 0 Error(s).
-- test prints "Tests completed successfully!".
-- template-smoke prints `Template smoke SUCCEEDED`.
-- repo audit prints "Repository passes all audit checks" and the nuru row is PASS.
-- `db nuke` prints "Refusing to nuke without --yes" and exits 1.
+- The script prints `comment placement ok`.
+- `ganda repo audit` prints "Repository passes all audit checks" and exits 0.
+- `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` stay `4.0.0-beta.2`. `Microsoft.Extensions.AI.OpenAI` stays `10.11.0`. `Microsoft.OpenApi` stays `2.12.2`.
+
+The package-update gates from the implement commit still describe this branch: `dev check-version` reports source `2.0.0-beta.22` ahead of NuGet `2.0.0-beta.21`, `dev build` is 0 warnings and 0 errors, `dev test --no-build` prints "Tests completed successfully!", and `dev template-smoke` prints `Template smoke SUCCEEDED`. This fix pass did not re-run those, because the diff is XML comments only.
 
 ### Review
 
-- Round 1 (effort 2, roster general): 0 bug, 1 suggestion open (M1), 1 nit open (M2). No
-  disposition yet. A fix pass was requested for M1 and M2. Both are comment-only edits in
-  `Directory.Packages.props`.
+- Round 1 (effort 2, roster general): 0 bug, 1 suggestion (M1), 1 nit (M2). Both addressed in this fix pass. Prior round files were left immutable.
 - The reviewer re-ran these gates: check-version passed, repo audit passed, `dev build` was
   0 warnings and 0 errors (after one transient MSB4018 retry), and `dev test --no-build` passed
   23 of 23 projects.

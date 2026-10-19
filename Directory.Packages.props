@@ -9,6 +9,9 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
+    <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.2. `ganda nuget outdated` treats
+         stable 3.0.0 as current, but `ganda repo audit` nuru check requires 4.0.0-beta.2 and
+         blocks signing on 3.0.0 (task 389). -->
     <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.2" />
     <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
@@ -148,10 +151,7 @@
          Npgsql.EntityFrameworkCore.PostgreSQL moved to the RC2 train in task 389:
          Npgsql 11.0.0-rc.2 pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.2.26504.105.
          Extensions monthly packages (Http.Resilience, ServiceDiscovery, Telemetry, AI) are 10.11.0;
-         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802.
-         TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.2. `ganda nuget outdated` treats
-         stable 3.0.0 as current, but `ganda repo audit` nuru check requires 4.0.0-beta.2 and
-         blocks signing on 3.0.0 (task 389). -->
+         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.0" />
@@ -162,8 +162,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
     <!-- Chat completions against api.x.ai. Pinned beside Microsoft.Extensions.AI (10.11.0, task 389).
-         Do not float onto the Responses API: adapter 10.10.0 TypeLoadExceptions on
-         tool calls when OpenAI 2.14 is resolved (GlobalMcpToolCallApprovalPolicy). -->
+         Do not float onto the Responses API. TypeLoadExceptions on tool calls when OpenAI 2.14
+         is resolved (GlobalMcpToolCallApprovalPolicy) were observed on adapter 10.10.0 and were
+         not re-checked on 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.2.26504.105" />
