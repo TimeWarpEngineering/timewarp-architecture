@@ -7,7 +7,7 @@
     <Title>TimeWarp Architecture</Title>
     <Authors>Steven T. Cramer</Authors>
     <Description>TimeWarp Architecture Templates</Description>
-    <PackageTags>dotnet-new;templates;aspnet;blazor;spa;pwa;timewarp;gRPC;Tye;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
+    <PackageTags>dotnet-new;templates;aspnet;blazor;spa;timewarp;gRPC;Aspire;YARP;Clean Architecture;Domain Driven Design</PackageTags>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
