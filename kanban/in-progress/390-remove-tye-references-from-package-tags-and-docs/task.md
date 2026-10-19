@@ -44,6 +44,7 @@ Kanban history under `kanban/done/` is a record and stays as written.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-19T13:13:18Z
 - Review oracle: claude (claude-opus-5-5), headless print mode, session id not exposed. Effort 1, roster
   general, 1 round. Disposition: clean. 2026-10-19.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-19T13:17:32Z
 
 ## Results
 
@@ -110,6 +111,10 @@ report. `dev build` succeeded with 0 warnings and 0 errors. `ganda repo audit` p
   - `review/round-1/general.md`
   - `review/round-1/merged.md`
   - `review/disposition.md`
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
