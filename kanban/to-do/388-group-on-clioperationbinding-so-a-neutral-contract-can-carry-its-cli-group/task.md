@@ -41,6 +41,11 @@ of 29 tools is about 16k tokens (timewarp-nuru 506), which is why groups matter.
 ## Session
 
 - Created: 559053 (2026-10-19) by the Roslynk 003 implementer as that task's architecture follow-up.
+- 2026-10-19: the pre-sign audit refused to sign (`FAIL nuru: TimeWarp.Nuru is outdated (current: 3.0.0, latest:
+  4.0.0-beta.2)`). Boy-scout fix on this branch: root `Directory.Packages.props` TimeWarp.Nuru and
+  TimeWarp.Nuru.DevCli 3.0.0 -> 4.0.0-beta.2; `dotnet run --file tools/dev-cli/dev.cs -- --capabilities` and
+  `dotnet build tools/agent-identity-cli/agent.cs` both succeed on beta.2. `kanban publish` merges only
+  `kanban/**`, so the bump reaches master with this task's PR.
 
 ## Notes
 
