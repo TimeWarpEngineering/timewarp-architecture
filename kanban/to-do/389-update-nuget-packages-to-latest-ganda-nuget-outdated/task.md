@@ -14,6 +14,7 @@ tests allow. On 2026-10-19 it reported 29 outdated packages:
 - Blazilla 2.4.2, Markdig 1.4.1
 - Microsoft.OpenApi 2.12.2 -> 3.10.2 (major)
 - System.Security.Cryptography.Pkcs 9.0.21 -> 10.0.13 (major)
+- TimeWarp.Nuru 3.0.0 -> 4.0.0-beta.2 (flagged by `ganda repo audit`, which blocks signing; includes `#:package` runfile directives such as tools/dev-cli)
 
 ## Checklist
 
