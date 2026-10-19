@@ -28,11 +28,13 @@
 // IEquatable is reference equality of the backing array, which would rebuild every
 // *Endpoint.g.cs on unrelated host edits even when tag content is unchanged.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the nested request supplies
-// OperationName and OperationDescription. An absent attribute leaves both null. A
-// whitespace name leaves both null, matching the contracts generator: the attribute
-// constructor rejects that name, so the description is not an operation on its own.
-// A whitespace description leaves OperationDescription null. The FastEndpoint template
-// does not read either value, so HTTP endpoint emission is unchanged.
+// OperationName, OperationDescription, and OperationGroup. An absent attribute leaves
+// all three null. A whitespace name leaves all three null, matching the contracts
+// generator: the attribute constructor rejects that name, so the description and the
+// group are not an operation on their own. A whitespace description leaves
+// OperationDescription null. A whitespace group leaves OperationGroup null. The
+// FastEndpoint template does not read these values, so HTTP endpoint emission is
+// unchanged and the group never prefixes the route.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -58,7 +60,8 @@ internal sealed record EndpointEmitModel(
   bool VerbUnresolved,
   string UnresolvedVerbDisplay,
   string? OperationName,
-  string? OperationDescription)
+  string? OperationDescription,
+  string? OperationGroup = null)
 {
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
 
@@ -91,7 +94,8 @@ internal sealed record EndpointEmitModel(
       && VerbUnresolved == other.VerbUnresolved
       && UnresolvedVerbDisplay == other.UnresolvedVerbDisplay
       && OperationName == other.OperationName
-      && OperationDescription == other.OperationDescription;
+      && OperationDescription == other.OperationDescription
+      && OperationGroup == other.OperationGroup;
   }
 
   public override int GetHashCode()
@@ -119,6 +123,7 @@ internal sealed record EndpointEmitModel(
     hashCode.Add(UnresolvedVerbDisplay);
     hashCode.Add(OperationName);
     hashCode.Add(OperationDescription);
+    hashCode.Add(OperationGroup);
     return hashCode.ToHashCode();
   }
 
@@ -154,7 +159,8 @@ internal sealed record EndpointEmitModel(
         VerbUnresolved: false,
         UnresolvedVerbDisplay: string.Empty,
         OperationName: null,
-        OperationDescription: null);
+        OperationDescription: null,
+        OperationGroup: null);
     }
 
     string requestTypeName = requestClass.Name;
@@ -242,7 +248,7 @@ internal sealed record EndpointEmitModel(
     }
 
     ImmutableArray<string> tags = CollectTags(symbol);
-    (string? operationName, string? operationDescription) = ReadOperation(requestClass);
+    (string? operationName, string? operationDescription, string? operationGroup) = ReadOperation(requestClass);
 
     return new EndpointEmitModel(
       Namespace: ns,
@@ -262,17 +268,18 @@ internal sealed record EndpointEmitModel(
       VerbUnresolved: verbUnresolved,
       UnresolvedVerbDisplay: unresolvedVerbDisplay,
       OperationName: operationName,
-      OperationDescription: operationDescription);
+      OperationDescription: operationDescription,
+      OperationGroup: operationGroup);
   }
 
-  private static (string? Name, string? Description) ReadOperation(INamedTypeSymbol requestClass)
+  private static (string? Name, string? Description, string? Group) ReadOperation(INamedTypeSymbol requestClass)
   {
     AttributeData? operation = requestClass.GetAttributes()
       .FirstOrDefault(static attr =>
         HostedRouteDiscovery.HasMetadataName(attr.AttributeClass, OperationAttributeFullName));
     if (operation is null)
     {
-      return (null, null);
+      return (null, null, null);
     }
 
     string? name = operation.ConstructorArguments.Length > 0
@@ -280,10 +287,13 @@ internal sealed record EndpointEmitModel(
       : null;
     if (string.IsNullOrWhiteSpace(name))
     {
-      return (null, null);
+      return (null, null, null);
     }
 
-    return (name, GetNamedStringArgument(operation, "Description"));
+    return (
+      name,
+      GetNamedStringArgument(operation, "Description"),
+      GetNamedStringArgument(operation, "Group"));
   }
 
   private static ImmutableArray<string> CollectTags(INamedTypeSymbol symbol)

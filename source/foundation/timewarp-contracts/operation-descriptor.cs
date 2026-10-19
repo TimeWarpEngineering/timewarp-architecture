@@ -1,11 +1,13 @@
 #region Purpose
-// One catalog entry: canonical name, kind, members, success type, and transport bindings.
+// One catalog entry: canonical name, purpose group, kind, members, success type, and bindings.
 #endregion
 
 #region Design
 // ReturnType is the success type's display name. Hosts that return OneOf of that type and
 // SharedProblemDetails record the success type; the problem type is shared and is not repeated
 // on each entry. Bindings are optional and are filled by the host that owns each transport.
+// Group is copied from OperationAttribute.Group. Null means ungrouped. It is metadata: a host
+// does not prefix OperationDescriptor.Name, an HTTP route, or a CLI pattern with it.
 #endregion
 
 namespace TimeWarp.Contracts;
@@ -18,6 +20,12 @@ public sealed class OperationDescriptor
 
   /// <summary>Operation summary from <see cref="OperationAttribute.Description"/>.</summary>
   public string? Description { get; init; }
+
+  /// <summary>
+  /// Purpose group from <see cref="OperationAttribute.Group"/>. Null when the operation is ungrouped.
+  /// Metadata only: hosts do not prefix the route or the command name with this value.
+  /// </summary>
+  public string? Group { get; init; }
 
   /// <summary>Kind derived from the request's mediator interface.</summary>
   public required OperationKind Kind { get; init; }
