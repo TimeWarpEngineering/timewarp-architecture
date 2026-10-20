@@ -50,6 +50,9 @@ Acceptance:
 - 2026-10-20 implementer (ganda task work, claude): ran `ganda nuget outdated --update --force`
   (15 updates), moved `Aspire.AppHost.Sdk` and the CI `Aspire.Cli` tool install to 13.6.2, held
   Microsoft.OpenApi on 2.x (2.13.0), reconciled pin comments, ran all gates.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T15:35:44Z
+- Review oracle (claude, model claude-opus-5-5, session not reported): effort 1, roster general,
+  round 1. Outcome accepted-exceptions (0 open, M1 nit wontfix) — 2026-10-20
 
 ## Notes
 
@@ -83,6 +86,19 @@ Gates (2026-10-20, this worktree): `dev build` 0 warnings / 0 errors; dev CLI re
 Nuru beta.4 (`dev self-install`); `dev test` 23/23 projects passed; `dev check-version` passed;
 `dev template-smoke` SUCCEEDED; `vally lint skills` 9/9; `ganda repo audit` passes all checks;
 `ganda nuget outdated` now lists only Microsoft.OpenApi (major, blocked).
+
+### Review disposition
+
+- Rounds: 1. Effort 1, roster: general.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open count is 0.
+- Disposition: **accepted-exceptions**. M1 (nit) is wontfix: `Directory.Packages.props:135` still
+  says "Stay on 2.12.2" in the dated task 201 history entry. Line 130 and the task 392 entry state
+  the live 2.13.0 pin. Fix it when task 257 next edits the block.
+- Reviewer re-verified: `ganda nuget outdated` lists only Microsoft.OpenApi (major); restore assets
+  show Aspire 13.6.2 / 13.6.2-preview.1.26519.11 and Microsoft.OpenApi 2.13.0, with no NU1608.
+  The build, test, and smoke gates were not re-run at effort 1.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
