@@ -74,6 +74,7 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - 2026-10-20: review-2 oracle (claude-opus-5-5, headless `ganda task work`), effort 1,
   roster general, session not reported. Reviewed the delta since round 1 (`6a1c4f489`) and
   confirmed M1 is fixed. No new findings. Disposition: clean.
+- 2026-10-20: PR #541 CI `Lint skill specs` failed (tw-web-api-contracts SKILL.md over 500 lines). Trimmed the neutral-operations section to 499 lines; member derivation lives in references/neutral-operations.md. `vally lint skills` 9/9.
 
 ## Review
 

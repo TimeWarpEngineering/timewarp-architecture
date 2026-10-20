@@ -174,15 +174,11 @@ HTTP endpoint, a CLI command, and an MCP tool:
   metadata.
 - **Kind:** the mediator interface (`IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`). It is
   never an attribute argument.
-- **Members:** the request's properties. Required, default, and allowed values come from the
-  type, `required`, the initializer, and enums.
 - **Bindings:** HTTP comes from `[ApiRoute]` + `[ApiEndpoint]` (this template). CLI and MCP come
   from TimeWarp.Nuru, which reads the same contract and dispatches through the mediator.
 
-The contracts generator copies `[Operation]` onto the partial as `OperationName`,
-`OperationDescription`, and `OperationGroup`. **TWA0035** (info) suggests `[Operation]` on a hosted
-contract that lacks one. Kind choice, binding details, and the catalog:
-[neutral-operations.md](references/neutral-operations.md).
+**TWA0035** (info) suggests `[Operation]` on a hosted contract that lacks one. Members, kind
+choice, bindings, and the catalog: [neutral-operations.md](references/neutral-operations.md).
 
 ## Contract shell
 
