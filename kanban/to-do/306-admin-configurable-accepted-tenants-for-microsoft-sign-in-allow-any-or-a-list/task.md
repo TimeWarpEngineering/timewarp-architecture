@@ -92,6 +92,8 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 
 - Implementation: grok task-work (2026-10-20). Tenant acceptance is site settings (`Restricted` list or `Any`), edited on `/Admin/Authentication`. `Authentication:Entra:TenantId` stays the OIDC authority. First passkey registration already claims Administrator through `TryClaimFirstAdministratorAsync` (settings.write + admin.access); no second bootstrap was added.
 - Docs: grok task-work (2026-10-21). `wwwroot/auth.md` and the policy, mode, and ticket-processor design notes still described the task 227 tenant pin. They now describe site-settings acceptance (restricted list or any tenant), the multi-tenant app registration, personal Microsoft accounts, and the first-passkey administrator path.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-20T19:03:10Z
+- Review round 1 (2026-10-21): review oracle (claude-opus-5-5, headless), effort 3, roster general. Findings: 1 bug, 1 suggestion, 1 nit, all open (`review/round-1/merged.md`). M1: web-server-integration-tests have 10 failures in `entra-challenge-tests.cs`, whose fixture seeds no accepted tenants. No disposition yet; a fix pass is needed before round 2.
 
 ## Results
 
