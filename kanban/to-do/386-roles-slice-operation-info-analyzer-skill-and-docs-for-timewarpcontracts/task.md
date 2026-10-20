@@ -78,8 +78,7 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 ## Review
 
 - Round 1: Blocked — open M1
-- Round 2: clean — M1 fixed, no new findings
-
+- Round 2: Done
 ## Notes
 
 - Follows 384 (not a child). Serial order, versioning and package contents are recorded there.
