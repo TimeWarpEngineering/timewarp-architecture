@@ -36,3 +36,8 @@ on the pinned train accepts it.
 ## Notes
 
 - Task 249 Results record the 10.0.12 nuspec check.
+- Re-checked task 392 (2026-10-20): FastEndpoints.OpenApi 8.3.0 (latest stable) still pins
+  Microsoft.AspNetCore.OpenApi 10.0.11, range [2.7.5, 3.0.0); pin moved to 2.13.0.
+  FastEndpoints.OpenApi 9.0.0-beta.2 has a net11.0 group on Microsoft.AspNetCore.OpenApi
+  11.0.0-rc.2.26504.105, range [3.10.0, 4.0.0). The gate opens once this repo takes
+  FastEndpoints 9 (currently beta).
