@@ -38,7 +38,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class AddAgentKey
 {
   [ApiRoute("api/identity/credentials/agent-key", HttpVerb.Post)]
-  public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public string PublicKey { get; set; } = null!;

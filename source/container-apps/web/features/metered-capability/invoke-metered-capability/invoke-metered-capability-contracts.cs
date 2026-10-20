@@ -11,6 +11,8 @@
 // the agent may attempt the capability; MeteredCapabilityGate bills credit or returns 402/503.
 // Distinct from voluntary tip (104-009): every success debits the ledger. No GetMockResponseFactory
 // — payment headers and principal identity are ambient, not mockable from SPA factories.
+// Bare IRequest, not IQuery: the GET debits the ledger on success, so it is neither read-only nor
+// retry-safe, and ICommand on a GET would mislead.
 #endregion
 
 namespace TimeWarp.Architecture.Features.MeteredCapability;

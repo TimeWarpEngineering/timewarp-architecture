@@ -13,6 +13,7 @@ global using System.Reflection;
 // the platform namespace; source mode uses $(RootNamespace).Attributes after sourceName rewrite.
 global using TimeWarp.Foundation.Features;
 // Solution usings
+global using TimeWarp.Contracts;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Identity;
 global using TimeWarp.Mediator;

@@ -30,7 +30,7 @@ public static partial class ListMyFeedback
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/Feedback", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
 

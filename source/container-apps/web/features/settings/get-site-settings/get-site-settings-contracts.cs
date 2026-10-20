@@ -26,7 +26,7 @@ using TimeWarp.Identity;
 public static partial class GetSiteSettings
 {
   [ApiRoute("api/settings", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 

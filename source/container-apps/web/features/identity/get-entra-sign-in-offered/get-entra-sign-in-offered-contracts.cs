@@ -16,7 +16,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetEntraSignInOffered
 {
   [ApiRoute("api/identity/entra/offered", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 

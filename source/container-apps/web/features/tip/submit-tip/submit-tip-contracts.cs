@@ -11,6 +11,7 @@
 // Distinct from metered capability: no ledger debit, no agent-scope policy, PaymentGate only.
 // GET hosted here; POST twin is SubmitTipPost (generator allows one Query|Command per outer type).
 // No GetMockResponseFactory — payment headers are ambient, not SPA-mockable.
+// SubmitTip.Query stays bare IRequest, not IQuery: the GET takes a payment, so it is not read-only.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Tip;
@@ -51,7 +52,7 @@ public static partial class SubmitTip
 public static partial class SubmitTipPost
 {
   [ApiRoute("api/tip", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 

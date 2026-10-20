@@ -81,7 +81,7 @@ public static partial class GetCredentials
 
   [ApiRoute("api/identity/credentials", HttpVerb.Get)]
   [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public bool IncludeRevoked { get; set; }
     public string? Search { get; set; }

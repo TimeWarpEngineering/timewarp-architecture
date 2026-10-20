@@ -23,7 +23,7 @@ public static partial class ReplyAsFiler
   public const int MaxBodyLength = 4000;
 
   [ApiRoute("api/Feedback/{FeedbackItemId:guid}/replies", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Body { get; set; } = null!;
   }

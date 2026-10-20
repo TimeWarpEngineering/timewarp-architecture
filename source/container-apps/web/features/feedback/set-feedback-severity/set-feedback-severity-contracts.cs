@@ -21,7 +21,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class SetFeedbackSeverity
 {
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/severity", HttpVerb.Put)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackSeverity Severity { get; set; }
   }

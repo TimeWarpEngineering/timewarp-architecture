@@ -17,7 +17,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class ApproveAgentHumanLink
 {
   [ApiRoute("api/agent-links/{LinkId:guid}/approve", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 

@@ -23,7 +23,7 @@ namespace TimeWarp.Architecture.Features.Profiles;
 public static partial class UpdateProfile
 {
   [ApiRoute("api/Users/Current/Profile", HttpVerb.Put)]
-  public sealed partial class Command : IApiRequest, IProfileDetails, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, IProfileDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Alias { get; set; } = null!;
     public string? Email { get; set; }

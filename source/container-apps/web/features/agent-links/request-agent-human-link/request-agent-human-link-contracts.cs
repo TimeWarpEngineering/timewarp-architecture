@@ -19,7 +19,7 @@ namespace TimeWarp.Architecture.Features.AgentLinks;
 public static partial class RequestAgentHumanLink
 {
   [ApiRoute("api/agent-links", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid HumanPrincipalId { get; set; }
   }

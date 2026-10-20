@@ -31,7 +31,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompletePasskeyAuthentication
 {
   [ApiRoute("api/identity/passkey/authenticate", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string CredentialId { get; set; } = null!;
     public string ClientDataJson { get; set; } = null!;

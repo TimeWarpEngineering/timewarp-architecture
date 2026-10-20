@@ -21,7 +21,7 @@ namespace TimeWarp.Architecture.Features.WeatherForecasts;
 public static partial class GetWeatherForecasts
 {
   [ApiRoute("api/weatherforecast", HttpVerb.Get)]
-  public sealed partial class Query : IRequest<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
+  public sealed partial class Query : IQuery<OneOf<Response, SharedProblemDetails>>, IQueryStringRouteProvider,
     IApiRequest
   {
     /// <summary>

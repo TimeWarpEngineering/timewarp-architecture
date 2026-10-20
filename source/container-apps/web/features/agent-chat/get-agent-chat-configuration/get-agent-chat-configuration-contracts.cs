@@ -28,7 +28,7 @@ namespace TimeWarp.Architecture.Features.AgentChats;
 public static partial class GetAgentChatConfiguration
 {
   [ApiRoute("api/agent-chat/configuration", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Response : BaseResponse
   {

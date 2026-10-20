@@ -34,7 +34,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string PublicKey { get; set; } = null!;
     public string Challenge { get; set; } = null!;

@@ -13,6 +13,7 @@
 // [EndpointAuthorize] (task 182-002): admin.roles.read (PermissionIds); manage is separate.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
+// [Operation] names it roles.get for every transport; IQuery is its kind (tw-web-api-contracts).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -29,7 +30,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class GetRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Get)]
-  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  [Operation("roles.get", Description = "Get one role with its stored permission ids.", Group = "admin.roles")]
+  public sealed partial class Query : IAuthApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
 

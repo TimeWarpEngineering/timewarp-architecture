@@ -12,6 +12,8 @@
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session so the generated
 // FastEndpoint's AuthSchemes(...) invokes the mock handler under closed-box tests — see
 // AuthenticationSchemeNames' Design region for why.
+// [Operation] names it roles.delete for every transport. IIdempotentCommand: a retried delete
+// leaves the role gone; the second call may report not found but changes nothing.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -25,7 +27,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class DeleteRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Delete)]
-  public sealed partial class Command : IAuthApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  [Operation("roles.delete", Description = "Delete a role.", Group = "admin.roles")]
+  public sealed partial class Command : IAuthApiRequest, IQueryStringRouteProvider, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
 

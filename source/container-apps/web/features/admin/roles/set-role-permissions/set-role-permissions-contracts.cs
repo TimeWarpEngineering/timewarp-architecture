@@ -10,6 +10,8 @@
 // mock-identity-session (same as Create/Update/Delete). Handler enforces protected-core on
 // Administrator (RolePermissionSeed.AdminPermissions cannot be stripped) — store stays dumb.
 // Response echoes stored permission ids after write.
+// [Operation] names it roles.set-permissions for every transport. IIdempotentCommand: the PUT is
+// a full replace, so a retry leaves the same grants.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -24,7 +26,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class SetRolePermissions
 {
   [ApiRoute("api/Roles/{RoleId:guid}/permissions", HttpVerb.Put)]
-  public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  [Operation("roles.set-permissions", Description = "Replace a role's permission ids.", Group = "admin.roles")]
+  public sealed partial class Command : IAuthApiRequest, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public List<string> PermissionIds { get; set; } = [];

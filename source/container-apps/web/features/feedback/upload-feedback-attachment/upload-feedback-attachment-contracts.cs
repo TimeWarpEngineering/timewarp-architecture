@@ -22,7 +22,7 @@ public static partial class UploadFeedbackAttachment
 {
   [ApiRoute("api/Feedback/attachments", HttpVerb.Post)]
   public sealed partial class Command
-    : IFileUploadRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+    : IFileUploadRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Stream Content { get; set; } = Stream.Null;
     public string FileName { get; set; } = null!;

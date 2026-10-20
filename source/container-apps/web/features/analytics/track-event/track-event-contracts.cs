@@ -24,7 +24,7 @@ namespace TimeWarp.Architecture.Features.Analytics;
 public static partial class TrackEvent
 {
   [ApiRoute("Analytics/TrackEvent", HttpVerb.Post)]
-  public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest
+  public sealed partial class Command : ICommand<OneOf<Response, SharedProblemDetails>>, IApiRequest
   {
     public string EventName { get; set; } = null!;
     public Guid? CorrelationId { get; set; }

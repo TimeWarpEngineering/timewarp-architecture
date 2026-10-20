@@ -37,7 +37,7 @@ public static partial class ListPrincipals
 {
   [ApiRoute("api/admin/principals", HttpVerb.Get)]
   [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
     public PrincipalListSortColumn SortBy { get; set; } = PrincipalListSortColumn.CreatedAt;

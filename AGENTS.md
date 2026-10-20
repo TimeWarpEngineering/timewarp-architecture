@@ -19,7 +19,9 @@ ship in every app. Removing one is `tw-slice-isolation`.
 - `dev build` is 0 warnings and 0 errors. Warnings are errors.
 - Tests are Jaribu and Shouldly. Do not add Fixie, xUnit, NUnit, MSTest, FluentAssertions,
   MediatR, or Tailwind.
-- Mediator calls use TimeWarp.Mediator: `IRequest<OneOf<Response, SharedProblemDetails>>`.
+- Mediator calls use TimeWarp.Mediator. A contract request implements `IQuery<…>`, `ICommand<…>`, or
+  `IIdempotentCommand<…>` over `OneOf<Response, SharedProblemDetails>`. New contracts add `[Operation]` from
+  `TimeWarp.Contracts` (TWA0035 suggests it; `tw-web-api-contracts`).
 - Purpose regions are analyzer **TWA0004** (every source file; generated code is exempt). The
   cross-repo skill's id **TWPA0004** is wrong for this repo. Maintenance rule:
   `tw-agent-context-regions`.
