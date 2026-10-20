@@ -616,6 +616,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 
       Terminal.WriteLine("");
       Terminal.WriteLine(EntraTenants.SignInAudienceSummary(TenantDomain));
+      Terminal.WriteLine(EntraTenants.MultiTenantAcceptanceNote());
       if (EntraTenants.PublicOriginMissingFromRedirectUris(Command.PublicOrigin, DesiredRedirectUris))
       {
         Terminal.WriteLine(

@@ -18,7 +18,6 @@ namespace EntraTicketProcessor_;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
-using Microsoft.Extensions.Options;
 using System.Text;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity.Application;
@@ -50,11 +49,12 @@ public class Bootstrap_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        passkeyPromptMode: PasskeyPromptMode.Soft));
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: [TrustedTenantId]));
     EntraTicketProcessor processor = new(
       principalStore,
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
+      new SiteSettingsEntraSignInPolicy(settingsStore),
       new CredentialUsageRecorder(),
       NullLogger<EntraTicketProcessor>.Instance);
 
@@ -80,11 +80,12 @@ public class Bootstrap_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        passkeyPromptMode: PasskeyPromptMode.Soft));
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: [TrustedTenantId]));
     EntraTicketProcessor processor = new(
       new InMemoryPrincipalStore(),
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
+      new SiteSettingsEntraSignInPolicy(settingsStore),
       new CredentialUsageRecorder(),
       logger);
 
@@ -253,9 +254,6 @@ public class Bootstrap_Given_
     result.AsT2.Title.ShouldBe("Untrusted tenant");
     result.AsT2.Status.ShouldBe(403);
   }
-
-  private static IOptions<EntraAuthenticationOptions> ConfiguredTenant() =>
-    Options.Create(new EntraAuthenticationOptions { TenantId = TrustedTenantId.ToString("D") });
 
   public static async Task Bootstrap_Should_Store_Provider_Label_And_Preferred_Username_Hint()
   {
@@ -666,11 +664,12 @@ public class Bootstrap_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        passkeyPromptMode: PasskeyPromptMode.Soft));
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: [TrustedTenantId]));
     return new EntraTicketProcessor(
       principalStore ?? new InMemoryPrincipalStore(),
       new NoOpPrincipalRoleStore(),
-      new SiteSettingsEntraSignInPolicy(settingsStore, ConfiguredTenant()),
+      new SiteSettingsEntraSignInPolicy(settingsStore),
       new CredentialUsageRecorder(clock ?? new ManualClock(T0)),
       NullLogger<EntraTicketProcessor>.Instance);
   }

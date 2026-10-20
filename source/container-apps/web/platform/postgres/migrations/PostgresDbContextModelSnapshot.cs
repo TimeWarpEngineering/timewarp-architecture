@@ -16,13 +16,13 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261017135945_AddFeedbackSeverity";
+    public override string LastMigrationId => "20261020162201_AddSiteSettingsEntraTenantAcceptance";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
         modelBuilder
-            .HasAnnotation("ProductVersion", "11.0.0-rc.1.26425.128")
+            .HasAnnotation("ProductVersion", "11.0.0-rc.2.26504.105")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -341,11 +341,27 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .HasMaxLength(32)
                     .HasColumnType("character varying(32)");
 
+                b.Property<string>("EntraAcceptedTenantIds")
+                    .IsRequired()
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("jsonb")
+                    .HasDefaultValueSql("'[]'::jsonb");
+
                 b.Property<bool>("EntraAllowBootstrap")
                     .HasColumnType("boolean");
 
                 b.Property<bool>("EntraSignInEnabled")
                     .HasColumnType("boolean");
+
+                b.Property<bool>("EntraTenantAcceptanceInitialized")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("boolean")
+                    .HasDefaultValue(false);
+
+                b.Property<int>("EntraTenantAcceptanceMode")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer")
+                    .HasDefaultValue(0);
 
                 b.Property<int>("PasskeyPromptMode")
                     .HasColumnType("integer");

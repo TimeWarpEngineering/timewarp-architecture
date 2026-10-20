@@ -1,5 +1,5 @@
 #region Purpose
-// Default IEntraSignInPolicy: site-settings offered/bootstrap plus configured-tenant trust pin.
+// Default IEntraSignInPolicy: site-settings offer/bootstrap plus admin tenant acceptance.
 #endregion
 
 #region Design
@@ -7,28 +7,24 @@
 // table evaluates against the configuration-seeded policy. A null read (table not migrated, or a
 // host wired without the decorator) is treated as disabled (Sign-in disabled on Challenge;
 // untrusted on ticket modes) so it cannot fail-open. Challenge checks EntraSignInEnabled only.
-// SyncHit and Link check token tid GUID-equals Authentication:Entra:TenantId. BootstrapCreate checks that pin
-// then AllowBootstrap. Non-GUID TenantId (organizations / common) never matches — Untrusted
-// tenant. Untrusted title stays "Untrusted tenant"; bootstrap title stays "Bootstrap not allowed"
-// (219-002 tests). RFC 219 pin-the-tenant is this comparison, in this type.
+// SyncHit, Link, and BootstrapCreate call SiteSettings.AcceptsEntraTenant: Restricted requires the
+// token tid in EntraAcceptedTenantIds; Any accepts any non-empty tid. Authentication:Entra:TenantId
+// is the OIDC authority, not this check. BootstrapCreate also requires AllowBootstrap.
+// Untrusted title stays "Untrusted tenant"; bootstrap title stays "Bootstrap not allowed"
+// (219-002 tests). Issuer pinning stays in EntraIssuerValidator.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
 
-using Microsoft.Extensions.Options;
 using TimeWarp.Identity;
 
 public sealed class SiteSettingsEntraSignInPolicy : IEntraSignInPolicy
 {
   private readonly ISiteSettingsStore SiteSettingsStore;
-  private readonly IOptions<EntraAuthenticationOptions> Options;
 
-  public SiteSettingsEntraSignInPolicy(
-    ISiteSettingsStore siteSettingsStore,
-    IOptions<EntraAuthenticationOptions> options)
+  public SiteSettingsEntraSignInPolicy(ISiteSettingsStore siteSettingsStore)
   {
     SiteSettingsStore = siteSettingsStore;
-    Options = options;
   }
 
   public async Task<EntraSignInDecision> EvaluateAsync(
@@ -48,7 +44,7 @@ public sealed class SiteSettingsEntraSignInPolicy : IEntraSignInPolicy
       return EntraSignInDecision.Allow();
     }
 
-    if (settings is null || tenantId is null || !MatchesConfiguredTenant(tenantId.Value))
+    if (settings is null || tenantId is null || !settings.AcceptsEntraTenant(tenantId.Value))
     {
       return EntraSignInDecision.Refuse(IdentityProblems.UntrustedTenant());
     }
@@ -59,20 +55,5 @@ public sealed class SiteSettingsEntraSignInPolicy : IEntraSignInPolicy
     }
 
     return EntraSignInDecision.Allow();
-  }
-
-  private bool MatchesConfiguredTenant(Guid tenantId)
-  {
-    if (tenantId == Guid.Empty)
-    {
-      return false;
-    }
-
-    if (!Guid.TryParse(Options.Value.TenantId, out Guid configured) || configured == Guid.Empty)
-    {
-      return false;
-    }
-
-    return configured == tenantId;
   }
 }

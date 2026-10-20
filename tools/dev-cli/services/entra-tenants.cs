@@ -304,6 +304,17 @@ internal static class EntraTenants
     return "Sign in with an account from this tenant (single-tenant app). Other tenants' accounts must be invited as guests first.";
   }
 
+  /// <summary>
+  /// Printed by <c>dev entra setup</c>. The created app is AzureADMyOrg; accepting other tenants
+  /// is an admin SiteSettings policy plus a multi-tenant app registration and authority.
+  /// </summary>
+  internal static string MultiTenantAcceptanceNote() =>
+    "Tenant acceptance is set on /Admin/Authentication (a restricted list, or any tenant), not by Authentication:Entra:TenantId. "
+    + "This app is AzureADMyOrg, so only the home tenant can finish sign-in. "
+    + "To accept other tenants, set supported account types to AzureADMultipleOrgs (work and school) or AzureADandPersonalMicrosoftAccount (also personal Microsoft accounts) and set Authentication:Entra:TenantId to organizations or common. "
+    + "Personal accounts use tenant 9188040d-6c67-4c5b-b112-36a304b66dad and reach the app only when the authority is common or consumers. "
+    + "Any tenant means any account that can finish OpenID Connect against this app can sign up or link, subject to the bootstrap and link toggles. There is no tenant blocklist.";
+
   internal static bool TenantIdsEqual(string left, string right)
   {
     if (string.Equals(left, right, StringComparison.OrdinalIgnoreCase))

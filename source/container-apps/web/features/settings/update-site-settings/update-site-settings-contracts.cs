@@ -6,9 +6,9 @@
 // SettingsWrite — granted to the bootstrap Administrator role, not self-service. Version is the
 // concurrency token from GetSiteSettings; mismatch is 409. Validator composes
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
-// implements so the Settings form binds once. Task 227 dropped trusted tenants from this
-// command; trust is Authentication:Entra:TenantId. Task 361: AssistantName rides the same
-// command; the handler stores it trimmed.
+// implements so the Authentication form binds once. Task 306: EntraTenantAcceptanceMode and
+// EntraAcceptedTenantIds are the trust policy on this command. Task 361: AssistantName rides
+// the same command; the handler stores it trimmed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -30,6 +30,8 @@ public static partial class UpdateSiteSettings
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public string AssistantName { get; set; } = null!;
+    public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
+    public List<Guid> EntraAcceptedTenantIds { get; set; } = [];
     public long Version { get; set; }
   }
 
@@ -48,6 +50,8 @@ public static partial class UpdateSiteSettings
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public string AssistantName { get; set; }
+    public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
+    public List<Guid> EntraAcceptedTenantIds { get; set; } = [];
     public long Version { get; }
 
     public Response(
@@ -55,13 +59,17 @@ public static partial class UpdateSiteSettings
       bool entraAllowBootstrap,
       PasskeyPromptMode passkeyPromptMode,
       string assistantName,
-      long version)
+      long version,
+      EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
+      List<Guid>? entraAcceptedTenantIds = null)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
       PasskeyPromptMode = passkeyPromptMode;
       AssistantName = assistantName;
       Version = version;
+      EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
+      EntraAcceptedTenantIds = entraAcceptedTenantIds is null ? [] : [.. entraAcceptedTenantIds];
     }
   }
 

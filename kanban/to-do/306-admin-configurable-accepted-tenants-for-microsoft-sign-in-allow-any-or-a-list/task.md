@@ -1,5 +1,18 @@
 # Admin-configurable accepted tenants for Microsoft sign-in (allow any or a list)
 
+## Goal (implementer restatement)
+
+Administrators choose, at runtime, which Microsoft Entra tenants may sign in. The choice lives on the site-settings row and is edited on `/Admin/Authentication`. It is either a list of tenant ids (restricted; one id is the single-tenant case) or any tenant. The existing offer toggle still only decides whether Microsoft sign-in is available.
+
+Acceptance means:
+
+- The first human passkey registration already becomes Administrator through `TryClaimFirstAdministratorAsync`, and that role can open the Authentication page. Document that path. Do not add another bootstrap.
+- Restricted mode refuses sign-in, link, and bootstrap when the token `tid` is missing from the accepted list (`Untrusted tenant`).
+- Any-tenant mode accepts any non-empty tenant id. The token issuer is still pinned to that `tid`.
+- Turning Microsoft sign-in off still refuses new challenges. Bootstrap off still refuses new accounts.
+- `Authentication:Entra:TenantId` stays the OIDC authority (`organizations`, `common`, or a home-tenant GUID). It is not the trust list. Multi-tenant sign-in needs a multi-tenant app registration, documented with the security tradeoffs (including personal Microsoft accounts).
+- Tests cover a refused unlisted tenant, an allowed different tenant in any-mode, and the unchanged availability toggle.
+
 ## Description
 
 Steven, 2026-10-11 (voice). With Sign in with Microsoft we want an identity/ID; we do not inherently care which Entra tenant the person is in. Today trust is pinned to a single configured tenant. Add an **admin-configurable** tenant acceptance policy (runtime SiteSettings, not appsettings): the admin can accept a list of tenant ids, or allow any tenant. Keep the existing admin-panel on/off toggle for Microsoft sign-in availability.
@@ -32,12 +45,12 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 
 ## Checklist
 
-- [ ] SiteSettings (+ migration / UpdateSiteSettings contracts / AuthenticationPage) carry allow-any or accepted-tenant list
-- [ ] `SiteSettingsEntraSignInPolicy` trusts SiteSettings list/any instead of only `Authentication:Entra:TenantId` GUID equality
-- [ ] OIDC authority / issuer path supports multi-tenant tickets when policy allows
-- [ ] Docs: security implications + Entra app registration supported account types
-- [ ] Confirm first-passkey → Administrator (`TryClaimFirstAdministratorAsync`) is sufficient for admin to configure tenants
-- [ ] Tests: restricted refuse, any allow, availability toggle unchanged
+- [x] SiteSettings (+ migration / UpdateSiteSettings contracts / AuthenticationPage) carry allow-any or accepted-tenant list
+- [x] `SiteSettingsEntraSignInPolicy` trusts SiteSettings list/any instead of only `Authentication:Entra:TenantId` GUID equality
+- [x] OIDC authority / issuer path supports multi-tenant tickets when policy allows
+- [x] Docs: security implications + Entra app registration supported account types
+- [x] Confirm first-passkey → Administrator (`TryClaimFirstAdministratorAsync`) is sufficient for admin to configure tenants
+- [x] Tests: restricted refuse, any allow, availability toggle unchanged
 
 ## Notes
 
@@ -75,7 +88,26 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 
 - `aspire-app-host/program.cs` currently defaults parameter `entra-tenant-id` to `"organizations"` in one place — that string fails the GUID trust pin today; relevant when wiring multi-tenant authority vs policy.
 
+## Session
+
+- Implementation: grok task-work (2026-10-20). Tenant acceptance is site settings (`Restricted` list or `Any`), edited on `/Admin/Authentication`. `Authentication:Entra:TenantId` stays the OIDC authority. First passkey registration already claims Administrator through `TryClaimFirstAdministratorAsync` (settings.write + admin.access); no second bootstrap was added.
+
 ## Results
+
+Administrators set accepted Entra tenants on the site-settings row. Restricted mode accepts only listed tenant ids (an empty list accepts none). Any mode accepts every non-empty `tid`. The offer and bootstrap toggles are unchanged. A GUID `Authentication:Entra:TenantId` is copied into the restricted list once on first seed or on a row that has not been initialized; `organizations` and `common` seed an empty list. Issuer pinning is unchanged: `EntraIssuerValidator` still pins `iss` to the token `tid`. A single-tenant app registration still completes OIDC only for its home tenant; other tenants need `organizations` or `common` plus a multi-tenant supported account type (`dev entra setup` prints that note). Personal Microsoft accounts use tenant `9188040d-6c67-4c5b-b112-36a304b66dad` and only arrive when the authority is `common` or `consumers`. There is no tenant blocklist.
+
+The Authentication page was compiled with the SPA. It was not clicked through in a browser in this walk.
 
 ### How to validate
 
+Smoke: `dotnet run --file source/container-apps/web/features/identity/entra-sign-in-policy-tests.cs`
+
+Expect: 10 passed. Restricted mode refuses an unlisted `tid` with title `Untrusted tenant`. Any mode allows a different `tid` on link. An empty guid is refused even in Any mode. Challenge with sign-in disabled returns `Sign-in disabled`; challenge with sign-in enabled allows without a tenant. Bootstrap stays refused when the tenant is accepted and bootstrap is off.
+
+Smoke: `dotnet run --file source/container-apps/web/features/identity/site-settings-seeder-tests.cs`
+
+Expect: 8 passed. A GUID authority seeds that one id. `organizations` seeds an empty restricted list. An uninitialized row receives the GUID once and keeps its passkey mode and assistant name. Development reseed rewrites offer and bootstrap and keeps Any mode.
+
+Smoke: `dotnet test` in `tests/libraries/timewarp-identity-tests` and `dotnet run --file source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs`
+
+Expect: identity tests passed (292). Update handler persists Any mode and the collapsed tenant list, and an empty guid fails validation.

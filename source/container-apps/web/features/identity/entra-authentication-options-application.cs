@@ -9,7 +9,8 @@
 // synonym never selects Entra as DefaultScheme. Enabled remains the scheme-registration gate
 // only (task 219-006). AllowBootstrap seeds site settings once, then IEntraSignInPolicy /
 // ISiteSettingsStore own runtime allow. Ticket processor does not read AllowBootstrap from
-// options. Trust is TenantId: token tid must GUID-equal this value. Task 227 removed the
+// options. TenantId is the OIDC authority segment (a tenant GUID, organizations, or common),
+// not the trust policy. Trust is SiteSettings tenant acceptance (task 306). Task 227 removed the
 // TrustedTenants allowlist; the validator rejects that key if it is still present.
 // PublicOrigin is the browser-facing origin when Web.Server sits behind a proxy that forwards
 // over http (YARP http://_http.web-server, ACA ingress). Unset keeps request-derived redirect_uri

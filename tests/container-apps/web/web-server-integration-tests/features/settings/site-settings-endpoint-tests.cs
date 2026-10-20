@@ -123,6 +123,8 @@ public class Returns_
         entraAllowBootstrap = current.EntraAllowBootstrap,
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName = current.AssistantName,
+        entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
+        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
         version = current.Version + 100
       },
       ContractSerializationDefaults.Options);
@@ -150,6 +152,7 @@ public class Returns_
         ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetSiteSettings deserialized to null.");
 
+    Guid acceptedTenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
     string body = JsonSerializer.Serialize(
       new
       {
@@ -157,6 +160,8 @@ public class Returns_
         entraAllowBootstrap = true,
         passkeyPromptMode = "Required",
         assistantName = current.AssistantName,
+        entraTenantAcceptanceMode = "Any",
+        entraAcceptedTenantIds = new[] { acceptedTenant },
         version = current.Version
       },
       ContractSerializationDefaults.Options);
@@ -173,6 +178,8 @@ public class Returns_
     updated.EntraSignInEnabled.ShouldBeTrue();
     updated.EntraAllowBootstrap.ShouldBeTrue();
     updated.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+    updated.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
+    updated.EntraAcceptedTenantIds.ShouldBe([acceptedTenant]);
     updated.Version.ShouldBe(current.Version + 1);
   }
 
@@ -237,6 +244,8 @@ public class Returns_
         entraAllowBootstrap = current.EntraAllowBootstrap,
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName = "<b>Zawadi</b>",
+        entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
+        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
         version = current.Version
       },
       ContractSerializationDefaults.Options);
@@ -276,6 +285,8 @@ public class Returns_
         entraAllowBootstrap = current.EntraAllowBootstrap,
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName,
+        entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
+        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
         version = current.Version
       },
       ContractSerializationDefaults.Options);
