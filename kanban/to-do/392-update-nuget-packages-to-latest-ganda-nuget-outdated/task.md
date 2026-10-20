@@ -53,6 +53,11 @@ Acceptance:
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T15:35:44Z
 - Review oracle (claude, model claude-opus-5-5, session not reported): effort 1, roster general,
   round 1. Outcome accepted-exceptions (0 open, M1 nit wontfix) — 2026-10-20
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-20T15:39:37Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
