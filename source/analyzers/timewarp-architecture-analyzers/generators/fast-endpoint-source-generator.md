@@ -39,7 +39,7 @@ public static partial class GetWeatherForecasts
   /// Get Weather Forecasts
   /// </summary>
   [ApiRoute("api/weatherForecasts", HttpVerb.Get)]
-  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public int? Days { get; set; }
   }

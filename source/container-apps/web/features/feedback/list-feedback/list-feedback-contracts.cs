@@ -49,7 +49,7 @@ public static partial class ListFeedback
   public const int MaxPage = (int.MaxValue / MaxPageSize) + 1;
 
   [ApiRoute("api/admin/feedback", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackStatus? Status { get; set; }
     public FeedbackSeverity? Severity { get; set; }

@@ -9,11 +9,11 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.2. `ganda nuget outdated` treats
-         stable 3.0.0 as current, but `ganda repo audit` nuru check requires 4.0.0-beta.2 and
+    <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.3. `ganda nuget outdated` treats
+         stable 3.0.0 as current, but `ganda repo audit` nuru check requires 4.0.0-beta.3 and
          blocks signing on 3.0.0 (task 389). -->
-    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.2" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.2" />
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.3" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.3" />
     <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />
@@ -23,28 +23,28 @@
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and
          bump in the same commit as it — packages and template publish together in one release run,
          so pins always reference versions that exist by the time a generated app restores. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.23" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.23" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.23" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.23" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.23" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.23" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.24" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.24" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Per task-124 policy, these pins equal the
          release <Version> and bump in the same commit as it. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.23" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.23" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.23" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.24" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.24" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.24" />
     <!-- TimeWarp.Identity has been published since 2.0.0-beta.6 (task 124). Per task-124 policy,
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.23" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.24" />
     <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
          feed; first nuget.org publish rides the next release. Same task-124 pin policy as
          TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
-    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.23" />
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.24" />
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">

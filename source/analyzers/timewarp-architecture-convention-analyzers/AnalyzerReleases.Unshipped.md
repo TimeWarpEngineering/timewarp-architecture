@@ -34,3 +34,4 @@ TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclas
 TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea outside the shared components/forms/TextArea.razor
 TWA0033 | Design | Warning | ReferenceableResourceAnalyzer: [ReferenceableResource] contract lacks a Search query, a typed-id or Guid item id, or a string label
 TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableResource] contracts share an @ prefix
+TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)

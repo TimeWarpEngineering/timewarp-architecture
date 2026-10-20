@@ -50,7 +50,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class AddPasskey
 {
   [ApiRoute("api/identity/credentials/passkey", HttpVerb.Post)]
-  public sealed partial class Command : IAuthApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IAuthApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public string CredentialId { get; set; } = null!;

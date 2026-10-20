@@ -51,7 +51,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteAgentTokenIssuance
 {
   [ApiRoute("api/identity/agent/token", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string KeyId { get; set; } = null!;
     public string Challenge { get; set; } = null!;

@@ -22,7 +22,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class StartAgentKeyRegistration
 {
   [ApiRoute("api/identity/agent/register/options", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 

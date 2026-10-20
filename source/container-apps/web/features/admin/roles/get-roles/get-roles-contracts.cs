@@ -23,6 +23,7 @@
 // fall through as 401 instead of 403. See AuthenticationSchemeNames' Design region.
 // Task 345: Search keeps roles whose name contains the term (case-insensitive), and
 // [ReferenceableResource] makes this the "role" @ type in Ask, labelled by name.
+// [Operation] names it roles.list for every transport; IQuery is its kind (tw-web-api-contracts).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -42,9 +43,10 @@ public static partial class GetRoles
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/Roles", HttpVerb.Get)]
+  [Operation("roles.list", Description = "List roles, optionally filtered by a name search.", Group = "admin.roles")]
   [OpenDataQueryParameters]
   [AuthApiRequest]
-  public sealed partial class Query : IQueryStringRouteProvider, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Query : IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
 

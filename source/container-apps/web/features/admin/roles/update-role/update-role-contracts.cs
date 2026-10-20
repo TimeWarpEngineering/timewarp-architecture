@@ -11,6 +11,8 @@
 // [EndpointAuthorize] (task 182-002): admin.roles.manage (PermissionIds); read is GetRoles/GetRole.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
+// [Operation] names it roles.update for every transport. IIdempotentCommand: the PUT replaces
+// name and description, so a retry leaves the same state.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -24,7 +26,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class UpdateRole
 {
   [ApiRoute("api/Roles/{RoleId:guid}", HttpVerb.Put)]
-  public sealed partial class Command : IAuthApiRequest, IRoleDetails, IRequest<OneOf<Response, SharedProblemDetails>>
+  [Operation("roles.update", Description = "Replace a role's name and description.", Group = "admin.roles")]
+  public sealed partial class Command : IAuthApiRequest, IRoleDetails, IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public string Name { get; set; } = null!;

@@ -33,7 +33,7 @@ public static partial class SubmitFeedback
   public const string UnavailableAttachmentIdsExtension = "unavailableAttachmentIds";
 
   [ApiRoute("api/Feedback", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackKind Kind { get; set; }
     public string Title { get; set; } = null!;

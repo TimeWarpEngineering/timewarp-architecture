@@ -14,7 +14,7 @@ public sealed partial class DeleteTodoItem
 {
   [ApiRoute("api/TodoItems/{TodoItemId:guid}", HttpVerb.Delete)]
   [ClientOnlyContract("Todo items are a client demo; the server slice awaits the feature's finish-vs-delete decision.")]
-  public sealed partial class Command : IRequest<OneOf<Response, SharedProblemDetails>>, IApiRequest;
+  public sealed partial class Command : ICommand<OneOf<Response, SharedProblemDetails>>, IApiRequest;
 
   public class Response : BaseResponse;
 

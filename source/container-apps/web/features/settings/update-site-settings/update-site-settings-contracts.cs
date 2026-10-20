@@ -24,7 +24,7 @@ using TimeWarp.Identity;
 public static partial class UpdateSiteSettings
 {
   [ApiRoute("api/settings", HttpVerb.Put)]
-  public sealed partial class Command : IApiRequest, ISiteSettingsDetails, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ISiteSettingsDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }

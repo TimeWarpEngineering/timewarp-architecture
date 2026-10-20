@@ -22,7 +22,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class ChangeFeedbackStatus
 {
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/status", HttpVerb.Put)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackStatus Status { get; set; }
   }

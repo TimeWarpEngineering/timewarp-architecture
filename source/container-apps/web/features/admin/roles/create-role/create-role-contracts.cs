@@ -13,6 +13,8 @@
 // client-facing/mock-mode identity signal only; this attribute gates the server.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session — see
 // AuthenticationSchemeNames' Design region.
+// [Operation] names it roles.create for every transport. ICommand, not IIdempotentCommand:
+// a retried create makes a second role.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -26,7 +28,8 @@ namespace TimeWarp.Architecture.Features.Admin.Roles;
 public static partial class CreateRole
 {
   [ApiRoute("api/Roles", HttpVerb.Post)]
-  public sealed partial class Command : IAuthApiRequest, IRoleDetails, IRequest<OneOf<Response, SharedProblemDetails>>
+  [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
+  public sealed partial class Command : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public string Name { get; set; } = null!;

@@ -36,7 +36,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class GetCurrentSession
 {
   [ApiRoute("api/identity/session", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;
 

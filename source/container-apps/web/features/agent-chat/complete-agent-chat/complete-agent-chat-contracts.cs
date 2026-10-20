@@ -45,7 +45,7 @@ public static partial class CompleteAgentChat
   public static readonly IReadOnlyList<string> ImageMediaTypes = ["image/png", "image/jpeg"];
 
   [ApiRoute("api/agent-chat/completions", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public List<Turn> Messages { get; set; } = [];
 

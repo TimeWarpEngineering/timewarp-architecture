@@ -22,7 +22,7 @@ public static partial class AddFeedbackNote
   public const int MaxBodyLength = 4000;
 
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/notes", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Body { get; set; } = null!;
   }

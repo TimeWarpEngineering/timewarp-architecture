@@ -32,7 +32,7 @@ public static partial class ForwardBrowserLogs
   public static readonly IReadOnlyList<string> AllowedSources = ["console", "window.error", "unhandledrejection"];
 
   [ApiRoute(RouteTemplate: "api/browser-logs", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public List<Entry> Entries { get; set; } = [];
     public string? PagePath { get; set; }

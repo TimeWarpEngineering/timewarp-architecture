@@ -14,7 +14,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteEntraBootstrapCreate
 {
   [ApiRoute("api/identity/entra/choice/create", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Command>;
 

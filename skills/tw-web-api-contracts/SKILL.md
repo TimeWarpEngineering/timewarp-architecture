@@ -1,7 +1,7 @@
 ---
 name: tw-web-api-contracts
-description: "**TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute, I*Details, Validator, serialization tests). Invoke before scaffolding or fixing contracts. WHEN: Add a CreateTodoItem command contract, Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form, Add a serialization round-trip test for my Command."
-when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
+description: "**TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute, Operation, I*Details, Validator, serialization tests), one contract bound to HTTP, CLI, and MCP. Invoke before scaffolding or fixing contracts. WHEN: Add a CreateTodoItem command contract, Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form, Add a serialization round-trip test for my Command."
+when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, Operation attribute, TimeWarp.Contracts, IQuery, ICommand, IIdempotentCommand, CLI or MCP binding, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
@@ -51,10 +51,12 @@ Activate when **any** signal matches:
 | Contracts project | `*.csproj` named `*contracts*` (any casing); product contracts may live in a cohesive `web/features/` tree (axis-1) or a project-local `features/`/`Features/` tree |
 | Contract file layout | `**/features/**/<use-case>/*-contracts.cs` (one folder per operation, contract beside its handler) or a shared `*-contracts.cs` at slice root for a file used by more than one operation (axis-1 grammar; also match legacy `*.cs` without the layer suffix). Search **case-insensitively** — repos use kebab `features/` or Pascal `Features/` |
 | Contract shell | `public static partial class` + nested `Query`/`Command` + `[ApiRoute(...)]` |
-| TimeWarp.Mediator return | `IRequest<OneOf<Response, SharedProblemDetails>>` |
+| TimeWarp.Mediator return | `IQuery<…>` / `ICommand<…>` / `IIdempotentCommand<…>` over `OneOf<Response, SharedProblemDetails>` (bare `IRequest<…>` where the kind is unclear) |
+| Neutral operation | `[Operation("…")]` (`TimeWarp.Contracts`) on the nested `Query`/`Command` |
 | Shared validation | `I*Details` interface + `AbstractValidator<I*Details>` |
 
-The mediator is **TimeWarp.Mediator** (not MediatR) — same `IRequest<T>` shape, different package.
+The mediator is **TimeWarp.Mediator** (not MediatR). `IQuery<T>`, `ICommand<T>`, and `IIdempotentCommand<T>`
+all extend `IRequest<T>`, so handlers stay `IRequestHandler<TRequest, TResponse>`.
 
 Before adding a contract, **read 2–3 existing contracts in the same repo** to match
 namespace root, folder casing, test project layout, and mock-service registration.
@@ -124,7 +126,7 @@ section below for why that combination is a contradiction, not just a style nit.
 public static partial class GetAgentIdentity
 {
   [ApiRoute("api/identity/agent/me", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
   // …
 }
 ```
@@ -148,15 +150,35 @@ mistyped, or unmarked names are **TWE008**. Hosted contracts assemblies apply
 
 ### HTTP verbs
 
-| Operation | Verb |
-|-----------|------|
-| Query | `Get` |
-| Create | `Post` |
-| Update | `Put` |
-| Delete | `Delete` |
+| Operation | Verb | Usual kind |
+|-----------|------|------------|
+| Query | `Get` | `IQuery<…>` |
+| Create | `Post` | `ICommand<…>` |
+| Update (full replace) | `Put` | `IIdempotentCommand<…>` |
+| Delete | `Delete` | `IIdempotentCommand<…>` |
 
 The verb is the contract's `[ApiRoute]` verb. Generated FastEndpoints take it from there. Do not
 hand-write a second verb. Analyzer id TWA0005 (MVC verb vs `[ApiRoute]`) is retired and reserved.
+
+The kind does not pick the verb, and the verb does not pick the kind. The column above is the
+usual pairing, not a rule: `IIdempotentCommand` promises that a retry is safe, so use `ICommand`
+when the handler cannot keep that promise. See [neutral-operations.md](references/neutral-operations.md).
+
+## Neutral operations: one contract, three bindings
+
+`TimeWarp.Contracts` adds the transport-neutral part of a contract. The same request class is an
+HTTP endpoint, a CLI command, and an MCP tool:
+
+- **Name and summary:** `[Operation("roles.get", Description = "…", Group = "…")]` on the nested
+  `Query`/`Command`. The name is not a route, a CLI pattern, or a tool name. `Group` is optional
+  metadata.
+- **Kind:** the mediator interface (`IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`). It is
+  never an attribute argument.
+- **Bindings:** HTTP comes from `[ApiRoute]` + `[ApiEndpoint]` (this template). CLI and MCP come
+  from TimeWarp.Nuru, which reads the same contract and dispatches through the mediator.
+
+**TWA0035** (info) suggests `[Operation]` on a hosted contract that lacks one. Members, kind
+choice, bindings, and the catalog: [neutral-operations.md](references/neutral-operations.md).
 
 ## Contract shell
 
@@ -166,8 +188,9 @@ Every operation is a `public static partial class` named for the operation:
 public static partial class CreateRole
 {
   [ApiRoute("api/Roles", HttpVerb.Post)]
+  [Operation("roles.create", Description = "Create a role.", Group = "admin.roles")]
   public sealed partial class Command
-    : IAuthApiRequest, IRoleDetails, IRequest<OneOf<Response, SharedProblemDetails>>
+    : IAuthApiRequest, IRoleDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public Guid UserId { get; set; }
     public string Name { get; set; } = null!;
@@ -200,8 +223,10 @@ public static partial class CreateRole
 | Output | `Response` | Success payload |
 | Input rules | `Validator` | `AbstractValidator<Query\|Command>` |
 
-Return type is always `IRequest<OneOf<Response, SharedProblemDetails>>` unless returning
-a stream/file (`OneOf<Stream, SharedProblemDetails>`).
+The result is always `OneOf<Response, SharedProblemDetails>`, or `OneOf<Stream, SharedProblemDetails>`
+for a stream or file. The interface that carries it states the kind: `IQuery<…>` for a read,
+`ICommand<…>` for a write, `IIdempotentCommand<…>` for a retry-safe write. Use bare `IRequest<…>`
+only when none fits, and say why in the Design region.
 
 ### When the request body may be empty
 
@@ -269,7 +294,10 @@ Read → `get-*/get-*-contracts.cs` · Write → `create-*|update-*|delete-*/…
 - `[ApiRoute("api/...", HttpVerb.*)]` on nested `Query`/`Command`
 - Implement `IApiRequest` (or `IAuthApiRequest` — see auth forms above; add
   `IQueryStringRouteProvider` when query-string filters apply)
-- `IRequest<OneOf<Response, SharedProblemDetails>>`
+- The kind interface over `OneOf<Response, SharedProblemDetails>`: `IQuery`, `ICommand`, or
+  `IIdempotentCommand` (see [neutral-operations.md](references/neutral-operations.md))
+- `[Operation("<resource>.<action>", Description = "…")]` on the nested `Query`/`Command`, so HTTP,
+  CLI, and MCP share one name (**TWA0035** suggests it on hosted contracts without one)
 
 ### 3. Bindable data — interface-driven validation
 
@@ -343,7 +371,7 @@ bindable, not `I*Details`.
 | List | `Response : ListResponse<TDto>` |
 | No body | `public sealed class Response;` |
 | Truly invariant-free echo | `public required int Id { get; init; }` acceptable |
-| File/stream | `IRequest<OneOf<Stream, SharedProblemDetails>>` |
+| File/stream | `IQuery<OneOf<Stream, SharedProblemDetails>>` |
 
 `required init` is **not** a general alternative to ctor+`Guard`: it enforces *presence at the
 construction site* but checks nothing — `new Response { RoleId = Guid.Empty }` compiles and ships.
@@ -408,7 +436,9 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
       `AddPolicy` name) — TWA0024 flags drift at the server build
 - [ ] Hosted `[EndpointAuthorize]` sets `AuthenticationSchemes`
 - [ ] `[ApiRoute]` with correct verb and route constraints (`{Id:guid}`, `{Id:min(1)}`, …)
-- [ ] `IRequest<OneOf<Response, SharedProblemDetails>>` (TimeWarp.Mediator)
+- [ ] Kind interface over `OneOf<Response, SharedProblemDetails>`: `IQuery` / `ICommand` /
+      `IIdempotentCommand` (TimeWarp.Mediator); bare `IRequest` only with a stated reason
+- [ ] `[Operation("<resource>.<action>", Description = "…")]` on the request (TWA0035)
 - [ ] Folder plural + repo's casing; namespace plural
 - [ ] Bindable flows use `I*Details` + shared `AbstractValidator<I*Details>`; Command/Response
       declare the interface properties
@@ -445,7 +475,9 @@ is generated from it. Shape, rules and the analyzer: [references/referenceable-r
 
 ## Canonical examples
 
-- **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` —
+- **Living anchor (timewarp-architecture template):** `web/features/admin/roles/` — every
+  operation carries `[Operation]` and a kind interface (`IQuery`, `ICommand`,
+  `IIdempotentCommand`);
   `role-details-contracts.cs` (`IRoleDetails` + validator, shared at slice root),
   `create-role/create-role-contracts.cs`, `get-roles/get-roles-contracts.cs` (attribute auth +
   open-data), `get-role/get-role-contracts.cs` (manual auth, `I*Details` Response). Each

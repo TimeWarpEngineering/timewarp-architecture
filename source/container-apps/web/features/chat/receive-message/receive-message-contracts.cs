@@ -12,7 +12,7 @@ namespace TimeWarp.Architecture.Features.Chat;
 
 public static partial class ReceiveMessage
 {
-  public sealed class Command : IRequest<OneOf<Success, SharedProblemDetails>>
+  public sealed class Command : ICommand<OneOf<Success, SharedProblemDetails>>
   {
     public string User { get; set; } = null!;
     public string Message { get; set; } = null!;

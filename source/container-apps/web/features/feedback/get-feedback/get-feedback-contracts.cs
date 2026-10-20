@@ -23,7 +23,7 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class GetFeedback
 {
   [ApiRoute("api/Feedback/{FeedbackItemId:guid}", HttpVerb.Get)]
-  public sealed partial class Query : IApiRequest, IRequest<OneOf<Response, SharedProblemDetails>>;
+  public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>
   {
