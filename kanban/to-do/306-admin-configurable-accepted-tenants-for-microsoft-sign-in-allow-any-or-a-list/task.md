@@ -91,12 +91,13 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 ## Session
 
 - Implementation: grok task-work (2026-10-20). Tenant acceptance is site settings (`Restricted` list or `Any`), edited on `/Admin/Authentication`. `Authentication:Entra:TenantId` stays the OIDC authority. First passkey registration already claims Administrator through `TryClaimFirstAdministratorAsync` (settings.write + admin.access); no second bootstrap was added.
+- Docs: grok task-work (2026-10-21). `wwwroot/auth.md` and the policy, mode, and ticket-processor design notes still described the task 227 tenant pin. They now describe site-settings acceptance (restricted list or any tenant), the multi-tenant app registration, personal Microsoft accounts, and the first-passkey administrator path.
 
 ## Results
 
 Administrators set accepted Entra tenants on the site-settings row. Restricted mode accepts only listed tenant ids (an empty list accepts none). Any mode accepts every non-empty `tid`. The offer and bootstrap toggles are unchanged. A GUID `Authentication:Entra:TenantId` is copied into the restricted list once on first seed or on a row that has not been initialized; `organizations` and `common` seed an empty list. Issuer pinning is unchanged: `EntraIssuerValidator` still pins `iss` to the token `tid`. A single-tenant app registration still completes OIDC only for its home tenant; other tenants need `organizations` or `common` plus a multi-tenant supported account type (`dev entra setup` prints that note). Personal Microsoft accounts use tenant `9188040d-6c67-4c5b-b112-36a304b66dad` and only arrive when the authority is `common` or `consumers`. There is no tenant blocklist.
 
-The Authentication page was compiled with the SPA. It was not clicked through in a browser in this walk.
+`wwwroot/auth.md` states the same policy, including personal Microsoft accounts and the first-passkey administrator path. The Authentication page was compiled with the SPA. It was not clicked through in a browser in this walk.
 
 ### How to validate
 

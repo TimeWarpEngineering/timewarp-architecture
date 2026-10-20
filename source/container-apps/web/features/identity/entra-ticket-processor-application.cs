@@ -8,8 +8,8 @@
 // enough — no passkey re-assert). Duplicate handle is 409 with no foreign-id oracle (104-005).
 // Sync-hit is Find-by-handle of an active EntraAccount. Revoked rows are non-hits for sync and for
 // link-merge (403 EntraCredentialRevoked, not Restore; unique Type+Handle still blocks re-insert).
-// Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND
-// tid GUID-equals Authentication:Entra:TenantId). Unknown-handle bootstrap does NOT mint a
+// Bootstrap Create is gated by IEntraSignInPolicy (site settings AllowBootstrap AND tenant
+// acceptance: restricted list or any non-empty tid). Unknown-handle bootstrap does NOT mint a
 // principal immediately: ProcessAsync returns EntraChoiceRequired so the HTTP adapter parks
 // claims and the SPA choose page decides create vs already-have. CompleteBootstrapCreateAsync
 // is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync

@@ -5,10 +5,11 @@
 #region Design
 // Keep the interface small for crunchit 008-004 replacements. Challenge is the only mode that
 // returns Sign-in disabled (new challenges only; in-flight tickets and existing sessions stay).
-// SyncHit, BootstrapCreate, and Link all require token tid to GUID-equal Authentication:Entra:TenantId
-// (task 227). organizations / common authority is not a GUID, so those tickets refuse Untrusted
-// tenant. AllowBootstrap gates Create only — sync-hit of an active EntraAccount still issues a
-// session. Link is the same tenant pin without AllowBootstrap.
+// SyncHit, BootstrapCreate, and Link call IEntraSignInPolicy with the token tid. Restricted mode
+// requires that tid in the site-settings accepted list; Any accepts any non-empty tid.
+// Authentication:Entra:TenantId is the OIDC authority, not this check. AllowBootstrap gates Create
+// only — sync-hit of an active EntraAccount still issues a session. Link uses the same tenant
+// acceptance without AllowBootstrap.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
