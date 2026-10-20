@@ -62,6 +62,8 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
   (TimeWarp.Nuru 4.0.0-beta.2 < beta.3). `ganda repo audit --fix` moved TimeWarp.Nuru and
   TimeWarp.Nuru.DevCli to 4.0.0-beta.3, and the pin comment was updated to match. dev-cli
   compiles on beta.3, and the audit passes.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T06:01:45Z
+- Reviewer: Grok session `01a157e6-d044-7442-b624-c74e144b8fff` (2026-10-20), effort 3, roster general, round 1
 
 ## Notes
 
@@ -114,6 +116,10 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - Version is 2.0.0-beta.24 in `source/Directory.Build.props`,
   `timewarp-templates/Directory.Build.props`, and the platform pins in
   `Directory.Packages.props`. beta.23 is already on nuget.org.
+- Review: round 1, effort 3, roster general. Counts: bug 0 open / 0 fixed / 0 wontfix,
+  suggestion 0, nit 0. Disposition: **clean**. No wontfix and no escalation.
+  Paths: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -145,4 +151,12 @@ Expect:
 - `dev check-version`: `Version in source is new — safe to release` (2.0.0-beta.24).
 - `dev template-smoke`: `Template smoke SUCCEEDED`.
 - `ganda repo audit`: `Repository passes all audit checks.`
+
+## Learnings
+
+- Misread: the Goal restatement says `documentation/` is retired, so the skill is the only
+  write-up of the neutral layer. The gate-lift task does not say that, and
+  `documentation/developer/guides/` still holds developer guides. The checklist required the
+  skill write-up, which is in `skills/tw-web-api-contracts/`, so the misread did not drop a
+  checklist item.
 
