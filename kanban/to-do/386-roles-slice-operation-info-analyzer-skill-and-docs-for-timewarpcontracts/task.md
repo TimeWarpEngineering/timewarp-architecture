@@ -71,10 +71,14 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - 2026-10-20: implement-fix-2 oracle (claude-opus-5-5, headless `ganda task work`) fixed M1.
   `ganda repo audit --fix` added `mission.heartbeat` to the root `.gitignore`
   (`kanban-porcelain-gitignore`). The audit now passes.
+- 2026-10-20: review-2 oracle (claude-opus-5-5, headless `ganda task work`), effort 1,
+  roster general, session not reported. Reviewed the delta since round 1 (`6a1c4f489`) and
+  confirmed M1 is fixed. No new findings. Disposition: clean.
 
 ## Review
 
 - Round 1: Blocked — open M1
+- Round 2: clean — M1 fixed, no new findings
 
 ## Notes
 
@@ -127,13 +131,14 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - Version is 2.0.0-beta.24 in `source/Directory.Build.props`,
   `timewarp-templates/Directory.Build.props`, and the platform pins in
   `Directory.Packages.props`. beta.23 is already on nuget.org.
-- Review: round 1, effort 3, roster general (two passes: `general.md` and a host retry,
-  `general-retry.md`). Counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0, nit 0.
-  M1 (audit gate) is fixed: `ganda repo audit --fix` added `mission.heartbeat` to the root
-  `.gitignore`, and `ganda repo audit` passes again. The product diff had no defects.
-  Disposition: pending review round 2. Paths: `review/review-framework.md`,
-  `review/round-1/general.md`, `review/round-1/general-retry.md`,
-  `review/round-1/merged.md`, `review/disposition.md`.
+- Review: 2 rounds, roster general. Round 1 ran at effort 3 with two passes, `general.md`
+  and a host retry, `general-retry.md`. Round 2 ran at effort 1 on the fix delta.
+  Final counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0, nit 0. M1 (audit gate) is
+  fixed: `ganda repo audit --fix` added `mission.heartbeat` to the root `.gitignore`, and
+  round 2 re-ran `ganda repo audit`, which passes. The product diff had no defects.
+  Disposition: **clean**. Paths: `review/review-framework.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md` (last merged),
+  `review/disposition.md`.
 
 ### How to validate
 
