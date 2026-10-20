@@ -7,12 +7,13 @@
 // I*Details so the Settings Authentication section binds one shape. Version is not on this
 // interface — it is the concurrency token on Command/Response, not a form field the user types.
 // PasskeyPromptMode and EntraTenantAcceptanceMode use TimeWarp.Identity enums
-// (JsonStringEnumConverter). Validator: both enums must be defined. Accepted tenant ids are a
-// list of non-empty GUIDs, at most EntraTenantIds.MaxAcceptedCount; an empty list is valid and
-// means Restricted accepts nobody. Task 306: this shape is the trust policy. Task 361 added
-// AssistantName: required, and trimmed it must be 1-32 plain-text characters. Beyond NotEmpty
-// (the required message) the validator calls AssistantNameRules.IsValid, the same check
-// SiteSettings.RenameAssistant runs, so they cannot drift.
+// (JsonStringEnumConverter). Validator: both enums must be defined. Accepted tenant ids call
+// EntraTenantIds.TryNormalize, the same check SiteSettings uses, so an empty Guid, the
+// distinct-count cap, and duplicate collapse cannot drift. An empty list is valid and means
+// Restricted accepts nobody. Null is refused. Task 306: this shape is the trust policy.
+// Task 361 added AssistantName: required, and trimmed it must be 1-32 plain-text characters.
+// Beyond NotEmpty (the required message) the validator calls AssistantNameRules.IsValid, the
+// same check SiteSettings.RenameAssistant runs, so they cannot drift.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -41,11 +42,18 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
       .NotNull()
       .WithMessage("Accepted tenant ids are required.");
     RuleFor(details => details.EntraAcceptedTenantIds)
-      .Must(ids => ids is null || ids.Count <= EntraTenantIds.MaxAcceptedCount)
-      .WithMessage($"At most {EntraTenantIds.MaxAcceptedCount} accepted tenant ids.");
-    RuleForEach(details => details.EntraAcceptedTenantIds)
-      .Must(tenantId => tenantId != Guid.Empty)
-      .WithMessage("Accepted tenant ids must be non-empty GUIDs.");
+      .Custom(static (ids, context) =>
+      {
+        if (ids is null)
+        {
+          return;
+        }
+
+        if (!EntraTenantIds.TryNormalize(ids, out _, out string? error))
+        {
+          context.AddFailure(error ?? "Accepted tenant ids are invalid.");
+        }
+      });
     RuleFor(details => details.AssistantName)
       .NotEmpty()
       .WithMessage("Assistant name is required.");

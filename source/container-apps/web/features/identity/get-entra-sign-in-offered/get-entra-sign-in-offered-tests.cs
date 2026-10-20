@@ -3,8 +3,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Options
-#:package Microsoft.Extensions.Logging.Abstractions
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 

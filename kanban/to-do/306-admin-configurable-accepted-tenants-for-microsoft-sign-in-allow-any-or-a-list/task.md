@@ -51,6 +51,13 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 - [x] Docs: security implications + Entra app registration supported account types
 - [x] Confirm first-passkey → Administrator (`TryClaimFirstAdministratorAsync`) is sufficient for admin to configure tenants
 - [x] Tests: restricted refuse, any allow, availability toggle unchanged
+- [x] Challenge fixture seeds TrustedTenantId, and Any mode accepts UntrustedTenantId over HTTP
+- [x] SiteSettingsDetailsValidator calls EntraTenantIds.TryNormalize
+- [x] Authentication help text says common (or consumers)
+
+## Review
+
+- Round 1: M1, M2, M3 fixed on this branch (2026-10-21). Host runs review round 2.
 
 ## Notes
 
@@ -93,7 +100,9 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 - Implementation: grok task-work (2026-10-20). Tenant acceptance is site settings (`Restricted` list or `Any`), edited on `/Admin/Authentication`. `Authentication:Entra:TenantId` stays the OIDC authority. First passkey registration already claims Administrator through `TryClaimFirstAdministratorAsync` (settings.write + admin.access); no second bootstrap was added.
 - Docs: grok task-work (2026-10-21). `wwwroot/auth.md` and the policy, mode, and ticket-processor design notes still described the task 227 tenant pin. They now describe site-settings acceptance (restricted list or any tenant), the multi-tenant app registration, personal Microsoft accounts, and the first-passkey administrator path.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-20T19:03:10Z
-- Review round 1 (2026-10-21): review oracle (claude-opus-5-5, headless), effort 3, roster general. Findings: 1 bug, 1 suggestion, 1 nit, all open (`review/round-1/merged.md`). M1: web-server-integration-tests have 10 failures in `entra-challenge-tests.cs`, whose fixture seeds no accepted tenants. No disposition yet; a fix pass is needed before round 2.
+- Review round 1 (2026-10-21): review oracle (claude-opus-5-5, headless), effort 3, roster general. Findings: 1 bug, 1 suggestion, 1 nit (`review/round-1/merged.md`).
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-20T19:21:19Z
+- Fix pass (2026-10-21): M1 seeds `entraAcceptedTenantIds: [TrustedTenantId]` and adds an Any-mode bootstrap for `UntrustedTenantId`. M2 validates tenant ids through `EntraTenantIds.TryNormalize`. M3 help text says common (or consumers). Dropped the NU1510 framework package refs on `get-entra-sign-in-offered-tests.cs` and `seed-on-read-site-settings-store-tests.cs`. `ganda repo audit --fix` removed the orphaned `Microsoft.Extensions.Logging.Abstractions` package version.
 
 ## Results
 
@@ -113,4 +122,16 @@ Expect: 8 passed. A GUID authority seeds that one id. `organizations` seeds an e
 
 Smoke: `dotnet test` in `tests/libraries/timewarp-identity-tests` and `dotnet run --file source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs`
 
-Expect: identity tests passed (292). Update handler persists Any mode and the collapsed tenant list, and an empty guid fails validation.
+Expect: identity tests passed (292). Update handler persists Any mode and the collapsed tenant list. The validator runfile passes 30. An empty guid fails with `Accepted tenant ids must be non-empty GUIDs.` Thirty-three copies of one id pass. Thirty-three distinct ids fail with `At most 32 accepted tenant ids.`
+
+Smoke: `cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release`
+
+Expect: 349 passed, 0 failed, 1 skipped (350 total). Restricted challenges for `TrustedTenantId` succeed. `Bootstrap_Any_Mode_Untrusted_Tenant_Should_Redirect_To_Choose` redirects an unlisted tenant to the choose path.
+
+Smoke: `dotnet run --file source/container-apps/web/features/identity/get-entra-sign-in-offered/get-entra-sign-in-offered-tests.cs` and `dotnet run --file source/container-apps/web/features/identity/seed-on-read-site-settings-store-tests.cs`
+
+Expect: 5 passed and 11 passed. Both runfiles build without a direct `Microsoft.Extensions.Options` or `Logging.Abstractions` package reference.
+
+Smoke: `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release`
+
+Expect: 0 warnings, 0 errors. The Authentication page help text says `common (or consumers)`. The page was not clicked in a browser.

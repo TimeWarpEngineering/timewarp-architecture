@@ -48,13 +48,12 @@
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
-    <!-- Configuration.Abstractions, DependencyInjection.Abstractions, and Hosting.Abstractions
-         are in the net11 shared framework. Direct PackageReferences to them are NU1510, so those
-         pins are gone. Logging.Abstractions and Options stay pinned: co-located runfiles take them
+    <!-- Configuration.Abstractions, DependencyInjection.Abstractions, Hosting.Abstractions, and
+         Logging.Abstractions are in the net11 shared framework. Direct PackageReferences to them
+         are NU1510, so those pins are gone. Options stays pinned: one co-located runfile takes it
          with a versionless #:package directive, which Central Package Management resolves from here.
-         A csproj must not PackageReference them (NU1510). -->
+         A csproj must not PackageReference it (NU1510). -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.11.0" />
