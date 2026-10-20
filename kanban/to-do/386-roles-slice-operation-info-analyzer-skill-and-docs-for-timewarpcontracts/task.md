@@ -67,6 +67,14 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - Reviewer (round 1 retry, after the first pass exited 143): review oracle, claude-opus-5-5,
   headless `ganda task work`, effort 3, roster general, session not reported (2026-10-20).
   Opened M1 (audit gate) and requested a fix pass.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-20T13:21:06Z
+- 2026-10-20: implement-fix-2 oracle (claude-opus-5-5, headless `ganda task work`) fixed M1.
+  `ganda repo audit --fix` added `mission.heartbeat` to the root `.gitignore`
+  (`kanban-porcelain-gitignore`). The audit now passes.
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 
@@ -120,12 +128,10 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
   `timewarp-templates/Directory.Build.props`, and the platform pins in
   `Directory.Packages.props`. beta.23 is already on nuget.org.
 - Review: round 1, effort 3, roster general (two passes: `general.md` and a host retry,
-  `general-retry.md`). Counts: bug 1 open / 0 fixed / 0 wontfix, suggestion 0, nit 0.
-  Disposition: **pending (reopened)**, fix pass requested for M1. The first pass recorded
-  clean. The retry re-ran the gates: `dev build`, the analyzer tests (231/231), and the roles
-  runfiles pass. `ganda repo audit` fails `kanban-porcelain-gitignore` (the `.gitignore` has
-  no `mission.heartbeat` line), so the audit line under "Expect" below is stale until M1 is
-  fixed. The product diff has no defects. Paths: `review/review-framework.md`,
+  `general-retry.md`). Counts: bug 0 open / 1 fixed / 0 wontfix, suggestion 0, nit 0.
+  M1 (audit gate) is fixed: `ganda repo audit --fix` added `mission.heartbeat` to the root
+  `.gitignore`, and `ganda repo audit` passes again. The product diff had no defects.
+  Disposition: pending review round 2. Paths: `review/review-framework.md`,
   `review/round-1/general.md`, `review/round-1/general-retry.md`,
   `review/round-1/merged.md`, `review/disposition.md`.
 
