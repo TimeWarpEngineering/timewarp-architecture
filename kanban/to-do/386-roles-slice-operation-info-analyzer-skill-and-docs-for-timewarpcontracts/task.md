@@ -64,6 +64,9 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
   compiles on beta.3, and the audit passes.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session not reported, max-turns 500, Done — 2026-10-20T06:01:45Z
 - Reviewer: Grok session `01a157e6-d044-7442-b624-c74e144b8fff` (2026-10-20), effort 3, roster general, round 1
+- Reviewer (round 1 retry, after the first pass exited 143): review oracle, claude-opus-5-5,
+  headless `ganda task work`, effort 3, roster general, session not reported (2026-10-20).
+  Opened M1 (audit gate) and requested a fix pass.
 
 ## Notes
 
@@ -116,9 +119,14 @@ contracts. The source generator and roles tests pass, `ganda repo audit` passes,
 - Version is 2.0.0-beta.24 in `source/Directory.Build.props`,
   `timewarp-templates/Directory.Build.props`, and the platform pins in
   `Directory.Packages.props`. beta.23 is already on nuget.org.
-- Review: round 1, effort 3, roster general. Counts: bug 0 open / 0 fixed / 0 wontfix,
-  suggestion 0, nit 0. Disposition: **clean**. No wontfix and no escalation.
-  Paths: `review/review-framework.md`, `review/round-1/general.md`,
+- Review: round 1, effort 3, roster general (two passes: `general.md` and a host retry,
+  `general-retry.md`). Counts: bug 1 open / 0 fixed / 0 wontfix, suggestion 0, nit 0.
+  Disposition: **pending (reopened)**, fix pass requested for M1. The first pass recorded
+  clean. The retry re-ran the gates: `dev build`, the analyzer tests (231/231), and the roles
+  runfiles pass. `ganda repo audit` fails `kanban-porcelain-gitignore` (the `.gitignore` has
+  no `mission.heartbeat` line), so the audit line under "Expect" below is stale until M1 is
+  fixed. The product diff has no defects. Paths: `review/review-framework.md`,
+  `review/round-1/general.md`, `review/round-1/general-retry.md`,
   `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
@@ -159,4 +167,8 @@ Expect:
   `documentation/developer/guides/` still holds developer guides. The checklist required the
   skill write-up, which is in `skills/tw-web-api-contracts/`, so the misread did not drop a
   checklist item.
+- Round 1 retry: the rest of the restatement matches the task. The kind decision, the six
+  roles operations, the three-binding write-up, and the proof scope (CLI and MCP excluded)
+  all line up. The `documentation/` note above reflects an earlier repo decision to retire
+  that tree, not new scope. No other misread.
 
