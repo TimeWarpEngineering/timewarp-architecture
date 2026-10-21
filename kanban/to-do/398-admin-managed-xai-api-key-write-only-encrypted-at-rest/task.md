@@ -39,6 +39,7 @@ The copy-paste setup text stays the exact user-secrets command in Development, a
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T22:14:04Z
 - Fix pass (implement-fix-2): addressed review round 1 M1–M12. Store failures on resolve return null and status/set/clear return 503. The Admin sentence is a separate field and only when the host can store a key. Configured follows a trial unprotect (`needsReplacement`). A successful set or clear reloads Ask. The store write result is the audit action, and a unique violation retries as replace. One completion reads the key once. The admin integration test captures the key the chat client receives. Migration class is `AddProtectedSecrets`. The password field uses `new-password`. 2026-10-22
 - Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 3, roster general, one inline pass over `df2f61ddf`. M1–M12 are verified fixed. One new nit (M13, a dead `XaiChatDefaults.SetupHint`) is open, so a fix pass is needed. The targeted test classes passed in this worktree, and `./bin/dev build` was clean. `dev lint-skills` could not run here because of a local vally version mismatch. 2026-10-22
+- Fix pass (implement-fix-3): deleted `XaiChatDefaults.SetupHint` (review M13). The hint tests assert `HostSetupText`. The handler tests already assert `AdminHint` on its own, so the concatenated command-plus-Admin assertions are gone. `GetAgentChatConfigurationHint_Given_` passed 6. `./bin/dev build` was 0 warnings and 0 errors. `./bin/dev template-smoke` printed `Template smoke SUCCEEDED` for SmokeDefault. `ganda repo audit` passed. 2026-10-22
 
 ## Results
 
@@ -46,7 +47,7 @@ Administrators set, replace, and clear the site xAI API key on Admin → AI (`/A
 
 Set, replace, and clear write `Site xAI API key {Action} by {PrincipalId}`. The action comes from the store write (`set` when the row was inserted, `replace` when it already existed or a concurrent insert lost the race, `clear` on delete). The line does not include the key or its suffix. `SiteXaiApiKey_Given_` asserts those three lines. Anonymous callers get 401. A member gets 403. `settings.read` does not see this.
 
-The copy-paste block is the exact user-secrets command in Development, and the `XAI__ApiKey` sentence everywhere else. `Or open Admin → AI.` is `AdminHint`, rendered outside that block, and only when this host can store an admin key. It is absent from Admin → AI and from 503 details. A successful set or clear reloads Ask readiness in an open tab. A failed save does not.
+The copy-paste block is the exact user-secrets command in Development, and the `XAI__ApiKey` sentence everywhere else. `Or open Admin → AI.` is `AdminHint`, rendered outside that block, and only when this host can store an admin key. It is absent from Admin → AI and from 503 details. `XaiChatDefaults.SetupHint` is gone, so the shipped contracts type no longer concatenates the host text and the Admin sentence. A successful set or clear reloads Ask readiness in an open tab. A failed save does not.
 
 The Admin → AI page was not clicked in a browser. The HTTP round trip (including two concurrent first writes and a completion that captures the key), the encrypted row, the status JSON, and the Ask HtmlRenderer were. The Ask Playwright classes expect the exact Development command and compiled under `./bin/dev build`; they were not executed.
 
@@ -67,12 +68,12 @@ cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Debug --
 ganda repo audit
 ```
 
-**Expect:** `XaiApiKeyAdmin_` passes 1. Anonymous is 401, a member is 403, the admin response suffix is `aaaa` then `bbbb`, the JSON has no `apiKey` property, the ciphertext does not contain the plaintext, a second host unprotects the replacement, a host `XAI:ApiKey` is what Ask resolves and PUT returns 409, and DELETE leaves Ask with no key. Two concurrent first PUTs both return 200, and the completion client receives the key from set and again from replace. `XaiChatUpstream_Given_` passes 11, and one turn unprotects the stored key once. `SiteXaiApiKey_Given_` passes 6: an unreadable row needs replacement, a store failure is 503 for status/set/clear and null for Ask, and the audit lines are `set`, `replace`, and `clear` plus the principal id. `XaiApiKeyStatus_Given_` passes 2 and the JSON name list includes `needsReplacement`. Hint filters pass 6 and 5: `SetupCommand` is the exact command or the host-variable sentence, and `AdminHint` is `Or open Admin → AI.` only when storage is available. `CompleteAgentChatHandler_Given_` passes 5, and a 503 detail has no Admin sentence. `AgentAskReadiness_Should_` passes 14: the Admin sentence is outside the copy block, a successful save reloads Ask, and a failed save does not. `./bin/dev build` is 0 warnings and 0 errors. Template smoke prints `Template smoke SUCCEEDED` for SmokeDefault. Audit prints `Repository passes all audit checks.`
+**Expect:** `XaiApiKeyAdmin_` passes 1. Anonymous is 401, a member is 403, the admin response suffix is `aaaa` then `bbbb`, the JSON has no `apiKey` property, the ciphertext does not contain the plaintext, a second host unprotects the replacement, a host `XAI:ApiKey` is what Ask resolves and PUT returns 409, and DELETE leaves Ask with no key. Two concurrent first PUTs both return 200, and the completion client receives the key from set and again from replace. `XaiChatUpstream_Given_` passes 11, and one turn unprotects the stored key once. `SiteXaiApiKey_Given_` passes 6: an unreadable row needs replacement, a store failure is 503 for status/set/clear and null for Ask, and the audit lines are `set`, `replace`, and `clear` plus the principal id. `XaiApiKeyStatus_Given_` passes 2 and the JSON name list includes `needsReplacement`. Hint filters pass 6 and 5: `HostSetupText` is the exact command or the host-variable sentence and does not contain the Admin sentence, and `AdminHint` is `Or open Admin → AI.` only when storage is available. `CompleteAgentChatHandler_Given_` passes 5, and a 503 detail has no Admin sentence. `AgentAskReadiness_Should_` passes 14: the Admin sentence is outside the copy block, a successful save reloads Ask, and a failed save does not. `./bin/dev build` is 0 warnings and 0 errors. Template smoke prints `Template smoke SUCCEEDED` for SmokeDefault. Audit prints `Repository passes all audit checks.`
 
 ### Review
 
 - Round 1 (effort 3, general): M1–M12 implemented on this id in the fix pass.
-- Round 2 (effort 3, general): M1–M12 verified fixed (4 bug, 4 suggestion, 4 nit). New finding M13 (nit, open): `XaiChatDefaults.SetupHint` has no production caller. Counts: bug 0 open / 4 fixed, suggestion 0 open / 4 fixed, nit 1 open / 4 fixed. Disposition is pending until M13 is fixed and re-reviewed in round 3.
+- Round 2 (effort 3, general): M1–M12 verified fixed (4 bug, 4 suggestion, 4 nit). M13 (nit) implemented on this id: deleted `XaiChatDefaults.SetupHint`. Hint tests assert `HostSetupText`. `AdminHint` stays a separate handler field. Round 3 re-verifies M13.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Learnings
@@ -83,8 +84,7 @@ ganda repo audit
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
-- Round 2: Blocked — M1–M12 fixed; open M13
-
+- Round 2: Blocked — open M13
 ## Notes
 
 - Origin: Steve 2026-10-21, "should this be configurable from Admin like Assistant name? And Tenant Ids".

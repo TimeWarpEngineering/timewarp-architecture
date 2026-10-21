@@ -45,23 +45,20 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     public static Task Development_Hint_Is_The_User_Secrets_Command()
     {
-      string command = XaiChatDefaults.SetupHint(development: true);
+      string command = XaiChatDefaults.HostSetupText(development: true);
       command.ShouldBe(XaiChatDefaults.SetupCommand);
       command.ShouldNotContain("Admin");
-      string withStorage = XaiChatDefaults.SetupHint(development: true, adminStorage: true);
-      withStorage.ShouldBe(XaiChatDefaults.SetupCommand + " " + XaiChatDefaults.AdminAiSentence);
       return Task.CompletedTask;
     }
 
     public static Task Other_Environments_Name_The_Variable_And_Hide_The_User_Secrets_Id()
     {
-      string hint = XaiChatDefaults.SetupHint(development: false);
+      string hint = XaiChatDefaults.HostSetupText(development: false);
       hint.ShouldBe(XaiChatDefaults.DeployedSetupHint);
       hint.ShouldContain("XAI__ApiKey");
       hint.ShouldNotContain("Admin");
       hint.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       hint.ShouldNotContain("user-secrets");
-      XaiChatDefaults.SetupHint(development: false, adminStorage: true).ShouldContain("Admin → AI");
       return Task.CompletedTask;
     }
 

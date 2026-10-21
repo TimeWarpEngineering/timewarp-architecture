@@ -76,15 +76,6 @@ public static class XaiChatDefaults
   public static string HostSetupText(bool development) =>
     development ? SetupCommand : DeployedSetupHint;
 
-  /// <summary>
-  /// <see cref="HostSetupText"/> plus <see cref="AdminAiSentence"/> when <paramref name="adminStorage"/> is true.
-  /// </summary>
-  public static string SetupHint(bool development, bool adminStorage = false)
-  {
-    string host = HostSetupText(development);
-    return adminStorage ? host + " " + AdminAiSentence : host;
-  }
-
   /// <summary>Template default: chats are not recorded until a deployment sets XAI:RecordChats.</summary>
   public const bool RecordChats = false;
 
