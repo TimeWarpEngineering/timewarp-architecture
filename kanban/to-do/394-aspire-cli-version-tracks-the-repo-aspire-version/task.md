@@ -40,6 +40,8 @@ dev-cli tests cover the warn path, the refuse path, and the agreement of those s
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implementation: 2026-10-21. Fast-forwarded this branch onto origin/master first (no unique commits, 13 behind, including task 393's deploy edits).
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T15:31:06Z
+- Review oracle round 1: claude (claude-opus-5-5), effort 2, roster general, session not reported — 2026-10-21. Two open suggestions (M1, M2); fix pass requested.
 
 ## Results
 
@@ -66,6 +68,16 @@ Expect:
 `db nuke` (no `--yes`) prints `Warning: Aspire CLI 13.6.1 is older than this repo's Aspire 13.6.2. Update with \`dotnet tool update -g Aspire.Cli\`.` then the existing refusal to nuke without `--yes`, and exits 1. Nothing is stopped and no volume is deleted. dev-cli-tests passes (303). Template smoke prints `Template smoke SUCCEEDED`, and the generated AppHost uses `Version="$(AspireVersion)"`.
 
 Ran those three on 2026-10-21. `db nuke` matched the warning and the refusal (exit 1). dev-cli-tests: 303 passed, 0 failed. Template smoke: `Template smoke SUCCEEDED` (SmokeDefault build, 0 warnings). AppHost Release build: 0 warnings; `AspireVersion` 13.6.2, `IsAspireHost` true. `vally lint skills/tw-deploy`: 3/3. `ganda repo audit`: Passed 32, Failed 0.
+
+### Review
+
+- Round 1 (effort 2, roster general): 0 bug, 2 suggestion, 0 nit, all open. M1: the workflow agreement check is satisfied by the `<AspireVersion>` comment in workflow.yml. M2: a prerelease `<AspireVersion>` refuses every Aspire verb. Fix pass requested. No disposition yet.
+- Re-verified by the reviewer: dev-cli-tests 303/303 pass. The AppHost evaluates with `IsAspireHost=true` and `AspireHostingSDKVersion=13.6.2`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- Misread (restatement vs task): the original checklist asked that "`tw-dev-cli` / `tw-deploy` skill mention the CLI must match the repo's Aspire version." The restatement covers only `tw-deploy`. The implementer also rewrote the original checklist item to drop `tw-dev-cli`, because that skill lives in timewarp-flow. Moving it out of this repo is reasonable, but the original item should have been left as written and a timewarp-flow follow-up filed for `tw-dev-cli`. Right now nothing tracks that gap. why: review oracle round 1 2026-10-21
 
 ## Notes
 
