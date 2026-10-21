@@ -101,8 +101,7 @@ This fix pass re-ran `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 3
 ## Review
 
 - Round 1: open M1, M2. Fix pass addressed both on 2026-10-21.
-- Round 2: M1 and M2 fixed, no new findings. Disposition clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, after `A new version of Aspire is available: 13.6.2` during the aca-neon test.
