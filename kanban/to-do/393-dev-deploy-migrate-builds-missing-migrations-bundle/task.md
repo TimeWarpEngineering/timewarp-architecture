@@ -61,10 +61,20 @@ Live proof on 2026-10-21. Empty resource group `rg-tw-architecture-aca-neon-sea`
 
 Tests, Release, from each project directory: `dev-cli-tests` 289 passed; `AcaNeonPublish_Given_` 7 passed; `AcaPublish_Given_` 13 passed.
 
+### Review
+
+Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer. The reviewer re-ran `dev-cli-tests` in Release and got 289 passed. Final counts so far: 1 bug, 1 suggestion, and 1 nit, all open. The bug is M1: the step-order and stop tests lock `DeployPipeline.Steps` and the test-only `StopMessage`, not the order the handler actually runs. The suggestion is M2: the AppHost reflects into the internal `ContainerAppDomain` getter when the public `GetOutput` exists. The nit is M3: the Neon region warning calls a nearby pair "far". Disposition: pending. A fix pass is needed before round 2. Paths: `review/review-framework.md`, `review/round-1/general.md`, and `review/round-1/merged.md` (the live ledger).
+
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implement: one-command deploy, passkey ingress host, Neon region warning, and the aca-neon live proof (2026-10-21)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T14:33:23Z
+- Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported. 3 findings open (M1 bug, M2 suggestion, M3 nit); a fix pass is requested (2026-10-21)
+
+## Learnings
+
+- Restatement vs task (narrowing, not a misread of intent): the task says passkeys work on "every deployed target (aca, aca-neon, compose, kubernetes)". The restatement says compose and Kubernetes are covered by the `localhost` default. That holds for compose and for a kind port-forward. It does not cover a Kubernetes LoadBalancer host. That host is an IP, which cannot be an RP ID, or a DNS name, which works like a custom domain. In both cases it needs `passkey-rp-host`, which the task allowed as the fallback. The reviewer judged this acceptable and raised no finding.
 
 ## Notes
 
