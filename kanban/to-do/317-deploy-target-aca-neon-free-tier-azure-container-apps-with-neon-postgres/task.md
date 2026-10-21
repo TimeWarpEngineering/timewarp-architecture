@@ -89,6 +89,8 @@ Done when:
 
 - 2026-10-21: `aca-neon` publish, deploy, migrate, open, and deprovision are wired. The pooled Neon reference is attached to web-server after `AddEFMigrations`, because that call snapshots the startup project's environment onto `ef-tool-web-migrations` and two `ConnectionStrings__postgres-db` references collide. The direct string stays off the Azure publish output; migrate reads it on the operator machine. `ganda repo audit --fix` pinned TimeWarp.Nuru and TimeWarp.Nuru.DevCli to 4.0.0-beta.5. No live deploy: AppHost user secrets do not contain the two Neon connection strings. Azure CLI is already logged in. ACR Basic (about $5/month) is the documented cost exception.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-21T03:27:27Z
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T07:16:14Z
+- Review oracle round 1 (2026-10-21): reviewer claude (claude-opus-5-5, headless), effort 3, roster general, plus a Sonnet general sub-reviewer (agent a270e187bf5cb516b). 0 bugs, 5 suggestions, 3 nits, all open. A fix pass was requested for M1–M8 (`review/round-1/merged.md`).
 
 ## Results
 
@@ -112,6 +114,10 @@ Publish suites passed: `AcaNeonPublish_Given_` 6, `AcaPublish_Given_` 12, `Compo
 Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release -- --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`, `ComposePublish_Given_`, and `KubernetesPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. With the two Neon strings in the AppHost user secrets: `dotnet run tools/dev-cli/dev.cs -- deploy --target aca-neon --yes`, then `dotnet run tools/dev-cli/dev.cs -- deploy migrate --target aca-neon --yes`, then `curl -fsS https://<ingress-fqdn>/web-server/alive` and `curl -fsS https://<ingress-fqdn>/api/identity/entra/offered`. Tear the resource group down with `dev deprovision --target aca-neon` when the registry should stop billing. Leave the Neon project.
 
 Expect: the four publish suites and dev-cli-tests pass. aca-neon Bicep has `minReplicas: 0` and no Flexible Server, Key Vault, or `postgres-kv`. The plan names the subscription source and does not print a connection string. Migrate names the direct connection and applies the bundle without a firewall rule. Both curls return HTTP 200 (`Healthy`, and `{"offered":false}` before Entra is turned on). The database route may wait while Neon wakes. After deprovision the resource group is gone and the Neon project still exists.
+
+### Review
+
+Round 1 (effort 3, general roster): 0 bug, 5 suggestion, 3 nit, all open, 0 fixed, 0 wontfix. Disposition is pending a fix pass. Artifacts: `review/review-framework.md` and `review/round-1/general.md`, plus `review/round-1/merged.md`, which is the live ledger.
 
 ### Registry cost (Steve, 2026-10-21)
 
