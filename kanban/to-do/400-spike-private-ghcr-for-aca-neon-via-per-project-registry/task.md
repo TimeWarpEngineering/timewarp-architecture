@@ -54,6 +54,8 @@ Acceptance:
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implementation: 2026-10-22. Per-project GHCR probe on Aspire.Hosting 13.6.2. `aspire publish` for aca-neon still wrote `aca-env-acr` at SKU Basic. Probe wiring removed. No token, no deploy.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 4), Done — 2026-10-21T23:52:47Z
+- Review oracle round 1: claude-opus-5-5 (headless), effort 2, roster general, 2026-10-22. 0 bug, 1 suggestion, 1 nit, all open. Fix pass requested for M1 and M2. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`.
 
 ## Notes
 
@@ -62,6 +64,8 @@ Acceptance:
 - Deploys are operator-run, never CI (`tw-deploy`).
 
 ## Results
+
+Review: round 1 (effort 2, general) is open. M1 is a suggestion: rewrite the guide section in present tense, not as a spike log. M2 is a nit: the docs reference has no link. Disposition is pending until the fix pass and the round-2 re-review. Ledger: `review/round-1/merged.md`.
 
 Aspire 13.6.2 can name a per-project `ghcr.io` push target. `AddAzureContainerAppEnvironment` still publishes ACR Basic, and each built container app still pulls with that registry's managed identity. Private GHCR does not remove the about-$5 ACR line. The template is unchanged aside from the AppHost design note that points at this finding. The operator guide's "Why the registry stays ACR" section is the record. No follow-up implementation task: the live-proof checklist item stays open because the condition (it works, and the resource group has no ACR) was not met. No GitHub token was created.
 
