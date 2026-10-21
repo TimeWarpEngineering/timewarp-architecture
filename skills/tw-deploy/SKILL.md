@@ -1,6 +1,6 @@
 ---
 name: tw-deploy
-description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and print the URL. The target matrix is Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are the one-step operator verbs (never CI). Also: the kind recipe, production-safety rules, secrets and parameters, the passkey ingress host, Postgres migrations per target, the ingress topology, and container-runtime neutrality. Invoke before deploying, before adding a publish target, or before touching publish-mode wiring in the AppHost. WHEN: deploy the app, dev deploy, first deploy, dev deprovision, dev open, dev deploy migrate, open the deployed app, migrate the deployed database, tear down a deployment, kind cluster, aspire publish, aspire deploy, docker compose, Helm chart, Kubernetes, AKS, Azure, Azure Container Apps, ACA, Flexible Server, Key Vault purge, production secrets, passkeys, AllowedRpIds, Neon region, run migrations in production, ingress controller, Podman."
+description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and print the URL. Targets: Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are one-step operator verbs (never CI). Also: kind, production safety, secrets and parameters, the passkey ingress host, migrations per target, ingress topology, container-runtime neutrality. Invoke before deploying, adding a publish target, or touching publish-mode wiring in the AppHost. WHEN: deploy the app, first deploy, dev deploy, dev deprovision, dev open, migrate the deployed database, tear down a deployment, kind cluster, Helm, AKS, Azure Container Apps, Neon region, passkeys on a deployed host, production secrets, Podman."
 when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev deploy migrate, port-forward, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, ACA, Bicep, Flexible Server, az login, Key Vault, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME, Neon, aca-neon, Lakebase
 ---
 
@@ -262,19 +262,8 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca and aca-neon: `https://<fqdn>` of the `ingress` container app
   (`az containerapp show --name ingress --resource-group <rg> --query
   properties.configuration.ingress.fqdn`).
-  Passkeys on a deployed target: web-server's `WebAuthnOptions:AllowedRpIds` includes the public
-  ingress host. The C# default is `localhost`, which covers compose and a kind port-forward. Azure
-  Container Apps adds `ingress.<environment domain>` (the Container Apps environment's domain
-  output, not the ingress endpoint, so web-server and ingress do not cycle). A custom domain is the
-  optional AppHost parameter `passkey-rp-host` (a bare DNS name, no scheme or port). Set it in
-  AppHost user secrets or `Parameters__passkey-rp-host`. `dev deploy` copies a user-secret value
-  into the aspire environment. It is emitted only when it is set and is not `localhost`. A custom
-  domain adds its own entry beside `localhost` and, on ACA, beside the ingress host. A value that
-  is not a bare DNS name refuses the deploy.
-  Passkeys work over these plain-http localhost URLs: with `WebAuthnOptions:AllowedOrigins` empty,
-  web-server accepts `http` only when the origin host is loopback (`localhost`, `127.0.0.1`,
-  `[::1]`) and equals the selected RP ID — the same rule browsers use for a secure context. Any
-  other host needs https, or an explicit `AllowedOrigins` list (an exact match, no fallback).
+  Passkeys: the deploy adds the public ingress host to `WebAuthnOptions:AllowedRpIds`; a custom
+  domain is `passkey-rp-host`. See [passkey-hosts.md](references/passkey-hosts.md).
 - **aca and aca-neon resource group** for `dev open`, and for `dev deploy migrate --target aca`:
   `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
   user secret `Azure:ResourceGroup` — the values `dev deploy` uses; the subscription
@@ -296,21 +285,7 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   on its own.
 - **Runtime:** Compose deploy and teardown go through Aspire, so `ASPIRE_CONTAINER_RUNTIME` picks
   the runtime; the verbs call no container CLI themselves (the registry check is an HTTP request).
-- **Without the `dev` CLI** (it lives in the template's source repository), run the same commands
-  the verbs wrap, and do the preflight yourself (`helm version`, `kubectl config current-context`,
-  `kubectl get --raw /version`):
-
-  ```bash
-  aspire deploy  --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> --Parameters:<name>=<value>
-  aspire destroy --apphost <apphost.csproj> --environment Production -- --Publish:Target=<target> [--Parameters:<name>=<value>]
-  ```
-
-  When `aspire destroy` fails or reports nothing to destroy, nothing was removed; use the manual
-  removal above. `dev deploy migrate` runs the commands in the Postgres and migrations table, and
-  `dev open` runs `kubectl port-forward --namespace ingress-nginx
-  service/ingress-nginx-controller <ingress-port>:80` (kind) and opens
-  `http://localhost:<ingress-port>`, where `<ingress-port>` is the `Parameters:ingress-port` value
-  in the AppHost `appsettings.json`.
+- **Without the `dev` CLI:** see [without-the-dev-cli.md](references/without-the-dev-cli.md).
 
 ### Local Kubernetes with kind
 
