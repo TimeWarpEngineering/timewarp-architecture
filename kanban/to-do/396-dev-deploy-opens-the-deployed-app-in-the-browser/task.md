@@ -35,6 +35,7 @@ PATH or there is no terminal). `--no-browser` prints the URL only. `--yes` does 
 - Review round 1 (2026-10-22): review oracle (claude-opus-5-5), effort 2, roster general. 0 bugs, 2 open nits (M1, M2). A fix pass is requested. `review/round-1/merged.md`
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T17:39:52Z
 - Fix pass (2026-10-22): M1 drops the `--no-browser` clause from `NoBrowserMessage`. M2 prints `TemporaryForwardStopped` in `finally` and uses `CompleteMessage` for the success summary.
+- Review round 2 (2026-10-22): review oracle (claude-opus-5-5), effort 1, roster general, turn cap 80. M1 and M2 are fixed. M3 (suggestion) is open, so a fix pass is requested. `review/round-2/merged.md`
 
 ## Results
 
@@ -68,12 +69,14 @@ Ran here on 2026-10-22 after the fix pass: FollowUp 3/3, Browser_Given 7/7, full
 
 ### Review
 
-- Round 1 (effort 2, general): bug 0, suggestion 0, nit 2 (M1, M2). The fix pass implemented both. Round 2 has not run.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 (effort 2, general): bug 0, suggestion 0, nit 2 (M1, M2). The fix pass implemented both.
+- Round 2 (effort 1, general, fix delta `a129b32a9..7bca85a38`): M1 and M2 are fixed. One suggestion is open: M3. After M2, nothing in production passes `temporaryPortForward: true`. That branch of `FollowUpAfterSmoke`, `SmokeFollowUp.Hint`, and the kubernetes test now cover a decision the command never consults. Counts: bug 0, suggestion 1 open, nit 2 fixed. There is no disposition yet.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
+- Round 2: Blocked — open M3
 
 ## Notes
 
