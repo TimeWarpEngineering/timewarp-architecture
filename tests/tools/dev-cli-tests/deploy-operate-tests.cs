@@ -497,7 +497,9 @@ public class Migrate_Given_
   {
     string message = DeployOperate.MissingPublishedOutputMessage(AspireDeploy.Kubernetes, "/repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql");
     message.ShouldContain("/repo/artifacts/aspire-output/kubernetes/efmigrations/web-migrations.sql does not exist");
+    message.ShouldContain("Publishing them now");
     message.ShouldEndWith("dev publish kubernetes");
+    message.ShouldNotContain("never publishes");
     return Task.CompletedTask;
   }
 
@@ -789,6 +791,7 @@ public partial class AppHostAgreement_Given_
     constants["PostgresResourceName"].ShouldBe(DeployOperate.PostgresResourceName);
     constants["PostgresDatabaseResourceName"].ShouldBe(DeployOperate.PostgresDatabaseName);
     constants["IngressPortParameterName"].ShouldBe(DeployOperate.IngressPortParameter);
+    constants["PasskeyRpHostParameterName"].ShouldBe(AspireDeploy.PasskeyRpHostParameter);
     DeployOperate.PostgresStatefulSet.ShouldBe($"statefulset/{constants["PostgresResourceName"]}-statefulset");
     return Task.CompletedTask;
   }
@@ -805,6 +808,11 @@ public partial class AppHostAgreement_Given_
     string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
     program.ShouldContain("builder.Configuration[$\"Parameters:{IngressPortParameterName}\"]");
     IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("program.cs passes a literal to AddParameter(IngressPortParameterName, …)");
+    program.ShouldContain("WebAuthnOptions__AllowedRpIds__");
+    program.ShouldContain("GetOutput(");
+    program.ShouldContain("AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+    program.ShouldNotContain("ContainerAppDomain");
+    program.ShouldContain("PasskeyRpHostParameterName");
     return Task.CompletedTask;
   }
 

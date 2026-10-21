@@ -20,6 +20,8 @@
 // Runtime neutrality (task 277): `aspire publish` only writes files — no image build, no deploy —
 // and nothing here calls a container CLI or a cluster.
 // Generated output is CI-only (never committed): artifacts/ is git-ignored; workflow.yml uploads it.
+// Task 393: `dev deploy` and a `dev deploy migrate` whose artifact is missing call PublishFilesAsync,
+// which is this pipeline's aspire publish only. The safety suite stays on `dev publish`.
 #endregion
 
 namespace DevCli.Services;
@@ -83,12 +85,51 @@ internal static class AspirePublish
       : Fail(terminal, $"{names} publish output failed the production-safety checks.");
   }
 
+  /// <summary>
+  /// Writes one target's publish output (wiping the directory first). Does not run the safety suite.
+  /// <paramref name="environment"/> is copied onto the aspire process for values the AppHost reads while
+  /// publishing (the passkey host). Do not put secrets in it; they belong on <c>aspire deploy</c> only.
+  /// Returns the aspire exit code, or 1 when the CLI version or the target name is refused.
+  /// </summary>
+  internal static async Task<int> PublishFilesAsync(
+    ITerminal terminal,
+    string repoRoot,
+    DeployTarget deployTarget,
+    CancellationToken cancellationToken,
+    IReadOnlyDictionary<string, string>? environment = null)
+  {
+    AspirePublishTarget? target = AspirePublishTargets.All.FirstOrDefault(candidate =>
+      string.Equals(candidate.Name, deployTarget.Name, StringComparison.OrdinalIgnoreCase));
+    if (target is null)
+    {
+      Fail(terminal, $"No aspire publish target named {deployTarget.Name}.");
+      return 1;
+    }
+
+    string? versionError = await AspireCli.ValidateVersionAsync(repoRoot, MinimumCliVersion, $"dev publish {target.Name}", cancellationToken);
+    if (versionError is not null)
+    {
+      Fail(terminal, $"Error: {versionError}");
+      return 1;
+    }
+
+    string outputDirectory = Path.Combine(repoRoot, target.OutputDirectory);
+    bool published = await PublishAsync(terminal, repoRoot, target, outputDirectory, cancellationToken, environment);
+    if (published)
+    {
+      return 0;
+    }
+
+    return Environment.ExitCode == 0 ? 1 : Environment.ExitCode;
+  }
+
   private static async Task<bool> PublishAsync(
     ITerminal terminal,
     string repoRoot,
     AspirePublishTarget target,
     string outputDirectory,
-    CancellationToken cancellationToken)
+    CancellationToken cancellationToken,
+    IReadOnlyDictionary<string, string>? environment = null)
   {
     if (Directory.Exists(outputDirectory))
     {
@@ -96,7 +137,7 @@ internal static class AspirePublish
     }
 
     terminal.WriteLine($"\naspire publish ({target.Name}) → {outputDirectory}");
-    int publishExitCode = await Shell.Builder("aspire")
+    ShellBuilder publish = Shell.Builder("aspire")
       .WithArguments(
         "publish",
         "--apphost", Path.Combine(repoRoot, AspireRun.AppHostProject),
@@ -105,8 +146,16 @@ internal static class AspirePublish
         "--",
         $"--Publish:Target={target.Name}")
       .WithWorkingDirectory(repoRoot)
-      .WithNoValidation()
-      .RunAsync(cancellationToken);
+      .WithNoValidation();
+    if (environment is not null)
+    {
+      foreach ((string name, string value) in environment)
+      {
+        publish = publish.WithEnvironmentVariable(name, value);
+      }
+    }
+
+    int publishExitCode = await publish.RunAsync(cancellationToken);
 
     if (publishExitCode == 0) return true;
 

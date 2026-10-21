@@ -145,6 +145,14 @@ public partial class AcaNeonPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
+  {
+    string webServer = ModuleContaining("name: 'web-server'");
+    webServer.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
+    webServer.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+    await Task.CompletedTask;
+  }
+
   public static async Task RunMode_Should_CarryNoAzureWiring()
   {
     await using IDistributedApplicationTestingBuilder appHost =

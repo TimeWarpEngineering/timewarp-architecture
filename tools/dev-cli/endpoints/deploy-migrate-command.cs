@@ -13,8 +13,8 @@
 //      `az login` and the subscription with its source; aca-neon — the direct Neon string only, no
 //      `az login` and no pooled string. No aspire/helm/registry checks: none of them runs.
 //   2. The published artifact (artifacts/aspire-output/<target>/efmigrations/web-migrations.sql, or the
-//      web-migrations bundle for aca) must exist. A missing one is REFUSED with the exact
-//      `dev publish <target>` command; the verb never publishes (DeployOperate Design region says why).
+//      web-migrations bundle for aca) must exist. A missing one is published (`aspire publish` for that
+//      target) and the verb continues (task 393). A failed publish stops here and names `dev publish`.
 //   3. Target specifics, all read-only so far:
 //      compose — `<runtime> compose ls --format json` (runtime = ASPIRE_CONTAINER_RUNTIME, else docker;
 //      never a hard-coded docker) picks the running project (--project-name, else the one from this
@@ -96,16 +96,17 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, Verb, command.Target, PreflightScope.Migrate, ct);
       if (preflight is null) return Unit.Value;
 
-      string artifact = Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), DeployOperate.MigrationArtifact(preflight.Target));
-      if (OperatingSystem.IsWindows() && AspireDeploy.IsAzureContainerApps(preflight.Target) && !File.Exists(artifact))
-      {
-        artifact += ".exe";
-      }
-
+      string artifact = MigrationArtifactPath(preflight);
       if (!File.Exists(artifact))
       {
-        Fail(DeployOperate.MissingPublishedOutputMessage(preflight.Target, artifact));
-        return Unit.Value;
+        Terminal.WriteLine(DeployOperate.MissingPublishedOutputMessage(preflight.Target, artifact));
+        int publishExit = await AspirePublish.PublishFilesAsync(Terminal, preflight.RepoRoot, preflight.Target, ct);
+        artifact = MigrationArtifactPath(preflight);
+        if (publishExit != 0 || !File.Exists(artifact))
+        {
+          Fail(DeployPipeline.FailureMessage(DeployPipeline.Publish, preflight.Target, publishExit == 0 ? 1 : publishExit));
+          return Unit.Value;
+        }
       }
 
       string script = AspireDeploy.UsesMigrationBundle(preflight.Target)
@@ -393,6 +394,18 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
 
       Terminal.WriteErrorLine(line.Red());
       Environment.ExitCode = exitCode;
+    }
+
+    private static string MigrationArtifactPath(DeployPreflight preflight)
+    {
+      string artifact = Path.Combine(
+        preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), DeployOperate.MigrationArtifact(preflight.Target));
+      if (OperatingSystem.IsWindows() && AspireDeploy.IsAzureContainerApps(preflight.Target) && !File.Exists(artifact) && File.Exists(artifact + ".exe"))
+      {
+        return artifact + ".exe";
+      }
+
+      return artifact;
     }
 
     private void Fail(string message)

@@ -184,6 +184,9 @@ internal static class AspireDeploy
   internal const string NeonPooledConnectionStringParameter = "neon-pooled-connection-string";
   internal const string NeonDirectConnectionStringParameter = "neon-direct-connection-string";
 
+  /// <summary>Optional extra passkey RP host (a custom domain or a non-localhost ingress). Not a secret.</summary>
+  internal const string PasskeyRpHostParameter = "passkey-rp-host";
+
   /// <summary>aca and aca-neon both provision an Azure Container Apps environment.</summary>
   internal static bool IsAzureContainerApps(DeployTarget target) => target == ContainerApps || target == ContainerAppsNeon;
 
@@ -699,6 +702,21 @@ internal static class AspireDeploy
     {
       CopyWhenUnset(aspireEnvironment, environment, ParameterEnvironmentVariable(secret.Name), secret.Value);
     }
+  }
+
+  /// <summary>
+  /// Copies <c>Parameters:passkey-rp-host</c> into <c>Parameters__passkey-rp-host</c> when that variable is unset.
+  /// Production does not load user secrets. The value is a hostname, not a secret; it is still not printed here.
+  /// </summary>
+  internal static void CopyPasskeyHostWhenUnset(
+    IDictionary<string, string> aspireEnvironment,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput)
+  {
+    CopyUserSecretWhenUnset(
+      aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput,
+      ParameterEnvironmentVariable(PasskeyRpHostParameter), ParameterConfigurationKey(PasskeyRpHostParameter));
   }
 
   /// <summary>

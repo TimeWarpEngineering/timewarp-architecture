@@ -6,10 +6,10 @@
 // Deploy guidance (operator map: target matrix, publish/deploy commands, production-safety rules, secrets,
 // migrations per target, ingress topology, runtime neutrality) lives in skills/tw-deploy/SKILL.md; the
 // reasoning below is its record. Keep the two in sync when publish-mode wiring changes. Deploying is
-// operator-run with `dev deploy` / `dev deprovision` (aspire deploy / destroy per Publish:Target, plus
-// the skill's kind recipe) — never a CI step. After a deploy the operator applies the migrations below
-// with `dev deploy migrate --target <t>` and reaches the ingress with `dev open --target <t>` (kind:
-// a kubectl port-forward of the ingress controller); both wrap the by-hand commands recorded here.
+// operator-run with `dev deploy` / `dev deprovision` — never a CI step. `dev deploy --target <t>`
+// publishes, deploys, migrates when the app has a database, smokes the ingress, and prints the URL.
+// `dev deploy migrate` and `dev open` remain the one-step verbs (kind: `dev open` keeps a kubectl
+// port-forward of the ingress controller). Both wrap the by-hand commands recorded here.
 // Preprocessor blocks mirror the dotnet-new template flags (api/grpc/web/yarp/postgres) so excluded services leave no trace.
 // Project resource names (see constants.cs) MUST equal ServiceNames.* in foundation-contracts — Aspire keys the
 // injected services__{name}__{endpoint}__0 env vars by resource name, and Web.Server's https+http://{name} named
@@ -126,6 +126,12 @@
 // own X-Forwarded-Host exactly as it can send its own Host, and selection-only is what makes both
 // safe — full argument in HttpRequestHostAccessor's Design region. Applied to Web.Server routes
 // only; the api/grpc backends do no host-based selection and keep YARP's defaults.
+// Task 393: a deployed target's public host is on WebAuthnOptions:AllowedRpIds. Azure Container
+// Apps uses ingress.<environment default domain> (GetOutput of
+// AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN, not the ingress endpoint, so web-server and
+// ingress do not cycle). Compose and Kubernetes serve localhost, already allowed.
+// A custom domain is the optional passkey-rp-host parameter, emitted only when it is set and is
+// not localhost. dev deploy copies that user secret into the aspire environment.
 // Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008, 305): request-level smokes
 // through the ingress with a foreign Host on a web route. A loopback client is a trusted proxy, so
 // its X-Forwarded-Host is honored; the untrusted-peer case is the standalone yarp suite.
@@ -757,6 +763,32 @@ internal class Program
       // The web routes below target the named-endpoint cluster (http://_http.web-server), which is
       // NOT a resource reference — this explicit reference keeps the services__web-server__* env
       // injected so the ingress can resolve that address.
+      // Task 393: the browser's public host must be an allowed passkey RP ID on the first deploy.
+      // ACA's FQDN is ingress.<environment domain>. Referencing the ingress endpoint would cycle
+      // web-server and ingress; both sides reference the environment instead. localhost is already
+      // in the C# default, so compose and kubernetes add a host only for a custom domain.
+      string? passkeyRpHost = builder.Configuration[$"Parameters:{PasskeyRpHostParameterName}"];
+      bool extraPasskeyHost = !string.IsNullOrWhiteSpace(passkeyRpHost)
+        && !string.Equals(passkeyRpHost.Trim(), "localhost", StringComparison.OrdinalIgnoreCase);
+      if (extraPasskeyHost)
+      {
+        webServer = webServer.WithEnvironment(
+          "WebAuthnOptions__AllowedRpIds__0",
+          builder.AddParameter(PasskeyRpHostParameterName, passkeyRpHost!.Trim(), publishValueAsDefault: true));
+      }
+
+      if (containerApps is not null)
+      {
+        // Public output on Aspire.Hosting.Azure.AppContainers 13.6.2. ingress.<domain> does not
+        // reference the ingress endpoint (that would cycle web-server and ingress).
+        global::Aspire.Hosting.Azure.BicepOutputReference defaultDomain = containerApps.GetOutput(
+          "AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+        string allowedRpIdIndex = extraPasskeyHost ? "1" : "0";
+        webServer = webServer.WithEnvironment(
+          $"WebAuthnOptions__AllowedRpIds__{allowedRpIdIndex}",
+          ReferenceExpression.Create($"{YarpResourceName}.{defaultDomain}"));
+      }
+
       yarp = yarp.WithReference(webServer);
 
       // Readiness, not liveness (task 058-001): WITHOUT a health check the ingress reports Healthy

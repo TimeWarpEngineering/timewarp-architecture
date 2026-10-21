@@ -24,7 +24,10 @@
 // environment when those variables are unset. An environment value is inherited and not rewritten
 // (task 070-007, task 317);
 // compose needs none of these and reports the container runtime Aspire will use
-// (ASPIRE_CONTAINER_RUNTIME). Which probes run is the verb's PreflightScope (task 287): dev open and
+// (ASPIRE_CONTAINER_RUNTIME). dev deploy also reads Parameters:passkey-rp-host (a hostname, not a
+// secret) and copies it when unset, and for aca-neon warns when the pooled host's AWS region is
+// far from Azure:Location (task 393). The warning does not refuse and does not print the string.
+// Which probes run is the verb's PreflightScope (task 287): dev open and
 // dev deploy migrate skip the aspire and helm checks (they run neither) and the registry probe, and keep
 // the cluster checks (the context answers, the kind cluster exists). aca migrate keeps `az login`.
 // aca-neon migrate skips it and resolves only the direct Neon connection string. They also read
@@ -89,7 +92,9 @@ internal static class AspireDeployPreflight
     string[] parameterProblems = [];
     DeployParameterResolution parameters = new([], []);
     string[] secretNames = AspireDeploy.SecretParameters(target, scope);
-    bool readUserSecrets = AspireDeploy.RequiredParameters(target).Length > 0 || (secretNames.Length > 0 && requireParameters);
+    bool readUserSecrets = scope == PreflightScope.Deploy
+      || AspireDeploy.RequiredParameters(target).Length > 0
+      || (secretNames.Length > 0 && requireParameters);
     CommandOutput? secrets = null;
     if (readUserSecrets)
     {
@@ -221,10 +226,36 @@ internal static class AspireDeployPreflight
       return FailReport(terminal, verb, secretProblems);
     }
 
+    Func<string, string?> environment = AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables());
     if (resolvedSecrets.Count > 0)
     {
-      AspireDeploy.AddSecretParameterEnvironment(
-        aspireEnvironment, resolvedSecrets, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()));
+      AspireDeploy.AddSecretParameterEnvironment(aspireEnvironment, resolvedSecrets, environment);
+    }
+
+    if (scope == PreflightScope.Deploy)
+    {
+      AspireDeploy.CopyPasskeyHostWhenUnset(
+        aspireEnvironment, environment, secrets?.Success == true, secrets?.Stdout ?? "");
+      string? passkeyHost = environment(AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.PasskeyRpHostParameter))
+        ?? aspireEnvironment.GetValueOrDefault(AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.PasskeyRpHostParameter));
+      string? passkeyProblem = DeployPipeline.PasskeyHostProblem(passkeyHost);
+      if (passkeyProblem is not null)
+      {
+        return FailReport(terminal, verb, [passkeyProblem]);
+      }
+
+      if (target == AspireDeploy.ContainerAppsNeon)
+      {
+        string? pooled = resolvedSecrets.FirstOrDefault(secret =>
+          string.Equals(secret.Name, AspireDeploy.NeonPooledConnectionStringParameter, StringComparison.Ordinal))?.Value;
+        string? location = environment(AspireDeploy.AzureLocationVariable)
+          ?? aspireEnvironment.GetValueOrDefault(AspireDeploy.AzureLocationVariable);
+        string? warning = NeonConnection.RegionDistanceWarning(pooled, location);
+        if (warning is not null)
+        {
+          terminal.WriteLine(warning.Yellow());
+        }
+      }
     }
 
     return new DeployPreflight(

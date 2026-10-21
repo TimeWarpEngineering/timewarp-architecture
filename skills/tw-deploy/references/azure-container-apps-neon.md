@@ -113,12 +113,35 @@ not a credential). With Entra enabled and that placeholder still set, sign-in fa
 `invalid_client`. Set that user secret, or `Parameters__entra-client-secret`, before turning Entra
 on. `dev deploy` copies the user secret the same way as the Neon strings.
 
-## Deploy, migrate, open
+## Region
+
+Put the Container Apps environment and the Neon project in the same region, near the users. A Neon
+host looks like `ep-….ap-southeast-1.aws.neon.tech`; the AWS region is the label before `aws`. The
+nearby Azure region for `ap-southeast-1` is `southeastasia`. Set that as `Azure:Location` (or
+`Azure__Location`) before deploy. `dev deploy --target aca-neon` warns when the pooled host's region
+is far from `Azure:Location` and names the nearby Azure region. A nearby Azure region for that AWS
+region (for example `eastus2` when Neon is in `us-east-1`) stays quiet. It does not print the connection
+string, and it does not refuse.
+
+## Deploy
+
+One command, after `az login` and the two Neon secrets. Set `Azure:Location` and
+`Azure:ResourceGroup` as well. Passkeys accept the ingress host on the first deploy
+(`ingress.<environment domain>` is added to `WebAuthnOptions:AllowedRpIds`). A custom domain also
+needs `Parameters:passkey-rp-host` set to that bare DNS name.
 
 ```bash
-az login
-dev publish aca-neon          # Bicep only; no Azure or Neon credentials
-dev deploy --target aca-neon
+dev deploy --target aca-neon   # publish, deploy, migrate, smoke, print the URL
+```
+
+`dev deploy` publishes the migrations bundle, deploys, migrates on the direct connection, then
+requests `GET /web-server/alive` and `GET /api/identity/entra/offered`. It retries a Neon cold
+start. It does not request `/api/health`.
+
+Operator steps, when you want one of them alone:
+
+```bash
+dev publish aca-neon          # Bicep only; no Azure or Neon credentials. Also the safety suite.
 dev deploy migrate --target aca-neon
 dev open --target aca-neon
 ```
