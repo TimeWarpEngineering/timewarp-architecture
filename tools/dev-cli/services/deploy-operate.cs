@@ -23,10 +23,10 @@
 // port, the `dev open --target kubernetes` forward port and the compose fallback. --port overrides it;
 // with neither, `dev open` refuses (NoIngressPortMessage) rather than guess a shared port such as 8080.
 //
-// Missing published output: `dev deploy migrate` REFUSES with the exact `dev publish <target>`
-// command instead of publishing itself. Publishing is a separate, gated step (it wipes the output
-// directory and runs the production-safety suite) and the operator should see which script runs —
-// a silent publish could migrate with a script from a different checkout state than the deploy.
+// Missing published output (task 393): `dev deploy migrate` publishes that target (`aspire publish`
+// into artifacts/aspire-output/<target>) and continues, instead of refusing. The line still names
+// `dev publish <target>`. The production-safety suite stays on `dev publish`; this publish only
+// writes the files the migration runs.
 //
 // Compose project: `aspire deploy` chooses the Compose project name itself (the published
 // docker-compose.yaml has no `name:`), so the verb never guesses it. It asks the runtime —
@@ -156,10 +156,9 @@ internal static partial class DeployOperate
   internal static string MigrationArtifact(DeployTarget target) =>
     AspireDeploy.UsesMigrationBundle(target) ? MigrationBundle : MigrationScript;
 
-  /// <summary>Refusal when the published migration artifact is missing: the exact command that writes it.</summary>
+  /// <summary>Printed when the migration artifact is missing: this verb publishes it, and names <c>dev publish</c>.</summary>
   internal static string MissingPublishedOutputMessage(DeployTarget target, string path) =>
-    $"No published migrations for {target.Name}: {path} does not exist. Publish them first (the verb never publishes for you), then re-run: "
-    + $"dev publish {target.Name}";
+    DeployPipeline.WillPublishMissingMigrations(target, path);
 
   /// <summary>
   /// <paramref name="value"/> as a TCP port; an error naming <paramref name="origin"/> (e.g. <c>--port</c>) when it is not one.

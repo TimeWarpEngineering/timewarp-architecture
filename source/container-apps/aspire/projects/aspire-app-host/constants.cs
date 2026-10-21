@@ -52,6 +52,10 @@ internal class Constants
   // (the template's ingressPort port generator rewrites it per generated app),
   // and dev open forwards / opens that same port on every target.
   public const string IngressPortParameterName = "ingress-port";
+  // Task 393: optional public hostname for passkeys when it is not localhost (a custom domain).
+  // Empty means no extra host. dev deploy copies a user-secret value; the AppHost emits it only
+  // when it is set and is not localhost.
+  public const string PasskeyRpHostParameterName = "passkey-rp-host";
   public const string EntraEnabledParameterName = "entra-enabled";
   public const string EntraTenantIdParameterName = "entra-tenant-id";
   public const string EntraClientIdParameterName = "entra-client-id";

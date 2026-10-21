@@ -348,6 +348,16 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
+  {
+    // The public host is ingress.<environment domain>. The domain is an output of the environment,
+    // so web-server does not reference the ingress container app (that pairing cycles).
+    ContainerApp webServer = ContainerApps.Single(app => app.Name == WebServerApp);
+    webServer.Text.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
+    webServer.Text.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+    await Task.CompletedTask;
+  }
+
   public static async Task RunMode_Should_CarryNoAzureWiring()
   {
     // Publish-only: the dev loop's model has no Azure resource at all — postgres stays the container

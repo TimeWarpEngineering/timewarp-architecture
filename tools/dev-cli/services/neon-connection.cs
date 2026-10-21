@@ -14,6 +14,9 @@
 // must be Disable; Npgsql rejects Disabled. Keepalive above 0 would ping Neon and burn the free
 // compute hours, so it is rejected on the pooled string. The direct host must not be the pooler.
 // A semicolon inside a password splits the string; Neon passwords do not need one.
+// Task 393: the pooled host's AWS region (the label before `.aws.neon.tech`) is compared with
+// Azure:Location. A far pair prints a warning that names the nearby Azure region. The warning
+// never includes the connection string or the endpoint id.
 #endregion
 
 namespace DevCli.Services;
@@ -95,6 +98,123 @@ internal static class NeonConnection
 
     return [.. problems];
   }
+
+  /// <summary>
+  /// Warning when <paramref name="connectionString"/>'s AWS region is far from <paramref name="azureLocation"/>,
+  /// or when the location is unset and a nearby Azure region is known. Null when the host has no
+  /// <c>.aws.neon.tech</c> region, or the location already is the nearby region. The text never
+  /// contains the connection string or the endpoint id.
+  /// </summary>
+  internal static string? RegionDistanceWarning(string? connectionString, string? azureLocation)
+  {
+    string? awsRegion = AwsRegion(connectionString);
+    if (awsRegion is null)
+    {
+      return null;
+    }
+
+    string? nearby = NearbyAzureRegion(awsRegion);
+    string location = NormalizeLocation(azureLocation);
+    if (nearby is null)
+    {
+      return string.IsNullOrEmpty(location)
+        ? $"aca-neon: Neon is in AWS region {awsRegion}. No paired Azure region is listed. Set Azure:Location near that region and your users. Warning only; deploy continues."
+        : $"aca-neon: Neon is in AWS region {awsRegion} and Azure:Location is {location.Trim()}. No paired Azure region is listed. Confirm they are near each other and near your users. Warning only; deploy continues.";
+    }
+
+    string nearbyNorm = NormalizeLocation(nearby);
+    if (!string.IsNullOrEmpty(location) && location.Equals(nearbyNorm, StringComparison.Ordinal))
+    {
+      return null;
+    }
+
+    return string.IsNullOrEmpty(location)
+      ? $"aca-neon: Neon is in AWS region {awsRegion}. Azure:Location is not set. Use {nearby} (near that region and your users) when Aspire asks, or set Azure:Location / Azure__Location first. Warning only; deploy continues."
+      : $"aca-neon: Neon is in AWS region {awsRegion}, far from Azure location {azureLocation!.Trim()}. Use {nearby} instead (set Azure:Location or Azure__Location). Warning only; deploy continues.";
+  }
+
+  /// <summary>The AWS region label in a Neon host (<c>….&lt;region&gt;.aws.neon.tech</c>), or null.</summary>
+  internal static string? AwsRegion(string? connectionString)
+  {
+    if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("://", StringComparison.Ordinal))
+    {
+      return null;
+    }
+
+    string? host = ReadHost(Parse(connectionString));
+    if (host is null)
+    {
+      return null;
+    }
+
+    string[] labels = host.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    for (int index = 0; index < labels.Length - 3; index++)
+    {
+      if (labels[index + 1].Equals("aws", StringComparison.OrdinalIgnoreCase)
+        && labels[index + 2].Equals("neon", StringComparison.OrdinalIgnoreCase)
+        && labels[index + 3].Equals("tech", StringComparison.OrdinalIgnoreCase)
+        && labels[index].Length > 0)
+      {
+        return labels[index].ToLowerInvariant();
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>The Azure region to prefer for an AWS region Neon uses, or null when none is paired.</summary>
+  internal static string? NearbyAzureRegion(string awsRegion) =>
+    NearbyAzureRegions.TryGetValue(awsRegion.Trim().ToLowerInvariant(), out string? azure) ? azure : null;
+
+  private static string NormalizeLocation(string? azureLocation)
+  {
+    if (string.IsNullOrWhiteSpace(azureLocation))
+    {
+      return "";
+    }
+
+    Span<char> buffer = stackalloc char[azureLocation.Length];
+    int length = 0;
+    foreach (char character in azureLocation)
+    {
+      if (character is ' ' or '_' or '-')
+      {
+        continue;
+      }
+
+      buffer[length++] = char.ToLowerInvariant(character);
+    }
+
+    return new string(buffer[..length]);
+  }
+
+  /// <summary>One nearby Azure region for each AWS region Neon commonly places a project in.</summary>
+  private static readonly Dictionary<string, string> NearbyAzureRegions = new(StringComparer.Ordinal)
+  {
+    ["us-east-1"] = "eastus",
+    ["us-east-2"] = "eastus2",
+    ["us-west-1"] = "westus",
+    ["us-west-2"] = "westus2",
+    ["eu-west-1"] = "northeurope",
+    ["eu-west-2"] = "uksouth",
+    ["eu-west-3"] = "francecentral",
+    ["eu-central-1"] = "germanywestcentral",
+    ["eu-central-2"] = "switzerlandnorth",
+    ["eu-north-1"] = "swedencentral",
+    ["eu-south-1"] = "italynorth",
+    ["ap-southeast-1"] = "southeastasia",
+    ["ap-southeast-2"] = "australiaeast",
+    ["ap-northeast-1"] = "japaneast",
+    ["ap-northeast-2"] = "koreacentral",
+    ["ap-northeast-3"] = "japaneast",
+    ["ap-south-1"] = "centralindia",
+    ["ap-east-1"] = "eastasia",
+    ["sa-east-1"] = "brazilsouth",
+    ["ca-central-1"] = "canadacentral",
+    ["af-south-1"] = "southafricanorth",
+    ["me-south-1"] = "uaenorth",
+    ["il-central-1"] = "israelcentral",
+  };
 
   private static Dictionary<string, string> Parse(string connectionString)
   {

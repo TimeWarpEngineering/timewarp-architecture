@@ -18,6 +18,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-run.cs" Link="services\aspire-run.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-deploy.cs" Link="services\aspire-deploy.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\deploy-operate.cs" Link="services\deploy-operate.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\deploy-pipeline.cs" Link="services\deploy-pipeline.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\neon-connection.cs" Link="services\neon-connection.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\db-ef.cs" Link="services\db-ef.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\db-nuke.cs" Link="services\db-nuke.cs" />

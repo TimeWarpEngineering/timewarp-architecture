@@ -26,6 +26,10 @@ Make `dev deploy --target <t>` the all-in-one path: publish (so the migrations b
 deploy, migrate (targets with a database), smoke the ingress, and print the URL. The separate
 verbs stay for operators who want one step.
 
+## Goal (implementer restatement)
+
+`dev deploy --target <t>` is the path from a generated app to a live site. In order it publishes (so the migration files exist), deploys, migrates when that app has a database, smokes the ingress, and prints the URL. It stops at the first failure and names the verb that retries that step. A target with no database skips migrate and says so. Smoke requests only `/web-server/alive` and `/api/identity/entra/offered`, waits through a Neon or scale-to-zero cold start, and never calls `/api/health`. There is no per-step opt-out flag; the existing step verbs are how an operator runs one step. `dev deploy migrate` still works alone, and a missing bundle is published instead of refused. Secrets stay off the command line and out of the output. Passkeys work on the first deploy: Azure Container Apps (aca and aca-neon) put the public ingress host on `WebAuthnOptions:AllowedRpIds` from the environment domain, and any other public host is the `passkey-rp-host` parameter that deploy copies in. Compose and Kubernetes already allow `localhost`, which is the public host of those default paths. aca-neon preflight warns, and does not refuse or print the connection string, when the pooled host's AWS region is far from `Azure:Location`, and it names the nearby Azure region. The tw-deploy skill and the target references lead with the one command, move the step verbs to an operator section, document the passkey host (a custom domain is its own entry), and say to put the app and the Neon project in the same region, near the users. dev-cli tests lock the step order and the stop message. A live aca-neon run goes from an empty resource group to HTTP 200 on those two paths, then `dev deprovision --target aca-neon`.
+
 ## Checklist
 
 - [ ] `dev deploy --target <t>` runs publish, deploy, migrate, smoke, and prints the ingress URL, in that order, stopping at the first failure with the verb to re-run

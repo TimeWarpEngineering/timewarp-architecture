@@ -100,3 +100,65 @@ public class Problems_Given_
   private static string Direct() =>
     "Host=ep-example.neon.tech;Database=app;Username=app;Password=" + Secret + ";SSL Mode=VerifyFull;Connection Timeout=30";
 }
+
+public class RegionDistance_Given_
+{
+  private const string Secret = "s3cret-value";
+  private const string Endpoint = "ep-secret-pooler";
+
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<RegionDistance_Given_>();
+
+  public static Task FarPair_Should_NameTheNearbyAzureRegionAndNotTheSecret()
+  {
+    string? warning = NeonConnection.RegionDistanceWarning(Pooled("ap-southeast-1"), "eastus");
+    warning.ShouldNotBeNull();
+    warning.ShouldContain("ap-southeast-1");
+    warning.ShouldContain("southeastasia");
+    warning.ShouldContain("eastus");
+    warning.ShouldContain("Warning only");
+    warning.ShouldNotContain(Secret);
+    warning.ShouldNotContain(Endpoint);
+    return Task.CompletedTask;
+  }
+
+  public static Task MatchingLocation_Should_BeSilent()
+  {
+    NeonConnection.RegionDistanceWarning(Pooled("ap-southeast-1"), "southeastasia").ShouldBeNull();
+    NeonConnection.RegionDistanceWarning(Pooled("ap-southeast-1"), "Southeast Asia").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task HostWithoutAnAwsRegion_Should_BeSilent()
+  {
+    NeonConnection.RegionDistanceWarning(
+      "Host=ep-example-pooler.neon.tech;Password=" + Secret, "eastus").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task UnknownAwsRegion_Should_NameOnlyThatRegion()
+  {
+    string? warning = NeonConnection.RegionDistanceWarning(Pooled("xx-fake-1"), "eastus");
+    warning.ShouldNotBeNull();
+    warning.ShouldContain("xx-fake-1");
+    warning.ShouldContain("No paired Azure region");
+    warning.ShouldNotContain(Secret);
+    warning.ShouldNotContain(Endpoint);
+    return Task.CompletedTask;
+  }
+
+  public static Task UnsetLocation_Should_NameTheNearbyRegion()
+  {
+    string? warning = NeonConnection.RegionDistanceWarning(Pooled("ap-southeast-1"), null);
+    warning.ShouldNotBeNull();
+    warning.ShouldContain("not set");
+    warning.ShouldContain("southeastasia");
+    warning.ShouldNotContain(Secret);
+    warning.ShouldNotContain(Endpoint);
+    return Task.CompletedTask;
+  }
+
+  private static string Pooled(string awsRegion) =>
+    "Host=" + Endpoint + "." + awsRegion + ".aws.neon.tech;Database=app;Username=app;Password=" + Secret
+    + ";SSL Mode=Require;Timeout=30;Max Auto Prepare=0;No Reset On Close=true;Channel Binding=Disable";
+}

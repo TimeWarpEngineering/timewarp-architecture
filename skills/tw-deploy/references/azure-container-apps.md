@@ -39,12 +39,20 @@ Azure, while the Helm chart runs on any cluster.
 - Entra settings are the same parameters as the other targets; the client secret is a secure
   parameter that becomes a container-app secret.
 
-**Deploy.**
+**Deploy.** One command. Set `Azure:Location` and `Azure:ResourceGroup` first so Aspire does not
+prompt and smoke can read the ingress host. Passkeys accept the ingress host on the first deploy
+(`ingress.<environment domain>` is added to `WebAuthnOptions:AllowedRpIds`). A custom domain also
+needs `Parameters:passkey-rp-host` set to that bare DNS name.
 
 ```bash
 az login                                    # and az account set --subscription <id>
+dev deploy --target aca                     # publish, deploy, migrate, smoke, print the URL
+```
+
+Operator steps, when you want one of them alone:
+
+```bash
 dev publish aca                             # optional: inspect artifacts/aspire-output/aca first
-dev deploy --target aca                     # prompts for location, resource group and parameters
 dev deploy migrate --target aca --resource-group <rg>
 dev open --target aca --resource-group <rg> # https://<fqdn> of the ingress container app
 ```
