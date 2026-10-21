@@ -71,6 +71,7 @@
 //
 // Browser (task 396): ChooseBrowserOpen is the decision `dev open` and `dev deploy` share.
 // --no-browser, no interactive terminal, or no launcher on PATH prints the URL and is not a failure.
+// NoBrowserMessage is the no-launcher and every-launcher-failed line. It does not name --no-browser.
 // The process that starts the launcher is services/deploy-browser.cs.
 #endregion
 
@@ -777,7 +778,7 @@ internal static partial class DeployOperate
     !string.IsNullOrWhiteSpace(distroName)
     || (kernelVersion?.Contains("microsoft", StringComparison.OrdinalIgnoreCase) ?? false);
 
-  internal static string NoBrowserMessage(string url) => $"No browser opener found (or --no-browser); open {url}";
+  internal static string NoBrowserMessage(string url) => $"No browser opener worked; open {url}";
 
   /// <summary>
   /// Which launchers to start. <paramref name="noBrowser"/> and a missing terminal print the URL only.

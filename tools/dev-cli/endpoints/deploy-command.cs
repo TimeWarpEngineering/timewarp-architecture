@@ -386,7 +386,6 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         .WithArguments(forwardArguments)
         .WithNoValidation()
         .CaptureAsync(forwardCancellation.Token);
-      SmokeFollowUp? followUp = null;
       try
       {
         if (!await WaitForListenerAsync(port.Value, forward, ct))
@@ -398,8 +397,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         int exit = await SmokeAtAsync(plan.Url, ct);
         if (exit == 0)
         {
-          followUp = DeployPipeline.FollowUpAfterSmoke(preflight.Target, plan.Url, temporaryPortForward: true, noBrowser);
-          Terminal.WriteLine(followUp.Summary.Green());
+          string summary = DeployPipeline.CompleteMessage(preflight.Target, plan.Url);
+          Terminal.WriteLine(summary.Green());
         }
 
         return exit;
@@ -417,7 +416,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         }
 
         // No foreground forward. The hint names `dev open`, which is what keeps one.
-        Terminal.WriteLine((followUp?.Hint ?? DeployPipeline.TemporaryForwardStopped(preflight.Target)).Yellow());
+        Terminal.WriteLine(DeployPipeline.TemporaryForwardStopped(preflight.Target).Yellow());
       }
     }
 

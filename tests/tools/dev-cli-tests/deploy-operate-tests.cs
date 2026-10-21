@@ -762,7 +762,7 @@ public class Browser_Given_
     DeployOperate.BrowserLaunchers(true, false, false).Single().Executable.ShouldBe("explorer.exe");
     DeployOperate.BrowserLaunchers(false, true, false).Single().Executable.ShouldBe("open");
     DeployOperate.BrowserLaunchers(false, false, false).Single().Executable.ShouldBe("xdg-open");
-    DeployOperate.NoBrowserMessage("http://localhost:36371").ShouldContain("open http://localhost:36371");
+    DeployOperate.NoBrowserMessage("http://localhost:36371").ShouldBe("No browser opener worked; open http://localhost:36371");
     return Task.CompletedTask;
   }
 
