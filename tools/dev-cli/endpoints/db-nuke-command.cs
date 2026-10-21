@@ -11,7 +11,8 @@
 //
 // Order:
 //   1. Aspire CLI version guard, shared with dev run -lp (AspireCli → AspireRun.ValidateCliVersion);
-//      a pre-13.6 CLI has no --volumes and is refused with the update command.
+//      a pre-13.6 CLI has no --volumes and is refused with the update command. A CLI that meets
+//      13.6 but is older than Directory.Packages.props <AspireVersion> warns and continues.
 //   2. Without --yes: print what would happen and exit 1. Nothing runs.
 //   3. aspire stop --force --volumes; nuke exits with its exit code.
 //   4. A hint for a pre-13.6 volume Aspire adopted rather than owned (see db-nuke.cs Design). The dev
@@ -54,12 +55,18 @@ internal sealed class DbNukeCommand : DbGroup, ICommand<Unit>
         return Unit.Value;
       }
 
-      string? versionError = await AspireCli.ValidateVersionAsync(
+      AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
         repoRoot, DbNuke.MinimumCliVersion, DbNuke.Requirement, ct);
+      string? versionError = report.BlockingError(enforceMinimum: true);
       if (versionError is not null)
       {
         Fail($"Error: {versionError}");
         return Unit.Value;
+      }
+
+      if (report.Warning is not null)
+      {
+        Terminal.WriteLine(report.Warning.Yellow());
       }
 
       if (!command.Yes)
