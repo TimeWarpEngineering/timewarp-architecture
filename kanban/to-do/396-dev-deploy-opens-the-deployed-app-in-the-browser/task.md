@@ -2,7 +2,9 @@
 
 ## Goal (implementer restatement)
 
-After smoke succeeds, `dev deploy` should land the operator in the running app. It opens the ingress URL with the same launcher `dev open` uses (`wslview`, then `explorer.exe` on WSL, then the platform opener). `--no-browser` prints that URL and starts nothing. `--yes` only skips the deploy prompt; it does not change the browser. When there is no terminal, or no opener on PATH, the command prints the URL and exits successfully. Kubernetes with no external address does not start a foreground port-forward: it prints the existing hint to run `dev open --target kubernetes` and finishes. Tests lock open-after-smoke, `--no-browser`, and the no-opener fallback. The `tw-deploy` first-deploy description says the command opens the app and names `--no-browser`.
+After smoke succeeds, `dev deploy` opens the ingress with the same launcher as `dev open` (`wslview`, then `explorer.exe` on WSL, then the platform opener). `--no-browser` prints that URL and starts nothing. `--yes` only skips the deploy prompt. No terminal, or no opener on PATH, prints the URL and exits successfully. Kubernetes with no external address does not keep a foreground port-forward: it prints the hint to run `dev open --target kubernetes` and finishes. Tests lock open-after-smoke, `--no-browser`, and the no-opener fallback. `tw-deploy` says the first deploy opens the app and names `--no-browser`.
+
+This pass clears review round 1. The line shown when no launcher works must not mention `--no-browser`, because that flag never prints it. The temporary kubernetes forward prints `TemporaryForwardStopped` in `finally`, and the success branch keeps a non-null summary local.
 
 ## Description
 
@@ -22,6 +24,8 @@ PATH or there is no terminal). `--no-browser` prints the URL only. `--yes` does 
 - [x] kubernetes without an external address: print the `dev open --target kubernetes` hint and finish (no foreground port-forward). Decided: Steve 2026-10-22
 - [x] dev-cli tests: open after smoke, `--no-browser`, no-opener fallback
 - [x] `tw-deploy` skill: the first-deploy description says it opens the app, and mentions `--no-browser`
+- [x] M1: `NoBrowserMessage` is `No browser opener worked; open {url}` and does not name `--no-browser`
+- [x] M2: the temporary kubernetes forward prints `TemporaryForwardStopped` in `finally`; the success branch uses a non-null `CompleteMessage` local
 
 ## Session
 
@@ -29,10 +33,14 @@ PATH or there is no terminal). `--no-browser` prints the URL only. `--yes` does 
 - Implementation: 2026-10-22. After smoke, `dev deploy` calls `DeployBrowser.OpenAsync`, the opener `dev open` now uses too. `--no-browser` and a missing terminal print the URL. Kubernetes without an external address still smokes through a cancelled port-forward and prints the `dev open` hint.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T17:37:26Z
 - Review round 1 (2026-10-22): review oracle (claude-opus-5-5), effort 2, roster general. 0 bugs, 2 open nits (M1, M2). A fix pass is requested. `review/round-1/merged.md`
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T17:39:52Z
+- Fix pass (2026-10-22): M1 drops the `--no-browser` clause from `NoBrowserMessage`. M2 prints `TemporaryForwardStopped` in `finally` and uses `CompleteMessage` for the success summary.
 
 ## Results
 
 `dev deploy` opens the ingress after a successful smoke through `services/deploy-browser.cs`. `dev open` calls that same method. The decision of whether to open lives in `DeployPipeline.FollowUpAfterSmoke` and `DeployOperate.ChooseBrowserOpen`, which the dev-cli tests compile. `--yes` only skips the prompt. A kubernetes smoke that needed a temporary port-forward prints the URL and `dev open --target kubernetes`, then stops the forward. It does not leave a foreground forward and it does not open a browser. `skills/tw-deploy` says the first deploy opens the app and names `--no-browser`. Kind has no external address, so that recipe says deploy prints the hint.
+
+Review round 1 left two nits. `NoBrowserMessage` is now `No browser opener worked; open {url}`. `--no-browser` still prints the URL and does not print that line. The temporary kubernetes forward prints `DeployPipeline.TemporaryForwardStopped` in `finally`. The success branch prints `CompleteMessage` from a non-null local.
 
 `ganda repo audit`: 32 passed, 0 failed, 1 skipped.
 
@@ -52,18 +60,20 @@ dotnet build tools/dev-cli/dev.cs --nologo -v q
 Expect:
 
 - `FollowUp` reports 3 passed: reachable compose, kubernetes LoadBalancer, and ACA open after smoke; `--no-browser` keeps `OpenBrowser` false and the confirm prompt says `print the URL`; kubernetes with a temporary port-forward sets `OpenBrowser` false and the hint contains `dev open --target kubernetes`.
-- `Browser_Given` reports 7 passed: no opener returns `NoBrowserMessage` and an empty launcher list; no terminal and `--no-browser` return no launchers and no fallback; WSL order is `wslview`, then `explorer.exe`.
+- `Browser_Given` reports 7 passed: no opener returns `No browser opener worked; open {url}` and an empty launcher list; no terminal and `--no-browser` return no launchers and no fallback; WSL order is `wslview`, then `explorer.exe`.
 - The full dev-cli-tests run reports 315 passed.
 - `dotnet build tools/dev-cli/dev.cs` exits 0.
 
-Ran here on 2026-10-22: FollowUp 3/3, Browser_Given 7/7, full suite 315/315, `dotnet build tools/dev-cli/dev.cs` exit 0. No live cluster deploy in this walk.
+Ran here on 2026-10-22 after the fix pass: FollowUp 3/3, Browser_Given 7/7, full suite 315/315, `dotnet build tools/dev-cli/dev.cs` exit 0, `ganda repo audit` 32 passed, 0 failed, 1 skipped. No live cluster deploy in this walk.
 
 ### Review
 
-- Round 1 (effort 2, general): bug 0, suggestion 0, nit 2 open (M1 stale `(or --no-browser)` in
-  `NoBrowserMessage`, M2 redundant hint coalesce in the kubernetes forward path). The reviewer
-  re-ran the gates: 315/315, dev.cs build exit 0. Disposition is pending until the fix pass and round 2.
+- Round 1 (effort 2, general): bug 0, suggestion 0, nit 2 (M1, M2). The fix pass implemented both. Round 2 has not run.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
 
 ## Notes
 
