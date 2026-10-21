@@ -12,9 +12,9 @@
 // reference that server type. TWA0024 constant-folds the attribute against the server AddPolicy.
 // The relay accepts identity-session and mock-identity-session only. Agent-token is omitted so
 // an agent bearer cannot spend the Grok key.
-// SetupHint is the text Ask shows when no key is configured. Development returns SetupCommand.
-// Every other environment returns DeployedSetupHint, which names XAI__ApiKey and does not include
-// the user-secrets id. Task 398 should append Admin → AI to DeployedSetupHint when that page exists.
+// SetupHint is the text Ask shows when no key is configured. Development returns SetupCommand
+// plus the Admin → AI sentence. Every other environment returns DeployedSetupHint, which names
+// XAI__ApiKey and Admin → AI and does not include the user-secrets id.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -59,17 +59,21 @@ public static class XaiChatDefaults
   public const string SetupCommand =
     "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + UserSecretsId;
 
-  /// <summary>
-  /// Shown outside Development. Names the environment variable. Does not include the user-secrets id.
-  /// </summary>
-  public const string DeployedSetupHint =
-    "Set XAI__ApiKey as an environment variable or a container-app secret.";
+  /// <summary>Points at the admin page that can store the key when the host has not.</summary>
+  public const string AdminAiSentence = "Or open Admin → AI.";
 
   /// <summary>
-  /// Development keeps <see cref="SetupCommand"/>. Every other environment gets <see cref="DeployedSetupHint"/>.
+  /// Shown outside Development. Names the environment variable and Admin → AI. Does not include the user-secrets id.
+  /// </summary>
+  public const string DeployedSetupHint =
+    "Set XAI__ApiKey as an environment variable or a container-app secret. " + AdminAiSentence;
+
+  /// <summary>
+  /// Development keeps <see cref="SetupCommand"/> and adds <see cref="AdminAiSentence"/>.
+  /// Every other environment gets <see cref="DeployedSetupHint"/>.
   /// </summary>
   public static string SetupHint(bool development) =>
-    development ? SetupCommand : DeployedSetupHint;
+    development ? SetupCommand + " " + AdminAiSentence : DeployedSetupHint;
 
   /// <summary>Template default: chats are not recorded until a deployment sets XAI:RecordChats.</summary>
   public const bool RecordChats = false;

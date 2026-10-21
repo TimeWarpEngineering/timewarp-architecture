@@ -236,7 +236,7 @@ public class AskSurface_Given_Wasm
       await missing.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
       (await missing.InnerTextAsync()).ShouldBe("AI not configured");
       string command = await page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync();
-      command.ShouldBe(XaiChatDefaults.SetupCommand);
+      command.ShouldBe(XaiChatDefaults.SetupHint(development: true));
       (await page.Locator("[data-qa=AskEditMode]").CountAsync()).ShouldBe(0);
       (await page.Locator("[data-qa=AskSettings]").CountAsync()).ShouldBe(0);
       await AssertIconButtonAsync(page, "AskNewConversation", "New conversation");

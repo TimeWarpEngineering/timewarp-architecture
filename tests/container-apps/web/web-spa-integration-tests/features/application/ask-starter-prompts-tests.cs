@@ -313,7 +313,11 @@ public class AskStarterPrompts_Should_
   /// <summary>The configuration answer does not depend on the upstream; completion is a test failure.</summary>
   private sealed class UnconfiguredUpstream : IAgentChatUpstream
   {
-    public bool IsConfigured => false;
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult(false);
+    }
 
     public string? Model => null;
 

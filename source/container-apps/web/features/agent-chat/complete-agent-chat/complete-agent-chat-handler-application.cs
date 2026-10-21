@@ -55,7 +55,7 @@ public sealed class CompleteAgentChat
         return AgentChatProblems.Unauthenticated();
       }
 
-      if (!Upstream.IsConfigured)
+      if (!await Upstream.IsConfiguredAsync(cancellationToken).ConfigureAwait(false))
       {
         return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
       }

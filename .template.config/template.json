@@ -111,6 +111,7 @@
             "tests/container-apps/web/web-server-integration-tests/features/feedback/feedback-attachment-blob-mode-tests.cs",
             "tests/container-apps/web/web-server-integration-tests/features/settings/site-settings-boot-pending-migrations-tests.cs",
             "tests/container-apps/web/web-server-integration-tests/features/data-protection/data-protection-key-ring-tests.cs",
+            "tests/container-apps/web/web-server-integration-tests/features/agent-chat/xai-api-key-admin-tests.cs",
             "tests/container-apps/web/web-infrastructure-tests/**",
             "tests/container-apps/aspire/aspire-tests/postgres-volume-model-tests.cs"
           ]

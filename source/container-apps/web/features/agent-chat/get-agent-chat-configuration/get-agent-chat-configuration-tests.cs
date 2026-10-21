@@ -45,7 +45,10 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     public static Task Development_Hint_Is_The_User_Secrets_Command()
     {
-      XaiChatDefaults.SetupHint(development: true).ShouldBe(XaiChatDefaults.SetupCommand);
+      string hint = XaiChatDefaults.SetupHint(development: true);
+      hint.ShouldBe(XaiChatDefaults.SetupCommand + " " + XaiChatDefaults.AdminAiSentence);
+      hint.ShouldContain(XaiChatDefaults.SetupCommand);
+      hint.ShouldContain("Admin → AI");
       return Task.CompletedTask;
     }
 
@@ -54,6 +57,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
       string hint = XaiChatDefaults.SetupHint(development: false);
       hint.ShouldBe(XaiChatDefaults.DeployedSetupHint);
       hint.ShouldContain("XAI__ApiKey");
+      hint.ShouldContain("Admin → AI");
       hint.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       hint.ShouldNotContain("user-secrets");
       return Task.CompletedTask;
@@ -63,7 +67,8 @@ namespace TimeWarp.Architecture.Features.AgentChats
     {
       GetAgentChatConfiguration.Response response = await Handle("Development");
 
-      response.SetupCommand.ShouldBe(XaiChatDefaults.SetupCommand);
+      response.SetupCommand.ShouldBe(XaiChatDefaults.SetupHint(development: true));
+      response.SetupCommand.ShouldContain("Admin → AI");
     }
 
     public static async Task Production_Handler_Does_Not_Name_User_Secrets()
@@ -88,6 +93,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
       response.SetupCommand.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       response.SetupCommand.ShouldNotContain("user-secrets");
       response.SetupCommand.ShouldContain("XAI__ApiKey");
+      response.SetupCommand.ShouldContain("Admin → AI");
     }
 
     private static async Task<GetAgentChatConfiguration.Response> Handle(string environmentName)
@@ -111,7 +117,11 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     private sealed class UnconfiguredUpstream : IAgentChatUpstream
     {
-      public bool IsConfigured => false;
+      public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
+      {
+        _ = cancellationToken;
+        return Task.FromResult(false);
+      }
 
       public string? Model => null;
 

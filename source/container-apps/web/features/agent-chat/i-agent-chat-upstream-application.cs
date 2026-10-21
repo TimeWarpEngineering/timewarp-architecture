@@ -3,9 +3,11 @@
 #endregion
 
 #region Design
-// IsConfigured is cheap and does not open a connection. CompleteAsync either returns the model's
-// text and function calls or a problem whose detail is safe to show. Implementations must not
-// execute tool declarations.
+// IsConfiguredAsync is the fake flag, the host key, or one read of the admin secret. A changed
+// admin key is visible on the next call. CompleteAsync either returns the model's text and
+// function calls or a problem whose detail is safe to show. Implementations must not execute
+// tool declarations. Model is the sync host-or-fake view; the configuration handler computes the
+// model from options once IsConfiguredAsync is true, so an admin-only key still reports one.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -15,8 +17,10 @@ using static TimeWarp.Architecture.Features.AgentChats.CompleteAgentChat;
 /// <summary>Forwards one completion to the configured model, or reports that none is configured.</summary>
 public interface IAgentChatUpstream
 {
-  /// <summary>True when a real key is set, or the Development/Testing fake is explicitly on.</summary>
-  bool IsConfigured { get; }
+  /// <summary>
+  /// True when the Development/Testing fake is on, the host key is set, or an admin key can be read.
+  /// </summary>
+  Task<bool> IsConfiguredAsync(CancellationToken cancellationToken);
 
   /// <summary>Model id to show in the status response. Empty when nothing is configured.</summary>
   string? Model { get; }
