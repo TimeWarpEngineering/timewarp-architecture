@@ -47,6 +47,12 @@ The cold-start failure is recorded with two isolated key directories that cannot
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implementation: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Audit: `ganda repo audit --fix` set the executable bit on `get-agent-chat-configuration-tests.cs` after the first commit's hook reported `runfile-executable`.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T19:02:49Z
+- Review oracle: reviewed by claude (claude-opus-5-5), session daca0722-ee55-4126-90d2-5dbd3aed5e27, effort 3, roster general, 1 round, disposition clean (2026-10-22)
+
+## Learnings
+
+- Restatement check (review, 2026-10-22): the restatement matches the task, with one narrowing and no misread. The checklist asked for the cold-start repro "on a deployed target ... or with two web-server instances". The restatement substituted two bare Data Protection providers on separate key directories. That is a weaker repro: it shows two separate rings cannot share payloads, not that a running web-server container uses an ephemeral ring. The fix side does use two real web-server hosts against one database, so the acceptance evidence holds.
 
 ## Notes
 
@@ -67,6 +73,19 @@ The cold-start failure and the restart fix both ran against Docker (Testcontaine
 Hint tests passed: `GetAgentChatConfigurationHint` 6, `CompleteAgentChatHandler` 5, `AgentAskReadiness` 11, `AskStarterPrompts` 7.
 
 `./bin/dev template-smoke --matrix` exited 0 (`Template smoke SUCCEEDED`). `ganda repo audit` passed 32 checks and failed 0. The commit hook then reported `runfile-executable` on the new hint runfile, which was still untracked when that audit ran. `ganda repo audit --fix` set its executable bit, and the follow-up audit passed 32 and failed 0.
+
+### Review disposition
+
+**clean.** 1 round, effort 3, roster general. Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix). The reviewer re-ran these in the claim worktree:
+
+- `KeyRing_Given_`: 2/2 passed.
+- The full `web-server-integration-tests`: 352 total, 351 passed, 1 skipped, 0 failed.
+- `Boot_Given_` with `AddDataProtectionKeys` pending: passed. The key ring loads after the migration wait, and no Error is logged.
+- The four hint classes: 29/29 passed.
+- `dev template-smoke --matrix`: all 6 variants passed.
+- `ganda repo audit`: passed.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
