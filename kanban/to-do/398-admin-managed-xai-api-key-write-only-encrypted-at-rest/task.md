@@ -89,8 +89,7 @@ ganda repo audit
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
 - Round 2: Blocked — open M13
-- Round 3: Done — disposition clean, 0 open
-
+- Round 3: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, "should this be configurable from Admin like Assistant name? And Tenant Ids".
