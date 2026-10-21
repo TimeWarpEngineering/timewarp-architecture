@@ -49,10 +49,15 @@ The cold-start failure is recorded with two isolated key directories that cannot
 - Audit: `ganda repo audit --fix` set the executable bit on `get-agent-chat-configuration-tests.cs` after the first commit's hook reported `runfile-executable`.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T19:02:49Z
 - Review oracle: reviewed by claude (claude-opus-5-5), session daca0722-ee55-4126-90d2-5dbd3aed5e27, effort 3, roster general, 1 round, disposition clean (2026-10-22)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T19:16:27Z
 
 ## Learnings
 
 - Restatement check (review, 2026-10-22): the restatement matches the task, with one narrowing and no misread. The checklist asked for the cold-start repro "on a deployed target ... or with two web-server instances". The restatement substituted two bare Data Protection providers on separate key directories. That is a weaker repro: it shows two separate rings cannot share payloads, not that a running web-server container uses an ephemeral ring. The fix side does use two real web-server hosts against one database, so the acceptance evidence holds.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
