@@ -38,6 +38,7 @@ PATH or there is no terminal). `--no-browser` prints the URL only. `--yes` does 
 - Fix pass (2026-10-22): M1 drops the `--no-browser` clause from `NoBrowserMessage`. M2 prints `TemporaryForwardStopped` in `finally` and uses `CompleteMessage` for the success summary.
 - Review round 2 (2026-10-22): review oracle (claude-opus-5-5), effort 1, roster general, turn cap 80. M1 and M2 are fixed. M3 (suggestion) is open, so a fix pass is requested. `review/round-2/merged.md`
 - Fix pass (2026-10-22): M3 drops `temporaryPortForward` from `FollowUpAfterSmoke` and `AnnounceAsync`, drops `Hint` from `SmokeFollowUp`, and asserts `TemporaryForwardStopped` directly. Design, XML docs, and Results match that split.
+- Review round 3 (2026-10-22): review oracle (claude-opus-5-5), effort 1, roster general, turn cap 80. M3 is fixed and nothing new was found. Disposition clean. `review/round-3/merged.md`, `review/disposition.md`
 
 ## Results
 
@@ -75,12 +76,16 @@ Ran here on 2026-10-22 after the M3 fix pass: FollowUp 3/3, Browser_Given 7/7, f
 
 - Round 1 (effort 2, general): bug 0, suggestion 0, nit 2 (M1, M2). The fix pass implemented both.
 - Round 2 (effort 1, general, fix delta `a129b32a9..7bca85a38`): M1 and M2 are fixed. One suggestion was open: M3. The fix pass took option (a): no `temporaryPortForward` parameter, no `SmokeFollowUp.Hint`, and the kubernetes test checks `TemporaryForwardStopped` directly. Counts at review time: bug 0, suggestion 1 open, nit 2 fixed.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
+- Round 3 (effort 1, general, fix delta `67075b649..d49e6a38e`): M3 is fixed and nothing new was found. Re-ran dev-cli-tests (315/315) and `dotnet build tools/dev-cli/dev.cs` (exit 0).
+- Final counts: bug 0, suggestion 0 open / 1 fixed, nit 0 open / 2 fixed, 0 wontfix.
+- Disposition: **clean**. All three findings are fixed.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Blocked — open M3
+- Round 3: Done — disposition clean (0 open)
 
 ## Notes
 
