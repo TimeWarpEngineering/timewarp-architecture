@@ -192,6 +192,30 @@ public class XaiChatUpstream_Given_
     factory.Keys.ShouldBe([host]);
   }
 
+  public static async Task One_Turn_Unprotects_The_Stored_Key_Once()
+  {
+    const string key = "xai-test-key-398-aaaa";
+    MemoryProtectedSecretStore store = new();
+    CapturingChatClientFactory factory = new();
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      key,
+      Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    await using ServiceProvider provider = Build("Production", useFake: false, apiKey: null, store, factory);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    upstream.BeginKeyResolution();
+    (await upstream.IsConfiguredAsync(CancellationToken.None)).ShouldBeTrue();
+    OneOf<Response, SharedProblemDetails> turn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+
+    turn.IsT0.ShouldBeTrue();
+    store.UnprotectCalls.ShouldBe(1);
+    factory.Keys.ShouldBe([key]);
+  }
+
   public static Task Tool_Declarations_Are_Not_Invocable()
   {
     List<AITool> tools = XaiChatMapping.ToTools
@@ -324,6 +348,8 @@ public class XaiChatUpstream_Given_
 
     public bool StorageAvailable => true;
 
+    public int UnprotectCalls { get; private set; }
+
     public Task<ProtectedSecretRecord?> FindAsync(string name, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
@@ -332,7 +358,7 @@ public class XaiChatUpstream_Given_
         : null);
     }
 
-    public Task SetAsync(
+    public Task<ProtectedSecretWrite> SetAsync(
       string name,
       string purpose,
       string plaintext,
@@ -341,18 +367,20 @@ public class XaiChatUpstream_Given_
       CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
+      bool inserted = !Rows.ContainsKey(name);
       Rows[name] = (plaintext, new ProtectedSecretRecord(
         name,
         purpose,
         ProtectedSecretSuffix.From(plaintext),
         setAt,
         setByPrincipalId));
-      return Task.CompletedTask;
+      return Task.FromResult(inserted ? ProtectedSecretWrite.Inserted : ProtectedSecretWrite.Replaced);
     }
 
     public Task<string?> UnprotectAsync(string name, string purpose, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
+      UnprotectCalls++;
       if (!Rows.TryGetValue(name, out (string Plaintext, ProtectedSecretRecord Record) row)
         || !string.Equals(row.Record.Purpose, purpose, StringComparison.Ordinal))
       {

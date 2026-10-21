@@ -24,6 +24,12 @@
   {
     get
     {
+      if (XaiApiKeyState.NeedsReplacement)
+      {
+        string tail = XaiApiKeyState.Suffix is null ? "" : $" It ends in …{XaiApiKeyState.Suffix}.";
+        return "The stored key cannot be read. Paste a new one." + tail;
+      }
+
       if (!XaiApiKeyState.Configured || XaiApiKeyState.Suffix is null)
       {
         return "No key stored.";
@@ -105,7 +111,7 @@
             <FluentTextInput @bind-Value="Command.ApiKey"
                              Name="ApiKey"
                              TextInputType="TextInputType.Password"
-                             AutoComplete="off"
+                             AutoComplete="new-password"
                              AriaLabel="xAI API key"
                              Placeholder="Paste a key"
                              Width="100%"
@@ -122,7 +128,7 @@
                       data-qa="XaiApiKeySave">
           Save key
         </FluentButton>
-        @if (XaiApiKeyState.Configured)
+        @if (XaiApiKeyState.Configured || XaiApiKeyState.NeedsReplacement)
         {
           <FluentButton Type="ButtonType.Button"
                         Appearance="ButtonAppearance.Outline"

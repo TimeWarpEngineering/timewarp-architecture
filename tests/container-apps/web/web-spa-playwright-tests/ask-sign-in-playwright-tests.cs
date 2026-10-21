@@ -314,7 +314,7 @@ public class AskSignIn_Given_Wasm
     state.ShouldBe("AgentAskNotConfigured", $"Ask text: {await session.AskTextAsync()}; statuses [{session.Statuses}]");
     session.ConfigurationStatuses.ShouldContain(200);
     (await session.Page.Locator("[data-qa=AgentAskNotConfigured]").InnerTextAsync()).ShouldBe("AI not configured");
-    (await session.Page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync()).ShouldBe(XaiChatDefaults.SetupHint(development: true));
+    (await session.Page.Locator("[data-qa=AgentAskSetupCommand]").InnerTextAsync()).ShouldBe(XaiChatDefaults.SetupCommand);
     session.AssertNoWasmFailures();
   }
 

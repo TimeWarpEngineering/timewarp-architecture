@@ -5,8 +5,9 @@
 #region Design
 // Get, set, and clear each have their own Response, and each Response is this shape. The SPA
 // binds the interface. Suffix is the last four characters when an admin key is the one Ask will
-// use. It is null when the host key wins, so the host secret's tail is not sent to the browser.
-// SetupHint is the same text Ask shows when nothing is configured.
+// use, or when a stored row cannot be read. It is null when the host key wins, so the host
+// secret's tail is not sent to the browser. SetupHint is how to set the host value. It does not
+// tell the reader to open Admin → AI.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -17,7 +18,7 @@ public interface IXaiApiKeyStatus
   /// <summary>True when <c>XAI:ApiKey</c> is set on the host. The page is read-only.</summary>
   bool ManagedByHost { get; }
 
-  /// <summary>True when Ask has a key, from the host or from Admin.</summary>
+  /// <summary>True when Ask has a key, from the host or from a readable admin secret.</summary>
   bool Configured { get; }
 
   /// <summary>True when this host can store an admin key that survives a restart.</summary>
@@ -26,7 +27,10 @@ public interface IXaiApiKeyStatus
   /// <summary>True when an admin may set, replace, or clear the stored key.</summary>
   bool CanChange { get; }
 
-  /// <summary>Last four characters of the admin key. Null when no admin key is the active one.</summary>
+  /// <summary>True when a row is stored but Ask cannot read it. Paste a new key.</summary>
+  bool NeedsReplacement { get; }
+
+  /// <summary>Last four characters of the stored admin key. Null when the host key wins or no row is stored.</summary>
   string? Suffix { get; }
 
   /// <summary>When the active admin key was written.</summary>
@@ -35,7 +39,7 @@ public interface IXaiApiKeyStatus
   /// <summary>Principal that wrote the active admin key.</summary>
   Guid? SetByPrincipalId { get; }
 
-  /// <summary>How to configure Ask when this page cannot store a key, or in addition to it.</summary>
+  /// <summary>How to set the host value. Does not mention Admin → AI.</summary>
   string SetupHint { get; }
 }
 
@@ -48,6 +52,7 @@ public class XaiApiKeyStatus : IXaiApiKeyStatus
     bool configured,
     bool storageAvailable,
     bool canChange,
+    bool needsReplacement,
     string? suffix,
     DateTimeOffset? setAt,
     Guid? setByPrincipalId,
@@ -57,6 +62,7 @@ public class XaiApiKeyStatus : IXaiApiKeyStatus
     Configured = configured;
     StorageAvailable = storageAvailable;
     CanChange = canChange;
+    NeedsReplacement = needsReplacement;
     Suffix = suffix;
     SetAt = setAt;
     SetByPrincipalId = setByPrincipalId;
@@ -74,6 +80,9 @@ public class XaiApiKeyStatus : IXaiApiKeyStatus
 
   /// <inheritdoc />
   public bool CanChange { get; }
+
+  /// <inheritdoc />
+  public bool NeedsReplacement { get; }
 
   /// <inheritdoc />
   public string? Suffix { get; }

@@ -61,6 +61,7 @@ public sealed class ClearXaiApiKey
         configured: status.Configured,
         storageAvailable: status.StorageAvailable,
         canChange: status.CanChange,
+        needsReplacement: status.NeedsReplacement,
         suffix: status.Suffix,
         setAt: status.SetAt,
         setByPrincipalId: status.SetByPrincipalId,

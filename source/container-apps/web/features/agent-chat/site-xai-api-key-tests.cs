@@ -95,7 +95,10 @@ namespace TimeWarp.Architecture.Features.AgentChats
       SiteXaiApiKey keys = Create(store, logger, HostSecret, development: false);
 
       (await keys.ResolveApiKeyAsync(CancellationToken.None)).ShouldBe(HostSecret);
-      SiteXaiApiKeyStatus status = await keys.GetStatusAsync(CancellationToken.None);
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> statusResult =
+        await keys.GetStatusAsync(CancellationToken.None);
+      statusResult.IsT0.ShouldBeTrue();
+      SiteXaiApiKeyStatus status = statusResult.AsT0;
       status.ManagedByHost.ShouldBeTrue();
       status.Configured.ShouldBeTrue();
       status.CanChange.ShouldBeFalse();
@@ -121,7 +124,10 @@ namespace TimeWarp.Architecture.Features.AgentChats
       ListLogger<SiteXaiApiKey> logger = new();
       SiteXaiApiKey keys = Create(new UnavailableProtectedSecretStore(), logger, hostKey: null, development: false);
 
-      SiteXaiApiKeyStatus status = await keys.GetStatusAsync(CancellationToken.None);
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> statusResult =
+        await keys.GetStatusAsync(CancellationToken.None);
+      statusResult.IsT0.ShouldBeTrue();
+      SiteXaiApiKeyStatus status = statusResult.AsT0;
       status.StorageAvailable.ShouldBeFalse();
       status.CanChange.ShouldBeFalse();
       status.Configured.ShouldBeFalse();
@@ -131,9 +137,99 @@ namespace TimeWarp.Architecture.Features.AgentChats
       set.IsT1.ShouldBeTrue();
       set.AsT1.Status.ShouldBe(503);
       set.AsT1.Detail.ShouldNotBeNull();
-      set.AsT1.Detail!.ShouldContain("Admin → AI");
+      set.AsT1.Detail!.ShouldBe(XaiChatDefaults.DeployedSetupHint);
+      set.AsT1.Detail.ShouldNotContain("Admin → AI");
+      set.AsT1.Detail.ShouldContain("XAI__ApiKey");
       set.AsT1.Detail.ShouldNotContain(Secret);
+
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> cleared =
+        await keys.ClearAsync(Principal, CancellationToken.None);
+      cleared.IsT1.ShouldBeTrue();
+      cleared.AsT1.Status.ShouldBe(503);
+      cleared.AsT1.Detail.ShouldNotBeNull();
+      cleared.AsT1.Detail!.ShouldNotContain("Admin → AI");
       logger.Lines.ShouldBeEmpty();
+
+      SiteXaiApiKey development = Create(new UnavailableProtectedSecretStore(), new ListLogger<SiteXaiApiKey>(), hostKey: null, development: true);
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> developmentSet =
+        await development.SetAsync(Secret, Principal, CancellationToken.None);
+      developmentSet.IsT1.ShouldBeTrue();
+      developmentSet.AsT1.Detail.ShouldBe(XaiChatDefaults.SetupCommand);
+      developmentSet.AsT1.Detail!.ShouldNotContain("Admin");
+    }
+
+    public static async Task Unreadable_Stored_Key_Should_Need_Replacement()
+    {
+      MemoryStore store = new();
+      ListLogger<SiteXaiApiKey> logger = new();
+      SiteXaiApiKey keys = Create(store, logger, hostKey: null, development: true);
+      (await keys.SetAsync(Secret, Principal, CancellationToken.None)).IsT0.ShouldBeTrue();
+      store.FailUnprotect = true;
+
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> statusResult =
+        await keys.GetStatusAsync(CancellationToken.None);
+      statusResult.IsT0.ShouldBeTrue();
+      statusResult.AsT0.Configured.ShouldBeFalse();
+      statusResult.AsT0.NeedsReplacement.ShouldBeTrue();
+      statusResult.AsT0.Suffix.ShouldBe("aaaa");
+      statusResult.AsT0.CanChange.ShouldBeTrue();
+      (await keys.ResolveApiKeyAsync(CancellationToken.None)).ShouldBeNull();
+    }
+
+    public static async Task Storage_Failure_Should_Degrade_Ask_And_Return_503()
+    {
+      ThrowingStore store = new();
+      ListLogger<SiteXaiApiKey> logger = new();
+      SiteXaiApiKey keys = Create(store, logger, hostKey: null, development: false);
+
+      (await keys.ResolveApiKeyAsync(CancellationToken.None)).ShouldBeNull();
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> status =
+        await keys.GetStatusAsync(CancellationToken.None);
+      status.IsT1.ShouldBeTrue();
+      status.AsT1.Status.ShouldBe(503);
+      status.AsT1.Detail.ShouldNotBeNull();
+      status.AsT1.Detail!.ShouldNotContain("Admin → AI");
+      status.AsT1.Detail.ShouldNotContain(Secret);
+
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> set =
+        await keys.SetAsync(Secret, Principal, CancellationToken.None);
+      set.IsT1.ShouldBeTrue();
+      set.AsT1.Status.ShouldBe(503);
+      set.AsT1.Detail!.ShouldNotContain(Secret);
+
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> cleared =
+        await keys.ClearAsync(Principal, CancellationToken.None);
+      cleared.IsT1.ShouldBeTrue();
+      cleared.AsT1.Status.ShouldBe(503);
+
+      string audit = string.Join('\n', logger.Lines);
+      audit.ShouldContain(nameof(InvalidOperationException));
+      audit.ShouldContain(nameof(TimeoutException));
+      audit.ShouldNotContain(Secret);
+      audit.ShouldNotContain("key set by");
+      audit.ShouldNotContain("key clear by");
+
+      SiteXaiApiKey hosted = Create(store, new ListLogger<SiteXaiApiKey>(), HostSecret, development: false);
+      (await hosted.ResolveApiKeyAsync(CancellationToken.None)).ShouldBe(HostSecret);
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> hostStatus =
+        await hosted.GetStatusAsync(CancellationToken.None);
+      hostStatus.IsT0.ShouldBeTrue();
+      hostStatus.AsT0.Configured.ShouldBeTrue();
+      hostStatus.AsT0.ManagedByHost.ShouldBeTrue();
+    }
+
+    public static async Task Audit_Label_Should_Follow_The_Store_Write()
+    {
+      MemoryStore store = new() { Report = ProtectedSecretWrite.Replaced };
+      ListLogger<SiteXaiApiKey> logger = new();
+      SiteXaiApiKey keys = Create(store, logger, hostKey: null, development: true);
+
+      (await keys.SetAsync(Secret, Principal, CancellationToken.None)).IsT0.ShouldBeTrue();
+
+      string audit = string.Join('\n', logger.Lines);
+      audit.ShouldContain("key replace by");
+      audit.ShouldNotContain("key set by");
+      audit.ShouldNotContain(Secret);
     }
 
     private static SiteXaiApiKey Create(
@@ -213,11 +309,59 @@ namespace TimeWarp.Architecture.Features.AgentChats
       }
     }
 
+    private sealed class ThrowingStore : IProtectedSecretStore
+    {
+      public bool StorageAvailable => true;
+
+      public Task<ProtectedSecretRecord?> FindAsync(string name, CancellationToken cancellationToken)
+      {
+        _ = name;
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new InvalidOperationException("42P01: relation \"secrets.protected_secrets\" does not exist");
+      }
+
+      public Task<ProtectedSecretWrite> SetAsync(
+        string name,
+        string purpose,
+        string plaintext,
+        Guid setByPrincipalId,
+        DateTimeOffset setAt,
+        CancellationToken cancellationToken)
+      {
+        _ = name;
+        _ = purpose;
+        _ = plaintext;
+        _ = setByPrincipalId;
+        _ = setAt;
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new TimeoutException("Npgsql timeout");
+      }
+
+      public Task<string?> UnprotectAsync(string name, string purpose, CancellationToken cancellationToken)
+      {
+        _ = name;
+        _ = purpose;
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new InvalidOperationException("42P01: relation \"secrets.protected_secrets\" does not exist");
+      }
+
+      public Task<bool> ClearAsync(string name, CancellationToken cancellationToken)
+      {
+        _ = name;
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new InvalidOperationException("DbException: connection refused");
+      }
+    }
+
     private sealed class MemoryStore : IProtectedSecretStore
     {
       private readonly Dictionary<string, (string Plaintext, ProtectedSecretRecord Record)> Rows = [];
 
       public bool StorageAvailable => true;
+
+      public bool FailUnprotect { get; set; }
+
+      public ProtectedSecretWrite? Report { get; set; }
 
       public Task<ProtectedSecretRecord?> FindAsync(string name, CancellationToken cancellationToken)
       {
@@ -227,7 +371,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
           : null);
       }
 
-      public Task SetAsync(
+      public Task<ProtectedSecretWrite> SetAsync(
         string name,
         string purpose,
         string plaintext,
@@ -236,19 +380,21 @@ namespace TimeWarp.Architecture.Features.AgentChats
         CancellationToken cancellationToken)
       {
         cancellationToken.ThrowIfCancellationRequested();
+        bool inserted = !Rows.ContainsKey(name);
         Rows[name] = (plaintext, new ProtectedSecretRecord(
           name,
           purpose,
           ProtectedSecretSuffix.From(plaintext),
           setAt,
           setByPrincipalId));
-        return Task.CompletedTask;
+        return Task.FromResult(Report ?? (inserted ? ProtectedSecretWrite.Inserted : ProtectedSecretWrite.Replaced));
       }
 
       public Task<string?> UnprotectAsync(string name, string purpose, CancellationToken cancellationToken)
       {
         cancellationToken.ThrowIfCancellationRequested();
-        if (!Rows.TryGetValue(name, out (string Plaintext, ProtectedSecretRecord Record) row)
+        if (FailUnprotect
+          || !Rows.TryGetValue(name, out (string Plaintext, ProtectedSecretRecord Record) row)
           || !string.Equals(row.Record.Purpose, purpose, StringComparison.Ordinal))
         {
           return Task.FromResult<string?>(null);

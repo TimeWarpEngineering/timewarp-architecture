@@ -9,10 +9,10 @@
 // The notice settings are read from XaiChatOptions per request. A blank notice falls back to
 // XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
 // goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
-// SetupCommand is the environment's setup hint: the user-secrets command plus Admin → AI in
-// Development, and the XAI__ApiKey plus Admin → AI hint in every other environment.
-// Configured reads IsConfiguredAsync so an admin key counts without a restart. The model id
-// comes from options, not Upstream.Model, because that property only sees the host key and the fake.
+// SetupCommand is the environment's host text and does not include the Admin sentence. AdminHint
+// is that sentence only when ISiteXaiApiKey.StorageAvailable is true. Configured reads
+// IsConfiguredAsync so an admin key counts without a restart. The model id comes from options,
+// not Upstream.Model, because that property only sees the host key and the fake.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -31,6 +31,7 @@ public sealed class GetAgentChatConfiguration
     private readonly IAgentChatUpstream Upstream;
     private readonly IOptions<XaiChatOptions> Options;
     private readonly IHostEnvironment Environment;
+    private readonly ISiteXaiApiKey Keys;
 
     /// <summary>Creates the handler.</summary>
     public Handler
@@ -38,13 +39,15 @@ public sealed class GetAgentChatConfiguration
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IAgentChatUpstream upstream,
       IOptions<XaiChatOptions> options,
-      IHostEnvironment environment
+      IHostEnvironment environment,
+      ISiteXaiApiKey keys
     )
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       Upstream = upstream;
       Options = options;
       Environment = environment;
+      Keys = keys;
     }
 
     /// <summary>Returns configured, the setup command, and the model id.</summary>
@@ -73,7 +76,8 @@ public sealed class GetAgentChatConfiguration
       return new Response
       {
         Configured = configured,
-        SetupCommand = XaiChatDefaults.SetupHint(Environment.IsDevelopment()),
+        SetupCommand = XaiChatDefaults.HostSetupText(Environment.IsDevelopment()),
+        AdminHint = Keys.StorageAvailable ? XaiChatDefaults.AdminAiSentence : null,
         Model = model,
         RecordChats = options.RecordChats,
         PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)

@@ -4,9 +4,10 @@
 
 #region Design
 // HostManaged is 409: the host value wins and the stored row must not change. StorageUnavailable
-// is 503 and carries the environment's setup hint, which is how Admin → AI explains a host-only
-// deployment. Rejected is the same bound as the contract validator, repeated so a caller that
-// skips the mediator still cannot store a key whose suffix is the secret.
+// is 503 when this host has no durable store. Its detail is the host setup text and does not say
+// to open Admin → AI. StorageFailed is 503 when the store throws (missing table or the database
+// is down), matching site settings. Rejected is the same bound as the contract validator, repeated
+// so a caller that skips the mediator still cannot store a key whose suffix is the secret.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -32,12 +33,20 @@ public static class XaiApiKeyProblems
     Detail = "XAI:ApiKey is set on the host. Admin cannot change it."
   };
 
-  /// <summary>This host has nowhere durable to store the key.</summary>
+  /// <summary>This host has nowhere durable to store the key. The detail does not mention Admin → AI.</summary>
   public static SharedProblemDetails StorageUnavailable(bool development) => new()
   {
     Title = "Host configuration only",
     Status = 503,
-    Detail = XaiChatDefaults.SetupHint(development)
+    Detail = XaiChatDefaults.HostSetupText(development)
+  };
+
+  /// <summary>The store threw. Retry after migrations, or when the database is back.</summary>
+  public static SharedProblemDetails StorageFailed() => new()
+  {
+    Title = "xAI key storage unavailable",
+    Status = 503,
+    Detail = "Protected secret storage is unavailable. Retry after database migrations finish."
   };
 
   /// <summary>The key failed the length or whitespace bound.</summary>

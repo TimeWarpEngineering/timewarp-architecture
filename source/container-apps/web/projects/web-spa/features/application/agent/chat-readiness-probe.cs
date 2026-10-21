@@ -17,15 +17,17 @@ using TimeWarp.Architecture.Features.AgentChats;
 
 /// <summary>Result of one Ask configuration probe.</summary>
 /// <param name="Readiness">What Ask should render.</param>
-/// <param name="SetupCommand">The setup hint; shown only for NotConfigured.</param>
+/// <param name="SetupCommand">The host setup text; shown only for NotConfigured. Never the Admin sentence.</param>
 /// <param name="Model">The configured model id when Configured.</param>
 /// <param name="Problem">Status, title and detail when Error.</param>
+/// <param name="AdminHint">Admin → AI sentence when the server says storage can hold a key.</param>
 public sealed record ChatProbeResult
 (
   CatalogAgentReadiness Readiness,
   string SetupCommand,
   string? Model,
-  string? Problem
+  string? Problem,
+  string? AdminHint = null
 );
 
 /// <summary>Maps the Ask configuration probe's outcome to a <see cref="ChatProbeResult"/>.</summary>
@@ -43,7 +45,8 @@ public static class ChatReadinessProbe
       response.Configured ? CatalogAgentReadiness.Configured : CatalogAgentReadiness.NotConfigured,
       string.IsNullOrWhiteSpace(response.SetupCommand) ? XaiChatDefaults.DeployedSetupHint : response.SetupCommand,
       response.Configured ? response.Model : null,
-      null
+      null,
+      string.IsNullOrWhiteSpace(response.AdminHint) ? null : response.AdminHint.Trim()
     );
   }
 

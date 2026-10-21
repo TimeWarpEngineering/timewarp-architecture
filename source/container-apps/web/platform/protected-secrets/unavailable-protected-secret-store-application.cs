@@ -26,7 +26,7 @@ public sealed class UnavailableProtectedSecretStore : IProtectedSecretStore
   }
 
   /// <inheritdoc />
-  public Task SetAsync(
+  public Task<ProtectedSecretWrite> SetAsync(
     string name,
     string purpose,
     string plaintext,

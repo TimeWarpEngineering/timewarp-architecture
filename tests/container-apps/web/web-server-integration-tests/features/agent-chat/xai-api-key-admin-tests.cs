@@ -16,7 +16,9 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentChats;
@@ -70,7 +72,12 @@ public class Returns_
       return;
     }
 
-    await using (HostGraph first = await StartAsync(apiKey: ""))
+    CapturingChatClientFactory captured = new();
+    await using (HostGraph first = await StartAsync(apiKey: "", configure: services =>
+    {
+      services.RemoveAll<IXaiChatClientFactory>();
+      services.AddSingleton<IXaiChatClientFactory>(captured);
+    }))
     {
     using HttpClient anonymous = Client(first);
     (await anonymous.GetAsync("api/admin/ai/xai-api-key")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -86,6 +93,16 @@ public class Returns_
     await SetRolesAsync(first, adminId, [RoleIds.Member, RoleIds.Administrator]);
     using HttpClient admin = Client(first, adminCookie);
 
+    Task<HttpResponseMessage> racedLeft = admin.PutAsync("api/admin/ai/xai-api-key", Json(Secret));
+    Task<HttpResponseMessage> racedRight = admin.PutAsync("api/admin/ai/xai-api-key", Json(Replacement));
+    await Task.WhenAll(racedLeft, racedRight);
+    using HttpResponseMessage left = await racedLeft;
+    using HttpResponseMessage right = await racedRight;
+    left.StatusCode.ShouldBe(HttpStatusCode.OK);
+    right.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string raced = await ResolveAsync(first) ?? "";
+    (raced == Secret || raced == Replacement).ShouldBeTrue(raced);
+
     HttpResponseMessage set = await admin.PutAsync("api/admin/ai/xai-api-key", Json(Secret));
     set.StatusCode.ShouldBe(HttpStatusCode.OK);
     string setJson = await set.Content.ReadAsStringAsync();
@@ -99,6 +116,7 @@ public class Returns_
     created.SetByPrincipalId.ShouldBe(adminId.Value);
 
     (await ResolveAsync(first)).ShouldBe(Secret);
+    await CompleteAsync(admin, captured, Secret);
 
     HttpResponseMessage replaced = await admin.PutAsync("api/admin/ai/xai-api-key", Json(Replacement));
     replaced.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -106,6 +124,8 @@ public class Returns_
     replacedJson.ShouldNotContain(Replacement);
     Read(replacedJson).Suffix.ShouldBe("bbbb");
     (await ResolveAsync(first)).ShouldBe(Replacement);
+    await CompleteAsync(admin, captured, Replacement);
+    captured.Keys.ShouldBe([Secret, Replacement]);
 
     await using (AsyncServiceScope scope = first.Web!.WebApplicationHost.ServiceProvider.CreateAsyncScope())
     {
@@ -162,7 +182,7 @@ public class Returns_
     }
   }
 
-  private static async Task<HostGraph> StartAsync(string apiKey)
+  private static async Task<HostGraph> StartAsync(string apiKey, Action<IServiceCollection>? configure = null)
   {
     Dictionary<string, string?> configuration = new(WebTestServerApplication.HttpsServiceEndpoints)
     {
@@ -170,7 +190,58 @@ public class Returns_
       ["XAI:ApiKey"] = apiKey,
       ["XAI:UseFakeUpstream"] = "false",
     };
-    return await HostGraphFactory.CreateWebAsync(serviceEndpoints: configuration);
+    return await HostGraphFactory.CreateWebAsync(configure, configuration);
+  }
+
+  private static async Task CompleteAsync(HttpClient client, CapturingChatClientFactory captured, string expectedKey)
+  {
+    using StringContent body = new(
+      """{"messages":[{"role":"user","text":"hi","toolCalls":[],"images":[]}],"tools":[]}""",
+      Encoding.UTF8,
+      "application/json");
+    HttpResponseMessage response = await client.PostAsync("api/agent-chat/completions", body);
+    string text = await response.Content.ReadAsStringAsync();
+    response.StatusCode.ShouldBe(HttpStatusCode.OK, text);
+    captured.Keys.ShouldContain(expectedKey);
+  }
+
+  private sealed class CapturingChatClientFactory : IXaiChatClientFactory
+  {
+    public List<string> Keys { get; } = [];
+
+    public IChatClient Create(string apiKey, string endpoint, string model)
+    {
+      _ = endpoint;
+      _ = model;
+      Keys.Add(apiKey);
+      return new StubChatClient();
+    }
+
+    private sealed class StubChatClient : IChatClient
+    {
+      public Task<ChatResponse> GetResponseAsync(
+        IEnumerable<ChatMessage> messages,
+        ChatOptions? options = null,
+        CancellationToken cancellationToken = default)
+      {
+        _ = messages;
+        _ = options;
+        _ = cancellationToken;
+        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "ok")));
+      }
+
+      public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+        IEnumerable<ChatMessage> messages,
+        ChatOptions? options = null,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+      public void Dispose()
+      {
+      }
+    }
   }
 
   private static async Task<string?> ResolveAsync(HostGraph graph)

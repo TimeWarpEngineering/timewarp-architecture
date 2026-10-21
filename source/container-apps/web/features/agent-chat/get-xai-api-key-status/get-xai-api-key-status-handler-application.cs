@@ -4,8 +4,8 @@
 
 #region Design
 // The endpoint policy already requires settings.write. A missing principal is still 401. The
-// setup hint is attached here from the host environment. The status itself comes from
-// ISiteXaiApiKey, which does not read the plaintext for this call.
+// setup hint attached here is the host text only: it does not tell the admin to open this page.
+// A store failure is the 503 from ISiteXaiApiKey. The plaintext is not copied onto the response.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -46,8 +46,11 @@ public sealed class GetXaiApiKeyStatus
         return XaiApiKeyProblems.Unauthenticated();
       }
 
-      SiteXaiApiKeyStatus status = await Keys.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-      return ToResponse(status, Environment.IsDevelopment());
+      OneOf<SiteXaiApiKeyStatus, SharedProblemDetails> status =
+        await Keys.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+      return status.Match<OneOf<Response, SharedProblemDetails>>(
+        value => ToResponse(value, Environment.IsDevelopment()),
+        problem => problem);
     }
   }
 
@@ -57,8 +60,9 @@ public sealed class GetXaiApiKeyStatus
       configured: status.Configured,
       storageAvailable: status.StorageAvailable,
       canChange: status.CanChange,
+      needsReplacement: status.NeedsReplacement,
       suffix: status.Suffix,
       setAt: status.SetAt,
       setByPrincipalId: status.SetByPrincipalId,
-      setupHint: XaiChatDefaults.SetupHint(development));
+      setupHint: XaiChatDefaults.HostSetupText(development));
 }

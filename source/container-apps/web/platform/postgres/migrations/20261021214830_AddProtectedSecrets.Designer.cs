@@ -13,7 +13,7 @@ namespace TimeWarp.Architecture.Persistence.Migrations;
 
 [DbContext(typeof(PostgresDbContext))]
 [Migration("20261021214830_AddProtectedSecrets")]
-partial class _20261021214830_AddProtectedSecrets
+partial class AddProtectedSecrets
 {
     /// <inheritdoc />
     protected override void BuildTargetModel(ModelBuilder modelBuilder)

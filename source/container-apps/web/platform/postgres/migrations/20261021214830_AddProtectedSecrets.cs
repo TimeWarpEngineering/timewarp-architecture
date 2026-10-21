@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TimeWarp.Architecture.Persistence.Migrations;
 
 /// <inheritdoc />
-public partial class _20261021214830_AddProtectedSecrets : Migration
+public partial class AddProtectedSecrets : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)

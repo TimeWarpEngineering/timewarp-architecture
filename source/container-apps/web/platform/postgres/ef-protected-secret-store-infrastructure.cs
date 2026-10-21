@@ -6,8 +6,9 @@
 // Registered only from PostgresDbModule, which is also the only place that calls
 // PersistKeysToDbContext. The purpose argument is the Data Protection purpose, stored on the row
 // and checked again before unprotect. A purpose mismatch or a CryptographicException returns null
-// and logs the failure type, not the payload. Last write wins. Task 399 passes a different name
-// and purpose through the same methods.
+// and logs the failure type, not the payload. Set returns Inserted or Replaced. Two first writes
+// that both Add hit the name primary key; the loser detaches the added row and replaces the
+// winner. Last write wins. Task 399 passes a different name and purpose through the same methods.
 #endregion
 
 namespace TimeWarp.Architecture.Secrets;
@@ -58,7 +59,7 @@ public sealed class EfProtectedSecretStore : IProtectedSecretStore
   }
 
   /// <inheritdoc />
-  public async Task SetAsync(
+  public async Task<ProtectedSecretWrite> SetAsync(
     string name,
     string purpose,
     string plaintext,
@@ -76,16 +77,34 @@ public sealed class EfProtectedSecretStore : IProtectedSecretStore
     ProtectedSecret? row = await Db.ProtectedSecrets
       .FirstOrDefaultAsync(secret => secret.Name == name, cancellationToken)
       .ConfigureAwait(false);
-    if (row is null)
-    {
-      Db.ProtectedSecrets.Add(ProtectedSecret.Create(name, purpose, ciphertext, suffix, setAt, setByPrincipalId));
-    }
-    else
+    if (row is not null)
     {
       row.Replace(purpose, ciphertext, suffix, setAt, setByPrincipalId);
+      await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+      return ProtectedSecretWrite.Replaced;
     }
 
-    await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    Db.ProtectedSecrets.Add(ProtectedSecret.Create(name, purpose, ciphertext, suffix, setAt, setByPrincipalId));
+    try
+    {
+      await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+      return ProtectedSecretWrite.Inserted;
+    }
+    catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+    {
+      DetachAdded();
+      ProtectedSecret? winner = await Db.ProtectedSecrets
+        .FirstOrDefaultAsync(secret => secret.Name == name, cancellationToken)
+        .ConfigureAwait(false);
+      if (winner is null)
+      {
+        throw;
+      }
+
+      winner.Replace(purpose, ciphertext, suffix, setAt, setByPrincipalId);
+      await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+      return ProtectedSecretWrite.Replaced;
+    }
   }
 
   /// <inheritdoc />
@@ -129,6 +148,35 @@ public sealed class EfProtectedSecretStore : IProtectedSecretStore
     Db.ProtectedSecrets.Remove(row);
     await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return true;
+  }
+
+  private void DetachAdded()
+  {
+    foreach (EntityEntry<ProtectedSecret> entry in Db.ChangeTracker.Entries<ProtectedSecret>().ToList())
+    {
+      if (entry.State == EntityState.Added)
+      {
+        entry.State = EntityState.Detached;
+      }
+    }
+  }
+
+  private static bool IsUniqueViolation(DbUpdateException exception)
+  {
+    Exception? current = exception;
+    while (current is not null)
+    {
+      string text = current.GetType().FullName + " " + current.Message;
+      if (text.Contains("23505", StringComparison.Ordinal)
+        || text.Contains("unique", StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+
+      current = current.InnerException;
+    }
+
+    return false;
   }
 
   private static ProtectedSecretRecord ToRecord(ProtectedSecret row) =>

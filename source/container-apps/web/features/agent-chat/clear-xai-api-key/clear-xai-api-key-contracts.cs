@@ -32,11 +32,12 @@ public static partial class ClearXaiApiKey
       bool configured,
       bool storageAvailable,
       bool canChange,
+      bool needsReplacement,
       string? suffix,
       DateTimeOffset? setAt,
       Guid? setByPrincipalId,
       string setupHint)
-      : base(managedByHost, configured, storageAvailable, canChange, suffix, setAt, setByPrincipalId, setupHint)
+      : base(managedByHost, configured, storageAvailable, canChange, needsReplacement, suffix, setAt, setByPrincipalId, setupHint)
     {
     }
   }
@@ -51,6 +52,7 @@ public static partial class ClearXaiApiKey
       configured: false,
       storageAvailable: false,
       canChange: false,
+      needsReplacement: false,
       suffix: null,
       setAt: null,
       setByPrincipalId: null,

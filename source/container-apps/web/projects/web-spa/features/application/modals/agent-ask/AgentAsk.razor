@@ -149,6 +149,7 @@
 
   private CatalogAgentReadiness Readiness => CatalogAgentAvailability.Readiness(AgentSurfaceState);
   private string SetupCommand => CatalogAgentAvailability.SetupCommand(AgentSurfaceState);
+  private string? AdminHint => CatalogAgentAvailability.AdminHint(AgentSurfaceState);
   private string ConversationTitle =>
     string.IsNullOrWhiteSpace(AgentSurfaceState.ConversationDisplayName)
       ? "New conversation"
@@ -663,6 +664,10 @@
       <p class="twe-agent-ask__state-title" data-qa="AgentAskNotConfigured">AI not configured</p>
       <p class="twe-agent-ask__state-text">Set the xAI key this way, then reload:</p>
       <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
+      @if (!string.IsNullOrWhiteSpace(AdminHint))
+      {
+        <p class="twe-agent-ask__state-text" data-qa="AgentAskAdminHint">@AdminHint</p>
+      }
     </div>
   }
   else if (Readiness == CatalogAgentReadiness.Unauthenticated)

@@ -23,13 +23,20 @@ public static class CatalogAgentAvailability
     return state.ChatReadiness;
   }
 
-  /// <summary>Setup hint from the probe, or the deployed hint when the probe has not stored one.</summary>
+  /// <summary>Host setup text from the probe, or the deployed hint when the probe has not stored one.</summary>
   public static string SetupCommand(AgentSurfaceState state)
   {
     ArgumentNullException.ThrowIfNull(state);
     return string.IsNullOrWhiteSpace(state.ChatSetupCommand)
       ? XaiChatDefaults.DeployedSetupHint
       : state.ChatSetupCommand;
+  }
+
+  /// <summary>Admin → AI sentence from the probe, or null when this host cannot store a key.</summary>
+  public static string? AdminHint(AgentSurfaceState state)
+  {
+    ArgumentNullException.ThrowIfNull(state);
+    return string.IsNullOrWhiteSpace(state.ChatAdminHint) ? null : state.ChatAdminHint;
   }
 
   /// <summary>Status, title and detail of a failed probe; null unless readiness is Error.</summary>

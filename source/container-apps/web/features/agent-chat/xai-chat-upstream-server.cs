@@ -7,6 +7,13 @@
 // TypeLoadExceptions when a tool call meets OpenAI 2.14. The real client is created on first
 // use so startup never dials xAI and a PostConfigure in tests wins over the key.
 // UseFakeUpstream is honored only in Development or Testing, and then it wins over a real key.
+// BeginKeyResolution opens a slot on the caller's async flow. IsConfiguredAsync fills that slot
+// and GetClientAsync consumes it, so a completion that already checked configuration reads the
+// database once. The slot has to be opened by the caller: a value stored inside IsConfiguredAsync
+// does not flow back. A call that did not check resolves on its own. The old client is kept when
+// the key changes: disposing it
+// inside the swap can drop a concurrent GetResponseAsync. Retired clients are disposed with this
+// upstream.
 // Tools are AIFunctionDeclaration instances. Invoke on a declaration throws, so this process
 // cannot run a catalog action on the model's behalf. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
@@ -53,8 +60,10 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   private readonly IServiceScopeFactory Scopes;
   private readonly IXaiChatClientFactory Clients;
   private readonly ILogger<XaiChatUpstream> Logger;
+  private static readonly AsyncLocal<KeySlot?> OpenTurn = new();
   private readonly Lock Gate = new();
   private readonly FakeChatClient Fake = new();
+  private readonly List<IChatClient> RetiredClients = [];
   private IChatClient? RealClient;
   private string? CachedKey;
 
@@ -78,6 +87,12 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     Environment.IsDevelopment() || Environment.IsEnvironment("Testing");
 
   /// <inheritdoc />
+  public void BeginKeyResolution()
+  {
+    OpenTurn.Value = new KeySlot();
+  }
+
+  /// <inheritdoc />
   public async Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
   {
     XaiChatOptions options = Options.CurrentValue;
@@ -87,6 +102,12 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     }
 
     string? apiKey = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    if (OpenTurn.Value is { } slot)
+    {
+      slot.Key = apiKey;
+      slot.Filled = true;
+    }
+
     return !string.IsNullOrWhiteSpace(apiKey);
   }
 
@@ -169,11 +190,26 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     return mapped;
   }
 
-  /// <summary>Disposes the real client, if one was created.</summary>
+  /// <summary>Disposes the current client and any client retired by a key change.</summary>
   public void Dispose()
   {
-    RealClient?.Dispose();
-    CachedKey = null;
+    IChatClient? current;
+    IChatClient[] retired;
+    lock (Gate)
+    {
+      current = RealClient;
+      retired = [.. RetiredClients];
+      RealClient = null;
+      RetiredClients.Clear();
+      CachedKey = null;
+    }
+
+    current?.Dispose();
+    foreach (IChatClient client in retired)
+    {
+      client.Dispose();
+    }
+
     Fake.Dispose();
   }
 
@@ -191,7 +227,17 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       return Fake;
     }
 
-    string? apiKey = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    string? apiKey;
+    if (OpenTurn.Value is { Filled: true } slot)
+    {
+      apiKey = slot.Key;
+      OpenTurn.Value = null;
+    }
+    else
+    {
+      apiKey = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     if (string.IsNullOrWhiteSpace(apiKey))
     {
       return null;
@@ -211,11 +257,24 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
         return RealClient;
       }
 
-      RealClient?.Dispose();
-      RealClient = Clients.Create(apiKey, endpoint, model);
+      IChatClient created = Clients.Create(apiKey, endpoint, model);
+      if (RealClient is not null)
+      {
+        RetiredClients.Add(RealClient);
+      }
+
+      RealClient = created;
       CachedKey = apiKey;
       return RealClient;
     }
+  }
+
+  /// <summary>One turn's resolved key. The caller opens it; <see cref="IsConfiguredAsync"/> fills it.</summary>
+  private sealed class KeySlot
+  {
+    public bool Filled { get; set; }
+
+    public string? Key { get; set; }
   }
 
   private sealed class FakeChatClient : IChatClient

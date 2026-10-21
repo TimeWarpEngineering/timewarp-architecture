@@ -35,7 +35,10 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
   /// <summary>Set, replace, and clear are offered.</summary>
   public bool CanChange { get; private set; }
 
-  /// <summary>Last four characters of the admin key, when that key is the one Ask uses.</summary>
+  /// <summary>A row is stored and Ask cannot read it.</summary>
+  public bool NeedsReplacement { get; private set; }
+
+  /// <summary>Last four characters of the stored admin key, when the host key is not the one Ask uses.</summary>
   public string? Suffix { get; private set; }
 
   /// <summary>When the admin key was written.</summary>
@@ -56,6 +59,7 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
     Configured = false;
     StorageAvailable = false;
     CanChange = false;
+    NeedsReplacement = false;
     Suffix = null;
     SetAt = null;
     SetByPrincipalId = null;
@@ -71,6 +75,7 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
     Configured = status.Configured;
     StorageAvailable = status.StorageAvailable;
     CanChange = status.CanChange;
+    NeedsReplacement = status.NeedsReplacement;
     Suffix = status.Suffix;
     SetAt = status.SetAt;
     SetByPrincipalId = status.SetByPrincipalId;

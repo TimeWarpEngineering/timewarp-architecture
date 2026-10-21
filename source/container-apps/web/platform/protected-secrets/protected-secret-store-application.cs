@@ -38,6 +38,16 @@ public static class ProtectedSecretSuffix
   }
 }
 
+/// <summary>Whether <see cref="IProtectedSecretStore.SetAsync"/> inserted a row or replaced one.</summary>
+public enum ProtectedSecretWrite
+{
+  /// <summary>No row existed. This call inserted it.</summary>
+  Inserted,
+
+  /// <summary>A row existed, including a concurrent insert this call then replaced.</summary>
+  Replaced
+}
+
 /// <summary>Durable named secrets. The plaintext exists only for the duration of Set or Unprotect.</summary>
 public interface IProtectedSecretStore
 {
@@ -47,8 +57,11 @@ public interface IProtectedSecretStore
   /// <summary>The row's status, or null when no secret is stored under <paramref name="name"/>.</summary>
   Task<ProtectedSecretRecord?> FindAsync(string name, CancellationToken cancellationToken);
 
-  /// <summary>Protects <paramref name="plaintext"/> for <paramref name="purpose"/> and upserts the row.</summary>
-  Task SetAsync(
+  /// <summary>
+  /// Protects <paramref name="plaintext"/> for <paramref name="purpose"/> and upserts the row.
+  /// A concurrent first insert is retried as a replace.
+  /// </summary>
+  Task<ProtectedSecretWrite> SetAsync(
     string name,
     string purpose,
     string plaintext,
