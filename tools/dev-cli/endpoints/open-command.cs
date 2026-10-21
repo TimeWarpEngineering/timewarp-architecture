@@ -1,5 +1,5 @@
 #region Purpose
-// `dev open [--target compose|kubernetes|aca] [--port <n>] [--no-browser]`: open the app a `dev deploy`
+// `dev open [--target compose|kubernetes|aca|aca-neon] [--port <n>] [--no-browser]`: open the app a `dev deploy`
 // made in the browser — forwarding the kind ingress controller when it has no external address.
 #endregion
 
@@ -24,6 +24,7 @@
 //   - aca: https://<fqdn> of the ingress container app from `az containerapp show … --query
 //     properties.configuration.ingress.fqdn`, in the preflight's subscription and the resource group
 //     from --resource-group, Azure__ResourceGroup or the AppHost user secret Azure:ResourceGroup.
+//   - aca-neon uses that same ingress FQDN. It does not open the Neon console.
 // Browser: the first opener on PATH from DeployOperate.BrowserLaunchers (WSL: wslview, then
 // explorer.exe); none, or --no-browser, prints the URL. Pure decisions live in
 // services/deploy-operate.cs (dev-cli-tests).
@@ -39,9 +40,10 @@ using System.Net.Sockets;
 [NuruRouteExample("open --target kubernetes --port 9090", Description = "Forward a different local port than ingress-port")]
 [NuruRouteExample("open", Description = "Open the compose deployment at http://localhost:<ingress-port>")]
 [NuruRouteExample("open --target aca --no-browser", Description = "Print the ingress container app's https URL")]
+[NuruRouteExample("open --target aca-neon --no-browser", Description = "Print the ingress container app's https URL for the Neon deployment")]
 internal sealed class OpenCommand : ICommand<Unit>
 {
-  [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca | aca-neon (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("port", Description = "Local port (default: the ingress-port parameter committed in the AppHost appsettings.json); kubernetes forwards it, compose opens it")]
@@ -56,7 +58,7 @@ internal sealed class OpenCommand : ICommand<Unit>
   [Option("controller-service", Description = "kubernetes: ingress controller Service name (default ingress-nginx-controller)")]
   public string? ControllerService { get; set; }
 
-  [Option("resource-group", "g", Description = "aca: resource group (default: Azure__ResourceGroup, else the AppHost user secret Azure:ResourceGroup)")]
+  [Option("resource-group", "g", Description = "aca and aca-neon: resource group (default: Azure__ResourceGroup, else the AppHost user secret Azure:ResourceGroup)")]
   public string? ResourceGroup { get; set; }
 
   internal sealed class Handler : ICommandHandler<OpenCommand, Unit>
@@ -81,7 +83,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       {
         await OpenKubernetesAsync(command, preflight, ct);
       }
-      else if (preflight.Target == AspireDeploy.ContainerApps)
+      else if (AspireDeploy.IsAzureContainerApps(preflight.Target))
       {
         await OpenContainerAppsAsync(command, preflight, ct);
       }

@@ -315,6 +315,7 @@ public class ContainerApps_Given_
     DeployOperate.BuildKeyVaultListArguments("rg", Subscription).ShouldContain("[?tags.\"aspire-resource-name\"=='postgres-kv'].name");
     DeployOperate.BuildConnectionStringArguments("kv1", Subscription).ShouldContain("connectionstrings--postgres-db");
     DeployOperate.MigrationArtifact(AspireDeploy.ContainerApps).ShouldBe("efmigrations/web-migrations");
+    DeployOperate.MigrationArtifact(AspireDeploy.ContainerAppsNeon).ShouldBe("efmigrations/web-migrations");
     return Task.CompletedTask;
   }
 
@@ -323,6 +324,11 @@ public class ContainerApps_Given_
     string[] printed = DeployOperate.RedactConnection(DeployOperate.BuildBundleArguments("Host=h;Password=hunter2"));
     printed.ShouldBe(["--connection", "<connection string from Key Vault>"]);
     string.Join(' ', printed).ShouldNotContain("hunter2");
+    string[] neon = DeployOperate.RedactConnection(
+      DeployOperate.BuildBundleArguments("Host=ep-example;Password=hunter2"), DeployOperate.NeonDirectConnectionPlaceholder);
+    neon.ShouldBe(["--connection", "<direct Neon connection string>"]);
+    string.Join(' ', neon).ShouldNotContain("hunter2");
+    string.Join(' ', neon).ShouldNotContain("ep-example");
     return Task.CompletedTask;
   }
 

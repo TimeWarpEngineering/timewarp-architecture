@@ -11,14 +11,16 @@
 // Azure Container Apps (task 070-007): `aspire deploy` provisions with the Azure CLI credential, so
 // the preflight requires `az login` (`az account show` succeeds). Aspire reads the subscription from
 // the AppHost's configuration key Azure:SubscriptionId — the Azure__SubscriptionId environment
-// variable, or the AppHost's user secrets. The az CLI subscription is a FALLBACK, never an override:
-// the verb passes it to the aspire process as Azure__SubscriptionId only when neither of those is set
-// (an injected env var would beat the user secret), and the plan prints which source chose the
-// subscription. The user secret is read by wrapping the tool — `dotnet user-secrets list --project
-// <apphost csproj>` — never by locating the secret store; the selection itself (ChooseAzureSubscription)
-// is pure. A subscription Aspire remembered in its own deployment state is not consulted (the dev CLI
-// never inspects that state; see below). Location and resource group stay Aspire's
-// (Azure__Location / Azure__ResourceGroup, or its prompt). When `aspire destroy` has no record, the
+// variable, or the AppHost's user secrets. `aspire deploy --environment Production` does not load
+// user secrets (they load only when the host environment is Development), so a user secret is copied
+// into the child process as Azure__SubscriptionId. An Azure__SubscriptionId already in the environment
+// is inherited and not rewritten. The az CLI subscription is the fallback, copied the same way, and
+// never overrides a subscription the operator pinned. The plan prints which source chose it. The user
+// secret is read by wrapping `dotnet user-secrets list --project <apphost csproj>`, never by locating
+// the secret store; ChooseAzureSubscription is pure. A subscription Aspire remembered in its own
+// deployment state is not consulted (the dev CLI never inspects that state; see below). Azure:Location
+// and Azure:ResourceGroup user secrets are copied to Azure__Location and Azure__ResourceGroup when
+// those variables are unset; otherwise Aspire prompts. When `aspire destroy` has no record, the
 // manual removal is `az group delete` (az asks for confirmation) plus purging the soft-deleted Key
 // Vault: a deleted vault keeps its name reserved, and the Bicep derives the name from the resource
 // group, so a redeploy into a same-named group fails until it is purged.
@@ -65,8 +67,17 @@
 //
 // Forwarded parameters must be non-secret: the plan prints each value and it is visible in the aspire
 // process's argv. A secret deploy value (a password, a client secret) stays in the AppHost user secrets
-// or a Parameters__<name> environment variable, where Aspire reads it itself; never add one to
-// RequiredParameters, and never commit one to appsettings.json.
+// or a Parameters__<name> environment variable. Never add one to RequiredParameters, and never commit
+// one to appsettings.json. Deploy runs as Production, so a secret resolved from user secrets is copied
+// into the aspire process environment as Parameters__<name> (AddSecretParameterEnvironment). A value
+// already in the environment is left alone. The plan and argv never contain it.
+//
+// aca-neon (task 317) is an Azure Container Apps target with no Flexible Server. Its two Neon
+// connection strings are SecretParameters: resolved from the environment or AppHost user secrets,
+// refused when a copy is in appsettings, and checked for shape. dev deploy resolves both and copies
+// them into the aspire environment as above. dev deploy migrate resolves and shape-checks only the
+// direct string and does not probe az login. Neither value is printed or placed on argv.
+// Destroying the resource group does not delete the Neon project and there is no Key Vault to purge.
 //
 // `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
 // `aspire destroy` sees the deployment's configuration if its pipeline resolves parameters; it never
@@ -95,6 +106,14 @@ internal sealed record AppSettingsFile(string FileName, string Json);
 
 /// <summary>The target's required parameters: those with a value, and the names nobody set.</summary>
 internal sealed record DeployParameterResolution(IReadOnlyList<ResolvedDeployParameter> Resolved, IReadOnlyList<string> Missing);
+
+/// <summary>
+/// Secret parameters for one target. CommittedToAppSettings names a value found in an appsettings file; that value is never used.
+/// </summary>
+internal sealed record SecretResolution(
+  IReadOnlyList<ResolvedDeployParameter> Resolved,
+  IReadOnlyList<string> Missing,
+  IReadOnlyList<string> CommittedToAppSettings);
 
 /// <summary>
 /// What the process half observed for one kubectl context: the API reachability probe, <c>kind get clusters</c> (kind contexts
@@ -149,13 +168,30 @@ internal static class AspireDeploy
   internal const string AzureSubscriptionIdVariable = "Azure__SubscriptionId";
   internal const string AzureSubscriptionIdConfigurationKey = "Azure:SubscriptionId";
   internal const string AzureResourceGroupVariable = "Azure__ResourceGroup";
+  internal const string AzureResourceGroupConfigurationKey = "Azure:ResourceGroup";
+  internal const string AzureLocationVariable = "Azure__Location";
+  internal const string AzureLocationConfigurationKey = "Azure:Location";
+  internal const string EntraClientSecretParameter = "entra-client-secret";
   internal const string PostgresKeyVaultTag = "postgres-kv";
 
   internal static readonly DeployTarget Compose = new("compose");
   internal static readonly DeployTarget Kubernetes = new("kubernetes");
   internal static readonly DeployTarget ContainerApps = new("aca");
+  internal static readonly DeployTarget ContainerAppsNeon = new("aca-neon");
 
-  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes, ContainerApps];
+  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes, ContainerApps, ContainerAppsNeon];
+
+  internal const string NeonPooledConnectionStringParameter = "neon-pooled-connection-string";
+  internal const string NeonDirectConnectionStringParameter = "neon-direct-connection-string";
+
+  /// <summary>aca and aca-neon both provision an Azure Container Apps environment.</summary>
+  internal static bool IsAzureContainerApps(DeployTarget target) => target == ContainerApps || target == ContainerAppsNeon;
+
+  /// <summary>Flexible Server and its Key Vault exist only on the aca target.</summary>
+  internal static bool UsesFlexibleServer(DeployTarget target) => target == ContainerApps;
+
+  /// <summary>The published EF bundle is the migration artifact for both Azure Container Apps targets.</summary>
+  internal static bool UsesMigrationBundle(DeployTarget target) => IsAzureContainerApps(target);
 
   /// <summary>The AppHost's Publish:Target default.</summary>
   internal static DeployTarget DefaultTarget => Compose;
@@ -181,11 +217,51 @@ internal static class AspireDeploy
     .. parameters.Select(parameter => $"--{ParameterConfigurationKey(parameter.Name)}={parameter.Value}"),
   ];
 
+  /// <summary>
+  /// Same arguments as the parameter overload. <paramref name="secrets"/> are not forwarded.
+  /// A secret name on <paramref name="parameters"/> is refused.
+  /// </summary>
+  internal static string[] BuildDeployArguments(
+    string appHostProject,
+    DeployTarget target,
+    bool nonInteractive,
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    RejectSecretsOnParameters(parameters, secrets);
+    return BuildDeployArguments(appHostProject, target, nonInteractive, parameters);
+  }
+
   /// <summary>The AppHost parameters a deploy of <paramref name="target"/> needs and that have no default.</summary>
   internal static string[] RequiredParameters(DeployTarget target) =>
     target == Kubernetes
       ? [KubernetesNamespaceParameter, HelmReleaseNameParameter, RegistryEndpointParameter, RegistryRepositoryParameter]
       : [];
+
+  /// <summary>Secret parameters Aspire reads itself. Never forwarded and never printed.</summary>
+  internal static string[] SecretParameters(DeployTarget target) =>
+    SecretParameters(target, PreflightScope.Deploy);
+
+  /// <summary>
+  /// Secret parameters for one verb. aca-neon migrate needs only the direct string. Deploy needs both.
+  /// </summary>
+  internal static string[] SecretParameters(DeployTarget target, PreflightScope scope)
+  {
+    if (target != ContainerAppsNeon)
+    {
+      return [];
+    }
+
+    return scope == PreflightScope.Migrate
+      ? [NeonDirectConnectionStringParameter]
+      : [NeonPooledConnectionStringParameter, NeonDirectConnectionStringParameter];
+  }
+
+  /// <summary>
+  /// aca migrate still needs <c>az login</c>. aca-neon migrate uses only the direct Neon string.
+  /// </summary>
+  internal static bool ProbesAzureAccount(DeployTarget target, PreflightScope scope) =>
+    IsAzureContainerApps(target) && !(target == ContainerAppsNeon && scope == PreflightScope.Migrate);
 
   /// <summary>Configuration key of an AppHost parameter: <c>Parameters:&lt;name&gt;</c>.</summary>
   internal static string ParameterConfigurationKey(string name) => $"Parameters:{name}";
@@ -306,6 +382,78 @@ internal static class AspireDeploy
     }
 
     return new DeployParameterResolution(resolved, missing);
+  }
+
+  /// <summary>
+  /// Resolves secret parameters from the environment, then user secrets. A value in appsettings is reported and not used.
+  /// </summary>
+  internal static SecretResolution ResolveSecrets(
+    IReadOnlyList<string> names,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
+    IReadOnlyList<AppSettingsFile>? appSettings = null)
+  {
+    List<ResolvedDeployParameter> resolved = [];
+    List<string> missing = [];
+    List<string> committed = [];
+    foreach (string name in names)
+    {
+      string? fromAppSettings = (appSettings ?? [])
+        .Select(file => ParseAppSettingsParameter(file.Json, name))
+        .FirstOrDefault(value => value is not null);
+      if (fromAppSettings is not null)
+      {
+        committed.Add(name);
+      }
+
+      string? fromEnvironment = environment(ParameterEnvironmentVariable(name));
+      string? fromSecret = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, ParameterConfigurationKey(name));
+      if (!string.IsNullOrWhiteSpace(fromEnvironment))
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromEnvironment.Trim(), $"{ParameterEnvironmentVariable(name)} environment variable"));
+      }
+      else if (fromSecret is not null)
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromSecret, UserSecretSource));
+      }
+      else if (fromAppSettings is null)
+      {
+        missing.Add(name);
+      }
+    }
+
+    return new SecretResolution(resolved, missing, committed);
+  }
+
+  /// <summary>Refusal lines for secret parameters. Never includes a secret value and never suggests appsettings.</summary>
+  internal static string[] CollectSecretProblems(
+    string appHostProject, DeployTarget target, SecretResolution resolution, string? userSecretsFailure)
+  {
+    List<string> lines = [];
+    if (userSecretsFailure is not null && resolution.Missing.Count > 0)
+    {
+      lines.Add(UserSecretsUnreadableMessage(appHostProject, userSecretsFailure));
+    }
+
+    foreach (string name in resolution.CommittedToAppSettings)
+    {
+      lines.Add(
+        $"Neon connection string '{name}' is in the AppHost appsettings. Remove it and set it with user secrets; a connection string must never be committed.");
+    }
+
+    if (resolution.Missing.Count > 0)
+    {
+      lines.Add(
+        $"Missing Neon connection string{(resolution.Missing.Count == 1 ? "" : "s")} for {target.Name}: {string.Join(", ", resolution.Missing)}. "
+        + "Set each in the AppHost user secrets or a Parameters__ environment variable. Do not commit them in appsettings.json.");
+      foreach (string name in resolution.Missing)
+      {
+        lines.Add($"  dotnet user-secrets set '{ParameterConfigurationKey(name)}' '<value>' --project '{appHostProject}'");
+      }
+    }
+
+    return [.. lines];
   }
 
   /// <summary>The refusal for unset deploy parameters: each one with the pwsh command that sets it.</summary>
@@ -515,8 +663,9 @@ internal static class AspireDeploy
 
   /// <summary>
   /// Subscription for the aca deploy, in the AppHost's own precedence: <c>Azure__SubscriptionId</c> when set, else the
-  /// AppHost user secret <c>Azure:SubscriptionId</c> (both passed through untouched — Aspire reads them itself), else
-  /// the <c>az account show</c> one, which only then is handed to <c>aspire deploy</c> as <c>Azure__SubscriptionId</c>.
+  /// AppHost user secret <c>Azure:SubscriptionId</c>, else the <c>az account show</c> one. <see cref="AzureSubscriptionChoice.PassToAspire"/>
+  /// is true when the child must receive <c>Azure__SubscriptionId</c>: Production does not load user secrets, and the
+  /// az CLI value is not already in the environment. An environment value is inherited (<c>PassToAspire</c> false).
   /// </summary>
   internal static AzureSubscriptionChoice ChooseAzureSubscription(string? environmentValue, string? userSecretValue, AzureAccount account)
   {
@@ -527,10 +676,70 @@ internal static class AspireDeploy
 
     if (!string.IsNullOrWhiteSpace(userSecretValue))
     {
-      return new AzureSubscriptionChoice(userSecretValue.Trim(), $"Azure subscription: {userSecretValue.Trim()} from the AppHost user secret {AzureSubscriptionIdConfigurationKey} (az CLI is logged in to {account.Name})", PassToAspire: false);
+      return new AzureSubscriptionChoice(
+        userSecretValue.Trim(),
+        $"Azure subscription: {userSecretValue.Trim()} from the AppHost user secret {AzureSubscriptionIdConfigurationKey} (copied to {AzureSubscriptionIdVariable}; aspire deploy runs as {DeployEnvironment} and does not load user secrets; az CLI is logged in to {account.Name})",
+        PassToAspire: true);
     }
 
     return new AzureSubscriptionChoice(account.Id, $"Azure subscription: {account.Name} ({account.Id}) from `az account show` — neither {AzureSubscriptionIdVariable} nor the AppHost user secret {AzureSubscriptionIdConfigurationKey} is set", PassToAspire: true);
+  }
+
+  /// <summary>
+  /// Copies resolved secret values into <paramref name="aspireEnvironment"/> as <c>Parameters__&lt;name&gt;</c> when that
+  /// variable is unset. Deploy runs as <see cref="DeployEnvironment"/>, which does not load AppHost user secrets.
+  /// A variable already set is inherited and left alone. Nothing here is printed or placed on argv.
+  /// </summary>
+  internal static void AddSecretParameterEnvironment(
+    IDictionary<string, string> aspireEnvironment,
+    IReadOnlyList<ResolvedDeployParameter> secrets,
+    Func<string, string?> environment)
+  {
+    foreach (ResolvedDeployParameter secret in secrets)
+    {
+      CopyWhenUnset(aspireEnvironment, environment, ParameterEnvironmentVariable(secret.Name), secret.Value);
+    }
+  }
+
+  /// <summary>
+  /// Copies Azure location, resource group and the Entra client secret from AppHost user secrets when the matching
+  /// environment variable is unset. Same reason as <see cref="AddSecretParameterEnvironment"/>.
+  /// </summary>
+  internal static void AddAzureUserSecretEnvironment(
+    IDictionary<string, string> aspireEnvironment,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput)
+  {
+    CopyUserSecretWhenUnset(aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput, AzureLocationVariable, AzureLocationConfigurationKey);
+    CopyUserSecretWhenUnset(aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput, AzureResourceGroupVariable, AzureResourceGroupConfigurationKey);
+    CopyUserSecretWhenUnset(
+      aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput,
+      ParameterEnvironmentVariable(EntraClientSecretParameter), ParameterConfigurationKey(EntraClientSecretParameter));
+  }
+
+  private static void CopyUserSecretWhenUnset(
+    IDictionary<string, string> aspireEnvironment,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
+    string variable,
+    string configurationKey)
+  {
+    string? value = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, configurationKey);
+    if (value is not null)
+    {
+      CopyWhenUnset(aspireEnvironment, environment, variable, value);
+    }
+  }
+
+  private static void CopyWhenUnset(
+    IDictionary<string, string> aspireEnvironment, Func<string, string?> environment, string variable, string value)
+  {
+    if (string.IsNullOrWhiteSpace(environment(variable)))
+    {
+      aspireEnvironment[variable] = value;
+    }
   }
 
   /// <summary>Parses <c>helm version --short</c> output (e.g. <c>v4.2.0+g1a2b3c4</c>).</summary>
@@ -588,6 +797,35 @@ internal static class AspireDeploy
     $"  {preflightDetail}",
   ];
 
+  /// <summary>
+  /// Same plan as the parameter overload. Secret values are not printed.
+  /// A secret name on <paramref name="parameters"/> is refused.
+  /// </summary>
+  internal static string[] BuildDeployPlanLines(
+    string appHostProject,
+    DeployTarget target,
+    string preflightDetail,
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    RejectSecretsOnParameters(parameters, secrets);
+    return BuildDeployPlanLines(appHostProject, target, preflightDetail, parameters);
+  }
+
+  private static void RejectSecretsOnParameters(
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    foreach (ResolvedDeployParameter secret in secrets)
+    {
+      if (parameters.Any(parameter => string.Equals(parameter.Name, secret.Name, StringComparison.Ordinal)))
+      {
+        throw new InvalidOperationException(
+          $"Secret parameter '{secret.Name}' is on the deploy parameter list. Secrets are copied as Parameters__ environment variables and are not forwarded.");
+      }
+    }
+  }
+
   /// <summary>One line per forwarded parameter: name, value and source (forwarded parameters are never secret).</summary>
   internal static string[] BuildParameterLines(IReadOnlyList<ResolvedDeployParameter> parameters) =>
     [.. parameters.Select(parameter => $"  Parameter:   {parameter.Name}={parameter.Value} (from the {parameter.Source})")];
@@ -616,6 +854,13 @@ internal static class AspireDeploy
         "  az group delete --name <resource-group>                      # az asks for confirmation; deletes every resource in the group",
         .. KeyVaultPurgeLines,
       ]
+      : target == ContainerAppsNeon
+      ?
+      [
+        $"  az group list --query \"[].name\" --output tsv                # find the resource group ({AzureResourceGroupVariable}, or the name aspire deploy asked for)",
+        "  az group delete --name <resource-group>                      # az asks for confirmation; deletes every resource in the group",
+        "  The Neon project is not part of the resource group and is not deleted.",
+      ]
       : target == Kubernetes
       ?
       [
@@ -641,6 +886,11 @@ internal static class AspireDeploy
   internal static string[] BuildPostDestroyLines(DeployTarget target) =>
     target == ContainerApps
       ? KeyVaultPurgeLines
+      : target == ContainerAppsNeon
+      ?
+      [
+        "The Azure resource group is gone. The Neon project is not deleted; suspend or delete it in the Neon console if you are done with it.",
+      ]
       : target == Kubernetes
       ?
       [

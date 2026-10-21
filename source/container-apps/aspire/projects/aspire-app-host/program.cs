@@ -158,7 +158,10 @@
 //     flag publishes no host port at all — the operator adds one for their own edge proxy, and the compose dashboard is disabled (it would publish an unauthenticated second port —
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
-//     settings (entra-client-secret is a secret parameter; Entra defaults to off);
+//     settings (entra-client-secret is a secret parameter; Entra defaults to off). An unset client
+//     secret publishes the placeholder "unused" on every publish target: the value overload of
+//     AddParameter does not read configuration, and Azure Container Apps rejects an empty secret.
+//     With Entra enabled and that placeholder still set, sign-in fails with AADSTS invalid_client;
 //   - mock auth, browser-log forwarding and the Postgres REPL are never emitted: the UseMock forward
 //     is run-mode only, and the other two are Development-only while publish runs as Production.
 // aspire-tests' compose-publish-tests guard all of the above against the generated files.
@@ -259,7 +262,8 @@
 //     the admin password is the barrier. VNet integration (private access) is the hardening step;
 //     aca-publish-tests pins the rule set so a wider rule cannot land in code;
 //   - Entra settings are the same parameters as Compose/Kubernetes (the client secret a secure
-//     parameter → container-app secret); mock auth, browser-log forwarding and the REPL are absent
+//     parameter → container-app secret; unset, the placeholder "unused" so the secret is non-empty);
+//     mock auth, browser-log forwarding and the REPL are absent
 //     for the same reasons as Compose.
 // Flexible Server is declared in the aca branch only, so run mode — which never reads Publish:Target —
 // keeps the AddPostgres container with its volume and REPL exactly as before (RunAsContainer would
@@ -274,6 +278,28 @@
 // `dev publish aca` writes artifacts/aspire-output/aca and gates it with aspire-tests'
 // aca-publish-tests (AcaPublish_Given_); publishing needs no Azure credentials, so CI runs it on every
 // PR and uploads the Bicep and SQL script. Deploying is `dev deploy --target aca` (operator-run).
+// Azure Container Apps with Neon (task 317): `Publish:Target=aca-neon` reuses this same
+// AddAzureContainerAppEnvironment("aca-env") and the same external-ingress rule. It does not declare
+// Flexible Server or postgres-kv. Postgres is two secret parameters the operator sets in AppHost user
+// secrets (Parameters:neon-pooled-connection-string for web-server,
+// Parameters:neon-direct-connection-string for the migration bundle). They are never forwarded on the
+// aspire command line and never committed. PublishAsAzureContainerApp sets minReplicas 0, maxReplicas 1,
+// 0.25 CPU and 0.5Gi on each container app so an idle app does not keep Neon or the consumption grant
+// awake. web-server gets Postgres__RetryCount=6 and Postgres__RetryDelaySeconds=8. The delay is EF's
+// maximum back-off, for the wake-up after Neon Free suspends (5 minutes, and that cannot be disabled).
+// Those two environment callbacks, and the
+// pooled WithReference, are attached to web-server AFTER AddEFMigrations. That call snapshots the
+// startup project's environment callbacks onto ef-tool-web-migrations; a pooled reference in the
+// snapshot collides with the migration resource's direct reference, because both emit
+// ConnectionStrings__postgres-db and Aspire refuses two different connection-string resources on one
+// variable. The connection timeout (Timeout=30) lives in the connection string. Run mode still ignores
+// Publish:Target and keeps the AddPostgres container.
+// Migrations are the published bundle on the direct connection (`dev deploy migrate --target aca-neon`);
+// there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon.
+// workflow.yml uploads that Bicep and the SQL script beside the bundle, not the bundle. The
+// environment's ACR Basic registry is not free. Aspire 13.6.2 rejects a non-ACR registry on this
+// environment (AzureContainerAppEnvironmentResource.ContainerRegistry), so ghcr.io is not a
+// substitute; the operator guide records that and the ACR Basic cost.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -285,7 +311,7 @@ internal class Program
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
     // Task 070-004: Aspire assigns each compute resource to exactly one compute environment, so the
-    // publish target is a configuration switch (Publish:Target = compose | kubernetes | aca), read in
+    // publish target is a configuration switch (Publish:Target = compose | kubernetes | aca | aca-neon), read in
     // publish mode only. Run mode always declares the Compose environment, exactly as before, and ignores it.
     string publishTarget = builder.ExecutionContext.IsPublishMode
       ? builder.Configuration[PublishTargetConfigurationKey] ?? ComposePublishTarget
@@ -325,6 +351,13 @@ internal class Program
       // unauthenticated-by-design second front door beside the ingress.
       containerApps = builder.AddAzureContainerAppEnvironment(ContainerAppsEnvironmentResourceName).WithDashboard(enable: false);
     }
+    else if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      // Task 317: the same environment as aca. Postgres is wired below as Neon connection strings, not
+      // a Flexible Server, so this branch only declares the environment. The container-app scale
+      // (min replicas 0, small CPU and memory) is applied to each compute resource further down.
+      containerApps = builder.AddAzureContainerAppEnvironment(ContainerAppsEnvironmentResourceName).WithDashboard(enable: false);
+    }
     else if (string.Equals(publishTarget, ComposePublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       // Task 070-003: `aspire publish` target for standalone hardware (compose.yaml + .env). A compute
@@ -335,7 +368,7 @@ internal class Program
     else
     {
       throw new InvalidOperationException(
-        $"{PublishTargetConfigurationKey} '{publishTarget}' is not a publish target; use '{ComposePublishTarget}', '{KubernetesPublishTarget}' or '{ContainerAppsPublishTarget}'.");
+        $"{PublishTargetConfigurationKey} '{publishTarget}' is not a publish target; use '{ComposePublishTarget}', '{KubernetesPublishTarget}', '{ContainerAppsPublishTarget}' or '{ContainerAppsNeonPublishTarget}'.");
     }
 
     // Declare project resources based on template flags
@@ -367,18 +400,28 @@ internal class Program
       webServer = webServer.WithTimeWarpStateDevTools(stateDevTools);
     }
 
-    // Task 070-003: published Entra settings are .env parameters, never literals. Defaults keep
-    // Entra off (appsettings.json posture); the client secret is a secret parameter with an empty
-    // value so `aspire deploy` does not demand one for a passkey-only deployment.
+    // Task 070-003: published Entra settings are parameters, never literals. Defaults keep Entra off.
+    // This block runs for every publish target, not only Azure Container Apps.
+    // AddParameter(name, value, secret: true) ignores configuration (its value callback is constant).
+    // Capture Parameters:entra-client-secret here. When it is unset, use "unused" (not a credential).
+    // Azure Container Apps rejects an empty container-app secret; the same placeholder keeps the
+    // other targets' secret non-empty. With Entra enabled and this placeholder still set, sign-in
+    // fails with AADSTS invalid_client. aspire deploy runs as Production and does not load user
+    // secrets; dev deploy copies a set user secret into the process environment.
     if (builder.ExecutionContext.IsPublishMode)
     {
+      const string unsetEntraClientSecret = "unused";
+      string? configuredEntraClientSecret = builder.Configuration[$"Parameters:{EntraClientSecretParameterName}"];
+      string entraClientSecret = string.IsNullOrWhiteSpace(configuredEntraClientSecret)
+        ? unsetEntraClientSecret
+        : configuredEntraClientSecret;
       webServer = webServer
         .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
         // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
         // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
         .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))
         .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true))
-        .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, "", secret: true))
+        .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, entraClientSecret, secret: true))
         .WithEnvironment("Authentication__Entra__PublicOrigin", builder.AddParameter(EntraPublicOriginParameterName, "", publishValueAsDefault: true));
     }
 
@@ -418,7 +461,21 @@ internal class Program
     // The database resource name doubles as the ConnectionStrings key Aspire injects into
     // Web.Server (see constants.cs).
     IResourceBuilder<IResourceWithConnectionString> postgresDb;
-    if (containerApps is not null)
+    IResourceBuilder<IResourceWithConnectionString>? neonDirect = null;
+    bool neonPostgres = string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase);
+    if (neonPostgres)
+    {
+      // Task 317: Neon is not provisioned by this model. The pooled string is the app's connection.
+      // The direct string is a second resource so migrations can reference it under the postgres-db
+      // name without pointing web-server at the pooler. The pooled WithReference is applied after
+      // AddEFMigrations (see the Design region). No WaitFor: a connection string has no health
+      // endpoint, and publish mode does not run wait edges.
+      IResourceBuilder<ParameterResource> pooled = builder.AddParameter(NeonPooledConnectionStringParameterName, secret: true);
+      IResourceBuilder<ParameterResource> direct = builder.AddParameter(NeonDirectConnectionStringParameterName, secret: true);
+      postgresDb = builder.AddConnectionString(PostgresDatabaseResourceName, ReferenceExpression.Create($"{pooled}"));
+      neonDirect = builder.AddConnectionString(NeonDirectConnectionResourceName, ReferenceExpression.Create($"{direct}"));
+    }
+    else if (containerApps is not null)
     {
       // Task 070-007: Azure Database for PostgreSQL Flexible Server, not a postgres container on Azure
       // Files (no volume to lose, Azure-managed backups/patching). Password authentication with the
@@ -491,22 +548,39 @@ internal class Program
       postgresDb = postgres.AddDatabase(PostgresDatabaseResourceName);
     }
 
-    webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
+    if (!neonPostgres)
+    {
+      webServer = webServer.WithReference(postgresDb).WaitFor(postgresDb);
+    }
 
     // Task 147-007: first-class EF migrations resource (aspire.dev AddEFMigrations).
     // Migrations live in web-infrastructure (not an AppHost project resource — path form; typed
     // Projects.* is only generated for Aspire project resources).
     string webInfrastructureProject = Path.GetFullPath(
       Path.Combine(builder.AppHostDirectory, "../../../web/projects/web-infrastructure/web-infrastructure.csproj"));
+    IResourceBuilder<IResourceWithConnectionString> migrationConnection = neonDirect ?? postgresDb;
     IResourceBuilder<global::Aspire.Hosting.EntityFrameworkCore.EFMigrationResource> webMigrations = webServer
       .AddEFMigrations(WebMigrationsResourceName, "TimeWarp.Architecture.Persistence.PostgresDbContext")
       .WithMigrationsProject(webInfrastructureProject)
       .WithMigrationOutputDirectory("../../platform/postgres/migrations")
       .WithMigrationNamespace("TimeWarp.Architecture.Persistence.Migrations")
-      .WithReference(postgresDb)
-      .WaitFor(postgresDb)
+      .WithReference(migrationConnection, PostgresDatabaseResourceName)
       .RunDatabaseUpdateOnStart()
       .PublishAsMigrationScript();
+
+    if (neonDirect is null)
+    {
+      webMigrations = webMigrations.WaitFor(postgresDb);
+    }
+    else
+    {
+      // Wake-up budget for Neon Free's suspend. The default retry (4 × 2s) is unchanged on every other target.
+      // After AddEFMigrations so the snapshot on ef-tool-web-migrations does not also carry the pooled string.
+      webServer = webServer
+        .WithReference(postgresDb)
+        .WithEnvironment("Postgres__RetryCount", AcaNeonCompute.RetryCount)
+        .WithEnvironment("Postgres__RetryDelaySeconds", AcaNeonCompute.RetryDelaySeconds);
+    }
 
     // Task 070-004: no bundle in the Helm chart. Publish output IS the chart directory, and Helm
     // refuses to load a chart holding the ~100 MB self-contained bundle (5 MiB per-file limit), so
@@ -632,6 +706,10 @@ internal class Program
         // Task 070-007: the ingress is the ONLY external container app (ACA's managed HTTPS ingress
         // with a public FQDN); web-server, api-server and grpc-server keep internal-only ingress.
         yarp = yarp.WithExternalHttpEndpoints();
+        if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
+        {
+          yarp = yarp.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
+        }
       }
       else if (builder.ExecutionContext.IsPublishMode)
       {
@@ -747,6 +825,27 @@ internal class Program
     }
 #endif
 
+#if api
+    if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      apiServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
+    }
+
+#endif
+#if grpc
+    if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      grpcServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
+    }
+
+#endif
+#if web
+    if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
+    {
+      webServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
+    }
+
+#endif
     builder.Build().Run();
   }
 }

@@ -7,7 +7,8 @@
 // Kept free of Amuru/Terminal so tests/tools/dev-cli-tests can Compile-include this file.
 // Each target names its Publish:Target, its output directory, its safety-suite class and the
 // variable that points that suite at the CLI output (tasks 070-003 / 070-004 / 070-007).
-// Task 367: `dev publish all` checks all three outputs in ONE aspire-tests run instead of three.
+// Task 367: `dev publish all` checks every target's output in ONE aspire-tests run instead of one run each.
+// Task 317 adds aca-neon to that list.
 // Jaribu's --filter-class takes exactly one substring of the class FullName, so the combined run
 // filters on SafetySuiteClassSuffix, which every target's class must end with (dev-cli-tests pin
 // it). A single target keeps its own class filter. --no-build is for a caller that just ran the
@@ -47,8 +48,14 @@ internal static class AspirePublishTargets
     SafetySuiteClass: "AcaPublish_Given_",
     OutputEnvironmentVariable: "TIMEWARP_ACA_OUTPUT");
 
+  internal static readonly AspirePublishTarget AcaNeon = new(
+    Name: "aca-neon",
+    OutputDirectory: "artifacts/aspire-output/aca-neon",
+    SafetySuiteClass: "AcaNeonPublish_Given_",
+    OutputEnvironmentVariable: "TIMEWARP_ACA_NEON_OUTPUT");
+
   /// <summary>Every target, in the order `dev publish all` publishes them.</summary>
-  internal static readonly AspirePublishTarget[] All = [Compose, Kubernetes, Aca];
+  internal static readonly AspirePublishTarget[] All = [Compose, Kubernetes, Aca, AcaNeon];
 
   /// <summary>The <c>dotnet test</c> arguments that run the safety suites of <paramref name="targets"/> in one invocation.</summary>
   internal static string[] SafetySuiteTestArguments(IReadOnlyList<AspirePublishTarget> targets, bool noBuild)

@@ -9,11 +9,13 @@
 // output with aspire-tests' production-safety suite; publish kubernetes (task 070-004) does the same
 // for the Helm chart and helm-lints it (Helm ships on the runner); publish aca (task 070-007) does the
 // same for the Azure Container Apps Bicep (no Azure credentials: publishing only writes files).
-// Task 367: the workflow runs `dev publish all --no-build` — the three publishes, then their three
+// publish aca-neon (task 317) does the same for Azure Container Apps with external Neon Postgres.
+// Task 367: the workflow runs `dev publish all --no-build` — every publish target, then their
 // safety suites in ONE aspire-tests run against the Release build that just ran, then helm lint.
 // The test step runs `dev test --no-build` (task 365): the Release solution build just ran, so
 // solution-listed test projects skip their own build/restore check.
-// workflow.yml uploads all three outputs. No mode deploys anything (deploying is operator-run).
+// workflow.yml uploads every publish output (compose files, the Helm chart, aca Bicep, aca-neon
+// Bicep; migration bundles stay out). No mode deploys anything (deploying is operator-run).
 // Task 366: Pr/Merge splits into phases so workflow.yml runs them as parallel jobs, each on its
 // own runner that builds what it needs (no shared build artifact: bin/obj is far larger than the
 // org's 500 MB Actions storage cap). --phase test [--group <name>] is clean -> build -> test

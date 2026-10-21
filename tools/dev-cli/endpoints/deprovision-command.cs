@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deprovision [--target compose|kubernetes|aca] [--yes]`: the operator's manual `aspire destroy` of a
+// `dev deprovision [--target compose|kubernetes|aca|aca-neon] [--yes]`: the operator's manual `aspire destroy` of a
 // deployment `dev deploy` made. Deletes the deployment's data. Never run by CI.
 #endregion
 
@@ -24,6 +24,7 @@
 //   4. On success for kubernetes, print how to check the postgres claim is gone; for aca, how to purge
 //      the soft-deleted Key Vault (it keeps its name reserved, blocking a redeploy into the same group).
 //      On failure for aca the manual removal is `az group delete` (az asks) plus that purge — task 070-007.
+//      aca-neon has no Key Vault: success and failure both say the Neon project is not deleted.
 // Runtime neutrality: Compose teardown is Aspire's (honours ASPIRE_CONTAINER_RUNTIME); the runtime
 // name only appears in the printed manual commands.
 // Pure argument and text helpers live in services/aspire-deploy.cs (dev-cli-tests).
@@ -34,10 +35,11 @@ namespace DevCli.Commands;
 [NuruRoute("deprovision", Description = "Destroy a deployment with `aspire destroy` (deletes its data; Aspire asks unless --yes; operator-run, never CI)")]
 [NuruRouteExample("deprovision", Description = "Preflight, then aspire destroy the compose deployment (Aspire asks for confirmation)")]
 [NuruRouteExample("deprovision --target aca", Description = "aspire destroy the Azure deployment, then print the Key Vault purge")]
+[NuruRouteExample("deprovision --target aca-neon", Description = "aspire destroy the Azure deployment; the Neon project is not deleted")]
 [NuruRouteExample("deprovision --target kubernetes --yes", Description = "Uninstall the Helm release without prompting")]
 internal sealed class DeprovisionCommand : ICommand<Unit>
 {
-  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca | aca-neon (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire destroy --yes --non-interactive")]
