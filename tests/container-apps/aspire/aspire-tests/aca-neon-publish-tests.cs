@@ -11,6 +11,11 @@
 // resource: dev deploy migrate reads it on the operator machine, so publish output has no
 // web-migrations container and no neon-direct parameter. The longer EF retry is on web-server only.
 // CPU is emitted as json('0.25'). Azure.Provisioning formats the double with the invariant culture.
+// The pooled-string fact compiles only with web and postgres: Neon is declared inside that AppHost block.
+// The passkey-host fact compiles only with web and yarp. Without yarp there is no ingress, so no
+// container app is external. Publish logs MissingParameterValueException while Aspire copies the two
+// secret parameters into deployment state. They are @secure() with no default; the warning is not a
+// publish failure, and a default would put the connection string in the Bicep.
 #endregion
 
 namespace Aspire.Tests;
@@ -94,6 +99,11 @@ public partial class AcaNeonPublish_Given_
 
   public static async Task Publish_Should_GiveWebServerThePooledStringAndLeaveTheDirectStringOffAzure()
   {
+    string all = string.Join('\n', Modules.Values);
+    ContainsParameter(all, "neon-direct-connection-string").ShouldBeFalse("publish output contains the direct Neon parameter");
+    Modules.Keys.ShouldNotContain(path => path.Contains("web-migrations", StringComparison.Ordinal));
+#if web
+#if postgres
     string webServer = ModuleContaining("name: 'web-server'");
     webServer.ShouldContain("ConnectionStrings__postgres-db");
     webServer.ShouldContain("secretRef:");
@@ -106,9 +116,8 @@ public partial class AcaNeonPublish_Given_
 
     string allExceptWeb = string.Join('\n', Modules.Where(module => !module.Value.Contains("name: 'web-server'", StringComparison.Ordinal)).Select(module => module.Value));
     allExceptWeb.ShouldNotContain("Postgres__RetryCount");
-    string all = string.Join('\n', Modules.Values);
-    ContainsParameter(all, "neon-direct-connection-string").ShouldBeFalse("publish output contains the direct Neon parameter");
-    Modules.Keys.ShouldNotContain(path => path.Contains("web-migrations", StringComparison.Ordinal));
+#endif
+#endif
     await Task.CompletedTask;
   }
 
@@ -119,7 +128,15 @@ public partial class AcaNeonPublish_Given_
     all.ShouldNotContain("Authentication__UseMock");
     all.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS");
 
+    bool hasIngress = Modules.Values.Any(text => text.Contains("name: 'ingress'", StringComparison.Ordinal));
     int external = ExternalTrue().Count(all);
+    if (!hasIngress)
+    {
+      external.ShouldBe(0, "without the YARP ingress no container app may set external: true");
+      await Task.CompletedTask;
+      return;
+    }
+
     external.ShouldBe(1, "only the ingress container app may set external: true");
     ModuleContaining("name: 'ingress'").ShouldContain("external: true");
     await Task.CompletedTask;
@@ -147,9 +164,13 @@ public partial class AcaNeonPublish_Given_
 
   public static async Task Publish_Should_AllowTheIngressHostForPasskeys()
   {
+#if web
+#if yarp
     string webServer = ModuleContaining("name: 'web-server'");
     webServer.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
     webServer.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+#endif
+#endif
     await Task.CompletedTask;
   }
 
