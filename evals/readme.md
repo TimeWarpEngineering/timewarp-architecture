@@ -7,15 +7,17 @@ Pattern follows [microsoft/aspire-skills](https://github.com/microsoft/aspire-sk
 ## Install
 
 ```bash
-npm install -g @microsoft/vally-cli
+npm install -g "@microsoft/vally-cli@$(tr -d '[:space:]' < tools/dev-cli/vally-cli.version)"
 vally --version
 ```
+
+Before a PR that changes `skills/`, run `dev lint-skills` (or `dotnet run tools/dev-cli/dev.cs -- lint-skills`). CI's skill-lint job installs that same pin and calls the verb.
 
 ## Layout
 
 ```
 .vally.yaml                          # suite filters (ci-gate, nightly)
-.github/workflows/skill-lint.yaml      # PR schema gate (no model token)
+.github/workflows/workflow.yml         # skill-lint job calls `dev lint-skills`
 evals/
   contracts/fixtures/                # shared contract snippets for stimuli
   non-contracts/                     # negative-routing fixtures
@@ -26,9 +28,10 @@ skills/<skill>/evals/
 ## Quick commands
 
 ```bash
-# Validate specs (no model token required)
-vally lint skills
-vally lint --eval-spec skills/web-api-contracts/evals/eval.yaml
+# Validate specs (no model token required). Pre-PR gate when skills/ changes:
+dev lint-skills
+# which runs: vally lint skills
+# and: vally lint --eval-spec skills/tw-web-api-contracts/evals/eval.yaml
 
 # Run one skill's ci-gate stimuli
 vally eval \
