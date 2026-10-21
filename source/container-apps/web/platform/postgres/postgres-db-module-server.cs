@@ -39,8 +39,9 @@
 // recorded on PostgresRetryPolicy; explicit transactions must run inside the execution strategy
 // (EfPrincipalRoleStore.TryClaimFirstAdministratorAsync).
 // aca-neon (task 317) sets Postgres:RetryCount and Postgres:RetryDelaySeconds on web-server only.
-// When either is present this module uses those bounds (an unset or unparsable one keeps the
-// PostgresRetryPolicy default). Every other target leaves both unset, so the policy is unchanged.
+// PostgresRetryPolicy.Resolve reads them. RetryDelaySeconds is the maximum back-off, not a fixed
+// pause. An unset or unparsable value keeps the policy default. The default and the override both
+// call PostgresRetryPolicy.Configure with those bounds. Every other target leaves both unset.
 // The connection Timeout stays in the connection string, not here. The design-time factory still
 // does not use this retry.
 // Logging (task 358): this module never calls LogTo or EnableSensitiveDataLogging. EF Core SQL
@@ -54,7 +55,6 @@ namespace TimeWarp.Architecture.Modules;
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using System.Globalization;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
@@ -144,34 +144,14 @@ public sealed partial class PostgresDbModule : IModule
 
   /// <summary>
   /// The default retry, unless Postgres:RetryCount or Postgres:RetryDelaySeconds is set (aca-neon).
-  /// An unparsable value is ignored.
+  /// RetryDelaySeconds is the maximum back-off. An unparsable value is ignored.
   /// </summary>
   private static Action<NpgsqlDbContextOptionsBuilder> NpgsqlOptions(IConfiguration configuration)
   {
-    int? retryCount = ParseNonNegative(configuration["Postgres:RetryCount"]);
-    int? retryDelaySeconds = ParseNonNegative(configuration["Postgres:RetryDelaySeconds"]);
-    if (retryCount is null && retryDelaySeconds is null)
-    {
-      return PostgresRetryPolicy.Configure;
-    }
-
-    int count = retryCount ?? PostgresRetryPolicy.MaxRetryCount;
-    TimeSpan delay = retryDelaySeconds is int seconds
-      ? TimeSpan.FromSeconds(seconds)
-      : PostgresRetryPolicy.MaxRetryDelay;
-    return builder => builder.EnableRetryOnFailure(count, delay, errorCodesToAdd: null);
-  }
-
-  private static int? ParseNonNegative(string? text)
-  {
-    if (string.IsNullOrWhiteSpace(text))
-    {
-      return null;
-    }
-
-    return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out int value) && value >= 0
-      ? value
-      : null;
+    (int count, TimeSpan maximumDelay) = PostgresRetryPolicy.Resolve(
+      configuration["Postgres:RetryCount"],
+      configuration["Postgres:RetryDelaySeconds"]);
+    return builder => PostgresRetryPolicy.Configure(builder, count, maximumDelay);
   }
 
   private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)

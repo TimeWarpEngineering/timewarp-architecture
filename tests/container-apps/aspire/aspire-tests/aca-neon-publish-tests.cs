@@ -10,7 +10,7 @@
 // web-server's ConnectionStrings__postgres-db is the pooled secret. The direct string is not an Azure
 // resource: dev deploy migrate reads it on the operator machine, so publish output has no
 // web-migrations container and no neon-direct parameter. The longer EF retry is on web-server only.
-// CPU is emitted as json('0.25') (Azure.Provisioning's invariant double), or as a bare 0.25.
+// CPU is emitted as json('0.25'). Azure.Provisioning formats the double with the invariant culture.
 #endregion
 
 namespace Aspire.Tests;
@@ -183,7 +183,7 @@ public partial class AcaNeonPublish_Given_
       || text.Contains(underscored, StringComparison.Ordinal);
   }
 
-  [GeneratedRegex(@"cpu:\s*(?:json\(\s*)?'?0[.,]25'?")]
+  [GeneratedRegex(@"cpu:\s*(?:json\(\s*)?'?0\.25'?")]
   private static partial Regex Cpu();
 
   [GeneratedRegex(@"external:\s*true")]

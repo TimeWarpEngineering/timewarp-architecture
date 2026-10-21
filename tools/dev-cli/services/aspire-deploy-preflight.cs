@@ -26,7 +26,8 @@
 // compose needs none of these and reports the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME). Which probes run is the verb's PreflightScope (task 287): dev open and
 // dev deploy migrate skip the aspire and helm checks (they run neither) and the registry probe, and keep
-// the cluster checks (the context answers, the kind cluster exists) and az login; they also read
+// the cluster checks (the context answers, the kind cluster exists). aca migrate keeps `az login`.
+// aca-neon migrate skips it and resolves only the direct Neon connection string. They also read
 // single parameters / user secrets here (ResolveParameterAsync, ReadUserSecretAsync) with the same
 // precedence as dev deploy.
 #endregion
@@ -37,7 +38,7 @@ namespace DevCli.Services;
 /// Resolved preflight for one deploy target: the AppHost, the detail line printed before acting, and the environment
 /// variables the aspire process needs (aca: Azure__SubscriptionId when only the az CLI chose the subscription).
 /// Also the user-secret copies Production will not load itself: Azure location and resource group, the Entra
-/// client secret, and aca-neon's Neon connection strings (never printed, never on argv).
+/// client secret, and aca-neon's Neon connection strings (migrate: the direct string only; never printed, never on argv).
 /// </summary>
 internal sealed record DeployPreflight(
   string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment,
@@ -87,7 +88,7 @@ internal static class AspireDeployPreflight
     Dictionary<string, string> aspireEnvironment = [];
     string[] parameterProblems = [];
     DeployParameterResolution parameters = new([], []);
-    string[] secretNames = AspireDeploy.SecretParameters(target);
+    string[] secretNames = AspireDeploy.SecretParameters(target, scope);
     bool readUserSecrets = AspireDeploy.RequiredParameters(target).Length > 0 || (secretNames.Length > 0 && requireParameters);
     CommandOutput? secrets = null;
     if (readUserSecrets)
@@ -140,7 +141,7 @@ internal static class AspireDeployPreflight
       resolvedSecrets = secretResolution.Resolved;
     }
 
-    if (AspireDeploy.IsAzureContainerApps(target))
+    if (AspireDeploy.ProbesAzureAccount(target, scope))
     {
       string[] azArguments = AspireDeploy.BuildAzureAccountArguments();
       CommandOutput? az = await ProbeAsync("az", azArguments, cancellationToken);
@@ -199,6 +200,10 @@ internal static class AspireDeployPreflight
 
       detail = scope.RequireHelm ? $"kubectl context: {context} (helm {helm!.Stdout.Trim()})" : $"kubectl context: {context}";
       kubectlContext = context;
+    }
+    else if (target == AspireDeploy.ContainerAppsNeon)
+    {
+      detail = "Direct Neon connection (migrate does not use Azure or the pooled connection string)";
     }
     else
     {

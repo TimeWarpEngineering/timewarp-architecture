@@ -159,8 +159,9 @@
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
 //     settings (entra-client-secret is a secret parameter; Entra defaults to off). An unset client
-//     secret publishes the placeholder "unused": Azure Container Apps rejects an empty secret, and
-//     the value overload of AddParameter does not read configuration;
+//     secret publishes the placeholder "unused" on every publish target: the value overload of
+//     AddParameter does not read configuration, and Azure Container Apps rejects an empty secret.
+//     With Entra enabled and that placeholder still set, sign-in fails with AADSTS invalid_client;
 //   - mock auth, browser-log forwarding and the Postgres REPL are never emitted: the UseMock forward
 //     is run-mode only, and the other two are Development-only while publish runs as Production.
 // aspire-tests' compose-publish-tests guard all of the above against the generated files.
@@ -284,8 +285,9 @@
 // Parameters:neon-direct-connection-string for the migration bundle). They are never forwarded on the
 // aspire command line and never committed. PublishAsAzureContainerApp sets minReplicas 0, maxReplicas 1,
 // 0.25 CPU and 0.5Gi on each container app so an idle app does not keep Neon or the consumption grant
-// awake. web-server gets Postgres__RetryCount=6 and Postgres__RetryDelaySeconds=8 for the wake-up after
-// Neon Free suspends (5 minutes, and that cannot be disabled). Those two environment callbacks, and the
+// awake. web-server gets Postgres__RetryCount=6 and Postgres__RetryDelaySeconds=8. The delay is EF's
+// maximum back-off, for the wake-up after Neon Free suspends (5 minutes, and that cannot be disabled).
+// Those two environment callbacks, and the
 // pooled WithReference, are attached to web-server AFTER AddEFMigrations. That call snapshots the
 // startup project's environment callbacks onto ef-tool-web-migrations; a pooled reference in the
 // snapshot collides with the migration resource's direct reference, because both emit
@@ -293,7 +295,8 @@
 // variable. The connection timeout (Timeout=30) lives in the connection string. Run mode still ignores
 // Publish:Target and keeps the AddPostgres container.
 // Migrations are the published bundle on the direct connection (`dev deploy migrate --target aca-neon`);
-// there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon. The
+// there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon.
+// workflow.yml uploads that Bicep and the SQL script beside the bundle, not the bundle. The
 // environment's ACR Basic registry is not free. Aspire 13.6.2 rejects a non-ACR registry on this
 // environment (AzureContainerAppEnvironmentResource.ContainerRegistry), so ghcr.io is not a
 // substitute; the operator guide records that and the ACR Basic cost.
@@ -398,10 +401,13 @@ internal class Program
     }
 
     // Task 070-003: published Entra settings are parameters, never literals. Defaults keep Entra off.
+    // This block runs for every publish target, not only Azure Container Apps.
     // AddParameter(name, value, secret: true) ignores configuration (its value callback is constant).
-    // Capture Parameters:entra-client-secret here. When it is unset, use "unused" (not a credential):
-    // Azure Container Apps rejects an empty container-app secret. aspire deploy runs as Production and
-    // does not load user secrets; dev deploy copies a set user secret into the process environment.
+    // Capture Parameters:entra-client-secret here. When it is unset, use "unused" (not a credential).
+    // Azure Container Apps rejects an empty container-app secret; the same placeholder keeps the
+    // other targets' secret non-empty. With Entra enabled and this placeholder still set, sign-in
+    // fails with AADSTS invalid_client. aspire deploy runs as Production and does not load user
+    // secrets; dev deploy copies a set user secret into the process environment.
     if (builder.ExecutionContext.IsPublishMode)
     {
       const string unsetEntraClientSecret = "unused";

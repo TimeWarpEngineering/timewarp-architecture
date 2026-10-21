@@ -223,7 +223,7 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes and aca), which needs the Aspire CLI. Pinned to the
+      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes, aca and aca-neon), which needs the Aspire CLI. Pinned to the
       # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
       - name: Install Aspire CLI
         if: matrix.name == 'publish'
@@ -301,6 +301,20 @@ jobs:
           path: |
             artifacts/aspire-output/aca/**/*.bicep
             artifacts/aspire-output/aca/efmigrations/*.sql
+          if-no-files-found: ignore
+          retention-days: 1
+
+      # Task 317: the Azure Container Apps + Neon Bicep (`dev publish aca-neon`, safety-checked).
+      # Publish only — CI has no Azure or Neon credentials and never deploys. The migration bundle
+      # is left out; the Bicep modules and the idempotent SQL script are the reviewable output.
+      - name: Upload Azure Container Apps + Neon publish output
+        if: always() && matrix.name == 'publish'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspire-aca-neon-${{ github.run_number }}
+          path: |
+            artifacts/aspire-output/aca-neon/**/*.bicep
+            artifacts/aspire-output/aca-neon/efmigrations/*.sql
           if-no-files-found: ignore
           retention-days: 1
 

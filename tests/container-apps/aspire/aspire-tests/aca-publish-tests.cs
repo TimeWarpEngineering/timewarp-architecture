@@ -241,6 +241,8 @@ public partial class AcaPublish_Given_
   public static Task Publish_Should_KeepAcaScaleAndPostgres()
   {
     string all = string.Join('\n', Modules.Values);
+    all.ShouldContain("Microsoft.DBforPostgreSQL/flexibleServers");
+    all.ShouldContain("Microsoft.KeyVault/vaults");
     all.ShouldNotContain("minReplicas: 0");
     all.ShouldNotContain("neon-pooled-connection-string");
     all.ShouldNotContain("neon-direct-connection-string");

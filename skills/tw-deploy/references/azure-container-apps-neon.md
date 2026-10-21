@@ -35,8 +35,10 @@ Aspire 13.6.2 cannot push this environment's images to GitHub Container Registry
    https://neon.com/docs/connect/connection-pooling):
    - **Pooled** — host contains `-pooler`. The app uses this.
    - **Direct** — same database, host does **not** contain `-pooler`. Migrations use this.
-3. Put these knobs on the strings. Validation refuses a deploy or migrate that omits them, and the
-   refusal does not print the string.
+3. Put these knobs on the strings. `dev deploy` refuses when either string is missing or wrong.
+   `dev deploy migrate` checks only the direct string. A refusal does not print the string. Use the
+   key/value form. `Host` and `Server` both name the host. A `postgresql://` URI is refused.
+   `Channel Binding` must be `Disable`. Npgsql rejects `Disabled`.
 
 Pooled (app):
 
@@ -105,10 +107,11 @@ into those variables. With none of those set, the subscription falls back to `az
 Aspire prompts for the location and resource group.
 
 The published Entra client secret cannot be empty: Azure Container Apps rejects an empty
-container-app secret. When `Parameters:entra-client-secret` is unset, the AppHost uses the
-placeholder `unused` (Entra stays off; this is not a credential). Set that user secret, or
-`Parameters__entra-client-secret`, when Entra is on. `dev deploy` copies the user secret the same
-way as the Neon strings.
+container-app secret. The same placeholder is published for every target, not only this one.
+When `Parameters:entra-client-secret` is unset, the AppHost uses the placeholder `unused` (it is
+not a credential). With Entra enabled and that placeholder still set, sign-in fails with AADSTS
+`invalid_client`. Set that user secret, or `Parameters__entra-client-secret`, before turning Entra
+on. `dev deploy` copies the user secret the same way as the Neon strings.
 
 ## Deploy, migrate, open
 
@@ -122,13 +125,14 @@ dev open --target aca-neon
 
 `dev deploy migrate --target aca-neon` runs the published bundle
 (`artifacts/aspire-output/aca-neon/efmigrations/web-migrations`) with `--connection` set to the
-**direct** secret. There is no Flexible Server, no Key Vault, and no firewall rule. The command
-redacts the string as `<direct Neon connection string>`.
+**direct** secret. It does not need `az login` or the pooled string. There is no Flexible Server,
+no Key Vault, and no firewall rule. The command redacts the string as `<direct Neon connection string>`.
 
 web-server's EF retry on this target only is `Postgres__RetryCount=6` and
-`Postgres__RetryDelaySeconds=8` (the default elsewhere stays 4 tries and 2 seconds). Together with
-`Timeout=30` that covers Neon's wake-up. The startup environment check calls `CanConnectAsync`
-once per process start, which is what wakes Neon. It is not a poll.
+`Postgres__RetryDelaySeconds=8`. `RetryDelaySeconds` is the maximum delay between tries (EF backs
+off up to that cap), not a fixed wait. The default elsewhere stays 4 tries and a 2 second maximum.
+Together with `Timeout=30` that covers Neon's wake-up. The startup environment check calls
+`CanConnectAsync` once per process start, which is what wakes Neon. It is not a poll.
 
 ## Smoke
 
@@ -139,9 +143,11 @@ curl -fsS "https://<ingress-fqdn>/web-server/alive"
 curl -fsS "https://<ingress-fqdn>/api/identity/entra/offered"
 ```
 
-- `/web-server/alive` is the ingress liveness route. It does not query Postgres. Expect HTTP 200.
-  ACA's probe uses this path, so probes do not keep Neon awake. `/health` is Development-only and
-  is not mapped in this deployment.
+- `/web-server/alive` does not query Postgres. Expect HTTP 200. Publish emits no HTTP probe
+  (Compose, Kubernetes, and Azure Container Apps), so nothing polls this path. `/health` is
+  Development-only and is not mapped in this deployment.
+- `/api/health` is anonymous and runs the `PostgresDbContext` check. That opens a connection and
+  wakes Neon. Do not point an uptime monitor at it.
 - `/api/identity/entra/offered` is anonymous and reads site settings from Postgres. Expect HTTP 200
   and a small JSON body (`offered`). A 500 after a cold start usually means the replica is still
   waiting on Neon, or migrate has not been run.

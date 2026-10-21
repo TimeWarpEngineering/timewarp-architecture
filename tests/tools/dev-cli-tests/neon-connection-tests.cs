@@ -56,6 +56,27 @@ public class Problems_Given_
     return Task.CompletedTask;
   }
 
+  public static Task Pooled_Should_AcceptServerAsTheHost()
+  {
+    NeonConnection.Problems(Parameter, Pooled().Replace("Host=", "Server=", StringComparison.Ordinal), pooled: true).ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task Pooled_Should_RejectChannelBindingDisabledAndAUri()
+  {
+    string disabled = Pooled().Replace("Channel Binding=Disable", "Channel Binding=Disabled", StringComparison.Ordinal);
+    string problems = string.Join('\n', NeonConnection.Problems(Parameter, disabled, pooled: true));
+    problems.ShouldContain("Channel Binding");
+    problems.ShouldNotContain(Secret);
+
+    const string uri = "postgresql://app:" + Secret + "@ep-example-pooler.neon.tech/app?sslmode=require";
+    string uriProblems = string.Join('\n', NeonConnection.Problems(Parameter, uri, pooled: true));
+    uriProblems.ShouldContain("not a URI");
+    uriProblems.ShouldNotContain(Secret);
+    uriProblems.ShouldNotContain("ep-example");
+    return Task.CompletedTask;
+  }
+
   public static Task Pooled_Should_RejectAKeepalive()
   {
     string connectionString = Pooled() + ";Keepalive=30";

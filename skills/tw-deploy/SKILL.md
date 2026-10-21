@@ -187,7 +187,8 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   parameter's namespace on the current context (same preflight as `dev deploy`, minus Helm and the
   registry); aca — the bundle through a temporary firewall rule that is **always deleted**, even on
   failure (Azure Container Apps below). aca-neon runs the same bundle with the direct Neon connection
-  string and creates no firewall rule (Azure Container Apps + Neon below).
+  string and creates no firewall rule (Azure Container Apps + Neon below). That migrate does not
+  require `az login` or the pooled string.
   compose and kubernetes read EF's `__EFMigrationsHistory` table before and after the run, through
   the same `exec` path (a missing table is a fresh database: none applied), and run the script
   quietly (`psql -q`, `PGOPTIONS='-c client_min_messages=warning'`), so only errors and WARNINGs
@@ -343,8 +344,11 @@ non-secret default every machine shares (the app's identity) is committed in the
   carry the same value. `aspire deploy` fills both from the one parameter.
 - Entra settings (`entra-enabled`, `entra-tenant-id`, `entra-client-id`, `entra-client-secret`,
   `entra-public-origin`) are parameters with Entra off by default; a passkey-only deployment needs
-  none of them. On Azure Container Apps an unset client secret is the placeholder `unused`, because
-  an empty container-app secret is rejected.
+  none of them. Every published target uses the placeholder `unused` when
+  `Parameters:entra-client-secret` is unset. `AddParameter(name, value, secret: true)` ignores
+  configuration, and Azure Container Apps rejects an empty container-app secret. With Entra enabled
+  and the secret still `unused`, sign-in fails with AADSTS `invalid_client`. Set the real secret
+  before turning Entra on.
 
 ## Postgres and migrations per target
 

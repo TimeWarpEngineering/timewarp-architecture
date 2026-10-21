@@ -8,11 +8,12 @@
 // refusal can be printed. dev-cli does not reference Npgsql; the parser splits on ';' and the
 // first '=' and compares keys with spaces, hyphens and underscores removed.
 // Both strings need a host, SSL Mode Require or VerifyFull, and Timeout of at least 30 seconds
-// (Neon Free can take that long to wake). The pooled host must contain "-pooler" and must disable
-// prepared statements, reset-on-close and channel binding, which PgBouncer transaction mode
-// rejects. Keepalive above 0 would ping Neon and burn the free compute hours, so it is rejected
-// on the pooled string. The direct host must not be the pooler. A semicolon inside a password
-// splits the string; Neon passwords do not need one.
+// (Neon Free can take that long to wake). The host key is Host or Server. A postgresql:// URI is
+// refused. The pooled host must contain "-pooler" and must disable prepared statements,
+// reset-on-close and channel binding, which PgBouncer transaction mode rejects. Channel Binding
+// must be Disable; Npgsql rejects Disabled. Keepalive above 0 would ping Neon and burn the free
+// compute hours, so it is rejected on the pooled string. The direct host must not be the pooler.
+// A semicolon inside a password splits the string; Neon passwords do not need one.
 #endregion
 
 namespace DevCli.Services;
@@ -35,13 +36,20 @@ internal static class NeonConnection
       return [$"Neon connection string '{parameterName}' is empty."];
     }
 
+    if (connectionString.Contains("://", StringComparison.Ordinal))
+    {
+      string kindName = pooled ? "pooled" : "direct";
+      return [$"Neon {kindName} connection string '{parameterName}' must be the key/value form (Host or Server), not a URI."];
+    }
+
     Dictionary<string, string> pairs = Parse(connectionString);
     List<string> problems = [];
     string kind = pooled ? "pooled" : "direct";
+    string? host = ReadHost(pairs);
 
-    if (!pairs.TryGetValue("host", out string? host) || host.Length == 0)
+    if (host is null)
     {
-      problems.Add($"Neon {kind} connection string '{parameterName}' must include a Host.");
+      problems.Add($"Neon {kind} connection string '{parameterName}' must include a Host or Server.");
     }
     else if (pooled && !host.Contains("-pooler", StringComparison.OrdinalIgnoreCase))
     {
@@ -154,6 +162,21 @@ internal static class NeonConnection
     || value == "1";
 
   private static bool IsChannelBindingDisabled(string value) =>
-    value.Equals("Disable", StringComparison.OrdinalIgnoreCase)
-    || value.Equals("Disabled", StringComparison.OrdinalIgnoreCase);
+    value.Equals("Disable", StringComparison.OrdinalIgnoreCase);
+
+  /// <summary>Npgsql accepts Host and Server. Host wins when both are set.</summary>
+  private static string? ReadHost(Dictionary<string, string> pairs)
+  {
+    if (pairs.TryGetValue("host", out string? host) && host.Length > 0)
+    {
+      return host;
+    }
+
+    if (pairs.TryGetValue("server", out string? server) && server.Length > 0)
+    {
+      return server;
+    }
+
+    return null;
+  }
 }

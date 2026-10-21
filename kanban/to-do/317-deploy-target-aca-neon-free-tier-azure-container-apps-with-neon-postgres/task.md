@@ -78,6 +78,17 @@ Done when:
 - One real ACA + Neon Free deploy passes a health check and one database-backed request, and the monthly cost is recorded.
 - An operator guide covers creating the Neon project, setting secrets, deploying, and tearing down.
 
+Review round 1 is fixed when:
+
+- The operator guide and the compute callback say publish emits no HTTP probe, and that `/api/health` opens Postgres so an uptime monitor must not call it.
+- The CPU assignment does not swap culture. The publish test accepts `0.25` and rejects `0,25`.
+- Default and aca-neon EF retries both call `PostgresRetryPolicy.Configure` with bounds. `RetryDelaySeconds` is documented as the maximum back-off. Parsing is tested.
+- `dev deploy migrate --target aca-neon` does not require `az login` or the pooled string. It checks the direct string only.
+- CI uploads the aca-neon Bicep, and the workflow comments name that upload.
+- A pooled string may use `Server` as the host. `Channel Binding=Disabled` is refused. `Disable` is accepted.
+- Tests that claim secrets stay off the deploy command pass the secret values in, and fail if those values are forwarded or printed.
+- The `unused` Entra placeholder is described for every publish target. Enabling Entra while it is still set fails sign-in with `invalid_client`.
+
 ## Learnings
 
 ## Session
@@ -91,6 +102,8 @@ Done when:
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-21T03:27:27Z
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T07:16:14Z
 - Review oracle round 1 (2026-10-21): reviewer claude (claude-opus-5-5, headless), effort 3, roster general, plus a Sonnet general sub-reviewer (agent a270e187bf5cb516b). 0 bugs, 5 suggestions, 3 nits, all open. A fix pass was requested for M1–M8 (`review/round-1/merged.md`).
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T07:25:52Z
+- 2026-10-21: review-round-1 fix pass. The CPU culture swap is gone because `BicepSyntax.Value` already formats `0.25` invariantly. Both retry paths call `PostgresRetryPolicy.Configure`; `RetryDelaySeconds` is the maximum back-off. aca-neon migrate checks only the direct string and does not probe `az login`. CI uploads the aca-neon Bicep. `Server` is a host alias; a URI and `Channel Binding=Disabled` are refused. Secret tests pass real values and reject them on argv and the plan. The `unused` Entra placeholder is documented for every publish target. No new live deploy.
 
 ## Results
 
@@ -107,18 +120,24 @@ Live deploy on 2026-10-21, subscription `40025bcc-ef1f-480f-9739-544719aeeb86`, 
 
 Monthly cost: Neon Free $0 (project kept). ACA consumption $0 inside the free grant while the apps existed (min replicas 0, 0.25 CPU, 0.5Gi). Log Analytics stays inside the 5 GB free ingestion for a deploy this short. ACR Basic is the exception, about $5 per month while the registry exists; Azure may prorate the hours it was up. `dev deprovision --target aca-neon` started deletion of `rg-tw-architecture-317-aca-neon` (registry, environment, container apps, Log Analytics, managed identity). That stops the registry bill. The Neon project was not deleted.
 
-Publish suites passed: `AcaNeonPublish_Given_` 6, `AcaPublish_Given_` 12, `ComposePublish_Given_` 10, `KubernetesPublish_Given_` 11. `dev-cli-tests` passed 270. `ganda repo audit` passed (32 checks, 0 failed). `dev publish aca-neon` wrote `artifacts/aspire-output/aca-neon` and its safety suite passed. The generated Bicep has `minReplicas: 0` and no Flexible Server or `postgres-kv`.
+Publish suites passed on the first implement: `AcaNeonPublish_Given_` 6, `AcaPublish_Given_` 12, `ComposePublish_Given_` 10, `KubernetesPublish_Given_` 11. `dev-cli-tests` passed 270. `ganda repo audit` passed (32 checks, 0 failed). `dev publish aca-neon` wrote `artifacts/aspire-output/aca-neon` and its safety suite passed. The generated Bicep has `minReplicas: 0` and no Flexible Server or `postgres-kv`.
+
+Review round 1 fix pass (2026-10-21), re-run from each test directory so its `global.json` selects Microsoft.Testing.Platform. `dev-cli-tests` `dotnet test -c Release` passed 273 (the three new facts are the migrate secret list, `Server` as a host, and refusal of `Channel Binding=Disabled` plus a URI). `web-infrastructure-tests` `--filter-class Resolve_Given_` passed 4. `AcaNeonPublish_Given_` passed 6 against Bicep generated in that run, including `cpu` `0.25`. `AcaPublish_Given_` passed 12, including Flexible Server and Key Vault still present on `aca`. `ganda repo audit` passed again (32 checks, 0 failed, 1 skipped). No second live deploy: the 2026-10-21 smoke already passed and the resource group was deleted.
 
 ### How to validate
 
-Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release -- --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`, `ComposePublish_Given_`, and `KubernetesPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. With the two Neon strings in the AppHost user secrets: `dotnet run tools/dev-cli/dev.cs -- deploy --target aca-neon --yes`, then `dotnet run tools/dev-cli/dev.cs -- deploy migrate --target aca-neon --yes`, then `curl -fsS https://<ingress-fqdn>/web-server/alive` and `curl -fsS https://<ingress-fqdn>/api/identity/entra/offered`. Tear the resource group down with `dev deprovision --target aca-neon` when the registry should stop billing. Leave the Neon project.
+Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. From `tests/container-apps/web/web-infrastructure-tests`, `dotnet test -c Release --filter-class Resolve_Given_`. Run `ganda repo audit`. With the two Neon strings in the AppHost user secrets, a live check is `dotnet run tools/dev-cli/dev.cs -- deploy --target aca-neon --yes`, then `dotnet run tools/dev-cli/dev.cs -- deploy migrate --target aca-neon --yes`, then `curl -fsS https://<ingress-fqdn>/web-server/alive`. Do not point an uptime monitor at `/api/health`; that route opens Postgres and wakes Neon. Tear the resource group down with `dev deprovision --target aca-neon` when the registry should stop billing. Leave the Neon project.
 
-Expect: the four publish suites and dev-cli-tests pass. aca-neon Bicep has `minReplicas: 0` and no Flexible Server, Key Vault, or `postgres-kv`. The plan names the subscription source and does not print a connection string. Migrate names the direct connection and applies the bundle without a firewall rule. Both curls return HTTP 200 (`Healthy`, and `{"offered":false}` before Entra is turned on). The database route may wait while Neon wakes. After deprovision the resource group is gone and the Neon project still exists.
+Expect: those suites and the audit pass. aca-neon Bicep has `minReplicas: 0`, cpu `0.25`, and no Flexible Server, Key Vault, or `postgres-kv`. aca Bicep still has Flexible Server and Key Vault. `PostgresRetryPolicy.Resolve("6", "8")` is count 6 and a maximum delay of 8 seconds; blank or unparsable text keeps 4 and 2 seconds. aca-neon migrate's secret list is only `neon-direct-connection-string`, and that scope does not probe Azure. A pooled string with `Server=` and `Channel Binding=Disable` is accepted; `Disabled` and a `postgresql://` URI are refused without the secret being echoed. Deploy arguments and the plan omit the secret values and the `neon-` names. The plan names the subscription source. Migrate names the direct connection and applies the bundle without a firewall rule. `/web-server/alive` returns HTTP 200 `Healthy`. After deprovision the resource group is gone and the Neon project still exists.
 
 ### Review
 
-Round 1 (effort 3, general roster): 0 bug, 5 suggestion, 3 nit, all open, 0 fixed, 0 wontfix. Disposition is pending a fix pass. Artifacts: `review/review-framework.md` and `review/round-1/general.md`, plus `review/round-1/merged.md`, which is the live ledger.
+Round 1 (effort 3, general roster): 0 bug, 5 suggestion, 3 nit. The fix pass is on this branch. Round 2 has not dispositioned the ledger. Artifacts: `review/review-framework.md` and `review/round-1/general.md`, plus `review/round-1/merged.md`, which stays the live ledger.
 
 ### Registry cost (Steve, 2026-10-21)
 
 Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or take a registry password as the pull credential. ACR Basic stayed, and the resource group was deleted after the smoke so that charge does not continue. Detail is under Results and in the operator guide.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8. Fix pass landed 2026-10-21; round 2 has not dispositioned them.

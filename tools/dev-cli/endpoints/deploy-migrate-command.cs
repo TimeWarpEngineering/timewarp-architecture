@@ -10,7 +10,8 @@
 // NeverAutomated_Given_).
 //   1. Preflight (PreflightScope.Migrate): kubernetes — the current kubectl context answers, kind's
 //      cluster exists, and the deploy parameters resolve (k8s-namespace names the namespace); aca —
-//      `az login` and the subscription with its source. No aspire/helm/registry checks: none of them runs.
+//      `az login` and the subscription with its source; aca-neon — the direct Neon string only, no
+//      `az login` and no pooled string. No aspire/helm/registry checks: none of them runs.
 //   2. The published artifact (artifacts/aspire-output/<target>/efmigrations/web-migrations.sql, or the
 //      web-migrations bundle for aca) must exist. A missing one is REFUSED with the exact
 //      `dev publish <target>` command; the verb never publishes (DeployOperate Design region says why).

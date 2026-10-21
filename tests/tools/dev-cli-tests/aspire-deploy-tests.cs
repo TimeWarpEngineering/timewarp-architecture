@@ -128,11 +128,43 @@ public class Arguments_Given_
 
   public static Task AcaNeonDeploy_Should_NotForwardTheConnectionStrings()
   {
-    string[] arguments = AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, nonInteractive: false, []);
+    const string pooledValue = "Host=ep-pooler.neon.tech;Password=s3cret-pooled";
+    const string directValue = "Host=ep.neon.tech;Password=s3cret-direct";
+    ResolvedDeployParameter[] secrets =
+    [
+      new(AspireDeploy.NeonPooledConnectionStringParameter, pooledValue, AspireDeploy.UserSecretSource),
+      new(AspireDeploy.NeonDirectConnectionStringParameter, directValue, AspireDeploy.UserSecretSource),
+    ];
+
+    string[] arguments = AspireDeploy.BuildDeployArguments(
+      "/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, nonInteractive: false, [], secrets);
     arguments.ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=aca-neon"]);
     string text = string.Join('\n', arguments);
+    text.ShouldNotContain(pooledValue);
+    text.ShouldNotContain(directValue);
     text.ShouldNotContain("neon-pooled");
     text.ShouldNotContain("neon-direct");
+
+    Dictionary<string, string> environment = [];
+    AspireDeploy.AddSecretParameterEnvironment(environment, secrets, _ => null);
+    environment.Select(pair => pair.Key).ShouldBe(
+    [
+      "Parameters__neon-pooled-connection-string",
+      "Parameters__neon-direct-connection-string",
+    ]);
+    environment["Parameters__neon-pooled-connection-string"].ShouldBe(pooledValue);
+    environment["Parameters__neon-direct-connection-string"].ShouldBe(directValue);
+
+    string plan = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+      "/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, "subscription: example", [], secrets));
+    plan.ShouldNotContain(pooledValue);
+    plan.ShouldNotContain(directValue);
+    plan.ShouldNotContain("neon-pooled");
+    plan.ShouldNotContain("neon-direct");
+
+    Should.Throw<InvalidOperationException>(() =>
+      AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, false, secrets, secrets));
+
     AspireDeploy.RequiredParameters(AspireDeploy.ContainerAppsNeon).ShouldBeEmpty();
     AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon).ShouldBe(
       [AspireDeploy.NeonPooledConnectionStringParameter, AspireDeploy.NeonDirectConnectionStringParameter]);
@@ -145,6 +177,26 @@ public class Arguments_Given_
     AspireDeploy.UsesFlexibleServer(AspireDeploy.ContainerAppsNeon).ShouldBeFalse();
     AspireDeploy.UsesMigrationBundle(AspireDeploy.ContainerAppsNeon).ShouldBeTrue();
     AspireDeploy.UsesMigrationBundle(AspireDeploy.Kubernetes).ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaNeonMigrate_Should_CheckOnlyTheDirectSecretAndSkipAzure()
+  {
+    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate)
+      .ShouldBe([AspireDeploy.NeonDirectConnectionStringParameter]);
+    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Deploy)
+      .ShouldBe([AspireDeploy.NeonPooledConnectionStringParameter, AspireDeploy.NeonDirectConnectionStringParameter]);
+    AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate).ShouldBeFalse();
+    AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Deploy).ShouldBeTrue();
+    AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Open).ShouldBeTrue();
+    AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerApps, PreflightScope.Migrate).ShouldBeTrue();
+    AspireDeploy.ProbesAzureAccount(AspireDeploy.Compose, PreflightScope.Migrate).ShouldBeFalse();
+
+    SecretResolution missing = AspireDeploy.ResolveSecrets(
+      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate), _ => null, true, "");
+    string missingText = string.Join('\n', AspireDeploy.CollectSecretProblems("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, missing, null));
+    missingText.ShouldContain("neon-direct-connection-string");
+    missingText.ShouldNotContain("neon-pooled-connection-string");
     return Task.CompletedTask;
   }
 }
@@ -519,10 +571,22 @@ public partial class DeployParameters_Given_
     missingText.ShouldNotContain("s3cret-value");
 
     string plan = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
-      AppHost, AspireDeploy.ContainerAppsNeon, "subscription: example", []));
+      AppHost, AspireDeploy.ContainerAppsNeon, "subscription: example", [], resolution.Resolved));
     plan.ShouldContain("Publish:Target=aca-neon");
+    plan.ShouldNotContain("from-env");
+    plan.ShouldNotContain("from-secret");
     plan.ShouldNotContain("neon-pooled");
     plan.ShouldNotContain("neon-direct");
+
+    Dictionary<string, string> environment = [];
+    AspireDeploy.AddSecretParameterEnvironment(environment, resolution.Resolved, _ => null);
+    environment.Select(pair => pair.Key).ShouldBe(
+    [
+      "Parameters__neon-pooled-connection-string",
+      "Parameters__neon-direct-connection-string",
+    ]);
+    environment["Parameters__neon-pooled-connection-string"].ShouldBe("from-env");
+    environment["Parameters__neon-direct-connection-string"].ShouldBe("from-secret");
     return Task.CompletedTask;
   }
 

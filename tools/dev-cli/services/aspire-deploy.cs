@@ -74,8 +74,9 @@
 //
 // aca-neon (task 317) is an Azure Container Apps target with no Flexible Server. Its two Neon
 // connection strings are SecretParameters: resolved from the environment or AppHost user secrets,
-// refused when a copy is in appsettings, checked for shape, and stashed on the preflight for
-// dev deploy migrate. They are copied into the aspire environment as above and not printed.
+// refused when a copy is in appsettings, and checked for shape. dev deploy resolves both and copies
+// them into the aspire environment as above. dev deploy migrate resolves and shape-checks only the
+// direct string and does not probe az login. Neither value is printed or placed on argv.
 // Destroying the resource group does not delete the Neon project and there is no Key Vault to purge.
 //
 // `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
@@ -216,6 +217,21 @@ internal static class AspireDeploy
     .. parameters.Select(parameter => $"--{ParameterConfigurationKey(parameter.Name)}={parameter.Value}"),
   ];
 
+  /// <summary>
+  /// Same arguments as the parameter overload. <paramref name="secrets"/> are not forwarded.
+  /// A secret name on <paramref name="parameters"/> is refused.
+  /// </summary>
+  internal static string[] BuildDeployArguments(
+    string appHostProject,
+    DeployTarget target,
+    bool nonInteractive,
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    RejectSecretsOnParameters(parameters, secrets);
+    return BuildDeployArguments(appHostProject, target, nonInteractive, parameters);
+  }
+
   /// <summary>The AppHost parameters a deploy of <paramref name="target"/> needs and that have no default.</summary>
   internal static string[] RequiredParameters(DeployTarget target) =>
     target == Kubernetes
@@ -224,9 +240,28 @@ internal static class AspireDeploy
 
   /// <summary>Secret parameters Aspire reads itself. Never forwarded and never printed.</summary>
   internal static string[] SecretParameters(DeployTarget target) =>
-    target == ContainerAppsNeon
-      ? [NeonPooledConnectionStringParameter, NeonDirectConnectionStringParameter]
-      : [];
+    SecretParameters(target, PreflightScope.Deploy);
+
+  /// <summary>
+  /// Secret parameters for one verb. aca-neon migrate needs only the direct string. Deploy needs both.
+  /// </summary>
+  internal static string[] SecretParameters(DeployTarget target, PreflightScope scope)
+  {
+    if (target != ContainerAppsNeon)
+    {
+      return [];
+    }
+
+    return scope == PreflightScope.Migrate
+      ? [NeonDirectConnectionStringParameter]
+      : [NeonPooledConnectionStringParameter, NeonDirectConnectionStringParameter];
+  }
+
+  /// <summary>
+  /// aca migrate still needs <c>az login</c>. aca-neon migrate uses only the direct Neon string.
+  /// </summary>
+  internal static bool ProbesAzureAccount(DeployTarget target, PreflightScope scope) =>
+    IsAzureContainerApps(target) && !(target == ContainerAppsNeon && scope == PreflightScope.Migrate);
 
   /// <summary>Configuration key of an AppHost parameter: <c>Parameters:&lt;name&gt;</c>.</summary>
   internal static string ParameterConfigurationKey(string name) => $"Parameters:{name}";
@@ -761,6 +796,35 @@ internal static class AspireDeploy
     .. BuildParameterLines(parameters),
     $"  {preflightDetail}",
   ];
+
+  /// <summary>
+  /// Same plan as the parameter overload. Secret values are not printed.
+  /// A secret name on <paramref name="parameters"/> is refused.
+  /// </summary>
+  internal static string[] BuildDeployPlanLines(
+    string appHostProject,
+    DeployTarget target,
+    string preflightDetail,
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    RejectSecretsOnParameters(parameters, secrets);
+    return BuildDeployPlanLines(appHostProject, target, preflightDetail, parameters);
+  }
+
+  private static void RejectSecretsOnParameters(
+    IReadOnlyList<ResolvedDeployParameter> parameters,
+    IReadOnlyList<ResolvedDeployParameter> secrets)
+  {
+    foreach (ResolvedDeployParameter secret in secrets)
+    {
+      if (parameters.Any(parameter => string.Equals(parameter.Name, secret.Name, StringComparison.Ordinal)))
+      {
+        throw new InvalidOperationException(
+          $"Secret parameter '{secret.Name}' is on the deploy parameter list. Secrets are copied as Parameters__ environment variables and are not forwarded.");
+      }
+    }
+  }
 
   /// <summary>One line per forwarded parameter: name, value and source (forwarded parameters are never secret).</summary>
   internal static string[] BuildParameterLines(IReadOnlyList<ResolvedDeployParameter> parameters) =>

@@ -74,7 +74,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       DeployPreflight? preflight = await AspireDeployPreflight.RunAsync(Terminal, "dev deploy", command.Target, PreflightScope.Deploy, ct);
       if (preflight is null) return Unit.Value;
 
-      foreach (string line in AspireDeploy.BuildDeployPlanLines(preflight.AppHostProject, preflight.Target, preflight.Detail, preflight.Parameters))
+      foreach (string line in AspireDeploy.BuildDeployPlanLines(
+        preflight.AppHostProject, preflight.Target, preflight.Detail, preflight.Parameters, preflight.Secrets ?? []))
       {
         Terminal.WriteLine(line);
       }
@@ -97,7 +98,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       }
 
       ShellBuilder aspire = Shell.Builder("aspire")
-        .WithArguments(AspireDeploy.BuildDeployArguments(preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes, preflight.Parameters))
+        .WithArguments(AspireDeploy.BuildDeployArguments(
+          preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes, preflight.Parameters, preflight.Secrets ?? []))
         .WithWorkingDirectory(preflight.RepoRoot)
         .WithNoValidation();
       foreach ((string name, string value) in preflight.AspireEnvironment)
