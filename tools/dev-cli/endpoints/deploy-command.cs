@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deploy [--target compose|kubernetes|aca]`: the operator's manual `aspire deploy` of one publish
+// `dev deploy [--target compose|kubernetes|aca|aca-neon]`: the operator's manual `aspire deploy` of one publish
 // target, after a preflight and a confirmation. Never run by CI.
 #endregion
 
@@ -23,6 +23,9 @@
 // environment variable, else the AppHost user secret Azure:SubscriptionId, else the az CLI's — only
 // that fallback is passed to `aspire deploy` as Azure__SubscriptionId, so it never overrides a
 // subscription the operator pinned.
+// aca-neon (task 317) uses the same Azure preflight and the same ACA environment. It does not
+// forward the Neon connection strings: those are secret parameters Aspire reads from user secrets
+// or Parameters__ environment variables, and a value found in appsettings is refused.
 // Confirmation: --yes deploys with `--non-interactive`. Without --yes the plan (with the forwarded
 // parameters) is printed and the operator is asked; when stdin is not a terminal there is nobody to
 // ask, so it refuses instead of assuming yes; any answer but y/yes cancels with nothing run. aspire
@@ -42,10 +45,11 @@ namespace DevCli.Commands;
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
 [NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* from the AppHost appsettings.json, user secrets or env)")]
 [NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
+[NuruRouteExample("deploy --target aca-neon", Description = "Provision Azure Container Apps (min replicas 0) wired to Neon; the connection strings stay in AppHost user secrets and are not forwarded")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 {
-  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Publish target: compose | kubernetes | aca | aca-neon (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire deploy --non-interactive")]

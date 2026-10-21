@@ -1,5 +1,5 @@
 #region Purpose
-// `dev deploy migrate [--target compose|kubernetes|aca] [--yes] [--allow-stale]`: apply the published idempotent EF
+// `dev deploy migrate [--target compose|kubernetes|aca|aca-neon] [--yes] [--allow-stale]`: apply the published idempotent EF
 // migrations to the database of a deployment `dev deploy` made. Operator-run, never CI.
 #endregion
 
@@ -23,9 +23,11 @@
 //      Azure:ResourceGroup), the one Flexible Server in it, the connection string from the postgres-kv
 //      Key Vault secret (never printed; a missing role is refused with the pwsh grant), and the
 //      operator's IPv4 (--client-ip, else api.ipify.org).
+//      aca-neon — the published bundle with --connection set to the direct Neon string from preflight
+//      secrets (never printed). No firewall rule, no Key Vault and no `az postgres`.
 //   3a. Stale check (task 341, DeployOperate Design region): source migration ids vs the published script's;
 //      missing ones print the warning before the prompt, --yes refuses on them unless --allow-stale, and the
-//      report then says "relative to the published script". aca reads the script beside the bundle, else skips.
+//      report then says "relative to the published script". aca and aca-neon read the script beside the bundle, else skip.
 //   4. The plan (the command in pwsh form, the script piped with Get-Content -Raw) is printed and
 //      confirmed unless --yes; with stdin redirected and no --yes it refuses.
 //   5. compose / kubernetes read __EFMigrationsHistory, pipe the script into psql inside the postgres
@@ -35,6 +37,8 @@
 //      --connection (output streamed and captured for the summary), and delete the rule in finally; a failed
 //      delete is reported from the finally with the command to run by hand, so it is printed even when
 //      Ctrl+C propagates.
+//      aca-neon runs only the bundle. The printed command replaces the connection string with the Neon
+//      placeholder, not the Key Vault one.
 //   6. The report (DeployOperate.BuildMigrationReport / BuildBundleReport: applied ids, "Up to date", or
 //      where it failed), then one summary line: what ran against which target; the exit code is the tool's.
 // The script and the bundle are idempotent (only pending migrations apply), so re-running is safe.
@@ -46,11 +50,12 @@ namespace DevCli.Commands;
 [NuruRouteExample("deploy migrate", Description = "psql the published script into the running compose stack's postgres")]
 [NuruRouteExample("deploy migrate --target kubernetes", Description = "kubectl exec psql in statefulset/postgres-statefulset of the k8s-namespace parameter")]
 [NuruRouteExample("deploy migrate --target aca --resource-group my-rg", Description = "Run the bundle through a temporary operator-migrate firewall rule (always deleted)")]
+[NuruRouteExample("deploy migrate --target aca-neon", Description = "Run the bundle with the direct Neon connection string (no firewall rule)")]
 [NuruRouteExample("deploy migrate --target kubernetes --yes", Description = "Migrate without prompting")]
 [NuruRouteExample("deploy migrate --target kubernetes --verbose", Description = "Show psql's full transcript instead of only errors and the summary")]
 internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
 {
-  [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca (default: compose, the AppHost's Publish:Target default)")]
+  [Option("target", "t", Description = "Deploy target: compose | kubernetes | aca | aca-neon (default: compose, the AppHost's Publish:Target default)")]
   public string? Target { get; set; }
 
   [Option("yes", "y", Description = "Confirm without prompting")]
@@ -65,7 +70,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
   [Option("resource-group", "g", Description = "aca: resource group (default: Azure__ResourceGroup, else the AppHost user secret Azure:ResourceGroup)")]
   public string? ResourceGroup { get; set; }
 
-  [Option("verbose", Description = "Show the full transcript: psql's statement tags and NOTICEs (compose/kubernetes), the bundle's --verbose (aca)")]
+  [Option("verbose", Description = "Show the full transcript: psql's statement tags and NOTICEs (compose/kubernetes), the bundle's --verbose (aca and aca-neon)")]
   public bool Verbose { get; set; }
 
   [Option("client-ip", Description = "aca: your public IPv4 for the temporary firewall rule (default: what https://api.ipify.org reports)")]
@@ -91,7 +96,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       if (preflight is null) return Unit.Value;
 
       string artifact = Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), DeployOperate.MigrationArtifact(preflight.Target));
-      if (OperatingSystem.IsWindows() && preflight.Target == AspireDeploy.ContainerApps && !File.Exists(artifact))
+      if (OperatingSystem.IsWindows() && AspireDeploy.IsAzureContainerApps(preflight.Target) && !File.Exists(artifact))
       {
         artifact += ".exe";
       }
@@ -102,7 +107,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         return Unit.Value;
       }
 
-      string script = preflight.Target == AspireDeploy.ContainerApps
+      string script = AspireDeploy.UsesMigrationBundle(preflight.Target)
         ? Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), DeployOperate.MigrationScript)
         : artifact;
       if (!await CheckStaleAsync(command, preflight, script, ct)) return Unit.Value;
@@ -110,6 +115,12 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       if (preflight.Target == AspireDeploy.ContainerApps)
       {
         await MigrateContainerAppsAsync(command, preflight, artifact, ct);
+        return Unit.Value;
+      }
+
+      if (preflight.Target == AspireDeploy.ContainerAppsNeon)
+      {
+        await MigrateNeonAsync(command, preflight, artifact, ct);
         return Unit.Value;
       }
 
@@ -235,7 +246,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       if (!Confirmed(command.Yes)) return;
 
       AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
-        create, run, delete, RunStepAsync,
+        create, run, delete, (step, token) => RunStepAsync(step, token),
         reason => Terminal.WriteErrorLine(DeployOperate.FirewallCleanupFailedMessage(group, server, subscription, reason).Red()),
         ct);
 
@@ -243,9 +254,33 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Summarize(AspireDeploy.ContainerApps, "the web-migrations bundle", $"server {server} in {group}", result.ExitCode);
     }
 
-    private async Task<int> RunStepAsync(ProcessStep step, CancellationToken ct)
+    private async Task MigrateNeonAsync(DeployMigrateCommand command, DeployPreflight preflight, string bundle, CancellationToken ct)
     {
-      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployOperate.RedactConnection(step.Arguments).Select(DeployOperate.PwshQuote))}");
+      ResolvedDeployParameter? direct = preflight.Secrets?.FirstOrDefault(secret =>
+        string.Equals(secret.Name, AspireDeploy.NeonDirectConnectionStringParameter, StringComparison.Ordinal));
+      if (direct is null)
+      {
+        Fail($"Missing the direct Neon connection string ({AspireDeploy.NeonDirectConnectionStringParameter}). "
+          + "Set it in the AppHost user secrets or a Parameters__ environment variable, then re-run.");
+        return;
+      }
+
+      ProcessStep run = new(bundle, DeployOperate.BuildBundleArguments(direct.Value, command.Verbose), Capture: true);
+
+      Terminal.WriteLine($"{Verb} → {AspireDeploy.ContainerAppsNeon.Name}");
+      Terminal.WriteLine($"  {preflight.Detail}");
+      Terminal.WriteLine("  Connection: direct Neon connection string (not shown; no firewall rule)");
+      Terminal.WriteLine($"  Bundle:  {bundle}");
+      if (!Confirmed(command.Yes)) return;
+
+      int exitCode = await RunStepAsync(run, ct, DeployOperate.NeonDirectConnectionPlaceholder);
+      Report(DeployOperate.BuildBundleReport(BundleOutput, exitCode), exitCode);
+      Summarize(AspireDeploy.ContainerAppsNeon, "the web-migrations bundle", "the direct Neon connection", exitCode);
+    }
+
+    private async Task<int> RunStepAsync(ProcessStep step, CancellationToken ct, string connectionPlaceholder = DeployOperate.KeyVaultConnectionPlaceholder)
+    {
+      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployOperate.RedactConnection(step.Arguments, connectionPlaceholder).Select(DeployOperate.PwshQuote))}");
       ShellBuilder builder = Shell.Builder(step.Executable)
         .WithArguments([.. step.Arguments])
         .WithNoValidation();

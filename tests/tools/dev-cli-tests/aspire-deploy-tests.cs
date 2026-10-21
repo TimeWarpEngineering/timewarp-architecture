@@ -25,6 +25,8 @@ public class Targets_Given_
     AspireDeploy.ResolveTarget("compose").ShouldBe(AspireDeploy.Compose);
     AspireDeploy.ResolveTarget("Kubernetes").ShouldBe(AspireDeploy.Kubernetes);
     AspireDeploy.ResolveTarget("ACA").ShouldBe(AspireDeploy.ContainerApps);
+    AspireDeploy.ResolveTarget("aca-neon").ShouldBe(AspireDeploy.ContainerAppsNeon);
+    AspireDeploy.ResolveTarget("ACA-NEON").ShouldBe(AspireDeploy.ContainerAppsNeon);
     return Task.CompletedTask;
   }
 
@@ -33,7 +35,7 @@ public class Targets_Given_
     AspireDeploy.ResolveTarget("swarm").ShouldBeNull();
     string message = AspireDeploy.UnknownTargetMessage("swarm");
     message.ShouldContain("'swarm'");
-    message.ShouldContain("compose, kubernetes, aca");
+    message.ShouldContain("compose, kubernetes, aca, aca-neon");
     return Task.CompletedTask;
   }
 }
@@ -121,6 +123,28 @@ public class Arguments_Given_
   {
     AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerApps, nonInteractive: false, [])
       .ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=aca"]);
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaNeonDeploy_Should_NotForwardTheConnectionStrings()
+  {
+    string[] arguments = AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, nonInteractive: false, []);
+    arguments.ShouldBe(["deploy", "--apphost", "/repo/app-host.csproj", "--environment", "Production", "--", "--Publish:Target=aca-neon"]);
+    string text = string.Join('\n', arguments);
+    text.ShouldNotContain("neon-pooled");
+    text.ShouldNotContain("neon-direct");
+    AspireDeploy.RequiredParameters(AspireDeploy.ContainerAppsNeon).ShouldBeEmpty();
+    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon).ShouldBe(
+      [AspireDeploy.NeonPooledConnectionStringParameter, AspireDeploy.NeonDirectConnectionStringParameter]);
+    AspireDeploy.SecretParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
+    AspireDeploy.SecretParameters(AspireDeploy.Compose).ShouldBeEmpty();
+    AspireDeploy.IsAzureContainerApps(AspireDeploy.ContainerApps).ShouldBeTrue();
+    AspireDeploy.IsAzureContainerApps(AspireDeploy.ContainerAppsNeon).ShouldBeTrue();
+    AspireDeploy.IsAzureContainerApps(AspireDeploy.Compose).ShouldBeFalse();
+    AspireDeploy.UsesFlexibleServer(AspireDeploy.ContainerApps).ShouldBeTrue();
+    AspireDeploy.UsesFlexibleServer(AspireDeploy.ContainerAppsNeon).ShouldBeFalse();
+    AspireDeploy.UsesMigrationBundle(AspireDeploy.ContainerAppsNeon).ShouldBeTrue();
+    AspireDeploy.UsesMigrationBundle(AspireDeploy.Kubernetes).ShouldBeFalse();
     return Task.CompletedTask;
   }
 }
@@ -365,9 +389,12 @@ public partial class DeployParameters_Given_
     // Every AddParameter names a constants.cs identifier first, so the value-less scan below cannot miss a literal or named-argument form.
     NonIdentifierParameterPattern().Matches(program).ShouldBeEmpty();
 
-    // A value-less parameter anywhere in program.cs makes Aspire prompt; every one must be in the kubernetes branch and listed.
+    // A value-less parameter in the kubernetes branch is required and forwarded. The aca-neon connection
+    // strings are value-less secrets outside that branch; Aspire reads them and dev deploy does not forward them.
     Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
-    Valueless(program).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
+    Valueless(program).ShouldBe(
+      [.. AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), .. AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon)],
+      ignoreOrder: true);
     return Task.CompletedTask;
   }
 
@@ -411,6 +438,49 @@ public partial class DeployParameters_Given_
     resolution.Resolved.ShouldAllBe(parameter => parameter.Source == "AppHost appsettings.json");
     string.Join('\n', AspireDeploy.BuildParameterLines(resolution.Resolved))
       .ShouldContain("Parameter:   k8s-namespace=my-app (from the AppHost appsettings.json)");
+    return Task.CompletedTask;
+  }
+
+  public static Task NeonSecrets_Should_ComeFromEnvOrUserSecretsAndNeverAppSettings()
+  {
+    const string committed = "Host=committed;Password=s3cret-value";
+    AppSettingsFile appSettings = AppSettings("appsettings.json", $"\"neon-pooled-connection-string\": \"{committed}\"");
+    SecretResolution resolution = AspireDeploy.ResolveSecrets(
+      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon),
+      name => name == "Parameters__neon-pooled-connection-string" ? "from-env" : null,
+      true,
+      "Parameters:neon-direct-connection-string = from-secret\n",
+      [appSettings]);
+
+    resolution.CommittedToAppSettings.ShouldBe([AspireDeploy.NeonPooledConnectionStringParameter]);
+    resolution.Missing.ShouldBeEmpty();
+    resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
+    [
+      "neon-pooled-connection-string=from-env",
+      "neon-direct-connection-string=from-secret",
+    ]);
+    resolution.Resolved.ShouldNotContain(parameter => parameter.Value == committed);
+
+    string problems = string.Join('\n', AspireDeploy.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, resolution, null));
+    problems.ShouldContain("never be committed");
+    problems.ShouldNotContain("s3cret-value");
+    problems.ShouldNotContain("from-env");
+    problems.ShouldNotContain("from-secret");
+
+    SecretResolution missing = AspireDeploy.ResolveSecrets(
+      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon), NoEnvironment, true, "");
+    string missingText = string.Join('\n', AspireDeploy.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, missing, null));
+    missingText.ShouldContain("Missing Neon connection strings for aca-neon");
+    missingText.ShouldContain("dotnet user-secrets set 'Parameters:neon-pooled-connection-string'");
+    missingText.ShouldContain("dotnet user-secrets set 'Parameters:neon-direct-connection-string'");
+    missingText.ShouldContain("Do not commit them in appsettings.json.");
+    missingText.ShouldNotContain("s3cret-value");
+
+    string plan = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+      AppHost, AspireDeploy.ContainerAppsNeon, "subscription: example", []));
+    plan.ShouldContain("Publish:Target=aca-neon");
+    plan.ShouldNotContain("neon-pooled");
+    plan.ShouldNotContain("neon-direct");
     return Task.CompletedTask;
   }
 
@@ -671,6 +741,21 @@ public class OperatorText_Given_
     text.ShouldContain("postgres-kv");
     text.ShouldContain("az keyvault purge --name <vault>");
     text.ShouldNotContain("docker");
+    return Task.CompletedTask;
+  }
+
+  public static Task AcaNeonCleanup_Should_DeleteTheGroupAndLeaveNeon()
+  {
+    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.ContainerAppsNeon, "docker"));
+
+    text.ShouldContain("az group delete --name <resource-group>");
+    text.ShouldContain("The Neon project is not part of the resource group and is not deleted.");
+    text.ShouldNotContain("keyvault");
+    text.ShouldNotContain("postgres-kv");
+    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
+      .ShouldContain("The Neon project is not deleted");
+    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
+      .ShouldNotContain("keyvault");
     return Task.CompletedTask;
   }
 

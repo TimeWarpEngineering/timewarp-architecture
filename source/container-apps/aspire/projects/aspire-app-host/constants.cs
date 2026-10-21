@@ -1,6 +1,7 @@
 #region Purpose
 // Aspire AppHost resource names: project resources aliased to ServiceNames for service discovery,
-// plus the Postgres container/database resource names (the database name doubles as its ConnectionStrings key).
+// plus the Postgres container/database resource names (the database name doubles as its ConnectionStrings key)
+// and the aca-neon connection-string parameter names.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -64,6 +65,7 @@ internal class Constants
   public const string ComposePublishTarget = "compose";
   public const string KubernetesPublishTarget = "kubernetes";
   public const string ContainerAppsPublishTarget = "aca";
+  public const string ContainerAppsNeonPublishTarget = "aca-neon";
 
   // Task 070-004: Kubernetes publish environment (Helm chart), its cluster Ingress, container registry,
   // and the publish-only parameters for Helm placement, registry and storage. Task 288: the four
@@ -83,6 +85,13 @@ internal class Constants
   // Task 070-007: Azure Container Apps publish environment (Bicep). Its registry, Log Analytics workspace
   // and the Flexible Server's Key Vault are named by Aspire from this and the postgres resource name.
   public const string ContainerAppsEnvironmentResourceName = "aca-env";
+
+  // Task 317: aca-neon Postgres is external Neon. web-server receives the pooled parameter as
+  // ConnectionStrings__postgres-db. The migration resource references the direct parameter under that
+  // same connection-string name. dev-cli treats both names as secret parameters and does not forward them.
+  public const string NeonPooledConnectionStringParameterName = "neon-pooled-connection-string";
+  public const string NeonDirectConnectionStringParameterName = "neon-direct-connection-string";
+  public const string NeonDirectConnectionResourceName = "neon-direct";
 
   // Task 335-002: the State DevTools inspector's configuration key TimeWarp:State:DevTools:CorsOrigins
   // as an environment variable. The inspector unions it with TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS,

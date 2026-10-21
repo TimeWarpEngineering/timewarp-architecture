@@ -68,6 +68,12 @@
 // or a Parameters__<name> environment variable, where Aspire reads it itself; never add one to
 // RequiredParameters, and never commit one to appsettings.json.
 //
+// aca-neon (task 317) is an Azure Container Apps target with no Flexible Server. Its two Neon
+// connection strings are SecretParameters: resolved from the environment or AppHost user secrets,
+// refused when a copy is in appsettings, checked for shape, and stashed on the preflight for
+// dev deploy migrate. They are not forwarded and not printed. Destroying the resource group does
+// not delete the Neon project and there is no Key Vault to purge.
+//
 // `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
 // `aspire destroy` sees the deployment's configuration if its pipeline resolves parameters; it never
 // refuses on a missing one (destroy works from Aspire's recorded deployment state) and never probes
@@ -95,6 +101,14 @@ internal sealed record AppSettingsFile(string FileName, string Json);
 
 /// <summary>The target's required parameters: those with a value, and the names nobody set.</summary>
 internal sealed record DeployParameterResolution(IReadOnlyList<ResolvedDeployParameter> Resolved, IReadOnlyList<string> Missing);
+
+/// <summary>
+/// Secret parameters for one target. CommittedToAppSettings names a value found in an appsettings file; that value is never used.
+/// </summary>
+internal sealed record SecretResolution(
+  IReadOnlyList<ResolvedDeployParameter> Resolved,
+  IReadOnlyList<string> Missing,
+  IReadOnlyList<string> CommittedToAppSettings);
 
 /// <summary>
 /// What the process half observed for one kubectl context: the API reachability probe, <c>kind get clusters</c> (kind contexts
@@ -154,8 +168,21 @@ internal static class AspireDeploy
   internal static readonly DeployTarget Compose = new("compose");
   internal static readonly DeployTarget Kubernetes = new("kubernetes");
   internal static readonly DeployTarget ContainerApps = new("aca");
+  internal static readonly DeployTarget ContainerAppsNeon = new("aca-neon");
 
-  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes, ContainerApps];
+  internal static readonly DeployTarget[] Targets = [Compose, Kubernetes, ContainerApps, ContainerAppsNeon];
+
+  internal const string NeonPooledConnectionStringParameter = "neon-pooled-connection-string";
+  internal const string NeonDirectConnectionStringParameter = "neon-direct-connection-string";
+
+  /// <summary>aca and aca-neon both provision an Azure Container Apps environment.</summary>
+  internal static bool IsAzureContainerApps(DeployTarget target) => target == ContainerApps || target == ContainerAppsNeon;
+
+  /// <summary>Flexible Server and its Key Vault exist only on the aca target.</summary>
+  internal static bool UsesFlexibleServer(DeployTarget target) => target == ContainerApps;
+
+  /// <summary>The published EF bundle is the migration artifact for both Azure Container Apps targets.</summary>
+  internal static bool UsesMigrationBundle(DeployTarget target) => IsAzureContainerApps(target);
 
   /// <summary>The AppHost's Publish:Target default.</summary>
   internal static DeployTarget DefaultTarget => Compose;
@@ -185,6 +212,12 @@ internal static class AspireDeploy
   internal static string[] RequiredParameters(DeployTarget target) =>
     target == Kubernetes
       ? [KubernetesNamespaceParameter, HelmReleaseNameParameter, RegistryEndpointParameter, RegistryRepositoryParameter]
+      : [];
+
+  /// <summary>Secret parameters Aspire reads itself. Never forwarded and never printed.</summary>
+  internal static string[] SecretParameters(DeployTarget target) =>
+    target == ContainerAppsNeon
+      ? [NeonPooledConnectionStringParameter, NeonDirectConnectionStringParameter]
       : [];
 
   /// <summary>Configuration key of an AppHost parameter: <c>Parameters:&lt;name&gt;</c>.</summary>
@@ -306,6 +339,78 @@ internal static class AspireDeploy
     }
 
     return new DeployParameterResolution(resolved, missing);
+  }
+
+  /// <summary>
+  /// Resolves secret parameters from the environment, then user secrets. A value in appsettings is reported and not used.
+  /// </summary>
+  internal static SecretResolution ResolveSecrets(
+    IReadOnlyList<string> names,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
+    IReadOnlyList<AppSettingsFile>? appSettings = null)
+  {
+    List<ResolvedDeployParameter> resolved = [];
+    List<string> missing = [];
+    List<string> committed = [];
+    foreach (string name in names)
+    {
+      string? fromAppSettings = (appSettings ?? [])
+        .Select(file => ParseAppSettingsParameter(file.Json, name))
+        .FirstOrDefault(value => value is not null);
+      if (fromAppSettings is not null)
+      {
+        committed.Add(name);
+      }
+
+      string? fromEnvironment = environment(ParameterEnvironmentVariable(name));
+      string? fromSecret = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, ParameterConfigurationKey(name));
+      if (!string.IsNullOrWhiteSpace(fromEnvironment))
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromEnvironment.Trim(), $"{ParameterEnvironmentVariable(name)} environment variable"));
+      }
+      else if (fromSecret is not null)
+      {
+        resolved.Add(new ResolvedDeployParameter(name, fromSecret, UserSecretSource));
+      }
+      else if (fromAppSettings is null)
+      {
+        missing.Add(name);
+      }
+    }
+
+    return new SecretResolution(resolved, missing, committed);
+  }
+
+  /// <summary>Refusal lines for secret parameters. Never includes a secret value and never suggests appsettings.</summary>
+  internal static string[] CollectSecretProblems(
+    string appHostProject, DeployTarget target, SecretResolution resolution, string? userSecretsFailure)
+  {
+    List<string> lines = [];
+    if (userSecretsFailure is not null && resolution.Missing.Count > 0)
+    {
+      lines.Add(UserSecretsUnreadableMessage(appHostProject, userSecretsFailure));
+    }
+
+    foreach (string name in resolution.CommittedToAppSettings)
+    {
+      lines.Add(
+        $"Neon connection string '{name}' is in the AppHost appsettings. Remove it and set it with user secrets; a connection string must never be committed.");
+    }
+
+    if (resolution.Missing.Count > 0)
+    {
+      lines.Add(
+        $"Missing Neon connection string{(resolution.Missing.Count == 1 ? "" : "s")} for {target.Name}: {string.Join(", ", resolution.Missing)}. "
+        + "Set each in the AppHost user secrets or a Parameters__ environment variable. Do not commit them in appsettings.json.");
+      foreach (string name in resolution.Missing)
+      {
+        lines.Add($"  dotnet user-secrets set '{ParameterConfigurationKey(name)}' '<value>' --project '{appHostProject}'");
+      }
+    }
+
+    return [.. lines];
   }
 
   /// <summary>The refusal for unset deploy parameters: each one with the pwsh command that sets it.</summary>
@@ -616,6 +721,13 @@ internal static class AspireDeploy
         "  az group delete --name <resource-group>                      # az asks for confirmation; deletes every resource in the group",
         .. KeyVaultPurgeLines,
       ]
+      : target == ContainerAppsNeon
+      ?
+      [
+        $"  az group list --query \"[].name\" --output tsv                # find the resource group ({AzureResourceGroupVariable}, or the name aspire deploy asked for)",
+        "  az group delete --name <resource-group>                      # az asks for confirmation; deletes every resource in the group",
+        "  The Neon project is not part of the resource group and is not deleted.",
+      ]
       : target == Kubernetes
       ?
       [
@@ -641,6 +753,11 @@ internal static class AspireDeploy
   internal static string[] BuildPostDestroyLines(DeployTarget target) =>
     target == ContainerApps
       ? KeyVaultPurgeLines
+      : target == ContainerAppsNeon
+      ?
+      [
+        "The Azure resource group is gone. The Neon project is not deleted; suspend or delete it in the Neon console if you are done with it.",
+      ]
       : target == Kubernetes
       ?
       [

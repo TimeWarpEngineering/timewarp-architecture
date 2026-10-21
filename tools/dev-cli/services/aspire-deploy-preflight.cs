@@ -36,7 +36,8 @@ namespace DevCli.Services;
 /// </summary>
 internal sealed record DeployPreflight(
   string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment,
-  IReadOnlyList<ResolvedDeployParameter> Parameters, string? KubectlContext = null, string? AzureSubscriptionId = null);
+  IReadOnlyList<ResolvedDeployParameter> Parameters, string? KubectlContext = null, string? AzureSubscriptionId = null,
+  IReadOnlyList<ResolvedDeployParameter>? Secrets = null);
 
 /// <summary>Runs the read-only probes both deploy verbs share.</summary>
 internal static class AspireDeployPreflight
@@ -81,10 +82,16 @@ internal static class AspireDeployPreflight
     Dictionary<string, string> aspireEnvironment = [];
     string[] parameterProblems = [];
     DeployParameterResolution parameters = new([], []);
+    string[] secretNames = AspireDeploy.SecretParameters(target);
+    bool readUserSecrets = AspireDeploy.RequiredParameters(target).Length > 0 || (secretNames.Length > 0 && requireParameters);
+    CommandOutput? secrets = null;
+    if (readUserSecrets)
+    {
+      secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+    }
+
     if (AspireDeploy.RequiredParameters(target).Length > 0)
     {
-      string[] secretsArguments = AspireDeploy.BuildUserSecretsListArguments(appHostProject);
-      CommandOutput? secrets = await ProbeAsync("dotnet", secretsArguments, cancellationToken);
       parameters = AspireDeploy.ResolveParameters(
         target, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()), secrets?.Success == true, secrets?.Stdout ?? "",
         ReadAppSettings(appHostProject));
@@ -101,7 +108,34 @@ internal static class AspireDeployPreflight
       }
     }
 
-    if (target == AspireDeploy.ContainerApps)
+    IReadOnlyList<ResolvedDeployParameter> resolvedSecrets = [];
+    string[] secretProblems = [];
+    if (secretNames.Length > 0 && requireParameters)
+    {
+      string? secretsFailure = secrets switch
+      {
+        null => "dotnet is not on PATH",
+        { TimedOut: true } => $"timed out after {AspireDeploy.ProbeTimeout.TotalSeconds:0}s",
+        { Success: false } => AspireDeploy.FirstLine(secrets.Stderr, AspireDeploy.FirstLine(secrets.Stdout, $"exit {secrets.ExitCode}")),
+        _ => null,
+      };
+      SecretResolution secretResolution = AspireDeploy.ResolveSecrets(
+        secretNames,
+        AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()),
+        secrets?.Success == true,
+        secrets?.Stdout ?? "",
+        ReadAppSettings(appHostProject));
+      secretProblems = AspireDeploy.CollectSecretProblems(appHostProject, target, secretResolution, secretsFailure);
+      foreach (ResolvedDeployParameter secret in secretResolution.Resolved)
+      {
+        bool pooled = string.Equals(secret.Name, AspireDeploy.NeonPooledConnectionStringParameter, StringComparison.Ordinal);
+        secretProblems = [.. secretProblems, .. NeonConnection.Problems(secret.Name, secret.Value, pooled)];
+      }
+
+      resolvedSecrets = secretResolution.Resolved;
+    }
+
+    if (AspireDeploy.IsAzureContainerApps(target))
     {
       string[] azArguments = AspireDeploy.BuildAzureAccountArguments();
       CommandOutput? az = await ProbeAsync("az", azArguments, cancellationToken);
@@ -115,9 +149,9 @@ internal static class AspireDeployPreflight
       string? userSecretSubscription = null;
       if (string.IsNullOrWhiteSpace(environmentSubscription))
       {
-        CommandOutput? secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
+        CommandOutput? subscriptionSecrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
         userSecretSubscription = AspireDeploy.ParseUserSecret(
-          secrets?.Success == true, secrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
+          subscriptionSecrets?.Success == true, subscriptionSecrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
       }
 
       AzureSubscriptionChoice subscription = AspireDeploy.ChooseAzureSubscription(environmentSubscription, userSecretSubscription, account);
@@ -166,7 +200,13 @@ internal static class AspireDeployPreflight
       return FailReport(terminal, verb, parameterProblems);
     }
 
-    return new DeployPreflight(repoRoot, appHostProject, target, detail, aspireEnvironment, parameters.Resolved, kubectlContext, azureSubscriptionId);
+    if (secretProblems.Length > 0)
+    {
+      return FailReport(terminal, verb, secretProblems);
+    }
+
+    return new DeployPreflight(
+      repoRoot, appHostProject, target, detail, aspireEnvironment, parameters.Resolved, kubectlContext, azureSubscriptionId, resolvedSecrets);
   }
 
   /// <summary>Gathers the cluster probe results; which refusals they produce is AspireDeploy.CollectClusterProblems'.</summary>

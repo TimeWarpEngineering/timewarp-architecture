@@ -1,6 +1,6 @@
 #region Purpose
 // Pins `dev publish` safety-suite arguments: one aspire-tests run for every target, with a class filter
-// that selects exactly the three publish safety suites.
+// that selects exactly the publish safety suites (one class per target).
 #endregion
 
 namespace AspirePublishTargets_;
@@ -28,7 +28,7 @@ public partial class SafetySuiteTestArguments_Given_
 
   public static Task AllTargets_Should_HaveDistinctOutputsAndVariables()
   {
-    AspirePublishTargets.All.Select(target => target.Name).ShouldBe(["compose", "kubernetes", "aca"]);
+    AspirePublishTargets.All.Select(target => target.Name).ShouldBe(["compose", "kubernetes", "aca", "aca-neon"]);
     AspirePublishTargets.All.Select(target => target.OutputDirectory).ShouldBeUnique();
     AspirePublishTargets.All.Select(target => target.OutputEnvironmentVariable).ShouldBeUnique();
     return Task.CompletedTask;

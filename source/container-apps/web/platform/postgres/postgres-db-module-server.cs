@@ -38,6 +38,11 @@
 // the next request instead of surfacing 57P01. Bounds and the concurrency-exception carve-out are
 // recorded on PostgresRetryPolicy; explicit transactions must run inside the execution strategy
 // (EfPrincipalRoleStore.TryClaimFirstAdministratorAsync).
+// aca-neon (task 317) sets Postgres:RetryCount and Postgres:RetryDelaySeconds on web-server only.
+// When either is present this module uses those bounds (an unset or unparsable one keeps the
+// PostgresRetryPolicy default). Every other target leaves both unset, so the policy is unchanged.
+// The connection Timeout stays in the connection string, not here. The design-time factory still
+// does not use this retry.
 // Logging (task 358): this module never calls LogTo or EnableSensitiveDataLogging. EF Core SQL
 // (Microsoft.EntityFrameworkCore.Database.Command) is Warning in every committed appsettings file;
 // a developer opts in per machine with Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command
@@ -48,6 +53,8 @@
 namespace TimeWarp.Architecture.Modules;
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using System.Globalization;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
@@ -81,7 +88,7 @@ public sealed partial class PostgresDbModule : IModule
 
     _ = serviceCollection.AddDbContext<PostgresDbContext>
     (
-      dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString, PostgresRetryPolicy.Configure)
+      dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString, NpgsqlOptions(configuration))
     );
 
     // Durable principal + principal→role + profile stores only when EF is registered
@@ -133,6 +140,38 @@ public sealed partial class PostgresDbModule : IModule
     );
 
     ConfigureEnvironmentChecks(serviceCollection);
+  }
+
+  /// <summary>
+  /// The default retry, unless Postgres:RetryCount or Postgres:RetryDelaySeconds is set (aca-neon).
+  /// An unparsable value is ignored.
+  /// </summary>
+  private static Action<NpgsqlDbContextOptionsBuilder> NpgsqlOptions(IConfiguration configuration)
+  {
+    int? retryCount = ParseNonNegative(configuration["Postgres:RetryCount"]);
+    int? retryDelaySeconds = ParseNonNegative(configuration["Postgres:RetryDelaySeconds"]);
+    if (retryCount is null && retryDelaySeconds is null)
+    {
+      return PostgresRetryPolicy.Configure;
+    }
+
+    int count = retryCount ?? PostgresRetryPolicy.MaxRetryCount;
+    TimeSpan delay = retryDelaySeconds is int seconds
+      ? TimeSpan.FromSeconds(seconds)
+      : PostgresRetryPolicy.MaxRetryDelay;
+    return builder => builder.EnableRetryOnFailure(count, delay, errorCodesToAdd: null);
+  }
+
+  private static int? ParseNonNegative(string? text)
+  {
+    if (string.IsNullOrWhiteSpace(text))
+    {
+      return null;
+    }
+
+    return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out int value) && value >= 0
+      ? value
+      : null;
   }
 
   private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)

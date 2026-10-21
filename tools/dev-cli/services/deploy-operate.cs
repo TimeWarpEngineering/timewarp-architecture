@@ -154,7 +154,7 @@ internal static partial class DeployOperate
 
   /// <summary>The published file <c>dev deploy migrate</c> runs for <paramref name="target"/>: the bundle for aca, else the SQL script.</summary>
   internal static string MigrationArtifact(DeployTarget target) =>
-    target == AspireDeploy.ContainerApps ? MigrationBundle : MigrationScript;
+    AspireDeploy.UsesMigrationBundle(target) ? MigrationBundle : MigrationScript;
 
   /// <summary>Refusal when the published migration artifact is missing: the exact command that writes it.</summary>
   internal static string MissingPublishedOutputMessage(DeployTarget target, string path) =>
@@ -470,8 +470,14 @@ internal static partial class DeployOperate
     verbose ? ["--connection", connectionString, "--verbose"] : ["--connection", connectionString];
 
   /// <summary>Arguments with every <c>--connection</c> value replaced, for printing.</summary>
-  internal static string[] RedactConnection(IReadOnlyList<string> arguments) =>
-    [.. arguments.Select((argument, index) => index > 0 && arguments[index - 1] == "--connection" ? "<connection string from Key Vault>" : argument)];
+  internal const string KeyVaultConnectionPlaceholder = "<connection string from Key Vault>";
+
+  /// <summary>Printed in place of the direct Neon connection string.</summary>
+  internal const string NeonDirectConnectionPlaceholder = "<direct Neon connection string>";
+
+  /// <summary>Arguments with every <c>--connection</c> value replaced, for printing.</summary>
+  internal static string[] RedactConnection(IReadOnlyList<string> arguments, string placeholder = KeyVaultConnectionPlaceholder) =>
+    [.. arguments.Select((argument, index) => index > 0 && arguments[index - 1] == "--connection" ? placeholder : argument)];
 
   internal static string NoFlexibleServerMessage(string resourceGroup, int count) =>
     count == 0

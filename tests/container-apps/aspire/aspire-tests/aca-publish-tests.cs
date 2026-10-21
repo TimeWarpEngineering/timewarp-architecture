@@ -238,6 +238,17 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static Task Publish_Should_KeepAcaScaleAndPostgres()
+  {
+    string all = string.Join('\n', Modules.Values);
+    all.ShouldNotContain("minReplicas: 0");
+    all.ShouldNotContain("neon-pooled-connection-string");
+    all.ShouldNotContain("neon-direct-connection-string");
+    all.ShouldNotContain("Postgres__RetryCount");
+    all.ShouldNotContain("Postgres__RetryDelaySeconds");
+    return Task.CompletedTask;
+  }
+
   public static async Task Publish_Should_UseAFlexibleServerForPostgres()
   {
     // No container app runs postgres, and nothing mounts an Azure Files share, whatever the flags.

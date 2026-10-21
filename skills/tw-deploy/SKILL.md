@@ -1,7 +1,7 @@
 ---
 name: tw-deploy
 description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost: the target matrix (Docker Compose, Kubernetes/Helm, Azure: AKS or Azure Container Apps), `aspire publish` / `aspire deploy` per target, operator-run `dev deploy` / `dev deprovision` / `dev open` / `dev deploy migrate` (never CI), a local kind recipe, production-safety rules, secrets and parameters, Postgres migrations per target, the ingress topology, and container-runtime neutrality. Invoke before deploying, before adding a publish target, or before touching publish-mode wiring in the AppHost. WHEN: deploy the app, dev deploy, dev deprovision, dev open, dev deploy migrate, open the deployed app, migrate the deployed database, tear down a deployment, kind cluster, aspire publish, aspire deploy, docker compose, Helm chart, Kubernetes, AKS, Azure, Azure Container Apps, ACA, Flexible Server, Key Vault purge, production secrets, run migrations in production, ingress controller, Podman."
-when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev deploy migrate, port-forward, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, ACA, Bicep, Flexible Server, az login, Key Vault, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME
+when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev deploy migrate, port-forward, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, ACA, Bicep, Flexible Server, az login, Key Vault, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME, Neon, aca-neon, Lakebase
 ---
 
 # Deploy (Aspire publish targets)
@@ -30,11 +30,13 @@ AppHost Design region holds the per-line reasoning; this skill is the operator's
 | Kubernetes (on-prem, any distribution) | `AddKubernetesEnvironment("k8s")` + `WithHelm` | `kubernetes` | Helm chart directory | `aspire deploy`, or `helm upgrade --install` |
 | Azure (shared cluster, portable default) | an existing AKS cluster is a Kubernetes target | `kubernetes` | Helm chart | `aspire deploy` against the AKS kubectl context |
 | Azure Container Apps (Azure-only) | `AddAzureContainerAppEnvironment("aca-env")` | `aca` | Bicep (`main.bicep` + one module per resource) + `efmigrations/` | `aspire deploy` into the `az login` subscription |
+| Azure Container Apps + Neon | the same `aca-env`, no Flexible Server | `aca-neon` | Bicep + `efmigrations/` | `aspire deploy`; Postgres is an external Neon connection string |
 
 **One target per publish.** Aspire assigns every compute resource to exactly one compute
 environment, so Compose, Kubernetes and Azure Container Apps are alternatives selected by configuration, never both in
-one model. `Publish:Target` is read in publish mode only; any other value throws. Run mode
-(`dev run`) always ignores it.
+one model. `aca` and `aca-neon` both use the ACA environment; they differ in where Postgres lives.
+`Publish:Target` is read in publish mode only; any other value throws. Run mode
+(`dev run`) always ignores it and keeps the local Postgres container.
 
 ## Publishing and deploying
 
@@ -57,8 +59,12 @@ dev publish aca                             # publish to artifacts/aspire-output
 aspire publish --apphost <apphost.csproj> --output-path out/aca -- --Publish:Target=aca
 aspire deploy  --apphost <apphost.csproj> -- --Publish:Target=aca   # provisions + pushes images, az CLI credential
 
+# Azure Container Apps + Neon — publishing needs no Neon or Azure credentials
+dev publish aca-neon                        # publish to artifacts/aspire-output/aca-neon + safety suite
+aspire publish --apphost <apphost.csproj> --output-path out/aca-neon -- --Publish:Target=aca-neon
+
 # Every target — what CI runs
-dev publish all                             # all three publishes, then one safety-suite run + helm lint
+dev publish all                             # all four publishes, then one safety-suite run + helm lint
 ```
 
 - **Kubernetes prerequisites:** Helm ≥ 4.2, a kubectl context pointing at the cluster, a
@@ -85,14 +91,17 @@ workflow step or `dev workflow` mode calls them, and none may.** A merge never d
 dev deploy                                  # compose (the Publish:Target default): preflight, plan, prompt
 dev deploy --target kubernetes              # Helm chart to the CURRENT kubectl context
 dev deploy --target aca                     # Azure Container Apps in the az CLI's subscription (az login first)
+dev deploy --target aca-neon                # ACA consumption (min replicas 0) + Neon; connection strings are user secrets
 dev deploy --target compose --yes           # no prompt: aspire deploy --non-interactive
 
 dev deploy migrate --target kubernetes      # psql the published migration script into the deployed postgres
+dev deploy migrate --target aca-neon        # the bundle, on the direct Neon connection (no firewall rule)
 dev open --target kubernetes                # port-forward the ingress controller and open the browser
 
 dev deprovision --target kubernetes         # preflight, then aspire destroy asks before deleting
 dev deprovision --target kubernetes --yes   # aspire destroy --yes --non-interactive — deletes the deployment and its data
 dev deprovision --target aca                # aspire destroy, then purge the soft-deleted Key Vault
+dev deprovision --target aca-neon           # aspire destroy the resource group; the Neon project stays
 ```
 
 - **`dev deploy`** runs `aspire deploy --apphost <csproj> --environment Production --
@@ -100,7 +109,7 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   parameters (below) after the preflight (below). It then asks for confirmation; `--yes` skips the
   prompt and adds `--non-interactive`. Without a terminal and without `--yes` it refuses. Aspire runs
   attached to the terminal, so a prompt it still shows (e.g. aca's location and resource group)
-  works. For aca the preflight
+  works. For aca and aca-neon the preflight
   requires `az login` and prints the subscription and where it came from, in this order: the
   `Azure__SubscriptionId` environment variable, then the AppHost user secret `Azure:SubscriptionId`
   (read with `dotnet user-secrets list --project <apphost>`), then the one `az account show`
@@ -110,8 +119,11 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   Location and resource group come from `Azure__Location` / `Azure__ResourceGroup`, or Aspire's prompt.
 - **Deploy configuration is committed in the AppHost `appsettings.json`** `Parameters` section.
   The kubernetes target needs `k8s-namespace`, `helm-release-name`, `registry-endpoint` and
-  `registry-repository` (the AppHost parameters without a default in code); compose and aca need
-  none. None of them is a secret. The template sets the three that identify the app —
+  `registry-repository` (the AppHost parameters without a default in code); compose, aca and
+  aca-neon forward none. aca-neon still requires `neon-pooled-connection-string` and
+  `neon-direct-connection-string` as secrets (AppHost user secrets or `Parameters__` environment
+  variables). They are not printed and not put on the aspire command line. A copy in appsettings is
+  refused. The template sets the three that identify the app —
   `k8s-namespace`, `helm-release-name`, `registry-repository` — to the app's kebab name (a DNS-1123
   label: `Contoso.Shop` → `contoso-shop`), and `registry-endpoint` to `localhost:5001`, the kind
   recipe's registry, so a kind deploy needs no configuration. It also commits the app's
@@ -167,13 +179,14 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   `ASPIRE_CONTAINER_RUNTIME`, else docker); kubernetes — `kubectl exec` in the `k8s-namespace`
   parameter's namespace on the current context (same preflight as `dev deploy`, minus Helm and the
   registry); aca — the bundle through a temporary firewall rule that is **always deleted**, even on
-  failure (Azure Container Apps below).
+  failure (Azure Container Apps below). aca-neon runs the same bundle with the direct Neon connection
+  string and creates no firewall rule (Azure Container Apps + Neon below).
   compose and kubernetes read EF's `__EFMigrationsHistory` table before and after the run, through
   the same `exec` path (a missing table is a fresh database: none applied), and run the script
   quietly (`psql -q`, `PGOPTIONS='-c client_min_messages=warning'`), so only errors and WARNINGs
   print. The idempotent script's transcript looks the same whether ten migrations applied or none;
-  the report says what changed. `--verbose` prints psql's full transcript instead (on aca, the
-  bundle's `--verbose`); the report still follows. aca reports from the bundle's own
+  the report says what changed. `--verbose` prints psql's full transcript instead (on aca and
+  aca-neon, the bundle's `--verbose`); the report still follows. Both bundle targets report from the bundle's own
   `Applying migration '…'` lines.
 
   ```text
@@ -202,7 +215,7 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
 
   Interactively you can still confirm; with `--yes` it **refuses** unless `--allow-stale` is
   passed, and the report then reads `Up to date relative to the published script: …` /
-  `Applied N migration(s) relative to the published script:`. aca checks the
+  `Applied N migration(s) relative to the published script:`. aca and aca-neon check the
   `web-migrations.sql` the same publish writes beside the bundle (the bundle's own migration list
   is compiled in); with no script there it says the check is unavailable and skips it.
 - **`dev open`** opens the deployed app in the browser (`--no-browser` prints the URL; with no
@@ -216,15 +229,16 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   one is refused with that hint); `--controller-namespace` / `--controller-service` name a
   controller other than the kind recipe's. compose: `http://localhost:<port>` from `--port`, else
   `INGRESS_PORT` in the published `.env`, else the `ingress-port` parameter. With no `--port` and no
-  `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca: `https://<fqdn>` of the `ingress` container app
+  `ingress-port` anywhere, `dev open` refuses rather than guess a port. aca and aca-neon: `https://<fqdn>` of the `ingress` container app
   (`az containerapp show --name ingress --resource-group <rg> --query
   properties.configuration.ingress.fqdn`).
   Passkeys work over these plain-http localhost URLs: with `WebAuthnOptions:AllowedOrigins` empty,
   web-server accepts `http` only when the origin host is loopback (`localhost`, `127.0.0.1`,
   `[::1]`) and equals the selected RP ID — the same rule browsers use for a secure context. Any
   other host needs https, or an explicit `AllowedOrigins` list (an exact match, no fallback).
-- **aca resource group** for both: `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
-  user secret `Azure:ResourceGroup` — the values `dev deploy --target aca` uses; the subscription
+- **aca and aca-neon resource group** for `dev open`, and for `dev deploy migrate --target aca`:
+  `--resource-group`, else `Azure__ResourceGroup`, else the AppHost
+  user secret `Azure:ResourceGroup` — the values `dev deploy` uses; the subscription
   comes from the same preflight as `dev deploy`.
 - **`dev deprovision`** runs `aspire destroy` for the same target after the same preflight, minus
   the registry check (for kubernetes it prints the kubectl context first). Deploy parameters are
@@ -238,7 +252,8 @@ dev deprovision --target aca                # aspire destroy, then purge the sof
   the Compose project (`<runtime> compose ls` finds it), or `helm uninstall <release> --namespace
   <namespace>` (the AppHost's `helm-release-name` and `k8s-namespace` parameters) plus deleting the
   `postgres-data` PersistentVolumeClaim, or for aca `az group delete --name <resource-group>` (az
-  asks for confirmation) plus the Key Vault purge below. It never falls back to a destructive command
+  asks for confirmation) plus the Key Vault purge below. aca-neon uses the same `az group delete`
+  and does not purge a Key Vault; the Neon project is not in the group. It never falls back to a destructive command
   on its own.
 - **Runtime:** Compose deploy and teardown go through Aspire, so `ASPIRE_CONTAINER_RUNTIME` picks
   the runtime; the verbs call no container CLI themselves (the registry check is an HTTP request).
@@ -307,6 +322,7 @@ non-secret default every machine shares (the app's identity) is committed in the
 | Compose | `.env` beside `docker-compose.yaml`; `aspire deploy` / `aspire do prepare-compose` fill it |
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
 | Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`. The Postgres connection string lives in a Key Vault Aspire provisions, which web-server reads with its managed identity; the Postgres password is also on web-server as the container-app secrets `postgres-db-password` and `postgres-db-uri`, built from the `@secure()` parameter |
+| Azure Container Apps + Neon | two `@secure()` parameters, `neon-pooled-connection-string` and `neon-direct-connection-string`, with no defaults. web-server reads the pooled string as `ConnectionStrings__postgres-db`. The migration bundle uses the direct string. `dev deploy` does not forward either value. Set them in AppHost user secrets or `Parameters__` environment variables, never in appsettings |
 
 - Non-secret deploy configuration that names the app is committed in the AppHost `appsettings.json`
   `Parameters` section (see Deploying). Per-machine values and secrets go in AppHost user secrets
@@ -338,6 +354,7 @@ or `podman`; `dev deploy migrate` passes the running project's `--project-name` 
 | Compose | named volume `postgres-data`; `POSTGRES_DB` creates the database on first start | `<runtime> compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql` |
 | Kubernetes | `postgres-data` PersistentVolumeClaim (`postgres-storage-capacity`, default 10Gi), single-replica StatefulSet | `kubectl exec -i -n <namespace> statefulset/postgres-statefulset -- sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d postgres-db -v ON_ERROR_STOP=1' < efmigrations/web-migrations.sql` |
 | Azure Container Apps | Azure Database for PostgreSQL Flexible Server (managed storage and backups); the Bicep creates `postgres-db` | the published bundle from the operator's machine, through a temporary firewall rule — see Azure Container Apps below |
+| Azure Container Apps + Neon | Neon Postgres (external). The app uses the pooled host; migrations use the direct host | the published bundle with the direct connection string — see Azure Container Apps + Neon below |
 
 The script is piped on stdin (`< efmigrations/web-migrations.sql` in bash; in pwsh
 `Get-Content -Raw efmigrations/web-migrations.sql | <command>`). `dev deploy migrate` adds `-q` and
@@ -424,6 +441,14 @@ Cost model, what the AppHost provisions, the deploy commands, the migration bund
 (slow first deploy, "Server is busy", soft-deleted Key Vault names, web hop host) and deprovision
 detail: [azure-container-apps.md](references/azure-container-apps.md).
 
+### Azure Container Apps + Neon (`Publish:Target=aca-neon`)
+
+Same ACA publisher as `aca`, without Flexible Server and without the postgres Key Vault. Postgres is
+Neon. The operator guide (create the project, set the two secrets, deploy, migrate, smoke, tear down,
+and the ACR Basic cost exception) is [azure-container-apps-neon.md](references/azure-container-apps-neon.md).
+
+`dev deprovision --target aca-neon` deletes the Azure resource group only. It does not delete the Neon project.
+
 ## Container-runtime neutrality
 
 - Generated Compose output is a standard compose file: Docker Compose, Podman Compose, or any
@@ -444,4 +469,4 @@ detail: [azure-container-apps.md](references/azure-container-apps.md).
   `dev open`; `services/deploy-operate.cs` records why migrate refuses instead of publishing, how the
   Compose project is found, and the firewall-rule cleanup.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` / `aca-publish-tests` — the
-  production-safety suites.
+  production-safety suites. `aca-neon-publish-tests` guards the Neon target.
