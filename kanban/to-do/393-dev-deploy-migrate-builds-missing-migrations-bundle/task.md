@@ -63,7 +63,9 @@ Tests, Release, from each project directory, after the review fix pass: `dev-cli
 
 ### Review
 
-Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer. The reviewer re-ran `dev-cli-tests` in Release and got 289 passed. Final counts so far: 1 bug, 1 suggestion, and 1 nit, all open. The bug is M1: the step-order and stop tests lock `DeployPipeline.Steps` and the test-only `StopMessage`, not the order the handler actually runs. The suggestion is M2: the AppHost reflects into the internal `ContainerAppDomain` getter when the public `GetOutput` exists. The nit is M3: the Neon region warning calls a nearby pair "far". Disposition: pending. A fix pass is needed before round 2. Paths: `review/review-framework.md`, `review/round-1/general.md`, and `review/round-1/merged.md` (the live ledger).
+Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer. The reviewer re-ran `dev-cli-tests` in Release and got 289 passed. Final counts so far: 1 bug, 1 suggestion, and 1 nit, all open. The bug is M1: the step-order and stop tests lock `DeployPipeline.Steps` and the test-only `StopMessage`, not the order the handler actually runs. The suggestion is M2: the AppHost reflects into the internal `ContainerAppDomain` getter when the public `GetOutput` exists. The nit is M3: the Neon region warning calls a nearby pair "far". A fix pass was needed before round 2. Paths: `review/review-framework.md`, `review/round-1/general.md`, and `review/round-1/merged.md`.
+
+Round 2 ran on 2026-10-21 at effort 2 (by-diff budget, 386 lines) with one general reviewer. It covered the fix delta `80af5fa25..bf734a6a1`. M1, M2, and M3 are all fixed, and the round raised no new findings. The reviewer re-ran `dev-cli-tests` in Release (293 passed) and built the AppHost in Release (0 warnings, 0 errors). The reviewer also confirmed that `AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN` is in the pinned Aspire.Hosting.Azure.AppContainers 13.6.2 assembly. Final counts: bug 0 open / 1 fixed; suggestion 0 open / 1 fixed; nit 0 open / 1 fixed; 0 wontfix. **Disposition: clean.** Paths: `review/round-2/general.md`, `review/round-2/merged.md`, and `review/disposition.md`.
 
 ## Session
 
@@ -73,6 +75,7 @@ Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported. 3 findings open (M1 bug, M2 suggestion, M3 nit); a fix pass is requested (2026-10-21)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T14:36:43Z
 - Fix pass (review round 1): the handler runs `DeployPipeline.RunAsync` over `Steps`, the AppHost reads the domain with public `GetOutput`, and a nearby Azure region stays quiet (2026-10-21)
+- Review oracle round 2: general reviewer (claude, model claude-opus-5-5), effort 2, max-turns 120, session not reported. M1–M3 fixed, no new findings, disposition clean (2026-10-21)
 
 ## Learnings
 
@@ -81,6 +84,7 @@ Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
+- Round 2: Done — M1, M2, M3 fixed; disposition clean
 
 ## Notes
 
