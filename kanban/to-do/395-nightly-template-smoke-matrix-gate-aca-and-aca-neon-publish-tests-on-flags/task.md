@@ -35,6 +35,8 @@ Nightly `template-smoke --matrix` (with generated-app tests) fails three flag-of
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implemented (2026-10-21): gated the aca and aca-neon publish facts on `web`/`postgres`/`yarp`. The Neon parameters were already declared only for aca-neon inside that web+postgres block. Aspire logs `MissingParameterValueException` while copying those unset secrets into deployment state; the warning does not fail publish, and a default would put the connection string in the Bicep. SmokeNoYarp failed on `external: true` because there is no ingress, not because the parameters were missing.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T16:54:15Z
+- Review oracle (2026-10-21): tw-implementation-review, effort 1, roster general (claude-opus-5-5), session id not exposed, 1 round, disposition clean
 
 ## Results
 
@@ -61,6 +63,14 @@ dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
 **Not in scope**
 
 - A second bare `template-smoke` without `--matrix`. SmokeDefault already generated, built, and passed its app tests inside the matrix run.
+
+### Review
+
+- **Disposition:** clean. 1 round at effort 1 with the `general` reviewer.
+- **Final counts:** bug 0, suggestion 0, nit 0. All statuses are 0 open, 0 fixed, 0 wontfix.
+- **Reviewer re-ran:** in-repo `AcaNeonPublish_Given_` 7/7 and `AcaPublish_Given_` 13/13, both green.
+- **Not re-run by the reviewer:** the full `template-smoke --matrix --app-tests`. It has no single-variant option and runs past the foreground limit. The flag-off counts above are implementer-reported, and the nightly run confirms them.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Notes
 
