@@ -153,3 +153,4 @@ Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or tak
 ## Blocked
 
 - 2026-10-21: PR #544 (head 35868444e) CI `template-smoke` failed: three IDE2003 errors (blank line required between block and subsequent statement) in source/container-apps/aspire/projects/aspire-app-host/program.cs lines 801, 805, 809. Job: https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/39564585663/job/119103759956. Resuming with `ganda task work 317 --yes` so the walk fixes and pushes it.
+- 2026-10-21: Resolved. Blank line after each aca-neon PublishAsAzureContainerApp block, inside its `#if`; local `dev template-smoke` passed.

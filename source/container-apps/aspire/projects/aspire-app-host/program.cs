@@ -830,18 +830,21 @@ internal class Program
     {
       apiServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
     }
+
 #endif
 #if grpc
     if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       grpcServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
     }
+
 #endif
 #if web
     if (string.Equals(publishTarget, ContainerAppsNeonPublishTarget, StringComparison.OrdinalIgnoreCase))
     {
       webServer.PublishAsAzureContainerApp((_, app) => AcaNeonCompute.Apply(app));
     }
+
 #endif
     builder.Build().Run();
   }
