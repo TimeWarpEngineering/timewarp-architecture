@@ -46,6 +46,7 @@ The cold-start failure is recorded with two isolated key directories that cannot
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implementation: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
+- Audit: `ganda repo audit --fix` set the executable bit on `get-agent-chat-configuration-tests.cs` after the first commit's hook reported `runfile-executable`.
 
 ## Notes
 
@@ -65,7 +66,7 @@ The cold-start failure and the restart fix both ran against Docker (Testcontaine
 
 Hint tests passed: `GetAgentChatConfigurationHint` 6, `CompleteAgentChatHandler` 5, `AgentAskReadiness` 11, `AskStarterPrompts` 7.
 
-`./bin/dev template-smoke --matrix` exited 0 (`Template smoke SUCCEEDED`). `ganda repo audit` passed 32 checks and failed 0.
+`./bin/dev template-smoke --matrix` exited 0 (`Template smoke SUCCEEDED`). `ganda repo audit` passed 32 checks and failed 0. The commit hook then reported `runfile-executable` on the new hint runfile, which was still untracked when that audit ran. `ganda repo audit --fix` set its executable bit, and the follow-up audit passed 32 and failed 0.
 
 ### How to validate
 
