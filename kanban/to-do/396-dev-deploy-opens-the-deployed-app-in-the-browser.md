@@ -15,7 +15,7 @@ PATH or there is no terminal). `--no-browser` prints the URL only. `--yes` does 
 - [ ] `dev deploy` ends by opening the ingress URL through the same code path `dev open` uses (reuse it, do not duplicate)
 - [ ] `--no-browser` prints the URL and opens nothing
 - [ ] No terminal, or no opener on PATH: prints the URL (no failure)
-- [ ] kubernetes without an external address: decide with Steve whether deploy starts the foreground port-forward or prints the `dev open --target kubernetes` hint (default proposal: print the hint, since a foreground forward would block the command)
+- [ ] kubernetes without an external address: print the `dev open --target kubernetes` hint and finish (no foreground port-forward). Decided: Steve 2026-10-22
 - [ ] dev-cli tests: open after smoke, `--no-browser`, no-opener fallback
 - [ ] `tw-deploy` skill: the first-deploy description says it opens the app, and mentions `--no-browser`
 
