@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1050
-- Effort: 3
+- Lines changed: 26
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -22,6 +22,11 @@
 
 **Diff scope:** the fix commit `df2f61ddf` vs `9df34f363` (the round-1 review commit). That is 42 files, and the host by-diff budget counted 1050 lines. Effort 3, roster general. The orchestrator did one pass inline, with no subagents. It re-verified M1–M12 and scanned the delta for new defects.
 **Session IDs:** review oracle round 2 (claude-opus-5-5, ganda task work, headless), session id not exposed.
+
+## Round 3 scope
+
+**Diff scope:** the fix commit `b5fe0b2fd` vs `f17e1a577` (the round-2 review commit). That is 3 files, and the host by-diff budget counted 26 lines. Effort 1, roster general. The orchestrator did one pass inline, with no subagents. It re-verified M13 and scanned the delta for new defects.
+**Session IDs:** review oracle round 3 (claude-opus-5-5, ganda task work, headless), session id not exposed.
 
 ## Ground rules
 

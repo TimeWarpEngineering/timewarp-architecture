@@ -40,6 +40,7 @@ The copy-paste setup text stays the exact user-secrets command in Development, a
 - Fix pass (implement-fix-2): addressed review round 1 M1–M12. Store failures on resolve return null and status/set/clear return 503. The Admin sentence is a separate field and only when the host can store a key. Configured follows a trial unprotect (`needsReplacement`). A successful set or clear reloads Ask. The store write result is the audit action, and a unique violation retries as replace. One completion reads the key once. The admin integration test captures the key the chat client receives. Migration class is `AddProtectedSecrets`. The password field uses `new-password`. 2026-10-22
 - Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 3, roster general, one inline pass over `df2f61ddf`. M1–M12 are verified fixed. One new nit (M13, a dead `XaiChatDefaults.SetupHint`) is open, so a fix pass is needed. The targeted test classes passed in this worktree, and `./bin/dev build` was clean. `dev lint-skills` could not run here because of a local vally version mismatch. 2026-10-22
 - Fix pass (implement-fix-3): deleted `XaiChatDefaults.SetupHint` (review M13). The hint tests assert `HostSetupText`. The handler tests already assert `AdminHint` on its own, so the concatenated command-plus-Admin assertions are gone. `GetAgentChatConfigurationHint_Given_` passed 6. `./bin/dev build` was 0 warnings and 0 errors. `./bin/dev template-smoke` printed `Template smoke SUCCEEDED` for SmokeDefault. `ganda repo audit` passed. 2026-10-22
+- Review oracle round 3: claude-opus-5-5 (ganda task work, headless), effort 1, roster general, one inline pass over `b5fe0b2fd`. M13 is verified fixed and there are no new findings. The changed runfile `get-agent-chat-configuration-tests.cs` passed 6/6 in this worktree. Disposition is `clean`. 2026-10-22
 
 ## Results
 
@@ -74,7 +75,10 @@ ganda repo audit
 
 - Round 1 (effort 3, general): M1–M12 implemented on this id in the fix pass.
 - Round 2 (effort 3, general): M1–M12 verified fixed (4 bug, 4 suggestion, 4 nit). M13 (nit) implemented on this id: deleted `XaiChatDefaults.SetupHint`. Hint tests assert `HostSetupText`. `AdminHint` stays a separate handler field. Round 3 re-verifies M13.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
+- Round 3 (effort 1, general): M13 verified fixed. No new findings.
+- Final counts: bug 0 open / 4 fixed / 0 wontfix, suggestion 0 open / 4 fixed / 0 wontfix, nit 0 open / 5 fixed / 0 wontfix.
+- **Disposition: clean**, after 3 rounds, with 0 open and no wontfix or escalation. The without-postgres behavior still needs Steve's confirmation (see Learnings).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Learnings
 
@@ -85,6 +89,8 @@ ganda repo audit
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
 - Round 2: Blocked — open M13
+- Round 3: Done — disposition clean, 0 open
+
 ## Notes
 
 - Origin: Steve 2026-10-21, "should this be configurable from Admin like Assistant name? And Tenant Ids".
