@@ -82,9 +82,12 @@ Done when:
 
 ## Session
 
+- 2026-10-21: unblocked by Steve (Neon user secrets set; live deploy approved; free-registry check added).
+
 - Created: grok-bot (2026-10-12)
 
 - 2026-10-21: `aca-neon` publish, deploy, migrate, open, and deprovision are wired. The pooled Neon reference is attached to web-server after `AddEFMigrations`, because that call snapshots the startup project's environment onto `ef-tool-web-migrations` and two `ConnectionStrings__postgres-db` references collide. The direct string stays off the Azure publish output; migrate reads it on the operator machine. `ganda repo audit --fix` pinned TimeWarp.Nuru and TimeWarp.Nuru.DevCli to 4.0.0-beta.5. No live deploy: AppHost user secrets do not contain the two Neon connection strings. Azure CLI is already logged in. ACR Basic (about $5/month) is the documented cost exception.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Blocked — 2026-10-21T03:27:27Z
 
 ## Results
 
@@ -99,3 +102,24 @@ A live ACA + Neon deploy did not run. `az account show` is logged in as StevenTC
 Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release -- --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`, `ComposePublish_Given_`, and `KubernetesPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. `dotnet run tools/dev-cli/dev.cs -- publish aca-neon --help` and `dotnet run tools/dev-cli/dev.cs -- deploy migrate --help`. After the two AppHost user secrets exist: `dev publish aca-neon`, `dev deploy --target aca-neon`, `dev deploy migrate --target aca-neon`, then `curl -fsS https://<ingress-fqdn>/web-server/alive` and `curl -fsS https://<ingress-fqdn>/api/identity/entra/offered`.
 
 Expect: the four publish suites and dev-cli-tests pass. aca-neon Bicep has `minReplicas: 0`, `cpu: json('0.25')`, `memory: '0.5Gi'`, the pooled parameter on web-server only, and no Flexible Server, Key Vault, `postgres-kv`, firewall rule, or direct Neon parameter. Compose, Kubernetes, and aca publish output stay free of `minReplicas: 0`, the Neon parameter names, and `Postgres__RetryCount`. Help lists `aca-neon` and the migrate example names the direct connection and no firewall rule. The live curls return HTTP 200 (the database route may wait while Neon wakes). That live half is not done until the two secrets are set.
+
+### Registry cost (Steve, 2026-10-21)
+
+The template prefers free tier end to end. ACA consumption (min replicas 0) is inside the monthly free grant;
+Azure Container Registry has no free tier (Basic is the cheapest). Before accepting ACR Basic:
+
+- Check whether the Aspire ACA publisher (Aspire 13.6.2) can push to and pull from a non-ACR registry, for
+  example GitHub Container Registry (`ghcr.io`), with the pull credential as a secure parameter. If it can,
+  make that the `aca-neon` default and keep ACR as an opt-in.
+- If it cannot, keep ACR Basic as the single documented cost exception and record the evidence (API,
+  docs, or the publisher error) under `## Results`.
+
+Neon connection strings are set in the AppHost user secrets (Steve, 2026-10-21). Run the live
+`dev deploy --target aca-neon` and `dev deploy migrate --target aca-neon` to verify; record resource names,
+the app URL and a passing health or smoke request under `## Results`. Tear nothing down unless it costs money.
+
+## Blocked
+
+2026-10-21: AppHost user secrets Parameters:neon-pooled-connection-string and Parameters:neon-direct-connection-string from a Neon Free project (pooled host contains -pooler, direct host does not). Azure login is already present. ACR Basic (~$5/month) is the documented cost exception. https://neon.com/docs/connect/connection-pooling
+
+- https://neon.com/docs/connect/connection-pooling
