@@ -54,6 +54,7 @@ comment-only workflow that must fail, and a prerelease property.
 - Review oracle round 1: claude (claude-opus-5-5), effort 2, roster general, session not reported — 2026-10-21. Two open suggestions (M1, M2); fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T15:35:08Z
 - Fix pass (review round 1 M1, M2): implement-fix-2, grok-4.7, 2026-10-21. The workflow check binds the install `--version` variable to the `sed` read, and `<AspireVersion>` compares on its numeric core.
+- Review oracle round 2: claude (claude-opus-5-5), effort 2, roster general, session not reported. 2026-10-21. M1 and M2 fixed. Disposition clean.
 
 ## Results
 
@@ -87,9 +88,11 @@ This fix pass re-ran `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 3
 
 ### Review
 
-- Round 1 (effort 2, roster general): 0 bug, 2 suggestion, 0 nit. M1 and M2 addressed in this fix pass. Round 2 has not run.
-- Re-verified by the reviewer: dev-cli-tests 303/303 pass. The AppHost evaluates with `IsAspireHost=true` and `AspireHostingSDKVersion=13.6.2`.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 (effort 2, roster general): 0 bug, 2 suggestion, 0 nit. M1 and M2 addressed in fix pass 949eb3dd8.
+- Round 2 (effort 2, roster general): re-verified the fix delta. No new findings. dev-cli-tests 308/308 pass and the `dev.cs` Release build has no warnings.
+- Final counts: bug 0/0/0, suggestion 0 open / 2 fixed / 0 wontfix, nit 0/0/0 (open/fixed/wontfix).
+- Disposition: **clean**. No wontfix, no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 
@@ -97,7 +100,8 @@ This fix pass re-ran `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 3
 
 ## Review
 
-- Round 1: open M1, M2. Fix pass addressed both on 2026-10-21. Round 2 has not run.
+- Round 1: open M1, M2. Fix pass addressed both on 2026-10-21.
+- Round 2: M1 and M2 fixed, no new findings. Disposition clean (`review/disposition.md`).
 
 ## Notes
 

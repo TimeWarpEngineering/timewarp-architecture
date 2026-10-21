@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 649
+- Lines changed: 357
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -25,3 +25,10 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+### Round 2
+
+**Date:** 2026-10-21
+**Diff scope:** fix delta `06881a0dc..949eb3dd8` (aspire-run.cs, aspire-cli.cs, aspire-run-tests.cs). Re-verify M1 and M2.
+**Effort / roster:** 2, general
+**Session IDs:** review oracle round 2 (claude, claude-opus-5-5), session not reported
