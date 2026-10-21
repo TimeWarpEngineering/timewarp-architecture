@@ -252,6 +252,69 @@ public class RepoAspireVersion_Given_
     return Task.CompletedTask;
   }
 
+  public static Task PrereleaseProperty_Should_ParseNumericCore()
+  {
+    AspireRun.ParseRepoAspireVersion("<AspireVersion>14.0.0-preview.1.26600.1</AspireVersion>")
+      .ShouldBe(new Version(14, 0, 0));
+    AspireRun.ParseRepoAspireVersion("<AspireVersion>13.6.0+56f3e9c0</AspireVersion>")
+      .ShouldBe(new Version(13, 6, 0));
+
+    const string props = """
+      <Project>
+        <PropertyGroup><AspireVersion>14.0.0-preview.1.26600.1</AspireVersion></PropertyGroup>
+        <PackageVersion Include="Aspire.Hosting.Yarp" Version="$(AspireVersion)" />
+      </Project>
+      """;
+    AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), WorkflowReadingProperty())
+      .ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task UnparseableProperty_Should_NameTheValue()
+  {
+    const string props = "<AspireVersion>not-a-version</AspireVersion>";
+    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), WorkflowReadingProperty());
+    error.ShouldNotBeNull();
+    error.ShouldContain("not-a-version");
+    return Task.CompletedTask;
+  }
+
+  public static Task CommentOnlyWorkflow_Should_Fail()
+  {
+    const string props = "<AspireVersion>13.6.2</AspireVersion>";
+    const string workflow = """
+      # The version is <AspireVersion> in Directory.Packages.props
+      dotnet tool install --global Aspire.Cli
+      """;
+    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    error.ShouldNotBeNull();
+    error.ShouldContain("without --version");
+    return Task.CompletedTask;
+  }
+
+  public static Task VersionFromAnotherSource_Should_Fail()
+  {
+    const string props = "<AspireVersion>13.6.2</AspireVersion>";
+    const string workflow = """
+      # The version is <AspireVersion> in Directory.Packages.props
+      dotnet tool install --global Aspire.Cli --version ${{ vars.ASPIRE_CLI }}
+      """;
+    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    error.ShouldNotBeNull();
+    error.ShouldContain("does not come from");
+    return Task.CompletedTask;
+  }
+
+  public static Task InstallVariableNotTheSedRead_Should_Fail()
+  {
+    const string props = "<AspireVersion>13.6.2</AspireVersion>";
+    string workflow = WorkflowReadingProperty().Replace("--version \"$version\"", "--version \"$other\"", StringComparison.Ordinal);
+    string? error = AspireRun.ValidateAspireVersionSources(props, AppHostUsingProperty(), workflow);
+    error.ShouldNotBeNull();
+    error.ShouldContain("does not come from");
+    return Task.CompletedTask;
+  }
+
   private static string RepoRoot()
   {
     string? directory = AppContext.BaseDirectory;

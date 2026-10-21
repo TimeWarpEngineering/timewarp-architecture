@@ -6,7 +6,8 @@
 // The process half of the version guard (Amuru), kept apart from aspire-run.cs so that file stays
 // pure for dev-cli-tests. One `aspire --version` probe feeds the hard minimum and the comparison
 // against Directory.Packages.props <AspireVersion>. A missing property is a refusal: without it
-// the lag check would pass in silence. Callers that do not enforce the hard minimum
+// the lag check would pass in silence. A value that is present but not a version is named.
+// Callers that do not enforce the hard minimum
 // (dev run without --launch-profile) still surface the lag warning.
 #endregion
 
@@ -37,7 +38,7 @@ internal static class AspireCli
     Version? repoVersion = AspireRun.ReadRepoAspireVersion(repoRoot);
     if (repoVersion is null)
     {
-      return new(null, null, AspireRun.MissingRepoVersionMessage);
+      return new(null, null, AspireRun.ReadRepoAspireVersionError(repoRoot));
     }
 
     CommandOutput version = await Shell.Builder("aspire")
