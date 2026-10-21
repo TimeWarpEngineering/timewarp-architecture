@@ -16,12 +16,17 @@
     <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
   </PropertyGroup>
 
-  <!-- Convention analyzers target net11.0. SetTargetFramework is the SDK escape hatch
-       (Microsoft.Common.CurrentVersion.targets) so this net10.0 inner build still runs them
-       instead of failing the upward TFM check. -->
+  <!-- Convention analyzers target net11.0. The net10.0 inner build still runs them, but it must
+       not schedule a second build. SetTargetFramework=TargetFramework=net11.0 (task 387) skipped
+       the upward TFM check by passing that global property, which is a different MSBuild project
+       instance from the solution build (no TargetFramework global). Both wrote
+       bin/Release/net11.0, and a parallel solution build deleted the DLL under CSC (CS8034,
+       task 403). Skip the TFM check and drop the inner build's TargetFramework global so this
+       reference joins the same project instance. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <ProjectReference Update="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj'))">
-      <SetTargetFramework>TargetFramework=net11.0</SetTargetFramework>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+      <GlobalPropertiesToRemove>TargetFramework</GlobalPropertiesToRemove>
     </ProjectReference>
   </ItemGroup>
 
