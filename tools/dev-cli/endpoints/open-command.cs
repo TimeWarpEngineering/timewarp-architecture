@@ -25,9 +25,10 @@
 //     properties.configuration.ingress.fqdn`, in the preflight's subscription and the resource group
 //     from --resource-group, Azure__ResourceGroup or the AppHost user secret Azure:ResourceGroup.
 //   - aca-neon uses that same ingress FQDN. It does not open the Neon console.
-// Browser: the first opener on PATH from DeployOperate.BrowserLaunchers (WSL: wslview, then
-// explorer.exe); none, or --no-browser, prints the URL. Pure decisions live in
-// services/deploy-operate.cs (dev-cli-tests).
+// Browser: DeployBrowser.OpenAsync, shared with `dev deploy`. Candidates come from
+// DeployOperate.BrowserLaunchers (WSL: wslview, then explorer.exe, then xdg-open). --no-browser,
+// a non-interactive terminal, or no launcher on PATH prints the URL and is not a failure.
+// Pure decisions live in services/deploy-operate.cs (dev-cli-tests).
 #endregion
 
 namespace DevCli.Commands;
@@ -132,7 +133,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       Terminal.WriteLine(plan.Detail);
       if (!plan.PortForward)
       {
-        await OpenBrowserAsync(plan.Url, command.NoBrowser, ct);
+        await DeployBrowser.OpenAsync(Terminal, plan.Url, command.NoBrowser, ct);
         return;
       }
 
@@ -151,7 +152,7 @@ internal sealed class OpenCommand : ICommand<Unit>
 
       if (await WaitForListenerAsync(port.Value, forward, ct))
       {
-        await OpenBrowserAsync(plan.Url, command.NoBrowser, ct);
+        await DeployBrowser.OpenAsync(Terminal, plan.Url, command.NoBrowser, ct);
       }
       else if (!forward.IsCompleted && !ct.IsCancellationRequested)
       {
@@ -202,7 +203,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       }
 
       Terminal.WriteLine($"Ingress port: {port} ({source})");
-      await OpenBrowserAsync($"http://localhost:{port}", command.NoBrowser, ct);
+      await DeployBrowser.OpenAsync(Terminal, $"http://localhost:{port}", command.NoBrowser, ct);
     }
 
     private async Task OpenContainerAppsAsync(OpenCommand command, DeployPreflight preflight, CancellationToken ct)
@@ -230,40 +231,7 @@ internal sealed class OpenCommand : ICommand<Unit>
         return;
       }
 
-      await OpenBrowserAsync($"https://{fqdn}", command.NoBrowser, ct);
-    }
-
-    private async Task OpenBrowserAsync(string url, bool noBrowser, CancellationToken ct)
-    {
-      Terminal.WriteLine($"App: {url}".Green());
-      if (noBrowser)
-      {
-        return;
-      }
-
-      string? kernel = File.Exists("/proc/version") ? await File.ReadAllTextAsync("/proc/version", ct) : null;
-      bool wsl = DeployOperate.IsWsl(Environment.GetEnvironmentVariable("WSL_DISTRO_NAME"), kernel);
-      foreach (BrowserLauncher launcher in DeployOperate.BrowserLaunchers(OperatingSystem.IsWindows(), OperatingSystem.IsMacOS(), wsl))
-      {
-        if (PathResolver.ResolveExecutable(launcher.Executable) is null)
-        {
-          continue;
-        }
-
-        CommandOutput opened = await Shell.Builder(launcher.Executable)
-          .WithArguments([.. launcher.Arguments, url])
-          .WithTimeout(TimeSpan.FromSeconds(15))
-          .WithNoValidation()
-          .CaptureAsync(ct);
-
-        // explorer.exe reports exit 1 even when it opened the URL.
-        if (opened.Success || (launcher.Executable == "explorer.exe" && !opened.TimedOut))
-        {
-          return;
-        }
-      }
-
-      Terminal.WriteLine(DeployOperate.NoBrowserMessage(url).Yellow());
+      await DeployBrowser.OpenAsync(Terminal, $"https://{fqdn}", command.NoBrowser, ct);
     }
 
     private static bool IsPortFree(int port)

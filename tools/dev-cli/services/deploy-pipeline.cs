@@ -13,9 +13,15 @@
 // Smoke is the two anonymous paths the Neon guide documents. It retries transport failures
 // and HTTP 5xx inside a budget so a Neon wake-up or a scale-to-zero start can finish.
 // It never requests /api/health. Secrets are not part of these strings.
+// After smoke succeeds, FollowUpAfterSmoke says whether to open the browser. A temporary
+// kubernetes port-forward does not: its hint names `dev open` and the forward is not left running.
+// --no-browser prints the URL. --yes is not an input. The launcher is DeployBrowser.
 #endregion
 
 namespace DevCli.Services;
+
+/// <summary>What a successful smoke prints, and whether <c>dev deploy</c> opens a browser.</summary>
+internal sealed record SmokeFollowUp(bool OpenBrowser, string Summary, string? Hint);
 
 /// <summary>Plans the one-command <c>dev deploy</c> and the message printed when a step stops it.</summary>
 internal static class DeployPipeline
@@ -91,14 +97,33 @@ internal static class DeployPipeline
   internal static string StepBanner(string step, DeployTarget target) => $"dev deploy: {step} ({target.Name})";
 
   /// <summary>Confirmation prompt. Names the steps that will run.</summary>
-  internal static string ConfirmPrompt(bool hasDatabase) =>
-    hasDatabase
-      ? "Deploy (publish, deploy, migrate, smoke)? [y/N] "
-      : "Deploy (publish, deploy, smoke; migrate skipped, no database)? [y/N] ";
+  internal static string ConfirmPrompt(bool hasDatabase, bool noBrowser)
+  {
+    string finish = noBrowser ? "print the URL" : "open the app";
+    return hasDatabase
+      ? $"Deploy (publish, deploy, migrate, smoke, {finish})? [y/N] "
+      : $"Deploy (publish, deploy, smoke, {finish}; migrate skipped, no database)? [y/N] ";
+  }
 
-  /// <summary>Last line after smoke: the URL and how to remove the deployment.</summary>
+  /// <summary>Printed after smoke: the URL and how to remove the deployment.</summary>
   internal static string CompleteMessage(DeployTarget target, string url) =>
     $"{target.Name} is up at {url}. Remove it with `dev deprovision --target {target.Name}`.";
+
+  /// <summary>
+  /// After smoke succeeds. Opens the ingress unless <paramref name="noBrowser"/> or the kubernetes
+  /// check used a temporary port-forward. That forward is not left running; <see cref="SmokeFollowUp.Hint"/>
+  /// names <c>dev open</c>. <c>--yes</c> is not an input.
+  /// </summary>
+  internal static SmokeFollowUp FollowUpAfterSmoke(DeployTarget target, string url, bool temporaryPortForward, bool noBrowser)
+  {
+    string summary = CompleteMessage(target, url);
+    if (temporaryPortForward)
+    {
+      return new(false, summary, TemporaryForwardStopped(target));
+    }
+
+    return new(!noBrowser, summary, null);
+  }
 
   /// <summary>Printed after a kubernetes smoke that used a port-forward. The forward is not left running.</summary>
   internal static string TemporaryForwardStopped(DeployTarget target) =>

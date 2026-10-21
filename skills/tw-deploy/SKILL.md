@@ -1,6 +1,6 @@
 ---
 name: tw-deploy
-description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and print the URL. Targets: Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are one-step operator verbs (never CI). Also: kind, production safety, secrets and parameters, the passkey ingress host, migrations per target, ingress topology, container-runtime neutrality. Invoke before deploying, adding a publish target, or touching publish-mode wiring in the AppHost. WHEN: deploy the app, first deploy, dev deploy, dev deprovision, dev open, migrate the deployed database, tear down a deployment, kind cluster, Helm, AKS, Azure Container Apps, Neon region, passkeys on a deployed host, production secrets, Podman."
+description: "**TIMEWARP SKILL** — deploy a generated app from its Aspire AppHost. The first deploy is one command, `dev deploy --target <t>`: publish, deploy, migrate when the app has a database, smoke the ingress, and open the app (`--no-browser` prints the URL). Targets: Docker Compose, Kubernetes/Helm, Azure (AKS or Azure Container Apps), and Azure Container Apps + Neon. `dev publish`, `dev deploy migrate`, `dev open`, and `dev deprovision` are one-step operator verbs (never CI). Also: kind, production safety, secrets and parameters, the passkey ingress host, migrations per target, ingress topology, container-runtime neutrality. Invoke before deploying, adding a publish target, or touching publish-mode wiring in the AppHost. WHEN: deploy the app, first deploy, dev deploy, dev deprovision, dev open, migrate the deployed database, tear down a deployment, kind cluster, Helm, AKS, Azure Container Apps, Neon region, passkeys on a deployed host, production secrets, Podman."
 when-to-use: deploy, deployment, dev deploy, dev deprovision, dev open, dev deploy migrate, port-forward, deprovision, aspire destroy, kind, local registry, aspire publish, aspire deploy, dev publish, compose.yaml, docker compose, Helm, helm install, Kubernetes, kubectl, AKS, Azure, Azure Container Apps, ACA, Bicep, Flexible Server, az login, Key Vault, Publish:Target, production safety, secrets, parameters, .env, values.yaml, migrations in production, ingress controller, container runtime, Podman, ASPIRE_CONTAINER_RUNTIME, Neon, aca-neon, Lakebase
 ---
 
@@ -87,16 +87,21 @@ The installed `aspire` CLI must match `<AspireVersion>` in `Directory.Packages.p
 ## Deploying
 
 The first deploy is one command. It publishes (so the migrations bundle exists), deploys, migrates
-when the app has a database, smokes the ingress, and prints the URL. It stops at the first failure
-and names the verb to re-run. **No CI job, workflow step or `dev workflow` mode calls it, and none
-may.** A merge never deploys.
+when the app has a database, smokes the ingress, and opens the app in the browser. `--no-browser`
+prints the URL and opens nothing. With no terminal, or no opener on PATH (`wslview`, then
+`explorer.exe` on WSL), it prints the URL and still succeeds. `--yes` skips the prompt only; it
+does not change the browser. Kubernetes with no external address does not keep a port-forward: it
+prints the `dev open --target kubernetes` hint. It stops at the first failure and names the verb
+to re-run. **No CI job, workflow step or `dev workflow` mode calls it, and none may.** A merge
+never deploys.
 
 ```bash
-dev deploy                                  # compose: publish, deploy, migrate, smoke, print the URL
-dev deploy --target kubernetes              # same path; Helm chart; current kubectl context
-dev deploy --target aca                     # same path; Azure Container Apps + Flexible Server (az login first)
-dev deploy --target aca-neon                # same path; ACA (min replicas 0) + Neon
-dev deploy --target compose --yes           # no prompt; aspire deploy --non-interactive
+dev deploy                                  # compose: publish, deploy, migrate, smoke, open the app
+dev deploy --target kubernetes              # same path; opens a LoadBalancer address; otherwise prints the dev open hint
+dev deploy --target aca                     # same path; Azure Container Apps + Flexible Server; opens the ingress (az login first)
+dev deploy --target aca-neon                # same path; ACA (min replicas 0) + Neon; opens the ingress
+dev deploy --target compose --yes           # no prompt; aspire deploy --non-interactive; still opens the app
+dev deploy --no-browser                     # print the URL and open nothing
 ```
 
 Set `Azure:Location` and `Azure:ResourceGroup` (AppHost user secrets, or `Azure__Location` /
@@ -130,7 +135,8 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
 
 - **`dev deploy`** runs publish, then `aspire deploy --apphost <csproj> --environment Production --
   --Publish:Target=<target> --Parameters:<name>=<value> …`, then migrate when the app has a database,
-  then smoke. It forwards the target's deploy parameters (below) after the preflight (below). It asks
+  then smoke, then opens the ingress the way `dev open` does. `--no-browser` prints the URL and
+  opens nothing. It forwards the target's deploy parameters (below) after the preflight (below). It asks
   for confirmation before anything runs; `--yes` skips the prompt and adds `--non-interactive` on
   `aspire deploy`. Without a terminal and without `--yes` it refuses. The deploy step runs Aspire
   attached to the terminal, so a prompt it still shows (e.g. aca's location and resource group)
@@ -456,7 +462,7 @@ target) when a cluster exists, is shared, or the deployment must stay portable. 
 AppHost provisions a Container Apps environment (no dashboard), ingress/web/api/grpc container
 apps (only the ingress external) and an Azure Database for PostgreSQL Flexible Server whose firewall
 rule is `AllowAllAzureIps` (the admin password is the barrier; `aca-publish-tests` pins the rule).
-The first deploy is `dev deploy --target aca` (publish, deploy, migrate, smoke, print the URL).
+The first deploy is `dev deploy --target aca` (publish, deploy, migrate, smoke, open the app; `--no-browser` prints the URL).
 `dev deploy migrate --target aca --resource-group <rg>` and `dev open --target aca --resource-group <rg>`
 are the one-step verbs. Remove it with `dev deprovision --target aca`.
 
@@ -490,7 +496,7 @@ and the ACR Basic cost exception) is [azure-container-apps-neon.md](references/a
 - `tools/dev-cli/endpoints/deploy-command.cs` / `deprovision-command.cs` — `dev deploy` /
   `dev deprovision`; their Design regions record the preflight and the `aspire destroy` hand-off.
 - `tools/dev-cli/endpoints/deploy-migrate-command.cs` / `open-command.cs` — `dev deploy migrate` /
-  `dev open`; `services/deploy-operate.cs` records that a missing migrations artifact is published
+  `dev open`; `services/deploy-browser.cs` is the opener both verbs use; `services/deploy-operate.cs` records that a missing migrations artifact is published
   (files only) and then applied, how the Compose project is found, and the firewall-rule cleanup.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` / `aca-publish-tests` — the
   production-safety suites. `aca-neon-publish-tests` guards the Neon target.
