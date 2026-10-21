@@ -1,0 +1,144 @@
+@namespace TimeWarp.Architecture.Features.Admin.Ai
+@inherits BaseComponent
+@using TimeWarp.Architecture.Features.AgentChats
+
+@*
+  Purpose: Admin → AI. Set, replace, or clear the site xAI API key, or show that the host owns it.
+
+  Design: The draft key is page-local and is cleared after a successful save. State never
+  receives it back. The input is a password field. Host configuration and a deployment with no
+  durable store render read-only text, including the setup hint. Save and clear only dispatch.
+*@
+
+@code {
+  public static string Title => "AI";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Key();
+
+  private static readonly SetXaiApiKey.Validator KeyValidator = new();
+
+  private SetXaiApiKey.Command Command { get; } = new();
+
+  private bool IsBusy => ActionTrackingState.IsActive;
+
+  private string StatusLine
+  {
+    get
+    {
+      if (XaiApiKeyState.NeedsReplacement)
+      {
+        string tail = XaiApiKeyState.Suffix is null ? "" : $" It ends in …{XaiApiKeyState.Suffix}.";
+        return "The stored key cannot be read. Paste a new one." + tail;
+      }
+
+      if (!XaiApiKeyState.Configured || XaiApiKeyState.Suffix is null)
+      {
+        return "No key stored.";
+      }
+
+      string when = XaiApiKeyState.SetAt is null
+        ? ""
+        : $" Set {XaiApiKeyState.SetAt.Value:u} by {XaiApiKeyState.SetByPrincipalId:D}.";
+      return $"Configured, ends in …{XaiApiKeyState.Suffix}.{when}";
+    }
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    await base.OnInitializedAsync();
+    if (RendererInfo.IsInteractive)
+    {
+      await NoSubXaiApiKeyState.FetchXaiApiKeyStatus();
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (firstRender && RendererInfo.IsInteractive && !XaiApiKeyState.HasSnapshot)
+    {
+      await NoSubXaiApiKeyState.FetchXaiApiKeyStatus();
+      await InvokeAsync(StateHasChanged);
+    }
+  }
+
+  private async Task SaveAsync()
+  {
+    await NoSubXaiApiKeyState.SetXaiApiKey(Command.ApiKey);
+    if (!XaiApiKeyState.SaveFailed)
+    {
+      Command.ApiKey = "";
+    }
+  }
+
+  private Task ClearAsync() => NoSubXaiApiKeyState.ClearXaiApiKey();
+}
+
+<TimeWarpPage Title="AI">
+  @if (!XaiApiKeyState.HasSnapshot)
+  {
+    <FormSection Title="xAI API key"
+                 Description="Ask uses this key. The value is never shown again after you save it."
+                 data-qa="XaiApiKeySettings" />
+  }
+  else if (XaiApiKeyState.ManagedByHost)
+  {
+    <FormSection Title="xAI API key"
+                 Description="Ask uses this key. The value is never shown again after you save it."
+                 data-qa="XaiApiKeySettings">
+      <p data-qa="XaiApiKeyManagedByHost">Managed by the host.</p>
+      <p>XAI:ApiKey is set in configuration. This page cannot show or change it.</p>
+    </FormSection>
+  }
+  else if (!XaiApiKeyState.StorageAvailable)
+  {
+    <FormSection Title="xAI API key"
+                 Description="This deployment keeps the key in host configuration."
+                 data-qa="XaiApiKeySettings">
+      <p data-qa="XaiApiKeyHostOnly">Set the key on the host. Admin cannot store one here.</p>
+      <p data-qa="XaiApiKeySetupHint">@XaiApiKeyState.SetupHint</p>
+    </FormSection>
+  }
+  else
+  {
+    <EditForm Model="Command" OnValidSubmit="SaveAsync" FormName="XaiApiKeyForm" novalidate>
+      <FluentValidator Validator="@KeyValidator" />
+      <FormSection Title="xAI API key"
+                   Description="Ask uses this key. The value is never shown again after you save it."
+                   data-qa="XaiApiKeySettings">
+        <p data-qa="XaiApiKeyStatus">@StatusLine</p>
+        <FormGrid>
+          <FormField Label="xAI API key">
+            <FluentTextInput @bind-Value="Command.ApiKey"
+                             Name="ApiKey"
+                             TextInputType="TextInputType.Password"
+                             AutoComplete="new-password"
+                             AriaLabel="xAI API key"
+                             Placeholder="Paste a key"
+                             Width="100%"
+                             Disabled="@IsBusy"
+                             data-qa="XaiApiKeyInput" />
+            <ValidationMessage For="@(() => Command.ApiKey)" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+      <FormActions>
+        <FluentButton Type="ButtonType.Submit"
+                      Appearance="ButtonAppearance.Primary"
+                      Disabled="@IsBusy"
+                      data-qa="XaiApiKeySave">
+          Save key
+        </FluentButton>
+        @if (XaiApiKeyState.Configured || XaiApiKeyState.NeedsReplacement)
+        {
+          <FluentButton Type="ButtonType.Button"
+                        Appearance="ButtonAppearance.Outline"
+                        Disabled="@IsBusy"
+                        OnClick="ClearAsync"
+                        data-qa="XaiApiKeyClear">
+            Clear key
+          </FluentButton>
+        }
+      </FormActions>
+    </EditForm>
+  }
+</TimeWarpPage>

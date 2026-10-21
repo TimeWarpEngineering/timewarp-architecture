@@ -365,6 +365,8 @@ The ring is not wrapped with a certificate or Azure Key Vault. Compose has nowhe
 
 Targets with postgres (compose, kubernetes, aca, aca-neon) all use the same table. `aca-neon` sets min replicas to 0, so the container disk is empty after idle; the Postgres ring is what keeps a signed-in cookie valid across that cold start.
 
+Ask uses `XAI:ApiKey` when that value is set (environment variable `XAI__ApiKey`, a container-app secret, or a Development user secret). The host value wins, and Admin → AI is read-only. When postgres is on and a connection string is set, an administrator can set the key on Admin → AI instead. The plaintext is protected with this ring (purpose `TimeWarp.Architecture.XaiApiKey`, rewritten with the generated app's name) and stored in `secrets.protected_secrets`. The browser receives a status, never the key. Ask reads it on each turn. Without postgres, or with no connection string, Admin → AI only shows how to set the host value.
+
 ## Ingress topology
 
 All public traffic enters through the **YARP ingress**, which owns the routing table (generated

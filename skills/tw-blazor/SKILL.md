@@ -188,9 +188,11 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   the viewport. While Ask is open it owns the aside column; a page `Aside` shows only when
   Ask is closed. web-server holds `XAI:ApiKey` and forwards completions to xAI. When the key
   is missing, the panel shows "AI not configured" and the environment's setup hint. Development
-  shows `dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id <UserSecretsId>`. Every other
-  environment names `XAI__ApiKey` as an environment variable or a container-app secret and does
-  not show the user-secrets id.
+  shows the exact `dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id <UserSecretsId>`
+  command in the copy block. Every other environment names `XAI__ApiKey` as an environment
+  variable or a container-app secret and does not show the user-secrets id. When this host can
+  store an admin key, a separate sentence points at Admin → AI. That sentence is not in the copy
+  block, and it is omitted when there is no admin storage.
 
   The template registers the relay, not a key. WebMCP does not need a client.
 - WebMCP registers the same tools (including `site_map` and `navigate`), plus `page_context`, through `document.modelContext.registerTool`

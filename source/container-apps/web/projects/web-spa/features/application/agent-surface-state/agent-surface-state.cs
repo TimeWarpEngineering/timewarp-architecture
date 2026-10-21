@@ -34,6 +34,7 @@
 // remounts the panel on navigation and a remount must not refocus.
 // AssistantIdentityRefreshHandler reloads them after a successful UpdateSiteSettings and after
 // ResetStore, whose Store.Reset puts them back to those defaults.
+// XaiApiKeyRefreshHandler reloads chat configuration after a successful admin set or clear.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -54,6 +55,9 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   public CatalogAgentReadiness ChatReadiness { get; private set; }
 
   public string ChatSetupCommand { get; private set; } = XaiChatDefaults.DeployedSetupHint;
+
+  /// <summary>Admin → AI sentence from the probe. Null when this host cannot store a key.</summary>
+  public string? ChatAdminHint { get; private set; }
 
   public string? ChatModel { get; private set; }
 
@@ -145,6 +149,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     PendingArgumentsJson = null;
     ChatReadiness = CatalogAgentReadiness.Unknown;
     ChatSetupCommand = XaiChatDefaults.DeployedSetupHint;
+    ChatAdminHint = null;
     ChatModel = null;
     ChatProblem = null;
     IsPanelOpen = false;

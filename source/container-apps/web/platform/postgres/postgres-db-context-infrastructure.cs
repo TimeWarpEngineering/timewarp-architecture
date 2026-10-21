@@ -26,6 +26,8 @@
 // durable ISiteSettingsStore backend (task 219-006) — singleton row, store-CAS, not IAggregateRoot.
 // DataProtectionKey (schema "data_protection", table "keys") is the ASP.NET key ring. It is not an
 // aggregate. PostgresDbModule persists keys here only when a connection string is configured.
+// ProtectedSecret (schema "secrets", table "protected_secrets") is a named ciphertext row. The
+// site xAI API key is one row. It is not an aggregate.
 // Connection setup lives in PostgresDbModule, not OnConfiguring, so the context stays
 // configuration-agnostic.
 // Aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
@@ -59,6 +61,7 @@ using TimeWarp.Architecture.Features.AgentLinks.Domain;
 using TimeWarp.Architecture.Features.Feedback.Domain;
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Domain;
+using TimeWarp.Architecture.Secrets;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
 
@@ -78,6 +81,7 @@ public sealed partial class PostgresDbContext : AggregateDbContext, IDataProtect
   public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();
   public DbSet<RolePermissionGrant> RolePermissionGrants => Set<RolePermissionGrant>();
   public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
+  public DbSet<ProtectedSecret> ProtectedSecrets => Set<ProtectedSecret>();
 
   protected override void OnConfigureConventions(ModelConfigurationBuilder configurationBuilder)
   {

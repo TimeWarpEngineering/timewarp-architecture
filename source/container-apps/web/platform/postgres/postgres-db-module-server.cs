@@ -49,6 +49,8 @@
 // template source name, so every replica of one generated app shares a ring and two apps do not.
 // An unconfigured connection leaves the ASP.NET file-system ring. The key XML is not wrapped with
 // a certificate or Key Vault.
+// Task 398: the same gate registers EfProtectedSecretStore over the unavailable store. The site
+// xAI API key is protected with this ring. No connection means Admin → AI cannot store a key.
 // Logging (task 358): this module never calls LogTo or EnableSensitiveDataLogging. EF Core SQL
 // (Microsoft.EntityFrameworkCore.Database.Command) is Warning in every committed appsettings file;
 // a developer opts in per machine with Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command
@@ -72,6 +74,7 @@ using TimeWarp.Architecture.Features.Feedback.Application;
 using TimeWarp.Architecture.Features.Feedback.Infrastructure;
 using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Features.Settings.Infrastructure;
+using TimeWarp.Architecture.Secrets;
 using TimeWarp.Identity;
 
 public sealed partial class PostgresDbModule : IModule
@@ -138,6 +141,10 @@ public sealed partial class PostgresDbModule : IModule
     // Task 219-006: durable site settings (same connection gate).
     serviceCollection.RemoveAll<ISiteSettingsStore>();
     serviceCollection.AddScoped<ISiteSettingsStore, EfSiteSettingsStore>();
+
+    // Task 398: durable protected secrets, same ring as PersistKeysToDbContext above.
+    serviceCollection.RemoveAll<IProtectedSecretStore>();
+    serviceCollection.AddScoped<IProtectedSecretStore, EfProtectedSecretStore>();
     // Task 363: lets the boot seed wait for web-migrations without a failing (Error-logging) query.
     serviceCollection.AddScoped<IPendingMigrationsProbe, EfPendingMigrationsProbe>();
 

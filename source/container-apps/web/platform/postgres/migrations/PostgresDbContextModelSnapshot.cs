@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261021184129_AddDataProtectionKeys";
+    public override string LastMigrationId => "20261021214830_AddProtectedSecrets";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -253,6 +253,37 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasKey("Id");
 
                 b.ToTable("profiles", "profiles");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Secrets.ProtectedSecret", b =>
+            {
+                b.Property<string>("Name")
+                    .HasMaxLength(128)
+                    .HasColumnType("character varying(128)");
+
+                b.Property<string>("Ciphertext")
+                    .IsRequired()
+                    .HasColumnType("text");
+
+                b.Property<string>("Purpose")
+                    .IsRequired()
+                    .HasMaxLength(256)
+                    .HasColumnType("character varying(256)");
+
+                b.Property<DateTimeOffset>("SetAt")
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property<Guid>("SetByPrincipalId")
+                    .HasColumnType("uuid");
+
+                b.Property<string>("Suffix")
+                    .IsRequired()
+                    .HasMaxLength(8)
+                    .HasColumnType("character varying(8)");
+
+                b.HasKey("Name");
+
+                b.ToTable("protected_secrets", "secrets");
             });
 
         modelBuilder.Entity("TimeWarp.Identity.Credential", b =>
