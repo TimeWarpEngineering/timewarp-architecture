@@ -38,6 +38,7 @@ The copy-paste setup text stays the exact user-secrets command in Development, a
 - Review oracle round 1: claude-opus-5-5 (ganda task work, headless), effort 3, roster general. The pass was split across read-only subagents adc95486e2571e8f2 (server) and a7d9ef2d146ecc994 (SPA and tests). 12 findings are open (4 bug, 4 suggestion, 4 nit), so a fix pass is needed. 2026-10-22
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T22:14:04Z
 - Fix pass (implement-fix-2): addressed review round 1 M1–M12. Store failures on resolve return null and status/set/clear return 503. The Admin sentence is a separate field and only when the host can store a key. Configured follows a trial unprotect (`needsReplacement`). A successful set or clear reloads Ask. The store write result is the audit action, and a unique violation retries as replace. One completion reads the key once. The admin integration test captures the key the chat client receives. Migration class is `AddProtectedSecrets`. The password field uses `new-password`. 2026-10-22
+- Review oracle round 2: claude-opus-5-5 (ganda task work, headless), effort 3, roster general, one inline pass over `df2f61ddf`. M1–M12 are verified fixed. One new nit (M13, a dead `XaiChatDefaults.SetupHint`) is open, so a fix pass is needed. The targeted test classes passed in this worktree, and `./bin/dev build` was clean. `dev lint-skills` could not run here because of a local vally version mismatch. 2026-10-22
 
 ## Results
 
@@ -70,8 +71,9 @@ ganda repo audit
 
 ### Review
 
-- Round 1 (effort 3, general): M1–M12 implemented on this id in the fix pass. Host review round 2 follows.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 1 (effort 3, general): M1–M12 implemented on this id in the fix pass.
+- Round 2 (effort 3, general): M1–M12 verified fixed (4 bug, 4 suggestion, 4 nit). New finding M13 (nit, open): `XaiChatDefaults.SetupHint` has no production caller. Counts: bug 0 open / 4 fixed, suggestion 0 open / 4 fixed, nit 1 open / 4 fixed. Disposition is pending until M13 is fixed and re-reviewed in round 3.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Learnings
 
@@ -81,6 +83,7 @@ ganda repo audit
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12
+- Round 2: Blocked — M1–M12 fixed; open M13
 
 ## Notes
 

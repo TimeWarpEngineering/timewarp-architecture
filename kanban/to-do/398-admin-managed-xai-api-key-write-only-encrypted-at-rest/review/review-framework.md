@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3202
+- Lines changed: 1050
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -17,6 +17,11 @@
 **Effort:** 3. Roster axis: general. The orchestrator ran one general pass, split into two read-only subagents: the server and storage half, and the SPA and tests half. The orchestrator re-verified each finding against the tree.
 **Reviewer roster:** general
 **Session IDs:** review oracle (claude-opus-5-5, ganda task work, headless), session id not exposed. Subagents adc95486e2571e8f2 (server) and a7d9ef2d146ecc994 (SPA and tests).
+
+## Round 2 scope
+
+**Diff scope:** the fix commit `df2f61ddf` vs `9df34f363` (the round-1 review commit). That is 42 files, and the host by-diff budget counted 1050 lines. Effort 3, roster general. The orchestrator did one pass inline, with no subagents. It re-verified M1–M12 and scanned the delta for new defects.
+**Session IDs:** review oracle round 2 (claude-opus-5-5, ganda task work, headless), session id not exposed.
 
 ## Ground rules
 
