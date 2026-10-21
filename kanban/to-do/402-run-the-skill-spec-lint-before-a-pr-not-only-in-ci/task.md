@@ -52,9 +52,19 @@ With `@microsoft/vally-cli@0.19.0` on `PATH`, `lint-skills` prints `9 skill(s) l
 
 Ran those checks on 2026-10-22. Missing `vally`: exit 1, install text as above. Installed 0.6.0: exit 1, `vally 0.6.0 is on PATH` and the 0.19.0 install. Pinned 0.19.0 on this repo: exit 0, 9/9 skills and the eval spec. Over-limit fixture: exit 1, `File length (518 lines) exceeds limit (500).` `dotnet build tools/dev-cli/dev.cs -c Release` succeeded. `cd tests/tools/dev-cli-tests && dotnet test -c Release`: 333 passed, 0 failed. `ganda repo audit`: Passed 32, Failed 0.
 
+### Review
+
+- Rounds: 1. Effort 2, roster: general.
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). 0 open.
+- Disposition: **accepted-exceptions**. M1 (nit): on native Windows, the `vally.cmd` npm shim is not found by the PATH probe or the launch. Out of scope for matching the Linux CI gate. It fails safe with the install message.
+- Reviewer re-ran on 2026-10-22: dev-cli-tests 333/333. vally 0.6.0 exits 1 with the pinned install. Pinned 0.19.0 lints 9/9 skills plus the eval spec and exits 0. A 527-line `SKILL.md` fixture exits 1 with vally's file-length message.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-21T21:07:14Z
+- Review oracle: claude-opus-5-5 (headless ganda task work), effort 2, roster general, 1 round, accepted-exceptions — 2026-10-22
 
 ## Notes
 
