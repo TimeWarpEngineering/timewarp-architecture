@@ -3,8 +3,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Options
-#:package Microsoft.Extensions.Logging.Abstractions
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
@@ -12,8 +10,8 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator (passkey mode, assistant name), emptied store re-seeds at
-// Version 0, 409, successful update, assistant rename stored trimmed.
+// Jaribu runfile: UpdateSiteSettings validator (passkey mode, assistant name, accepted tenants),
+// emptied store re-seeds at Version 0, 409, successful update, assistant rename stored trimmed.
 #endregion
 
 //-:cnd:noEmit
@@ -102,6 +100,57 @@ namespace TimeWarp.Architecture.Features.Settings
       ValidationResult result = new Validator().Validate(ValidCommand(LoneSurrogateName()));
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
+      return Task.CompletedTask;
+    }
+
+    public static Task Empty_Accepted_Tenant_Should_Fail_Validation()
+    {
+      Command command = ValidCommand(AssistantNameRules.Default);
+      command.EntraAcceptedTenantIds = [Guid.Empty];
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.ShouldContain(error => error.ErrorMessage == "Accepted tenant ids must be non-empty GUIDs.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Duplicate_Accepted_Tenants_Past_The_Raw_Cap_Should_Pass_Validation()
+    {
+      Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      List<Guid> tenantIds = [];
+      for (int index = 0; index < EntraTenantIds.MaxAcceptedCount + 1; index++)
+      {
+        tenantIds.Add(tenantId);
+      }
+
+      Command command = ValidCommand(AssistantNameRules.Default);
+      command.EntraAcceptedTenantIds = tenantIds;
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeTrue();
+      return Task.CompletedTask;
+    }
+
+    public static Task Too_Many_Distinct_Accepted_Tenants_Should_Fail_Validation()
+    {
+      List<Guid> tenantIds = [];
+      for (int index = 1; index <= EntraTenantIds.MaxAcceptedCount + 1; index++)
+      {
+        tenantIds.Add(Guid.Parse($"00000000-0000-0000-0000-{index:D12}"));
+      }
+
+      Command command = ValidCommand(AssistantNameRules.Default);
+      command.EntraAcceptedTenantIds = tenantIds;
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
+      result.Errors.ShouldContain(error => error.ErrorMessage == $"At most {EntraTenantIds.MaxAcceptedCount} accepted tenant ids.");
+      return Task.CompletedTask;
+    }
+
+    public static Task Undefined_Tenant_Acceptance_Mode_Should_Fail_Validation()
+    {
+      Command command = ValidCommand(AssistantNameRules.Default);
+      command.EntraTenantAcceptanceMode = (EntraTenantAcceptanceMode)99;
+      ValidationResult result = new Validator().Validate(command);
+      result.IsValid.ShouldBeFalse();
       return Task.CompletedTask;
     }
 
@@ -238,6 +287,35 @@ namespace TimeWarp.Architecture.Features.Settings
       result.IsT0.ShouldBeTrue();
       result.AsT0.AssistantName.ShouldBe("Zawadi");
       (await store.GetAsync())!.AssistantName.ShouldBe("Zawadi");
+    }
+
+    public static async Task Any_Mode_Should_Persist_The_Accepted_List()
+    {
+      InMemorySiteSettingsStore store = new();
+      await store.AddAsync(SiteSettings.Create());
+      Guid first = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      Guid second = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+      UpdateHandler handler = new(store);
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(
+        new Command
+        {
+          PasskeyPromptMode = PasskeyPromptMode.Soft,
+          AssistantName = AssistantNameRules.Default,
+          EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Any,
+          EntraAcceptedTenantIds = [second, first, first],
+          Version = 0
+        },
+        default);
+
+      result.IsT0.ShouldBeTrue();
+      result.AsT0.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
+      result.AsT0.EntraAcceptedTenantIds.Count.ShouldBe(2);
+      result.AsT0.EntraAcceptedTenantIds.ShouldContain(first);
+      result.AsT0.EntraAcceptedTenantIds.ShouldContain(second);
+      SiteSettings stored = (await store.GetAsync()).ShouldNotBeNull();
+      stored.AcceptsEntraTenant(Guid.NewGuid()).ShouldBeTrue();
+      stored.EntraTenantAcceptanceInitialized.ShouldBeTrue();
+      stored.AssistantName.ShouldBe(AssistantNameRules.Default);
     }
   }
 }

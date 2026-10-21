@@ -1,30 +1,33 @@
 #region Purpose
-// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap, passkey prompt)
-// and the assistant's display name.
+// Singleton site-settings aggregate: runtime admin policy (Entra offered/bootstrap, tenant
+// acceptance, passkey prompt) and the assistant's display name.
 #endregion
 
 #region Design
-// Task 219-006: configuration owns what is *configured* (client id, secret, tenant, PublicOrigin,
-// scheme registration). This aggregate owns what is *allowed* at runtime and will accumulate
-// (registration, agent keys, payment toggles, banners). One row, one concurrency token — copy
-// IPrincipalStore, not IAggregateRoot/Profile: Version is store-CAS via Snapshot + EntityVersion.Next,
-// not AggregateDbContext. IAggregateRoot is deliberately not implemented (same rationale as
-// Principal). Entity<SiteSettingsId> with a well-known Singleton id rather than a dedicated
-// singleton type so the store port stays Get/Add/Update like principals.
+// Task 219-006: configuration owns what is *configured* (client id, secret, authority tenant,
+// PublicOrigin, scheme registration). This aggregate owns what is *allowed* at runtime and will
+// accumulate (registration, agent keys, payment toggles, banners). One row, one concurrency token —
+// copy IPrincipalStore, not IAggregateRoot/Profile: Version is store-CAS via Snapshot +
+// EntityVersion.Next, not AggregateDbContext. IAggregateRoot is deliberately not implemented (same
+// rationale as Principal). Entity<SiteSettingsId> with a well-known Singleton id rather than a
+// dedicated singleton type so the store port stays Get/Add/Update like principals.
 // Defaults: EntraSignInEnabled false, EntraAllowBootstrap false, PasskeyPromptMode Soft,
-// AssistantName Akili (task 361). AssistantName is stored trimmed; AssistantNameRules owns its
-// rules so the contract validator agrees. RenameAssistant is separate from ReplacePolicy because
-// the seeder's reseed rewrites policy from configuration and must keep the admin-set name.
-// Task 227: trust is Authentication:Entra:TenantId (token tid GUID-equals the configured tenant).
-// This aggregate does not store a tenant allowlist. Do not fold PublicOrigin / client id /
-// secret / authority tenant into this type.
+// AssistantName Akili (task 361), tenant acceptance Restricted with an empty list.
+// AssistantName is stored trimmed; AssistantNameRules owns its rules so the contract validator
+// agrees. RenameAssistant is separate from ReplacePolicy because the seeder's reseed rewrites
+// offer/bootstrap from configuration and must keep the admin-set name and tenant acceptance.
+// Task 306: Entra tenant acceptance is this row (Restricted list or Any), not
+// Authentication:Entra:TenantId. That config value remains the OIDC authority segment.
+// EntraTenantAcceptanceInitialized is false only on rows migrated before the column existed;
+// the seeder copies a GUID authority into the restricted list once, then leaves admin edits alone.
+// Do not fold PublicOrigin / client id / secret / authority tenant into this type.
 #endregion
 
 namespace TimeWarp.Identity;
 
 /// <summary>
-/// Singleton runtime admin policy for Entra offer/bootstrap, the post-Entra passkey prompt, and the
-/// assistant's display name.
+/// Singleton runtime admin policy for Entra offer/bootstrap, accepted tenants, the post-Entra
+/// passkey prompt, and the assistant's display name.
 /// </summary>
 public sealed class SiteSettings : Entity<SiteSettingsId>
 {
@@ -40,6 +43,9 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     bool entraAllowBootstrap,
     PasskeyPromptMode passkeyPromptMode,
     string assistantName,
+    EntraTenantAcceptanceMode entraTenantAcceptanceMode,
+    IReadOnlyList<Guid> entraAcceptedTenantIds,
+    bool entraTenantAcceptanceInitialized,
     long version)
     : base(id, version)
   {
@@ -47,6 +53,9 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     EntraAllowBootstrap = entraAllowBootstrap;
     PasskeyPromptMode = passkeyPromptMode;
     AssistantName = assistantName;
+    EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
+    EntraAcceptedTenantIds = entraAcceptedTenantIds;
+    EntraTenantAcceptanceInitialized = entraTenantAcceptanceInitialized;
   }
 
   /// <summary>Whether Entra sign-in is offered at runtime (separate from configured client secrets).</summary>
@@ -61,23 +70,45 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   /// <summary>The assistant's display name (trimmed, 1-32 plain-text characters; default Akili).</summary>
   public string AssistantName { get; private set; }
 
+  /// <summary>Restricted list or any Entra tenant. Default Restricted.</summary>
+  public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; private set; }
+
+  /// <summary>
+  /// Tenant ids accepted when <see cref="EntraTenantAcceptanceMode"/> is Restricted.
+  /// Kept when the mode is Any so switching back does not drop the list.
+  /// </summary>
+  public IReadOnlyList<Guid> EntraAcceptedTenantIds { get; private set; }
+
+  /// <summary>
+  /// False on a row that has not yet received a tenant-acceptance value.
+  /// The seeder fills that row once from a GUID <c>Authentication:Entra:TenantId</c>.
+  /// </summary>
+  public bool EntraTenantAcceptanceInitialized { get; private set; }
+
   /// <summary>
   /// Creates the singleton row at version 0 with the given policy (defaults: Entra off, Soft prompt,
-  /// assistant Akili).
+  /// assistant Akili, restricted tenant list empty and already initialized).
   /// </summary>
   public static SiteSettings Create(
     bool entraSignInEnabled = false,
     bool entraAllowBootstrap = false,
     PasskeyPromptMode passkeyPromptMode = PasskeyPromptMode.Soft,
-    string assistantName = AssistantNameRules.Default)
+    string assistantName = AssistantNameRules.Default,
+    EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
+    IEnumerable<Guid>? entraAcceptedTenantIds = null,
+    bool entraTenantAcceptanceInitialized = true)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
+    EnsureTenantAcceptanceMode(entraTenantAcceptanceMode);
     return new SiteSettings(
       SingletonId,
       entraSignInEnabled,
       entraAllowBootstrap,
       passkeyPromptMode,
       NormalizeAssistantName(assistantName),
+      entraTenantAcceptanceMode,
+      NormalizeAcceptedTenantIds(entraAcceptedTenantIds),
+      entraTenantAcceptanceInitialized,
       version: 0);
   }
 
@@ -91,9 +122,14 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       EntraAllowBootstrap,
       PasskeyPromptMode,
       AssistantName,
+      EntraTenantAcceptanceMode,
+      EntraAcceptedTenantIds.ToArray(),
+      EntraTenantAcceptanceInitialized,
       version);
 
-  /// <summary>Replaces the whole runtime policy surface in one mutation.</summary>
+  /// <summary>
+  /// Replaces offer, bootstrap, and passkey prompt. Tenant acceptance and the assistant name stay.
+  /// </summary>
   public void ReplacePolicy(
     bool entraSignInEnabled,
     bool entraAllowBootstrap,
@@ -103,6 +139,40 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     EntraSignInEnabled = entraSignInEnabled;
     EntraAllowBootstrap = entraAllowBootstrap;
     PasskeyPromptMode = passkeyPromptMode;
+  }
+
+  /// <summary>
+  /// Replaces tenant acceptance and marks it initialized.
+  /// Restricted with an empty list accepts no tenant. Any ignores the list for decisions and keeps it.
+  /// </summary>
+  public void ReplaceEntraTenantAcceptance(
+    EntraTenantAcceptanceMode mode,
+    IEnumerable<Guid>? acceptedTenantIds)
+  {
+    EnsureTenantAcceptanceMode(mode);
+    EntraTenantAcceptanceMode = mode;
+    EntraAcceptedTenantIds = NormalizeAcceptedTenantIds(acceptedTenantIds);
+    EntraTenantAcceptanceInitialized = true;
+  }
+
+  /// <summary>
+  /// True when <paramref name="tenantId"/> may sign in under the stored acceptance policy.
+  /// <see cref="Guid.Empty"/> is never accepted.
+  /// </summary>
+  public bool AcceptsEntraTenant(Guid tenantId)
+  {
+    if (tenantId == Guid.Empty)
+    {
+      return false;
+    }
+
+    if (EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Any)
+    {
+      return true;
+    }
+
+    return EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Restricted
+      && EntraAcceptedTenantIds.Contains(tenantId);
   }
 
   /// <summary>Renames the assistant; the name is trimmed and must pass <see cref="AssistantNameRules.IsValid"/>.</summary>
@@ -131,5 +201,26 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
         passkeyPromptMode,
         "PasskeyPromptMode must be Soft or Required.");
     }
+  }
+
+  private static void EnsureTenantAcceptanceMode(EntraTenantAcceptanceMode mode)
+  {
+    if (!Enum.IsDefined(mode))
+    {
+      throw new ArgumentOutOfRangeException(
+        nameof(mode),
+        mode,
+        "EntraTenantAcceptanceMode must be Restricted or Any.");
+    }
+  }
+
+  private static IReadOnlyList<Guid> NormalizeAcceptedTenantIds(IEnumerable<Guid>? tenantIds)
+  {
+    if (!EntraTenantIds.TryNormalize(tenantIds, out IReadOnlyList<Guid> normalized, out string? error))
+    {
+      throw new ArgumentException(error, nameof(tenantIds));
+    }
+
+    return normalized;
   }
 }

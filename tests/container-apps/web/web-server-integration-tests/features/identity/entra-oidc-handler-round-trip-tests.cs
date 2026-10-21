@@ -149,7 +149,8 @@ public class Callback_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        passkeyPromptMode: PasskeyPromptMode.Soft));
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: [TrustedTenantId]));
     TestServer testServer = App.GetTestServer();
     Client = new HttpClient(testServer.CreateHandler())
     {

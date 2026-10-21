@@ -353,4 +353,16 @@ public class SignInAudienceSummary_Given_
         "Sign in with an account from this tenant (single-tenant app). Other tenants' accounts must be invited as guests first.");
     return Task.CompletedTask;
   }
+
+  public static Task MultiTenantNote_Should_Name_Admin_Policy_And_Account_Types()
+  {
+    string note = EntraTenants.MultiTenantAcceptanceNote();
+    note.ShouldContain("/Admin/Authentication");
+    note.ShouldContain("AzureADMultipleOrgs");
+    note.ShouldContain("AzureADandPersonalMicrosoftAccount");
+    note.ShouldContain("organizations");
+    note.ShouldContain("9188040d-6c67-4c5b-b112-36a304b66dad");
+    note.ShouldContain("no tenant blocklist");
+    return Task.CompletedTask;
+  }
 }

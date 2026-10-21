@@ -3,8 +3,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Options
-#:package Microsoft.Extensions.Logging.Abstractions
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
@@ -49,6 +47,7 @@ namespace TimeWarp.Architecture.Features.Settings
     public static Task ValidResponse_Should_RoundTripThroughJson()
     {
       Guid configured = Guid.Parse("a16bcaef-ea01-44ad-be12-249a17658692");
+      Guid accepted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
       Response response = new(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
@@ -59,7 +58,9 @@ namespace TimeWarp.Architecture.Features.Settings
         configurationTenantDisplayName: "TimeWarp Enterprises LLC",
         configurationTenantDomain: "timewarp.engineering",
         configurationEnabled: true,
-        configurationAllowBootstrap: false);
+        configurationAllowBootstrap: false,
+        entraTenantAcceptanceMode: EntraTenantAcceptanceMode.Any,
+        entraAcceptedTenantIds: [accepted]);
 
       string json = JsonSerializer.Serialize(response, ContractSerializationDefaults.Options);
       Response? parsed = JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options);
@@ -75,8 +76,12 @@ namespace TimeWarp.Architecture.Features.Settings
       parsed.ConfigurationTenantDomain.ShouldBe("timewarp.engineering");
       parsed.ConfigurationEnabled.ShouldBeTrue();
       parsed.ConfigurationAllowBootstrap.ShouldBeFalse();
+      parsed.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
+      parsed.EntraAcceptedTenantIds.ShouldBe([accepted]);
       json.ShouldContain("passkeyPromptMode");
       json.ShouldContain("configurationTenantId");
+      json.ShouldContain("entraTenantAcceptanceMode");
+      json.ShouldContain("entraAcceptedTenantIds");
       json.ShouldNotContain("entraTrustedTenants");
       return Task.CompletedTask;
     }

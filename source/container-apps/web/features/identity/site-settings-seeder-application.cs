@@ -4,17 +4,22 @@
 
 #region Design
 // When the store is empty, copy Enabled / AllowBootstrap once so existing `dev entra setup`
-// secrets keep working. After that those two are not consulted for policy — Configuration
-// Enabled remains the scheme-registration gate only. PasskeyPromptMode is not in configuration;
-// seed uses Soft. Concurrent first-seed Add races re-Get (boot, or concurrent reads through
-// SeedOnReadSiteSettingsStore — task 254 seeds on first read too); a reseed Update that loses the
-// same race re-Gets the winner's row instead of surfacing ConcurrencyConflictException.
-// Task 225 / 227: each later boot compares persisted policy with configuration. LoggerMessage.Define
-// Warning when AllowBootstrap differs or when Enabled differs — each line names
-// /Admin/Authentication and `dev entra reseed`. Trust is TenantId, not a persisted list, so
-// there is no tenant-drift warning. ReseedSiteSettings overwrites those two fields from
-// configuration only when isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore
-// pass IHostEnvironment.IsDevelopment()). PasskeyPromptMode is kept.
+// secrets keep working, and copy a GUID Authentication:Entra:TenantId into the restricted
+// accepted-tenant list so a home-tenant deployment keeps accepting that tenant. organizations /
+// common are authorities, not tenant ids, so they seed an empty restricted list (refuse until an
+// administrator chooses a list or Any). After that Enabled / AllowBootstrap are not consulted for
+// policy — Configuration Enabled remains the scheme-registration gate only. PasskeyPromptMode is
+// not in configuration; seed uses Soft. A row with EntraTenantAcceptanceInitialized false (migrated
+// before task 306) receives that same one-time copy. Concurrent first-seed Add races re-Get (boot,
+// or concurrent reads through SeedOnReadSiteSettingsStore — task 254 seeds on first read too); a
+// reseed or acceptance Update that loses the same race re-Gets the winner's row instead of
+// surfacing ConcurrencyConflictException.
+// Task 225 / 227: each later boot compares persisted offer/bootstrap with configuration.
+// LoggerMessage.Define Warning when AllowBootstrap differs or when Enabled differs — each line names
+// /Admin/Authentication and `dev entra reseed`. Tenant acceptance is admin-owned, so there is no
+// tenant-drift warning. ReseedSiteSettings overwrites Enabled / AllowBootstrap from configuration
+// only when isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore pass
+// IHostEnvironment.IsDevelopment()). PasskeyPromptMode, assistant name, and tenant acceptance stay.
 // IsUndefinedTable (Postgres 42P01) lives here so the boot retry and the read path share one
 // string-based check (same convention as EfSiteSettingsStore.IsUniqueViolation) without an
 // Npgsql package reference in application or server layers.
@@ -60,6 +65,14 @@ public sealed class SiteSettingsSeeder
       "Authentication:Entra:ReseedSiteSettings is true but isDevelopment is false; the flag is honoured only in Development."
     );
 
+  private static readonly Action<ILogger, int, Exception?> LogTenantAcceptanceInitialized =
+    LoggerMessage.Define<int>
+    (
+      LogLevel.Information,
+      new EventId(6, nameof(LogTenantAcceptanceInitialized)),
+      "Initialized Entra tenant acceptance to Restricted with {AcceptedTenantCount} tenant id(s) from Authentication:Entra:TenantId. Edit the list or allow any tenant on /Admin/Authentication."
+    );
+
   private readonly ISiteSettingsStore SiteSettingsStore;
   private readonly IOptions<EntraAuthenticationOptions> Options;
   private readonly ILogger<SiteSettingsSeeder> Logger;
@@ -83,10 +96,13 @@ public sealed class SiteSettingsSeeder
     if (existing is null)
     {
       EntraAuthenticationOptions options = Options.Value;
+      IReadOnlyList<Guid> homeTenant = ConfiguredHomeTenant(options);
       var created = SiteSettings.Create(
         entraSignInEnabled: options.Enabled,
         entraAllowBootstrap: options.AllowBootstrap,
-        passkeyPromptMode: PasskeyPromptMode.Soft);
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: homeTenant,
+        entraTenantAcceptanceInitialized: true);
 
       try
       {
@@ -104,6 +120,23 @@ public sealed class SiteSettingsSeeder
     }
 
     EntraAuthenticationOptions configured = Options.Value;
+    if (!existing.EntraTenantAcceptanceInitialized)
+    {
+      IReadOnlyList<Guid> homeTenant = ConfiguredHomeTenant(configured);
+      existing.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Restricted, homeTenant);
+      try
+      {
+        await SiteSettingsStore.UpdateAsync(existing, cancellationToken).ConfigureAwait(false);
+        LogTenantAcceptanceInitialized(Logger, homeTenant.Count, null);
+      }
+      catch (ConcurrencyConflictException)
+      {
+        // A concurrent seeder already initialized this row.
+      }
+
+      existing = await SiteSettingsStore.GetAsync(cancellationToken).ConfigureAwait(false) ?? existing;
+    }
+
     if (configured.ReseedSiteSettings)
     {
       if (isDevelopment)
@@ -150,6 +183,16 @@ public sealed class SiteSettingsSeeder
     }
 
     return false;
+  }
+
+  private static IReadOnlyList<Guid> ConfiguredHomeTenant(EntraAuthenticationOptions options)
+  {
+    if (Guid.TryParse(options.TenantId, out Guid tenantId) && tenantId != Guid.Empty)
+    {
+      return [tenantId];
+    }
+
+    return [];
   }
 
   private void LogDrift(EntraAuthenticationOptions configured, SiteSettings existing)

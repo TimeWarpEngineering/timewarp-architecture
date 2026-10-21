@@ -118,7 +118,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
       Terminal.WriteLine("");
       Terminal.WriteErrorLine(
-        "Obsolete Authentication:Entra:TrustedTenants is set. Task 227 removed the allowlist; trust is TenantId.".Yellow());
+        "Obsolete Authentication:Entra:TrustedTenants is set. Tenant acceptance is the admin policy on /Admin/Authentication.".Yellow());
       Terminal.WriteLine(
         $"dotnet user-secrets remove \"{EntraSetup.ObsoleteTrustedTenants0Key}\" --project {EntraSetup.WebServerProject}");
     }

@@ -69,7 +69,9 @@ public sealed class GetSiteSettings
         configurationTenantDisplayName: displayName,
         configurationTenantDomain: domain,
         configurationEnabled: configured.Enabled,
-        configurationAllowBootstrap: configured.AllowBootstrap);
+        configurationAllowBootstrap: configured.AllowBootstrap,
+        entraTenantAcceptanceMode: settings.EntraTenantAcceptanceMode,
+        entraAcceptedTenantIds: [.. settings.EntraAcceptedTenantIds]);
     }
   }
 }

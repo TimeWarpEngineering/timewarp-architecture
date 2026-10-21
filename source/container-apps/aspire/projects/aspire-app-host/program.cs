@@ -374,6 +374,8 @@ internal class Program
     {
       webServer = webServer
         .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
+        // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
+        // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
         .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))
         .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true))
         .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, "", secret: true))

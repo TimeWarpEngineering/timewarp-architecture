@@ -115,6 +115,8 @@ public partial class CatalogAgent_Should
     UpdateSiteSettings.Command bind = bound[0].ShouldBeOfType<UpdateSiteSettings.Command>();
     bind.EntraSignInEnabled.ShouldBeTrue();
     bind.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+    bind.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
+    bind.EntraAcceptedTenantIds.ShouldBeEmpty();
     bind.Version.ShouldBe(3);
 
     // The seam converter refuses integers, so the schema must advertise the member names.
@@ -136,6 +138,14 @@ public partial class CatalogAgent_Should
     mode.GetProperty("type").GetString().ShouldBe("string");
     string[] members = [.. mode.GetProperty("enum").EnumerateArray().Select(member => member.GetString() ?? "")];
     members.ShouldBe(Enum.GetNames<PasskeyPromptMode>());
+    JsonElement acceptance = schema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties")
+      .GetProperty("entraTenantAcceptanceMode");
+    acceptance.GetProperty("type").GetString().ShouldBe("string");
+    string[] acceptanceMembers = [.. acceptance.GetProperty("enum").EnumerateArray().Select(member => member.GetString() ?? "")];
+    acceptanceMembers.ShouldBe(Enum.GetNames<EntraTenantAcceptanceMode>());
     return Task.CompletedTask;
   }
 
@@ -953,6 +963,9 @@ public partial class CatalogAgent_Should
     settingsRecord.GetProperty("passkeyPromptMode").GetString()
       .ShouldBe(scope.Store.GetState<SiteSettingsState>().PasskeyPromptMode.ToString());
     settingsRecord.TryGetProperty("entraSignInEnabled", out _).ShouldBeTrue();
+    settingsRecord.GetProperty("entraTenantAcceptanceMode").GetString()
+      .ShouldBe(scope.Store.GetState<SiteSettingsState>().EntraTenantAcceptanceMode.ToString());
+    settingsRecord.TryGetProperty("entraAcceptedTenantIds", out _).ShouldBeTrue();
     return Task.CompletedTask;
   }
 

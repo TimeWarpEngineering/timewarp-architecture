@@ -104,11 +104,16 @@ public class Round_Trip
 
     SiteSettings? a = await store.GetAsync();
     SiteSettings? b = await store.GetAsync();
+    Guid accepted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
     a!.ReplacePolicy(false, false, PasskeyPromptMode.Required);
+    a.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [accepted]);
     await store.UpdateAsync(a);
     SiteSettings? after = await store.GetAsync();
     after!.Version.ShouldBe(EntityVersion.Next(0));
     after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+    after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
+    after.EntraAcceptedTenantIds.ShouldBe([accepted]);
+    after.AcceptsEntraTenant(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")).ShouldBeTrue();
 
     b!.ReplacePolicy(true, true, PasskeyPromptMode.Soft);
     await Should.ThrowAsync<ConcurrencyConflictException>(() => store.UpdateAsync(b));

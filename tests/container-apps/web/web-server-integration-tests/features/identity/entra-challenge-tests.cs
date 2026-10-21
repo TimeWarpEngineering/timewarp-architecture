@@ -10,6 +10,8 @@
 // this host. Link of a foreign active handle merges; already-on-this-account is 409.
 // CredentialUsageRecorder is registered as the singleton the real host's InMemoryIdentityStoresModule
 // provides; sync-hit and link assert the last-used stamp end-to-end (task 252).
+// The settings row is Restricted and lists TrustedTenantId. options.TenantId is only the OIDC
+// authority. One case switches the row to Any and expects UntrustedTenantId to reach choose.
 #endregion
 
 namespace EntraChallenge_;
@@ -162,7 +164,8 @@ public class Challenge_Given_
       SiteSettings.Create(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
-        passkeyPromptMode: PasskeyPromptMode.Soft));
+        passkeyPromptMode: PasskeyPromptMode.Soft,
+        entraAcceptedTenantIds: [TrustedTenantId]));
   }
 
   public static async Task CleanUpOnce()
@@ -189,6 +192,35 @@ public class Challenge_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     SharedProblemDetails problem = await ReadProblemAsync(response);
     problem.Title.ShouldBe("Untrusted tenant");
+  }
+
+  public static async Task Bootstrap_Any_Mode_Untrusted_Tenant_Should_Redirect_To_Choose()
+  {
+    App.ShouldNotBeNull();
+    Store.ShouldNotBeNull();
+    ISiteSettingsStore siteSettingsStore = App.Services.GetRequiredService<ISiteSettingsStore>();
+    SiteSettings? current = await siteSettingsStore.GetAsync();
+    current.ShouldNotBeNull();
+    EntraTenantAcceptanceMode previousMode = current!.EntraTenantAcceptanceMode;
+    IReadOnlyList<Guid> previousTenants = current.EntraAcceptedTenantIds;
+    current.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, previousTenants);
+    await siteSettingsStore.UpdateAsync(current);
+    try
+    {
+      int principalCount = (await Store.ListPrincipalsAsync()).Count;
+      HttpResponseMessage response = await SendChallengeAsync("bootstrap", UntrustedTenantId, Guid.NewGuid());
+      response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+      response.Headers.Location.ShouldNotBeNull();
+      response.Headers.Location!.ToString().ShouldStartWith(EntraChoiceCookie.ChoosePath);
+      (await Store.ListPrincipalsAsync()).Count.ShouldBe(principalCount);
+    }
+    finally
+    {
+      SiteSettings? restore = await siteSettingsStore.GetAsync();
+      restore.ShouldNotBeNull();
+      restore!.ReplaceEntraTenantAcceptance(previousMode, previousTenants);
+      await siteSettingsStore.UpdateAsync(restore);
+    }
   }
 
   public static async Task Link_Untrusted_Tenant_Should_403()

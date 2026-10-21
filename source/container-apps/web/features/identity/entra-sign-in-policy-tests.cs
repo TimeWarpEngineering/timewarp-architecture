@@ -2,7 +2,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Options
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
@@ -10,7 +9,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/identity/entra-sign-in-policy-tests.cs
 
 #region Purpose
-// Jaribu runfile: disabled / bootstrap disabled / untrusted tenant / allowed / organizations.
+// Jaribu runfile: availability toggle, restricted list refuses an unlisted tid, any-tenant allows a different tid.
 #endregion
 
 //-:cnd:noEmit
@@ -24,7 +23,6 @@ namespace TimeWarp.Architecture.Features.Identity.EntraSignInPolicyTests
 
   using System;
   using System.Threading.Tasks;
-  using Microsoft.Extensions.Options;
   using Shouldly;
   using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Identity;
@@ -68,13 +66,38 @@ namespace TimeWarp.Architecture.Features.Identity.EntraSignInPolicyTests
       decision.Problem!.Title.ShouldBe("Untrusted tenant");
     }
 
-    public static async Task Organizations_TenantId_Should_Refuse_Bootstrap()
+    public static async Task Empty_Restricted_List_Should_Refuse()
     {
       SiteSettingsEntraSignInPolicy policy = await PolicyAsync(
         enabled: true,
         allowBootstrap: true,
-        configuredTenantId: "organizations");
+        EntraTenantAcceptanceMode.Restricted,
+        []);
       EntraSignInDecision decision = await policy.EvaluateAsync(EntraSignInMode.BootstrapCreate, Trusted);
+      decision.Allowed.ShouldBeFalse();
+      decision.Problem!.Title.ShouldBe("Untrusted tenant");
+    }
+
+    public static async Task Any_Tenant_Should_Allow_A_Different_Tid()
+    {
+      SiteSettingsEntraSignInPolicy policy = await PolicyAsync(
+        enabled: true,
+        allowBootstrap: true,
+        EntraTenantAcceptanceMode.Any,
+        [Trusted]);
+      EntraSignInDecision decision = await policy.EvaluateAsync(EntraSignInMode.Link, Untrusted);
+      decision.Allowed.ShouldBeTrue();
+      decision.Problem.ShouldBeNull();
+    }
+
+    public static async Task Empty_Guid_Should_Refuse_Even_When_Any()
+    {
+      SiteSettingsEntraSignInPolicy policy = await PolicyAsync(
+        enabled: true,
+        allowBootstrap: true,
+        EntraTenantAcceptanceMode.Any,
+        []);
+      EntraSignInDecision decision = await policy.EvaluateAsync(EntraSignInMode.SyncHit, Guid.Empty);
       decision.Allowed.ShouldBeFalse();
       decision.Problem!.Title.ShouldBe("Untrusted tenant");
     }
@@ -109,25 +132,29 @@ namespace TimeWarp.Architecture.Features.Identity.EntraSignInPolicyTests
       decision.Allowed.ShouldBeTrue();
     }
 
-    private static async Task<SiteSettingsEntraSignInPolicy> PolicyAsync(
+    private static Task<SiteSettingsEntraSignInPolicy> PolicyAsync(
       bool enabled,
       bool allowBootstrap,
-      Guid configuredTenant)
+      Guid acceptedTenant)
     {
-      return await PolicyAsync(enabled, allowBootstrap, configuredTenant.ToString("D"));
+      return PolicyAsync(enabled, allowBootstrap, EntraTenantAcceptanceMode.Restricted, [acceptedTenant]);
     }
 
     private static async Task<SiteSettingsEntraSignInPolicy> PolicyAsync(
       bool enabled,
       bool allowBootstrap,
-      string configuredTenantId)
+      EntraTenantAcceptanceMode mode,
+      Guid[] acceptedTenantIds)
     {
       InMemorySiteSettingsStore store = new();
       await store.AddAsync(
-        SiteSettings.Create(enabled, allowBootstrap, PasskeyPromptMode.Soft));
-      IOptions<EntraAuthenticationOptions> options = Options.Create(
-        new EntraAuthenticationOptions { TenantId = configuredTenantId });
-      return new SiteSettingsEntraSignInPolicy(store, options);
+        SiteSettings.Create(
+          enabled,
+          allowBootstrap,
+          PasskeyPromptMode.Soft,
+          entraTenantAcceptanceMode: mode,
+          entraAcceptedTenantIds: acceptedTenantIds));
+      return new SiteSettingsEntraSignInPolicy(store);
     }
   }
 }

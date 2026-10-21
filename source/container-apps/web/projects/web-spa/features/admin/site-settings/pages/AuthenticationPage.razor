@@ -4,10 +4,12 @@
 @using TimeWarp.Identity
 
 @*
-  Purpose: Admin authentication policy editor — Entra offer/bootstrap, passkey prompt, concurrency version.
+  Purpose: Admin authentication policy editor — Entra offer/bootstrap, accepted tenants, passkey prompt, concurrency version.
 
   Design: web-api-contracts — EditForm binds ISiteSettingsDetails; UpdateSiteSettings.Command
   is the model (no view model). Version is the concurrency token, not a typed field.
+  Accepted tenant ids are a page-local textarea parsed into Command.EntraAcceptedTenantIds
+  on submit (one id per line). Any-tenant mode keeps the list and disables the box.
   Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
   SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Enabled/AllowBootstrap
   drift banner stay outside the form (read-only / host config, not bindable policy).
@@ -37,6 +39,8 @@
   private ISiteSettingsDetails Details => Command;
 
   private bool DraftLoaded;
+  private string AcceptedTenantsDraft { get; set; } = "";
+  private string? AcceptedTenantsError { get; set; }
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -46,10 +50,21 @@
     PasskeyPromptMode.Required
   ];
 
+  private static readonly EntraTenantAcceptanceMode[] TenantAcceptanceModes =
+  [
+    EntraTenantAcceptanceMode.Restricted,
+    EntraTenantAcceptanceMode.Any
+  ];
+
   private static string PasskeyPromptLabel(PasskeyPromptMode mode) =>
     mode == PasskeyPromptMode.Soft
       ? "Soft (dismissible banner)"
       : "Required (block app until a passkey is added)";
+
+  private static string TenantAcceptanceLabel(EntraTenantAcceptanceMode mode) =>
+    mode == EntraTenantAcceptanceMode.Any
+      ? "Any Entra tenant"
+      : "Only these tenant ids";
 
   protected override async Task OnInitializedAsync()
   {
@@ -83,12 +98,28 @@
     Command.EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
     Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
     Command.AssistantName = SiteSettingsState.AssistantName;
+    Command.EntraTenantAcceptanceMode = SiteSettingsState.EntraTenantAcceptanceMode;
+    Command.EntraAcceptedTenantIds = [.. SiteSettingsState.EntraAcceptedTenantIds];
+    AcceptedTenantsDraft = string.Join('\n', Command.EntraAcceptedTenantIds.Select(id => id.ToString("D")));
+    AcceptedTenantsError = null;
     Command.Version = SiteSettingsState.Version;
     DraftLoaded = true;
   }
 
   private async Task HandleValidSubmit()
   {
+    if (Command.EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Restricted)
+    {
+      if (!EntraTenantIds.TryParse(AcceptedTenantsDraft, out IReadOnlyList<Guid> tenantIds, out string? error))
+      {
+        AcceptedTenantsError = error;
+        return;
+      }
+
+      Command.EntraAcceptedTenantIds = [.. tenantIds];
+    }
+
+    AcceptedTenantsError = null;
     await NoSubSiteSettingsState.UpdateSiteSettings(Command);
     if (!SiteSettingsState.SaveFailed)
     {
@@ -129,6 +160,33 @@
             <FluentCheckbox @bind-Value=Details.EntraAllowBootstrap
                             AriaLabel="Allow first-time Microsoft 365 bootstrap"
                             Disabled=@IsBusy />
+          </FormField>
+          <FormField Label="Accepted tenants">
+            <FluentSelect TOption="EntraTenantAcceptanceMode" TValue="EntraTenantAcceptanceMode"
+                          Items="@TenantAcceptanceModes"
+                          OptionText="@TenantAcceptanceLabel"
+                          @bind-Value="Details.EntraTenantAcceptanceMode"
+                          AriaLabel="Accepted tenants"
+                          Width="100%"
+                          Disabled=@IsBusy
+                          data-qa="TenantAcceptanceMode" />
+            <ValidationMessage For="@(() => Details.EntraTenantAcceptanceMode)" />
+          </FormField>
+          <FormField Label="Tenant ids">
+            <TextArea @bind-Value="AcceptedTenantsDraft"
+                      AriaLabel="Accepted tenant ids"
+                      Placeholder="One tenant id per line"
+                      Disabled="@(IsBusy || Details.EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Any)"
+                      MinHeight="6rem"
+                      data-qa="AcceptedTenantIds" />
+            @if (AcceptedTenantsError is not null)
+            {
+              <span data-qa="AcceptedTenantsError">@AcceptedTenantsError</span>
+            }
+            <p data-qa="TenantAcceptanceHelp">
+              Restricted mode refuses any tenant that is not listed. Any Entra tenant accepts every non-empty tenant id that completes sign-in.
+              Personal Microsoft accounts are included only when the app registration allows them and Authentication:Entra:TenantId is common (or consumers).
+            </p>
           </FormField>
           <FormField Label="Passkey prompt">
             <FluentSelect TOption="PasskeyPromptMode" TValue="PasskeyPromptMode"

@@ -10,7 +10,10 @@
 // redirect-to-IdP event. MapInboundClaims=false so tid/oid/iss keep JWT names.
 // IssuerValidator is always EntraIssuerValidator (organizations/common/consumers metadata issuer is
 // a {tenantid} placeholder; single-tenant GUID authorities use the same tid pin). ValidateIssuer
-// stays true — do not disable it.
+// stays true — do not disable it. TenantId selects that authority only. Which tids may sign in
+// is SiteSettings (restricted list or any tenant), evaluated after this issuer pin. A GUID
+// authority still completes OIDC only for that tenant; organizations or common is required
+// before another tenant's ticket can reach the policy.
 // YARP and ACA terminate TLS and forward to Web.Server over http without UseForwardedHeaders
 // (104-031, kept by 070-008: X-Forwarded-Host is read only for passkey RP-ID selection, never to
 // rewrite scheme/host). OpenIdConnectHandler would then emit an http redirect_uri naming the

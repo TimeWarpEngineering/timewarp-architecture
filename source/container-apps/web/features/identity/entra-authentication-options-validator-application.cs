@@ -7,9 +7,8 @@
 // require Instance, TenantId, ClientId, and CallbackPath so AddOpenIdConnect is not registered
 // with a blank authority. ClientSecret is not required here (user secrets / Key Vault).
 // Task 227 removed TrustedTenants; if that key is still present in configuration the validator
-// fails with a message that names TenantId as the pin. organizations / common TenantId is still
-// a valid *string* at bind time (template placeholder when Enabled is false); ticket policy
-// refuses those authorities with Untrusted tenant.
+// fails. organizations / common / a tenant GUID are all valid TenantId strings: they select the
+// OIDC authority. Ticket acceptance is SiteSettings, not this value.
 // PublicOrigin is optional (empty = request-derived redirect_uri). When set it must be an absolute
 // https URI, or http only for a loopback host (TimeWarp.Identity's LoopbackHost, shared with the
 // WebAuthn origin fallback) — never a non-https public host, and never a path/query
@@ -25,7 +24,7 @@ using Microsoft.Extensions.Options;
 public sealed class EntraAuthenticationOptionsValidator : AbstractValidator<EntraAuthenticationOptions>
 {
   public const string TrustedTenantsRemovedMessage =
-    "TrustedTenants was removed by task 227; trust is TenantId";
+    "TrustedTenants was removed by task 227; tenant acceptance is the admin policy on /Admin/Authentication";
 
   public EntraAuthenticationOptionsValidator()
     : this(configuration: null)

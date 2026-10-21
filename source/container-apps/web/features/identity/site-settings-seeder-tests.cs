@@ -2,8 +2,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Logging.Abstractions
-#:package Microsoft.Extensions.Options
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
@@ -51,6 +49,44 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       seeded.EntraSignInEnabled.ShouldBeTrue();
       seeded.EntraAllowBootstrap.ShouldBeTrue();
       seeded.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
+      seeded.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
+      seeded.EntraAcceptedTenantIds.ShouldBe([Tenant]);
+      seeded.EntraTenantAcceptanceInitialized.ShouldBeTrue();
+    }
+
+    public static async Task Organizations_Authority_Should_Seed_An_Empty_Restricted_List()
+    {
+      InMemorySiteSettingsStore store = new();
+      SiteSettingsSeeder seeder = Create(
+        store,
+        enabled: true,
+        allowBootstrap: true,
+        tenant: Guid.Empty,
+        tenantId: "organizations");
+      SiteSettings seeded = await seeder.GetOrSeedAsync();
+      seeded.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
+      seeded.EntraAcceptedTenantIds.ShouldBeEmpty();
+      seeded.EntraTenantAcceptanceInitialized.ShouldBeTrue();
+    }
+
+    public static async Task Uninitialized_Row_Should_Copy_The_Guid_Tenant_And_Keep_The_Prompt()
+    {
+      InMemorySiteSettingsStore store = new();
+      await store.AddAsync(
+        SiteSettings.Create(
+          entraSignInEnabled: false,
+          entraAllowBootstrap: false,
+          passkeyPromptMode: PasskeyPromptMode.Required,
+          assistantName: "Zawadi",
+          entraTenantAcceptanceInitialized: false));
+      SiteSettingsSeeder seeder = Create(store, enabled: true, allowBootstrap: true, Tenant);
+      SiteSettings after = await seeder.GetOrSeedAsync();
+      after.EntraTenantAcceptanceInitialized.ShouldBeTrue();
+      after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
+      after.EntraAcceptedTenantIds.ShouldBe([Tenant]);
+      after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+      after.AssistantName.ShouldBe("Zawadi");
+      after.EntraSignInEnabled.ShouldBeFalse();
     }
 
     public static async Task Empty_Get_Without_Insert_Should_Still_Allow_Config_Seed()
@@ -106,7 +142,9 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       InMemorySiteSettingsStore store = new();
       SiteSettingsSeeder first = Create(store, enabled: true, allowBootstrap: true, Tenant);
       SiteSettings seeded = await first.GetOrSeedAsync();
+      Guid kept = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
       seeded.ReplacePolicy(false, false, PasskeyPromptMode.Required);
+      seeded.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [kept]);
       await store.UpdateAsync(seeded);
 
       CapturingLogger logger = new();
@@ -122,6 +160,8 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       after.EntraSignInEnabled.ShouldBeTrue();
       after.EntraAllowBootstrap.ShouldBeTrue();
       after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
+      after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
+      after.EntraAcceptedTenantIds.ShouldBe([kept]);
       logger.Messages.ShouldContain(message =>
         message.Contains("Overwrote EntraSignInEnabled", StringComparison.Ordinal));
     }
@@ -157,14 +197,15 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       bool allowBootstrap,
       Guid tenant,
       bool reseedSiteSettings = false,
-      ILogger<SiteSettingsSeeder>? logger = null)
+      ILogger<SiteSettingsSeeder>? logger = null,
+      string? tenantId = null)
     {
       IOptions<EntraAuthenticationOptions> options = Options.Create(
         new EntraAuthenticationOptions
         {
           Enabled = enabled,
           AllowBootstrap = allowBootstrap,
-          TenantId = tenant.ToString("D"),
+          TenantId = tenantId ?? tenant.ToString("D"),
           ReseedSiteSettings = reseedSiteSettings
         });
       return new SiteSettingsSeeder(

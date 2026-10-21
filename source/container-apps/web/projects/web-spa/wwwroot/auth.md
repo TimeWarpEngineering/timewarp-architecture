@@ -116,10 +116,38 @@ client id, secret, authority tenant, `PublicOrigin`, and `Enabled` as the
 **Enabled for users** is runtime admin policy on the site-settings singleton
 (`/Admin/Authentication`). First boot copies `Enabled` and `AllowBootstrap`
 into settings once; after that the admin page is the source of truth for those
-two. Trust is `Authentication:Entra:TenantId`: the token `tid` must GUID-equal
-that tenant. `organizations` / `common` authority is not supported for bootstrap
-or link (403 `Untrusted tenant`). Disabling sign-in at runtime refuses **new**
-challenges (403 `Sign-in disabled`); existing Entra credentials and sessions stay.
+two. Disabling sign-in at runtime refuses **new** challenges (403 `Sign-in disabled`);
+existing Entra credentials and sessions stay.
+
+**Tenant acceptance** is the same admin page, not `Authentication:Entra:TenantId`.
+That setting is only the OpenID Connect authority (`{instance}/{tenant}/v2.0`):
+a home-tenant GUID, `organizations` (work and school), or `common` (work, school,
+and personal Microsoft accounts). The token issuer must still match the token's
+own `tid`.
+
+| Mode | Token `tid` |
+|------|-------------|
+| Restricted | Must be in the accepted-tenant list. An empty list refuses every tenant (403 `Untrusted tenant`). One id is the single-tenant case. |
+| Any | Any non-empty GUID. |
+
+A GUID authority completes OpenID Connect only for that tenant. Accepting another
+tenant, or any tenant, needs authority `organizations` or `common` and an app
+registration whose supported account types are multi-tenant. `dev entra setup`
+creates `AzureADMyOrg` (this tenant only). Change supported account types to
+`AzureADMultipleOrgs` or `AzureADandPersonalMicrosoftAccount` before other
+tenants can finish sign-in.
+
+Any tenant means any account that can finish OpenID Connect against this app
+registration can sign up or link, still subject to the bootstrap and link
+toggles. There is no tenant blocklist. Personal Microsoft accounts use tenant
+`9188040d-6c67-4c5b-b112-36a304b66dad`. They reach the app only when the
+authority is `common` or `consumers`. `organizations` never issues those tokens.
+Restricted mode accepts that id only when an administrator lists it.
+
+First boot copies a GUID `TenantId` into the restricted list. `organizations`
+and `common` seed an empty list until an administrator chooses a list or Any.
+The first human passkey registration becomes Administrator
+(`TryClaimFirstAdministratorAsync`) and can open `/Admin/Authentication`.
 
 `Authentication:Entra:Enabled=true` with settings `EntraSignInEnabled=false` (or
 the reverse) logs a warning at boot so the two are never silently confused.

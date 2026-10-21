@@ -25,6 +25,9 @@ partial class SiteSettingsState : IAgentPageFacts
       ["entraAllowBootstrap"] = EntraAllowBootstrap,
       ["passkeyPromptMode"] = PasskeyPromptMode.ToString(),
       ["assistantName"] = AssistantName,
+      ["entraTenantAcceptanceMode"] = EntraTenantAcceptanceMode.ToString(),
+      ["entraAcceptedTenantIds"] = new JsonArray(
+        [.. EntraAcceptedTenantIds.Select(static id => JsonValue.Create(id.ToString("D")))]),
       ["version"] = Version,
     };
   }
