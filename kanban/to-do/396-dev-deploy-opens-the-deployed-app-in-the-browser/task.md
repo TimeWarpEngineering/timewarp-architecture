@@ -85,8 +85,7 @@ Ran here on 2026-10-22 after the M3 fix pass: FollowUp 3/3, Browser_Given 7/7, f
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Blocked — open M3
-- Round 3: Done — disposition clean (0 open)
-
+- Round 3: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, "so dev open isn't included I guess" during the aca-neon test after 393.
