@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1658
-- Effort: 3
+- Lines changed: 526
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -17,6 +17,13 @@
 **Effort:** 3
 **Reviewer roster:** general (review oracle, Opus 5.5) plus one general sub-reviewer (Sonnet). Findings merged and re-verified by the oracle.
 **Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`), session id not exposed; sub-reviewer agent a270e187bf5cb516b
+
+## Round 2 scope
+
+**Date:** 2026-10-21
+**Diff scope:** fix delta `0bf297e17..c640fb928` (round-1 base to the fix commit), kanban paths excluded
+**Effort:** 2 (budget above)
+**Reviewer roster:** general (review oracle, Opus 5.5, headless `ganda task work`), session id not exposed
 
 ## Ground rules
 

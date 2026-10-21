@@ -104,6 +104,7 @@ Review round 1 is fixed when:
 - Review oracle round 1 (2026-10-21): reviewer claude (claude-opus-5-5, headless), effort 3, roster general, plus a Sonnet general sub-reviewer (agent a270e187bf5cb516b). 0 bugs, 5 suggestions, 3 nits, all open. A fix pass was requested for M1–M8 (`review/round-1/merged.md`).
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T07:25:52Z
 - 2026-10-21: review-round-1 fix pass. The CPU culture swap is gone because `BicepSyntax.Value` already formats `0.25` invariantly. Both retry paths call `PostgresRetryPolicy.Configure`; `RetryDelaySeconds` is the maximum back-off. aca-neon migrate checks only the direct string and does not probe `az login`. CI uploads the aca-neon Bicep. `Server` is a host alias; a URI and `Channel Binding=Disabled` are refused. Secret tests pass real values and reject them on argv and the plan. The `unused` Entra placeholder is documented for every publish target. No new live deploy.
+- Review oracle round 2 (2026-10-21): reviewer claude (claude-opus-5-5, headless), effort 2, roster general, session id not exposed. Scope was the fix delta `0bf297e17..c640fb928`. M1–M8 are fixed and nothing new was found. Disposition is clean.
 
 ## Results
 
@@ -132,7 +133,13 @@ Expect: those suites and the audit pass. aca-neon Bicep has `minReplicas: 0`, cp
 
 ### Review
 
-Round 1 (effort 3, general roster): 0 bug, 5 suggestion, 3 nit. The fix pass is on this branch. Round 2 has not dispositioned the ledger. Artifacts: `review/review-framework.md` and `review/round-1/general.md`, plus `review/round-1/merged.md`, which stays the live ledger.
+Disposition: **clean** after 2 rounds. Final counts: bug 0; suggestion 5 fixed; nit 3 fixed; 0 open; 0 wontfix.
+
+- Round 1 (effort 3, general roster plus a Sonnet general sub-reviewer) raised 0 bugs, 5 suggestions, and 3 nits (M1–M8).
+- Fix commit `c640fb928` addressed all eight.
+- Round 2 (effort 2, general) re-verified M1–M8 on the fix delta `0bf297e17..c640fb928` and found nothing new. It re-ran `dev-cli-tests` (273 passed) and `Resolve_Given_` (4 passed). It confirmed by decompile that Azure.Provisioning formats the CPU double with the invariant culture.
+
+Artifacts: `review/review-framework.md`, `review/round-1/` and `review/round-2/` (`general.md`, `merged.md`; round 2's `merged.md` is the final ledger), and `review/disposition.md`.
 
 ### Registry cost (Steve, 2026-10-21)
 
@@ -140,4 +147,5 @@ Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or tak
 
 ## Review
 
-- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8. Fix pass landed 2026-10-21; round 2 has not dispositioned them.
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8. Fix pass landed 2026-10-21.
+- Round 2: Done. M1–M8 fixed, no new findings. Disposition is clean (`review/disposition.md`).
