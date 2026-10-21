@@ -275,7 +275,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       int exit = await SmokeAtAsync(url, ct);
       if (exit == 0)
       {
-        await AnnounceAsync(preflight.Target, url, temporaryPortForward: false, noBrowser, ct);
+        await AnnounceAsync(preflight.Target, url, noBrowser, ct);
       }
 
       return exit;
@@ -319,7 +319,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       int exit = await SmokeAtAsync(url, ct);
       if (exit == 0)
       {
-        await AnnounceAsync(preflight.Target, url, temporaryPortForward: false, noBrowser, ct);
+        await AnnounceAsync(preflight.Target, url, noBrowser, ct);
       }
 
       return exit;
@@ -367,7 +367,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         int direct = await SmokeAtAsync(plan.Url, ct);
         if (direct == 0)
         {
-          await AnnounceAsync(preflight.Target, plan.Url, temporaryPortForward: false, noBrowser, ct);
+          await AnnounceAsync(preflight.Target, plan.Url, noBrowser, ct);
         }
 
         return direct;
@@ -422,16 +422,15 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 
     /// <summary>
     /// Prints the smoke summary and, when <see cref="SmokeFollowUp.OpenBrowser"/> is set, opens the URL
-    /// through <see cref="DeployBrowser"/>. A temporary kubernetes forward never sets that flag.
+    /// through <see cref="DeployBrowser"/>. A temporary kubernetes forward does not call this method.
     /// </summary>
     private async Task AnnounceAsync(
       DeployTarget target,
       string url,
-      bool temporaryPortForward,
       bool noBrowser,
       CancellationToken ct)
     {
-      SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(target, url, temporaryPortForward, noBrowser);
+      SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(target, url, noBrowser);
       Terminal.WriteLine(followUp.Summary.Green());
       if (followUp.OpenBrowser)
       {

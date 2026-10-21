@@ -185,18 +185,17 @@ public class FollowUp_Given_
   {
     // --yes is not an input. The same flags open whether or not the operator confirmed.
     SmokeFollowUp compose = DeployPipeline.FollowUpAfterSmoke(
-      AspireDeploy.Compose, "http://localhost:36371", temporaryPortForward: false, noBrowser: false);
+      AspireDeploy.Compose, "http://localhost:36371", noBrowser: false);
     compose.OpenBrowser.ShouldBeTrue();
     compose.Summary.ShouldContain("http://localhost:36371");
-    compose.Hint.ShouldBeNull();
 
     SmokeFollowUp external = DeployPipeline.FollowUpAfterSmoke(
-      AspireDeploy.Kubernetes, "http://203.0.113.10", temporaryPortForward: false, noBrowser: false);
+      AspireDeploy.Kubernetes, "http://203.0.113.10", noBrowser: false);
     external.OpenBrowser.ShouldBeTrue();
     external.Summary.ShouldContain("http://203.0.113.10");
 
     SmokeFollowUp containerApps = DeployPipeline.FollowUpAfterSmoke(
-      AspireDeploy.ContainerApps, "https://ingress.example", temporaryPortForward: false, noBrowser: false);
+      AspireDeploy.ContainerApps, "https://ingress.example", noBrowser: false);
     containerApps.OpenBrowser.ShouldBeTrue();
     return Task.CompletedTask;
   }
@@ -204,10 +203,9 @@ public class FollowUp_Given_
   public static Task NoBrowser_Should_PrintTheUrlAndNotOpen()
   {
     SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(
-      AspireDeploy.ContainerAppsNeon, "https://ingress.example", temporaryPortForward: false, noBrowser: true);
+      AspireDeploy.ContainerAppsNeon, "https://ingress.example", noBrowser: true);
     followUp.OpenBrowser.ShouldBeFalse();
     followUp.Summary.ShouldContain("https://ingress.example");
-    followUp.Hint.ShouldBeNull();
 
     string prompt = DeployPipeline.ConfirmPrompt(hasDatabase: true, noBrowser: true);
     prompt.ShouldContain("print the URL");
@@ -218,13 +216,10 @@ public class FollowUp_Given_
 
   public static Task KubernetesWithoutAnExternalAddress_Should_HintDevOpenAndNotOpen()
   {
-    SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(
-      AspireDeploy.Kubernetes, "http://localhost:36371", temporaryPortForward: true, noBrowser: false);
-    followUp.OpenBrowser.ShouldBeFalse();
-    string hint = followUp.Hint.ShouldNotBeNull();
-    hint.ShouldBe(DeployPipeline.TemporaryForwardStopped(AspireDeploy.Kubernetes));
-    hint.ShouldContain("dev open --target kubernetes");
-    followUp.Summary.ShouldContain("http://localhost:36371");
+    // The command prints this from finally. FollowUpAfterSmoke is not on this path.
+    string stopped = DeployPipeline.TemporaryForwardStopped(AspireDeploy.Kubernetes);
+    stopped.ShouldContain("dev open --target kubernetes");
+    stopped.ShouldContain("temporary port-forward");
     return Task.CompletedTask;
   }
 }
