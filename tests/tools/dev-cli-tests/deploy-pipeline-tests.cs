@@ -1,5 +1,6 @@
 #region Purpose
-// Locks the one-command deploy order and the stop-on-failure text without running Aspire.
+// Locks the one-command deploy order by running DeployPipeline.RunAsync with fake steps,
+// and the stop-on-failure text, without Aspire.
 #endregion
 
 namespace DeployPipeline_;
@@ -44,18 +45,11 @@ public class Stop_Given_
 
   public static Task DeployFailure_Should_NameDeployAfterPublishFinished()
   {
-    string? message = DeployPipeline.StopMessage(AspireDeploy.ContainerAppsNeon,
-    [
-      (DeployPipeline.Publish, 0),
-      (DeployPipeline.Deploy, 3),
-      (DeployPipeline.Migrate, 9),
-    ]);
-    message.ShouldNotBeNull();
+    string message = DeployPipeline.FailureMessage(DeployPipeline.Deploy, AspireDeploy.ContainerAppsNeon, 3);
     message.ShouldContain("exit 3");
     message.ShouldContain("Publish already finished");
     message.ShouldContain("dev deploy --target aca-neon");
     message.ShouldNotContain("dev deploy migrate");
-    message.ShouldNotContain("exit 9");
     return Task.CompletedTask;
   }
 
@@ -78,16 +72,53 @@ public class Stop_Given_
     message.ShouldContain("dev deploy --target aca");
     return Task.CompletedTask;
   }
+}
 
-  public static Task Success_Should_NotStop()
+public class Run_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Run_Given_>();
+
+  public static async Task Database_Should_RunEveryStepInOrder()
   {
-    DeployPipeline.StopMessage(AspireDeploy.Compose,
-    [
-      (DeployPipeline.Publish, 0),
-      (DeployPipeline.Deploy, 0),
-      (DeployPipeline.Smoke, 0),
-    ]).ShouldBeNull();
-    return Task.CompletedTask;
+    List<string> ran = [];
+    int exit = await DeployPipeline.RunAsync(true, (step, _) =>
+    {
+      ran.Add(step);
+      return Task.FromResult(0);
+    }, CancellationToken.None);
+
+    exit.ShouldBe(0);
+    ran.ShouldBe(["publish", "deploy", "migrate", "smoke"]);
+    DeployPipeline.Steps(true).ShouldBe(ran);
+  }
+
+  public static async Task NoDatabase_Should_SkipMigrate()
+  {
+    List<string> ran = [];
+    int exit = await DeployPipeline.RunAsync(false, (step, _) =>
+    {
+      ran.Add(step);
+      return Task.FromResult(0);
+    }, CancellationToken.None);
+
+    exit.ShouldBe(0);
+    ran.ShouldBe(["publish", "deploy", "smoke"]);
+    DeployPipeline.Steps(false).ShouldBe(ran);
+  }
+
+  public static async Task FirstFailure_Should_StopAndSkipTheRest()
+  {
+    List<string> ran = [];
+    int exit = await DeployPipeline.RunAsync(true, (step, _) =>
+    {
+      ran.Add(step);
+      int code = step == DeployPipeline.Deploy ? 3 : step == DeployPipeline.Publish ? 0 : 9;
+      return Task.FromResult(code);
+    }, CancellationToken.None);
+
+    exit.ShouldBe(3);
+    ran.ShouldBe(["publish", "deploy"]);
   }
 }
 

@@ -119,7 +119,8 @@ Put the Container Apps environment and the Neon project in the same region, near
 host looks like `ep-….ap-southeast-1.aws.neon.tech`; the AWS region is the label before `aws`. The
 nearby Azure region for `ap-southeast-1` is `southeastasia`. Set that as `Azure:Location` (or
 `Azure__Location`) before deploy. `dev deploy --target aca-neon` warns when the pooled host's region
-is far from `Azure:Location` and names the nearby Azure region. It does not print the connection
+is far from `Azure:Location` and names the nearby Azure region. A nearby Azure region for that AWS
+region (for example `eastus2` when Neon is in `us-east-1`) stays quiet. It does not print the connection
 string, and it does not refuse.
 
 ## Deploy

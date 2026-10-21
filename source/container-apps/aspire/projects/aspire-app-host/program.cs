@@ -127,8 +127,9 @@
 // safe — full argument in HttpRequestHostAccessor's Design region. Applied to Web.Server routes
 // only; the api/grpc backends do no host-based selection and keep YARP's defaults.
 // Task 393: a deployed target's public host is on WebAuthnOptions:AllowedRpIds. Azure Container
-// Apps uses ingress.<ContainerAppDomain> (the environment output, not the ingress endpoint, so
-// web-server and ingress do not cycle). Compose and Kubernetes serve localhost, already allowed.
+// Apps uses ingress.<environment default domain> (GetOutput of
+// AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN, not the ingress endpoint, so web-server and
+// ingress do not cycle). Compose and Kubernetes serve localhost, already allowed.
 // A custom domain is the optional passkey-rp-host parameter, emitted only when it is set and is
 // not localhost. dev deploy copies that user secret into the aspire environment.
 // Guarded by aspire-tests/ingress-smoke-tests.cs (tasks 117, 070-008, 305): request-level smokes
@@ -778,19 +779,14 @@ internal class Program
 
       if (containerApps is not null)
       {
-        // ContainerAppDomain's getter is internal on Aspire.Hosting.Azure.AppContainers 13.6.2.
-        // NameOutputReference is the only public output. Reading the domain by name keeps the
-        // expression ingress.<domain> without a reference to the ingress endpoint (that cycles).
-        System.Reflection.PropertyInfo? domainProperty = containerApps.Resource.GetType().GetProperty(
-          "ContainerAppDomain",
-          System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (domainProperty?.GetValue(containerApps.Resource) is global::Aspire.Hosting.Azure.BicepOutputReference containerAppDomain)
-        {
-          string allowedRpIdIndex = extraPasskeyHost ? "1" : "0";
-          webServer = webServer.WithEnvironment(
-            $"WebAuthnOptions__AllowedRpIds__{allowedRpIdIndex}",
-            ReferenceExpression.Create($"{YarpResourceName}.{containerAppDomain}"));
-        }
+        // Public output on Aspire.Hosting.Azure.AppContainers 13.6.2. ingress.<domain> does not
+        // reference the ingress endpoint (that would cycle web-server and ingress).
+        global::Aspire.Hosting.Azure.BicepOutputReference defaultDomain = containerApps.GetOutput(
+          "AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+        string allowedRpIdIndex = extraPasskeyHost ? "1" : "0";
+        webServer = webServer.WithEnvironment(
+          $"WebAuthnOptions__AllowedRpIds__{allowedRpIdIndex}",
+          ReferenceExpression.Create($"{YarpResourceName}.{defaultDomain}"));
       }
 
       yarp = yarp.WithReference(webServer);

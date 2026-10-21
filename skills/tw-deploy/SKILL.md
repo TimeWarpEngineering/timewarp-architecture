@@ -99,8 +99,9 @@ Set `Azure:Location` and `Azure:ResourceGroup` (AppHost user secrets, or `Azure_
 `Azure__ResourceGroup`) before an Azure deploy so Aspire does not prompt and smoke can read the
 ingress host. Put the app and the Neon project in the same region, near the users.
 `dev deploy --target aca-neon` warns when the pooled host's AWS region is far from `Azure:Location`
-and names a nearby Azure region (`ap-southeast-1` → `southeastasia`). The warning does not print
-the connection string and does not stop the deploy.
+and names a nearby Azure region (`ap-southeast-1` → `southeastasia`). A location in that AWS
+region's nearby set (for example `us-east-1` with `eastus` or `eastus2`) stays quiet. The warning
+does not print the connection string and does not stop the deploy.
 
 Smoke is `GET /web-server/alive` and `GET /api/identity/entra/offered`. It retries a cold start
 (a Neon wake-up or a scale-to-zero replica). It does not request `/api/health`. A target with no

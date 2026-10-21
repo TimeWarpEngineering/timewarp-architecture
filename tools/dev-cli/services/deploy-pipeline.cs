@@ -7,6 +7,8 @@
 // The order is publish, deploy, migrate, smoke. Migrate is omitted when the app has no
 // database (no platform/postgres/migrations folder). There is no per-step opt-out flag:
 // `dev publish`, `dev deploy migrate`, and `dev open` remain the one-step verbs.
+// The handler runs that list through RunAsync. Each step delegate returns an exit code.
+// The first non-zero code stops the run, and later steps are not called.
 // A failure names the verb that retries that step and does not imply a later step ran.
 // Smoke is the two anonymous paths the Neon guide documents. It retries transport failures
 // and HTTP 5xx inside a budget so a Neon wake-up or a scale-to-zero start can finish.
@@ -39,6 +41,28 @@ internal static class DeployPipeline
   internal static string[] Steps(bool hasDatabase) =>
     hasDatabase ? [Publish, Deploy, Migrate, Smoke] : [Publish, Deploy, Smoke];
 
+  /// <summary>
+  /// Runs <see cref="Steps"/> in order. <paramref name="runStep"/> returns that step's exit code.
+  /// The first non-zero code is returned and later steps are not called.
+  /// </summary>
+  internal static async Task<int> RunAsync(
+    bool hasDatabase,
+    Func<string, CancellationToken, Task<int>> runStep,
+    CancellationToken cancellationToken)
+  {
+    foreach (string step in Steps(hasDatabase))
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      int exitCode = await runStep(step, cancellationToken);
+      if (exitCode != 0)
+      {
+        return exitCode;
+      }
+    }
+
+    return 0;
+  }
+
   /// <summary>True when a smoke response should be tried again: no response, or an HTTP 5xx.</summary>
   internal static bool ShouldRetrySmoke(int? statusCode) => statusCode is null or >= 500;
 
@@ -62,20 +86,6 @@ internal static class DeployPipeline
     Smoke => $"dev deploy: smoke failed (exit {exitCode}). The deployment is up. Re-check {string.Join(" and ", SmokePaths)}, or re-run: dev deploy --target {target.Name}",
     _ => $"dev deploy: {step} failed (exit {exitCode}). Re-run: dev deploy --target {target.Name}",
   };
-
-  /// <summary>The failure message of the first non-zero step, or null when every step succeeded.</summary>
-  internal static string? StopMessage(DeployTarget target, IReadOnlyList<(string Step, int ExitCode)> results)
-  {
-    foreach ((string step, int exitCode) in results)
-    {
-      if (exitCode != 0)
-      {
-        return FailureMessage(step, target, exitCode);
-      }
-    }
-
-    return null;
-  }
 
   /// <summary>Heading printed before a step runs.</summary>
   internal static string StepBanner(string step, DeployTarget target) => $"dev deploy: {step} ({target.Name})";

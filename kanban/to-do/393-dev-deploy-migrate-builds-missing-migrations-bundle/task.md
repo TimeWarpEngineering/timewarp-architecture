@@ -28,7 +28,7 @@ verbs stay for operators who want one step.
 
 ## Goal (implementer restatement)
 
-`dev deploy --target <t>` is the path from a generated app to a live site. In order it publishes (so the migration files exist), deploys, migrates when that app has a database, smokes the ingress, and prints the URL. It stops at the first failure and names the verb that retries that step. A target with no database skips migrate and says so. Smoke requests only `/web-server/alive` and `/api/identity/entra/offered`, waits through a Neon or scale-to-zero cold start, and never calls `/api/health`. There is no per-step opt-out flag; the existing step verbs are how an operator runs one step. `dev deploy migrate` still works alone, and a missing bundle is published instead of refused. Secrets stay off the command line and out of the output. Passkeys work on the first deploy: Azure Container Apps (aca and aca-neon) put the public ingress host on `WebAuthnOptions:AllowedRpIds` from the environment domain, and any other public host is the `passkey-rp-host` parameter that deploy copies in. Compose and Kubernetes already allow `localhost`, which is the public host of those default paths. aca-neon preflight warns, and does not refuse or print the connection string, when the pooled host's AWS region is far from `Azure:Location`, and it names the nearby Azure region. The tw-deploy skill and the target references lead with the one command, move the step verbs to an operator section, document the passkey host (a custom domain is its own entry), and say to put the app and the Neon project in the same region, near the users. dev-cli tests lock the step order and the stop message. A live aca-neon run goes from an empty resource group to HTTP 200 on those two paths, then `dev deprovision --target aca-neon`.
+`dev deploy --target <t>` is the path from a generated app to a live site. In order it publishes (so the migration files exist), deploys, migrates when that app has a database, smokes the ingress, and prints the URL. It stops at the first failure and names the verb that retries that step. A target with no database skips migrate and says so. Smoke requests only `/web-server/alive` and `/api/identity/entra/offered`, waits through a Neon or scale-to-zero cold start, and never calls `/api/health`. There is no per-step opt-out flag; the existing step verbs are how an operator runs one step. `dev deploy migrate` still works alone, and a missing bundle is published instead of refused. Secrets stay off the command line and out of the output. Passkeys work on the first deploy: Azure Container Apps (aca and aca-neon) put the public ingress host on `WebAuthnOptions:AllowedRpIds` from the environment's public default-domain output, and any other public host is the `passkey-rp-host` parameter that deploy copies in. Compose and Kubernetes already allow `localhost`, which is the public host of those default paths. aca-neon preflight warns, and does not refuse or print the connection string, when the pooled host's AWS region is far from `Azure:Location`, and it names the preferred nearby Azure region. A location in that AWS region's nearby set stays quiet. The tw-deploy skill and the target references lead with the one command, move the step verbs to an operator section, document the passkey host (a custom domain is its own entry), and say to put the app and the Neon project in the same region, near the users. The handler runs that order through one step runner. dev-cli tests drive the runner with fake delegates, so a skipped or reordered step fails, and they lock the stop message. A live aca-neon run goes from an empty resource group to HTTP 200 on those two paths, then `dev deprovision --target aca-neon`.
 
 ## Checklist
 
@@ -49,7 +49,7 @@ verbs stay for operators who want one step.
 
 ## Results
 
-`dev deploy --target <t>` is the first-deploy command. It publishes, deploys, migrates when the app has a database, smokes the two anonymous paths, and prints the URL. A missing migrations bundle is published by `dev deploy migrate` instead of refused. Azure Container Apps puts `ingress.<environment domain>` on `WebAuthnOptions:AllowedRpIds`. A custom domain is the `passkey-rp-host` parameter. aca-neon warns, and does not refuse, when the Neon AWS region is far from `Azure:Location`.
+`dev deploy --target <t>` is the first-deploy command. It publishes, deploys, migrates when the app has a database, smokes the two anonymous paths, and prints the URL. The handler runs that order through `DeployPipeline.RunAsync`, which stops at the first non-zero exit. A missing migrations bundle is published by `dev deploy migrate` instead of refused. Azure Container Apps puts `ingress.<environment default domain>` on `WebAuthnOptions:AllowedRpIds` through the public `GetOutput` of `AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN`. A custom domain is the `passkey-rp-host` parameter. aca-neon warns, and does not refuse, when the Neon AWS region is outside the nearby Azure set, and it names the preferred region. A location in that set stays quiet.
 
 ### How to validate
 
@@ -59,7 +59,7 @@ Expect: exit 0, the step line `publish → deploy → migrate → smoke`, `200 /
 
 Live proof on 2026-10-21. Empty resource group `rg-tw-architecture-aca-neon-sea` in `southeastasia` (0 resources). Neon pooled host region `ap-southeast-1`, so the location already matched and preflight stayed quiet. `dev deploy --target aca-neon --yes` exited 0. Smoke printed `200 /web-server/alive` and `200 /api/identity/entra/offered`. The URL was `https://ingress.orangetree-59f940d0.southeastasia.azurecontainerapps.io`. web-server's `WebAuthnOptions__AllowedRpIds__0` was that same host. Migrate ran the bundle and reported the database already up to date. `dev deprovision --target aca-neon --yes` exited 0. The group was `Deleting`, with only the Container Apps environment left, when this session stopped watching. The Neon project was not deleted.
 
-Tests, Release, from each project directory: `dev-cli-tests` 289 passed; `AcaNeonPublish_Given_` 7 passed; `AcaPublish_Given_` 13 passed.
+Tests, Release, from each project directory, after the review fix pass: `dev-cli-tests` 293 passed; `AcaNeonPublish_Given_` 7 passed; `AcaPublish_Given_` 13 passed. `dotnet build` of `tools/dev-cli/dev.cs` and the AppHost succeeded. `ganda repo audit` passed (32 checks, 0 failed, 1 skipped). This pass did not repeat the live Azure deploy.
 
 ### Review
 
@@ -71,10 +71,16 @@ Round 1 ran on 2026-10-21 at effort 3 (by-diff budget) with one general reviewer
 - Implement: one-command deploy, passkey ingress host, Neon region warning, and the aca-neon live proof (2026-10-21)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-21T14:33:23Z
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported. 3 findings open (M1 bug, M2 suggestion, M3 nit); a fix pass is requested (2026-10-21)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-21T14:36:43Z
+- Fix pass (review round 1): the handler runs `DeployPipeline.RunAsync` over `Steps`, the AppHost reads the domain with public `GetOutput`, and a nearby Azure region stays quiet (2026-10-21)
 
 ## Learnings
 
 - Restatement vs task (narrowing, not a misread of intent): the task says passkeys work on "every deployed target (aca, aca-neon, compose, kubernetes)". The restatement says compose and Kubernetes are covered by the `localhost` default. That holds for compose and for a kind port-forward. It does not cover a Kubernetes LoadBalancer host. That host is an IP, which cannot be an RP ID, or a DNS name, which works like a custom domain. In both cases it needs `passkey-rp-host`, which the task allowed as the fallback. The reviewer judged this acceptable and raised no finding.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
 
 ## Notes
 

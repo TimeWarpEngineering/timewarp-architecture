@@ -15,7 +15,8 @@
 // compute hours, so it is rejected on the pooled string. The direct host must not be the pooler.
 // A semicolon inside a password splits the string; Neon passwords do not need one.
 // Task 393: the pooled host's AWS region (the label before `.aws.neon.tech`) is compared with
-// Azure:Location. A far pair prints a warning that names the nearby Azure region. The warning
+// Azure:Location. Each AWS region has a small set of nearby Azure regions. The first is the one
+// a warning names. A location in the set stays quiet. A location outside it is far. The warning
 // never includes the connection string or the endpoint id.
 #endregion
 
@@ -102,7 +103,7 @@ internal static class NeonConnection
   /// <summary>
   /// Warning when <paramref name="connectionString"/>'s AWS region is far from <paramref name="azureLocation"/>,
   /// or when the location is unset and a nearby Azure region is known. Null when the host has no
-  /// <c>.aws.neon.tech</c> region, or the location already is the nearby region. The text never
+  /// <c>.aws.neon.tech</c> region, or the location is one of the nearby Azure regions. The text never
   /// contains the connection string or the endpoint id.
   /// </summary>
   internal static string? RegionDistanceWarning(string? connectionString, string? azureLocation)
@@ -122,8 +123,7 @@ internal static class NeonConnection
         : $"aca-neon: Neon is in AWS region {awsRegion} and Azure:Location is {location.Trim()}. No paired Azure region is listed. Confirm they are near each other and near your users. Warning only; deploy continues.";
     }
 
-    string nearbyNorm = NormalizeLocation(nearby);
-    if (!string.IsNullOrEmpty(location) && location.Equals(nearbyNorm, StringComparison.Ordinal))
+    if (!string.IsNullOrEmpty(location) && IsNearbyLocation(awsRegion, location))
     {
       return null;
     }
@@ -164,7 +164,27 @@ internal static class NeonConnection
 
   /// <summary>The Azure region to prefer for an AWS region Neon uses, or null when none is paired.</summary>
   internal static string? NearbyAzureRegion(string awsRegion) =>
-    NearbyAzureRegions.TryGetValue(awsRegion.Trim().ToLowerInvariant(), out string? azure) ? azure : null;
+    NearbyAzureRegions.TryGetValue(awsRegion.Trim().ToLowerInvariant(), out string[]? azureRegions) && azureRegions.Length > 0
+      ? azureRegions[0]
+      : null;
+
+  private static bool IsNearbyLocation(string awsRegion, string normalizedLocation)
+  {
+    if (!NearbyAzureRegions.TryGetValue(awsRegion.Trim().ToLowerInvariant(), out string[]? azureRegions))
+    {
+      return false;
+    }
+
+    foreach (string azureRegion in azureRegions)
+    {
+      if (NormalizeLocation(azureRegion).Equals(normalizedLocation, StringComparison.Ordinal))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   private static string NormalizeLocation(string? azureLocation)
   {
@@ -188,32 +208,35 @@ internal static class NeonConnection
     return new string(buffer[..length]);
   }
 
-  /// <summary>One nearby Azure region for each AWS region Neon commonly places a project in.</summary>
-  private static readonly Dictionary<string, string> NearbyAzureRegions = new(StringComparer.Ordinal)
+  /// <summary>
+  /// Nearby Azure regions for each AWS region Neon commonly places a project in.
+  /// The first entry is the region a warning names.
+  /// </summary>
+  private static readonly Dictionary<string, string[]> NearbyAzureRegions = new(StringComparer.Ordinal)
   {
-    ["us-east-1"] = "eastus",
-    ["us-east-2"] = "eastus2",
-    ["us-west-1"] = "westus",
-    ["us-west-2"] = "westus2",
-    ["eu-west-1"] = "northeurope",
-    ["eu-west-2"] = "uksouth",
-    ["eu-west-3"] = "francecentral",
-    ["eu-central-1"] = "germanywestcentral",
-    ["eu-central-2"] = "switzerlandnorth",
-    ["eu-north-1"] = "swedencentral",
-    ["eu-south-1"] = "italynorth",
-    ["ap-southeast-1"] = "southeastasia",
-    ["ap-southeast-2"] = "australiaeast",
-    ["ap-northeast-1"] = "japaneast",
-    ["ap-northeast-2"] = "koreacentral",
-    ["ap-northeast-3"] = "japaneast",
-    ["ap-south-1"] = "centralindia",
-    ["ap-east-1"] = "eastasia",
-    ["sa-east-1"] = "brazilsouth",
-    ["ca-central-1"] = "canadacentral",
-    ["af-south-1"] = "southafricanorth",
-    ["me-south-1"] = "uaenorth",
-    ["il-central-1"] = "israelcentral",
+    ["us-east-1"] = ["eastus", "eastus2"],
+    ["us-east-2"] = ["eastus2", "eastus", "centralus"],
+    ["us-west-1"] = ["westus", "westus2"],
+    ["us-west-2"] = ["westus2", "westus3", "westus"],
+    ["eu-west-1"] = ["northeurope", "westeurope"],
+    ["eu-west-2"] = ["uksouth", "ukwest"],
+    ["eu-west-3"] = ["francecentral", "westeurope"],
+    ["eu-central-1"] = ["germanywestcentral", "germanynorth", "westeurope"],
+    ["eu-central-2"] = ["switzerlandnorth", "switzerlandwest"],
+    ["eu-north-1"] = ["swedencentral"],
+    ["eu-south-1"] = ["italynorth"],
+    ["ap-southeast-1"] = ["southeastasia"],
+    ["ap-southeast-2"] = ["australiaeast", "australiasoutheast"],
+    ["ap-northeast-1"] = ["japaneast", "japanwest"],
+    ["ap-northeast-2"] = ["koreacentral", "koreasouth"],
+    ["ap-northeast-3"] = ["japaneast", "japanwest"],
+    ["ap-south-1"] = ["centralindia", "southindia", "westindia"],
+    ["ap-east-1"] = ["eastasia"],
+    ["sa-east-1"] = ["brazilsouth", "brazilsoutheast"],
+    ["ca-central-1"] = ["canadacentral", "canadaeast"],
+    ["af-south-1"] = ["southafricanorth", "southafricawest"],
+    ["me-south-1"] = ["uaenorth", "uaecentral"],
+    ["il-central-1"] = ["israelcentral"],
   };
 
   private static Dictionary<string, string> Parse(string connectionString)

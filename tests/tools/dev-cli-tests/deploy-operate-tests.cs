@@ -809,7 +809,9 @@ public partial class AppHostAgreement_Given_
     program.ShouldContain("builder.Configuration[$\"Parameters:{IngressPortParameterName}\"]");
     IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("program.cs passes a literal to AddParameter(IngressPortParameterName, …)");
     program.ShouldContain("WebAuthnOptions__AllowedRpIds__");
-    program.ShouldContain("ContainerAppDomain");
+    program.ShouldContain("GetOutput(");
+    program.ShouldContain("AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
+    program.ShouldNotContain("ContainerAppDomain");
     program.ShouldContain("PasskeyRpHostParameterName");
     return Task.CompletedTask;
   }

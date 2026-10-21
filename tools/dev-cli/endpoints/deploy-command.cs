@@ -6,8 +6,9 @@
 #region Design
 // Deploying is a deliberate operator action, never a side effect of a merge (task 070-006): no
 // workflow step and no `dev workflow` mode calls this verb; CI stops at `dev publish` plus its
-// production-safety suites. Task 393 makes this the pit-of-success path. It runs, in order,
-// stopping at the first failure and naming the verb that retries that step:
+// production-safety suites. Task 393 makes this the pit-of-success path. It runs
+// DeployPipeline.RunAsync over DeployPipeline.Steps, stopping at the first non-zero exit
+// and naming the verb that retries that step:
 //   1. aspire publish into artifacts/aspire-output/<target> (files only; the safety suite stays on
 //      `dev publish`) so the migrations bundle exists before anything is deployed.
 //   2. aspire deploy (the same arguments and preflight as before).
@@ -124,60 +125,93 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         }
       }
 
-      Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Publish, preflight.Target));
-      int publishExit = await AspirePublish.PublishFilesAsync(
-        Terminal, preflight.RepoRoot, preflight.Target, ct, PublishEnvironment(preflight));
-      if (publishExit != 0)
+      int pipelineExit = await DeployPipeline.RunAsync(hasDatabase, RunStepAsync, ct);
+      if (pipelineExit != 0 && Environment.ExitCode == 0)
       {
-        Stop(DeployPipeline.FailureMessage(DeployPipeline.Publish, preflight.Target, publishExit), publishExit);
-        return Unit.Value;
-      }
-
-      Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Deploy, preflight.Target));
-      ShellBuilder aspire = Shell.Builder("aspire")
-        .WithArguments(AspireDeploy.BuildDeployArguments(
-          preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes, preflight.Parameters, preflight.Secrets ?? []))
-        .WithWorkingDirectory(preflight.RepoRoot)
-        .WithNoValidation();
-      foreach ((string name, string value) in preflight.AspireEnvironment)
-      {
-        aspire = aspire.WithEnvironmentVariable(name, value);
-      }
-
-      CommandOutput deploy = await aspire.TtyPassthroughAsync(ct);
-      if (!deploy.Success)
-      {
-        int deployExit = deploy.ExitCode == 0 ? 1 : deploy.ExitCode;
-        Stop(DeployPipeline.FailureMessage(DeployPipeline.Deploy, preflight.Target, deployExit), deployExit);
-        return Unit.Value;
-      }
-
-      if (!hasDatabase)
-      {
-        Terminal.WriteLine(DeployPipeline.SkipMigrateMessage(preflight.Target).Yellow());
-      }
-      else
-      {
-        Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Migrate, preflight.Target));
-        await new DeployMigrateCommand.Handler(Terminal).Handle(
-          new DeployMigrateCommand { Target = preflight.Target.Name, Yes = true }, ct);
-        if (Environment.ExitCode != 0)
-        {
-          Terminal.WriteErrorLine(DeployPipeline.FailureMessage(
-            DeployPipeline.Migrate, preflight.Target, Environment.ExitCode).Red());
-          return Unit.Value;
-        }
-      }
-
-      Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Smoke, preflight.Target));
-      int smokeExit = await SmokeAsync(preflight, ct);
-      if (smokeExit != 0)
-      {
-        Stop(DeployPipeline.FailureMessage(DeployPipeline.Smoke, preflight.Target, smokeExit), smokeExit);
-        return Unit.Value;
+        Environment.ExitCode = pipelineExit;
       }
 
       return Unit.Value;
+
+      async Task<int> RunStepAsync(string step, CancellationToken stepCancellation)
+      {
+        switch (step)
+        {
+          case DeployPipeline.Publish:
+          {
+            Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Publish, preflight.Target));
+            int publishExit = await AspirePublish.PublishFilesAsync(
+              Terminal, preflight.RepoRoot, preflight.Target, stepCancellation, PublishEnvironment(preflight));
+            if (publishExit != 0)
+            {
+              Stop(DeployPipeline.FailureMessage(DeployPipeline.Publish, preflight.Target, publishExit), publishExit);
+              return Environment.ExitCode;
+            }
+
+            return 0;
+          }
+          case DeployPipeline.Deploy:
+          {
+            Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Deploy, preflight.Target));
+            ShellBuilder aspire = Shell.Builder("aspire")
+              .WithArguments(AspireDeploy.BuildDeployArguments(
+                preflight.AppHostProject, preflight.Target, nonInteractive: command.Yes, preflight.Parameters, preflight.Secrets ?? []))
+              .WithWorkingDirectory(preflight.RepoRoot)
+              .WithNoValidation();
+            foreach ((string name, string value) in preflight.AspireEnvironment)
+            {
+              aspire = aspire.WithEnvironmentVariable(name, value);
+            }
+
+            CommandOutput deploy = await aspire.TtyPassthroughAsync(stepCancellation);
+            if (!deploy.Success)
+            {
+              int deployExit = deploy.ExitCode == 0 ? 1 : deploy.ExitCode;
+              Stop(DeployPipeline.FailureMessage(DeployPipeline.Deploy, preflight.Target, deployExit), deployExit);
+              return Environment.ExitCode;
+            }
+
+            if (!hasDatabase)
+            {
+              Terminal.WriteLine(DeployPipeline.SkipMigrateMessage(preflight.Target).Yellow());
+            }
+
+            return 0;
+          }
+          case DeployPipeline.Migrate:
+          {
+            Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Migrate, preflight.Target));
+            await new DeployMigrateCommand.Handler(Terminal).Handle(
+              new DeployMigrateCommand { Target = preflight.Target.Name, Yes = true }, stepCancellation);
+            if (Environment.ExitCode != 0)
+            {
+              Stop(
+                DeployPipeline.FailureMessage(DeployPipeline.Migrate, preflight.Target, Environment.ExitCode),
+                Environment.ExitCode);
+              return Environment.ExitCode;
+            }
+
+            return 0;
+          }
+          case DeployPipeline.Smoke:
+          {
+            Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Smoke, preflight.Target));
+            int smokeExit = await SmokeAsync(preflight, stepCancellation);
+            if (smokeExit != 0)
+            {
+              Stop(DeployPipeline.FailureMessage(DeployPipeline.Smoke, preflight.Target, smokeExit), smokeExit);
+              return Environment.ExitCode;
+            }
+
+            return 0;
+          }
+          default:
+          {
+            Stop(DeployPipeline.FailureMessage(step, preflight.Target, 1), 1);
+            return Environment.ExitCode;
+          }
+        }
+      }
     }
 
     private bool Confirm(bool hasDatabase)

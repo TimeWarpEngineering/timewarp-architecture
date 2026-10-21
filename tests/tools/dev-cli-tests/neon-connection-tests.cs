@@ -129,6 +129,26 @@ public class RegionDistance_Given_
     return Task.CompletedTask;
   }
 
+  public static Task NearbyPair_Should_BeSilent()
+  {
+    NeonConnection.RegionDistanceWarning(Pooled("us-east-1"), "eastus").ShouldBeNull();
+    NeonConnection.RegionDistanceWarning(Pooled("us-east-1"), "eastus2").ShouldBeNull();
+    NeonConnection.RegionDistanceWarning(Pooled("us-east-1"), "East US 2").ShouldBeNull();
+    NeonConnection.RegionDistanceWarning(Pooled("eu-west-1"), "westeurope").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task DistantPair_Should_SayFarAndNameThePreferredRegion()
+  {
+    string? warning = NeonConnection.RegionDistanceWarning(Pooled("us-east-1"), "westus");
+    warning.ShouldNotBeNull();
+    warning.ShouldContain("far from");
+    warning.ShouldContain("Use eastus instead");
+    warning.ShouldNotContain(Secret);
+    warning.ShouldNotContain(Endpoint);
+    return Task.CompletedTask;
+  }
+
   public static Task HostWithoutAnAwsRegion_Should_BeSilent()
   {
     NeonConnection.RegionDistanceWarning(
