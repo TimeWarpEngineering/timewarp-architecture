@@ -58,6 +58,7 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 ## Review
 
 - Round 1: M1, M2, M3 fixed on this branch (2026-10-21). Host runs review round 2.
+- Round 2 (2026-10-21): M1–M3 verified fixed and no new findings. Disposition is `clean` (`review/disposition.md`).
 
 ## Notes
 
@@ -103,6 +104,7 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 - Review round 1 (2026-10-21): review oracle (claude-opus-5-5, headless), effort 3, roster general. Findings: 1 bug, 1 suggestion, 1 nit (`review/round-1/merged.md`).
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-20T19:21:19Z
 - Fix pass (2026-10-21): M1 seeds `entraAcceptedTenantIds: [TrustedTenantId]` and adds an Any-mode bootstrap for `UntrustedTenantId`. M2 validates tenant ids through `EntraTenantIds.TryNormalize`. M3 help text says common (or consumers). Dropped the NU1510 framework package refs on `get-entra-sign-in-offered-tests.cs` and `seed-on-read-site-settings-store-tests.cs`. `ganda repo audit --fix` removed the orphaned `Microsoft.Extensions.Logging.Abstractions` package version.
+- Review round 2 (2026-10-21): review oracle (claude-opus-5-5, headless, session not reported), effort 1, roster general, turn cap 80. Scope was the fix delta `9896f0a67..e00a0e7dd`. M1–M3 are fixed and there are no new findings. Disposition is clean.
 
 ## Results
 
@@ -135,3 +137,11 @@ Expect: 5 passed and 11 passed. Both runfiles build without a direct `Microsoft.
 Smoke: `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release`
 
 Expect: 0 warnings, 0 errors. The Authentication page help text says `common (or consumers)`. The page was not clicked in a browser.
+
+### Review disposition
+
+- Rounds: 2. Round 1 was effort 3 and round 2 was effort 1, both with the `general` reviewer (claude-opus-5-5, headless).
+- Final counts (open/fixed/wontfix): bug 0/1/0, suggestion 0/1/0, nit 0/1/0.
+- Disposition: **clean**. Every finding (M1 challenge-fixture tenant seed, M2 validator through `EntraTenantIds.TryNormalize`, M3 consumers help text) was fixed in e00a0e7dd. There are no wontfix items or escalations.
+- Round 2 gates: dev build 0 warnings / 0 errors. web-server-integration-tests 349 passed, 0 failed, 1 skipped. The update-site-settings runfile passed 30, get-entra-sign-in-offered passed 5, and seed-on-read-site-settings-store passed 11.
+- Artifacts: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, `review/disposition.md`.
