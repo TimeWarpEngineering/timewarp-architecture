@@ -148,4 +148,4 @@ Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or tak
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8. Fix pass landed 2026-10-21.
-- Round 2: Done. M1–M8 fixed, no new findings. Disposition is clean (`review/disposition.md`).
+- Round 2: Done
