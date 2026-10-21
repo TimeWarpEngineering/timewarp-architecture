@@ -476,6 +476,10 @@ internal class Program
       // name without pointing web-server at the pooler. The pooled WithReference is applied after
       // AddEFMigrations (see the Design region). No WaitFor: a connection string has no health
       // endpoint, and publish mode does not run wait edges.
+      // This is the only declaration of the two Neon parameters: web on, postgres on, Publish:Target=aca-neon.
+      // Neither has a default. Publish still emits the pooled name as @secure(). Aspire also tries to copy
+      // every parameter value into deployment state and logs MissingParameterValueException when the
+      // operator has not set one. That warning does not fail publish. A default would ship the secret.
       IResourceBuilder<ParameterResource> pooled = builder.AddParameter(NeonPooledConnectionStringParameterName, secret: true);
       IResourceBuilder<ParameterResource> direct = builder.AddParameter(NeonDirectConnectionStringParameterName, secret: true);
       postgresDb = builder.AddConnectionString(PostgresDatabaseResourceName, ReferenceExpression.Create($"{pooled}"));

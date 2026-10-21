@@ -37,6 +37,8 @@
 // Ingress: each container app's `ingress: { … }` block is sliced and its `external` field read; an
 // ingress block without `external` fails rather than defaulting to internal.
 // Every rule is conditional on what the template flags emitted (no web/postgres → their rules skip).
+// The Flexible Server pin compiles only with web and postgres (postgres is declared inside the web
+// block). The passkey-host fact compiles only with web and yarp, which is where that environment is set.
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
@@ -241,13 +243,17 @@ public partial class AcaPublish_Given_
   public static Task Publish_Should_KeepAcaScaleAndPostgres()
   {
     string all = string.Join('\n', Modules.Values);
-    all.ShouldContain("Microsoft.DBforPostgreSQL/flexibleServers");
-    all.ShouldContain("Microsoft.KeyVault/vaults");
     all.ShouldNotContain("minReplicas: 0");
     all.ShouldNotContain("neon-pooled-connection-string");
     all.ShouldNotContain("neon-direct-connection-string");
     all.ShouldNotContain("Postgres__RetryCount");
     all.ShouldNotContain("Postgres__RetryDelaySeconds");
+#if web
+#if postgres
+    all.ShouldContain("Microsoft.DBforPostgreSQL/flexibleServers");
+    all.ShouldContain("Microsoft.KeyVault/vaults");
+#endif
+#endif
     return Task.CompletedTask;
   }
 
@@ -352,9 +358,13 @@ public partial class AcaPublish_Given_
   {
     // The public host is ingress.<environment domain>. The domain is an output of the environment,
     // so web-server does not reference the ingress container app (that pairing cycles).
+#if web
+#if yarp
     ContainerApp webServer = ContainerApps.Single(app => app.Name == WebServerApp);
     webServer.Text.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
     webServer.Text.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+#endif
+#endif
     await Task.CompletedTask;
   }
 
