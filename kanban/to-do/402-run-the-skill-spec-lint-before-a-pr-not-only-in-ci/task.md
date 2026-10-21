@@ -65,6 +65,11 @@ Ran those checks on 2026-10-22. Missing `vally`: exit 1, install text as above. 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-21T21:07:14Z
 - Review oracle: claude-opus-5-5 (headless ganda task work), effort 2, roster general, 1 round, accepted-exceptions — 2026-10-22
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T21:10:35Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
