@@ -158,7 +158,9 @@
 //     flag publishes no host port at all — the operator adds one for their own edge proxy, and the compose dashboard is disabled (it would publish an unauthenticated second port —
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
-//     settings (entra-client-secret is a secret parameter; Entra defaults to off);
+//     settings (entra-client-secret is a secret parameter; Entra defaults to off). An unset client
+//     secret publishes the placeholder "unused": Azure Container Apps rejects an empty secret, and
+//     the value overload of AddParameter does not read configuration;
 //   - mock auth, browser-log forwarding and the Postgres REPL are never emitted: the UseMock forward
 //     is run-mode only, and the other two are Development-only while publish runs as Production.
 // aspire-tests' compose-publish-tests guard all of the above against the generated files.
@@ -259,7 +261,8 @@
 //     the admin password is the barrier. VNet integration (private access) is the hardening step;
 //     aca-publish-tests pins the rule set so a wider rule cannot land in code;
 //   - Entra settings are the same parameters as Compose/Kubernetes (the client secret a secure
-//     parameter → container-app secret); mock auth, browser-log forwarding and the REPL are absent
+//     parameter → container-app secret; unset, the placeholder "unused" so the secret is non-empty);
+//     mock auth, browser-log forwarding and the REPL are absent
 //     for the same reasons as Compose.
 // Flexible Server is declared in the aca branch only, so run mode — which never reads Publish:Target —
 // keeps the AddPostgres container with its volume and REPL exactly as before (RunAsContainer would
@@ -291,7 +294,9 @@
 // Publish:Target and keeps the AddPostgres container.
 // Migrations are the published bundle on the direct connection (`dev deploy migrate --target aca-neon`);
 // there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon. The
-// environment's ACR Basic registry is not free; the operator guide records that cost.
+// environment's ACR Basic registry is not free. Aspire 13.6.2 rejects a non-ACR registry on this
+// environment (AzureContainerAppEnvironmentResource.ContainerRegistry), so ghcr.io is not a
+// substitute; the operator guide records that and the ACR Basic cost.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
@@ -392,18 +397,25 @@ internal class Program
       webServer = webServer.WithTimeWarpStateDevTools(stateDevTools);
     }
 
-    // Task 070-003: published Entra settings are .env parameters, never literals. Defaults keep
-    // Entra off (appsettings.json posture); the client secret is a secret parameter with an empty
-    // value so `aspire deploy` does not demand one for a passkey-only deployment.
+    // Task 070-003: published Entra settings are parameters, never literals. Defaults keep Entra off.
+    // AddParameter(name, value, secret: true) ignores configuration (its value callback is constant).
+    // Capture Parameters:entra-client-secret here. When it is unset, use "unused" (not a credential):
+    // Azure Container Apps rejects an empty container-app secret. aspire deploy runs as Production and
+    // does not load user secrets; dev deploy copies a set user secret into the process environment.
     if (builder.ExecutionContext.IsPublishMode)
     {
+      const string unsetEntraClientSecret = "unused";
+      string? configuredEntraClientSecret = builder.Configuration[$"Parameters:{EntraClientSecretParameterName}"];
+      string entraClientSecret = string.IsNullOrWhiteSpace(configuredEntraClientSecret)
+        ? unsetEntraClientSecret
+        : configuredEntraClientSecret;
       webServer = webServer
         .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
         // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
         // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
         .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))
         .WithEnvironment("Authentication__Entra__ClientId", builder.AddParameter(EntraClientIdParameterName, "", publishValueAsDefault: true))
-        .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, "", secret: true))
+        .WithEnvironment("Authentication__Entra__ClientSecret", builder.AddParameter(EntraClientSecretParameterName, entraClientSecret, secret: true))
         .WithEnvironment("Authentication__Entra__PublicOrigin", builder.AddParameter(EntraPublicOriginParameterName, "", publishValueAsDefault: true));
     }
 

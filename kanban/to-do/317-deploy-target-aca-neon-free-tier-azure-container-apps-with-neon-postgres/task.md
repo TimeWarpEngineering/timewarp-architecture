@@ -51,7 +51,7 @@ free monthly grant) for compute. Requested by Steven 2026-10-12.
 - [x] `dev deploy migrate --target aca-neon` applies migrations via the direct connection
 - [x] Extension compatibility with Neon confirmed and recorded
 - [x] Run mode still uses the local Postgres container
-- [ ] One real deploy to ACA + Neon Free passes the smoke test; resulting monthly cost recorded (target $0 or noted exceptions like ACR)
+- [x] One real deploy to ACA + Neon Free passes the smoke test; resulting monthly cost recorded (target $0 or noted exceptions like ACR)
 - [x] Docs: operator guide for creating the Neon project, setting secrets, deploying, tearing down
 
 ## Links
@@ -83,6 +83,7 @@ Done when:
 ## Session
 
 - 2026-10-21: unblocked by Steve (Neon user secrets set; live deploy approved; free-registry check added).
+- 2026-10-21: live deploy, migrate, and smoke passed. Aspire 13.6.2 cannot pull from GHCR, so ACR Basic stayed. The resource group was deleted after the smoke because the registry bills; the Neon project was kept. `aspire deploy` runs as Production and does not load user secrets, so `dev deploy` copies them into the child environment. An empty Entra client secret is rejected by Container Apps, so an unset secret publishes the placeholder `unused`.
 
 - Created: grok-bot (2026-10-12)
 
@@ -93,33 +94,25 @@ Done when:
 
 `Publish:Target=aca-neon` reuses `AddAzureContainerAppEnvironment("aca-env")` and does not declare Flexible Server or `postgres-kv`. web-server gets the pooled connection as `ConnectionStrings__postgres-db` plus `Postgres__RetryCount=6` and `Postgres__RetryDelaySeconds=8`. Container apps publish with min replicas 0, max replicas 1, 0.25 CPU, and 0.5Gi. `dev deploy migrate --target aca-neon` runs the published bundle with the direct connection and opens no firewall rule. Run mode still uses the local Postgres container. Migrations use core Postgres types only; that check is in `neon-extension-tests` and `skills/tw-deploy/references/azure-container-apps-neon.md`.
 
-Publish suites passed: `AcaNeonPublish_Given_` 6, `AcaPublish_Given_` 12, `ComposePublish_Given_` 10, `KubernetesPublish_Given_` 11. `dev-cli-tests` passed 268. `ganda repo audit` passes after the Nuru pin. `publish aca-neon --help` and `deploy migrate --help` show the aca-neon examples. `dev deploy --target aca-neon` refuses when the two secrets are missing and does not print a connection string.
+`aspire deploy` runs with `--environment Production`, and that AppHost loads user secrets only in Development. `dev deploy` copies a user-secret subscription, location, resource group, Entra client secret, and the two Neon strings into the child process environment when those variables are unset. They stay off the command line and out of the plan. Azure Container Apps rejects an empty container-app secret, and `AddParameter(name, value, secret: true)` ignores configuration, so an unset `Parameters:entra-client-secret` publishes the placeholder `unused` (Entra stays off; it is not a credential).
 
-A live ACA + Neon deploy did not run. `az account show` is logged in as StevenTCramer@gmail.comMSDN. The AppHost user secrets have no `Parameters:neon-pooled-connection-string` and no `Parameters:neon-direct-connection-string`, and no Neon environment variable is set. Expected monthly cost once deployed, from the operator guide: Neon Free $0, ACA consumption $0 while inside the free grant, Log Analytics usually inside 5 GB, ACR Basic about $5 per month (the exception to $0).
+GitHub Container Registry cannot replace ACR on this publisher. `AzureContainerAppEnvironmentResource.ContainerRegistry` in Aspire.Hosting.Azure.AppContainers 13.6.2 throws unless the registry is an `AzureContainerRegistryResource`. Pull is managed identity, with no password secret for `ghcr.io`. The registry SKU is Basic. Evidence is in `skills/tw-deploy/references/azure-container-apps-neon.md`.
+
+Live deploy on 2026-10-21, subscription `40025bcc-ef1f-480f-9739-544719aeeb86`, location `eastus`, resource group `rg-tw-architecture-317-aca-neon`. Aspire reported the pipeline succeeded, including `provision-web-server-containerapp`. Ingress was `https://ingress.graydesert-89341d91.eastus.azurecontainerapps.io`. `dev deploy migrate --target aca-neon` applied the bundle on the direct Neon connection (17 migrations, from `20260804154245_InitialPostgresModel` through `20261020162201_AddSiteSettingsEntraTenantAcceptance`) and printed the connection as `<direct Neon connection string>`. Smoke, first attempt each:
+
+- `GET /web-server/alive` → HTTP 200, body `Healthy`
+- `GET /api/identity/entra/offered` → HTTP 200, body `{"offered":false}`
+
+Monthly cost: Neon Free $0 (project kept). ACA consumption $0 inside the free grant while the apps existed (min replicas 0, 0.25 CPU, 0.5Gi). Log Analytics stays inside the 5 GB free ingestion for a deploy this short. ACR Basic is the exception, about $5 per month while the registry exists; Azure may prorate the hours it was up. `dev deprovision --target aca-neon` started deletion of `rg-tw-architecture-317-aca-neon` (registry, environment, container apps, Log Analytics, managed identity). That stops the registry bill. The Neon project was not deleted.
+
+Publish suites passed: `AcaNeonPublish_Given_` 6, `AcaPublish_Given_` 12, `ComposePublish_Given_` 10, `KubernetesPublish_Given_` 11. `dev-cli-tests` passed 270. `ganda repo audit` passed (32 checks, 0 failed). `dev publish aca-neon` wrote `artifacts/aspire-output/aca-neon` and its safety suite passed. The generated Bicep has `minReplicas: 0` and no Flexible Server or `postgres-kv`.
 
 ### How to validate
 
-Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release -- --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`, `ComposePublish_Given_`, and `KubernetesPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. `dotnet run tools/dev-cli/dev.cs -- publish aca-neon --help` and `dotnet run tools/dev-cli/dev.cs -- deploy migrate --help`. After the two AppHost user secrets exist: `dev publish aca-neon`, `dev deploy --target aca-neon`, `dev deploy migrate --target aca-neon`, then `curl -fsS https://<ingress-fqdn>/web-server/alive` and `curl -fsS https://<ingress-fqdn>/api/identity/entra/offered`.
+Smoke: from `tests/container-apps/aspire/aspire-tests`, `dotnet test -c Release -- --filter-class AcaNeonPublish_Given_`, then the same for `AcaPublish_Given_`, `ComposePublish_Given_`, and `KubernetesPublish_Given_`. From `tests/tools/dev-cli-tests`, `dotnet test -c Release`. With the two Neon strings in the AppHost user secrets: `dotnet run tools/dev-cli/dev.cs -- deploy --target aca-neon --yes`, then `dotnet run tools/dev-cli/dev.cs -- deploy migrate --target aca-neon --yes`, then `curl -fsS https://<ingress-fqdn>/web-server/alive` and `curl -fsS https://<ingress-fqdn>/api/identity/entra/offered`. Tear the resource group down with `dev deprovision --target aca-neon` when the registry should stop billing. Leave the Neon project.
 
-Expect: the four publish suites and dev-cli-tests pass. aca-neon Bicep has `minReplicas: 0`, `cpu: json('0.25')`, `memory: '0.5Gi'`, the pooled parameter on web-server only, and no Flexible Server, Key Vault, `postgres-kv`, firewall rule, or direct Neon parameter. Compose, Kubernetes, and aca publish output stay free of `minReplicas: 0`, the Neon parameter names, and `Postgres__RetryCount`. Help lists `aca-neon` and the migrate example names the direct connection and no firewall rule. The live curls return HTTP 200 (the database route may wait while Neon wakes). That live half is not done until the two secrets are set.
+Expect: the four publish suites and dev-cli-tests pass. aca-neon Bicep has `minReplicas: 0` and no Flexible Server, Key Vault, or `postgres-kv`. The plan names the subscription source and does not print a connection string. Migrate names the direct connection and applies the bundle without a firewall rule. Both curls return HTTP 200 (`Healthy`, and `{"offered":false}` before Entra is turned on). The database route may wait while Neon wakes. After deprovision the resource group is gone and the Neon project still exists.
 
 ### Registry cost (Steve, 2026-10-21)
 
-The template prefers free tier end to end. ACA consumption (min replicas 0) is inside the monthly free grant;
-Azure Container Registry has no free tier (Basic is the cheapest). Before accepting ACR Basic:
-
-- Check whether the Aspire ACA publisher (Aspire 13.6.2) can push to and pull from a non-ACR registry, for
-  example GitHub Container Registry (`ghcr.io`), with the pull credential as a secure parameter. If it can,
-  make that the `aca-neon` default and keep ACR as an opt-in.
-- If it cannot, keep ACR Basic as the single documented cost exception and record the evidence (API,
-  docs, or the publisher error) under `## Results`.
-
-Neon connection strings are set in the AppHost user secrets (Steve, 2026-10-21). Run the live
-`dev deploy --target aca-neon` and `dev deploy migrate --target aca-neon` to verify; record resource names,
-the app URL and a passing health or smoke request under `## Results`. Tear nothing down unless it costs money.
-
-## Blocked
-
-2026-10-21: AppHost user secrets Parameters:neon-pooled-connection-string and Parameters:neon-direct-connection-string from a Neon Free project (pooled host contains -pooler, direct host does not). Azure login is already present. ACR Basic (~$5/month) is the documented cost exception. https://neon.com/docs/connect/connection-pooling
-
-- https://neon.com/docs/connect/connection-pooling
+Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or take a registry password as the pull credential. ACR Basic stayed, and the resource group was deleted after the smoke so that charge does not continue. Detail is under Results and in the operator guide.

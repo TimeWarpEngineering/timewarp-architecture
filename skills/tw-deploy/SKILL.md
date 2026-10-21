@@ -113,16 +113,21 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   requires `az login` and prints the subscription and where it came from, in this order: the
   `Azure__SubscriptionId` environment variable, then the AppHost user secret `Azure:SubscriptionId`
   (read with `dotnet user-secrets list --project <apphost>`), then the one `az account show`
-  reports. Only that last fallback is passed to `aspire deploy` as `Azure__SubscriptionId`, so the
-  az CLI never overrides a subscription you pinned. A subscription Aspire remembered in its own
-  deployment state is not checked; pin it in user secrets if `az account` may point elsewhere.
-  Location and resource group come from `Azure__Location` / `Azure__ResourceGroup`, or Aspire's prompt.
+  reports. `aspire deploy` runs as Production and does not load user secrets, so a user-secret
+  subscription is copied to `Azure__SubscriptionId`. The az CLI value is copied only when neither
+  the environment variable nor the user secret is set, so it never overrides a subscription you
+  pinned. An environment variable is inherited and not rewritten. A subscription Aspire remembered
+  in its own deployment state is not checked; pin it in user secrets if `az account` may point
+  elsewhere. `Azure:Location` and `Azure:ResourceGroup` are copied to `Azure__Location` and
+  `Azure__ResourceGroup` the same way when those variables are unset; otherwise Aspire prompts.
 - **Deploy configuration is committed in the AppHost `appsettings.json`** `Parameters` section.
   The kubernetes target needs `k8s-namespace`, `helm-release-name`, `registry-endpoint` and
   `registry-repository` (the AppHost parameters without a default in code); compose, aca and
-  aca-neon forward none. aca-neon still requires `neon-pooled-connection-string` and
-  `neon-direct-connection-string` as secrets (AppHost user secrets or `Parameters__` environment
-  variables). They are not printed and not put on the aspire command line. A copy in appsettings is
+  aca-neon forward none of those on the command line. aca-neon still requires
+  `neon-pooled-connection-string` and `neon-direct-connection-string` as secrets (AppHost user
+  secrets or `Parameters__` environment variables). They are not printed and not put on the aspire
+  command line. Production does not load user secrets, so `dev deploy` copies a user-secret value
+  into the aspire process environment when that variable is unset. A copy in appsettings is
   refused. The template sets the three that identify the app —
   `k8s-namespace`, `helm-release-name`, `registry-repository` — to the app's kebab name (a DNS-1123
   label: `Contoso.Shop` → `contoso-shop`), and `registry-endpoint` to `localhost:5001`, the kind
@@ -157,7 +162,9 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   a committed value keeps winning; remove it with `dotnet user-secrets remove
   'Parameters:<name>' --project <apphost.csproj>`. The values appear in the `aspire` command line,
   so a forwarded parameter is never a secret — secrets (`postgres-password`, the Entra client
-  secret) stay in user secrets or env vars, never in `appsettings.json`.
+  secret, the Neon connection strings) stay off the command line. Production does not load user
+  secrets, so `dev deploy` copies a user-secret value into the aspire environment when that
+  variable is unset. Never commit a secret in `appsettings.json`.
 - **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
   nothing run: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
@@ -322,7 +329,7 @@ non-secret default every machine shares (the app's identity) is committed in the
 | Compose | `.env` beside `docker-compose.yaml`; `aspire deploy` / `aspire do prepare-compose` fill it |
 | Kubernetes | `values.yaml`: secrets under `secrets.<resource>` (rendered into `<resource>-secrets` Secret objects, empty defaults), never ConfigMaps |
 | Azure Container Apps | `@secure()` Bicep parameters (no defaults) that become container-app secrets read through `secretRef`. The Postgres connection string lives in a Key Vault Aspire provisions, which web-server reads with its managed identity; the Postgres password is also on web-server as the container-app secrets `postgres-db-password` and `postgres-db-uri`, built from the `@secure()` parameter |
-| Azure Container Apps + Neon | two `@secure()` parameters, `neon-pooled-connection-string` and `neon-direct-connection-string`, with no defaults. web-server reads the pooled string as `ConnectionStrings__postgres-db`. The migration bundle uses the direct string. `dev deploy` does not forward either value. Set them in AppHost user secrets or `Parameters__` environment variables, never in appsettings |
+| Azure Container Apps + Neon | two `@secure()` parameters, `neon-pooled-connection-string` and `neon-direct-connection-string`, with no defaults. web-server reads the pooled string as `ConnectionStrings__postgres-db`. The migration bundle uses the direct string. `dev deploy` does not put either value on the command line or in the plan. Production does not load user secrets, so a user-secret value is copied into the aspire process environment. Set them in AppHost user secrets or `Parameters__` environment variables, never in appsettings |
 
 - Non-secret deploy configuration that names the app is committed in the AppHost `appsettings.json`
   `Parameters` section (see Deploying). Per-machine values and secrets go in AppHost user secrets
@@ -336,7 +343,8 @@ non-secret default every machine shares (the app's identity) is committed in the
   carry the same value. `aspire deploy` fills both from the one parameter.
 - Entra settings (`entra-enabled`, `entra-tenant-id`, `entra-client-id`, `entra-client-secret`,
   `entra-public-origin`) are parameters with Entra off by default; a passkey-only deployment needs
-  none of them.
+  none of them. On Azure Container Apps an unset client secret is the placeholder `unused`, because
+  an empty container-app secret is rejected.
 
 ## Postgres and migrations per target
 

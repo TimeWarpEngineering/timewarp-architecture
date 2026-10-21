@@ -229,15 +229,56 @@ public class Preflight_Given_
     return Task.CompletedTask;
   }
 
-  public static Task UserSecretSubscription_Should_BeatTheAzCliAndNotBeOverridden()
+  public static Task UserSecretSubscription_Should_BeatTheAzCliAndBePassedToAspire()
   {
-    // An injected Azure__SubscriptionId env var would beat the AppHost's user secret, so the az CLI
-    // value must not be passed when the operator pinned one there.
+    // aspire deploy runs as Production and does not load user secrets, so the pinned subscription is
+    // copied to Azure__SubscriptionId. The az CLI value is not the one passed.
     AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, "88888888-1111-2222-3333-444444444444", CliAccount);
     choice.SubscriptionId.ShouldBe("88888888-1111-2222-3333-444444444444");
-    choice.PassToAspire.ShouldBeFalse();
+    choice.PassToAspire.ShouldBeTrue();
     choice.Detail.ShouldContain("user secret Azure:SubscriptionId");
     choice.Detail.ShouldNotContain("az account show");
+    choice.Detail.ShouldContain("does not load user secrets");
+    return Task.CompletedTask;
+  }
+
+  public static Task SecretParameters_Should_BeCopiedToTheAspireEnvironmentWhenUnset()
+  {
+    Dictionary<string, string> environment = new()
+    {
+      [AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonPooledConnectionStringParameter)] = "already",
+    };
+    Dictionary<string, string> aspireEnvironment = [];
+    AspireDeploy.AddSecretParameterEnvironment(
+      aspireEnvironment,
+      [
+        new ResolvedDeployParameter(AspireDeploy.NeonPooledConnectionStringParameter, "from-env", "env"),
+        new ResolvedDeployParameter(AspireDeploy.NeonDirectConnectionStringParameter, "from-secret", "secret"),
+      ],
+      AspireDeploy.CaseInsensitiveEnvironment(environment));
+
+    aspireEnvironment.ContainsKey(AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonPooledConnectionStringParameter)).ShouldBeFalse();
+    aspireEnvironment[AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonDirectConnectionStringParameter)].ShouldBe("from-secret");
+    return Task.CompletedTask;
+  }
+
+  public static Task AzureUserSecrets_Should_BeCopiedWhenTheEnvironmentIsUnset()
+  {
+    Dictionary<string, string> aspireEnvironment = [];
+    const string output =
+      "Azure:Location = eastus\nAzure:ResourceGroup = rg-example\nParameters:entra-client-secret = from-secret\n";
+    AspireDeploy.AddAzureUserSecretEnvironment(
+      aspireEnvironment,
+      AspireDeploy.CaseInsensitiveEnvironment(new Dictionary<string, string>
+      {
+        [AspireDeploy.AzureLocationVariable] = "westus",
+      }),
+      true,
+      output);
+
+    aspireEnvironment.ContainsKey(AspireDeploy.AzureLocationVariable).ShouldBeFalse();
+    aspireEnvironment[AspireDeploy.AzureResourceGroupVariable].ShouldBe("rg-example");
+    aspireEnvironment[AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.EntraClientSecretParameter)].ShouldBe("from-secret");
     return Task.CompletedTask;
   }
 
@@ -389,8 +430,9 @@ public partial class DeployParameters_Given_
     // Every AddParameter names a constants.cs identifier first, so the value-less scan below cannot miss a literal or named-argument form.
     NonIdentifierParameterPattern().Matches(program).ShouldBeEmpty();
 
-    // A value-less parameter in the kubernetes branch is required and forwarded. The aca-neon connection
-    // strings are value-less secrets outside that branch; Aspire reads them and dev deploy does not forward them.
+    // A value-less parameter in the kubernetes branch is required and forwarded on argv. The aca-neon
+    // connection strings are value-less secrets outside that branch. dev deploy copies them into the
+    // aspire process environment and does not put them on argv.
     Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
     Valueless(program).ShouldBe(
       [.. AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), .. AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon)],

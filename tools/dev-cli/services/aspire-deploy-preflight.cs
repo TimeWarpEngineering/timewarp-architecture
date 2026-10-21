@@ -19,7 +19,10 @@
 // AspireDeploy.Collect*Problems (tested). Kubernetes problems are collected into one report instead of
 // stopping at the first; aca needs `az login` and prints the
 // subscription and its source (Azure__SubscriptionId, else the AppHost user secret
-// Azure:SubscriptionId, else the az CLI's — only that last one is passed to Aspire, task 070-007);
+// Azure:SubscriptionId, else the az CLI's). Aspire deploy runs as Production and does not load user
+// secrets, so the user-secret subscription, location and resource group are copied into the child
+// environment when those variables are unset. An environment value is inherited and not rewritten
+// (task 070-007, task 317);
 // compose needs none of these and reports the container runtime Aspire will use
 // (ASPIRE_CONTAINER_RUNTIME). Which probes run is the verb's PreflightScope (task 287): dev open and
 // dev deploy migrate skip the aspire and helm checks (they run neither) and the registry probe, and keep
@@ -33,6 +36,8 @@ namespace DevCli.Services;
 /// <summary>
 /// Resolved preflight for one deploy target: the AppHost, the detail line printed before acting, and the environment
 /// variables the aspire process needs (aca: Azure__SubscriptionId when only the az CLI chose the subscription).
+/// Also the user-secret copies Production will not load itself: Azure location and resource group, the Entra
+/// client secret, and aca-neon's Neon connection strings (never printed, never on argv).
 /// </summary>
 internal sealed record DeployPreflight(
   string RepoRoot, string AppHostProject, DeployTarget Target, string Detail, IReadOnlyDictionary<string, string> AspireEnvironment,
@@ -147,18 +152,24 @@ internal static class AspireDeployPreflight
 
       string? environmentSubscription = Environment.GetEnvironmentVariable(AspireDeploy.AzureSubscriptionIdVariable);
       string? userSecretSubscription = null;
-      if (string.IsNullOrWhiteSpace(environmentSubscription))
+      if (secrets is null)
       {
-        CommandOutput? subscriptionSecrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
-        userSecretSubscription = AspireDeploy.ParseUserSecret(
-          subscriptionSecrets?.Success == true, subscriptionSecrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
+        secrets = await ProbeAsync("dotnet", AspireDeploy.BuildUserSecretsListArguments(appHostProject), cancellationToken);
       }
 
+      userSecretSubscription = AspireDeploy.ParseUserSecret(
+        secrets?.Success == true, secrets?.Stdout ?? "", AspireDeploy.AzureSubscriptionIdConfigurationKey);
       AzureSubscriptionChoice subscription = AspireDeploy.ChooseAzureSubscription(environmentSubscription, userSecretSubscription, account);
       if (subscription.PassToAspire)
       {
         aspireEnvironment[AspireDeploy.AzureSubscriptionIdVariable] = subscription.SubscriptionId;
       }
+
+      AspireDeploy.AddAzureUserSecretEnvironment(
+        aspireEnvironment,
+        AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()),
+        secrets?.Success == true,
+        secrets?.Stdout ?? "");
 
       detail = subscription.Detail;
       azureSubscriptionId = subscription.SubscriptionId;
@@ -203,6 +214,12 @@ internal static class AspireDeployPreflight
     if (secretProblems.Length > 0)
     {
       return FailReport(terminal, verb, secretProblems);
+    }
+
+    if (resolvedSecrets.Count > 0)
+    {
+      AspireDeploy.AddSecretParameterEnvironment(
+        aspireEnvironment, resolvedSecrets, AspireDeploy.CaseInsensitiveEnvironment(EnvironmentVariables()));
     }
 
     return new DeployPreflight(

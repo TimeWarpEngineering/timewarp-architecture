@@ -21,11 +21,14 @@
 // (ASPIRE_CONTAINER_RUNTIME, else docker); the verb itself calls no container CLI. For aca (task
 // 070-007), `az login` and the subscription with its source, printed: the Azure__SubscriptionId
 // environment variable, else the AppHost user secret Azure:SubscriptionId, else the az CLI's — only
-// that fallback is passed to `aspire deploy` as Azure__SubscriptionId, so it never overrides a
-// subscription the operator pinned.
-// aca-neon (task 317) uses the same Azure preflight and the same ACA environment. It does not
-// forward the Neon connection strings: those are secret parameters Aspire reads from user secrets
-// or Parameters__ environment variables, and a value found in appsettings is refused.
+// that fallback, and a user-secret subscription, are passed to `aspire deploy` as Azure__SubscriptionId.
+// An environment value is inherited and not rewritten, so the az CLI never overrides a subscription
+// the operator pinned. Production does not load AppHost user secrets, which is why the copy exists.
+// Azure:Location and Azure:ResourceGroup are copied the same way when unset.
+// aca-neon (task 317) uses the same Azure preflight and the same ACA environment. The Neon
+// connection strings are secret parameters. A value found in appsettings is refused. They are not
+// printed and not placed on the aspire command line. A user-secret value is copied into the aspire
+// process environment as Parameters__<name> because Production does not load user secrets.
 // Confirmation: --yes deploys with `--non-interactive`. Without --yes the plan (with the forwarded
 // parameters) is printed and the operator is asked; when stdin is not a terminal there is nobody to
 // ask, so it refuses instead of assuming yes; any answer but y/yes cancels with nothing run. aspire
@@ -45,7 +48,7 @@ namespace DevCli.Commands;
 [NuruRouteExample("deploy", Description = "Preflight, show the plan, ask, then aspire deploy the default target (compose)")]
 [NuruRouteExample("deploy --target kubernetes", Description = "Deploy the Helm chart to the current kubectl context (Helm 4.2+; Parameters:* from the AppHost appsettings.json, user secrets or env)")]
 [NuruRouteExample("deploy --target aca", Description = "Provision Azure Container Apps + Flexible Server (subscription: Azure__SubscriptionId, AppHost user secret, else the az CLI's; az login first)")]
-[NuruRouteExample("deploy --target aca-neon", Description = "Provision Azure Container Apps (min replicas 0) wired to Neon; the connection strings stay in AppHost user secrets and are not forwarded")]
+[NuruRouteExample("deploy --target aca-neon", Description = "Provision Azure Container Apps (min replicas 0) wired to Neon; connection strings stay off the command line (user secrets are copied into the aspire environment)")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Deploy without prompting (aspire deploy --non-interactive)")]
 internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 {

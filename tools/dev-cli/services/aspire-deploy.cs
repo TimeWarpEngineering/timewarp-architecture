@@ -11,14 +11,16 @@
 // Azure Container Apps (task 070-007): `aspire deploy` provisions with the Azure CLI credential, so
 // the preflight requires `az login` (`az account show` succeeds). Aspire reads the subscription from
 // the AppHost's configuration key Azure:SubscriptionId — the Azure__SubscriptionId environment
-// variable, or the AppHost's user secrets. The az CLI subscription is a FALLBACK, never an override:
-// the verb passes it to the aspire process as Azure__SubscriptionId only when neither of those is set
-// (an injected env var would beat the user secret), and the plan prints which source chose the
-// subscription. The user secret is read by wrapping the tool — `dotnet user-secrets list --project
-// <apphost csproj>` — never by locating the secret store; the selection itself (ChooseAzureSubscription)
-// is pure. A subscription Aspire remembered in its own deployment state is not consulted (the dev CLI
-// never inspects that state; see below). Location and resource group stay Aspire's
-// (Azure__Location / Azure__ResourceGroup, or its prompt). When `aspire destroy` has no record, the
+// variable, or the AppHost's user secrets. `aspire deploy --environment Production` does not load
+// user secrets (they load only when the host environment is Development), so a user secret is copied
+// into the child process as Azure__SubscriptionId. An Azure__SubscriptionId already in the environment
+// is inherited and not rewritten. The az CLI subscription is the fallback, copied the same way, and
+// never overrides a subscription the operator pinned. The plan prints which source chose it. The user
+// secret is read by wrapping `dotnet user-secrets list --project <apphost csproj>`, never by locating
+// the secret store; ChooseAzureSubscription is pure. A subscription Aspire remembered in its own
+// deployment state is not consulted (the dev CLI never inspects that state; see below). Azure:Location
+// and Azure:ResourceGroup user secrets are copied to Azure__Location and Azure__ResourceGroup when
+// those variables are unset; otherwise Aspire prompts. When `aspire destroy` has no record, the
 // manual removal is `az group delete` (az asks for confirmation) plus purging the soft-deleted Key
 // Vault: a deleted vault keeps its name reserved, and the Bicep derives the name from the resource
 // group, so a redeploy into a same-named group fails until it is purged.
@@ -65,14 +67,16 @@
 //
 // Forwarded parameters must be non-secret: the plan prints each value and it is visible in the aspire
 // process's argv. A secret deploy value (a password, a client secret) stays in the AppHost user secrets
-// or a Parameters__<name> environment variable, where Aspire reads it itself; never add one to
-// RequiredParameters, and never commit one to appsettings.json.
+// or a Parameters__<name> environment variable. Never add one to RequiredParameters, and never commit
+// one to appsettings.json. Deploy runs as Production, so a secret resolved from user secrets is copied
+// into the aspire process environment as Parameters__<name> (AddSecretParameterEnvironment). A value
+// already in the environment is left alone. The plan and argv never contain it.
 //
 // aca-neon (task 317) is an Azure Container Apps target with no Flexible Server. Its two Neon
 // connection strings are SecretParameters: resolved from the environment or AppHost user secrets,
 // refused when a copy is in appsettings, checked for shape, and stashed on the preflight for
-// dev deploy migrate. They are not forwarded and not printed. Destroying the resource group does
-// not delete the Neon project and there is no Key Vault to purge.
+// dev deploy migrate. They are copied into the aspire environment as above and not printed.
+// Destroying the resource group does not delete the Neon project and there is no Key Vault to purge.
 //
 // `dev deprovision` resolves the same parameters best-effort and forwards those that are set, so
 // `aspire destroy` sees the deployment's configuration if its pipeline resolves parameters; it never
@@ -163,6 +167,10 @@ internal static class AspireDeploy
   internal const string AzureSubscriptionIdVariable = "Azure__SubscriptionId";
   internal const string AzureSubscriptionIdConfigurationKey = "Azure:SubscriptionId";
   internal const string AzureResourceGroupVariable = "Azure__ResourceGroup";
+  internal const string AzureResourceGroupConfigurationKey = "Azure:ResourceGroup";
+  internal const string AzureLocationVariable = "Azure__Location";
+  internal const string AzureLocationConfigurationKey = "Azure:Location";
+  internal const string EntraClientSecretParameter = "entra-client-secret";
   internal const string PostgresKeyVaultTag = "postgres-kv";
 
   internal static readonly DeployTarget Compose = new("compose");
@@ -620,8 +628,9 @@ internal static class AspireDeploy
 
   /// <summary>
   /// Subscription for the aca deploy, in the AppHost's own precedence: <c>Azure__SubscriptionId</c> when set, else the
-  /// AppHost user secret <c>Azure:SubscriptionId</c> (both passed through untouched — Aspire reads them itself), else
-  /// the <c>az account show</c> one, which only then is handed to <c>aspire deploy</c> as <c>Azure__SubscriptionId</c>.
+  /// AppHost user secret <c>Azure:SubscriptionId</c>, else the <c>az account show</c> one. <see cref="AzureSubscriptionChoice.PassToAspire"/>
+  /// is true when the child must receive <c>Azure__SubscriptionId</c>: Production does not load user secrets, and the
+  /// az CLI value is not already in the environment. An environment value is inherited (<c>PassToAspire</c> false).
   /// </summary>
   internal static AzureSubscriptionChoice ChooseAzureSubscription(string? environmentValue, string? userSecretValue, AzureAccount account)
   {
@@ -632,10 +641,70 @@ internal static class AspireDeploy
 
     if (!string.IsNullOrWhiteSpace(userSecretValue))
     {
-      return new AzureSubscriptionChoice(userSecretValue.Trim(), $"Azure subscription: {userSecretValue.Trim()} from the AppHost user secret {AzureSubscriptionIdConfigurationKey} (az CLI is logged in to {account.Name})", PassToAspire: false);
+      return new AzureSubscriptionChoice(
+        userSecretValue.Trim(),
+        $"Azure subscription: {userSecretValue.Trim()} from the AppHost user secret {AzureSubscriptionIdConfigurationKey} (copied to {AzureSubscriptionIdVariable}; aspire deploy runs as {DeployEnvironment} and does not load user secrets; az CLI is logged in to {account.Name})",
+        PassToAspire: true);
     }
 
     return new AzureSubscriptionChoice(account.Id, $"Azure subscription: {account.Name} ({account.Id}) from `az account show` — neither {AzureSubscriptionIdVariable} nor the AppHost user secret {AzureSubscriptionIdConfigurationKey} is set", PassToAspire: true);
+  }
+
+  /// <summary>
+  /// Copies resolved secret values into <paramref name="aspireEnvironment"/> as <c>Parameters__&lt;name&gt;</c> when that
+  /// variable is unset. Deploy runs as <see cref="DeployEnvironment"/>, which does not load AppHost user secrets.
+  /// A variable already set is inherited and left alone. Nothing here is printed or placed on argv.
+  /// </summary>
+  internal static void AddSecretParameterEnvironment(
+    IDictionary<string, string> aspireEnvironment,
+    IReadOnlyList<ResolvedDeployParameter> secrets,
+    Func<string, string?> environment)
+  {
+    foreach (ResolvedDeployParameter secret in secrets)
+    {
+      CopyWhenUnset(aspireEnvironment, environment, ParameterEnvironmentVariable(secret.Name), secret.Value);
+    }
+  }
+
+  /// <summary>
+  /// Copies Azure location, resource group and the Entra client secret from AppHost user secrets when the matching
+  /// environment variable is unset. Same reason as <see cref="AddSecretParameterEnvironment"/>.
+  /// </summary>
+  internal static void AddAzureUserSecretEnvironment(
+    IDictionary<string, string> aspireEnvironment,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput)
+  {
+    CopyUserSecretWhenUnset(aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput, AzureLocationVariable, AzureLocationConfigurationKey);
+    CopyUserSecretWhenUnset(aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput, AzureResourceGroupVariable, AzureResourceGroupConfigurationKey);
+    CopyUserSecretWhenUnset(
+      aspireEnvironment, environment, userSecretsProbeSucceeded, userSecretsOutput,
+      ParameterEnvironmentVariable(EntraClientSecretParameter), ParameterConfigurationKey(EntraClientSecretParameter));
+  }
+
+  private static void CopyUserSecretWhenUnset(
+    IDictionary<string, string> aspireEnvironment,
+    Func<string, string?> environment,
+    bool userSecretsProbeSucceeded,
+    string userSecretsOutput,
+    string variable,
+    string configurationKey)
+  {
+    string? value = ParseUserSecret(userSecretsProbeSucceeded, userSecretsOutput, configurationKey);
+    if (value is not null)
+    {
+      CopyWhenUnset(aspireEnvironment, environment, variable, value);
+    }
+  }
+
+  private static void CopyWhenUnset(
+    IDictionary<string, string> aspireEnvironment, Func<string, string?> environment, string variable, string value)
+  {
+    if (string.IsNullOrWhiteSpace(environment(variable)))
+    {
+      aspireEnvironment[variable] = value;
+    }
   }
 
   /// <summary>Parses <c>helm version --short</c> output (e.g. <c>v4.2.0+g1a2b3c4</c>).</summary>

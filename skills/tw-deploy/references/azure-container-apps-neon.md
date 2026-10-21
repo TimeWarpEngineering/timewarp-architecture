@@ -14,9 +14,19 @@ starts the local Postgres container.
 |-------|----------------|-------|
 | Neon Free | $0 | Per project: 100 CU-hours (0.25 CU × 400 hours), autoscaling 0.25–2 CU, 1 GB storage, 5 GB public egress. Compute **suspends after 5 minutes**. That cannot be turned off. https://neon.com/docs/introduction/plans |
 | ACA consumption | $0 while you stay inside the monthly free grant | Container apps publish with **min replicas 0**, max replicas 1, 0.25 CPU, 0.5Gi. Idle replicas do not bill. https://azure.microsoft.com/pricing/details/container-apps/ |
-| Container registry | **not free** | Aspire's environment provisions **ACR Basic** (about $5 per month). This is the exception to a $0 bill. Deleting the resource group deletes the registry. |
+| Container registry | **not free** | Aspire's environment provisions **ACR Basic** (about $5 per month). This is the exception to a $0 bill. GitHub Container Registry cannot replace it; see [Why the registry stays ACR](#why-the-registry-stays-acr). Deleting the resource group deletes the registry. |
 | Log Analytics | usually inside the 5 GB/month free ingestion | The environment creates a workspace. A noisy app can exceed the free tier. |
 | Key Vault, Flexible Server | not provisioned | `aca-neon` does not declare them. |
+
+## Why the registry stays ACR
+
+Aspire 13.6.2 cannot push this environment's images to GitHub Container Registry (`ghcr.io`) or any other non-ACR registry, and it cannot take a registry password as the pull credential.
+
+`AzureContainerAppEnvironmentResource.ContainerRegistry` (package `Aspire.Hosting.Azure.AppContainers` 13.6.2) throws when the registry attached with `WithContainerRegistry` is not an `AzureContainerRegistryResource`:
+
+> The container registry configured for the Azure Container App Environment 'aca-env' is not an Azure Container Registry. Only Azure Container Registry resources are supported. Use '.WithAzureContainerRegistry()' to configure an Azure Container Registry.
+
+`AddContainerRegistry("ghcr", "ghcr.io")` creates a generic `ContainerRegistryResource`, which is the type that throw names. The container app's `registries` entry is the registry server plus `ContainerRegistryManagedIdentityId` (managed identity pull). There is no username or password secret for a GHCR credential. `ContainerRegistryInfrastructure` creates the registry at SKU Basic (`ContainerRegistrySkuName.Basic`) unless a private endpoint forces Premium. Azure Container Registry has no free tier, so Basic (about $5 per month) is the cost exception. ACR stays. It is not an opt-in beside GHCR, because GHCR is not a supported pull target for this publisher.
 
 ## Neon project
 
@@ -54,10 +64,16 @@ Host=<endpoint>.<region>.aws.neon.tech;Database=neondb;Username=<role>;Password=
 ## Where the secrets go
 
 Set them on the **AppHost** user secrets, or as environment variables for one shell. Do **not**
-commit them and do **not** put them in `appsettings.json`. `dev deploy` refuses a value found only
-in appsettings, and it does **not** forward these on the `aspire` command line (they would show up
-in the process list and in the plan). Aspire reads user secrets and `Parameters__*` itself. The
-pooled string is the web-server container-app secret `ConnectionStrings__postgres-db` (`secretRef`
+commit them and do **not** put them in `appsettings.json`. `dev deploy` refuses a value found in
+appsettings. It does **not** put these on the `aspire` command line (they would show up in the
+process list and in the plan), and the plan does not print them.
+
+`aspire deploy` runs with `--environment Production`. That AppHost loads user secrets only when
+the environment is Development, so Production does not see `dotnet user-secrets`. `dev deploy`
+copies a user-secret value into the aspire process as `Parameters__<name>` when that variable is
+not already set. An environment variable you set yourself is inherited and wins.
+
+The pooled string is the web-server container-app secret `ConnectionStrings__postgres-db` (`secretRef`
 to an `@secure()` parameter). The direct string is not published into Azure. `dev deploy migrate`
 reads it from the same user secrets and passes it to the bundle on your machine.
 
@@ -82,9 +98,17 @@ The names match the AppHost parameters `neon-pooled-connection-string` and
 started by `dev deploy migrate` on your machine, receives the direct value as its `--connection`.
 Publish output has no `web-migrations` container and no direct parameter.
 
-Subscription and resource group are the same as `aca`: `Azure__SubscriptionId` /
-`Azure:SubscriptionId`, and `Azure__ResourceGroup` / `Azure:ResourceGroup`, or Aspire's prompt for
-the group on deploy.
+Subscription, location and resource group follow the same rule. An `Azure__SubscriptionId`,
+`Azure__Location` or `Azure__ResourceGroup` environment variable is inherited. Otherwise `dev deploy`
+copies the AppHost user secrets `Azure:SubscriptionId`, `Azure:Location` and `Azure:ResourceGroup`
+into those variables. With none of those set, the subscription falls back to `az account show` and
+Aspire prompts for the location and resource group.
+
+The published Entra client secret cannot be empty: Azure Container Apps rejects an empty
+container-app secret. When `Parameters:entra-client-secret` is unset, the AppHost uses the
+placeholder `unused` (Entra stays off; this is not a credential). Set that user secret, or
+`Parameters__entra-client-secret`, when Entra is on. `dev deploy` copies the user secret the same
+way as the Neon strings.
 
 ## Deploy, migrate, open
 
