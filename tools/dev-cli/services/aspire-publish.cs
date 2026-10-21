@@ -19,6 +19,11 @@
 // (not the linter) is the gate. It runs after the safety suite passes, as before task 367.
 // Runtime neutrality (task 277): `aspire publish` only writes files — no image build, no deploy —
 // and nothing here calls a container CLI or a cluster.
+// The Aspire CLI must be at least 13.6 (refused below that). A CLI older than <AspireVersion>
+// in Directory.Packages.props warns, with `dotnet tool update -g Aspire.Cli`, and publish continues.
+// PublishAndCheckAsync and PublishFilesAsync both check. dev deploy migrate skips the aspire
+// preflight, so PublishFilesAsync is the check on that path. dev deploy already warned in
+// preflight, so that call passes warnWhenOlder: false.
 // Generated output is CI-only (never committed): artifacts/ is git-ignored; workflow.yml uploads it.
 // Task 393: `dev deploy` and a `dev deploy migrate` whose artifact is missing call PublishFilesAsync,
 // which is this pipeline's aspire publish only. The safety suite stays on `dev publish`.
@@ -49,10 +54,17 @@ internal static class AspirePublish
     }
 
     string command = $"dev publish {(targets.Count == 1 ? targets[0].Name : "all")}";
-    string? versionError = await AspireCli.ValidateVersionAsync(repoRoot, MinimumCliVersion, command, cancellationToken);
+    AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
+      repoRoot, MinimumCliVersion, command, cancellationToken);
+    string? versionError = report.BlockingError(enforceMinimum: true);
     if (versionError is not null)
     {
       return Fail(terminal, $"Error: {versionError}");
+    }
+
+    if (report.Warning is not null)
+    {
+      terminal.WriteLine(report.Warning.Yellow());
     }
 
     List<string> outputDirectories = [];
@@ -89,6 +101,8 @@ internal static class AspirePublish
   /// Writes one target's publish output (wiping the directory first). Does not run the safety suite.
   /// <paramref name="environment"/> is copied onto the aspire process for values the AppHost reads while
   /// publishing (the passkey host). Do not put secrets in it; they belong on <c>aspire deploy</c> only.
+  /// <paramref name="warnWhenOlder"/> prints the lag warning. <c>dev deploy</c> passes false because
+  /// preflight already printed it.
   /// Returns the aspire exit code, or 1 when the CLI version or the target name is refused.
   /// </summary>
   internal static async Task<int> PublishFilesAsync(
@@ -96,7 +110,8 @@ internal static class AspirePublish
     string repoRoot,
     DeployTarget deployTarget,
     CancellationToken cancellationToken,
-    IReadOnlyDictionary<string, string>? environment = null)
+    IReadOnlyDictionary<string, string>? environment = null,
+    bool warnWhenOlder = true)
   {
     AspirePublishTarget? target = AspirePublishTargets.All.FirstOrDefault(candidate =>
       string.Equals(candidate.Name, deployTarget.Name, StringComparison.OrdinalIgnoreCase));
@@ -106,11 +121,18 @@ internal static class AspirePublish
       return 1;
     }
 
-    string? versionError = await AspireCli.ValidateVersionAsync(repoRoot, MinimumCliVersion, $"dev publish {target.Name}", cancellationToken);
+    AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
+      repoRoot, MinimumCliVersion, $"dev publish {target.Name}", cancellationToken);
+    string? versionError = report.BlockingError(enforceMinimum: true);
     if (versionError is not null)
     {
       Fail(terminal, $"Error: {versionError}");
       return 1;
+    }
+
+    if (warnWhenOlder && report.Warning is not null)
+    {
+      terminal.WriteLine(report.Warning.Yellow());
     }
 
     string outputDirectory = Path.Combine(repoRoot, target.OutputDirectory);

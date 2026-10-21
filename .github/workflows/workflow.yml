@@ -223,11 +223,19 @@ jobs:
       - name: Trust HTTPS dev certificate
         run: dotnet dev-certs https --trust || true
 
-      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes, aca and aca-neon), which needs the Aspire CLI. Pinned to the
-      # AppHost SDK version (Aspire.AppHost.Sdk in aspire-app-host.csproj); bump both together.
+      # `dev workflow --phase publish` runs `dev publish all` (compose, kubernetes, aca and aca-neon), which needs the Aspire CLI.
+      # The version is <AspireVersion> in Directory.Packages.props — the same property the AppHost SDK and Aspire packages use.
       - name: Install Aspire CLI
         if: matrix.name == 'publish'
-        run: dotnet tool install --global Aspire.Cli --version 13.6.2
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/.*<AspireVersion>\([^<]*\)<\/AspireVersion>.*/\1/p' Directory.Packages.props)
+          if [ -z "$version" ]; then
+            echo "Directory.Packages.props has no <AspireVersion>."
+            exit 1
+          fi
+          echo "Installing Aspire.Cli $version from Directory.Packages.props"
+          dotnet tool install --global Aspire.Cli --version "$version"
 
       - name: Run CI Pipeline
         run: |

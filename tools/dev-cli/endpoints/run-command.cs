@@ -12,10 +12,11 @@
 // building, profile validation and the version guard live in services/aspire-run.cs (the
 // `aspire --version` probe in services/aspire-cli.cs, shared with dev db nuke) so
 // dev-cli-tests gate them without launching Aspire. With the option, dev run reads the
-// AppHost's launchSettings.json and rejects an unknown name with the declared list, then checks
-// `aspire --version` and refuses a pre-13.6 CLI with the update command (never drops the
-// option silently). Without the option, the arguments are exactly the pre-option ones and no
-// version probe runs, so any CLI version still works.
+// AppHost's launchSettings.json and rejects an unknown name with the declared list, then
+// refuses a pre-13.6 CLI with the update command (never drops the option silently). Every
+// dev run, with or without the option, warns when the installed CLI is older than
+// <AspireVersion> in Directory.Packages.props and prints `dotnet tool update -g Aspire.Cli`.
+// A CLI below 13.6 is still allowed when --launch-profile is absent.
 //
 // Environment precedence: dev run still sets ASPNETCORE_ENVIRONMENT=Development on the aspire
 // process (legacy Run.ps1 parity), but the selected launch profile's `environmentVariables`
@@ -56,11 +57,8 @@ internal sealed class RunCommand : ICommand<Unit>
       LaunchProfile = command.LaunchProfile;
 
       if (!FindRepoRoot()) return Unit.Value;
-      if (LaunchProfile is not null)
-      {
-        if (!ValidateLaunchProfile()) return Unit.Value;
-        if (!await ValidateCliVersionAsync()) return Unit.Value;
-      }
+      if (LaunchProfile is not null && !ValidateLaunchProfile()) return Unit.Value;
+      if (!await CheckCliVersionAsync()) return Unit.Value;
 
       await WarnIfXaiKeyMissingAsync();
       await RunAsync();
@@ -95,11 +93,22 @@ internal sealed class RunCommand : ICommand<Unit>
       return error is null || Fail($"Error: {error}");
     }
 
-    private async Task<bool> ValidateCliVersionAsync()
+    private async Task<bool> CheckCliVersionAsync()
     {
-      string? error = await AspireCli.ValidateVersionAsync(
+      AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
         RepoRoot, AspireRun.MinimumLaunchProfileVersion, "--launch-profile", Ct);
-      return error is null || Fail($"Error: {error}");
+      string? error = report.BlockingError(LaunchProfile is not null);
+      if (error is not null)
+      {
+        return Fail($"Error: {error}");
+      }
+
+      if (report.Warning is not null)
+      {
+        Terminal.WriteLine(report.Warning.Yellow());
+      }
+
+      return true;
     }
 
     private bool Fail(string message)

@@ -18,7 +18,9 @@
 //   4. smoke the two anonymous paths (/web-server/alive, /api/identity/entra/offered), then print
 //      the URL. Smoke retries a cold start. It never requests /api/health.
 // `dev publish`, `dev deploy migrate`, and `dev open` stay the one-step verbs.
-// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+; for kubernetes, Helm 4.2+, a
+// Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+ (refused below that; a CLI older
+// than Directory.Packages.props <AspireVersion> warns once, and the publish step does not repeat it);
+// for kubernetes, Helm 4.2+, a
 // current kubectl context whose API answers, which is printed — any context works, a local kind cluster
 // included; for a kind context the kind cluster exists and the registry at registry-endpoint answers;
 // this verb never creates a cluster. Deploy parameters (tasks 286, 288): every value-less AppHost parameter of
@@ -141,7 +143,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
           {
             Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Publish, preflight.Target));
             int publishExit = await AspirePublish.PublishFilesAsync(
-              Terminal, preflight.RepoRoot, preflight.Target, stepCancellation, PublishEnvironment(preflight));
+              Terminal, preflight.RepoRoot, preflight.Target, stepCancellation, PublishEnvironment(preflight),
+              warnWhenOlder: false);
             if (publishExit != 0)
             {
               Stop(DeployPipeline.FailureMessage(DeployPipeline.Publish, preflight.Target, publishExit), publishExit);

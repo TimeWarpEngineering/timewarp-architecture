@@ -5,7 +5,8 @@
 
 #region Design
 // Kept apart from aspire-deploy.cs so that file stays pure for dev-cli-tests (same split as
-// aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version`, `helm version --short`,
+// aspire-cli.cs / aspire-run.cs). Probes only read: `aspire --version` (refuse below 13.6; warn
+// when older than Directory.Packages.props <AspireVersion>), `helm version --short`,
 // `kubectl config current-context`, `kubectl get --raw /version`, `kind get clusters`, an HTTP GET of
 // the registry's /v2/, `az account show`, `dotnet user-secrets list --project <apphost>`, and the
 // AppHost's appsettings.Production.json / appsettings.json (read as text; parsed by the pure half). Each process
@@ -77,12 +78,20 @@ internal static class AspireDeployPreflight
       return Fail(terminal, $"Error: AppHost project not found at {appHostProject}.");
     }
 
-    string? versionError = scope.RequireAspire
-      ? await AspireCli.ValidateVersionAsync(repoRoot, AspireDeploy.MinimumCliVersion, $"`{verb}`", cancellationToken)
-      : null;
-    if (versionError is not null)
+    if (scope.RequireAspire)
     {
-      return Fail(terminal, $"Error: {versionError}");
+      AspireCli.AspireCliVersionReport report = await AspireCli.ValidateVersionAsync(
+        repoRoot, AspireDeploy.MinimumCliVersion, $"`{verb}`", cancellationToken);
+      string? versionError = report.BlockingError(enforceMinimum: true);
+      if (versionError is not null)
+      {
+        return Fail(terminal, $"Error: {versionError}");
+      }
+
+      if (report.Warning is not null)
+      {
+        terminal.WriteLine(report.Warning.Yellow());
+      }
     }
 
     string detail;

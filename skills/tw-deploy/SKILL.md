@@ -80,6 +80,10 @@ dev publish all                             # all four publishes, then one safet
   `docker compose up` against a real environment. A deploy is run by an operator who has chosen
   the target, the context and the parameter values, with `dev deploy` (below).
 
+## Aspire CLI version
+
+The installed `aspire` CLI must match `<AspireVersion>` in `Directory.Packages.props`. The AppHost SDK, the `Aspire.*` pins, and the CI `Aspire.Cli` install read it. `dev run`, `dev publish`, and `dev deploy` warn when the CLI is older and print `dotnet tool update -g Aspire.Cli`. A CLI below 13.6 is still refused. The same or a newer CLI is left alone.
+
 ## Deploying
 
 The first deploy is one command. It publishes (so the migrations bundle exists), deploys, migrates
@@ -187,7 +191,8 @@ dev deprovision --target aca-neon           # aspire destroy the resource group;
   secrets, so `dev deploy` copies a user-secret value into the aspire environment when that
   variable is unset. Never commit a secret in `appsettings.json`.
 - **Preflight runs before `aspire` and reports every problem at once**, then exits non-zero with
-  nothing run: Aspire CLI ≥ 13.6; for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
+  nothing run: Aspire CLI ≥ 13.6, and a warning when that CLI is older than `<AspireVersion>`
+  (see Aspire CLI version); for kubernetes, Helm ≥ 4.2, a current kubectl context (printed —
   check it) whose API answers (`kubectl get --raw /version`), every required parameter set (each
   missing one is listed with the command that sets it), and for a kind context (`kind-<cluster>`)
   that `kind get clusters` lists the cluster and the registry at `registry-endpoint` answers its

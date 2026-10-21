@@ -1,4 +1,8 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.2">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Version is <AspireVersion> in Directory.Packages.props. The SDK resolver expands the property;
+       the Sdk attribute form (Aspire.AppHost.Sdk/$(AspireVersion)) does not. -->
+  <Sdk Name="Aspire.AppHost.Sdk" Version="$(AspireVersion)" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
