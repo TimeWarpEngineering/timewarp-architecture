@@ -73,10 +73,23 @@ ganda repo audit
 
 **Not in scope:** re-running the GitHub `ci (publish)` and `ci (playwright)` jobs. That proof is the PR after this branch is pushed.
 
+### Review disposition
+
+- **Outcome:** clean. 1 round, effort 1, roster `general`.
+- **Counts (final):** bug 0, suggestion 0, nit 0. All open, fixed, and wontfix counts are 0.
+- **Reviewer re-verified:**
+  - net10.0 and net11.0 both resolve `bin/Release/net11.0/timewarp-architecture-convention-analyzers.dll` as `Analyzer`.
+  - The `timewarp-contracts` build uses one analyzer project instance.
+  - `./bin/dev build` has one `convention-analyzers ->` line, 0 warnings, and 0 errors.
+- **Not re-run by the reviewer:** `dev template-smoke` and `ganda repo audit`. These rely on the implementer's report.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`
+
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implementation: 2026-10-22. Traced CS8034 to the net10.0 `SetTargetFramework` on the convention-analyzer reference and stopped that second build.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-21T20:31:45Z
+- Review oracle: claude-opus-5-5 (ganda task work headless, tw-implementation-review), effort 1, roster general, session id not exposed. Disposition clean, round 1, 2026-10-22.
 
 ## Notes
 
