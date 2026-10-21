@@ -1,5 +1,5 @@
 #region Purpose
-// Shared xAI chat constants: configuration keys, the default model, and the user-secrets command.
+// Shared xAI chat constants: configuration keys, the default model, and the setup hint.
 #endregion
 
 #region Design
@@ -12,11 +12,14 @@
 // reference that server type. TWA0024 constant-folds the attribute against the server AddPolicy.
 // The relay accepts identity-session and mock-identity-session only. Agent-token is omitted so
 // an agent bearer cannot spend the Grok key.
+// SetupHint is the text Ask shows when no key is configured. Development returns SetupCommand.
+// Every other environment returns DeployedSetupHint, which names XAI__ApiKey and does not include
+// the user-secrets id. Task 398 should append Admin → AI to DeployedSetupHint when that page exists.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
 
-/// <summary>Configuration keys and the development setup command for the xAI relay.</summary>
+/// <summary>Configuration keys and the setup hint for the xAI relay.</summary>
 public static class XaiChatDefaults
 {
   /// <summary>Configuration section. Environment variable prefix is <c>XAI__</c>.</summary>
@@ -50,11 +53,23 @@ public static class XaiChatDefaults
   public const string UserSecretsId = "0e53fdd3-6f93-4d5a-9c86-040621f7929e";
 
   /// <summary>
-  /// Exact pwsh command shown when no key is configured. <c>--id</c> works from any directory;
-  /// the old repo-relative <c>--project</c> path failed outside the repo root (task 290).
+  /// Exact pwsh command shown in Development when no key is configured. <c>--id</c> works from any
+  /// directory; the old repo-relative <c>--project</c> path failed outside the repo root (task 290).
   /// </summary>
   public const string SetupCommand =
     "dotnet user-secrets set \"XAI:ApiKey\" \"<your-xai-key>\" --id " + UserSecretsId;
+
+  /// <summary>
+  /// Shown outside Development. Names the environment variable. Does not include the user-secrets id.
+  /// </summary>
+  public const string DeployedSetupHint =
+    "Set XAI__ApiKey as an environment variable or a container-app secret.";
+
+  /// <summary>
+  /// Development keeps <see cref="SetupCommand"/>. Every other environment gets <see cref="DeployedSetupHint"/>.
+  /// </summary>
+  public static string SetupHint(bool development) =>
+    development ? SetupCommand : DeployedSetupHint;
 
   /// <summary>Template default: chats are not recorded until a deployment sets XAI:RecordChats.</summary>
   public const bool RecordChats = false;

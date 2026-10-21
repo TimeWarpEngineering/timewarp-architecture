@@ -28,6 +28,8 @@ namespace TimeWarp.Architecture.Features.AgentChats
 {
 
   using System.Net.Http.Json;
+  using Microsoft.Extensions.FileProviders;
+  using Microsoft.Extensions.Hosting;
   using OneOf;
   using Shouldly;
   using TimeWarp.Architecture.Abstractions;
@@ -55,7 +57,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
           new ToolCall { Name = "page_context", CallId = "call-1", ArgumentsJson = "{}" }
         ]
       });
-      Handler handler = new(new FixedPrincipal(), upstream, new AgentChatAdmission());
+      Handler handler = new(new FixedPrincipal(), upstream, new AgentChatAdmission(), Development());
 
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(UserTurn(), CancellationToken.None);
 
@@ -67,7 +69,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     public static async Task Missing_Key_Returns_Setup_Command()
     {
-      Handler handler = new(new FixedPrincipal(), new RecordingUpstream(configured: false), new AgentChatAdmission());
+      Handler handler = new(new FixedPrincipal(), new RecordingUpstream(configured: false), new AgentChatAdmission(), Development());
 
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(UserTurn(), CancellationToken.None);
 
@@ -77,10 +79,28 @@ namespace TimeWarp.Architecture.Features.AgentChats
       result.AsT1.Title.ShouldBe("AI not configured");
     }
 
+    public static async Task Missing_Key_Outside_Development_Does_Not_Name_User_Secrets()
+    {
+      Handler handler = new(
+        new FixedPrincipal(),
+        new RecordingUpstream(configured: false),
+        new AgentChatAdmission(),
+        new NamedHostEnvironment("Production"));
+
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(UserTurn(), CancellationToken.None);
+
+      result.IsT1.ShouldBeTrue();
+      string detail = result.AsT1.Detail!;
+      detail.ShouldBe(XaiChatDefaults.DeployedSetupHint);
+      detail.ShouldNotContain(XaiChatDefaults.UserSecretsId);
+      detail.ShouldNotContain("user-secrets");
+      detail.ShouldContain("XAI__ApiKey");
+    }
+
     public static async Task Anonymous_Returns_401()
     {
       RecordingUpstream upstream = new(new Response { Text = "nope" });
-      Handler handler = new(new FixedPrincipal(null), upstream, new AgentChatAdmission());
+      Handler handler = new(new FixedPrincipal(null), upstream, new AgentChatAdmission(), Development());
 
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(UserTurn(), CancellationToken.None);
 
@@ -93,7 +113,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
     {
       RecordingUpstream upstream = new(new Response { Text = "ok" });
       using AgentChatAdmission admission = new();
-      Handler handler = new(new FixedPrincipal(), upstream, admission);
+      Handler handler = new(new FixedPrincipal(), upstream, admission, Development());
       for (int index = 0; index < MaxRequestsPerMinute; index++)
       {
         OneOf<Response, SharedProblemDetails> ok = await handler.Handle(UserTurn(), CancellationToken.None);
@@ -105,6 +125,8 @@ namespace TimeWarp.Architecture.Features.AgentChats
       denied.IsT1.ShouldBeTrue();
       denied.AsT1.Status.ShouldBe(429);
     }
+
+    private static NamedHostEnvironment Development() => new("Development");
 
     private static Command UserTurn() => new()
     {
@@ -161,6 +183,17 @@ namespace TimeWarp.Architecture.Features.AgentChats
         LastCommand = command;
         return Task.FromResult<OneOf<Response, SharedProblemDetails>>(Reply!);
       }
+    }
+
+    private sealed class NamedHostEnvironment(string environmentName) : IHostEnvironment
+    {
+      public string EnvironmentName { get; set; } = environmentName;
+
+      public string ApplicationName { get; set; } = "tests";
+
+      public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+      public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
   }
 

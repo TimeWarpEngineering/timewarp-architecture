@@ -24,6 +24,8 @@
 // (task 147-006). RolePermissionGrant (identity.role_permissions) is the durable
 // IRolePermissionStore backend (task 182-001). SiteSettings (identity.site_settings) is the
 // durable ISiteSettingsStore backend (task 219-006) — singleton row, store-CAS, not IAggregateRoot.
+// DataProtectionKey (schema "data_protection", table "keys") is the ASP.NET key ring. It is not an
+// aggregate. PostgresDbModule persists keys here only when a connection string is configured.
 // Connection setup lives in PostgresDbModule, not OnConfiguring, so the context stays
 // configuration-agnostic.
 // Aggregate enforcement (DomainInvariantsGuard, EntityVersion.Next, child→root resolution,
@@ -50,6 +52,7 @@
 
 namespace TimeWarp.Architecture.Persistence;
 
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.AgentLinks.Domain;
@@ -59,9 +62,11 @@ using TimeWarp.Architecture.Features.Profiles.Domain;
 using TimeWarp.Foundation.Persistence;
 using TimeWarp.Identity;
 
-public sealed partial class PostgresDbContext : AggregateDbContext
+public sealed partial class PostgresDbContext : AggregateDbContext, IDataProtectionKeyContext
 {
   public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
+
+  public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
   public DbSet<Profile> Profiles => Set<Profile>();
   public DbSet<FeedbackItem> FeedbackItems => Set<FeedbackItem>();

@@ -9,10 +9,13 @@
 // The notice settings are read from XaiChatOptions per request. A blank notice falls back to
 // XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
 // goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
+// SetupCommand is the environment's setup hint: the user-secrets command in Development, and the
+// XAI__ApiKey hint in every other environment.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
 
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using static TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration;
 
@@ -25,18 +28,21 @@ public sealed class GetAgentChatConfiguration
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IAgentChatUpstream Upstream;
     private readonly IOptions<XaiChatOptions> Options;
+    private readonly IHostEnvironment Environment;
 
     /// <summary>Creates the handler.</summary>
     public Handler
     (
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IAgentChatUpstream upstream,
-      IOptions<XaiChatOptions> options
+      IOptions<XaiChatOptions> options,
+      IHostEnvironment environment
     )
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       Upstream = upstream;
       Options = options;
+      Environment = environment;
     }
 
     /// <summary>Returns configured, the setup command, and the model id.</summary>
@@ -59,7 +65,7 @@ public sealed class GetAgentChatConfiguration
       return new Response
       {
         Configured = configured,
-        SetupCommand = XaiChatDefaults.SetupCommand,
+        SetupCommand = XaiChatDefaults.SetupHint(Environment.IsDevelopment()),
         Model = configured ? Upstream.Model : null,
         RecordChats = options.RecordChats,
         PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)

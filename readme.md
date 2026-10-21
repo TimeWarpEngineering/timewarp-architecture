@@ -42,8 +42,10 @@ dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id 0e53fdd3-6f93-4d5a-9c
 ```
 
 The `--id` is web-server's `UserSecretsId`, so the command works from any directory.
-`dev run` still starts when the key is missing and prints that command. Ask stays visible and
-shows the same command until the key is set. `XAI:Model` overrides the default `grok-4.7`.
+`dev run` still starts when the key is missing and prints that command. In Development, Ask
+stays visible and shows the same command until the key is set. Any other environment names
+`XAI__ApiKey` (an environment variable or a container-app secret) and does not show the
+user-secrets id. `XAI:Model` overrides the default `grok-4.7`.
 
 ## Content
 

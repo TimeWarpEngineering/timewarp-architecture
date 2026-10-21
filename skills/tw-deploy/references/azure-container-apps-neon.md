@@ -181,7 +181,9 @@ curl -fsS "https://<ingress-fqdn>/api/identity/entra/offered"
 
 min replicas 0 means a quiet app has no container and no probe traffic. Neon suspends on its own
 5 minutes after the last connection. The next request pays a cold start (container, then Neon).
-Do not add a health check that opens Postgres on a timer.
+Do not add a health check that opens Postgres on a timer. A signed-in cookie still validates
+after that idle period because the Data Protection key ring is the Postgres table
+`data_protection.keys`, not the container disk. See [Data Protection key ring](../SKILL.md#data-protection-key-ring).
 
 ## Extensions
 

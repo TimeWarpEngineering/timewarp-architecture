@@ -53,7 +53,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
 
   public CatalogAgentReadiness ChatReadiness { get; private set; }
 
-  public string ChatSetupCommand { get; private set; } = XaiChatDefaults.SetupCommand;
+  public string ChatSetupCommand { get; private set; } = XaiChatDefaults.DeployedSetupHint;
 
   public string? ChatModel { get; private set; }
 
@@ -144,7 +144,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     PendingToolName = null;
     PendingArgumentsJson = null;
     ChatReadiness = CatalogAgentReadiness.Unknown;
-    ChatSetupCommand = XaiChatDefaults.SetupCommand;
+    ChatSetupCommand = XaiChatDefaults.DeployedSetupHint;
     ChatModel = null;
     ChatProblem = null;
     IsPanelOpen = false;
