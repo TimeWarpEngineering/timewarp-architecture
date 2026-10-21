@@ -149,3 +149,7 @@ Checked. Aspire 13.6.2 cannot push this environment's images to `ghcr.io` or tak
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8. Fix pass landed 2026-10-21.
 - Round 2: Done
+
+## Blocked
+
+- 2026-10-21: PR #544 (head 35868444e) CI `template-smoke` failed: three IDE2003 errors (blank line required between block and subsequent statement) in source/container-apps/aspire/projects/aspire-app-host/program.cs lines 801, 805, 809. Job: https://github.com/TimeWarpEngineering/timewarp-architecture/actions/runs/39564585663/job/119103759956. Resuming with `ganda task work 317 --yes` so the walk fixes and pushes it.
