@@ -34,6 +34,8 @@ The Ask "not configured" hint, in Development and elsewhere, points at Admin →
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Implemented the admin key on the existing `settings.write` gate. Storage is a named protected secret (`site.xai.api-key`), not a SiteSettings column, so task 399 can add another row.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-21T22:07:45Z
+- Review oracle round 1: claude-opus-5-5 (ganda task work, headless), effort 3, roster general. The pass was split across read-only subagents adc95486e2571e8f2 (server) and a7d9ef2d146ecc994 (SPA and tests). 12 findings are open (4 bug, 4 suggestion, 4 nit), so a fix pass is needed. 2026-10-22
 
 ## Results
 
@@ -61,6 +63,15 @@ ganda repo audit
 ```
 
 **Expect:** `XaiApiKeyAdmin_` passes 1. Anonymous is 401, a member is 403, the admin response suffix is `aaaa` then `bbbb`, the JSON has no `apiKey` property, the ciphertext does not contain the plaintext, a second host unprotects the replacement, a host `XAI:ApiKey` is what Ask resolves and PUT returns 409, and DELETE leaves Ask with no key. The audit lines are `set`, `replace`, and `clear` plus the principal id. `XaiChatUpstream_Given_` passes 10. `SiteXaiApiKey_Given_` passes 3. `XaiApiKeyStatus_Given_` passes 2. Hint filters pass 6 and 5, and the Development hint contains `Admin → AI` after the user-secrets command. Template smoke prints `Template smoke SUCCEEDED` for SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, and SmokeNoYarp. Audit prints `Repository passes all audit checks.`
+
+### Review
+
+- Round 1 (effort 3, general): 4 bug, 4 suggestion, and 4 nit findings, all open (M1–M12). There is no disposition yet. A fix pass is pending on this id.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- Misread (review round 1): the Goal says the without-postgres behavior is "the decision already written on this task". The checklist item reads "Without `postgres`: decide with Steve (host configuration only, Admin shows how to set it)". That parenthetical is a proposal awaiting Steve, not a recorded decision, and no Note records Steve deciding it. The implementer built the proposal, which is reasonable, but it should have been surfaced as an open operator confirmation instead of described as decided. Separately, the restatement says the no-storage Admin page "only shows how to set the host value". The implementation also tells the admin to "open Admin → AI" there (review M2). why: review oracle round 1, 2026-10-22
 
 ## Notes
 
