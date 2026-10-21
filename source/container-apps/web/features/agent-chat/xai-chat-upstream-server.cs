@@ -123,7 +123,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
 
     if (client is null)
     {
-      return AgentChatProblems.NotConfigured();
+      return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
     }
 
     ChatOptions chatOptions;

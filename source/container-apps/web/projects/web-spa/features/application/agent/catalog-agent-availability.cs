@@ -6,7 +6,7 @@
 // Task 271 treated "an IChatClient is registered" as configured, which hid Ask in the template.
 // Task 289 always registers a relay. Configured means the server status probe said so. Until
 // that probe finishes the readiness is Unknown. Task 293: only a server answer of "no key" is
-// NotConfigured and shows the pwsh user-secrets command. A 401 is Unauthenticated and any other
+// NotConfigured and shows that environment's setup hint. A 401 is Unauthenticated and any other
 // failure is Error with the problem text (ChatReadinessProbe). Ask stays visible in every state.
 // WebMCP does not consult this.
 #endregion
@@ -23,12 +23,12 @@ public static class CatalogAgentAvailability
     return state.ChatReadiness;
   }
 
-  /// <summary>Setup command from the probe, or the constant when the probe has not stored one.</summary>
+  /// <summary>Setup hint from the probe, or the deployed hint when the probe has not stored one.</summary>
   public static string SetupCommand(AgentSurfaceState state)
   {
     ArgumentNullException.ThrowIfNull(state);
     return string.IsNullOrWhiteSpace(state.ChatSetupCommand)
-      ? XaiChatDefaults.SetupCommand
+      ? XaiChatDefaults.DeployedSetupHint
       : state.ChatSetupCommand;
   }
 

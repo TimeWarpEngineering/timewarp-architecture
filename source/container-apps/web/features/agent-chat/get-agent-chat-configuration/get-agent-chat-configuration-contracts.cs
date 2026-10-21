@@ -5,7 +5,9 @@
 #region Design
 // The WASM client cannot see user-secrets. This GET is the only signal Ask uses. Configured is
 // true when a key is present, or when the Development/Testing fake upstream is explicitly on.
-// SetupCommand is always the same pwsh line so a failed probe can fall back to the constant.
+// SetupCommand is the environment's setup hint. The live handler returns SetupHint. The mock
+// factory stays the Development command. The client falls back to DeployedSetupHint when the
+// server omits the text, so a blank answer never shows the user-secrets id.
 // Model is the configured id when Configured is true, and null otherwise.
 // RecordChats, PrivacyNotice, and PrivacyUrl come from XAI configuration (task 347); SupportUrl and
 // CredentialLifetimeMinutes are template settings. The notice is shown only when RecordChats is

@@ -44,6 +44,11 @@
 // call PostgresRetryPolicy.Configure with those bounds. Every other target leaves both unset.
 // The connection Timeout stays in the connection string, not here. The design-time factory still
 // does not use this retry.
+// Data protection keys are stored on PostgresDbContext (schema data_protection, table keys) when a
+// connection string is present. The application name is DataProtectionDefaults.ApplicationName, the
+// template source name, so every replica of one generated app shares a ring and two apps do not.
+// An unconfigured connection leaves the ASP.NET file-system ring. The key XML is not wrapped with
+// a certificate or Key Vault.
 // Logging (task 358): this module never calls LogTo or EnableSensitiveDataLogging. EF Core SQL
 // (Microsoft.EntityFrameworkCore.Database.Command) is Warning in every committed appsettings file;
 // a developer opts in per machine with Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command
@@ -53,6 +58,7 @@
 
 namespace TimeWarp.Architecture.Modules;
 
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using TimeWarp.Architecture.Authorization;
@@ -90,6 +96,11 @@ public sealed partial class PostgresDbModule : IModule
     (
       dbContextOptionsBuilder => dbContextOptionsBuilder.UseNpgsql(connectionString, NpgsqlOptions(configuration))
     );
+
+    serviceCollection
+      .AddDataProtection()
+      .SetApplicationName(DataProtectionDefaults.ApplicationName)
+      .PersistKeysToDbContext<PostgresDbContext>();
 
     // Durable principal + principal→role + profile stores only when EF is registered
     // (skip-mode keeps in-memory).

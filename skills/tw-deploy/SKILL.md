@@ -352,6 +352,19 @@ after for its report.
   is set, otherwise in Postgres (`feedback.feedback_attachment_bytes`, backed up with the
   database), and in process memory only in apps generated without `postgres` (lost on restart).
 
+## Data Protection key ring
+
+ASP.NET Core Data Protection encrypts auth cookies and other protected payloads. Every replica of one app must share one key ring, and the ring must outlive a container.
+
+| postgres | Where the ring lives |
+|----------|----------------------|
+| on, and a connection string is set | Postgres table `data_protection.keys`, via `PersistKeysToDbContext` on `PostgresDbContext`. The application name is the template source name (`TimeWarp.Architecture` here; `dotnet new` rewrites it to the generated app's name), so every replica of that app shares keys and two apps do not. `dev deploy migrate` creates the table with the other migrations. |
+| off, or no connection string | The ASP.NET default file-system ring, inside the container. No volume is mounted. A new container, a second replica, or a scale-to-zero cold start gets an empty ring. Cookies and other protected payloads from the previous process stop validating. Turn postgres on when sign-in must survive a restart. |
+
+The ring is not wrapped with a certificate or Azure Key Vault. Compose has nowhere to put that protector. `aca` provisions a Key Vault for the Postgres connection string, not for this ring. `aca-neon` provisions no Key Vault. The database's own encryption is the at-rest protection for the key XML. A certificate or Key Vault protector is a possible follow-up.
+
+Targets with postgres (compose, kubernetes, aca, aca-neon) all use the same table. `aca-neon` sets min replicas to 0, so the container disk is empty after idle; the Postgres ring is what keeps a signed-in cookie valid across that cold start.
+
 ## Ingress topology
 
 All public traffic enters through the **YARP ingress**, which owns the routing table (generated

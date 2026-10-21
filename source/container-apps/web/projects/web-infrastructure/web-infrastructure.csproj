@@ -7,6 +7,9 @@
 
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!--#if (postgres) -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
+    <!--#endif -->
     <PackageReference Include="Azure.Storage.Blobs" />
     <!-- Design-time: PrivateAssets + IncludeAssets (EF standard). Bare PrivateAssets alone
          drops design-time MSBuild targets and breaks `dotnet ef` / Aspire RunDatabaseUpdateOnStart. -->

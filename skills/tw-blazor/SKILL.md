@@ -187,11 +187,10 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   The page reflows beside the 450px panel. Below 880px, and when expanded, the panel covers
   the viewport. While Ask is open it owns the aside column; a page `Aside` shows only when
   Ask is closed. web-server holds `XAI:ApiKey` and forwards completions to xAI. When the key
-  is missing, the panel shows "AI not configured" and:
-
-  ```pwsh
-  dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --project source/container-apps/web/projects/web-server/web-server.csproj
-  ```
+  is missing, the panel shows "AI not configured" and the environment's setup hint. Development
+  shows `dotnet user-secrets set "XAI:ApiKey" "<your-xai-key>" --id <UserSecretsId>`. Every other
+  environment names `XAI__ApiKey` as an environment variable or a container-app secret and does
+  not show the user-secrets id.
 
   The template registers the relay, not a key. WebMCP does not need a client.
 - WebMCP registers the same tools (including `site_map` and `navigate`), plus `page_context`, through `document.modelContext.registerTool`

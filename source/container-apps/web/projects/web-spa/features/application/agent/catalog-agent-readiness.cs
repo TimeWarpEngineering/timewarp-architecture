@@ -19,7 +19,7 @@ public enum CatalogAgentReadiness
   /// <summary>The server can call a model.</summary>
   Configured = 1,
 
-  /// <summary>The server answered and has no key. Ask shows the user-secrets command.</summary>
+  /// <summary>The server answered and has no key. Ask shows that environment's setup hint.</summary>
   NotConfigured = 2,
 
   /// <summary>The server answered 401. Ask asks the user to sign in.</summary>

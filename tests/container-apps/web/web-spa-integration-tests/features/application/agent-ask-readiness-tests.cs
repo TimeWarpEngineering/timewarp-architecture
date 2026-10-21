@@ -64,7 +64,7 @@ public class AgentAskReadiness_Should_
     });
 
     result.Readiness.ShouldBe(CatalogAgentReadiness.NotConfigured);
-    result.SetupCommand.ShouldBe(XaiChatDefaults.SetupCommand);
+    result.SetupCommand.ShouldBe(XaiChatDefaults.DeployedSetupHint);
     result.Model.ShouldBeNull();
     result.Problem.ShouldBeNull();
     return Task.CompletedTask;
@@ -82,7 +82,7 @@ public class AgentAskReadiness_Should_
   public static Task Map_Other_Failures_To_Error_With_Status_And_Detail()
   {
     ChatReadinessProbe.FromProblem(new SharedProblemDetails { Status = 403, Title = "Forbidden" })
-      .ShouldBe(new ChatProbeResult(CatalogAgentReadiness.Error, XaiChatDefaults.SetupCommand, null, "403 Forbidden"));
+      .ShouldBe(new ChatProbeResult(CatalogAgentReadiness.Error, XaiChatDefaults.DeployedSetupHint, null, "403 Forbidden"));
 
     ChatReadinessProbe.FromProblem(new SharedProblemDetails { Status = 500, Title = "Internal Server Error", Detail = "boom" })
       .Problem.ShouldBe("500 Internal Server Error: boom");
@@ -112,6 +112,21 @@ public class AgentAskReadiness_Should_
     html.ShouldContain("--id " + XaiChatDefaults.UserSecretsId);
     html.ShouldNotContain("data-qa=\"AgentAskSignIn\"");
     html.ShouldNotContain("data-qa=\"AgentAskError\"");
+  }
+
+  public static async Task Render_Deployed_Hint_Without_The_User_Secrets_Id()
+  {
+    string html = await ProbeAndRenderAsync(new GetAgentChatConfiguration.Response
+    {
+      Configured = false,
+      SetupCommand = XaiChatDefaults.DeployedSetupHint,
+    }, CatalogAgentReadiness.NotConfigured);
+
+    html.ShouldContain("data-qa=\"AgentAskSetupCommand\"");
+    html.ShouldContain("XAI__ApiKey");
+    html.ShouldContain("Set the xAI key this way, then reload:");
+    html.ShouldNotContain(XaiChatDefaults.UserSecretsId);
+    html.ShouldNotContain("user-secrets");
   }
 
   public static async Task Render_SignIn_For_401_Without_The_Key_Hint()

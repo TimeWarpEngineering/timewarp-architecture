@@ -17,7 +17,7 @@ using TimeWarp.Architecture.Features.AgentChats;
 
 /// <summary>Result of one Ask configuration probe.</summary>
 /// <param name="Readiness">What Ask should render.</param>
-/// <param name="SetupCommand">The user-secrets command; shown only for NotConfigured.</param>
+/// <param name="SetupCommand">The setup hint; shown only for NotConfigured.</param>
 /// <param name="Model">The configured model id when Configured.</param>
 /// <param name="Problem">Status, title and detail when Error.</param>
 public sealed record ChatProbeResult
@@ -41,7 +41,7 @@ public static class ChatReadinessProbe
     return new ChatProbeResult
     (
       response.Configured ? CatalogAgentReadiness.Configured : CatalogAgentReadiness.NotConfigured,
-      string.IsNullOrWhiteSpace(response.SetupCommand) ? XaiChatDefaults.SetupCommand : response.SetupCommand,
+      string.IsNullOrWhiteSpace(response.SetupCommand) ? XaiChatDefaults.DeployedSetupHint : response.SetupCommand,
       response.Configured ? response.Model : null,
       null
     );
@@ -52,8 +52,8 @@ public static class ChatReadinessProbe
   {
     ArgumentNullException.ThrowIfNull(problem);
     return problem.Status == UnauthorizedStatus
-      ? new ChatProbeResult(CatalogAgentReadiness.Unauthenticated, XaiChatDefaults.SetupCommand, null, null)
-      : new ChatProbeResult(CatalogAgentReadiness.Error, XaiChatDefaults.SetupCommand, null, Describe(problem));
+      ? new ChatProbeResult(CatalogAgentReadiness.Unauthenticated, XaiChatDefaults.DeployedSetupHint, null, null)
+      : new ChatProbeResult(CatalogAgentReadiness.Error, XaiChatDefaults.DeployedSetupHint, null, Describe(problem));
   }
 
   /// <summary>The endpoint never returns a file; treat one as a failed probe.</summary>
@@ -61,7 +61,7 @@ public static class ChatReadinessProbe
     new
     (
       CatalogAgentReadiness.Error,
-      XaiChatDefaults.SetupCommand,
+      XaiChatDefaults.DeployedSetupHint,
       null,
       "The server returned a file instead of the assistant configuration."
     );

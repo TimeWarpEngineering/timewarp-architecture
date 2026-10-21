@@ -4,7 +4,7 @@
 
 #region Design
 // Unauthenticated is defense in depth behind EndpointAuthorize. NotConfigured is a 503 so the
-// client can show the setup command without treating a missing key as a crash. TooManyRequests
+// client can show the environment's setup hint without treating a missing key as a crash. TooManyRequests
 // is the admission cap. UpstreamFailed stays generic because provider exceptions can echo the key.
 #endregion
 
@@ -19,11 +19,11 @@ public static class AgentChatProblems
     Detail = "No authenticated principal."
   };
 
-  public static SharedProblemDetails NotConfigured() => new()
+  public static SharedProblemDetails NotConfigured(bool development) => new()
   {
     Title = "AI not configured",
     Status = 503,
-    Detail = XaiChatDefaults.SetupCommand
+    Detail = XaiChatDefaults.SetupHint(development)
   };
 
   public static SharedProblemDetails TooManyRequests() => new()

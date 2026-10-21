@@ -37,6 +37,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <!--#if (postgres) -->
+    <!-- PersistKeysToDbContext. The module file compiles into this project. -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
+    <!--#endif -->
     <!-- Task 147-007: AddEFMigrations uses web-server as the startup project for `dotnet ef
          database update`. Design must be referenced here (not only web-infrastructure) or the
          tool fails with "startup project doesn't reference Microsoft.EntityFrameworkCore.Design". -->

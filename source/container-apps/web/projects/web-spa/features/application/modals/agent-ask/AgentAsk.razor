@@ -11,7 +11,7 @@
   sibling of the layout. The top-bar "Ask {AssistantName}" button and the Ctrl-K Ask row both open it.
   The page reflows beside it; below 880px and when expanded the aside item covers the viewport.
   It renders the probe's state (task 293): only when the server answered "no key" does it show
-  "AI not configured" and the pwsh user-secrets command. Signed out (401) shows "Sign in to use
+  "AI not configured" and that environment's setup hint. Signed out (401) shows "Sign in to use
   Ask" and a button that closes the panel and goes to Login with the current page as the return
   path. Any other failure shows the status, title and detail and a Retry that runs the probe
   again. The probe itself re-runs on every sign-in and sign-out (AuthenticationStateListener).
@@ -661,7 +661,7 @@
   {
     <div class="twe-agent-ask__state">
       <p class="twe-agent-ask__state-title" data-qa="AgentAskNotConfigured">AI not configured</p>
-      <p class="twe-agent-ask__state-text">Run this to add the xAI key, then reload:</p>
+      <p class="twe-agent-ask__state-text">Set the xAI key this way, then reload:</p>
       <pre class="twe-agent-ask__setup" data-qa="AgentAskSetupCommand">@SetupCommand</pre>
     </div>
   }

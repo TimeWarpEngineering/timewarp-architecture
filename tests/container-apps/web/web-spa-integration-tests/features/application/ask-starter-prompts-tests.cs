@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -180,7 +182,7 @@ public class AskStarterPrompts_Should_
   {
     XaiChatOptions options = new();
     options.StarterPrompts.Add(new() { Icon = " Search ", Title = " Find an order ", Prompt = " Help me find an order. " });
-    Handler handler = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(options));
+    Handler handler = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(options), new NamedHostEnvironment("Development"));
 
     GetAgentChatConfiguration.Response configured = (await handler.Handle(new(), CancellationToken.None)).AsT0;
 
@@ -189,7 +191,7 @@ public class AskStarterPrompts_Should_
     configured.StarterPrompts[0].Title.ShouldBe("Find an order");
     configured.StarterPrompts[0].Prompt.ShouldBe("Help me find an order.");
 
-    Handler unset = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(new XaiChatOptions()));
+    Handler unset = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(new XaiChatOptions()), new NamedHostEnvironment("Development"));
     (await unset.Handle(new(), CancellationToken.None)).AsT0.StarterPrompts.ShouldBe(AgentChatStarterPrompts.Defaults);
   }
 
@@ -289,6 +291,17 @@ public class AskStarterPrompts_Should_
 
     public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) =>
       throw new NotSupportedException(identifier);
+  }
+
+  private sealed class NamedHostEnvironment(string environmentName) : IHostEnvironment
+  {
+    public string EnvironmentName { get; set; } = environmentName;
+
+    public string ApplicationName { get; set; } = "tests";
+
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
   }
 
   private sealed class FixedPrincipalAccessor : ICurrentPrincipalAccessor

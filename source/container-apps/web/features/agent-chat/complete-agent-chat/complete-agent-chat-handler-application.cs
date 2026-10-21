@@ -4,13 +4,14 @@
 
 #region Design
 // The endpoint policy already requires a principal. The handler checks again so a miswired
-// endpoint is not an open proxy to the key. A missing key returns 503 with the setup command
-// and does not call the provider. Admission covers the upstream call only. The lease is
+// endpoint is not an open proxy to the key. A missing key returns 503 with the environment's
+// setup hint and does not call the provider. Admission covers the upstream call only. The lease is
 // disposed on every path, including cancellation.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
 
+using Microsoft.Extensions.Hosting;
 using static TimeWarp.Architecture.Features.AgentChats.CompleteAgentChat;
 
 /// <summary>Handles <see cref="Command"/>.</summary>
@@ -22,18 +23,21 @@ public sealed class CompleteAgentChat
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IAgentChatUpstream Upstream;
     private readonly AgentChatAdmission Admission;
+    private readonly IHostEnvironment Environment;
 
     /// <summary>Creates the handler.</summary>
     public Handler
     (
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IAgentChatUpstream upstream,
-      AgentChatAdmission admission
+      AgentChatAdmission admission,
+      IHostEnvironment environment
     )
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       Upstream = upstream;
       Admission = admission;
+      Environment = environment;
     }
 
     /// <summary>Returns the model text and function calls, or a problem.</summary>
@@ -53,7 +57,7 @@ public sealed class CompleteAgentChat
 
       if (!Upstream.IsConfigured)
       {
-        return AgentChatProblems.NotConfigured();
+        return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
       }
 
       using AgentChatAdmission.AdmissionLease lease = await Admission

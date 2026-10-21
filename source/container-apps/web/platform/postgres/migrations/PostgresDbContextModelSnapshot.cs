@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261020162201_AddSiteSettingsEntraTenantAcceptance";
+    public override string LastMigrationId => "20261021184129_AddDataProtectionKeys";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -26,6 +26,26 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+        modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+            {
+                var id = b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer");
+
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(id);
+
+                b.Property<string>("FriendlyName")
+                    .HasColumnType("text");
+
+                b.Property<string>("Xml")
+                    .IsRequired()
+                    .HasColumnType("text");
+
+                b.HasKey("Id");
+
+                b.ToTable("keys", "data_protection");
+            });
 
         modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>
             {
