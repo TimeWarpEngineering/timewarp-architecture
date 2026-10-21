@@ -59,7 +59,7 @@ This is **not** about hard-coding "drop the single-tenant limit" in deploy confi
 
 - Round 1: M1, M2, M3 fixed on this branch (2026-10-21). Host runs review round 2.
 - Round 2 (2026-10-21): M1–M3 verified fixed and no new findings. Disposition is `clean` (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 ### Code grounding (read-only, master ~2026-10-11)
