@@ -32,3 +32,12 @@ use that through or around Aspire, without reconstructing Aspire internals.
 
 - Origin: Steve 2026-10-21, "create a task to use Docker Image Registry I think that works and is free".
 - Spike output is a finding and a recommendation; Steve decides before the template changes.
+
+## Research notes: container registry options
+
+- ACA has a free tier; good for scale-to-zero serverless containers.
+- ACR has no free tier: Basic ~ $5/month (~$0.17/day), billed while the registry exists. Practical: delete ACR between projects, recreate via CLI when needed.
+- ACA can pull directly from public registries like Docker Hub (`docker.io/user/image`); public images need no ACR.
+- Docker Hub free tier works for public images: anonymous pulls limited to 100 per 6 h (a free account raises it); small images push in 10-30 s, cached layers speed rebuilds; GitHub Actions can push to Docker Hub free from public repos.
+- Aspire 13.1+: add a `ContainerRegistryResource` via `AddContainerRegistry("docker.io", ...)`, then `WithContainerRegistry` on the project resource; Aspire tags and pushes there.
+- ACR is still preferred for production (managed identity wires credential-less pulls from ACA); Docker Hub works end to end for free/dev; Aspire local dev already pulls infra images (Redis, Postgres) from Docker Hub.
