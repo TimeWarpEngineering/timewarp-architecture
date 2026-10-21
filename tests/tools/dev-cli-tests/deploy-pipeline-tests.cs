@@ -175,3 +175,51 @@ public class PasskeyHost_Given_
     return Task.CompletedTask;
   }
 }
+
+public class FollowUp_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<FollowUp_Given_>();
+
+  public static Task ReachableIngress_Should_OpenAfterSmoke()
+  {
+    // --yes is not an input. The same flags open whether or not the operator confirmed.
+    SmokeFollowUp compose = DeployPipeline.FollowUpAfterSmoke(
+      AspireDeploy.Compose, "http://localhost:36371", noBrowser: false);
+    compose.OpenBrowser.ShouldBeTrue();
+    compose.Summary.ShouldContain("http://localhost:36371");
+
+    SmokeFollowUp external = DeployPipeline.FollowUpAfterSmoke(
+      AspireDeploy.Kubernetes, "http://203.0.113.10", noBrowser: false);
+    external.OpenBrowser.ShouldBeTrue();
+    external.Summary.ShouldContain("http://203.0.113.10");
+
+    SmokeFollowUp containerApps = DeployPipeline.FollowUpAfterSmoke(
+      AspireDeploy.ContainerApps, "https://ingress.example", noBrowser: false);
+    containerApps.OpenBrowser.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+
+  public static Task NoBrowser_Should_PrintTheUrlAndNotOpen()
+  {
+    SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(
+      AspireDeploy.ContainerAppsNeon, "https://ingress.example", noBrowser: true);
+    followUp.OpenBrowser.ShouldBeFalse();
+    followUp.Summary.ShouldContain("https://ingress.example");
+
+    string prompt = DeployPipeline.ConfirmPrompt(hasDatabase: true, noBrowser: true);
+    prompt.ShouldContain("print the URL");
+    prompt.ShouldNotContain("open the app");
+    DeployPipeline.ConfirmPrompt(hasDatabase: false, noBrowser: false).ShouldContain("open the app");
+    return Task.CompletedTask;
+  }
+
+  public static Task KubernetesWithoutAnExternalAddress_Should_HintDevOpenAndNotOpen()
+  {
+    // The command prints this from finally. FollowUpAfterSmoke is not on this path.
+    string stopped = DeployPipeline.TemporaryForwardStopped(AspireDeploy.Kubernetes);
+    stopped.ShouldContain("dev open --target kubernetes");
+    stopped.ShouldContain("temporary port-forward");
+    return Task.CompletedTask;
+  }
+}

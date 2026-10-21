@@ -46,7 +46,7 @@ needs `Parameters:passkey-rp-host` set to that bare DNS name.
 
 ```bash
 az login                                    # and az account set --subscription <id>
-dev deploy --target aca                     # publish, deploy, migrate, smoke, print the URL
+dev deploy --target aca                     # publish, deploy, migrate, smoke, open the app (--no-browser prints the URL)
 ```
 
 Operator steps, when you want one of them alone:

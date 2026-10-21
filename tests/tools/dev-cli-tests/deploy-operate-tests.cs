@@ -762,7 +762,7 @@ public class Browser_Given_
     DeployOperate.BrowserLaunchers(true, false, false).Single().Executable.ShouldBe("explorer.exe");
     DeployOperate.BrowserLaunchers(false, true, false).Single().Executable.ShouldBe("open");
     DeployOperate.BrowserLaunchers(false, false, false).Single().Executable.ShouldBe("xdg-open");
-    DeployOperate.NoBrowserMessage("http://localhost:36371").ShouldContain("open http://localhost:36371");
+    DeployOperate.NoBrowserMessage("http://localhost:36371").ShouldBe("No browser opener worked; open http://localhost:36371");
     return Task.CompletedTask;
   }
 
@@ -771,6 +771,61 @@ public class Browser_Given_
     DeployOperate.IsWsl("Ubuntu", null).ShouldBeTrue();
     DeployOperate.IsWsl(null, "Linux version 6.18.40.1-microsoft-standard-WSL2").ShouldBeTrue();
     DeployOperate.IsWsl(null, "Linux version 6.8.0-generic").ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task NoOpener_Should_PrintTheUrlAndNotFail()
+  {
+    BrowserOpenChoice choice = DeployOperate.ChooseBrowserOpen(
+      noBrowser: false,
+      hasTerminal: true,
+      DeployOperate.BrowserLaunchers(isWindows: false, isMacOs: false, isWsl: true),
+      _ => false,
+      "http://localhost:36371");
+    choice.Launchers.ShouldBeEmpty();
+    choice.Fallback.ShouldBe(DeployOperate.NoBrowserMessage("http://localhost:36371"));
+    return Task.CompletedTask;
+  }
+
+  public static Task NoTerminal_Should_PrintTheUrlAndNotOpen()
+  {
+    BrowserOpenChoice choice = DeployOperate.ChooseBrowserOpen(
+      noBrowser: false,
+      hasTerminal: false,
+      DeployOperate.BrowserLaunchers(isWindows: false, isMacOs: false, isWsl: true),
+      _ => true,
+      "http://localhost:36371");
+    choice.Launchers.ShouldBeEmpty();
+    choice.Fallback.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task NoBrowser_Should_OpenNothing()
+  {
+    BrowserOpenChoice choice = DeployOperate.ChooseBrowserOpen(
+      noBrowser: true,
+      hasTerminal: true,
+      DeployOperate.BrowserLaunchers(isWindows: true, isMacOs: false, isWsl: false),
+      _ => true,
+      "http://localhost:36371");
+    choice.Launchers.ShouldBeEmpty();
+    choice.Fallback.ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Wsl_Should_TryWslviewBeforeExplorerWhenBothAreOnPath()
+  {
+    BrowserOpenChoice choice = DeployOperate.ChooseBrowserOpen(
+      noBrowser: false,
+      hasTerminal: true,
+      DeployOperate.BrowserLaunchers(isWindows: false, isMacOs: false, isWsl: true),
+      executable => executable is "wslview" or "explorer.exe",
+      "http://localhost:36371");
+    choice.Fallback.ShouldBeNull();
+    choice.Launchers.Select(launcher => launcher.Executable).ShouldBe(["wslview", "explorer.exe"]);
+    DeployOperate.BrowserLaunchSucceeded("explorer.exe", processSuccess: false, timedOut: false).ShouldBeTrue();
+    DeployOperate.BrowserLaunchSucceeded("explorer.exe", processSuccess: false, timedOut: true).ShouldBeFalse();
+    DeployOperate.BrowserLaunchSucceeded("wslview", processSuccess: false, timedOut: false).ShouldBeFalse();
     return Task.CompletedTask;
   }
 }

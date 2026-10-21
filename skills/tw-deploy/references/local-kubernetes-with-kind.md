@@ -38,8 +38,10 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod `
 # 5. Deploy (kubectl context is now kind-app); the committed AppHost appsettings.json already
 #    names the namespace, release and repository after the app and points at localhost:5001.
 #    Preflight checks the cluster answers, kind lists it and localhost:5001 is up.
-#    One command: publish, deploy, migrate, smoke, print the URL. localhost is already an
-#    allowed passkey host. A custom domain sets Parameters:passkey-rp-host.
+#    One command: publish, deploy, migrate, smoke. Kind has no external address, so this
+#    prints the URL and `dev open --target kubernetes` (no foreground port-forward).
+#    `--no-browser` prints the URL on targets that would otherwise open a browser.
+#    localhost is already an allowed passkey host. A custom domain sets Parameters:passkey-rp-host.
 dev deploy --target kubernetes
 
 # Reach the ingress in a browser (forwards localhost:<ingress-port>, the app's committed
@@ -83,7 +85,9 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod \
 # 5. Deploy (kubectl context is now kind-app); the committed AppHost appsettings.json already
 #    names the namespace, release and repository after the app and points at localhost:5001.
 #    Preflight checks the cluster answers, kind lists it and localhost:5001 is up.
-#    One command: publish, deploy, migrate, smoke, print the URL.
+#    One command: publish, deploy, migrate, smoke. Kind has no external address, so this
+#    prints the URL and `dev open --target kubernetes` (no foreground port-forward).
+#    `--no-browser` prints the URL on targets that would otherwise open a browser.
 #    localhost is already an allowed passkey host. A custom domain sets Parameters:passkey-rp-host.
 dev deploy --target kubernetes
 

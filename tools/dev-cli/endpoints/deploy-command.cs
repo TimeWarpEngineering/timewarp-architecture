@@ -15,8 +15,11 @@
 //   3. migrate, only when platform/postgres/migrations sits beside the AppHost. Otherwise the step
 //      is skipped and the skip line says so. The inner verb is `dev deploy migrate` with --yes,
 //      because this confirmation already covered the pipeline. There is no --no-migrate flag.
-//   4. smoke the two anonymous paths (/web-server/alive, /api/identity/entra/offered), then print
-//      the URL. Smoke retries a cold start. It never requests /api/health.
+//   4. smoke the two anonymous paths (/web-server/alive, /api/identity/entra/offered), then open
+//      the ingress URL through DeployBrowser, the same launcher as `dev open`. Smoke retries a
+//      cold start. It never requests /api/health. --no-browser prints the URL and opens nothing.
+//      --yes does not change that. No terminal, or no opener on PATH, prints the URL and is not
+//      a failure.
 // `dev publish`, `dev deploy migrate`, and `dev open` stay the one-step verbs.
 // Preflight (services/aspire-deploy-preflight.cs): Aspire CLI 13.6+ (refused below that; a CLI older
 // than Directory.Packages.props <AspireVersion> warns once, and the publish step does not repeat it);
@@ -51,8 +54,9 @@
 // Aspire still shows — e.g. an optional parameter, or aca's location and resource group — works
 // interactively; a piped stdin would make Aspire fail "non-interactive mode" instead of asking.
 // Smoke's URL is the same one `dev open` uses: compose is http://localhost:<ingress-port>, ACA is
-// https://<ingress fqdn>, kubernetes is the LoadBalancer address or a temporary kubectl port-forward
-// that is cancelled after the checks. `dev open --target kubernetes` is what keeps a forward.
+// https://<ingress fqdn>, kubernetes with an external address is that address. Kubernetes without
+// an external address smokes through a temporary kubectl port-forward that is cancelled after the
+// checks, prints the `dev open --target kubernetes` hint, and does not keep a foreground forward.
 // This command is the DeployGroup's empty route, so `dev deploy` runs it and `dev deploy --help`
 // lists it beside `migrate` (a separate `deploy` route would be shadowed by the group's help table).
 // Pure step text lives in services/deploy-pipeline.cs (dev-cli-tests). The HTTP calls live in
@@ -64,12 +68,13 @@ namespace DevCli.Commands;
 using System.Net;
 using System.Net.Sockets;
 
-[NuruRoute("", Description = "Publish, deploy, migrate when the app has a database, smoke the ingress, and print the URL (operator-run, never CI). Asks unless --yes")]
+[NuruRoute("", Description = "Publish, deploy, migrate when the app has a database, smoke the ingress, and open it in the browser (operator-run, never CI). --no-browser prints the URL. Asks unless --yes")]
 [NuruRouteExample("deploy", Description = "One command for the default target (compose): publish, deploy, migrate, smoke")]
 [NuruRouteExample("deploy --target kubernetes", Description = "One command: publish, deploy the Helm chart to the current kubectl context, migrate, smoke")]
 [NuruRouteExample("deploy --target aca", Description = "One command: publish, provision Azure Container Apps + Flexible Server, migrate, smoke the ingress (az login first)")]
 [NuruRouteExample("deploy --target aca-neon", Description = "One command: publish, provision Azure Container Apps wired to Neon, migrate, smoke. Connection strings stay off the command line")]
 [NuruRouteExample("deploy --target compose --yes", Description = "Run the whole path without prompting (aspire deploy --non-interactive)")]
+[NuruRouteExample("deploy --no-browser", Description = "Run the path and print the URL without opening a browser")]
 internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 {
   private const int ListenerTimeoutSeconds = 30;
@@ -79,6 +84,9 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
 
   [Option("yes", "y", Description = "Confirm without prompting and run aspire deploy --non-interactive")]
   public bool Yes { get; set; }
+
+  [Option("no-browser", Description = "Print the URL instead of opening a browser")]
+  public bool NoBrowser { get; set; }
 
   internal sealed class Handler : ICommandHandler<DeployCommand, Unit>
   {
@@ -119,7 +127,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
           return Unit.Value;
         }
 
-        if (!Confirm(hasDatabase))
+        if (!Confirm(hasDatabase, command.NoBrowser))
         {
           Terminal.WriteErrorLine(AspireDeploy.DeployDeclined.Red());
           Environment.ExitCode = 1;
@@ -199,7 +207,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
           case DeployPipeline.Smoke:
           {
             Terminal.WriteLine(DeployPipeline.StepBanner(DeployPipeline.Smoke, preflight.Target));
-            int smokeExit = await SmokeAsync(preflight, stepCancellation);
+            int smokeExit = await SmokeAsync(preflight, command.NoBrowser, stepCancellation);
             if (smokeExit != 0)
             {
               Stop(DeployPipeline.FailureMessage(DeployPipeline.Smoke, preflight.Target, smokeExit), smokeExit);
@@ -217,30 +225,30 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       }
     }
 
-    private bool Confirm(bool hasDatabase)
+    private bool Confirm(bool hasDatabase, bool noBrowser)
     {
-      Terminal.Write(DeployPipeline.ConfirmPrompt(hasDatabase));
+      Terminal.Write(DeployPipeline.ConfirmPrompt(hasDatabase, noBrowser));
       string? answer = Terminal.ReadLine();
       return string.Equals(answer?.Trim(), "y", StringComparison.OrdinalIgnoreCase)
         || string.Equals(answer?.Trim(), "yes", StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<int> SmokeAsync(DeployPreflight preflight, CancellationToken ct)
+    private async Task<int> SmokeAsync(DeployPreflight preflight, bool noBrowser, CancellationToken ct)
     {
       if (AspireDeploy.IsAzureContainerApps(preflight.Target))
       {
-        return await SmokeContainerAppsAsync(preflight, ct);
+        return await SmokeContainerAppsAsync(preflight, noBrowser, ct);
       }
 
       if (preflight.Target == AspireDeploy.Kubernetes)
       {
-        return await SmokeKubernetesAsync(preflight, ct);
+        return await SmokeKubernetesAsync(preflight, noBrowser, ct);
       }
 
-      return await SmokeComposeAsync(preflight, ct);
+      return await SmokeComposeAsync(preflight, noBrowser, ct);
     }
 
-    private async Task<int> SmokeComposeAsync(DeployPreflight preflight, CancellationToken ct)
+    private async Task<int> SmokeComposeAsync(DeployPreflight preflight, bool noBrowser, CancellationToken ct)
     {
       string envFile = Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), ".env");
       string? envValue = File.Exists(envFile)
@@ -267,13 +275,13 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       int exit = await SmokeAtAsync(url, ct);
       if (exit == 0)
       {
-        Terminal.WriteLine(DeployPipeline.CompleteMessage(preflight.Target, url).Green());
+        await AnnounceAsync(preflight.Target, url, noBrowser, ct);
       }
 
       return exit;
     }
 
-    private async Task<int> SmokeContainerAppsAsync(DeployPreflight preflight, CancellationToken ct)
+    private async Task<int> SmokeContainerAppsAsync(DeployPreflight preflight, bool noBrowser, CancellationToken ct)
     {
       if (string.IsNullOrWhiteSpace(preflight.AzureSubscriptionId))
       {
@@ -311,13 +319,13 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
       int exit = await SmokeAtAsync(url, ct);
       if (exit == 0)
       {
-        Terminal.WriteLine(DeployPipeline.CompleteMessage(preflight.Target, url).Green());
+        await AnnounceAsync(preflight.Target, url, noBrowser, ct);
       }
 
       return exit;
     }
 
-    private async Task<int> SmokeKubernetesAsync(DeployPreflight preflight, CancellationToken ct)
+    private async Task<int> SmokeKubernetesAsync(DeployPreflight preflight, bool noBrowser, CancellationToken ct)
     {
       if (string.IsNullOrWhiteSpace(preflight.KubectlContext))
       {
@@ -359,7 +367,7 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         int direct = await SmokeAtAsync(plan.Url, ct);
         if (direct == 0)
         {
-          Terminal.WriteLine(DeployPipeline.CompleteMessage(preflight.Target, plan.Url).Green());
+          await AnnounceAsync(preflight.Target, plan.Url, noBrowser, ct);
         }
 
         return direct;
@@ -389,7 +397,8 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
         int exit = await SmokeAtAsync(plan.Url, ct);
         if (exit == 0)
         {
-          Terminal.WriteLine(DeployPipeline.CompleteMessage(preflight.Target, plan.Url).Green());
+          string summary = DeployPipeline.CompleteMessage(preflight.Target, plan.Url);
+          Terminal.WriteLine(summary.Green());
         }
 
         return exit;
@@ -406,7 +415,26 @@ internal sealed class DeployCommand : DeployGroup, ICommand<Unit>
           // Cancelling the token is how the temporary forward is stopped.
         }
 
+        // No foreground forward. The hint names `dev open`, which is what keeps one.
         Terminal.WriteLine(DeployPipeline.TemporaryForwardStopped(preflight.Target).Yellow());
+      }
+    }
+
+    /// <summary>
+    /// Prints the smoke summary and, when <see cref="SmokeFollowUp.OpenBrowser"/> is set, opens the URL
+    /// through <see cref="DeployBrowser"/>. A temporary kubernetes forward does not call this method.
+    /// </summary>
+    private async Task AnnounceAsync(
+      DeployTarget target,
+      string url,
+      bool noBrowser,
+      CancellationToken ct)
+    {
+      SmokeFollowUp followUp = DeployPipeline.FollowUpAfterSmoke(target, url, noBrowser);
+      Terminal.WriteLine(followUp.Summary.Green());
+      if (followUp.OpenBrowser)
+      {
+        await DeployBrowser.OpenAsync(Terminal, url, noBrowser: false, ct);
       }
     }
 

@@ -68,6 +68,11 @@
 // documented interface; it is visible in the operator's own process list for the bundle's lifetime,
 // accepted for an operator-run verb on the operator's machine. The operator's IP is --client-ip, else what
 // https://api.ipify.org reports.
+//
+// Browser (task 396): ChooseBrowserOpen is the decision `dev open` and `dev deploy` share.
+// --no-browser, no interactive terminal, or no launcher on PATH prints the URL and is not a failure.
+// NoBrowserMessage is the no-launcher and every-launcher-failed line. It does not name --no-browser.
+// The process that starts the launcher is services/deploy-browser.cs.
 #endregion
 
 namespace DevCli.Services;
@@ -95,6 +100,12 @@ internal sealed record AcaMigrationResult(int ExitCode, int CleanupExitCode, str
 
 /// <summary>A browser opener candidate: executable plus the arguments before the URL.</summary>
 internal sealed record BrowserLauncher(string Executable, IReadOnlyList<string> Arguments);
+
+/// <summary>
+/// Launchers to try, in order. An empty list and a null <see cref="BrowserOpenChoice.Fallback"/>
+/// means print the URL and start nothing. A fallback line means no launcher was on PATH.
+/// </summary>
+internal sealed record BrowserOpenChoice(IReadOnlyList<BrowserLauncher> Launchers, string? Fallback);
 
 /// <summary>Builds and decides the <c>dev open</c> / <c>dev deploy migrate</c> invocations per deploy target.</summary>
 internal static partial class DeployOperate
@@ -753,8 +764,8 @@ internal static partial class DeployOperate
 
   /// <summary>
   /// Browser openers to try in order: Windows <c>explorer.exe</c>; macOS <c>open</c>; WSL <c>wslview</c> then
-  /// <c>explorer.exe</c> (the Windows browser), then <c>xdg-open</c>; other Linux <c>xdg-open</c>. The first on PATH wins;
-  /// none means print the URL.
+  /// <c>explorer.exe</c> (the Windows browser), then <c>xdg-open</c>; other Linux <c>xdg-open</c>. Those on PATH are
+  /// tried until one succeeds; none on PATH means print the URL.
   /// </summary>
   internal static BrowserLauncher[] BrowserLaunchers(bool isWindows, bool isMacOs, bool isWsl) =>
     isWindows ? [new BrowserLauncher("explorer.exe", [])]
@@ -767,7 +778,36 @@ internal static partial class DeployOperate
     !string.IsNullOrWhiteSpace(distroName)
     || (kernelVersion?.Contains("microsoft", StringComparison.OrdinalIgnoreCase) ?? false);
 
-  internal static string NoBrowserMessage(string url) => $"No browser opener found (or --no-browser); open {url}";
+  internal static string NoBrowserMessage(string url) => $"No browser opener worked; open {url}";
+
+  /// <summary>
+  /// Which launchers to start. <paramref name="noBrowser"/> and a missing terminal print the URL only.
+  /// No launcher on PATH returns <see cref="NoBrowserMessage"/>. Neither case is a failure.
+  /// </summary>
+  internal static BrowserOpenChoice ChooseBrowserOpen(
+    bool noBrowser,
+    bool hasTerminal,
+    IReadOnlyList<BrowserLauncher> candidates,
+    Func<string, bool> isOnPath,
+    string url)
+  {
+    if (noBrowser || !hasTerminal)
+    {
+      return new([], null);
+    }
+
+    BrowserLauncher[] onPath = [.. candidates.Where(launcher => isOnPath(launcher.Executable))];
+    return onPath.Length == 0
+      ? new([], NoBrowserMessage(url))
+      : new(onPath, null);
+  }
+
+  /// <summary>
+  /// <c>explorer.exe</c> exits 1 after it opens a URL. A timeout is still a miss.
+  /// Any other launcher must exit 0.
+  /// </summary>
+  internal static bool BrowserLaunchSucceeded(string executable, bool processSuccess, bool timedOut) =>
+    processSuccess || (executable == "explorer.exe" && !timedOut);
 
   internal static string ForwardNotReadyMessage(string url, int seconds) =>
     $"The port-forward is not listening after {seconds}s; the browser was not opened. Open {url} once it is (Ctrl+C stops the forward).";

@@ -131,7 +131,7 @@ One command, after `az login` and the two Neon secrets. Set `Azure:Location` and
 needs `Parameters:passkey-rp-host` set to that bare DNS name.
 
 ```bash
-dev deploy --target aca-neon   # publish, deploy, migrate, smoke, print the URL
+dev deploy --target aca-neon   # publish, deploy, migrate, smoke, open the app (--no-browser prints the URL)
 ```
 
 `dev deploy` publishes the migrations bundle, deploys, migrates on the direct connection, then
