@@ -1,5 +1,25 @@
 # Upstream FilterBar and FilterSelect from Crunchit portal
 
+## Goal (implementer restatement)
+
+List pages should share one brand-neutral filter toolbar. `FilterBar` is a paper bar with
+`role="toolbar"`: an optional search box, then whatever controls the page passes as
+`ChildContent`. `FilterSelect` is a muted label beside a `FluentSelect<string,string>`. Neither
+component stores the filter or fetches. They raise `EventCallback`s, and the page handler only
+dispatches TimeWarp.State actions.
+
+Search waits inside `FilterBar`. Each keystroke restarts a 300 ms timer backed by `TimeProvider`,
+so a test can complete the wait without sleeping. When the timer fires, `SearchTextChanged` runs
+once with the latest text, on the renderer via `InvokeAsync`. Clearing the box or pressing Escape
+fires immediately. A newer keystroke cancels the pending callback. Dispose cancels the timer, and
+nothing fires after that.
+
+The admin feedback list drops its hand-built filter row for this bar. Status, Kind, and Severity
+keep their items, option text, and `data-qa` values. Show closed stays a checkbox in
+`ChildContent`. The list query already keeps rows whose title contains `Search`, so this page
+shows the box and sends that existing field. No new server filter. The style guide shows the bar
+with sample text and callbacks that do not write local fields.
+
 ## Description
 
 Port Crunchit's `FilterBar` and `FilterSelect` into the template as brand-neutral components, so
@@ -33,7 +53,7 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
 
 ## Checklist
 
-- [ ] `components/composites/FilterBar.razor` with `.razor.css`.
+- [x] `components/composites/FilterBar.razor` with `.razor.css`.
   - Root: `<div class="twe-filter-bar @Class" role="toolbar">`.
   - Parameters: `ShowSearch` (default true), `SearchPlaceholder` (default "Search…"),
     `SearchText`, `SearchTextChanged` (`EventCallback<string>`), `SearchDelay` (`TimeSpan`,
@@ -41,7 +61,7 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
   - The search box is FluentUI v5. Choose `FluentSearch`, or `FluentTextInput` with
     `Icons.Regular.Size16.Search`, using the fluent-ui-blazor MCP, and record the choice in
     Design. No Blazicons.
-- [ ] Debounce, owned by `FilterBar`:
+- [x] Debounce, owned by `FilterBar`:
   - Each keystroke restarts the timer. When the timer fires, `SearchTextChanged` fires once with
     the latest text.
   - Clearing the box (the clear button or Escape) fires immediately.
@@ -51,7 +71,7 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
   - Callbacks go through `InvokeAsync`.
   - The Design region records why this timing lives in the component and why the page keeps
     only action dispatch.
-- [ ] `components/composites/FilterSelect.razor` with `.razor.css`.
+- [x] `components/composites/FilterSelect.razor` with `.razor.css`.
   - Root: `<div class="twe-filter-select @Class">`, holding a muted `<span>` label and a
     `FluentSelect<string,string>`.
   - Parameters: `Label`, `Items` (`EditorRequired`), optional `OptionText`
@@ -60,20 +80,20 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
   - `AdditionalAttributes` (including `data-qa`) are forwarded to the select, so existing
     selectors keep working.
   - Use the same `FluentSelect` API the feedback page already uses. No combobox.
-- [ ] Tokens:
+- [x] Tokens:
   - Crunchit `paper`, `radius`, `radius-sm`, `shadow-sm`, `rule`, `background`, `ink`, and
     `muted` map to their `--twe-*` counterparts.
   - `muted-2` maps to `--twe-muted`, unless a new token is clearly needed.
   - The orange focus ring becomes `--twe-primary`.
   - Font sizes use `--twe-text-helper` and `--twe-text-body`. Spacing uses `--twe-space-*`.
   - No hex values in the new CSS.
-- [ ] FluentUI CSS follows `tw-blazor-css-strategy`:
+- [x] FluentUI CSS follows `tw-blazor-css-strategy`:
   - Anchor on the native root, then a targeted `::deep > fluent-select` and the search host for
     size, as `FormField.razor.css` does.
   - Use `::part()` for shadow internals.
   - No `::deep *` and no `<style>` element.
   - Drop Crunchit's data-URI chevron.
-- [ ] Adopt in `FeedbackAdminListPage.razor`.
+- [x] Adopt in `FeedbackAdminListPage.razor`.
   - Replace the horizontal `FluentStack` inside `<Section Title="Filter">` with a `<FilterBar>`.
   - That bar holds three `<FilterSelect>`s: Status, Kind, and Severity. Keep the same `Items`,
     the `StatusLabel`, `KindLabel`, and `SeverityLabel` option text, and the same `data-qa`
@@ -85,13 +105,13 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
     `ShowSearch="false"` there, and the Results say so. Do not add server-side search in this
     task.
   - Keep the `Section` wrapper and its `LoadingActionType`.
-- [ ] Style guide: add a "Filter Bar" `Card` after "Section Header" in `StyleGuidePage.razor`.
+- [x] Style guide: add a "Filter Bar" `Card` after "Section Header" in `StyleGuidePage.razor`.
   - It holds a search box and two `FilterSelect`s, with neutral sample text.
   - The demo's callbacks go through style-guide state or are inert. No `@bind` to local fields.
   - Do not extend the StyleGuidePage contract; that is 379-017.
-- [ ] Add a row for each new component to `components/overview.md`, if that file lists
+- [x] Add a row for each new component to `components/overview.md`, if that file lists
       components.
-- [ ] Render tests in `tests/container-apps/web/web-spa-integration-tests/components/`, in
+- [x] Render tests in `tests/container-apps/web/web-spa-integration-tests/components/`, in
       `filter-bar-render-tests.cs` and `filter-select-render-tests.cs`, modelled on
       `section-header-render-tests.cs`. Cases:
   - The toolbar role and the `twe-` class are present.
@@ -103,18 +123,59 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
   - The label is omitted when empty.
   - `OptionText` and the selected value are applied.
   - `data-qa` reaches the select.
-- [ ] Debounce test, deterministic: inject a `TimeProvider` (or a fake timer), with no real
+- [x] Debounce test, deterministic: inject a `TimeProvider` (or a fake timer), with no real
       sleeps.
   - Several keystrokes produce one callback with the last text.
   - A clear fires immediately.
   - Dispose cancels the pending callback.
-- [ ] Gates:
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
   - `git diff origin/master -- source tests | rg -i crunchit` prints nothing.
   - The existing feedback-admin tests pass, plus a Playwright check that the admin feedback
     filters still filter.
+
+## Results
+
+`FilterBar` and `FilterSelect` live under `components/composites/`. FluentUI 5.0.1 has no
+`FluentSearch`, so the search box is `FluentTextInput` (`TextInputType.Search`,
+`Icons.Regular.Size16.Search`, `ImmediateDelay` 0). The bar owns the pause via `TimeProvider`.
+This FluentUI build renders `FluentSelect` as `fluent-field` around `fluent-dropdown`, so the
+isolated CSS and the render tests target that host and still name `fluent-select`.
+
+The admin feedback list uses the bar. `ListFeedback.Query.Search` already keeps rows whose
+title contains the text, so the page shows the box and sends that existing field through
+`SetFilter`, then `FetchFeedbackList`. Whitespace is stored as null. No new server filter.
+Show closed stays a checkbox in `ChildContent`. The style-guide card is sample text with no
+callbacks. `ganda repo audit` was already green; nothing was turned off.
+
+### How to validate
+
+Smoke:
+
+- `./bin/dev build --quiet` — completed successfully (warnings are errors).
+- `./bin/dev template-smoke` — SmokeDefault OK, 0 warnings, 0 errors. Generated Jaribu
+  aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
+- `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
+- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -- --filter-class Filter`
+  (14 passed) and `--filter-class FeedbackAdmin` (11 passed).
+- From `tests/container-apps/web/web-spa-playwright-tests`:
+  `dotnet test -- --filter-method AdminListFilters_Should_NarrowTheRows` (passed). Kind
+  `FeatureRequest` leaves one row; clearing the kind and typing `bug` leaves the bug row.
+- `git diff origin/master -- source tests | rg -i crunchit` — no match.
+
+Expect:
+
+- Style Guide, after Section Header, shows a Filter Bar card: search placeholder "Search…",
+  value "Report", a Status select on Open, and a Kind select whose empty item reads "All".
+  Changing them does not write page fields.
+- Admin Feedback keeps the Filter section. The bar has a title search, Status, Kind, Severity,
+  and Show closed. `data-qa` stays `AdminFeedbackStatus`, `AdminFeedbackKind`,
+  `AdminFeedbackSeverity`, and `AdminFeedbackIncludeClosed`.
+- Typing a title waits for the pause, then the grid shows only matching titles. Clearing the
+  box or pressing Escape fetches immediately. Status, Kind, Severity, and Show closed still
+  narrow the same rows, and they keep the current search text.
 
 ## Session
 

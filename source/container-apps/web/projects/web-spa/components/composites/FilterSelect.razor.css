@@ -1,0 +1,61 @@
+/* Filter select — native root, CSS isolation. Tokens from tokens.css.
+   The 3px focus ring is a hairline, not a spacing step. */
+.twe-filter-select {
+  display: flex;
+  align-items: center;
+  gap: var(--twe-space-2);
+  min-width: 0;
+}
+
+.twe-filter-select__label {
+  font-size: var(--twe-text-helper);
+  font-weight: 500;
+  color: var(--twe-muted);
+  white-space: nowrap;
+}
+
+/* FluentSelect's root is a child component, which isolation never stamps (Wall A).
+   This version renders fluent-field around fluent-dropdown (and fluent-select where
+   that host is used). ::part stays on the dropdown, the element that draws the control. */
+.twe-filter-select ::deep > fluent-field,
+.twe-filter-select ::deep > fluent-dropdown,
+.twe-filter-select ::deep > fluent-select {
+  display: block;
+  min-width: 0;
+  max-width: calc(var(--twe-space-12) * 4);
+  font-size: var(--twe-text-body);
+  color: var(--twe-ink);
+}
+
+.twe-filter-select ::deep > fluent-field:not(:defined),
+.twe-filter-select ::deep > fluent-dropdown:not(:defined),
+.twe-filter-select ::deep > fluent-select:not(:defined) {
+  display: block;
+  min-height: calc(var(--twe-space-6) + var(--twe-space-2));
+}
+
+.twe-filter-select ::deep fluent-dropdown::part(control),
+.twe-filter-select ::deep fluent-select::part(control) {
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-background);
+  color: var(--twe-ink);
+  font-size: var(--twe-text-body);
+}
+
+.twe-filter-select ::deep fluent-dropdown::part(indicator),
+.twe-filter-select ::deep fluent-select::part(indicator) {
+  color: var(--twe-muted);
+}
+
+.twe-filter-select ::deep fluent-dropdown:hover::part(control),
+.twe-filter-select ::deep fluent-select:hover::part(control) {
+  border-color: var(--twe-muted);
+}
+
+.twe-filter-select ::deep fluent-dropdown:focus-within::part(control),
+.twe-filter-select ::deep fluent-select:focus-within::part(control) {
+  border-color: var(--twe-primary);
+  background: var(--twe-paper);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--twe-primary) 24%, transparent);
+}

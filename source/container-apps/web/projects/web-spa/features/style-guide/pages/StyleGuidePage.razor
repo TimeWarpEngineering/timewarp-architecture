@@ -29,6 +29,9 @@
   private string FormDemoName { get; set; } = "Ada Lovelace";
   private string FormDemoEmail { get; set; } = "ada@example.test";
 
+  private static readonly string[] FilterDemoStatuses = ["Open", "Closed"];
+  private static readonly string[] FilterDemoKinds = ["", "Note"];
+
   // Message bars go through OUR NotificationState pipeline (the generated ActionSet
   // dispatcher), not a direct INotificationService call — the point is to exercise the app's own path.
   private async Task ShowMessage(MessageBarIntent intent, string title) =>
@@ -109,6 +112,14 @@
             <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Details."))">Details</FluentButton>
           </Aside>
         </SectionHeader>
+      </Card>
+
+      <Card Title="Filter Bar">
+        <p class="sg-subtitle">A paper toolbar. Search waits for a pause, then raises one callback. These values are sample text; the demo does not store them.</p>
+        <FilterBar SearchText="Report" SearchPlaceholder="Search…">
+          <FilterSelect Label="Status" Items="FilterDemoStatuses" Value="Open" />
+          <FilterSelect Label="Kind" Items="FilterDemoKinds" Value="" OptionText="@(static value => value.Length == 0 ? "All" : value)" />
+        </FilterBar>
       </Card>
 
       <Card Title="Buttons (FluentUI, themed)">

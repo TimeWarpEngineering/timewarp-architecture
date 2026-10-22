@@ -30,7 +30,9 @@
 // the body references are not listed again under it. The narrow-grid proof (task 354) opens
 // /Admin/Feedback at 1280 with the Ask panel docked, then both admin grids at 640: header cells
 // never overlap, the primary column keeps its width and its link opens the item, and below the
-// grid's minimum the DataGridFrame scrolls while the page does not.
+// grid's minimum the DataGridFrame scrolls while the page does not. The filter proof
+// (task 379-004) files a bug and a feature request, then uses the admin Kind select to
+// leave only the feature row, and the search box to leave only the bug row.
 #endregion
 
 namespace FeedbackAttachmentPlaywright_;
@@ -277,6 +279,55 @@ public class FeedbackAttachment_Given_Wasm
     await Assertions.Expect(titleHeader).ToHaveAttributeAsync("aria-sort", "descending", new LocatorAssertionsToHaveAttributeOptions { Timeout = 30_000 });
     await Assertions.Expect(rows).ToHaveTextAsync(["Zulu sort", "Alpha sort"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-sort-title-descending.png"), FullPage = true });
+  }
+
+  public static async Task AdminListFilters_Should_NarrowTheRows()
+  {
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    ConcurrentQueue<string> console = new();
+    page.Console += (_, message) => console.Enqueue($"{message.Type}: {message.Text}");
+    page.PageError += (_, error) => console.Enqueue(error);
+
+    await SignInWithNewPasskeyAsync(page, context);
+    await FileFeedbackAsync(page, console, "Filter bug", kindLabel: null);
+    await FileFeedbackAsync(page, console, "Filter feature", kindLabel: "Feature request");
+
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    ILocator rows = page.Locator("[data-qa=AdminFeedbackRow]");
+    try
+    {
+      await Assertions.Expect(rows).ToHaveTextAsync(["Filter feature", "Filter bug"], new LocatorAssertionsToHaveTextOptions { Timeout = 120_000 });
+    }
+    catch (PlaywrightException exception)
+    {
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-filter-failed.png"), FullPage = true });
+      string text = await page.Locator("body").InnerTextAsync();
+      string log = string.Join('\n', console);
+      throw new TimeoutException($"Admin feedback list did not render both filings at {page.Url}. Page:\n{text}\nConsole:\n{log}", exception);
+    }
+
+    await ChooseOptionAsync(page, "AdminFeedbackKind", "FeatureRequest");
+    await Assertions.Expect(rows).ToHaveTextAsync(["Filter feature"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-filter-kind.png"), FullPage = true });
+
+    await ChooseOptionAsync(page, "AdminFeedbackKind", "All kinds");
+    await Assertions.Expect(rows).ToHaveTextAsync(["Filter feature", "Filter bug"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+
+    await page.Locator(".twe-filter-bar input").FillAsync("bug");
+    await Assertions.Expect(rows).ToHaveTextAsync(["Filter bug"], new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("admin-feedback-filter-search.png"), FullPage = true });
   }
 
   public static async Task AdminListOwnerCell_Should_ShowTheDisplayName_And_LinkToThePrincipal()
@@ -609,6 +660,28 @@ public class FeedbackAttachment_Given_Wasm
     Console.WriteLine(dragReport);
     grown.ShouldBeGreaterThan(dragDistance - 20d, dragReport);
     grown.ShouldBeLessThan(dragDistance + 20d, dragReport);
+  }
+
+  private static async Task FileFeedbackAsync(IPage page, ConcurrentQueue<string> console, string title, string? kindLabel)
+  {
+    await OpenFeedbackAsync(page, console);
+    if (kindLabel is not null)
+    {
+      await ChooseOptionAsync(page, "FeedbackKind", kindLabel);
+    }
+
+    await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(title);
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Filter me.");
+    await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
+    await SubmitFeedbackAsync(page);
+  }
+
+  private static async Task ChooseOptionAsync(IPage page, string dataQa, string optionText)
+  {
+    ILocator host = page.Locator($"[data-qa={dataQa}]");
+    await host.ClickAsync();
+    ILocator option = page.Locator("fluent-option").Filter(new LocatorFilterOptions { HasText = optionText });
+    await option.Last.ClickAsync(new LocatorClickOptions { Timeout = 10_000 });
   }
 
   private static async Task OpenFeedbackAsync(IPage page, ConcurrentQueue<string> console)

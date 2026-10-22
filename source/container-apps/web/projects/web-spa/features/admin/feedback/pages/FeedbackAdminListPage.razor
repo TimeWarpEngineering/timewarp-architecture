@@ -38,9 +38,10 @@
     FeedbackStatus? status,
     FeedbackKind? kind,
     bool includeClosed,
-    FeedbackSeverity? severity)
+    FeedbackSeverity? severity,
+    string? search)
   {
-    await FeedbackAdminState.SetFilter(status, kind, includeClosed, severity);
+    await FeedbackAdminState.SetFilter(status, kind, includeClosed, severity, search ?? "");
     await FeedbackAdminState.FetchFeedbackList();
   }
 
@@ -49,24 +50,40 @@
       Enum.TryParse(value, out FeedbackStatus status) ? status : null,
       FeedbackAdminState.Kind,
       FeedbackAdminState.IncludeClosed,
-      FeedbackAdminState.Severity);
+      FeedbackAdminState.Severity,
+      FeedbackAdminState.Search);
 
   private Task OnKindChanged(string value) =>
     ApplyFilterAsync(
       FeedbackAdminState.Status,
       Enum.TryParse(value, out FeedbackKind kind) ? kind : null,
       FeedbackAdminState.IncludeClosed,
-      FeedbackAdminState.Severity);
+      FeedbackAdminState.Severity,
+      FeedbackAdminState.Search);
 
   private Task OnSeverityChanged(string value) =>
     ApplyFilterAsync(
       FeedbackAdminState.Status,
       FeedbackAdminState.Kind,
       FeedbackAdminState.IncludeClosed,
-      Enum.TryParse(value, out FeedbackSeverity severity) ? severity : null);
+      Enum.TryParse(value, out FeedbackSeverity severity) ? severity : null,
+      FeedbackAdminState.Search);
 
   private Task OnIncludeClosedChanged(bool value) =>
-    ApplyFilterAsync(FeedbackAdminState.Status, FeedbackAdminState.Kind, value, FeedbackAdminState.Severity);
+    ApplyFilterAsync(
+      FeedbackAdminState.Status,
+      FeedbackAdminState.Kind,
+      value,
+      FeedbackAdminState.Severity,
+      FeedbackAdminState.Search);
+
+  private Task OnSearchChanged(string value) =>
+    ApplyFilterAsync(
+      FeedbackAdminState.Status,
+      FeedbackAdminState.Kind,
+      FeedbackAdminState.IncludeClosed,
+      FeedbackAdminState.Severity,
+      value);
 
   private async Task GoToPageAsync(int page)
   {
@@ -115,45 +132,38 @@
 }
 
 <TimeWarpPage Title="Feedback review">
-  <Description>Review filings. Filter by status, kind, and severity.</Description>
+  <Description>Review filings. Filter by title, status, kind, and severity.</Description>
   <ChildContent>
     <div class="twe-stack">
       <Section Title="Filter" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Wrap="true">
-          <FormField Label="Status">
-            <FluentSelect TOption="string" TValue="string"
-              Items="StatusChoices"
-              OptionText="@(static value => StatusLabel(value))"
-              Value="@StatusValue"
-              ValueChanged="@OnStatusChanged"
-              AriaLabel="Status"
-              data-qa="AdminFeedbackStatus" />
-          </FormField>
-          <FormField Label="Kind">
-            <FluentSelect TOption="string" TValue="string"
-              Items="KindChoices"
-              OptionText="@(static value => KindLabel(value))"
-              Value="@KindValue"
-              ValueChanged="@OnKindChanged"
-              AriaLabel="Kind"
-              data-qa="AdminFeedbackKind" />
-          </FormField>
-          <FormField Label="Severity">
-            <FluentSelect TOption="string" TValue="string"
-              Items="SeverityChoices"
-              OptionText="@(static value => SeverityLabel(value))"
-              Value="@SeverityValue"
-              ValueChanged="@OnSeverityChanged"
-              AriaLabel="Severity"
-              data-qa="AdminFeedbackSeverity" />
-          </FormField>
-          <FormField Label="Show closed">
-            <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
-              ValueChanged="@OnIncludeClosedChanged"
-              AriaLabel="Show closed"
-              data-qa="AdminFeedbackIncludeClosed" />
-          </FormField>
-        </FluentStack>
+        <FilterBar SearchText="@FeedbackAdminState.Search"
+                   SearchTextChanged="@OnSearchChanged"
+                   SearchPlaceholder="Search titles…">
+          <FilterSelect Label="Status"
+                        Items="StatusChoices"
+                        OptionText="@(static value => StatusLabel(value))"
+                        Value="@StatusValue"
+                        ValueChanged="@OnStatusChanged"
+                        data-qa="AdminFeedbackStatus" />
+          <FilterSelect Label="Kind"
+                        Items="KindChoices"
+                        OptionText="@(static value => KindLabel(value))"
+                        Value="@KindValue"
+                        ValueChanged="@OnKindChanged"
+                        data-qa="AdminFeedbackKind" />
+          <FilterSelect Label="Severity"
+                        Items="SeverityChoices"
+                        OptionText="@(static value => SeverityLabel(value))"
+                        Value="@SeverityValue"
+                        ValueChanged="@OnSeverityChanged"
+                        data-qa="AdminFeedbackSeverity" />
+          <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
+                          ValueChanged="@OnIncludeClosedChanged"
+                          Label="Show closed"
+                          LabelPosition="LabelPosition.After"
+                          AriaLabel="Show closed"
+                          data-qa="AdminFeedbackIncludeClosed" />
+        </FilterBar>
       </Section>
       <Section Title="Feedback">
         @if (FeedbackAdminState.ListLoadError is not null)

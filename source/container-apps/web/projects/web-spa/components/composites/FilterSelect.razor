@@ -1,0 +1,37 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Muted inline label plus a string select for a filter toolbar.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Class stays on that
+  root. Unmatched attributes, including data-qa, splat onto the FluentSelect so existing
+  selectors keep working. The select is FluentSelect of string, the same API the feedback
+  admin list already uses. In this FluentUI build that component renders a fluent-field
+  around a fluent-dropdown. There is no combobox. AriaLabel is the visible label. OptionText,
+  when set, is the select's own option text. This component stores no value and fetches
+  nothing; ValueChanged is the caller's callback.
+*@
+
+@code {
+  [Parameter] public string? Label { get; set; }
+  [Parameter, EditorRequired] public IEnumerable<string> Items { get; set; } = [];
+  [Parameter] public Func<string, string>? OptionText { get; set; }
+  [Parameter] public string? Value { get; set; }
+  [Parameter] public EventCallback<string> ValueChanged { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<div class="twe-filter-select @Class">
+  @if (!string.IsNullOrEmpty(Label))
+  {
+    <span class="twe-filter-select__label">@Label</span>
+  }
+  <FluentSelect TOption="string" TValue="string"
+                Items="@Items"
+                OptionText="@OptionText"
+                Value="@Value"
+                ValueChanged="@ValueChanged"
+                AriaLabel="@Label"
+                @attributes="AdditionalAttributes" />
+</div>
