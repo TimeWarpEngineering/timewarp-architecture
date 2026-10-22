@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 74
+- Lines changed: 26
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -22,6 +22,7 @@ from aca-neon. Record the failure in the guide's "Why the registry stays ACR" se
 **Effort:** 2. **Roster:** general.
 **Session IDs:** review oracle claude-opus-5-5 (headless, session not exposed).
 **Round 2 scope:** fix delta `94b1b38f1..28369a335`. Effort 1, roster general.
+**Round 3 scope:** fix delta `a53c41364..e2ab3757a` (26 lines). Effort 1, roster general.
 
 ## Ground rules
 

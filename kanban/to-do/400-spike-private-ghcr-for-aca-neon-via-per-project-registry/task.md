@@ -60,11 +60,13 @@ Acceptance:
 - Fix pass (implement-fix-2): rewrote "Why the registry stays ACR" as present-tense Aspire 13.6.2 facts. Cited https://aspire.dev/app-host/container-registry/. The probe log stays in this file's Results. 2026-10-22.
 - Review oracle round 2: claude-opus-5-5 (headless), effort 1, roster general, turn cap 80, 2026-10-22. It reviewed the fix delta `94b1b38f1..28369a335`. M1 and M2 are fixed. New M3 (suggestion) is open. Fix pass requested for M3. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`.
 - Fix pass (implement-fix-3): the Token paragraph no longer says `dev deploy` copies a GHCR token. It says `dev deploy` does not forward a registry token, and that a later release with no ACR should keep the token in an AppHost user secret and copy it the way the Neon strings are copied. 2026-10-22.
+- Review oracle round 3: claude-opus-5-5 (headless), effort 1, roster general, turn cap 80, 2026-10-22. It reviewed the fix delta `a53c41364..e2ab3757a`. M3 is fixed and there are no new findings. Disposition: clean. Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Blocked — open M3
+- Round 3: Done — 0 open; disposition clean
 
 ## Notes
 
@@ -78,7 +80,7 @@ Aspire 13.6.2 can name a per-project `ghcr.io` push target. `AddAzureContainerAp
 
 The operator guide's "Why the registry stays ACR" section states the Aspire 13.6.2 facts: the API table, the default-ACR mechanics, the pull shape, the token scopes, the recommendation, and the revisit condition. The token's home is intended design: `dev deploy` does not forward a registry token, and a later release that publishes this environment with no ACR should keep the token in an AppHost user secret and copy it the way the Neon strings are copied. Task ids stay in parentheses (task 317, task 400). The run narrative stays here. [Container registry configuration](https://aspire.dev/app-host/container-registry/) is the cited page for the ACA `WithContainerRegistry(environment)` example. Round-1 ledger: `review/round-1/merged.md`. Round-2 ledger: `review/round-2/merged.md`.
 
-Review: 2 rounds so far, effort 1 in round 2, roster general. Round 2 has 0 bugs. There are 2 suggestions: M1 fixed, and M3 addressed in this fix pass (the host reviews it in round 3). There is 1 nit, M2, which is fixed. `rg -i "ghcr|github.*token" tools/dev-cli` is empty, which is why the guide does not claim a copy exists. This pass ran `./bin/dev lint-skills` with vally 0.19.0 ahead of the installed 0.6.0: 9 skills passed and the eval spec is valid. `ganda repo audit` passed 32 and failed 0. `https://aspire.dev/app-host/container-registry/` returned 200, titled "Container registry configuration", and contains `WithContainerRegistry(environment)`. The existing `artifacts/aspire-output/aca-neon` still has `aca-env-acr` at SKU Basic and managed-identity pulls; this pass did not republish.
+Review disposition: **clean**. The review ran 3 rounds with roster general: effort 2 in round 1, effort 1 in rounds 2 and 3. Final counts (`review/round-3/merged.md`): 0 bugs, 2 suggestions (M1 and M3, both fixed), and 1 nit (M2, fixed), with 0 open and 0 wontfix. Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`. Round 3 verified that M3 is fixed in `e2ab3757a`. `rg -i "ghcr|github.*token" tools/dev-cli` is empty, which is why the guide does not claim a copy exists. This pass ran `./bin/dev lint-skills` with vally 0.19.0 ahead of the installed 0.6.0: 9 skills passed and the eval spec is valid. `ganda repo audit` passed 32 and failed 0. `https://aspire.dev/app-host/container-registry/` returned 200, titled "Container registry configuration", and contains `WithContainerRegistry(environment)`. The existing `artifacts/aspire-output/aca-neon` still has `aca-env-acr` at SKU Basic and managed-identity pulls; this pass did not republish.
 
 `dotnet-inspect` on `Aspire.Hosting` 13.6.2:
 
