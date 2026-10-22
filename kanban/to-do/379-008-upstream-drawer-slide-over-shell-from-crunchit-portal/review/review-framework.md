@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 323
-- Effort: 2
+- Lines changed: 86
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -32,5 +32,14 @@
 **Diff scope:** fix delta `138a8cbea..93befc533` (Drawer.razor, Drawer.razor.css, drawer-js-module.cs, drawer.ts, drawer-playwright-tests.cs, task.md)
 **Brief:** round-1 merged.md M1–M3, plus the fix-pass paragraph of the Goal restatement.
 **Effort:** 2 (by-diff, 323 lines)
+**Reviewer roster:** general (review oracle, claude-opus-5-5)
+**Session IDs:** review oracle session not exposed in print mode
+
+## Round 3 scope
+
+**Date:** 2026-10-23
+**Diff scope:** fix delta `5d03e880b..92103e67a` (Drawer.razor, drawer.ts, drawer-playwright-tests.cs, task.md)
+**Brief:** round-2 merged.md M5 and M6, plus the close-event paragraph of the Goal restatement.
+**Effort:** 1 (by-diff, 86 lines)
 **Reviewer roster:** general (review oracle, claude-opus-5-5)
 **Session IDs:** review oracle session not exposed in print mode

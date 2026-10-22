@@ -207,6 +207,7 @@ possible, and this task adds one.
 - Fix pass for review round 1 (2026-10-23). M1: `wantOpen` cancels a deferred `showModal` after `Close` or `Dispose`. M2: End and Start use inline insets and borders, and `:dir(rtl)` plays the slide from the opposite physical side. M3: a `close` the module did not start calls `RequestClose`. M4 stays wontfix. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed, portal-name grep printed nothing.
 - Review oracle round 2 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 2, reviewing the fix delta `138a8cbea..93befc533`. The session id is not exposed in print mode. M1 and M2 are fixed, and M3's listener landed. New: M5 (bug): `moduleClosing` resets before the queued `close` event fires, so every module `Close` also calls `RequestClose`. This was reproduced against the compiled `drawer.js` in Playwright Chromium. M6 (bug): the Playwright check reads the result before that event fires. Gates were not re-run this round. A fix pass is needed for M5 and M6. Files: `review/round-2/general.md`, `review/round-2/merged.md`.
 - Fix pass for review round 2 (2026-10-23). M5: `pendingModuleClose` is taken by the queued `close` listener, so `Close`, `Dispose`, and the move onto `document.body` do not call `RequestClose`. A `method="dialog"` close still does. M6: the Playwright check waits for that `close` event before it reads the host-call count, and it counts the native close on a cleared list. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed (1 skipped), portal-name grep printed nothing.
+- Review oracle round 3 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 1, reviewing the fix delta `5d03e880b..92103e67a`. The session id is not exposed in print mode. M5 and M6 are fixed. In Playwright Chromium against the compiled `drawer.js`: `Close`, `Dispose`, and the `placeOnBody` close made no host call. A native close made exactly one, including one queued behind a module close. No new findings. Gates were not re-run this round. Disposition: accepted-exceptions (M4 wontfix), 0 open. Files: `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -224,19 +225,23 @@ Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit pa
 
 ### Review
 
-Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs, and this pass closes them:
+Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs. The second fix pass closed them, and round 3 confirmed the fixes:
 
 - M5: `pendingModuleClose` counts a close the module starts. The listener takes that count when the queued `close` event fires, so `OnClose` does not run a second time and a later `SetActiveModal` is left in place.
 - M6: the Playwright check waits for that event before it reads the host-call count, and it counts the native close on a cleared list.
 
 - Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
 - Round 2: general reviewer, effort 2, fix delta only. M5 and M6 (bugs) are implemented in this pass. Suggestion 2 fixed; nit 1 fixed and 1 wontfix.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`. Round 3 has not run.
+- Round 3: general reviewer, effort 1, fix delta only. M5 and M6 were re-verified as fixed in Chromium against the compiled module. No new findings.
+- Final counts: bug 0 open / 2 fixed; suggestion 0 open / 2 fixed; nit 0 open / 1 fixed / 1 wontfix.
+- **Disposition: accepted-exceptions.** 0 open. The one exception is M4 (nit, wontfix; the review oracle decided it in round 1). No escalations.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md` (final ledger), `review/disposition.md`.
 
 ## Review
 
 - Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix.
-- Round 2: M5 and M6 implemented in the fix pass. Round 3 has not run.
+- Round 2: M5 and M6 implemented in the fix pass.
+- Round 3: M5 and M6 confirmed fixed, and no new findings. Disposition: accepted-exceptions (M4), 0 open.
 
 ## Notes
 
