@@ -194,6 +194,8 @@ possible, and this task adds one.
 
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
 - Implemented the native dialog drawer, the style-guide card, the render tests, and the Playwright focus test (2026-10-23). The shell is `display: contents`, so the module moves the dialog onto `document.body` before `showModal`. Chromium still does not wrap Tab out of a `fluent-button` shadow host, so the module wraps Tab.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T20:37:52Z
+- Review oracle round 1 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 3; the session id is not exposed in print mode. Gates re-run: build 0/0, render tests 7/7, Playwright 1/1, template-smoke passed, audit passed, portal-name grep printed nothing. Findings: 0 bug, 2 suggestion, 2 nit. M4 is wontfix; M1, M2, and M3 are open and need a fix pass. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Results
 
@@ -206,6 +208,13 @@ possible, and this task adds one.
 Smoke: `./bin/dev build`; `./bin/dev template-smoke`; `ganda repo audit`; `dotnet test -c Debug --nologo -- --filter-class Drawer_Should_` in `tests/container-apps/web/web-spa-integration-tests`; `dotnet test -c Debug --nologo -- --filter-class StyleGuideDrawer_Given_Wasm` in `tests/container-apps/web/web-spa-playwright-tests`; `git diff origin/master -- source tests | rg -i crunchit`.
 
 Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. The portal-name search prints nothing.
+
+### Review
+
+Review is in progress. There is no disposition yet.
+
+- Round 1: general reviewer, effort 3. Open: M1 (suggestion, a deferred `showModal` can open after `Close`), M2 (suggestion, the End and Start sides use physical CSS and break under RTL), and M3 (nit, no `close` listener to sync a native close back to the caller). Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`.
 
 ## Notes
 
