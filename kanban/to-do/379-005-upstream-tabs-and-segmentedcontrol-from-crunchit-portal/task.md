@@ -147,9 +147,13 @@ Smoke:
 
 ### Review
 
-Round 1 (effort 3, general reviewer) reported 4 findings. This fix pass implements them.
-Round 2 has not run. Paths: `review/review-framework.md`, `review/round-1/general.md`, and
-`review/round-1/merged.md`.
+Disposition: **clean**, after 2 rounds and with 0 open. Round 1 was effort 3 and round 2 was
+effort 2, both with the general reviewer only. Final counts: bug 1 fixed, suggestion 2 fixed,
+nit 1 fixed, and no wontfix. Round 1 raised M1–M4, and fix pass `2d4892b38` closed all four.
+Round 2 re-verified each fix against the delta and found nothing new. It re-ran Tabs 5/5,
+SegmentedControl 5/5, and RovingSelection 10/10, and the client-name grep was empty. Paths:
+`review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`, and
+`review/disposition.md`.
 
 - M1 (bug): `CancelScript` calls `preventDefault` only when `altKey`, `ctrlKey`, `metaKey`, and `shiftKey` are all false. Both render suites read that guard off the root `onkeydown`.
 - M2: `HandledKeys` is the key list. `CancelScript` is built from it, and `FromKey` ignores any other key. Both roots bind `CancelScript`.
@@ -176,10 +180,14 @@ Round 2 has not run. Paths: `review/review-framework.md`, `review/round-1/genera
   general. Session id not exposed. 4 open findings (M1–M4); fix pass requested. 2026-10-22.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T11:18:28Z
 - Fix pass (implement-fix-2): modifier guard, one key list, `RovingValueGroup`, and camelCase `move`. Build, template-smoke, and audit are green. 2026-10-22.
+- Review oracle round 2: claude (claude-opus-5-5), headless ganda task work, effort 2, roster
+  general, turn cap 120. Session id not exposed. M1–M4 verified fixed, no new findings;
+  disposition clean. 2026-10-22.
 
 ## Review
 
-- Round 1: fix pass implemented M1, M2, M3, and M4. Round 2 has not run.
+- Round 1: fix pass implemented M1, M2, M3, and M4.
+- Round 2: all four verified fixed, 0 open, and no new findings. Disposition is clean (`review/disposition.md`).
 
 ## Notes
 
