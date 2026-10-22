@@ -128,8 +128,12 @@ already green; nothing was turned off.
 
 ### Review
 
-Round 1 (effort 2, general) raised M1 and M2. This fix pass addresses both. Round 2 has not
-run. Files: `review/review-framework.md` and `review/round-1/merged.md`.
+Round 1 (effort 2, general) raised M1 and M2. The fix pass (b336a866e) fixed both. Round 2
+(effort 1, general) checked that delta, found nothing new, and ran 15 Avatar tests, all passing.
+
+**Disposition: clean.** 2 rounds. Final counts: 0 bug, 1 suggestion fixed, 1 nit fixed,
+0 wontfix, 0 open. Files: `review/review-framework.md`, `review/round-2/merged.md`, and
+`review/disposition.md`.
 
 - M1 (suggestion): `Leave_The_Default_Size_Without_A_Modifier` renders with only `Name`, so the
   property default is the size that must carry no `twe-avatar--` class.
@@ -166,10 +170,12 @@ Smoke:
 - Review oracle round 1 (Claude Opus 5.5, headless; effort 2; roster general): 0 bug, 1 suggestion, 1 nit, all open. A fix pass is requested for M1 and M2. See `review/round-1/merged.md`. 2026-10-22.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T12:39:11Z
 - Fix pass (implement-fix-2): the default-size render test omits `Size`, and the unreachable initials guards are gone. Build, template-smoke, and audit are green. 2026-10-22.
+- Review oracle round 2 (Claude Opus 5.5, headless; effort 1; roster general): M1 and M2 fixed, no new findings. Disposition clean. See `review/round-2/merged.md` and `review/disposition.md`. 2026-10-22.
 
 ## Review
 
 - Round 1: fix pass implemented M1 and M2.
+- Round 2: M1 and M2 verified fixed, no new findings. Disposition: clean.
 
 ## Notes
 
