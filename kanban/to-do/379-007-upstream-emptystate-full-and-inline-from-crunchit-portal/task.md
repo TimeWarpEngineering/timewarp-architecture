@@ -126,6 +126,8 @@ Follow the conventions of 379-001 through 379-006:
 ## Session
 
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T17:32:22Z
+- Review oracle round 1: general reviewer (claude-opus-5-5), effort 2, session not reported. 3 open (1 suggestion, 2 nits), 0 bugs; fix pass requested for M1–M3 (2026-10-23)
 
 ## Notes
 
@@ -177,3 +179,15 @@ git diff origin/master -- source tests | rg -i crunchit
 ```
 
 `dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0. The client-name search prints nothing.
+
+### Review
+
+Round 1 ran with effort 2 and a single general reviewer. It found 0 bugs, 1 suggestion, and 2 nits; all 3 are open. Disposition is pending until round 2.
+
+The reviewer re-ran every gate in this worktree, and all passed: `dev build` (0 warnings, 0 errors), the 7 EmptyState tests (7/7), `ganda repo audit`, `dev template-smoke`, and the client-name grep.
+
+- **M1:** the Design region says a `role="status"` region that is inserted gets announced. That is not reliable across screen readers, so correct the text.
+- **M2:** the style guide's Full samples should use `HeadingLevel="3"` under the Card's `h2`.
+- **M3:** drop the trailing period from the two adopter titles.
+
+Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
