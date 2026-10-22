@@ -2,9 +2,11 @@
 
 ## Goal (implementer restatement)
 
-Every generated app should say "nothing here" the same way. Add one native `EmptyState` element, brand-neutral, with a full paper card and a compact inline form for use inside a card or grid. The full form is a centred column: an optional FluentUI icon (hidden from assistive tech, omitted entirely when inline), a heading whose level follows the page, an optional description, and an optional actions slot the page fills with its own button. The inline form drops the paper, shadow, and icon, and uses a paragraph for the title so it does not add a second heading inside a section. There is no phase chip; a page that wants one puts it in the actions slot.
+Every generated app should say "nothing here" the same way. One native `EmptyState` element, brand-neutral, has a full paper card and a compact inline form for use inside a card or grid. The full form is a centred column: an optional FluentUI icon (hidden from assistive tech, omitted entirely when inline), a heading whose level follows the page, an optional description, and an optional actions slot the page fills with its own button. The inline form drops the paper, shadow, and icon, and uses a paragraph for the title so it does not add a second heading inside a section. There is no phase chip; a page that wants one puts it in the actions slot.
 
-Wire it into the admin feedback grid's empty content (same `data-qa`, still inside `EmptyContent`) and the "Your filings" empty branch. Leave the principals grid and the admin item activity line for a later task on this same pattern. Show both forms on the style guide, with the sample button dispatching an existing notification action. Render tests pin the root class, variant modifier, optional description and actions, attribute passthrough, heading level, and the hidden icon. `dev build` is 0 warnings and 0 errors, `dev template-smoke` passes, `ganda repo audit` passes, and the source and test diff contains no client name.
+The root keeps `role="status"`. The Design region says that inserting that region together with its text is announced inconsistently, and that a page which needs a guaranteed announcement keeps its own persistent live region (for example an always-rendered result count). It does not claim that a filter-to-empty transition is announced.
+
+Wire the inline form into the admin feedback grid's empty content (same `data-qa`, still inside `EmptyContent`) and the "Your filings" empty branch. Those titles have no trailing period. Leave the principals grid and the admin item activity line for a later task on this same pattern. Show both forms on the style guide. The two full samples use heading level 3, because the card title is already an `h2`. The sample button dispatches an existing notification action. Render tests pin the root class, variant modifier, optional description and actions, attribute passthrough, heading level, and the hidden icon. `dev build` is 0 warnings and 0 errors, `dev template-smoke` passes, `ganda repo audit` passes, and the source and test diff contains no client name.
 
 ## Description
 
@@ -128,6 +130,13 @@ Follow the conventions of 379-001 through 379-006:
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T17:32:22Z
 - Review oracle round 1: general reviewer (claude-opus-5-5), effort 2, session not reported. 3 open (1 suggestion, 2 nits), 0 bugs; fix pass requested for M1–M3 (2026-10-23)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T17:38:02Z
+- Fix pass (implement-fix-2): review round 1 M1–M3. The Design region no longer claims that inserting the status region, or a filter that empties a list, is announced. The two style-guide Full samples use heading level 3. The adopter titles drop the trailing period. grok-4.7, 2026-10-23.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
+- Fix pass implemented M1–M3 on this id. Round 2 verifies.
 
 ## Notes
 
@@ -146,18 +155,21 @@ Follow the conventions of 379-001 through 379-006:
 - Out of scope: the shell user card (379-015), the Drawer (379-008), and 379-017.
 - Follow-up on the same pattern, left untouched: `PrincipalsPage` grid empty content
   (`data-qa="AdminPrincipalsEmpty"`) and `FeedbackAdminItemPage` ("No activity yet.").
-- Inline is left-aligned. Full keeps `role="status"`: a status region already in the first
-  paint is not announced, and a list that becomes empty after a filter is. No token was
-  added. The default icon is Fluent UI regular 24px `CollectionsEmpty` (the fluent-ui-blazor
-  MCP was not in this session).
+- Inline is left-aligned. Full keeps `role="status"`. A status region already in the first
+  paint is not announced. Inserting the region together with its text is announced
+  inconsistently; a page that needs a guaranteed announcement keeps its own persistent
+  live region. No token was added. The default icon is Fluent UI regular 24px
+  `CollectionsEmpty` (the fluent-ui-blazor MCP was not in this session).
 
 ## Results
 
 One `EmptyState` under `components/elements`. Full is a centred paper card (`twe-empty-state`) with `role="status"`, a regular 24px Fluent `CollectionsEmpty` icon in an `aria-hidden` tile, a heading at `HeadingLevel` (2–6, otherwise h2), an optional description, and an actions slot. Inline adds `twe-empty-state--inline`: no paper, shadow, or icon, left-aligned, and a paragraph title so a nested section does not gain a second heading. Description and actions render only when set. A page that wants a phase chip puts it in `ChildContent`. No new tokens: the tile is `--twe-space-12`, and the description measure is 32rem in the component stylesheet.
 
-Adopted on the admin feedback grid empty content (`data-qa="AdminFeedbackEmpty"` stays inside `EmptyContent`) and the "Your filings" empty branch. The style guide shows the full form, the full form with a button that dispatches the existing notification action, and the inline form. `PrincipalsPage` and `FeedbackAdminItemPage` are unchanged.
+Adopted on the admin feedback grid empty content (`data-qa="AdminFeedbackEmpty"` stays inside `EmptyContent`) and the "Your filings" empty branch. Those titles have no trailing period. The style guide shows the full form, the full form with a button that dispatches the existing notification action, and the inline form. Both full samples use heading level 3 under the card's `h2`. `PrincipalsPage` and `FeedbackAdminItemPage` are unchanged.
 
-Markup is pinned by seven HtmlRenderer tests. The style guide and the two feedback pages were not opened in a browser.
+The Design region keeps `role="status"` and records the limit: a change of text inside a live region that is already on the page is what screen readers reliably announce. Inserting the region with its text is announced inconsistently. A page that needs a guaranteed announcement keeps its own persistent live region.
+
+Markup is pinned by seven HtmlRenderer tests. The style guide and the two feedback pages were not opened in a browser. The heading-level test already renders `h3` for `HeadingLevel` 3, and the sample markup now passes that value.
 
 ### How to validate
 
@@ -178,16 +190,14 @@ ganda repo audit
 git diff origin/master -- source tests | rg -i crunchit
 ```
 
-`dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0. The client-name search prints nothing.
+Re-ran on 2026-10-23 after the fix pass. `dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0, Skipped 1. The client-name search prints nothing. `EmptyState_Should_`: 7 passed, 0 failed.
 
 ### Review
 
-Round 1 ran with effort 2 and a single general reviewer. It found 0 bugs, 1 suggestion, and 2 nits; all 3 are open. Disposition is pending until round 2.
+Round 1 ran with effort 2 and a single general reviewer. It found 0 bugs, 1 suggestion, and 2 nits. The fix pass implemented all three. Round 2 has not verified them yet.
 
-The reviewer re-ran every gate in this worktree, and all passed: `dev build` (0 warnings, 0 errors), the 7 EmptyState tests (7/7), `ganda repo audit`, `dev template-smoke`, and the client-name grep.
-
-- **M1:** the Design region says a `role="status"` region that is inserted gets announced. That is not reliable across screen readers, so correct the text.
-- **M2:** the style guide's Full samples should use `HeadingLevel="3"` under the Card's `h2`.
-- **M3:** drop the trailing period from the two adopter titles.
+- **M1:** the Design region now says insertion is announced inconsistently, and that a guaranteed announcement belongs to a persistent live region the page already renders. `role="status"` stays.
+- **M2:** the two Full samples on the style guide pass `HeadingLevel="3"`.
+- **M3:** the admin filter title and the "Your filings" title no longer end in a period.
 
 Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

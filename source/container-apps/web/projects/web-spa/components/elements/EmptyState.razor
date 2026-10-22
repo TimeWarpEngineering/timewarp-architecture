@@ -8,11 +8,13 @@
   or grid that already has chrome. Native div root so CSS isolation stamps the scope
   attribute. Class is appended on that root the way Card does, and unmatched attributes
   splat onto it.
-  The root is role="status" (an implicit polite live region). Assistive tech does not
-  announce a status region that is already in the first paint; it announces when the
-  region is inserted or its text changes. A list that becomes empty after a filter is
-  announced. A page that is empty on first load is not announced again at load. A page
-  that needs different politeness overrides role through unmatched attributes.
+  The root is role="status" (an implicit polite live region). Screen readers reliably
+  announce a change of content inside a live region that already exists. A region that
+  is already in the first paint is not announced. Inserting the region together with
+  its text is announced inconsistently; NVDA and JAWS often stay silent. A page that
+  needs a guaranteed announcement keeps its own persistent live region (for example an
+  always-rendered result count) and changes that region's text. A page that needs
+  different politeness overrides role through unmatched attributes.
   Full renders a heading. HeadingLevel 2 through 6 selects h2–h6; any other value stays
   h2. Inline renders a paragraph with the title class, and ignores HeadingLevel, because
   it sits under a section heading that already owns the outline.
