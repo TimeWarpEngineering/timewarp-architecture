@@ -187,8 +187,7 @@ SegmentedControl 5/5, and RovingSelection 10/10, and the client-name grep was em
 ## Review
 
 - Round 1: fix pass implemented M1, M2, M3, and M4.
-- Round 2: all four verified fixed, 0 open, and no new findings. Disposition is clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source is under
