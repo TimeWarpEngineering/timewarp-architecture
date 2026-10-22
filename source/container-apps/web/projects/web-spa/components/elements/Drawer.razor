@@ -18,6 +18,8 @@
   the cancel event and is held so the caller still owns the flag. A backdrop click is
   forwarded the same way. A native close the module did not start, such as a form with
   method dialog, is forwarded as OnClose so the caller's flag drops with the dialog.
+  A close the module starts is not forwarded again. The close event arrives on a later
+  turn, and the module still skips it.
   The title id is minted per instance. The heading level is 2. The root is labelled by that
   heading and carries aria-modal while open. End and medium add twe-drawer--end and no size
   class. Start adds twe-drawer--start. Wide adds twe-drawer--wide. Class is appended, and

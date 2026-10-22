@@ -1,7 +1,8 @@
 #region Purpose
 // Browser proof that the style-guide drawer moves focus in, keeps Tab inside, and returns
 // focus to the opener on Escape. The same run checks the inline edges under both writing
-// directions, a native dialog close, and a show that resolves only after Close.
+// directions, a native dialog close, a module close that must not ask the host, and a show
+// that resolves only after Close.
 #endregion
 
 #region Design
@@ -15,8 +16,9 @@
 // document direction and the side class, then reads the settled box and the inner border.
 // A form with method dialog closes the dialog without the module's Close, and the title
 // leaves once the caller's flag drops. A direct Bind, with fluent-button still undefined,
-// proves a late show does not call showModal after Close, and a close the module did not
-// start asks the host.
+// proves a late show does not call showModal after Close. The module Close check waits for
+// the queued close event before it reads host calls. The native close check clears that
+// list first, then counts RequestClose, so an earlier module close cannot satisfy it.
 #endregion
 
 namespace StyleGuideDrawerPlaywright_;
@@ -237,6 +239,16 @@ public class StyleGuideDrawer_Given_Wasm
         document.body.append(dialog);
         const calls = [];
         const host = { invokeMethodAsync: async (name) => { calls.push(name); } };
+        const requestCloseCount = () => calls.filter((name) => name === "RequestClose").length;
+        const waitForQueuedClose = () => {
+          if (!dialog.open) {
+            return Promise.resolve();
+          }
+
+          return new Promise((resolve) => {
+            dialog.addEventListener("close", () => resolve(), { once: true });
+          });
+        };
         try {
           const module = await import("/js/features/drawer.js");
           const handle = module.Bind(dialog, host);
@@ -246,8 +258,10 @@ public class StyleGuideDrawer_Given_Wasm
           release();
           await frames();
           const openedAfterDefine = dialog.open === true;
+          const moduleClose = waitForQueuedClose();
           handle.Close();
-          const moduleCloseAskedHost = calls.length > 0;
+          await moduleClose;
+          const moduleCloseRequestCount = requestCloseCount();
 
           handle.Show();
           const stayedClosedOnSecondShow = dialog.open === false;
@@ -259,19 +273,21 @@ public class StyleGuideDrawer_Given_Wasm
           handle.Show();
           release();
           await frames();
+          calls.length = 0;
+          const nativeClose = waitForQueuedClose();
           dialog.close();
-          await frames();
-          const nativeCloseAskedHost = calls.includes("RequestClose");
+          await nativeClose;
+          const nativeCloseRequestCount = requestCloseCount();
           const stayedClosedAfterNativeClose = dialog.open === false;
           handle.Dispose();
 
           return JSON.stringify({
             stayedClosedUntilDefined,
             openedAfterDefine,
-            moduleCloseAskedHost,
+            moduleCloseRequestCount,
             stayedClosedOnSecondShow,
             stayedClosedAfterLateShow,
-            nativeCloseAskedHost,
+            nativeCloseRequestCount,
             stayedClosedAfterNativeClose,
           });
         } finally {
@@ -286,10 +302,10 @@ public class StyleGuideDrawer_Given_Wasm
     System.Text.Json.JsonElement root = document.RootElement;
     root.GetProperty("stayedClosedUntilDefined").GetBoolean().ShouldBeTrue();
     root.GetProperty("openedAfterDefine").GetBoolean().ShouldBeTrue();
-    root.GetProperty("moduleCloseAskedHost").GetBoolean().ShouldBeFalse();
+    root.GetProperty("moduleCloseRequestCount").GetInt32().ShouldBe(0);
     root.GetProperty("stayedClosedOnSecondShow").GetBoolean().ShouldBeTrue();
     root.GetProperty("stayedClosedAfterLateShow").GetBoolean().ShouldBeTrue();
-    root.GetProperty("nativeCloseAskedHost").GetBoolean().ShouldBeTrue();
+    root.GetProperty("nativeCloseRequestCount").GetInt32().ShouldBe(1);
     root.GetProperty("stayedClosedAfterNativeClose").GetBoolean().ShouldBeTrue();
   }
 

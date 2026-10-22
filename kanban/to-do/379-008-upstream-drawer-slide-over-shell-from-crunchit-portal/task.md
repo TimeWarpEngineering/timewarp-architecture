@@ -12,7 +12,7 @@ The only adoption is the style guide: a Drawers card after Empty States, with on
 
 Done means the component, the side and size enums, the script and its C# wrapper, token-only CSS, the style-guide card, the overview row, the render tests, and the browser test are in place; `./bin/dev build`, `./bin/dev template-smoke`, and `ganda repo audit` pass; and the `source` and `tests` diff contains no portal product name. The existing modal overlay stays unchanged. It still has no Escape or focus handling, and this task records that gap instead of fixing it.
 
-This fix pass keeps that contract and closes the three open review findings. A show that is still waiting for the dismiss button's custom element must leave the dialog closed when `Close` or `Dispose` has already run. End and Start sit on the inline edges: the panel, its inner border, and the slide follow the writing direction, and under a right-to-left document the slide comes from the opposite physical side. A native close this script did not start, including a form with `method="dialog"` inside the body, calls the same `OnClose` path so the caller's flag and the style-guide modal id clear.
+The shell still has to meet the earlier review contract. A show that is still waiting for the dismiss button's custom element must leave the dialog closed when `Close` or `Dispose` has already run. End and Start sit on the inline edges: the panel, its inner border, and the slide follow the writing direction, and under a right-to-left document the slide comes from the opposite physical side. A native close this script did not start, including a form with `method="dialog"` inside the body, calls the same `OnClose` path so the caller's flag and the style-guide modal id clear. A close this script does start — `Close`, `Dispose`, or moving the dialog onto `document.body` — must not call `OnClose` again. The browser fires that `close` event on a later turn, so the skip has to survive past the return of `close()`. The browser check waits for that event before it reads the host calls, and it counts the native close on a cleared list so a leaked module close cannot satisfy it.
 
 ## Description
 
@@ -170,6 +170,8 @@ drawer where a real in-page edit form appears.
 - [x] A deferred `show` does not call `showModal` after `Close` or `Dispose`.
 - [x] End and Start use inline insets and borders, and the slide flips under `:dir(rtl)`.
 - [x] A native close the module did not start calls `RequestClose`.
+- [x] A close the module starts does not call `RequestClose` after the queued `close` event.
+      The Playwright check waits for that event, and counts the native close on a cleared list.
 - [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
@@ -204,6 +206,7 @@ possible, and this task adds one.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T20:46:14Z
 - Fix pass for review round 1 (2026-10-23). M1: `wantOpen` cancels a deferred `showModal` after `Close` or `Dispose`. M2: End and Start use inline insets and borders, and `:dir(rtl)` plays the slide from the opposite physical side. M3: a `close` the module did not start calls `RequestClose`. M4 stays wontfix. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed, portal-name grep printed nothing.
 - Review oracle round 2 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 2, reviewing the fix delta `138a8cbea..93befc533`. The session id is not exposed in print mode. M1 and M2 are fixed, and M3's listener landed. New: M5 (bug): `moduleClosing` resets before the queued `close` event fires, so every module `Close` also calls `RequestClose`. This was reproduced against the compiled `drawer.js` in Playwright Chromium. M6 (bug): the Playwright check reads the result before that event fires. Gates were not re-run this round. A fix pass is needed for M5 and M6. Files: `review/round-2/general.md`, `review/round-2/merged.md`.
+- Fix pass for review round 2 (2026-10-23). M5: `pendingModuleClose` is taken by the queued `close` listener, so `Close`, `Dispose`, and the move onto `document.body` do not call `RequestClose`. A `method="dialog"` close still does. M6: the Playwright check waits for that `close` event before it reads the host-call count, and it counts the native close on a cleared list. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed (1 skipped), portal-name grep printed nothing.
 
 ## Results
 
@@ -211,31 +214,29 @@ possible, and this task adds one.
 
 `ModalContainer` is unchanged. It still closes on a backdrop click and exposes `role="dialog"`, and it still has no Escape handling, no focus move, no focus return, and no inert background.
 
-The script keeps a `wantOpen` flag. `Show` sets it, and `Close` and `Dispose` clear it, so a `show` that is still waiting on `fluent-button` returns without `showModal` after the caller has closed. End and Start use `inset-inline-*` and `border-inline-*`. Under `:dir(rtl)` the slide comes from the opposite physical side, and `prefers-reduced-motion` still drops it. A `close` event the module did not start, such as a form with `method="dialog"`, calls `RequestClose`. `Close`, `Dispose`, and the move onto `document.body` do not.
+The script keeps a `wantOpen` flag. `Show` sets it, and `Close` and `Dispose` clear it, so a `show` that is still waiting on `fluent-button` returns without `showModal` after the caller has closed. End and Start use `inset-inline-*` and `border-inline-*`. Under `:dir(rtl)` the slide comes from the opposite physical side, and `prefers-reduced-motion` still drops it. A `close` event the module did not start, such as a form with `method="dialog"`, calls `RequestClose`. A close the module starts increments `pendingModuleClose` before `close()`. The browser queues that event, and the listener takes one count and returns, so `Close`, `Dispose`, and the move onto `document.body` do not call `RequestClose`.
 
 ### How to validate
 
 Smoke: `./bin/dev build`; `./bin/dev template-smoke`; `ganda repo audit`; `dotnet test -c Debug --nologo -- --filter-class Drawer_Should_` in `tests/container-apps/web/web-spa-integration-tests`; `dotnet test -c Debug --nologo -- --filter-class StyleGuideDrawer_Given_Wasm` in `tests/container-apps/web/web-spa-playwright-tests`; `git diff origin/master -- source tests | rg -i crunchit`.
 
-Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. End sits on the right in LTR and the left in RTL, Start is the mirror, and the inner border follows the inline edge. A `method="dialog"` submit removes the title and leaves the dialog shut. A show that resolves only after `Close` stays shut, and a native `close` asks the host. The portal-name search prints nothing.
+Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. End sits on the right in LTR and the left in RTL, Start is the mirror, and the inner border follows the inline edge. A `method="dialog"` submit removes the title and leaves the dialog shut. A show that resolves only after `Close` stays shut. After the queued `close` event, a module `Close` has asked the host zero times. A native `close`, counted on a cleared list, asks once. The portal-name search prints nothing.
 
 ### Review
 
-Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs:
+Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs, and this pass closes them:
 
-- M5: the guard that skips closes the module starts is reset before the browser fires the queued `close` event. Every `Close` therefore also calls `RequestClose`, which runs `OnClose` a second time and can clear an overlay that `SetActiveModal` just opened.
-- M6: the Playwright check reads its result too early to catch M5.
+- M5: `pendingModuleClose` counts a close the module starts. The listener takes that count when the queued `close` event fires, so `OnClose` does not run a second time and a later `SetActiveModal` is left in place.
+- M6: the Playwright check waits for that event before it reads the host-call count, and it counts the native close on a cleared list.
 
-Disposition is pending a fix pass for M5 and M6.
-
-- Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented in this pass. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
-- Round 2: general reviewer, effort 2, fix delta only. Counts: bug 2 open; suggestion 2 fixed; nit 1 fixed and 1 wontfix.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`.
+- Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
+- Round 2: general reviewer, effort 2, fix delta only. M5 and M6 (bugs) are implemented in this pass. Suggestion 2 fixed; nit 1 fixed and 1 wontfix.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`. Round 3 has not run.
 
 ## Review
 
 - Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix.
-- Round 2: M1, M2, and M3 are fixed. M5 and M6 (bugs) are open: a module `Close` still calls `RequestClose` through the late `close` event, and the test does not catch it. A fix pass is needed.
+- Round 2: M5 and M6 implemented in the fix pass. Round 3 has not run.
 
 ## Notes
 

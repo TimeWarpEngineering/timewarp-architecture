@@ -12,8 +12,10 @@
 // Close and Dispose clear it, and a native close this module did not start clears it too.
 // The deferred show returns without showModal when the flag is clear.
 // Close calls close, which returns focus to the opener. Both no-op when the dialog is already
-// in that state. A close this module starts (Close, Dispose, or the move onto document.body)
-// does not call RequestClose. Any other close, such as a form with method dialog, does.
+// in that state. The browser queues the close event, so a flag held only while close() runs
+// is already clear when the listener runs. pendingModuleClose counts closes this module
+// starts (Close, Dispose, or the move onto document.body). The listener takes one and
+// returns. Any other close, such as a form with method dialog, still calls RequestClose.
 // Chromium still does not wrap Tab when the focused control is a closed-shadow host
 // (fluent-button), even after the dialog matches :modal on document.body. A capture-phase
 // keydown wraps Tab and Shift+Tab between the first and last tab stop in the dialog.
@@ -38,19 +40,15 @@ export interface DrawerHandle {
 export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle {
   let disposed = false;
   let wantOpen = false;
-  let moduleClosing = false;
+  let pendingModuleClose = 0;
 
   const closeFromModule = (): void => {
     if (!dialog.open) {
       return;
     }
 
-    moduleClosing = true;
-    try {
-      dialog.close();
-    } finally {
-      moduleClosing = false;
-    }
+    pendingModuleClose += 1;
+    dialog.close();
   };
 
   const placeOnBody = (): void => {
@@ -156,7 +154,12 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
   };
 
   const onDialogClose = (): void => {
-    if (moduleClosing || disposed) {
+    if (pendingModuleClose > 0) {
+      pendingModuleClose -= 1;
+      return;
+    }
+
+    if (disposed) {
       return;
     }
 
