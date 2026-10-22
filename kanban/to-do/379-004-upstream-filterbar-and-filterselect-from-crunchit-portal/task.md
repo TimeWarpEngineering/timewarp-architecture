@@ -222,8 +222,7 @@ Expect:
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-- Round 2: M1–M3 fixed; M4 nit wontfix — disposition accepted-exceptions (0 open)
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source is under
