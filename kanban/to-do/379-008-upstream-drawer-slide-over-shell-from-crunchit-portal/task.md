@@ -1,0 +1,203 @@
+# Upstream Drawer slide-over shell from Crunchit portal
+
+## Description
+
+Port Crunchit's `Drawer` into the template as a native, brand-neutral slide-over shell, so a
+generated app can show a detail or edit form beside the page without leaving it.
+
+Crunchit's `Drawer` (`components/Drawer.razor`, `.razor.css`, plus a script block in
+`wwwroot/index.html`) works like this:
+
+- Parameters: `IsOpen` and `IsOpenChanged` (a two-way bind), `Title` (required), `Footer`
+  (`RenderFragment?`), `ChildContent`. Nothing else: no side, no width, no size, no `Class`.
+- Markup, rendered only while open: a scrim `<div>` (click closes), then
+  `<aside role="dialog" aria-modal="true" aria-labelledby=title-id tabindex="-1">` holding a
+  header (`<h2>` title and a `×` close button with `aria-label="Close"`), a scrolling body, and
+  an optional footer. The title id comes from a static counter.
+- CSS: fixed to the right edge, full height, 560px wide (100vw under 600px), flex column,
+  scrim at z-index 199 and panel at 200. It uses hex and `rgba` literals, a hand-drawn shadow, and
+  `crunchit-*` variables. There is no slide animation, in spite of the name.
+- Open and close: the parent owns the state. The drawer never sets `IsOpen` itself. It calls
+  `IsOpenChanged(false)` on scrim click, close button, and Escape.
+- Escape and focus: a `@onkeydown` on the panel handles Escape once focus is inside. After each
+  render a JS helper (`crunchit.setDrawerSession`, inline in `index.html`) adds a capture-phase
+  `document` keydown listener that calls back into `[JSInvokable] OnEscape`, locks scroll on
+  `<body>` and the main region, and focuses the first focusable control in the body (else the
+  panel). The component implements `IAsyncDisposable` to undo the session.
+- What is missing: focus is not restored to the opener on close, focus is not contained (Tab
+  leaves the panel), and the background is not inert (a screen reader can still read the page).
+  The `×` glyph is the button label's visual only.
+- Uses: the staff page (invite form and member detail, one drawer switched by a local
+  `DrawerMode` enum, open flag held in the page), and a sample in the style guide. The shell
+  also has an unrelated sidebar-toggle state that only shares the word "drawer".
+
+Template today: there is no drawer. The overlay that exists is the store-driven modal
+(`ApplicationState.ActiveModalId`, `ModalController`, `ModalContainer`, `twe-modal`). It has a
+backdrop click and a dialog role, but no Escape, no focus move, no focus return, and no inert
+background. `CommandPalette` and `AgentAsk` add their own focus handling with a
+`[DirectComponentSideEffect]` opt-out (TWA0026). FluentUI is 5.0.1. It ships `FluentDialog`
+(Modal, `Alignment` Start/End, `PreventDismissOnEscape`, `Show/HideAsync`),
+`FluentDialogBody` (with `FixedHeaderFooter`), and `IDialogService.ShowDrawerAsync`. It has no
+`FluentDrawer` component. The tree already has `FluentProviders`
+(`layouts/FluentUIRequiredFeatures.razor`). No other panel or slide-over pattern exists.
+
+Defects to fix in the port:
+
+- Focus is not restored to the opener, not contained, and the background is not inert.
+- No `Class` or attribute passthrough, hex literals instead of tokens, and `crunchit-*` names.
+- The two-way bind plus a page-local `DrawerOpen` bool does not satisfy the rule that every
+  interaction is a State action (see Decision).
+- Open and close are not animated, and there is no `prefers-reduced-motion` handling.
+- No width option. The 560px width is fixed.
+
+Follow the conventions of 379-001 through 379-007:
+
+- A native root with a `twe-` class (`twe-drawer`).
+- A `Class` parameter and `[Parameter(CaptureUnmatchedValues = true)] AdditionalAttributes`,
+  splatted on the root, as `Card.razor` does.
+- No `DisplayComponent` or `CssBuilder`.
+- Isolated `.razor.css` with `--twe-*` tokens from `wwwroot/css/tokens.css`. No hex values, no
+  `<style>`. Add tokens only if needed (panel width, scrim colour, drawer z-index).
+- Purpose and Design regions (TWA0004).
+- Static `HtmlRenderer` Jaribu tests in
+  `tests/container-apps/web/web-spa-integration-tests/components/`, modelled on
+  `empty-state-render-tests.cs`.
+- The component exposes only `EventCallback`s. A page handler only dispatches
+  TimeWarp.State actions (`tw-blazor`). No page-local navigate, service or JS methods.
+- No TypeScript patches of library internals (`tw-blazor-css-strategy`, memory). Any script is
+  the component's own presentational module, not a patch of FluentUI.
+- The generated code contains no client name.
+
+## Decision
+
+- **Open state is a State action, not a bind** (default chosen for this task): the component takes
+  `IsOpen` (read-only `bool`) and `OnClose` (`EventCallback`). There is no `IsOpenChanged` and
+  no `@bind-IsOpen`. The page computes `IsOpen` from a store and `OnClose` dispatches a close
+  action. For the style guide and any page with no store of its own, use the existing
+  `ApplicationState.ActiveModalId`: the opener dispatches `SetActiveModal` with a drawer id,
+  `IsOpen="@(ApplicationState.ActiveModalId == DrawerId)"`, `OnClose` dispatches `CloseModal`.
+  That also gives "one overlay at a time" for free. The component itself stays a leaf and does
+  not reference `ApplicationState`.
+- **Slots and parameters** (default chosen): `Title` (required), `ChildContent`, `Footer`,
+  `Side` (`DrawerSide.End` default, `Start`), `Class`, `AdditionalAttributes`. Width comes from
+  one token with a `Size` of `Medium` (default) and `Wide`; do not copy the fixed 560px as a
+  literal. No `IsOpenChanged`.
+- **Close paths** (default chosen): scrim click, the header close button, and Escape all call
+  `OnClose`. The close button is a `FluentButton` with a FluentUI dismiss icon and
+  `aria-label="Close"`, replacing the `×` glyph.
+- **Motion** (default chosen): a short slide-in using a transform, off under
+  `prefers-reduced-motion`. Closing is immediate, because the parent removes the drawer.
+- **No Crunchit `DrawerMode` enum port.** A page that needs two drawers uses two ids.
+
+- **Native `<dialog>`** (Steve, 2026-10-23): `<dialog class="twe-drawer">` opened with
+  `showModal()` and closed with `close()` through one small presentational TypeScript module.
+  The browser supplies the top layer, inert background, Tab containment, Escape (the `cancel`
+  event, forwarded to `OnClose`) and focus return to the opener. `::backdrop` is the scrim. Body
+  scroll lock is one global rule, `body:has(dialog.twe-drawer:modal)`. The component carries a
+  `[DirectComponentSideEffect]` opt-out like `CommandPalette`. Not a `FluentDialog` wrapper, and
+  not a port of Crunchit's `<aside>` plus scroll-lock helper.
+- **One Playwright test** (default chosen for this task): HtmlRenderer cannot see focus or keys,
+  and the accessibility behaviour is the point of the component, so one browser test pins
+  focus-in, Escape, focus-return and Tab containment on the style-guide drawer.
+
+## Adoption site
+
+Style guide only, like 379-005. The only candidate is the admin feedback item
+(`features/admin/feedback/pages/FeedbackAdminItemPage.razor`, opened from the grid link
+`/Admin/Feedback/{id}`), but that is a routed page with a permalink, a loaded-by-id state flow
+and its own Section layout. Turning it into a slide-over would drop deep links and the
+`OpenFeedbackForAdmin` page flow for no gain, which is not an honest fit. Crunchit's staff
+invite and detail forms have no counterpart in the template. A later task can adopt the
+drawer where a real in-page edit form appears.
+
+## Checklist
+
+- [ ] `components/elements/Drawer.razor` and `.razor.css`. It goes under `elements/`: the drawer
+      owns no state and holds no child components of its own, as `Card` and `EmptyState` do.
+  - Root and parameters as in Decision. Keep the `<dialog>` closed when `IsOpen` is false. Title id unique per instance (no static counter shared across
+    circuits; derive from the instance).
+  - Root labelled by its title: `role="dialog"` (implicit on `<dialog>`), `aria-modal`, and
+    `aria-labelledby` pointing at the title element's id. Heading level is fixed at 2.
+  - Footer renders only when set. The body is the only scroll area; header and footer stay
+    pinned.
+  - Escape, scrim click, and the close button call `OnClose`.
+- [ ] `components/elements/drawer-side.cs` and, if kept, `drawer-size.cs` for the enums
+      (kebab file names, TW0001).
+- [ ] The presentational module in TypeScript under `source/features/` (compiled to
+      `wwwroot/js`, like `web-authn.ts`), with a C# wrapper in `services/` like
+      `command-palette-js-module.cs`, and a `[DirectComponentSideEffect("…")]` reason on the
+      component. Dispose the module reference and guard `JSDisconnectedException`. No edits to
+      FluentUI internals.
+- [ ] CSS in the isolated stylesheet: fixed to the chosen side, full height, width from a token,
+      `--twe-paper`, `--twe-shadow`, `--twe-rule`/border token, spacing from `--twe-space-*`,
+      header title at 600 in `--twe-ink`, a body that scrolls, a footer with a top border and a
+      flex gap. Narrow screens: full width. Slide-in via transform, disabled under
+      `prefers-reduced-motion`. Add tokens (`--twe-drawer-width`, `--twe-scrim`, a drawer z
+      layer) to `tokens.css` only if needed. No hex values and no `<style>`.
+- [ ] Style guide: add a "Drawers" card (after "Empty States") with one opener button and one
+      drawer containing a short body and a footer with a close button. The opener dispatches
+      `SetActiveModal`, `IsOpen` reads `ActiveModalId`, `OnClose` and the footer button
+      dispatch `CloseModal`. No new local field. Do not extend the StyleGuidePage contract
+      (379-017).
+- [ ] Add a row to `components/overview.md`.
+- [ ] Render tests in `components/drawer-render-tests.cs`. They pin only what the static
+      render shows:
+  - Closed: no panel markup (or a closed dialog), and no title text.
+  - Open: root carries `twe-drawer`, the side modifier, the title, `aria-modal`, and
+    `aria-labelledby` equal to the id of the title element.
+  - Two instances get different title ids.
+  - Footer is omitted when unset and present when set.
+  - `Class` and additional attributes (`data-qa`) merge on the root.
+  - The close button has `aria-label="Close"` and the icon is `aria-hidden`.
+- [ ] One Playwright test in
+      `tests/container-apps/web/web-spa-playwright-tests/` (model: `ask-focus-playwright-tests.cs`
+      and its sign-in helper) for focus-in, Escape, focus-return, and Tab containment on the
+      style-guide drawer.
+- [ ] Gates:
+  - `./bin/dev build` reports 0 warnings and 0 errors.
+  - `./bin/dev template-smoke` passes.
+  - `ganda repo audit` passes.
+  - `git diff origin/master -- source tests | rg -i crunchit` prints nothing.
+
+## Accessibility
+
+| Requirement | Crunchit port (rejected) | FluentDialog (rejected) | Native `<dialog>` (chosen) | Render test can pin it? |
+|---|---|---|---|---|
+| `role="dialog"`, `aria-modal` | build | library | native | yes (markup) |
+| Labelled by the title | build | build (title template) | build | yes (id match) |
+| Escape closes | build (JS) | library (`PreventDismissOnEscape` false) | native `cancel`, forward it | no |
+| Focus moves in on open | build (JS) | library | native | no |
+| Focus returns to opener | build (not done in Crunchit) | library | native | no |
+| Focus contained | build (not done in Crunchit) | library | native | no |
+| Background inert | build (not done in Crunchit) | library ("windows under a modal dialog are inert") | native | no |
+| Body scroll lock | build (JS) | check | one `:has()` rule | no |
+| Reduced motion | build | build | build | CSS only, not by render test |
+
+HtmlRenderer sees markup only: roles, attributes, ids, classes, slot presence. It cannot run
+JavaScript, move focus, press keys, or know what is inert. The Playwright suite exists in the
+repo (`web-spa-playwright-tests`, with focus tests for the Ask panel), so a browser test is
+possible, and this task adds one.
+
+## Session
+
+- Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
+
+## Notes
+
+- Crunchit source is under
+  `/home/steve/worktrees/github.com/Crunchitfs/crunchit/master/source/container-apps/web/projects/web-spa/`:
+  - `components/Drawer.razor(.css)`.
+  - `wwwroot/index.html` (inline `crunchit.setDrawerSession` and `setBodyScrollLocked`).
+  - Usages: `features/staff/pages/StaffPage.razor(.cs)` and the style guide sample. The
+    `features/application/**/*sidebar-drawer*` files are the mobile nav toggle, not this component.
+- Template targets:
+  - `source/container-apps/web/projects/web-spa/components/elements/`
+  - `features/style-guide/pages/StyleGuidePage.razor`
+  - `wwwroot/css/tokens.css`
+  - `features/application/components/ModalContainer.razor` (existing overlay; do not extend it
+    in this task, and say in Design how the drawer differs from it).
+- Boundaries with other children: the confirm dialog is 379-009 and may share the overlay
+  base chosen here; the shell slots are 379-015; the StyleGuidePage contract is 379-017. This
+  task does not touch `ModalContainer` or the shell.
+- The template's modal has no Escape or focus handling. That is a separate gap; note it in the
+  Results rather than fixing it here.
