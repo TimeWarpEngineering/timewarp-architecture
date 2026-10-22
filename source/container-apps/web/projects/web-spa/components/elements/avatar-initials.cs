@@ -23,11 +23,6 @@ public static class AvatarInitials
     }
 
     string[] words = name.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
-    if (words.Length == 0)
-    {
-      return "";
-    }
-
     string first = FirstTextElement(words[0]);
     if (words.Length == 1)
     {
@@ -38,9 +33,6 @@ public static class AvatarInitials
     return string.Concat(first, last).ToUpperInvariant();
   }
 
-  private static string FirstTextElement(string word)
-  {
-    StringInfo info = new(word);
-    return info.LengthInTextElements == 0 ? "" : info.SubstringByTextElements(0, 1);
-  }
+  private static string FirstTextElement(string word) =>
+    StringInfo.GetNextTextElement(word);
 }

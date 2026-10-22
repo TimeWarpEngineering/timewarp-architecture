@@ -41,8 +41,7 @@ public class Avatar_Should_
   {
     string html = await RenderAsync(new Dictionary<string, object?>
     {
-      ["Name"] = "Ada Lovelace",
-      ["Size"] = InitialsAvatarSize.Medium
+      ["Name"] = "Ada Lovelace"
     });
 
     string root = RootTag(html);

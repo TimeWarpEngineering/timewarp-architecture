@@ -114,20 +114,28 @@ Follow the conventions of 379-001 through 379-005:
 attributes land on that root. `AvatarInitials.From` returns the first text element of the first
 word and, when another word exists, of the last word, uppercased through `StringInfo`. One word
 yields one letter. Null, empty, and whitespace yield an empty string. A surrogate pair stays one
-code point. An email-shaped name is one word. Every name uses `--twe-primary` on `--twe-on-primary`.
-Photos stay on `FluentAvatar`. Medium is 32px and adds no modifier. Small is 24px
-(`twe-avatar--small`, eyebrow type) and Large is 56px (`twe-avatar--large`, page-title type).
-Those diameters stay in `Avatar.razor.css`. `tokens.css` is unchanged. The circle is `aria-hidden`
-and has no role unless `AriaHidden` is false and the initials are non-empty; then it is `role="img"`
-and the label is `AriaLabel`, or `Name` when that label is blank. Empty initials stay a hidden
-circle. The style guide shows an Avatars card after Segmented Control. `components/overview.md`
-lists the element. `ganda repo audit` was already green; nothing was turned off.
+code point. An email-shaped name is one word. After that whitespace guard the split already has
+a word, so `StringInfo.GetNextTextElement` reads it with no empty-list or empty-element check.
+Every name uses `--twe-primary` on `--twe-on-primary`. Photos stay on `FluentAvatar`. Medium is
+32px and adds no modifier. The default-size render test omits `Size`, so that missing modifier
+is the property default. Small is 24px (`twe-avatar--small`, eyebrow type) and Large is 56px
+(`twe-avatar--large`, page-title type). Those diameters stay in `Avatar.razor.css`. `tokens.css`
+is unchanged. The circle is `aria-hidden` and has no role unless `AriaHidden` is false and the
+initials are non-empty; then it is `role="img"` and the label is `AriaLabel`, or `Name` when
+that label is blank. Empty initials stay a hidden circle. The style guide shows an Avatars card
+after Segmented Control. `components/overview.md` lists the element. `ganda repo audit` was
+already green; nothing was turned off.
 
 ### Review
 
-Round 1 (effort 2, general) is open: 0 bug, 1 suggestion (M1, the default size is not pinned by
-a test), and 1 nit (M2, unreachable guards in `avatar-initials.cs`). It has no disposition yet.
-Files: `review/review-framework.md` and `review/round-1/merged.md`.
+Round 1 (effort 2, general) raised M1 and M2. This fix pass addresses both. Round 2 has not
+run. Files: `review/review-framework.md` and `review/round-1/merged.md`.
+
+- M1 (suggestion): `Leave_The_Default_Size_Without_A_Modifier` renders with only `Name`, so the
+  property default is the size that must carry no `twe-avatar--` class.
+- M2 (nit): `AvatarInitials.From` no longer checks for an empty word list or an empty text
+  element. `StringInfo.GetNextTextElement` reads the first element of a word the whitespace
+  split already proved is non-empty.
 
 ### How to validate
 
@@ -156,6 +164,12 @@ Smoke:
 - Implement oracle: Avatar, AvatarInitials, the style-guide card, and render tests. Build, template-smoke, and audit are green. 2026-10-22.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T12:37:16Z
 - Review oracle round 1 (Claude Opus 5.5, headless; effort 2; roster general): 0 bug, 1 suggestion, 1 nit, all open. A fix pass is requested for M1 and M2. See `review/round-1/merged.md`. 2026-10-22.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T12:39:11Z
+- Fix pass (implement-fix-2): the default-size render test omits `Size`, and the unreachable initials guards are gone. Build, template-smoke, and audit are green. 2026-10-22.
+
+## Review
+
+- Round 1: fix pass implemented M1 and M2.
 
 ## Notes
 
