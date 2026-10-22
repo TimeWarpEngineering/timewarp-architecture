@@ -49,11 +49,34 @@ public class FeedbackAdminActions_Should_
     seen.Kind.ShouldBe(FeedbackKind.BugReport);
     seen.IncludeClosed.ShouldBeTrue();
     seen.Severity.ShouldBeNull();
+    seen.Search.ShouldBeNull();
     seen.Page.ShouldBe(1);
     FeedbackAdminState state = scope.Store.GetState<FeedbackAdminState>();
     state.Items.ShouldNotBeNull();
     state.Items.Count.ShouldBe(2);
     state.TotalCount.ShouldBe(2);
+  }
+
+  public static async Task Search_Is_Trimmed_Onto_The_Query_And_Blank_Clears_It()
+  {
+    using AdminSpa spa = new();
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ListFeedback.Query? seen = null;
+    spa.Api.Answer<ListFeedback.Query>(query =>
+    {
+      seen = query;
+      return ListFeedback.GetMockResponseFactory()(query);
+    });
+
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(null, null, includeClosed: false, search: "  acme  "));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.ShouldNotBeNull().Search.ShouldBe("acme");
+    scope.Store.GetState<FeedbackAdminState>().Search.ShouldBe("acme");
+
+    await scope.Send(new FeedbackAdminState.SetFilterActionSet.Action(null, null, includeClosed: false, search: "   "));
+    await scope.Send(new FeedbackAdminState.FetchFeedbackListActionSet.Action());
+    seen.Search.ShouldBeNull();
+    scope.Store.GetState<FeedbackAdminState>().Search.ShouldBeNull();
   }
 
   public static async Task Owner_Display_Name_Lands_In_State_For_Rows_And_The_Open_Item()
