@@ -88,8 +88,7 @@ the `twe-` CSS prefix and neutral sample text.
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass: M1–M4 are addressed on this branch.
-- Round 2: M1–M4 fixed, nothing new, 0 open. Disposition `clean`.
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source:
