@@ -76,6 +76,9 @@ the `twe-` CSS prefix and neutral sample text.
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec written: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T03:21:25Z
+- Review oracle round 1: general reviewer (claude, claude-opus-5-5), effort 2, session not
+  reported — 2026-10-22. 4 open (1 bug, 1 suggestion, 2 nits); fix pass requested.
 
 ## Notes
 
@@ -144,3 +147,14 @@ Expect:
 - Any other page that does not set the slots still renders only the title and breadcrumb.
 
 A live browser pass of the running app was not done in this walk. The static renderer covers the slot markup.
+
+### Review
+
+- Round 1 (general reviewer, effort 2): 1 bug, 1 suggestion, and 2 nits, all open. The
+  reviewer re-ran the gates: `./bin/dev build` 0/0, `ganda repo audit` passes, both new test
+  classes 4/4, no "crunchit" in the product diff. The reviewer did not re-run template-smoke.
+- M1 (bug): a test suppresses ASP0006 with a `#pragma`. M2: the title markup is duplicated
+  in `TimeWarpPage`. M3: the todo page has a placeholder description. M4: indentation in
+  FeedbackAdminListPage.
+- Disposition: pending. M1–M4 are open, so a fix pass and round 2 are next.
+- Paths: `review/review-framework.md` and `review/round-1/merged.md`.
