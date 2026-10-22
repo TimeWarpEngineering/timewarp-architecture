@@ -76,6 +76,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
       result.IsT1.ShouldBeTrue();
       result.AsT1.Status.ShouldBe(503);
       result.AsT1.Detail.ShouldBe(XaiChatDefaults.SetupCommand);
+      result.AsT1.Detail!.ShouldNotContain("Admin");
       result.AsT1.Title.ShouldBe("AI not configured");
     }
 
@@ -95,6 +96,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
       detail.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       detail.ShouldNotContain("user-secrets");
       detail.ShouldContain("XAI__ApiKey");
+      detail.ShouldNotContain("Admin → AI");
     }
 
     public static async Task Anonymous_Returns_401()
@@ -157,17 +159,23 @@ namespace TimeWarp.Architecture.Features.AgentChats
       public RecordingUpstream(Response reply)
       {
         Reply = reply;
-        IsConfigured = true;
+        Configured = true;
       }
 
       public RecordingUpstream(bool configured)
       {
-        IsConfigured = configured;
+        Configured = configured;
       }
 
-      public bool IsConfigured { get; }
+      private bool Configured { get; }
 
-      public string? Model => IsConfigured ? XaiChatDefaults.DefaultModel : null;
+      public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
+      {
+        _ = cancellationToken;
+        return Task.FromResult(Configured);
+      }
+
+      public string? Model => Configured ? XaiChatDefaults.DefaultModel : null;
 
       public int Calls { get; private set; }
 

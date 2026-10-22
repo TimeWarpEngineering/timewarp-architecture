@@ -27,6 +27,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Security.Claims;
 using TimeWarp.Architecture;
+using TimeWarp.Architecture.Features.Admin.Ai;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
@@ -110,6 +111,7 @@ public class AgentAskReadiness_Should_
     html.ShouldContain("data-qa=\"AgentAskNotConfigured\"");
     html.ShouldContain("data-qa=\"AgentAskSetupCommand\"");
     html.ShouldContain("--id " + XaiChatDefaults.UserSecretsId);
+    html.ShouldNotContain("data-qa=\"AgentAskAdminHint\"");
     html.ShouldNotContain("data-qa=\"AgentAskSignIn\"");
     html.ShouldNotContain("data-qa=\"AgentAskError\"");
   }
@@ -128,6 +130,71 @@ public class AgentAskReadiness_Should_
     html.ShouldNotContain(XaiChatDefaults.UserSecretsId);
     html.ShouldNotContain("user-secrets");
   }
+
+  public static async Task Render_The_Admin_Sentence_Outside_The_Copy_Block()
+  {
+    string html = await ProbeAndRenderAsync(new GetAgentChatConfiguration.Response
+    {
+      Configured = false,
+      SetupCommand = XaiChatDefaults.SetupCommand,
+      AdminHint = XaiChatDefaults.AdminAiSentence,
+    }, CatalogAgentReadiness.NotConfigured);
+
+    int command = html.IndexOf("data-qa=\"AgentAskSetupCommand\"", StringComparison.Ordinal);
+    int hint = html.IndexOf("data-qa=\"AgentAskAdminHint\"", StringComparison.Ordinal);
+    int commandClose = html.IndexOf("</pre>", command, StringComparison.Ordinal);
+    command.ShouldBeGreaterThanOrEqualTo(0);
+    hint.ShouldBeGreaterThan(commandClose);
+    string commandText = System.Net.WebUtility.HtmlDecode(html[command..commandClose]);
+    commandText.ShouldContain(XaiChatDefaults.SetupCommand);
+    commandText.ShouldNotContain("Admin");
+    System.Net.WebUtility.HtmlDecode(html).ShouldContain(XaiChatDefaults.AdminAiSentence);
+  }
+
+  public static async Task Reload_Ask_After_The_Admin_Key_Is_Saved()
+  {
+    ScriptedWebServer server = new(new SharedProblemDetails { Status = 500, Title = "missing" });
+    server.Outcomes[typeof(SetXaiApiKey.Response)] = SavedStatus();
+    server.Outcomes[typeof(GetAgentChatConfiguration.Response)] = new GetAgentChatConfiguration.Response
+    {
+      Configured = true,
+      SetupCommand = XaiChatDefaults.SetupCommand,
+      Model = "grok-4.7",
+    };
+    using AskSpa spa = new(server, signedIn: true);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new XaiApiKeyState.SetXaiApiKeyActionSet.Action("xai-test-key-398"));
+
+    scope.Store.GetState<XaiApiKeyState>().SaveFailed.ShouldBeFalse();
+    scope.Store.GetState<AgentSurfaceState>().ChatReadiness.ShouldBe(CatalogAgentReadiness.Configured);
+    server.Calls.ShouldBe(2);
+  }
+
+  public static async Task Skip_The_Ask_Reload_When_The_Key_Save_Fails()
+  {
+    ScriptedWebServer server = new(new SharedProblemDetails { Status = 503, Title = "xAI key storage unavailable" });
+    using AskSpa spa = new(server, signedIn: true);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+
+    await scope.Send(new XaiApiKeyState.SetXaiApiKeyActionSet.Action("xai-test-key-398"));
+
+    scope.Store.GetState<XaiApiKeyState>().SaveFailed.ShouldBeTrue();
+    scope.Store.GetState<AgentSurfaceState>().ChatReadiness.ShouldBe(CatalogAgentReadiness.Unknown);
+    server.Calls.ShouldBe(1);
+  }
+
+  private static SetXaiApiKey.Response SavedStatus() =>
+    new(
+      managedByHost: false,
+      configured: true,
+      storageAvailable: true,
+      canChange: true,
+      needsReplacement: false,
+      suffix: "8398",
+      setAt: null,
+      setByPrincipalId: null,
+      setupHint: XaiChatDefaults.DeployedSetupHint);
 
   public static async Task Render_SignIn_For_401_Without_The_Key_Hint()
   {
@@ -257,10 +324,12 @@ public class AgentAskReadiness_Should_
     return await renderer.Dispatcher.InvokeAsync(async () => (await renderer.RenderComponentAsync<AgentAsk>()).ToHtmlString());
   }
 
-  /// <summary>Answers every request with <see cref="Outcome"/>: a response, a problem, or a file.</summary>
+  /// <summary>Answers a request from <see cref="Outcomes"/> when the response type is listed, else <see cref="Outcome"/>.</summary>
   private sealed class ScriptedWebServer(object outcome) : IWebServerApiService
   {
     public object Outcome { get; set; } = outcome;
+
+    public Dictionary<Type, object> Outcomes { get; } = [];
 
     public int Calls { get; private set; }
 
@@ -271,7 +340,8 @@ public class AgentAskReadiness_Should_
     ) where TResponse : class
     {
       Calls++;
-      OneOf<TResponse, FileResponse, SharedProblemDetails> result = Outcome switch
+      object outcome = Outcomes.TryGetValue(typeof(TResponse), out object? byType) ? byType : Outcome;
+      OneOf<TResponse, FileResponse, SharedProblemDetails> result = outcome switch
       {
         TResponse response => response,
         FileResponse file => file,
@@ -287,7 +357,7 @@ public class AgentAskReadiness_Should_
   {
     public IServiceProvider ServiceProvider { get; }
 
-    public AskSpa(IWebServerApiService webServer)
+    public AskSpa(IWebServerApiService webServer, bool signedIn = false)
     {
       ServiceCollection services = new();
       services.AddLogging();
@@ -308,7 +378,8 @@ public class AgentAskReadiness_Should_
       services.AddActionCatalog(typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly);
       services.AddTimeWarpStatePersistence();
       services.AddAuthorizationCore(PolicyRegistration.AddPolicies);
-      services.AddScoped<AuthenticationStateProvider>(_ => new AnonymousAuthenticationStateProvider());
+      services.AddScoped<AuthenticationStateProvider>(_ =>
+        signedIn ? new SignedInAuthenticationStateProvider() : new AnonymousAuthenticationStateProvider());
       services.AddScoped(_ => A.Fake<IJSRuntime>());
       services.AddScoped<NavigationManager, TestNavigationManager>();
       services.AddScoped<PageAgentRoute>();
@@ -331,5 +402,14 @@ public class AgentAskReadiness_Should_
   {
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
       Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
+  }
+
+  private sealed class SignedInAuthenticationStateProvider : AuthenticationStateProvider
+  {
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+      ClaimsIdentity identity = new([new Claim("sub", Guid.NewGuid().ToString())], authenticationType: "test");
+      return Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity)));
+    }
   }
 }

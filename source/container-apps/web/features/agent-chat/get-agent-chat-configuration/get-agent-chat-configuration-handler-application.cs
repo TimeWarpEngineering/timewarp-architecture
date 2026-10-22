@@ -9,8 +9,10 @@
 // The notice settings are read from XaiChatOptions per request. A blank notice falls back to
 // XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
 // goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
-// SetupCommand is the environment's setup hint: the user-secrets command in Development, and the
-// XAI__ApiKey hint in every other environment.
+// SetupCommand is the environment's host text and does not include the Admin sentence. AdminHint
+// is that sentence only when ISiteXaiApiKey.StorageAvailable is true. Configured reads
+// IsConfiguredAsync so an admin key counts without a restart. The model id comes from options,
+// not Upstream.Model, because that property only sees the host key and the fake.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -22,13 +24,14 @@ using static TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration
 /// <summary>Handles <see cref="Query"/>.</summary>
 public sealed class GetAgentChatConfiguration
 {
-  /// <summary>Reads <see cref="IAgentChatUpstream.IsConfigured"/> for the current principal.</summary>
+  /// <summary>Reads <see cref="IAgentChatUpstream.IsConfiguredAsync"/> for the current principal.</summary>
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IAgentChatUpstream Upstream;
     private readonly IOptions<XaiChatOptions> Options;
     private readonly IHostEnvironment Environment;
+    private readonly ISiteXaiApiKey Keys;
 
     /// <summary>Creates the handler.</summary>
     public Handler
@@ -36,13 +39,15 @@ public sealed class GetAgentChatConfiguration
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IAgentChatUpstream upstream,
       IOptions<XaiChatOptions> options,
-      IHostEnvironment environment
+      IHostEnvironment environment,
+      ISiteXaiApiKey keys
     )
     {
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       Upstream = upstream;
       Options = options;
       Environment = environment;
+      Keys = keys;
     }
 
     /// <summary>Returns configured, the setup command, and the model id.</summary>
@@ -60,13 +65,20 @@ public sealed class GetAgentChatConfiguration
         return AgentChatProblems.Unauthenticated();
       }
 
-      bool configured = Upstream.IsConfigured;
+      bool configured = await Upstream.IsConfiguredAsync(cancellationToken).ConfigureAwait(false);
       XaiChatOptions options = Options.Value;
+      string? model = null;
+      if (configured)
+      {
+        model = string.IsNullOrWhiteSpace(options.Model) ? XaiChatDefaults.DefaultModel : options.Model;
+      }
+
       return new Response
       {
         Configured = configured,
-        SetupCommand = XaiChatDefaults.SetupHint(Environment.IsDevelopment()),
-        Model = configured ? Upstream.Model : null,
+        SetupCommand = XaiChatDefaults.HostSetupText(Environment.IsDevelopment()),
+        AdminHint = Keys.StorageAvailable ? XaiChatDefaults.AdminAiSentence : null,
+        Model = model,
         RecordChats = options.RecordChats,
         PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)
           ? XaiChatDefaults.PrivacyNotice

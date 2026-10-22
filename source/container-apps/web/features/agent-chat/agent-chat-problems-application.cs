@@ -23,7 +23,7 @@ public static class AgentChatProblems
   {
     Title = "AI not configured",
     Status = 503,
-    Detail = XaiChatDefaults.SetupHint(development)
+    Detail = XaiChatDefaults.HostSetupText(development)
   };
 
   public static SharedProblemDetails TooManyRequests() => new()

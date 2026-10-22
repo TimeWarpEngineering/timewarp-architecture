@@ -34,6 +34,8 @@ using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 using Handler = TimeWarp.Architecture.Features.AgentChats.Application.GetAgentChatConfiguration.Handler;
 using IAgentChatUpstream = TimeWarp.Architecture.Features.AgentChats.Application.IAgentChatUpstream;
+using ISiteXaiApiKey = TimeWarp.Architecture.Features.AgentChats.Application.ISiteXaiApiKey;
+using SiteXaiApiKeyStatus = TimeWarp.Architecture.Features.AgentChats.Application.SiteXaiApiKeyStatus;
 using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons;
 
 [TestTag("Unit")]
@@ -182,7 +184,7 @@ public class AskStarterPrompts_Should_
   {
     XaiChatOptions options = new();
     options.StarterPrompts.Add(new() { Icon = " Search ", Title = " Find an order ", Prompt = " Help me find an order. " });
-    Handler handler = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(options), new NamedHostEnvironment("Development"));
+    Handler handler = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(options), new NamedHostEnvironment("Development"), new NoStorageKeys());
 
     GetAgentChatConfiguration.Response configured = (await handler.Handle(new(), CancellationToken.None)).AsT0;
 
@@ -191,7 +193,7 @@ public class AskStarterPrompts_Should_
     configured.StarterPrompts[0].Title.ShouldBe("Find an order");
     configured.StarterPrompts[0].Prompt.ShouldBe("Help me find an order.");
 
-    Handler unset = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(new XaiChatOptions()), new NamedHostEnvironment("Development"));
+    Handler unset = new(new FixedPrincipalAccessor(), new UnconfiguredUpstream(), Options.Create(new XaiChatOptions()), new NamedHostEnvironment("Development"), new NoStorageKeys());
     (await unset.Handle(new(), CancellationToken.None)).AsT0.StarterPrompts.ShouldBe(AgentChatStarterPrompts.Defaults);
   }
 
@@ -310,10 +312,36 @@ public class AskStarterPrompts_Should_
       Task.FromResult<PrincipalId?>(PrincipalId.New());
   }
 
+  private sealed class NoStorageKeys : ISiteXaiApiKey
+  {
+    public bool StorageAvailable => false;
+
+    public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> GetStatusAsync(CancellationToken cancellationToken) =>
+      throw new NotSupportedException();
+
+    public Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken) =>
+      throw new NotSupportedException();
+
+    public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> SetAsync(
+      string apiKey,
+      Guid setByPrincipalId,
+      CancellationToken cancellationToken) =>
+      throw new NotSupportedException();
+
+    public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> ClearAsync(
+      Guid setByPrincipalId,
+      CancellationToken cancellationToken) =>
+      throw new NotSupportedException();
+  }
+
   /// <summary>The configuration answer does not depend on the upstream; completion is a test failure.</summary>
   private sealed class UnconfiguredUpstream : IAgentChatUpstream
   {
-    public bool IsConfigured => false;
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
+    {
+      _ = cancellationToken;
+      return Task.FromResult(false);
+    }
 
     public string? Model => null;
 

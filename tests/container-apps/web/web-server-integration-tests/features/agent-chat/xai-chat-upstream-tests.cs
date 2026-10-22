@@ -20,6 +20,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.AgentChats.Application;
+using TimeWarp.Architecture.Secrets;
 using static TimeWarp.Architecture.Features.AgentChats.CompleteAgentChat;
 
 public class XaiChatUpstream_Given_
@@ -31,7 +32,7 @@ public class XaiChatUpstream_Given_
   {
     await using ServiceProvider provider = Build("Development", useFake: true, apiKey: "should-not-be-sent");
     IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
-    upstream.IsConfigured.ShouldBeTrue();
+    (await upstream.IsConfiguredAsync(CancellationToken.None)).ShouldBeTrue();
     upstream.Model.ShouldBe(XaiChatDefaults.DefaultModel);
 
     OneOf<Response, SharedProblemDetails> first = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
@@ -134,8 +135,85 @@ public class XaiChatUpstream_Given_
   {
     await using ServiceProvider provider = Build("Production", useFake: true, apiKey: null);
     IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
-    upstream.IsConfigured.ShouldBeFalse();
+    (await upstream.IsConfiguredAsync(CancellationToken.None)).ShouldBeFalse();
     upstream.Model.ShouldBeNull();
+  }
+
+  public static async Task Stored_Key_Is_Sent_And_A_Replacement_Is_Used_Without_A_Restart()
+  {
+    const string first = "xai-test-key-398-aaaa";
+    const string second = "xai-test-key-398-bbbb";
+    MemoryProtectedSecretStore store = new();
+    CapturingChatClientFactory factory = new();
+    await using ServiceProvider provider = Build("Production", useFake: false, apiKey: null, store, factory);
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      first,
+      Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    OneOf<Response, SharedProblemDetails> firstTurn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      second,
+      Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    OneOf<Response, SharedProblemDetails> secondTurn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+
+    firstTurn.IsT0.ShouldBeTrue();
+    secondTurn.IsT0.ShouldBeTrue();
+    factory.Keys.ShouldBe([first, second]);
+  }
+
+  public static async Task Host_Key_Wins_Over_The_Stored_Key()
+  {
+    const string host = "xai-host-key-398-hhhh";
+    const string stored = "xai-test-key-398-aaaa";
+    MemoryProtectedSecretStore store = new();
+    CapturingChatClientFactory factory = new();
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      stored,
+      Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    await using ServiceProvider provider = Build("Production", useFake: false, apiKey: host, store, factory);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    OneOf<Response, SharedProblemDetails> turn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+
+    turn.IsT0.ShouldBeTrue();
+    factory.Keys.ShouldBe([host]);
+  }
+
+  public static async Task One_Turn_Unprotects_The_Stored_Key_Once()
+  {
+    const string key = "xai-test-key-398-aaaa";
+    MemoryProtectedSecretStore store = new();
+    CapturingChatClientFactory factory = new();
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      key,
+      Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    await using ServiceProvider provider = Build("Production", useFake: false, apiKey: null, store, factory);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    upstream.BeginKeyResolution();
+    (await upstream.IsConfiguredAsync(CancellationToken.None)).ShouldBeTrue();
+    OneOf<Response, SharedProblemDetails> turn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+
+    turn.IsT0.ShouldBeTrue();
+    store.UnprotectCalls.ShouldBe(1);
+    factory.Keys.ShouldBe([key]);
   }
 
   public static Task Tool_Declarations_Are_Not_Invocable()
@@ -191,7 +269,12 @@ public class XaiChatUpstream_Given_
     Messages = [new Turn { Role = "user", Text = "What is on this page?" }]
   };
 
-  private static ServiceProvider Build(string environmentName, bool useFake, string? apiKey)
+  private static ServiceProvider Build(
+    string environmentName,
+    bool useFake,
+    string? apiKey,
+    IProtectedSecretStore? store = null,
+    IXaiChatClientFactory? clients = null)
   {
     Dictionary<string, string?> values = new()
     {
@@ -206,8 +289,112 @@ public class XaiChatUpstream_Given_
     ServiceCollection services = new();
     services.AddLogging();
     services.AddSingleton<IHostEnvironment>(new NamedEnvironment(environmentName));
+    if (store is not null)
+    {
+      services.AddSingleton(store);
+    }
+
+    if (clients is not null)
+    {
+      services.AddSingleton(clients);
+    }
+
     XaiChatRegistration.ConfigureServices(services, configuration);
     return services.BuildServiceProvider();
+  }
+
+  private sealed class CapturingChatClientFactory : IXaiChatClientFactory
+  {
+    public List<string> Keys { get; } = [];
+
+    public IChatClient Create(string apiKey, string endpoint, string model)
+    {
+      _ = endpoint;
+      _ = model;
+      Keys.Add(apiKey);
+      return new StubChatClient();
+    }
+  }
+
+  private sealed class StubChatClient : IChatClient
+  {
+    public Task<ChatResponse> GetResponseAsync(
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      CancellationToken cancellationToken = default)
+    {
+      _ = messages;
+      _ = options;
+      _ = cancellationToken;
+      return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "ok")));
+    }
+
+    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      CancellationToken cancellationToken = default) =>
+      throw new NotSupportedException();
+
+    public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+    public void Dispose()
+    {
+    }
+  }
+
+  private sealed class MemoryProtectedSecretStore : IProtectedSecretStore
+  {
+    private readonly Dictionary<string, (string Plaintext, ProtectedSecretRecord Record)> Rows = [];
+
+    public bool StorageAvailable => true;
+
+    public int UnprotectCalls { get; private set; }
+
+    public Task<ProtectedSecretRecord?> FindAsync(string name, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      return Task.FromResult(Rows.TryGetValue(name, out (string Plaintext, ProtectedSecretRecord Record) row)
+        ? row.Record
+        : null);
+    }
+
+    public Task<ProtectedSecretWrite> SetAsync(
+      string name,
+      string purpose,
+      string plaintext,
+      Guid setByPrincipalId,
+      DateTimeOffset setAt,
+      CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      bool inserted = !Rows.ContainsKey(name);
+      Rows[name] = (plaintext, new ProtectedSecretRecord(
+        name,
+        purpose,
+        ProtectedSecretSuffix.From(plaintext),
+        setAt,
+        setByPrincipalId));
+      return Task.FromResult(inserted ? ProtectedSecretWrite.Inserted : ProtectedSecretWrite.Replaced);
+    }
+
+    public Task<string?> UnprotectAsync(string name, string purpose, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      UnprotectCalls++;
+      if (!Rows.TryGetValue(name, out (string Plaintext, ProtectedSecretRecord Record) row)
+        || !string.Equals(row.Record.Purpose, purpose, StringComparison.Ordinal))
+      {
+        return Task.FromResult<string?>(null);
+      }
+
+      return Task.FromResult<string?>(row.Plaintext);
+    }
+
+    public Task<bool> ClearAsync(string name, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      return Task.FromResult(Rows.Remove(name));
+    }
   }
 
   private sealed class NamedEnvironment : IHostEnvironment

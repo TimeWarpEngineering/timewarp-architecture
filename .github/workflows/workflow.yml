@@ -154,7 +154,7 @@ jobs:
             ci=true
           fi
 
-          if echo "$changed" | grep -Eq '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/'; then
+          if echo "$changed" | grep -Eq '(^|/)SKILL\.md$|(^|/)eval\.yaml$|^\.vally\.yaml$|^evals/|^skills/|\.github/workflows/|^tools/dev-cli/'; then
             skill=true
           fi
 
@@ -426,19 +426,33 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # RC1 is the go-live SDK until 11.0 GA. '11.0.x' alone does not resolve a prerelease.
+          dotnet-version: '11.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-skill-lint-${{ hashFiles('**/Directory.Packages.props', 'msbuild/*.props', 'global.json') }}
+
+      # The version is tools/dev-cli/vally-cli.version — the same pin `dev lint-skills` requires.
       - name: Install vally CLI
-        run: npm install -g @microsoft/vally-cli
-
-      - name: Lint all skills
-        run: vally lint skills
-
-      - name: Lint eval specs
         run: |
-          for spec in skills/*/evals/eval.yaml; do
-            [ -f "$spec" ] || continue
-            echo "Linting $spec"
-            vally lint --eval-spec "$spec"
-          done
+          set -euo pipefail
+          version=$(tr -d '[:space:]' < tools/dev-cli/vally-cli.version)
+          if [ -z "$version" ]; then
+            echo "tools/dev-cli/vally-cli.version is missing or empty."
+            exit 1
+          fi
+          echo "Installing @microsoft/vally-cli@$version from tools/dev-cli/vally-cli.version"
+          npm install -g "@microsoft/vally-cli@$version"
+
+      - name: Lint skill specs
+        run: dotnet run tools/dev-cli/dev.cs -- lint-skills
 
   template-smoke:
     # Former template-smoke.yml — push/PR path filter, workflow_dispatch, and the nightly schedule.

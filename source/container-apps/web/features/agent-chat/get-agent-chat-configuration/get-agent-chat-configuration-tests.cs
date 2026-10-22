@@ -45,15 +45,18 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     public static Task Development_Hint_Is_The_User_Secrets_Command()
     {
-      XaiChatDefaults.SetupHint(development: true).ShouldBe(XaiChatDefaults.SetupCommand);
+      string command = XaiChatDefaults.HostSetupText(development: true);
+      command.ShouldBe(XaiChatDefaults.SetupCommand);
+      command.ShouldNotContain("Admin");
       return Task.CompletedTask;
     }
 
     public static Task Other_Environments_Name_The_Variable_And_Hide_The_User_Secrets_Id()
     {
-      string hint = XaiChatDefaults.SetupHint(development: false);
+      string hint = XaiChatDefaults.HostSetupText(development: false);
       hint.ShouldBe(XaiChatDefaults.DeployedSetupHint);
       hint.ShouldContain("XAI__ApiKey");
+      hint.ShouldNotContain("Admin");
       hint.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       hint.ShouldNotContain("user-secrets");
       return Task.CompletedTask;
@@ -61,9 +64,15 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     public static async Task Development_Handler_Returns_The_User_Secrets_Command()
     {
-      GetAgentChatConfiguration.Response response = await Handle("Development");
+      GetAgentChatConfiguration.Response response = await Handle("Development", adminStorage: true);
 
       response.SetupCommand.ShouldBe(XaiChatDefaults.SetupCommand);
+      response.SetupCommand.ShouldNotContain("Admin");
+      response.AdminHint.ShouldBe(XaiChatDefaults.AdminAiSentence);
+
+      GetAgentChatConfiguration.Response withoutStorage = await Handle("Development", adminStorage: false);
+      withoutStorage.SetupCommand.ShouldBe(XaiChatDefaults.SetupCommand);
+      withoutStorage.AdminHint.ShouldBeNull();
     }
 
     public static async Task Production_Handler_Does_Not_Name_User_Secrets()
@@ -83,20 +92,23 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     private static async Task AssertDeployed(string environmentName)
     {
-      GetAgentChatConfiguration.Response response = await Handle(environmentName);
+      GetAgentChatConfiguration.Response response = await Handle(environmentName, adminStorage: true);
       response.SetupCommand.ShouldBe(XaiChatDefaults.DeployedSetupHint);
       response.SetupCommand.ShouldNotContain(XaiChatDefaults.UserSecretsId);
       response.SetupCommand.ShouldNotContain("user-secrets");
+      response.SetupCommand.ShouldNotContain("Admin");
       response.SetupCommand.ShouldContain("XAI__ApiKey");
+      response.AdminHint.ShouldBe(XaiChatDefaults.AdminAiSentence);
     }
 
-    private static async Task<GetAgentChatConfiguration.Response> Handle(string environmentName)
+    private static async Task<GetAgentChatConfiguration.Response> Handle(string environmentName, bool adminStorage)
     {
       Handler handler = new(
         new FixedPrincipal(),
         new UnconfiguredUpstream(),
         Options.Create(new XaiChatOptions()),
-        new NamedHostEnvironment(environmentName));
+        new NamedHostEnvironment(environmentName),
+        new FixedKeys(adminStorage));
       OneOf<GetAgentChatConfiguration.Response, SharedProblemDetails> result =
         await handler.Handle(new GetAgentChatConfiguration.Query(), CancellationToken.None);
       result.IsT0.ShouldBeTrue();
@@ -109,9 +121,35 @@ namespace TimeWarp.Architecture.Features.AgentChats
         Task.FromResult<PrincipalId?>(PrincipalId.From(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")));
     }
 
+    private sealed class FixedKeys(bool storageAvailable) : ISiteXaiApiKey
+    {
+      public bool StorageAvailable => storageAvailable;
+
+      public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> GetStatusAsync(CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+      public Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+      public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> SetAsync(
+        string apiKey,
+        Guid setByPrincipalId,
+        CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+      public Task<OneOf<SiteXaiApiKeyStatus, SharedProblemDetails>> ClearAsync(
+        Guid setByPrincipalId,
+        CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+    }
+
     private sealed class UnconfiguredUpstream : IAgentChatUpstream
     {
-      public bool IsConfigured => false;
+      public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
+      {
+        _ = cancellationToken;
+        return Task.FromResult(false);
+      }
 
       public string? Model => null;
 

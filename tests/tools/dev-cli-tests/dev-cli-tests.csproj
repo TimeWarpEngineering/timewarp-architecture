@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Compile-include of aspire-run.cs / aspire-deploy.cs / deploy-operate.cs / neon-connection.cs / db-nuke.cs / entra-setup.cs / entra-tenants.cs / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / generated-ingress-prefixes.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs
+    <!-- Compile-include of aspire-run.cs / aspire-deploy.cs / deploy-operate.cs / neon-connection.cs / db-nuke.cs / entra-setup.cs / entra-tenants.cs / jaribu-aggregator-summary-gate.cs / template-smoke-content-assets.cs / xai-preflight.cs / dotnet-test-arguments.cs / generated-ingress-prefixes.cs / test-groups.cs / aspire-publish-targets.cs / test-parallelism.cs / skill-spec-lint.cs
          (with in-proc-test-ports.cs, which test-parallelism.cs uses)
          (pure helpers). Monorepo-only:
          template.json excludes this tree. The slnx tests/tools folder is gated by a template
@@ -33,6 +33,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\test-groups.cs" Link="services\test-groups.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-publish-targets.cs" Link="services\aspire-publish-targets.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\test-parallelism.cs" Link="services\test-parallelism.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\skill-spec-lint.cs" Link="services\skill-spec-lint.cs" />
     <Compile Include="..\..\common\timewarp-testing\in-proc-test-ports.cs" Link="services\in-proc-test-ports.cs" />
   </ItemGroup>
 </Project>
