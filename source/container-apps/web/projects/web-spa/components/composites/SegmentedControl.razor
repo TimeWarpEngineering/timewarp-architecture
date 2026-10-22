@@ -1,100 +1,17 @@
 @namespace TimeWarp.Architecture.Components
+@inherits RovingValueGroup
 
 @*
   Purpose: Pill group of mutually exclusive options. The caller owns the value.
 
-  Design: Native div root so CSS isolation stamps the scope attribute. Class and unmatched
-  attributes stay on that root, as Card does. FluentUI v5 has no segmented control. Each
-  item is a button with role="radio" inside role="radiogroup". The checked item is
-  aria-checked and tabindex 0; the others are tabindex -1. A null value checks nothing
-  and the first item keeps the tab stop. OptionText changes the label only. The component
-  never assigns Value and never navigates. Choosing the current item does not raise
-  ValueChanged. Left and Right wrap, Home and End jump, and a move raises ValueChanged
-  (automatic activation). RovingSelection owns the index math, shared with Tabs. Focus
-  follows that item on the next render via ElementReference.FocusAsync. Blazor picks
-  preventDefault when the frame renders, before it knows the key, and a button cannot carry
-  both a delegate and a script on onkeydown. The root's onkeydown attribute cancels
-  ArrowLeft, ArrowRight, Home, and End as the event bubbles. Tab still leaves the group.
-  Those four names are the keys FromKey handles. Modified chords are ignored.
+  Design: Each item is a button with role="radio" inside role="radiogroup". The checked item
+  is aria-checked and tabindex 0; the others are tabindex -1. FluentUI v5 has no segmented
+  control. Parameters, choosing, keyboard, focus, and the cancel script live on
+  RovingValueGroup.
 *@
 
-@code {
-  [Parameter, EditorRequired] public IReadOnlyList<string> Items { get; set; } = [];
-  [Parameter] public Func<string, string>? OptionText { get; set; }
-  [Parameter] public string? Value { get; set; }
-  [Parameter] public EventCallback<string> ValueChanged { get; set; }
-  [Parameter] public string? AriaLabel { get; set; }
-  [Parameter] public string? Class { get; set; }
-  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
-
-  private ElementReference[] ItemReferences = [];
-  private int? PendingFocus;
-  private int TabStopIndex;
-
-  private IReadOnlyList<string> Rows => Items ?? [];
-
-  protected override void OnParametersSet()
-  {
-    IReadOnlyList<string> rows = Rows;
-    if (ItemReferences.Length != rows.Count)
-    {
-      ItemReferences = new ElementReference[rows.Count];
-    }
-
-    TabStopIndex = RovingSelection.TabStop(rows.Count, RovingSelection.IndexOf(rows, Value));
-  }
-
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-    if (PendingFocus is not int slot)
-    {
-      return;
-    }
-
-    PendingFocus = null;
-    if ((uint)slot >= (uint)ItemReferences.Length)
-    {
-      return;
-    }
-
-    await ItemReferences[slot].FocusAsync();
-  }
-
-  private string Text(string item) => OptionText is null ? item : OptionText(item);
-
-  private Task ChooseAsync(string item)
-  {
-    if (string.Equals(item, Value, StringComparison.Ordinal))
-    {
-      return Task.CompletedTask;
-    }
-
-    return ValueChanged.InvokeAsync(item);
-  }
-
-  private async Task OnKeyDownAsync(KeyboardEventArgs keyboard)
-  {
-    if (keyboard.AltKey || keyboard.CtrlKey || keyboard.MetaKey || keyboard.ShiftKey)
-    {
-      return;
-    }
-
-    if (RovingSelection.FromKey(Rows, Value, keyboard.Key) is not RovingSelection.MoveResult MoveResult)
-    {
-      return;
-    }
-
-    PendingFocus = MoveResult.Index;
-    if (MoveResult.Raise)
-    {
-      await ValueChanged.InvokeAsync(MoveResult.Item);
-    }
-  }
-}
-
 <div class="twe-segmented @Class" role="radiogroup" aria-label="@AriaLabel" @attributes="AdditionalAttributes"
-     onkeydown="if(event.key==='ArrowLeft'||event.key==='ArrowRight'||event.key==='Home'||event.key==='End')event.preventDefault()">
+     onkeydown="@RovingSelection.CancelScript">
   @for (int index = 0; index < Rows.Count; index++)
   {
     int slot = index;

@@ -2,24 +2,29 @@
 
 ## Goal (implementer restatement)
 
-The template gets two generic switchers. `Tabs` is an underline bar for changing sub-views.
-`SegmentedControl` is a pill group where one option is on. Both are native elements with a
-`twe-` class, a `Class` parameter, and unmatched attributes on the root. They take string
-items, an optional text function, the current `Value`, and `ValueChanged`. They never write
-`Value` and never navigate. Choosing the item that is already current does not raise the
-callback. A page that wants a URL change dispatches a State action; the page renders `Value`
-from State.
+The template ships two generic switchers and nothing else adopts them. `Tabs` is an underline
+bar for changing sub-views. `SegmentedControl` is a pill group with one option on. Each is a
+native root with a `twe-` class, a `Class` parameter, and unmatched attributes on that root.
+Callers pass string items, an optional text function, `Value`, and `ValueChanged`. The control
+never writes `Value` and never navigates. Choosing the item that is already current does not
+raise the callback. A page that wants a URL change dispatches a State action and renders
+`Value` from State.
 
 Left and Right move the selection and wrap. Home and End jump to the ends. A move raises
-`ValueChanged` and focus follows that item. The index math lives in one pure helper, with
-tests for next, previous, wrap, Home, End, and an empty list. Styles use the existing
-`--twe-*` tokens. The active tab uses the accent token, and both controls have a visible
-keyboard focus ring. There is no orange literal and no new token.
+`ValueChanged` and focus follows that item. Those four keys are cancelled only when no Alt,
+Ctrl, Meta, or Shift modifier is held, so browser Back/Forward and page scroll still work.
+The key names live once on `RovingSelection`. The cancel script is built from that list, and
+both roots bind that script. The index math stays in that helper, with tests for next,
+previous, wrap, Home, End, an empty list, and every cancelled key. Parameters, focus, choose,
+and key handling live on one abstract base. Each razor file keeps its own markup and ARIA
+roles. The method-local move is camelCase.
 
-Nothing in the product pages adopts them. The style guide shows a Tabs card and a Segmented
-Control card after Filter Bar, with sample text and callbacks that do not store a value.
-Render tests pin the markup. The build, template smoke, and repo audit pass, and the source
-and test diff does not name the portal.
+Styles use the existing `--twe-*` tokens. The active tab uses the accent token, and both
+controls have a visible keyboard focus ring. There is no orange literal and no new token.
+The style guide shows a Tabs card and a Segmented Control card after Filter Bar, with sample
+text and callbacks that do not store a value. Render tests pin the markup, including the
+cancel script. The build, template smoke, and repo audit pass, and the source and test diff
+does not name the portal.
 
 ## Description
 
@@ -116,12 +121,16 @@ The generated code contains no client name.
 `Class` and unmatched attributes on that root. They take string items, optional `OptionText`,
 `Value`, and `ValueChanged`. They never assign `Value` and never navigate. Choosing the current
 item does not raise the callback. `RovingSelection` (`roving-selection.cs`) owns next, previous,
-wrap, Home, End, and the empty list. A move raises `ValueChanged` only when the landing item
-differs from the current value. The following render focuses that button. Active tab text and
-the underline use `--twe-primary`. The segmented track, active pill, text, rule, and shadow use
-tokens that were already in `tokens.css`. No new token. The style guide shows both cards after
-Filter Bar with sample text and no stored value. `ganda repo audit` was already green; nothing
-was turned off.
+wrap, Home, End, and the empty list. `HandledKeys` is the only key list. `CancelScript` is built
+from that list, and `FromKey` returns a move only for a key on it. The script calls
+`preventDefault` only when Alt, Ctrl, Meta, and Shift are all up. Both roots bind that script.
+`RovingValueGroup` owns the parameters, focus, choose, and key handling. Each razor file keeps
+its markup and ARIA roles. The method-local move is `move`. A move raises `ValueChanged` only
+when the landing item differs from the current value. The following render focuses that button.
+Active tab text and the underline use `--twe-primary`. The segmented track, active pill, text,
+rule, and shadow use tokens that were already in `tokens.css`. No new token. The style guide
+shows both cards after Filter Bar with sample text and no stored value. `ganda repo audit` was
+already green; nothing was turned off.
 
 ### How to validate
 
@@ -131,34 +140,31 @@ Smoke:
 - `./bin/dev template-smoke` — SmokeDefault OK, 0 warnings, 0 errors. Generated Jaribu
   aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
 - `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
-- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -- --filter-class Tabs_Should_`
-  (4 passed), `--filter-class SegmentedControl_Should_` (4 passed), and
-  `--filter-class RovingSelection_Should_` (9 passed).
+- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug --nologo -- --filter-class Tabs_Should_`
+  (5 passed), `--filter-class SegmentedControl_Should_` (5 passed), and
+  `--filter-class RovingSelection_Should_` (10 passed).
 - `git diff origin/master -- source tests | rg -i crunchit` — no match.
 
 ### Review
 
-Round 1 (effort 3, general reviewer) has 4 open findings: 1 bug, 2 suggestions, and 1 nit.
-Disposition is pending until a fix pass and round 2.
-
-- M1 (bug): the root `onkeydown` script cancels Alt, Ctrl, Meta, and Shift arrow, Home, and End
-  chords, which the C# handler ignores.
-- M2: keep the cancelled keys and the `FromKey` keys in one source.
-- M3: the two `@code` blocks are duplicates.
-- M4: rename the local variable `MoveResult`.
-
-Re-run during review: Tabs 4/4, SegmentedControl 4/4, RovingSelection 9/9, and the client-name
-grep is empty. Paths: `review/review-framework.md`, `review/round-1/general.md`, and
+Round 1 (effort 3, general reviewer) reported 4 findings. This fix pass implements them.
+Round 2 has not run. Paths: `review/review-framework.md`, `review/round-1/general.md`, and
 `review/round-1/merged.md`.
+
+- M1 (bug): `CancelScript` calls `preventDefault` only when `altKey`, `ctrlKey`, `metaKey`, and `shiftKey` are all false. Both render suites read that guard off the root `onkeydown`.
+- M2: `HandledKeys` is the key list. `CancelScript` is built from it, and `FromKey` ignores any other key. Both roots bind `CancelScript`.
+- M3: `RovingValueGroup` owns the shared parameters, focus, choose, key handling, and Design prose. `RovingMarkup` shares the render parsers.
+- M4: the pattern variable is `move`.
 
 ### Expect
 
 - Style Guide, after Filter Bar, shows a Tabs card and a Segmented Control card. Tabs reads
   Overview, Activity, and Notes, with Overview selected. The segmented control reads Day, Week,
   and Month, with Week checked. Changing them does not write page fields.
-- Left and Right move the selection and wrap. Home and End jump to the ends. Each move raises
-  `ValueChanged` and focus follows that item. A page that maps a tab to a URL dispatches a
-  State action; the control does not navigate.
+- Left and Right move the selection and wrap. Home and End jump to the ends. Each unmodified
+  move raises `ValueChanged` and focus follows that item. Alt+Left and Alt+Right still go to
+  the browser. Ctrl+Home and Ctrl+End still scroll the page. A page that maps a tab to a URL
+  dispatches a State action; the control does not navigate.
 
 ## Session
 
@@ -168,6 +174,12 @@ grep is empty. Paths: `review/review-framework.md`, `review/round-1/general.md`,
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T11:15:17Z
 - Review oracle round 1: claude (claude-opus-5-5), headless ganda task work, effort 3, roster
   general. Session id not exposed. 4 open findings (M1–M4); fix pass requested. 2026-10-22.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T11:18:28Z
+- Fix pass (implement-fix-2): modifier guard, one key list, `RovingValueGroup`, and camelCase `move`. Build, template-smoke, and audit are green. 2026-10-22.
+
+## Review
+
+- Round 1: fix pass implemented M1, M2, M3, and M4. Round 2 has not run.
 
 ## Notes
 

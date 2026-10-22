@@ -6,16 +6,14 @@
 // Tabs is a leaf with no services, so a bare ServiceCollection host is enough. The root is a
 // native div. Class, AriaLabel, and unmatched attributes land on that root. One button per
 // item. Only the Value item is selected. A null Value selects nothing and the first item has
-// tabindex 0. OptionText replaces the label. The component authors no style element.
+// tabindex 0. OptionText replaces the label. The component authors no style element. The root
+// onkeydown cancels unmodified Arrow, Home, and End keys and leaves modified chords alone.
 #endregion
 
 namespace TabsRender_;
 
-using System.Net;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Logging.Abstractions;
 using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Components;
 
 [TestTag("Unit")]
 public class Tabs_Should_
@@ -36,7 +34,7 @@ public class Tabs_Should_
     buttons[0].ShouldContain("Overview");
     buttons[1].ShouldContain("Activity");
     buttons[2].ShouldContain("Notes");
-    Selected(buttons, "aria-selected").ShouldBe(["Activity"]);
+    Selected(buttons).ShouldBe(["Activity"]);
     TabIndex(buttons[0]).ShouldBe("-1");
     TabIndex(buttons[1]).ShouldBe("0");
     TabIndex(buttons[2]).ShouldBe("-1");
@@ -54,7 +52,7 @@ public class Tabs_Should_
 
     string[] buttons = Buttons(html);
     buttons.Length.ShouldBe(2);
-    Selected(buttons, "aria-selected").ShouldBeEmpty();
+    Selected(buttons).ShouldBeEmpty();
     TabIndex(buttons[0]).ShouldBe("0");
     TabIndex(buttons[1]).ShouldBe("-1");
   }
@@ -72,7 +70,7 @@ public class Tabs_Should_
     buttons.Length.ShouldBe(2);
     buttons[0].ShouldContain("Alpha");
     buttons[1].ShouldContain("Beta");
-    Selected(buttons, "aria-selected").ShouldBe(["Alpha"]);
+    Selected(buttons).ShouldBe(["Alpha"]);
   }
 
   public static async Task Merge_Class_AriaLabel_And_Extra_Attributes_Onto_The_Root()
@@ -95,71 +93,27 @@ public class Tabs_Should_
     html.ShouldNotContain("<style");
   }
 
-  private static async Task<string> RenderAsync(Dictionary<string, object?> parameters)
+  public static async Task Cancel_Unmodified_Arrow_Home_And_End_Only()
   {
-    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
-    await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
-    string html = await renderer.Dispatcher.InvokeAsync(async () =>
-      (await renderer.RenderComponentAsync<Tabs>(ParameterView.FromDictionary(parameters))).ToHtmlString());
-    return WebUtility.HtmlDecode(html);
-  }
-
-  private static string RootTag(string html)
-  {
-    int classAt = html.IndexOf("twe-tabs", StringComparison.Ordinal);
-    classAt.ShouldBeGreaterThan(-1, "tabs rendered no root");
-    int start = html.LastIndexOf('<', classAt, StringComparison.Ordinal);
-    int end = html.IndexOf('>', classAt, StringComparison.Ordinal);
-    return html.Substring(start, end - start + 1);
-  }
-
-  private static string[] Buttons(string html)
-  {
-    List<string> buttons = [];
-    const string close = "</button>";
-    int from = 0;
-    while (true)
+    string html = await RenderAsync(new Dictionary<string, object?>
     {
-      int start = html.IndexOf("<button", from, StringComparison.OrdinalIgnoreCase);
-      if (start < 0)
-      {
-        break;
-      }
+      ["Items"] = new[] { "Overview", "Activity" },
+      ["Value"] = "Overview"
+    });
 
-      int end = html.IndexOf(close, start, StringComparison.OrdinalIgnoreCase);
-      end.ShouldBeGreaterThan(start);
-      end += close.Length;
-      buttons.Add(html[start..end]);
-      from = end;
-    }
-
-    return [.. buttons];
+    RovingMarkup.ShouldCancelPlainKeys(RootTag(html));
   }
 
-  private static string[] Selected(string[] buttons, string attribute)
-  {
-    string marker = attribute + "=\"true\"";
-    List<string> selected = [];
-    foreach (string button in buttons)
-    {
-      if (button.Contains(marker, StringComparison.Ordinal))
-      {
-        int labelAt = button.IndexOf('>', StringComparison.Ordinal) + 1;
-        int labelEnd = button.LastIndexOf('<', StringComparison.Ordinal);
-        selected.Add(button[labelAt..labelEnd]);
-      }
-    }
+  private static Task<string> RenderAsync(Dictionary<string, object?> parameters) =>
+    RovingMarkup.RenderAsync<Tabs>(parameters);
 
-    return [.. selected];
-  }
+  private static string RootTag(string html) =>
+    RovingMarkup.RootTag(html, "twe-tabs", "tabs rendered no root");
 
-  private static string TabIndex(string button)
-  {
-    const string marker = "tabindex=\"";
-    int start = button.IndexOf(marker, StringComparison.Ordinal);
-    start.ShouldBeGreaterThan(-1, "tab rendered no tabindex. Html: " + button);
-    start += marker.Length;
-    int end = button.IndexOf('"', start, StringComparison.Ordinal);
-    return button[start..end];
-  }
+  private static string[] Buttons(string html) => RovingMarkup.Buttons(html);
+
+  private static string[] Selected(string[] buttons) => RovingMarkup.Labels(buttons, "aria-selected");
+
+  private static string TabIndex(string button) =>
+    RovingMarkup.TabIndex(button, "tab rendered no tabindex. Html: ");
 }

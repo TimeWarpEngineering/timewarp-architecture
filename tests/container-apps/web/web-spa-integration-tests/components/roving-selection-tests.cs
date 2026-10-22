@@ -1,12 +1,13 @@
 #region Purpose
-// Pin RovingSelection: next, previous, wrap, Home, End, and an empty list.
+// Pin RovingSelection: next, previous, wrap, Home, End, an empty list, and the cancel script.
 #endregion
 
 #region Design
 // The helper is pure, so these tests construct nothing. A missing selection is index -1, which
 // is also what IndexOf returns for a null value. Left and Right step from the first item in
 // that case, because that item is the roving tab stop. FromKey reports Raise only when the
-// landing item differs from the current value.
+// landing item differs from the current value. Every HandledKeys entry is a move, and the
+// cancel script names those keys inside the unmodified-modifier guard.
 #endregion
 
 namespace RovingSelection_;
@@ -84,6 +85,20 @@ public class RovingSelection_Should_
     RovingSelection.FromKey(["Only"], "Only", "ArrowRight").ShouldBe(new RovingSelection.MoveResult(0, "Only", false));
     RovingSelection.FromKey(["A", "B"], "A", "ArrowRight").ShouldBe(new RovingSelection.MoveResult(1, "B", true));
     RovingSelection.FromKey(["A", "B"], "A", "Enter").ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task FromKey_Handles_Each_Cancelled_Key_And_The_Script_Guards_Modifiers()
+  {
+    string[] items = ["a", "b", "c"];
+    foreach (string key in RovingSelection.HandledKeys)
+    {
+      RovingSelection.FromKey(items, "b", key).ShouldNotBeNull();
+      RovingSelection.CancelScript.ShouldContain("event.key==='" + key + "'");
+    }
+
+    RovingSelection.CancelScript.ShouldContain("!event.altKey&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey");
+    RovingSelection.CancelScript.ShouldContain("preventDefault()");
     return Task.CompletedTask;
   }
 }

@@ -9,6 +9,9 @@
 // roving tab stop (tabindex 0). Left and Right start at that tab stop and then step, so the move
 // matches the focused item. Home and End ignore the current index. An empty list has no index.
 // Landing on the current item does not raise. Comparison is ordinal. Unknown keys are not moves.
+// HandledKeys is the only key list. CancelScript is built from it, and FromKey returns a move
+// only for a key on that list, so the browser cancel and the C# handler stay the same set.
+// The script also requires Alt, Ctrl, Meta, and Shift to be up, matching OnKeyDownAsync.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
@@ -16,6 +19,21 @@ namespace TimeWarp.Architecture.Components;
 internal static class RovingSelection
 {
   internal readonly record struct MoveResult(int Index, string Item, bool Raise);
+
+  internal const string ArrowLeftKey = "ArrowLeft";
+  internal const string ArrowRightKey = "ArrowRight";
+  internal const string HomeKey = "Home";
+  internal const string EndKey = "End";
+
+  internal static readonly IReadOnlyList<string> HandledKeys =
+  [
+    ArrowLeftKey,
+    ArrowRightKey,
+    HomeKey,
+    EndKey
+  ];
+
+  internal static readonly string CancelScript = BuildCancelScript();
 
   public static int Next(int count, int current) => Step(count, current, 1);
 
@@ -60,17 +78,17 @@ internal static class RovingSelection
 
   public static MoveResult? FromKey(IReadOnlyList<string>? items, string? value, string? key)
   {
-    if (items is null || items.Count == 0)
+    if (items is null || items.Count == 0 || !IsHandled(key))
     {
       return null;
     }
 
     int index = key switch
     {
-      "ArrowRight" => Next(items.Count, IndexOf(items, value)),
-      "ArrowLeft" => Previous(items.Count, IndexOf(items, value)),
-      "Home" => Home(items.Count),
-      "End" => End(items.Count),
+      ArrowRightKey => Next(items.Count, IndexOf(items, value)),
+      ArrowLeftKey => Previous(items.Count, IndexOf(items, value)),
+      HomeKey => Home(items.Count),
+      EndKey => End(items.Count),
       _ => -1
     };
 
@@ -82,6 +100,36 @@ internal static class RovingSelection
     string item = items[index];
     bool raise = !string.Equals(item, value, StringComparison.Ordinal);
     return new MoveResult(index, item, raise);
+  }
+
+  private static bool IsHandled(string? key)
+  {
+    if (key is null)
+    {
+      return false;
+    }
+
+    for (int index = 0; index < HandledKeys.Count; index++)
+    {
+      if (string.Equals(HandledKeys[index], key, StringComparison.Ordinal))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static string BuildCancelScript()
+  {
+    string[] clauses = new string[HandledKeys.Count];
+    for (int index = 0; index < HandledKeys.Count; index++)
+    {
+      clauses[index] = "event.key==='" + HandledKeys[index] + "'";
+    }
+
+    string keys = string.Join("||", clauses);
+    return "if(!event.altKey&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&(" + keys + "))event.preventDefault()";
   }
 
   private static int Step(int count, int current, int delta)

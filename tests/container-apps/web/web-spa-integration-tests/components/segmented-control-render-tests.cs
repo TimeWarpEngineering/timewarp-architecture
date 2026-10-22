@@ -7,15 +7,13 @@
 // The root is a native div. Class, AriaLabel, and unmatched attributes land on that root.
 // One radio per item. Only the Value item is checked. A null Value checks nothing and the
 // first item has tabindex 0. OptionText replaces the label. The component authors no style element.
+// The root onkeydown cancels unmodified Arrow, Home, and End keys and leaves modified chords alone.
 #endregion
 
 namespace SegmentedControlRender_;
 
-using System.Net;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Logging.Abstractions;
 using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Web.Spa.Integration.Tests.Components;
 
 [TestTag("Unit")]
 public class SegmentedControl_Should_
@@ -95,71 +93,27 @@ public class SegmentedControl_Should_
     html.ShouldNotContain("<style");
   }
 
-  private static async Task<string> RenderAsync(Dictionary<string, object?> parameters)
+  public static async Task Cancel_Unmodified_Arrow_Home_And_End_Only()
   {
-    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
-    await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
-    string html = await renderer.Dispatcher.InvokeAsync(async () =>
-      (await renderer.RenderComponentAsync<SegmentedControl>(ParameterView.FromDictionary(parameters))).ToHtmlString());
-    return WebUtility.HtmlDecode(html);
-  }
-
-  private static string RootTag(string html)
-  {
-    int classAt = html.IndexOf("twe-segmented", StringComparison.Ordinal);
-    classAt.ShouldBeGreaterThan(-1, "segmented control rendered no root");
-    int start = html.LastIndexOf('<', classAt, StringComparison.Ordinal);
-    int end = html.IndexOf('>', classAt, StringComparison.Ordinal);
-    return html.Substring(start, end - start + 1);
-  }
-
-  private static string[] Buttons(string html)
-  {
-    List<string> buttons = [];
-    const string close = "</button>";
-    int from = 0;
-    while (true)
+    string html = await RenderAsync(new Dictionary<string, object?>
     {
-      int start = html.IndexOf("<button", from, StringComparison.OrdinalIgnoreCase);
-      if (start < 0)
-      {
-        break;
-      }
+      ["Items"] = new[] { "Day", "Week" },
+      ["Value"] = "Day"
+    });
 
-      int end = html.IndexOf(close, start, StringComparison.OrdinalIgnoreCase);
-      end.ShouldBeGreaterThan(start);
-      end += close.Length;
-      buttons.Add(html[start..end]);
-      from = end;
-    }
-
-    return [.. buttons];
+    RovingMarkup.ShouldCancelPlainKeys(RootTag(html));
   }
 
-  private static string[] Checked(string[] buttons)
-  {
-    const string marker = "aria-checked=\"true\"";
-    List<string> selected = [];
-    foreach (string button in buttons)
-    {
-      if (button.Contains(marker, StringComparison.Ordinal))
-      {
-        int labelAt = button.IndexOf('>', StringComparison.Ordinal) + 1;
-        int labelEnd = button.LastIndexOf('<', StringComparison.Ordinal);
-        selected.Add(button[labelAt..labelEnd]);
-      }
-    }
+  private static Task<string> RenderAsync(Dictionary<string, object?> parameters) =>
+    RovingMarkup.RenderAsync<SegmentedControl>(parameters);
 
-    return [.. selected];
-  }
+  private static string RootTag(string html) =>
+    RovingMarkup.RootTag(html, "twe-segmented", "segmented control rendered no root");
 
-  private static string TabIndex(string button)
-  {
-    const string marker = "tabindex=\"";
-    int start = button.IndexOf(marker, StringComparison.Ordinal);
-    start.ShouldBeGreaterThan(-1, "radio rendered no tabindex. Html: " + button);
-    start += marker.Length;
-    int end = button.IndexOf('"', start, StringComparison.Ordinal);
-    return button[start..end];
-  }
+  private static string[] Buttons(string html) => RovingMarkup.Buttons(html);
+
+  private static string[] Checked(string[] buttons) => RovingMarkup.Labels(buttons, "aria-checked");
+
+  private static string TabIndex(string button) =>
+    RovingMarkup.TabIndex(button, "radio rendered no tabindex. Html: ");
 }
