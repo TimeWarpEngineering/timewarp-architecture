@@ -11,9 +11,14 @@
   in StartTemplate. Immediate is on and ImmediateDelay is 0 so each keystroke reaches this
   component; Fluent's own delay is not the clock. SearchDebouncer waits on the injected
   TimeProvider and then raises SearchTextChanged once. Empty text (the clear control) and
-  Escape publish immediately and cancel a pending wait. Dispose cancels that wait. The
-  callback runs through InvokeAsync. This component stores no filter and fetches nothing;
-  the page handler only dispatches a TimeWarp.State action.
+  Escape publish immediately and cancel a pending wait. A text equal to the last published
+  value is not published again, immediate or delayed, and that path still cancels the
+  pending wait. The baseline is SearchText on the first parameter set, or empty when that
+  is unset: Escape on an empty box does not fetch, the browser's search-clear after Escape
+  does not fetch a second time, and typing back to that text before the delay elapses
+  cancels the wait and does not publish. Dispose cancels that wait. The callback runs
+  through InvokeAsync. This component stores no filter and fetches nothing; the page
+  handler only dispatches a TimeWarp.State action.
 *@
 
 @code {
@@ -30,18 +35,31 @@
 
   private SearchDebouncer? Debouncer;
   private int Disposed;
+  private string LastPublished = "";
+  private bool BaselineReady;
 
   private const string PlaceholderStyle = "::placeholder { color: var(--twe-muted); }";
 
   private SearchDebouncer Timer => Debouncer ??= new SearchDebouncer(Clock);
 
-  private Task OnSearchChanged(string? value)
+  protected override void OnParametersSet()
+  {
+    if (BaselineReady)
+    {
+      return;
+    }
+
+    LastPublished = SearchText ?? "";
+    BaselineReady = true;
+  }
+
+  internal Task OnSearchChanged(string? value)
   {
     string text = value ?? "";
     return ScheduleAsync(text, immediate: text.Length == 0);
   }
 
-  private Task OnSearchKeyDown(KeyboardEventArgs args)
+  internal Task OnSearchKeyDown(KeyboardEventArgs args)
   {
     if (!string.Equals(args.Key, "Escape", StringComparison.Ordinal))
     {
@@ -51,16 +69,25 @@
     return ScheduleAsync("", immediate: true);
   }
 
-  private Task ScheduleAsync(string text, bool immediate) =>
-    Timer.ScheduleAsync(text, SearchDelay, immediate, PublishAsync);
+  private Task ScheduleAsync(string text, bool immediate)
+  {
+    if (string.Equals(text, LastPublished, StringComparison.Ordinal))
+    {
+      Debouncer?.Cancel();
+      return Task.CompletedTask;
+    }
+
+    return Timer.ScheduleAsync(text, SearchDelay, immediate, PublishAsync);
+  }
 
   private Task PublishAsync(string text)
   {
-    if (Volatile.Read(ref Disposed) != 0)
+    if (Volatile.Read(ref Disposed) != 0 || string.Equals(text, LastPublished, StringComparison.Ordinal))
     {
       return Task.CompletedTask;
     }
 
+    LastPublished = text;
     return InvokeAsync(async () =>
     {
       if (Volatile.Read(ref Disposed) != 0)

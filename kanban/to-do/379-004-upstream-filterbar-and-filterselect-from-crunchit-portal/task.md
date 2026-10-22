@@ -20,6 +20,14 @@ keep their items, option text, and `data-qa` values. Show closed stays a checkbo
 shows the box and sends that existing field. No new server filter. The style guide shows the bar
 with sample text and callbacks that do not write local fields.
 
+A later keystroke, clear, or Escape publishes only when the text differs from the last
+value this bar published. The baseline is the `SearchText` already on the bar, or empty
+when that parameter is unset. A matching publish is skipped, and a pending wait is still
+cancelled, so Escape on an empty box, Escape plus the browser's search-clear, and typing
+back to the current text before the delay do not fetch. FilterBar tests on a manual clock
+cover an immediate clear, an immediate Escape, and that repeated text. The handlers are
+internal, and those tests call them directly.
+
 ## Description
 
 Port Crunchit's `FilterBar` and `FilterSelect` into the template as brand-neutral components, so
@@ -128,6 +136,9 @@ Follow the conventions of 379-001 (`SectionHeader`) and 379-003 (`KpiCard`):
   - Several keystrokes produce one callback with the last text.
   - A clear fires immediately.
   - Dispose cancels the pending callback.
+- [x] A publish equal to the last published text is skipped (Escape on an empty box, Escape
+      plus the browser clear, or a return to that text before the delay). The pending wait
+      is still cancelled. FilterBar tests call the internal handlers directly.
 - [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
@@ -150,6 +161,11 @@ title contains the text, so the page shows the box and sends that existing field
 Show closed stays a checkbox in `ChildContent`. The style-guide card is sample text with no
 callbacks. `ganda repo audit` was already green; nothing was turned off.
 
+Review round 1: the bar remembers the last text it published, starting from `SearchText` or
+empty. A clear, Escape, or later keystroke equal to that text does not publish again, and a
+pending wait is still cancelled. `OnSearchChanged` and `OnSearchKeyDown` are internal, and the
+render tests call them. `SearchDebouncer.Cancel` drops a wait without publishing.
+
 ### How to validate
 
 Smoke:
@@ -159,7 +175,7 @@ Smoke:
   aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
 - `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
 - From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -- --filter-class Filter`
-  (14 passed) and `--filter-class FeedbackAdmin` (11 passed).
+  (18 passed) and `--filter-class FeedbackAdmin` (11 passed).
 - From `tests/container-apps/web/web-spa-playwright-tests`:
   `dotnet test -- --filter-method AdminListFilters_Should_NarrowTheRows` (passed). Kind
   `FeatureRequest` leaves one row; clearing the kind and typing `bug` leaves the bug row.
@@ -173,9 +189,10 @@ Expect:
 - Admin Feedback keeps the Filter section. The bar has a title search, Status, Kind, Severity,
   and Show closed. `data-qa` stays `AdminFeedbackStatus`, `AdminFeedbackKind`,
   `AdminFeedbackSeverity`, and `AdminFeedbackIncludeClosed`.
-- Typing a title waits for the pause, then the grid shows only matching titles. Clearing the
-  box or pressing Escape fetches immediately. Status, Kind, Severity, and Show closed still
-  narrow the same rows, and they keep the current search text.
+- Typing a title waits for the pause, then the grid shows only matching titles. Clearing a
+  published value, or pressing Escape, fetches immediately and only once. Escape on an empty
+  box, or typing back to the current text before the pause, does not fetch. Status, Kind,
+  Severity, and Show closed still narrow the same rows, and they keep the current search text.
 
 ## Session
 
@@ -185,6 +202,14 @@ Expect:
 - Review oracle round 1 (effort 3, roster general; headless, session id not exposed) — 2026-10-22:
   0 bug, 2 suggestion, 1 nit open (M1–M3, `review/round-1/merged.md`). Fix pass requested; no
   disposition yet. Build and Filter/FeedbackAdmin integration tests re-run green.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T08:55:52Z
+- Fix pass (implement-fix-2): M1–M3. Skip a repeated publish, cover clear/Escape/repeat on
+  FilterBar, call the internal handlers directly. Build, audit, template-smoke, Filter (18),
+  FeedbackAdmin (11), and the admin-filter Playwright check are green. 2026-10-22.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3
 
 ## Notes
 

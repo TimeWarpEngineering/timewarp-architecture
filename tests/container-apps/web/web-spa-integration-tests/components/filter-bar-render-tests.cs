@@ -8,12 +8,14 @@
 // the test releases it, so there is no sleep. FilterBar injects that clock and passes it to
 // SearchDebouncer. The debouncer tests call that type directly. Two more cases go through the
 // component: a zero delay publishes from the renderer, and dispose cancels a pending publish.
+// Clear and Escape on a published value publish immediately, with no timer release. A repeat
+// of the last published text, including a return to it before the delay, publishes nothing.
+// The handlers are internal, so these cases call them on the bar.
 #endregion
 
 namespace FilterBarRender_;
 
 using System.Net;
-using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
@@ -156,7 +158,7 @@ public class FilterBar_Should_
     });
     await using (renderer)
     {
-      await renderer.Dispatcher.InvokeAsync(() => NotifyAsync(bar, "acme"));
+      await renderer.Dispatcher.InvokeAsync(() => bar.OnSearchChanged("acme"));
     }
 
     seen.ShouldBe(["acme"]);
@@ -175,11 +177,80 @@ public class FilterBar_Should_
     await using (renderer)
     {
 #pragma warning disable CA2025 // Dispose must cancel this in-flight wait.
-      Task pending = NotifyAsync(bar, "acme");
+      Task pending = bar.OnSearchChanged("acme");
       bar.Dispose();
 #pragma warning restore CA2025
       clock.Release();
       await pending;
+    }
+
+    seen.ShouldBeEmpty();
+  }
+
+  public static async Task A_Clear_Of_Published_Text_Fires_Immediately_On_The_Bar()
+  {
+    ManualDelay clock = new();
+    List<string> seen = [];
+    (FilterBar bar, HtmlRenderer renderer) = await MountAsync(Listening(seen, "acme"), clock);
+    await using (renderer)
+    {
+      await renderer.Dispatcher.InvokeAsync(() => bar.OnSearchChanged(""));
+    }
+
+    seen.ShouldBe([""]);
+  }
+
+  public static async Task Escape_On_Published_Text_Fires_Immediately_On_The_Bar()
+  {
+    ManualDelay clock = new();
+    List<string> seen = [];
+    (FilterBar bar, HtmlRenderer renderer) = await MountAsync(Listening(seen, "acme"), clock);
+    await using (renderer)
+    {
+      await renderer.Dispatcher.InvokeAsync(() => bar.OnSearchKeyDown(EscapeKey()));
+    }
+
+    seen.ShouldBe([""]);
+  }
+
+  public static async Task Repeated_Text_Does_Not_Publish_Again()
+  {
+    ManualDelay clock = new();
+    List<string> seen = [];
+    (FilterBar bar, HtmlRenderer renderer) = await MountAsync(Listening(seen, "acme"), clock);
+    await using (renderer)
+    {
+      await renderer.Dispatcher.InvokeAsync(async () =>
+      {
+        await bar.OnSearchChanged("acme");
+        Task drifted = bar.OnSearchChanged("acmex");
+        await bar.OnSearchChanged("acme");
+        clock.Release();
+        await drifted;
+        await bar.OnSearchKeyDown(EscapeKey());
+        await bar.OnSearchChanged("");
+        await bar.OnSearchKeyDown(EscapeKey());
+      });
+    }
+
+    seen.ShouldBe([""]);
+  }
+
+  public static async Task Text_That_Returns_To_The_Published_Value_Before_The_Delay_Publishes_Nothing()
+  {
+    ManualDelay clock = new();
+    List<string> seen = [];
+    (FilterBar bar, HtmlRenderer renderer) = await MountAsync(Listening(seen), clock);
+    await using (renderer)
+    {
+      await renderer.Dispatcher.InvokeAsync(async () =>
+      {
+        Task pending = bar.OnSearchChanged("acme");
+        await bar.OnSearchChanged("");
+        await bar.OnSearchKeyDown(EscapeKey());
+        clock.Release();
+        await pending;
+      });
     }
 
     seen.ShouldBeEmpty();
@@ -195,13 +266,21 @@ public class FilterBar_Should_
       return Task.CompletedTask;
     };
 
-  private static Task NotifyAsync(FilterBar bar, string? text)
+  private static Dictionary<string, object?> Listening(List<string> seen, string? searchText = null)
   {
-    MethodInfo method = typeof(FilterBar)
-      .GetMethod("OnSearchChanged", BindingFlags.Instance | BindingFlags.NonPublic)
-      .ShouldNotBeNull();
-    return (Task)method.Invoke(bar, [text])!;
+    Dictionary<string, object?> parameters = new()
+    {
+      ["SearchTextChanged"] = EventCallback.Factory.Create<string>(new object(), (string text) => seen.Add(text))
+    };
+    if (searchText is not null)
+    {
+      parameters["SearchText"] = searchText;
+    }
+
+    return parameters;
   }
+
+  private static KeyboardEventArgs EscapeKey() => new() { Key = "Escape" };
 
   private static async Task<string> RenderAsync(Dictionary<string, object?> parameters)
   {
@@ -252,14 +331,16 @@ public class FilterBar_Should_
   {
     [Parameter] public Action<FilterBar>? Capture { get; set; }
     [Parameter] public TimeSpan SearchDelay { get; set; } = TimeSpan.FromMilliseconds(300);
+    [Parameter] public string? SearchText { get; set; }
     [Parameter] public EventCallback<string> SearchTextChanged { get; set; }
 
     protected override void BuildRenderTree(RenderTreeBuilder builder)
     {
       builder.OpenComponent<FilterBar>(0);
       builder.AddAttribute(1, "SearchDelay", SearchDelay);
-      builder.AddAttribute(2, "SearchTextChanged", SearchTextChanged);
-      builder.AddComponentReferenceCapture(3, instance => Capture?.Invoke((FilterBar)instance));
+      builder.AddAttribute(2, "SearchText", SearchText);
+      builder.AddAttribute(3, "SearchTextChanged", SearchTextChanged);
+      builder.AddComponentReferenceCapture(4, instance => Capture?.Invoke((FilterBar)instance));
       builder.CloseComponent();
     }
   }

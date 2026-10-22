@@ -7,8 +7,9 @@
 // per-keystroke callback would fetch once per character. The page only dispatches an action
 // when this type publishes. TimeProvider is the clock so a test completes the wait without
 // sleeping. Each schedule cancels the previous wait. An immediate schedule (cleared text)
-// publishes without waiting. Dispose cancels the pending wait and drops later schedules.
-// FilterBar sends the publish through ComponentBase.InvokeAsync.
+// publishes without waiting. Cancel drops a pending wait without publishing; FilterBar
+// uses that when the text matches the last published value. Dispose cancels the pending
+// wait and drops later schedules. FilterBar sends the publish through ComponentBase.InvokeAsync.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
@@ -69,6 +70,8 @@ internal sealed class SearchDebouncer : IDisposable
       source.Dispose();
     }
   }
+
+  public void Cancel() => CancelPending();
 
   public void Dispose()
   {
