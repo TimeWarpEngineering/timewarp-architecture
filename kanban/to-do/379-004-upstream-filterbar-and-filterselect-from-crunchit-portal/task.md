@@ -166,6 +166,15 @@ empty. A clear, Escape, or later keystroke equal to that text does not publish a
 pending wait is still cancelled. `OnSearchChanged` and `OnSearchKeyDown` are internal, and the
 render tests call them. `SearchDebouncer.Cancel` drops a wait without publishing.
 
+### Review disposition
+
+- Rounds: 2. Roster: general. Round 1 at effort 3, round 2 at effort 1 (by-diff, 184 lines).
+- Final counts: bug 0; suggestion 2 fixed; nit 1 fixed, 1 wontfix. Open: 0.
+- Disposition: **accepted-exceptions**. M4 (nit) is wontfix. FilterBar publishes the raw box
+  text, and `SetFilter` trims it. A trailing-space change after a pause causes one redundant
+  fetch, and the result is still correct. Normalization belongs to the consuming state.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -206,10 +215,14 @@ Expect:
 - Fix pass (implement-fix-2): M1–M3. Skip a repeated publish, cover clear/Escape/repeat on
   FilterBar, call the internal handlers directly. Build, audit, template-smoke, Filter (18),
   FeedbackAdmin (11), and the admin-filter Playwright check are green. 2026-10-22.
+- Review oracle round 2 (effort 1, roster general; reviewer-claude, model claude-opus-5-5,
+  headless, session id not exposed, max-turns 80) — 2026-10-22: M1–M3 fixed and verified
+  (FilterBarRender_ 14/14). New M4 nit is wontfix. Disposition accepted-exceptions, 0 open.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
+- Round 2: M1–M3 fixed; M4 nit wontfix — disposition accepted-exceptions (0 open)
 
 ## Notes
 
