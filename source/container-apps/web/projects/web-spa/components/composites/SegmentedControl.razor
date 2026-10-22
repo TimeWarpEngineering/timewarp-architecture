@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Components
+@inherits RovingValueGroup
+
+@*
+  Purpose: Pill group of mutually exclusive options. The caller owns the value.
+
+  Design: Each item is a button with role="radio" inside role="radiogroup". The checked item
+  is aria-checked and tabindex 0; the others are tabindex -1. FluentUI v5 has no segmented
+  control. Parameters, choosing, keyboard, focus, and the cancel script live on
+  RovingValueGroup.
+*@
+
+<div class="twe-segmented @Class" role="radiogroup" aria-label="@AriaLabel" @attributes="AdditionalAttributes"
+     onkeydown="@RovingSelection.CancelScript">
+  @for (int index = 0; index < Rows.Count; index++)
+  {
+    int slot = index;
+    string item = Rows[slot];
+    bool selected = string.Equals(item, Value, StringComparison.Ordinal);
+    <button type="button"
+            role="radio"
+            class="twe-segmented__item @(selected ? "is-active" : null)"
+            aria-checked="@(selected ? "true" : "false")"
+            tabindex="@(slot == TabStopIndex ? 0 : -1)"
+            @onclick="() => ChooseAsync(item)"
+            @onkeydown="OnKeyDownAsync"
+            @ref="ItemReferences[slot]">@Text(item)</button>
+  }
+</div>

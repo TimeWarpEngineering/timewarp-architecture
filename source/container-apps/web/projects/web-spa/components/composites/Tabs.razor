@@ -1,0 +1,30 @@
+@namespace TimeWarp.Architecture.Components
+@inherits RovingValueGroup
+
+@*
+  Purpose: Underline sub-view switcher. The caller owns the value.
+
+  Design: Each item is a button with role="tab" inside role="tablist". There is no panel, so
+  there is no aria-controls. The selected item is aria-selected and tabindex 0; the others
+  are tabindex -1. FluentTabs is the wrong control: it is panel-oriented, and this is a
+  header-only switcher, so matching the look would mean restyling shadow DOM. Parameters,
+  choosing, keyboard, focus, and the cancel script live on RovingValueGroup.
+*@
+
+<div class="twe-tabs @Class" role="tablist" aria-label="@AriaLabel" @attributes="AdditionalAttributes"
+     onkeydown="@RovingSelection.CancelScript">
+  @for (int index = 0; index < Rows.Count; index++)
+  {
+    int slot = index;
+    string item = Rows[slot];
+    bool selected = string.Equals(item, Value, StringComparison.Ordinal);
+    <button type="button"
+            role="tab"
+            class="twe-tabs__tab @(selected ? "is-active" : null)"
+            aria-selected="@(selected ? "true" : "false")"
+            tabindex="@(slot == TabStopIndex ? 0 : -1)"
+            @onclick="() => ChooseAsync(item)"
+            @onkeydown="OnKeyDownAsync"
+            @ref="ItemReferences[slot]">@Text(item)</button>
+  }
+</div>

@@ -1,0 +1,37 @@
+/* Underline tablist. The 2px gap, the 1px overlap, and the 10/14 padding are below the
+   spacing scale (8, 12, 24, 48). The table-cell size maps to the body token. The active
+   underline and label use the accent, not a second hue. */
+.twe-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--twe-rule);
+}
+
+.twe-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: -1px;
+  padding: 10px 14px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--twe-muted);
+  font-family: inherit;
+  font-size: var(--twe-text-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms;
+}
+
+.twe-tabs__tab:hover { color: var(--twe-ink-2); }
+
+.twe-tabs__tab.is-active,
+.twe-tabs__tab.is-active:hover {
+  color: var(--twe-primary);
+  border-bottom-color: var(--twe-primary);
+}
+
+.twe-tabs__tab:focus-visible {
+  outline: 2px solid var(--twe-primary);
+  outline-offset: 2px;
+}

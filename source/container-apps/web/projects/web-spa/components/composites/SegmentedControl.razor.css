@@ -1,0 +1,37 @@
+/* Pill group. 3px and 5px sit below the spacing scale (8, 12, 24, 48). 6px is the inset
+   corner inside the 8px track; no radius token is 6. The 12.5px label maps to the helper
+   token. The active pill uses the small elevation token. */
+.twe-segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+}
+
+.twe-segmented__item {
+  border: none;
+  background: transparent;
+  color: var(--twe-muted);
+  font-family: inherit;
+  font-size: var(--twe-text-helper);
+  font-weight: 500;
+  padding: 5px var(--twe-space-3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.twe-segmented__item:hover { color: var(--twe-ink-2); }
+
+.twe-segmented__item.is-active,
+.twe-segmented__item.is-active:hover {
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  box-shadow: var(--twe-shadow-sm);
+}
+
+.twe-segmented__item:focus-visible {
+  outline: 2px solid var(--twe-primary);
+  outline-offset: 1px;
+}

@@ -26,6 +26,8 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Section.razor` (composites) — Card + `FluentSpinner` while `ActionTrackingState.IsAnyActive(LoadingActionType)`
 - `FilterBar.razor` (composites) — paper toolbar (`role="toolbar"`) with optional debounced search and filter `ChildContent`
 - `FilterSelect.razor` (composites) — muted inline label and `FluentSelect`
+- `Tabs.razor` (composites) — underline sub-view switcher (`role="tablist"`); items raise `ValueChanged`
+- `SegmentedControl.razor` (composites) — pill group of mutually exclusive options (`role="radiogroup"`)
 - `DataGridFrame.razor` (composites) — frame around every `FluentDataGrid`: scrolls sideways below the grid's minimum width, ellipsis headers; columns use `GridTemplateColumns` minmax tracks (tw-blazor)
 
 **Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.
