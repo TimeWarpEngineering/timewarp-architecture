@@ -120,7 +120,7 @@ Expect:
 - Round 1 findings M1, M2, M3, and M4 are addressed on this branch.
 - Round 2 finding M5 is addressed on this branch.
 - Round 3 verified M5 and found nothing new. Disposition is clean (`review/disposition.md`).
-
+- Round 3: Done
 ## Notes
 
 - Follow-up in timewarp-nuru after this ships: read the Contracts hints by metadata name, with the
