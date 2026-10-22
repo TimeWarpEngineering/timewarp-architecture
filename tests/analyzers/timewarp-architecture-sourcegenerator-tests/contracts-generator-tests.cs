@@ -915,4 +915,56 @@ public class ContractsGenerator_Tests
     generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
     return Task.CompletedTask;
   }
+
+  public static Task Should_Omit_Hints_When_The_Operation_Name_Is_Whitespace()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("  ", Description = "Lists roles.", Title = "List roles")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source, extraReferences: RealOperationReferences());
+    generated.ShouldNotContain("OperationName");
+    generated.ShouldNotContain("OperationTitle");
+    generated.ShouldNotContain("OperationDestructive");
+    generated.ShouldNotContain("OperationOpenWorld");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_An_Explicit_True_Destructive_Hint()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class PurgeCache
+          {
+              [TimeWarp.Contracts.Operation("purge_cache")]
+              [TimeWarp.Contracts.Destructive(true)]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source, extraReferences: RealOperationReferences());
+    generated.ShouldContain("public const string OperationName = \"purge_cache\";");
+    generated.ShouldContain("public const bool OperationDestructive = true;");
+    generated.ShouldNotContain("OperationOpenWorld");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
 }

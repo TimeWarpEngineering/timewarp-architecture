@@ -171,7 +171,7 @@ HTTP endpoint, a CLI command, and an MCP tool:
 
 - **Name, group, and title:** `[Operation("roles.get", Description = "…", Group = "…", Title = "…")]`
   on the nested `Query`/`Command`. A blank title means no title. `[Destructive]` and `[OpenWorld]`
-  are tri-state: omitted is unset, not false. Kind still supplies read-only and idempotent.
+  are tri-state: omitted is unset, not false. MCP treats an omitted destructive hint as true and reads it only when the tool is not read-only. Generators copy the hints only when `[Operation]` has a non-blank name. Kind still supplies read-only and idempotent.
 - **Kind:** the mediator interface (`IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`). It is
   never an attribute argument.
 - **Bindings:** HTTP comes from `[ApiRoute]` + `[ApiEndpoint]` (this template). CLI and MCP come

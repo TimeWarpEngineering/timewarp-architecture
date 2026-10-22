@@ -38,25 +38,27 @@ The catalog carries the hints on `OperationDescriptor` (`Title`, `DestructiveHin
 
 ## Goal (implementer restatement)
 
-A request class states the three tool hints a mediator kind cannot supply, and an operation catalog carries them without a reference to TimeWarp.Nuru. `readOnlyHint` and `idempotentHint` still come from the kind.
+A request states the three tool hints a mediator kind cannot supply, and the operation catalog carries them. The contract does not reference TimeWarp.Nuru. `readOnlyHint` and `idempotentHint` still come from the kind.
 
-`Title` is optional on `[Operation]`. A blank title is no title. `[Destructive]` and `[OpenWorld]` are tri-state: absent is unset, a bare attribute is true, and `(false)` is an explicit false. `OperationDescriptor` stores `Title` and `DestructiveHint` / `OpenWorldHint` as `bool?`. The HTTP route, the CLI pattern, and the MCP tool name stay unchanged.
+`Title` is an optional named argument on `[Operation]`. Null, empty, and whitespace mean no title. `[Destructive]` and `[OpenWorld]` are tri-state: the attribute's absence is unset, a bare attribute is true, and `(false)` is an explicit false. `OperationDescriptor` stores `Title` plus `DestructiveHint` and `OpenWorldHint` as `bool?`. The HTTP route, the CLI pattern, and the MCP tool name stay as they are.
 
-The contracts generator and the endpoint emit model read those metadata names. A set hint is copied. An unset hint is omitted. Neither reader folds a hint into a route.
+Destructive means a delete or an overwrite, as opposed to an update that only adds data. MCP clients treat an omitted `destructiveHint` as true, and they read that hint only when the tool is not read-only. The catalog still stores null for an omitted attribute and does not fill in the client default. The package readme's example of `[Destructive(false)]` is an operation that only appends.
+
+Both generator readers copy a set hint and omit an unset one. They also ignore the hint attributes unless `[Operation]` has a name that is not blank. A reflection reader still sees the attributes. The author-facing tool-hint sections say so.
 
 Acceptance:
 
-- The shape above is the contract. XML docs, the package readme, and the neutral-operations skill describe it.
-- Jaribu covers a set title, a blank title, both hint attributes (bare, explicit false, absent), catalog JSON that keeps false and omits null, and the generator and emit-model reads.
+- XML docs, the package readme, and `neutral-operations.md` describe that shape, the MCP default and not-read-only rule, and the generator's blank-name rule.
+- Jaribu covers a set title, a blank title, both hint attributes (bare, explicit true, explicit false, absent), a whitespace operation name together with hint attributes in each reader, and catalog JSON that keeps false and omits null.
 - `dev build` is 0 warnings and 0 errors. The touched tests pass. `dev check-version` passes. `ganda repo audit` is clean. `dev lint-skills` passes.
-- These hints ship in the repo version already one prerelease ahead of NuGet. Publishing stays `dev release` from a clean synced master after merge.
+- Source stays `2.0.0-beta.24`, one prerelease ahead of NuGet. Publishing is `dev release` from a clean synced master after merge. The checklist does not claim that release is already cut.
 
 ## Checklist
 
 - [x] Pick the shape (OperationAttribute properties vs dedicated attributes) and record why
 - [x] Contracts types and descriptor/binding members
 - [x] Tests and docs
-- [x] Release a TimeWarp.Contracts prerelease
+- [ ] Publish TimeWarp.Contracts with `dev release` after this branch merges. Source is already `2.0.0-beta.24`
 
 ## Session
 
@@ -64,6 +66,8 @@ Acceptance:
 - 2026-10-22: `Title` on `[Operation]`. `[Destructive]` and `[OpenWorld]` are tri-state attributes. `OperationDescriptor` carries `Title`, `DestructiveHint`, and `OpenWorldHint`. The contracts generator and the endpoint emit model read them by metadata name and leave the route alone. Source stays `2.0.0-beta.24` (already one prerelease ahead of NuGet `2.0.0-beta.23`). The cut is `dev release` from master after merge.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T13:24:43Z
 - Review oracle round 1 (2026-10-22): effort 3. Roster: general, which is the review oracle (claude-opus-5-5) plus an independent sub-agent read (sonnet, `abb85a851a96d8e80`). Findings: 0 bug, 2 suggestion (M1, M2), and 2 nit (M3, M4), all open (`review/round-1/merged.md`). I re-ran the gates: `dev build` gave 0 warnings and 0 errors, the tests passed 47/47 and 146/146, and `check-version` and `ganda repo audit` both passed. `dev lint-skills` did not run, because `vally` is not on PATH. The implementer restatement matches the task and the Decision, so there is no misread. Disposition waits on a fix pass.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T13:31:43Z
+- Fix pass (implement-fix-2, 2026-10-22): M1 aligns the destructive hint with MCP (a delete or overwrite, rather than an update that only adds data), uses an append for `[Destructive(false)]`, and states that an omitted `destructiveHint` is true and is read only when the tool is not read-only. M2 records that generators ignore the hint attributes unless `[Operation]` has a non-blank name. M3 adds a whitespace-name-plus-hints test in each reader and an explicit `[Destructive(true)]` test. M4 leaves the NuGet publish unchecked until `dev release` after merge.
 
 ## Results
 
@@ -78,6 +82,8 @@ Metadata names: `TimeWarp.Contracts.OperationAttribute` named argument `Title`, 
 Source version stays `2.0.0-beta.24`. That version is already one prerelease increment ahead of published `2.0.0-beta.23`, and `dev check-version` lists `TimeWarp.Contracts` among the packages at the source version. A second bump would skip `2.0.0-beta.24`. Publishing stays `dev release` from a clean synced master after this branch merges (`tw-release`). NuGet does not have this build yet.
 
 A file that imports both `TimeWarp.Contracts` and `TimeWarp.Nuru` must qualify `[Destructive]` and `[OpenWorld]` after the Nuru follow-up bumps the package. The Nuru attribute wins when both are present, as the Notes already say.
+
+The destructive hint means a delete or an overwrite, as opposed to an update that only adds data. The package readme's `[Destructive(false)]` example appends a note. MCP clients treat an omitted `destructiveHint` as true and read it only when the tool is not read-only. The catalog still stores null and does not fill in that client default. Generators copy `[Destructive]` and `[OpenWorld]` only when `[Operation]` has a name that is not blank. A reflection reader sees the attributes either way. An explicit `[Destructive(true)]` emits `OperationDestructive = true`. A whitespace operation name emits no hint members.
 
 ### How to validate
 
@@ -94,10 +100,14 @@ Expect:
 
 - `./bin/dev build` ends with 0 warnings and 0 errors.
 - Foundation contracts tests: 47 passed, 0 failed. Title, both hint attributes, and catalog JSON are covered. A stated false is present. A null hint is absent.
-- Source generator tests: 146 passed, 0 failed. A set title and explicit false hints are copied. A bare hint attribute is true. A whitespace title and an omitted hint are omitted. `RouteTemplate` stays `api/Roles`.
+- Source generator tests: 149 passed, 0 failed. A set title and explicit false hints are copied. A bare hint attribute and an explicit `[Destructive(true)]` are true. A whitespace title and an omitted hint are omitted. A whitespace operation name together with hint attributes emits no hint members in either reader. `RouteTemplate` stays `api/Roles`.
 - `dev check-version` exits 0. Source is `2.0.0-beta.24`, NuGet is `2.0.0-beta.23`, one prerelease increment ahead, and it reports the version is safe to release. `TimeWarp.Contracts` is in the package list.
 - `ganda repo audit` exits 0.
-- `dev lint-skills` exits 0. Nine skills pass, including `tw-web-api-contracts`, and its eval spec is valid.
+- `dev lint-skills` exits 0 with vally `0.19.0`. Nine skills pass, including `tw-web-api-contracts`, and its eval spec is valid.
+
+## Review
+
+- Round 1 findings M1, M2, M3, and M4 are addressed on this branch. Round 2 is the host review node.
 
 ## Notes
 

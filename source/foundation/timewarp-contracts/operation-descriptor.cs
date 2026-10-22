@@ -40,7 +40,8 @@ public sealed class OperationDescriptor
   /// <summary>
   /// MCP <c>destructiveHint</c> from <see cref="DestructiveAttribute"/>.
   /// Null when the request has no <see cref="DestructiveAttribute"/>.
-  /// False is a stated claim that the operation is not destructive.
+  /// False means the operation only adds data.
+  /// MCP clients treat an omitted hint as true and read it only when the tool is not read-only.
   /// </summary>
   public bool? DestructiveHint { get; init; }
 

@@ -28,20 +28,26 @@ Apply `[Operation(name, Description = ..., Group = ..., Title = ...)]` to the re
 `readOnlyHint` and `idempotentHint` come from the kind. The contract states the three hints the kind
 cannot supply. A generator reads them by metadata name.
 
+The hints belong on a request that has `[Operation]` with a name that is not blank. The contracts
+generator and the endpoint emit model ignore `[Destructive]` and `[OpenWorld]` without that name.
+A reflection reader still sees the attributes.
+
 | Hint | Declaration | Catalog field | Unset |
 | --- | --- | --- | --- |
 | Title | `Title` on `[Operation]` | `OperationDescriptor.Title` | Null or whitespace |
-| Destructive | `[Destructive]`, `[Destructive(false)]` | `DestructiveHint` | Attribute absent. That is not false |
+| Destructive | `[Destructive]`, `[Destructive(false)]` | `DestructiveHint` | Attribute absent. That is not false. MCP clients treat an omitted `destructiveHint` as true, and they read it only when the tool is not read-only |
 | Open world | `[OpenWorld]`, `[OpenWorld(false)]` | `OpenWorldHint` | Attribute absent. MCP clients treat an omitted `openWorldHint` as true |
 
-`[Destructive]` and `[OpenWorld]` with no argument are true. `[Destructive(false)]` states that the
-operation only adds data. `[OpenWorld(false)]` states that it only touches local state.
+`[Destructive]` and `[OpenWorld]` with no argument are true. `[Destructive(true)]` is the same claim
+as a bare `[Destructive]`. `[Destructive(false)]` states that the operation only adds data: it does
+not delete or overwrite. `[OpenWorld(false)]` states that it only touches local state. `destructiveHint`
+does not apply to an `IQuery`, because that kind is read-only.
 
 ```csharp
-[Operation("rename_symbol", Description = "Rename a symbol across the solution.", Title = "Rename symbol")]
+[Operation("notes.append", Description = "Append a note to the log.", Title = "Append note")]
 [Destructive(false)]
 [OpenWorld(false)]
-public sealed class RenameSymbolCommand : ICommand<string> { }
+public sealed class AppendNoteCommand : ICommand<string> { }
 ```
 
 Metadata names: `TimeWarp.Contracts.OperationAttribute` (named argument `Title`),

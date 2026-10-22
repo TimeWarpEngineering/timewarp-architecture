@@ -311,6 +311,35 @@ public class EndpointOperationMetadata_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Drop_Hints_When_The_Operation_Name_Is_Whitespace()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("  ", Description = "Get one role.", Title = "Get role")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataBlankNameHints");
+    model.OperationName.ShouldBeNull();
+    model.OperationDescription.ShouldBeNull();
+    model.OperationGroup.ShouldBeNull();
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBeNull();
+    model.OperationOpenWorld.ShouldBeNull();
+    model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
   private static EndpointEmitModel ModelFrom(string requestSource, string assemblyName)
   {
     const string stubs = """
