@@ -71,6 +71,7 @@ Acceptance:
 - Fix pass (implement-fix-2, 2026-10-22): M1 aligns the destructive hint with MCP (a delete or overwrite, rather than an update that only adds data), uses an append for `[Destructive(false)]`, and states that an omitted `destructiveHint` is true and is read only when the tool is not read-only. M2 records that generators ignore the hint attributes unless `[Operation]` has a non-blank name. M3 adds a whitespace-name-plus-hints test in each reader and an explicit `[Destructive(true)]` test. M4 leaves the NuGet publish unchecked until `dev release` after merge.
 - Review oracle round 2 (2026-10-22): effort 1, roster general (claude-opus-5-5). I reviewed the fix delta `598e03177..13dd8cef6`. Round 1 M1–M4 are fixed. One new nit, M5, is open: two test fixtures contradict the documented destructive meaning (`review/round-2/merged.md`). I re-ran the gates: `dev build` gave 0 warnings and 0 errors, the tests passed 47/47 and 149/149, and `ganda repo audit` passed. `dev lint-skills` did not run, because `vally` is not on PATH. The restatement matches the task and the round 1 findings, so there is no misread. Disposition waits on a fix pass for M5.
 - Fix pass (implement-fix-3, 2026-10-22): M5 aligns the fixtures with that meaning. `[Destructive(false)]` sits on `notes.append`, which only adds data. A stated destructive hint, including the explicit-true case and the blank-name omission case, sits on a `Command` with `HttpVerb.Delete` or `HttpVerb.Post`. The route stays `api/Roles`.
+- Review oracle round 3 (2026-10-22): effort 1, roster general (claude-opus-5-5), session not reported. I reviewed the fix delta `86f340e42..d87c02ded`. M5 is fixed and I found nothing new. Tests pass 47/47 and 149/149 on `d87c02ded`. The restatement's added fixture criterion comes from the round 2 finding and fits the task, so there is no misread. Disposition: clean.
 
 ## Results
 
@@ -108,10 +109,17 @@ Expect:
 - `ganda repo audit` exits 0.
 - `dev lint-skills` exits 0 with vally `0.19.0`. Nine skills pass, including `tw-web-api-contracts`, and its eval spec is valid.
 
+### Review disposition
+
+- Outcome: **clean**. 3 rounds, effort 1, roster general (claude-opus-5-5). Round 1 also had an independent sonnet read.
+- Final counts: bug 0. Suggestions: 2 fixed (M1, M2). Nits: 3 fixed (M3, M4, M5). Nothing is open and nothing is wontfix.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
+
 ## Review
 
 - Round 1 findings M1, M2, M3, and M4 are addressed on this branch.
-- Round 2 finding M5 is addressed on this branch. Round 3 is the host review node.
+- Round 2 finding M5 is addressed on this branch.
+- Round 3 verified M5 and found nothing new. Disposition is clean (`review/disposition.md`).
 
 ## Notes
 

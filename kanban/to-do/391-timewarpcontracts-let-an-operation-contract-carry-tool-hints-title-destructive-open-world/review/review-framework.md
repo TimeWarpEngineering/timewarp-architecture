@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 158
+- Lines changed: 93
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -31,5 +31,13 @@
 - **Date:** 2026-10-22
 - **Diff scope:** the fix delta `598e03177..13dd8cef6` (docs in `source/foundation/timewarp-contracts/` and `skills/tw-web-api-contracts/`, tests in `tests/analyzers/timewarp-architecture-sourcegenerator-tests/`, and `task.md`), plus a re-check of round 1 M1–M4
 - **Effort:** 1 (by-diff, 158 lines), roster axis general
+- **Reviewer roster:** general (review oracle, claude-opus-5-5). No sub-agent
+- **Session IDs:** review oracle session not reported
+
+## Round 3 scope
+
+- **Date:** 2026-10-22
+- **Diff scope:** the fix delta `86f340e42..d87c02ded` (test fixtures in `tests/analyzers/timewarp-architecture-sourcegenerator-tests/` and `tests/foundation/foundation-contracts-tests/`, and `task.md`), plus a re-check of round 2 M5
+- **Effort:** 1 (by-diff, 93 lines), roster axis general
 - **Reviewer roster:** general (review oracle, claude-opus-5-5). No sub-agent
 - **Session IDs:** review oracle session not reported
