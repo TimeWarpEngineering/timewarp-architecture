@@ -20,13 +20,24 @@ starts the local Postgres container.
 
 ## Why the registry stays ACR
 
-Aspire 13.6.2 still provisions **ACR Basic** for this environment when every project points at a private GitHub Container Registry. Task 400 published that shape and stopped. There is no monthly saving, so the template keeps the registry Aspire creates. No GitHub token was created, and nothing was deployed.
+Aspire 13.6.2 provisions **ACR Basic** for this environment when every project points at a private
+GitHub Container Registry. There is no monthly saving, so the template keeps the registry Aspire
+creates.
 
-Packages: `Aspire.Hosting` and `Aspire.Hosting.Azure.AppContainers` **13.6.2** (AppHost reported `13.6.2+af07e33f8d1ef733645138b3f8e36067d073148d`). The probe used Aspire CLI 13.6.1; the Bicep comes from the 13.6.2 AppHost packages. Docs: [ASPIRECOMPUTE003](https://aspire.dev/diagnostics/aspirecompute003/) (preview) and [Azure Container Registry integration](https://aspire.dev/integrations/cloud/azure/azure-container-registry/azure-container-registry-get-started/). Source for this build: [ContainerRegistryResourceBuilderExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting/ContainerRegistryResourceBuilderExtensions.cs), [AzureContainerAppExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/AzureContainerAppExtensions.cs), [ContainerRegistryInfrastructure.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Shared/ContainerRegistryInfrastructure.cs), [BaseContainerAppContext.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/BaseContainerAppContext.cs).
+Packages: `Aspire.Hosting` and `Aspire.Hosting.Azure.AppContainers` **13.6.2**
+(`13.6.2+af07e33f8d1ef733645138b3f8e36067d073148d`). Published Bicep comes from those AppHost
+packages. Docs: [ASPIRECOMPUTE003](https://aspire.dev/diagnostics/aspirecompute003/) (preview),
+[Container registry configuration](https://aspire.dev/app-host/container-registry/), and
+[Azure Container Registry integration](https://aspire.dev/integrations/cloud/azure/azure-container-registry/azure-container-registry-get-started/).
+Source for this build:
+[ContainerRegistryResourceBuilderExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting/ContainerRegistryResourceBuilderExtensions.cs),
+[AzureContainerAppExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/AzureContainerAppExtensions.cs),
+[ContainerRegistryInfrastructure.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Shared/ContainerRegistryInfrastructure.cs),
+[BaseContainerAppContext.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/BaseContainerAppContext.cs).
 
-### Per-project API (confirmed on 13.6.2, not from notes)
+### Per-project API (Aspire 13.6.2)
 
-`dotnet-inspect` on `Aspire.Hosting` 13.6.2, matching the authored source above:
+These methods are on `Aspire.Hosting` 13.6.2 and match the authored source above:
 
 | Method | Signature |
 |--------|-----------|
@@ -36,7 +47,10 @@ Packages: `Aspire.Hosting` and `Aspire.Hosting.Azure.AppContainers` **13.6.2** (
 
 Both `AddContainerRegistry` overloads are `ASPIRECOMPUTE003`. Each one also subscribes to `BeforeStart` and adds a `RegistryTargetAnnotation` for that registry on **every** resource. `ResourceExtensions.GetContainerRegistry` then picks, in order, the explicit annotation, then `DeploymentTargetAnnotation.ContainerRegistry`, then a single `RegistryTargetAnnotation`.
 
-The Aspire CLI docs article "Container registry configuration" shows the ACA example as `WithContainerRegistry(environment)`, which uses the environment's own ACR and Azure credentials. That is the managed-identity path. A `ghcr.io` `ContainerRegistryResource` is a different registry.
+[Container registry configuration](https://aspire.dev/app-host/container-registry/) shows the ACA
+example as `WithContainerRegistry(environment)`, which uses the environment's own ACR and Azure
+credentials. That is the managed-identity path. A `ghcr.io` `ContainerRegistryResource` is a
+different registry.
 
 ### The environment still creates ACR
 
@@ -46,14 +60,11 @@ The Aspire CLI docs article "Container registry configuration" shows the ACA exa
 
 > The container registry configured for the Azure Container App Environment 'aca-env' is not an Azure Container Registry. Only Azure Container Registry resources are supported. Use '.WithAzureContainerRegistry()' to configure an Azure Container Registry.
 
-Task 317 hit that throw. Task 400 did not attach the GHCR registry to the environment. The default ACR was still written.
-
-Probe (removed from the AppHost after publish; Steve decides before any template change): in the `aca-neon` branch only, `AddContainerRegistry("ghcr", "ghcr.io", "spike-owner")`, then `WithContainerRegistry` on web, api, grpc, and the ingress. `aspire publish --non-interactive --output-path /tmp/task-400-aca-neon-ghcr -- --Publish:Target=aca-neon` succeeded (placeholder Neon parameter values in the process environment, not a real database). The output still contained:
-
-- `aca-env-acr/aca-env-acr.bicep` — `Microsoft.ContainerRegistry/registries@2025-04-01`, `sku.name` `Basic`, resource name `aca-env-acr`
-- `aca-env/aca-env.bicep` — that registry as `existing`, plus an `AcrPull` role assignment, and outputs `AZURE_CONTAINER_REGISTRY_ENDPOINT` and `AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID`
-
-`aspire deploy` was not run. The checklist stops once publish shows the registry is still created.
+That throw is the environment attachment (task 317). With `WithContainerRegistry(ghcr)` on every
+project, `aspire publish` still writes `aca-env-acr/aca-env-acr.bicep`
+(`Microsoft.ContainerRegistry/registries`, `sku.name` `Basic`) and `aca-env/aca-env.bicep` (that
+registry as `existing`, an `AcrPull` role assignment, and outputs
+`AZURE_CONTAINER_REGISTRY_ENDPOINT` and `AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID`) (task 400).
 
 ### How each container app pulls
 
@@ -68,15 +79,26 @@ registries: [
 ]
 ```
 
-The image is a separate parameter (`api_server_containerimage`, and the same for grpc and web). At deploy time `GetFullRemoteImageNameAsync` would fill it from the project's registry, so an explicit `WithContainerRegistry(ghcr)` names `ghcr.io/spike-owner/<resource>`. The pull entry would still be the ACR login server and its managed identity. The ingress resource is the public `mcr.microsoft.com/dotnet/nightly/yarp` image, so its module has no `registries` entry; `WithContainerRegistry` on it does not retarget that image.
+The image is a separate parameter (`api_server_containerimage`, and the same for grpc and web).
+At deploy time `GetFullRemoteImageNameAsync` fills it from the project's registry, so an explicit
+`WithContainerRegistry(ghcr)` names `ghcr.io/<owner>/<resource>`. The pull entry stays the ACR
+login server and its managed identity. The ingress resource is the public
+`mcr.microsoft.com/dotnet/nightly/yarp` image, so its module has no `registries` entry.
+`WithContainerRegistry` on the ingress leaves that public image in place.
 
-`Azure.Provisioning.AppContainers` 1.2.0 `ContainerAppRegistryCredentials` also has `Username` and `PasswordSecretRef`. Aspire 13.6.2 does not set them. `PublishAsAzureContainerApp` runs after the registries list is assigned, so a callback could overwrite it. That callback was not added: the environment module would still provision ACR Basic, which is the cost this spike was trying to remove.
+`Azure.Provisioning.AppContainers` 1.2.0 `ContainerAppRegistryCredentials` also has `Username` and
+`PasswordSecretRef`. Aspire 13.6.2 writes `Server` and `Identity` only.
+`PublishAsAzureContainerApp` runs after the registries list is assigned, so a callback can
+overwrite that list. The environment module still provisions ACR Basic, which is the cost a
+private registry has to remove.
 
 ### Token
 
-No token was created, stored, or printed. GitHub documents GHCR authentication as a [personal access token (classic)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry): `read:packages` to download images, `write:packages` to download and upload. The token UI also selects the `repo` scope unless the token is created from `https://github.com/settings/tokens/new?scopes=write:packages`. Expiration is chosen when the token is created; an organization can enforce a maximum lifetime ([Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)).
+GitHub documents GHCR authentication as a [personal access token (classic)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry): `read:packages` to download images, `write:packages` to download and upload. The token UI also selects the `repo` scope unless the token is created from `https://github.com/settings/tokens/new?scopes=write:packages`. Expiration is chosen when the token is created; an organization can enforce a maximum lifetime ([Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)).
 
-A token that a later Aspire release could actually use would live as an AppHost user secret. `dev deploy` would copy it into the aspire process the way it copies the Neon strings: off the command line, and absent from the plan. This spike did not add that secret.
+A token a later Aspire release can use lives as an AppHost user secret. `dev deploy` copies it
+into the aspire process the way it copies the Neon strings: off the command line, and absent from
+the plan.
 
 ### Recommendation
 
