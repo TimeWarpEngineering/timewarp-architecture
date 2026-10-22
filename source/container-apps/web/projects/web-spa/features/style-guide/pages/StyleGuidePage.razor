@@ -111,6 +111,15 @@
         </SectionHeader>
       </Card>
 
+      <Card Title="KPI Cards">
+        <KpiStrip>
+          <KpiCard Label="Open items" Value="12" />
+          <KpiCard Label="Coverage" Value="4" Unit="sites" SecondaryValue="2" SecondaryUnit="regions" />
+          <KpiCard Label="On time" Value="49.5%" Caption="Last 12 months" />
+          <KpiCard Label="Exceptions" Value="3" Tone="KpiTone.Danger" />
+        </KpiStrip>
+      </Card>
+
       <Card Title="Buttons (FluentUI, themed)">
         <p class="sg-subtitle">Actions use these appearances. Destructive row actions are Outline plus the danger class (token --twe-danger) — never a page-local button class.</p>
         <div class="sg-row">

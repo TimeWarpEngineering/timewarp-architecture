@@ -1,0 +1,52 @@
+/* KPI tile — native root, CSS isolation. Tokens from tokens.css.
+   The value/unit gap is 6px, under the spacing scale (8, 12, 24, 48), so it stays a hairline. */
+.twe-kpi {
+  background: var(--twe-paper);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow-sm);
+  padding: var(--twe-kpi-pad);
+  min-width: 0;
+}
+
+.twe-kpi--positive { border-color: var(--twe-positive); }
+.twe-kpi--danger { border-color: var(--twe-danger); }
+
+.twe-kpi__label {
+  font-size: var(--twe-text-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--twe-muted);
+}
+
+.twe-kpi__metrics {
+  display: flex;
+  gap: var(--twe-space-6);
+  align-items: baseline;
+  margin-top: var(--twe-space-2);
+}
+
+.twe-kpi__metric { display: flex; align-items: baseline; gap: 6px; }
+
+.twe-kpi__value {
+  font-size: var(--twe-text-kpi-value);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--twe-ink);
+}
+
+.twe-kpi__unit {
+  font-size: var(--twe-text-eyebrow);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--twe-muted);
+}
+
+.twe-kpi__caption {
+  margin-top: var(--twe-space-2);
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
