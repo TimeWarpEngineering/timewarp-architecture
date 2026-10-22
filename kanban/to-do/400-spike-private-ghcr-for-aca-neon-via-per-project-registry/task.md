@@ -66,8 +66,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Blocked — open M3
-- Round 3: Done — 0 open; disposition clean
-
+- Round 3: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, "create a task to use Docker Image Registry", then refocused: "forget the docker registry option ... If this works (and I have my doubts) then we could use GitHub private registry like we were trying."
