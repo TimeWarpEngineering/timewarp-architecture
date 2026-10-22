@@ -210,7 +210,10 @@
                 </TemplateColumn>
               </ChildContent>
               <EmptyContent>
-                <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
+                <EmptyState Variant="EmptyStateVariant.Inline"
+                            Title="No feedback matches this filter"
+                            Description="Try another status, kind, or severity."
+                            data-qa="AdminFeedbackEmpty" />
               </EmptyContent>
             </FluentDataGrid>
           </DataGridFrame>

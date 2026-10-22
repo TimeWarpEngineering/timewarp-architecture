@@ -1,0 +1,96 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Empty list or panel — a title, optional description, and an optional actions slot.
+
+  Design: One component. Variant Full (the default) is a centred paper card. Inline adds
+  twe-empty-state--inline and drops the paper, shadow, large padding, and icon, for a card
+  or grid that already has chrome. Native div root so CSS isolation stamps the scope
+  attribute. Class is appended on that root the way Card does, and unmatched attributes
+  splat onto it.
+  The root is role="status" (an implicit polite live region). Screen readers reliably
+  announce a change of content inside a live region that already exists. A region that
+  is already in the first paint is not announced. Inserting the region together with
+  its text is announced inconsistently; NVDA and JAWS often stay silent. A page that
+  needs a guaranteed announcement keeps its own persistent live region (for example an
+  always-rendered result count) and changes that region's text. A page that needs
+  different politeness overrides role through unmatched attributes.
+  Full renders a heading. HeadingLevel 2 through 6 selects h2–h6; any other value stays
+  h2. Inline renders a paragraph with the title class, and ignores HeadingLevel, because
+  it sits under a section heading that already owns the outline.
+  Icon is a FluentUI icon. Full shows it, defaulting to the regular 24px empty-collection
+  icon, inside a tile marked aria-hidden. Inline never shows an icon, even when Icon is set.
+  Description renders only when it has text. ChildContent renders in an actions row only
+  when the page passes it (its own FluentButton, so label, intent, and data-qa stay on the
+  page). There is no phase chip; a page that wants one passes it in that slot.
+  This component wires no events. Isolated CSS uses --twe-* tokens. FluentIcon renders an
+  svg with fill currentColor and its own 24px width, so the tile sets the color and this
+  stylesheet does not restyle the svg.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public string? Description { get; set; }
+  [Parameter] public EmptyStateVariant Variant { get; set; } = EmptyStateVariant.Full;
+  [Parameter] public Microsoft.FluentUI.AspNetCore.Components.Icon? Icon { get; set; }
+  [Parameter] public int HeadingLevel { get; set; } = 2;
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private static readonly Microsoft.FluentUI.AspNetCore.Components.Icon DefaultIcon =
+    new Icons.Regular.Size24.CollectionsEmpty();
+
+  private bool ShowIcon => Variant != EmptyStateVariant.Inline;
+
+  private Microsoft.FluentUI.AspNetCore.Components.Icon ShownIcon => Icon ?? DefaultIcon;
+
+  private string? VariantClass =>
+    Variant == EmptyStateVariant.Inline ? "twe-empty-state--inline" : null;
+
+  private int ResolvedHeadingLevel => HeadingLevel is >= 2 and <= 6 ? HeadingLevel : 2;
+}
+
+<div class="twe-empty-state @VariantClass @Class" role="status" @attributes="AdditionalAttributes">
+  @if (ShowIcon)
+  {
+    <div class="twe-empty-state__icon" aria-hidden="true">
+      <FluentIcon Value="@ShownIcon" Color="Color.Custom" CustomColor="currentColor" />
+    </div>
+  }
+  @if (Variant == EmptyStateVariant.Inline)
+  {
+    <p class="twe-empty-state__title">@Title</p>
+  }
+  else
+  {
+    @switch (ResolvedHeadingLevel)
+    {
+      case 3:
+        <h3 class="twe-empty-state__title">@Title</h3>
+        break;
+      case 4:
+        <h4 class="twe-empty-state__title">@Title</h4>
+        break;
+      case 5:
+        <h5 class="twe-empty-state__title">@Title</h5>
+        break;
+      case 6:
+        <h6 class="twe-empty-state__title">@Title</h6>
+        break;
+      default:
+        <h2 class="twe-empty-state__title">@Title</h2>
+        break;
+    }
+  }
+  @if (!string.IsNullOrWhiteSpace(Description))
+  {
+    <p class="twe-empty-state__description">@Description</p>
+  }
+  @if (ChildContent is not null)
+  {
+    <div class="twe-empty-state__actions">
+      @ChildContent
+    </div>
+  }
+</div>

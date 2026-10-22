@@ -1,0 +1,64 @@
+/* Empty state — native root, CSS isolation. Tokens from tokens.css.
+   The description measure is 32rem. That is a reading width, not a spacing step
+   (the scale is 8, 12, 24, 48). The icon tile is the 48px step. FluentIcon draws a
+   24px svg itself, so this sheet does not size the glyph. */
+.twe-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--twe-space-3);
+  text-align: center;
+  background: var(--twe-paper);
+  border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow-sm);
+  padding: var(--twe-space-12) var(--twe-space-6);
+}
+
+.twe-empty-state--inline {
+  align-items: flex-start;
+  text-align: start;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: var(--twe-space-2) 0;
+  gap: var(--twe-space-2);
+}
+
+.twe-empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--twe-space-12);
+  height: var(--twe-space-12);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: var(--twe-muted);
+}
+
+.twe-empty-state__title {
+  margin: 0;
+  font-size: var(--twe-text-section-title);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--twe-ink);
+}
+
+.twe-empty-state--inline .twe-empty-state__title {
+  font-size: var(--twe-text-body);
+}
+
+.twe-empty-state__description {
+  margin: 0;
+  max-width: 32rem;
+  font-size: var(--twe-text-body);
+  line-height: 1.55;
+  color: var(--twe-muted);
+}
+
+.twe-empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--twe-space-3);
+}

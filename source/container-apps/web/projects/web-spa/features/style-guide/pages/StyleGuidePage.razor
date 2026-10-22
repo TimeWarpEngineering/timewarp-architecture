@@ -155,6 +155,17 @@
         </div>
       </Card>
 
+      <Card Title="Empty States">
+        <p class="sg-subtitle">A full paper card, the same card with an action, and the inline form used inside a card or grid. The sample does not store a choice.</p>
+        <div class="twe-stack">
+          <EmptyState HeadingLevel="3" Title="No reports yet" Description="Reports appear here after the first run." />
+          <EmptyState HeadingLevel="3" Title="No locations selected" Description="Choose the locations this report covers.">
+            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Select all locations."))">Select all locations</FluentButton>
+          </EmptyState>
+          <EmptyState Variant="EmptyStateVariant.Inline" Title="No rows match" Description="Try a different filter." />
+        </div>
+      </Card>
+
       <Card Title="KPI Cards">
         <KpiStrip>
           <KpiCard Label="Open items" Value="12" />
