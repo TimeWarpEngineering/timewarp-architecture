@@ -1,6 +1,6 @@
 #region Purpose
 // Emits [ApiRoute]/[AuthApiRequest]/[OpenDataQueryParameters] members on partial contract types,
-// and copies [Operation] name/description onto that partial when the request carries one.
+// and copies [Operation] name, description, group, and tool hints onto that partial when the request carries them.
 // Marker attributes are public types in TimeWarp.Foundation.Features (same namespace as
 // IAuthApiRequest / HttpVerb) via RegisterPostInitializationOutput, then discovered with
 // ForAttributeWithMetadataName. FastEndpoint/ingress match the same FQN — not per-consumer
@@ -35,11 +35,16 @@
 // Constraint args are the parenthesized-digits form only (`min(1)`, `minlength(3)`). Multiple
 // constraints, comma args, catch-alls, and `{name=default}` are not parsed.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the same partial is copied as
-// OperationName and, when the matching named argument is not whitespace, OperationDescription
-// and OperationGroup. A whitespace name supplies no operation, description and group included:
+// OperationName and, when the matching named argument is not whitespace, OperationDescription,
+// OperationGroup, and OperationTitle. DestructiveAttribute and OpenWorldAttribute are read by
+// those metadata names. A present attribute copies OperationDestructive or OperationOpenWorld;
+// an absent attribute omits the member, because unset is not false. A bare [Destructive] or
+// [OpenWorld] (no constructor argument, or any value other than false) is true.
+// A whitespace name supplies no operation, description, group, title, and hints included:
 // the attribute constructor rejects that name, and EndpointEmitModel uses the same rule.
-// Group is purpose metadata. It is not inserted into RouteTemplate or GetRoute. Kind is not copied.
-// The same type seen through more than one attribute pipeline keeps the first Operation part.
+// Group, title, and the two hints are metadata. They are not inserted into RouteTemplate or
+// GetRoute. Kind is not copied. The same type seen through more than one attribute pipeline
+// keeps the first Operation part.
 #endregion
 
 namespace TimeWarp.Foundation.Contracts.Generators;
@@ -67,6 +72,8 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
   private const string OpenDataName = "OpenDataQueryParameters";
   private const string OperationPartKind = "Operation";
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
+  private const string DestructiveAttributeFullName = "TimeWarp.Contracts.DestructiveAttribute";
+  private const string OpenWorldAttributeFullName = "TimeWarp.Contracts.OpenWorldAttribute";
   private const string Verb = "global::TimeWarp.Foundation.Features.HttpVerb";
   private const string Nvc = "global::System.Collections.Specialized.NameValueCollection";
 
@@ -287,6 +294,7 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
 
     string? description = null;
     string? group = null;
+    string? title = null;
     foreach (KeyValuePair<string, TypedConstant> named in operation.NamedArguments)
     {
       if (named.Key == "Description")
@@ -297,6 +305,10 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
       {
         group = named.Value.Value as string;
       }
+      else if (named.Key == "Title")
+      {
+        title = named.Value.Value as string;
+      }
     }
 
     if (string.IsNullOrWhiteSpace(description))
@@ -305,19 +317,54 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
     if (string.IsNullOrWhiteSpace(group))
       group = null;
 
-    parts.Add(new Part(OperationPartKind, null, OperationBody(name, description, group)));
+    if (string.IsNullOrWhiteSpace(title))
+      title = null;
+
+    bool? destructive = ReadBoolHint(symbol, DestructiveAttributeFullName);
+    bool? openWorld = ReadBoolHint(symbol, OpenWorldAttributeFullName);
+    parts.Add(new Part(
+      OperationPartKind,
+      null,
+      OperationBody(name, description, group, title, destructive, openWorld)));
   }
 
-  private static bool IsOperationAttribute(AttributeData attribute)
+  private static bool IsOperationAttribute(AttributeData attribute) =>
+    IsAttributeFullName(attribute, OperationAttributeFullName);
+
+  private static bool IsAttributeFullName(AttributeData attribute, string fullName)
   {
     INamedTypeSymbol? type = attribute.AttributeClass;
     if (type?.ContainingNamespace is not { IsGlobalNamespace: false } containingNamespace)
       return false;
 
-    return containingNamespace.ToDisplayString() + "." + type.Name == OperationAttributeFullName;
+    return containingNamespace.ToDisplayString() + "." + type.Name == fullName;
   }
 
-  private static string OperationBody(string name, string? description, string? group)
+  /// <summary>
+  /// Constructor argument of a tri-state hint attribute. True when the argument is omitted.
+  /// Null when the attribute is absent.
+  /// </summary>
+  private static bool? ReadBoolHint(INamedTypeSymbol symbol, string attributeFullName)
+  {
+    foreach (AttributeData attribute in symbol.GetAttributes())
+    {
+      if (!IsAttributeFullName(attribute, attributeFullName))
+        continue;
+
+      return attribute.ConstructorArguments.Length == 0
+        || attribute.ConstructorArguments[0].Value is not false;
+    }
+
+    return null;
+  }
+
+  private static string OperationBody(
+    string name,
+    string? description,
+    string? group,
+    string? title,
+    bool? destructive,
+    bool? openWorld)
   {
     StringBuilder builder = new();
     builder.Append("    public const string OperationName = \"").Append(EscapeLiteral(name)).Append("\";\n");
@@ -335,7 +382,25 @@ public sealed partial class ContractsGenerator : IIncrementalGenerator
         .Append("\";\n");
     }
 
+    if (!string.IsNullOrWhiteSpace(title))
+    {
+      builder.Append("    public const string OperationTitle = \"")
+        .Append(EscapeLiteral(title))
+        .Append("\";\n");
+    }
+
+    AppendBoolHint(builder, "OperationDestructive", destructive);
+    AppendBoolHint(builder, "OperationOpenWorld", openWorld);
     return builder.ToString();
+  }
+
+  private static void AppendBoolHint(StringBuilder builder, string memberName, bool? value)
+  {
+    if (value is not bool hint)
+      return;
+
+    builder.Append("    public const bool ").Append(memberName).Append(" = ")
+      .Append(hint ? "true" : "false").Append(";\n");
   }
 
   private static string EscapeLiteral(string value) =>

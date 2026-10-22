@@ -1,5 +1,5 @@
 #region Purpose
-// Endpoint emit metadata stores [Operation] name, description, and group from the nested request.
+// Endpoint emit metadata stores [Operation] name, description, group, title, and tool hints.
 #endregion
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
@@ -120,6 +120,9 @@ public class EndpointOperationMetadata_Tests
     model.OperationName.ShouldBe("roles.get");
     model.OperationDescription.ShouldBe("Get one role.");
     model.OperationGroup.ShouldBeNull();
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBeNull();
+    model.OperationOpenWorld.ShouldBeNull();
     model.Route.ShouldBe("api/Roles/{RoleId}");
     return Task.CompletedTask;
   }
@@ -255,12 +258,94 @@ public class EndpointOperationMetadata_Tests
     return Task.CompletedTask;
   }
 
+  public static Task Should_Carry_Title_And_Tool_Hints_Without_Changing_The_Route()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("notes.append", Description = "Append a note to the log.", Title = "Append note")]
+              [TimeWarp.Contracts.Destructive(false)]
+              [TimeWarp.Contracts.OpenWorld(false)]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Post)]
+              public sealed class Command { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataHints");
+    model.OperationName.ShouldBe("notes.append");
+    model.OperationDescription.ShouldBe("Append a note to the log.");
+    model.OperationTitle.ShouldBe("Append note");
+    model.OperationDestructive.ShouldBe(false);
+    model.OperationOpenWorld.ShouldBe(false);
+    model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Treat_A_Bare_Hint_Attribute_As_True()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("purge_cache", Title = "  ")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Delete)]
+              public sealed class Command { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataBareHints");
+    model.OperationName.ShouldBe("purge_cache");
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBe(true);
+    model.OperationOpenWorld.ShouldBe(true);
+    model.Route.ShouldBe("api/Roles");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Drop_Hints_When_The_Operation_Name_Is_Whitespace()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("  ", Description = "Purge the cache.", Title = "Purge cache")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Delete)]
+              public sealed class Command { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataBlankNameHints");
+    model.OperationName.ShouldBeNull();
+    model.OperationDescription.ShouldBeNull();
+    model.OperationGroup.ShouldBeNull();
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBeNull();
+    model.OperationOpenWorld.ShouldBeNull();
+    model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
   private static EndpointEmitModel ModelFrom(string requestSource, string assemblyName)
   {
     const string stubs = """
       namespace TimeWarp.Foundation.Features
       {
-          public enum HttpVerb { Get }
+          public enum HttpVerb { Get, Post, Delete }
           public sealed class ApiRouteAttribute : System.Attribute
           {
               public ApiRouteAttribute(string route, HttpVerb verb) { }
@@ -288,7 +373,7 @@ public class EndpointOperationMetadata_Tests
     errors.ShouldBeEmpty(string.Join(Environment.NewLine, errors.Select(static diagnostic => diagnostic.ToString())));
 
     INamedTypeSymbol outer = compilation.GetTypeByMetadataName("Test.Features.Admin.Roles.GetRole")!;
-    outer.GetTypeMembers("Query").Single().GetAttributes()
+    outer.GetTypeMembers().Single(static member => member.Name is "Query" or "Command").GetAttributes()
       .Any(static attribute =>
         attribute.AttributeClass is { TypeKind: not TypeKind.Error } symbol
         && symbol.ToDisplayString() == "TimeWarp.Contracts.OperationAttribute")

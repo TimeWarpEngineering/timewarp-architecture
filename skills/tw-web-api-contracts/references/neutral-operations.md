@@ -11,6 +11,9 @@ the same class. Nobody writes a second schema.
 | Canonical name | `[Operation("roles.get")]` on the nested `Query`/`Command` |
 | Summary | `Description = "…"` on `[Operation]` |
 | Purpose group | `Group = "admin.roles"` on `[Operation]` (optional; `.` or space separates segments) |
+| Title | `Title = "Rename symbol"` on `[Operation]` (optional). Null or whitespace means no title |
+| Destructive | `[Destructive]` or `[Destructive(false)]`. Absent is unset, not false. MCP treats an omitted `destructiveHint` as true and reads it only when the tool is not read-only |
+| Open world | `[OpenWorld]` or `[OpenWorld(false)]`. Absent is unset, not false |
 | Kind | The mediator interface: `IQuery<T>`, `ICommand<T>`, or `IIdempotentCommand<T>` |
 | Members | The request's properties. Name, required, default, enum values, and `[Description]` are derived (see the `TimeWarp.Contracts` package readme) |
 | Result | `OneOf<Response, SharedProblemDetails>`. The catalog records `Response`. |
@@ -47,7 +50,7 @@ safety is uncertain: it is never wrong, and `IIdempotentCommand` is a promise to
 
 | Binding | Source of truth | Who projects it |
 |---------|-----------------|-----------------|
-| HTTP | `[ApiRoute(template, verb)]` on the request and `[ApiEndpoint]` on the outer class | The contracts generator emits route members, plus `OperationName`, `OperationDescription`, and `OperationGroup` when `[Operation]` is present. The FastEndpoint generator hosts it. |
+| HTTP | `[ApiRoute(template, verb)]` on the request and `[ApiEndpoint]` on the outer class | The contracts generator emits route members, plus `OperationName`, `OperationDescription`, and `OperationGroup` when `[Operation]` is present. A set title or hint adds `OperationTitle`, `OperationDestructive`, or `OperationOpenWorld`. An unset hint is omitted. The FastEndpoint generator hosts the route and does not read the hints. |
 | CLI | The operation name, members, and kind | TimeWarp.Nuru derives a route pattern from the contract and dispatches through the mediator. The command is the operation name. |
 | MCP | The operation name, description, and members | The TimeWarp.Nuru MCP host derives the tool name and input schema and dispatches through the mediator. |
 
@@ -59,6 +62,41 @@ generated partial.
 
 An `IResponseRenderer<TResponse>` registered for a response type gives CLI and MCP a text
 rendering. HTTP ignores it and returns JSON.
+
+## Tool hints
+
+`readOnlyHint` and `idempotentHint` come from the kind (`IQuery` is read-only;
+`IIdempotentCommand` is idempotent). The request states the three hints the kind cannot supply.
+`OperationDescriptor` carries them. `McpOperationBinding` stays the tool name.
+
+The hints belong on a request that has `[Operation]` with a name that is not blank. A whitespace
+name counts as no operation. The contracts generator and the endpoint emit model ignore
+`[Destructive]` and `[OpenWorld]` without that name, so they emit no hint members. A reflection
+reader sees the attributes either way.
+
+| Hint | Declaration | Catalog | Unset |
+|------|-------------|---------|-------|
+| Title | `Title = "…"` on `[Operation]` | `Title` | Null or whitespace. Not the operation name |
+| Destructive | `[Destructive]` or `[Destructive(false)]` | `DestructiveHint` | Attribute absent. A bare `[Destructive]` is true. MCP clients treat an omitted `destructiveHint` as true, and they read it only when the tool is not read-only |
+| Open world | `[OpenWorld]` or `[OpenWorld(false)]` | `OpenWorldHint` | Attribute absent. MCP clients treat an omitted `openWorldHint` as true |
+
+`[Destructive(false)]` means the operation only adds data. A delete or an overwrite is `[Destructive]`.
+`destructiveHint` does not apply to an `IQuery`, because that kind is read-only.
+
+A generator matches `TimeWarp.Contracts.OperationAttribute` (named argument `Title`),
+`TimeWarp.Contracts.DestructiveAttribute`, and `TimeWarp.Contracts.OpenWorldAttribute`.
+The constructor parameters are `isDestructive` and `isOpenWorld`. No argument means true.
+The contracts generator copies a set hint onto the request partial and leaves the route alone.
+
+```csharp
+[Operation("roles.delete", Description = "Delete a role.", Group = "admin.roles", Title = "Delete role")]
+[Destructive]
+[OpenWorld(false)]
+public sealed partial class Command
+  : IIdempotentCommand<OneOf<Response, SharedProblemDetails>>
+{
+}
+```
 
 ## Enforcement
 
