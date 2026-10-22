@@ -9,8 +9,9 @@
 // IsNullOrWhiteSpace rule as the name. Hosts read it from the catalog. It never prefixes a
 // route pattern or a command name, so the CLI command stays the operation name.
 // Title is the human-readable name. Null or whitespace means no title, the same blank rule.
-// Destructive and open-world stay off this attribute. An attribute property cannot be bool?,
-// and an omitted hint is not false, so those two are DestructiveAttribute and OpenWorldAttribute.
+// Destructive and open-world stay off this attribute. A generator can see an omitted named
+// bool, but reflection reads it as false, so those two are DestructiveAttribute and
+// OpenWorldAttribute, where presence means stated for every reader.
 // Hosts copy Title and those attributes onto OperationDescriptor. They are not binding fields.
 // HTTP route, CLI pattern, and MCP tool name are bindings, filled by each host, not this attribute.
 #endregion

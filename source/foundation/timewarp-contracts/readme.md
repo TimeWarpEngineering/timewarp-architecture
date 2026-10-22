@@ -54,6 +54,11 @@ Metadata names: `TimeWarp.Contracts.OperationAttribute` (named argument `Title`)
 `TimeWarp.Contracts.DestructiveAttribute`, and `TimeWarp.Contracts.OpenWorldAttribute`.
 The constructor parameters are `isDestructive` and `isOpenWorld`.
 
+TimeWarp.Nuru has its own `[Destructive]` and `[OpenWorld]` with the same constructors. A file that
+imports both `TimeWarp.Contracts` and `TimeWarp.Nuru` gets an ambiguous reference (CS0104) on the
+bare name. Put the contracts attributes on the contract, and qualify the name
+(`[TimeWarp.Contracts.Destructive]`) where both namespaces are in scope.
+
 ## Kind
 
 | Request implements | `OperationKind` |

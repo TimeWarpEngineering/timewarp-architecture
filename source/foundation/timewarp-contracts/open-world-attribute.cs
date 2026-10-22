@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// Same tri-state encoding as DestructiveAttribute: presence is the unset test, because an
-// attribute property cannot be bool?. [OpenWorld] and [OpenWorld(true)] mean the operation
+// Same tri-state encoding as DestructiveAttribute: presence is the unset test for generator
+// and reflection readers alike. [OpenWorld] and [OpenWorld(true)] mean the operation
 // reaches outside the app. [OpenWorld(false)] means it only touches local state. A generator
 // matches TimeWarp.Contracts.OpenWorldAttribute by metadata name. The MCP specification tells
 // clients to treat an omitted openWorldHint as true, so the catalog stores null and lets the

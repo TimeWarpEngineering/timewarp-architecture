@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Attribute arguments cannot be bool?, and a bool property would default to false, so an
-// omitted hint and an explicit false would be the same value. Presence of this attribute is
-// the unset test every reader can make: a generator matches
+// A bool named argument on [Operation] would be tri-state for a generator, which sees
+// whether the argument was written, but reflection fills an omitted property with its
+// default, so a runtime reader would see false for a hint nobody stated. Presence of this
+// attribute is the unset test both readers can make: a generator matches
 // TimeWarp.Contracts.DestructiveAttribute by metadata name, and reflection finds the attribute
 // or finds nothing. The constructor argument defaults to true, so [Destructive] and
 // [Destructive(true)] are the same claim. [Destructive(false)] means the operation only adds
