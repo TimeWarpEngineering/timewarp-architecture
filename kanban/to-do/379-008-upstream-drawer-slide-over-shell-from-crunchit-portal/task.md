@@ -241,8 +241,7 @@ Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays 
 
 - Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix.
 - Round 2: M5 and M6 implemented in the fix pass.
-- Round 3: M5 and M6 confirmed fixed, and no new findings. Disposition: accepted-exceptions (M4), 0 open.
-
+- Round 3: Done
 ## Notes
 
 - Crunchit source is under
