@@ -132,11 +132,13 @@ Follow the conventions of 379-001 through 379-006:
 - Review oracle round 1: general reviewer (claude-opus-5-5), effort 2, session not reported. 3 open (1 suggestion, 2 nits), 0 bugs; fix pass requested for M1–M3 (2026-10-23)
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T17:38:02Z
 - Fix pass (implement-fix-2): review round 1 M1–M3. The Design region no longer claims that inserting the status region, or a filter that empties a list, is announced. The two style-guide Full samples use heading level 3. The adopter titles drop the trailing period. grok-4.7, 2026-10-23.
+- Review oracle round 2: general reviewer (claude-opus-5-5), effort 1, session not reported. M1–M3 fixed, 0 open; disposition clean (2026-10-23)
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-- Fix pass implemented M1–M3 on this id. Round 2 verifies.
+- Fix pass implemented M1–M3 on this id.
+- Round 2: M1–M3 fixed, no new findings. Disposition clean.
 
 ## Notes
 
@@ -194,10 +196,10 @@ Re-ran on 2026-10-23 after the fix pass. `dev build`: 0 warnings, 0 errors. `dev
 
 ### Review
 
-Round 1 ran with effort 2 and a single general reviewer. It found 0 bugs, 1 suggestion, and 2 nits. The fix pass implemented all three. Round 2 has not verified them yet.
+**Disposition: clean.** There were 2 rounds, each with a single general reviewer: round 1 at effort 2, round 2 at effort 1. The final counts are 0 open, 3 fixed (1 suggestion, 2 nits), 0 wontfix, and 0 bugs. Round 2 confirmed the three fixes in 96ebe145f, found nothing new, and re-ran `dev build` (0 warnings, 0 errors).
 
-- **M1:** the Design region now says insertion is announced inconsistently, and that a guaranteed announcement belongs to a persistent live region the page already renders. `role="status"` stays.
-- **M2:** the two Full samples on the style guide pass `HeadingLevel="3"`.
-- **M3:** the admin filter title and the "Your filings" title no longer end in a period.
+- **M1 (fixed):** the Design region now says insertion is announced inconsistently, and that a guaranteed announcement belongs to a persistent live region the page already renders. `role="status"` stays.
+- **M2 (fixed):** the two Full samples on the style guide pass `HeadingLevel="3"`.
+- **M3 (fixed):** the admin filter title and the "Your filings" title no longer end in a period.
 
-Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
