@@ -81,11 +81,14 @@ the `twe-` CSS prefix and neutral sample text.
   reported — 2026-10-22. 4 open (1 bug, 1 suggestion, 2 nits); fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T03:24:19Z
 - Fix pass (implement-fix-2): implementer-cursor (cursor, grok-4.7), 2026-10-22. Addressed M1–M4.
+- Review oracle round 2: general reviewer (claude, claude-opus-5-5), effort 2, max-turns 120,
+  session not reported — 2026-10-22. M1–M4 fixed, nothing new. Disposition clean.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-- Fix pass: M1–M4 are addressed on this branch. Round 2 has not run.
+- Fix pass: M1–M4 are addressed on this branch.
+- Round 2: M1–M4 fixed, nothing new, 0 open. Disposition `clean`.
 
 ## Notes
 
@@ -175,5 +178,9 @@ A live browser pass of the running app was not done in this walk. The static ren
 - M1: the test now uses `AddMultipleAttributes(1, PageParameters)`. M2: `TitleBlock` is the
   one title fragment. M3: the todo description is "Browse the sample todo list." M4: the
   feedback body is indented inside `ChildContent`.
-- Disposition: addressed in this fix pass. Round 2 has not run.
-- Paths: `review/review-framework.md` and `review/round-1/merged.md`.
+- Round 2 (general reviewer, effort 2, delta `aac996375..fee49aa3b`): it confirmed M1–M4 fixed
+  and found nothing new. The reviewer re-ran `./bin/dev build` 0/0, `ganda repo audit` (pass),
+  both render-test classes 4/4, and the crunchit check (no match). It did not re-run template-smoke.
+- Final counts: bug 1 fixed, suggestion 1 fixed, nit 2 fixed. 0 open and 0 wontfix.
+- Disposition: `clean` after 2 rounds. No exceptions and no escalations.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, and `review/disposition.md`.

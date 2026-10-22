@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 641
+- Lines changed: 351
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -19,6 +19,11 @@ TimeWarpPage gains `Description` and `Actions` slots. SectionHeader is a new com
 style guide, todo, and feedback pages adopt them, and there are HtmlRenderer render tests.
 **Effort:** 2. **Reviewer roster:** general (review oracle, claude-opus-5-5).
 **Session IDs:** review oracle session not reported by the host.
+
+### Round 2
+
+**Diff scope:** fix delta `aac996375..fee49aa3b`. It re-verifies round-1 M1–M4 and scans the
+delta for new defects. **Effort:** 2. **Roster:** general (review oracle, claude-opus-5-5).
 
 ## Ground rules
 
