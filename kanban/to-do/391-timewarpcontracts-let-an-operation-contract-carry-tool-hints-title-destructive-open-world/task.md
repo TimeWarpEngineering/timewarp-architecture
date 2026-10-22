@@ -62,6 +62,8 @@ Acceptance:
 
 - Created: 139624 (2026-10-20) from timewarp-nuru 508-015 (implementer), because McpOperationBinding lacks the hints.
 - 2026-10-22: `Title` on `[Operation]`. `[Destructive]` and `[OpenWorld]` are tri-state attributes. `OperationDescriptor` carries `Title`, `DestructiveHint`, and `OpenWorldHint`. The contracts generator and the endpoint emit model read them by metadata name and leave the route alone. Source stays `2.0.0-beta.24` (already one prerelease ahead of NuGet `2.0.0-beta.23`). The cut is `dev release` from master after merge.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T13:24:43Z
+- Review oracle round 1 (2026-10-22): effort 3. Roster: general, which is the review oracle (claude-opus-5-5) plus an independent sub-agent read (sonnet, `abb85a851a96d8e80`). Findings: 0 bug, 2 suggestion (M1, M2), and 2 nit (M3, M4), all open (`review/round-1/merged.md`). I re-ran the gates: `dev build` gave 0 warnings and 0 errors, the tests passed 47/47 and 146/146, and `check-version` and `ganda repo audit` both passed. `dev lint-skills` did not run, because `vally` is not on PATH. The implementer restatement matches the task and the Decision, so there is no misread. Disposition waits on a fix pass.
 
 ## Results
 
