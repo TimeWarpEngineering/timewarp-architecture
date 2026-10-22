@@ -28,7 +28,7 @@ Acceptance:
 - web, api, and grpc are pointed at `ghcr.io/<owner>/<image>`, and `aspire publish` for `aca-neon` is run. `aspire deploy` runs only if publish does not already show an ACR.
 - If the environment still provisions an ACR when every project has its own registry, that is the result: there is no saving, and the walk stops.
 - A ghcr pull is a `configuration.registries` entry with a token secret, not a managed identity. It is applied only through the `PublishAsAzureContainerApp` callback, and only if the ACR is actually gone.
-- The GitHub token's scopes (`read:packages` to pull, `write:packages` to push), where it would live (AppHost user secret, copied by `dev deploy` the way the Neon strings are, never on the command line and never printed), and its expiry are recorded.
+- The GitHub token's scopes (`read:packages` to pull, `write:packages` to push) and its expiry are recorded. A later Aspire release that stopped provisioning ACR would keep that token in an AppHost user secret, and `dev deploy` should copy it the way it copies the Neon strings: off the command line and never printed. The guide also says `dev deploy` does not forward a registry token today.
 - A path that works gets a live aca-neon proof (deploy, migrate, smoke 200, a cold start after a long idle, no ACR in the group, then deprovision) and a follow-up implementation task. A path that fails is written into the aca-neon guide's "Why the registry stays ACR" section, with the Aspire version and the docs cited, so Steve can decide. The template is not switched to GHCR as part of this spike.
 
 ## Ruled out (Steve 2026-10-21)
@@ -59,11 +59,12 @@ Acceptance:
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T23:55:16Z
 - Fix pass (implement-fix-2): rewrote "Why the registry stays ACR" as present-tense Aspire 13.6.2 facts. Cited https://aspire.dev/app-host/container-registry/. The probe log stays in this file's Results. 2026-10-22.
 - Review oracle round 2: claude-opus-5-5 (headless), effort 1, roster general, turn cap 80, 2026-10-22. It reviewed the fix delta `94b1b38f1..28369a335`. M1 and M2 are fixed. New M3 (suggestion) is open. Fix pass requested for M3. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`.
+- Fix pass (implement-fix-3): the Token paragraph no longer says `dev deploy` copies a GHCR token. It says `dev deploy` does not forward a registry token, and that a later release with no ACR should keep the token in an AppHost user secret and copy it the way the Neon strings are copied. 2026-10-22.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Round 2: Blocked — M1, M2 fixed; open M3
+- Round 2: Blocked — open M3
 
 ## Notes
 
@@ -75,9 +76,9 @@ Acceptance:
 
 Aspire 13.6.2 can name a per-project `ghcr.io` push target. `AddAzureContainerAppEnvironment` publishes ACR Basic, and each built container app pulls with that registry's managed identity. Private GHCR leaves the about-$5 ACR line in place. The template is unchanged aside from the AppHost design note that points at this finding. No follow-up implementation task: the live-proof checklist item stays open because the condition (it works, and the resource group has no ACR) was not met. No GitHub token was created.
 
-The operator guide's "Why the registry stays ACR" section states that as current fact for Aspire 13.6.2: the API table, the default-ACR mechanics, the pull shape, the token scopes and where a token lives, the recommendation, and the revisit condition. Task ids stay in parentheses (task 317, task 400). The run narrative stays here. [Container registry configuration](https://aspire.dev/app-host/container-registry/) is the cited page for the ACA `WithContainerRegistry(environment)` example. Round-1 ledger: `review/round-1/merged.md`.
+The operator guide's "Why the registry stays ACR" section states the Aspire 13.6.2 facts: the API table, the default-ACR mechanics, the pull shape, the token scopes, the recommendation, and the revisit condition. The token's home is intended design: `dev deploy` does not forward a registry token, and a later release that publishes this environment with no ACR should keep the token in an AppHost user secret and copy it the way the Neon strings are copied. Task ids stay in parentheses (task 317, task 400). The run narrative stays here. [Container registry configuration](https://aspire.dev/app-host/container-registry/) is the cited page for the ACA `WithContainerRegistry(environment)` example. Round-1 ledger: `review/round-1/merged.md`. Round-2 ledger: `review/round-2/merged.md`.
 
-Review: 2 rounds so far, effort 1 in round 2, roster general. Round 2 (`review/round-2/merged.md`) has 0 bugs. There are 2 suggestions: M1 fixed and M3 open. There is 1 nit, M2, which is fixed. M3: the token paragraph states as current fact that `dev deploy` copies a GHCR token, and no such copy exists. Disposition is pending the M3 fix pass and round 3. `dev lint-skills` was not run in round 2: the runfile refused because vally 0.6.0 is installed and the repo pins 0.19.0.
+Review: 2 rounds so far, effort 1 in round 2, roster general. Round 2 has 0 bugs. There are 2 suggestions: M1 fixed, and M3 addressed in this fix pass (the host reviews it in round 3). There is 1 nit, M2, which is fixed. `rg -i "ghcr|github.*token" tools/dev-cli` is empty, which is why the guide does not claim a copy exists. This pass ran `./bin/dev lint-skills` with vally 0.19.0 ahead of the installed 0.6.0: 9 skills passed and the eval spec is valid. `ganda repo audit` passed 32 and failed 0. `https://aspire.dev/app-host/container-registry/` returned 200, titled "Container registry configuration", and contains `WithContainerRegistry(environment)`. The existing `artifacts/aspire-output/aca-neon` still has `aca-env-acr` at SKU Basic and managed-identity pulls; this pass did not republish.
 
 `dotnet-inspect` on `Aspire.Hosting` 13.6.2:
 
@@ -86,19 +87,23 @@ Review: 2 rounds so far, effort 1 in round 2, roster general. Round 2 (`review/r
 
 The probe, in the `aca-neon` branch only, called `AddContainerRegistry("ghcr", "ghcr.io", "spike-owner")` and `WithContainerRegistry` on web, api, grpc, and the ingress, then `aspire publish` (CLI 13.6.1, AppHost `13.6.2+af07e33`). Publish succeeded. `aca-env-acr.bicep` is `Microsoft.ContainerRegistry/registries` with `sku.name` `Basic`. api, grpc, and web `registries` entries set `server` to `AZURE_CONTAINER_REGISTRY_ENDPOINT` and `identity` to `AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID`. `Azure.Provisioning.AppContainers` 1.2.0 also has `Username` and `PasswordSecretRef` on `ContainerAppRegistryCredentials`; Aspire's `AddContainerRegistryParameters` sets neither. A `PublishAsAzureContainerApp` callback could overwrite that list and was not added, because the environment module would still provision the registry. The probe was deleted after publish.
 
-GHCR auth, if a later Aspire release stopped provisioning ACR, would be a classic PAT (`read:packages` to pull, `write:packages` to push) in an AppHost user secret, copied by `dev deploy` the way the Neon strings are. Expiration is chosen at creation; an organization can cap it. Docs and the exact publish shape are in the guide.
+GHCR auth, if a later Aspire release stopped provisioning ACR, would be a classic PAT (`read:packages` to pull, `write:packages` to push) in an AppHost user secret. `dev deploy` should then copy it the way it copies the Neon strings. It does not forward a registry token today. Expiration is chosen at creation; an organization can cap it. Docs and the exact publish shape are in the guide.
 
 ### How to validate
 
 Smoke:
 
 ```bash
-rg -n "Task 400 published|No GitHub token was created|Steve decides|/tmp/task-400|was not run|was not added|did not add|No token was created" skills/tw-deploy/references/azure-container-apps-neon.md
+rg -n "Task 400 published|No GitHub token was created|Steve decides|/tmp/task-400|was not run|was not added|did not add|No token was created|lives as an AppHost user secret" skills/tw-deploy/references/azure-container-apps-neon.md
+rg -n "copies it" skills/tw-deploy/references/azure-container-apps-neon.md
+rg -n "does not forward a registry token" skills/tw-deploy/references/azure-container-apps-neon.md
+rg -n "should copy it" skills/tw-deploy/references/azure-container-apps-neon.md
 rg -n "https://aspire.dev/app-host/container-registry/" skills/tw-deploy/references/azure-container-apps-neon.md
+rg -i "ghcr|github.*token" tools/dev-cli
 curl -fsS -o /dev/null -w "%{http_code}\n" https://aspire.dev/app-host/container-registry/
 dotnet run tools/dev-cli/dev.cs -- publish aca-neon
 rg -n "Microsoft.ContainerRegistry|name: 'Basic'|identity:" artifacts/aspire-output/aca-neon -g '*.bicep'
 rg -n 'AddContainerRegistry\("ghcr"' source/container-apps/aspire/projects/aspire-app-host/program.cs
 ```
 
-Expect: the first `rg` prints nothing. The second `rg` hits the Container registry configuration link in the docs list and in the ACA example sentence. `curl` prints `200`; that page is titled "Container registry configuration" and its ACA example is `WithContainerRegistry(environment)`. `aca-env-acr.bicep` declares `Microsoft.ContainerRegistry/registries` with `sku.name` `Basic`. api-server, grpc-server, and web-server set `registries[].identity` to `aca_env_outputs_azure_container_registry_managed_identity_id`. No module sets `registries[].server` to `ghcr.io`. The AppHost `rg` prints nothing. The guide section names Aspire 13.6.2, the `af07e33` sources, and task 400.
+Expect: the first two `rg` commands print nothing. `does not forward a registry token` and `should copy it` each hit the Token paragraph once. The container-registry link `rg` hits the docs list and the ACA example sentence. `rg` over `tools/dev-cli` prints nothing. `curl` prints `200`; that page is titled "Container registry configuration" and its ACA example is `WithContainerRegistry(environment)`. `aca-env-acr.bicep` declares `Microsoft.ContainerRegistry/registries` with `sku.name` `Basic`. api-server, grpc-server, and web-server set `registries[].identity` to `aca_env_outputs_azure_container_registry_managed_identity_id`. No module sets `registries[].server` to `ghcr.io`. The AppHost `rg` prints nothing. The guide section names Aspire 13.6.2, the `af07e33` sources, and task 400.

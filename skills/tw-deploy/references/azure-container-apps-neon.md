@@ -96,9 +96,10 @@ private registry has to remove.
 
 GitHub documents GHCR authentication as a [personal access token (classic)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry): `read:packages` to download images, `write:packages` to download and upload. The token UI also selects the `repo` scope unless the token is created from `https://github.com/settings/tokens/new?scopes=write:packages`. Expiration is chosen when the token is created; an organization can enforce a maximum lifetime ([Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)).
 
-A token a later Aspire release can use lives as an AppHost user secret. `dev deploy` copies it
-into the aspire process the way it copies the Neon strings: off the command line, and absent from
-the plan.
+`dev deploy` does not forward a registry token. If a later Aspire release publishes this
+environment with no ACR, the token belongs in an AppHost user secret, and `dev deploy`
+should copy it into the aspire process the way it copies the Neon strings: off the command
+line, and absent from the plan.
 
 ### Recommendation
 
