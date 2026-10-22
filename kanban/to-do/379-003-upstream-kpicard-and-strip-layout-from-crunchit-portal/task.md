@@ -99,11 +99,13 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
 - Review oracle round 1: claude-opus-5-5, effort 2, roster general (inline), session not reported — 2026-10-22. Fix pass requested for M1, M2.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T05:06:33Z
 - Fix pass (implement-fix-2): implementer-cursor (cursor, grok-4.7), 2026-10-22. Addressed M1 and M2.
+- Review oracle round 2: claude-opus-5-5, effort 1, roster general (inline), max-turns 80, session not reported — 2026-10-22. Disposition clean.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
 - Fix pass: M1 and M2 are addressed on this branch. Round 2 is the host review node.
+- Round 2: M1, M2 verified fixed; no new findings. Disposition clean.
 
 ## Notes
 
@@ -201,8 +203,12 @@ A live browser pass of the running app was not done in this walk. The static ren
 - Round 1 (effort 2, roster general): 0 bug, 1 suggestion, 1 nit. Fix pass addressed both.
 - M1 (suggestion): `splatted-class.cs` is gone. `KpiCard` and `KpiStrip` take `Class` and render it on the root the way `Card` does. Unmatched attributes splat directly. The passthrough tests still pass.
 - M2 (nit): the strip child must sit between the end of the root's opening tag and the closing `</div>` that ends the markup.
-- Round 2 has not run. The host review node does that.
-- Files: `review/review-framework.md` and `review/round-1/{general,merged}.md`.
+- Round 2 (effort 1, roster general): verified M1 and M2 fixed on the delta (b59530c9f); re-ran
+  KpiCard 7/7 and KpiStrip 2/2; no new findings.
+- Final counts: bug 0, suggestion 1 fixed, nit 1 fixed; 0 open, 0 wontfix.
+- Disposition: **clean** (2 rounds).
+- Files: `review/review-framework.md`, `review/round-2/merged.md` (last ledger), and
+  `review/disposition.md`.
 
 ## Learnings
 
