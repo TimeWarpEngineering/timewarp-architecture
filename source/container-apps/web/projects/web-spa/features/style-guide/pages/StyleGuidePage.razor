@@ -43,9 +43,13 @@
 }
 
 <TimeWarpPage Title="Style Guide">
+  <Description>Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</Description>
+  <Actions>
+    <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Outline action."))">Outline</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => ShowMessage(MessageBarIntent.Success, "Primary action."))">Primary</FluentButton>
+  </Actions>
+  <ChildContent>
     <div class="twe-stack">
-
-      <p class="sg-subtitle">Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</p>
 
       <Card Title="Color Tokens">
         <div class="sg-swatches">
@@ -99,6 +103,14 @@
         <p>Loaded section content. Bind <code>LoadingActionType</code> to the in-flight action (for example FetchPrincipals).</p>
       </Section>
 
+      <Card Title="Section Header">
+        <SectionHeader Title="Reports" Subtitle="Summary for the current period.">
+          <Aside>
+            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Details."))">Details</FluentButton>
+          </Aside>
+        </SectionHeader>
+      </Card>
+
       <Card Title="Buttons (FluentUI, themed)">
         <p class="sg-subtitle">Actions use these appearances. Destructive row actions are Outline plus the danger class (token --twe-danger) — never a page-local button class.</p>
         <div class="sg-row">
@@ -149,4 +161,5 @@
       </Card>
 
     </div>
+  </ChildContent>
 </TimeWarpPage>

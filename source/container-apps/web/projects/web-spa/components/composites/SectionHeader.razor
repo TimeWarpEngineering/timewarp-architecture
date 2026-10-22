@@ -1,0 +1,31 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Section heading — an h2, an optional subtitle, and an optional aside slot.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Unmatched attributes
+  splat onto that root, as Card does. Subtitle is text. Aside is a RenderFragment (a hint or
+  an action the caller owns). This component wires no events. Isolated CSS uses --twe-* tokens.
+  There is no FluentUI child here, so the stylesheet needs no ::deep.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public string? Subtitle { get; set; }
+  [Parameter] public RenderFragment? Aside { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<div class="twe-section-header" @attributes="AdditionalAttributes">
+  <div class="twe-section-header__text">
+    <h2 class="twe-section-header__title">@Title</h2>
+    @if (!string.IsNullOrWhiteSpace(Subtitle))
+    {
+      <p class="twe-section-header__subtitle">@Subtitle</p>
+    }
+  </div>
+  @if (Aside is not null)
+  {
+    <div class="twe-section-header__aside">@Aside</div>
+  }
+</div>

@@ -92,3 +92,55 @@ the `twe-` CSS prefix and neutral sample text.
   `components/TimeWarpPage.razor.css` (`.twe-page__title`).
 - 379-017 extends the StyleGuidePage contract for every upstreamed part. This task only adds its
   own entries.
+
+## Goal (implementer restatement)
+
+The shell already renders the page title, so a second title component would put two h1 elements
+on the page. `TimeWarpPage` gains optional `Description` and `Actions` slots. With both empty,
+the title and breadcrumb markup stays as it is. With either set, the title and description sit
+on the left and the actions wrap on the right, in the same header as the title. `SectionHeader`
+is a new composite beside `Section`: an h2, an optional subtitle, an optional aside, and
+unmatched attributes on a native `twe-section-header` root. Styling is isolated CSS and the
+existing `--twe-*` tokens. The components dispatch nothing; callers pass buttons. The style
+guide shows the page slots and a section-header card. The todo list and feedback-review pages
+use the description slot. Render tests cover the empty shell, each slot, a single h1, and the
+section header's title, subtitle, aside, and attribute passthrough.
+
+Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `ganda repo audit`
+passes, and the product diff does not introduce the source product's name.
+
+## Results
+
+There is no separate page-title component. `TimeWarpPage` takes optional `Description` and
+`Actions` render fragments. Both empty keeps today's title and breadcrumb markup. Either one
+set wraps the title and description on the left and the actions on the right. Razor will not
+mix a named slot with implicit body content, so a page that sets either slot wraps its body in
+`ChildContent`. Pages that set neither slot are unchanged.
+
+`SectionHeader` lives in `components/composites/` (`TimeWarp.Architecture.Components`). The root
+is `div.twe-section-header`. `--twe-text-section-title` was already in `tokens.css`, so no token
+was added. Row and action gaps use `--twe-space-3` and `--twe-space-2` (the spacing scale has
+no 16px step). The subtitle's 2px offset stays a hairline under the title.
+
+The style guide puts its intro in `Description`, dispatches Outline and Primary through
+`NotificationState`, and shows a Section Header card (Reports, a subtitle, Details). Todo Items
+and Feedback review had no loose intro paragraph, action row, or hand-built sub-heading, so
+they adopt `Description` only.
+
+### How to validate
+
+Smoke:
+
+- `./bin/dev build` — 0 warnings, 0 errors.
+- `./bin/dev template-smoke` — SmokeDefault OK; generated Jaribu aggregators 405/405, 9/9, and 14/14.
+- `ganda repo audit` — 32 passed, 0 failed.
+- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug -- --filter-class SectionHeader_Should_` (4 passed) and `--filter-class TimeWarpPage_Should_` (4 passed).
+
+Expect:
+
+- Style Guide shows one h1, the brand sentence under it, and Outline / Primary on the right. The Section Header card shows an h2 "Reports", the period subtitle, and Details.
+- Todo Items shows "Items on this list." under the title and no action cluster.
+- Feedback review shows "Review filings. Filter by status, kind, and severity." under the title. The filter and grid are unchanged.
+- Any other page that does not set the slots still renders only the title and breadcrumb.
+
+A live browser pass of the running app was not done in this walk. The static renderer covers the slot markup.
