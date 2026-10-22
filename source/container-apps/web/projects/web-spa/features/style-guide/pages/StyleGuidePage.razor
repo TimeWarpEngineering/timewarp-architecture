@@ -31,6 +31,8 @@
 
   private static readonly string[] FilterDemoStatuses = ["Open", "Closed"];
   private static readonly string[] FilterDemoKinds = ["", "Note"];
+  private static readonly string[] TabDemoItems = ["Overview", "Activity", "Notes"];
+  private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
 
   // Message bars go through OUR NotificationState pipeline (the generated ActionSet
   // dispatcher), not a direct INotificationService call — the point is to exercise the app's own path.
@@ -120,6 +122,16 @@
           <FilterSelect Label="Status" Items="FilterDemoStatuses" Value="Open" />
           <FilterSelect Label="Kind" Items="FilterDemoKinds" Value="" OptionText="@(static value => value.Length == 0 ? "All" : value)" />
         </FilterBar>
+      </Card>
+
+      <Card Title="Tabs">
+        <p class="sg-subtitle">An underline switcher. The sample does not store the value.</p>
+        <Tabs Items="TabDemoItems" Value="Overview" AriaLabel="Sample views" />
+      </Card>
+
+      <Card Title="Segmented Control">
+        <p class="sg-subtitle">A pill group of mutually exclusive options. The sample does not store the value.</p>
+        <SegmentedControl Items="SegmentDemoItems" Value="Week" AriaLabel="Sample period" />
       </Card>
 
       <Card Title="KPI Cards">
