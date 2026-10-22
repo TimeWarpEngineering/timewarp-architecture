@@ -39,7 +39,7 @@ public class TimeWarpPage_Should_
 
   public static async Task Render_Title_And_Body_Without_Header_Slots()
   {
-    string html = await RenderAsync(new Dictionary<string, object?>
+    string html = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["ChildContent"] = Text("Page body")
@@ -64,7 +64,7 @@ public class TimeWarpPage_Should_
 
   public static async Task Show_Description_When_Set_And_Omit_It_When_Unset()
   {
-    string shown = await RenderAsync(new Dictionary<string, object?>
+    string shown = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["Description"] = Text("Manage the team."),
@@ -77,7 +77,7 @@ public class TimeWarpPage_Should_
     shown.ShouldNotContain("twe-page__actions");
     Title(shown).ShouldBe("Staff");
 
-    string hidden = await RenderAsync(new Dictionary<string, object?>
+    string hidden = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["Actions"] = Mark("PageAction", "Add item"),
@@ -90,7 +90,7 @@ public class TimeWarpPage_Should_
 
   public static async Task Show_Actions_When_Set_And_Omit_Them_When_Unset()
   {
-    string shown = await RenderAsync(new Dictionary<string, object?>
+    string shown = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["Actions"] = Mark("PageAction", "Add item"),
@@ -102,7 +102,7 @@ public class TimeWarpPage_Should_
     shown.ShouldContain("data-qa=\"PageAction\"");
     shown.ShouldContain("Add item");
 
-    string hidden = await RenderAsync(new Dictionary<string, object?>
+    string hidden = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["Description"] = Text("Manage the team."),
@@ -115,7 +115,7 @@ public class TimeWarpPage_Should_
 
   public static async Task Render_Exactly_One_H1_With_Slots_And_A_Section_Header()
   {
-    string html = await RenderAsync(new Dictionary<string, object?>
+    string html = await RenderAsync(new Dictionary<string, object>
     {
       ["Title"] = "Staff",
       ["Description"] = Text("Manage the team."),
@@ -148,7 +148,7 @@ public class TimeWarpPage_Should_
     builder.CloseElement();
   };
 
-  private static async Task<string> RenderAsync(Dictionary<string, object?> parameters)
+  private static async Task<string> RenderAsync(Dictionary<string, object> parameters)
   {
     ServiceCollection services = new();
     services.AddLogging();
@@ -226,7 +226,7 @@ public class TimeWarpPage_Should_
 
   private sealed class ShellHost : ComponentBase
   {
-    [Parameter] public Dictionary<string, object?> PageParameters { get; set; } = new();
+    [Parameter] public Dictionary<string, object> PageParameters { get; set; } = new();
 
     protected override void BuildRenderTree(RenderTreeBuilder builder)
     {
@@ -234,16 +234,7 @@ public class TimeWarpPage_Should_
       builder.AddAttribute(1, "ChildContent", (RenderFragment)(child =>
       {
         child.OpenComponent<TimeWarpPage>(0);
-        int sequence = 1;
-        foreach (KeyValuePair<string, object?> pair in PageParameters)
-        {
-          // The parameter set is the caller's dictionary, so the sequence cannot be a literal.
-#pragma warning disable ASP0006
-          child.AddAttribute(sequence, pair.Key, pair.Value);
-#pragma warning restore ASP0006
-          sequence += 1;
-        }
-
+        child.AddMultipleAttributes(1, PageParameters);
         child.CloseComponent();
       }));
       builder.CloseComponent();

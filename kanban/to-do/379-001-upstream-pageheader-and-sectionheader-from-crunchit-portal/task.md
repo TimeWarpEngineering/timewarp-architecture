@@ -79,6 +79,13 @@ the `twe-` CSS prefix and neutral sample text.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T03:21:25Z
 - Review oracle round 1: general reviewer (claude, claude-opus-5-5), effort 2, session not
   reported — 2026-10-22. 4 open (1 bug, 1 suggestion, 2 nits); fix pass requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T03:24:19Z
+- Fix pass (implement-fix-2): implementer-cursor (cursor, grok-4.7), 2026-10-22. Addressed M1–M4.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4
+- Fix pass: M1–M4 are addressed on this branch. Round 2 has not run.
 
 ## Notes
 
@@ -98,16 +105,19 @@ the `twe-` CSS prefix and neutral sample text.
 
 ## Goal (implementer restatement)
 
-The shell already renders the page title, so a second title component would put two h1 elements
-on the page. `TimeWarpPage` gains optional `Description` and `Actions` slots. With both empty,
-the title and breadcrumb markup stays as it is. With either set, the title and description sit
-on the left and the actions wrap on the right, in the same header as the title. `SectionHeader`
-is a new composite beside `Section`: an h2, an optional subtitle, an optional aside, and
-unmatched attributes on a native `twe-section-header` root. Styling is isolated CSS and the
-existing `--twe-*` tokens. The components dispatch nothing; callers pass buttons. The style
-guide shows the page slots and a section-header card. The todo list and feedback-review pages
-use the description slot. Render tests cover the empty shell, each slot, a single h1, and the
-section header's title, subtitle, aside, and attribute passthrough.
+The page shell already owns the only h1, so this task does not add a second title component.
+`TimeWarpPage` takes optional `Description` and `Actions` fragments. When both are empty, the
+title and breadcrumb markup stays what it is today. When either is set, the title and
+description sit on the left and the actions wrap on the right, in that same header. The title
+markup itself is one fragment, so the empty-slot path and the header path cannot drift.
+`SectionHeader` is a composite next to `Section`: an h2, an optional subtitle, an optional
+aside, and unmatched attributes on a native `twe-section-header` root. Styling is isolated CSS
+and the existing `--twe-*` tokens. These pieces dispatch nothing; a caller passes the buttons.
+The style guide demos the page slots and a section-header card. The todo list and the feedback
+review page use the description slot, and the todo copy says what that sample page is for.
+Render tests cover the empty shell, each slot, a single h1, and the section header's title,
+subtitle, aside, and attribute passthrough. The page render harness passes its parameter
+dictionary through `AddMultipleAttributes` with a literal sequence.
 
 Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `ganda repo audit`
 passes, and the product diff does not introduce the source product's name.
@@ -128,33 +138,42 @@ no 16px step). The subtitle's 2px offset stays a hairline under the title.
 The style guide puts its intro in `Description`, dispatches Outline and Primary through
 `NotificationState`, and shows a Section Header card (Reports, a subtitle, Details). Todo Items
 and Feedback review had no loose intro paragraph, action row, or hand-built sub-heading, so
-they adopt `Description` only.
+they adopt `Description` only. Todo Items says "Browse the sample todo list." The list
+component only renders the words "Todo Item List", so the description does not claim that a
+person can mark items done.
+
+Fix pass for round 1: the page render harness calls `AddMultipleAttributes` with sequence `1`
+and no `#pragma`. The dictionary is `Dictionary<string, object>` because that method takes
+non-null values. The document title and the h1 are one `TitleBlock` fragment, rendered from
+both header branches. The feedback page body is indented one level inside `ChildContent`.
 
 ### How to validate
 
 Smoke:
 
-- `./bin/dev build` — 0 warnings, 0 errors.
-- `./bin/dev template-smoke` — SmokeDefault OK; generated Jaribu aggregators 405/405, 9/9, and 14/14.
-- `ganda repo audit` — 32 passed, 0 failed.
-- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug -- --filter-class SectionHeader_Should_` (4 passed) and `--filter-class TimeWarpPage_Should_` (4 passed).
+- `./bin/dev build` — 0 warnings, 0 errors (Release, this fix pass).
+- `./bin/dev template-smoke` — SmokeDefault OK; generated Jaribu aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
+- `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
+- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug -- --filter-class TimeWarpPage_Should_` (4 passed) and `--filter-class SectionHeader_Should_` (4 passed).
+- `git diff origin/master -- source tests | rg -i crunchit` — no match. The kitchen path contains the task folder name, so a whole-tree diff still matches that path.
 
 Expect:
 
 - Style Guide shows one h1, the brand sentence under it, and Outline / Primary on the right. The Section Header card shows an h2 "Reports", the period subtitle, and Details.
-- Todo Items shows "Items on this list." under the title and no action cluster.
-- Feedback review shows "Review filings. Filter by status, kind, and severity." under the title. The filter and grid are unchanged.
+- Todo Items shows "Browse the sample todo list." under the title and no action cluster.
+- Feedback review shows "Review filings. Filter by status, kind, and severity." under the title. The filter and grid are unchanged. The body inside `ChildContent` is indented one level.
 - Any other page that does not set the slots still renders only the title and breadcrumb.
+- A page with either slot still has exactly one h1, and that h1 is the same markup as the empty-slot page.
 
-A live browser pass of the running app was not done in this walk. The static renderer covers the slot markup.
+A live browser pass of the running app was not done in this walk. The static renderer covers the slot markup, including one h1 on both header paths.
 
 ### Review
 
-- Round 1 (general reviewer, effort 2): 1 bug, 1 suggestion, and 2 nits, all open. The
-  reviewer re-ran the gates: `./bin/dev build` 0/0, `ganda repo audit` passes, both new test
-  classes 4/4, no "crunchit" in the product diff. The reviewer did not re-run template-smoke.
-- M1 (bug): a test suppresses ASP0006 with a `#pragma`. M2: the title markup is duplicated
-  in `TimeWarpPage`. M3: the todo page has a placeholder description. M4: indentation in
-  FeedbackAdminListPage.
-- Disposition: pending. M1–M4 are open, so a fix pass and round 2 are next.
+- Round 1 (general reviewer, effort 2): 1 bug, 1 suggestion, and 2 nits. The reviewer re-ran
+  `./bin/dev build` 0/0, `ganda repo audit`, and both new test classes 4/4. The reviewer did
+  not re-run template-smoke.
+- M1: the test now uses `AddMultipleAttributes(1, PageParameters)`. M2: `TitleBlock` is the
+  one title fragment. M3: the todo description is "Browse the sample todo list." M4: the
+  feedback body is indented inside `ChildContent`.
+- Disposition: addressed in this fix pass. Round 2 has not run.
 - Paths: `review/review-framework.md` and `review/round-1/merged.md`.
