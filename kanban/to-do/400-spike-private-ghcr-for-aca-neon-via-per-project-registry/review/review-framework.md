@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 200
-- Effort: 2
+- Lines changed: 74
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -21,6 +21,7 @@ Product files: `skills/tw-deploy/references/azure-container-apps-neon.md` and
 from aca-neon. Record the failure in the guide's "Why the registry stays ACR" section.
 **Effort:** 2. **Roster:** general.
 **Session IDs:** review oracle claude-opus-5-5 (headless, session not exposed).
+**Round 2 scope:** fix delta `94b1b38f1..28369a335`. Effort 1, roster general.
 
 ## Ground rules
 

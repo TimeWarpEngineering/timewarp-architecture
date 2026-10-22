@@ -58,10 +58,12 @@ Acceptance:
 - Review oracle round 1: claude-opus-5-5 (headless), effort 2, roster general, 2026-10-22. 0 bug, 1 suggestion, 1 nit, all open. Fix pass requested for M1 and M2. Artifacts: `review/review-framework.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-21T23:55:16Z
 - Fix pass (implement-fix-2): rewrote "Why the registry stays ACR" as present-tense Aspire 13.6.2 facts. Cited https://aspire.dev/app-host/container-registry/. The probe log stays in this file's Results. 2026-10-22.
+- Review oracle round 2: claude-opus-5-5 (headless), effort 1, roster general, turn cap 80, 2026-10-22. It reviewed the fix delta `94b1b38f1..28369a335`. M1 and M2 are fixed. New M3 (suggestion) is open. Fix pass requested for M3. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
+- Round 2: Blocked — M1, M2 fixed; open M3
 
 ## Notes
 
@@ -73,7 +75,9 @@ Acceptance:
 
 Aspire 13.6.2 can name a per-project `ghcr.io` push target. `AddAzureContainerAppEnvironment` publishes ACR Basic, and each built container app pulls with that registry's managed identity. Private GHCR leaves the about-$5 ACR line in place. The template is unchanged aside from the AppHost design note that points at this finding. No follow-up implementation task: the live-proof checklist item stays open because the condition (it works, and the resource group has no ACR) was not met. No GitHub token was created.
 
-The operator guide's "Why the registry stays ACR" section states that as current fact for Aspire 13.6.2: the API table, the default-ACR mechanics, the pull shape, the token scopes and where a token lives, the recommendation, and the revisit condition. Task ids stay in parentheses (task 317, task 400). The run narrative stays here. [Container registry configuration](https://aspire.dev/app-host/container-registry/) is the cited page for the ACA `WithContainerRegistry(environment)` example. Round-1 ledger: `review/round-1/merged.md`. Round 2 is the host's review node.
+The operator guide's "Why the registry stays ACR" section states that as current fact for Aspire 13.6.2: the API table, the default-ACR mechanics, the pull shape, the token scopes and where a token lives, the recommendation, and the revisit condition. Task ids stay in parentheses (task 317, task 400). The run narrative stays here. [Container registry configuration](https://aspire.dev/app-host/container-registry/) is the cited page for the ACA `WithContainerRegistry(environment)` example. Round-1 ledger: `review/round-1/merged.md`.
+
+Review: 2 rounds so far, effort 1 in round 2, roster general. Round 2 (`review/round-2/merged.md`) has 0 bugs. There are 2 suggestions: M1 fixed and M3 open. There is 1 nit, M2, which is fixed. M3: the token paragraph states as current fact that `dev deploy` copies a GHCR token, and no such copy exists. Disposition is pending the M3 fix pass and round 3. `dev lint-skills` was not run in round 2: the runfile refused because vally 0.6.0 is installed and the repo pins 0.19.0.
 
 `dotnet-inspect` on `Aspire.Hosting` 13.6.2:
 
