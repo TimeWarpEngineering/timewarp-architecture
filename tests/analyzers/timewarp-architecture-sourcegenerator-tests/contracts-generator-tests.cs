@@ -836,13 +836,13 @@ public class ContractsGenerator_Tests
 
       namespace Test.Features.Admin.Roles
       {
-          public static partial class RenameSymbol
+          public static partial class AppendNote
           {
-              [TimeWarp.Contracts.Operation("rename_symbol", Description = "Rename a symbol.", Title = "Rename symbol")]
+              [TimeWarp.Contracts.Operation("notes.append", Description = "Append a note to the log.", Title = "Append note")]
               [TimeWarp.Contracts.Destructive(false)]
               [TimeWarp.Contracts.OpenWorld(false)]
-              [ApiRoute("api/Roles", HttpVerb.Get)]
-              public sealed partial class Query { }
+              [ApiRoute("api/Roles", HttpVerb.Post)]
+              public sealed partial class Command { }
           }
       }
       """;
@@ -850,14 +850,14 @@ public class ContractsGenerator_Tests
     MetadataReference[] operation = RealOperationReferences();
     string generated = Run(source, extraReferences: operation);
 
-    generated.ShouldContain("public const string OperationName = \"rename_symbol\";");
-    generated.ShouldContain("public const string OperationDescription = \"Rename a symbol.\";");
-    generated.ShouldContain("public const string OperationTitle = \"Rename symbol\";");
+    generated.ShouldContain("public const string OperationName = \"notes.append\";");
+    generated.ShouldContain("public const string OperationDescription = \"Append a note to the log.\";");
+    generated.ShouldContain("public const string OperationTitle = \"Append note\";");
     generated.ShouldContain("public const bool OperationDestructive = false;");
     generated.ShouldContain("public const bool OperationOpenWorld = false;");
     generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
-    generated.ShouldNotContain("Rename symbol rename_symbol");
-    generated.ShouldNotContain("Rename symbol/api");
+    generated.ShouldNotContain("Append note notes.append");
+    generated.ShouldNotContain("Append note/api");
     return Task.CompletedTask;
   }
 
@@ -873,8 +873,8 @@ public class ContractsGenerator_Tests
               [TimeWarp.Contracts.Operation("purge_cache")]
               [TimeWarp.Contracts.Destructive]
               [TimeWarp.Contracts.OpenWorld]
-              [ApiRoute("api/Roles", HttpVerb.Get)]
-              public sealed partial class Query { }
+              [ApiRoute("api/Roles", HttpVerb.Delete)]
+              public sealed partial class Command { }
           }
       }
       """;
@@ -923,13 +923,13 @@ public class ContractsGenerator_Tests
 
       namespace Test.Features.Admin.Roles
       {
-          public static partial class GetRoles
+          public static partial class PurgeCache
           {
-              [TimeWarp.Contracts.Operation("  ", Description = "Lists roles.", Title = "List roles")]
+              [TimeWarp.Contracts.Operation("  ", Description = "Purge the cache.", Title = "Purge cache")]
               [TimeWarp.Contracts.Destructive]
               [TimeWarp.Contracts.OpenWorld]
-              [ApiRoute("api/Roles", HttpVerb.Get)]
-              public sealed partial class Query { }
+              [ApiRoute("api/Roles", HttpVerb.Delete)]
+              public sealed partial class Command { }
           }
       }
       """;
@@ -954,8 +954,8 @@ public class ContractsGenerator_Tests
           {
               [TimeWarp.Contracts.Operation("purge_cache")]
               [TimeWarp.Contracts.Destructive(true)]
-              [ApiRoute("api/Roles", HttpVerb.Get)]
-              public sealed partial class Query { }
+              [ApiRoute("api/Roles", HttpVerb.Delete)]
+              public sealed partial class Command { }
           }
       }
       """;

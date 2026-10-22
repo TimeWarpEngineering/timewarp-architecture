@@ -21,24 +21,24 @@ public class ToolHints_Given_
 
   public static Task Stated_Hints_Should_Appear_Beside_The_Name()
   {
-    OperationAttribute attribute = new("rename_symbol")
+    OperationAttribute attribute = new("notes.append")
     {
-      Description = "Rename a symbol across the solution.",
-      Title = "Rename symbol"
+      Description = "Append a note to the log.",
+      Title = "Append note"
     };
     OperationCatalog catalog = Catalog(attribute, new DestructiveAttribute(false), new OpenWorldAttribute(false));
     string json = JsonSerializer.Serialize(catalog, CatalogJson);
 
-    json.ShouldContain("\"name\":\"rename_symbol\"");
-    json.ShouldContain("\"title\":\"Rename symbol\"");
+    json.ShouldContain("\"name\":\"notes.append\"");
+    json.ShouldContain("\"title\":\"Append note\"");
     json.ShouldContain("\"destructiveHint\":false");
     json.ShouldContain("\"openWorldHint\":false");
-    json.ShouldContain("\"pattern\":\"rename_symbol {id}\"");
-    json.ShouldNotContain("Rename symbol rename_symbol");
-    catalog.Operations[0].Title.ShouldBe("Rename symbol");
+    json.ShouldContain("\"pattern\":\"notes.append {id}\"");
+    json.ShouldNotContain("Append note notes.append");
+    catalog.Operations[0].Title.ShouldBe("Append note");
     catalog.Operations[0].DestructiveHint.ShouldBe(false);
     catalog.Operations[0].OpenWorldHint.ShouldBe(false);
-    catalog.Operations[0].Bindings!.Cli!.Pattern.ShouldBe("rename_symbol {id}");
+    catalog.Operations[0].Bindings!.Cli!.Pattern.ShouldBe("notes.append {id}");
     return Task.CompletedTask;
   }
 
@@ -74,7 +74,7 @@ public class ToolHints_Given_
 
   public static Task A_Blank_Title_Should_Be_Absent_From_Catalog_Output()
   {
-    OperationAttribute attribute = new("find_references") { Title = "   " };
+    OperationAttribute attribute = new("notes.append") { Title = "   " };
     OperationCatalog catalog = Catalog(attribute, new DestructiveAttribute(false), openWorld: null);
     string json = JsonSerializer.Serialize(catalog, CatalogJson);
 

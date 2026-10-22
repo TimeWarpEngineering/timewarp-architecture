@@ -265,11 +265,11 @@ public class EndpointOperationMetadata_Tests
       {
           public static class GetRole
           {
-              [TimeWarp.Contracts.Operation("rename_symbol", Description = "Rename a symbol.", Title = "Rename symbol")]
+              [TimeWarp.Contracts.Operation("notes.append", Description = "Append a note to the log.", Title = "Append note")]
               [TimeWarp.Contracts.Destructive(false)]
               [TimeWarp.Contracts.OpenWorld(false)]
-              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
-              public sealed class Query { }
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Post)]
+              public sealed class Command { }
 
               public sealed class Response { }
           }
@@ -277,9 +277,9 @@ public class EndpointOperationMetadata_Tests
       """;
 
     EndpointEmitModel model = ModelFrom(source, "OperationMetadataHints");
-    model.OperationName.ShouldBe("rename_symbol");
-    model.OperationDescription.ShouldBe("Rename a symbol.");
-    model.OperationTitle.ShouldBe("Rename symbol");
+    model.OperationName.ShouldBe("notes.append");
+    model.OperationDescription.ShouldBe("Append a note to the log.");
+    model.OperationTitle.ShouldBe("Append note");
     model.OperationDestructive.ShouldBe(false);
     model.OperationOpenWorld.ShouldBe(false);
     model.Route.ShouldBe("api/Roles/{RoleId}");
@@ -296,8 +296,8 @@ public class EndpointOperationMetadata_Tests
               [TimeWarp.Contracts.Operation("purge_cache", Title = "  ")]
               [TimeWarp.Contracts.Destructive]
               [TimeWarp.Contracts.OpenWorld]
-              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Get)]
-              public sealed class Query { }
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Delete)]
+              public sealed class Command { }
           }
       }
       """;
@@ -318,11 +318,11 @@ public class EndpointOperationMetadata_Tests
       {
           public static class GetRole
           {
-              [TimeWarp.Contracts.Operation("  ", Description = "Get one role.", Title = "Get role")]
+              [TimeWarp.Contracts.Operation("  ", Description = "Purge the cache.", Title = "Purge cache")]
               [TimeWarp.Contracts.Destructive]
               [TimeWarp.Contracts.OpenWorld]
-              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
-              public sealed class Query { }
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Delete)]
+              public sealed class Command { }
 
               public sealed class Response { }
           }
@@ -345,7 +345,7 @@ public class EndpointOperationMetadata_Tests
     const string stubs = """
       namespace TimeWarp.Foundation.Features
       {
-          public enum HttpVerb { Get }
+          public enum HttpVerb { Get, Post, Delete }
           public sealed class ApiRouteAttribute : System.Attribute
           {
               public ApiRouteAttribute(string route, HttpVerb verb) { }
@@ -373,7 +373,7 @@ public class EndpointOperationMetadata_Tests
     errors.ShouldBeEmpty(string.Join(Environment.NewLine, errors.Select(static diagnostic => diagnostic.ToString())));
 
     INamedTypeSymbol outer = compilation.GetTypeByMetadataName("Test.Features.Admin.Roles.GetRole")!;
-    outer.GetTypeMembers("Query").Single().GetAttributes()
+    outer.GetTypeMembers().Single(static member => member.Name is "Query" or "Command").GetAttributes()
       .Any(static attribute =>
         attribute.AttributeClass is { TypeKind: not TypeKind.Error } symbol
         && symbol.ToDisplayString() == "TimeWarp.Contracts.OperationAttribute")

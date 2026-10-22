@@ -42,7 +42,7 @@ A request states the three tool hints a mediator kind cannot supply, and the ope
 
 `Title` is an optional named argument on `[Operation]`. Null, empty, and whitespace mean no title. `[Destructive]` and `[OpenWorld]` are tri-state: the attribute's absence is unset, a bare attribute is true, and `(false)` is an explicit false. `OperationDescriptor` stores `Title` plus `DestructiveHint` and `OpenWorldHint` as `bool?`. The HTTP route, the CLI pattern, and the MCP tool name stay as they are.
 
-Destructive means a delete or an overwrite, as opposed to an update that only adds data. MCP clients treat an omitted `destructiveHint` as true, and they read that hint only when the tool is not read-only. The catalog still stores null for an omitted attribute and does not fill in the client default. The package readme's example of `[Destructive(false)]` is an operation that only appends.
+Destructive means a delete or an overwrite, as opposed to an update that only adds data. MCP clients treat an omitted `destructiveHint` as true, and they read that hint only when the tool is not read-only. The catalog still stores null for an omitted attribute and does not fill in the client default. A `[Destructive(false)]` fixture names an operation that only appends, such as `notes.append`. A fixture that states destructive true is a `Command` with a non-GET verb, such as a purge on `HttpVerb.Delete`.
 
 Both generator readers copy a set hint and omit an unset one. They also ignore the hint attributes unless `[Operation]` has a name that is not blank. A reflection reader still sees the attributes. The author-facing tool-hint sections say so.
 
@@ -50,6 +50,7 @@ Acceptance:
 
 - XML docs, the package readme, and `neutral-operations.md` describe that shape, the MCP default and not-read-only rule, and the generator's blank-name rule.
 - Jaribu covers a set title, a blank title, both hint attributes (bare, explicit true, explicit false, absent), a whitespace operation name together with hint attributes in each reader, and catalog JSON that keeps false and omits null.
+- Those fixtures agree with that meaning. An explicit false sits on an additive operation. An explicit true sits on a command with a non-GET verb.
 - `dev build` is 0 warnings and 0 errors. The touched tests pass. `dev check-version` passes. `ganda repo audit` is clean. `dev lint-skills` passes.
 - Source stays `2.0.0-beta.24`, one prerelease ahead of NuGet. Publishing is `dev release` from a clean synced master after merge. The checklist does not claim that release is already cut.
 
@@ -69,6 +70,7 @@ Acceptance:
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T13:31:43Z
 - Fix pass (implement-fix-2, 2026-10-22): M1 aligns the destructive hint with MCP (a delete or overwrite, rather than an update that only adds data), uses an append for `[Destructive(false)]`, and states that an omitted `destructiveHint` is true and is read only when the tool is not read-only. M2 records that generators ignore the hint attributes unless `[Operation]` has a non-blank name. M3 adds a whitespace-name-plus-hints test in each reader and an explicit `[Destructive(true)]` test. M4 leaves the NuGet publish unchecked until `dev release` after merge.
 - Review oracle round 2 (2026-10-22): effort 1, roster general (claude-opus-5-5). I reviewed the fix delta `598e03177..13dd8cef6`. Round 1 M1–M4 are fixed. One new nit, M5, is open: two test fixtures contradict the documented destructive meaning (`review/round-2/merged.md`). I re-ran the gates: `dev build` gave 0 warnings and 0 errors, the tests passed 47/47 and 149/149, and `ganda repo audit` passed. `dev lint-skills` did not run, because `vally` is not on PATH. The restatement matches the task and the round 1 findings, so there is no misread. Disposition waits on a fix pass for M5.
+- Fix pass (implement-fix-3, 2026-10-22): M5 aligns the fixtures with that meaning. `[Destructive(false)]` sits on `notes.append`, which only adds data. A stated destructive hint, including the explicit-true case and the blank-name omission case, sits on a `Command` with `HttpVerb.Delete` or `HttpVerb.Post`. The route stays `api/Roles`.
 
 ## Results
 
@@ -84,7 +86,7 @@ Source version stays `2.0.0-beta.24`. That version is already one prerelease inc
 
 A file that imports both `TimeWarp.Contracts` and `TimeWarp.Nuru` must qualify `[Destructive]` and `[OpenWorld]` after the Nuru follow-up bumps the package. The Nuru attribute wins when both are present, as the Notes already say.
 
-The destructive hint means a delete or an overwrite, as opposed to an update that only adds data. The package readme's `[Destructive(false)]` example appends a note. MCP clients treat an omitted `destructiveHint` as true and read it only when the tool is not read-only. The catalog still stores null and does not fill in that client default. Generators copy `[Destructive]` and `[OpenWorld]` only when `[Operation]` has a name that is not blank. A reflection reader sees the attributes either way. An explicit `[Destructive(true)]` emits `OperationDestructive = true`. A whitespace operation name emits no hint members.
+The destructive hint means a delete or an overwrite, as opposed to an update that only adds data. The package readme's `[Destructive(false)]` example appends a note, and the catalog and both generator readers use that same `notes.append` operation for an explicit false. MCP clients treat an omitted `destructiveHint` as true and read it only when the tool is not read-only. The catalog still stores null and does not fill in that client default. Generators copy `[Destructive]` and `[OpenWorld]` only when `[Operation]` has a name that is not blank. A reflection reader sees the attributes either way. An explicit `[Destructive(true)]` emits `OperationDestructive = true` from a `Command` on `HttpVerb.Delete`. A bare destructive hint uses the same shape. A whitespace operation name emits no hint members, and that fixture is a delete command as well.
 
 ### How to validate
 
@@ -100,15 +102,16 @@ Smoke:
 Expect:
 
 - `./bin/dev build` ends with 0 warnings and 0 errors.
-- Foundation contracts tests: 47 passed, 0 failed. Title, both hint attributes, and catalog JSON are covered. A stated false is present. A null hint is absent.
-- Source generator tests: 149 passed, 0 failed. A set title and explicit false hints are copied. A bare hint attribute and an explicit `[Destructive(true)]` are true. A whitespace title and an omitted hint are omitted. A whitespace operation name together with hint attributes emits no hint members in either reader. `RouteTemplate` stays `api/Roles`.
+- Foundation contracts tests: 47 passed, 0 failed. Title, both hint attributes, and catalog JSON are covered. The stated false is `notes.append`. A null hint is absent.
+- Source generator tests: 149 passed, 0 failed. A set title and explicit false hints are copied from `notes.append` on `HttpVerb.Post`. A bare hint attribute and an explicit `[Destructive(true)]` are true, both on a `Command` with `HttpVerb.Delete`. A whitespace title and an omitted hint are omitted. A whitespace operation name together with hint attributes emits no hint members in either reader. `RouteTemplate` stays `api/Roles`.
 - `dev check-version` exits 0. Source is `2.0.0-beta.24`, NuGet is `2.0.0-beta.23`, one prerelease increment ahead, and it reports the version is safe to release. `TimeWarp.Contracts` is in the package list.
 - `ganda repo audit` exits 0.
 - `dev lint-skills` exits 0 with vally `0.19.0`. Nine skills pass, including `tw-web-api-contracts`, and its eval spec is valid.
 
 ## Review
 
-- Round 1 findings M1, M2, M3, and M4 are addressed on this branch. Round 2 is the host review node.
+- Round 1 findings M1, M2, M3, and M4 are addressed on this branch.
+- Round 2 finding M5 is addressed on this branch. Round 3 is the host review node.
 
 ## Notes
 
