@@ -181,6 +181,10 @@ Expect:
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec written: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T08:51:32Z
+- Review oracle round 1 (effort 3, roster general; headless, session id not exposed) — 2026-10-22:
+  0 bug, 2 suggestion, 1 nit open (M1–M3, `review/round-1/merged.md`). Fix pass requested; no
+  disposition yet. Build and Filter/FeedbackAdmin integration tests re-run green.
 
 ## Notes
 
