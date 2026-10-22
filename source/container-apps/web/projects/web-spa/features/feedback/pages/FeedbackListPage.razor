@@ -432,7 +432,9 @@
     <Section Title="Your filings" LoadingActionType="typeof(FeedbackState.ListMyFeedbackActionSet.Action)">
       @if (FeedbackState.Items.Count == 0)
       {
-        <p>No feedback filed yet.</p>
+        <EmptyState Variant="EmptyStateVariant.Inline"
+                    Title="No feedback filed yet."
+                    Description="Filings you submit are listed here." />
       }
       else
       {

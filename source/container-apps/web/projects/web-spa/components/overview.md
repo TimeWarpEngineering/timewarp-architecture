@@ -21,6 +21,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Card.razor`
 - `StatusBadge.razor`
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
+- `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
 - `FormContainer.razor` (Card shell; `ActionContent` renders in `FormActions`)
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
 - `TextArea.razor` (forms) — the only multi-line text field: fills its field, 9rem default height, vertical resize; raw `FluentTextArea` elsewhere is TWA0032

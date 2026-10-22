@@ -1,5 +1,11 @@
 # Upstream EmptyState, full and inline, from Crunchit portal
 
+## Goal (implementer restatement)
+
+Every generated app should say "nothing here" the same way. Add one native `EmptyState` element, brand-neutral, with a full paper card and a compact inline form for use inside a card or grid. The full form is a centred column: an optional FluentUI icon (hidden from assistive tech, omitted entirely when inline), a heading whose level follows the page, an optional description, and an optional actions slot the page fills with its own button. The inline form drops the paper, shadow, and icon, and uses a paragraph for the title so it does not add a second heading inside a section. There is no phase chip; a page that wants one puts it in the actions slot.
+
+Wire it into the admin feedback grid's empty content (same `data-qa`, still inside `EmptyContent`) and the "Your filings" empty branch. Leave the principals grid and the admin item activity line for a later task on this same pattern. Show both forms on the style guide, with the sample button dispatching an existing notification action. Render tests pin the root class, variant modifier, optional description and actions, attribute passthrough, heading level, and the hidden icon. `dev build` is 0 warnings and 0 errors, `dev template-smoke` passes, `ganda repo audit` passes, and the source and test diff contains no client name.
+
 ## Description
 
 Port Crunchit's `EmptyState` into the template as a native, brand-neutral element, so every
@@ -71,7 +77,7 @@ Follow the conventions of 379-001 through 379-006:
 
 ## Checklist
 
-- [ ] `components/elements/EmptyState.razor` and `.razor.css`. It goes under `elements/` because it
+- [x] `components/elements/EmptyState.razor` and `.razor.css`. It goes under `elements/` because it
       holds no child components of its own and no state, as `Card` and `Avatar` do.
   - Root: `<div class="twe-empty-state @VariantClass @Class" role="status">`, with
     unmatched attributes splatted on it. Confirm in Design whether `role="status"` is right
@@ -82,36 +88,36 @@ Follow the conventions of 379-001 through 379-006:
     non-heading `<p class="twe-empty-state__title">` for `Inline`; `ChildContent`; `Class`;
     `AdditionalAttributes`.
   - Description and actions render only when set.
-- [ ] `components/elements/empty-state-variant.cs` for the enum (kebab file name, TW0001).
-- [ ] CSS in the isolated stylesheet:
+- [x] `components/elements/empty-state-variant.cs` for the enum (kebab file name, TW0001).
+- [x] CSS in the isolated stylesheet:
   - Full: centred column, `--twe-paper`, `--twe-radius`, `--twe-shadow-sm`, padding from
     `--twe-space-*`, title in `--twe-ink` at 600, description in `--twe-muted` and
     `--twe-text-body`, max width on the description.
   - Inline: no background or shadow, smaller padding, left-aligned or centred as chosen, text
     sizes from `--twe-text-*`.
   - Add tokens to `tokens.css` only if needed (for example an icon-tile size). No hex values.
-- [ ] Adopt in `features/admin/feedback/pages/FeedbackAdminListPage.razor`: replace the grid's
+- [x] Adopt in `features/admin/feedback/pages/FeedbackAdminListPage.razor`: replace the grid's
       `<EmptyContent>` paragraph with `<EmptyState Variant="Inline" Title="No feedback matches
       this filter" Description="…" data-qa="AdminFeedbackEmpty" />`. The `data-qa` value and
       its place inside `EmptyContent` stay, so any existing test selector still resolves.
-- [ ] Adopt in `features/feedback/pages/FeedbackListPage.razor`: replace "No feedback filed
+- [x] Adopt in `features/feedback/pages/FeedbackListPage.razor`: replace "No feedback filed
       yet." in the "Your filings" `Section` with the inline form (the Section is already a
       Card). Keep the `Items.Count == 0` branch.
-- [ ] Leave `PrincipalsPage` and `FeedbackAdminItemPage` alone in this task, and say in Notes
+- [x] Leave `PrincipalsPage` and `FeedbackAdminItemPage` alone in this task, and say in Notes
       that they are follow-ups on the same pattern. (Choosing one adopter is acceptable if
       the second grows the diff; the first is required.)
-- [ ] Style guide: add an "Empty States" card (after "Avatars") showing the full form with
+- [x] Style guide: add an "Empty States" card (after "Avatars") showing the full form with
       description, the full form with an action, and the inline form, using callbacks that do
       not write local fields. Do not extend the StyleGuidePage contract (379-017).
-- [ ] Add a row to `components/overview.md`.
-- [ ] Render tests in `components/empty-state-render-tests.cs`:
+- [x] Add a row to `components/overview.md`.
+- [x] Render tests in `components/empty-state-render-tests.cs`:
   - The root carries `twe-empty-state` and the title text.
   - The default variant has no inline modifier; `Inline` adds it.
   - Description and the actions row are omitted when unset, and present when set.
   - `Class` and the additional attributes are merged on the root.
   - The heading level follows `HeadingLevel`, if kept.
   - The icon, when shown, is `aria-hidden`.
-- [ ] Gates:
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
@@ -136,3 +142,38 @@ Follow the conventions of 379-001 through 379-006:
 - The load-failure use ("Could not load …") is not ported here. The template reports failures
   through the shell notification region (TWA0025).
 - Out of scope: the shell user card (379-015), the Drawer (379-008), and 379-017.
+- Follow-up on the same pattern, left untouched: `PrincipalsPage` grid empty content
+  (`data-qa="AdminPrincipalsEmpty"`) and `FeedbackAdminItemPage` ("No activity yet.").
+- Inline is left-aligned. Full keeps `role="status"`: a status region already in the first
+  paint is not announced, and a list that becomes empty after a filter is. No token was
+  added. The default icon is Fluent UI regular 24px `CollectionsEmpty` (the fluent-ui-blazor
+  MCP was not in this session).
+
+## Results
+
+One `EmptyState` under `components/elements`. Full is a centred paper card (`twe-empty-state`) with `role="status"`, a regular 24px Fluent `CollectionsEmpty` icon in an `aria-hidden` tile, a heading at `HeadingLevel` (2–6, otherwise h2), an optional description, and an actions slot. Inline adds `twe-empty-state--inline`: no paper, shadow, or icon, left-aligned, and a paragraph title so a nested section does not gain a second heading. Description and actions render only when set. A page that wants a phase chip puts it in `ChildContent`. No new tokens: the tile is `--twe-space-12`, and the description measure is 32rem in the component stylesheet.
+
+Adopted on the admin feedback grid empty content (`data-qa="AdminFeedbackEmpty"` stays inside `EmptyContent`) and the "Your filings" empty branch. The style guide shows the full form, the full form with a button that dispatches the existing notification action, and the inline form. `PrincipalsPage` and `FeedbackAdminItemPage` are unchanged.
+
+Markup is pinned by seven HtmlRenderer tests. The style guide and the two feedback pages were not opened in a browser.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build -- --filter-class EmptyState_Should_
+```
+
+**Expect:** 7 passed, 0 failed. The root carries `twe-empty-state` and the title. The default variant has no inline modifier. `Inline` adds `twe-empty-state--inline`, uses a paragraph title, and renders no icon. Description and `twe-empty-state__actions` are absent until set. `Class` and `data-qa` land on the root. `HeadingLevel` 3 renders `h3`. The icon tile is `aria-hidden="true"` and the root is not.
+
+**Automated gate**
+
+```bash
+./bin/dev build
+./bin/dev template-smoke
+ganda repo audit
+git diff origin/master -- source tests | rg -i crunchit
+```
+
+`dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0. The client-name search prints nothing.
