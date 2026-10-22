@@ -136,7 +136,22 @@ Smoke:
   `--filter-class RovingSelection_Should_` (9 passed).
 - `git diff origin/master -- source tests | rg -i crunchit` — no match.
 
-Expect:
+### Review
+
+Round 1 (effort 3, general reviewer) has 4 open findings: 1 bug, 2 suggestions, and 1 nit.
+Disposition is pending until a fix pass and round 2.
+
+- M1 (bug): the root `onkeydown` script cancels Alt, Ctrl, Meta, and Shift arrow, Home, and End
+  chords, which the C# handler ignores.
+- M2: keep the cancelled keys and the `FromKey` keys in one source.
+- M3: the two `@code` blocks are duplicates.
+- M4: rename the local variable `MoveResult`.
+
+Re-run during review: Tabs 4/4, SegmentedControl 4/4, RovingSelection 9/9, and the client-name
+grep is empty. Paths: `review/review-framework.md`, `review/round-1/general.md`, and
+`review/round-1/merged.md`.
+
+### Expect
 
 - Style Guide, after Filter Bar, shows a Tabs card and a Segmented Control card. Tabs reads
   Overview, Activity, and Notes, with Overview selected. The segmented control reads Day, Week,
@@ -150,6 +165,9 @@ Expect:
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec written: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implement oracle: Tabs, SegmentedControl, RovingSelection, style-guide cards, and render tests. Build, template-smoke, and audit are green. 2026-10-22.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T11:15:17Z
+- Review oracle round 1: claude (claude-opus-5-5), headless ganda task work, effort 3, roster
+  general. Session id not exposed. 4 open findings (M1–M4); fix pass requested. 2026-10-22.
 
 ## Notes
 
