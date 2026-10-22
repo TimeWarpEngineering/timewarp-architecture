@@ -203,6 +203,7 @@ possible, and this task adds one.
 - Review oracle round 1 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 3; the session id is not exposed in print mode. Gates re-run: build 0/0, render tests 7/7, Playwright 1/1, template-smoke passed, audit passed, portal-name grep printed nothing. Findings: 0 bug, 2 suggestion, 2 nit. M4 is wontfix; M1, M2, and M3 are open and need a fix pass. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T20:46:14Z
 - Fix pass for review round 1 (2026-10-23). M1: `wantOpen` cancels a deferred `showModal` after `Close` or `Dispose`. M2: End and Start use inline insets and borders, and `:dir(rtl)` plays the slide from the opposite physical side. M3: a `close` the module did not start calls `RequestClose`. M4 stays wontfix. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed, portal-name grep printed nothing.
+- Review oracle round 2 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 2, reviewing the fix delta `138a8cbea..93befc533`. The session id is not exposed in print mode. M1 and M2 are fixed, and M3's listener landed. New: M5 (bug): `moduleClosing` resets before the queued `close` event fires, so every module `Close` also calls `RequestClose`. This was reproduced against the compiled `drawer.js` in Playwright Chromium. M6 (bug): the Playwright check reads the result before that event fires. Gates were not re-run this round. A fix pass is needed for M5 and M6. Files: `review/round-2/general.md`, `review/round-2/merged.md`.
 
 ## Results
 
@@ -220,14 +221,21 @@ Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit pa
 
 ### Review
 
-Round 1 found M1, M2, and M3. This fix pass implements them. Round 2 has not run. M4 stays wontfix.
+Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs:
+
+- M5: the guard that skips closes the module starts is reset before the browser fires the queued `close` event. Every `Close` therefore also calls `RequestClose`, which runs `OnClose` a second time and can clear an overlay that `SetActiveModal` just opened.
+- M6: the Playwright check reads its result too early to catch M5.
+
+Disposition is pending a fix pass for M5 and M6.
 
 - Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented in this pass. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+- Round 2: general reviewer, effort 2, fix delta only. Counts: bug 2 open; suggestion 2 fixed; nit 1 fixed and 1 wontfix.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`.
 
 ## Review
 
-- Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix. Round 2 has not run.
+- Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix.
+- Round 2: M1, M2, and M3 are fixed. M5 and M6 (bugs) are open: a module `Close` still calls `RequestClose` through the late `close` event, and the test does not catch it. A fix pass is needed.
 
 ## Notes
 

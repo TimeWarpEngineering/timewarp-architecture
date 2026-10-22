@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1109
-- Effort: 3
+- Lines changed: 323
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -25,3 +25,12 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Date:** 2026-10-23
+**Diff scope:** fix delta `138a8cbea..93befc533` (Drawer.razor, Drawer.razor.css, drawer-js-module.cs, drawer.ts, drawer-playwright-tests.cs, task.md)
+**Brief:** round-1 merged.md M1–M3, plus the fix-pass paragraph of the Goal restatement.
+**Effort:** 2 (by-diff, 323 lines)
+**Reviewer roster:** general (review oracle, claude-opus-5-5)
+**Session IDs:** review oracle session not exposed in print mode
