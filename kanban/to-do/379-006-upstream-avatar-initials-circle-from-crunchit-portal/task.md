@@ -175,8 +175,7 @@ Smoke:
 ## Review
 
 - Round 1: fix pass implemented M1 and M2.
-- Round 2: M1 and M2 verified fixed, no new findings. Disposition: clean.
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source is under
