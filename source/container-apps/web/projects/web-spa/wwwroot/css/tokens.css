@@ -83,4 +83,11 @@
      separates the region from the first card. The region owns its spacing; pages do not. */
   --twe-notify-gap: var(--twe-space-3);
   --twe-notify-margin-bottom: var(--twe-space-6);
+
+  /* Slide-over drawer. Medium is the default width; wide is the larger size.
+     A modal dialog paints in the top layer, so there is no drawer z-index.
+     The scrim is the dialog backdrop, mixed from ink. */
+  --twe-drawer-width: 36rem;
+  --twe-drawer-width-wide: 48rem;
+  --twe-scrim: color-mix(in srgb, var(--twe-ink) 48%, transparent);
 }

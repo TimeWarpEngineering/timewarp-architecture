@@ -26,6 +26,8 @@
     ("--twe-text-eyebrow", "11 — Section eyebrow"),
   ];
 
+  private const string StyleGuideDrawerId = "style-guide-drawer";
+
   private string FormDemoName { get; set; } = "Ada Lovelace";
   private string FormDemoEmail { get; set; } = "ada@example.test";
 
@@ -164,6 +166,22 @@
           </EmptyState>
           <EmptyState Variant="EmptyStateVariant.Inline" Title="No rows match" Description="Try a different filter." />
         </div>
+      </Card>
+
+      <Card Title="Drawers">
+        <p class="sg-subtitle">A slide-over beside the page. Opening sets the app modal id; closing clears it. One overlay is open at a time.</p>
+        <FluentButton Appearance="ButtonAppearance.Primary" data-qa="DrawerOpen" OnClick="@(() => ApplicationState.SetActiveModal(StyleGuideDrawerId))">Open drawer</FluentButton>
+        <Drawer Title="Sample drawer"
+                IsOpen="@(ApplicationState.ActiveModalId == StyleGuideDrawerId)"
+                OnClose="@(() => ApplicationState.CloseModal())"
+                data-qa="StyleGuideDrawer">
+          <ChildContent>
+            <p>A detail or edit form can sit here without leaving the page.</p>
+          </ChildContent>
+          <Footer>
+            <FluentButton Appearance="ButtonAppearance.Primary" data-qa="DrawerFooterClose" OnClick="@(() => ApplicationState.CloseModal())">Close</FluentButton>
+          </Footer>
+        </Drawer>
       </Card>
 
       <Card Title="KPI Cards">

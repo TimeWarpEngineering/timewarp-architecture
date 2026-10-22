@@ -20,6 +20,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* A modal drawer locks document scroll. Isolated CSS cannot match body.
+   The dialog's top layer already covers the page; this rule only stops it scrolling. */
+body:has(dialog.twe-drawer:modal) {
+  overflow: hidden;
+}
+
 h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
 
 a { color: var(--twe-blue); text-decoration: none; }

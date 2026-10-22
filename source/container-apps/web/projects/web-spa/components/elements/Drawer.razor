@@ -1,0 +1,169 @@
+@namespace TimeWarp.Architecture.Components
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@attribute [DirectComponentSideEffect("showModal, close, the cancel event, backdrop clicks, and the Tab wrap are presentational DOM on this dialog. Open state stays with the caller: OnClose is the only signal, and the page dispatches the state action.")]
+
+@*
+  Purpose: Slide-over shell — a title, a scrolling body, and an optional footer, beside the page.
+
+  Design: Native modal dialog, not FluentDialog, and not ModalContainer. ModalContainer is a
+  div overlay: backdrop click closes it, and it has no Escape handling, no focus move, no
+  focus return, and no inert background. This component does not extend that overlay and does
+  not read ApplicationState. The caller passes IsOpen and handles OnClose.
+  The dialog stays in the tree while closed and has no title text until it is open. Opening
+  calls showModal through DrawerJsModule; closing calls close, which returns focus to the
+  opener. The module moves the dialog onto document.body first. The app shell is
+  display:contents, and a modal dialog under that ancestor does not enter the top layer, so
+  Tab would leave the panel. Content stays until that close runs, then drops. Escape and a
+  backdrop click are forwarded as OnClose; the browser is not allowed to close the dialog
+  on its own.
+  The title id is minted per instance. The heading level is 2. The root is labelled by that
+  heading and carries aria-modal while open. End and medium add twe-drawer--end and no size
+  class. Start adds twe-drawer--start. Wide adds twe-drawer--wide. Class is appended, and
+  unmatched attributes splat onto the dialog, the same way Card does.
+  The header dismiss control is a FluentButton with the dismiss icon and aria-label Close.
+  The footer renders only when set. The body is the only scroll area. The dialog itself
+  stays display:block; a flex column on the dialog element drops the browser's Tab trap,
+  so the column lives on an inner panel. Chromium still does not wrap Tab out of a
+  fluent-button shadow host, so the module wraps Tab between the first and last stop.
+  Isolated CSS uses --twe-* tokens. The top layer supplies stacking, so there is no z-index.
+*@
+
+@code {
+  [Parameter] public bool IsOpen { get; set; }
+  [Parameter] public EventCallback OnClose { get; set; }
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public RenderFragment? Footer { get; set; }
+  [Parameter] public DrawerSide Side { get; set; } = DrawerSide.End;
+  [Parameter] public DrawerSize Size { get; set; } = DrawerSize.Medium;
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private readonly string TitleId = "twe-drawer-title-" + Guid.NewGuid().ToString("N");
+  private static readonly Icon DismissIcon = new Icons.Regular.Size20.Dismiss();
+
+  private ElementReference Dialog;
+  private DotNetObjectReference<Drawer>? HostReference;
+  private IJSObjectReference? Handle;
+  private bool ShowContent;
+  private bool Disposed;
+
+  private string RootClass
+  {
+    get
+    {
+      string side = Side == DrawerSide.Start ? "twe-drawer--start" : "twe-drawer--end";
+      string size = Size == DrawerSize.Wide ? " twe-drawer--wide" : "";
+      string extra = string.IsNullOrWhiteSpace(Class) ? "" : " " + Class.Trim();
+      return $"twe-drawer {side}{size}{extra}";
+    }
+  }
+
+  /// <summary>Called from drawer.js when Escape or the backdrop asks to close.</summary>
+  [JSInvokable]
+  public Task RequestClose() => OnClose.InvokeAsync();
+
+  private Task CloseAsync() => OnClose.InvokeAsync();
+
+  protected override void OnParametersSet()
+  {
+    if (IsOpen)
+    {
+      ShowContent = true;
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await base.OnAfterRenderAsync(firstRender);
+    if (!RendererInfo.IsInteractive || Disposed)
+    {
+      return;
+    }
+
+    if (Handle is null)
+    {
+      DotNetObjectReference<Drawer> host = HostReference ?? DotNetObjectReference.Create(this);
+      HostReference = host;
+      IJSObjectReference handle;
+      try
+      {
+        handle = await DrawerJsModule.BindAsync(JsRuntime, Dialog, host);
+      }
+      catch (Exception exception) when (Disposed && exception is InvalidOperationException or JSDisconnectedException)
+      {
+        host.Dispose();
+        HostReference = null;
+        return;
+      }
+
+      if (Disposed)
+      {
+        await DrawerJsModule.DisposeAsync(handle);
+        host.Dispose();
+        HostReference = null;
+        return;
+      }
+
+      Handle = handle;
+    }
+
+    if (IsOpen)
+    {
+      await DrawerJsModule.ShowAsync(Handle);
+      return;
+    }
+
+    await DrawerJsModule.CloseAsync(Handle);
+    if (ShowContent)
+    {
+      ShowContent = false;
+      StateHasChanged();
+    }
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    Disposed = true;
+    if (Handle is not null)
+    {
+      await DrawerJsModule.DisposeAsync(Handle);
+      Handle = null;
+    }
+
+    HostReference?.Dispose();
+    HostReference = null;
+  }
+}
+
+<dialog class="@RootClass"
+        aria-modal="@(ShowContent ? "true" : null)"
+        aria-labelledby="@(ShowContent ? TitleId : null)"
+        @attributes="AdditionalAttributes"
+        @ref="Dialog">
+  @if (ShowContent)
+  {
+    <div class="twe-drawer__panel">
+      <header class="twe-drawer__header">
+        <h2 id="@TitleId" class="twe-drawer__title">@Title</h2>
+        <FluentButton Appearance="ButtonAppearance.Subtle"
+                      IconOnly="true"
+                      IconStart="@DismissIcon"
+                      Title="Close"
+                      aria-label="Close"
+                      data-qa="DrawerClose"
+                      OnClick="CloseAsync" />
+      </header>
+      <div class="twe-drawer__body">
+        @ChildContent
+      </div>
+      @if (Footer is not null)
+      {
+        <footer class="twe-drawer__footer">
+          @Footer
+        </footer>
+      }
+    </div>
+  }
+</dialog>

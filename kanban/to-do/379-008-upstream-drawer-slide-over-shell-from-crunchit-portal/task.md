@@ -1,5 +1,17 @@
 # Upstream Drawer slide-over shell from Crunchit portal
 
+## Goal (implementer restatement)
+
+A generated app needs a brand-neutral slide-over so a detail or edit form can sit beside the current page. This task adds that shell as a native modal `<dialog>` (`twe-drawer`). It is not a FluentDialog wrapper, and it does not reuse the existing div modal.
+
+The drawer is a leaf. It shows a required title, body content, and an optional footer. It takes a read-only `IsOpen` and an `OnClose` callback, plus which side it sits on (end by default, or start), a size (medium by default, or wide), `Class`, and unmatched attributes. It does not two-way bind open state, and it does not read `ApplicationState`. The caller owns the flag. On the style guide, the opener dispatches `SetActiveModal` with a drawer id, `IsOpen` compares `ActiveModalId` to that id, and both close paths dispatch `CloseModal`.
+
+While open, the root is a dialog labelled by its level-2 heading. One small script calls `showModal()` and `close()`, and moves the dialog onto `document.body` first because the shell is `display: contents`. The browser supplies the top layer, an inert background, and focus return to the opener. Chromium does not wrap Tab out of a Fluent button's shadow root, so the script wraps Tab. Escape (the `cancel` event, held so the caller still owns the flag), a backdrop click, and the header dismiss button all raise `OnClose`. The panel slides in unless the user prefers reduced motion. Closing is immediate. Document scroll locks with one global `body:has(dialog.twe-drawer:modal)` rule.
+
+The only adoption is the style guide: a Drawers card after Empty States, with one opener, a short body, and a footer close button. Static render tests pin the markup. One browser test on that card pins focus moving in, Escape, focus returning to the opener, and Tab staying inside.
+
+Done means the component, the side and size enums, the script and its C# wrapper, token-only CSS, the style-guide card, the overview row, the render tests, and the browser test are in place; `./bin/dev build`, `./bin/dev template-smoke`, and `ganda repo audit` pass; and the `source` and `tests` diff contains no portal product name. The existing modal overlay stays unchanged. It still has no Escape or focus handling, and this task records that gap instead of fixing it.
+
 ## Description
 
 Port Crunchit's `Drawer` into the template as a native, brand-neutral slide-over shell, so a
@@ -112,7 +124,7 @@ drawer where a real in-page edit form appears.
 
 ## Checklist
 
-- [ ] `components/elements/Drawer.razor` and `.razor.css`. It goes under `elements/`: the drawer
+- [x] `components/elements/Drawer.razor` and `.razor.css`. It goes under `elements/`: the drawer
       owns no state and holds no child components of its own, as `Card` and `EmptyState` do.
   - Root and parameters as in Decision. Keep the `<dialog>` closed when `IsOpen` is false. Title id unique per instance (no static counter shared across
     circuits; derive from the instance).
@@ -121,26 +133,26 @@ drawer where a real in-page edit form appears.
   - Footer renders only when set. The body is the only scroll area; header and footer stay
     pinned.
   - Escape, scrim click, and the close button call `OnClose`.
-- [ ] `components/elements/drawer-side.cs` and, if kept, `drawer-size.cs` for the enums
+- [x] `components/elements/drawer-side.cs` and, if kept, `drawer-size.cs` for the enums
       (kebab file names, TW0001).
-- [ ] The presentational module in TypeScript under `source/features/` (compiled to
+- [x] The presentational module in TypeScript under `source/features/` (compiled to
       `wwwroot/js`, like `web-authn.ts`), with a C# wrapper in `services/` like
       `command-palette-js-module.cs`, and a `[DirectComponentSideEffect("…")]` reason on the
       component. Dispose the module reference and guard `JSDisconnectedException`. No edits to
       FluentUI internals.
-- [ ] CSS in the isolated stylesheet: fixed to the chosen side, full height, width from a token,
+- [x] CSS in the isolated stylesheet: fixed to the chosen side, full height, width from a token,
       `--twe-paper`, `--twe-shadow`, `--twe-rule`/border token, spacing from `--twe-space-*`,
       header title at 600 in `--twe-ink`, a body that scrolls, a footer with a top border and a
       flex gap. Narrow screens: full width. Slide-in via transform, disabled under
       `prefers-reduced-motion`. Add tokens (`--twe-drawer-width`, `--twe-scrim`, a drawer z
       layer) to `tokens.css` only if needed. No hex values and no `<style>`.
-- [ ] Style guide: add a "Drawers" card (after "Empty States") with one opener button and one
+- [x] Style guide: add a "Drawers" card (after "Empty States") with one opener button and one
       drawer containing a short body and a footer with a close button. The opener dispatches
       `SetActiveModal`, `IsOpen` reads `ActiveModalId`, `OnClose` and the footer button
       dispatch `CloseModal`. No new local field. Do not extend the StyleGuidePage contract
       (379-017).
-- [ ] Add a row to `components/overview.md`.
-- [ ] Render tests in `components/drawer-render-tests.cs`. They pin only what the static
+- [x] Add a row to `components/overview.md`.
+- [x] Render tests in `components/drawer-render-tests.cs`. They pin only what the static
       render shows:
   - Closed: no panel markup (or a closed dialog), and no title text.
   - Open: root carries `twe-drawer`, the side modifier, the title, `aria-modal`, and
@@ -149,11 +161,11 @@ drawer where a real in-page edit form appears.
   - Footer is omitted when unset and present when set.
   - `Class` and additional attributes (`data-qa`) merge on the root.
   - The close button has `aria-label="Close"` and the icon is `aria-hidden`.
-- [ ] One Playwright test in
+- [x] One Playwright test in
       `tests/container-apps/web/web-spa-playwright-tests/` (model: `ask-focus-playwright-tests.cs`
       and its sign-in helper) for focus-in, Escape, focus-return, and Tab containment on the
       style-guide drawer.
-- [ ] Gates:
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
@@ -181,6 +193,19 @@ possible, and this task adds one.
 ## Session
 
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
+- Implemented the native dialog drawer, the style-guide card, the render tests, and the Playwright focus test (2026-10-23). The shell is `display: contents`, so the module moves the dialog onto `document.body` before `showModal`. Chromium still does not wrap Tab out of a `fluent-button` shadow host, so the module wraps Tab.
+
+## Results
+
+`components/elements/Drawer.razor` is a native `<dialog class="twe-drawer">`. Open state stays with the caller (`IsOpen` and `OnClose`). The style guide Drawers card, after Empty States, opens it through `SetActiveModal` and `ActiveModalId`, and both close paths dispatch `CloseModal`. Width comes from `--twe-drawer-width` and `--twe-drawer-width-wide`. The scrim is `--twe-scrim`. There is no drawer z-index token: a modal dialog paints in the top layer. Body scroll locks with `body:has(dialog.twe-drawer:modal)`.
+
+`ModalContainer` is unchanged. It still closes on a backdrop click and exposes `role="dialog"`, and it still has no Escape handling, no focus move, no focus return, and no inert background.
+
+### How to validate
+
+Smoke: `./bin/dev build`; `./bin/dev template-smoke`; `ganda repo audit`; `dotnet test -c Debug --nologo -- --filter-class Drawer_Should_` in `tests/container-apps/web/web-spa-integration-tests`; `dotnet test -c Debug --nologo -- --filter-class StyleGuideDrawer_Given_Wasm` in `tests/container-apps/web/web-spa-playwright-tests`; `git diff origin/master -- source tests | rg -i crunchit`.
+
+Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. The portal-name search prints nothing.
 
 ## Notes
 
