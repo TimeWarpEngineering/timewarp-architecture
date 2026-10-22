@@ -105,8 +105,7 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
 
 - Round 1: Blocked — open M1, M2
 - Fix pass: M1 and M2 are addressed on this branch. Round 2 is the host review node.
-- Round 2: M1, M2 verified fixed; no new findings. Disposition clean.
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source is under
