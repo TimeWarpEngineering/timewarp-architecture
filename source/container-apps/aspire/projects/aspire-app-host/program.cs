@@ -303,9 +303,11 @@
 // Migrations are the published bundle on the direct connection (`dev deploy migrate --target aca-neon`);
 // there is no firewall rule. `dev publish aca-neon` writes artifacts/aspire-output/aca-neon.
 // workflow.yml uploads that Bicep and the SQL script beside the bundle, not the bundle. The
-// environment's ACR Basic registry is not free. Aspire 13.6.2 rejects a non-ACR registry on this
-// environment (AzureContainerAppEnvironmentResource.ContainerRegistry), so ghcr.io is not a
-// substitute; the operator guide records that and the ACR Basic cost.
+// environment's ACR Basic registry is not free. Task 400: WithContainerRegistry on each project
+// (a ghcr.io ContainerRegistryResource) still publishes aca-env-acr at SKU Basic, and each
+// container app's registries entry stays the ACR endpoint plus a managed identity. The environment
+// property AzureContainerAppEnvironmentResource.ContainerRegistry throws for a non-ACR registry
+// attached to the environment itself. The operator guide records both and the ACR Basic cost.
 #endregion
 
 namespace TimeWarp.Architecture.Aspire;
