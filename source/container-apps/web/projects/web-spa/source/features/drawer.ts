@@ -8,8 +8,12 @@
 // Show moves the dialog onto document.body before showModal. Blazor keeps the element
 // reference, so later renders update it there. Show waits until the dismiss button's custom
 // element is defined, so the first focusable control exists when the browser moves focus in.
+// That wait can outlive a close. wantOpen records the caller's last request: Show sets it,
+// Close and Dispose clear it, and a native close this module did not start clears it too.
+// The deferred show returns without showModal when the flag is clear.
 // Close calls close, which returns focus to the opener. Both no-op when the dialog is already
-// in that state.
+// in that state. A close this module starts (Close, Dispose, or the move onto document.body)
+// does not call RequestClose. Any other close, such as a form with method dialog, does.
 // Chromium still does not wrap Tab when the focused control is a closed-shadow host
 // (fluent-button), even after the dialog matches :modal on document.body. A capture-phase
 // keydown wraps Tab and Shift+Tab between the first and last tab stop in the dialog.
@@ -32,12 +36,26 @@ export interface DrawerHandle {
 }
 
 export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle {
+  let disposed = false;
+  let wantOpen = false;
+  let moduleClosing = false;
+
+  const closeFromModule = (): void => {
+    if (!dialog.open) {
+      return;
+    }
+
+    moduleClosing = true;
+    try {
+      dialog.close();
+    } finally {
+      moduleClosing = false;
+    }
+  };
+
   const placeOnBody = (): void => {
     if (dialog.parentElement !== document.body) {
-      if (dialog.open) {
-        dialog.close();
-      }
-
+      closeFromModule();
       document.body.appendChild(dialog);
     }
   };
@@ -115,8 +133,6 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
     return false;
   };
 
-  let disposed = false;
-
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key !== "Tab" || disposed) {
       return;
@@ -139,12 +155,22 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
     }
   };
 
+  const onDialogClose = (): void => {
+    if (moduleClosing || disposed) {
+      return;
+    }
+
+    wantOpen = false;
+    host.invokeMethodAsync("RequestClose").catch(() => undefined);
+  };
+
   dialog.addEventListener("cancel", onCancel);
   dialog.addEventListener("click", onClick);
   dialog.addEventListener("keydown", onKeyDown, true);
+  dialog.addEventListener("close", onDialogClose);
 
   const show = (): void => {
-    if (disposed || !dialog.isConnected || dialog.open) {
+    if (disposed || !wantOpen || !dialog.isConnected || dialog.open) {
       return;
     }
 
@@ -154,6 +180,7 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
 
   return {
     Show(): void {
+      wantOpen = true;
       placeOnBody();
       if (customElements.get("fluent-button")) {
         show();
@@ -165,18 +192,17 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
       }).catch(() => undefined);
     },
     Close(): void {
-      if (dialog.open) {
-        dialog.close();
-      }
+      wantOpen = false;
+      closeFromModule();
     },
     Dispose(): void {
       disposed = true;
+      wantOpen = false;
       dialog.removeEventListener("cancel", onCancel);
       dialog.removeEventListener("click", onClick);
       dialog.removeEventListener("keydown", onKeyDown, true);
-      if (dialog.open) {
-        dialog.close();
-      }
+      dialog.removeEventListener("close", onDialogClose);
+      closeFromModule();
     },
   };
 }

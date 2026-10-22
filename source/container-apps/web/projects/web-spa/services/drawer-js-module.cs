@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// Same import-a-named-export shape as CommandPaletteJsModule. Bind attaches cancel and
-// backdrop listeners and returns a handle. The component keeps the handle, calls Show when
-// IsOpen becomes true and Close when it becomes false, and disposes the handle with the
-// component. The module reference is released after Bind; the handle object stays.
+// Same import-a-named-export shape as CommandPaletteJsModule. Bind attaches cancel,
+// backdrop, and close listeners and returns a handle. The component keeps the handle, calls
+// Show when IsOpen becomes true and Close when it becomes false, and disposes the handle
+// with the component. The module reference is released after Bind; the handle object stays.
 // [SideEffectService]: Drawer is the caller and opts out with [DirectComponentSideEffect].
 // showModal, close, and the listeners are presentational. The page's OnClose callback is
 // what dispatches the state action.

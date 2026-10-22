@@ -1,6 +1,7 @@
 #region Purpose
 // Browser proof that the style-guide drawer moves focus in, keeps Tab inside, and returns
-// focus to the opener on Escape.
+// focus to the opener on Escape. The same run checks the inline edges under both writing
+// directions, a native dialog close, and a show that resolves only after Close.
 #endregion
 
 #region Design
@@ -10,6 +11,12 @@
 // Administrator, which does not include developer.access, so the test adds the Developer role
 // on the host store and loads /StyleGuide with a full navigation. Focus checks retry because
 // showModal runs after the dialog's script binds.
+// End sits on the inline-end edge and Start on the inline-start edge. The test flips the
+// document direction and the side class, then reads the settled box and the inner border.
+// A form with method dialog closes the dialog without the module's Close, and the title
+// leaves once the caller's flag drops. A direct Bind, with fluent-button still undefined,
+// proves a late show does not call showModal after Close, and a close the module did not
+// start asks the host.
 #endregion
 
 namespace StyleGuideDrawerPlaywright_;
@@ -61,6 +68,7 @@ public class StyleGuideDrawer_Given_Wasm
     ILocator headerClose = page.Locator("[data-qa=DrawerClose]");
     ILocator footerClose = page.Locator("[data-qa=DrawerFooterClose]");
     await Assertions.Expect(headerClose).ToBeFocusedAsync(new LocatorAssertionsToBeFocusedOptions { Timeout = 30_000 });
+    await AssertInlineEdgesAsync(page);
 
     List<string> stops = [];
     bool sawFooter = false;
@@ -90,6 +98,199 @@ public class StyleGuideDrawer_Given_Wasm
     await page.Keyboard.PressAsync("Escape");
     await Assertions.Expect(openDialog).ToHaveCountAsync(0, new LocatorAssertionsToHaveCountOptions { Timeout = 10_000 });
     await Assertions.Expect(opener).ToBeFocusedAsync(new LocatorAssertionsToBeFocusedOptions { Timeout = 10_000 });
+
+    await opener.ClickAsync();
+    await Assertions.Expect(openDialog).ToHaveCountAsync(1, new LocatorAssertionsToHaveCountOptions { Timeout = 30_000 });
+    bool inserted = await page.EvaluateAsync<bool>(
+      """
+      () => {
+        const body = document.querySelector("dialog.twe-drawer[open] .twe-drawer__body");
+        if (!body) {
+          return false;
+        }
+
+        const form = document.createElement("form");
+        form.method = "dialog";
+        const button = document.createElement("button");
+        button.type = "submit";
+        button.setAttribute("data-qa", "DrawerNativeClose");
+        button.textContent = "Native close";
+        form.append(button);
+        body.append(form);
+        return true;
+      }
+      """);
+    inserted.ShouldBeTrue();
+    await page.Locator("[data-qa=DrawerNativeClose]").ClickAsync();
+    await Assertions.Expect(page.Locator("dialog.twe-drawer")).Not.ToContainTextAsync(
+      "Sample drawer",
+      new LocatorAssertionsToContainTextOptions { Timeout = 10_000 });
+    await Assertions.Expect(openDialog).ToHaveCountAsync(0);
+
+    await AssertLateShowStaysClosedAsync(page);
+  }
+
+  private static async Task AssertInlineEdgesAsync(IPage page)
+  {
+    await WaitUntilFlushAsync(page, flushRight: true);
+    await AssertInnerBorderAsync(page, onInlineStart: true);
+
+    await page.EvaluateAsync("() => { document.documentElement.dir = 'rtl'; }");
+    await WaitUntilFlushAsync(page, flushRight: false);
+    await AssertInnerBorderAsync(page, onInlineStart: true);
+
+    await page.EvaluateAsync(
+      """
+      () => {
+        const dialog = document.querySelector("dialog.twe-drawer[open]");
+        dialog.classList.remove("twe-drawer--end");
+        dialog.classList.add("twe-drawer--start");
+      }
+      """);
+    await WaitUntilFlushAsync(page, flushRight: true);
+    await AssertInnerBorderAsync(page, onInlineStart: false);
+
+    await page.EvaluateAsync(
+      """
+      () => {
+        document.documentElement.dir = "ltr";
+        const dialog = document.querySelector("dialog.twe-drawer[open]");
+        dialog.classList.remove("twe-drawer--start");
+        dialog.classList.add("twe-drawer--end");
+      }
+      """);
+    await WaitUntilFlushAsync(page, flushRight: true);
+    await AssertInnerBorderAsync(page, onInlineStart: true);
+  }
+
+  private static async Task AssertInnerBorderAsync(IPage page, bool onInlineStart)
+  {
+    double[] widths = await page.EvaluateAsync<double[]>(
+      """
+      () => {
+        const dialog = document.querySelector("dialog.twe-drawer[open]");
+        const style = getComputedStyle(dialog);
+        return [
+          Number.parseFloat(style.borderInlineStartWidth),
+          Number.parseFloat(style.borderInlineEndWidth),
+        ];
+      }
+      """);
+    if (onInlineStart)
+    {
+      widths[0].ShouldBe(1, 0.2);
+      widths[1].ShouldBe(0, 0.2);
+      return;
+    }
+
+    widths[0].ShouldBe(0, 0.2);
+    widths[1].ShouldBe(1, 0.2);
+  }
+
+  private static Task WaitUntilFlushAsync(IPage page, bool flushRight) =>
+    page.WaitForFunctionAsync(
+      """
+      (flushRight) => {
+        const dialog = document.querySelector("dialog.twe-drawer[open]");
+        if (!dialog) {
+          return false;
+        }
+
+        const rect = dialog.getBoundingClientRect();
+        const width = document.documentElement.clientWidth;
+        const transform = getComputedStyle(dialog).transform;
+        const idle = transform === "none" || transform === "matrix(1, 0, 0, 1, 0, 0)";
+        if (!idle) {
+          return false;
+        }
+
+        if (flushRight) {
+          return Math.abs(rect.right - width) <= 1 && rect.left > 64;
+        }
+
+        return rect.left <= 1 && width - rect.right > 64;
+      }
+      """,
+      flushRight,
+      new PageWaitForFunctionOptions { Timeout = 5_000 });
+
+  private static async Task AssertLateShowStaysClosedAsync(IPage page)
+  {
+    string result = await page.EvaluateAsync<string>(
+      """
+      async () => {
+        const realGet = customElements.get.bind(customElements);
+        const realWhenDefined = customElements.whenDefined.bind(customElements);
+        const frames = () => new Promise((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        });
+        let release = () => undefined;
+        const holdButton = () => new Promise((resolve) => {
+          release = resolve;
+        });
+        customElements.get = (name) => name === "fluent-button" ? undefined : realGet(name);
+        customElements.whenDefined = (name) => name === "fluent-button" ? holdButton() : realWhenDefined(name);
+
+        const dialog = document.createElement("dialog");
+        dialog.className = "twe-drawer twe-drawer--end";
+        dialog.append(document.createElement("button"));
+        document.body.append(dialog);
+        const calls = [];
+        const host = { invokeMethodAsync: async (name) => { calls.push(name); } };
+        try {
+          const module = await import("/js/features/drawer.js");
+          const handle = module.Bind(dialog, host);
+
+          handle.Show();
+          const stayedClosedUntilDefined = dialog.open === false;
+          release();
+          await frames();
+          const openedAfterDefine = dialog.open === true;
+          handle.Close();
+          const moduleCloseAskedHost = calls.length > 0;
+
+          handle.Show();
+          const stayedClosedOnSecondShow = dialog.open === false;
+          handle.Close();
+          release();
+          await frames();
+          const stayedClosedAfterLateShow = dialog.open === false;
+
+          handle.Show();
+          release();
+          await frames();
+          dialog.close();
+          await frames();
+          const nativeCloseAskedHost = calls.includes("RequestClose");
+          const stayedClosedAfterNativeClose = dialog.open === false;
+          handle.Dispose();
+
+          return JSON.stringify({
+            stayedClosedUntilDefined,
+            openedAfterDefine,
+            moduleCloseAskedHost,
+            stayedClosedOnSecondShow,
+            stayedClosedAfterLateShow,
+            nativeCloseAskedHost,
+            stayedClosedAfterNativeClose,
+          });
+        } finally {
+          customElements.get = realGet;
+          customElements.whenDefined = realWhenDefined;
+          dialog.remove();
+        }
+      }
+      """);
+
+    using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(result);
+    System.Text.Json.JsonElement root = document.RootElement;
+    root.GetProperty("stayedClosedUntilDefined").GetBoolean().ShouldBeTrue();
+    root.GetProperty("openedAfterDefine").GetBoolean().ShouldBeTrue();
+    root.GetProperty("moduleCloseAskedHost").GetBoolean().ShouldBeFalse();
+    root.GetProperty("stayedClosedOnSecondShow").GetBoolean().ShouldBeTrue();
+    root.GetProperty("stayedClosedAfterLateShow").GetBoolean().ShouldBeTrue();
+    root.GetProperty("nativeCloseAskedHost").GetBoolean().ShouldBeTrue();
+    root.GetProperty("stayedClosedAfterNativeClose").GetBoolean().ShouldBeTrue();
   }
 
   private static Task<string> FocusedStopAsync(IPage page) =>

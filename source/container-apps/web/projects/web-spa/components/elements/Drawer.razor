@@ -1,7 +1,7 @@
 @namespace TimeWarp.Architecture.Components
 @implements IAsyncDisposable
 @inject IJSRuntime JsRuntime
-@attribute [DirectComponentSideEffect("showModal, close, the cancel event, backdrop clicks, and the Tab wrap are presentational DOM on this dialog. Open state stays with the caller: OnClose is the only signal, and the page dispatches the state action.")]
+@attribute [DirectComponentSideEffect("showModal, close, the cancel event, a native close this module did not start, backdrop clicks, and the Tab wrap are presentational DOM on this dialog. Open state stays with the caller: OnClose is the only signal, and the page dispatches the state action.")]
 
 @*
   Purpose: Slide-over shell — a title, a scrolling body, and an optional footer, beside the page.
@@ -14,9 +14,10 @@
   calls showModal through DrawerJsModule; closing calls close, which returns focus to the
   opener. The module moves the dialog onto document.body first. The app shell is
   display:contents, and a modal dialog under that ancestor does not enter the top layer, so
-  Tab would leave the panel. Content stays until that close runs, then drops. Escape and a
-  backdrop click are forwarded as OnClose; the browser is not allowed to close the dialog
-  on its own.
+  Tab would leave the panel. Content stays until that close runs, then drops. Escape is
+  the cancel event and is held so the caller still owns the flag. A backdrop click is
+  forwarded the same way. A native close the module did not start, such as a form with
+  method dialog, is forwarded as OnClose so the caller's flag drops with the dialog.
   The title id is minted per instance. The heading level is 2. The root is labelled by that
   heading and carries aria-modal while open. End and medium add twe-drawer--end and no size
   class. Start adds twe-drawer--start. Wide adds twe-drawer--wide. Class is appended, and
@@ -60,7 +61,9 @@
     }
   }
 
-  /// <summary>Called from drawer.js when Escape or the backdrop asks to close.</summary>
+  /// <summary>
+  /// Called from drawer.js when Escape, the backdrop, or a native close the module did not start asks to close.
+  /// </summary>
   [JSInvokable]
   public Task RequestClose() => OnClose.InvokeAsync();
 

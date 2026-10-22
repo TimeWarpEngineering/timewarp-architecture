@@ -2,7 +2,9 @@
    The dialog is the box. The inner panel is the flex column, because flex on the dialog
    drops the browser Tab trap. ::backdrop is the scrim. A modal dialog paints in the
    top layer, so this sheet sets no z-index. Viewports up to 600px take the full width.
-   The slide runs when the dialog is open. Closing drops the open state immediately.
+   End and Start are inline edges: inset-inline and border-inline follow the writing
+   direction. The slide runs when the dialog is open, and :dir(rtl) plays it from the
+   opposite physical side. Closing drops the open state immediately.
    prefers-reduced-motion drops the slide. */
 
 dialog.twe-drawer:not([open]) {
@@ -32,17 +34,27 @@ dialog.twe-drawer.twe-drawer--wide[open] {
 }
 
 dialog.twe-drawer.twe-drawer--end[open] {
-  right: 0;
-  left: auto;
-  border-left: 1px solid var(--twe-rule);
+  inset-inline-end: 0;
+  inset-inline-start: auto;
+  border-inline-start: 1px solid var(--twe-rule);
   animation: twe-drawer-in-end 180ms ease-out;
 }
 
 dialog.twe-drawer.twe-drawer--start[open] {
-  left: 0;
-  right: auto;
-  border-right: 1px solid var(--twe-rule);
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  border-inline-end: 1px solid var(--twe-rule);
   animation: twe-drawer-in-start 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.twe-drawer.twe-drawer--end[open]:dir(rtl) {
+    animation: twe-drawer-in-start 180ms ease-out;
+  }
+
+  dialog.twe-drawer.twe-drawer--start[open]:dir(rtl) {
+    animation: twe-drawer-in-end 180ms ease-out;
+  }
 }
 
 dialog.twe-drawer::backdrop {

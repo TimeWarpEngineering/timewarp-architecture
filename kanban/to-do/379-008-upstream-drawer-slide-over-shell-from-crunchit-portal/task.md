@@ -12,6 +12,8 @@ The only adoption is the style guide: a Drawers card after Empty States, with on
 
 Done means the component, the side and size enums, the script and its C# wrapper, token-only CSS, the style-guide card, the overview row, the render tests, and the browser test are in place; `./bin/dev build`, `./bin/dev template-smoke`, and `ganda repo audit` pass; and the `source` and `tests` diff contains no portal product name. The existing modal overlay stays unchanged. It still has no Escape or focus handling, and this task records that gap instead of fixing it.
 
+This fix pass keeps that contract and closes the three open review findings. A show that is still waiting for the dismiss button's custom element must leave the dialog closed when `Close` or `Dispose` has already run. End and Start sit on the inline edges: the panel, its inner border, and the slide follow the writing direction, and under a right-to-left document the slide comes from the opposite physical side. A native close this script did not start, including a form with `method="dialog"` inside the body, calls the same `OnClose` path so the caller's flag and the style-guide modal id clear.
+
 ## Description
 
 Port Crunchit's `Drawer` into the template as a native, brand-neutral slide-over shell, so a
@@ -165,6 +167,9 @@ drawer where a real in-page edit form appears.
       `tests/container-apps/web/web-spa-playwright-tests/` (model: `ask-focus-playwright-tests.cs`
       and its sign-in helper) for focus-in, Escape, focus-return, and Tab containment on the
       style-guide drawer.
+- [x] A deferred `show` does not call `showModal` after `Close` or `Dispose`.
+- [x] End and Start use inline insets and borders, and the slide flips under `:dir(rtl)`.
+- [x] A native close the module did not start calls `RequestClose`.
 - [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
@@ -196,6 +201,8 @@ possible, and this task adds one.
 - Implemented the native dialog drawer, the style-guide card, the render tests, and the Playwright focus test (2026-10-23). The shell is `display: contents`, so the module moves the dialog onto `document.body` before `showModal`. Chromium still does not wrap Tab out of a `fluent-button` shadow host, so the module wraps Tab.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T20:37:52Z
 - Review oracle round 1 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 3; the session id is not exposed in print mode. Gates re-run: build 0/0, render tests 7/7, Playwright 1/1, template-smoke passed, audit passed, portal-name grep printed nothing. Findings: 0 bug, 2 suggestion, 2 nit. M4 is wontfix; M1, M2, and M3 are open and need a fix pass. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T20:46:14Z
+- Fix pass for review round 1 (2026-10-23). M1: `wantOpen` cancels a deferred `showModal` after `Close` or `Dispose`. M2: End and Start use inline insets and borders, and `:dir(rtl)` plays the slide from the opposite physical side. M3: a `close` the module did not start calls `RequestClose`. M4 stays wontfix. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed, portal-name grep printed nothing.
 
 ## Results
 
@@ -203,18 +210,24 @@ possible, and this task adds one.
 
 `ModalContainer` is unchanged. It still closes on a backdrop click and exposes `role="dialog"`, and it still has no Escape handling, no focus move, no focus return, and no inert background.
 
+The script keeps a `wantOpen` flag. `Show` sets it, and `Close` and `Dispose` clear it, so a `show` that is still waiting on `fluent-button` returns without `showModal` after the caller has closed. End and Start use `inset-inline-*` and `border-inline-*`. Under `:dir(rtl)` the slide comes from the opposite physical side, and `prefers-reduced-motion` still drops it. A `close` event the module did not start, such as a form with `method="dialog"`, calls `RequestClose`. `Close`, `Dispose`, and the move onto `document.body` do not.
+
 ### How to validate
 
 Smoke: `./bin/dev build`; `./bin/dev template-smoke`; `ganda repo audit`; `dotnet test -c Debug --nologo -- --filter-class Drawer_Should_` in `tests/container-apps/web/web-spa-integration-tests`; `dotnet test -c Debug --nologo -- --filter-class StyleGuideDrawer_Given_Wasm` in `tests/container-apps/web/web-spa-playwright-tests`; `git diff origin/master -- source tests | rg -i crunchit`.
 
-Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. The portal-name search prints nothing.
+Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. End sits on the right in LTR and the left in RTL, Start is the mirror, and the inner border follows the inline edge. A `method="dialog"` submit removes the title and leaves the dialog shut. A show that resolves only after `Close` stays shut, and a native `close` asks the host. The portal-name search prints nothing.
 
 ### Review
 
-Review is in progress. There is no disposition yet.
+Round 1 found M1, M2, and M3. This fix pass implements them. Round 2 has not run. M4 stays wontfix.
 
-- Round 1: general reviewer, effort 3. Open: M1 (suggestion, a deferred `showModal` can open after `Close`), M2 (suggestion, the End and Start sides use physical CSS and break under RTL), and M3 (nit, no `close` listener to sync a native close back to the caller). Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
+- Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented in this pass. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
 - Paths: `review/review-framework.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix. Round 2 has not run.
 
 ## Notes
 
