@@ -47,10 +47,18 @@
   when the panel is expanded, TimeWarpPage.razor.css covers the viewport with one full-screen
   treatment on `.fluent-layout-item[area=aside]`. `.twe-shell` stays `display: contents`.
   The `twe-shell--ask` class is only the hook for that treatment. It does not change display.
+  Description and Actions are optional header slots. Both unset leaves the title and breadcrumb
+  markup unchanged, so existing pages keep one h1 and no extra row. Either slot set lays the
+  title and description on the left and the actions (wrapping) on the right. TitleBlock is the
+  one copy of the document title and the h1, rendered from both branches so they cannot drift.
+  This component still owns the only h1. Callers put buttons in Actions; this shell does not
+  handle their clicks.
 *@
 
 @code {
   [Parameter] public string? Title { get; set; }
+  [Parameter] public RenderFragment? Description { get; set; }
+  [Parameter] public RenderFragment? Actions { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
   [Parameter] public bool ShowInBreadcrumbs { get; set; } = true;
@@ -78,6 +86,21 @@
       await NoSubRouteState.PushRouteInfo();
     }
   }
+
+  private RenderFragment TitleBlock => @<text>
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+      @if (ShowInBreadcrumbs)
+      {
+        <TwPageTitle>@Title</TwPageTitle>
+      }
+      else
+      {
+        <PageTitle>@Title</PageTitle>
+      }
+      <h1 class="twe-page__title">@Title</h1>
+    }
+  </text>;
 }
 
 <CascadingValue Value=@this>
@@ -120,17 +143,25 @@
 
       <FluentLayoutItem Area="LayoutArea.Content">
         <div class="twe-page">
-          @if (!string.IsNullOrWhiteSpace(Title))
+          @if (Description is null && Actions is null)
           {
-            @if (ShowInBreadcrumbs)
-            {
-              <TwPageTitle>@Title</TwPageTitle>
-            }
-            else
-            {
-              <PageTitle>@Title</PageTitle>
-            }
-            <h1 class="twe-page__title">@Title</h1>
+            @TitleBlock
+          }
+          else
+          {
+            <div class="twe-page__header">
+              <div class="twe-page__lead">
+                @TitleBlock
+                @if (Description is not null)
+                {
+                  <div class="twe-page__description">@Description</div>
+                }
+              </div>
+              @if (Actions is not null)
+              {
+                <div class="twe-page__actions">@Actions</div>
+              }
+            </div>
           }
           @if (ShowInBreadcrumbs)
           {

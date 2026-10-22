@@ -115,108 +115,111 @@
 }
 
 <TimeWarpPage Title="Feedback review">
-  <div class="twe-stack">
-    <Section Title="Filter" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
-      <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Wrap="true">
-        <FormField Label="Status">
-          <FluentSelect TOption="string" TValue="string"
-            Items="StatusChoices"
-            OptionText="@(static value => StatusLabel(value))"
-            Value="@StatusValue"
-            ValueChanged="@OnStatusChanged"
-            AriaLabel="Status"
-            data-qa="AdminFeedbackStatus" />
-        </FormField>
-        <FormField Label="Kind">
-          <FluentSelect TOption="string" TValue="string"
-            Items="KindChoices"
-            OptionText="@(static value => KindLabel(value))"
-            Value="@KindValue"
-            ValueChanged="@OnKindChanged"
-            AriaLabel="Kind"
-            data-qa="AdminFeedbackKind" />
-        </FormField>
-        <FormField Label="Severity">
-          <FluentSelect TOption="string" TValue="string"
-            Items="SeverityChoices"
-            OptionText="@(static value => SeverityLabel(value))"
-            Value="@SeverityValue"
-            ValueChanged="@OnSeverityChanged"
-            AriaLabel="Severity"
-            data-qa="AdminFeedbackSeverity" />
-        </FormField>
-        <FormField Label="Show closed">
-          <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
-            ValueChanged="@OnIncludeClosedChanged"
-            AriaLabel="Show closed"
-            data-qa="AdminFeedbackIncludeClosed" />
-        </FormField>
-      </FluentStack>
-    </Section>
-    <Section Title="Feedback">
-      @if (FeedbackAdminState.ListLoadError is not null)
-      {
-        <p data-qa="AdminFeedbackLoadError">@FeedbackAdminState.ListLoadError</p>
-      }
-      else
-      {
-        <DataGridFrame>
-          <FluentDataGrid TGridItem="ListFeedback.Item"
-            Items="@GridItems"
-            RefreshItems="@OnGridRefreshAsync"
-            Loading="@IsListLoading"
-            ItemKey="@(static row => row.FeedbackItemId)"
-            DisplayMode="DataGridDisplayMode.Grid"
-            GridTemplateColumns="@GridColumns"
-            data-qa="AdminFeedbackTable">
-            <ChildContent>
-              <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
-                Sortable="true" SortBy="@TitleSort"
-                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
-                <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
-              </TemplateColumn>
-              <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)"
-                Sortable="true" SortBy="@KindSort"
-                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Kind)" InitialSortDirection="@SortDirection">
-                @context.Kind
-              </TemplateColumn>
-              <TemplateColumn Title="Status" ColumnId="@nameof(FeedbackListSortColumn.Status)"
-                Sortable="true" SortBy="@StatusSort"
-                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Status)" InitialSortDirection="@SortDirection">
-                @context.Status
-              </TemplateColumn>
-              <TemplateColumn Title="Severity">
-                <span data-qa="AdminFeedbackRowSeverity">@context.Severity</span>
-              </TemplateColumn>
-              <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)"
-                Sortable="true" SortBy="@FiledSort"
-                IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
-                @context.FiledAt.ToString("u")
-              </TemplateColumn>
-              <TemplateColumn Title="Owner" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
-                <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />
-              </TemplateColumn>
-            </ChildContent>
-            <EmptyContent>
-              <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
-            </EmptyContent>
-          </FluentDataGrid>
-        </DataGridFrame>
-      }
-      @if (FeedbackAdminState.TotalCount > 0 || FeedbackAdminState.HasPreviousPage)
-      {
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
-          <FluentButton Appearance="ButtonAppearance.Outline"
-            Disabled="@(!FeedbackAdminState.HasPreviousPage)"
-            data-qa="AdminFeedbackPrevious"
-            OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page - 1))">Previous</FluentButton>
-          <span data-qa="AdminFeedbackPage">Page @FeedbackAdminState.Page · @FeedbackAdminState.TotalCount items</span>
-          <FluentButton Appearance="ButtonAppearance.Outline"
-            Disabled="@(!FeedbackAdminState.HasNextPage)"
-            data-qa="AdminFeedbackNext"
-            OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page + 1))">Next</FluentButton>
+  <Description>Review filings. Filter by status, kind, and severity.</Description>
+  <ChildContent>
+    <div class="twe-stack">
+      <Section Title="Filter" LoadingActionType="typeof(FeedbackAdminState.FetchFeedbackListActionSet.Action)">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="16" Wrap="true">
+          <FormField Label="Status">
+            <FluentSelect TOption="string" TValue="string"
+              Items="StatusChoices"
+              OptionText="@(static value => StatusLabel(value))"
+              Value="@StatusValue"
+              ValueChanged="@OnStatusChanged"
+              AriaLabel="Status"
+              data-qa="AdminFeedbackStatus" />
+          </FormField>
+          <FormField Label="Kind">
+            <FluentSelect TOption="string" TValue="string"
+              Items="KindChoices"
+              OptionText="@(static value => KindLabel(value))"
+              Value="@KindValue"
+              ValueChanged="@OnKindChanged"
+              AriaLabel="Kind"
+              data-qa="AdminFeedbackKind" />
+          </FormField>
+          <FormField Label="Severity">
+            <FluentSelect TOption="string" TValue="string"
+              Items="SeverityChoices"
+              OptionText="@(static value => SeverityLabel(value))"
+              Value="@SeverityValue"
+              ValueChanged="@OnSeverityChanged"
+              AriaLabel="Severity"
+              data-qa="AdminFeedbackSeverity" />
+          </FormField>
+          <FormField Label="Show closed">
+            <FluentCheckbox Value="@FeedbackAdminState.IncludeClosed"
+              ValueChanged="@OnIncludeClosedChanged"
+              AriaLabel="Show closed"
+              data-qa="AdminFeedbackIncludeClosed" />
+          </FormField>
         </FluentStack>
-      }
-    </Section>
-  </div>
+      </Section>
+      <Section Title="Feedback">
+        @if (FeedbackAdminState.ListLoadError is not null)
+        {
+          <p data-qa="AdminFeedbackLoadError">@FeedbackAdminState.ListLoadError</p>
+        }
+        else
+        {
+          <DataGridFrame>
+            <FluentDataGrid TGridItem="ListFeedback.Item"
+              Items="@GridItems"
+              RefreshItems="@OnGridRefreshAsync"
+              Loading="@IsListLoading"
+              ItemKey="@(static row => row.FeedbackItemId)"
+              DisplayMode="DataGridDisplayMode.Grid"
+              GridTemplateColumns="@GridColumns"
+              data-qa="AdminFeedbackTable">
+              <ChildContent>
+                <TemplateColumn Title="Title" ColumnId="@nameof(FeedbackListSortColumn.Title)"
+                  Sortable="true" SortBy="@TitleSort"
+                  IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Title)" InitialSortDirection="@SortDirection">
+                  <FluentLink Href="@($"/Admin/Feedback/{context.FeedbackItemId:D}")" data-qa="AdminFeedbackRow" @attributes="RowMark(context)">@context.Title</FluentLink>
+                </TemplateColumn>
+                <TemplateColumn Title="Kind" ColumnId="@nameof(FeedbackListSortColumn.Kind)"
+                  Sortable="true" SortBy="@KindSort"
+                  IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Kind)" InitialSortDirection="@SortDirection">
+                  @context.Kind
+                </TemplateColumn>
+                <TemplateColumn Title="Status" ColumnId="@nameof(FeedbackListSortColumn.Status)"
+                  Sortable="true" SortBy="@StatusSort"
+                  IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.Status)" InitialSortDirection="@SortDirection">
+                  @context.Status
+                </TemplateColumn>
+                <TemplateColumn Title="Severity">
+                  <span data-qa="AdminFeedbackRowSeverity">@context.Severity</span>
+                </TemplateColumn>
+                <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)"
+                  Sortable="true" SortBy="@FiledSort"
+                  IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
+                  @context.FiledAt.ToString("u")
+                </TemplateColumn>
+                <TemplateColumn Title="Owner" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
+                  <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />
+                </TemplateColumn>
+              </ChildContent>
+              <EmptyContent>
+                <p data-qa="AdminFeedbackEmpty">No feedback matches this filter.</p>
+              </EmptyContent>
+            </FluentDataGrid>
+          </DataGridFrame>
+        }
+        @if (FeedbackAdminState.TotalCount > 0 || FeedbackAdminState.HasPreviousPage)
+        {
+          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalAlignment="VerticalAlignment.Center">
+            <FluentButton Appearance="ButtonAppearance.Outline"
+              Disabled="@(!FeedbackAdminState.HasPreviousPage)"
+              data-qa="AdminFeedbackPrevious"
+              OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page - 1))">Previous</FluentButton>
+            <span data-qa="AdminFeedbackPage">Page @FeedbackAdminState.Page · @FeedbackAdminState.TotalCount items</span>
+            <FluentButton Appearance="ButtonAppearance.Outline"
+              Disabled="@(!FeedbackAdminState.HasNextPage)"
+              data-qa="AdminFeedbackNext"
+              OnClick="@(() => GoToPageAsync(FeedbackAdminState.Page + 1))">Next</FluentButton>
+          </FluentStack>
+        }
+      </Section>
+    </div>
+  </ChildContent>
 </TimeWarpPage>
