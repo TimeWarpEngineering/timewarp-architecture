@@ -11,7 +11,7 @@ Dependencies are `TimeWarp.Mediator.Contracts` and `OneOf`.
 
 ## `[Operation]`
 
-Apply `[Operation(name, Description = ..., Group = ...)]` to the request class (`Query` or `Command`).
+Apply `[Operation(name, Description = ..., Group = ..., Title = ...)]` to the request class (`Query` or `Command`).
 
 - `name` is the canonical operation name. It is not an HTTP route, a CLI pattern, or an MCP tool name.
 - `Description` is the operation summary hosts show in `--capabilities`, OpenAPI, and MCP `tools/list`.
@@ -19,7 +19,34 @@ Apply `[Operation(name, Description = ..., Group = ...)]` to the request class (
   whitespace mean ungrouped. CLI, MCP, and HTTP hosts read the same value from the catalog. The group
   does not prefix the route pattern or the command name: the CLI command stays the operation name
   (`get_symbol`, not `symbols get_symbol`).
+- `Title` is the human-readable name hosts project to MCP `title`. Null, empty, and whitespace mean
+  no title. It is not the canonical name and not the summary.
 - Kind is not an attribute argument. Generators read it from the mediator interface on the request.
+
+## Tool hints
+
+`readOnlyHint` and `idempotentHint` come from the kind. The contract states the three hints the kind
+cannot supply. A generator reads them by metadata name.
+
+| Hint | Declaration | Catalog field | Unset |
+| --- | --- | --- | --- |
+| Title | `Title` on `[Operation]` | `OperationDescriptor.Title` | Null or whitespace |
+| Destructive | `[Destructive]`, `[Destructive(false)]` | `DestructiveHint` | Attribute absent. That is not false |
+| Open world | `[OpenWorld]`, `[OpenWorld(false)]` | `OpenWorldHint` | Attribute absent. MCP clients treat an omitted `openWorldHint` as true |
+
+`[Destructive]` and `[OpenWorld]` with no argument are true. `[Destructive(false)]` states that the
+operation only adds data. `[OpenWorld(false)]` states that it only touches local state.
+
+```csharp
+[Operation("rename_symbol", Description = "Rename a symbol across the solution.", Title = "Rename symbol")]
+[Destructive(false)]
+[OpenWorld(false)]
+public sealed class RenameSymbolCommand : ICommand<string> { }
+```
+
+Metadata names: `TimeWarp.Contracts.OperationAttribute` (named argument `Title`),
+`TimeWarp.Contracts.DestructiveAttribute`, and `TimeWarp.Contracts.OpenWorldAttribute`.
+The constructor parameters are `isDestructive` and `isOpenWorld`.
 
 ## Kind
 
@@ -59,6 +86,10 @@ projections of it, not separate schemas.
 - `OperationDescriptor.Group` is the purpose group from `[Operation]`. Null when the operation is
   ungrouped. A host reads it as metadata (CLI `groupPath`, MCP tool filtering). This package does
   not prefix a route or a command name with it.
+- `OperationDescriptor.Title`, `DestructiveHint`, and `OpenWorldHint` are the tool hints above.
+  Null means the request did not state that hint. A host omits null and still writes an explicit
+  false. The hints are operation facts, not `McpOperationBinding` fields, so a CLI catalog can
+  project them when MCP is unbound. They do not change the tool name.
 
 ## `IResponseRenderer<TResponse>`
 

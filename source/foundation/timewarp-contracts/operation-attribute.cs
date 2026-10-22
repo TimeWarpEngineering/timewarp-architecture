@@ -1,5 +1,5 @@
 #region Purpose
-// Canonical name, description, and purpose group of a transport-neutral operation.
+// Canonical name, description, purpose group, and title of a transport-neutral operation.
 #endregion
 
 #region Design
@@ -8,13 +8,17 @@
 // Group is purpose metadata for every transport. Null or whitespace means ungrouped, the same
 // IsNullOrWhiteSpace rule as the name. Hosts read it from the catalog. It never prefixes a
 // route pattern or a command name, so the CLI command stays the operation name.
+// Title is the human-readable name. Null or whitespace means no title, the same blank rule.
+// Destructive and open-world stay off this attribute. An attribute property cannot be bool?,
+// and an omitted hint is not false, so those two are DestructiveAttribute and OpenWorldAttribute.
+// Hosts copy Title and those attributes onto OperationDescriptor. They are not binding fields.
 // HTTP route, CLI pattern, and MCP tool name are bindings, filled by each host, not this attribute.
 #endregion
 
 namespace TimeWarp.Contracts;
 
 /// <summary>
-/// Canonical name, description, and purpose group of an operation.
+/// Canonical name, description, purpose group, and title of an operation.
 /// Apply to the request class (<c>Query</c> or <c>Command</c>).
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
@@ -43,6 +47,16 @@ public sealed class OperationAttribute : Attribute
   /// route pattern or the command name with it.
   /// </summary>
   public string? Group
+  {
+    get => field;
+    set => field = string.IsNullOrWhiteSpace(value) ? null : value;
+  }
+
+  /// <summary>
+  /// Human-readable title. Null or whitespace means the operation has no title.
+  /// Hosts project it to MCP <c>title</c>. It is not the canonical name and not <see cref="Description"/>.
+  /// </summary>
+  public string? Title
   {
     get => field;
     set => field = string.IsNullOrWhiteSpace(value) ? null : value;

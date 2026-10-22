@@ -828,4 +828,91 @@ public class ContractsGenerator_Tests
     generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
     return Task.CompletedTask;
   }
+
+  public static Task Should_Copy_Title_And_Tool_Hints_Without_Prefixing_The_Route()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class RenameSymbol
+          {
+              [TimeWarp.Contracts.Operation("rename_symbol", Description = "Rename a symbol.", Title = "Rename symbol")]
+              [TimeWarp.Contracts.Destructive(false)]
+              [TimeWarp.Contracts.OpenWorld(false)]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    MetadataReference[] operation = RealOperationReferences();
+    string generated = Run(source, extraReferences: operation);
+
+    generated.ShouldContain("public const string OperationName = \"rename_symbol\";");
+    generated.ShouldContain("public const string OperationDescription = \"Rename a symbol.\";");
+    generated.ShouldContain("public const string OperationTitle = \"Rename symbol\";");
+    generated.ShouldContain("public const bool OperationDestructive = false;");
+    generated.ShouldContain("public const bool OperationOpenWorld = false;");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    generated.ShouldNotContain("Rename symbol rename_symbol");
+    generated.ShouldNotContain("Rename symbol/api");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Copy_A_Bare_Hint_Attribute_As_True()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class PurgeCache
+          {
+              [TimeWarp.Contracts.Operation("purge_cache")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source, extraReferences: RealOperationReferences());
+
+    generated.ShouldContain("public const string OperationName = \"purge_cache\";");
+    generated.ShouldContain("public const bool OperationDestructive = true;");
+    generated.ShouldContain("public const bool OperationOpenWorld = true;");
+    generated.ShouldNotContain("OperationTitle");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Omit_Unset_Tool_Hints_And_A_Whitespace_Title()
+  {
+    const string source = """
+      using TimeWarp.Foundation.Features;
+
+      namespace Test.Features.Admin.Roles
+      {
+          public static partial class GetRoles
+          {
+              [TimeWarp.Contracts.Operation("roles.list", Description = "Lists roles.", Title = "  ")]
+              [ApiRoute("api/Roles", HttpVerb.Get)]
+              public sealed partial class Query { }
+          }
+      }
+      """;
+
+    string generated = Run(source, extraReferences: RealOperationReferences());
+
+    generated.ShouldContain("public const string OperationName = \"roles.list\";");
+    generated.ShouldContain("public const string OperationDescription = \"Lists roles.\";");
+    generated.ShouldNotContain("OperationTitle");
+    generated.ShouldNotContain("OperationDestructive");
+    generated.ShouldNotContain("OperationOpenWorld");
+    generated.ShouldContain("""public const string RouteTemplate = "api/Roles";""");
+    return Task.CompletedTask;
+  }
 }

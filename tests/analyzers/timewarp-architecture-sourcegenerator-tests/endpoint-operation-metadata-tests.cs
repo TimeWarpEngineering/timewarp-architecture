@@ -1,5 +1,5 @@
 #region Purpose
-// Endpoint emit metadata stores [Operation] name, description, and group from the nested request.
+// Endpoint emit metadata stores [Operation] name, description, group, title, and tool hints.
 #endregion
 
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
@@ -120,6 +120,9 @@ public class EndpointOperationMetadata_Tests
     model.OperationName.ShouldBe("roles.get");
     model.OperationDescription.ShouldBe("Get one role.");
     model.OperationGroup.ShouldBeNull();
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBeNull();
+    model.OperationOpenWorld.ShouldBeNull();
     model.Route.ShouldBe("api/Roles/{RoleId}");
     return Task.CompletedTask;
   }
@@ -252,6 +255,59 @@ public class EndpointOperationMetadata_Tests
     model.OperationDescription.ShouldBe("Get one role.");
     model.OperationGroup.ShouldBeNull();
     model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Carry_Title_And_Tool_Hints_Without_Changing_The_Route()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("rename_symbol", Description = "Rename a symbol.", Title = "Rename symbol")]
+              [TimeWarp.Contracts.Destructive(false)]
+              [TimeWarp.Contracts.OpenWorld(false)]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles/{RoleId}", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+
+              public sealed class Response { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataHints");
+    model.OperationName.ShouldBe("rename_symbol");
+    model.OperationDescription.ShouldBe("Rename a symbol.");
+    model.OperationTitle.ShouldBe("Rename symbol");
+    model.OperationDestructive.ShouldBe(false);
+    model.OperationOpenWorld.ShouldBe(false);
+    model.Route.ShouldBe("api/Roles/{RoleId}");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Treat_A_Bare_Hint_Attribute_As_True()
+  {
+    const string source = """
+      namespace Test.Features.Admin.Roles
+      {
+          public static class GetRole
+          {
+              [TimeWarp.Contracts.Operation("purge_cache", Title = "  ")]
+              [TimeWarp.Contracts.Destructive]
+              [TimeWarp.Contracts.OpenWorld]
+              [TimeWarp.Foundation.Features.ApiRoute("api/Roles", TimeWarp.Foundation.Features.HttpVerb.Get)]
+              public sealed class Query { }
+          }
+      }
+      """;
+
+    EndpointEmitModel model = ModelFrom(source, "OperationMetadataBareHints");
+    model.OperationName.ShouldBe("purge_cache");
+    model.OperationTitle.ShouldBeNull();
+    model.OperationDestructive.ShouldBe(true);
+    model.OperationOpenWorld.ShouldBe(true);
+    model.Route.ShouldBe("api/Roles");
     return Task.CompletedTask;
   }
 

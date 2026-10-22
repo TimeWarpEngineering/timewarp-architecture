@@ -28,13 +28,14 @@
 // IEquatable is reference equality of the backing array, which would rebuild every
 // *Endpoint.g.cs on unrelated host edits even when tag content is unchanged.
 // [Operation] (TimeWarp.Contracts.OperationAttribute) on the nested request supplies
-// OperationName, OperationDescription, and OperationGroup. An absent attribute leaves
-// all three null. A whitespace name leaves all three null, matching the contracts
-// generator: the attribute constructor rejects that name, so the description and the
-// group are not an operation on their own. A whitespace description leaves
-// OperationDescription null. A whitespace group leaves OperationGroup null. The
-// FastEndpoint template does not read these values, so HTTP endpoint emission is
-// unchanged and the group never prefixes the route.
+// OperationName, OperationDescription, OperationGroup, and OperationTitle. An absent
+// attribute leaves those null, and leaves OperationDestructive and OperationOpenWorld
+// null too. A whitespace name leaves all of them null, matching the contracts generator:
+// the attribute constructor rejects that name, so the other fields are not an operation
+// on their own. A whitespace description, group, or title leaves that one field null.
+// DestructiveAttribute and OpenWorldAttribute are read by metadata name. Absent is null,
+// not false. The FastEndpoint template does not read these values, so HTTP endpoint
+// emission is unchanged and none of them prefixes the route.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Models;
@@ -61,9 +62,14 @@ internal sealed record EndpointEmitModel(
   string UnresolvedVerbDisplay,
   string? OperationName,
   string? OperationDescription,
-  string? OperationGroup = null)
+  string? OperationGroup = null,
+  string? OperationTitle = null,
+  bool? OperationDestructive = null,
+  bool? OperationOpenWorld = null)
 {
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
+  private const string DestructiveAttributeFullName = "TimeWarp.Contracts.DestructiveAttribute";
+  private const string OpenWorldAttributeFullName = "TimeWarp.Contracts.OpenWorldAttribute";
 
   public bool Equals(EndpointEmitModel? other)
   {
@@ -95,7 +101,10 @@ internal sealed record EndpointEmitModel(
       && UnresolvedVerbDisplay == other.UnresolvedVerbDisplay
       && OperationName == other.OperationName
       && OperationDescription == other.OperationDescription
-      && OperationGroup == other.OperationGroup;
+      && OperationGroup == other.OperationGroup
+      && OperationTitle == other.OperationTitle
+      && OperationDestructive == other.OperationDestructive
+      && OperationOpenWorld == other.OperationOpenWorld;
   }
 
   public override int GetHashCode()
@@ -124,6 +133,9 @@ internal sealed record EndpointEmitModel(
     hashCode.Add(OperationName);
     hashCode.Add(OperationDescription);
     hashCode.Add(OperationGroup);
+    hashCode.Add(OperationTitle);
+    hashCode.Add(OperationDestructive);
+    hashCode.Add(OperationOpenWorld);
     return hashCode.ToHashCode();
   }
 
@@ -160,7 +172,10 @@ internal sealed record EndpointEmitModel(
         UnresolvedVerbDisplay: string.Empty,
         OperationName: null,
         OperationDescription: null,
-        OperationGroup: null);
+        OperationGroup: null,
+        OperationTitle: null,
+        OperationDestructive: null,
+        OperationOpenWorld: null);
     }
 
     string requestTypeName = requestClass.Name;
@@ -248,7 +263,14 @@ internal sealed record EndpointEmitModel(
     }
 
     ImmutableArray<string> tags = CollectTags(symbol);
-    (string? operationName, string? operationDescription, string? operationGroup) = ReadOperation(requestClass);
+    (
+      string? operationName,
+      string? operationDescription,
+      string? operationGroup,
+      string? operationTitle,
+      bool? operationDestructive,
+      bool? operationOpenWorld
+    ) = ReadOperation(requestClass);
 
     return new EndpointEmitModel(
       Namespace: ns,
@@ -269,17 +291,21 @@ internal sealed record EndpointEmitModel(
       UnresolvedVerbDisplay: unresolvedVerbDisplay,
       OperationName: operationName,
       OperationDescription: operationDescription,
-      OperationGroup: operationGroup);
+      OperationGroup: operationGroup,
+      OperationTitle: operationTitle,
+      OperationDestructive: operationDestructive,
+      OperationOpenWorld: operationOpenWorld);
   }
 
-  private static (string? Name, string? Description, string? Group) ReadOperation(INamedTypeSymbol requestClass)
+  private static (string? Name, string? Description, string? Group, string? Title, bool? Destructive, bool? OpenWorld) ReadOperation(
+    INamedTypeSymbol requestClass)
   {
     AttributeData? operation = requestClass.GetAttributes()
       .FirstOrDefault(static attr =>
         HostedRouteDiscovery.HasMetadataName(attr.AttributeClass, OperationAttributeFullName));
     if (operation is null)
     {
-      return (null, null, null);
+      return (null, null, null, null, null, null);
     }
 
     string? name = operation.ConstructorArguments.Length > 0
@@ -287,13 +313,36 @@ internal sealed record EndpointEmitModel(
       : null;
     if (string.IsNullOrWhiteSpace(name))
     {
-      return (null, null, null);
+      return (null, null, null, null, null, null);
     }
 
     return (
       name,
       GetNamedStringArgument(operation, "Description"),
-      GetNamedStringArgument(operation, "Group"));
+      GetNamedStringArgument(operation, "Group"),
+      GetNamedStringArgument(operation, "Title"),
+      ReadBoolHint(requestClass, DestructiveAttributeFullName),
+      ReadBoolHint(requestClass, OpenWorldAttributeFullName));
+  }
+
+  /// <summary>
+  /// Constructor argument of a tri-state hint attribute. True when the argument is omitted.
+  /// Null when the attribute is absent.
+  /// </summary>
+  private static bool? ReadBoolHint(INamedTypeSymbol requestClass, string attributeFullName)
+  {
+    foreach (AttributeData attribute in requestClass.GetAttributes())
+    {
+      if (!HostedRouteDiscovery.HasMetadataName(attribute.AttributeClass, attributeFullName))
+      {
+        continue;
+      }
+
+      return attribute.ConstructorArguments.Length == 0
+        || attribute.ConstructorArguments[0].Value is not false;
+    }
+
+    return null;
   }
 
   private static ImmutableArray<string> CollectTags(INamedTypeSymbol symbol)

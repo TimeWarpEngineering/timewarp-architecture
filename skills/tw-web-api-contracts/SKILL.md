@@ -1,7 +1,7 @@
 ---
 name: tw-web-api-contracts
 description: "**TIMEWARP SKILL** — endpoint-centric Web.Contracts API contracts (Command, Query, ApiRoute, Operation, I*Details, Validator, serialization tests), one contract bound to HTTP, CLI, and MCP. Invoke before scaffolding or fixing contracts. WHEN: Add a CreateTodoItem command contract, Scaffold a GetRole query with ApiRoute and IRoleDetails for the edit form, Add a serialization round-trip test for my Command."
-when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, Operation attribute, TimeWarp.Contracts, IQuery, ICommand, IIdempotentCommand, CLI or MCP binding, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
+when-to-use: Web.Contracts, web-contracts, command contract, query contract, ApiRoute, ApiEndpoint, Operation attribute, TimeWarp.Contracts, IQuery, ICommand, IIdempotentCommand, CLI or MCP binding, tool hint, Destructive, OpenWorld, Operation title, EndpointAuthorize, EndpointAllowAnonymous, I*Details, EditForm binding, Validator, serialization round-trip, BFF, AuthApiRequest, FastEndpoint generation
 ---
 
 # Web API Contracts
@@ -169,9 +169,9 @@ when the handler cannot keep that promise. See [neutral-operations.md](reference
 `TimeWarp.Contracts` adds the transport-neutral part of a contract. The same request class is an
 HTTP endpoint, a CLI command, and an MCP tool:
 
-- **Name and summary:** `[Operation("roles.get", Description = "…", Group = "…")]` on the nested
-  `Query`/`Command`. The name is not a route, a CLI pattern, or a tool name. `Group` is optional
-  metadata.
+- **Name, group, and title:** `[Operation("roles.get", Description = "…", Group = "…", Title = "…")]`
+  on the nested `Query`/`Command`. A blank title means no title. `[Destructive]` and `[OpenWorld]`
+  are tri-state: omitted is unset, not false. Kind still supplies read-only and idempotent.
 - **Kind:** the mediator interface (`IQuery<T>`, `ICommand<T>`, `IIdempotentCommand<T>`). It is
   never an attribute argument.
 - **Bindings:** HTTP comes from `[ApiRoute]` + `[ApiEndpoint]` (this template). CLI and MCP come
