@@ -60,6 +60,7 @@
   --twe-text-body: 14px;
   --twe-text-helper: 12px;
   --twe-text-eyebrow: 11px;
+  --twe-text-kpi-value: 30px;
 
   /* Spacing — form rhythm (FormSection / FormField / FormGrid / FormActions).
      Map from the Tailwind UI stacked form (rhythm only; we do not use Tailwind):
@@ -70,6 +71,9 @@
   --twe-space-3: 12px;
   --twe-space-6: 24px;
   --twe-space-12: 48px;
+
+  /* KPI tile padding. 18px by 20px matches no spacing step (8, 12, 24, 48). */
+  --twe-kpi-pad: 18px 20px;
 
   /* App shell chrome heights (TimeWarpPage.razor.css feeds them to FluentLayout). */
   --twe-appbar-height: 70px;
