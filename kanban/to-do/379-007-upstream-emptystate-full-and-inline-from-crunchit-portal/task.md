@@ -138,8 +138,7 @@ Follow the conventions of 379-001 through 379-006:
 
 - Round 1: Blocked — open M1, M2, M3
 - Fix pass implemented M1–M3 on this id.
-- Round 2: M1–M3 fixed, no new findings. Disposition clean.
-
+- Round 2: Done
 ## Notes
 
 - Crunchit source is under
