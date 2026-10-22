@@ -1,0 +1,29 @@
+/* Initials circle. 24, 32, and 56 match no single spacing step, so the diameters stay here.
+   Lettering stays on the type scale: helper at medium, eyebrow at small, page title at large. */
+.twe-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--twe-primary);
+  color: var(--twe-on-primary);
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.twe-avatar--small {
+  width: 24px;
+  height: 24px;
+  font-size: var(--twe-text-eyebrow);
+}
+
+.twe-avatar--large {
+  width: 56px;
+  height: 56px;
+  font-size: var(--twe-text-page-title);
+}

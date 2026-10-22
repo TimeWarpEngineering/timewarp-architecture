@@ -1,0 +1,42 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Initials-only circle for a person's name.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is appended on
+  that root the way Card does, and unmatched attributes splat onto it. Every name uses the
+  same brand fill. There is no per-name color and no ImageUrl; a photo stays on FluentAvatar.
+  Medium is 32px and adds no modifier. Small is 24px and Large is 56px. Initials come from
+  AvatarInitials. The circle is aria-hidden and has no role unless AriaHidden is false and the
+  initials are non-empty; then it is role="img" and the label is AriaLabel, or Name when that
+  label is blank. Empty initials stay an empty hidden circle. This component wires no events.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Name { get; set; } = "";
+  [Parameter] public InitialsAvatarSize Size { get; set; } = InitialsAvatarSize.Medium;
+  [Parameter] public bool AriaHidden { get; set; } = true;
+  [Parameter] public string? AriaLabel { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string Initials => AvatarInitials.From(Name);
+
+  private bool Decorative => AriaHidden || Initials.Length == 0;
+
+  private string? SizeClass => Size switch
+  {
+    InitialsAvatarSize.Small => "twe-avatar--small",
+    InitialsAvatarSize.Large => "twe-avatar--large",
+    _ => null,
+  };
+
+  private string? AccessibleName =>
+    string.IsNullOrWhiteSpace(AriaLabel) ? Name : AriaLabel;
+}
+
+<span class="twe-avatar @SizeClass @Class"
+      aria-hidden="@(Decorative ? "true" : null)"
+      role="@(Decorative ? null : "img")"
+      aria-label="@(Decorative ? null : AccessibleName)"
+      @attributes="AdditionalAttributes">@Initials</span>
