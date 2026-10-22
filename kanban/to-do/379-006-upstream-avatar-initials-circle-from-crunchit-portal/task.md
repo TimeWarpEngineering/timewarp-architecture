@@ -123,6 +123,12 @@ and the label is `AriaLabel`, or `Name` when that label is blank. Empty initials
 circle. The style guide shows an Avatars card after Segmented Control. `components/overview.md`
 lists the element. `ganda repo audit` was already green; nothing was turned off.
 
+### Review
+
+Round 1 (effort 2, general) is open: 0 bug, 1 suggestion (M1, the default size is not pinned by
+a test), and 1 nit (M2, unreachable guards in `avatar-initials.cs`). It has no disposition yet.
+Files: `review/review-framework.md` and `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke:
@@ -148,6 +154,8 @@ Smoke:
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec written: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implement oracle: Avatar, AvatarInitials, the style-guide card, and render tests. Build, template-smoke, and audit are green. 2026-10-22.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T12:37:16Z
+- Review oracle round 1 (Claude Opus 5.5, headless; effort 2; roster general): 0 bug, 1 suggestion, 1 nit, all open. A fix pass is requested for M1 and M2. See `review/round-1/merged.md`. 2026-10-22.
 
 ## Notes
 
