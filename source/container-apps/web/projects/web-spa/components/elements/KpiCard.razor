@@ -3,13 +3,13 @@
 @*
   Purpose: Stat tile — an uppercase label, a pre-formatted metric, and optional unit, second metric, and caption.
 
-  Design: Native div root so CSS isolation stamps the scope attribute. Unmatched attributes
-  splat onto that root, as SectionHeader does. A caller class is appended to the root class;
-  splatting it would replace twe-kpi. Callers pass pre-formatted strings; this tile formats
-  nothing and has no delta or trend. Tone adds a border modifier (positive or danger) in this
-  stylesheet; None adds no class. Blank optional strings are omitted. This component wires no
-  events. Isolated CSS uses --twe-* tokens. There is no FluentUI child, so the stylesheet
-  needs no ::deep.
+  Design: Native div root so CSS isolation stamps the scope attribute. A caller class binds to
+  Class and is rendered on that root the way Card does, so it is appended and does not replace
+  twe-kpi. Other unmatched attributes splat onto the root, as SectionHeader does. Callers pass
+  pre-formatted strings; this tile formats nothing and has no delta or trend. Tone adds a border
+  modifier (positive or danger) in this stylesheet; None adds no class. Blank optional strings
+  are omitted. This component wires no events. Isolated CSS uses --twe-* tokens. There is no
+  FluentUI child, so the stylesheet needs no ::deep.
 *@
 
 @code {
@@ -20,22 +20,18 @@
   [Parameter] public string? SecondaryUnit { get; set; }
   [Parameter] public string? Caption { get; set; }
   [Parameter] public KpiTone Tone { get; set; } = KpiTone.None;
+  [Parameter] public string? Class { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
-  private string RootClass => SplattedClass.Merge(ToneClass, AdditionalAttributes);
-
-  private string ToneClass => Tone switch
+  private string? ToneClass => Tone switch
   {
-    KpiTone.Positive => "twe-kpi twe-kpi--positive",
-    KpiTone.Danger => "twe-kpi twe-kpi--danger",
-    _ => "twe-kpi",
+    KpiTone.Positive => "twe-kpi--positive",
+    KpiTone.Danger => "twe-kpi--danger",
+    _ => null,
   };
-
-  private IReadOnlyDictionary<string, object>? PassthroughAttributes =>
-    SplattedClass.WithoutClass(AdditionalAttributes);
 }
 
-<div class="@RootClass" @attributes="PassthroughAttributes">
+<div class="twe-kpi @ToneClass @Class" @attributes="AdditionalAttributes">
   <div class="twe-kpi__label">@Label</div>
   <div class="twe-kpi__metrics">
     <div class="twe-kpi__metric">

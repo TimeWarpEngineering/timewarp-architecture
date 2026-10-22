@@ -97,6 +97,13 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
 - Spec written: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-22)
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T05:03:49Z
 - Review oracle round 1: claude-opus-5-5, effort 2, roster general (inline), session not reported — 2026-10-22. Fix pass requested for M1, M2.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-22T05:06:33Z
+- Fix pass (implement-fix-2): implementer-cursor (cursor, grok-4.7), 2026-10-22. Addressed M1 and M2.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass: M1 and M2 are addressed on this branch. Round 2 is the host review node.
 
 ## Notes
 
@@ -126,8 +133,9 @@ and an optional unit, second metric, and caption. Those optional strings render 
 are not blank. Callers pass the strings already formatted. The card does no number formatting
 and has no delta, trend, or event callback. `Tone` is `KpiTone` (`None`, `Positive`, `Danger`).
 `None` adds no class. The other two add `twe-kpi--positive` or `twe-kpi--danger`, drawn as a
-border in the card's own stylesheet. Unmatched attributes, including `class` and `data-testid`,
-land on the root.
+border in the card's own stylesheet. A caller class binds to a `Class` parameter and is rendered
+on the root the way `Card` does, so it is appended and does not replace `twe-kpi` or
+`twe-kpi-strip`. Other unmatched attributes, including `data-testid`, splat onto the root.
 
 `KpiStrip` is a composite: a native `div.twe-kpi-strip` whose isolated CSS is the one responsive
 grid, `repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr))`, with `--twe-space-3` and
@@ -155,9 +163,9 @@ secondary unit, and caption render only when they are not blank. `KpiTone` is `N
 `twe-kpi--danger`, which set the border color to `--twe-positive` or `--twe-danger`. There is
 no delta, trend, or event callback.
 
-A caller `class` is appended to the root class. Splatting it replaced `twe-kpi`, so
-`SplattedClass` merges it and leaves the other unmatched attributes on the root. `data-testid`
-still lands on the root.
+A caller class binds to `Class` and is rendered on the root the way `Card` does
+(`class="twe-kpi @ToneClass @Class"` and `class="twe-kpi-strip @Class"`). Other unmatched
+attributes, including `data-testid`, splat directly. There is no class-merge helper.
 
 `KpiStrip` lives in `components/composites/`. Its grid is
 `repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr))` with `gap: var(--twe-space-3)` and
@@ -173,7 +181,7 @@ caption, and a danger tone. The page contract is unchanged. No other page adopts
 
 Smoke:
 
-- `./bin/dev build` — 0 warnings, 0 errors (Release).
+- `./bin/dev build` — 0 warnings, 0 errors (Release, this fix pass).
 - `./bin/dev template-smoke` — SmokeDefault OK; generated Jaribu aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
 - `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
 - From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug -- --filter-class KpiCard_Should_` (7 passed) and `--filter-class KpiStrip_Should_` (2 passed).
@@ -184,18 +192,16 @@ Expect:
 - Style Guide → KPI Cards shows four tiles in one strip: "Open items" / 12, "Coverage" / 4 sites and 2 regions, "On time" / 49.5% with "Last 12 months", and "Exceptions" / 3 with the danger border.
 - A narrow viewport reflows the strip to fewer columns without a breakpoint.
 - A tile with no unit, second metric, or caption omits those blocks. Tone None has no modifier class.
-- Passing `class` and `data-testid` keeps `twe-kpi` on the root and adds the caller class and test id.
+- Passing `class` and `data-testid` keeps `twe-kpi` (or `twe-kpi-strip`) on the root and adds the caller class and test id. The strip's child sits between the root's opening tag and the closing `</div>` that ends the markup.
 
-A live browser pass of the running app was not done in this walk. The static renderer covers the tile and strip markup.
+A live browser pass of the running app was not done in this walk. The static renderer covers the tile and strip markup, including the caller class on the root.
 
 ### Review
 
-- Round 1 (effort 2, roster general): 0 bug, 1 suggestion, 1 nit, all open. Disposition is pending
-  a fix pass.
-- M1 (suggestion): remove the new `SplattedClass` helper and take a caller class through a `Class`
-  parameter, as `Card`, `FormSection`, and `FormField` already do.
-- M2 (nit): the strip child-content test's `</div>` check passes trivially.
-- The reviewer re-ran both render-test classes (7/7 and 2/2) and the product-name grep (0 matches).
+- Round 1 (effort 2, roster general): 0 bug, 1 suggestion, 1 nit. Fix pass addressed both.
+- M1 (suggestion): `splatted-class.cs` is gone. `KpiCard` and `KpiStrip` take `Class` and render it on the root the way `Card` does. Unmatched attributes splat directly. The passthrough tests still pass.
+- M2 (nit): the strip child must sit between the end of the root's opening tag and the closing `</div>` that ends the markup.
+- Round 2 has not run. The host review node does that.
 - Files: `review/review-framework.md` and `review/round-1/{general,merged}.md`.
 
 ## Learnings

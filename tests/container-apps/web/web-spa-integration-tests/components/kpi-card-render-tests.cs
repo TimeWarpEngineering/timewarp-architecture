@@ -4,7 +4,8 @@
 
 #region Design
 // KpiCard is a Tier-1 leaf with no DI, so a bare ServiceCollection host is enough.
-// The root is a native div; unmatched attributes splat onto it the same way SectionHeader passes data-qa.
+// The root is a native div. A caller class binds to Class; other unmatched attributes splat onto
+// it the same way SectionHeader passes data-qa.
 // A blank unit, second metric, or caption is omitted. Tone None adds no modifier class.
 // The script case asserts the raw markup, before HtmlDecode, so the label stays encoded.
 #endregion

@@ -4,7 +4,8 @@
 
 #region Design
 // KpiStrip is a Tier-1 composite with no DI, so a bare ServiceCollection host is enough.
-// The root is a native div; unmatched attributes splat onto it. Child content is the caller's.
+// The root is a native div. A caller class binds to Class; other unmatched attributes splat onto
+// the root. Child content sits between the end of the root's opening tag and its closing div.
 // The component authors no style element. The grid itself is CSS, not markup.
 #endregion
 
@@ -35,16 +36,16 @@ public class KpiStrip_Should_
       })
     });
 
-    string root = RootTag(html);
+    string markup = html.TrimEnd();
+    string root = RootTag(markup);
     root.ShouldContain("twe-kpi-strip");
-    int stripAt = html.IndexOf("twe-kpi-strip", StringComparison.Ordinal);
-    int childAt = html.IndexOf("data-qa=\"StripChild\"", StringComparison.Ordinal);
-    int closeAt = html.IndexOf("</div>", childAt, StringComparison.Ordinal);
-    stripAt.ShouldBeGreaterThan(-1);
-    childAt.ShouldBeGreaterThan(stripAt);
-    closeAt.ShouldBeGreaterThan(childAt);
-    html.ShouldContain("12");
-    html.ShouldNotContain("<style");
+    markup.ShouldEndWith("</div>");
+    int openingEnd = markup.IndexOf(root, StringComparison.Ordinal) + root.Length;
+    int closeAt = markup.IndexOf("</div>", openingEnd, StringComparison.Ordinal);
+    closeAt.ShouldBe(markup.Length - "</div>".Length);
+    markup[openingEnd..closeAt].ShouldContain("data-qa=\"StripChild\"");
+    markup.ShouldContain("12");
+    markup.ShouldNotContain("<style");
   }
 
   public static async Task Pass_Extra_Attributes_To_The_Root()
