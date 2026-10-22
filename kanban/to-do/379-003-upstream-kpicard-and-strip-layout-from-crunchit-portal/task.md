@@ -38,42 +38,42 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
 
 ## Checklist
 
-- [ ] `KpiCard.razor` with a `.razor.css`, root `div.twe-kpi`.
+- [x] `KpiCard.razor` with a `.razor.css`, root `div.twe-kpi`.
   - Takes `AdditionalAttributes`.
   - Does not use Crunchit's `DisplayComponent` or `CssBuilder`.
-- [ ] `KpiCard` parameters, all strings and pre-formatted:
+- [x] `KpiCard` parameters, all strings and pre-formatted:
   - `Label` and `Value` (`EditorRequired`).
   - `Unit`, `SecondaryValue`, `SecondaryUnit`, `Caption`. These render only when they are not
     blank.
   - No `EventCallback`. Any interaction from a caller dispatches a TimeWarp.State action.
-- [ ] Tone:
+- [x] Tone:
   - Add a `KpiTone` enum (`None`, `Positive`, `Danger`) as the `Tone` parameter.
   - It renders the modifier class `twe-kpi--positive` or `twe-kpi--danger`, styled in the card's
     own CSS.
   - It replaces Crunchit's caller `::deep` box-shadow.
   - It is a border or accent only, not a pill.
-- [ ] `KpiStrip.razor` with a `.razor.css`.
+- [x] `KpiStrip.razor` with a `.razor.css`.
   - Root `div.twe-kpi-strip`, with `ChildContent` and `AdditionalAttributes`.
   - The grid is `repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr))`, with
     `gap: var(--twe-space-3)` and `min-width: 0` on the children.
   - One 160px minimum replaces Crunchit's 140–180px spread. This is a deliberate normalisation.
   - It reflows to fewer columns on narrow screens without media queries.
   - Spacing comes from `--twe-space-*`, not page-local margins.
-- [ ] Use CSS isolation only: no `<style>` element and no Tailwind (`tw-blazor-css-strategy`).
+- [x] Use CSS isolation only: no `<style>` element and no Tailwind (`tw-blazor-css-strategy`).
       There are no FluentUI children, so no `::deep` is needed.
-- [ ] Tokens in `wwwroot/css/tokens.css`:
+- [x] Tokens in `wwwroot/css/tokens.css`:
   - Map Crunchit tokens to their existing `--twe-*` equivalents: paper, rule, radius, shadow-sm,
     muted, ink, text-eyebrow, text-helper. Success maps to `--twe-positive` and danger to
     `--twe-danger`.
   - Add `--twe-text-kpi-value` (30px) and `--twe-kpi-pad` only if nothing existing fits. Check
     `tokens.css` first, and add a spacing step only if the padding needs one.
-- [ ] Add Purpose and Design regions (TWA0004) to both `.razor` files, in the style of
+- [x] Add Purpose and Design regions (TWA0004) to both `.razor` files, in the style of
       `SectionHeader.razor`.
-- [ ] Style guide (`features/style-guide/pages/StyleGuidePage.razor`):
+- [x] Style guide (`features/style-guide/pages/StyleGuidePage.razor`):
   - Replace the hand-rolled `.sg-kpis` demo with a "KPI Cards" `Card`.
   - The card shows a `KpiStrip` of four cards: single, dual-metric, caption, and tone.
   - Do not extend the StyleGuidePage contract; that is 379-017.
-- [ ] Render tests in `tests/container-apps/web/web-spa-integration-tests/components/`, in
+- [x] Render tests in `tests/container-apps/web/web-spa-integration-tests/components/`, in
       `kpi-card-render-tests.cs` and `kpi-strip-render-tests.cs`, modelled on
       `section-header-render-tests.cs`. Cases:
   - Label and value render.
@@ -85,7 +85,7 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
   - Unmatched attributes (`data-testid`, `class`) land on the root.
   - The strip renders `ChildContent` inside `.twe-kpi-strip`.
   - A `<script>` label is HTML-encoded.
-- [ ] Gates:
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
@@ -113,3 +113,75 @@ admin, counter, and todo pages show no aggregate tiles. The style guide is the o
   - Add no delta or trend parameter here. 379-012 may add a `Trend` slot later.
 - Tone as an enum parameter, rather than a strictly literal port, was the recommendation adopted
   when this spec was written (2026-10-22).
+
+## Goal (implementer restatement)
+
+Bring the stat tile and its row layout into the template as two components. Generated code,
+including copy, comments, sample data, and class names, carries no source-product name.
+
+`KpiCard` is an element: a native `div.twe-kpi` with an uppercase label, a pre-formatted value,
+and an optional unit, second metric, and caption. Those optional strings render only when they
+are not blank. Callers pass the strings already formatted. The card does no number formatting
+and has no delta, trend, or event callback. `Tone` is `KpiTone` (`None`, `Positive`, `Danger`).
+`None` adds no class. The other two add `twe-kpi--positive` or `twe-kpi--danger`, drawn as a
+border in the card's own stylesheet. Unmatched attributes, including `class` and `data-testid`,
+land on the root.
+
+`KpiStrip` is a composite: a native `div.twe-kpi-strip` whose isolated CSS is the one responsive
+grid, `repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr))`, with `--twe-space-3` and
+`min-width: 0` on the children. Pages do not repeat that grid or add a page-local margin. There
+is no `<style>` element and no Tailwind. Tokens reuse the existing paper, rule, radius, shadow,
+muted, ink, eyebrow, and helper variables. The positive and danger tones use `--twe-positive`
+and `--twe-danger`. `--twe-text-kpi-value` (30px) and `--twe-kpi-pad` are added only because the
+type scale and spacing steps do not already cover 30px and the tile padding.
+
+The style guide is the only consumer: a "KPI Cards" card with a strip of four tiles (single,
+dual-metric, caption, tone). The page contract stays as it is. Render tests cover label and
+value, optional unit, one or two metric blocks, optional caption, each tone, attribute
+passthrough, strip child content, and an HTML-encoded `<script>` label.
+
+Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `ganda repo audit`
+passes, and `git diff origin/master -- source tests` contains no case-insensitive match for the
+source product name.
+
+## Results
+
+`KpiCard` lives in `components/elements/` (`TimeWarp.Architecture.Components`). The root is
+`div.twe-kpi`. Label and value are required pre-formatted strings. Unit, secondary value,
+secondary unit, and caption render only when they are not blank. `KpiTone` is `None`,
+`Positive`, or `Danger`. `None` adds no modifier. The other two add `twe-kpi--positive` or
+`twe-kpi--danger`, which set the border color to `--twe-positive` or `--twe-danger`. There is
+no delta, trend, or event callback.
+
+A caller `class` is appended to the root class. Splatting it replaced `twe-kpi`, so
+`SplattedClass` merges it and leaves the other unmatched attributes on the root. `data-testid`
+still lands on the root.
+
+`KpiStrip` lives in `components/composites/`. Its grid is
+`repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr))` with `gap: var(--twe-space-3)` and
+`min-width: 0` on the children. The strip has no margin. `--twe-text-kpi-value` is 30px.
+`--twe-kpi-pad` is `18px 20px` because the spacing scale is 8, 12, 24, and 48. The 6px gap
+between a value and its unit stays a hairline under that scale. Paper, rule, radius, shadow,
+muted, ink, eyebrow, and helper reuse the existing tokens.
+
+The style guide's KPI Cards card is a strip of four tiles: a single value, a dual metric, a
+caption, and a danger tone. The page contract is unchanged. No other page adopts the tile.
+
+### How to validate
+
+Smoke:
+
+- `./bin/dev build` — 0 warnings, 0 errors (Release).
+- `./bin/dev template-smoke` — SmokeDefault OK; generated Jaribu aggregators 405/405, 9/9, and 14/14. Template smoke succeeded.
+- `ganda repo audit` — 32 passed, 0 failed, 1 skipped.
+- From `tests/container-apps/web/web-spa-integration-tests`: `dotnet test -c Debug -- --filter-class KpiCard_Should_` (7 passed) and `--filter-class KpiStrip_Should_` (2 passed).
+- `git diff origin/master -- source tests | rg -i crunchit` — no match.
+
+Expect:
+
+- Style Guide → KPI Cards shows four tiles in one strip: "Open items" / 12, "Coverage" / 4 sites and 2 regions, "On time" / 49.5% with "Last 12 months", and "Exceptions" / 3 with the danger border.
+- A narrow viewport reflows the strip to fewer columns without a breakpoint.
+- A tile with no unit, second metric, or caption omits those blocks. Tone None has no modifier class.
+- Passing `class` and `data-testid` keeps `twe-kpi` on the root and adds the caller class and test id.
+
+A live browser pass of the running app was not done in this walk. The static renderer covers the tile and strip markup.

@@ -1,0 +1,10 @@
+/* KPI strip — the one responsive grid for stat tiles.
+   160px is the single minimum; a caller overrides --twe-kpi-min.
+   The parent owns the space around the strip, so this rule has no margin. */
+.twe-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--twe-kpi-min, 160px), 1fr));
+  gap: var(--twe-space-3);
+}
+
+.twe-kpi-strip > * { min-width: 0; }

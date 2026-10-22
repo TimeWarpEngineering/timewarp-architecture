@@ -1,0 +1,63 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Stat tile — an uppercase label, a pre-formatted metric, and optional unit, second metric, and caption.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Unmatched attributes
+  splat onto that root, as SectionHeader does. A caller class is appended to the root class;
+  splatting it would replace twe-kpi. Callers pass pre-formatted strings; this tile formats
+  nothing and has no delta or trend. Tone adds a border modifier (positive or danger) in this
+  stylesheet; None adds no class. Blank optional strings are omitted. This component wires no
+  events. Isolated CSS uses --twe-* tokens. There is no FluentUI child, so the stylesheet
+  needs no ::deep.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Label { get; set; } = "";
+  [Parameter, EditorRequired] public string Value { get; set; } = "";
+  [Parameter] public string? Unit { get; set; }
+  [Parameter] public string? SecondaryValue { get; set; }
+  [Parameter] public string? SecondaryUnit { get; set; }
+  [Parameter] public string? Caption { get; set; }
+  [Parameter] public KpiTone Tone { get; set; } = KpiTone.None;
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string RootClass => SplattedClass.Merge(ToneClass, AdditionalAttributes);
+
+  private string ToneClass => Tone switch
+  {
+    KpiTone.Positive => "twe-kpi twe-kpi--positive",
+    KpiTone.Danger => "twe-kpi twe-kpi--danger",
+    _ => "twe-kpi",
+  };
+
+  private IReadOnlyDictionary<string, object>? PassthroughAttributes =>
+    SplattedClass.WithoutClass(AdditionalAttributes);
+}
+
+<div class="@RootClass" @attributes="PassthroughAttributes">
+  <div class="twe-kpi__label">@Label</div>
+  <div class="twe-kpi__metrics">
+    <div class="twe-kpi__metric">
+      <span class="twe-kpi__value">@Value</span>
+      @if (!string.IsNullOrWhiteSpace(Unit))
+      {
+        <span class="twe-kpi__unit">@Unit</span>
+      }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(SecondaryValue))
+    {
+      <div class="twe-kpi__metric">
+        <span class="twe-kpi__value">@SecondaryValue</span>
+        @if (!string.IsNullOrWhiteSpace(SecondaryUnit))
+        {
+          <span class="twe-kpi__unit">@SecondaryUnit</span>
+        }
+      </div>
+    }
+  </div>
+  @if (!string.IsNullOrWhiteSpace(Caption))
+  {
+    <div class="twe-kpi__caption">@Caption</div>
+  }
+</div>

@@ -1,0 +1,27 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Responsive row of stat tiles. The strip owns the grid so a page does not repeat it.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Unmatched attributes
+  splat onto that root. A caller class is appended to twe-kpi-strip; splatting it would
+  replace that class. One 160px minimum (overridable with --twe-kpi-min) replaces the spread
+  of page-local strips. auto-fit reflows without a media query. Gap is --twe-space-3; the
+  strip has no margin of its own. Child content is whatever the caller places, usually
+  KpiCard. This component wires no events. There is no FluentUI child, so the stylesheet
+  needs no ::deep.
+*@
+
+@code {
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string RootClass => SplattedClass.Merge("twe-kpi-strip", AdditionalAttributes);
+
+  private IReadOnlyDictionary<string, object>? PassthroughAttributes =>
+    SplattedClass.WithoutClass(AdditionalAttributes);
+}
+
+<div class="@RootClass" @attributes="PassthroughAttributes">
+  @ChildContent
+</div>
