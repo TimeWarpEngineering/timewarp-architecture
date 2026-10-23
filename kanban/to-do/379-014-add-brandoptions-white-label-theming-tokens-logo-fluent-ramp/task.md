@@ -33,6 +33,8 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Implementation: 2026-10-24 (implementer walk)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T21:53:51Z
+- Review oracle round 1: claude (claude-opus-5-5), session ea832021-9579-4f4a-b67f-01532e447553, effort 3, general axis. An independent general subagent (a94ae757bf634b8e4) did a second pass. 2026-10-24
 
 ## Results
 
@@ -62,6 +64,21 @@ git diff origin/master -- source tests | rg -i crunchit || echo NO_CLIENT_NAME
 ```
 
 `dev build`: 0 warnings, 0 errors (00:00:05.84). `dev template-smoke`: `Template smoke SUCCEEDED`. SmokeDefault OK. create-role 5/5, weather 5/5, hello 2/2, web-jaribu-tests 405/405, api-jaribu-tests 9/9, timewarp-testing-tests 14/14. `ganda repo audit`: Passed 33, Failed 0, Skipped 1 (self-hosted, public repository). The client-name search prints `NO_CLIENT_NAME`.
+
+### Review
+
+Round 1 ran at effort 3 with the general roster: the oracle pass plus an independent subagent pass. It found 2 bugs, 2 suggestions, and 3 nits, all open. There is no disposition yet, and a fix pass is needed.
+
+- M1 (bug): the `tokens.css` drift test checks 2 of the 19 default token values.
+- M2 (bug): the duplicated `BrandOptions` appsettings sections have no equality check.
+
+Both bugs break the AGENTS.md rule "generate one from the other or add a build check". Re-run by the reviewer: `BrandOptions_Should_` passed 5 of 5, and `TimeWarpPage_Should_` passed 5 of 5.
+
+Artifacts:
+
+- Framework: `review/review-framework.md`
+- Findings: `review/round-1/general.md`
+- Live ledger: `review/round-1/merged.md`
 
 ## Notes
 
