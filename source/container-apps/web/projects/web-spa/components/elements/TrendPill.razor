@@ -1,0 +1,49 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Period-move pill — up, down, or flat, with an optional pre-formatted label.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root, and unmatched attributes splat onto it. The page passes
+  Direction and Label. This pill computes no delta. Flat is the default. The glyph
+  is aria-hidden. The direction word is visually hidden and is the accessible name,
+  so colour is not the only signal. A blank label is omitted. This component wires
+  no events. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter] public TrendDirection Direction { get; set; } = TrendDirection.Flat;
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string Modifier => Direction switch
+  {
+    TrendDirection.Up => "up",
+    TrendDirection.Down => "down",
+    _ => "flat",
+  };
+
+  private string Glyph => Direction switch
+  {
+    TrendDirection.Up => "↑",
+    TrendDirection.Down => "↓",
+    _ => "—",
+  };
+
+  private string DirectionName => Direction switch
+  {
+    TrendDirection.Up => "Up",
+    TrendDirection.Down => "Down",
+    _ => "Flat",
+  };
+}
+
+<span class="twe-trend twe-trend--@Modifier @Class" @attributes="AdditionalAttributes">
+  <span class="twe-trend__glyph" aria-hidden="true">@Glyph</span>
+  <span class="twe-trend__name">@DirectionName</span>
+  @if (!string.IsNullOrWhiteSpace(Label))
+  {
+    <span class="twe-trend__label">@Label</span>
+  }
+</span>

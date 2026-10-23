@@ -1,0 +1,22 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Classification pill — a mapped label, or a dashed unmapped label.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root, and unmatched attributes splat onto it. Unmapped adds
+  twe-class-pill--unmapped. The default is the mapped wash. The page passes the
+  words, including a phrase such as "Not mapped". This component wires no events
+  and draws no icon. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Label { get; set; } = "";
+  [Parameter] public bool Unmapped { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string? UnmappedClass => Unmapped ? "twe-class-pill--unmapped" : null;
+}
+
+<span class="twe-class-pill @UnmappedClass @Class" @attributes="AdditionalAttributes">@Label</span>

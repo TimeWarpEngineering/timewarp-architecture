@@ -1,0 +1,20 @@
+/* Legend row — native root, CSS isolation. Tokens from tokens.css.
+   The 6px gap matches the value/unit hairline on KpiCard, under the 8px step. */
+.twe-chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--twe-text-helper);
+  color: var(--twe-ink-2);
+}
+
+.twe-chart-legend__dot {
+  width: var(--twe-space-2);
+  height: var(--twe-space-2);
+  border-radius: var(--twe-radius-sm);
+  flex: none;
+}
+
+.twe-chart-legend__dot--ink { background: var(--twe-ink); }
+.twe-chart-legend__dot--primary { background: var(--twe-primary); }
+.twe-chart-legend__dot--positive { background: var(--twe-positive); }

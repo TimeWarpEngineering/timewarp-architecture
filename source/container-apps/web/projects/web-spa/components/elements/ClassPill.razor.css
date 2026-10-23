@@ -1,0 +1,21 @@
+/* Class pill — native root, CSS isolation. Tokens from tokens.css.
+   2px block padding sits under the 8px spacing step.
+   Unmapped text is --twe-ink-2. --twe-muted is 4.29:1 on white, under 4.5:1. */
+.twe-class-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--twe-space-2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--twe-ink) 6%, var(--twe-paper));
+  color: var(--twe-ink);
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.twe-class-pill--unmapped {
+  background: transparent;
+  border: 1px dashed var(--twe-rule);
+  color: var(--twe-ink-2);
+  font-weight: 500;
+}
