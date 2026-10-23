@@ -255,6 +255,8 @@ Results.
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
 - Implemented: grouped table, row group, and count chip; style guide only (2026-10-23)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T17:15:04Z
+- Review round 1 (2026-10-24): review oracle, Claude Code claude-opus-5-5, effort 2, roster general. Open: M1 suggestion (named ColumnCount cascade), M2 nit (false row-hover claim in a Design comment). No disposition yet; fix pass requested. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Results
 
