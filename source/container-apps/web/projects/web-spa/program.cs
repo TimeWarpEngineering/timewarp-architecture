@@ -284,5 +284,11 @@ public static class Program
     serviceCollection
       .AddFluentValidatedOptions<BlazorSettings, BlazorSettingsValidator>(configuration)
       .ValidateOnStart();
+
+    // BrandOptions: server prerender and the WebAssembly host each bind the configuration they
+    // were given. Defaults match the checked-in TimeWarp brand when the section is absent.
+    serviceCollection
+      .AddFluentValidatedOptions<BrandOptions, BrandOptionsValidator>(configuration)
+      .ValidateOnStart();
   }
 }

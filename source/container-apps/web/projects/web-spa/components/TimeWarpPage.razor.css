@@ -111,7 +111,7 @@
 }
 
 .twe-brand { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; padding: 0 6px; }
-.twe-brand__logo { height: 48px; width: auto; flex: none; display: block; }
+.twe-brand__logo { height: var(--twe-logo-height); width: auto; flex: none; display: block; }
 
 /* FluentNav is NavMenu's root (a child component), so it is reached from the shell anchor. */
 .twe-shell ::deep .twe-nav {

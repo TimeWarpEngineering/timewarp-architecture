@@ -32,6 +32,8 @@
   ReadOnly and carries the CommandPaletteJsModule trigger attribute, so focusing or clicking it
   opens the CommandPalette modal (as Ctrl-K / Cmd-K anywhere on the page does). The palette is a
   ModalContainer beside AssemblyInfoModal and owns its JS registration; only this shell hosts it.
+  The app-bar logo is BrandOptions (source, alt, width, height). This shell authors the img so
+  the isolated .twe-brand__logo rule can match it. Height is --twe-logo-height from /brand.css.
   Task 290: all shell CSS is in TimeWarpPage.razor.css (CSS isolation), which the browser loads in
   <head> before first paint. A <style>@(...)</style> block here was HTML-encoded by prerender and
   dropped until interactive, so the shell flashed unstyled. Components author no <style> elements
@@ -56,6 +58,10 @@
 *@
 
 @code {
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+
+  private BrandOptions Brand => BrandOptionsAccessor.Value;
+
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? Description { get; set; }
   [Parameter] public RenderFragment? Actions { get; set; }
@@ -120,7 +126,12 @@
                stacked timewarp-logo.svg so the wordmark stays readable at bar height.
                Explicit width/height reserve the box before styles apply (no first-paint
                size flash). *@
-            <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="201" height="48" />
+            <img class="twe-brand__logo"
+                 src="@Brand.LogoSrc"
+                 alt="@Brand.LogoAlt"
+                 width="@Brand.LogoWidth"
+                 height="@Brand.LogoHeight"
+                 data-qa="BrandLogo" />
           </div>
           <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
             <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">

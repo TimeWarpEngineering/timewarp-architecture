@@ -79,6 +79,8 @@ public partial class FirstPaint_Given_PrerenderedShell
     await File.WriteAllTextAsync(ScreenshotPath("prerendered.html"), html);
     AssertStyleElementsAreNotEncoded(html);
     html.ShouldContain("data-theme-color=\"#55409c\"");
+    html.ShouldContain("href=\"brand.css\"");
+    html.ShouldContain("images/timewarp-horizontal.svg");
 
     IBrowser browser = session.Inner;
 
@@ -160,6 +162,13 @@ public partial class FirstPaint_Given_PrerenderedShell
     response.Ok.ShouldBeTrue($"GET / returned {response.Status}");
     string html = await response.TextAsync();
     html.ShouldContain("twe-appbar");
+
+    IAPIResponse brandCss = await request.GetAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css");
+    brandCss.Ok.ShouldBeTrue($"GET /brand.css returned {brandCss.Status}");
+    string css = await brandCss.TextAsync();
+    css.ShouldContain("--twe-purple: #55409c;");
+    css.ShouldContain("--twe-logo-height: 48px;");
+    css.ShouldNotContain("<");
     return html;
   }
 

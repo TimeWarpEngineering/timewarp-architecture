@@ -8,6 +8,8 @@
 // Version is derived from the assembly rather than stored, so it cannot drift from the
 // deployed build.
 // Setters are private; mutation happens only via action-set handlers in sibling partials.
+// The visible product name and logo are BrandOptions. Name's default matches
+// BrandOptions.DefaultProductName so a store that has only run Initialize agrees with the shell.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -55,7 +57,7 @@ public sealed partial class ApplicationState : State<ApplicationState>
   public override void Initialize()
   {
     IsMenuExpanded = true;
-    Name = "TimeWarp.Architecture";
+    Name = BrandOptions.DefaultProductName;
     Logo = "/images/logo.png";
   }
 }

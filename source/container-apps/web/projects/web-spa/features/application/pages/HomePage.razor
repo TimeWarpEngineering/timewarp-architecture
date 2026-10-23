@@ -3,6 +3,8 @@
 
 @code
 {
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
   public static string Title => "Home";
 
@@ -10,7 +12,7 @@
     await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
 }
 
-<TimeWarpPage Title=@ApplicationState.Name>
+<TimeWarpPage Title=@BrandOptionsAccessor.Value.ProductName>
   <div class="twe-stack">
 
     <Card Title="Welcome to TimeWarp.Architecture">

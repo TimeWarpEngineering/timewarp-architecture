@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using TimeWarp.Architecture.Components;
+using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
@@ -138,6 +139,50 @@ public class TimeWarpPage_Should_
     html.ShouldContain("Add item");
   }
 
+  public static async Task Render_The_Configured_Logo_On_The_App_Bar_And_The_Focused_Page()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldContain("data-qa=\"BrandLogo\"");
+    html.ShouldContain("src=\"images/timewarp-horizontal.svg\"");
+    html.ShouldContain("alt=\"TimeWarp Architecture\"");
+    html.ShouldContain("width=\"201\"");
+    html.ShouldContain("height=\"48\"");
+
+    BrandOptions brand = new()
+    {
+      LogoSrc = "https://cdn.example/mark.svg",
+      LogoAlt = "Sample Product",
+      LogoWidth = 80,
+      LogoHeight = 32
+    };
+    string custom = await RenderAsync
+    (
+      new Dictionary<string, object>
+      {
+        ["Title"] = "Staff",
+        ["ChildContent"] = Text("Page body")
+      },
+      brand
+    );
+    custom.ShouldContain("src=\"https://cdn.example/mark.svg\"");
+    custom.ShouldContain("alt=\"Sample Product\"");
+    custom.ShouldContain("width=\"80\"");
+    custom.ShouldContain("height=\"32\"");
+
+    string focused = await RenderFocusedAsync(brand);
+    focused.ShouldContain("twe-focused__logo");
+    focused.ShouldContain("src=\"https://cdn.example/mark.svg\"");
+    focused.ShouldContain("alt=\"Sample Product\"");
+    focused.ShouldContain("width=\"80\"");
+    focused.ShouldContain("height=\"32\"");
+    focused.ShouldContain("data-qa=\"BrandLogo\"");
+  }
+
   private static RenderFragment Text(string value) => builder => builder.AddContent(0, value);
 
   private static RenderFragment Mark(string dataQa, string text) => builder =>
@@ -148,7 +193,31 @@ public class TimeWarpPage_Should_
     builder.CloseElement();
   };
 
-  private static async Task<string> RenderAsync(Dictionary<string, object> parameters)
+  private static async Task<string> RenderAsync(Dictionary<string, object> parameters, BrandOptions? brand = null)
+  {
+    await using ServiceProvider provider = CreateServices(brand ?? new BrandOptions()).BuildServiceProvider();
+    await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
+    string html = await renderer.Dispatcher.InvokeAsync(async () =>
+    {
+      Dictionary<string, object?> hostParameters = new()
+      {
+        ["PageParameters"] = parameters
+      };
+      return (await renderer.RenderComponentAsync<ShellHost>(ParameterView.FromDictionary(hostParameters))).ToHtmlString();
+    });
+    return WebUtility.HtmlDecode(html);
+  }
+
+  private static async Task<string> RenderFocusedAsync(BrandOptions brand)
+  {
+    await using ServiceProvider provider = CreateServices(brand).BuildServiceProvider();
+    await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
+    string html = await renderer.Dispatcher.InvokeAsync(async () =>
+      (await renderer.RenderComponentAsync<TimeWarpFocusedPage>(ParameterView.Empty)).ToHtmlString());
+    return WebUtility.HtmlDecode(html);
+  }
+
+  private static ServiceCollection CreateServices(BrandOptions brand)
   {
     ServiceCollection services = new();
     services.AddLogging();
@@ -157,6 +226,7 @@ public class TimeWarpPage_Should_
     services.AddScoped<AuthenticationStateProvider, FixedAuthenticationStateProvider>();
     services.AddScoped<IJSRuntime, HeadlessJsRuntime>();
     services.AddScoped(_ => A.Fake<ISessionStorageService>());
+    services.AddSingleton<IOptions<BrandOptions>>(Options.Create(brand));
     services.AddWebSpaGeneratedMediator();
     services.AddTimeWarpState(options =>
     {
@@ -175,18 +245,7 @@ public class TimeWarpPage_Should_
     services.AddScoped<JsWebMcpModelContext>();
     services.AddScoped<WebMcpPublisher>();
     services.AddScoped<NavigationManager, TestNavigationManager>();
-
-    await using ServiceProvider provider = services.BuildServiceProvider();
-    await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
-    string html = await renderer.Dispatcher.InvokeAsync(async () =>
-    {
-      Dictionary<string, object?> hostParameters = new()
-      {
-        ["PageParameters"] = parameters
-      };
-      return (await renderer.RenderComponentAsync<ShellHost>(ParameterView.FromDictionary(hostParameters))).ToHtmlString();
-    });
-    return WebUtility.HtmlDecode(html);
+    return services;
   }
 
   private static string Title(string html)

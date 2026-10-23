@@ -566,6 +566,15 @@ public partial class Program : IAspNetProgram
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
+    // White-label shell tokens. Linked from App.razor after tokens.css. Anonymous: the mark
+    // paints before anyone signs in. Not a static asset, so a configuration edit is the next GET.
+    webApplication.MapGet
+    (
+      BrandStylesheet.Path,
+      (IOptions<BrandOptions> brandOptions) =>
+        Results.Text(BrandStylesheet.Render(brandOptions.Value), "text/css; charset=utf-8")
+    ).AllowAnonymous();
+
     webApplication.MapStaticAssets();
     WebMcpDiscoveryEndpoint.Map(webApplication);
     webApplication.MapRazorComponents<App>()
