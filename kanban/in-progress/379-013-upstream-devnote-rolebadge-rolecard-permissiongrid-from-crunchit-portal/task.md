@@ -79,7 +79,7 @@ git diff origin/master -- source tests | rg -i crunchit || echo NO_CLIENT_NAME
 
 ### Review
 
-Round 1 ran at effort 3 with one general reviewer. Counts at merge: bug 1 open, suggestion 1 open, nit 2 open. This fix pass addresses all four. Round 2 has not run, so disposition stays with the host.
+Round 1 ran at effort 3 with one general reviewer. Counts at merge: bug 1 open, suggestion 1 open, nit 2 open. The fix pass addressed all four.
 
 - M1 (bug): `sg-follow` is on a native wrapper for the permission grid and the dev note. The page scope `.sg-follow[b-iy1milohjd]` can match those divs. `data-qa` moved with the class.
 - M2 (suggestion): the RoleCard Design region and the overview row name the parent's roving tabindex and arrow keys, and they point at `RovingSelection` and `SegmentedControl`. The style-guide sample sets `tabindex="0"` on the selected card and `tabindex="-1"` on the others. The sample still does not handle arrow keys or store a choice.
@@ -90,7 +90,11 @@ The four render classes were re-run after the fix (18/18 passed). `dev build`, `
 
 Operator note: the task branch was reset from `origin/feature/379-portal-rest` to `origin/master`. It shares hunks with that feature branch (StatusBadge, StyleGuidePage, tokens.css, overview.md), so the PR target is an operator call.
 
-Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 2 ran at effort 1 with one general reviewer, on the fix delta `787fa86db..8041a392f`. All four fixes were confirmed and no new findings were raised. RoleCard (4/4) and PermissionGrid (5/5) were re-run and passed. Final counts: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0 open / 2 fixed, 0 wontfix.
+
+**Disposition: clean** (2 rounds, final open count 0, no exceptions, no escalations).
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -100,11 +104,13 @@ Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/ro
 - Review oracle round 1: claude (claude-opus-5-5), general reviewer, effort 3, session not reported, 2026-10-24. 4 findings open (M1–M4); fix pass requested
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T20:39:13Z
 - Fix pass: implementer-grok (grok, model grok-4.7), session not reported, 2026-10-24. Addressed M1–M4. Build, template-smoke, audit, and the four render classes are green. Round 2 has not run.
+- Review oracle round 2: claude (claude-opus-5-5), general reviewer, effort 1, max-turns 80, session not reported, 2026-10-24. M1–M4 fixed, 0 open. Disposition clean
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-- Fix pass 2: addressed M1, M2, M3, and M4. Round 2 has not run.
+- Fix pass 2: addressed M1, M2, M3, and M4.
+- Round 2: Done. M1–M4 fixed, 0 open. Disposition clean (`review/disposition.md`)
 
 ## Notes
 
