@@ -109,8 +109,7 @@ Round 3 (effort 1, general) confirms M8 is fixed in 5aa2a680e and raises no new 
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
-- Round 3: Done — M8 fixed, no new findings. Disposition clean (`review/disposition.md`)
-
+- Round 3: Done
 ## Notes
 
 - Source idea (read-only): the portal's `BrandTheme` seed and exact-versus-harmonized `ThemeSettings`. This template does not copy that orange, that product name, or a settings-page toggle. The operator sets the brand in configuration. The shell does not call `IThemeService.SetThemeAsync` (task 290: that painted Fluent's default blue first).
