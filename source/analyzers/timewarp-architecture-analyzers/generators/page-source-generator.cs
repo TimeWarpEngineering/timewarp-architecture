@@ -54,8 +54,13 @@
 // - NavGroup (string constant, "" = top level) is the menu category; NavOrder (int constant) is
 //   the menu position. PageRegistry.All is sorted by NavOrder, then route, so the registry order
 //   IS the menu order and NavMenu starts a category whenever NavGroup changes; the registry test
-//   requires each NavGroup to be one contiguous run. Description, NavGroup and NavOrder accept
-//   any compile-time constant (a const field reads like a literal).
+//   requires each NavGroup to be one contiguous run. NavPlacement is the enum constant Top
+//   (default) or Bottom. Bottom pins that group in the lower nav. One named group uses one
+//   placement. Description, NavGroup, NavOrder and NavPlacement accept any compile-time constant
+//   (a const field reads like a literal). NavPlacement is read from the member name Bottom.
+//   The enum is emitted internal next to [Page]. Every project that references this generator
+//   gets that attribute, and several share a root namespace, so a public enum would collide.
+//   The registry stores it on an internal init property for the same reason.
 // - AgentActions (typeof list) names the catalog actions the agent may execute while this page is
 //   on screen. Types are resolved with the semantic model and emitted fully qualified, so the
 //   generated file needs none of the page file's usings. Every page that declares any (navigable
@@ -146,6 +151,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     ImmutableArray<string> RouteTemplates,
     string NavGroup,
     int NavOrder,
+    bool NavPinBottom,
     ImmutableArray<string> AgentActions)
   {
     public bool Equals(PageModel? other) =>
@@ -167,6 +173,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       && RouteTemplates.SequenceEqual(other.RouteTemplates)
       && NavGroup == other.NavGroup
       && NavOrder == other.NavOrder
+      && NavPinBottom == other.NavPinBottom
       && AgentActions.SequenceEqual(other.AgentActions);
 
     public override int GetHashCode()
@@ -179,6 +186,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         hash = (hash * 397) ^ Errors.Length;
         hash = (hash * 397) ^ Navigable.GetHashCode();
         hash = (hash * 397) ^ NavOrder;
+        hash = (hash * 397) ^ NavPinBottom.GetHashCode();
         hash = (hash * 397) ^ AgentActions.Length;
         return (hash * 397) ^ StringComparer.Ordinal.GetHashCode(Description);
       }
@@ -203,6 +211,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         RouteTemplates: [],
         NavGroup: "",
         NavOrder: 0,
+        NavPinBottom: false,
         AgentActions: []);
   }
 
@@ -257,6 +266,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     string description = "";
     string navGroup = "";
     int navOrder = 0;
+    bool navPinBottom = false;
     var agentActions = new List<string>();
 
     foreach (AttributeArgumentSyntax arg in attr.ArgumentList.Arguments)
@@ -299,6 +309,12 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       {
         if (semanticModel.GetConstantValue(arg.Expression) is { HasValue: true, Value: int order })
           navOrder = order;
+        continue;
+      }
+
+      if (argName == "NavPlacement")
+      {
+        navPinBottom = NavPlacementName(arg.Expression) == "Bottom";
         continue;
       }
 
@@ -431,7 +447,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       ns, className, hint, primary.RouteAttribute, [.. additionalAttributes], signature, primary.Format, [.. parameters], policy,
       Errors: [], RouteTemplate: route, Navigable: navigable, NavigableDiagnostic: navigableDiagnostic,
       Description: description, RouteTemplates: [route, .. additionalRoutes.Select(static r => r.Route)],
-      NavGroup: navGroup, NavOrder: navOrder, AgentActions: [.. agentActions]);
+      NavGroup: navGroup, NavOrder: navOrder, NavPinBottom: navPinBottom, AgentActions: [.. agentActions]);
   }
 
   /// <summary>
@@ -572,7 +588,11 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    string Policy,\n");
     sb.Append("    string Description,\n");
     sb.Append("    string NavGroup,\n");
-    sb.Append("    int NavOrder);\n\n");
+    sb.Append("    int NavOrder)\n");
+    sb.Append("  {\n");
+    sb.Append("    /// <summary>Bottom pins this entry's NavGroup in the lower nav. Top is the default.</summary>\n");
+    sb.Append("    internal global::").Append(rootNamespace).Append(".NavPlacement NavPlacement { get; init; }\n");
+    sb.Append("  }\n\n");
     sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates and the actions the agent may run on it.</summary>\n");
     sb.Append("  public sealed record PageActionScope(\n");
     sb.Append("    global::System.Type PageType,\n");
@@ -597,7 +617,10 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         .Append(type).Append(".Policy, ")
         .Append(CSharpString(page.Description)).Append(", ")
         .Append(CSharpString(page.NavGroup)).Append(", ")
-        .Append(page.NavOrder.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append("),\n");
+        .Append(page.NavOrder.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        .Append(") { NavPlacement = global::").Append(rootNamespace)
+        .Append(page.NavPinBottom ? ".NavPlacement.Bottom" : ".NavPlacement.Top")
+        .Append(" },\n");
     }
 
     sb.Append("    ];\n\n");
@@ -625,6 +648,12 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     var sb = new StringBuilder();
     sb.Append("// <auto-generated/>\n");
     sb.Append("namespace ").Append(ns).Append("\n{\n");
+    sb.Append("    /// <summary>Where a [Page] NavGroup sits. Top is the default. Bottom pins the group.</summary>\n");
+    sb.Append("    internal enum NavPlacement\n");
+    sb.Append("    {\n");
+    sb.Append("        Top = 0,\n");
+    sb.Append("        Bottom = 1,\n");
+    sb.Append("    }\n\n");
     sb.Append("    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false)]\n");
     sb.Append("    internal sealed class PageAttribute : System.Attribute\n    {\n");
     sb.Append("        public string RouteTemplate { get; set; }\n");
@@ -638,6 +667,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("        public string NavGroup { get; set; }\n");
     sb.Append("        /// <summary>Menu position: PageRegistry.All is sorted by NavOrder, then route. An int literal.</summary>\n");
     sb.Append("        public int NavOrder { get; set; }\n");
+    sb.Append("        /// <summary>Bottom pins this page's NavGroup in the lower nav. Top is the default.</summary>\n");
+    sb.Append("        public NavPlacement NavPlacement { get; set; }\n");
     sb.Append("        /// <summary>Catalog Action types the agent may execute while this page is on screen.</summary>\n");
     sb.Append("        public System.Type[] AgentActions { get; set; }\n");
     sb.Append("        /// <summary>Extra routes emitted as [Route] aliases; GetPageUrl and PageRegistry use RouteTemplate (the primary route) only.</summary>\n");
@@ -646,6 +677,10 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    }\n}\n");
     return sb.ToString();
   }
+
+  // NavPlacement.Bottom, including a global:: qualification. Anything else stays Top.
+  private static string? NavPlacementName(SyntaxNode expression) =>
+    expression is MemberAccessExpressionSyntax member ? member.Name.Identifier.Text : null;
 
   // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as
   // a newline, so any constant Description compiles in the registry. A non-constant expression

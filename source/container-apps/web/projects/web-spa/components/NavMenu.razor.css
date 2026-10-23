@@ -1,0 +1,30 @@
+/* The menu fills the nav column. The second nav (twe-nav--pin) sits on the bottom
+   edge when the column is taller than the links. FluentNavCategory must stay a
+   direct child of FluentNav, so the pin is a second nav rather than a wrapper.
+   The rail hides link text and collapses a category title to its icon.
+   880 and 1279 match TimeWarpPage.razor.css. */
+.twe-nav-menu {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.twe-nav-menu ::deep .twe-nav--pin {
+  margin-top: auto;
+}
+
+@media (max-width: 1279px) and (min-width: 880px) {
+  .twe-nav__label {
+    display: none;
+  }
+
+  .twe-nav-menu ::deep .fluent-navcategoryitem {
+    font-size: 0;
+  }
+
+  .twe-nav-menu ::deep .fluent-navcategoryitem .icon,
+  .twe-nav-menu ::deep .fluent-navcategoryitem .expand-icon {
+    font-size: 20px;
+  }
+}

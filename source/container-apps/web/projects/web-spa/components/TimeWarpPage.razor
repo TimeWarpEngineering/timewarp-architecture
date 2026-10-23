@@ -55,6 +55,15 @@
   one copy of the document title and the h1, rendered from both branches so they cannot drift.
   This component still owns the only h1. Callers put buttons in Actions; this shell does not
   handle their clicks.
+  SearchMode chooses the app-bar search slot. Palette is the read-only Ctrl-K field. Hidden
+  omits it. Custom renders the Search fragment in that same slot. The command palette modal
+  stays mounted, so Ctrl-K still opens it.
+  The navigation column pins a user card under the menu when someone is signed in. The name
+  is the profile alias, the identity name, or Account. The detail is the profile email.
+  The card links to the profile page only when that policy allows it. A UserCard fragment
+  replaces that default. ShowUserCard false omits it. Signed out, the default card is absent.
+  NavPlacement.Bottom groups render in NavMenu's pinned nav. The rail (880px through 1279px)
+  narrows that column to --twe-shell-rail-width. Below 880px Fluent's drawer is unchanged.
 *@
 
 @code {
@@ -68,6 +77,10 @@
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
   [Parameter] public bool ShowInBreadcrumbs { get; set; } = true;
+  [Parameter] public ShellSearchMode SearchMode { get; set; } = ShellSearchMode.Palette;
+  [Parameter] public RenderFragment? Search { get; set; }
+  [Parameter] public RenderFragment? UserCard { get; set; }
+  [Parameter] public bool ShowUserCard { get; set; } = true;
 
   // The attribute command-palette.js looks for; the name is CommandPaletteJsModule's constant.
   private static readonly Dictionary<string, object> CommandPaletteTrigger =
@@ -133,11 +146,18 @@
                  height="@Brand.LogoHeight"
                  data-qa="BrandLogo" />
           </div>
-          <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
-            <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
-              <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
-            </FluentTextInput>
-          </div>
+          @if (SearchMode == ShellSearchMode.Palette)
+          {
+            <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
+              <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
+                <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
+              </FluentTextInput>
+            </div>
+          }
+          else if (SearchMode == ShellSearchMode.Custom && Search is not null)
+          {
+            <div class="twe-appbar__search">@Search</div>
+          }
           <div class="twe-appbar__actions">
             <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">@AgentSurfaceState.AskLabel</FluentButton>
             <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
@@ -149,7 +169,17 @@
       </FluentLayoutItem>
 
       <FluentLayoutItem Area="LayoutArea.Navigation" Width="240px">
-        <NavMenu />
+        <div class="twe-nav-column">
+          <NavMenu />
+          @if (UserCard is not null)
+          {
+            <div class="twe-nav-column__user">@UserCard</div>
+          }
+          else if (ShowUserCard)
+          {
+            <ShellUserCard />
+          }
+        </div>
       </FluentLayoutItem>
 
       <FluentLayoutItem Area="LayoutArea.Content">

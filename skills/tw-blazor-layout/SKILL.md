@@ -105,7 +105,10 @@ Concrete instance of the pattern in this repo:
   component → gives it the state `Id` and render-on-state-change, e.g. the footer activity spinner
   bound to `ActionTrackingState.IsActive`). Renders FluentUI `FluentLayout` zones + brand/search/nav/
   footer/`ModalController`, and `<CascadingValue Value=@this>`s itself. Parameters: `Title`,
-  `ChildContent`, `Aside`. `FluentLayout` `MobileBreakdownWidth` is 880. Ask, when open, is the
+  `ChildContent`, optional `Aside`, optional `Description` and `Actions`, `SearchMode`
+  (`Palette` default, `Hidden`, or `Custom` with a `Search` fragment), and an optional `UserCard`
+  fragment (`ShowUserCard` false omits the signed-in card). `FluentLayout` `MobileBreakdownWidth`
+  is 880. Ask, when open, is the
   aside item (`LayoutArea.Aside`, 450px) so the grid reflows the page. The page `Aside` is that
   same column only while Ask is closed — two aside items would share one grid area. Below 880px,
   and when Ask is expanded, `TimeWarpPage.razor.css` covers the viewport from
@@ -124,7 +127,12 @@ Concrete instance of the pattern in this repo:
   description, menu group, menu order), sorted by `NavOrder`, and adds `INavigationDestination`.
   `components/NavMenu.razor` has no page links of its own: it renders
   `NavigationDestinations.ForAsync` (the registry filtered by each page's own `Policy`) and starts
-  a `FluentNavCategory` whenever `NavGroup` changes (`""` is the top level). There is no category
+  a `FluentNavCategory` whenever `NavGroup` changes (`""` is the top level). `NavPlacement` is
+  `Top` (default) or `Bottom`. `Bottom` renders that group in a second `FluentNav`
+  (`twe-nav--pin`, `margin-top: auto`) with the external links. The signed-in user card sits under
+  the menu. From 1280px up the nav is 240px; from 880px through 1279px it is a 68px icon rail
+  (`--twe-shell-rail-width`); below 880px the drawer is unchanged. Media queries repeat 880 and
+  1279 because they cannot read the tokens. There is no category
   gate; a category shows when one of its pages is permitted. The Ctrl-K palette, Ask's `navigate`
   and `site_map` tools, and WebMCP read the same list, so a new menu page is one `[Page]` edit.
   `Navigable = true` on a parameterized route (or a non-literal value) is **TWE009**.

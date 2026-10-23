@@ -24,8 +24,10 @@ using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
@@ -183,6 +185,150 @@ public class TimeWarpPage_Should_
     focused.ShouldContain("data-qa=\"BrandLogo\"");
   }
 
+  public static async Task Keep_The_Palette_Search_And_Omit_The_Signed_Out_User_Card()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldContain("twe-appbar__search");
+    html.ShouldContain("Search pages and commands (Ctrl-K)");
+    html.ShouldContain("data-command-palette-trigger");
+    html.ShouldContain("aria-label=\"Pinned\"");
+    html.ShouldNotContain("twe-user-card");
+    html.ShouldNotContain("data-qa=\"ShellUserCard\"");
+  }
+
+  public static async Task Omit_The_Search_Field_When_SearchMode_Is_Hidden()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["SearchMode"] = ShellSearchMode.Hidden,
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldNotContain("twe-appbar__search");
+    html.ShouldNotContain("Search pages and commands (Ctrl-K)");
+    html.ShouldNotContain("data-command-palette-trigger");
+  }
+
+  public static async Task Render_A_Custom_Search_Fragment_Without_The_Palette_Field()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["SearchMode"] = ShellSearchMode.Custom,
+      ["Search"] = Mark("CustomSearch", "Find a person"),
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldContain("twe-appbar__search");
+    html.ShouldContain("data-qa=\"CustomSearch\"");
+    html.ShouldContain("Find a person");
+    html.ShouldNotContain("Search pages and commands (Ctrl-K)");
+    html.ShouldNotContain("data-command-palette-trigger");
+  }
+
+  public static async Task Omit_A_Custom_Search_Slot_When_The_Fragment_Is_Unset()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["SearchMode"] = ShellSearchMode.Custom,
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldNotContain("twe-appbar__search");
+    html.ShouldNotContain("data-command-palette-trigger");
+  }
+
+  public static async Task Render_A_User_Card_Fragment_In_Place_Of_The_Default()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["UserCard"] = Mark("SlotUserCard", "Slot person"),
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldContain("twe-nav-column__user");
+    html.ShouldContain("data-qa=\"SlotUserCard\"");
+    html.ShouldContain("Slot person");
+    html.ShouldNotContain("data-qa=\"ShellUserCard\"");
+  }
+
+  public static async Task Render_A_Static_User_Card_For_A_Signed_In_Person_Without_Profile_Permission()
+  {
+    ClaimsPrincipal user = new(new ClaimsIdentity(
+      [new Claim(ClaimTypes.Name, "Ada Lovelace")],
+      authenticationType: "Test"));
+
+    string html = await RenderAsync
+    (
+      new Dictionary<string, object>
+      {
+        ["Title"] = "Staff",
+        ["ChildContent"] = Text("Page body")
+      },
+      user: user
+    );
+
+    string root = UserCardTag(html);
+    root.ShouldStartWith("<div ");
+    root.ShouldContain("twe-user-card");
+    root.ShouldContain("data-qa=\"ShellUserCard\"");
+    root.ShouldNotContain("href");
+    html.ShouldContain("Ada Lovelace");
+  }
+
+  public static async Task Link_The_User_Card_When_The_Profile_Policy_Allows_It()
+  {
+    ClaimsIdentity identity = new("Test");
+    identity.AddClaim(new Claim(ClaimTypes.Name, "Ada Lovelace"));
+    identity.AddClaim(new Claim(PermissionIds.ClaimType, PermissionIds.ProfileRead));
+
+    string html = await RenderAsync
+    (
+      new Dictionary<string, object>
+      {
+        ["Title"] = "Staff",
+        ["ChildContent"] = Text("Page body")
+      },
+      user: new ClaimsPrincipal(identity)
+    );
+
+    string root = UserCardTag(html);
+    root.ShouldStartWith("<a ");
+    root.ShouldContain("href=\"/Profile\"");
+    root.ShouldContain("data-qa=\"ShellUserCard\"");
+    html.ShouldContain("Ada Lovelace");
+  }
+
+  public static async Task Omit_The_User_Card_When_ShowUserCard_Is_False()
+  {
+    ClaimsPrincipal user = new(new ClaimsIdentity(
+      [new Claim(ClaimTypes.Name, "Ada Lovelace")],
+      authenticationType: "Test"));
+
+    string html = await RenderAsync
+    (
+      new Dictionary<string, object>
+      {
+        ["Title"] = "Staff",
+        ["ShowUserCard"] = false,
+        ["ChildContent"] = Text("Page body")
+      },
+      user: user
+    );
+
+    html.ShouldNotContain("twe-user-card");
+    html.ShouldNotContain("data-qa=\"ShellUserCard\"");
+    html.ShouldNotContain("Ada Lovelace");
+  }
+
   private static RenderFragment Text(string value) => builder => builder.AddContent(0, value);
 
   private static RenderFragment Mark(string dataQa, string text) => builder =>
@@ -193,9 +339,14 @@ public class TimeWarpPage_Should_
     builder.CloseElement();
   };
 
-  private static async Task<string> RenderAsync(Dictionary<string, object> parameters, BrandOptions? brand = null)
+  private static async Task<string> RenderAsync
+  (
+    Dictionary<string, object> parameters,
+    BrandOptions? brand = null,
+    ClaimsPrincipal? user = null
+  )
   {
-    await using ServiceProvider provider = CreateServices(brand ?? new BrandOptions()).BuildServiceProvider();
+    await using ServiceProvider provider = CreateServices(brand ?? new BrandOptions(), user).BuildServiceProvider();
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
     {
@@ -217,13 +368,22 @@ public class TimeWarpPage_Should_
     return WebUtility.HtmlDecode(html);
   }
 
-  private static ServiceCollection CreateServices(BrandOptions brand)
+  private static string UserCardTag(string html)
+  {
+    int classAt = html.IndexOf("twe-user-card", StringComparison.Ordinal);
+    classAt.ShouldBeGreaterThan(-1, "shell rendered no user card");
+    int start = html.LastIndexOf('<', classAt, StringComparison.Ordinal);
+    int end = html.IndexOf('>', classAt, StringComparison.Ordinal);
+    return html.Substring(start, end - start + 1);
+  }
+
+  private static ServiceCollection CreateServices(BrandOptions brand, ClaimsPrincipal? user = null)
   {
     ServiceCollection services = new();
     services.AddLogging();
     services.AddFluentUIComponents();
     services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
-    services.AddScoped<AuthenticationStateProvider, FixedAuthenticationStateProvider>();
+    services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
     services.AddScoped<IJSRuntime, HeadlessJsRuntime>();
     services.AddScoped(_ => A.Fake<ISessionStorageService>());
     services.AddSingleton<IOptions<BrandOptions>>(Options.Create(brand));
@@ -302,8 +462,15 @@ public class TimeWarpPage_Should_
 
   private sealed class FixedAuthenticationStateProvider : AuthenticationStateProvider
   {
+    private readonly ClaimsPrincipal User;
+
+    public FixedAuthenticationStateProvider(ClaimsPrincipal? user = null)
+    {
+      User = user ?? new ClaimsPrincipal(new ClaimsIdentity());
+    }
+
     public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
-      Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
+      Task.FromResult(new AuthenticationState(User));
   }
 
   private sealed class HeadlessJsRuntime : IJSRuntime
