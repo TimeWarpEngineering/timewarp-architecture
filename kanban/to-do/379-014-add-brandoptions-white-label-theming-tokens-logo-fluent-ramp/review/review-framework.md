@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 843
-- Effort: 3
+- Lines changed: 345
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope (review oracle)
 
@@ -17,6 +17,14 @@
 **Effort:** 3, general axis
 **Reviewer roster:** general. The review oracle (claude-opus-5-5) did one pass. An independent general-purpose subagent (claude-opus-5-5) did a second pass without seeing the oracle's conclusions. The two passes are merged into `round-N/general.md`.
 **Session IDs:** review oracle ea832021-9579-4f4a-b67f-01532e447553. Subagent a94ae757bf634b8e4.
+
+## Scope (review oracle, round 2)
+
+**Date:** 2026-10-24
+**Diff scope:** commit 7f9e21a90 (`fix(web-spa): stop the brand sheet and shell from drifting apart`) against 29d4585bc (the round-1 review commit), `source/` and `tests/` only. This is the fix delta for M1 through M7.
+**Effort:** 2, general axis (the budget above)
+**Reviewer roster:** general. The review oracle (claude-opus-5-5) did one pass.
+**Checks run:** `BrandOptions_Should_` 7/7, `Clone_Should` 4/4, `TimeWarpPage_Should_` 5/5 (Release), and `./bin/dev build` with 0 warnings and 0 errors. Template smoke and Playwright were not re-run.
 
 ## Ground rules
 

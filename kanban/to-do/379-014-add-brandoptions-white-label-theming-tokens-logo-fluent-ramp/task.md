@@ -40,6 +40,7 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - Review oracle round 1: claude (claude-opus-5-5), session ea832021-9579-4f4a-b67f-01532e447553, effort 3, general axis. An independent general subagent (a94ae757bf634b8e4) did a second pass. 2026-10-24
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T21:59:55Z
 - Implement-fix-2 oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, 2026-10-24. Round-1 findings M1 through M7 fixed on this branch. The ledger was left open.
+- Review oracle round 2: claude (claude-opus-5-5), session not reported, effort 2, general axis, max-turns 120, 2026-10-24. Reviewed the fix delta 7f9e21a90. Re-ran `BrandOptions_Should_` 7/7, `Clone_Should` 4/4, `TimeWarpPage_Should_` 5/5, and `./bin/dev build` (0 warnings, 0 errors).
 
 ## Results
 
@@ -86,11 +87,15 @@ Artifacts:
 
 - Framework: `review/review-framework.md`
 - Findings: `review/round-1/general.md`
-- Live ledger: `review/round-1/merged.md`
+- Round 1 ledger (frozen): `review/round-1/merged.md`
+- Round 2: `review/round-2/general.md`. Live ledger: `review/round-2/merged.md`
+
+Round 2 (effort 2, general) confirms M1 through M7 are fixed. It opens M8 (suggestion): `BrandStylesheet` compares `If-None-Match` strongly, and the test pins `W/` as 200. RFC 9110 requires weak comparison there. Counts: bug 0 open / 2 fixed, suggestion 1 open / 2 fixed, nit 0 open / 3 fixed. Disposition is pending until M8 is fixed.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
+- Round 2: Blocked — M1 through M7 fixed. New M8 open (suggestion): `If-None-Match` must use weak comparison. Ledger: `review/round-2/merged.md`
 
 ## Notes
 
