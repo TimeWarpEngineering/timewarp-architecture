@@ -302,9 +302,8 @@ git diff origin/master -- source tests | rg -i "crunchit|copic"
 
 - Round 1: Blocked — open M1, M2
 - Round 1 fix pass: M1 and M2 are implemented.
-- Round 2: the reviewer re-checked M1 and M2 on the fix delta and found both fixed, with no new findings. The reviewer re-ran `GroupedTable_Should_`: 9 passed, 0 failed.
+- Round 2: Done
 - **Review disposition: clean.** Two rounds. Effort 2 in round 1 and effort 1 in round 2. The roster was general in both rounds. Final counts: bug 0, suggestion 1 fixed (M1), nit 1 fixed (M2). 0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
-
 ## Notes
 
 - Crunchit source is under
