@@ -6,8 +6,10 @@
   Purpose: Admin → AI. Set, replace, or clear the site xAI API key, or show that the host owns it.
 
   Design: The draft key is page-local and is cleared after a successful save. State never
-  receives it back. The input is a password field. Host configuration and a deployment with no
-  durable store render read-only text, including the setup hint. Save and clear only dispatch.
+  receives it back. The input is a password field. The editable branch shows the connection
+  as an IntegrationCard; the status sentence stays the meta line, and save and clear stay
+  outside the card. Host configuration and a deployment with no durable store render
+  read-only text, including the setup hint. Save and clear only dispatch.
 *@
 
 @code {
@@ -15,6 +17,8 @@
   public static Icon? NavIcon => new Icons.Regular.Size20.Key();
 
   private static readonly SetXaiApiKey.Validator KeyValidator = new();
+
+  private static readonly Icon XaiKeyIcon = new Icons.Regular.Size24.Key();
 
   private SetXaiApiKey.Command Command { get; } = new();
 
@@ -41,6 +45,20 @@
       return $"Configured, ends in …{XaiApiKeyState.Suffix}.{when}";
     }
   }
+
+  private BadgeStatus KeyBadgeStatus =>
+    XaiApiKeyState.NeedsReplacement
+      ? BadgeStatus.Warning
+      : XaiApiKeyState.Configured
+        ? BadgeStatus.Active
+        : BadgeStatus.Inactive;
+
+  private string KeyBadgeLabel =>
+    XaiApiKeyState.NeedsReplacement
+      ? "Needs a new key"
+      : XaiApiKeyState.Configured
+        ? "Configured"
+        : "No key";
 
   protected override async Task OnInitializedAsync()
   {
@@ -105,7 +123,12 @@
       <FormSection Title="xAI API key"
                    Description="Ask uses this key. The value is never shown again after you save it."
                    data-qa="XaiApiKeySettings">
-        <p data-qa="XaiApiKeyStatus">@StatusLine</p>
+        <IntegrationCard Title="xAI"
+                         Meta="@StatusLine"
+                         Icon="@XaiKeyIcon"
+                         Status="@KeyBadgeStatus"
+                         StatusLabel="@KeyBadgeLabel"
+                         data-qa="XaiApiKeyStatus" />
         <FormGrid>
           <FormField Label="xAI API key">
             <FluentTextInput @bind-Value="Command.ApiKey"

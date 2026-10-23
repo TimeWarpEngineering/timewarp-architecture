@@ -1,0 +1,88 @@
+/* Integration card — native root, CSS isolation. Tokens from tokens.css.
+   Full is the identity banner. Compact is the thin pull-status row.
+   The full tile is the 48px step. 40px is not on the scale (8, 12, 24, 48).
+   The compact tile is the 24px step. The body min-width is a wrap floor, not a
+   spacing step. FluentIcon draws its own svg, so this sheet does not size the glyph. */
+.twe-integration-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  background: var(--twe-paper);
+  border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow-sm);
+  padding: var(--twe-space-3) var(--twe-space-6);
+}
+
+.twe-integration-card--compact {
+  padding: var(--twe-space-2) var(--twe-space-3);
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+
+.twe-integration-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--twe-space-12);
+  height: var(--twe-space-12);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper-2);
+  color: var(--twe-muted);
+}
+
+.twe-integration-card--compact .twe-integration-card__icon {
+  width: var(--twe-space-6);
+  height: var(--twe-space-6);
+}
+
+.twe-integration-card__body {
+  flex: 1 1 auto;
+  min-width: 12.5rem;
+}
+
+.twe-integration-card--compact .twe-integration-card__body {
+  min-width: 0;
+}
+
+.twe-integration-card__title,
+.twe-integration-card__meta,
+.twe-integration-card__line {
+  margin: 0;
+}
+
+.twe-integration-card__title {
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-integration-card__meta {
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+
+.twe-integration-card__line {
+  min-width: 0;
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}
+
+.twe-integration-card--compact .twe-integration-card__title {
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+  color: var(--twe-ink-2);
+}
+
+.twe-integration-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--twe-space-2);
+  flex: none;
+}
+
+.twe-integration-card--compact .twe-integration-card__actions {
+  margin-inline-start: auto;
+}
