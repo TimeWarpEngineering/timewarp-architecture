@@ -10,6 +10,8 @@
 // The "Message bars (FluentUI)" card renders Success/Error FluentMessageBar as component
 // documentation, not as operation outcomes — the reasoned PageLocalMessageBar opt-out below is
 // the one TWA0025 exception in the SPA (task 247).
+// The Confirmations card only dispatches StyleGuideState.ConfirmSample. The handler asks
+// through IConfirmationService, the same service ApiHandler.ConfirmAsync overrides call.
 #endregion
 
 namespace TimeWarp.Architecture.Features.StyleGuide;

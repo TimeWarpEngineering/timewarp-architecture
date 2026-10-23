@@ -4,7 +4,11 @@
 
 #region Design
 // No key in the action. Opted out of the palette so a keystroke cannot clear the site key.
-// SaveFailed covers a host-managed refusal.
+// The handler overrides ApiHandler.ConfirmAsync, which runs before the per-state semaphore.
+// No skips the delete: no request and no error notification. It sets ClearDeclined so the
+// Ask reload does not treat the skip as a successful clear. Yes clears that flag and sends
+// the delete. SaveFailed covers a host-managed refusal. Any dispatcher (page, palette, agent)
+// hits the same question.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Ai;
@@ -23,15 +27,38 @@ partial class XaiApiKeyState
 
     internal sealed class Handler : DefaultApiHandler<Action, Command, Response>
     {
+      internal const string ConfirmTitle = "Clear the xAI API key?";
+      internal const string ConfirmMessage = "Ask stops working until a new key is saved.";
+      internal const string ConfirmLabel = "Clear key";
+      internal const string CancelLabel = "Cancel";
+
+      private readonly IConfirmationService Confirmation;
+
       public Handler(
         IStore store,
         IWebServerApiService webServerApiService,
         ILogger<Handler> logger,
         IPublisher<ClientPipeline> publisher,
+        IConfirmationService confirmation,
         IValidator<Command>? validator = null,
         AuthenticationStateProvider? authenticationStateProvider = null)
         : base(store, webServerApiService, logger, publisher, validator, authenticationStateProvider)
       {
+        Confirmation = confirmation;
+      }
+
+      /// <inheritdoc />
+      protected override async Task<bool> ConfirmAsync(Action action, CancellationToken cancellationToken)
+      {
+        _ = action;
+        bool confirmed = await Confirmation.ConfirmAsync(
+          ConfirmTitle,
+          ConfirmMessage,
+          ConfirmLabel,
+          CancelLabel,
+          cancellationToken);
+        XaiApiKeyState.ClearDeclined = !confirmed;
+        return confirmed;
       }
 
       /// <inheritdoc />

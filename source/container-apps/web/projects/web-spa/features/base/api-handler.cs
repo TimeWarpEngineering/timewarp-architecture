@@ -11,10 +11,15 @@
 // The semaphore is one per (store, state type), shared across every handler type through
 // ApiHandlerSemaphores. Authentication is opt-in via the nullable
 // AuthenticationStateProvider: when supplied, actions from anonymous users are silently
-// dropped rather than surfacing a 401 round-trip. GetRequest returning null is the
-// sanctioned "skip this action" signal for derived handlers. Cancellation maps to a
-// synthetic 499 SharedProblemDetails so HandleError stays the single failure path;
-// validation failures throw instead, since they indicate a client-side coding bug.
+// dropped rather than surfacing a 401 round-trip. ConfirmAsync runs after that auth check
+// and before AcquireSemaphoreAsync. The default answer is yes. A handler that must ask
+// (ClearXaiApiKey) overrides it and calls IConfirmationService. No returns immediately:
+// no GetRequest, no error notification, and the per-state lock is never taken, so a
+// person answering cannot stall another action on the same state (a status fetch, for
+// example). GetRequest returning null remains the sanctioned skip once the lock is held.
+// Cancellation maps to a synthetic 499 SharedProblemDetails so HandleError stays the
+// single failure path; validation failures throw instead, since they indicate a
+// client-side coding bug.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -51,6 +56,8 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
   public sealed override async ValueTask Handle(TAction action, CancellationToken cancellationToken)
   {
     if (RequiresAuthentication && !await IsUserAuthenticatedAsync()) return;
+
+    if (!await ConfirmAsync(action, cancellationToken)) return;
 
     Type currentType = typeof(TAction).GetEnclosingStateType();
 
@@ -166,6 +173,16 @@ internal abstract class ApiHandler<TAction, TRequest, TResponse> : BaseHandler<T
 #pragma warning restore BL0013
     ClaimsPrincipal user = authState.User;
     return user.Identity?.IsAuthenticated ?? false;
+  }
+
+  /// <summary>
+  /// Asks before the per-state lock. False skips the action: no request and no error notification.
+  /// </summary>
+  protected virtual Task<bool> ConfirmAsync(TAction action, CancellationToken cancellationToken)
+  {
+    _ = action;
+    _ = cancellationToken;
+    return Task.FromResult(true);
   }
 
   /// <summary>

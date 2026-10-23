@@ -23,6 +23,9 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
   /// <summary>True when the last set or clear failed. The problem is on NotificationState.</summary>
   public bool SaveFailed { get; private set; }
 
+  /// <summary>True when the latest clear was declined. The Ask reload skips that case.</summary>
+  internal bool ClearDeclined { get; private set; }
+
   /// <summary>Host <c>XAI:ApiKey</c> is set. The page is read-only.</summary>
   public bool ManagedByHost { get; private set; }
 
@@ -55,6 +58,7 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
   {
     HasSnapshot = false;
     SaveFailed = false;
+    ClearDeclined = false;
     ManagedByHost = false;
     Configured = false;
     StorageAvailable = false;
