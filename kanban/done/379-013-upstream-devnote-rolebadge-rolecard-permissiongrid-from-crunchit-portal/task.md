@@ -92,9 +92,11 @@ Operator note: the task branch was reset from `origin/feature/379-portal-rest` t
 
 Round 2 ran at effort 1 with one general reviewer, on the fix delta `787fa86db..8041a392f`. All four fixes were confirmed and no new findings were raised. RoleCard (4/4) and PermissionGrid (5/5) were re-run and passed. Final counts: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0 open / 2 fixed, 0 wontfix.
 
-**Disposition: clean** (2 rounds, final open count 0, no exceptions, no escalations).
+Round 3 ran at effort 3 with one general reviewer. It covered merge `d94228528` (`feature/379-portal-rest` into the task branch) and the PR #568 delta `origin/feature/379-portal-rest..HEAD`. All four conflict resolutions (StatusBadge, overview, style-guide CSS, tokens) kept both sides. `--twe-on-positive` is defined once, and the on-paper contrast claim holds: 5.50:1 and 7.09:1. M1–M4 still hold, and no new findings were raised. `dev build` is 0 warnings and 0 errors. Ten render classes passed (43 tests). The client-name search found 0 matches. GitHub CI is green on `d94228528`. `template-smoke` was not re-run locally, but the CI run on the same head includes it. Final counts: bug 0 open / 1 fixed, suggestion 0 open / 1 fixed, nit 0 open / 2 fixed, 0 wontfix.
 
-Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+**Disposition: clean** (3 rounds, final open count 0, no exceptions, no escalations). PR #568 targets `feature/379-portal-rest`.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Session
 
@@ -105,12 +107,15 @@ Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/ro
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T20:39:13Z
 - Fix pass: implementer-grok (grok, model grok-4.7), session not reported, 2026-10-24. Addressed M1–M4. Build, template-smoke, audit, and the four render classes are green. Round 2 has not run.
 - Review oracle round 2: claude (claude-opus-5-5), general reviewer, effort 1, max-turns 80, session not reported, 2026-10-24. M1–M4 fixed, 0 open. Disposition clean
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T21:08:20Z
+- Review oracle round 3: claude (claude-opus-5-5), general reviewer, effort 3, max-turns 200, session not reported, 2026-10-24. Reviewed merge `d94228528`. M1–M4 still fixed, no new findings, 0 open. Disposition clean
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass 2: addressed M1, M2, M3, and M4.
 - Round 2: Done
+- Round 3: Done (merge `d94228528` reviewed, clean)
 ## Notes
 
 - Source (read-only): the portal's `DevNote`, `RoleBadge`, `RoleCard`, `PermissionGrid`, and `PermissionGroup` / `PermissionItem` under the portal web-spa `components/` folder.
