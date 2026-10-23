@@ -1,8 +1,10 @@
 #region Purpose
 // Browser proof that the style-guide drawer moves focus in, keeps Tab inside, and returns
-// focus to the opener on Escape. The same run checks the inline edges under both writing
-// directions, a native dialog close, a module close that must not ask the host, and a show
-// that resolves only after Close.
+// focus to the opener on Escape. The same run checks the dialog stays in the render tree,
+// matches :modal, paints above the app bar, and refuses focus on the opener. It also checks
+// the inline edges under both writing directions, a native dialog close, a module close that
+// must not ask the host, Dispose closing an open dialog without asking the host, a modal
+// of only native buttons letting Tab leave, and leaving the page while the drawer is open.
 #endregion
 
 #region Design
@@ -15,10 +17,16 @@
 // End sits on the inline-end edge and Start on the inline-start edge. The test flips the
 // document direction and the side class, then reads the settled box and the inner border.
 // A form with method dialog closes the dialog without the module's Close, and the title
-// leaves once the caller's flag drops. A direct Bind, with fluent-button still undefined,
-// proves a late show does not call showModal after Close. The module Close check waits for
-// the queued close event before it reads host calls. The native close check clears that
-// list first, then counts RequestClose, so an earlier module close cannot satisfy it.
+// leaves once the caller's flag drops. A direct Bind proves Show opens on the same turn,
+// Close does not call RequestClose, and a native close calls it once. The module Close
+// check waits for the queued close event before it reads host calls. The native close
+// check clears that list first, then counts RequestClose, so an earlier module close
+// cannot satisfy it. Dispose while open removes the listeners and then closes, so the
+// queued close does not call RequestClose, and a later Show stays shut. Before the drawer
+// opens, a display:contents host holds a modal dialog of two native buttons. Tab from the
+// last button leaves that dialog for both display:block and display:flex. That is why the
+// drawer wraps Tab. The inner panel is the flex column and the sheet hit target. Leaving the
+// page uses Blazor.navigateTo so the open dialog is disposed in place.
 #endregion
 
 namespace StyleGuideDrawerPlaywright_;
@@ -63,38 +71,26 @@ public class StyleGuideDrawer_Given_Wasm
       throw new TimeoutException($"Style guide drawer opener was not shown at {page.Url}. Page:\n{text}", exception);
     }
 
+    await AssertNativeModalLetsTabLeaveAsync(page);
+
     await opener.ClickAsync();
     ILocator openDialog = page.Locator("dialog.twe-drawer[open]");
     await Assertions.Expect(openDialog).ToHaveCountAsync(1, new LocatorAssertionsToHaveCountOptions { Timeout = 30_000 });
 
     ILocator headerClose = page.Locator("[data-qa=DrawerClose]");
-    ILocator footerClose = page.Locator("[data-qa=DrawerFooterClose]");
     await Assertions.Expect(headerClose).ToBeFocusedAsync(new LocatorAssertionsToBeFocusedOptions { Timeout = 30_000 });
+    await AssertModalInTheShellAsync(page);
     await AssertInlineEdgesAsync(page);
 
-    List<string> stops = [];
-    bool sawFooter = false;
-    bool returnedToHeader = false;
-    for (int step = 0; step < 6 && !returnedToHeader; step++)
-    {
-      await page.Keyboard.PressAsync("Tab");
-      string where = await FocusedStopAsync(page);
-      stops.Add(where);
-      where.EndsWith("|inside", StringComparison.Ordinal)
-        .ShouldBeTrue($"Tab left the drawer: {string.Join(" -> ", stops)}");
-      if (where.Contains("|DrawerFooterClose|", StringComparison.Ordinal))
-      {
-        sawFooter = true;
-      }
-
-      if (sawFooter && where.Contains("|DrawerClose|", StringComparison.Ordinal))
-      {
-        returnedToHeader = true;
-      }
-    }
-
-    sawFooter.ShouldBeTrue($"Tab never reached the footer close button: {string.Join(" -> ", stops)}");
-    returnedToHeader.ShouldBeTrue($"Tab never wrapped back to the header close button: {string.Join(" -> ", stops)}");
+    string withHandler = await RecordTabStopsAsync(page);
+    withHandler.StartsWith("wrapped:", StringComparison.Ordinal)
+      .ShouldBeTrue($"Tab left the drawer or never wrapped: {withHandler}");
+    await page.Keyboard.PressAsync("Shift+Tab");
+    string backward = await FocusedStopAsync(page);
+    backward.EndsWith("|inside", StringComparison.Ordinal)
+      .ShouldBeTrue($"Shift+Tab left the drawer: {backward}");
+    backward.Contains("|DrawerFooterClose|", StringComparison.Ordinal)
+      .ShouldBeTrue($"Shift+Tab did not wrap to the footer close button: {backward}");
     await Assertions.Expect(opener).Not.ToBeFocusedAsync();
 
     await page.Keyboard.PressAsync("Escape");
@@ -129,7 +125,148 @@ public class StyleGuideDrawer_Given_Wasm
       new LocatorAssertionsToContainTextOptions { Timeout = 10_000 });
     await Assertions.Expect(openDialog).ToHaveCountAsync(0);
 
-    await AssertLateShowStaysClosedAsync(page);
+    await AssertCloseAndNativeCloseAsync(page);
+
+    await opener.ClickAsync();
+    await Assertions.Expect(openDialog).ToHaveCountAsync(1, new LocatorAssertionsToHaveCountOptions { Timeout = 30_000 });
+    await AssertLeavingThePageRemovesTheOpenDrawerAsync(page);
+  }
+
+  private static async Task AssertModalInTheShellAsync(IPage page)
+  {
+    string probe = await page.EvaluateAsync<string>(
+      """
+      () => {
+        const dialog = document.querySelector("dialog.twe-drawer[open]");
+        const shell = document.querySelector(".twe-shell");
+        const opener = document.querySelector("[data-qa=DrawerOpen]");
+        const closeButton = dialog && dialog.querySelector("[data-qa=DrawerClose]");
+        if (!dialog || !shell || !opener || !closeButton) {
+          return JSON.stringify({ error: "missing drawer, shell, opener, or close button" });
+        }
+
+        const rect = dialog.getBoundingClientRect();
+        const hitsDialog = (x, y) => {
+          let node = document.elementFromPoint(x, y);
+          while (node) {
+            if (node === dialog) {
+              return true;
+            }
+
+            const root = node.getRootNode();
+            node = root instanceof ShadowRoot ? root.host : node.parentElement;
+          }
+
+          return false;
+        };
+        const insideDialog = (node) => {
+          while (node) {
+            if (node === dialog) {
+              return true;
+            }
+
+            const root = node.getRootNode();
+            node = root instanceof ShadowRoot ? root.host : node.parentElement;
+          }
+
+          return false;
+        };
+
+        closeButton.focus();
+        const focusBeforeOpener = insideDialog(document.activeElement);
+        opener.focus();
+        const openerTookFocus = document.activeElement === opener || opener.contains(document.activeElement);
+        const focusAfterOpenerAttempt = insideDialog(document.activeElement);
+        closeButton.focus();
+        return JSON.stringify({
+          parentIsBody: dialog.parentElement === document.body,
+          shellDisplay: getComputedStyle(shell).display,
+          matchesModal: dialog.matches(":modal"),
+          focusBeforeOpener,
+          openerTookFocus,
+          focusAfterOpenerAttempt,
+          paintHitsDialog: hitsDialog(rect.left + 24, Math.min(rect.top + 12, 16)),
+          scrimHitsDialog: hitsDialog(24, Math.round(window.innerHeight / 2))
+        });
+      }
+      """);
+
+    using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(probe);
+    System.Text.Json.JsonElement root = document.RootElement;
+    root.TryGetProperty("error", out _).ShouldBeFalse(probe);
+    root.GetProperty("parentIsBody").GetBoolean().ShouldBeFalse(probe);
+    root.GetProperty("shellDisplay").GetString().ShouldBe("contents", probe);
+    root.GetProperty("matchesModal").GetBoolean().ShouldBeTrue(probe);
+    root.GetProperty("focusBeforeOpener").GetBoolean().ShouldBeTrue(probe);
+    root.GetProperty("openerTookFocus").GetBoolean().ShouldBeFalse(probe);
+    root.GetProperty("focusAfterOpenerAttempt").GetBoolean().ShouldBeTrue(probe);
+    root.GetProperty("paintHitsDialog").GetBoolean().ShouldBeTrue(probe);
+    root.GetProperty("scrimHitsDialog").GetBoolean().ShouldBeTrue(probe);
+  }
+
+  private static async Task AssertLeavingThePageRemovesTheOpenDrawerAsync(IPage page)
+  {
+    System.Collections.Concurrent.ConcurrentQueue<string> errors = new();
+    void OnConsole(object? _, IConsoleMessage message)
+    {
+      if (message.Type == "error")
+      {
+        errors.Enqueue(message.Text);
+      }
+    }
+
+    void OnPageError(object? _, string error) => errors.Enqueue(error);
+
+    page.Console += OnConsole;
+    page.PageError += OnPageError;
+    try
+    {
+      await page.EvaluateAsync("() => Blazor.navigateTo('/')");
+      await page.GetByText("Welcome to TimeWarp.Architecture").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+      (await page.Locator("dialog.twe-drawer").CountAsync()).ShouldBe(0);
+      string[] found = errors.ToArray();
+      found.Length.ShouldBe(0, string.Join("\n", found));
+    }
+    finally
+    {
+      page.Console -= OnConsole;
+      page.PageError -= OnPageError;
+    }
+  }
+
+  private static async Task<string> RecordTabStopsAsync(IPage page)
+  {
+    List<string> stops = [];
+    bool sawFooter = false;
+    bool returnedToHeader = false;
+    for (int step = 0; step < 6 && !returnedToHeader; step++)
+    {
+      await page.Keyboard.PressAsync("Tab");
+      string where = await FocusedStopAsync(page);
+      stops.Add(where);
+      if (!where.EndsWith("|inside", StringComparison.Ordinal))
+      {
+        return "left:" + string.Join(" -> ", stops);
+      }
+
+      if (where.Contains("|DrawerFooterClose|", StringComparison.Ordinal))
+      {
+        sawFooter = true;
+      }
+
+      if (sawFooter && where.Contains("|DrawerClose|", StringComparison.Ordinal))
+      {
+        returnedToHeader = true;
+      }
+    }
+
+    string joined = string.Join(" -> ", stops);
+    if (!sawFooter || !returnedToHeader)
+    {
+      return "incomplete:" + joined;
+    }
+
+    return "wrapped:" + joined;
   }
 
   private static async Task AssertInlineEdgesAsync(IPage page)
@@ -216,23 +353,11 @@ public class StyleGuideDrawer_Given_Wasm
       flushRight,
       new PageWaitForFunctionOptions { Timeout = 5_000 });
 
-  private static async Task AssertLateShowStaysClosedAsync(IPage page)
+  private static async Task AssertCloseAndNativeCloseAsync(IPage page)
   {
     string result = await page.EvaluateAsync<string>(
       """
       async () => {
-        const realGet = customElements.get.bind(customElements);
-        const realWhenDefined = customElements.whenDefined.bind(customElements);
-        const frames = () => new Promise((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(resolve));
-        });
-        let release = () => undefined;
-        const holdButton = () => new Promise((resolve) => {
-          release = resolve;
-        });
-        customElements.get = (name) => name === "fluent-button" ? undefined : realGet(name);
-        customElements.whenDefined = (name) => name === "fluent-button" ? holdButton() : realWhenDefined(name);
-
         const dialog = document.createElement("dialog");
         dialog.className = "twe-drawer twe-drawer--end";
         dialog.append(document.createElement("button"));
@@ -240,59 +365,56 @@ public class StyleGuideDrawer_Given_Wasm
         const calls = [];
         const host = { invokeMethodAsync: async (name) => { calls.push(name); } };
         const requestCloseCount = () => calls.filter((name) => name === "RequestClose").length;
-        const waitForQueuedClose = () => {
-          if (!dialog.open) {
-            return Promise.resolve();
-          }
-
-          return new Promise((resolve) => {
-            dialog.addEventListener("close", () => resolve(), { once: true });
-          });
-        };
+        const waitForQueuedClose = () => new Promise((resolve) => {
+          dialog.addEventListener("close", () => resolve(), { once: true });
+        });
         try {
           const module = await import("/js/features/drawer.js");
           const handle = module.Bind(dialog, host);
 
           handle.Show();
-          const stayedClosedUntilDefined = dialog.open === false;
-          release();
-          await frames();
-          const openedAfterDefine = dialog.open === true;
+          const openedImmediately = dialog.open === true;
           const moduleClose = waitForQueuedClose();
           handle.Close();
           await moduleClose;
           const moduleCloseRequestCount = requestCloseCount();
+          const closed = dialog.open === false;
 
           handle.Show();
-          const stayedClosedOnSecondShow = dialog.open === false;
-          handle.Close();
-          release();
-          await frames();
-          const stayedClosedAfterLateShow = dialog.open === false;
-
-          handle.Show();
-          release();
-          await frames();
+          const reopened = dialog.open === true;
           calls.length = 0;
           const nativeClose = waitForQueuedClose();
           dialog.close();
           await nativeClose;
           const nativeCloseRequestCount = requestCloseCount();
           const stayedClosedAfterNativeClose = dialog.open === false;
+
+          handle.Show();
+          const openedForDispose = dialog.open === true;
+          calls.length = 0;
+          const disposeClosed = new Promise((resolve) => {
+            dialog.addEventListener("close", () => resolve(), { once: true });
+          });
           handle.Dispose();
+          await disposeClosed;
+          const disposeRequestCount = requestCloseCount();
+          const closedAfterDispose = dialog.open === false;
+          handle.Show();
+          const stayedClosedAfterDispose = dialog.open === false;
 
           return JSON.stringify({
-            stayedClosedUntilDefined,
-            openedAfterDefine,
+            openedImmediately,
             moduleCloseRequestCount,
-            stayedClosedOnSecondShow,
-            stayedClosedAfterLateShow,
+            closed,
+            reopened,
             nativeCloseRequestCount,
             stayedClosedAfterNativeClose,
+            openedForDispose,
+            disposeRequestCount,
+            closedAfterDispose,
+            stayedClosedAfterDispose,
           });
         } finally {
-          customElements.get = realGet;
-          customElements.whenDefined = realWhenDefined;
           dialog.remove();
         }
       }
@@ -300,13 +422,92 @@ public class StyleGuideDrawer_Given_Wasm
 
     using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(result);
     System.Text.Json.JsonElement root = document.RootElement;
-    root.GetProperty("stayedClosedUntilDefined").GetBoolean().ShouldBeTrue();
-    root.GetProperty("openedAfterDefine").GetBoolean().ShouldBeTrue();
+    root.GetProperty("openedImmediately").GetBoolean().ShouldBeTrue();
     root.GetProperty("moduleCloseRequestCount").GetInt32().ShouldBe(0);
-    root.GetProperty("stayedClosedOnSecondShow").GetBoolean().ShouldBeTrue();
-    root.GetProperty("stayedClosedAfterLateShow").GetBoolean().ShouldBeTrue();
+    root.GetProperty("closed").GetBoolean().ShouldBeTrue();
+    root.GetProperty("reopened").GetBoolean().ShouldBeTrue();
     root.GetProperty("nativeCloseRequestCount").GetInt32().ShouldBe(1);
     root.GetProperty("stayedClosedAfterNativeClose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("openedForDispose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("disposeRequestCount").GetInt32().ShouldBe(0);
+    root.GetProperty("closedAfterDispose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("stayedClosedAfterDispose").GetBoolean().ShouldBeTrue();
+  }
+
+  private static async Task AssertNativeModalLetsTabLeaveAsync(IPage page)
+  {
+    await AssertNativeModalDisplayLetsTabLeaveAsync(page, "block");
+    await AssertNativeModalDisplayLetsTabLeaveAsync(page, "flex");
+  }
+
+  private static async Task AssertNativeModalDisplayLetsTabLeaveAsync(IPage page, string display)
+  {
+    await page.EvaluateAsync(
+      """
+      (display) => {
+        const host = document.createElement("div");
+        host.id = "native-modal-probe";
+        host.style.display = "contents";
+        const dialog = document.createElement("dialog");
+        dialog.id = "native-modal-probe-dialog";
+        dialog.style.display = display;
+        const a = document.createElement("button");
+        a.id = "native-modal-probe-a";
+        a.type = "button";
+        a.textContent = "a";
+        const b = document.createElement("button");
+        b.id = "native-modal-probe-b";
+        b.type = "button";
+        b.textContent = "b";
+        dialog.append(a, b);
+        host.append(dialog);
+        document.body.append(host);
+        dialog.showModal();
+        b.focus();
+      }
+      """,
+      display);
+
+    try
+    {
+      List<string> stops = [];
+      for (int step = 0; step < 4; step++)
+      {
+        await page.Keyboard.PressAsync("Tab");
+        stops.Add(await page.EvaluateAsync<string>(
+          """
+          () => {
+            const dialog = document.getElementById("native-modal-probe-dialog");
+            const active = document.activeElement;
+            const inside = !!dialog && !!active && (active === dialog || dialog.contains(active));
+            if (!active || active === document.body) {
+              return "outside:BODY";
+            }
+
+            const id = "id" in active && active.id ? active.id : active.tagName;
+            return `${inside ? "inside" : "outside"}:${id}`;
+          }
+          """));
+      }
+
+      string joined = string.Join(" -> ", stops);
+      stops[0].StartsWith("outside:", StringComparison.Ordinal)
+        .ShouldBeTrue($"display:{display} kept Tab inside a native-button dialog: {joined}");
+    }
+    finally
+    {
+      await page.EvaluateAsync(
+        """
+        () => {
+          const dialog = document.getElementById("native-modal-probe-dialog");
+          if (dialog instanceof HTMLDialogElement && dialog.open) {
+            dialog.close();
+          }
+
+          document.getElementById("native-modal-probe")?.remove();
+        }
+        """);
+    }
   }
 
   private static Task<string> FocusedStopAsync(IPage page) =>

@@ -12,23 +12,25 @@
   not read ApplicationState. The caller passes IsOpen and handles OnClose.
   The dialog stays in the tree while closed and has no title text until it is open. Opening
   calls showModal through DrawerJsModule; closing calls close, which returns focus to the
-  opener. The module moves the dialog onto document.body first. The app shell is
-  display:contents, and a modal dialog under that ancestor does not enter the top layer, so
-  Tab would leave the panel. Content stays until that close runs, then drops. Escape is
-  the cancel event and is held so the caller still owns the flag. A backdrop click is
+  opener. The dialog stays where this component rendered it. showModal puts it in the top
+  layer while an ancestor, .twe-shell, is display:contents. Content stays until that close
+  runs, then drops. Escape is the cancel event and is held so the caller still owns the flag.
+  A backdrop click is
   forwarded the same way. A native close the module did not start, such as a form with
   method dialog, is forwarded as OnClose so the caller's flag drops with the dialog.
   A close the module starts is not forwarded again. The close event arrives on a later
-  turn, and the module still skips it.
+  turn, and the module skips it.
   The title id is minted per instance. The heading level is 2. The root is labelled by that
   heading and carries aria-modal while open. End and medium add twe-drawer--end and no size
   class. Start adds twe-drawer--start. Wide adds twe-drawer--wide. Class is appended, and
   unmatched attributes splat onto the dialog, the same way Card does.
   The header dismiss control is a FluentButton with the dismiss icon and aria-label Close.
-  The footer renders only when set. The body is the only scroll area. The dialog itself
-  stays display:block; a flex column on the dialog element drops the browser's Tab trap,
-  so the column lives on an inner panel. Chromium still does not wrap Tab out of a
-  fluent-button shadow host, so the module wraps Tab between the first and last stop.
+  The footer renders only when set. The body is the only scroll area. The open dialog stays
+  a block box. The inner panel is the flex column: it stacks the header, the scrolling body,
+  and the footer, and it fills the dialog so a click on the sheet hits the panel. A click
+  whose target is the dialog is the backdrop. HeadlessChrome 153 does not keep Tab inside a
+  modal dialog, even when that dialog holds only native buttons, so the module wraps Tab
+  between the first and last stop. The walk enters open shadow roots, which fluent-button uses.
   Isolated CSS uses --twe-* tokens. The top layer supplies stacking, so there is no z-index.
 *@
 

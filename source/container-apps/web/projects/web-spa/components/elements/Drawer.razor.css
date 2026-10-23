@@ -1,7 +1,9 @@
 /* Drawer — native modal dialog, CSS isolation. Tokens from tokens.css.
-   The dialog is the box. The inner panel is the flex column, because flex on the dialog
-   drops the browser Tab trap. ::backdrop is the scrim. A modal dialog paints in the
-   top layer, so this sheet sets no z-index. Viewports up to 600px take the full width.
+   The dialog is the box and stays a block box while open. The inner panel is the flex
+   column: header, scrolling body, footer. It fills the dialog, so a click on the sheet
+   hits the panel. A click on the dialog box itself is the backdrop. ::backdrop is the
+   scrim. A modal dialog paints in the top layer, so this sheet sets no z-index.
+   Viewports up to 600px take the full width.
    End and Start are inline edges: inset-inline and border-inline follow the writing
    direction. The slide runs when the dialog is open, and :dir(rtl) plays it from the
    opposite physical side. Closing drops the open state immediately.
@@ -12,7 +14,7 @@ dialog.twe-drawer:not([open]) {
 }
 
 dialog.twe-drawer[open] {
-  /* display stays block. Flex or grid on the dialog itself drops the browser's Tab trap. */
+  /* Display stays the user-agent block box. The flex column is the inner panel. */
   position: fixed;
   top: 0;
   bottom: 0;
