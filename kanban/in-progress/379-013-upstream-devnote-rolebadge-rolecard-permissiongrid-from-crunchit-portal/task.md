@@ -72,10 +72,27 @@ git diff origin/master -- source tests | rg -i crunchit || echo NO_CLIENT_NAME
 
 `dev build`: 0 warnings, 0 errors (00:00:11.21). `dev template-smoke`: `Template smoke SUCCEEDED`. SmokeDefault OK. create-role 5/5, weather 5/5, hello 2/2, web-jaribu-tests 405/405, api-jaribu-tests 9/9, timewarp-testing-tests 14/14. `ganda repo audit`: Passed 33, Failed 0, Skipped 1 (self-hosted, public repository). The client-name search prints `NO_CLIENT_NAME`.
 
+### Review
+
+Round 1 ran at effort 3 with one general reviewer. Counts: bug 1 open, suggestion 1 open, nit 2 open. Nothing is fixed or wontfix yet. Disposition is pending, because 4 findings are open and a fix pass is needed.
+
+- M1 (bug): the style-guide `sg-follow` class on `PermissionGrid` and `DevNote` is dead under CSS isolation.
+- M2 (suggestion): the RoleCard Design region does not say the parent owns the roving tab stop and the arrow keys.
+- M3 (nit): the granted test text is not pinned apart from "Not granted".
+- M4 (nit): rename `twe-perm-grid__name` to `__state`.
+
+The reviewer re-ran the four test classes (18/18 passed) and the client-name search (0 matches). It did not re-run `dev build`, `template-smoke`, or `ganda repo audit`.
+
+Operator note: the task branch was reset from `origin/feature/379-portal-rest` to `origin/master`. It shares hunks with that feature branch (StatusBadge, StyleGuidePage, tokens.css, overview.md), so the PR target is an operator call.
+
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ## Session
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Implementation: implementer-grok (2026-10-24). The claim worktree started at `origin/feature/379-portal-rest` (the 379-012 merge, five commits that are not on `origin/master`). Those commits stay on that feature branch. This task branch was reset to `origin/master` before the product commits so the pull request contains only 379-013.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T20:35:02Z
+- Review oracle round 1: claude (claude-opus-5-5), general reviewer, effort 3, session not reported, 2026-10-24. 4 findings open (M1–M4); fix pass requested
 
 ## Notes
 
