@@ -156,8 +156,7 @@ ganda repo audit
 ## Review
 
 - Round 1: M1, M2, and M3 are addressed in this fix pass.
-- Round 2: all three are fixed, with no new findings. Disposition is clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Files: `components/elements/Drawer.razor`, `Drawer.razor.css`, `services/drawer-js-module.cs`,
