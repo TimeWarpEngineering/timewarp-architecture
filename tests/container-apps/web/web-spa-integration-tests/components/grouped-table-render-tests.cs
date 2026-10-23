@@ -5,8 +5,9 @@
 #region Design
 // Both components are Tier-1 leaves with no DI, so a bare ServiceCollection host is enough.
 // GroupedTable's root is a native div. A caller class binds to Class; other unmatched attributes
-// splat onto it. Child content is a thead plus TableGroup bodies, and ColumnCount cascades so
-// each group header spans that many columns. A blank Label omits aria-label. A TableGroup
+// splat onto it. Child content is a thead plus TableGroup bodies. ColumnCount cascades under
+// the name TweGroupedTableColumnCount, so each group header spans that many columns and an
+// unrelated CascadingValue<int> does not. A blank Label omits aria-label. A TableGroup
 // rendered alone has no cascade and spans one column. The script case asserts the raw markup,
 // before HtmlDecode, so the title stays encoded.
 #endregion
@@ -167,6 +168,16 @@ public class GroupedTable_Should_
     html.ShouldNotContain("twe-table-group__meta");
   }
 
+  public static async Task Ignore_An_Unrelated_Int_Cascade_When_A_Group_Is_Rendered_Alone()
+  {
+    string html = await RenderGroupUnderUnrelatedIntAsync(7);
+
+    html.ShouldContain("colspan=\"1\"");
+    html.ShouldNotContain("colspan=\"7\"");
+    html.ShouldContain("scope=\"rowgroup\"");
+    html.ShouldContain("Open");
+  }
+
   private static Dictionary<string, object?> Sample(string? label) => new()
   {
     ["ColumnCount"] = 3,
@@ -240,6 +251,28 @@ public class GroupedTable_Should_
     await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
       (await renderer.RenderComponentAsync<TableGroup>(ParameterView.FromDictionary(parameters))).ToHtmlString());
+    return WebUtility.HtmlDecode(html);
+  }
+
+  private static async Task<string> RenderGroupUnderUnrelatedIntAsync(int unrelated)
+  {
+    RenderFragment group = builder =>
+    {
+      builder.OpenComponent<TableGroup>(0);
+      builder.AddComponentParameter(1, "Title", "Open");
+      builder.AddComponentParameter(2, "ChildContent", Row("Alpha"));
+      builder.CloseComponent();
+    };
+    ParameterView parameters = ParameterView.FromDictionary(new Dictionary<string, object?>
+    {
+      [nameof(CascadingValue<>.Value)] = unrelated,
+      [nameof(CascadingValue<>.ChildContent)] = group,
+    });
+
+    await using ServiceProvider services = new ServiceCollection().BuildServiceProvider();
+    await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);
+    string html = await renderer.Dispatcher.InvokeAsync(async () =>
+      (await renderer.RenderComponentAsync<CascadingValue<int>>(parameters)).ToHtmlString());
     return WebUtility.HtmlDecode(html);
   }
 

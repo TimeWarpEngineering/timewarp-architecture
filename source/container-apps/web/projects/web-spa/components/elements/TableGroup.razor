@@ -6,8 +6,9 @@
   Design: The root is a tbody, so several groups are several bodies in the one table GroupedTable
   renders. The first row is the group header: th scope="rowgroup" spanning the column count.
   A th cannot be display:flex and keep colspan, so the title, count, and meta sit in a flex div
-  inside the cell. ColumnCount cascades from GroupedTable. A missing cascade, or a non-positive
-  value, falls back to 1 so a stand-alone render still draws and does not throw.
+  inside the cell. ColumnCount cascades from GroupedTable under the name
+  TweGroupedTableColumnCount. A missing cascade, an unrelated int cascade, or a non-positive
+  value falls back to 1 so a stand-alone render still draws and does not throw.
   Count null omits the chip. Count zero renders 0. The chip is the accent CountChip: the header
   fill is paper-2, the same fill as the neutral chip, so a neutral chip would disappear into the
   strip. Meta renders only when it has text, and margin-inline-start:auto pins it to the end.
@@ -24,7 +25,9 @@
   [Parameter] public string? Class { get; set; }
   [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
-  [CascadingParameter] private int ColumnCount { get; set; } = 1;
+  internal const string ColumnCountCascadeName = "TweGroupedTableColumnCount";
+
+  [CascadingParameter(Name = ColumnCountCascadeName)] private int ColumnCount { get; set; } = 1;
 
   private int HeaderSpan => ColumnCount > 0 ? ColumnCount : 1;
 

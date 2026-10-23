@@ -1,6 +1,6 @@
 /* Grouped table — native root, CSS isolation. Tokens from tokens.css.
    The paper container scrolls sideways when the table is wider than the card.
-   Row and cell styling stay on the global .twe-table rule. */
+   Cell padding and rules stay on the global .twe-table rule. */
 .twe-grouped-table {
   background: var(--twe-paper);
   border-radius: var(--twe-radius);

@@ -7,11 +7,12 @@
   root the way Card does, and unmatched attributes splat onto it. The table is one real table
   (class twe-table) so column widths stay shared and assistive tech sees one set of column
   headers. ChildContent is the page's thead followed by TableGroup bodies. ColumnCount cascades
-  to those groups and is not fixed, so a group does not repeat it. Label becomes aria-label on
-  the table; a blank label omits the attribute. The page owns grouping, order, and cells. This
-  component wires no events, does not sort, and does not collapse. Isolated CSS uses --twe-*
-  tokens. Row hover and cell padding stay on the global .twe-table rule. There is no FluentUI
-  child, so the stylesheet needs no ::deep.
+  to those groups under the name TweGroupedTableColumnCount and is not fixed, so a group does
+  not repeat it and an unnamed int cascade is left alone. Label becomes aria-label on the table;
+  a blank label omits the attribute. The page owns grouping, order, and cells. This component
+  wires no events, does not sort, and does not collapse. Isolated CSS uses --twe-* tokens.
+  Cell padding and rules stay on the global .twe-table rule. There is no FluentUI child, so
+  the stylesheet needs no ::deep.
 *@
 
 @code {
@@ -26,7 +27,7 @@
 
 <div class="twe-grouped-table @Class" @attributes="AdditionalAttributes">
   <table class="twe-table" aria-label="@TableLabel">
-    <CascadingValue Value="ColumnCount">
+    <CascadingValue Name="@TableGroup.ColumnCountCascadeName" Value="ColumnCount">
       @ChildContent
     </CascadingValue>
   </table>
