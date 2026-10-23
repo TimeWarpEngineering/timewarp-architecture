@@ -15,7 +15,7 @@
 // "" and SecondaryShortCut "Escape". Enter does not take the primary action. Escape calls
 // CancelAsync, so Cancelled is true. Confirmed is a result that is not cancelled. The question
 // icon matches ShowConfirmationAsync. No tone enum: every confirm through this service uses that
-// shape. ConfirmationStandIn is the registration for a test or a host with no dialog provider.
+// shape.
 // [SideEffectService] on the interface: a component cannot call it (TWA0026). Handlers do.
 #endregion
 
@@ -69,50 +69,5 @@ internal sealed class DialogConfirmationService(IDialogService DialogService) : 
     });
 
     return result is { Cancelled: false };
-  }
-}
-
-/// <summary>Fixed answer for a host or a test that has no dialog provider.</summary>
-internal sealed class ConfirmationStandIn : IConfirmationService
-{
-  /// <summary>Answer returned from the next <see cref="ConfirmAsync"/>.</summary>
-  public bool Answer { get; set; } = true;
-
-  /// <summary>How many times <see cref="ConfirmAsync"/> has been called.</summary>
-  public int CallCount { get; private set; }
-
-  /// <summary>Title from the latest call.</summary>
-  public string? Title { get; private set; }
-
-  /// <summary>Message from the latest call.</summary>
-  public string? Message { get; private set; }
-
-  /// <summary>Confirm label from the latest call.</summary>
-  public string? ConfirmLabel { get; private set; }
-
-  /// <summary>Cancel label from the latest call.</summary>
-  public string? CancelLabel { get; private set; }
-
-  /// <inheritdoc />
-  public Task<bool> ConfirmAsync
-  (
-    string title,
-    string message,
-    string confirmLabel,
-    string cancelLabel,
-    CancellationToken cancellationToken
-  )
-  {
-    ArgumentNullException.ThrowIfNull(title);
-    ArgumentNullException.ThrowIfNull(message);
-    ArgumentNullException.ThrowIfNull(confirmLabel);
-    ArgumentNullException.ThrowIfNull(cancelLabel);
-    cancellationToken.ThrowIfCancellationRequested();
-    CallCount++;
-    Title = title;
-    Message = message;
-    ConfirmLabel = confirmLabel;
-    CancelLabel = cancelLabel;
-    return Task.FromResult(Answer);
   }
 }

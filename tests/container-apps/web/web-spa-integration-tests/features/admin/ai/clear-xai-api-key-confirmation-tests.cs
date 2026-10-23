@@ -98,6 +98,40 @@ public class ClearXaiApiKey_Given_A_StandIn
       setByPrincipalId: null,
       setupHint: XaiChatDefaults.DeployedSetupHint);
 
+  /// <summary>Fixed answer in place of the FluentUI dialog. Records the latest question.</summary>
+  private sealed class ConfirmationStandIn : IConfirmationService
+  {
+    public bool Answer { get; init; } = true;
+
+    public int CallCount { get; private set; }
+
+    public string? Title { get; private set; }
+
+    public string? Message { get; private set; }
+
+    public string? ConfirmLabel { get; private set; }
+
+    public string? CancelLabel { get; private set; }
+
+    public Task<bool> ConfirmAsync
+    (
+      string title,
+      string message,
+      string confirmLabel,
+      string cancelLabel,
+      CancellationToken cancellationToken
+    )
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      CallCount++;
+      Title = title;
+      Message = message;
+      ConfirmLabel = confirmLabel;
+      CancelLabel = cancelLabel;
+      return Task.FromResult(Answer);
+    }
+  }
+
   /// <summary>One scripted web-server response.</summary>
   private sealed class ScriptedWebServer(object Outcome) : IWebServerApiService
   {
