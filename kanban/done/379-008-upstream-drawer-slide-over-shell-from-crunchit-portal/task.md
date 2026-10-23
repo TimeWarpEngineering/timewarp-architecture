@@ -1,5 +1,19 @@
 # Upstream Drawer slide-over shell from Crunchit portal
 
+## Goal (implementer restatement)
+
+A generated app needs a brand-neutral slide-over so a detail or edit form can sit beside the current page. This task adds that shell as a native modal `<dialog>` (`twe-drawer`). It is not a FluentDialog wrapper, and it does not reuse the existing div modal.
+
+The drawer is a leaf. It shows a required title, body content, and an optional footer. It takes a read-only `IsOpen` and an `OnClose` callback, plus which side it sits on (end by default, or start), a size (medium by default, or wide), `Class`, and unmatched attributes. It does not two-way bind open state, and it does not read `ApplicationState`. The caller owns the flag. On the style guide, the opener dispatches `SetActiveModal` with a drawer id, `IsOpen` compares `ActiveModalId` to that id, and both close paths dispatch `CloseModal`.
+
+While open, the root is a dialog labelled by its level-2 heading. One small script calls `showModal()` and `close()`, and moves the dialog onto `document.body` first because the shell is `display: contents`. The browser supplies the top layer, an inert background, and focus return to the opener. Chromium does not wrap Tab out of a Fluent button's shadow root, so the script wraps Tab. Escape (the `cancel` event, held so the caller still owns the flag), a backdrop click, and the header dismiss button all raise `OnClose`. The panel slides in unless the user prefers reduced motion. Closing is immediate. Document scroll locks with one global `body:has(dialog.twe-drawer:modal)` rule.
+
+The only adoption is the style guide: a Drawers card after Empty States, with one opener, a short body, and a footer close button. Static render tests pin the markup. One browser test on that card pins focus moving in, Escape, focus returning to the opener, and Tab staying inside.
+
+Done means the component, the side and size enums, the script and its C# wrapper, token-only CSS, the style-guide card, the overview row, the render tests, and the browser test are in place; `./bin/dev build`, `./bin/dev template-smoke`, and `ganda repo audit` pass; and the `source` and `tests` diff contains no portal product name. The existing modal overlay stays unchanged. It still has no Escape or focus handling, and this task records that gap instead of fixing it.
+
+The shell still has to meet the earlier review contract. A show that is still waiting for the dismiss button's custom element must leave the dialog closed when `Close` or `Dispose` has already run. End and Start sit on the inline edges: the panel, its inner border, and the slide follow the writing direction, and under a right-to-left document the slide comes from the opposite physical side. A native close this script did not start, including a form with `method="dialog"` inside the body, calls the same `OnClose` path so the caller's flag and the style-guide modal id clear. A close this script does start — `Close`, `Dispose`, or moving the dialog onto `document.body` — must not call `OnClose` again. The browser fires that `close` event on a later turn, so the skip has to survive past the return of `close()`. The browser check waits for that event before it reads the host calls, and it counts the native close on a cleared list so a leaked module close cannot satisfy it.
+
 ## Description
 
 Port Crunchit's `Drawer` into the template as a native, brand-neutral slide-over shell, so a
@@ -112,7 +126,7 @@ drawer where a real in-page edit form appears.
 
 ## Checklist
 
-- [ ] `components/elements/Drawer.razor` and `.razor.css`. It goes under `elements/`: the drawer
+- [x] `components/elements/Drawer.razor` and `.razor.css`. It goes under `elements/`: the drawer
       owns no state and holds no child components of its own, as `Card` and `EmptyState` do.
   - Root and parameters as in Decision. Keep the `<dialog>` closed when `IsOpen` is false. Title id unique per instance (no static counter shared across
     circuits; derive from the instance).
@@ -121,26 +135,26 @@ drawer where a real in-page edit form appears.
   - Footer renders only when set. The body is the only scroll area; header and footer stay
     pinned.
   - Escape, scrim click, and the close button call `OnClose`.
-- [ ] `components/elements/drawer-side.cs` and, if kept, `drawer-size.cs` for the enums
+- [x] `components/elements/drawer-side.cs` and, if kept, `drawer-size.cs` for the enums
       (kebab file names, TW0001).
-- [ ] The presentational module in TypeScript under `source/features/` (compiled to
+- [x] The presentational module in TypeScript under `source/features/` (compiled to
       `wwwroot/js`, like `web-authn.ts`), with a C# wrapper in `services/` like
       `command-palette-js-module.cs`, and a `[DirectComponentSideEffect("…")]` reason on the
       component. Dispose the module reference and guard `JSDisconnectedException`. No edits to
       FluentUI internals.
-- [ ] CSS in the isolated stylesheet: fixed to the chosen side, full height, width from a token,
+- [x] CSS in the isolated stylesheet: fixed to the chosen side, full height, width from a token,
       `--twe-paper`, `--twe-shadow`, `--twe-rule`/border token, spacing from `--twe-space-*`,
       header title at 600 in `--twe-ink`, a body that scrolls, a footer with a top border and a
       flex gap. Narrow screens: full width. Slide-in via transform, disabled under
       `prefers-reduced-motion`. Add tokens (`--twe-drawer-width`, `--twe-scrim`, a drawer z
       layer) to `tokens.css` only if needed. No hex values and no `<style>`.
-- [ ] Style guide: add a "Drawers" card (after "Empty States") with one opener button and one
+- [x] Style guide: add a "Drawers" card (after "Empty States") with one opener button and one
       drawer containing a short body and a footer with a close button. The opener dispatches
       `SetActiveModal`, `IsOpen` reads `ActiveModalId`, `OnClose` and the footer button
       dispatch `CloseModal`. No new local field. Do not extend the StyleGuidePage contract
       (379-017).
-- [ ] Add a row to `components/overview.md`.
-- [ ] Render tests in `components/drawer-render-tests.cs`. They pin only what the static
+- [x] Add a row to `components/overview.md`.
+- [x] Render tests in `components/drawer-render-tests.cs`. They pin only what the static
       render shows:
   - Closed: no panel markup (or a closed dialog), and no title text.
   - Open: root carries `twe-drawer`, the side modifier, the title, `aria-modal`, and
@@ -149,11 +163,16 @@ drawer where a real in-page edit form appears.
   - Footer is omitted when unset and present when set.
   - `Class` and additional attributes (`data-qa`) merge on the root.
   - The close button has `aria-label="Close"` and the icon is `aria-hidden`.
-- [ ] One Playwright test in
+- [x] One Playwright test in
       `tests/container-apps/web/web-spa-playwright-tests/` (model: `ask-focus-playwright-tests.cs`
       and its sign-in helper) for focus-in, Escape, focus-return, and Tab containment on the
       style-guide drawer.
-- [ ] Gates:
+- [x] A deferred `show` does not call `showModal` after `Close` or `Dispose`.
+- [x] End and Start use inline insets and borders, and the slide flips under `:dir(rtl)`.
+- [x] A native close the module did not start calls `RequestClose`.
+- [x] A close the module starts does not call `RequestClose` after the queued `close` event.
+      The Playwright check waits for that event, and counts the native close on a cleared list.
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
@@ -181,7 +200,48 @@ possible, and this task adds one.
 ## Session
 
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
+- Implemented the native dialog drawer, the style-guide card, the render tests, and the Playwright focus test (2026-10-23). The shell is `display: contents`, so the module moves the dialog onto `document.body` before `showModal`. Chromium still does not wrap Tab out of a `fluent-button` shadow host, so the module wraps Tab.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-22T20:37:52Z
+- Review oracle round 1 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 3; the session id is not exposed in print mode. Gates re-run: build 0/0, render tests 7/7, Playwright 1/1, template-smoke passed, audit passed, portal-name grep printed nothing. Findings: 0 bug, 2 suggestion, 2 nit. M4 is wontfix; M1, M2, and M3 are open and need a fix pass. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-22T20:46:14Z
+- Fix pass for review round 1 (2026-10-23). M1: `wantOpen` cancels a deferred `showModal` after `Close` or `Dispose`. M2: End and Start use inline insets and borders, and `:dir(rtl)` plays the slide from the opposite physical side. M3: a `close` the module did not start calls `RequestClose`. M4 stays wontfix. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed, portal-name grep printed nothing.
+- Review oracle round 2 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 2, reviewing the fix delta `138a8cbea..93befc533`. The session id is not exposed in print mode. M1 and M2 are fixed, and M3's listener landed. New: M5 (bug): `moduleClosing` resets before the queued `close` event fires, so every module `Close` also calls `RequestClose`. This was reproduced against the compiled `drawer.js` in Playwright Chromium. M6 (bug): the Playwright check reads the result before that event fires. Gates were not re-run this round. A fix pass is needed for M5 and M6. Files: `review/round-2/general.md`, `review/round-2/merged.md`.
+- Fix pass for review round 2 (2026-10-23). M5: `pendingModuleClose` is taken by the queued `close` listener, so `Close`, `Dispose`, and the move onto `document.body` do not call `RequestClose`. A `method="dialog"` close still does. M6: the Playwright check waits for that `close` event before it reads the host-call count, and it counts the native close on a cleared list. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded, audit 32 passed (1 skipped), portal-name grep printed nothing.
+- Review oracle round 3 (2026-10-23). Reviewer: general (claude-opus-5-5) at effort 1, reviewing the fix delta `5d03e880b..92103e67a`. The session id is not exposed in print mode. M5 and M6 are fixed. In Playwright Chromium against the compiled `drawer.js`: `Close`, `Dispose`, and the `placeOnBody` close made no host call. A native close made exactly one, including one queued behind a module close. No new findings. Gates were not re-run this round. Disposition: accepted-exceptions (M4 wontfix), 0 open. Files: `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
+## Results
+
+`components/elements/Drawer.razor` is a native `<dialog class="twe-drawer">`. Open state stays with the caller (`IsOpen` and `OnClose`). The style guide Drawers card, after Empty States, opens it through `SetActiveModal` and `ActiveModalId`, and both close paths dispatch `CloseModal`. Width comes from `--twe-drawer-width` and `--twe-drawer-width-wide`. The scrim is `--twe-scrim`. There is no drawer z-index token: a modal dialog paints in the top layer. Body scroll locks with `body:has(dialog.twe-drawer:modal)`.
+
+`ModalContainer` is unchanged. It still closes on a backdrop click and exposes `role="dialog"`, and it still has no Escape handling, no focus move, no focus return, and no inert background.
+
+The script keeps a `wantOpen` flag. `Show` sets it, and `Close` and `Dispose` clear it, so a `show` that is still waiting on `fluent-button` returns without `showModal` after the caller has closed. End and Start use `inset-inline-*` and `border-inline-*`. Under `:dir(rtl)` the slide comes from the opposite physical side, and `prefers-reduced-motion` still drops it. A `close` event the module did not start, such as a form with `method="dialog"`, calls `RequestClose`. A close the module starts increments `pendingModuleClose` before `close()`. The browser queues that event, and the listener takes one count and returns, so `Close`, `Dispose`, and the move onto `document.body` do not call `RequestClose`.
+
+### How to validate
+
+Smoke: `./bin/dev build`; `./bin/dev template-smoke`; `ganda repo audit`; `dotnet test -c Debug --nologo -- --filter-class Drawer_Should_` in `tests/container-apps/web/web-spa-integration-tests`; `dotnet test -c Debug --nologo -- --filter-class StyleGuideDrawer_Given_Wasm` in `tests/container-apps/web/web-spa-playwright-tests`; `git diff origin/master -- source tests | rg -i crunchit`.
+
+Expect: build reports 0 warnings and 0 errors. Template smoke succeeds. Audit passes. The seven render tests pass (closed dialog hides the title, open markup carries `twe-drawer`, the side class, `aria-modal`, and a title id match, two instances differ, the footer is optional, `Class` and `data-qa` land on the root, and the dismiss icon is `aria-hidden` with `aria-label="Close"`). The Playwright test passes: the header close control receives focus, Tab reaches the footer close and wraps back to the header, Escape removes the open dialog, and focus returns to the opener. End sits on the right in LTR and the left in RTL, Start is the mirror, and the inner border follows the inline edge. A `method="dialog"` submit removes the title and leaves the dialog shut. A show that resolves only after `Close` stays shut. After the queued `close` event, a module `Close` has asked the host zero times. A native `close`, counted on a cleared list, asks once. The portal-name search prints nothing.
+
+### Review
+
+Round 1 found M1, M2, and M3, and the first fix pass implemented them. M4 stays wontfix. Round 2 confirmed that M1 and M2 are fixed and that M3's listener landed. It opened two bugs. The second fix pass closed them, and round 3 confirmed the fixes:
+
+- M5: `pendingModuleClose` counts a close the module starts. The listener takes that count when the queued `close` event fires, so `OnClose` does not run a second time and a later `SetActiveModal` is left in place.
+- M6: the Playwright check waits for that event before it reads the host-call count, and it counts the native close on a cleared list.
+
+- Round 1: general reviewer, effort 3. M1 (suggestion, a deferred `showModal` could open after `Close`), M2 (suggestion, End and Start used physical CSS), and M3 (nit, no `close` listener) are implemented. Wontfix: M4 (nit, interop on every render; it keeps the dialog in sync and costs little). No bugs.
+- Round 2: general reviewer, effort 2, fix delta only. M5 and M6 (bugs) are implemented in this pass. Suggestion 2 fixed; nit 1 fixed and 1 wontfix.
+- Round 3: general reviewer, effort 1, fix delta only. M5 and M6 were re-verified as fixed in Chromium against the compiled module. No new findings.
+- Final counts: bug 0 open / 2 fixed; suggestion 0 open / 2 fixed; nit 0 open / 1 fixed / 1 wontfix.
+- **Disposition: accepted-exceptions.** 0 open. The one exception is M4 (nit, wontfix; the review oracle decided it in round 1). No escalations.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md` (final ledger), `review/disposition.md`.
+
+## Review
+
+- Round 1: M1, M2, and M3 implemented in the fix pass. M4 wontfix.
+- Round 2: M5 and M6 implemented in the fix pass.
+- Round 3: Done
 ## Notes
 
 - Crunchit source is under
