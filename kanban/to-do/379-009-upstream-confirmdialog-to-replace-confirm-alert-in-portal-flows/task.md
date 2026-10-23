@@ -184,8 +184,7 @@ dropped assertion, both covered by the Release build.
 ## Review
 
 - Round 1: open M1, M2. Fix pass addressed both on 2026-10-23.
-- Round 2: M1 and M2 fixed, no new findings. Disposition: clean (2026-10-23).
-
+- Round 2: Done
 ## Notes
 
 - FluentUI dialogs need `FluentProviders`, which `components/layouts/FluentUIRequiredFeatures.razor`
