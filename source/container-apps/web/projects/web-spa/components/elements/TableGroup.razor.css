@@ -1,0 +1,37 @@
+/* Table group — one tbody, CSS isolation. Tokens from tokens.css.
+   The header cell overrides the global .twe-table th rule (muted, 600, bottom border).
+   These selectors carry the isolation attribute, so they beat that global rule.
+   Vertical padding is the 12px step. Horizontal padding is the 24px step, the nearest
+   step to the 22px strip the port replaces. */
+.twe-table-group__header th {
+  background: var(--twe-paper-2);
+  color: var(--twe-ink);
+  font-weight: 600;
+  text-align: start;
+  padding: var(--twe-space-3) var(--twe-space-6);
+  border-top: 1px solid var(--twe-rule);
+  border-bottom: 1px solid var(--twe-rule);
+}
+
+.twe-table-group:first-of-type .twe-table-group__header th {
+  border-top: none;
+}
+
+.twe-table-group__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--twe-space-3);
+  width: 100%;
+}
+
+.twe-table-group__title {
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-table-group__meta {
+  margin-inline-start: auto;
+  font-size: var(--twe-text-helper);
+  color: var(--twe-muted);
+}

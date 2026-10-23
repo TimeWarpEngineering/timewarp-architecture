@@ -1,0 +1,54 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One row group inside a GroupedTable — a title, an optional count, optional meta, then the page's rows.
+
+  Design: The root is a tbody, so several groups are several bodies in the one table GroupedTable
+  renders. The first row is the group header: th scope="rowgroup" spanning the column count.
+  A th cannot be display:flex and keep colspan, so the title, count, and meta sit in a flex div
+  inside the cell. ColumnCount cascades from GroupedTable under the name
+  TweGroupedTableColumnCount. A missing cascade, an unrelated int cascade, or a non-positive
+  value falls back to 1 so a stand-alone render still draws and does not throw.
+  Count null omits the chip. Count zero renders 0. The chip is the accent CountChip: the header
+  fill is paper-2, the same fill as the neutral chip, so a neutral chip would disappear into the
+  strip. Meta renders only when it has text, and margin-inline-start:auto pins it to the end.
+  ChildContent is the group's tr rows. The page owns grouping, order, and cells. This component
+  wires no events and does not collapse. Isolated CSS uses --twe-* tokens. The header cell
+  overrides the global .twe-table th rule; the rows keep that global styling.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public int? Count { get; set; }
+  [Parameter] public string? Meta { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  internal const string ColumnCountCascadeName = "TweGroupedTableColumnCount";
+
+  [CascadingParameter(Name = ColumnCountCascadeName)] private int ColumnCount { get; set; } = 1;
+
+  private int HeaderSpan => ColumnCount > 0 ? ColumnCount : 1;
+
+  private bool HasMeta => !string.IsNullOrWhiteSpace(Meta);
+}
+
+<tbody class="twe-table-group @Class" @attributes="AdditionalAttributes">
+  <tr class="twe-table-group__header">
+    <th scope="rowgroup" colspan="@HeaderSpan">
+      <div class="twe-table-group__bar">
+        <span class="twe-table-group__title">@Title</span>
+        @if (Count is not null)
+        {
+          <CountChip Value="Count.Value" Accent="true" />
+        }
+        @if (HasMeta)
+        {
+          <span class="twe-table-group__meta">@Meta</span>
+        }
+      </div>
+    </th>
+  </tr>
+  @ChildContent
+</tbody>

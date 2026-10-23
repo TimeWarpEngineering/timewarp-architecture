@@ -1,0 +1,26 @@
+/* Count chip — native root, CSS isolation. Tokens from tokens.css.
+   22px is between the 12px and 24px spacing steps, so the pill is 1.375rem.
+   Side padding is half the 8px step, so a one-digit value stays on that minimum.
+   The radius is the same 999px literal StatusBadge uses. */
+.twe-count-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex: none;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding-inline: calc(var(--twe-space-2) / 2);
+  border-radius: 999px;
+  background: var(--twe-paper-2);
+  color: var(--twe-ink);
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.twe-count-chip--accent {
+  background: var(--twe-primary);
+  color: var(--twe-on-primary);
+}
