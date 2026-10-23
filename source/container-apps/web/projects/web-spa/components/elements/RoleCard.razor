@@ -1,0 +1,48 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One option in a single-select group — a title, an optional description, and a selected state.
+
+  Design: Native button so CSS isolation stamps the scope attribute. type="button" so it
+  does not submit a form. role="radio" and aria-checked reflect Selected. The parent owns
+  the radiogroup, which item is selected, and what OnSelect does. This component does not
+  know its siblings and does not move focus between them. Class is appended on the button,
+  and unmatched attributes splat onto it. Description renders only when it has text. The
+  check is decorative; aria-checked carries the state. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public string? Description { get; set; }
+  [Parameter] public bool Selected { get; set; }
+  [Parameter] public EventCallback OnSelect { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+
+  private string Checked => Selected ? "true" : "false";
+
+  private Task SelectAsync() => OnSelect.InvokeAsync();
+}
+
+<button type="button"
+        role="radio"
+        aria-checked="@Checked"
+        class="twe-role-card @(Selected ? "is-selected" : null) @Class"
+        @onclick="SelectAsync"
+        @attributes="AdditionalAttributes">
+  <span class="twe-role-card__head">
+    <span class="twe-role-card__title">@Title</span>
+    @if (Selected)
+    {
+      <svg class="twe-role-card__check" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M3.2 8.2 6.4 11.4 12.8 4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    }
+  </span>
+  @if (HasDescription)
+  {
+    <span class="twe-role-card__desc">@Description</span>
+  }
+</button>

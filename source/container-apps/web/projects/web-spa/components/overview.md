@@ -19,7 +19,11 @@ Underscores in component names represent **hierarchical relationships** and are 
 **Location**: `Elements/`, `Forms/`, etc.  
 **Examples**:
 - `Card.razor`
-- `StatusBadge.razor`
+- `StatusBadge.razor` — status pill (`twe-badge`); the caller can pass a label and extra attributes
+- `RoleBadge.razor` — role name on that pill; the page passes the word and the status
+- `RoleCard.razor` — one selectable option (`twe-role-card`); the page owns which item is selected
+- `PermissionGrid.razor` — capability groups (`twe-perm-grid`); each row is granted or not
+- `DevNote.razor` — callout (`twe-devnote`); optional eyebrow, optional title, and a body
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
 - `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
 - `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; optional FluentUI icon, meta, status badge, and actions

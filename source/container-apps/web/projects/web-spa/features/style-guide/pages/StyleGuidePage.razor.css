@@ -10,3 +10,9 @@
 .sg-type { display: flex; flex-direction: column; gap: 10px; }
 .sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
 .sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sg-follow { margin-top: var(--twe-space-3); }
+.sg-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--twe-space-3);
+}

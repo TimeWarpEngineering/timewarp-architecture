@@ -44,6 +44,10 @@
   --twe-positive: #50852c;
   --twe-info: #0085b2;
 
+  /* Glyph or body text that must clear 4.5:1 on paper.
+     --twe-positive is 4.44:1 on white. */
+  --twe-on-positive: #14784a;
+
   /* Radius + elevation */
   --twe-radius: 12px;
   --twe-radius-sm: 8px;

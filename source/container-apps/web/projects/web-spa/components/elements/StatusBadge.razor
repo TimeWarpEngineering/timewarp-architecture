@@ -1,13 +1,18 @@
 @namespace TimeWarp.Architecture.Components
 @*
-  Design-system status pill (Tier-1 leaf, native root). Styled by .twe-badge in
-  wwwroot/css/components.css using the --twe-* tokens.
+  Purpose: Status pill — a word and a dot for one record status.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root, and unmatched attributes splat onto it. The default label
+  is the enum name. A caller passes Label to replace it. The dot is decorative.
+  This component wires no events.
 *@
 
 @code {
   [Parameter] public BadgeStatus Status { get; set; } = BadgeStatus.Active;
   [Parameter] public string? Label { get; set; }
   [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
   private string Modifier => Status switch
   {
@@ -19,7 +24,7 @@
   };
 }
 
-<span class="twe-badge twe-badge--@Modifier @Class">
+<span class="twe-badge twe-badge--@Modifier @Class" @attributes="AdditionalAttributes">
   <span class="twe-badge__dot"></span>
   @(Label ?? Status.ToString())
 </span>
