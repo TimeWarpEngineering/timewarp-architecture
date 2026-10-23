@@ -568,7 +568,8 @@ public partial class Program : IAspNetProgram
   {
     // White-label shell tokens. Linked from App.razor after tokens.css. Anonymous: the mark
     // paints before anyone signs in. Not a static asset, so a configuration edit is the next GET.
-    // Cache-Control: no-cache plus a strong ETag. A matching If-None-Match is 304.
+    // Cache-Control: no-cache plus a strong ETag. If-None-Match uses weak comparison, so the
+    // strong tag and the same tag with a leading W/ are both 304.
     webApplication.MapGet
     (
       BrandStylesheet.Path,

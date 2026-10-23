@@ -7,8 +7,10 @@
 // Only brand custom properties and the logo height are emitted. tokens.css remains the fallback and
 // the home of neutrals, type, and spacing. Hex values are trimmed; anything else throws so a skipped
 // validator cannot inject a declaration.
-// Respond hashes the sheet into a strong ETag. Cache-Control is no-cache. A matching If-None-Match
-// is status 304 with no body, so the browser revalidates instead of painting a stale brand.
+// Respond hashes the sheet into a strong ETag. Cache-Control is no-cache. If-None-Match uses
+// weak comparison (RFC 9110 §13.1.2): "*" matches, and a listed tag matches after a leading
+// "W/" is removed. A match is status 304 with no body, so a proxy that weakens the tag on
+// the way back still revalidates instead of painting a stale brand.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
@@ -104,7 +106,19 @@ public static class BrandStylesheet
     foreach (string part in ifNoneMatch.Split(','))
     {
       string token = part.Trim();
-      if (token == "*" || string.Equals(token, entityTag, StringComparison.Ordinal))
+      if (token == "*")
+      {
+        return true;
+      }
+
+      // RFC 9110 entity-tag: optional case-sensitive "W/" immediately before the quoted tag.
+      // "*" is matched above so a non-tag such as W/* does not become a wildcard.
+      if (token.StartsWith("W/\"", StringComparison.Ordinal))
+      {
+        token = token[2..];
+      }
+
+      if (string.Equals(token, entityTag, StringComparison.Ordinal))
       {
         return true;
       }

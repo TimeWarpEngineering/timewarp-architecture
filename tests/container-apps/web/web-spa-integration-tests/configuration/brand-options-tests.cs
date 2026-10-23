@@ -173,7 +173,20 @@ public class BrandOptions_Should_
     any.StatusCode.ShouldBe(304);
 
     BrandStylesheet.Response weak = BrandStylesheet.Respond(new BrandOptions(), "W/" + first.EntityTag);
-    weak.StatusCode.ShouldBe(200);
+    weak.StatusCode.ShouldBe(304);
+    weak.Body.ShouldBeNull();
+    weak.EntityTag.ShouldBe(first.EntityTag);
+
+    BrandStylesheet.Response weakListed = BrandStylesheet.Respond
+    (
+      new BrandOptions(),
+      "\"other\", W/" + first.EntityTag
+    );
+    weakListed.StatusCode.ShouldBe(304);
+    weakListed.Body.ShouldBeNull();
+
+    BrandStylesheet.Response weakOther = BrandStylesheet.Respond(new BrandOptions(), "W/\"other\"");
+    weakOther.StatusCode.ShouldBe(200);
 
     BrandOptions custom = new() { Tokens = new BrandTokenOptions { Purple = "#abcdef" } };
     BrandStylesheet.Response changed = BrandStylesheet.Respond(custom, first.EntityTag);
