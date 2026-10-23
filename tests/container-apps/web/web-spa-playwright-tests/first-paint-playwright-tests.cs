@@ -18,6 +18,8 @@
 // container-query <style>; it is framework markup, so the HTML scan checks entities, not count.
 // Screenshots go to test output (PlaywrightScreenshot). CI uploads that folder.
 // Brand purple is --twe-purple (#55409c), the same value App.razor puts in data-theme-color.
+// GET /brand.css sends Cache-Control: no-cache and a strong ETag. A repeat with that tag,
+// and a repeat with the same tag weakened by a leading W/, are both 304.
 #endregion
 
 namespace FirstPaintPlaywright_;
@@ -79,6 +81,8 @@ public partial class FirstPaint_Given_PrerenderedShell
     await File.WriteAllTextAsync(ScreenshotPath("prerendered.html"), html);
     AssertStyleElementsAreNotEncoded(html);
     html.ShouldContain("data-theme-color=\"#55409c\"");
+    html.ShouldContain("href=\"brand.css\"");
+    html.ShouldContain("images/timewarp-horizontal.svg");
 
     IBrowser browser = session.Inner;
 
@@ -160,6 +164,37 @@ public partial class FirstPaint_Given_PrerenderedShell
     response.Ok.ShouldBeTrue($"GET / returned {response.Status}");
     string html = await response.TextAsync();
     html.ShouldContain("twe-appbar");
+
+    IAPIResponse brandCss = await request.GetAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css");
+    brandCss.Ok.ShouldBeTrue($"GET /brand.css returned {brandCss.Status}");
+    string css = await brandCss.TextAsync();
+    css.ShouldContain("--twe-purple: #55409c;");
+    css.ShouldContain("--twe-logo-height: 48px;");
+    css.ShouldNotContain("<");
+    brandCss.Headers["cache-control"].ShouldBe("no-cache");
+    string etag = brandCss.Headers["etag"];
+    etag.ShouldStartWith("\"");
+    etag.ShouldEndWith("\"");
+
+    IAPIResponse revalidated = await request.GetAsync
+    (
+      InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css",
+      new APIRequestContextOptions
+      {
+        Headers = new Dictionary<string, string> { ["If-None-Match"] = etag }
+      }
+    );
+    revalidated.Status.ShouldBe(304);
+
+    IAPIResponse weakened = await request.GetAsync
+    (
+      InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css",
+      new APIRequestContextOptions
+      {
+        Headers = new Dictionary<string, string> { ["If-None-Match"] = "W/" + etag }
+      }
+    );
+    weakened.Status.ShouldBe(304);
     return html;
   }
 

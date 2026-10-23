@@ -5,9 +5,13 @@
 {
   [Inject] private IOptions<BlazorSettings> BlazorSettingsAccessor { get; set; } = null!;
 
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+
   [Inject] private IHostEnvironment HostEnvironment { get; set; } = null!;
 
   private BlazorSettings BlazorSettings => BlazorSettingsAccessor.Value;
+
+  private BrandOptions Brand => BrandOptionsAccessor.Value;
 
   private IComponentRenderMode RenderMode => BlazorSettings.RenderMode switch
   {
@@ -23,20 +27,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TimeWarp.Architecture</title>
+  <title>@Brand.ProductName</title>
   @* Static shell, outside HeadOutlet: crawlers do not run Blazor, and Prerender may be off. *@
   <LinkPreviewMeta />
   <base href="/"/>
 
   @* Design tokens + global app styles + design-system components (plain CSS, replaces Tailwind) *@
   <link href="css/tokens.css" rel="stylesheet"/>
+  @* BrandOptions overrides. A real sheet in head, so prerender is on brand before any script. *@
+  <link href="brand.css" rel="stylesheet"/>
   <link href="css/app.css" rel="stylesheet"/>
 
   @* Component-scoped CSS (Blazor isolation) — Card/StatusBadge/Modal/pages *.razor.css *@
   <link href="Web.Spa.styles.css" rel="stylesheet"/>
 
   @* FluentUI v5 component styles. Fluent's design tokens are applied at runtime by its startup
-     script from <body data-theme-color>; the shell's brand frame comes from tokens.css. *@
+     script from <body data-theme-color>; the shell's brand frame comes from tokens.css and brand.css. *@
   <link href="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.bundle.scp.css" rel="stylesheet" />
   <link href="_content/Microsoft.AspNetCore.Components.AI/ai-chat.css" rel="stylesheet" />
 
@@ -51,9 +57,9 @@
   <HeadOutlet @rendermode=RenderMode />
 </head>
 @* Task 290: Fluent's beforeStart initializer builds the brand theme from these attributes, so
-   Fluent components are purple from the first script tick, not blue until MainLayout went
-   interactive. data-theme="light" keeps the light mode the app always used. *@
-<body data-theme-color="@MainLayout.BrandColor" data-theme="light">
+   Fluent components use the seed from the first script tick, not the default blue. The seed is
+   BrandOptions.SeedColor. data-theme="light" keeps light mode until a stored mode says otherwise. *@
+<body data-theme-color="@Brand.NormalizedSeedColor" data-theme="light">
 @* Page-load navigate: parser-blocking classic script before Routes and blazor.web.js. *@
 <WebMcpPageLoad />
 <Routes @rendermode=RenderMode />
@@ -79,6 +85,10 @@
     }
     return path + location.search + location.hash;
   };
+</script>
+@* Before blazor.web.js so Fluent's initializer sees the seed and ExactRamp. Mode is left alone. *@
+<script>
+@((MarkupString)BrandThemeScript.Render(Brand))
 </script>
 <script src="_framework/blazor.web.js"></script>
 </body>
