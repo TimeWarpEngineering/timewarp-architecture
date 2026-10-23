@@ -7,6 +7,8 @@
 // Only brand custom properties and the logo height are emitted. tokens.css remains the fallback and
 // the home of neutrals, type, and spacing. Hex values are trimmed; anything else throws so a skipped
 // validator cannot inject a declaration.
+// Respond hashes the sheet into a strong ETag. Cache-Control is no-cache. A matching If-None-Match
+// is status 304 with no body, so the browser revalidates instead of painting a stale brand.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
@@ -17,6 +19,18 @@ using System.Text;
 public static class BrandStylesheet
 {
   public const string Path = "/brand.css";
+
+  /// <summary>One GET of <see cref="Path"/>: status, optional body, and the strong entity tag.</summary>
+  public readonly record struct Response
+  (
+    int StatusCode,
+    string? Body,
+    string EntityTag
+  )
+  {
+    /// <summary>Browser must revalidate. The sheet is not a fingerprinted static asset.</summary>
+    public const string CacheControl = "no-cache";
+  }
 
   /// <summary>CSS custom properties for one brand. Throws when a color is not hex.</summary>
   public static string Render(BrandOptions brand)
@@ -55,6 +69,48 @@ public static class BrandStylesheet
     css.AppendLine("px;");
     css.AppendLine("}");
     return css.ToString();
+  }
+
+  /// <summary>
+  /// Status and body for one request. <paramref name="ifNoneMatch"/> is the raw If-None-Match header.
+  /// </summary>
+  public static Response Respond(BrandOptions brand, string? ifNoneMatch)
+  {
+    string css = Render(brand);
+    string entityTag = EntityTag(css);
+    if (Matches(ifNoneMatch, entityTag))
+    {
+      return new Response(304, Body: null, entityTag);
+    }
+
+    return new Response(200, css, entityTag);
+  }
+
+  /// <summary>Strong entity tag for a stylesheet body. The tag is a quoted SHA-256 hex digest.</summary>
+  public static string EntityTag(string css)
+  {
+    ArgumentException.ThrowIfNullOrEmpty(css);
+    byte[] hash = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(css));
+    return "\"" + Convert.ToHexString(hash) + "\"";
+  }
+
+  private static bool Matches(string? ifNoneMatch, string entityTag)
+  {
+    if (string.IsNullOrEmpty(ifNoneMatch))
+    {
+      return false;
+    }
+
+    foreach (string part in ifNoneMatch.Split(','))
+    {
+      string token = part.Trim();
+      if (token == "*" || string.Equals(token, entityTag, StringComparison.Ordinal))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static void Declaration(StringBuilder css, string name, string value)

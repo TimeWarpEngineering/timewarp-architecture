@@ -18,6 +18,7 @@
 // container-query <style>; it is framework markup, so the HTML scan checks entities, not count.
 // Screenshots go to test output (PlaywrightScreenshot). CI uploads that folder.
 // Brand purple is --twe-purple (#55409c), the same value App.razor puts in data-theme-color.
+// GET /brand.css sends Cache-Control: no-cache and a strong ETag. A repeat with that tag is 304.
 #endregion
 
 namespace FirstPaintPlaywright_;
@@ -169,6 +170,20 @@ public partial class FirstPaint_Given_PrerenderedShell
     css.ShouldContain("--twe-purple: #55409c;");
     css.ShouldContain("--twe-logo-height: 48px;");
     css.ShouldNotContain("<");
+    brandCss.Headers["cache-control"].ShouldBe("no-cache");
+    string etag = brandCss.Headers["etag"];
+    etag.ShouldStartWith("\"");
+    etag.ShouldEndWith("\"");
+
+    IAPIResponse revalidated = await request.GetAsync
+    (
+      InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css",
+      new APIRequestContextOptions
+      {
+        Headers = new Dictionary<string, string> { ["If-None-Match"] = etag }
+      }
+    );
+    revalidated.Status.ShouldBe(304);
     return html;
   }
 

@@ -1,5 +1,5 @@
 #region Purpose
-// Application shell UI state: active modal, menu expansion, branding, and displayed version.
+// Application shell UI state: active modal, menu expansion, and displayed version.
 #endregion
 
 #region Design
@@ -8,8 +8,7 @@
 // Version is derived from the assembly rather than stored, so it cannot drift from the
 // deployed build.
 // Setters are private; mutation happens only via action-set handlers in sibling partials.
-// The visible product name and logo are BrandOptions. Name's default matches
-// BrandOptions.DefaultProductName so a store that has only run Initialize agrees with the shell.
+// The product name and the logo are BrandOptions. This store does not keep a second copy.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -18,7 +17,7 @@ namespace TimeWarp.Architecture.Features.Applications;
 /// Represents application-level UI state shared across the Blazor client.
 /// </summary>
 /// <remarks>
-/// The state tracks the active modal, menu expansion, branding, and assembly version displayed by the application shell.
+/// The state tracks the active modal, menu expansion, and assembly version displayed by the application shell.
 /// <see cref="Initialize()"/> sets the default shell values used when the store starts.
 /// </remarks>
 [StateAccess]
@@ -35,16 +34,6 @@ public sealed partial class ApplicationState : State<ApplicationState>
   public bool IsMenuExpanded { get; private set; }
 
   /// <summary>
-  /// Gets the path to the application logo.
-  /// </summary>
-  public string? Logo { get; private set; }
-
-  /// <summary>
-  /// Gets the application display name.
-  /// </summary>
-  public string Name { get; private set; } = null!;
-
-  /// <summary>
   /// Gets the version of the assembly containing this state type.
   /// </summary>
   public string? Version => GetType().Assembly.GetName().Version?.ToString();
@@ -57,7 +46,5 @@ public sealed partial class ApplicationState : State<ApplicationState>
   public override void Initialize()
   {
     IsMenuExpanded = true;
-    Name = BrandOptions.DefaultProductName;
-    Logo = "/images/logo.png";
   }
 }

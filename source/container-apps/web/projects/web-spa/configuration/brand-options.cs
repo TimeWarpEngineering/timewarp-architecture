@@ -11,6 +11,8 @@
 // Fluent reads the seed from the body attribute (task 290). ExactRamp is not a body attribute
 // in FluentUI 5, so BrandThemeScript writes it into Fluent's theme storage before blazor.web.js
 // and leaves a stored light or dark mode in place. The shell does not call SetThemeAsync.
+// An absolute http(s) logo may carry a query or a fragment, so a cache-busted CDN URL is valid.
+// A relative or root-relative logo stays a path: ? and # are rejected there.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
@@ -83,7 +85,8 @@ public sealed class BrandOptions
 
   /// <summary>
   /// A logo reference the shell can put in an attribute: a relative path, a root-relative path,
-  /// or an absolute http(s) URL. Scheme-relative and script URLs are rejected.
+  /// or an absolute http(s) URL. Scheme-relative and script URLs are rejected. A query or a
+  /// fragment is allowed only on an absolute http(s) URL.
   /// </summary>
   public static bool IsLogoReference(string? value)
   {
@@ -98,9 +101,7 @@ public sealed class BrandOptions
       || value.Contains('"', StringComparison.Ordinal)
       || value.Contains('\'', StringComparison.Ordinal)
       || value.Contains('<', StringComparison.Ordinal)
-      || value.Contains('>', StringComparison.Ordinal)
-      || value.Contains('?', StringComparison.Ordinal)
-      || value.Contains('#', StringComparison.Ordinal))
+      || value.Contains('>', StringComparison.Ordinal))
     {
       return false;
     }
@@ -110,14 +111,22 @@ public sealed class BrandOptions
       return false;
     }
 
+    // A leading slash is a root-relative path. Uri.TryCreate treats it as a file URI on Unix.
     if (value.StartsWith('/', StringComparison.Ordinal))
     {
-      return value.Length > 1;
+      return value.Length > 1
+        && !value.Contains('?', StringComparison.Ordinal)
+        && !value.Contains('#', StringComparison.Ordinal);
     }
 
     if (Uri.TryCreate(value, UriKind.Absolute, out Uri? absolute))
     {
       return IsHttpScheme(absolute.Scheme) && string.IsNullOrEmpty(absolute.UserInfo);
+    }
+
+    if (value.Contains('?', StringComparison.Ordinal) || value.Contains('#', StringComparison.Ordinal))
+    {
+      return false;
     }
 
     return !value.Contains(':', StringComparison.Ordinal);

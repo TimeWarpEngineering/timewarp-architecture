@@ -5,11 +5,15 @@
 #region Design
 // No host. The stylesheet and the script are pure functions of BrandOptions. The validator is the
 // same internal type ValidateOnStart runs. tokens.css is read from the repo so a default hex
-// cannot drift from the fallback sheet.
+// cannot drift from the fallback sheet: every declaration Render emits for new BrandOptions()
+// must appear in that file. Both checked-in BrandOptions sections bind through the configuration
+// binder and must equal new BrandOptions().
 #endregion
 
 namespace BrandOptions_;
 
+using System.Globalization;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using TimeWarp.Architecture.Configuration;
 
@@ -32,7 +36,12 @@ public class BrandOptions_Should_
     validator.Validate(new BrandOptions { Tokens = new BrandTokenOptions { Purple = "purple" } }).IsValid.ShouldBeFalse();
 
     validator.Validate(new BrandOptions { LogoSrc = "https://cdn.example/mark.svg" }).IsValid.ShouldBeTrue();
+    validator.Validate(new BrandOptions { LogoSrc = "https://cdn.example/mark.svg?v=1" }).IsValid.ShouldBeTrue();
+    validator.Validate(new BrandOptions { LogoSrc = "https://cdn.example/mark.svg#mark" }).IsValid.ShouldBeTrue();
+    validator.Validate(new BrandOptions { LogoSrc = "https://cdn.example/mark.svg?v=1#mark" }).IsValid.ShouldBeTrue();
     validator.Validate(new BrandOptions { LogoSrc = "/images/mark.svg" }).IsValid.ShouldBeTrue();
+    validator.Validate(new BrandOptions { LogoSrc = "/images/mark.svg?v=1" }).IsValid.ShouldBeFalse();
+    validator.Validate(new BrandOptions { LogoSrc = "images/mark.svg#mark" }).IsValid.ShouldBeFalse();
     validator.Validate(new BrandOptions { SeedColor = " #abc " }).IsValid.ShouldBeTrue();
     return Task.CompletedTask;
   }
@@ -63,18 +72,24 @@ public class BrandOptions_Should_
   public static Task Render_Default_Tokens_That_Match_The_Fallback_Sheet()
   {
     string css = BrandStylesheet.Render(new BrandOptions());
-    css.ShouldContain("--twe-purple: #55409c;");
-    css.ShouldContain("--twe-primary: #55409c;");
-    css.ShouldContain("--twe-blue: #0085b2;");
-    css.ShouldContain("--twe-green: #69a144;");
-    css.ShouldContain("--twe-info: #0085b2;");
-    css.ShouldContain("--twe-on-primary: #ffffff;");
-    css.ShouldContain("--twe-logo-height: 48px;");
     css.ShouldNotContain("<");
 
     string tokens = File.ReadAllText(Path.Combine(RepoRoot(), "source/container-apps/web/projects/web-spa/wwwroot/css/tokens.css"));
-    tokens.ShouldContain("--twe-purple: #55409c;");
-    tokens.ShouldContain("--twe-logo-height: 48px;");
+    int declarations = 0;
+    foreach (string line in css.Split('\n'))
+    {
+      string declaration = line.Trim();
+      if (declaration.Length == 0 || declaration is ":root {" or "}")
+      {
+        continue;
+      }
+
+      declaration.ShouldEndWith(";");
+      tokens.ShouldContain(declaration);
+      declarations++;
+    }
+
+    declarations.ShouldBe(typeof(BrandTokenOptions).GetProperties().Length + 1);
     return Task.CompletedTask;
   }
 
@@ -124,6 +139,49 @@ public class BrandOptions_Should_
     return Task.CompletedTask;
   }
 
+  public static Task Bind_The_Checked_In_Sections_To_The_Code_Defaults()
+  {
+    BrandOptions defaults = new();
+    BrandOptions server = BindCheckedIn("source/container-apps/web/projects/web-server/appsettings.json");
+    BrandOptions spa = BindCheckedIn("source/container-apps/web/projects/web-spa/wwwroot/appsettings.json");
+    ShouldMatch(server, defaults);
+    ShouldMatch(spa, defaults);
+    ShouldMatch(server, spa);
+    return Task.CompletedTask;
+  }
+
+  public static Task Revalidate_The_Sheet_With_A_Strong_ETag()
+  {
+    BrandStylesheet.Response first = BrandStylesheet.Respond(new BrandOptions(), ifNoneMatch: null);
+    first.StatusCode.ShouldBe(200);
+    first.Body.ShouldNotBeNull();
+    first.Body.ShouldContain("--twe-purple: #55409c;");
+    first.EntityTag.ShouldStartWith("\"");
+    first.EntityTag.ShouldEndWith("\"");
+    first.EntityTag.ShouldNotContain("W/");
+    BrandStylesheet.Response.CacheControl.ShouldBe("no-cache");
+
+    BrandStylesheet.Response again = BrandStylesheet.Respond(new BrandOptions(), first.EntityTag);
+    again.StatusCode.ShouldBe(304);
+    again.Body.ShouldBeNull();
+    again.EntityTag.ShouldBe(first.EntityTag);
+
+    BrandStylesheet.Response listed = BrandStylesheet.Respond(new BrandOptions(), "\"other\", " + first.EntityTag);
+    listed.StatusCode.ShouldBe(304);
+
+    BrandStylesheet.Response any = BrandStylesheet.Respond(new BrandOptions(), "*");
+    any.StatusCode.ShouldBe(304);
+
+    BrandStylesheet.Response weak = BrandStylesheet.Respond(new BrandOptions(), "W/" + first.EntityTag);
+    weak.StatusCode.ShouldBe(200);
+
+    BrandOptions custom = new() { Tokens = new BrandTokenOptions { Purple = "#abcdef" } };
+    BrandStylesheet.Response changed = BrandStylesheet.Respond(custom, first.EntityTag);
+    changed.StatusCode.ShouldBe(200);
+    changed.EntityTag.ShouldNotBe(first.EntityTag);
+    return Task.CompletedTask;
+  }
+
   private static string RepoRoot()
   {
     string? directory = AppContext.BaseDirectory;
@@ -134,5 +192,81 @@ public class BrandOptions_Should_
 
     directory.ShouldNotBeNull();
     return directory;
+  }
+
+  private static BrandOptions BindCheckedIn(string relativePath)
+  {
+    using FileStream stream = File.OpenRead(Path.Combine(RepoRoot(), relativePath));
+    using JsonDocument document = JsonDocument.Parse(stream);
+    Dictionary<string, string?> values = new(StringComparer.OrdinalIgnoreCase);
+    Flatten(BrandOptions.SectionName, document.RootElement.GetProperty(BrandOptions.SectionName), values);
+
+    ConfigurationBuilder builder = new();
+    builder.AddInMemoryCollection(values);
+    BrandOptions bound = new();
+    builder.Build().GetSection(BrandOptions.SectionName).Bind(bound);
+    return bound;
+  }
+
+  private static void Flatten(string prefix, JsonElement element, Dictionary<string, string?> values)
+  {
+    if (element.ValueKind == JsonValueKind.Object)
+    {
+      foreach (JsonProperty property in element.EnumerateObject())
+      {
+        Flatten(prefix + ":" + property.Name, property.Value, values);
+      }
+
+      return;
+    }
+
+    if (element.ValueKind == JsonValueKind.Array)
+    {
+      int index = 0;
+      foreach (JsonElement item in element.EnumerateArray())
+      {
+        Flatten(prefix + ":" + index.ToString(CultureInfo.InvariantCulture), item, values);
+        index++;
+      }
+
+      return;
+    }
+
+    values[prefix] = Scalar(element);
+  }
+
+  private static string? Scalar(JsonElement element) =>
+    element.ValueKind switch
+    {
+      JsonValueKind.String => element.GetString(),
+      JsonValueKind.Null => null,
+      JsonValueKind.True => "true",
+      JsonValueKind.False => "false",
+      JsonValueKind.Number => element.GetRawText(),
+      _ => throw new InvalidOperationException("BrandOptions JSON contains " + element.ValueKind + ".")
+    };
+
+  private static void ShouldMatch(BrandOptions actual, BrandOptions expected)
+  {
+    foreach (PropertyInfo property in typeof(BrandOptions).GetProperties())
+    {
+      object? actualValue = property.GetValue(actual);
+      object? expectedValue = property.GetValue(expected);
+      if (actualValue is BrandTokenOptions actualTokens && expectedValue is BrandTokenOptions expectedTokens)
+      {
+        ShouldMatchTokens(actualTokens, expectedTokens);
+        continue;
+      }
+
+      actualValue.ShouldBe(expectedValue, property.Name);
+    }
+  }
+
+  private static void ShouldMatchTokens(BrandTokenOptions actual, BrandTokenOptions expected)
+  {
+    foreach (PropertyInfo property in typeof(BrandTokenOptions).GetProperties())
+    {
+      property.GetValue(actual).ShouldBe(property.GetValue(expected), property.Name);
+    }
   }
 }

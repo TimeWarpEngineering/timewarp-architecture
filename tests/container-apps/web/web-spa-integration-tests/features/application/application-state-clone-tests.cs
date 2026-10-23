@@ -32,14 +32,13 @@ public class Clone_Should
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
     ApplicationState applicationState = scope.Store.GetState<ApplicationState>();
 
-    applicationState.Initialize(name: "TestName", logo: "SomeUrl", isMenuExpanded: false);
+    applicationState.Initialize(isMenuExpanded: false);
 
     ApplicationState clone = applicationState.Clone()!;
 
     applicationState.ShouldNotBeSameAs(clone);
-    applicationState.Name.ShouldBe(clone.Name);
-    applicationState.Logo.ShouldBe(clone.Logo);
     applicationState.IsMenuExpanded.ShouldBe(clone.IsMenuExpanded);
+    clone.IsMenuExpanded.ShouldBeFalse();
     applicationState.Guid.ShouldNotBe(clone.Guid);
     return Task.CompletedTask;
   }

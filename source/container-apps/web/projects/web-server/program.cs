@@ -568,11 +568,26 @@ public partial class Program : IAspNetProgram
   {
     // White-label shell tokens. Linked from App.razor after tokens.css. Anonymous: the mark
     // paints before anyone signs in. Not a static asset, so a configuration edit is the next GET.
+    // Cache-Control: no-cache plus a strong ETag. A matching If-None-Match is 304.
     webApplication.MapGet
     (
       BrandStylesheet.Path,
-      (IOptions<BrandOptions> brandOptions) =>
-        Results.Text(BrandStylesheet.Render(brandOptions.Value), "text/css; charset=utf-8")
+      (HttpContext httpContext, IOptions<BrandOptions> brandOptions) =>
+      {
+        BrandStylesheet.Response response = BrandStylesheet.Respond
+        (
+          brandOptions.Value,
+          httpContext.Request.Headers.IfNoneMatch.ToString()
+        );
+        httpContext.Response.Headers["Cache-Control"] = BrandStylesheet.Response.CacheControl;
+        httpContext.Response.Headers["ETag"] = response.EntityTag;
+        if (response.Body is null)
+        {
+          return Results.StatusCode(response.StatusCode);
+        }
+
+        return Results.Text(response.Body, "text/css; charset=utf-8", statusCode: response.StatusCode);
+      }
     ).AllowAnonymous();
 
     webApplication.MapStaticAssets();
