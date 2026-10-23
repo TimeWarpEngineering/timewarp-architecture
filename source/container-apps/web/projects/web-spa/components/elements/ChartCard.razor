@@ -1,0 +1,84 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Chart frame — title, optional header and filter, a plot slot, and an optional legend.
+
+  Design: Native section root so CSS isolation stamps the scope attribute. The frame
+  draws no series and no sparkline. Header holds a period control. Filter holds a
+  row under the header. ChildContent is the plot. Legend holds ChartLegendItem rows.
+  A null slot is omitted. HeadingLevel 2 through 6 selects the title element; any
+  other value stays h2, the same rule EmptyState uses. The root carries Ask Tag's
+  Card kind with the title as its label. Unmatched attributes win, so a caller can
+  override the kind or label. Class is appended and does not replace twe-chart-card.
+  This component wires no events. Isolated CSS uses --twe-* tokens. There is no
+  FluentUI child, so the stylesheet needs no ::deep.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public int HeadingLevel { get; set; } = 2;
+  [Parameter] public RenderFragment? Header { get; set; }
+  [Parameter] public RenderFragment? Filter { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public RenderFragment? Legend { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private int ResolvedHeadingLevel => HeadingLevel is >= 2 and <= 6 ? HeadingLevel : 2;
+
+  private Dictionary<string, object> RootAttributes
+  {
+    get
+    {
+      Dictionary<string, object> attributes = new(AskTagMark.For(AskTagMark.CardKind, Title));
+      if (AdditionalAttributes is not null)
+      {
+        foreach (KeyValuePair<string, object> attribute in AdditionalAttributes)
+        {
+          attributes[attribute.Key] = attribute.Value;
+        }
+      }
+
+      return attributes;
+    }
+  }
+}
+
+<section class="twe-chart-card @Class" @attributes="RootAttributes">
+  <div class="twe-chart-card__header">
+    @switch (ResolvedHeadingLevel)
+    {
+      case 3:
+        <h3 class="twe-chart-card__title">@Title</h3>
+        break;
+      case 4:
+        <h4 class="twe-chart-card__title">@Title</h4>
+        break;
+      case 5:
+        <h5 class="twe-chart-card__title">@Title</h5>
+        break;
+      case 6:
+        <h6 class="twe-chart-card__title">@Title</h6>
+        break;
+      default:
+        <h2 class="twe-chart-card__title">@Title</h2>
+        break;
+    }
+    @if (Header is not null)
+    {
+      <div class="twe-chart-card__controls">@Header</div>
+    }
+  </div>
+  @if (Filter is not null)
+  {
+    <div class="twe-chart-card__filter">@Filter</div>
+  }
+  @if (ChildContent is not null)
+  {
+    <div class="twe-chart-card__plot">@ChildContent</div>
+  }
+  @if (Legend is not null)
+  {
+    <div class="twe-chart-card__legend">@Legend</div>
+  }
+</section>

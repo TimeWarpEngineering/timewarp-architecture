@@ -1,0 +1,42 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: On-time tier pill — a pre-formatted label coloured good, warning, or behind.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root, and unmatched attributes splat onto it. The page passes
+  Tone and Label. This chip scores nothing. Good is the default. The dot is
+  aria-hidden. The tier word (Good, Warning, Behind) is visually hidden and leads
+  the accessible name, so colour is not the only signal. This component wires no
+  events. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Label { get; set; } = "";
+  [Parameter] public SlaTone Tone { get; set; } = SlaTone.Good;
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string Modifier => Tone switch
+  {
+    SlaTone.Warn => "warn",
+    SlaTone.Bad => "bad",
+    _ => "good",
+  };
+
+  private string ToneName => Tone switch
+  {
+    SlaTone.Warn => "Warning",
+    SlaTone.Bad => "Behind",
+    _ => "Good",
+  };
+}
+
+<span class="twe-sla-chip twe-sla-chip--@Modifier @Class" @attributes="AdditionalAttributes">
+  <span class="twe-sla-chip__dot" aria-hidden="true"></span>
+  <span class="twe-sla-chip__name">@ToneName</span>
+  @if (!string.IsNullOrWhiteSpace(Label))
+  {
+    <span class="twe-sla-chip__label">@Label</span>
+  }
+</span>

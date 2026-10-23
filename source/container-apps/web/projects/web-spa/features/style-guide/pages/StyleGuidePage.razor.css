@@ -10,3 +10,8 @@
 .sg-type { display: flex; flex-direction: column; gap: 10px; }
 .sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
 .sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sg-chart-sample { display: block; width: 100%; height: 6rem; }
+.sg-chart-sample polyline { fill: none; stroke-width: 2; }
+.sg-chart-sample__a { stroke: var(--twe-ink); }
+.sg-chart-sample__b { stroke: var(--twe-primary); }
+.sg-chart-sample__c { stroke: var(--twe-positive); }

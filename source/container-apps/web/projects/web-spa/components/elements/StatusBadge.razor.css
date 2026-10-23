@@ -19,3 +19,6 @@
 .twe-badge--warning .twe-badge__dot  { background: var(--twe-warning); }
 .twe-badge--info     { background: #e6f4fa; color: var(--twe-blue-deep); }
 .twe-badge--info .twe-badge__dot     { background: var(--twe-blue); }
+/* 12% danger into paper is 4.60:1 with --twe-danger. A mix into paper-2 drops under 4.5:1. */
+.twe-badge--error    { background: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper)); color: var(--twe-danger); }
+.twe-badge--error .twe-badge__dot    { background: var(--twe-danger); }
