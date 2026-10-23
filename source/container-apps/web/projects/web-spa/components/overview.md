@@ -19,7 +19,12 @@ Underscores in component names represent **hierarchical relationships** and are 
 **Location**: `Elements/`, `Forms/`, etc.  
 **Examples**:
 - `Card.razor`
-- `StatusBadge.razor`
+- `StatusBadge.razor` — status pill (`twe-badge`); Active, Inactive, Warning, Info, and Error (the red lost/error status; the label carries the word)
+- `ChartCard.razor` — chart frame (`twe-chart-card`); title, optional header, filter, plot slot, and legend; the page draws the plot
+- `ChartLegendItem.razor` — one legend row (`twe-chart-legend`); ink, primary, or positive dot
+- `TrendPill.razor` — period move (`twe-trend`); up, down, or flat; the direction word is in the accessible name
+- `SlaChip.razor` — on-time tier (`twe-sla-chip`); good, warning, or behind
+- `ClassPill.razor` — classification pill (`twe-class-pill`); mapped ink wash, or dashed when unmapped
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
 - `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
 - `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; optional FluentUI icon, meta, status badge, and actions

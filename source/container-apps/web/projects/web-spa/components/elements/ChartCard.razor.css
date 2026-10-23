@@ -1,0 +1,57 @@
+/* Chart frame — native root, CSS isolation. Tokens from tokens.css.
+   20px 24px matches Card. 20px is not a spacing step (8, 12, 24, 48). */
+.twe-chart-card {
+  background: var(--twe-paper);
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius);
+  box-shadow: var(--twe-shadow-sm);
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.twe-chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+}
+
+.twe-chart-card__title {
+  margin: 0;
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--twe-ink);
+}
+
+.twe-chart-card__controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--twe-space-2);
+}
+
+.twe-chart-card__filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--twe-space-2);
+  margin-top: var(--twe-space-3);
+  padding-bottom: var(--twe-space-3);
+  border-bottom: 1px solid var(--twe-rule);
+}
+
+.twe-chart-card__plot {
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--twe-space-3);
+  overflow-x: auto;
+}
+
+.twe-chart-card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--twe-space-3);
+  margin-top: var(--twe-space-2);
+}

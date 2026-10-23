@@ -1,7 +1,12 @@
 @namespace TimeWarp.Architecture.Components
 @*
-  Design-system status pill (Tier-1 leaf, native root). Styled by .twe-badge in
-  wwwroot/css/components.css using the --twe-* tokens.
+  Purpose: Status pill — a word and a dot for one record status.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root. Error maps to twe-badge--error, the red lost/error status.
+  The default label is the enum name. A caller passes Label to say Lost, Churned, or
+  any other word without a second enum value. The dot is decorative. This component
+  wires no events.
 *@
 
 @code {
@@ -15,6 +20,7 @@
     BadgeStatus.Inactive => "inactive",
     BadgeStatus.Warning => "warning",
     BadgeStatus.Info => "info",
+    BadgeStatus.Error => "error",
     _ => "active",
   };
 }
