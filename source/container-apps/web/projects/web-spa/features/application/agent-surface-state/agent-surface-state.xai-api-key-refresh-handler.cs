@@ -7,8 +7,8 @@
 // here, in the post-pipeline notification shape (AssistantIdentityRefreshHandler): it runs after
 // the action's pipeline finishes. A successful set or clear changes whether Ask has a key. An
 // open tab would otherwise keep the readiness it loaded at sign-in. A failed save (SaveFailed)
-// skips the reload. LoadChatConfiguration's own notification matches neither filter, so there is
-// no loop.
+// skips the reload. A declined clear (ClearDeclined) skips it too: the key did not change.
+// LoadChatConfiguration's own notification matches neither filter, so there is no loop.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -25,7 +25,9 @@ partial class AgentSurfaceState
       bool refresh = postPipelineNotification.Request switch
       {
         XaiApiKeyState.SetXaiApiKeyActionSet.Action => !store.GetState<XaiApiKeyState>().SaveFailed,
-        XaiApiKeyState.ClearXaiApiKeyActionSet.Action => !store.GetState<XaiApiKeyState>().SaveFailed,
+        XaiApiKeyState.ClearXaiApiKeyActionSet.Action =>
+          !store.GetState<XaiApiKeyState>().SaveFailed
+          && !store.GetState<XaiApiKeyState>().ClearDeclined,
         _ => false,
       };
 

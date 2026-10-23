@@ -176,6 +176,8 @@ public static class Program
     // SPA permission claim policies (PermissionIds) + Anonymous/Authenticated.
     serviceCollection.AddAuthorizationCore(PolicyRegistration.AddPolicies);
     serviceCollection.AddFluentUIComponents();
+    // Handlers ask through this. A host with no dialog provider registers ConfirmationStandIn instead.
+    serviceCollection.AddScoped<IConfirmationService, DialogConfirmationService>();
     // FilterBar's search debounce reads this clock. Tests register their own TimeProvider.
     serviceCollection.AddSingleton(TimeProvider.System);
     serviceCollection.AddBlazoredSessionStorage();

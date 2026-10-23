@@ -47,6 +47,8 @@
   // (TWA0022 bans direct mediator Send here).
   private async Task TriggerException() =>
     await CounterState.ThrowException("Demo exception dispatched from the Style Guide.", CancellationToken);
+
+  private Task ConfirmSampleAsync() => NoSubStyleGuideState.ConfirmSample();
 }
 
 <TimeWarpPage Title="Style Guide">
@@ -191,6 +193,11 @@
           <KpiCard Label="On time" Value="49.5%" Caption="Last 12 months" />
           <KpiCard Label="Exceptions" Value="3" Tone="KpiTone.Danger" />
         </KpiStrip>
+      </Card>
+
+      <Card Title="Confirmations">
+        <p class="sg-subtitle">A confirm asks inside the action, before any request. Enter does not confirm. Escape cancels. This sample posts a note and changes nothing else.</p>
+        <FluentButton Appearance="ButtonAppearance.Outline" data-qa="ConfirmSample" OnClick="ConfirmSampleAsync">Ask to confirm</FluentButton>
       </Card>
 
       <Card Title="Buttons (FluentUI, themed)">

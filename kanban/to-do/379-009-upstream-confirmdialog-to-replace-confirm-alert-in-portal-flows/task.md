@@ -1,5 +1,30 @@
 # Upstream ConfirmDialog to replace confirm alert in portal flows
 
+## Goal (implementer restatement)
+
+Clear key on Admin → AI must ask before it deletes the site xAI key, and the page must still
+only dispatch `ClearXaiApiKey`. The question lives in the action handler, through FluentUI
+5.0.1's message box, not a new component and not `window.confirm`.
+
+`ApiHandler` grows one overridable confirm hook that runs before the per-state semaphore. Yes
+continues. No returns with no request and no error notification, so answering does not stall
+other actions on that state. Handlers depend on a small `IConfirmationService` (title, message,
+confirm label, cancel label → bool), registered in `program.cs`, not on FluentUI types. A
+stand-in covers tests and hosts with no dialog provider.
+
+The destructive dialog's confirm label is "Clear key" and cancel is "Cancel". The title is
+"Clear the xAI API key?" and the message says the Ask panel stops until a new key is saved.
+Enter does not confirm. Escape cancels.
+
+The style guide gets a Confirmations card whose opener dispatches a style-guide-only action.
+That action asks through the same service. CredentialList's inline revoke stays as it is.
+
+Done when a handler test shows No skips the API, the notification, and the state, and Yes
+clears as today; a Playwright pass on Admin → AI with a stored key shows the dialog, Cancel
+leaves the key, and Clear key removes it; `./bin/dev build` is 0 warnings and 0 errors;
+`./bin/dev template-smoke` passes; `ganda repo audit` passes; and `source` plus `tests` contain
+no client names.
+
 ## Description
 
 Destructive actions need a confirmation step that fits the rule that every interaction is a
@@ -67,35 +92,66 @@ handler so the page still only dispatches. No new component and no new JavaScrip
 
 ## Checklist
 
-- [ ] Confirm the v5 `IDialogService` API (MCP plus package docs) and record the exact calls
+- [x] Confirm the v5 `IDialogService` API (MCP plus package docs) and record the exact calls
       used in the wrapper's Design region
-- [ ] `ApiHandler`: overridable confirm hook that runs before the per-state semaphore; No skips
+- [x] `ApiHandler`: overridable confirm hook that runs before the per-state semaphore; No skips
       the action silently. Design region updated.
-- [ ] Confirmation wrapper over `IDialogService.ShowMessageBoxAsync` (or
+- [x] Confirmation wrapper over `IDialogService.ShowMessageBoxAsync` (or
       `ShowConfirmationAsync` if labels and shortcuts suffice), registered in `program.cs`
-- [ ] `ClearXaiApiKey` handler overrides the hook: title "Clear the xAI API key?", a message that
+- [x] `ClearXaiApiKey` handler overrides the hook: title "Clear the xAI API key?", a message that
       says what stops working (the Ask panel) until a new key is saved, "Clear key" / "Cancel"
-- [ ] Enter does not confirm the destructive dialog; Escape cancels
-- [ ] Style guide: a "Confirmations" card with one opener that dispatches an existing harmless
+- [x] Enter does not confirm the destructive dialog; Escape cancels
+- [x] Style guide: a "Confirmations" card with one opener that dispatches an existing harmless
       action through the same hook, or a small style-guide-only action (no page-local flag)
-- [ ] Tests:
+- [x] Tests:
   - Handler-level test: hook says No → no API call, no notification, state unchanged; Yes →
     clears as today. Use the wrapper's stand-in, not a mock of first-party code.
   - Playwright (model: `tests/container-apps/web/web-spa-playwright-tests/drawer-playwright-tests.cs`):
     on Admin → AI with a stored key, click Clear key, the dialog shows, Cancel leaves the key,
     Clear key clears it. Update any existing test that expects Clear to act immediately.
-- [ ] Gates:
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
   - `git diff origin/master -- source tests | rg -i crunchit` prints nothing (no client names of
     any kind in generated code).
 
+## Results
+
+Clear key asks inside `ClearXaiApiKey`'s handler, before the per-state lock. The page still
+only dispatches. `DialogConfirmationService` calls FluentUI 5.0.1
+`IDialogService.ShowMessageBoxAsync` with an empty primary shortcut so Enter does not confirm,
+and `SecondaryShortCut` `"Escape"` so Escape cancels. `ConfirmationStandIn` is the test seam.
+A declined clear sets `XaiApiKeyState.ClearDeclined` so the Ask reload does not treat the skip
+as a successful clear. The style guide Confirmations card dispatches `ConfirmSample`, which
+asks through the same service and posts a shell note only on yes.
+
+`./bin/dev build` — 0 warnings, 0 errors.
+`./bin/dev template-smoke` — succeeded (SmokeDefault build 0/0; generated Jaribu 405 + 9 + 14).
+`ganda repo audit` — 32 passed, 0 failed.
+`git diff origin/master -- source tests | rg -i crunchit` — no output.
+
+### How to validate
+
+Smoke: Sign in as an administrator, open Admin → AI, save a site key, and click Clear key.
+Press Enter, then Cancel, then open it again and press Escape. Open it once more and click
+the dialog's Clear key. Then grant developer access, open Style Guide, click Ask to confirm,
+press Escape, open it again, and click Confirm.
+
+Expect: The dialog title is "Clear the xAI API key?" and the message says Ask stops working
+until a new key is saved. Enter, Cancel, and Escape leave the stored suffix in place and
+leave the dialog closed after Cancel or Escape. The dialog's Clear key removes the key, the
+status reads "No key stored.", and the shell shows "xAI API key cleared." On the style guide,
+Escape posts no "Sample confirmed." note; Confirm does.
+
 ## Session
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec rewritten: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23) after Steve chose FluentUI's
   built-in confirmation over a native-dialog component.
+- Implemented the FluentUI v5 message-box confirm, the ApiHandler hook, the style-guide sample,
+  and the handler plus Playwright coverage (2026-10-23). Audit was already green; no boy-scout
+  fixes.
 
 ## Notes
 
