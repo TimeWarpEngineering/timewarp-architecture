@@ -109,13 +109,14 @@ Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/ro
 - Review oracle round 2: claude (claude-opus-5-5), general reviewer, effort 1, max-turns 80, session not reported, 2026-10-24. M1–M4 fixed, 0 open. Disposition clean
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T21:08:20Z
 - Review oracle round 3: claude (claude-opus-5-5), general reviewer, effort 3, max-turns 200, session not reported, 2026-10-24. Reviewed merge `d94228528`. M1–M4 still fixed, no new findings, 0 open. Disposition clean
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T21:11:41Z
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass 2: addressed M1, M2, M3, and M4.
 - Round 2: Done
-- Round 3: Done (merge `d94228528` reviewed, clean)
+- Round 3: Done
 ## Notes
 
 - Source (read-only): the portal's `DevNote`, `RoleBadge`, `RoleCard`, `PermissionGrid`, and `PermissionGroup` / `PermissionItem` under the portal web-spa `components/` folder.
