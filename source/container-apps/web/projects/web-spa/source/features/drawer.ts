@@ -3,27 +3,23 @@
 // #endregion
 //
 // #region Design
-// Bind takes the dialog element and a .NET host. The app shell is display:contents, and a
-// modal dialog under that ancestor does not go into the top layer, so Tab leaves the panel.
-// Show moves the dialog onto document.body before showModal. Blazor keeps the element
-// reference, so later renders update it there. Show waits until the dismiss button's custom
-// element is defined, so the first focusable control exists when the browser moves focus in.
-// That wait can outlive a close. wantOpen records the caller's last request: Show sets it,
-// Close and Dispose clear it, and a native close this module did not start clears it too.
-// The deferred show returns without showModal when the flag is clear.
-// Close calls close, which returns focus to the opener. Both no-op when the dialog is already
-// in that state. The browser queues the close event, so a flag held only while close() runs
-// is already clear when the listener runs. pendingModuleClose counts closes this module
-// starts (Close, Dispose, or the move onto document.body). The listener takes one and
-// returns. Any other close, such as a form with method dialog, still calls RequestClose.
-// Chromium still does not wrap Tab when the focused control is a closed-shadow host
-// (fluent-button), even after the dialog matches :modal on document.body. A capture-phase
-// keydown wraps Tab and Shift+Tab between the first and last tab stop in the dialog.
-// Escape fires cancel. preventDefault keeps the browser from closing the dialog itself: the
-// caller owns IsOpen, and Close runs only after that flag drops, which is what restores focus.
-// A click whose target is the dialog is a backdrop click. The panel box is only the drawer, so
-// a click inside the panel hits a child. Both paths call RequestClose and do not close here.
-// Dispose removes the listeners and closes an open dialog so a navigation still returns focus.
+// Bind takes the dialog and a .NET host. The dialog stays in the Blazor render tree.
+// showModal puts it in the top layer with an ancestor .twe-shell of display:contents.
+// In HeadlessChrome 153.0.8010.12 that dialog matches :modal, paints above the app bar,
+// and opener.focus() leaves focus inside the panel. The dialog is left in place.
+// The same Chrome does not wrap Tab out of a fluent-button. Its shadow root is open.
+// With the keydown listener skipped, Tab from the footer button moved focus to body.
+// A capture-phase keydown wraps Tab and Shift+Tab between the first and last tab stop.
+// fluent-button is registered in FluentUI beforeStart, before Show, so Show calls
+// showModal on the same turn. Close cannot be overtaken by a later showModal.
+// Escape fires cancel. preventDefault keeps the browser from closing the dialog: the
+// caller owns IsOpen, and Close runs after that flag drops, which returns focus.
+// A click whose target is the dialog is the backdrop. Both paths call RequestClose.
+// close() queues the close event, so a flag cleared when close() returns is already
+// clear in the listener. pendingModuleClose counts Close and Dispose. The listener
+// takes one and returns. Any other close, such as a form with method dialog, calls
+// RequestClose. Show and Close no-op when the dialog is already in that state.
+// Dispose removes the listeners and closes an open dialog so navigation returns focus.
 // Imported on demand (DrawerJsModule), not via window.Spa.
 // #endregion
 
@@ -39,7 +35,6 @@ export interface DrawerHandle {
 
 export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle {
   let disposed = false;
-  let wantOpen = false;
   let pendingModuleClose = 0;
 
   const closeFromModule = (): void => {
@@ -49,13 +44,6 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
 
     pendingModuleClose += 1;
     dialog.close();
-  };
-
-  const placeOnBody = (): void => {
-    if (dialog.parentElement !== document.body) {
-      closeFromModule();
-      document.body.appendChild(dialog);
-    }
   };
 
   const onCancel = (event: Event): void => {
@@ -163,7 +151,6 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
       return;
     }
 
-    wantOpen = false;
     host.invokeMethodAsync("RequestClose").catch(() => undefined);
   };
 
@@ -172,35 +159,19 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
   dialog.addEventListener("keydown", onKeyDown, true);
   dialog.addEventListener("close", onDialogClose);
 
-  const show = (): void => {
-    if (disposed || !wantOpen || !dialog.isConnected || dialog.open) {
-      return;
-    }
-
-    placeOnBody();
-    dialog.showModal();
-  };
-
   return {
     Show(): void {
-      wantOpen = true;
-      placeOnBody();
-      if (customElements.get("fluent-button")) {
-        show();
+      if (disposed || !dialog.isConnected || dialog.open) {
         return;
       }
 
-      customElements.whenDefined("fluent-button").then(() => {
-        requestAnimationFrame(show);
-      }).catch(() => undefined);
+      dialog.showModal();
     },
     Close(): void {
-      wantOpen = false;
       closeFromModule();
     },
     Dispose(): void {
       disposed = true;
-      wantOpen = false;
       dialog.removeEventListener("cancel", onCancel);
       dialog.removeEventListener("click", onClick);
       dialog.removeEventListener("keydown", onKeyDown, true);
