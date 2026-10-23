@@ -1,5 +1,11 @@
 # Upstream GroupedTable, TableGroup and CountChip from Crunchit portal
 
+## Goal (implementer restatement)
+
+A generated app should be able to show one table whose rows are already sorted into titled groups, each group with a count, without the page building the paper container, the header strip, or the number pill itself. Three native leaves do that. `GroupedTable` is the paper container and the single `<table>`, with an accessible name from `Label` and the page's `<thead>` plus `TableGroup`s as its content. `TableGroup` is one `<tbody>`: a header cell (`th scope="rowgroup"`) spanning the cascaded column count, then the page's own rows. `CountChip` is the one number pill, neutral or accent, and the group header uses it for the count.
+
+The page owns grouping, order, and cells. These components have no group-by, no sort, no collapse, and no events. A missing column-count cascade falls back to one column so a group rendered on its own still draws. There is no product page in the template whose rows form a natural group, so the only adoption is the style guide, plus a row for each component in the components overview. Render tests pin the static markup. `dev build` is 0 warnings and 0 errors, `dev template-smoke` passes, `ganda repo audit` passes, and the source and test diff contains no client name.
+
 ## Description
 
 Port Crunchit's `GroupedTable`, `TableGroup` and `CountChip` into the template as native,
@@ -159,13 +165,13 @@ Results.
 
 ## Checklist
 
-- [ ] `components/elements/CountChip.razor` and `.razor.css`.
+- [x] `components/elements/CountChip.razor` and `.razor.css`.
   - `<span class="twe-count-chip @AccentClass @Class" @attributes="AdditionalAttributes">@Value</span>`
     with `AccentClass` = `twe-count-chip--accent` when `Accent`.
   - Inline-flex, centred, `min-width` and `height` from the spacing scale (about 22px, 1.375rem),
     `border-radius: 999px` (the same literal `StatusBadge` uses), `--twe-text-helper`, 600,
     `font-variant-numeric: tabular-nums`. No hex values.
-- [ ] `components/elements/TableGroup.razor` and `.razor.css`.
+- [x] `components/elements/TableGroup.razor` and `.razor.css`.
   - `<tbody class="twe-table-group @Class" @attributes="AdditionalAttributes">`, first row
     `<tr class="twe-table-group__header"><th scope="rowgroup" colspan="@ColumnCount">` with a
     flex `<div>` inside the `th` (a `th` cannot be `display: flex` and keep `colspan` reliably):
@@ -178,16 +184,16 @@ Results.
     only; isolated selectors are more specific, confirm in the browser.
   - `ColumnCount` comes from the cascading value; a missing cascade falls back to 1 so a
     stand-alone render does not throw.
-- [ ] `components/elements/GroupedTable.razor` and `.razor.css`.
+- [x] `components/elements/GroupedTable.razor` and `.razor.css`.
   - Root `<div class="twe-grouped-table @Class" @attributes="AdditionalAttributes">` (paper,
     `--twe-radius`, `--twe-shadow-sm`, `overflow-x: auto`) containing
     `<table class="twe-table" aria-label="@Label">` and `<CascadingValue Value="ColumnCount">`
     around `ChildContent`. Omit `aria-label` when `Label` is blank.
   - Row hover and cell padding come from the global `.twe-table`; this component adds none.
-- [ ] Purpose and Design regions (TWA0004) on all three: one table with a row-group per
+- [x] Purpose and Design regions (TWA0004) on all three: one table with a row-group per
       `TableGroup`; page owns grouping, order and cells; no events, no collapse; `CountChip`
       is the one number pill.
-- [ ] Style guide: add a "Grouped Table" card (after "Integration Cards" if 379-010 has landed,
+- [x] Style guide: add a "Grouped Table" card (after "Integration Cards" if 379-010 has landed,
       else after "KPI Cards") in `features/style-guide/pages/StyleGuidePage.razor`.
   - One `GroupedTable` (`ColumnCount="3"`, `Label`, `data-qa="StyleGuideGroupedTable"`) with a
     `<thead>` (`TableHeader`), and two or three `TableGroup`s, for example "Open" (Count 2,
@@ -196,8 +202,8 @@ Results.
   - A small "Count Chip" card or row beside it: 1, 12, 128 neutral, and one `Accent`.
   - Names in the sample are generic (no staff, no places). Do not extend the StyleGuidePage
     contract (379-017).
-- [ ] Add rows to `components/overview.md` for `GroupedTable`, `TableGroup` and `CountChip`.
-- [ ] Render tests, `components/grouped-table-render-tests.cs`. They pin only what the static
+- [x] Add rows to `components/overview.md` for `GroupedTable`, `TableGroup` and `CountChip`.
+- [x] Render tests, `components/grouped-table-render-tests.cs`. They pin only what the static
       render shows:
   - Renders one `<table>` and the group `<tbody>`s inside it (count of `<table>` is 1 for two
     groups).
@@ -208,10 +214,10 @@ Results.
   - Group rows follow the header row in the same `<tbody>`.
   - Root carries `twe-grouped-table`, `Class` merges and does not replace it, `data-qa` passes
     through, no `<style` in the output, and a script-bearing title stays encoded.
-- [ ] Render tests, `components/count-chip-render-tests.cs`: value renders; neutral has no accent
+- [x] Render tests, `components/count-chip-render-tests.cs`: value renders; neutral has no accent
       class; `Accent` adds `twe-count-chip--accent`; `Class` merges; `data-qa` passes through.
-- [ ] No Playwright test: there is no interaction (no collapse, no handlers).
-- [ ] Gates:
+- [x] No Playwright test: there is no interaction (no collapse, no handlers).
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `./bin/dev lint-skills` is not needed unless `skills/` changes.
@@ -248,6 +254,37 @@ Results.
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
+- Implemented: grouped table, row group, and count chip; style guide only (2026-10-23)
+
+## Results
+
+`GroupedTable`, `TableGroup`, and `CountChip` are native leaves under `components/elements`. `GroupedTable` is a paper container (`twe-grouped-table`: `--twe-paper`, `--twe-radius`, `--twe-shadow-sm`, `overflow-x: auto`) around one `<table class="twe-table">`. `Label` becomes `aria-label` on that table, and a blank label omits the attribute. `ColumnCount` cascades to the groups and is not fixed. `TableGroup` is a `<tbody>`. Its first row is `<th scope="rowgroup">` spanning the cascaded column count, with the title, an accent `CountChip` when `Count` is set (including zero), and the meta when it has text. A missing or non-positive cascade spans one column. `CountChip` is the one number pill: neutral is `--twe-paper-2` / `--twe-ink`, accent is `--twe-primary` / `--twe-on-primary`. The group header uses the accent chip because the header fill is `--twe-paper-2`, the same fill as the neutral chip. No new tokens. The pill is `1.375rem` (22px is not a spacing step). Header padding is `--twe-space-3` by `--twe-space-6` (12px by 24px). The chip's side padding is half of `--twe-space-2`. No events, no collapse, no JavaScript.
+
+FluentUI stays at 5.0.1, so the spec's finding stands: `FluentDataGrid` has no grouping, and `FluentCounterBadge` is not used. No product page in the template has a natural group, so nothing but the style guide adopts these components. A later task can adopt them where a page loads a full list that groups. The style guide, after Integration Cards, shows a three-column table labeled "Work items" (`data-qa="StyleGuideGroupedTable"`) with Open (count 2, meta "2 items"), In progress (count 1), and Closed (no count), plus a Count Chip card with 1, 12, 128, and an accent 7. Sample names are generic. `components/overview.md` has a row for each component.
+
+The isolated group-header rule beats the global `.twe-table th` rule. In Chromium, with the compiled scope attributes, a column header stays muted `#767a86` at `8px 12px`. A group header is ink `#1a1d28` on paper-2 `#f5f5f7` at `12px 24px`. The first group has no top border. The next group has a 1px top border. Both keep a bottom border. Accent text `#ffffff` on `#55409c` is 8.08:1. Neutral ink `#1a1d28` on paper-2 `#f5f5f7` is 15.43:1. Both meet 4.5:1. Meta uses the existing `--twe-muted` token, which measures 3.94:1 on paper-2. That token is 4.29:1 on paper as well, so this task leaves it. A nowrap cell inside a 280px frame scrolled (`scrollWidth` 854, `clientWidth` 280). The signed-in Style Guide route was not opened. Markup is pinned by the HtmlRenderer tests. There is no Playwright test.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build -- --filter-class CountChip_Should_
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build -- --filter-class GroupedTable_Should_
+```
+
+**Expect:** `CountChip_Should_` 4 passed, 0 failed. The value renders, including zero. Neutral has no `twe-count-chip--accent`. `Accent` adds that class. `Class` merges and `data-qa` passes through. `GroupedTable_Should_` 8 passed, 0 failed. Two groups render one `<table>` and two `<tbody>` elements. `aria-label` is on the table when `Label` has text and absent when it is blank. Each header is `th scope="rowgroup"` with `colspan` equal to `ColumnCount`. A group rendered alone spans one column. The title renders. The count chip, with `twe-count-chip--accent`, appears for 2 and for 0, and is absent when `Count` is null. Meta appears only when it has text. Group rows follow the header in the same `<tbody>`. The root keeps `twe-grouped-table` when `Class` is set, `data-qa` passes through, the output has no `<style`, and a title of `<script>` stays `&lt;script&gt;` in the raw markup.
+
+**Automated gate**
+
+```bash
+./bin/dev build
+./bin/dev template-smoke
+ganda repo audit
+git diff origin/master -- source tests | rg -i "crunchit|copic"
+```
+
+`dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0, Skipped 1. The client-name search prints nothing. `CountChip_Should_`: 4 passed, 0 failed. `GroupedTable_Should_`: 8 passed, 0 failed. `lint-skills` was not run; `skills/` did not change.
 
 ## Notes
 

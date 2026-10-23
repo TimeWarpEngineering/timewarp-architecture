@@ -1,0 +1,23 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Number pill — a value, neutral or accent.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is appended
+  on that root the way Card does, and unmatched attributes splat onto it. Accent adds
+  twe-count-chip--accent; the default adds no modifier. The value is rendered as a number,
+  including zero. This component wires no events and adds no role: the pill is decoration
+  around the number. Isolated CSS uses --twe-* tokens. There is no FluentUI child, so the
+  stylesheet needs no ::deep.
+*@
+
+@code {
+  [Parameter] public int Value { get; set; }
+  [Parameter] public bool Accent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string? AccentClass => Accent ? "twe-count-chip--accent" : null;
+}
+
+<span class="twe-count-chip @AccentClass @Class" @attributes="AdditionalAttributes">@Value</span>

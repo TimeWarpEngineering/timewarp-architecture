@@ -230,6 +230,55 @@
         </div>
       </Card>
 
+      <Card Title="Grouped Table">
+        <p class="sg-subtitle">One table, with a row group for each title. The page supplies the groups, the order, and the cells.</p>
+        <GroupedTable ColumnCount="3" Label="Work items" data-qa="StyleGuideGroupedTable">
+          <thead>
+            <tr>
+              <TableHeader>Item</TableHeader>
+              <TableHeader>Note</TableHeader>
+              <TableHeader>Updated</TableHeader>
+            </tr>
+          </thead>
+          <TableGroup Title="Open" Count="2" Meta="2 items">
+            <tr>
+              <Cell>Alpha</Cell>
+              <Cell>First pass</Cell>
+              <Cell>Today</Cell>
+            </tr>
+            <tr>
+              <Cell>Beta</Cell>
+              <Cell>First pass</Cell>
+              <Cell>Yesterday</Cell>
+            </tr>
+          </TableGroup>
+          <TableGroup Title="In progress" Count="1">
+            <tr>
+              <Cell>Gamma</Cell>
+              <Cell>Second pass</Cell>
+              <Cell>Monday</Cell>
+            </tr>
+          </TableGroup>
+          <TableGroup Title="Closed">
+            <tr>
+              <Cell>Delta</Cell>
+              <Cell>Filed</Cell>
+              <Cell>Last week</Cell>
+            </tr>
+          </TableGroup>
+        </GroupedTable>
+      </Card>
+
+      <Card Title="Count Chip">
+        <p class="sg-subtitle">A number pill. Neutral is for a paper surface. Accent is the brand fill.</p>
+        <div class="sg-row">
+          <CountChip Value="1" />
+          <CountChip Value="12" />
+          <CountChip Value="128" />
+          <CountChip Value="7" Accent="true" />
+        </div>
+      </Card>
+
       <Card Title="Confirmations">
         <p class="sg-subtitle">A confirm asks inside the action, before any request. Enter does not confirm. Escape cancels. This sample posts a note and changes nothing else.</p>
         <FluentButton Appearance="ButtonAppearance.Outline" data-qa="ConfirmSample" OnClick="ConfirmSampleAsync">Ask to confirm</FluentButton>

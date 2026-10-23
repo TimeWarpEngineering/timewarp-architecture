@@ -23,6 +23,9 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
 - `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
 - `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; optional FluentUI icon, meta, status badge, and actions
+- `CountChip.razor` — number pill (`twe-count-chip`); neutral or accent; tabular numerals
+- `GroupedTable.razor` — one table in a paper container (`twe-grouped-table`); the page supplies the header and the groups
+- `TableGroup.razor` — one row group (`twe-table-group`); title, optional count chip, optional meta; the page supplies the rows
 - `Drawer.razor` — slide-over shell (`twe-drawer`); native modal dialog; end or start; medium or wide; optional footer
 - `FormContainer.razor` (Card shell; `ActionContent` renders in `FormActions`)
 - `FormSection.razor` / `FormGrid.razor` / `FormField.razor` / `FormActions.razor` — stacked form layout (full-width controls, `--twe-space-*` tokens)
