@@ -88,6 +88,7 @@ render tests, the Playwright drawer test, `./bin/dev build` (0 warnings, 0 error
 - Review oracle round 1: claude-opus-5-5 (headless ganda task work, session id not exposed), effort 2, roster general. 1 bug and 2 suggestions are open, so a fix pass is needed. 2026-10-23
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T02:09:26Z
 - Fix pass for review round 1 (2026-10-23). M1: Design and the Playwright probe say this Chromium lets Tab leave a modal dialog that holds only native buttons, for both `display:block` and `display:flex`. M2: the inner panel is the flex column and the sheet hit target. M3: `Dispose` removes its listeners, then calls `dialog.close()` while open, and the unread `disposed` guards are gone. `pendingModuleClose` counts `Close` only. Gates: build 0/0, render tests 7/7, Playwright 1/1, template-smoke succeeded on retry (the first run lost a runfile `obj` directory mid-write), audit 32 passed (1 skipped).
+- Review oracle round 2: claude-opus-5-5 (headless ganda task work, session id not exposed), effort 2, roster general. The review covered the delta `7819e05b7..0f55dc6da`. M1, M2, and M3 are fixed, with no new findings. Disposition is clean. 2026-10-23
 
 ## Results
 
@@ -145,13 +146,17 @@ ganda repo audit
 ### Review
 
 - Round 1: effort 2, roster general. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
-- Round 1 counts were bug 1 open (M1) and suggestion 2 open (M2, M3). This fix pass addresses all three. Round 2 has not run, and `review/disposition.md` is not written yet.
+- Round 1 counts were bug 1 open (M1) and suggestion 2 open (M2, M3). This fix pass addresses all three.
+- Round 2: effort 2, roster general. The review covered the fix delta `7819e05b7..0f55dc6da`. M1, M2, and M3 are fixed, and there are no new findings. The reviewer re-ran `StyleGuideDrawer_Given_Wasm`: 1/1 passed.
+- Final counts: bug 1 fixed, suggestion 2 fixed, nit 0. 0 open, 0 wontfix.
+- Disposition: **clean**. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 - M1: Design in `drawer.ts` and `Drawer.razor`, plus the Playwright probe, record that HeadlessChrome 153 lets Tab leave a `showModal()` dialog of only native buttons. The same probe covers `display: flex`, which is M2's evidence that a flex column does not create or drop a Tab trap. The panel stays because it is the flex column and the sheet hit target.
 - M3: `Dispose` no longer increments `pendingModuleClose` or leaves `disposed` checks in listeners that it has already removed. `Show` still returns when `disposed` is set.
 
 ## Review
 
-- Round 1: M1, M2, and M3 are addressed in this fix pass. Round 2 has not run.
+- Round 1: M1, M2, and M3 are addressed in this fix pass.
+- Round 2: all three are fixed, with no new findings. Disposition is clean (`review/disposition.md`).
 
 ## Notes
 

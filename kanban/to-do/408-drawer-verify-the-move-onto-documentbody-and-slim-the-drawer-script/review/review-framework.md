@@ -2,21 +2,16 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 423
+- Lines changed: 233
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 120 (--max-turns; cursor uncapped)
 
-# Review framework — task 408
+## Rounds
 
-**Date:** 2026-10-23
-**Host task:** kanban/to-do/408-drawer-verify-the-move-onto-documentbody-and-slim-the-drawer-script/
-**Diff scope:** branch `task/408-drawer-verify-the-move-onto-documentbody-and-slim` vs `8151be94b` (commit `f5eccc471`): `Drawer.razor`, `source/features/drawer.ts`, `drawer-playwright-tests.cs`, plus `task.md`
-**Plan / brief:** task.md `## Goal` and `## Goal (implementer restatement)`: probe the drawer without `placeOnBody`, remove the move if not needed, add a navigate-away Playwright check, slim `drawer.ts`, and record why each remaining piece exists
-**Effort:** 2 (by-diff budget above)
-**Reviewer roster:** general
-**Session IDs:** review oracle (claude-opus-5-5, headless ganda task work; session id not exposed)
+- Round 1: branch vs `8151be94b` (commit `f5eccc471`), general. See `round-1/merged.md`.
+- Round 2: fix delta `7819e05b7..0f55dc6da`, general, reviewer claude-opus-5-5 (headless ganda task work, session id not exposed). See `round-2/merged.md`.
 
 ## Ground rules
 
