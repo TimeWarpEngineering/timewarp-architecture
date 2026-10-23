@@ -76,6 +76,8 @@ The drawer render tests, the Playwright drawer test, `./bin/dev build` (0 warnin
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23), from the 379-008 merge review (Steve asked to file it).
 - Implementer: removed `placeOnBody` after the Chromium probe below. The Tab wrap stays. The `fluent-button` wait and `wantOpen` are gone because FluentUI's `beforeStart` defines that element before `Show`.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T02:05:58Z
+- Review oracle round 1: claude-opus-5-5 (headless ganda task work, session id not exposed), effort 2, roster general. 1 bug and 2 suggestions are open, so a fix pass is needed. 2026-10-23
 
 ## Results
 
@@ -127,6 +129,14 @@ cd tests/container-apps/web/web-spa-playwright-tests && dotnet test -c Debug --n
 ./bin/dev template-smoke
 ganda repo audit
 ```
+
+### Review
+
+- Round 1: effort 2, roster general. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Counts: bug 1 open (M1). Suggestion 2 open (M2, M3). Nit 0. Nothing fixed or wontfix yet.
+- Disposition: pending. A fix pass is needed for M1, M2, and M3, and `review/disposition.md` is not written yet.
+- I re-ran these in this worktree: `Drawer_Should_` 7/7, `StyleGuideDrawer_Given_Wasm` 1/1, and `./bin/dev build` with 0 warnings and 0 errors. I did not re-run `template-smoke` or `ganda repo audit`.
+- M1: I probed the same Chrome build with only native buttons in a `showModal()` dialog. Tab still left the dialog, so the Tab wrap is needed because Chromium does not keep Tab inside a modal dialog. `fluent-button` is not the cause.
 
 ## Notes
 
