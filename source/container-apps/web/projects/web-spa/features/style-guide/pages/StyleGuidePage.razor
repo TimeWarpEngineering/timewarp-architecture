@@ -36,6 +36,21 @@
   private static readonly string[] TabDemoItems = ["Overview", "Activity", "Notes"];
   private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
 
+  private static readonly IReadOnlyList<PermissionGroup> SamplePermissions =
+  [
+    new("Work",
+    [
+      new PermissionItem("View assigned work", true),
+      new PermissionItem("Edit shared records", true),
+      new PermissionItem("Delete records", false)
+    ]),
+    new("Administration",
+    [
+      new PermissionItem("Manage people", false),
+      new PermissionItem("Change billing", false)
+    ])
+  ];
+
   private static readonly Icon IntegrationConnectedIcon = new Icons.Regular.Size24.CloudSync();
   private static readonly Icon IntegrationWarningIcon = new Icons.Regular.Size24.Warning();
   private static readonly Icon IntegrationSyncIcon = new Icons.Regular.Size20.ArrowSync();
@@ -347,6 +362,40 @@
           <StatusBadge Status="BadgeStatus.Info" />
           <StatusBadge Status="BadgeStatus.Error" />
           <StatusBadge Status="BadgeStatus.Error" Label="Lost" />
+        </div>
+      </Card>
+
+      <Card Title="Role badges">
+        <p class="sg-subtitle">A role name on a status pill. The page passes the word and the status. These samples change nothing.</p>
+        <div class="sg-row sg-follow" data-qa="StyleGuideRoleBadges">
+          <RoleBadge Role="Owner" Status="BadgeStatus.Warning" />
+          <RoleBadge Role="Admin" Status="BadgeStatus.Info" />
+          <RoleBadge Role="Staff" Status="BadgeStatus.Inactive" />
+        </div>
+      </Card>
+
+      <Card Title="Role cards">
+        <p class="sg-subtitle">One option in a single-select group. The page owns which one is selected, the roving tab stop, and the arrow keys. This sample sets the tab indexes and does not move selection.</p>
+        <div class="sg-choice-grid sg-follow" role="radiogroup" aria-label="Sample role" data-qa="StyleGuideRoleCards">
+          <RoleCard Title="Owner" Description="Full access to billing, people, and records." Selected="true" tabindex="0" />
+          <RoleCard Title="Admin" Description="Manage people and records. No billing." tabindex="-1" />
+          <RoleCard Title="Staff" Description="Work assigned records." tabindex="-1" />
+        </div>
+      </Card>
+
+      <Card Title="Permission grid">
+        <p class="sg-subtitle">Capability groups. A check is granted. A minus is not. The page passes the rows.</p>
+        <div class="sg-follow" data-qa="StyleGuidePermissionGrid">
+          <PermissionGrid Groups="SamplePermissions" />
+        </div>
+      </Card>
+
+      <Card Title="Dev note">
+        <p class="sg-subtitle">A callout with an eyebrow, a title, and a body. The body can include code.</p>
+        <div class="sg-follow" data-qa="StyleGuideDevNote">
+          <DevNote Eyebrow="Note" Title="How a note reads">
+            The body can include <code>inline code</code>.
+          </DevNote>
         </div>
       </Card>
 

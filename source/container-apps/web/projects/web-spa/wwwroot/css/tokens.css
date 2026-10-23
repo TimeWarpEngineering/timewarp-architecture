@@ -44,9 +44,9 @@
   --twe-positive: #50852c;
   --twe-info: #0085b2;
 
-  /* Body text on a tinted positive or warning fill.
+  /* Glyph or body text on paper or on a tinted positive or warning fill.
      --twe-positive is 4.44:1 on white. --twe-warning is 3.19:1 on white.
-     These two clear 4.5:1 on a 12% mix of the semantic color into paper. */
+     These two clear 4.5:1 on paper and on a 12% mix of the semantic color into paper. */
   --twe-on-positive: #14784a;
   --twe-on-warning: #92400e;
 

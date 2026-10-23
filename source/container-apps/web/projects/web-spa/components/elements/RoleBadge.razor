@@ -1,0 +1,22 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Role name on a status pill. The page passes the word and the colour.
+
+  Design: This is not a second pill. It renders StatusBadge and passes Role through
+  as the label, unchanged. A blank role passes an empty label so the badge does not
+  fall back to the status name. Status defaults to Inactive. There is no map from a
+  role word to a colour: Owner, Admin, and Staff are not special. Class and unmatched
+  attributes go through to the badge. This component wires no events.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Role { get; set; } = "";
+  [Parameter] public BadgeStatus Status { get; set; } = BadgeStatus.Inactive;
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string ShownLabel => string.IsNullOrWhiteSpace(Role) ? "" : Role;
+}
+
+<StatusBadge Status="@Status" Label="@ShownLabel" Class="@Class" @attributes="AdditionalAttributes" />

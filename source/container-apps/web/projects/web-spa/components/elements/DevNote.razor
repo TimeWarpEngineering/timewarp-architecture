@@ -1,0 +1,46 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Callout — an eyebrow, a title, and a body for a note beside the page content.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Class is appended
+  on that root, and unmatched attributes splat onto it. role="note" is the default; a
+  caller attribute can override it. The icon tile is the characters </> and is
+  aria-hidden. Eyebrow and Title render only when they have text. ChildContent is the
+  body and renders only when the caller passes it. A code element in that body is
+  authored by the caller, so the chip rule uses ::deep. This component wires no events.
+  Isolated CSS uses --twe-* tokens. --twe-muted is under 4.5:1 on paper, so the body
+  uses --twe-ink-2 and the eyebrow uses --twe-purple-deep.
+*@
+
+@code {
+  [Parameter] public string? Eyebrow { get; set; }
+  [Parameter] public string? Title { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private const string Mark = "</>";
+
+  private bool HasEyebrow => !string.IsNullOrWhiteSpace(Eyebrow);
+
+  private bool HasTitle => !string.IsNullOrWhiteSpace(Title);
+}
+
+<div class="twe-devnote @Class" role="note" @attributes="AdditionalAttributes">
+  <div class="twe-devnote__icon" aria-hidden="true">@Mark</div>
+  <div class="twe-devnote__body">
+    @if (HasEyebrow)
+    {
+      <p class="twe-devnote__eyebrow">@Eyebrow</p>
+    }
+    @if (HasTitle)
+    {
+      <p class="twe-devnote__title">@Title</p>
+    }
+    @if (ChildContent is not null)
+    {
+      <div class="twe-devnote__desc">@ChildContent</div>
+    }
+  </div>
+</div>
