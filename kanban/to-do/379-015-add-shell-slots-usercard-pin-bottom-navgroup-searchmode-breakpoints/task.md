@@ -34,6 +34,8 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Implementation: 2026-10-24 (implementer walk)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T23:27:13Z
+- Review oracle round 1: general reviewer (claude, Claude Opus 5.5), effort 3, headless (no session id reported), 2026-10-24. Findings: 3 bug, 2 suggestion, 2 nit, all open. A fix pass was requested.
 
 ## Notes
 
@@ -85,3 +87,15 @@ git diff origin/master -- source tests | rg -i crunchit
 - `./bin/dev template-smoke`: Template smoke SUCCEEDED. SmokeDefault OK. Standalone 5/5, 5/5, 2/2. web-jaribu-tests 405/405. api-jaribu-tests 9/9. timewarp-testing-tests 14/14. Generated build 0 Warning(s), 0 Error(s), Time Elapsed 00:00:16.04.
 - `ganda repo audit`: Passed 33, Failed 0, Skipped 1. Repository passes all audit checks.
 - Client-name scan of `git diff origin/master -- source tests` prints nothing.
+
+### Review
+
+- Round 1 (general, effort 3, 2026-10-24) covered `82ef665fc..cb9a17ddd`. The reviewer re-ran
+  `./bin/dev build` (0 warnings, 0 errors) and the five targeted test classes above. All passed
+  with the same counts. Template-smoke was not re-run.
+- Open: M1 bug (the shell card name stays stale after the profile alias loads), M2 bug
+  (NavPlacement is read by syntax name, so a const field silently becomes Top), M3 bug (a tall
+  menu overlaps the pinned card), M4 and M5 suggestions (rail accessible names, and a rail
+  Playwright check), M6 and M7 nits.
+- Disposition: pending. A fix pass was requested, and round 2 follows.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
