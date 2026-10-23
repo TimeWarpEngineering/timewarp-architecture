@@ -1,0 +1,97 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One external system — its name, connection state, and the actions the page supplies.
+
+  Design: One component. Variant Full (the default) is the identity banner. Compact adds
+  twe-integration-card--compact and is the thin pull-status row, so there is no separate
+  sync bar. Native div root so CSS isolation stamps the scope attribute. Class is appended
+  on that root the way Card does, and unmatched attributes splat onto it.
+  Full stacks the title and the meta. Compact puts them on one line and, when both are
+  set, puts an aria-hidden middle dot between them. A blank title or meta is omitted, so
+  the separator is absent unless both have text. The title is a paragraph or a span, not
+  a heading: the card sits under a page or section heading that owns the outline.
+  Icon is a FluentUI icon, shown only when set, inside a tile marked aria-hidden.
+  Status null shows no badge. StatusBadge supplies the label text; pass StatusLabel so
+  the badge says what the state means. ChildContent is the actions slot, rendered only
+  when the page passes it (its own FluentButton). This component wires no events, owns
+  no sync button, and formats no dates. A change of Meta is not announced; an action's
+  outcome goes through NotificationState. Isolated CSS uses --twe-* tokens. FluentIcon
+  renders an svg with fill currentColor and its own size, so the tile sets the color and
+  this stylesheet does not restyle the svg.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Title { get; set; } = "";
+  [Parameter] public string? Meta { get; set; }
+  [Parameter] public IntegrationCardVariant Variant { get; set; } = IntegrationCardVariant.Full;
+  [Parameter] public Microsoft.FluentUI.AspNetCore.Components.Icon? Icon { get; set; }
+  [Parameter] public BadgeStatus? Status { get; set; }
+  [Parameter] public string? StatusLabel { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private bool HasTitle => !string.IsNullOrWhiteSpace(Title);
+
+  private bool HasMeta => !string.IsNullOrWhiteSpace(Meta);
+
+  private bool ShowSeparator => Variant == IntegrationCardVariant.Compact && HasTitle && HasMeta;
+
+  private string? VariantClass =>
+    Variant == IntegrationCardVariant.Compact ? "twe-integration-card--compact" : null;
+}
+
+<div class="twe-integration-card @VariantClass @Class" @attributes="AdditionalAttributes">
+  @if (Icon is not null)
+  {
+    <div class="twe-integration-card__icon" aria-hidden="true">
+      <FluentIcon Value="@Icon" Color="Color.Custom" CustomColor="currentColor" />
+    </div>
+  }
+  <div class="twe-integration-card__body">
+    @if (Variant == IntegrationCardVariant.Compact)
+    {
+      @if (HasTitle || HasMeta)
+      {
+        <p class="twe-integration-card__line">
+          @if (HasTitle)
+          {
+            <span class="twe-integration-card__title">@Title</span>
+          }
+          @if (ShowSeparator)
+          {
+            @(" ")
+            <span class="twe-integration-card__separator" aria-hidden="true">·</span>
+            @(" ")
+          }
+          @if (HasMeta)
+          {
+            <span class="twe-integration-card__meta">@Meta</span>
+          }
+        </p>
+      }
+    }
+    else
+    {
+      @if (HasTitle)
+      {
+        <p class="twe-integration-card__title">@Title</p>
+      }
+      @if (HasMeta)
+      {
+        <p class="twe-integration-card__meta">@Meta</p>
+      }
+    }
+  </div>
+  @if (Status is not null)
+  {
+    <StatusBadge Status="Status.Value" Label="@StatusLabel" />
+  }
+  @if (ChildContent is not null)
+  {
+    <div class="twe-integration-card__actions">
+      @ChildContent
+    </div>
+  }
+</div>

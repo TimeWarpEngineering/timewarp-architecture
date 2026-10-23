@@ -1,5 +1,13 @@
 # Upstream IntegrationCard and SyncBar from Crunchit portal
 
+## Goal (implementer restatement)
+
+A generated app should be able to show one external system, whether it is connected, and what the page lets you do about it, without each page building that row by hand. One native `IntegrationCard` does both jobs. `Full` (the default) is the identity banner: a paper card, an optional FluentUI icon in a decorative tile, the title on its own line, optional meta under it, an optional `StatusBadge`, and an optional actions slot. `Compact` is the thin pull-status row that replaces a separate sync bar: smaller padding and tile, helper-size muted text, and the title and meta on one line with a middle dot that assistive tech skips. A blank title or meta is left out, so the separator appears only when both are set.
+
+The component stays a leaf. It has no sync button, no click handler, and no date formatting. The page puts its own `FluentButton` in `ChildContent` and that handler dispatches a State action. Status reuses `BadgeStatus`; null means no badge. The title is a paragraph or a span, never a heading, so the page outline stays with the section heading.
+
+On Admin → AI, the editable key branch replaces the status paragraph with the full card. The title is xAI, the meta is the existing status sentence, and the badge is Active / Warning / Inactive with the labels Configured, Needs a new key, and No key. `data-qa="XaiApiKeyStatus"` stays on the card root. Save and Clear stay where they are. The host-managed and host-only branches stay plain text. The compact form appears only on the style guide, because nothing in the template pulls data on a schedule. Render tests pin the markup the static render shows. `dev build` is 0 warnings and 0 errors, `dev template-smoke` passes, `ganda repo audit` passes, and the source and test diff contains no client name.
+
 ## Description
 
 Port Crunchit's `IntegrationCard` and `SyncBar` into the template as one native, brand-neutral
@@ -119,7 +127,7 @@ sync appears.
 
 ## Checklist
 
-- [ ] `components/elements/IntegrationCard.razor` and `.razor.css`.
+- [x] `components/elements/IntegrationCard.razor` and `.razor.css`.
   - Root `<div class="twe-integration-card @VariantClass @Class" @attributes="AdditionalAttributes">`.
     Icon tile (`aria-hidden`, `--twe-radius-sm`, `--twe-paper-2`, `--twe-muted`), body, then
     `StatusBadge` when `Status` is set, then the actions container when `ChildContent` is set.
@@ -131,17 +139,17 @@ sync appears.
     text, title in `--twe-ink-2` at 600 followed by an `aria-hidden` separator and the meta on
     one line, actions right-aligned and not shrinking.
   - Blank `Meta` is omitted. No hex values and no `<style>`.
-- [ ] `components/elements/integration-card-variant.cs` with `Full` and `Compact`.
-- [ ] Purpose and Design regions (TWA0004) stating the two variants, that neither wires events,
+- [x] `components/elements/integration-card-variant.cs` with `Full` and `Compact`.
+- [x] Purpose and Design regions (TWA0004) stating the two variants, that neither wires events,
       and that the Compact row replaces a separate sync bar.
-- [ ] AI page adoption (Full) as above, with `data-qa="XaiApiKeyStatus"` on the card root.
-- [ ] Style guide: add an "Integration Cards" card (after "KPI Cards") with: Full connected with
+- [x] AI page adoption (Full) as above, with `data-qa="XaiApiKeyStatus"` on the card root.
+- [x] Style guide: add an "Integration Cards" card (after "KPI Cards") with: Full connected with
       a status badge and two action buttons, Full warning with one action, Full with no status,
       Compact with title, meta and one button, and Compact with meta only. Buttons are plain
       `FluentButton`s. They carry no handler (the samples change nothing) or post an info note
       through the existing `ShowMessage`. Do not extend the StyleGuidePage contract (379-017).
-- [ ] Add a row to `components/overview.md`.
-- [ ] Render tests in `components/integration-card-render-tests.cs`. They pin only what the
+- [x] Add a row to `components/overview.md`.
+- [x] Render tests in `components/integration-card-render-tests.cs`. They pin only what the
       static render shows:
   - Title and meta render; blank meta is omitted.
   - No badge when `Status` is null; the badge and its label render when set.
@@ -153,8 +161,8 @@ sync appears.
   - Root carries `twe-integration-card`, `Class` merges and does not replace it, `data-qa`
     passes through, no `<style` in the output, and a script-bearing title stays encoded (raw
     markup, as `kpi-card-render-tests.cs` does).
-- [ ] No new Playwright test: the component has no interaction of its own.
-- [ ] Gates:
+- [x] No new Playwright test: the component has no interaction of its own.
+- [x] Gates:
   - `./bin/dev build` reports 0 warnings and 0 errors.
   - `./bin/dev template-smoke` passes.
   - `ganda repo audit` passes.
@@ -207,3 +215,32 @@ sync appears.
   contract (379-017). Adding `BadgeStatus.Error` is out of scope; open a follow-up if a page
   needs it.
 - Parent 379 stays in-progress until all its children are done.
+
+## Results
+
+One `IntegrationCard` under `components/elements`. Full is a paper row (`twe-integration-card`): optional FluentUI icon in an `aria-hidden` tile, title and meta stacked, `StatusBadge` when `Status` is set, and `ChildContent` as the actions slot. Compact adds `twe-integration-card--compact`: helper-size muted text, title in `--twe-ink-2` at 600, and an `aria-hidden` middle dot only when both title and meta have text. A blank title or meta is omitted. The component wires no events and formats no dates. No new tokens. The full tile is `--twe-space-12` (48px); 40px is not on the spacing scale. The compact tile is `--twe-space-6` (24px). The body wrap floor is 12.5rem.
+
+Admin → AI, editable branch, replaces the status paragraph with the full card. Title is xAI, meta is the existing status sentence, and the badge is Warning when the key needs replacement, Active when it is configured, and Inactive otherwise, labeled "Needs a new key", "Configured", and "No key". `data-qa="XaiApiKeyStatus"` is on the card root. Save and Clear stay in `FormActions`. The host-managed and host-only branches are unchanged. The style guide, after KPI Cards, shows the connected full card with two buttons, the warning full card with one button, a full card with no status, a compact row with title, meta, and one button, and a compact row with meta only. Those buttons call the existing `ShowMessage`. Icon names confirmed in FluentUI Icons 5.0.1 Regular: `CloudSync`, `Warning`, `ArrowSync`, and `Key`.
+
+The warning badge pair (`#92400e` on `#fef3c7`) measures 6.37:1, which meets 4.5:1. This task does not change `StatusBadge`. Markup is pinned by nine HtmlRenderer tests. The style guide and the Admin AI page were not opened in a browser.
+
+### How to validate
+
+**Smoke**
+
+```bash
+cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release --no-build -- --filter-class IntegrationCard_Should_
+```
+
+**Expect:** 9 passed, 0 failed. Title and meta render, and a blank meta is omitted. `Status` null omits `twe-badge`; a set status renders the badge and its label. `twe-integration-card__actions` appears only when `ChildContent` is passed. The icon tile is `aria-hidden="true"` and is absent when `Icon` is null. Full has no compact modifier. Compact adds `twe-integration-card--compact` and shows the `aria-hidden` separator only when both title and meta are set. The root keeps `twe-integration-card` when `Class` is set, `data-qa` passes through, the output has no `<style`, and a title of `<script>` stays `&lt;script&gt;` in the raw markup.
+
+**Automated gate**
+
+```bash
+./bin/dev build
+./bin/dev template-smoke
+ganda repo audit
+git diff origin/master -- source tests | rg -i "crunchit|copic"
+```
+
+`dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0, Skipped 1. The client-name search prints nothing. `IntegrationCard_Should_`: 9 passed, 0 failed.

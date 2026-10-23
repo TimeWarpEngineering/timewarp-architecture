@@ -36,6 +36,10 @@
   private static readonly string[] TabDemoItems = ["Overview", "Activity", "Notes"];
   private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
 
+  private static readonly Icon IntegrationConnectedIcon = new Icons.Regular.Size24.CloudSync();
+  private static readonly Icon IntegrationWarningIcon = new Icons.Regular.Size24.Warning();
+  private static readonly Icon IntegrationSyncIcon = new Icons.Regular.Size20.ArrowSync();
+
   // Message bars go through OUR NotificationState pipeline (the generated ActionSet
   // dispatcher), not a direct INotificationService call — the point is to exercise the app's own path.
   private async Task ShowMessage(MessageBarIntent intent, string title) =>
@@ -193,6 +197,37 @@
           <KpiCard Label="On time" Value="49.5%" Caption="Last 12 months" />
           <KpiCard Label="Exceptions" Value="3" Tone="KpiTone.Danger" />
         </KpiStrip>
+      </Card>
+
+      <Card Title="Integration Cards">
+        <p class="sg-subtitle">A full identity banner, and the compact pull-status row. The sample buttons post a note and change nothing.</p>
+        <div class="twe-stack">
+          <IntegrationCard Title="External system"
+                           Meta="Last data pull 2 hours ago"
+                           Icon="@IntegrationConnectedIcon"
+                           Status="BadgeStatus.Active"
+                           StatusLabel="Connected">
+            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Sync now."))">Sync now</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Disconnect."))">Disconnect</FluentButton>
+          </IntegrationCard>
+          <IntegrationCard Title="External system"
+                           Meta="The stored connection cannot be used."
+                           Icon="@IntegrationWarningIcon"
+                           Status="BadgeStatus.Warning"
+                           StatusLabel="Needs attention">
+            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Review connection."))">Review</FluentButton>
+          </IntegrationCard>
+          <IntegrationCard Title="External system" Meta="Last data pull 2 hours ago" />
+          <IntegrationCard Variant="IntegrationCardVariant.Compact"
+                           Title="External system"
+                           Meta="Last data pull 2 hours ago"
+                           Icon="@IntegrationSyncIcon">
+            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Sync now."))">Sync now</FluentButton>
+          </IntegrationCard>
+          <IntegrationCard Variant="IntegrationCardVariant.Compact"
+                           Title=""
+                           Meta="Last data pull 2 hours ago" />
+        </div>
       </Card>
 
       <Card Title="Confirmations">
