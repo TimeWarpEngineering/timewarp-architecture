@@ -262,6 +262,7 @@ Results.
 - Review round 1 (2026-10-24): review oracle, Claude Code claude-opus-5-5, effort 2, roster general. Open: M1 suggestion (named ColumnCount cascade), M2 nit (false row-hover claim in a Design comment). No disposition yet; fix pass requested. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T17:17:43Z
 - Fix pass (2026-10-24): M1 names the column cascade `TweGroupedTableColumnCount`. M2 drops the row-hover claim. Implement-fix-2 oracle.
+- Review round 2 (2026-10-24): review oracle, Claude Code claude-opus-5-5, effort 1, roster general, max-turns 80. Scope: fix delta `c9f69e6f7..d9678e5a8`. M1 and M2 fixed, no new findings. `GroupedTable_Should_` re-run 9 of 9 pass. Disposition: clean. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -272,6 +273,8 @@ FluentUI stays at 5.0.1, so the spec's finding stands: `FluentDataGrid` has no g
 Review round 1 fix pass: M1 names the cascade on both sides, so a stand-alone `TableGroup` under a `CascadingValue<int>` of 7 still spans one column, and a descendant with an unnamed `int` cascade does not receive the column count. M2 drops "row hover" from the `GroupedTable` Design region and the CSS header. `app.css` `.twe-table` supplies cell padding and rules, and it has no row-hover rule. The signed-in Style Guide was not reopened. The visible sample is unchanged, and the new case is the HtmlRenderer test.
 
 The isolated group-header rule beats the global `.twe-table th` rule. In Chromium, with the compiled scope attributes, a column header stays muted `#767a86` at `8px 12px`. A group header is ink `#1a1d28` on paper-2 `#f5f5f7` at `12px 24px`. The first group has no top border. The next group has a 1px top border. Both keep a bottom border. Accent text `#ffffff` on `#55409c` is 8.08:1. Neutral ink `#1a1d28` on paper-2 `#f5f5f7` is 15.43:1. Both meet 4.5:1. Meta uses the existing `--twe-muted` token, which measures 3.94:1 on paper-2. That token is 4.29:1 on paper as well, so this task leaves it. A nowrap cell inside a 280px frame scrolled (`scrollWidth` 854, `clientWidth` 280). The signed-in Style Guide route was not opened. Markup is pinned by the HtmlRenderer tests. There is no Playwright test.
+
+Review disposition: **clean** after 2 rounds, with a general reviewer in both. Round 1 used effort 2 and round 2 used effort 1. Final counts: bug 0. Suggestion 1, fixed (M1, the named column cascade). Nit 1, fixed (M2, the row-hover comment). 0 open, 0 wontfix. See `review/round-2/merged.md` and `review/disposition.md`.
 
 ### How to validate
 
@@ -298,7 +301,9 @@ git diff origin/master -- source tests | rg -i "crunchit|copic"
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Round 1 fix pass: M1 and M2 are implemented. Round 2 has not run.
+- Round 1 fix pass: M1 and M2 are implemented.
+- Round 2: the reviewer re-checked M1 and M2 on the fix delta and found both fixed, with no new findings. The reviewer re-ran `GroupedTable_Should_`: 9 passed, 0 failed.
+- **Review disposition: clean.** Two rounds. Effort 2 in round 1 and effort 1 in round 2. The roster was general in both rounds. Final counts: bug 0, suggestion 1 fixed (M1), nit 1 fixed (M2). 0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Notes
 
