@@ -50,6 +50,7 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - Implemented: chart frame, legend item, trend pill, SLA chip, class pill, and `BadgeStatus.Error` (2026-10-24). Style guide is the only consumer. A live browser pass was not done.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T19:59:27Z
 - Review oracle: general reviewer (claude, Claude Opus 5.5, headless print mode, session not exposed), effort 3, 1 round, disposition clean — 2026-10-24
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T20:03:05Z
 
 ## Results
 
@@ -97,6 +98,10 @@ git diff origin/master -- source tests | rg -i crunchit || echo NO_CLIENT_NAME
 - **Final counts:** bug 0, suggestion 0, nit 0. Open 0, fixed 0, wontfix 0.
 - **Reviewer re-ran these in this worktree:** `./bin/dev build` (0 warnings, 0 errors), the six render-test classes (25/25 passed, counts match above), and the client-name search (0 matches). Every contrast ratio in the CSS and token comments was recomputed from `tokens.css` and holds. `dev template-smoke` and `ganda repo audit` were not re-run by the reviewer. Their results above are implementer-reported.
 - **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
