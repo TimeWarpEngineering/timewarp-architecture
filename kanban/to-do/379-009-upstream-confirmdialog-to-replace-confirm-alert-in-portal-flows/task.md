@@ -136,7 +136,11 @@ asks through the same service and posts a shell note only on yes.
 Round 1, effort 2, roster general. 0 bug, 1 suggestion (M1), 1 nit (M2). Both are fixed on
 this pass. `ClearDeclined` is `{ get; private set; }`, same as `SaveFailed`; the nested
 clear handler is still the only writer. The No test asserts `standIn.CallCount` once.
-Round 2 has not run. The reviewer re-ran the gates in this worktree before the fix.
+Round 2 (effort 1, roster general) reviewed the fix delta and found no new issues. It re-ran
+`ClearXaiApiKey_Given_A_StandIn`: 2/2 passed. Final counts: 0 bug; 1 suggestion and 1 nit,
+both fixed; 0 open; 0 wontfix. **Disposition: clean** (2 rounds). Paths:
+`review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
+In round 1, the reviewer re-ran the gates in this worktree before the fix.
 web-spa integration tests passed 393/393, including both new handler tests.
 web-spa Playwright passed 26/26, including the clear-key test. `./bin/dev build` reported
 0 warnings and 0 errors, and `ganda repo audit` passed. Paths:
@@ -174,10 +178,13 @@ dropped assertion, both covered by the Release build.
   2026-10-23: 2 open findings (M1 suggestion, M2 nit), fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T03:29:22Z
 - Fix pass (review round 1 M1, M2): implement-fix-2, grok-4.7, 2026-10-23. `ClearDeclined` is private-set. The No test asserts the stand-in call count once.
+- Review oracle round 2 (claude-opus-5-5, effort 1, roster general, session id not reported),
+  2026-10-23: M1 and M2 verified fixed, 0 open. Disposition clean.
 
 ## Review
 
 - Round 1: open M1, M2. Fix pass addressed both on 2026-10-23.
+- Round 2: M1 and M2 fixed, no new findings. Disposition: clean (2026-10-23).
 
 ## Notes
 

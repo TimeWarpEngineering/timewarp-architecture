@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 750
-- Effort: 2
+- Lines changed: 23
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope — task 379-009
 
@@ -21,6 +21,8 @@ Confirmations sample.
 **Effort:** 2. Roster axes: general.
 **Reviewer roster:** general (review oracle, claude-opus-5-5, inline)
 **Session IDs:** review oracle under ganda task work, session id not reported
+**Round 2:** scope is the fix delta `4d06f07af..812f263a6`. Effort 1, roster general
+(claude-opus-5-5, inline). The Budget section above holds the round-2 numbers.
 
 ## Ground rules
 
