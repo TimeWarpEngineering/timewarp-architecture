@@ -7,19 +7,23 @@
 // showModal puts it in the top layer with an ancestor .twe-shell of display:contents.
 // In HeadlessChrome 153.0.8010.12 that dialog matches :modal, paints above the app bar,
 // and opener.focus() leaves focus inside the panel. The dialog is left in place.
-// The same Chrome does not wrap Tab out of a fluent-button. Its shadow root is open.
-// With the keydown listener skipped, Tab from the footer button moved focus to body.
-// A capture-phase keydown wraps Tab and Shift+Tab between the first and last tab stop.
+// The same Chrome does not keep Tab inside a modal dialog. A dialog that holds only
+// native buttons, under a display:contents ancestor, still leaves on Tab from the last
+// button, for both display:block and display:flex. A capture-phase keydown wraps Tab
+// and Shift+Tab between the first and last tab stop. The walk enters open shadow
+// roots, so a fluent-button host counts as its inner control.
 // fluent-button is registered in FluentUI beforeStart, before Show, so Show calls
 // showModal on the same turn. Close cannot be overtaken by a later showModal.
 // Escape fires cancel. preventDefault keeps the browser from closing the dialog: the
 // caller owns IsOpen, and Close runs after that flag drops, which returns focus.
 // A click whose target is the dialog is the backdrop. Both paths call RequestClose.
 // close() queues the close event, so a flag cleared when close() returns is already
-// clear in the listener. pendingModuleClose counts Close and Dispose. The listener
-// takes one and returns. Any other close, such as a form with method dialog, calls
-// RequestClose. Show and Close no-op when the dialog is already in that state.
-// Dispose removes the listeners and closes an open dialog so navigation returns focus.
+// clear in the listener. pendingModuleClose counts Close. The listener takes one and
+// returns. Any other close, such as a form with method dialog, calls RequestClose.
+// Show and Close no-op when the dialog is already in that state. Show also returns
+// once Dispose has run.
+// Dispose removes the listeners, then closes an open dialog so navigation returns
+// focus. The close listener is already gone, so that close does not call RequestClose.
 // Imported on demand (DrawerJsModule), not via window.Spa.
 // #endregion
 
@@ -120,7 +124,7 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key !== "Tab" || disposed) {
+    if (event.key !== "Tab") {
       return;
     }
 
@@ -144,10 +148,6 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
   const onDialogClose = (): void => {
     if (pendingModuleClose > 0) {
       pendingModuleClose -= 1;
-      return;
-    }
-
-    if (disposed) {
       return;
     }
 
@@ -176,7 +176,9 @@ export function Bind(dialog: HTMLDialogElement, host: DrawerHost): DrawerHandle 
       dialog.removeEventListener("click", onClick);
       dialog.removeEventListener("keydown", onKeyDown, true);
       dialog.removeEventListener("close", onDialogClose);
-      closeFromModule();
+      if (dialog.open) {
+        dialog.close();
+      }
     },
   };
 }

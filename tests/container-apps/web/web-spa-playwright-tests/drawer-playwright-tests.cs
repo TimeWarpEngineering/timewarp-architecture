@@ -3,7 +3,8 @@
 // focus to the opener on Escape. The same run checks the dialog stays in the render tree,
 // matches :modal, paints above the app bar, and refuses focus on the opener. It also checks
 // the inline edges under both writing directions, a native dialog close, a module close that
-// must not ask the host, and leaving the page while the drawer is open.
+// must not ask the host, Dispose closing an open dialog without asking the host, a modal
+// of only native buttons letting Tab leave, and leaving the page while the drawer is open.
 #endregion
 
 #region Design
@@ -20,8 +21,12 @@
 // Close does not call RequestClose, and a native close calls it once. The module Close
 // check waits for the queued close event before it reads host calls. The native close
 // check clears that list first, then counts RequestClose, so an earlier module close
-// cannot satisfy it. Leaving the page uses Blazor.navigateTo so the open dialog is
-// disposed in place.
+// cannot satisfy it. Dispose while open removes the listeners and then closes, so the
+// queued close does not call RequestClose, and a later Show stays shut. Before the drawer
+// opens, a display:contents host holds a modal dialog of two native buttons. Tab from the
+// last button leaves that dialog for both display:block and display:flex. That is why the
+// drawer wraps Tab. The inner panel is the flex column and the sheet hit target. Leaving the
+// page uses Blazor.navigateTo so the open dialog is disposed in place.
 #endregion
 
 namespace StyleGuideDrawerPlaywright_;
@@ -65,6 +70,8 @@ public class StyleGuideDrawer_Given_Wasm
       string text = await page.Locator("body").InnerTextAsync();
       throw new TimeoutException($"Style guide drawer opener was not shown at {page.Url}. Page:\n{text}", exception);
     }
+
+    await AssertNativeModalLetsTabLeaveAsync(page);
 
     await opener.ClickAsync();
     ILocator openDialog = page.Locator("dialog.twe-drawer[open]");
@@ -381,7 +388,19 @@ public class StyleGuideDrawer_Given_Wasm
           await nativeClose;
           const nativeCloseRequestCount = requestCloseCount();
           const stayedClosedAfterNativeClose = dialog.open === false;
+
+          handle.Show();
+          const openedForDispose = dialog.open === true;
+          calls.length = 0;
+          const disposeClosed = new Promise((resolve) => {
+            dialog.addEventListener("close", () => resolve(), { once: true });
+          });
           handle.Dispose();
+          await disposeClosed;
+          const disposeRequestCount = requestCloseCount();
+          const closedAfterDispose = dialog.open === false;
+          handle.Show();
+          const stayedClosedAfterDispose = dialog.open === false;
 
           return JSON.stringify({
             openedImmediately,
@@ -390,6 +409,10 @@ public class StyleGuideDrawer_Given_Wasm
             reopened,
             nativeCloseRequestCount,
             stayedClosedAfterNativeClose,
+            openedForDispose,
+            disposeRequestCount,
+            closedAfterDispose,
+            stayedClosedAfterDispose,
           });
         } finally {
           dialog.remove();
@@ -405,6 +428,86 @@ public class StyleGuideDrawer_Given_Wasm
     root.GetProperty("reopened").GetBoolean().ShouldBeTrue();
     root.GetProperty("nativeCloseRequestCount").GetInt32().ShouldBe(1);
     root.GetProperty("stayedClosedAfterNativeClose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("openedForDispose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("disposeRequestCount").GetInt32().ShouldBe(0);
+    root.GetProperty("closedAfterDispose").GetBoolean().ShouldBeTrue();
+    root.GetProperty("stayedClosedAfterDispose").GetBoolean().ShouldBeTrue();
+  }
+
+  private static async Task AssertNativeModalLetsTabLeaveAsync(IPage page)
+  {
+    await AssertNativeModalDisplayLetsTabLeaveAsync(page, "block");
+    await AssertNativeModalDisplayLetsTabLeaveAsync(page, "flex");
+  }
+
+  private static async Task AssertNativeModalDisplayLetsTabLeaveAsync(IPage page, string display)
+  {
+    await page.EvaluateAsync(
+      """
+      (display) => {
+        const host = document.createElement("div");
+        host.id = "native-modal-probe";
+        host.style.display = "contents";
+        const dialog = document.createElement("dialog");
+        dialog.id = "native-modal-probe-dialog";
+        dialog.style.display = display;
+        const a = document.createElement("button");
+        a.id = "native-modal-probe-a";
+        a.type = "button";
+        a.textContent = "a";
+        const b = document.createElement("button");
+        b.id = "native-modal-probe-b";
+        b.type = "button";
+        b.textContent = "b";
+        dialog.append(a, b);
+        host.append(dialog);
+        document.body.append(host);
+        dialog.showModal();
+        b.focus();
+      }
+      """,
+      display);
+
+    try
+    {
+      List<string> stops = [];
+      for (int step = 0; step < 4; step++)
+      {
+        await page.Keyboard.PressAsync("Tab");
+        stops.Add(await page.EvaluateAsync<string>(
+          """
+          () => {
+            const dialog = document.getElementById("native-modal-probe-dialog");
+            const active = document.activeElement;
+            const inside = !!dialog && !!active && (active === dialog || dialog.contains(active));
+            if (!active || active === document.body) {
+              return "outside:BODY";
+            }
+
+            const id = "id" in active && active.id ? active.id : active.tagName;
+            return `${inside ? "inside" : "outside"}:${id}`;
+          }
+          """));
+      }
+
+      string joined = string.Join(" -> ", stops);
+      stops[0].StartsWith("outside:", StringComparison.Ordinal)
+        .ShouldBeTrue($"display:{display} kept Tab inside a native-button dialog: {joined}");
+    }
+    finally
+    {
+      await page.EvaluateAsync(
+        """
+        () => {
+          const dialog = document.getElementById("native-modal-probe-dialog");
+          if (dialog instanceof HTMLDialogElement && dialog.open) {
+            dialog.close();
+          }
+
+          document.getElementById("native-modal-probe")?.remove();
+        }
+        """);
+    }
   }
 
   private static Task<string> FocusedStopAsync(IPage page) =>

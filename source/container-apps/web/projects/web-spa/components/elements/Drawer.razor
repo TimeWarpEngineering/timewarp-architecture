@@ -25,11 +25,12 @@
   class. Start adds twe-drawer--start. Wide adds twe-drawer--wide. Class is appended, and
   unmatched attributes splat onto the dialog, the same way Card does.
   The header dismiss control is a FluentButton with the dismiss icon and aria-label Close.
-  The footer renders only when set. The body is the only scroll area. The dialog itself
-  stays display:block; a flex column on the dialog element drops the browser's Tab trap,
-  so the column lives on an inner panel. HeadlessChrome 153 does not wrap Tab out of a
-  fluent-button, whose shadow root is open, so the module wraps Tab between the first and
-  last stop.
+  The footer renders only when set. The body is the only scroll area. The open dialog stays
+  a block box. The inner panel is the flex column: it stacks the header, the scrolling body,
+  and the footer, and it fills the dialog so a click on the sheet hits the panel. A click
+  whose target is the dialog is the backdrop. HeadlessChrome 153 does not keep Tab inside a
+  modal dialog, even when that dialog holds only native buttons, so the module wraps Tab
+  between the first and last stop. The walk enters open shadow roots, which fluent-button uses.
   Isolated CSS uses --twe-* tokens. The top layer supplies stacking, so there is no z-index.
 *@
 
