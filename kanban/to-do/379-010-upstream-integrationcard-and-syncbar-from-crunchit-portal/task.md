@@ -191,6 +191,10 @@ sync appears.
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Spec drafted: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-23)
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T12:30:54Z
+- Review oracle: claude-opus-5-5 (ganda task work, headless), session not reported. Body
+  tw-implementation-review, effort 2, roster general, 1 round. Disposition accepted-exceptions,
+  2026-10-23.
 
 ## Notes
 
@@ -244,3 +248,17 @@ git diff origin/master -- source tests | rg -i "crunchit|copic"
 ```
 
 `dev build`: 0 warnings, 0 errors. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault). `ganda repo audit`: Passed 32, Failed 0, Skipped 1. The client-name search prints nothing. `IntegrationCard_Should_`: 9 passed, 0 failed.
+
+### Review disposition
+
+- **Outcome:** accepted-exceptions. 1 round, effort 2, roster general (review oracle claude-opus-5-5).
+- **Final counts:** bug 0 open / 0 fixed / 0 wontfix. Suggestion 0 / 0 / 0. Nit 0 / 0 / 1.
+- **Wontfix M1 (nit):** `AiPage.razor` works out the key state in three getters (`StatusLine`,
+  `KeyBadgeStatus`, `KeyBadgeLabel`). They cannot disagree in a reachable state, because the server
+  sets `Configured` only from a readable row, and that row carries a `Suffix`. It is page-local style,
+  so it was left out of a fix round.
+- **Reviewer re-ran:** the `IntegrationCard_Should_` Release build and tests (9/9), the full
+  `web-spa-integration-tests` (402/402), and the client-name search (empty). Not re-run: `dev build`
+  for the full solution, `dev template-smoke`, `ganda repo audit`, and Playwright.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
