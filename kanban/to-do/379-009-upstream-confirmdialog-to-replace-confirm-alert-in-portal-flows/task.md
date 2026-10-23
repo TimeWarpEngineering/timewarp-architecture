@@ -131,6 +131,15 @@ asks through the same service and posts a shell note only on yes.
 `ganda repo audit` — 32 passed, 0 failed.
 `git diff origin/master -- source tests | rg -i crunchit` — no output.
 
+### Review
+
+Round 1, effort 2, roster general. 0 bug, 1 suggestion (M1, open), 1 nit (M2, open).
+Disposition is pending: a fix pass is needed for M1 and M2. The reviewer re-ran the gates in
+this worktree. web-spa integration tests passed 393/393, including both new handler tests.
+web-spa Playwright passed 26/26, including the clear-key test. `./bin/dev build` reported
+0 warnings and 0 errors, and `ganda repo audit` passed. Paths:
+`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke: Sign in as an administrator, open Admin → AI, save a site key, and click Clear key.
@@ -152,6 +161,9 @@ Escape posts no "Sample confirmed." note; Confirm does.
 - Implemented the FluentUI v5 message-box confirm, the ApiHandler hook, the style-guide sample,
   and the handler plus Playwright coverage (2026-10-23). Audit was already green; no boy-scout
   fixes.
+- Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T03:20:28Z
+- Review oracle round 1 (claude-opus-5-5, effort 2, roster general, session id not reported),
+  2026-10-23: 2 open findings (M1 suggestion, M2 nit), fix pass requested.
 
 ## Notes
 
