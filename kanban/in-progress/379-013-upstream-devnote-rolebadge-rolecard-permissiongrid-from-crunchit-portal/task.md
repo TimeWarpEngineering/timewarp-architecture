@@ -110,8 +110,7 @@ Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/ro
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass 2: addressed M1, M2, M3, and M4.
-- Round 2: Done. M1–M4 fixed, 0 open. Disposition clean (`review/disposition.md`)
-
+- Round 2: Done
 ## Notes
 
 - Source (read-only): the portal's `DevNote`, `RoleBadge`, `RoleCard`, `PermissionGrid`, and `PermissionGroup` / `PermissionItem` under the portal web-spa `components/` folder.
