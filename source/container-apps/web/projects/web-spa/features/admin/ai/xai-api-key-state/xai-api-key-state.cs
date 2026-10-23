@@ -24,7 +24,7 @@ public sealed partial class XaiApiKeyState : State<XaiApiKeyState>
   public bool SaveFailed { get; private set; }
 
   /// <summary>True when the latest clear was declined. The Ask reload skips that case.</summary>
-  internal bool ClearDeclined { get; set; }
+  internal bool ClearDeclined { get; private set; }
 
   /// <summary>Host <c>XAI:ApiKey</c> is set. The page is read-only.</summary>
   public bool ManagedByHost { get; private set; }

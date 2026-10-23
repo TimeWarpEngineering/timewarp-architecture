@@ -133,9 +133,11 @@ asks through the same service and posts a shell note only on yes.
 
 ### Review
 
-Round 1, effort 2, roster general. 0 bug, 1 suggestion (M1, open), 1 nit (M2, open).
-Disposition is pending: a fix pass is needed for M1 and M2. The reviewer re-ran the gates in
-this worktree. web-spa integration tests passed 393/393, including both new handler tests.
+Round 1, effort 2, roster general. 0 bug, 1 suggestion (M1), 1 nit (M2). Both are fixed on
+this pass. `ClearDeclined` is `{ get; private set; }`, same as `SaveFailed`; the nested
+clear handler is still the only writer. The No test asserts `standIn.CallCount` once.
+Round 2 has not run. The reviewer re-ran the gates in this worktree before the fix.
+web-spa integration tests passed 393/393, including both new handler tests.
 web-spa Playwright passed 26/26, including the clear-key test. `./bin/dev build` reported
 0 warnings and 0 errors, and `ganda repo audit` passed. Paths:
 `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
@@ -153,6 +155,12 @@ leave the dialog closed after Cancel or Escape. The dialog's Clear key removes t
 status reads "No key stored.", and the shell shows "xAI API key cleared." On the style guide,
 Escape posts no "Sample confirmed." note; Confirm does.
 
+This fix pass re-ran `ClearXaiApiKey_Given_A_StandIn`: 2 passed, 0 failed. `./bin/dev build`
+reported 0 warnings and 0 errors. `ganda repo audit` passed 32, failed 0. `git diff
+origin/master -- source tests | rg -i crunchit` printed nothing. Template smoke was not
+re-run; the first pass already succeeded, and this delta is the private setter plus one
+dropped assertion, both covered by the Release build.
+
 ## Session
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
@@ -164,6 +172,12 @@ Escape posts no "Sample confirmed." note; Confirm does.
 - Implement oracle: implemented by implementer-cursor (cursor, model grok-4.7-high), session not reported, max-turns uncapped (no --max-turns flag; bound 500), Done — 2026-10-23T03:20:28Z
 - Review oracle round 1 (claude-opus-5-5, effort 2, roster general, session id not reported),
   2026-10-23: 2 open findings (M1 suggestion, M2 nit), fix pass requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-23T03:29:22Z
+- Fix pass (review round 1 M1, M2): implement-fix-2, grok-4.7, 2026-10-23. `ClearDeclined` is private-set. The No test asserts the stand-in call count once.
+
+## Review
+
+- Round 1: open M1, M2. Fix pass addressed both on 2026-10-23.
 
 ## Notes
 

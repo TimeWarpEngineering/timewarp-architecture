@@ -39,7 +39,6 @@ public class ClearXaiApiKey_Given_A_StandIn
     state.Configured.ShouldBeTrue();
     state.Suffix.ShouldBe("3799");
     state.SaveFailed.ShouldBeFalse();
-    standIn.CallCount.ShouldBe(1);
     server.RequestTypes.ShouldBeEmpty();
     scope.Store.GetState<NotificationState>().Messages.Count.ShouldBe(0);
     standIn.CallCount.ShouldBe(1);
