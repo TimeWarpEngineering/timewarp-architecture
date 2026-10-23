@@ -43,6 +43,7 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - Implement-fix-2 oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, 2026-10-24. Round-1 findings M1 through M7 fixed on this branch. The ledger was left open.
 - Review oracle round 2: claude (claude-opus-5-5), session not reported, effort 2, general axis, max-turns 120, 2026-10-24. Reviewed the fix delta 7f9e21a90. Re-ran `BrandOptions_Should_` 7/7, `Clone_Should` 4/4, `TimeWarpPage_Should_` 5/5, and `./bin/dev build` (0 warnings, 0 errors).
 - Implement-fix-3 oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, 2026-10-24. Round-2 finding M8 fixed on this branch. The ledger was left open for review round 3.
+- Review oracle round 3: claude (claude-opus-5-5), session not reported, effort 1, general axis, max-turns 80, 2026-10-24. Reviewed the fix delta 5aa2a680e. Re-ran `BrandOptions_Should_` 7/7 and `./bin/dev build` (0 warnings, 0 errors). Disposition clean.
 
 ## Results
 
@@ -90,7 +91,9 @@ Artifacts:
 - Framework: `review/review-framework.md`
 - Findings: `review/round-1/general.md`
 - Round 1 ledger (frozen): `review/round-1/merged.md`
-- Round 2: `review/round-2/general.md`. Live ledger: `review/round-2/merged.md`
+- Round 2 (frozen): `review/round-2/general.md`, `review/round-2/merged.md`
+- Round 3: `review/round-3/general.md`. Final ledger: `review/round-3/merged.md`
+- Disposition: `review/disposition.md`
 
 Round 2 (effort 2, general) confirms M1 through M7 are fixed. It opens M8 (suggestion): `BrandStylesheet` compares `If-None-Match` strongly, and the test pins `W/` as 200. RFC 9110 requires weak comparison there. Counts at the end of round 2: bug 0 open / 2 fixed, suggestion 1 open / 2 fixed, nit 0 open / 3 fixed.
 
@@ -98,10 +101,16 @@ This fix pass implements M8. The ledger is unchanged so review round 3 can close
 
 - M8: a listed `If-None-Match` tag matches after a leading `W/` is removed. The response tag stays strong. `W/"other"` stays 200.
 
+Round 3 (effort 1, general) confirms M8 is fixed in 5aa2a680e and raises no new findings. It re-ran `BrandOptions_Should_` 7/7 and `./bin/dev build` (0 warnings, 0 errors).
+
+**Review disposition: clean.** 3 rounds. Roster: general at effort 3, then 2, then 1. Final counts: bug 0 open / 2 fixed / 0 wontfix, suggestion 0 open / 3 fixed / 0 wontfix, nit 0 open / 3 fixed / 0 wontfix. No wontfix and no escalation.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
+- Round 3: Done — M8 fixed, no new findings. Disposition clean (`review/disposition.md`)
+
 ## Notes
 
 - Source idea (read-only): the portal's `BrandTheme` seed and exact-versus-harmonized `ThemeSettings`. This template does not copy that orange, that product name, or a settings-page toggle. The operator sets the brand in configuration. The shell does not call `IThemeService.SetThemeAsync` (task 290: that painted Fluent's default blue first).
