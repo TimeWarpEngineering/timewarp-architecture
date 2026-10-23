@@ -6,8 +6,9 @@
   Design: Native div root so CSS isolation stamps the scope attribute. Class is appended
   on that root, and unmatched attributes splat onto it. The page passes Groups. A null
   list renders the root and no rows. A blank group label is omitted. The mark is
-  decorative. The words Granted and Not granted are visually hidden, so the state is
-  not colour alone. This component wires no events and does not decide the grants.
+  decorative. The words Granted and Not granted sit in twe-perm-grid__state, visually
+  hidden, so the state is not colour alone. The capability text is twe-perm-grid__label.
+  This component wires no events and does not decide the grants.
   Isolated CSS uses --twe-* tokens. The granted mark uses --twe-on-positive because
   --twe-positive is 4.44:1 on paper. Denied text uses --twe-ink-2 because --twe-muted
   is under 4.5:1 on paper.
@@ -38,14 +39,14 @@
               <svg class="twe-perm-grid__mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 <path d="M3.2 8.2 6.4 11.4 12.8 4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span class="twe-perm-grid__name">Granted</span>
+              <span class="twe-perm-grid__state">Granted</span>
             }
             else
             {
               <svg class="twe-perm-grid__mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 <path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
               </svg>
-              <span class="twe-perm-grid__name">Not granted</span>
+              <span class="twe-perm-grid__state">Not granted</span>
             }
             <span class="twe-perm-grid__label">@item.Label</span>
           </li>

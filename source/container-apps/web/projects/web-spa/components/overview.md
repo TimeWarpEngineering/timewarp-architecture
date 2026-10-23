@@ -21,7 +21,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Card.razor`
 - `StatusBadge.razor` — status pill (`twe-badge`); the caller can pass a label and extra attributes
 - `RoleBadge.razor` — role name on that pill; the page passes the word and the status
-- `RoleCard.razor` — one selectable option (`twe-role-card`); the page owns which item is selected
+- `RoleCard.razor` — one selectable option (`twe-role-card`); the page owns selection, the roving tabindex (0 on the selected card, -1 on the others, through unmatched attributes), and the arrow keys (`RovingSelection`, `SegmentedControl`)
 - `PermissionGrid.razor` — capability groups (`twe-perm-grid`); each row is granted or not
 - `DevNote.razor` — callout (`twe-devnote`); optional eyebrow, optional title, and a body
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large

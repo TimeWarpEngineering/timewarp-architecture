@@ -4,8 +4,9 @@
 
 #region Design
 // RoleCard is a leaf with no services, so a bare ServiceCollection host is enough.
-// Selected sets aria-checked and the check. A blank description is omitted. The
-// script case asserts the raw markup, before HtmlDecode.
+// Selected sets aria-checked and the check. A blank description is omitted.
+// tabindex rides unmatched attributes, which is how a parent sets the roving
+// tab stop. The script case asserts the raw markup, before HtmlDecode.
 #endregion
 
 namespace RoleCardRender_;
@@ -69,13 +70,15 @@ public class RoleCard_Should_
     {
       ["Title"] = "Admin",
       ["Class"] = "caller-mark",
-      ["data-qa"] = "card-mark"
+      ["data-qa"] = "card-mark",
+      ["tabindex"] = "0"
     });
 
     string root = RootTag(html);
     root.ShouldContain("twe-role-card");
     root.ShouldContain("caller-mark");
     root.ShouldContain("data-qa=\"card-mark\"");
+    root.ShouldContain("tabindex=\"0\"");
     root.ShouldContain("aria-checked=\"false\"");
   }
 

@@ -5,8 +5,8 @@
 #region Design
 // PermissionGrid is a leaf with no services, so a bare ServiceCollection host is enough.
 // A null or empty group list renders the root and no rows. A blank group label is
-// omitted. Granted and Not granted are in the markup. The script case asserts the
-// raw markup, before HtmlDecode.
+// omitted. Granted is pinned as ">Granted<" so it does not match "Not granted".
+// The script case asserts the raw markup, before HtmlDecode.
 #endregion
 
 namespace PermissionGridRender_;
@@ -36,7 +36,9 @@ public class PermissionGrid_Should_
     html.ShouldContain("Administration");
     html.ShouldContain("View assigned work");
     html.ShouldContain("Delete records");
-    html.ShouldContain("Granted");
+    html.ShouldContain(">Granted<");
+    html.ShouldContain("twe-perm-grid__state");
+    html.ShouldNotContain("twe-perm-grid__name");
     html.ShouldContain("Not granted");
     html.ShouldContain("is-denied");
     html.ShouldContain("twe-perm-grid__mark");
@@ -75,7 +77,7 @@ public class PermissionGrid_Should_
     });
 
     html.ShouldContain("Alpha");
-    html.ShouldContain("Granted");
+    html.ShouldContain(">Granted<");
     html.ShouldNotContain("twe-perm-grid__eyebrow");
   }
 

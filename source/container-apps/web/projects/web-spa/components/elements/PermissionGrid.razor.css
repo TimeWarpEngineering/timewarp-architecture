@@ -47,7 +47,7 @@
   color: var(--twe-ink-2);
 }
 
-.twe-perm-grid__name {
+.twe-perm-grid__state {
   position: absolute;
   width: 1px;
   height: 1px;

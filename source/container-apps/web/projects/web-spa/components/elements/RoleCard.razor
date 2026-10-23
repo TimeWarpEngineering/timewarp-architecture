@@ -5,9 +5,11 @@
 
   Design: Native button so CSS isolation stamps the scope attribute. type="button" so it
   does not submit a form. role="radio" and aria-checked reflect Selected. The parent owns
-  the radiogroup, which item is selected, and what OnSelect does. This component does not
-  know its siblings and does not move focus between them. Class is appended on the button,
-  and unmatched attributes splat onto it. Description renders only when it has text. The
+  the radiogroup, which item is selected, and what OnSelect does. The parent also owns the
+  keyboard: a roving tabindex (0 on the selected card, -1 on the others) passed through
+  unmatched attributes, and the arrow keys. RovingSelection and SegmentedControl are that
+  pattern. This card does not know its siblings. Class is appended on the button, and
+  unmatched attributes splat onto it. Description renders only when it has text. The
   check is decorative; aria-checked carries the state. Isolated CSS uses --twe-* tokens.
 *@
 
