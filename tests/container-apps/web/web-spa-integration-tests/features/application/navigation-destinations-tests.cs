@@ -82,6 +82,25 @@ public partial class Destinations_Should_
     destinations.ShouldAllBe(static url => !url.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase));
   }
 
+  public static async Task Keep_External_In_The_Primary_Nav()
+  {
+    PageRegistry.All.ShouldAllBe(static entry => entry.NavPlacement.ToString() == "Top");
+
+    using DestinationSpa anonymous = new(null);
+    string signedOut = await MenuHtmlAsync(anonymous.ServiceProvider, anonymous.User);
+    AssertExternalFollowsHome(signedOut);
+
+    using DestinationSpa administrator = new([.. PermissionIds.All]);
+    string signedIn = await MenuHtmlAsync(administrator.ServiceProvider, administrator.User);
+    string primary = PrimaryNav(signedIn);
+    primary.ShouldContain("/StyleGuide");
+    primary.ShouldContain("https://thefreezeteam.com/");
+    primary.IndexOf("/StyleGuide", StringComparison.Ordinal)
+      .ShouldBeLessThan(primary.IndexOf("https://thefreezeteam.com/", StringComparison.Ordinal));
+    signedIn.ShouldNotContain("aria-label=\"Pinned\"");
+    signedIn.ShouldNotContain("twe-nav--pin");
+  }
+
   public static async Task Match_Across_Menu_Palette_And_Agent_For_Anonymous()
   {
     string[] destinations = await AssertSameDestinationsAsync(null, "Anonymous");
@@ -144,7 +163,7 @@ public partial class Destinations_Should_
       }
     }
 
-    // One named group uses one band. Bottom is the pinned nav; Top is the default.
+    // One named group uses one band. Bottom is the pinned nav. This registry keeps every group on Top.
     // Compare the name: this suite references two assemblies that each emit NavPlacement.
     Dictionary<string, string> placementByGroup = [];
     foreach (PageRegistryEntry entry in PageRegistry.All)
@@ -166,9 +185,10 @@ public partial class Destinations_Should_
       }
     }
 
-    placementByGroup["Developer"].ShouldBe("Bottom");
+    placementByGroup["Developer"].ShouldBe("Top");
     placementByGroup["Admin"].ShouldBe("Top");
     placementByGroup["Demos"].ShouldBe("Top");
+    placementByGroup.Values.ShouldAllBe(static placement => placement == "Top");
 
     using DestinationSpa spa = new(null);
     IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
@@ -402,6 +422,12 @@ public partial class Destinations_Should_
 
   private static async Task<string[]> MenuHrefsAsync(IServiceProvider services, ClaimsPrincipal user)
   {
+    string html = await MenuHtmlAsync(services, user);
+    return [.. Href().Matches(html).Select(static match => match.Groups[1].Value).Where(static href => href.StartsWith('/', StringComparison.Ordinal))];
+  }
+
+  private static async Task<string> MenuHtmlAsync(IServiceProvider services, ClaimsPrincipal user)
+  {
     await using HtmlRenderer renderer = new(services, services.GetRequiredService<ILoggerFactory>());
     RenderFragment menu = builder =>
     {
@@ -416,13 +442,34 @@ public partial class Destinations_Should_
         [nameof(CascadingValue<>.ChildContent)] = menu,
       }
     );
-    string html = await renderer.Dispatcher.InvokeAsync(async () =>
+    return await renderer.Dispatcher.InvokeAsync(async () =>
     {
       HtmlRootComponent root = await renderer.RenderComponentAsync<CascadingValue<Task<AuthenticationState>>>(parameters);
       await root.QuiescenceTask;
       return root.ToHtmlString();
     });
-    return [.. Href().Matches(html).Select(static match => match.Groups[1].Value).Where(static href => href.StartsWith('/', StringComparison.Ordinal))];
+  }
+
+  private static void AssertExternalFollowsHome(string html)
+  {
+    string primary = PrimaryNav(html);
+    primary.ShouldContain("href=\"/\"");
+    primary.ShouldContain("https://thefreezeteam.com/");
+    primary.ShouldContain("https://github.com/TimeWarpEngineering/timewarp-architecture");
+    primary.IndexOf("href=\"/\"", StringComparison.Ordinal)
+      .ShouldBeLessThan(primary.IndexOf("https://thefreezeteam.com/", StringComparison.Ordinal));
+    html.ShouldNotContain("aria-label=\"Pinned\"");
+    html.ShouldNotContain("twe-nav--pin");
+  }
+
+  private static string PrimaryNav(string html)
+  {
+    const string label = "aria-label=\"Primary\"";
+    int start = html.IndexOf(label, StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0);
+    int close = html.IndexOf("</nav>", start, StringComparison.Ordinal);
+    close.ShouldBeGreaterThan(start);
+    return html[start..close];
   }
 
   private static string RepoFile(params string[] parts)

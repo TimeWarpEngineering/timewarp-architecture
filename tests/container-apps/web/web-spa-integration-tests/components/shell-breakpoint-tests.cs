@@ -38,6 +38,8 @@ public class ShellBreakpoints_Should_
     string menuCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/NavMenu.razor.css"));
     menuCss.ShouldContain(MediaQuery);
     menuCss.ShouldContain("overflow-y: auto");
+    menuCss.ShouldContain("flex: none");
+    menuCss.ShouldContain("overflow: visible");
     menuCss.ShouldContain("clip: rect(0, 0, 0, 0);");
 
     string cardCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/composites/UserCard.razor.css"));

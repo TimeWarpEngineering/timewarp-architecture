@@ -129,8 +129,10 @@ Concrete instance of the pattern in this repo:
   `NavigationDestinations.ForAsync` (the registry filtered by each page's own `Policy`) and starts
   a `FluentNavCategory` whenever `NavGroup` changes (`""` is the top level). `NavPlacement` is
   `Top` (default) or `Bottom`. `Bottom` renders that group in a second `FluentNav`
-  (`twe-nav--pin`, `margin-top: auto`) with the external links. The signed-in user card sits under
-  the menu. From 1280px up the nav is 240px; from 880px through 1279px it is a 68px icon rail
+  (`twe-nav--pin`, `margin-top: auto`) only when a permitted page uses Bottom. External links
+  stay in the primary nav, after the top groups. `.twe-nav-menu` is the one scroll container;
+  each `FluentNav` is `flex: none` and `overflow: visible`, so the menu scrolls as one list.
+  The signed-in user card sits under the menu. From 1280px up the nav is 240px; from 880px through 1279px it is a 68px icon rail
   (`--twe-shell-rail-width`); below 880px the drawer is unchanged. Media queries repeat 880 and
   1279 because they cannot read the tokens. There is no category
   gate; a category shows when one of its pages is permitted. The Ctrl-K palette, Ask's `navigate`
