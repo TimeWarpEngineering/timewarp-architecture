@@ -310,8 +310,7 @@ fixed M1–M6. Round 2 (general reviewer, effort 2) re-verified the fix delta
 ## Review
 
 - Round 1: findings M1–M6 implemented in the fix pass.
-- Round 2: M1–M6 verified fixed, no new findings. Disposition clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Found while checking PR #569 (the 379-012..017 stack) before merge. Steve: merge, file this follow-up.
