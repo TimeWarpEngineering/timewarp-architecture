@@ -131,12 +131,6 @@
   padding: 0 var(--twe-space-2) var(--twe-space-2);
 }
 
-/* The default card authors its own root, so the same padding applies through ::deep. */
-.twe-nav-column ::deep .twe-nav-column__user {
-  flex: none;
-  padding: 0 var(--twe-space-2) var(--twe-space-2);
-}
-
 .twe-shell ::deep .twe-nav {
   padding: 8px;
   background: transparent;

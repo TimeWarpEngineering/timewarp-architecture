@@ -15,6 +15,7 @@
 namespace TimeWarpPageRender_;
 
 using System.Net;
+using System.Reflection;
 using System.Security.Claims;
 using Blazored.SessionStorage;
 using FakeItEasy;
@@ -22,6 +23,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using TimeWarp.Architecture;
@@ -29,6 +31,7 @@ using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Applications;
+using TimeWarp.Architecture.Features.Profiles;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -305,6 +308,53 @@ public class TimeWarpPage_Should_
     root.ShouldContain("href=\"/Profile\"");
     root.ShouldContain("data-qa=\"ShellUserCard\"");
     html.ShouldContain("Ada Lovelace");
+    html.ShouldNotContain("title=\"GitHub\"");
+  }
+
+  public static async Task Show_The_Profile_Alias_When_It_Arrives_After_The_First_Render()
+  {
+    ClaimsPrincipal user = new(new ClaimsIdentity(
+      [new Claim(ClaimTypes.Name, "Ada Lovelace")],
+      authenticationType: "Test"));
+
+    await using ServiceProvider provider = CreateServices(new BrandOptions(), user).BuildServiceProvider();
+    await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
+    HtmlRootComponent root = await renderer.Dispatcher.InvokeAsync(() =>
+      renderer.RenderComponentAsync<ShellHost>(ParameterView.FromDictionary(new Dictionary<string, object?>
+      {
+        ["PageParameters"] = new Dictionary<string, object>
+        {
+          ["Title"] = "Staff",
+          ["ChildContent"] = Text("Page body")
+        }
+      })));
+
+    string first = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(root.ToHtmlString));
+    first.ShouldContain("Ada Lovelace");
+    first.ShouldNotContain("Countess");
+
+    ProfileState profile = provider.GetRequiredService<IStore>().GetState<ProfileState>();
+    SetProperty(profile, nameof(ProfileState.Alias), "Countess");
+    SetProperty(profile, nameof(ProfileState.Email), "ada@example.test");
+    await renderer.Dispatcher.InvokeAsync(() =>
+      provider.GetRequiredService<Subscriptions>().ReRenderSubscribers<ProfileState>());
+
+    string second = "";
+    DateTime deadline = DateTime.UtcNow.AddSeconds(2);
+    while (DateTime.UtcNow < deadline)
+    {
+      second = WebUtility.HtmlDecode(await renderer.Dispatcher.InvokeAsync(root.ToHtmlString));
+      if (second.Contains("Countess", StringComparison.Ordinal))
+      {
+        break;
+      }
+
+      await Task.Delay(20);
+    }
+
+    second.ShouldContain("Countess");
+    second.ShouldContain("ada@example.test");
+    second.ShouldNotContain("Ada Lovelace");
   }
 
   public static async Task Omit_The_User_Card_When_ShowUserCard_Is_False()
@@ -327,6 +377,13 @@ public class TimeWarpPage_Should_
     html.ShouldNotContain("twe-user-card");
     html.ShouldNotContain("data-qa=\"ShellUserCard\"");
     html.ShouldNotContain("Ada Lovelace");
+  }
+
+  private static void SetProperty(object target, string name, object? value)
+  {
+    PropertyInfo? property = target.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    property.ShouldNotBeNull(name);
+    property.SetValue(target, value);
   }
 
   private static RenderFragment Text(string value) => builder => builder.AddContent(0, value);

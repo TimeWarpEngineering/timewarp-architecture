@@ -57,7 +57,11 @@
 //   requires each NavGroup to be one contiguous run. NavPlacement is the enum constant Top
 //   (default) or Bottom. Bottom pins that group in the lower nav. One named group uses one
 //   placement. Description, NavGroup, NavOrder and NavPlacement accept any compile-time constant
-//   (a const field reads like a literal). NavPlacement is read from the member name Bottom.
+//   (a const field reads like a literal). NavPlacement uses that constant's underlying value:
+//   1 is Bottom. A member, a const field, a using-static name, and a cast all count when the
+//   constant is known. The generated enum is not in this compilation, so an unbound
+//   NavPlacement.Bottom (or a using-static Bottom) is read by that name. A known value other
+//   than 1 stays Top.
 //   The enum is emitted internal next to [Page]. Every project that references this generator
 //   gets that attribute, and several share a root namespace, so a public enum would collide.
 //   The registry stores it on an internal init property for the same reason.
@@ -76,6 +80,7 @@ namespace TimeWarp.Architecture.Analyzers;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 /// <summary>Source generator that emits [Route], navigation helpers, and parameter props for [Page] Blazor pages.</summary>
@@ -314,7 +319,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
 
       if (argName == "NavPlacement")
       {
-        navPinBottom = NavPlacementName(arg.Expression) == "Bottom";
+        navPinBottom = IsNavPinBottom(semanticModel, arg.Expression);
         continue;
       }
 
@@ -678,9 +683,51 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     return sb.ToString();
   }
 
-  // NavPlacement.Bottom, including a global:: qualification. Anything else stays Top.
-  private static string? NavPlacementName(SyntaxNode expression) =>
-    expression is MemberAccessExpressionSyntax member ? member.Name.Identifier.Text : null;
+  // Bottom is underlying value 1. A known constant (member, const field, using-static name, or
+  // cast) uses that value. The generated enum is not in this compilation, so an unbound
+  // NavPlacement.Bottom, or a using-static Bottom, is read by name.
+  private static bool IsNavPinBottom(SemanticModel semanticModel, ExpressionSyntax expression)
+  {
+    Optional<object?> constant = semanticModel.GetConstantValue(expression);
+    if (constant.HasValue && constant.Value is not null)
+    {
+      if (constant.Value is not IConvertible convertible || constant.Value is string)
+      {
+        return false;
+      }
+
+      try
+      {
+        return convertible.ToInt64(CultureInfo.InvariantCulture) == 1;
+      }
+      catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException)
+      {
+        return false;
+      }
+    }
+
+    return UnboundNavPlacementName(expression) == "Bottom";
+  }
+
+  private static string? UnboundNavPlacementName(SyntaxNode expression)
+  {
+    if (expression is ParenthesizedExpressionSyntax parenthesized)
+    {
+      return UnboundNavPlacementName(parenthesized.Expression);
+    }
+
+    if (expression is MemberAccessExpressionSyntax member)
+    {
+      return member.Name.Identifier.Text;
+    }
+
+    if (expression is IdentifierNameSyntax identifier)
+    {
+      return identifier.Identifier.Text;
+    }
+
+    return null;
+  }
 
   // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as
   // a newline, so any constant Description compiles in the registry. A non-constant expression

@@ -1,5 +1,8 @@
 @namespace TimeWarp.Architecture.Components
 @using TimeWarp.Architecture.Features.Applications
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@attribute [DirectComponentSideEffect("matchMedia chooses the icon rail so a nav link's title tooltip is set only while the label is clipped. The watch is presentational and has no store state.")]
 
 @code {
   // Purpose: Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
@@ -15,8 +18,11 @@
   // flag (api's Weather, grpc's Superheros) is not compiled, so it is not in the registry. Login
   // is not a registry page (the profile menu and the palette's Sign in row reach it). The
   // External category is plain links to other sites, not app pages, and it shares the pinned nav.
-  // Destinations are re-read only when the cascaded authentication state task is replaced
-  // (sign-in and sign-out), not on every parent render.
+  // A category has no icon. In the rail its title is collapsed and the expand chevron is the mark.
+  // Link text stays in the tree (clipped, not display:none). The title tooltip is set only while
+  // the viewport is the rail, so a full-width label is not repeated. Destinations are re-read
+  // only when the cascaded authentication state task is replaced (sign-in and sign-out), not on
+  // every parent render.
 
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
@@ -29,6 +35,14 @@
   private Task<AuthenticationState>? LoadedAuthenticationState;
 
   private bool Loaded;
+
+  private bool Rail;
+
+  private IJSObjectReference? RailModule;
+
+  private DotNetObjectReference<NavMenu>? RailHost;
+
+  private string? ItemTooltip(string title) => Rail ? title : null;
 
   protected override async Task OnParametersSetAsync()
   {
@@ -53,6 +67,59 @@
     BottomGroups = bottom;
   }
 
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || !RendererInfo.IsInteractive || RailModule is not null)
+    {
+      return;
+    }
+
+    try
+    {
+      RailHost = DotNetObjectReference.Create(this);
+      RailModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/features/shell-rail.js");
+      bool rail = await RailModule.InvokeAsync<bool>("watch", RailHost);
+      if (rail)
+      {
+        Rail = true;
+        StateHasChanged();
+      }
+    }
+    catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+    {
+      Rail = false;
+    }
+  }
+
+  [JSInvokable]
+  public void SetRail(bool rail)
+  {
+    if (Rail == rail)
+    {
+      return;
+    }
+
+    Rail = rail;
+    StateHasChanged();
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    try
+    {
+      if (RailModule is not null)
+      {
+        await RailModule.InvokeVoidAsync("stop");
+        await RailModule.DisposeAsync();
+      }
+    }
+    catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+    {
+    }
+
+    RailHost?.Dispose();
+  }
+
   private static void AddTo
   (
     List<(string Group, List<PageRegistryEntry> Pages)> groups,
@@ -74,7 +141,7 @@
       {
         foreach (PageRegistryEntry destination in pages)
         {
-          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@destination.Title>
+          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
             <span class="twe-nav__label">@destination.Title</span>
           </FluentNavItem>
         }
@@ -84,7 +151,7 @@
         <FluentNavCategory Title=@group Class="twe-nav__category">
           @foreach (PageRegistryEntry destination in pages)
           {
-            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@destination.Title>
+            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
               <span class="twe-nav__label">@destination.Title</span>
             </FluentNavItem>
           }
@@ -105,10 +172,10 @@
   <FluentNav Class="twe-nav twe-nav--pin" aria-label="Pinned">
     @Groups(BottomGroups)
     <FluentNavCategory Title="External" Class="twe-nav__category">
-      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank" Tooltip="The Freeze Team">
+      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank" Tooltip=@ItemTooltip("The Freeze Team")>
         <span class="twe-nav__label">The Freeze Team</span>
       </FluentNavItem>
-      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target="LinkTarget.Blank" Tooltip="GitHub">
+      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target="LinkTarget.Blank" Tooltip=@ItemTooltip("GitHub")>
         <span class="twe-nav__label">GitHub</span>
       </FluentNavItem>
     </FluentNavCategory>

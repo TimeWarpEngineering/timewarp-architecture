@@ -20,6 +20,10 @@ The style guide shows a linked card and a static card, and names the search mode
 
 Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `ganda repo audit` passes, and `git diff origin/master -- source tests` has no case-insensitive client-name match.
 
+Fix pass after review round 1: the shell card shows the profile alias on every render, so an alias that arrives after sign-in replaces the identity name. `NavPlacement` is the constant's underlying value (`1` is Bottom), so a const field, a `using static` name, or a cast stays Bottom. The generated enum is not in the generator's input, so an unbound `NavPlacement.Bottom` still counts as Bottom. A known constant whose value is not 1 stays Top. The menu scrolls inside the column instead of painting over the pinned card. In the rail, labels and the card name stay in the accessibility tree, and the link tooltip is present only there. A browser check at about 1024×700 pins the 68px rail, the hidden labels, and no overlap between the card and the menu. Categories have no icon; the expand chevron is their rail mark. The duplicated user-card padding is gone. The navigation item width is the `--twe-shell-nav-width` token.
+
+Acceptance for this pass: those seven findings are fixed, and the render, generator, breakpoint, and Playwright checks that cover them pass along with the gates above.
+
 ## Checklist
 
 - [x] `UserCard` composite and shell slot, including the signed-in default and `ShowUserCard`
@@ -29,6 +33,7 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - [x] Rail and drawer breakpoints, tokens, and label hiding
 - [x] Style-guide card. Render tests. Generator test. Breakpoint file test
 - [x] `./bin/dev build`, `./bin/dev template-smoke`, `ganda repo audit`, no client name in the source or test diff
+- [x] Review round 1 findings: alias on each render, constant `NavPlacement`, menu scroll, rail names and tooltip, Playwright rail, one user-card padding rule, nav width token
 
 ## Session
 
@@ -36,6 +41,12 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - Implementation: 2026-10-24 (implementer walk)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-23T23:27:13Z
 - Review oracle round 1: general reviewer (claude, Claude Opus 5.5), effort 3, headless (no session id reported), 2026-10-24. Findings: 3 bug, 2 suggestion, 2 nit, all open. A fix pass was requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T23:32:52Z
+- Fix pass: 2026-10-24 (implement-fix-2). Alias on each render, `NavPlacement` by constant value, menu scroll, rail clip and tooltip, Playwright at 1024×700.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 
 ## Notes
 
@@ -52,7 +63,9 @@ A generated app can pin the signed-in identity and one nav group to the bottom o
 - Widths: `--twe-shell-nav-width` 240px from 1280px up, `--twe-shell-rail-width` 68px from 880px through 1279px, Fluent drawer below 880. Media queries repeat 880 and 1279 because a custom property cannot sit in a media condition.
 - The style guide shows a linked card and a static card, and names the search modes and the three widths.
 
-The 68px rail was not measured in a browser. First paint ran with an app bar 1264px wide, which is the full nav. The rail numbers are pinned by the stylesheet file test.
+Review round 1 is addressed on this branch. The card name is computed on each render from the profile alias, then the identity name, then "Account". `NavPlacement` uses the constant's underlying value (`1` is Bottom). The generated enum is not in the generator input, so an unbound `NavPlacement.Bottom` still pins the group, and a known member whose value is 0 stays Top. The menu scrolls inside the column (`overflow-y: auto`). In the rail, labels and the card name are clipped rather than removed, and `shell-rail.ts` sets the link title only while the viewport is that rail. Categories have no icon; the expand chevron is their mark. The duplicated `::deep` user-card padding is gone. The navigation item width is `var(--twe-shell-nav-width)`.
+
+Playwright at 1024×700 measured the nav at 68px, the label at 1px, `overflow-y: auto`, no overlap between the menu and the card, and a GitHub link whose title and accessible name are "GitHub". Widening to 1400×800 measured the nav at 240px, a visible label, and no title attribute.
 
 ### How to validate
 
@@ -73,18 +86,18 @@ git diff origin/master -- source tests | rg -i crunchit
 
 **Expect:**
 
-- `PageSourceGenerator_Tests`: 33 passed, 0 failed (1s 133ms).
-- `UserCard_Should_`: 5 passed, 0 failed (218ms).
-- `TimeWarpPage_Should_`: 13 passed, 0 failed (600ms).
-- `ShellBreakpoints_Should_`: 1 passed, 0 failed (186ms).
-- `NavigationDestinations_`: 7 passed, 0 failed (477ms). Menu href order:
+- `PageSourceGenerator_Tests`: 36 passed, 0 failed (1s 057ms).
+- `UserCard_Should_`: 5 passed, 0 failed (98ms).
+- `TimeWarpPage_Should_`: 14 passed, 0 failed (516ms).
+- `ShellBreakpoints_Should_`: 1 passed, 0 failed (63ms).
+- `NavigationDestinations_`: 7 passed, 0 failed (383ms). Developer placement is Bottom. Menu href order:
   - Administrator: `/,/Settings,/Profile,/AgentLinks,/Feedback,/Admin/Roles,/Admin/Principals,/Admin/Feedback,/Admin/Authentication,/Admin/AI,/Counter,/WeatherForecasts,/Superheros,/Chat,/Passkeys,/StyleGuide,/Debugger/Test,/Services,/Developer/UserClaims`
   - PlainUser: `/,/Settings,/Profile,/AgentLinks,/Feedback`
   - Developer: `/,/Counter,/WeatherForecasts,/Superheros,/Chat,/Passkeys,/StyleGuide,/Debugger/Test,/Services,/Developer/UserClaims`
   - Anonymous: `/`
-- `FirstPaint_Given_PrerenderedShell`: 2 passed, 0 failed (4s 605ms). Search input stayed at x=382, y=18, width=520, height=32 from prerender through the settled shell. Search width 520.
-- `./bin/dev build`: Build succeeded. 0 Warning(s). 0 Error(s). Time Elapsed 00:00:07.54.
-- `./bin/dev template-smoke`: Template smoke SUCCEEDED. SmokeDefault OK. Standalone 5/5, 5/5, 2/2. web-jaribu-tests 405/405. api-jaribu-tests 9/9. timewarp-testing-tests 14/14. Generated build 0 Warning(s), 0 Error(s), Time Elapsed 00:00:16.04.
+- `FirstPaint_Given_PrerenderedShell`: 3 passed, 0 failed (5s 813ms). The settled first-paint checks still pass. At 1024×700 the nav is 68px, the clipped label is 1px wide, the menu does not overlap the card, and the GitHub link's title and accessible name are "GitHub". At 1400×800 the nav is 240px, the label is visible, and the title attribute is absent.
+- `./bin/dev build`: Build succeeded. 0 Warning(s). 0 Error(s). Time Elapsed 00:00:06.35.
+- `./bin/dev template-smoke`: Template smoke SUCCEEDED. SmokeDefault OK. Standalone 5/5, 5/5, 2/2. web-jaribu-tests 405/405. api-jaribu-tests 9/9. timewarp-testing-tests 14/14. Generated build 0 Warning(s), 0 Error(s), Time Elapsed 00:00:12.58.
 - `ganda repo audit`: Passed 33, Failed 0, Skipped 1. Repository passes all audit checks.
 - Client-name scan of `git diff origin/master -- source tests` prints nothing.
 
@@ -93,9 +106,8 @@ git diff origin/master -- source tests | rg -i crunchit
 - Round 1 (general, effort 3, 2026-10-24) covered `82ef665fc..cb9a17ddd`. The reviewer re-ran
   `./bin/dev build` (0 warnings, 0 errors) and the five targeted test classes above. All passed
   with the same counts. Template-smoke was not re-run.
-- Open: M1 bug (the shell card name stays stale after the profile alias loads), M2 bug
-  (NavPlacement is read by syntax name, so a const field silently becomes Top), M3 bug (a tall
-  menu overlaps the pinned card), M4 and M5 suggestions (rail accessible names, and a rail
-  Playwright check), M6 and M7 nits.
-- Disposition: pending. A fix pass was requested, and round 2 follows.
+- Round 1 left open: M1 (stale card name), M2 (`NavPlacement` by syntax name), M3 (menu overlap),
+  M4 and M5 (rail accessible names and a Playwright check), M6 and M7 (duplicate padding, unused
+  nav-width token). This pass changes the product for each of those.
+- Disposition: this fix pass implements M1–M7. Round 2 is the host's next review. The round 1 artifacts are unchanged.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.

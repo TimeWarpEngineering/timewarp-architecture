@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// 240px is the FluentLayout navigation width. 68px is the icon rail. 880px is
-// MobileBreakdownWidth (the drawer). 1279px is the last rail width. Those numbers are
-// repeated in tokens.css and the shell styles. This test reads the files; HtmlRenderer
-// does not size the rail.
+// 240px is the --twe-shell-nav-width token. The navigation item's Width is that
+// variable. 68px is the icon rail. 880px is MobileBreakdownWidth (the drawer).
+// 1279px is the last rail width. Those numbers are repeated in tokens.css and the
+// shell styles. This test reads the files; HtmlRenderer does not size the rail.
 #endregion
 
 namespace ShellBreakpoint_;
@@ -28,7 +28,7 @@ public class ShellBreakpoints_Should_
 
     string page = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/TimeWarpPage.razor"));
     page.ShouldContain("MobileBreakdownWidth=\"880\"");
-    page.ShouldContain("Width=\"240px\"");
+    page.ShouldContain("Width=\"var(--twe-shell-nav-width)\"");
 
     string pageCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/TimeWarpPage.razor.css"));
     pageCss.ShouldContain(MediaQuery);
@@ -37,9 +37,12 @@ public class ShellBreakpoints_Should_
 
     string menuCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/NavMenu.razor.css"));
     menuCss.ShouldContain(MediaQuery);
+    menuCss.ShouldContain("overflow-y: auto");
+    menuCss.ShouldContain("clip: rect(0, 0, 0, 0);");
 
     string cardCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/composites/UserCard.razor.css"));
     cardCss.ShouldContain(MediaQuery);
+    cardCss.ShouldContain("clip: rect(0, 0, 0, 0);");
     return Task.CompletedTask;
   }
 

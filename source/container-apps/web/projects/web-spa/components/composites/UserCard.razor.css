@@ -1,5 +1,6 @@
-/* Identity row. The link and the static card share one rule. The rail hides the
-   text so the circle fits the 68px nav. 880 and 1279 match TimeWarpPage.razor.css. */
+/* Identity row. The link and the static card share one rule. The rail clips the
+   name and detail so the circle fits the 68px nav and the text stays the
+   accessible name. 880 and 1279 match TimeWarpPage.razor.css. */
 .twe-user-card {
   display: flex;
   align-items: center;
@@ -41,11 +42,20 @@ a.twe-user-card:hover {
 
 @media (max-width: 1279px) and (min-width: 880px) {
   .twe-user-card {
+    position: relative;
     justify-content: center;
     padding-inline: 0;
   }
 
   .twe-user-card__meta {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
