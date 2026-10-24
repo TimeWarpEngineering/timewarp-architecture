@@ -50,11 +50,13 @@ Acceptance for this pass: M2 and M8 are fixed. The generator tests cover the mem
 - Fix pass: 2026-10-24 (implement-fix-2). Alias on each render, `NavPlacement` by constant value, menu scroll, rail clip and tooltip, Playwright at 1024×700.
 - Review oracle round 2: general reviewer (claude, Claude Opus 5.5), effort 2, headless (no session id reported), 2026-10-24. Scope `b6bd9ba6d..27b7623a9`. M1 and M3–M7 are fixed. M2 is still open, and M8 (nit) is new. A fix pass was requested.
 - Fix pass: 2026-10-24 (implement-fix-3, grok session 01a16b53-3118-75c0-9b46-322a01cff8a9). `NavPlacement` follows a const initializer and a cast operand. `shell-rail.ts` returns one watch handle per menu.
+- Review oracle round 3: general reviewer (claude, Claude Opus 5.5), effort 2, headless (no session id reported), 2026-10-24. Scope `9ab07f923..f0bb4fd10`. M2 and M8 are fixed, and nothing new was raised. Disposition: clean.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M2, M8
+- Round 3: Done — 0 open, disposition clean
 
 ## Notes
 
@@ -134,5 +136,16 @@ git diff origin/master -- source tests | rg -i crunchit
   is read from its operand, with the enum absent from the test source. `watch` returns a handle
   and `NavMenu.DisposeAsync` stops that handle. Round 3 is the host's next review. The round 2
   artifacts are unchanged.
+- Round 3 (general, effort 2, 2026-10-24) covered the fix pass `9ab07f923..f0bb4fd10`. The
+  reviewer re-ran `PageSourceGenerator_Tests` (36 passed), `ShellBreakpoints_Should_` (1 passed),
+  `NavigationDestinations_` (7 passed), and `./bin/dev build` (0 errors). Playwright and
+  template-smoke were not re-run; the implementer reported both passing. M2 and M8 are fixed,
+  and no new findings were raised. A using alias for `NavPlacement` stays Top, as the Design
+  region documents; it was noted but not raised.
+- Final counts after round 3: bug 0 open / 3 fixed, suggestion 0 open / 2 fixed, nit 0 open /
+  3 fixed. Wontfix: none.
+- Disposition: **clean** (3 rounds, general axis; effort 3, then 2, then 2). No exceptions or
+  escalations.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
-  `review/round-2/general.md`, `review/round-2/merged.md`.
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`,
+  `review/round-3/merged.md`, `review/disposition.md`.
