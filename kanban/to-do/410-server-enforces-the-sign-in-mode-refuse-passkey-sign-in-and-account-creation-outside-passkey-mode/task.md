@@ -1,78 +1,107 @@
-# Server enforces the sign-in mode: refuse passkey sign-in and account creation outside Passkey mode
+# Sign-in methods: the server owns the list of enabled methods and refuses the rest
 
 ## Description
 
-Task 379-016 added `SignInOptions.Mode` with three values: `Passkey` (the default), `Microsoft365Only`
-and `Staff`. The mode only changes what the browser shows. The web-spa binds `SignInOptions`
-(`configuration/sign-in-options.cs`) from two appsettings files, web-server and web-spa `wwwroot`,
-and no server code reads it. So in `Microsoft365Only` the server still serves:
+Task 379-016 added `SignInOptions.Mode` (`Passkey` default, `Microsoft365Only`, `Staff`). That shape
+does not scale: Google and X sign-in are coming, and a single mode would need a value for every
+combination. The mode also only changes what the browser shows. The web-spa binds `SignInOptions`
+(`configuration/sign-in-options.cs`) from two appsettings files (web-server and web-spa `wwwroot`),
+and no server code reads it. With passkey hidden, the server still serves:
 
 - passkey sign-in (`features/identity/start-passkey-authentication`, `complete-passkey-authentication`),
 - passkey account creation (`start-passkey-registration`, `complete-passkey-registration`),
 - the add-existing-passkey flow (`start-add-existing-passkey`, `complete-add-existing-passkey`).
 
-Anyone who skips the login card can still call those endpoints.
+`Staff` is not a sign-in method. It is Microsoft-365-only plus a hard-coded "Staff only." line,
+which is app wording and does not belong in the template.
 
-`Staff` is not a sign-in mode. It is `Microsoft365Only` plus a hard-coded "Staff only." line, which
-is app wording and does not belong in the template.
+Goal: one enum names the sign-in methods, configuration lists the enabled ones, the server owns
+that list and refuses any method not in it, and the browser renders one button per enabled method
+from the server's answer. Adding Google or X later is one enum value, its settings, its button, and
+its endpoints behind the same check.
 
-Goal: the template has two modes, the server owns the mode, and the server refuses what the mode
-does not offer. The browser reads the mode from the server, so the two cannot drift (AGENTS.md:
-when two things must agree, generate one from the other).
+## Shape
 
-## Modes
+```csharp
+public enum SignInMethod
+{
+  Passkey,
+  Microsoft365
+}
+```
 
-| Mode | Offers |
-|------|--------|
-| `Passkey` (default) | Passkey sign-in and account creation, plus Microsoft 365 when the site offers it. Same as today. |
-| `Microsoft365Only` | Only Continue with Microsoft 365. The server refuses every passkey endpoint above, including for existing passkeys. |
+```json
+"SignInOptions": {
+  "Methods": [ "Passkey", "Microsoft365" ]
+}
+```
+
+- `Methods` is a collection of `SignInMethod`, not strings. Configuration binding turns the names
+  into enum values, so an unknown name fails on start.
+- The template default is `[ "Passkey", "Microsoft365" ]`, which matches today's default behaviour:
+  passkey, plus Microsoft 365 when it is offered.
+- Microsoft 365 only is `[ "Microsoft365" ]`.
+- The browser shows buttons in a fixed order defined in code (the enum order), not the config order.
 
 ## Decisions
 
-- Remove `Staff` entirely. `SignInMode` keeps `Passkey = 0` and `Microsoft365Only = 1`.
-- Existing passkey credentials stop working in `Microsoft365Only`. The mode means Microsoft 365
-  sign-in only. The rows stay in the database, and switching back to `Passkey` makes them work again.
-- The server binds and validates the mode on start, from one checked-in section in the web-server
-  appsettings. The default stays `Passkey`, so existing apps behave the same.
-- The SPA gets the mode from the server, next to the existing Microsoft 365 offer read
-  (`get-entra-sign-in-offered` / `SignInState.FetchMicrosoft365Offered`). Extend that contract, or
-  add one alongside it, whichever is less code. Remove the SPA's own `SignInOptions` binding, its
-  `wwwroot/appsettings.json` section, and the test that both files bind equal.
-- In `Microsoft365Only`, the passkey start and complete endpoints return 403 with one stable problem
-  type. The start endpoints refuse before any WebAuthn ceremony state is created. Use one shared
-  check, not a copy per endpoint.
-- The shell's required-passkey gate stays skipped in `Microsoft365Only`. That is now correct,
-  because the server agrees passkeys are not offered.
+- Replace `SignInMode` with `SignInMethod` and a `Methods` collection. Remove `SignInMode`,
+  `Microsoft365Only` and `Staff`.
+- The web-server binds and validates `SignInOptions` on start (`ValidateOnStart`), from one
+  checked-in section in the web-server appsettings. The validator rejects an empty list and
+  duplicates.
+- Microsoft 365 is offered only when it is listed and `EntraSignInOffer.IsOfferedAsync` is true
+  (the scheme is registered and the site-settings toggle is on). Listing `Microsoft365` while the
+  Entra scheme is not configured fails validation on start, so it cannot half-work.
+  **Review point:** this leaves two configuration switches for Microsoft 365: the list and
+  `EntraAuthenticationOptions.Enabled`. The recommendation is to make the list the only one.
+  Register the Entra scheme when `Methods` contains `Microsoft365`, and remove `Enabled`. That is
+  the AGENTS.md rule that two things which must agree come from one source. The site-settings
+  runtime toggle (`EntraSignInEnabled`) stays as the admin's on/off. Steve confirms in review.
+- The SPA gets the enabled, currently offered methods from the server. Replace or extend
+  `get-entra-sign-in-offered` / `SignInState.FetchMicrosoft365Offered` with one read that returns
+  the offered `SignInMethod` list. Pick whichever is less code, and update `GetCredentials`'
+  `CanLinkMicrosoft365` to keep using the same rule. Remove the SPA's own `SignInOptions`
+  binding, its `wwwroot/appsettings.json` section, and the test that both files bind equal.
+- When `Passkey` is not listed, every passkey endpoint above returns 403 with one stable problem
+  type, through one shared check (not a copy per endpoint). The start endpoints refuse before any
+  WebAuthn ceremony state is created.
+- Existing passkey credentials stop working while `Passkey` is not listed. The rows stay, and
+  listing `Passkey` again makes them work.
+- The shell's required-passkey gate runs only when `Passkey` is listed.
 - Agent keys and agent tokens are out of scope. They are not browser sign-in.
 
-## Remove Staff
+## Remove Staff and the mode
 
-- `configuration/sign-in-mode.cs`: drop the `Staff` member and its summary.
-- `configuration/sign-in-options.cs`: drop `StaffNote` and any Staff handling.
+- `configuration/sign-in-mode.cs`: replace with `SignInMethod`. The file name follows the type.
+- `configuration/sign-in-options.cs`: `Methods` replaces `Mode`; drop `StaffNote`. It moves to the
+  web-server side, or a shared project both sides can read. Follow `tw-feature-placement`.
 - `SignInChoices.razor`, `Microsoft365AccountChoice.razor`, `LoginPage.razor.cs`,
-  `ChooseMicrosoft365Page.razor.cs`: drop the staff-line markup and any `Staff` branches. Checks
-  like `Mode is Microsoft365Only or Staff` become `Mode == Microsoft365Only`.
-- `StyleGuidePage.razor`: drop the Staff sign-in example and the "Staff only." text.
+  `ChooseMicrosoft365Page.razor.cs`: render from the method list. Drop the staff line and every
+  `Mode` / `Staff` branch.
+- `StyleGuidePage.razor`: show the sign-in choices for one method and for both. Drop the Staff
+  example and "Staff only.".
 - Tests: `sign-in-choices-render-tests.cs`, `microsoft-365-account-choice-render-tests.cs`,
-  `configuration/sign-in-options-tests.cs` (which moves server-side with the binding), and
-  `style-guide-page-contract-tests.cs`: drop the Staff cases and the "Staff only." assertions.
+  `configuration/sign-in-options-tests.cs`, `style-guide-page-contract-tests.cs`. Replace the mode
+  cases with method-list cases and drop the Staff assertions.
 - Keep the sample role named "Staff" in the role card, TimeWarpPage and style guide role tests.
-  That is example data, not the sign-in mode.
-- Update the Purpose and Design regions that mention Staff.
-- After the change, `rg -n 'SignInMode\.Staff|StaffNote|Staff only' source tests skills` is empty.
+  That is example data, not sign-in.
+- Update the Purpose and Design regions that mention the mode or Staff.
+- After the change, `rg -n 'SignInMode|StaffNote|Staff only|Microsoft365Only' source tests skills`
+  is empty.
 
 ## Checklist
 
-- [ ] `Staff` removed from `SignInMode`, `SignInOptions`, components, pages, style guide, and tests
-- [ ] Server-side `SignInOptions` bound and validated on the web-server from one checked-in section
-- [ ] The SPA reads the mode from the server; SPA `SignInOptions` binding and `wwwroot` section removed
-- [ ] Passkey start/complete authentication, start/complete registration, and add-existing-passkey
-      return 403 with one problem type in `Microsoft365Only`, through one shared check
-- [ ] Tests: server tests for each refused endpoint in `Microsoft365Only`, including an existing
-      passkey; Passkey mode unchanged; SPA render tests updated for the server-read mode
+- [ ] `SignInMethod` enum and `SignInOptions.Methods`; `SignInMode`, `Microsoft365Only`, `Staff` removed
+- [ ] Web-server binds and validates `SignInOptions` on start (non-empty, no duplicates, Microsoft365 needs Entra)
+- [ ] Review point on the single Microsoft 365 switch applied as Steve decides
+- [ ] One server read returns the offered methods; the SPA renders buttons from it; SPA binding and `wwwroot` section removed
+- [ ] Passkey endpoints return 403 with one problem type when `Passkey` is not listed, through one shared check
+- [ ] Tests: each refused passkey endpoint (including an existing passkey) when Passkey is not listed;
+      both-listed unchanged; Microsoft365 listed without Entra fails validation; SPA render tests per method list
 - [ ] Remove the client name from the Design region of
       `features/identity/entra-sign-in-mode-application.cs` (the "... 008-004 replacements" sentence).
-      It predates 379 and is not from this task's change.
+      It predates 379.
 - [ ] Gates: `./bin/dev build` 0/0, `./bin/dev template-smoke`, `ganda repo audit`,
       `git diff origin/master -- source tests | rg -i "crunchit|copic"` empty
 
@@ -83,6 +112,8 @@ when two things must agree, generate one from the other).
 ## Notes
 
 - Found while checking PR #569 (the 379-012..017 stack) before merge. Steve: merge, file this follow-up.
-- Steve 2026-10-24 on Staff: "sounds like UX to me not something we put in a template". Removed here.
+- Steve 2026-10-24: Staff "sounds like UX to me not something we put in a template". Removed.
+- Steve 2026-10-25: Login with X and Google are coming, so the shape is a collection of
+  `SignInMethod` enum values, not a single mode and not strings.
 - Do not rename the existing `EntraSignInMode` in `entra-sign-in-mode-application.cs`. It is an
-  evaluation result (Challenge / SyncHit / BootstrapCreate / Link), not the sign-in mode.
+  evaluation result (Challenge / SyncHit / BootstrapCreate / Link), not a sign-in method.
