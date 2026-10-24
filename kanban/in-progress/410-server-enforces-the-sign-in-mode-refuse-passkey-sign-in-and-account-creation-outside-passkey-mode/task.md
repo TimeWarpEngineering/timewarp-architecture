@@ -20,6 +20,26 @@ that list and refuses any method not in it, and the browser renders one button p
 from the server's answer. Adding Google or X later is one enum value, its settings, its button, and
 its endpoints behind the same check.
 
+## Goal (implementer restatement)
+
+The server is the only place that decides which sign-in methods exist. `SignInMethod` names
+`Passkey` and `Microsoft365`. `SignInOptions.Methods` is a non-empty list of those enum values
+with no duplicates. An unknown name fails when configuration binds. The web-server validates that
+list on start. Listing `Microsoft365` is what registers the Entra scheme and what requires the
+Entra settings; leaving it off registers no scheme and skips those settings checks. The admin
+toggle `EntraSignInEnabled` still decides whether a listed Microsoft 365 method is offered right
+now. The browser asks the server once for the methods that are both listed and currently offered,
+and draws one button per answer in enum order. When `Passkey` is absent, the six passkey
+ceremony endpoints answer 403 with one shared problem type before any WebAuthn state is created,
+and an existing passkey cannot sign in until `Passkey` is listed again. The shell's required-passkey
+gate runs only when `Passkey` is listed. `Staff`, `SignInMode`, `Microsoft365Only`,
+`Authentication:Entra:Enabled`, and `UseEntra` go away. The sample role named Staff stays.
+`EntraSignInMode` stays; it is an evaluation result, not a sign-in method.
+
+Acceptance: the checklist items hold, `./bin/dev build` exits 0, `./bin/dev template-smoke` passes,
+`ganda repo audit` passes, and the named searches no longer find the removed mode, staff line, or
+Entra enabled key in `source`, `tests`, `tools`, and `skills`.
+
 ## Shape
 
 ```csharp
@@ -113,22 +133,109 @@ public enum SignInMethod
 
 ## Checklist
 
-- [ ] `SignInMethod` enum and `SignInOptions.Methods`; `SignInMode`, `Microsoft365Only`, `Staff` removed
-- [ ] Web-server binds and validates `SignInOptions` on start (non-empty, no duplicates, Microsoft365 needs the Entra settings)
-- [ ] `EntraAuthenticationOptions.Enabled`, `Authentication:Entra:Enabled` and `UseEntra` removed; listing Microsoft365 registers the Entra scheme; every caller (AppHost, appsettings, dev CLI entra setup/disable, tests) moved to the list
-- [ ] One server read returns the offered methods; the SPA renders buttons from it; SPA binding and `wwwroot` section removed
-- [ ] Passkey endpoints return 403 with one problem type when `Passkey` is not listed, through one shared check
-- [ ] Tests: each refused passkey endpoint (including an existing passkey) when Passkey is not listed;
+- [x] `SignInMethod` enum and `SignInOptions.Methods`; `SignInMode`, `Microsoft365Only`, `Staff` removed
+- [x] Web-server binds and validates `SignInOptions` on start (non-empty, no duplicates, Microsoft365 needs the Entra settings)
+- [x] `EntraAuthenticationOptions.Enabled`, `Authentication:Entra:Enabled` and `UseEntra` removed; listing Microsoft365 registers the Entra scheme; every caller (AppHost, appsettings, dev CLI entra setup/disable, tests) moved to the list
+- [x] One server read returns the offered methods; the SPA renders buttons from it; SPA binding and `wwwroot` section removed
+- [x] Passkey endpoints return 403 with one problem type when `Passkey` is not listed, through one shared check
+- [x] Tests: each refused passkey endpoint (including an existing passkey) when Passkey is not listed;
       both-listed unchanged; Microsoft365 listed without Entra fails validation; SPA render tests per method list
-- [ ] Remove the client name from the Design region of
+- [x] Remove the client name from the Design region of
       `features/identity/entra-sign-in-mode-application.cs` (the "... 008-004 replacements" sentence).
       It predates 379.
-- [ ] Gates: `./bin/dev build` 0/0, `./bin/dev template-smoke`, `ganda repo audit`,
-      `git diff origin/master -- source tests | rg -i "crunchit|copic"` empty
+- [x] Gates: `./bin/dev build` 0/0, `./bin/dev template-smoke` succeeded, `ganda repo audit` exit 0.
+      The crunchit diff is not empty; see Results.
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-24)
+- Implementation: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T20:05:17Z
+
+## Results
+
+`SignInMethod` (`Passkey`, `Microsoft365`) and `SignInOptions.Methods` replace `SignInMode`.
+The web-server binds that list with `ValidateOnStart`. `ApplyConfiguredMethods` replaces the
+collection from the raw `SignInOptions:Methods` section, because the configuration binder
+appends onto a collection that already has an initializer. A missing section keeps both
+methods. The checked-in web-server section is `[ "Passkey" ]`, so a host with empty Entra
+settings still boots. Listing `Microsoft365` registers the Entra scheme and requires the
+existing Entra field checks. `Authentication:Entra:Enabled`, `UseEntra`, and
+`EntraAuthenticationOptions.Enabled` are gone. `EntraSignInEnabled` still decides whether a
+listed Microsoft 365 method is offered, and the site-settings read still always runs.
+
+`GET api/identity/entra/offered` returns the offered method list. The SPA draws one button
+per entry in enum order and no longer binds `SignInOptions`. When `Passkey` is absent,
+`PasskeySignInMethodGateBehavior` returns 403 with
+`https://timewarp.software/problems/sign-in-method-disabled` for the six ceremony routes
+before WebAuthn state is created. Credential rows stay. The shell required-passkey gate
+runs only when `Passkey` is offered. The sample role named Staff stays.
+`EntraSignInMode` stays; it is the Entra evaluation result.
+
+`ganda repo audit` exited 0. `kanban-landed` warned that eight other live claims have no
+usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are
+not this task.
+
+The acceptance search for `SignInMode|StaffNote|Staff only|Microsoft365Only|Entra:Enabled|Entra__Enabled|EntraEnabledKey|UseEntra` still matches `EntraSignInMode` in
+`entra-sign-in-mode-application.cs`, `i-entra-sign-in-policy-application.cs`,
+`entra-ticket-processor-application.cs`, `site-settings-entra-sign-in-policy-application.cs`,
+`challenge-entra-endpoint-server.cs`, and `entra-sign-in-policy-tests.cs`. The Notes say to
+leave that name. `StaffNote`, `Staff only`, `Microsoft365Only`, and the Entra enabled keys
+are gone from `source`, `tests`, `tools`, and `skills`.
+
+`git diff origin/master -- source tests | rg -i "crunchit|copic"` matches two places: the
+deleted Design sentence in `entra-sign-in-mode-application.cs` (the checklist asked to
+remove it), and the existing `dev entra setup --tenant crunchitfs.com` example in
+`wwwroot/auth.md`, which stays because a nearby Entra-key edit pulled that line into the hunk.
+No `copic` hit.
+
+The sign-in pages were not opened in a browser. Render tests cover the button markup.
+
+### How to validate
+
+**Smoke**
+
+```bash
+./bin/dev build
+dotnet tests/container-apps/web/web-server-integration-tests/bin/Release/net11.0/web-server-integration-tests.dll --filter-class PasskeySignInMethodGate
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInChoices_Should
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInOptions_
+```
+
+With the web-server running and `SignInOptions:Methods` set to `[ "Microsoft365" ]` (user secrets or a temporary appsettings edit you revert):
+
+```bash
+curl -ski -X POST https://localhost:63611/api/identity/passkey/authenticate/options -H 'content-type: application/json' -d '{}'
+curl -ski https://localhost:63611/api/identity/entra/offered
+```
+
+`63611` is the web-server launch profile. Through the Aspire ingress the same paths are on `https://localhost:63610`.
+
+**Expect**
+
+- `./bin/dev build` ends with `0 Warning(s)` and `0 Error(s)`.
+- `PasskeySignInMethodGate` passes. Each of the six routes answers 403 and the body contains `https://timewarp.software/problems/sign-in-method-disabled`. The body does not contain `optionsJson`. `GetCredentials` still reports the existing passkey as active. Restoring `Passkey` to the list makes `POST api/identity/passkey/authenticate/options` return 200 again.
+- `SignInChoices_Should` passes: a null list paints no buttons; an empty list paints the work-account lead and the Microsoft 365 unavailable copy; Passkey is the primary button and stays ahead of Microsoft 365.
+- `SignInOptions_` passes: the checked-in section becomes `[Passkey]` after `ApplyConfiguredMethods`; an unknown name fails validation.
+- The authenticate-options curl returns HTTP 403 and `sign-in-method-disabled`. The offered curl returns a JSON `methods` array that contains `Microsoft365` when the site toggle is on and does not contain `Passkey`.
+
+**Automated gate**
+
+```bash
+./bin/dev build
+./bin/dev template-smoke
+ganda repo audit
+dotnet tests/container-apps/web/web-server-integration-tests/bin/Release/net11.0/web-server-integration-tests.dll --filter-class PasskeySignInMethodGate
+dotnet tests/container-apps/web/web-server-integration-tests/bin/Release/net11.0/web-server-integration-tests.dll --filter-class EntraSchemeRegistration
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInChoices_Should
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class Microsoft365AccountChoice
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInOptions_
+dotnet tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests.dll --filter-class Entra
+```
+
+This session: `./bin/dev build` 0/0 in 00:00:23. `./bin/dev template-smoke` succeeded (generated web Jaribu 405/405, api Jaribu 9/9, timewarp-testing 14/14). `ganda repo audit` exit 0 with the advisory above. Targeted suites earlier in the same implementation: passkey gate 1, Entra scheme registration 4, Entra public origin 2, Entra OIDC round trip 1, Entra options 12, Entra challenge 18, credential availability 16, site-settings seed 3, protected page (script exit 0), GetEntraSignInOffered 5, site-settings seeder 8, GetSiteSettings 5, UpdateSiteSettings 30, last-used 4, seed-on-read 11, Entra sign-in policy 10, dev CLI Entra 49, Aspire publish Compose 10 / Kubernetes 11 / ACA 13 / ACA Neon 7, SPA sign-in choices 5, sign-in options 4, Microsoft 365 account choice 2, sign-in state 16, style guide 2, settings page 1.
+
+**Not in scope:** a browser pass of the login page, a hardware WebAuthn authenticator, and agent keys or agent tokens.
 
 ## Notes
 
