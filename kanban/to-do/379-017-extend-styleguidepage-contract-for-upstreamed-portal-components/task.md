@@ -35,8 +35,7 @@ The confirm sample is the only style-guide action.
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass: M1–M4 addressed on this branch.
-- Round 2: M1–M4 re-verified as fixed. No new findings. Disposition clean.
-
+- Round 2: Done
 ## Notes
 
 - Sibling ports (379-001 through 379-016) each say the StyleGuidePage contract is 379-017.
