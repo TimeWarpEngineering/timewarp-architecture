@@ -46,6 +46,8 @@ Done means `dev build` is 0 warnings and 0 errors, `dev check-version` says the 
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-24)
 - Implementation: 01a16e14-c24c-7043-aa5e-341195a12844 (2026-10-24)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T14:29:23Z
+- Review oracle: general reviewer (claude, model claude-opus-5-5), effort 1, session not reported, max-turns 80, disposition clean — 2026-10-24
 
 ## Results
 
@@ -56,6 +58,10 @@ Done means `dev build` is 0 warnings and 0 errors, `dev check-version` says the 
 `./bin/dev build`: 0 warnings, 0 errors. `./bin/dev check-version`: source `2.0.0-beta.25`, NuGet `2.0.0-beta.24`, one prerelease increment ahead, safe to release. `ganda repo audit`: 33 passed, 0 failed, 1 skipped.
 
 `dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests` ran every variant: SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp, with generated-app tests. Every variant built with 0 warnings and 0 errors. SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, and SmokeNoGrpc passed their app-test suites, including Playwright 27/27 on each web variant. SmokeNoApi's SPA integration suite was 493/493. SmokeNoYarp's suites passed except `web-spa-playwright-tests` (26 passed, 1 failed): `Open_Should_MoveFocusIn_TrapTab_And_ReturnFocusOnEscape` saw `paintHitsDialog` false. The same project, rerun immediately against that generated tree, passed 27/27. That assertion also passed inside the matrix on the other four web variants. The matrix command therefore exited 1 on that one SmokeNoYarp Playwright miss. `web-server-integration-tests` printed 355/356 succeeded on the variants that include it, and the harness continued, which it does only when the MTP summary has zero failures.
+
+### Review disposition
+
+One round, effort 1, one general reviewer. The reviewer found 0 bugs, 0 suggestions, and 0 nits, with 0 open, 0 fixed, and 0 wontfix. Disposition is **clean**. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors) and `./bin/dev check-version` (safe to release) in this worktree. The reviewer did not re-run template smoke, because it cannot select one variant. Smoke evidence is the implementer's matrix run above. The SmokeNoYarp Playwright focus-trap miss, which passed on rerun, is recorded as an observation outside this diff. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, and `review/disposition.md`.
 
 ### How to validate
 
