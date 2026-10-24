@@ -42,6 +42,7 @@ Acceptance: `./bin/dev build` is clean, `./bin/dev template-smoke` passes, `gand
 - Review round 1: review oracle (claude, claude-opus-5-5), session not reported. Effort 2, roster general — 2026-10-24
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-24T01:35:20Z
 - Fix pass (implement-fix-2): implementer-grok (grok, model grok-4.7), 2026-10-24. Addressed M1, M2, and M3.
+- Review round 2: review oracle (claude, claude-opus-5-5), session not reported. Effort 2, roster general, max-turns 120. Disposition clean — 2026-10-24
 
 ## Results
 
@@ -83,11 +84,16 @@ git diff origin/master -- source tests | rg -i crunchit
 
 ### Review
 
-Round 1 (effort 2, general) raised 1 bug, 1 suggestion, and 1 nit. This fix pass marks M1, M2, and M3 fixed on `review/round-1/merged.md`. Round 2 has not re-verified them. Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
+Rounds: 2. Effort 2, roster general. Round 1 raised 1 bug (M1), 1 suggestion (M2), and 1 nit (M3). The fix pass (20c0216b5) addressed all three. Round 2 re-verified them on the fix delta and raised nothing new. In round 2 the reviewer ran `./bin/dev build` (0 errors) and `SignInOptions_Should_`, `SignInChoices_Should_`, `Microsoft365AccountChoice_Should_`, and `SignInActions_Should_` (all passed, 0 failed).
+
+Final counts: bug 1 fixed, suggestion 1 fixed, nit 1 fixed. 0 open, 0 wontfix. **Disposition: clean.**
+
+Framework: `review/review-framework.md`. Last merged ledger: `review/round-2/merged.md`. Disposition: `review/disposition.md`.
 
 ## Review
 
-- Round 1: M1, M2, and M3 addressed on this branch. Round 2 has not run.
+- Round 1: M1, M2, and M3 raised. Fixed in 20c0216b5.
+- Round 2: M1, M2, and M3 re-verified fixed. No new findings. Disposition clean.
 
 ## Notes
 
