@@ -48,6 +48,7 @@ Done means `dev build` is 0 warnings and 0 errors, `dev check-version` says the 
 - Implementation: 01a16e14-c24c-7043-aa5e-341195a12844 (2026-10-24)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T14:29:23Z
 - Review oracle: general reviewer (claude, model claude-opus-5-5), effort 1, session not reported, max-turns 80, disposition clean — 2026-10-24
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-24T14:33:48Z
 
 ## Results
 
@@ -78,6 +79,10 @@ Expect:
 - Build ends with `0 Warning(s)` and `0 Error(s)`.
 - `check-version` prints source `2.0.0-beta.25`, NuGet `2.0.0-beta.24`, and `Version in source is new — safe to release`.
 - Template smoke prints `SmokeNoApi OK` and `SmokeDefault OK`, then `Template smoke SUCCEEDED`. A generated app with `--api false` compiles `tests/container-apps/web/web-spa-integration-tests`, including `infrastructure/static-render-host.cs`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
