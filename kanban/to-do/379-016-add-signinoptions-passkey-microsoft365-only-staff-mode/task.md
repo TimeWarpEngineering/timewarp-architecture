@@ -93,8 +93,7 @@ Framework: `review/review-framework.md`. Last merged ledger: `review/round-2/mer
 ## Review
 
 - Round 1: M1, M2, and M3 raised. Fixed in 20c0216b5.
-- Round 2: M1, M2, and M3 re-verified fixed. No new findings. Disposition clean.
-
+- Round 2: Done
 ## Notes
 
 - Source idea (read-only): the portal sign-in card is one Microsoft 365 work-account button and a staff-only line. This template keeps passkey as the default and does not copy that product name.
