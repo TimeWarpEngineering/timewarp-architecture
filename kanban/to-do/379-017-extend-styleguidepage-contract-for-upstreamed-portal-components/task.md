@@ -29,11 +29,13 @@ The confirm sample is the only style-guide action.
 - Review round 1: review oracle (Claude Code, claude-opus-5-5, headless), effort 2, roster general, session id not exposed — 2026-10-24
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-24T02:29:49Z
 - Fix pass: implement-fix-2 (grok, model grok-4.7), session not reported — 2026-10-24
+- Review round 2: review oracle (Claude Code, claude-opus-5-5, headless), effort 2, roster general, session id not exposed, max-turns 120. Disposition clean — 2026-10-24
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-- Fix pass: M1–M4 addressed on this branch. Round 2 has not re-verified them.
+- Fix pass: M1–M4 addressed on this branch.
+- Round 2: M1–M4 re-verified as fixed. No new findings. Disposition clean.
 
 ## Notes
 
@@ -88,7 +90,8 @@ two `@bind` occurrences (`FormDemoName` and `FormDemoEmail`), no `Changed="` cal
 code-behind Design note names that contract. The absent-name check composes its token so the
 test file does not spell it.
 
-Review round 1 findings M1–M4 are addressed on this branch. Round 2 has not re-verified them.
+Review round 1 findings M1–M4 are fixed on this branch. Round 2 re-checked them, and the
+review disposition is clean.
 
 ### How to validate
 
@@ -115,9 +118,15 @@ A live browser pass was not done. `HtmlRenderer` does not run `OnAfterRenderAsyn
 
 - Round 1 (effort 2, roster general): 0 bug, 2 suggestion, 2 nit. M1–M4 were open.
   The reviewer re-ran `--filter-class StyleGuidePage_Should_`: 2/2 passed.
-- Disposition: fixed on this branch (implement-fix-2, 2026-10-24). Round 2 has not re-verified them.
+- Fix pass: implement-fix-2, 2026-10-24.
   - M1: the source scan counts every `@bind`, bans `Changed="`, and ties `data-qa="ConfirmSample"` to `OnClick="ConfirmSampleAsync"` and that method to `NoSubStyleGuideState.ConfirmSample()`.
   - M2: `StaticRenderHost` in `infrastructure/static-render-host.cs` is the service host, headless JS runtime, fixed auth state, and h1 helpers for both page contracts.
   - M3: each role card is sliced. Owner is the one checked card. Admin and Staff are unchecked.
   - M4: Expect uses the rendered title "Trend, SLA, and class pills".
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (effort 2, roster general): re-checked `aa69106be..HEAD`. M1–M4 are fixed, with no new
+  findings. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors),
+  `--filter-class StyleGuidePage_Should_` (2/2), and `--filter-class TimeWarpPage_Should_` (14/14).
+- Final counts: bug 0; suggestion 0 open, 2 fixed; nit 0 open, 2 fixed; 0 wontfix.
+- Disposition: **clean**. No wontfix and no escalation.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.

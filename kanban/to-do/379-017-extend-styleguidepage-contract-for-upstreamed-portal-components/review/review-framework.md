@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 480
+- Lines changed: 543
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -30,3 +30,11 @@ fields store a value; the drawer follows `ApplicationState`; confirm dispatches 
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Date:** 2026-10-24
+**Diff scope:** `aa69106be..HEAD` (`review/round-1/base.sha`): fix commit e9374c26d and kanban
+commit fd31d8a59. Re-verify M1–M4 and scan the fix delta for new defects.
+**Effort:** 2, by diff size. **Roster:** general.
+**Session IDs:** review oracle claude-opus-5-5 (Claude Code, headless print mode); session id not exposed
