@@ -37,6 +37,7 @@ public class SignInOptions_Should_
     signIn.OffersPasskey.ShouldBeTrue();
     signIn.ShowsWorkAccountLead.ShouldBeFalse();
     signIn.ShowsStaffNote.ShouldBeFalse();
+    signIn.ShowMicrosoft365Unavailable(offered: null).ShouldBeFalse();
     signIn.ShowMicrosoft365Unavailable(offered: false).ShouldBeFalse();
     return Task.CompletedTask;
   }
@@ -47,6 +48,7 @@ public class SignInOptions_Should_
     signIn.OffersPasskey.ShouldBeFalse();
     signIn.ShowsWorkAccountLead.ShouldBeTrue();
     signIn.ShowsStaffNote.ShouldBeFalse();
+    signIn.ShowMicrosoft365Unavailable(offered: null).ShouldBeFalse();
     signIn.ShowMicrosoft365Unavailable(offered: true).ShouldBeFalse();
     signIn.ShowMicrosoft365Unavailable(offered: false).ShouldBeTrue();
     return Task.CompletedTask;

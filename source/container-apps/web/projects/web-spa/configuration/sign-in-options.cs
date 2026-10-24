@@ -8,6 +8,8 @@
 // The server configuration drives prerender. The WebAssembly host binds the same section from
 // its own appsettings so hydration does not swap the card. Staff and Microsoft365Only share the
 // work-account lead. Only Staff shows the staff-only line. Copy is generic; no client name.
+// ShowMicrosoft365Unavailable is true only after a completed read says the site does not offer
+// Microsoft 365. Null (not fetched) is not that answer.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;
@@ -35,8 +37,8 @@ public sealed class SignInOptions
   public bool ShowsStaffNote => Mode == SignInMode.Staff;
 
   /// <summary>
-  /// Microsoft 365 is the only path, and the site is not offering it, so the card must not
-  /// fall back to a passkey.
+  /// Microsoft 365 is the only path and a completed read says the site does not offer it,
+  /// so the card shows that and offers no passkey. Null means the read has not finished.
   /// </summary>
-  public bool ShowMicrosoft365Unavailable(bool offered) => ShowsWorkAccountLead && !offered;
+  public bool ShowMicrosoft365Unavailable(bool? offered) => ShowsWorkAccountLead && offered is false;
 }

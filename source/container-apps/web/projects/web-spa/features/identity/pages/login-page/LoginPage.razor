@@ -17,7 +17,7 @@
   [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
   private bool IsBusy => ActionTrackingState.IsActive;
-  private bool ShowMicrosoft365 => SignInState.Microsoft365Offered;
+  private bool? ShowMicrosoft365 => SignInState.Microsoft365Offered;
 
   protected override async Task OnInitializedAsync()
   {

@@ -5,14 +5,15 @@
 
   Design: Passkey keeps the passkey button, optional Microsoft 365, and account creation.
   Microsoft365Only and Staff hide passkey and account creation. Staff adds the staff-only line.
-  When those modes are selected and Microsoft 365 is not offered, the card says so and does not
-  fall back to a passkey. The page supplies the clicks. This component does not dispatch.
+  Microsoft365Offered is null until the page's fetch finishes. The unavailable line renders
+  only when that value is false, and a work-account mode then shows no passkey button. The
+  page supplies the clicks. This component does not dispatch.
 *@
 
 @code {
   [Parameter] public SignInOptions SignIn { get; set; } = new();
 
-  [Parameter] public bool Microsoft365Offered { get; set; }
+  [Parameter] public bool? Microsoft365Offered { get; set; }
 
   [Parameter] public bool IsBusy { get; set; }
 
@@ -39,7 +40,7 @@
     </FluentButton>
   }
 
-  @if (Microsoft365Offered)
+  @if (Microsoft365Offered is true)
   {
     <FluentButton Appearance="@(SignIn.OffersPasskey ? ButtonAppearance.Outline : ButtonAppearance.Primary)"
                   data-qa="ContinueWithMicrosoft365"

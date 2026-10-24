@@ -1,0 +1,50 @@
+@namespace TimeWarp.Architecture.Features.Identity
+
+@*
+  Purpose: The unlinked Microsoft 365 account choice for the configured sign-in mode.
+
+  Design: Passkey offers a new account and the passkey proof ("I already have an account").
+  Microsoft365Only and Staff omit that proof, because it is a passkey ceremony. Staff adds
+  the staff-only line. The page supplies the clicks. This component does not dispatch.
+  Copy is generic; no product or client name.
+*@
+
+@code {
+  [Parameter] public SignInOptions SignIn { get; set; } = new();
+
+  [Parameter] public bool IsBusy { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnCreateAccount { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnAlreadyHaveAccount { get; set; }
+}
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+  @if (SignIn.OffersPasskey)
+  {
+    <p>This Microsoft 365 account is not linked yet. Create a new account, or prove you already have one with a passkey.</p>
+  }
+  else
+  {
+    <p>This Microsoft 365 account is not linked yet. Create a new account to continue.</p>
+  }
+  @if (SignIn.ShowsStaffNote)
+  {
+    <p data-qa="ChooseStaffNote">@SignInOptions.StaffNote</p>
+  }
+  <FluentButton Appearance="ButtonAppearance.Primary"
+                data-qa="CreateNewAccount"
+                Disabled="IsBusy"
+                OnClick="OnCreateAccount">
+    Create a new account
+  </FluentButton>
+  @if (SignIn.OffersPasskey)
+  {
+    <FluentButton Appearance="ButtonAppearance.Outline"
+                  data-qa="AlreadyHaveAccount"
+                  Disabled="IsBusy"
+                  OnClick="OnAlreadyHaveAccount">
+      I already have an account
+    </FluentButton>
+  }
+</FluentStack>

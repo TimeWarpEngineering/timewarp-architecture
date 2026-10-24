@@ -5,8 +5,8 @@
 #region Design
 // Passkey is the template default: passkey first, Microsoft 365 only when the site offers it.
 // Microsoft365Only and Staff hide passkey sign-in and public account creation. Staff adds the
-// staff-only line. The portal card that inspired this is a work-account button plus that line;
-// the product name stays out of the template. Numeric values are stable for configuration binding.
+// staff-only line. Copy is generic; no product or client name. Numeric values are stable for
+// configuration binding.
 #endregion
 
 namespace TimeWarp.Architecture.Configuration;

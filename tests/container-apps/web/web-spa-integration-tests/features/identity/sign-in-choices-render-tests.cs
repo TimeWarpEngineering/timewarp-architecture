@@ -6,7 +6,8 @@
 // SignInChoices hosts Fluent buttons, so the renderer needs FluentUI services and a no-op JS
 // runtime. The component injects nothing. Passkey keeps both passkey actions and treats Microsoft
 // 365 as optional. Microsoft365Only and Staff omit those actions. Staff adds the staff-only line.
-// A work-account mode with Microsoft 365 not offered says so and does not show a passkey button.
+// A work-account mode with Microsoft 365 known not to be offered says so and shows no passkey
+// button. While the offer is still null, that mode shows neither the button nor the unavailable line.
 #endregion
 
 namespace SignInChoicesRender_;
@@ -57,6 +58,12 @@ public class SignInChoices_Should_
     offered.ShouldNotContain("data-qa=\"SignInStaffNote\"");
     ButtonTag(offered, "ContinueWithMicrosoft365").ShouldContain("appearance=\"primary\"");
 
+    string unknown = await RenderAsync(signIn, offered: null);
+    unknown.ShouldContain("data-qa=\"SignInLead\"");
+    unknown.ShouldNotContain("data-qa=\"Microsoft365Unavailable\"");
+    unknown.ShouldNotContain("data-qa=\"ContinueWithMicrosoft365\"");
+    unknown.ShouldNotContain("data-qa=\"ContinueWithPasskey\"");
+
     string missing = await RenderAsync(signIn, offered: false);
     missing.ShouldContain("data-qa=\"Microsoft365Unavailable\"");
     missing.ShouldContain(SignInOptions.Microsoft365UnavailableMessage);
@@ -72,9 +79,14 @@ public class SignInChoices_Should_
     html.ShouldContain("data-qa=\"SignInLead\"");
     html.ShouldNotContain("data-qa=\"ContinueWithPasskey\"");
     html.ShouldNotContain("data-qa=\"CreatePasskey\"");
+
+    string unknown = await RenderAsync(new SignInOptions { Mode = SignInMode.Staff }, offered: null);
+    unknown.ShouldContain("data-qa=\"SignInStaffNote\"");
+    unknown.ShouldNotContain("data-qa=\"Microsoft365Unavailable\"");
+    unknown.ShouldNotContain("data-qa=\"ContinueWithMicrosoft365\"");
   }
 
-  private static async Task<string> RenderAsync(SignInOptions signIn, bool offered)
+  private static async Task<string> RenderAsync(SignInOptions signIn, bool? offered)
   {
     Dictionary<string, object?> parameters = new()
     {

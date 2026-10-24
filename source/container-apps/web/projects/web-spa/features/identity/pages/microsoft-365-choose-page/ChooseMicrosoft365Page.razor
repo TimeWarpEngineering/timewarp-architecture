@@ -50,35 +50,10 @@
       }
       else
       {
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-          @if (SignIn.OffersPasskey)
-          {
-            <p>This Microsoft 365 account is not linked yet. Create a new account, or prove you already have one with a passkey.</p>
-          }
-          else
-          {
-            <p>This Microsoft 365 account is not linked yet. Create a new account to continue.</p>
-          }
-          @if (SignIn.ShowsStaffNote)
-          {
-            <p data-qa="ChooseStaffNote">@SignInOptions.StaffNote</p>
-          }
-          <FluentButton Appearance="ButtonAppearance.Primary"
-                        data-qa="CreateNewAccount"
-                        Disabled="IsBusy"
-                        OnClick="CreateNewAccount">
-            Create a new account
-          </FluentButton>
-          @if (SignIn.OffersPasskey)
-          {
-            <FluentButton Appearance="ButtonAppearance.Outline"
-                          data-qa="AlreadyHaveAccount"
-                          Disabled="IsBusy"
-                          OnClick="AlreadyHaveAccount">
-              I already have an account
-            </FluentButton>
-          }
-        </FluentStack>
+        <Microsoft365AccountChoice SignIn="SignIn"
+                                   IsBusy="IsBusy"
+                                   OnCreateAccount="CreateNewAccount"
+                                   OnAlreadyHaveAccount="AlreadyHaveAccount" />
       }
     </Card>
   </div>
