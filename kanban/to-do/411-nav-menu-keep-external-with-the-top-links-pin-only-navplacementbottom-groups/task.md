@@ -60,6 +60,8 @@ Task 379-015 (pinned user card and nav group) regressed the side menu in two way
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-24)
 - Implementation: 01a16d1e-d936-7d21-840c-d5beb8e4279d (2026-10-24)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T09:05:55Z
+- Review oracle: tw-implementation-review, general reviewer (claude-opus-5-5), effort 1, round 1, disposition clean, session not reported (2026-10-24)
 
 ## Results
 
@@ -72,6 +74,13 @@ Smoke: Sign out and open Home. Then sign in as an administrator and scroll the s
 Expect: Signed out, Home is followed immediately by External (The Freeze Team, then GitHub). There is no empty band between them and no Pinned nav. Signed in, Developer sits with the other categories and External follows the last group. The menu has one scrollbar, and Developer and External move with that scroll. The user card stays at the bottom of the column. The rail still clips labels. Below 880px the drawer is unchanged.
 
 Checked: `dev build` 0 warnings, 0 errors. `web-spa-integration-tests` 497 passed, 0 failed. `dev lint-skills` 9/9. `ganda repo audit` 33 passed, 0 failed. Headless Chromium loaded the compiled scoped rules plus Fluent's `.fluent-nav` rule: a short list leaves External directly under Home (292px of column left below the list), a tall list scrolls `.twe-nav-menu` and not the inner nav, and the user card stays at the column bottom while the menu scrolls. A Bottom group still sits on the menu's bottom edge. The live Aspire shell was not opened.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 1 (by diff, 186 lines).
+- Final counts: bug 0, suggestion 0, nit 0. All are 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. No findings. The reviewer re-ran `web-spa-integration-tests`: 497 passed, 0 failed.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ## Notes
 
