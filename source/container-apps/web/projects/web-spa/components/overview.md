@@ -30,6 +30,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `PermissionGrid.razor` — capability groups (`twe-perm-grid`); each row is granted or not
 - `DevNote.razor` — callout (`twe-devnote`); optional eyebrow, optional title, and a body
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
+- `UserCard.razor` (composites) — identity row (`twe-user-card`); name, optional detail, optional link; the shell pins the signed-in person under the menu
 - `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
 - `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; optional FluentUI icon, meta, status badge, and actions
 - `CountChip.razor` — number pill (`twe-count-chip`); neutral or accent; tabular numerals

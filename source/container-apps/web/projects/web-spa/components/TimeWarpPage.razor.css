@@ -113,12 +113,34 @@
 .twe-brand { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; padding: 0 6px; }
 .twe-brand__logo { height: var(--twe-logo-height); width: auto; flex: none; display: block; }
 
-/* FluentNav is NavMenu's root (a child component), so it is reached from the shell anchor. */
-.twe-shell ::deep .twe-nav {
+/* The nav column owns the rule and the paper fill, including the pinned user card.
+   FluentNav is NavMenu's root (a child component), so it is reached from the shell anchor.
+   From 880px through 1279px the column is the icon rail. Below 880px FluentLayout's
+   drawer (MobileBreakdownWidth) takes over. Those two numbers match tokens.css. */
+.twe-nav-column {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  padding: 8px;
+  min-height: 0;
   background: var(--twe-paper-2);
   border-right: 1px solid var(--twe-rule);
+}
+
+.twe-nav-column__user {
+  flex: none;
+  padding: 0 var(--twe-space-2) var(--twe-space-2);
+}
+
+.twe-shell ::deep .twe-nav {
+  padding: 8px;
+  background: transparent;
+}
+
+@media (max-width: 1279px) and (min-width: 880px) {
+  .twe-shell ::deep .fluent-layout-item[area=nav] {
+    width: var(--twe-shell-rail-width) !important;
+    max-width: var(--twe-shell-rail-width) !important;
+  }
 }
 
 .twe-page { padding: 20px 28px 28px; }

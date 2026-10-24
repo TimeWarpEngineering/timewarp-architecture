@@ -1,0 +1,51 @@
+/* The menu fills the nav column and scrolls there, so a tall list stays above
+   the pinned user card. The second nav (twe-nav--pin) sits on the bottom edge
+   when the column is taller than the links. FluentNavCategory must stay a
+   direct child of FluentNav, so the pin is a second nav rather than a wrapper.
+   The rail clips link text (the words stay the accessible name) and collapses
+   a category title onto its expand chevron. Categories have no icon of their own.
+   880 and 1279 match TimeWarpPage.razor.css. */
+.twe-nav-menu {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.twe-nav-menu ::deep .twe-nav--pin {
+  margin-top: auto;
+}
+
+@media (max-width: 1279px) and (min-width: 880px) {
+  .twe-nav__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .twe-nav-menu ::deep .fluent-navitem,
+  .twe-nav-menu ::deep .fluent-navsubitem,
+  .twe-nav-menu ::deep .fluent-navcategoryitem {
+    position: relative;
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .twe-nav-menu ::deep .fluent-navcategoryitem {
+    font-size: 0;
+  }
+
+  .twe-nav-menu ::deep .fluent-navcategoryitem .icon,
+  .twe-nav-menu ::deep .fluent-navcategoryitem .expand-icon {
+    font-size: 20px;
+  }
+}

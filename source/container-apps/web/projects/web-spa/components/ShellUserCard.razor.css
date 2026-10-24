@@ -1,0 +1,4 @@
+.twe-nav-column__user {
+  flex: none;
+  padding: 0 var(--twe-space-2) var(--twe-space-2);
+}

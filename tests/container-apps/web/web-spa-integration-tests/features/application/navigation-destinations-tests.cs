@@ -144,6 +144,32 @@ public partial class Destinations_Should_
       }
     }
 
+    // One named group uses one band. Bottom is the pinned nav; Top is the default.
+    // Compare the name: this suite references two assemblies that each emit NavPlacement.
+    Dictionary<string, string> placementByGroup = [];
+    foreach (PageRegistryEntry entry in PageRegistry.All)
+    {
+      string placement = entry.NavPlacement.ToString();
+      if (entry.NavGroup.Length == 0)
+      {
+        placement.ShouldBe("Top", entry.PageType.Name);
+        continue;
+      }
+
+      if (placementByGroup.TryGetValue(entry.NavGroup, out string? seen))
+      {
+        placement.ShouldBe(seen, $"{entry.PageType.Name}: {entry.NavGroup} mixes Top and Bottom");
+      }
+      else
+      {
+        placementByGroup[entry.NavGroup] = placement;
+      }
+    }
+
+    placementByGroup["Developer"].ShouldBe("Bottom");
+    placementByGroup["Admin"].ShouldBe("Top");
+    placementByGroup["Demos"].ShouldBe("Top");
+
     using DestinationSpa spa = new(null);
     IActionCatalog catalog = spa.ServiceProvider.GetRequiredService<IActionCatalog>();
     IAuthorizationService authorization = spa.ServiceProvider.GetRequiredService<IAuthorizationService>();

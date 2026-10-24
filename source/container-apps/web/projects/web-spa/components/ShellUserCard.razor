@@ -1,0 +1,84 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+@*
+  Purpose: The shell's default user card for the signed-in person.
+
+  Design: A leaf under the nav. Signed out renders nothing, so the column does not
+  keep an empty box. The name is read on each render: the profile alias, then the
+  identity name, then Account. The alias arrives after sign-in and can change
+  without a new authentication parameter, so it is not cached beside the auth
+  task. The detail is the profile email when it is set. The card links to the
+  profile page only when that page's policy allows it. This component reads the
+  cascaded authentication state and authorizes; it does not navigate or fetch.
+*@
+
+@code {
+  [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+  private bool SignedIn;
+
+  private bool CanOpenProfile;
+
+  private string? IdentityName;
+
+  private Task<AuthenticationState>? LoadedAuthenticationState;
+
+  private bool Loaded;
+
+  private string DisplayName => ShellUserName(IdentityName, ProfileState.Alias);
+
+  protected override async Task OnParametersSetAsync()
+  {
+    if (Loaded && ReferenceEquals(LoadedAuthenticationState, AuthenticationState))
+    {
+      return;
+    }
+
+    Loaded = true;
+    LoadedAuthenticationState = AuthenticationState;
+    ClaimsPrincipal user = AuthenticationState is null
+      ? new ClaimsPrincipal(new ClaimsIdentity())
+      : (await AuthenticationState).User;
+    SignedIn = user.Identity?.IsAuthenticated == true;
+    if (!SignedIn)
+    {
+      CanOpenProfile = false;
+      IdentityName = null;
+      return;
+    }
+
+    IdentityName = user.Identity?.Name;
+    AuthorizationResult allowed = await AuthorizationService.AuthorizeAsync(user, resource: null, ProfilePage.Policy);
+    CanOpenProfile = allowed.Succeeded;
+  }
+
+  private static string ShellUserName(string? identityName, string? alias)
+  {
+    if (!string.IsNullOrWhiteSpace(alias))
+    {
+      return alias;
+    }
+
+    if (!string.IsNullOrWhiteSpace(identityName))
+    {
+      return identityName;
+    }
+
+    return "Account";
+  }
+}
+
+@if (SignedIn)
+{
+  <div class="twe-nav-column__user">
+    @if (CanOpenProfile)
+    {
+      <UserCard Name="@DisplayName" Detail="@ProfileState.Email" Href="@ProfilePage.GetPageUrl()" data-qa="ShellUserCard" />
+    }
+    else
+    {
+      <UserCard Name="@DisplayName" Detail="@ProfileState.Email" data-qa="ShellUserCard" />
+    }
+  </div>
+}

@@ -16,8 +16,9 @@
 
 namespace TimeWarp.Architecture.Features.StyleGuide;
 
-[Page("/StyleGuide", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Visual style guide for template components.", NavGroup = "Developer", NavOrder = 310)]
+[Page("/StyleGuide", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Visual style guide for template components.", NavGroup = "Developer", NavOrder = 310, NavPlacement = NavPlacement.Bottom)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 [CrossSliceReference(typeof(CounterState), "Living style guide deliberately exercises the counter throw-exception pipeline.")]
+[CrossSliceReference(typeof(ProfilePage), "Style guide sample links the profile page from the user card.")]
 [PageLocalMessageBar("Style guide showcases the FluentMessageBar component itself; these bars are documentation, not operation outcomes.")]
 partial class StyleGuidePage;
