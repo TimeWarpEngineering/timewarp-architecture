@@ -21,6 +21,8 @@ The confirm sample is the only style-guide action.
 
 - Created: ses_ebc1f6587ffeC5oxDhO3SRDeMu (2026-10-16)
 - Implementation: implementer-grok (2026-10-24)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T02:27:00Z
+- Review round 1: review oracle (Claude Code, claude-opus-5-5, headless), effort 2, roster general, session id not exposed — 2026-10-24
 
 ## Notes
 
@@ -83,3 +85,10 @@ Expect:
 - The razor has exactly two `@bind-Value` attributes, `FormDemoName` and `FormDemoEmail`. It has no `ValueChanged`. The drawer calls `ApplicationState.SetActiveModal(StyleGuideDrawerId)` and `ApplicationState.CloseModal()`. Confirm goes through `ConfirmSampleAsync`.
 
 A live browser pass was not done. `HtmlRenderer` does not run `OnAfterRenderAsync`, so the drawer script stays dormant and the closed title stays absent. The static render covers the catalog markup.
+
+### Review
+
+- Round 1 (effort 2, roster general): 0 bug, 2 suggestion, 2 nit. All 4 are open (M1–M4).
+  The reviewer re-ran `--filter-class StyleGuidePage_Should_`: 2/2 passed.
+- Disposition: pending. A fix pass was requested for M1–M4.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
