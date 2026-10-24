@@ -54,14 +54,14 @@
 // - NavGroup (string constant, "" = top level) is the menu category; NavOrder (int constant) is
 //   the menu position. PageRegistry.All is sorted by NavOrder, then route, so the registry order
 //   IS the menu order and NavMenu starts a category whenever NavGroup changes; the registry test
-//   requires each NavGroup to be one contiguous run. NavPlacement is the enum constant Top
-//   (default) or Bottom. Bottom pins that group in the lower nav. One named group uses one
-//   placement. Description, NavGroup, NavOrder and NavPlacement accept any compile-time constant
-//   (a const field reads like a literal). NavPlacement uses that constant's underlying value:
-//   1 is Bottom. A member, a const field, a using-static name, and a cast all count when the
-//   constant is known. The generated enum is not in this compilation, so an unbound
-//   NavPlacement.Bottom (or a using-static Bottom) is read by that name. A known value other
-//   than 1 stays Top.
+//   requires each NavGroup to be one contiguous run. NavPlacement is Top (default) or Bottom.
+//   Bottom pins that group in the lower nav. One named group uses one placement. Description,
+//   NavGroup and NavOrder accept any compile-time constant. NavPlacement does not: this
+//   generator emits the enum, so the syntax pass never binds it and GetConstantValue has no
+//   value for a NavPlacement member. Bottom is an unbound NavPlacement.Bottom, a using-static
+//   Bottom, a const field followed to an initializer that is one of those, or a cast (or a bare
+//   integer) whose constant value is 1. The same forms with Top, or any other known value, stay
+//   Top. Any other shape stays Top, with no diagnostic.
 //   The enum is emitted internal next to [Page]. Every project that references this generator
 //   gets that attribute, and several share a root namespace, so a public enum would collide.
 //   The registry stores it on an internal init property for the same reason.
@@ -88,6 +88,7 @@ using System.Text.RegularExpressions;
 public sealed partial class PageSourceGenerator : IIncrementalGenerator
 {
   private const string AttributeName = "Page";
+  private const int NavPlacementWalkLimit = 8;
 
   // {name:type}? — page route tokens carry real C# type names (Guid, int, …), used directly.
   // An untyped token ({name}) is a string; the previous greedy pattern split its name instead.
@@ -683,50 +684,155 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     return sb.ToString();
   }
 
-  // Bottom is underlying value 1. A known constant (member, const field, using-static name, or
-  // cast) uses that value. The generated enum is not in this compilation, so an unbound
-  // NavPlacement.Bottom, or a using-static Bottom, is read by name.
-  private static bool IsNavPinBottom(SemanticModel semanticModel, ExpressionSyntax expression)
-  {
-    Optional<object?> constant = semanticModel.GetConstantValue(expression);
-    if (constant.HasValue && constant.Value is not null)
-    {
-      if (constant.Value is not IConvertible convertible || constant.Value is string)
-      {
-        return false;
-      }
+  // 1 is Bottom. The generated enum is not in this compilation, so a NavPlacement member has no
+  // constant value. A const field is followed to its initializer. A cast is read from its operand.
+  // An unbound NavPlacement.Bottom, or a using-static Bottom, is read by that name. Any other
+  // shape stays Top.
+  private static bool IsNavPinBottom(SemanticModel semanticModel, ExpressionSyntax expression) =>
+    ReadNavPlacementValue(semanticModel, expression, 0) == 1;
 
-      try
-      {
-        return convertible.ToInt64(CultureInfo.InvariantCulture) == 1;
-      }
-      catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException)
-      {
-        return false;
-      }
+  private static long? ReadNavPlacementValue(SemanticModel semanticModel, ExpressionSyntax expression, int depth)
+  {
+    if (depth > NavPlacementWalkLimit)
+    {
+      return null;
     }
 
-    return UnboundNavPlacementName(expression) == "Bottom";
+    ExpressionSyntax current = expression;
+    while (current is ParenthesizedExpressionSyntax parenthesized)
+    {
+      current = parenthesized.Expression;
+    }
+
+    if (current is CheckedExpressionSyntax checkedExpression)
+    {
+      return ReadNavPlacementValue(semanticModel, checkedExpression.Expression, depth + 1);
+    }
+
+    if (TryReadIntegralConstant(semanticModel, current, out long known))
+    {
+      return known;
+    }
+
+    if (current is CastExpressionSyntax cast)
+    {
+      return ReadNavPlacementValue(semanticModel, cast.Expression, depth + 1);
+    }
+
+    if (FindConstFieldInitializer(semanticModel, current) is { } initializer)
+    {
+      return ReadNavPlacementValue(initializer.SemanticModel, initializer.Expression, depth + 1);
+    }
+
+    return UnboundNavPlacementValue(semanticModel, current);
   }
 
-  private static string? UnboundNavPlacementName(SyntaxNode expression)
+  private static bool TryReadIntegralConstant(SemanticModel semanticModel, ExpressionSyntax expression, out long value)
   {
-    if (expression is ParenthesizedExpressionSyntax parenthesized)
+    value = 0;
+    Optional<object?> constant = semanticModel.GetConstantValue(expression);
+    if (!constant.HasValue || constant.Value is not (byte or sbyte or short or ushort or int or uint or long or ulong or Enum))
     {
-      return UnboundNavPlacementName(parenthesized.Expression);
+      return false;
     }
 
-    if (expression is MemberAccessExpressionSyntax member)
+    try
     {
-      return member.Name.Identifier.Text;
+      value = Convert.ToInt64(constant.Value, CultureInfo.InvariantCulture);
+      return true;
+    }
+    catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException)
+    {
+      return false;
+    }
+  }
+
+  private static (ExpressionSyntax Expression, SemanticModel SemanticModel)? FindConstFieldInitializer
+  (
+    SemanticModel semanticModel,
+    ExpressionSyntax expression
+  )
+  {
+    SymbolInfo info = semanticModel.GetSymbolInfo(expression);
+    ISymbol? symbol = info.Symbol;
+    if (symbol is null && info.CandidateSymbols.Length == 1)
+    {
+      symbol = info.CandidateSymbols[0];
+    }
+
+    if (symbol is not IFieldSymbol { IsConst: true } field)
+    {
+      return null;
+    }
+
+    foreach (SyntaxReference reference in field.DeclaringSyntaxReferences)
+    {
+      if (reference.GetSyntax() is not VariableDeclaratorSyntax declarator)
+      {
+        continue;
+      }
+
+      if (declarator.Initializer?.Value is not ExpressionSyntax value)
+      {
+        continue;
+      }
+
+      SemanticModel initializerModel = value.SyntaxTree == semanticModel.SyntaxTree
+        ? semanticModel
+        : semanticModel.Compilation.GetSemanticModel(value.SyntaxTree);
+      return (value, initializerModel);
+    }
+
+    return null;
+  }
+
+  private static long? UnboundNavPlacementValue(SemanticModel semanticModel, ExpressionSyntax expression)
+  {
+    SymbolInfo info = semanticModel.GetSymbolInfo(expression);
+    if (info.Symbol is not null || info.CandidateSymbols.Length > 0)
+    {
+      return null;
     }
 
     if (expression is IdentifierNameSyntax identifier)
     {
-      return identifier.Identifier.Text;
+      return PlacementValue(identifier.Identifier.Text);
+    }
+
+    if (expression is MemberAccessExpressionSyntax member && IsNavPlacementTypeName(member.Expression))
+    {
+      return PlacementValue(member.Name.Identifier.Text);
     }
 
     return null;
+  }
+
+  private static long? PlacementValue(string name) => name switch
+  {
+    "Bottom" => 1,
+    "Top" => 0,
+    _ => null
+  };
+
+  private static bool IsNavPlacementTypeName(ExpressionSyntax expression)
+  {
+    ExpressionSyntax current = expression;
+    while (current is MemberAccessExpressionSyntax member)
+    {
+      if (member.Name.Identifier.Text == "NavPlacement")
+      {
+        return true;
+      }
+
+      current = member.Expression;
+    }
+
+    return current switch
+    {
+      IdentifierNameSyntax identifier => identifier.Identifier.Text == "NavPlacement",
+      AliasQualifiedNameSyntax alias => alias.Name.Identifier.Text == "NavPlacement",
+      _ => false
+    };
   }
 
   // Roslyn's own literal formatter escapes quotes, backslashes, and control characters such as

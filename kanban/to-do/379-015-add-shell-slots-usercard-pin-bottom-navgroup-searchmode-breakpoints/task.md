@@ -24,6 +24,10 @@ Fix pass after review round 1: the shell card shows the profile alias on every r
 
 Acceptance for this pass: those seven findings are fixed, and the render, generator, breakpoint, and Playwright checks that cover them pass along with the gates above.
 
+Fix pass after review round 2: the generator emits `NavPlacement`, so the syntax pass never binds that enum and a constant value is never there to read. A const field is followed to its initializer. A cast is read from its operand. `NavPlacement.Bottom` and a using-static `Bottom` still pin the group. A known value other than 1, and any other shape, stays Top. The tests for those forms do not declare the enum. The rail watcher is one handle per menu. `watch` returns that handle, and disposing the menu removes only that listener.
+
+Acceptance for this pass: M2 and M8 are fixed. The generator tests cover the member, the const field, and the cast without a source enum. The rail file check, the Playwright rail check, and the gates above still pass.
+
 ## Checklist
 
 - [x] `UserCard` composite and shell slot, including the signed-in default and `ShowUserCard`
@@ -34,6 +38,7 @@ Acceptance for this pass: those seven findings are fixed, and the render, genera
 - [x] Style-guide card. Render tests. Generator test. Breakpoint file test
 - [x] `./bin/dev build`, `./bin/dev template-smoke`, `ganda repo audit`, no client name in the source or test diff
 - [x] Review round 1 findings: alias on each render, constant `NavPlacement`, menu scroll, rail names and tooltip, Playwright rail, one user-card padding rule, nav width token
+- [x] Review round 2: `NavPlacement` without a source enum (const field, cast, member name), one rail watch handle per menu
 
 ## Session
 
@@ -44,6 +49,7 @@ Acceptance for this pass: those seven findings are fixed, and the render, genera
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T23:32:52Z
 - Fix pass: 2026-10-24 (implement-fix-2). Alias on each render, `NavPlacement` by constant value, menu scroll, rail clip and tooltip, Playwright at 1024×700.
 - Review oracle round 2: general reviewer (claude, Claude Opus 5.5), effort 2, headless (no session id reported), 2026-10-24. Scope `b6bd9ba6d..27b7623a9`. M1 and M3–M7 are fixed. M2 is still open, and M8 (nit) is new. A fix pass was requested.
+- Fix pass: 2026-10-24 (implement-fix-3, grok session 01a16b53-3118-75c0-9b46-322a01cff8a9). `NavPlacement` follows a const initializer and a cast operand. `shell-rail.ts` returns one watch handle per menu.
 
 ## Review
 
@@ -65,7 +71,9 @@ A generated app can pin the signed-in identity and one nav group to the bottom o
 - Widths: `--twe-shell-nav-width` 240px from 1280px up, `--twe-shell-rail-width` 68px from 880px through 1279px, Fluent drawer below 880. Media queries repeat 880 and 1279 because a custom property cannot sit in a media condition.
 - The style guide shows a linked card and a static card, and names the search modes and the three widths.
 
-Review round 1 is addressed on this branch. The card name is computed on each render from the profile alias, then the identity name, then "Account". `NavPlacement` uses the constant's underlying value (`1` is Bottom). The generated enum is not in the generator input, so an unbound `NavPlacement.Bottom` still pins the group, and a known member whose value is 0 stays Top. The menu scrolls inside the column (`overflow-y: auto`). In the rail, labels and the card name are clipped rather than removed, and `shell-rail.ts` sets the link title only while the viewport is that rail. Categories have no icon; the expand chevron is their mark. The duplicated `::deep` user-card padding is gone. The navigation item width is `var(--twe-shell-nav-width)`.
+Review round 1 is addressed on this branch. The card name is computed on each render from the profile alias, then the identity name, then "Account". The menu scrolls inside the column (`overflow-y: auto`). In the rail, labels and the card name are clipped rather than removed, and the link title is set only while the viewport is that rail. Categories have no icon; the expand chevron is their mark. The duplicated `::deep` user-card padding is gone. The navigation item width is `var(--twe-shell-nav-width)`.
+
+Review round 2 is addressed on this branch. The generator emits `NavPlacement`, so the syntax pass never binds it. Bottom is an unbound `NavPlacement.Bottom`, a using-static `Bottom`, a const field followed to an initializer that is one of those, or a cast or bare integer whose constant value is 1. The same forms with Top, or any other known value, stay Top. Any other shape stays Top, with no diagnostic. The generator tests do not declare the enum. `watch` returns a handle for one menu. `stop` removes that handle's listener. Disposing one menu leaves another menu's listener in place.
 
 Playwright at 1024×700 measured the nav at 68px, the label at 1px, `overflow-y: auto`, no overlap between the menu and the card, and a GitHub link whose title and accessible name are "GitHub". Widening to 1400×800 measured the nav at 240px, a visible label, and no title attribute.
 
@@ -88,18 +96,18 @@ git diff origin/master -- source tests | rg -i crunchit
 
 **Expect:**
 
-- `PageSourceGenerator_Tests`: 36 passed, 0 failed (1s 057ms).
-- `UserCard_Should_`: 5 passed, 0 failed (98ms).
-- `TimeWarpPage_Should_`: 14 passed, 0 failed (516ms).
-- `ShellBreakpoints_Should_`: 1 passed, 0 failed (63ms).
-- `NavigationDestinations_`: 7 passed, 0 failed (383ms). Developer placement is Bottom. Menu href order:
+- `PageSourceGenerator_Tests`: 36 passed, 0 failed (1s 158ms). The const field, the chained const, the using-static name, the cast, the cast of a const int, and the bare `1` pin Bottom. Top, a cast of 0, a cast of 2, and `Foo.Bottom` stay Top. None of those tests declare the enum.
+- `UserCard_Should_`: 5 passed, 0 failed (98ms) on the prior pass. This diff does not change the card.
+- `TimeWarpPage_Should_`: 14 passed, 0 failed (487ms).
+- `ShellBreakpoints_Should_`: 1 passed, 0 failed (63ms). The rail source has no module-level `stop` or `let query`, and `NavMenu` disposes the watch handle.
+- `NavigationDestinations_`: 7 passed, 0 failed (383ms) on the prior pass. This diff does not change menu order. Developer placement is Bottom. Menu href order:
   - Administrator: `/,/Settings,/Profile,/AgentLinks,/Feedback,/Admin/Roles,/Admin/Principals,/Admin/Feedback,/Admin/Authentication,/Admin/AI,/Counter,/WeatherForecasts,/Superheros,/Chat,/Passkeys,/StyleGuide,/Debugger/Test,/Services,/Developer/UserClaims`
   - PlainUser: `/,/Settings,/Profile,/AgentLinks,/Feedback`
   - Developer: `/,/Counter,/WeatherForecasts,/Superheros,/Chat,/Passkeys,/StyleGuide,/Debugger/Test,/Services,/Developer/UserClaims`
   - Anonymous: `/`
-- `FirstPaint_Given_PrerenderedShell`: 3 passed, 0 failed (5s 813ms). The settled first-paint checks still pass. At 1024×700 the nav is 68px, the clipped label is 1px wide, the menu does not overlap the card, and the GitHub link's title and accessible name are "GitHub". At 1400×800 the nav is 240px, the label is visible, and the title attribute is absent.
-- `./bin/dev build`: Build succeeded. 0 Warning(s). 0 Error(s). Time Elapsed 00:00:06.35.
-- `./bin/dev template-smoke`: Template smoke SUCCEEDED. SmokeDefault OK. Standalone 5/5, 5/5, 2/2. web-jaribu-tests 405/405. api-jaribu-tests 9/9. timewarp-testing-tests 14/14. Generated build 0 Warning(s), 0 Error(s), Time Elapsed 00:00:12.58.
+- `FirstPaint_Given_PrerenderedShell`: 3 passed, 0 failed (5s 730ms). The settled first-paint checks still pass. At 1024×700 the nav is 68px, the clipped label is 1px wide, the menu does not overlap the card, and the GitHub link's title and accessible name are "GitHub". At 1400×800 the nav is 240px, the label is visible (45px), and the title attribute is absent.
+- `./bin/dev build`: Build succeeded. 0 Warning(s). 0 Error(s). Time Elapsed 00:00:05.04.
+- `./bin/dev template-smoke`: Template smoke SUCCEEDED. SmokeDefault OK. Standalone 5/5, 5/5, 2/2. web-jaribu-tests 405/405. api-jaribu-tests 9/9. timewarp-testing-tests 14/14. Generated build 0 Warning(s), 0 Error(s), Time Elapsed 00:00:11.84.
 - `ganda repo audit`: Passed 33, Failed 0, Skipped 1. Repository passes all audit checks.
 - Client-name scan of `git diff origin/master -- source tests` prints nothing.
 
@@ -122,5 +130,9 @@ git diff origin/master -- source tests | rg -i crunchit
   instead of returning a per-instance handle.
 - Final counts after round 2: bug 1 open / 2 fixed, suggestion 0 open / 2 fixed, nit 1 open /
   2 fixed. No disposition yet.
+- This fix pass implements M2 and M8. A const field is followed to its initializer, and a cast
+  is read from its operand, with the enum absent from the test source. `watch` returns a handle
+  and `NavMenu.DisposeAsync` stops that handle. Round 3 is the host's next review. The round 2
+  artifacts are unchanged.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/round-2/general.md`, `review/round-2/merged.md`.

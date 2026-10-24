@@ -43,6 +43,15 @@ public class ShellBreakpoints_Should_
     string cardCss = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/composites/UserCard.razor.css"));
     cardCss.ShouldContain(MediaQuery);
     cardCss.ShouldContain("clip: rect(0, 0, 0, 0);");
+
+    string rail = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/source/features/shell-rail.ts"));
+    rail.ShouldNotContain("export function stop");
+    rail.ShouldContain("stop(): void");
+    rail.ShouldNotContain("let query");
+
+    string menu = File.ReadAllText(Path.Combine(root, "source/container-apps/web/projects/web-spa/components/NavMenu.razor"));
+    menu.ShouldContain("\"watch\"");
+    menu.ShouldContain("InvokeVoidAsync(\"stop\")");
     return Task.CompletedTask;
   }
 

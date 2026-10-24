@@ -20,7 +20,8 @@
   // External category is plain links to other sites, not app pages, and it shares the pinned nav.
   // A category has no icon. In the rail its title is collapsed and the expand chevron is the mark.
   // Link text stays in the tree (clipped, not display:none). The title tooltip is set only while
-  // the viewport is the rail, so a full-width label is not repeated. Destinations are re-read
+  // the viewport is the rail, so a full-width label is not repeated. shell-rail watch returns a
+  // handle for this menu, and DisposeAsync stops that handle only. Destinations are re-read
   // only when the cascaded authentication state task is replaced (sign-in and sign-out), not on
   // every parent render.
 
@@ -38,7 +39,9 @@
 
   private bool Rail;
 
-  private IJSObjectReference? RailModule;
+  private bool RailDisposed;
+
+  private IJSObjectReference? RailWatch;
 
   private DotNetObjectReference<NavMenu>? RailHost;
 
@@ -69,17 +72,31 @@
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (!firstRender || !RendererInfo.IsInteractive || RailModule is not null)
+    if (!firstRender || !RendererInfo.IsInteractive || RailWatch is not null || RailDisposed)
     {
       return;
     }
 
+    IJSObjectReference? module = null;
+    DotNetObjectReference<NavMenu>? host = null;
     try
     {
-      RailHost = DotNetObjectReference.Create(this);
-      RailModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/features/shell-rail.js");
-      bool rail = await RailModule.InvokeAsync<bool>("watch", RailHost);
-      if (rail)
+      host = DotNetObjectReference.Create(this);
+      module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/features/shell-rail.js");
+      IJSObjectReference watch = await module.InvokeAsync<IJSObjectReference>("watch", host);
+      if (RailDisposed)
+      {
+        await watch.InvokeVoidAsync("stop");
+        await watch.DisposeAsync();
+        host.Dispose();
+        return;
+      }
+
+      RailHost = host;
+      host = null;
+      RailWatch = watch;
+      bool rail = await RailWatch.InvokeAsync<bool>("matches");
+      if (!RailDisposed && rail)
       {
         Rail = true;
         StateHasChanged();
@@ -87,7 +104,21 @@
     }
     catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
     {
+      host?.Dispose();
       Rail = false;
+    }
+    finally
+    {
+      if (module is not null)
+      {
+        try
+        {
+          await module.DisposeAsync();
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+        }
+      }
     }
   }
 
@@ -105,12 +136,14 @@
 
   public async ValueTask DisposeAsync()
   {
+    RailDisposed = true;
     try
     {
-      if (RailModule is not null)
+      if (RailWatch is not null)
       {
-        await RailModule.InvokeVoidAsync("stop");
-        await RailModule.DisposeAsync();
+        await RailWatch.InvokeVoidAsync("stop");
+        await RailWatch.DisposeAsync();
+        RailWatch = null;
       }
     }
     catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
@@ -118,6 +151,7 @@
     }
 
     RailHost?.Dispose();
+    RailHost = null;
   }
 
   private static void AddTo
