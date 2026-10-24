@@ -5,7 +5,8 @@
 #region Design
 // Anonymous focused chrome (same as Login). Parked Entra claims are server-side; this page
 // only peeks validity (SignInState.FetchMicrosoft365Choice) and dispatches create vs already-have
-// (CreateAccountFromMicrosoft365 / UseExistingAccountForMicrosoft365). The handlers notify
+// (CreateAccountFromMicrosoft365 / UseExistingAccountForMicrosoft365). Already-have is the passkey
+// proof, so SignInOptions hides it unless Mode is Passkey. The handlers notify
 // IdentitySessionAuthenticationStateProvider before navigating; already-have reuses
 // StartPasskeyAuthentication then CompleteEntraBootstrapExisting so the Entra attach and session
 // happen together. "Sign in again" is a RouteState.ChangeRoute to Login. The page injects no

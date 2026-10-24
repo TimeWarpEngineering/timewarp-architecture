@@ -23,7 +23,8 @@
   RFC 219 D8 / 219-006: AddPasskeyPrompt sits above ChildContent so post-login Home and
   Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
   mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
-  hosts this prompt. Soft dismiss is not a gate.
+  hosts this prompt. Soft dismiss is not a gate. SignInOptions.Mode other than Passkey
+  omits the prompt and does not hide ChildContent: those apps sign in with Microsoft 365.
   MessageBars sits above that prompt: it is the ONE notification region per page (task 247),
   painting NotificationState rows (pipeline failures, handler outcomes, AddNotification)
   directly below the breadcrumb and above the first card, without a toast provider. Pages
@@ -69,8 +70,15 @@
 
 @code {
   [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+  [Inject] private IOptions<SignInOptions> SignInOptionsAccessor { get; set; } = null!;
 
   private BrandOptions Brand => BrandOptionsAccessor.Value;
+  private SignInOptions SignIn => SignInOptionsAccessor.Value;
+
+  private bool BlockForPasskey =>
+    SignIn.OffersPasskey
+    && SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
+    && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false);
 
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? Description { get; set; }
@@ -214,9 +222,11 @@
           <div class="twe-page__body">
             <WebMcpAgentSurface />
             <MessageBars />
-            <AddPasskeyPrompt />
-            @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
-              && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))
+            @if (SignIn.OffersPasskey)
+            {
+              <AddPasskeyPrompt />
+            }
+            @if (!BlockForPasskey)
             {
               @ChildContent
             }

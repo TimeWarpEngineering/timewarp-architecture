@@ -1,0 +1,75 @@
+@namespace TimeWarp.Architecture.Features.Identity
+
+@*
+  Purpose: The login card's actions for the configured sign-in mode.
+
+  Design: Passkey keeps the passkey button, optional Microsoft 365, and account creation.
+  Microsoft365Only and Staff hide passkey and account creation. Staff adds the staff-only line.
+  When those modes are selected and Microsoft 365 is not offered, the card says so and does not
+  fall back to a passkey. The page supplies the clicks. This component does not dispatch.
+*@
+
+@code {
+  [Parameter] public SignInOptions SignIn { get; set; } = new();
+
+  [Parameter] public bool Microsoft365Offered { get; set; }
+
+  [Parameter] public bool IsBusy { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnPasskey { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnCreateAccount { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnMicrosoft365 { get; set; }
+}
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+  @if (SignIn.ShowsWorkAccountLead)
+  {
+    <p class="twe-login-lead" data-qa="SignInLead">@SignInOptions.WorkAccountLead</p>
+  }
+
+  @if (SignIn.OffersPasskey)
+  {
+    <FluentButton Appearance="ButtonAppearance.Primary"
+                  data-qa="ContinueWithPasskey"
+                  Disabled="IsBusy"
+                  OnClick="OnPasskey">
+      Sign in with a passkey
+    </FluentButton>
+  }
+
+  @if (Microsoft365Offered)
+  {
+    <FluentButton Appearance="@(SignIn.OffersPasskey ? ButtonAppearance.Outline : ButtonAppearance.Primary)"
+                  data-qa="ContinueWithMicrosoft365"
+                  Disabled="IsBusy"
+                  OnClick="OnMicrosoft365">
+      Continue with Microsoft 365
+    </FluentButton>
+  }
+  else if (SignIn.ShowMicrosoft365Unavailable(Microsoft365Offered))
+  {
+    <p class="twe-login-lead" data-qa="Microsoft365Unavailable">@SignInOptions.Microsoft365UnavailableMessage</p>
+  }
+
+  @if (SignIn.ShowsStaffNote)
+  {
+    <p class="twe-login-note" data-qa="SignInStaffNote">@SignInOptions.StaffNote</p>
+  }
+
+  @if (SignIn.OffersPasskey)
+  {
+    <hr class="twe-login-divider" />
+
+    <p class="twe-login-create">
+      Don't have an account?
+      <FluentButton Appearance="ButtonAppearance.Outline"
+                    data-qa="CreatePasskey"
+                    Disabled="IsBusy"
+                    OnClick="OnCreateAccount">
+        Create account
+      </FluentButton>
+    </p>
+  }
+</FluentStack>

@@ -1,9 +1,12 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
+@inject IOptions<SignInOptions> SignInOptionsAccessor
 
 @code {
   public static string Title => "Microsoft 365 account";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
+
+  private SignInOptions SignIn => SignInOptionsAccessor.Value;
 
   private bool IsBusy => ActionTrackingState.IsActive;
   private bool? IsValid => SignInState.Microsoft365ChoiceValid;
@@ -48,19 +51,33 @@
       else
       {
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-          <p>This Microsoft 365 account is not linked yet. Create a new account, or prove you already have one with a passkey.</p>
+          @if (SignIn.OffersPasskey)
+          {
+            <p>This Microsoft 365 account is not linked yet. Create a new account, or prove you already have one with a passkey.</p>
+          }
+          else
+          {
+            <p>This Microsoft 365 account is not linked yet. Create a new account to continue.</p>
+          }
+          @if (SignIn.ShowsStaffNote)
+          {
+            <p data-qa="ChooseStaffNote">@SignInOptions.StaffNote</p>
+          }
           <FluentButton Appearance="ButtonAppearance.Primary"
                         data-qa="CreateNewAccount"
                         Disabled="IsBusy"
                         OnClick="CreateNewAccount">
             Create a new account
           </FluentButton>
-          <FluentButton Appearance="ButtonAppearance.Outline"
-                        data-qa="AlreadyHaveAccount"
-                        Disabled="IsBusy"
-                        OnClick="AlreadyHaveAccount">
-            I already have an account
-          </FluentButton>
+          @if (SignIn.OffersPasskey)
+          {
+            <FluentButton Appearance="ButtonAppearance.Outline"
+                          data-qa="AlreadyHaveAccount"
+                          Disabled="IsBusy"
+                          OnClick="AlreadyHaveAccount">
+              I already have an account
+            </FluentButton>
+          }
         </FluentStack>
       }
     </Card>
