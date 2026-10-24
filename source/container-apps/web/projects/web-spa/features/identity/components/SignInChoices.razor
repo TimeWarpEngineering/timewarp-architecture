@@ -6,8 +6,9 @@
   Design: Buttons follow SignInMethod declaration order. Passkey, when offered, is the primary
   button and keeps account creation. Microsoft 365 is outline beside passkey and primary when it
   is the only method. A completed empty list is the work-account lead plus the unavailable line
-  and no buttons. Null (not loaded, or the read failed) paints nothing. This component does not
-  dispatch. Copy is generic; no product or client name.
+  and no buttons. Null while the read has not finished paints nothing. A completed failure
+  (LoadFailed, list still null) shows one line and a retry. This component does not dispatch.
+  Copy is generic; no product or client name.
 *@
 
 @code {
@@ -21,6 +22,10 @@
 
   [Parameter] public EventCallback<MouseEventArgs> OnMicrosoft365 { get; set; }
 
+  [Parameter] public bool LoadFailed { get; set; }
+
+  [Parameter] public EventCallback<MouseEventArgs> OnRetry { get; set; }
+
   private bool Loaded => Methods is not null;
 
   private bool Passkey => Methods?.Contains(SignInMethod.Passkey) == true;
@@ -30,6 +35,18 @@
   private bool WorkAccountLead => Loaded && !Passkey;
 }
 
+@if (LoadFailed && !Loaded)
+{
+  <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+    <p class="twe-login-lead" data-qa="SignInOptionsLoadFailed">Sign-in options could not be loaded.</p>
+    <FluentButton Appearance="ButtonAppearance.Outline"
+                  data-qa="RetrySignInOptions"
+                  Disabled="IsBusy"
+                  OnClick="OnRetry">
+      Try again
+    </FluentButton>
+  </FluentStack>
+}
 @if (Loaded)
 {
   <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">

@@ -5,7 +5,8 @@
 #region Design
 // SignInChoices hosts Fluent buttons, so the renderer needs FluentUI services and a no-op JS
 // runtime. The component injects nothing. Buttons follow SignInMethod declaration order.
-// Null paints nothing. An empty list is the work-account lead plus the unavailable line.
+// Null paints nothing. A completed failure shows the load-failed line and a retry.
+// An empty list is the work-account lead plus the unavailable line.
 // Passkey is primary and keeps account creation. Microsoft 365 is outline beside passkey and
 // primary when it is the only method.
 #endregion
@@ -35,6 +36,18 @@ public class SignInChoices_Should_
     html.ShouldNotContain("data-qa=\"ContinueWithMicrosoft365\"");
     html.ShouldNotContain("data-qa=\"SignInLead\"");
     html.ShouldNotContain("data-qa=\"Microsoft365Unavailable\"");
+  }
+
+  public static async Task Render_A_Retry_When_The_Read_Failed()
+  {
+    string html = await RenderAsync(methods: null, loadFailed: true);
+    html.ShouldContain("data-qa=\"SignInOptionsLoadFailed\"");
+    html.ShouldContain("Sign-in options could not be loaded.");
+    html.ShouldContain("data-qa=\"RetrySignInOptions\"");
+    html.ShouldContain("Try again");
+    html.ShouldNotContain("data-qa=\"ContinueWithPasskey\"");
+    html.ShouldNotContain("data-qa=\"ContinueWithMicrosoft365\"");
+    html.ShouldNotContain("data-qa=\"SignInLead\"");
   }
 
   public static async Task Render_The_Unavailable_Line_For_An_Empty_List()
@@ -90,11 +103,12 @@ public class SignInChoices_Should_
     }
   }
 
-  private static async Task<string> RenderAsync(IReadOnlyList<SignInMethod>? methods)
+  private static async Task<string> RenderAsync(IReadOnlyList<SignInMethod>? methods, bool loadFailed = false)
   {
     Dictionary<string, object?> parameters = new()
     {
-      ["Methods"] = methods
+      ["Methods"] = methods,
+      ["LoadFailed"] = loadFailed
     };
     await using ServiceProvider services = Services();
     await using HtmlRenderer renderer = new(services, NullLoggerFactory.Instance);

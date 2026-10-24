@@ -66,6 +66,8 @@
   private Task CreatePasskey() => NoSubSignInState.CreateAccountWithPasskey(GetSafeReturnUrl(ReturnUrl));
 
   private Task ContinueWithMicrosoft365() => NoSubSignInState.SignInWithMicrosoft365(GetSafeReturnUrl(ReturnUrl));
+
+  private Task RetryOfferedMethods() => NoSubSignInState.FetchOfferedSignInMethods();
 }
 
 <PageTitle>Sign in</PageTitle>
@@ -75,9 +77,11 @@
     <Card Title="Sign in">
       <SignInChoices Methods="SignInState.OfferedMethods"
                      IsBusy="IsBusy"
+                     LoadFailed="SignInState.OfferedMethodsFailed"
                      OnPasskey="ContinueWithPasskey"
                      OnCreateAccount="CreatePasskey"
-                     OnMicrosoft365="ContinueWithMicrosoft365" />
+                     OnMicrosoft365="ContinueWithMicrosoft365"
+                     OnRetry="RetryOfferedMethods" />
     </Card>
   </div>
 </TimeWarpFocusedPage>

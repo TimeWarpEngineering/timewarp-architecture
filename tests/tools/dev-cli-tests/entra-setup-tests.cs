@@ -376,3 +376,65 @@ public class MintClientSecretMessages_Given_
     return Task.CompletedTask;
   }
 }
+
+public class Microsoft365MethodList_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<Microsoft365MethodList_Given_>();
+
+  public static Task EmptySecrets_Beside_Passkey_Should_AppendAtTheNextIndex()
+  {
+    Dictionary<string, string> secrets = [];
+    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
+      .ShouldBe(EntraSetup.SignInMethodsPrefix + "1");
+    EntraSetup.Microsoft365MethodKeysToRemove(secrets).ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task CheckedIn_Microsoft365_Should_WriteNothing()
+  {
+    EntraSetup.Microsoft365MethodKeyToAdd([EntraSetup.Microsoft365MethodName], new Dictionary<string, string>())
+      .ShouldBeNull();
+    return Task.CompletedTask;
+  }
+
+  public static Task Secret_Index_Zero_Microsoft365_Should_Stay()
+  {
+    Dictionary<string, string> secrets = new(StringComparer.Ordinal)
+    {
+      [EntraSetup.PasskeyMethodKey] = EntraSetup.Microsoft365MethodName
+    };
+    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets).ShouldBeNull();
+    EntraSetup.MergeSignInMethods(["Passkey"], secrets).ShouldBe([EntraSetup.Microsoft365MethodName]);
+    EntraSetup.Microsoft365MethodKeysToRemove(secrets).ShouldBe([EntraSetup.PasskeyMethodKey]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Later_Secret_Index_Should_Append_Past_It()
+  {
+    Dictionary<string, string> secrets = new()
+    {
+      [EntraSetup.SignInMethodsPrefix + "3"] = "Passkey"
+    };
+    EntraSetup.Microsoft365MethodKeyToAdd(["Passkey"], secrets)
+      .ShouldBe(EntraSetup.SignInMethodsPrefix + "4");
+    return Task.CompletedTask;
+  }
+
+  public static Task CheckedIn_File_Should_Read_The_Methods_Array()
+  {
+    string path = Path.Combine(Path.GetTempPath(), "sign-in-methods-" + Guid.NewGuid().ToString("N") + ".json");
+    File.WriteAllText(path, """{"SignInOptions":{"Methods":["Passkey"]}}""");
+    try
+    {
+      EntraSetup.ReadCheckedInSignInMethods(path).ShouldBe(["Passkey"]);
+      EntraSetup.ReadCheckedInSignInMethods(path + ".missing").ShouldBeEmpty();
+    }
+    finally
+    {
+      File.Delete(path);
+    }
+
+    return Task.CompletedTask;
+  }
+}

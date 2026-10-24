@@ -264,6 +264,27 @@ public partial class KubernetesPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static Task Publish_Should_AppendMicrosoft365FromAParameter()
+  {
+    if (!Workloads().Any(workload => Component(workload) == WebServerComponent))
+    {
+      return Task.CompletedTask;
+    }
+
+    string templates = string.Join(
+      '\n',
+      Directory.EnumerateFiles(Path.Combine(OutputDirectory, "templates"), "*.yaml", SearchOption.AllDirectories)
+        .Select(File.ReadAllText));
+    int at = templates.IndexOf("SignInOptions__IncludeMicrosoft365", StringComparison.Ordinal);
+    at.ShouldBeGreaterThan(-1);
+    string window = templates.Substring(at, Math.Min(400, templates.Length - at));
+    window.ShouldContain(".Values");
+    window.ShouldNotContain("Passkey");
+    templates.ShouldNotContain("SignInOptions__Methods__0");
+    templates.ShouldNotContain("SignInOptions__Methods__1");
+    return Task.CompletedTask;
+  }
+
   public static async Task RunMode_Should_CarryNoKubernetesWiring()
   {
     // Publish-only: the dev loop's model has no Kubernetes environment and none of its parameters,

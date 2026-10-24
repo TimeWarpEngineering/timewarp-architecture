@@ -4,7 +4,8 @@
 
 #region Design
 // OfferedMethods starts null. A successful read stores the list (possibly empty). A failure leaves
-// it null so the card invents no buttons and the required-passkey gate does not block. The server
+// it null and sets OfferedMethodsFailed so the card can say the read failed, and the
+// required-passkey gate does not block. The server
 // remains the authority: passkey ceremonies 403 when Passkey is not listed, and the Entra challenge
 // 404s when Microsoft365 is not listed.
 #endregion
@@ -26,6 +27,7 @@ partial class SignInState
       {
         IReadOnlyList<SignInMethod>? methods = await LoadMethodsAsync(cancellationToken);
         SignInState.OfferedMethodList = methods is null ? null : [.. methods];
+        SignInState.OfferedMethodsFailed = methods is null;
       }
 
       private async Task<IReadOnlyList<SignInMethod>?> LoadMethodsAsync(CancellationToken cancellationToken)

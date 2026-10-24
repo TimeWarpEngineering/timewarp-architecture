@@ -169,6 +169,16 @@ public partial class AcaNeonPublish_Given_
     string webServer = ModuleContaining("name: 'web-server'");
     webServer.ShouldContain("WebAuthnOptions__AllowedRpIds__0");
     webServer.ShouldContain("ingress.${aca_env_outputs_azure_container_apps_environment_default_domain}");
+    int includeAt = webServer.IndexOf("name: 'SignInOptions__IncludeMicrosoft365'", StringComparison.Ordinal);
+    includeAt.ShouldBeGreaterThan(-1);
+    int valueAt = webServer.IndexOf("value:", includeAt, StringComparison.Ordinal);
+    valueAt.ShouldBeGreaterThan(includeAt);
+    int lineEnd = webServer.IndexOf('\n', valueAt, StringComparison.Ordinal);
+    string value = webServer[valueAt..lineEnd]["value:".Length..].Trim();
+    value.StartsWith('\'', StringComparison.Ordinal).ShouldBeFalse(value);
+    value.Contains("entra", StringComparison.OrdinalIgnoreCase).ShouldBeTrue(value);
+    webServer.ShouldNotContain("SignInOptions__Methods__0");
+    webServer.ShouldNotContain("SignInOptions__Methods__1");
 #endif
 #endif
     await Task.CompletedTask;

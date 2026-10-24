@@ -244,6 +244,21 @@ public partial class ComposePublish_Given_
     await Task.CompletedTask;
   }
 
+  public static async Task Publish_Should_AppendMicrosoft365FromAParameter()
+  {
+    if (!ServiceNames().Contains(WebServerService))
+    {
+      return;
+    }
+
+    Dictionary<string, string> environment = ServiceEnvironment(WebServerService);
+    environment["SignInOptions__IncludeMicrosoft365"].ShouldBe("${ENTRA_ENABLED}");
+    environment.ShouldNotContainKey("SignInOptions__Methods__0");
+    environment.ShouldNotContainKey("SignInOptions__Methods__1");
+    EnvFile.ShouldContainKey("ENTRA_ENABLED");
+    await Task.CompletedTask;
+  }
+
   public static async Task RunMode_Should_CarryNoPublishOnlyWiring()
   {
     // Publish-only: the dev loop's model keeps its external web-server endpoint and gains none of

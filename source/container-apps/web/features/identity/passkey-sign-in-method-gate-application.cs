@@ -5,7 +5,8 @@
 #region Design
 // Registered at order 400, outside FluentValidationBehavior (500), so the refusal runs before
 // validation and before the handler. Start endpoints therefore create no WebAuthn ceremony state.
-// The six passkey ceremony commands share this check. add-passkey and agent-key or agent-token
+// The passkey ceremony commands share this check, including CompleteEntraBootstrapExisting, which
+// verifies a passkey assertion and signs that principal in. add-passkey and agent-key or agent-token
 // commands are not browser sign-in and are not in the set. The problem type is stable so clients
 // can branch on it. Rows for existing passkeys stay; listing Passkey again lets those ceremonies run.
 #endregion
@@ -26,7 +27,8 @@ public sealed class PasskeySignInMethodGateBehavior<TRequest, TResponse> : IPipe
     typeof(IdentityContracts.StartPasskeyRegistration.Command),
     typeof(IdentityContracts.CompletePasskeyRegistration.Command),
     typeof(IdentityContracts.StartAddExistingPasskey.Command),
-    typeof(IdentityContracts.CompleteAddExistingPasskey.Command)
+    typeof(IdentityContracts.CompleteAddExistingPasskey.Command),
+    typeof(IdentityContracts.CompleteEntraBootstrapExisting.Command)
   ];
 
   private readonly IOptions<SignInOptions> SignInOptions;

@@ -16,8 +16,10 @@
 // sequence follow-up actions only after a success.
 // Microsoft365ChoiceValid: null = not checked yet, false = the parked Entra sign-in expired (load
 // said so, or a completion problem mentioned "expired").
-// OfferedMethods: null = not fetched or the read failed. An empty list is a completed read that
-// offers nothing. Microsoft365Offered and PasskeyOffered derive from that list.
+// OfferedMethods: null until a read succeeds. An empty list is a completed read that offers
+// nothing. OfferedMethodsFailed is true only after a completed failure, so the login card can
+// say so. A failure leaves the list null, and the required-passkey gate stays off.
+// Microsoft365Offered and PasskeyOffered derive from that list.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -49,6 +51,9 @@ public sealed partial class SignInState : State<SignInState>
   public bool? PasskeyOffered =>
     OfferedMethodList is null ? null : OfferedMethodList.Contains(SignInMethod.Passkey);
 
+  /// <summary>True after FetchOfferedSignInMethods fails. False before the first read and after a success.</summary>
+  public bool OfferedMethodsFailed { get; private set; }
+
   /// <summary>Whether a parked Microsoft 365 sign-in is still waiting for create / already-have; null until checked.</summary>
   public bool? Microsoft365ChoiceValid { get; private set; }
 
@@ -65,6 +70,7 @@ public sealed partial class SignInState : State<SignInState>
   {
     IsAuthenticated = null;
     OfferedMethodList = null;
+    OfferedMethodsFailed = false;
     Microsoft365ChoiceValid = null;
     CeremonyFailed = false;
     LastRegisteredCredentialId = null;

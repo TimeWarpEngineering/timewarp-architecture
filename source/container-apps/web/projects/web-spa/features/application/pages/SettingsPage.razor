@@ -115,20 +115,23 @@
                         OnRenameCancel="CancelPendingNicknameAsync"
                         PendingRenameCredentialId="CredentialsState.PendingListRenameCredentialId"
                         PendingRenameDefault="CredentialsState.PendingNicknameDefault" />
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
-          <FluentButton Appearance="ButtonAppearance.Primary"
-                        data-qa="CreatePasskey"
-                        Disabled="@IsBusy"
-                        OnClick="CreatePasskeyAsync">
-            Create a passkey
-          </FluentButton>
-          <FluentButton Appearance="ButtonAppearance.Outline"
-                        data-qa="AddExistingPasskey"
-                        Disabled="@IsBusy"
-                        OnClick="AddExistingPasskeyAsync">
-            Add an existing passkey
-          </FluentButton>
-        </FluentStack>
+        @if (SignInState.PasskeyOffered is true)
+        {
+          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" Wrap="true">
+            <FluentButton Appearance="ButtonAppearance.Primary"
+                          data-qa="CreatePasskey"
+                          Disabled="@IsBusy"
+                          OnClick="CreatePasskeyAsync">
+              Create a passkey
+            </FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Outline"
+                          data-qa="AddExistingPasskey"
+                          Disabled="@IsBusy"
+                          OnClick="AddExistingPasskeyAsync">
+              Add an existing passkey
+            </FluentButton>
+          </FluentStack>
+        }
       </FluentStack>
     </Section>
 

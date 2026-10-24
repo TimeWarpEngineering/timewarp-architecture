@@ -7,7 +7,8 @@
 // One host. Registration runs while the checked-in list includes Passkey, which proves the
 // ceremony still succeeds with Passkey listed. The live SignInOptions list is then set to both
 // methods (start still succeeds), then to Microsoft365 only. Each of the six passkey ceremony
-// routes answers 403 with IdentityProblems.SignInMethodDisabledType. The credential row stays.
+// routes, plus CompleteEntraBootstrapExisting, answers 403 with
+// IdentityProblems.SignInMethodDisabledType. The credential row stays.
 // Listing Passkey again makes start succeed. The gate reads IOptions, so this mutates the same
 // instance the pipeline holds. Agent-key routes are not in the set.
 #endregion
@@ -50,7 +51,7 @@ public class Returns_
     }
   }
 
-  public static async Task Refuse_The_Six_Passkey_Routes_When_Passkey_Is_Not_Listed()
+  public static async Task Refuse_Passkey_Routes_When_Passkey_Is_Not_Listed()
   {
     (_, string sessionCookie) = await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
@@ -88,6 +89,16 @@ public class Returns_
         Signature = Dummy
       },
       sessionCookie);
+
+    await ShouldRefuseAsync(
+      CompleteEntraBootstrapExisting.Command.RouteTemplate,
+      new CompleteEntraBootstrapExisting.Command
+      {
+        CredentialId = Dummy,
+        ClientDataJson = Dummy,
+        AuthenticatorData = Dummy,
+        Signature = Dummy
+      });
 
     using HttpClient listed = Client(sessionCookie);
     HttpResponseMessage credentials = await listed.GetAsync(new GetCredentials.Query { UserId = Guid.NewGuid() }.GetRouteWithQueryString());

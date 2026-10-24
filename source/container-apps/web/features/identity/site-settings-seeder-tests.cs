@@ -9,7 +9,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs
 
 #region Purpose
-// Jaribu runfile: seed-once from configuration; Enabled/AllowBootstrap drift warnings; Development-only reseed.
+// Jaribu runfile: seed-once from configuration; Microsoft365 list / AllowBootstrap drift warnings; Development-only reseed.
 #endregion
 
 //-:cnd:noEmit

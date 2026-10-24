@@ -13,6 +13,8 @@
 // from the target app (GUID-equal, case-insensitive). A failed user-secrets list aborts
 // (does not fail-open mint). The password and Graph tokens are never printed. Handler stores
 // Command/Ct as fields so private methods are zero-parameter.
+// SignInOptions:Methods is appended, not replaced: Microsoft365 is written at the next index only
+// when the checked-in list plus user secrets do not already contain it.
 #endregion
 
 namespace DevCli.Commands;
@@ -63,6 +65,9 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
     private bool MergedRedirectUris;
     private bool CreatedServicePrincipal;
     private readonly List<string> WrittenSecretKeys = [];
+    private string RepoRoot = "";
+    private Dictionary<string, string> ListedSecrets = [];
+    private bool ListedSecretsCaptured;
 
     public Handler(ITerminal terminal)
     {
@@ -82,6 +87,7 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
       }
 
       Cli = new EntraCli(Terminal, repoRoot, Command.DryRun, Ct);
+      RepoRoot = repoRoot;
 
       if (!PreflightAz())
       {
@@ -447,6 +453,11 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
         listOutput = await Cli.ListUserSecretsAsync().ConfigureAwait(false);
         listSucceeded = listOutput.Success;
         secrets = listSucceeded ? EntraSetup.ParseUserSecretsList(listOutput.Stdout) : [];
+        if (listSucceeded)
+        {
+          ListedSecrets = secrets;
+          ListedSecretsCaptured = true;
+        }
       }
 
       secrets.TryGetValue(EntraSetup.ClientIdKey, out string? existingClientId);
@@ -539,14 +550,34 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 
     private async Task<bool> WriteUserSecretsAsync()
     {
+      if (!ListedSecretsCaptured)
+      {
+        CommandOutput listed = await Cli.ListUserSecretsAsync().ConfigureAwait(false);
+        if (!listed.Success)
+        {
+          Cli.WriteFailure(listed, "Failed to list Web.Server user secrets.");
+          Environment.ExitCode = 1;
+          return false;
+        }
+
+        ListedSecrets = EntraSetup.ParseUserSecretsList(listed.Stdout);
+        ListedSecretsCaptured = true;
+      }
+
+      IReadOnlyList<string> checkedIn = EntraSetup.ReadCheckedInSignInMethods(
+        Path.Combine(RepoRoot, EntraSetup.WebServerAppSettings));
+      string? methodKey = EntraSetup.Microsoft365MethodKeyToAdd(checkedIn, ListedSecrets);
       List<(string Key, string Value, bool Mask)> pairs =
       [
-        (EntraSetup.PasskeyMethodKey, "Passkey", false),
-        (EntraSetup.Microsoft365MethodKey, "Microsoft365", false),
         (EntraSetup.TenantIdKey, TenantId, false),
         (EntraSetup.ClientIdKey, AppId, false),
         (EntraSetup.AllowBootstrapKey, "true", false)
       ];
+
+      if (methodKey is not null)
+      {
+        pairs.Insert(0, (methodKey, EntraSetup.Microsoft365MethodName, false));
+      }
 
       if (!string.IsNullOrWhiteSpace(TenantDisplayName))
       {

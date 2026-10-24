@@ -22,23 +22,28 @@ its endpoints behind the same check.
 
 ## Goal (implementer restatement)
 
-The server is the only place that decides which sign-in methods exist. `SignInMethod` names
-`Passkey` and `Microsoft365`. `SignInOptions.Methods` is a non-empty list of those enum values
-with no duplicates. An unknown name fails when configuration binds. The web-server validates that
-list on start. Listing `Microsoft365` is what registers the Entra scheme and what requires the
-Entra settings; leaving it off registers no scheme and skips those settings checks. The admin
-toggle `EntraSignInEnabled` still decides whether a listed Microsoft 365 method is offered right
-now. The browser asks the server once for the methods that are both listed and currently offered,
-and draws one button per answer in enum order. When `Passkey` is absent, the six passkey
-ceremony endpoints answer 403 with one shared problem type before any WebAuthn state is created,
-and an existing passkey cannot sign in until `Passkey` is listed again. The shell's required-passkey
-gate runs only when `Passkey` is listed. `Staff`, `SignInMode`, `Microsoft365Only`,
-`Authentication:Entra:Enabled`, and `UseEntra` go away. The sample role named Staff stays.
-`EntraSignInMode` stays; it is an evaluation result, not a sign-in method.
+The server owns which browser sign-in methods are enabled. `SignInOptions.Methods` lists
+`Passkey` and `Microsoft365`. Listing `Microsoft365` registers Entra and requires its settings.
+Leaving it off does not. The browser draws one button per method the server currently offers.
+Passkey ceremonies, including the Entra "use an existing passkey" completion, answer 403 when
+`Passkey` is not listed. The shell's required-passkey gate runs only when that read says Passkey
+is offered.
 
-Acceptance: the checklist items hold, `./bin/dev build` exits 0, `./bin/dev template-smoke` passes,
-`ganda repo audit` passes, and the named searches no longer find the removed mode, staff line, or
-Entra enabled key in `source`, `tests`, `tools`, and `skills`.
+Round 2 closes the review findings on that behavior:
+
+- Publish keeps `entra-enabled` as a deploy-time parameter. It appends `Microsoft365` to the
+  checked-in list and does not write a literal `SignInOptions__Methods__0=Passkey`. Compose,
+  Kubernetes, and Azure Container Apps publish tests pin that.
+- Settings hides Create and Add existing passkey unless `PasskeyOffered` is true, with a render case.
+- `dev entra setup` appends `Microsoft365` only when the merged list lacks it. Disable removes
+  those user-secret entries and does not write `Passkey`.
+- The admin drift banner and the three stale Design comments name `SignInOptions:Methods` /
+  Microsoft365.
+- A failed offered-methods read shows "Sign-in options could not be loaded." and a retry. A read
+  that has not finished yet still paints nothing.
+
+Acceptance: those six findings are implemented, `./bin/dev build` exits 0, the targeted suites
+below pass, `./bin/dev template-smoke` passes, and `ganda repo audit` exits 0.
 
 ## Shape
 
@@ -145,6 +150,12 @@ public enum SignInMethod
       It predates 379.
 - [x] Gates: `./bin/dev build` 0/0, `./bin/dev template-smoke` succeeded, `ganda repo audit` exit 0.
       The crunchit diff is not empty; see Results.
+- [x] Publish keeps `entra-enabled` as `SignInOptions__IncludeMicrosoft365` and does not write a literal method index
+- [x] Settings hides Create and Add existing passkey unless Passkey is offered
+- [x] `CompleteEntraBootstrapExisting` is in the passkey gate
+- [x] `dev entra setup` appends Microsoft365 and does not force `Methods:0=Passkey`; disable removes those keys
+- [x] Admin drift banner names `SignInOptions:Methods` / Microsoft365
+- [x] A failed offered-methods read shows a message and a retry
 
 ## Session
 
@@ -152,6 +163,8 @@ public enum SignInMethod
 - Implementation: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T20:05:17Z
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-25. 6 open (1 bug, 4 suggestion, 1 nit); fix pass requested.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T20:12:34Z
+- Fix pass for review round 1: implement-fix-2 (grok, model grok-4.7), session not reported — 2026-10-25. M1–M6 implemented on this branch. Review round 2 has not run.
 
 ## Results
 
@@ -192,6 +205,25 @@ No `copic` hit.
 
 The sign-in pages were not opened in a browser. Render tests cover the button markup.
 
+### Fix pass (review round 1)
+
+Publish writes `SignInOptions__IncludeMicrosoft365` from the `entra-enabled` parameter
+(`${ENTRA_ENABLED}` on Compose, a Helm `.Values` reference, an unquoted ACA parameter). It does
+not write `SignInOptions__Methods__0` or `__1`, so a checked-in Microsoft 365 list stays at
+index 0 until the parameter is true, and then Microsoft365 is appended. `dev entra setup`
+does the same append against the merged checked-in list and user secrets, and does not write
+Passkey. Disable removes secret keys whose value is `Microsoft365` and leaves a checked-in
+entry in place. Settings shows Create and Add existing passkey only when `PasskeyOffered` is
+true. `CompleteEntraBootstrapExisting` is in the passkey gate. The admin drift banner names
+`SignInOptions:Methods` and `Authentication:Entra:AllowBootstrap`. A finished offered-methods
+read that failed sets `OfferedMethodsFailed` and the login card shows "Sign-in options could
+not be loaded." plus Try again. A read that has not finished still paints nothing.
+`PasskeyOffered` stays null on that failure, so the required-passkey shell gate stays off.
+
+`./bin/dev build` 0/0 in 00:00:05.98. `./bin/dev template-smoke` succeeded (generated web Jaribu 405/405, api Jaribu 9/9, timewarp-testing 14/14). Targeted suites: SignInChoices 6, SignInOptions 5,
+SettingsPagePasskeyButtons 2, SignInActions 16, Microsoft365MethodList 5, PasskeySignInMethodGate 1,
+Compose publish 11, Kubernetes publish 12, ACA publish 14, ACA Neon publish 7. No browser pass.
+
 ### How to validate
 
 **Smoke**
@@ -201,6 +233,9 @@ The sign-in pages were not opened in a browser. Render tests cover the button ma
 dotnet tests/container-apps/web/web-server-integration-tests/bin/Release/net11.0/web-server-integration-tests.dll --filter-class PasskeySignInMethodGate
 dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInChoices_Should
 dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SignInOptions_
+dotnet tests/container-apps/web/web-spa-integration-tests/bin/Release/net11.0/web-spa-integration-tests.dll --filter-class SettingsPagePasskeyButtons_Should_
+dotnet tests/container-apps/aspire/aspire-tests/bin/Release/net11.0/aspire-tests.dll --filter-class ComposePublish_Given_
+dotnet tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests.dll --filter-class Microsoft365MethodList_Given_
 ```
 
 With the web-server running and `SignInOptions:Methods` set to `[ "Microsoft365" ]` (user secrets or a temporary appsettings edit you revert):
@@ -215,9 +250,12 @@ curl -ski https://localhost:63611/api/identity/entra/offered
 **Expect**
 
 - `./bin/dev build` ends with `0 Warning(s)` and `0 Error(s)`.
-- `PasskeySignInMethodGate` passes. Each of the six routes answers 403 and the body contains `https://timewarp.software/problems/sign-in-method-disabled`. The body does not contain `optionsJson`. `GetCredentials` still reports the existing passkey as active. Restoring `Passkey` to the list makes `POST api/identity/passkey/authenticate/options` return 200 again.
-- `SignInChoices_Should` passes: a null list paints no buttons; an empty list paints the work-account lead and the Microsoft 365 unavailable copy; Passkey is the primary button and stays ahead of Microsoft 365.
-- `SignInOptions_` passes: the checked-in section becomes `[Passkey]` after `ApplyConfiguredMethods`; an unknown name fails validation.
+- `PasskeySignInMethodGate` passes. The ceremony routes, including `CompleteEntraBootstrapExisting`, answer 403 and the body contains `https://timewarp.software/problems/sign-in-method-disabled`. The body does not contain `optionsJson`. `GetCredentials` still reports the existing passkey as active. Restoring `Passkey` to the list makes `POST api/identity/passkey/authenticate/options` return 200 again.
+- `SignInChoices_Should` passes: a null list paints no buttons; a completed failure paints "Sign-in options could not be loaded." and Try again; an empty list paints the work-account lead and the Microsoft 365 unavailable copy; Passkey is the primary button and stays ahead of Microsoft 365.
+- `SignInOptions_` passes: the checked-in section becomes `[Passkey]` after `ApplyConfiguredMethods`; `IncludeMicrosoft365=true` appends Microsoft365 beside Passkey and `false` does not replace a Microsoft365 index 0; an unknown name fails validation.
+- `SettingsPagePasskeyButtons_Should_` passes: offered Passkey shows Create and Add existing; offered Microsoft365 hides both and still shows the Passkeys section.
+- `ComposePublish_Given_` passes: web-server `SignInOptions__IncludeMicrosoft365` is `${ENTRA_ENABLED}` and `SignInOptions__Methods__0` is absent. Kubernetes and ACA publish suites pin the same parameter and the same absence.
+- `Microsoft365MethodList_Given_` passes: empty secrets beside checked-in Passkey append at index 1; a secret `Methods:0=Microsoft365` is not rewritten to Passkey.
 - The authenticate-options curl returns HTTP 403 and `sign-in-method-disabled`. The offered curl returns a JSON `methods` array that contains `Microsoft365` when the site toggle is on and does not contain `Passkey`.
 
 **Automated gate**
@@ -240,14 +278,9 @@ This session: `./bin/dev build` 0/0 in 00:00:23. `./bin/dev template-smoke` succ
 
 ### Review
 
-Round 1 (general reviewer, effort 3) is open: 1 bug, 4 suggestions, 1 nit, all open, so there is no
-disposition yet. M1 (bug): AppHost publish bakes the sign-in list as literals, so the deploy-time
-`entra-enabled` parameter is dead and index 0 is forced to `Passkey`. M2: Settings passkey buttons
-403 when Passkey is not listed. M3: `CompleteEntraBootstrapExisting` is outside the gate. M4:
-`dev entra setup` forces `Methods:0=Passkey`. M5: the admin drift banner names the removed key.
-M6 (nit): a failed offered read leaves a blank login card. The reviewer re-ran `./bin/dev build`
-(0/0) and the gate, scheme-registration, sign-in-choices, sign-in-options and account-choice suites;
-all pass. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 (general reviewer, effort 3) found 1 bug, 4 suggestions, and 1 nit. The fix pass
+implemented M1–M6. Review round 2 has not run, so there is no disposition yet. Paths:
+`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Learnings
 
@@ -258,6 +291,10 @@ all pass. Paths: `review/review-framework.md`, `review/round-1/general.md`, `rev
   The review accepts this. why: review oracle round 1, 2026-10-25
 - The acceptance `rg` only catches `Entra:Enabled`. Copy that writes `Authentication:Entra Enabled`
   survived (M5). Search the prose form too when a key is retired. why: review oracle round 1, 2026-10-25
+
+## Review
+
+- Round 1: findings M1–M6 implemented in the fix pass. Review round 2 has not closed them.
 
 ## Notes
 

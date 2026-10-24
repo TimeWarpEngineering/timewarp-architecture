@@ -6,7 +6,8 @@
 // No host. SignInOptions and SignInOptionsValidator live in web-application. The initializer lists
 // Passkey and Microsoft365. The checked-in web-server section lists Passkey only. The SPA
 // wwwroot file has no SignInOptions section. An unknown method name fails the validator, which
-// reads the raw configuration. Empty lists and duplicates fail too.
+// reads the raw configuration. Empty lists and duplicates fail too. IncludeMicrosoft365
+// appends Microsoft365 beside the configured list and does not replace index 0.
 #endregion
 
 namespace SignInOptions_;
@@ -76,6 +77,41 @@ public class SignInOptions_Should_
     using JsonDocument document = JsonDocument.Parse(json);
     document.RootElement.TryGetProperty("SignInOptions", out _).ShouldBeFalse();
     return Task.CompletedTask;
+  }
+
+  public static Task Append_Microsoft365_When_Asked_And_Leave_Index_Zero_Alone()
+  {
+    SignInOptions appended = new();
+    appended.ApplyConfiguredMethods(Methods("Passkey", includeMicrosoft365: "true"));
+    appended.Methods.ShouldBe([SignInMethod.Passkey, SignInMethod.Microsoft365]);
+    SignInOptions.ConfigurationLists(Methods("Passkey", includeMicrosoft365: "true"), SignInMethod.Microsoft365)
+      .ShouldBeTrue();
+    SignInOptions.RequestsMicrosoft365(Methods("Passkey", includeMicrosoft365: "1")).ShouldBeTrue();
+
+    SignInOptions untouched = new();
+    untouched.ApplyConfiguredMethods(Methods("Passkey", includeMicrosoft365: null));
+    untouched.Methods.ShouldBe([SignInMethod.Passkey]);
+    SignInOptions.ConfigurationLists(Methods("Passkey", includeMicrosoft365: "false"), SignInMethod.Microsoft365)
+      .ShouldBeFalse();
+
+    SignInOptions kept = new();
+    kept.ApplyConfiguredMethods(Methods("Microsoft365", includeMicrosoft365: "false"));
+    kept.Methods.ShouldBe([SignInMethod.Microsoft365]);
+    return Task.CompletedTask;
+  }
+
+  private static IConfiguration Methods(string method, string? includeMicrosoft365)
+  {
+    Dictionary<string, string?> values = new()
+    {
+      ["SignInOptions:Methods:0"] = method
+    };
+    if (includeMicrosoft365 is not null)
+    {
+      values["SignInOptions:IncludeMicrosoft365"] = includeMicrosoft365;
+    }
+
+    return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
   }
 
   private static IConfiguration LoadCheckedIn(string relativePath)

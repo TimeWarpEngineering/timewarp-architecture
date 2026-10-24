@@ -10,7 +10,9 @@
 // Checked-in appsettings lists Passkey only so a host with empty Entra settings still boots;
 // listing Microsoft365 is what registers the Entra scheme. ConfigurationLists reads the raw
 // section for scheme registration, which runs before options validation. A missing Methods
-// section follows the initializer. The browser does not bind this type; it renders the offered
+// section follows the initializer. Publish sets SignInOptions:IncludeMicrosoft365 from the
+// entra-enabled parameter. True appends Microsoft365 when the list does not already contain it
+// and never replaces another method. The browser does not bind this type; it renders the offered
 // list from GetEntraSignInOffered.
 #endregion
 
@@ -22,6 +24,9 @@ using Microsoft.Extensions.Configuration;
 public sealed class SignInOptions
 {
   public const string SectionName = "SignInOptions";
+
+  /// <summary>Sibling of Methods. True asks the server to append Microsoft365.</summary>
+  public const string IncludeMicrosoft365Key = "IncludeMicrosoft365";
 
   public List<SignInMethod> Methods { get; set; } = [SignInMethod.Passkey, SignInMethod.Microsoft365];
 
@@ -49,6 +54,7 @@ public sealed class SignInOptions
       }
     }
 
+    AppendRequestedMicrosoft365(configuration, configured);
     Methods = configured;
   }
 
@@ -74,6 +80,24 @@ public sealed class SignInOptions
       }
     }
 
-    return false;
+    return method == SignInMethod.Microsoft365 && RequestsMicrosoft365(configuration);
+  }
+
+  /// <summary>
+  /// True when <c>SignInOptions:IncludeMicrosoft365</c> is <c>true</c> or <c>1</c>.
+  /// </summary>
+  public static bool RequestsMicrosoft365(IConfiguration configuration)
+  {
+    string? value = configuration[$"{SectionName}:{IncludeMicrosoft365Key}"];
+    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+      || string.Equals(value, "1", StringComparison.OrdinalIgnoreCase);
+  }
+
+  private static void AppendRequestedMicrosoft365(IConfiguration configuration, List<SignInMethod> configured)
+  {
+    if (RequestsMicrosoft365(configuration) && !configured.Contains(SignInMethod.Microsoft365))
+    {
+      configured.Add(SignInMethod.Microsoft365);
+    }
   }
 }

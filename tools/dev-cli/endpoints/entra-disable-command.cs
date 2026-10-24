@@ -3,10 +3,11 @@
 #endregion
 
 #region Design
-// Local only — no Azure change. Idempotent. Passkey stays listed. The app registration and other
-// Entra secrets stay so `dev entra setup` without --new-secret can add Microsoft365 again without
-// minting a credential. dotnet user-secrets remove fails when the key is absent, so remove runs
-// only when the list shows the key.
+// Local only — no Azure change. Idempotent. Removes every SignInOptions:Methods user secret whose
+// value is Microsoft365 and does not write Passkey. Other method entries stay. The app registration
+// and other Entra secrets stay so `dev entra setup` without --new-secret can add Microsoft365 again
+// without minting a credential. dotnet user-secrets remove fails when the key is absent, so remove
+// runs only for keys the list shows.
 #endregion
 
 namespace DevCli.Commands;
@@ -42,30 +43,29 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
       }
 
       Dictionary<string, string> secrets = EntraSetup.ParseUserSecretsList(listed.Stdout);
-      if (secrets.ContainsKey(EntraSetup.Microsoft365MethodKey))
+      IReadOnlyList<string> methodKeys = EntraSetup.Microsoft365MethodKeysToRemove(secrets);
+      foreach (string methodKey in methodKeys)
       {
         CommandOutput removed = await Cli
-          .RemoveUserSecretAsync(EntraSetup.Microsoft365MethodKey)
+          .RemoveUserSecretAsync(methodKey)
           .ConfigureAwait(false);
         if (!removed.Success)
         {
-          Cli.WriteFailure(removed, "Failed to remove Microsoft365 from SignInOptions:Methods.");
+          Cli.WriteFailure(removed, $"Failed to remove {methodKey} from SignInOptions:Methods.");
           Environment.ExitCode = 1;
           return Unit.Value;
         }
       }
 
-      CommandOutput passkey = await Cli
-        .SetUserSecretAsync(EntraSetup.PasskeyMethodKey, "Passkey", maskValue: false)
-        .ConfigureAwait(false);
-      if (!passkey.Success)
+      if (methodKeys.Count == 0)
       {
-        Cli.WriteFailure(passkey, "Failed to keep Passkey in SignInOptions:Methods.");
-        Environment.ExitCode = 1;
-        return Unit.Value;
+        Terminal.WriteLine("SignInOptions:Methods in user secrets does not list Microsoft365.".Green());
+      }
+      else
+      {
+        Terminal.WriteLine("Microsoft365 was removed from SignInOptions:Methods in user secrets.".Green());
       }
 
-      Terminal.WriteLine("SignInOptions:Methods keeps Passkey. Microsoft365 was removed.".Green());
       Terminal.WriteLine("Azure app registration was not changed. Add Microsoft365 again with `dev entra setup`.");
       return Unit.Value;
     }

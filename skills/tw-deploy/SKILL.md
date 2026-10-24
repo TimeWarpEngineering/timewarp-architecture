@@ -310,9 +310,12 @@ non-secret default every machine shares (the app's identity) is committed in the
 - Under a plain `helm install` (no `aspire deploy`), the Postgres password appears under two keys
   — `secrets.postgres.postgres_password` and `secrets.web_server.postgres_password` — and both must
   carry the same value. `aspire deploy` fills both from the one parameter.
-- Entra settings (`entra-enabled`, `entra-tenant-id`, `entra-client-id`, `entra-client-secret`,
-  `entra-public-origin`) are parameters with Entra off by default; a passkey-only deployment needs
-  none of them. Every published target uses the placeholder `unused` when
+- Entra settings (`entra-tenant-id`, `entra-client-id`, `entra-client-secret`,
+  `entra-public-origin`) are parameters. `entra-enabled` publishes as
+  `SignInOptions__IncludeMicrosoft365` (`${ENTRA_ENABLED}` on Compose, the Helm value, or the
+  Azure Container Apps parameter). True appends `Microsoft365` to the checked-in
+  `SignInOptions:Methods` list and does not replace index 0. A passkey-only deployment needs
+  none of the Entra parameters. Every published target uses the placeholder `unused` when
   `Parameters:entra-client-secret` is unset. `AddParameter(name, value, secret: true)` ignores
   configuration, and Azure Container Apps rejects an empty container-app secret. With Entra enabled
   and the secret still `unused`, sign-in fails with AADSTS `invalid_client`. Set the real secret

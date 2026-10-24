@@ -240,6 +240,23 @@ public partial class AcaPublish_Given_
     await Task.CompletedTask;
   }
 
+  public static Task Publish_Should_AppendMicrosoft365FromAParameter()
+  {
+    if (ContainerApps.SingleOrDefault(app => app.Name == WebServerApp) is not { } webServer)
+    {
+      return Task.CompletedTask;
+    }
+
+    EnvironmentEntry entry = Entry(webServer, "SignInOptions__IncludeMicrosoft365");
+    entry.IsSecretRef.ShouldBeFalse();
+    IsStringLiteral(entry.Expression).ShouldBeFalse(entry.Expression);
+    entry.Expression.ShouldNotContain("Passkey");
+    ParameterNames(entry.Expression).ShouldNotBeEmpty(entry.Expression);
+    webServer.Environment.ShouldNotContain(item => item.Name == "SignInOptions__Methods__0");
+    webServer.Environment.ShouldNotContain(item => item.Name == "SignInOptions__Methods__1");
+    return Task.CompletedTask;
+  }
+
   public static Task Publish_Should_KeepAcaScaleAndPostgres()
   {
     string all = string.Join('\n', Modules.Values);

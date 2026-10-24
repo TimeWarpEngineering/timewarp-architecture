@@ -77,10 +77,18 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
     private void PrintSecrets()
     {
+      List<string> methodKeys = [];
+      foreach (string key in Secrets.Keys)
+      {
+        if (EntraSetup.TryParseSignInMethodIndex(key, out _))
+        {
+          methodKeys.Add(key);
+        }
+      }
+
+      methodKeys.Sort(StringComparer.Ordinal);
       string[] keys =
       [
-        EntraSetup.PasskeyMethodKey,
-        EntraSetup.Microsoft365MethodKey,
         EntraSetup.TenantIdKey,
         EntraSetup.TenantDisplayNameKey,
         EntraSetup.TenantDomainKey,
@@ -97,6 +105,16 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         table =>
         {
           table.AddColumns("Key", "Value");
+          if (methodKeys.Count == 0)
+          {
+            table.AddRow(EntraSetup.SignInMethodsPrefix, "(not set)");
+          }
+
+          foreach (string methodKey in methodKeys)
+          {
+            table.AddRow(methodKey, SecretDisplay(methodKey));
+          }
+
           foreach (string key in keys)
           {
             string display = SecretDisplay(key);

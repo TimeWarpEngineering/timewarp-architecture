@@ -12,6 +12,9 @@
 // az JSON is parsed with JsonDocument (AOT-safe; no reflection serializer).
 // TenantDisplayNameKey / TenantDomainKey are the SSOT strings for informational user-secrets
 // written by setup and shown by status (see EntraTenants for formatting/selection).
+// Setup appends Microsoft365 at the next Methods index when the merged checked-in list and user
+// secrets do not already contain it, and does not rewrite other entries. Disable removes every
+// user-secret Methods entry whose value is Microsoft365 and does not write Passkey.
 #endregion
 
 namespace DevCli.Services;
@@ -28,6 +31,11 @@ internal static class EntraSetup
   internal const string WebServerProject =
     "source/container-apps/web/projects/web-server/web-server.csproj";
   internal const string MaskedSecret = "********";
+
+  internal const string SignInMethodsPrefix = "SignInOptions:Methods:";
+  internal const string Microsoft365MethodName = "Microsoft365";
+  internal const string WebServerAppSettings =
+    "source/container-apps/web/projects/web-server/appsettings.json";
 
   internal const string PasskeyMethodKey = "SignInOptions:Methods:0";
   internal const string Microsoft365MethodKey = "SignInOptions:Methods:1";
@@ -160,6 +168,101 @@ internal static class EntraSetup
     }
 
     return secrets;
+  }
+
+  internal static bool TryParseSignInMethodIndex(string key, out int index)
+  {
+    index = -1;
+    if (!key.StartsWith(SignInMethodsPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    return int.TryParse(key[SignInMethodsPrefix.Length..], out index) && index >= 0;
+  }
+
+  internal static IReadOnlyList<string> MergeSignInMethods(
+    IReadOnlyList<string> checkedIn,
+    IReadOnlyDictionary<string, string> secrets)
+  {
+    SortedDictionary<int, string> byIndex = [];
+    for (int index = 0; index < checkedIn.Count; index++)
+    {
+      byIndex[index] = checkedIn[index];
+    }
+
+    foreach ((string key, string value) in secrets)
+    {
+      if (TryParseSignInMethodIndex(key, out int index))
+      {
+        byIndex[index] = value;
+      }
+    }
+
+    return [.. byIndex.Values];
+  }
+
+  internal static string? Microsoft365MethodKeyToAdd(
+    IReadOnlyList<string> checkedIn,
+    IReadOnlyDictionary<string, string> secrets)
+  {
+    if (MergeSignInMethods(checkedIn, secrets).Contains(Microsoft365MethodName, StringComparer.Ordinal))
+    {
+      return null;
+    }
+
+    int next = checkedIn.Count;
+    foreach (string key in secrets.Keys)
+    {
+      if (TryParseSignInMethodIndex(key, out int index))
+      {
+        next = Math.Max(next, index + 1);
+      }
+    }
+
+    return SignInMethodsPrefix + next.ToString(System.Globalization.CultureInfo.InvariantCulture);
+  }
+
+  internal static IReadOnlyList<string> Microsoft365MethodKeysToRemove(IReadOnlyDictionary<string, string> secrets)
+  {
+    List<string> keys = [];
+    foreach ((string key, string value) in secrets)
+    {
+      if (TryParseSignInMethodIndex(key, out _) && string.Equals(value, Microsoft365MethodName, StringComparison.Ordinal))
+      {
+        keys.Add(key);
+      }
+    }
+
+    keys.Sort(StringComparer.Ordinal);
+    return keys;
+  }
+
+  internal static IReadOnlyList<string> ReadCheckedInSignInMethods(string appsettingsPath)
+  {
+    if (!File.Exists(appsettingsPath))
+    {
+      return [];
+    }
+
+    using JsonDocument document = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+    if (!document.RootElement.TryGetProperty("SignInOptions", out JsonElement section)
+      || !section.TryGetProperty("Methods", out JsonElement methods)
+      || methods.ValueKind != JsonValueKind.Array)
+    {
+      return [];
+    }
+
+    List<string> values = [];
+    foreach (JsonElement item in methods.EnumerateArray())
+    {
+      if (item.ValueKind == JsonValueKind.String && item.GetString() is string value)
+      {
+        values.Add(value);
+      }
+    }
+
+    return values;
   }
 
   internal static bool HasClientSecret(IReadOnlyDictionary<string, string> secrets)
