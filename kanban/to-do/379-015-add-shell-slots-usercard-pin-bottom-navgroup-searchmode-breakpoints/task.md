@@ -56,8 +56,7 @@ Acceptance for this pass: M2 and M8 are fixed. The generator tests cover the mem
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M2, M8
-- Round 3: Done — 0 open, disposition clean
-
+- Round 3: Done
 ## Notes
 
 - Source idea (read-only): the portal shell pins a user block and a bottom nav group, and it uses three widths (full, icon rail, off-canvas drawer). This template keeps `FluentLayout` and the 880px breakdown. It does not copy that product name, that logo, or a hand-rolled grid.
