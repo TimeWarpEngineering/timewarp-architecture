@@ -62,6 +62,7 @@ Task 379-015 (pinned user card and nav group) regressed the side menu in two way
 - Implementation: 01a16d1e-d936-7d21-840c-d5beb8e4279d (2026-10-24)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T09:05:55Z
 - Review oracle: tw-implementation-review, general reviewer (claude-opus-5-5), effort 1, round 1, disposition clean, session not reported (2026-10-24)
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-24T09:08:32Z
 
 ## Results
 
@@ -81,6 +82,10 @@ Checked: `dev build` 0 warnings, 0 errors. `web-spa-integration-tests` 497 passe
 - Final counts: bug 0, suggestion 0, nit 0. All are 0 open, 0 fixed, 0 wontfix.
 - Disposition: **clean**. No findings. The reviewer re-ran `web-spa-integration-tests`: 497 passed, 0 failed.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
