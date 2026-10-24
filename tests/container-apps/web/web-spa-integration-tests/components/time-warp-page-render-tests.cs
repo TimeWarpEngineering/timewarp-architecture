@@ -192,9 +192,31 @@ public class TimeWarpPage_Should_
     html.ShouldContain("twe-appbar__search");
     html.ShouldContain("Search pages and commands (Ctrl-K)");
     html.ShouldContain("data-command-palette-trigger");
-    html.ShouldContain("aria-label=\"Pinned\"");
+    html.ShouldContain("aria-label=\"Primary\"");
+    html.ShouldNotContain("aria-label=\"Pinned\"");
     html.ShouldNotContain("twe-user-card");
     html.ShouldNotContain("data-qa=\"ShellUserCard\"");
+  }
+
+  public static async Task Keep_External_In_The_Primary_Nav()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "Staff",
+      ["ChildContent"] = Text("Page body")
+    });
+
+    const string label = "aria-label=\"Primary\"";
+    int start = html.IndexOf(label, StringComparison.Ordinal);
+    int close = html.IndexOf("</nav>", start, StringComparison.Ordinal);
+    int external = html.IndexOf("https://thefreezeteam.com/", StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0);
+    close.ShouldBeGreaterThan(start);
+    external.ShouldBeGreaterThan(start);
+    external.ShouldBeLessThan(close);
+    html[start..close].ShouldContain("https://github.com/TimeWarpEngineering/timewarp-architecture");
+    html.ShouldNotContain("aria-label=\"Pinned\"");
+    html.ShouldNotContain("twe-nav--pin");
   }
 
   public static async Task Omit_The_Search_Field_When_SearchMode_Is_Hidden()

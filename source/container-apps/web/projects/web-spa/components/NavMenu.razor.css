@@ -1,7 +1,11 @@
-/* The menu fills the nav column and scrolls there, so a tall list stays above
-   the pinned user card. The second nav (twe-nav--pin) sits on the bottom edge
-   when the column is taller than the links. FluentNavCategory must stay a
-   direct child of FluentNav, so the pin is a second nav rather than a wrapper.
+/* The menu is the one scroll container, so a tall list stays above the pinned
+   user card. FluentNav's own rule is flex: 1 1 0% and overflow-y: auto, which
+   would scroll and shrink each nav. flex: none and overflow: visible keep each
+   nav at its content size, so this menu scrolls as one list. The pin
+   (twe-nav--pin) renders only for NavPlacement.Bottom groups and sits on the
+   bottom edge when the column is taller than the links. External stays in the
+   primary nav. FluentNavCategory must stay a direct child of FluentNav, so the
+   pin is a second nav rather than a wrapper.
    The rail clips link text (the words stay the accessible name) and collapses
    a category title onto its expand chevron. Categories have no icon of their own.
    880 and 1279 match TimeWarpPage.razor.css. */
@@ -12,6 +16,11 @@
   min-height: 0;
   overflow-x: clip;
   overflow-y: auto;
+}
+
+.twe-nav-menu ::deep .twe-nav {
+  flex: none;
+  overflow: visible;
 }
 
 .twe-nav-menu ::deep .twe-nav--pin {

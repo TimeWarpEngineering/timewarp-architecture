@@ -18,7 +18,7 @@
 
 namespace TimeWarp.Architecture.Features.StyleGuide;
 
-[Page("/StyleGuide", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Visual style guide for template components.", NavGroup = "Developer", NavOrder = 310, NavPlacement = NavPlacement.Bottom)]
+[Page("/StyleGuide", Policy = PermissionIds.DeveloperAccess, Navigable = true, Description = "Visual style guide for template components.", NavGroup = "Developer", NavOrder = 310)]
 [Authorize(Policy = PermissionIds.DeveloperAccess)]
 [CrossSliceReference(typeof(CounterState), "Living style guide deliberately exercises the counter throw-exception pipeline.")]
 [CrossSliceReference(typeof(ProfilePage), "Style guide sample links the profile page from the user card.")]
