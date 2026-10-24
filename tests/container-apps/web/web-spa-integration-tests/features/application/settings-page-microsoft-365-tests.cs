@@ -4,7 +4,7 @@
 
 #region Design
 // HTML proof lives with the prerender host (protected-page-deep-link-tests). This file pins the
-// contract the Settings page calls so a client-side Authentication:Entra:Enabled key cannot
+// contract the Settings page calls so a client-side configuration key cannot
 // sneak back in as the gate. Link / Unlink themselves follow the server's availability flags (task
 // 282, no client predicates): the flags are pinned in web-server-integration-tests
 // credential-availability-tests and the SPA side in web-spa-integration-tests credential-availability-tests.

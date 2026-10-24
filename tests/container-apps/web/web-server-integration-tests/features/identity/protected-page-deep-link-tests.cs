@@ -39,6 +39,7 @@ using System.Net.Http.Headers;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
+using SignInOptions = TimeWarp.Architecture.Features.Identity.Application.SignInOptions;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
 
@@ -172,16 +173,16 @@ public class Returns_
     hiddenHtml.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
-    EntraAuthenticationOptions options =
-      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    SignInOptions signIn =
+      scope.ServiceProvider.GetRequiredService<IOptions<SignInOptions>>().Value;
     ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
     SiteSettings? settings = await store.GetAsync();
     settings.ShouldNotBeNull();
-    bool previousEnabled = options.Enabled;
+    List<SignInMethod> previousMethods = [.. signIn.Methods];
     bool previousSignIn = settings!.EntraSignInEnabled;
     bool previousBootstrap = settings.EntraAllowBootstrap;
     PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
-    options.Enabled = true;
+    signIn.Methods = [SignInMethod.Passkey, SignInMethod.Microsoft365];
     settings.ReplacePolicy(true, previousBootstrap, previousMode);
     await store.UpdateAsync(settings);
     try
@@ -193,7 +194,7 @@ public class Returns_
     }
     finally
     {
-      options.Enabled = previousEnabled;
+      signIn.Methods = previousMethods;
       SiteSettings? restore = await store.GetAsync();
       restore.ShouldNotBeNull();
       restore!.ReplacePolicy(previousSignIn, previousBootstrap, previousMode);
@@ -469,44 +470,44 @@ public class Returns_
   private static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync()
   {
     AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
-    EntraAuthenticationOptions options =
-      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    SignInOptions signIn =
+      scope.ServiceProvider.GetRequiredService<IOptions<SignInOptions>>().Value;
     ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
     SiteSettings? settings = await store.GetAsync();
     settings.ShouldNotBeNull();
-    bool previousEnabled = options.Enabled;
+    List<SignInMethod> previousMethods = [.. signIn.Methods];
     bool previousSignIn = settings.EntraSignInEnabled;
     bool previousBootstrap = settings.EntraAllowBootstrap;
     PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
-    options.Enabled = true;
+    signIn.Methods = [SignInMethod.Passkey, SignInMethod.Microsoft365];
     settings.ReplacePolicy(true, previousBootstrap, previousMode);
     await store.UpdateAsync(settings);
-    return new RestoreMicrosoft365Offered(scope, options, store, previousEnabled, previousSignIn, previousBootstrap, previousMode);
+    return new RestoreMicrosoft365Offered(scope, signIn, previousMethods, store, previousSignIn, previousBootstrap, previousMode);
   }
 
   private sealed class RestoreMicrosoft365Offered : IAsyncDisposable
   {
     private readonly AsyncServiceScope Scope;
-    private readonly EntraAuthenticationOptions Options;
+    private readonly SignInOptions SignIn;
+    private readonly List<SignInMethod> PreviousMethods;
     private readonly ISiteSettingsStore Store;
-    private readonly bool PreviousEnabled;
     private readonly bool PreviousSignIn;
     private readonly bool PreviousBootstrap;
     private readonly PasskeyPromptMode PreviousMode;
 
     public RestoreMicrosoft365Offered(
       AsyncServiceScope scope,
-      EntraAuthenticationOptions options,
+      SignInOptions signIn,
+      List<SignInMethod> previousMethods,
       ISiteSettingsStore store,
-      bool previousEnabled,
       bool previousSignIn,
       bool previousBootstrap,
       PasskeyPromptMode previousMode)
     {
       Scope = scope;
-      Options = options;
+      SignIn = signIn;
+      PreviousMethods = previousMethods;
       Store = store;
-      PreviousEnabled = previousEnabled;
       PreviousSignIn = previousSignIn;
       PreviousBootstrap = previousBootstrap;
       PreviousMode = previousMode;
@@ -514,7 +515,7 @@ public class Returns_
 
     public async ValueTask DisposeAsync()
     {
-      Options.Enabled = PreviousEnabled;
+      SignIn.Methods = PreviousMethods;
       SiteSettings? restore = await Store.GetAsync();
       restore.ShouldNotBeNull();
       restore.ReplacePolicy(PreviousSignIn, PreviousBootstrap, PreviousMode);

@@ -30,6 +30,7 @@ namespace TimeWarp.Architecture.Features.Settings
   using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
+  using TimeWarp.Architecture.Features.Identity;
   using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
@@ -105,8 +106,11 @@ namespace TimeWarp.Architecture.Features.Settings
     {
       EmptiableSiteSettingsStore inner = new();
       await inner.AddAsync(SiteSettings.Create(false, false, PasskeyPromptMode.Required));
-      EntraAuthenticationOptions configured = new() { Enabled = true, AllowBootstrap = true };
-      GetHandler handler = CreateHandler(SeedOnRead(inner, configured), configured);
+      EntraAuthenticationOptions configured = new() { AllowBootstrap = true };
+      GetHandler handler = CreateHandler(
+        SeedOnRead(inner, configured, microsoft365Listed: true),
+        configured,
+        Listed());
 
       inner.Clear();
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
@@ -142,12 +146,12 @@ namespace TimeWarp.Architecture.Features.Settings
         store,
         new EntraAuthenticationOptions
         {
-          Enabled = true,
           AllowBootstrap = false,
           TenantId = configured.ToString("D"),
           TenantDisplayName = "TimeWarp Enterprises LLC",
           TenantDomain = "timewarp.engineering"
-        });
+        },
+        Listed());
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
       result.IsT0.ShouldBeTrue();
       result.AsT0.EntraSignInEnabled.ShouldBeTrue();
@@ -158,17 +162,34 @@ namespace TimeWarp.Architecture.Features.Settings
       result.AsT0.ConfigurationAllowBootstrap.ShouldBeFalse();
     }
 
+    private static SignInOptions Listed() =>
+      new() { Methods = [SignInMethod.Passkey, SignInMethod.Microsoft365] };
+
     private static GetHandler CreateHandler(
       ISiteSettingsStore store,
-      EntraAuthenticationOptions? options = null) =>
-      new(store, Options.Create(options ?? new EntraAuthenticationOptions()));
+      EntraAuthenticationOptions? options = null,
+      SignInOptions? signIn = null) =>
+      new(
+        store,
+        Options.Create(options ?? new EntraAuthenticationOptions()),
+        Options.Create(signIn ?? new SignInOptions { Methods = [SignInMethod.Passkey] }));
 
     private static SeedOnReadSiteSettingsStore SeedOnRead(
       ISiteSettingsStore inner,
-      EntraAuthenticationOptions configured) =>
+      EntraAuthenticationOptions configured,
+      bool microsoft365Listed = false) =>
       new(
         inner,
-        new SiteSettingsSeeder(inner, Options.Create(configured), NullLogger<SiteSettingsSeeder>.Instance),
+        new SiteSettingsSeeder(
+          inner,
+          Options.Create(configured),
+          Options.Create(new SignInOptions
+          {
+            Methods = microsoft365Listed
+              ? [SignInMethod.Passkey, SignInMethod.Microsoft365]
+              : [SignInMethod.Passkey]
+          }),
+          NullLogger<SiteSettingsSeeder>.Instance),
         isDevelopment: false,
         NullLogger<SeedOnReadSiteSettingsStore>.Instance);
   }

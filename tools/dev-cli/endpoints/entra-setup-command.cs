@@ -541,7 +541,8 @@ internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
     {
       List<(string Key, string Value, bool Mask)> pairs =
       [
-        (EntraSetup.EnabledKey, "true", false),
+        (EntraSetup.PasskeyMethodKey, "Passkey", false),
+        (EntraSetup.Microsoft365MethodKey, "Microsoft365", false),
         (EntraSetup.TenantIdKey, TenantId, false),
         (EntraSetup.ClientIdKey, AppId, false),
         (EntraSetup.AllowBootstrapKey, "true", false)

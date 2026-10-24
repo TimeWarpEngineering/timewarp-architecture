@@ -83,20 +83,24 @@ public class SignInActions_Should_
     ]);
   }
 
-  public static async Task FetchMicrosoft365Offered_Read_The_Server_Flag_And_Fail_Closed()
+  public static async Task FetchOfferedSignInMethods_Read_The_Server_List_And_Fail_Closed()
   {
     using SignInSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
     scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeNull();
+    scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBeNull();
 
-    spa.Api.Answer<GetEntraSignInOffered.Query>(_ => new GetEntraSignInOffered.Response(offered: true));
-    await scope.Send(new SignInState.FetchMicrosoft365OfferedActionSet.Action());
+    spa.Api.Answer<GetEntraSignInOffered.Query>(_ =>
+      new GetEntraSignInOffered.Response([SignInMethod.Passkey, SignInMethod.Microsoft365]));
+    await scope.Send(new SignInState.FetchOfferedSignInMethodsActionSet.Action());
     scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBe(true);
+    scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBe(true);
 
     spa.Api.Answer<GetEntraSignInOffered.Query>(_ => throw new HttpRequestException("BFF down"));
-    await scope.Send(new SignInState.FetchMicrosoft365OfferedActionSet.Action());
-    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBe(false);
+    await scope.Send(new SignInState.FetchOfferedSignInMethodsActionSet.Action());
+    scope.Store.GetState<SignInState>().OfferedMethods.ShouldBeNull();
+    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeNull();
   }
 
   public static async Task CreateAccountFromMicrosoft365_Navigate_To_The_Safe_Destination()

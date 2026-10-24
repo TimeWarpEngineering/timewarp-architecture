@@ -29,7 +29,8 @@ internal static class EntraSetup
     "source/container-apps/web/projects/web-server/web-server.csproj";
   internal const string MaskedSecret = "********";
 
-  internal const string EnabledKey = "Authentication:Entra:Enabled";
+  internal const string PasskeyMethodKey = "SignInOptions:Methods:0";
+  internal const string Microsoft365MethodKey = "SignInOptions:Methods:1";
   internal const string TenantIdKey = "Authentication:Entra:TenantId";
   internal const string TenantDisplayNameKey = "Authentication:Entra:TenantDisplayName";
   internal const string TenantDomainKey = "Authentication:Entra:TenantDomain";

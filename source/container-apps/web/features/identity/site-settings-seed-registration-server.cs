@@ -43,6 +43,7 @@ public static class SiteSettingsSeedRegistration
     serviceCollection.AddScoped(serviceProvider => new SiteSettingsSeeder(
       serviceProvider.GetRequiredKeyedService<ISiteSettingsStore>(SeedOnReadSiteSettingsStore.InnerStoreKey),
       serviceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>(),
+      serviceProvider.GetRequiredService<IOptions<SignInOptions>>(),
       serviceProvider.GetRequiredService<ILogger<SiteSettingsSeeder>>()));
     serviceCollection.AddScoped<ISiteSettingsStore>(serviceProvider => new SeedOnReadSiteSettingsStore(
       serviceProvider.GetRequiredKeyedService<ISiteSettingsStore>(SeedOnReadSiteSettingsStore.InnerStoreKey),

@@ -1,12 +1,12 @@
 #region Purpose
-// FetchMicrosoft365Offered: read GetEntraSignInOffered so Login and Settings show Microsoft 365 only when the server offers it.
+// FetchOfferedSignInMethods: read the server's offered sign-in methods for the login card and the shell gate.
 #endregion
 
 #region Design
-// The property starts null. This handler always writes true or false. Any failure (transport,
-// problem, mock 501) reads as not offered: the section is an optional path and must not break
-// the page. The server challenge stays the authority (404 when the scheme is not registered,
-// 403 when site policy turns sign-in off).
+// OfferedMethods starts null. A successful read stores the list (possibly empty). A failure leaves
+// it null so the card invents no buttons and the required-passkey gate does not block. The server
+// remains the authority: passkey ceremonies 403 when Passkey is not listed, and the Entra challenge
+// 404s when Microsoft365 is not listed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -15,7 +15,7 @@ using TimeWarp.Architecture.Services;
 
 partial class SignInState
 {
-  public static class FetchMicrosoft365OfferedActionSet
+  public static class FetchOfferedSignInMethodsActionSet
   {
     [CommandPaletteOptOut("Page/startup data load; the owning page or shell runs it, a person never needs to.")]
     public sealed class Action : IBaseAction;
@@ -24,10 +24,11 @@ partial class SignInState
     {
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        SignInState.Microsoft365Offered = await LoadOfferedAsync(cancellationToken);
+        IReadOnlyList<SignInMethod>? methods = await LoadMethodsAsync(cancellationToken);
+        SignInState.OfferedMethodList = methods is null ? null : [.. methods];
       }
 
-      private async Task<bool> LoadOfferedAsync(CancellationToken cancellationToken)
+      private async Task<IReadOnlyList<SignInMethod>?> LoadMethodsAsync(CancellationToken cancellationToken)
       {
         try
         {
@@ -36,11 +37,12 @@ partial class SignInState
               new GetEntraSignInOffered.Query(),
               cancellationToken);
           return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
-            && response.Offered;
+            ? response.Methods
+            : null;
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
-          return false;
+          return null;
         }
       }
     }

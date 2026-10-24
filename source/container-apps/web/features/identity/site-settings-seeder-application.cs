@@ -1,24 +1,25 @@
 #region Purpose
-// First-run seed of site settings from Authentication:Entra, then drift warnings or Development reseed.
+// First-run seed of site settings from the sign-in method list and Authentication:Entra, then drift warnings or Development reseed.
 #endregion
 
 #region Design
-// When the store is empty, copy Enabled / AllowBootstrap once so existing `dev entra setup`
-// secrets keep working, and copy a GUID Authentication:Entra:TenantId into the restricted
-// accepted-tenant list so a home-tenant deployment keeps accepting that tenant. organizations /
-// common are authorities, not tenant ids, so they seed an empty restricted list (refuse until an
-// administrator chooses a list or Any). After that Enabled / AllowBootstrap are not consulted for
-// policy — Configuration Enabled remains the scheme-registration gate only. PasskeyPromptMode is
-// not in configuration; seed uses Soft. A row with EntraTenantAcceptanceInitialized false (migrated
-// before task 306) receives that same one-time copy. Concurrent first-seed Add races re-Get (boot,
-// or concurrent reads through SeedOnReadSiteSettingsStore — task 254 seeds on first read too); a
-// reseed or acceptance Update that loses the same race re-Gets the winner's row instead of
-// surfacing ConcurrencyConflictException.
+// When the store is empty, copy "Microsoft365 is listed" / AllowBootstrap once so existing
+// `dev entra setup` secrets keep working, and copy a GUID Authentication:Entra:TenantId into the
+// restricted accepted-tenant list so a home-tenant deployment keeps accepting that tenant.
+// organizations / common are authorities, not tenant ids, so they seed an empty restricted list
+// (refuse until an administrator chooses a list or Any). After that the list and AllowBootstrap
+// are not consulted for policy — listing Microsoft365 remains the scheme-registration gate only.
+// PasskeyPromptMode is not in configuration; seed uses Soft. A row with
+// EntraTenantAcceptanceInitialized false (migrated before task 306) receives that same one-time
+// copy. Concurrent first-seed Add races re-Get (boot, or concurrent reads through
+// SeedOnReadSiteSettingsStore — task 254 seeds on first read too); a reseed or acceptance Update
+// that loses the same race re-Gets the winner's row instead of surfacing ConcurrencyConflictException.
 // Task 225 / 227: each later boot compares persisted offer/bootstrap with configuration.
-// LoggerMessage.Define Warning when AllowBootstrap differs or when Enabled differs — each line names
-// /Admin/Authentication and `dev entra reseed`. Tenant acceptance is admin-owned, so there is no
-// tenant-drift warning. ReseedSiteSettings overwrites Enabled / AllowBootstrap from configuration
-// only when isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore pass
+// LoggerMessage.Define Warning when AllowBootstrap differs or when the listed Microsoft 365 method
+// differs from EntraSignInEnabled — each line names /Admin/Authentication and `dev entra reseed`.
+// Tenant acceptance is admin-owned, so there is no tenant-drift warning. ReseedSiteSettings
+// overwrites the offer from the method list and AllowBootstrap from configuration only when
+// isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore pass
 // IHostEnvironment.IsDevelopment()). PasskeyPromptMode, assistant name, and tenant acceptance stay.
 // IsUndefinedTable (Postgres 42P01) lives here so the boot retry and the read path share one
 // string-based check (same convention as EfSiteSettingsStore.IsUniqueViolation) without an
@@ -38,7 +39,7 @@ public sealed class SiteSettingsSeeder
     (
       LogLevel.Warning,
       new EventId(1, nameof(LogConfiguredVsEnabled)),
-      "Authentication:Entra:Enabled is {ConfiguredEnabled} but site settings EntraSignInEnabled is {SettingsEnabled}. Configuration registers the named entra scheme; settings decide whether users may sign in. Edit on /Admin/Authentication or run `dev entra reseed`."
+      "SignInOptions lists Microsoft365 ({Microsoft365Listed}) but site settings EntraSignInEnabled is {SettingsEnabled}. Listing Microsoft365 registers the named entra scheme; settings decide whether users may sign in. Edit on /Admin/Authentication or run `dev entra reseed`."
     );
 
   private static readonly Action<ILogger, bool, bool, Exception?> LogConfiguredVsAllowBootstrap =
@@ -75,15 +76,18 @@ public sealed class SiteSettingsSeeder
 
   private readonly ISiteSettingsStore SiteSettingsStore;
   private readonly IOptions<EntraAuthenticationOptions> Options;
+  private readonly IOptions<SignInOptions> SignInOptions;
   private readonly ILogger<SiteSettingsSeeder> Logger;
 
   public SiteSettingsSeeder(
     ISiteSettingsStore siteSettingsStore,
     IOptions<EntraAuthenticationOptions> options,
+    IOptions<SignInOptions> signInOptions,
     ILogger<SiteSettingsSeeder> logger)
   {
     SiteSettingsStore = siteSettingsStore;
     Options = options;
+    SignInOptions = signInOptions;
     Logger = logger;
   }
 
@@ -98,7 +102,7 @@ public sealed class SiteSettingsSeeder
       EntraAuthenticationOptions options = Options.Value;
       IReadOnlyList<Guid> homeTenant = ConfiguredHomeTenant(options);
       var created = SiteSettings.Create(
-        entraSignInEnabled: options.Enabled,
+        entraSignInEnabled: SignInOptions.Value.Lists(SignInMethod.Microsoft365),
         entraAllowBootstrap: options.AllowBootstrap,
         passkeyPromptMode: PasskeyPromptMode.Soft,
         entraAcceptedTenantIds: homeTenant,
@@ -142,7 +146,7 @@ public sealed class SiteSettingsSeeder
       if (isDevelopment)
       {
         existing.ReplacePolicy(
-          configured.Enabled,
+          SignInOptions.Value.Lists(SignInMethod.Microsoft365),
           configured.AllowBootstrap,
           existing.PasskeyPromptMode);
         try
@@ -197,9 +201,10 @@ public sealed class SiteSettingsSeeder
 
   private void LogDrift(EntraAuthenticationOptions configured, SiteSettings existing)
   {
-    if (existing.EntraSignInEnabled != configured.Enabled)
+    bool microsoft365Listed = SignInOptions.Value.Lists(SignInMethod.Microsoft365);
+    if (existing.EntraSignInEnabled != microsoft365Listed)
     {
-      LogConfiguredVsEnabled(Logger, configured.Enabled, existing.EntraSignInEnabled, null);
+      LogConfiguredVsEnabled(Logger, microsoft365Listed, existing.EntraSignInEnabled, null);
     }
 
     if (existing.EntraAllowBootstrap != configured.AllowBootstrap)

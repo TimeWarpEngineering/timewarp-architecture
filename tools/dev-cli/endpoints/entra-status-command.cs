@@ -79,7 +79,8 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
     {
       string[] keys =
       [
-        EntraSetup.EnabledKey,
+        EntraSetup.PasskeyMethodKey,
+        EntraSetup.Microsoft365MethodKey,
         EntraSetup.TenantIdKey,
         EntraSetup.TenantDisplayNameKey,
         EntraSetup.TenantDomainKey,

@@ -423,8 +423,20 @@ internal class Program
       string entraClientSecret = string.IsNullOrWhiteSpace(configuredEntraClientSecret)
         ? unsetEntraClientSecret
         : configuredEntraClientSecret;
+      IResourceBuilder<ParameterResource> entraEnabledParameter =
+        builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true);
       webServer = webServer
-        .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
+        .WithEnvironment(async context =>
+        {
+          context.EnvironmentVariables["SignInOptions__Methods__0"] = "Passkey";
+          string? enabled = await entraEnabledParameter.Resource.GetValueAsync(context.CancellationToken)
+            .ConfigureAwait(false);
+          if (string.Equals(enabled, "true", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(enabled, "1", StringComparison.OrdinalIgnoreCase))
+          {
+            context.EnvironmentVariables["SignInOptions__Methods__1"] = "Microsoft365";
+          }
+        })
         // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
         // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
         .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))

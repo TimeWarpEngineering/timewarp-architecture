@@ -205,6 +205,16 @@ public static class IdentityProblems
     Detail = "Microsoft 365 sign-in is not offered."
   };
 
+  public const string SignInMethodDisabledType = "https://timewarp.software/problems/sign-in-method-disabled";
+
+  public static SharedProblemDetails SignInMethodDisabled() => new()
+  {
+    Type = SignInMethodDisabledType,
+    Title = "Sign-in method disabled",
+    Status = 403,
+    Detail = "Passkey sign-in is not enabled."
+  };
+
   public static SharedProblemDetails AlreadyOnThisAccount(string kind) => new()
   {
     Title = "Already on this account",

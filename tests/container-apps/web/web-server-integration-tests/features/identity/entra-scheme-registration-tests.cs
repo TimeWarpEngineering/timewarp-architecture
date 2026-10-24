@@ -5,7 +5,7 @@
 #region Design
 // RFC 219 D10 composition pin. Calls Web.Server.Program.ConfigureServices (same path as the
 // IModule 2-arg overload) and inspects the resulting IServiceCollection / a built provider —
-// no live tenant. UseEntra synonym must register entra AND keep identity-session as default.
+// no live tenant. Listing Microsoft365 registers entra and keeps identity-session as default.
 // AddMicrosoftIdentityWebAppAuthentication is gone; OpenIdConnectHandler is the named scheme.
 // Multi-tenant TenantId=organizations must install EntraIssuerValidator on the named scheme.
 #endregion
@@ -29,7 +29,6 @@ using System.Reflection;
 using System.Text;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
-using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;
 using WebServerProgram = TimeWarp.Architecture.Web.Server.Program;
 
@@ -70,7 +69,7 @@ public class ConfigureAuthentication_Given_
     WebServerProgram.ConfigureServices(builder.Services, builder.Configuration);
 
     HasOpenIdConnectHandler(builder.Services).ShouldBeFalse(
-      "Entra OIDC must not register when Authentication:Entra:Enabled is false.");
+      "Entra OIDC must not register when Microsoft365 is not listed.");
 
     await using ServiceProvider provider = builder.Services.BuildServiceProvider(validateScopes: false);
     AuthenticationOptions authenticationOptions = provider.GetRequiredService<IOptions<AuthenticationOptions>>().Value;
@@ -85,7 +84,8 @@ public class ConfigureAuthentication_Given_
     (
       new Dictionary<string, string?>
       {
-        [MockAuthenticationDefaults.EntraEnabledKey] = "true",
+        ["SignInOptions:Methods:0"] = "Passkey",
+        ["SignInOptions:Methods:1"] = "Microsoft365",
         ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
         ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
@@ -148,34 +148,6 @@ public class ConfigureAuthentication_Given_
       $"Registered named OpenID Connect scheme entra (informational version {informationalVersion}).");
   }
 
-  public static async Task Obsolete_UseEntra_Should_Enable_Named_Scheme_Not_Default()
-  {
-    Guid tenantId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-    WebApplicationBuilder builder = CreateBuilder(Environments.Development);
-    builder.Configuration.AddInMemoryCollection
-    (
-      new Dictionary<string, string?>
-      {
-        [MockAuthenticationDefaults.UseEntraKey] = "true",
-        ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
-        ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
-        ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
-        ["Authentication:Entra:CallbackPath"] = "/signin-oidc"
-      }
-    );
-
-    WebServerProgram.ConfigureServices(builder.Services, builder.Configuration);
-
-    HasOpenIdConnectHandler(builder.Services).ShouldBeTrue(
-      "Obsolete UseEntra synonym must map to named entra, not skip registration.");
-
-    await using ServiceProvider provider = builder.Services.BuildServiceProvider(validateScopes: false);
-    AuthenticationOptions authenticationOptions = provider.GetRequiredService<IOptions<AuthenticationOptions>>().Value;
-    authenticationOptions.DefaultScheme.ShouldBe(
-      IdentitySessionDefaults.Scheme,
-      "UseEntra synonym must never restore Entra as DefaultScheme.");
-  }
-
   public static async Task Organizations_Tenant_Should_Install_Entra_Issuer_Validator()
   {
     Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
@@ -185,7 +157,8 @@ public class ConfigureAuthentication_Given_
     (
       new Dictionary<string, string?>
       {
-        [MockAuthenticationDefaults.EntraEnabledKey] = "true",
+        ["SignInOptions:Methods:0"] = "Passkey",
+        ["SignInOptions:Methods:1"] = "Microsoft365",
         ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
         ["Authentication:Entra:TenantId"] = "organizations",
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),

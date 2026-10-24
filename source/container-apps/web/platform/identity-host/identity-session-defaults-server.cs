@@ -4,7 +4,7 @@
 
 #region Design
 // RFC 219 D10: this scheme is always DefaultScheme. Entra is a named OIDC scheme ("entra") and
-// never owns the default (the 104-021 UseEntra branch that called
+// never owns the default (the retired branch that called
 // AddMicrosoftIdentityWebAppAuthentication is deleted). CookieBrowserSessionService always signs
 // in/reads by this explicit scheme name, never relying on "the default."
 // AuthenticatedPolicy (task 110): "any signed-in identity-session cookie" — scheme-restricted

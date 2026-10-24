@@ -81,8 +81,8 @@ with the moved passkey authenticates as the surviving principal (lookup is by
 credential handle, not authenticator user handle).
 
 **Not offered:** email register, password reset, magic-link-only accounts as the
-primary path. Microsoft Entra is **opt-in only** (`Authentication:Entra:Enabled=true`)
-and is not the agent- or human-priority story. When enabled it is a named OIDC scheme
+primary path. Microsoft 365 is offered when `SignInOptions.Methods` lists `Microsoft365`
+and is not the agent- or human-priority story. When listed it is a named OIDC scheme
 (`entra`); identity-session stays DefaultScheme. The SPA “Continue with Microsoft 365”
 button is a BFF `Challenge(“entra”)` — no WASM MSAL session. Default non-mock SPA
 auth projects the identity-session cookie via `GetCurrentSession`.
@@ -110,11 +110,12 @@ has one is 409 “Microsoft 365 already linked.”
 ### Configured vs enabled
 
 **Configured** (deploy-time, secret-bearing) stays in `Authentication:Entra:*`:
-client id, secret, authority tenant, `PublicOrigin`, and `Enabled` as the
-**scheme-registration gate**. `dev entra setup` still writes those user secrets.
+client id, secret, authority tenant, and `PublicOrigin`. Listing `Microsoft365` in
+`SignInOptions.Methods` is the scheme-registration gate. `dev entra setup` writes
+that list plus the Entra user secrets.
 
 **Enabled for users** is runtime admin policy on the site-settings singleton
-(`/Admin/Authentication`). First boot copies `Enabled` and `AllowBootstrap`
+(`/Admin/Authentication`). First boot copies whether `Microsoft365` is listed and `AllowBootstrap`
 into settings once; after that the admin page is the source of truth for those
 two. Disabling sign-in at runtime refuses **new** challenges (403 `Sign-in disabled`);
 existing Entra credentials and sessions stay.
@@ -149,7 +150,7 @@ and `common` seed an empty list until an administrator chooses a list or Any.
 The first human passkey registration becomes Administrator
 (`TryClaimFirstAdministratorAsync`) and can open `/Admin/Authentication`.
 
-`Authentication:Entra:Enabled=true` with settings `EntraSignInEnabled=false` (or
+Listing `Microsoft365` with settings `EntraSignInEnabled=false` (or
 the reverse) logs a warning at boot so the two are never silently confused.
 
 ### Local Entra setup
@@ -163,7 +164,7 @@ dev entra setup --tenant crunchitfs.com
 # optional: --name “TimeWarp Architecture Dev” --public-origin https://arch.timewarp.work
 #           --redirect-uri https://extra.example/signin-oidc --new-secret --dry-run
 dev entra status
-dev entra disable   # sets Authentication:Entra:Enabled=false; does not change Azure
+dev entra disable   # removes Microsoft365 from SignInOptions:Methods; does not change Azure
 ```
 
 `dev entra setup` finds or creates the app registration, unions redirect URIs
@@ -173,7 +174,7 @@ first write, when the stored tenant or app registration differs from the one set
 writing, or with `--new-secret`, and writes Web.Server user secrets. Switching tenants
 (or otherwise changing `ClientId` / `TenantId`) re-mints automatically; `--new-secret`
 is only for rotating a secret on the same app. The secret is never printed. First run
-seeds Enabled / AllowBootstrap into site settings; after that use
+seeds the Microsoft365 list entry and AllowBootstrap into site settings; after that use
 `/Admin/Authentication` to offer or hide Microsoft 365 sign-in. Then
 `dev run`, browse the app, and click **Continue with Microsoft 365** when offered.
 
@@ -206,7 +207,8 @@ The named `entra` scheme always writes Secure correlation/nonce cookies.
 User-secrets example (Web.Server project):
 
 ```bash
-dotnet user-secrets set “Authentication:Entra:Enabled” “true” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “SignInOptions:Methods:0” “Passkey” --project source/container-apps/web/projects/web-server
+dotnet user-secrets set “SignInOptions:Methods:1” “Microsoft365” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:Instance” “https://login.microsoftonline.com/” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:TenantId” “<tenant-id>” --project source/container-apps/web/projects/web-server
 dotnet user-secrets set “Authentication:Entra:ClientId” “<app-id>” --project source/container-apps/web/projects/web-server

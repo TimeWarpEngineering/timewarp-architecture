@@ -100,12 +100,12 @@ public class ParseUserSecretsList_Given_
   public static Task KeyEqualsValue_Should_SplitOnFirstSeparator()
   {
     const string stdout = """
-      Authentication:Entra:Enabled = True
+      SignInOptions:Methods:0 = Passkey
       Authentication:Entra:ClientSecret = a=b=c
       junk line
       """;
     Dictionary<string, string> secrets = EntraSetup.ParseUserSecretsList(stdout);
-    secrets[EntraSetup.EnabledKey].ShouldBe("True");
+    secrets[EntraSetup.PasskeyMethodKey].ShouldBe("Passkey");
     secrets[EntraSetup.ClientSecretKey].ShouldBe("a=b=c");
     EntraSetup.HasClientSecret(secrets).ShouldBeTrue();
     return Task.CompletedTask;

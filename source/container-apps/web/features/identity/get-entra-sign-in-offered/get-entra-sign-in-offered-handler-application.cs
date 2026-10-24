@@ -1,10 +1,11 @@
 #region Purpose
-// Server-side handler for GetEntraSignInOffered: configuration scheme gate AND settings policy.
+// Server-side handler for GetEntraSignInOffered: the methods the browser should render.
 #endregion
 
 #region Design
-// The rule (scheme registered AND site policy on) is EntraSignInOffer, shared with GetCredentials,
-// which sets its CanLinkMicrosoft365 flag from the same answer (task 282).
+// Passkey is included when it is listed. Microsoft365 uses EntraSignInOffer, the same rule
+// GetCredentials uses for CanLinkMicrosoft365 (task 282). The list is enum order: Passkey, then
+// Microsoft365.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -17,14 +18,14 @@ public sealed class GetEntraSignInOffered
 {
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly IOptions<EntraAuthenticationOptions> Options;
+    private readonly IOptions<SignInOptions> SignInOptions;
     private readonly ISiteSettingsStore SiteSettingsStore;
 
     public Handler(
-      IOptions<EntraAuthenticationOptions> options,
+      IOptions<SignInOptions> signInOptions,
       ISiteSettingsStore siteSettingsStore)
     {
-      Options = options;
+      SignInOptions = signInOptions;
       SiteSettingsStore = siteSettingsStore;
     }
 
@@ -33,7 +34,18 @@ public sealed class GetEntraSignInOffered
       CancellationToken cancellationToken)
     {
       _ = request;
-      return new Response(await EntraSignInOffer.IsOfferedAsync(Options.Value, SiteSettingsStore, cancellationToken).ConfigureAwait(false));
+      List<SignInMethod> methods = [];
+      if (SignInOptions.Value.Lists(SignInMethod.Passkey))
+      {
+        methods.Add(SignInMethod.Passkey);
+      }
+
+      if (await EntraSignInOffer.IsOfferedAsync(SignInOptions.Value, SiteSettingsStore, cancellationToken).ConfigureAwait(false))
+      {
+        methods.Add(SignInMethod.Microsoft365);
+      }
+
+      return new Response(methods);
     }
   }
 }

@@ -6,7 +6,7 @@
 // Generated [ApiEndpoint] handlers always serialize a mediator JSON body; Challenge writes a 302
 // (or the fake handler completes the ticket). AllowAnonymous at the HTTP metadata so bootstrap
 // works; link authenticates identity-session explicitly and 401s without bouncing to /Login.
-// Scheme not registered (configuration Enabled false) is 404 so the route does not advertise a
+// Scheme not registered (Microsoft365 not listed) is 404 so the route does not advertise a
 // scheme that is not registered. Runtime policy (IEntraSignInPolicy / site settings) refuses new
 // challenges with 403 Sign-in disabled when EntraSignInEnabled is false — existing sessions stay.
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
@@ -29,9 +29,9 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
 
   public override async Task HandleAsync(CancellationToken cancellationToken)
   {
-    EntraAuthenticationOptions entra = HttpContext.RequestServices
-      .GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
-    if (!entra.Enabled)
+    SignInOptions signIn = HttpContext.RequestServices
+      .GetRequiredService<IOptions<SignInOptions>>().Value;
+    if (!signIn.Lists(SignInMethod.Microsoft365))
     {
       await Send.NotFoundAsync(cancellation: cancellationToken);
       return;

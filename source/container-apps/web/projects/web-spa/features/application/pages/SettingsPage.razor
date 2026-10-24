@@ -21,7 +21,7 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    await NoSubSignInState.FetchMicrosoft365Offered();
+    await NoSubSignInState.FetchOfferedSignInMethods();
     await NoSubCredentialsState.FetchCredentials();
     if (RendererInfo.IsInteractive)
     {

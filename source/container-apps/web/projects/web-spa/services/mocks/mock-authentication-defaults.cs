@@ -1,23 +1,21 @@
 #region Purpose
-// Shared Authentication:* config keys and fail-closed gates for mock auth (145-009) and
-// named Entra OIDC (RFC 219 D10). Lives in Web.Spa so template sourceName rewrite keeps SPA +
-// web-server (which ProjectReferences Web.Spa) aligned without a Foundation package version race.
+// Shared Authentication:* config keys and fail-closed gates for mock auth (145-009).
+// Lives in Web.Spa so template sourceName rewrite keeps SPA + web-server (which ProjectReferences
+// Web.Spa) aligned without a Foundation package version race.
 #endregion
 
 #region Design
 // Fail-closed mock: Development/Testing AND Authentication:UseMock=true. Production never
 // activates mock when the flag is set. Absent flags default false.
-// Entra: Authentication:Entra:Enabled registers a named OIDC scheme; identity-session stays
-// DefaultScheme. Obsolete Authentication:UseEntra maps to Enabled for one version and MUST
-// never restore default-scheme Entra. SPA session is always identity-session when not mock
-// (no WASM MSAL). Callers pass raw config strings so this type has no IConfiguration dependency.
+// Microsoft 365 scheme registration is SignInOptions.Methods, not a key on this type.
+// SPA session is always identity-session when not mock (no WASM MSAL). Callers pass raw config
+// strings so this type has no IConfiguration dependency.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
 
 /// <summary>
-/// Shared defaults for runtime-config-gated mock authentication (SPA + closed-box BFF)
-/// and named Entra OIDC enablement (RFC 219 D10).
+/// Shared defaults for runtime-config-gated mock authentication (SPA + closed-box BFF).
 /// </summary>
 public static class MockAuthenticationDefaults
 {
@@ -26,17 +24,6 @@ public static class MockAuthenticationDefaults
   /// the web-server mock-principal scheme. Default false when the key is absent.
   /// </summary>
   public const string UseMockKey = "Authentication:UseMock";
-
-  /// <summary>
-  /// When true, register the named <c>entra</c> OIDC scheme. identity-session stays DefaultScheme.
-  /// </summary>
-  public const string EntraEnabledKey = "Authentication:Entra:Enabled";
-
-  /// <summary>
-  /// Obsolete synonym for <see cref="EntraEnabledKey"/>. Accepted for one template version;
-  /// never selects Entra as DefaultScheme.
-  /// </summary>
-  public const string UseEntraKey = "Authentication:UseEntra";
 
   /// <summary>
   /// Request header that, when mock mode is active, establishes an identity-session principal
@@ -66,26 +53,6 @@ public static class MockAuthenticationDefaults
 
     return IsTruthy(useMockConfigurationValue);
   }
-
-  /// <summary>
-  /// Named Entra scheme: <paramref name="entraEnabledValue"/> true/1, else obsolete
-  /// <paramref name="useEntraValue"/> true/1. Absent is false. Never means DefaultScheme Entra.
-  /// </summary>
-  public static bool IsEntraEnabled(string? entraEnabledValue, string? useEntraValue) =>
-    IsTruthy(entraEnabledValue) || IsTruthy(useEntraValue);
-
-  /// <summary>
-  /// True when Enabled comes only from the obsolete <see cref="UseEntraKey"/> synonym.
-  /// </summary>
-  public static bool UsedObsoleteUseEntraKey(string? entraEnabledValue, string? useEntraValue) =>
-    !IsTruthy(entraEnabledValue) && IsTruthy(useEntraValue);
-
-  /// <summary>
-  /// Opt-in Entra: true/1 only. Absent or any other value is false (non-default).
-  /// Prefer <see cref="IsEntraEnabled"/>; this overload remains for the obsolete key's raw value.
-  /// </summary>
-  public static bool IsEntraAuthActive(string? useEntraConfigurationValue) =>
-    IsTruthy(useEntraConfigurationValue);
 
   private static bool IsTruthy(string? configurationValue)
   {

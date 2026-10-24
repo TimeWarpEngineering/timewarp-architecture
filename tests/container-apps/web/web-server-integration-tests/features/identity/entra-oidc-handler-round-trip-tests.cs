@@ -74,7 +74,8 @@ public class Callback_Given_
     (
       new Dictionary<string, string?>
       {
-        [MockAuthenticationDefaults.EntraEnabledKey] = "true",
+        ["SignInOptions:Methods:0"] = "Passkey",
+        ["SignInOptions:Methods:1"] = "Microsoft365",
         ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
         ["Authentication:Entra:TenantId"] = TrustedTenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = ClientId,
@@ -96,7 +97,6 @@ public class Callback_Given_
     builder.Services.AddScoped<IEntraChoiceTicketAccessor, HttpEntraChoiceTicketAccessor>();
     builder.Services.AddOptions<EntraAuthenticationOptions>()
       .Bind(builder.Configuration.GetSection(EntraAuthenticationOptions.SectionKey));
-    builder.Services.PostConfigure<EntraAuthenticationOptions>(options => options.Enabled = true);
 
     AuthenticationBuilder authenticationBuilder = builder.Services
       .AddAuthentication(IdentitySessionDefaults.Scheme)

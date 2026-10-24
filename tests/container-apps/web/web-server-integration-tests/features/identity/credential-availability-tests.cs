@@ -12,7 +12,7 @@
 // flags. Each principal is minted fresh (RegisterPasskeyAndMintSessionAsync starts with one active
 // credential; AddPasskey adds more) so tests never share credential counts. The in-proc host starts with
 // Entra off; the Microsoft 365 "offered" cases turn it on in-proc for the one test
-// (EntraAuthenticationOptions.Enabled + SiteSettings.ReplacePolicy) and restore it afterwards — the
+// (SignInOptions lists Microsoft365 + SiteSettings.ReplacePolicy) and restore it afterwards — the
 // toggle-and-restore pattern of protected-page-deep-link-tests.cs.
 // The stale-Revoke case is the "flags are guidance, the endpoint is the rule" pin: a client holding a
 // snapshot where both rows said CanRevoke revokes one, then the other, and the server answers 409.
@@ -26,6 +26,7 @@ using System.Net;
 using System.Text.Json;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
+using SignInOptions = TimeWarp.Architecture.Features.Identity.Application.SignInOptions;
 using TimeWarp.Identity;
 using CredentialRules = TimeWarp.Architecture.Features.Identity.Application.CredentialRules;
 
@@ -222,26 +223,26 @@ public class GetCredentialsAvailability_Returns_
         accountHint: "linked@example.test"));
   }
 
-  /// <summary>Turns Microsoft 365 sign-in on in-proc (scheme enabled + site policy on); disposing restores both.</summary>
+  /// <summary>Turns Microsoft 365 sign-in on in-proc (method listed + site policy on); disposing restores both.</summary>
   private static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync()
   {
     AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
-    EntraAuthenticationOptions options =
-      scope.ServiceProvider.GetRequiredService<IOptions<EntraAuthenticationOptions>>().Value;
+    SignInOptions signIn =
+      scope.ServiceProvider.GetRequiredService<IOptions<SignInOptions>>().Value;
     ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
     SiteSettings settings = (await store.GetAsync()).ShouldNotBeNull();
-    bool previousEnabled = options.Enabled;
+    List<SignInMethod> previousMethods = [.. signIn.Methods];
     bool previousSignIn = settings.EntraSignInEnabled;
     bool previousBootstrap = settings.EntraAllowBootstrap;
     PasskeyPromptMode previousMode = settings.PasskeyPromptMode;
-    options.Enabled = true;
+    signIn.Methods = [SignInMethod.Passkey, SignInMethod.Microsoft365];
     settings.ReplacePolicy(true, previousBootstrap, previousMode);
     await store.UpdateAsync(settings);
     return new Restore
     (
       async () =>
       {
-        options.Enabled = previousEnabled;
+        signIn.Methods = previousMethods;
         SiteSettings restore = (await store.GetAsync()).ShouldNotBeNull();
         restore.ReplacePolicy(previousSignIn, previousBootstrap, previousMode);
         await store.UpdateAsync(restore);

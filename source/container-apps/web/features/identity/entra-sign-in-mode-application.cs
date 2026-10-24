@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Keep the interface small for crunchit 008-004 replacements. Challenge is the only mode that
+// Keep the interface small. Challenge is the only mode that
 // returns Sign-in disabled (new challenges only; in-flight tickets and existing sessions stay).
 // SyncHit, BootstrapCreate, and Link call IEntraSignInPolicy with the token tid. Restricted mode
 // requires that tid in the site-settings accepted list; Any accepts any non-empty tid.

@@ -85,10 +85,18 @@ public class Challenge_Given_
     builder.Services.AddScoped<TimeWarp.Architecture.Features.Identity.Application.CompleteEntraBootstrapCreate.Handler>();
     builder.Services.Configure<EntraAuthenticationOptions>(options =>
     {
-      options.Enabled = true;
       options.AllowBootstrap = true;
       options.TenantId = TrustedTenantId.ToString("D");
     });
+    builder.Services.AddSingleton<IOptions<TimeWarp.Architecture.Features.Identity.Application.SignInOptions>>(
+      Options.Create(new TimeWarp.Architecture.Features.Identity.Application.SignInOptions
+      {
+        Methods =
+        [
+          TimeWarp.Architecture.Features.Identity.SignInMethod.Passkey,
+          TimeWarp.Architecture.Features.Identity.SignInMethod.Microsoft365
+        ]
+      }));
 
     builder.Services
       .AddAuthentication(IdentitySessionDefaults.Scheme)

@@ -3,17 +3,18 @@
 #endregion
 
 #region Design
-// When Enabled is false the section may be empty placeholders — do not fail boot. When Enabled,
-// require Instance, TenantId, ClientId, and CallbackPath so AddOpenIdConnect is not registered
-// with a blank authority. ClientSecret is not required here (user secrets / Key Vault).
-// Task 227 removed TrustedTenants; if that key is still present in configuration the validator
-// fails. organizations / common / a tenant GUID are all valid TenantId strings: they select the
-// OIDC authority. Ticket acceptance is SiteSettings, not this value.
+// When Microsoft365 is not listed the section may be empty placeholders — do not fail boot. When
+// it is listed, require Instance, TenantId, ClientId, and CallbackPath so AddOpenIdConnect is not
+// registered with a blank authority. ClientSecret is not required here (user secrets / Key Vault).
+// The list is read from configuration, not from IOptions<SignInOptions>, so the two validators do
+// not cycle. Task 227 removed TrustedTenants; if that key is still present in configuration the
+// validator fails. organizations / common / a tenant GUID are all valid TenantId strings: they
+// select the OIDC authority. Ticket acceptance is SiteSettings, not this value.
 // PublicOrigin is optional (empty = request-derived redirect_uri). When set it must be an absolute
 // https URI, or http only for a loopback host (TimeWarp.Identity's LoopbackHost, shared with the
 // WebAuthn origin fallback) — never a non-https public host, and never a path/query
-// (it is an origin, not the full redirect URI). Validated even when Enabled is false so a bad
-// value cannot sit dormant until Entra is turned on.
+// (it is an origin, not the full redirect URI). Validated even when Microsoft365 is not listed so
+// a bad value cannot sit dormant until the method is listed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;
@@ -42,7 +43,7 @@ public sealed class EntraAuthenticationOptionsValidator : AbstractValidator<Entr
 
     When
     (
-      options => options.Enabled,
+      _ => configuration is not null && SignInOptions.ConfigurationLists(configuration, SignInMethod.Microsoft365),
       () =>
       {
         RuleFor(options => options.Instance).NotEmpty();

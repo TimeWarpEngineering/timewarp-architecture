@@ -27,7 +27,6 @@ using System.Net;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
-using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;
 
 public class Challenge_Given_
@@ -52,7 +51,8 @@ public class Challenge_Given_
     (
       new Dictionary<string, string?>
       {
-        [MockAuthenticationDefaults.EntraEnabledKey] = "true",
+        ["SignInOptions:Methods:0"] = "Passkey",
+        ["SignInOptions:Methods:1"] = "Microsoft365",
         ["Authentication:Entra:Instance"] = "https://login.microsoftonline.com/",
         ["Authentication:Entra:TenantId"] = tenantId.ToString("D"),
         ["Authentication:Entra:ClientId"] = Guid.NewGuid().ToString("D"),
@@ -66,7 +66,6 @@ public class Challenge_Given_
     builder.Services.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     builder.Services.AddOptions<EntraAuthenticationOptions>()
       .Bind(builder.Configuration.GetSection(EntraAuthenticationOptions.SectionKey));
-    builder.Services.PostConfigure<EntraAuthenticationOptions>(options => options.Enabled = true);
 
     AuthenticationBuilder authenticationBuilder = builder.Services
       .AddAuthentication(IdentitySessionDefaults.Scheme)

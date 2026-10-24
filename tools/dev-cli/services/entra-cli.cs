@@ -84,6 +84,12 @@ internal sealed class EntraCli
     return CaptureAsync("dotnet", arguments, skipOnDryRun: true, maskArguments: maskValue, maskAuthorizationHeader: false);
   }
 
+  internal Task<CommandOutput> RemoveUserSecretAsync(string key)
+  {
+    string[] arguments = ["user-secrets", "remove", key, "--project", WebServerProjectPath];
+    return CaptureAsync("dotnet", arguments, skipOnDryRun: true, maskArguments: false, maskAuthorizationHeader: false);
+  }
+
   /// <summary>
   /// Always executes (including under --dry-run). Listing is read-only; the mint decision
   /// compares stored ClientId/TenantId against the target app.

@@ -117,10 +117,46 @@ public class Validate_Should
     return Task.CompletedTask;
   }
 
+  public static Task Reject_Microsoft365_When_ClientId_Is_Empty()
+  {
+    IConfiguration configuration = new ConfigurationBuilder()
+      .AddInMemoryCollection(
+        new Dictionary<string, string?>
+        {
+          ["SignInOptions:Methods:0"] = "Microsoft365"
+        })
+      .Build();
+
+    EntraAuthenticationOptions options = new()
+    {
+      Instance = "https://login.microsoftonline.com/",
+      TenantId = "organizations",
+      ClientId = "",
+      CallbackPath = "/signin-oidc"
+    };
+
+    new EntraAuthenticationOptionsValidator(configuration).Validate(options).IsValid.ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Skip_Entra_Fields_When_Microsoft365_Is_Not_Listed()
+  {
+    IConfiguration configuration = new ConfigurationBuilder()
+      .AddInMemoryCollection(
+        new Dictionary<string, string?>
+        {
+          ["SignInOptions:Methods:0"] = "Passkey"
+        })
+      .Build();
+
+    EntraAuthenticationOptions options = new() { ClientId = "" };
+    new EntraAuthenticationOptionsValidator(configuration).Validate(options).IsValid.ShouldBeTrue();
+    return Task.CompletedTask;
+  }
+
   private static EntraAuthenticationOptions EnabledOptions() =>
     new()
     {
-      Enabled = true,
       Instance = "https://login.microsoftonline.com/",
       TenantId = "organizations",
       ClientId = "11111111-1111-1111-1111-111111111111",
