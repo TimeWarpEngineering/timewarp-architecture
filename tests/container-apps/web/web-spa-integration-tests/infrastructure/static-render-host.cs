@@ -9,6 +9,9 @@
 // registered because FilterBar's search debounce injects that clock; a static render never
 // waits on it. Brand options and the signed-in principal are the only per-call inputs.
 // Title and CountOpen live here because both contracts read the h1 the same way.
+// Brand and sign-in options register through IOptions<>. The Options namespace is a global
+// using only when the api template symbol is on, and this host compiles with that symbol off,
+// so the file imports the namespace itself.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -18,6 +21,7 @@ using Blazored.SessionStorage;
 using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
