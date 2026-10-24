@@ -16,6 +16,14 @@ error CS0103: The name 'Options' does not exist in the current context
 
 This blocks the beta.25 release, so the version bump rides in the same PR.
 
+## Goal (implementer restatement)
+
+`SmokeNoApi` fails because `static-render-host.cs` calls `IOptions<>` and `Options.Create`, while `Microsoft.Extensions.Options` is imported only inside the `#if(api)` block of that test project's `global-usings.cs`. With `--api false` the preprocessor drops that import and the file does not compile. The fix is a file-level `using Microsoft.Extensions.Options;` on `static-render-host.cs`, the same pattern `ask-starter-prompts-tests.cs` already uses. The `#if(api)` global using stays as it is.
+
+The same change set moves the repo from `2.0.0-beta.24` to `2.0.0-beta.25` so the release can cut. That means `<Version>` in `source/Directory.Build.props`, the matching `<Version>` in `timewarp-templates/Directory.Build.props`, and every platform `PackageVersion` pin in `Directory.Packages.props` that task 124 keeps equal to the release version. Those version edits land in one commit.
+
+Done means `dev build` is 0 warnings and 0 errors, `dev check-version` says the source version is new, and template smoke covers `SmokeNoApi` and the default variant (the full `--matrix --app-tests` set when it can run). The kitchen records which variants actually ran.
+
 ## Required outcome
 
 - Add `using Microsoft.Extensions.Options;` to `static-render-host.cs`, matching
@@ -29,14 +37,41 @@ This blocks the beta.25 release, so the version bump rides in the same PR.
 
 ## Checklist
 
-- [ ] Using added to static-render-host.cs
-- [ ] Version bumped to 2.0.0-beta.25 (plus pins)
-- [ ] dev build 0/0, dev check-version clean
-- [ ] SmokeNoApi and default template smoke pass
+- [x] Using added to static-render-host.cs
+- [x] Version bumped to 2.0.0-beta.25 (plus pins)
+- [x] dev build 0/0, dev check-version clean
+- [x] SmokeNoApi and default template smoke pass
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-24)
+- Implementation: 01a16e14-c24c-7043-aa5e-341195a12844 (2026-10-24)
+
+## Results
+
+`static-render-host.cs` now imports `Microsoft.Extensions.Options` in the file. The `#if(api)` block in `global-usings.cs` is unchanged. A generated `--api false` tree keeps that file-level using and drops the Options global using, so `IOptions<>` and `Options.Create` resolve.
+
+`<Version>` is `2.0.0-beta.25` in `source/Directory.Build.props` and `timewarp-templates/Directory.Build.props`. The task-124 platform pins in `Directory.Packages.props` match: Foundation (Domain, Contracts, Application, Infrastructure, Server), Modules, Analyzers, Generators, Attributes, Identity, and TimeWarp.402.
+
+`./bin/dev build`: 0 warnings, 0 errors. `./bin/dev check-version`: source `2.0.0-beta.25`, NuGet `2.0.0-beta.24`, one prerelease increment ahead, safe to release. `ganda repo audit`: 33 passed, 0 failed, 1 skipped.
+
+`dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests` ran every variant: SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp, with generated-app tests. Every variant built with 0 warnings and 0 errors. SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, and SmokeNoGrpc passed their app-test suites, including Playwright 27/27 on each web variant. SmokeNoApi's SPA integration suite was 493/493. SmokeNoYarp's suites passed except `web-spa-playwright-tests` (26 passed, 1 failed): `Open_Should_MoveFocusIn_TrapTab_And_ReturnFocusOnEscape` saw `paintHitsDialog` false. The same project, rerun immediately against that generated tree, passed 27/27. That assertion also passed inside the matrix on the other four web variants. The matrix command therefore exited 1 on that one SmokeNoYarp Playwright miss. `web-server-integration-tests` printed 355/356 succeeded on the variants that include it, and the harness continued, which it does only when the MTP summary has zero failures.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+./bin/dev check-version
+dotnet run tools/dev-cli/dev.cs -- template-smoke --matrix --app-tests
+```
+
+Expect:
+
+- Build ends with `0 Warning(s)` and `0 Error(s)`.
+- `check-version` prints source `2.0.0-beta.25`, NuGet `2.0.0-beta.24`, and `Version in source is new — safe to release`.
+- Template smoke prints `SmokeNoApi OK` and `SmokeDefault OK`, then `Template smoke SUCCEEDED`. A generated app with `--api false` compiles `tests/container-apps/web/web-spa-integration-tests`, including `infrastructure/static-render-host.cs`.
 
 ## Notes
 
