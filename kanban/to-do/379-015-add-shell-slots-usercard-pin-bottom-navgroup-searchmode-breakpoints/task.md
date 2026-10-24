@@ -43,10 +43,12 @@ Acceptance for this pass: those seven findings are fixed, and the render, genera
 - Review oracle round 1: general reviewer (claude, Claude Opus 5.5), effort 3, headless (no session id reported), 2026-10-24. Findings: 3 bug, 2 suggestion, 2 nit, all open. A fix pass was requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-23T23:32:52Z
 - Fix pass: 2026-10-24 (implement-fix-2). Alias on each render, `NavPlacement` by constant value, menu scroll, rail clip and tooltip, Playwright at 1024×700.
+- Review oracle round 2: general reviewer (claude, Claude Opus 5.5), effort 2, headless (no session id reported), 2026-10-24. Scope `b6bd9ba6d..27b7623a9`. M1 and M3–M7 are fixed. M2 is still open, and M8 (nit) is new. A fix pass was requested.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
+- Round 2: Blocked — open M2, M8
 
 ## Notes
 
@@ -110,4 +112,15 @@ git diff origin/master -- source tests | rg -i crunchit
   M4 and M5 (rail accessible names and a Playwright check), M6 and M7 (duplicate padding, unused
   nav-width token). This pass changes the product for each of those.
 - Disposition: this fix pass implements M1–M7. Round 2 is the host's next review. The round 1 artifacts are unchanged.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (general, effort 2, 2026-10-24) covered the fix pass `b6bd9ba6d..27b7623a9`. The
+  reviewer re-ran `./bin/dev build` (0 warnings, 0 errors), `PageSourceGenerator_Tests`
+  (36 passed), and `TimeWarpPage_Should_` (14 passed). The Playwright check and template-smoke
+  were not re-run. Fixed: M1, M3, M4, M5, M6, M7. Open: M2 (bug), M8 (nit).
+- M2 is still open because the generator never binds the generated `NavPlacement` enum. In an
+  app, a const field and a cast both page as Top with no diagnostic. The new tests declare the
+  enum in source, so they do not model that. M8: `shell-rail.ts` keeps one module-level watcher
+  instead of returning a per-instance handle.
+- Final counts after round 2: bug 1 open / 2 fixed, suggestion 0 open / 2 fixed, nit 1 open /
+  2 fixed. No disposition yet.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md`.

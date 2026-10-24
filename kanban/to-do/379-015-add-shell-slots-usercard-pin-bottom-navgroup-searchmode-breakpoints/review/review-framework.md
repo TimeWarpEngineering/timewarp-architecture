@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 996
-- Effort: 3
+- Lines changed: 555
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope — task 379-015
 
