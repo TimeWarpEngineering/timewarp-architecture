@@ -566,6 +566,31 @@ public partial class Program : IAspNetProgram
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
+    // White-label shell tokens. Linked from App.razor after tokens.css. Anonymous: the mark
+    // paints before anyone signs in. Not a static asset, so a configuration edit is the next GET.
+    // Cache-Control: no-cache plus a strong ETag. If-None-Match uses weak comparison, so the
+    // strong tag and the same tag with a leading W/ are both 304.
+    webApplication.MapGet
+    (
+      BrandStylesheet.Path,
+      (HttpContext httpContext, IOptions<BrandOptions> brandOptions) =>
+      {
+        BrandStylesheet.Response response = BrandStylesheet.Respond
+        (
+          brandOptions.Value,
+          httpContext.Request.Headers.IfNoneMatch.ToString()
+        );
+        httpContext.Response.Headers["Cache-Control"] = BrandStylesheet.Response.CacheControl;
+        httpContext.Response.Headers["ETag"] = response.EntityTag;
+        if (response.Body is null)
+        {
+          return Results.StatusCode(response.StatusCode);
+        }
+
+        return Results.Text(response.Body, "text/css; charset=utf-8", statusCode: response.StatusCode);
+      }
+    ).AllowAnonymous();
+
     webApplication.MapStaticAssets();
     WebMcpDiscoveryEndpoint.Map(webApplication);
     webApplication.MapRazorComponents<App>()

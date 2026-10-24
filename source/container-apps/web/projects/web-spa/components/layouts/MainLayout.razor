@@ -4,19 +4,9 @@
 {
   protected const string HeadingHeight = "52px";
 
-  /// <summary>
-  /// TimeWarp Enterprises brand purple (the dominant logo color, tokens.css --twe-purple).
-  /// App.razor renders it as &lt;body data-theme-color&gt; with data-theme="light".
-  /// </summary>
-  /// <remarks>
-  /// Task 290: Fluent's startup script reads those body attributes in its beforeStart initializer
-  /// and generates the FluentUI v5 brand ramp from this color, before any component is
-  /// interactive. The ramp used to be applied here with IThemeService.SetThemeAsync in
-  /// OnAfterRenderAsync, which a fresh browser painted as Fluent's default blue first and then
-  /// switched to purple. The shell's header/footer frame colors come from tokens.css, so the
-  /// prerendered HTML is already on brand before any script runs.
-  /// </remarks>
-  public const string BrandColor = "#55409c";
+  // The Fluent seed and the shell tokens live on BrandOptions. App.razor writes the seed to
+  // data-theme-color and links /brand.css. This layout does not call IThemeService.SetThemeAsync
+  // (task 290: that painted Fluent's default blue until the first interactive render).
 }
 @Body
 

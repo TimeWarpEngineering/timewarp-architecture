@@ -210,7 +210,7 @@ public class PageSourceGenerator_Tests
     string registry = RegistryOf(generated);
     registry.ShouldContain(
       "new(typeof(global::Test.Pages.CounterPage), \"/Counter\", global::Test.Pages.CounterPage.GetPageUrl(), "
-      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\", \"\", 0),");
+      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
     registry.ShouldContain("new(typeof(global::Test.Pages.SettingsPage), \"/settings\"");
     registry.ShouldNotContain("LoginPage");
     registry.ShouldNotContain("LogoutPage");
@@ -252,8 +252,8 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("public string NavGroup { get; set; }");
     generated.ShouldContain("public int NavOrder { get; set; }");
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Admin\", 200),");
-    registry.ShouldContain("global::Test.Pages.ZuluPage.Policy, \"\", \"\", 10),");
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.ZuluPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
     // NavOrder wins over the route: "/Zulu" (10) before "/Alpha" (200).
     registry.IndexOf("ZuluPage", StringComparison.Ordinal)
       .ShouldBeLessThan(registry.IndexOf("AlphaPage", StringComparison.Ordinal));
@@ -270,7 +270,119 @@ public class PageSourceGenerator_Tests
       """);
 
     diagnostics.ShouldBeEmpty();
-    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200),");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_NavPlacement_Bottom_From_The_Member_Name()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages
+      {
+        [Page("/Alpha", Navigable = true, NavGroup = "Developer", NavOrder = 310, NavPlacement = TimeWarp.Architecture.NavPlacement.Bottom)]
+        public partial class AlphaPage { }
+        [Page("/Home", Navigable = true, NavOrder = 10, NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top)]
+        public partial class HomePage { }
+      }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    generated.ShouldContain("public NavPlacement NavPlacement { get; set; }");
+    string registry = RegistryOf(generated);
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_NavPlacement_Bottom_From_A_Compile_Time_Constant()
+  {
+    // The enum is not declared here. An app does not have it in the generator's compilation.
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages
+      {
+        using static TimeWarp.Architecture.NavPlacement;
+        public static class Placements
+        {
+          public const TimeWarp.Architecture.NavPlacement Pin = TimeWarp.Architecture.NavPlacement.Bottom;
+          public const TimeWarp.Architecture.NavPlacement Also = Pin;
+          public const int One = 1;
+        }
+        [Page("/Const", Navigable = true, NavGroup = "Developer", NavOrder = 310, NavPlacement = Placements.Pin)]
+        public partial class ConstPage { }
+        [Page("/Chain", Navigable = true, NavOrder = 11, NavPlacement = Placements.Also)]
+        public partial class ChainPage { }
+        [Page("/Static", Navigable = true, NavOrder = 10, NavPlacement = Bottom)]
+        public partial class StaticPage { }
+        [Page("/Cast", Navigable = true, NavOrder = 20, NavPlacement = (TimeWarp.Architecture.NavPlacement)1)]
+        public partial class CastPage { }
+        [Page("/CastConst", Navigable = true, NavOrder = 21, NavPlacement = (TimeWarp.Architecture.NavPlacement)Placements.One)]
+        public partial class CastConstPage { }
+        [Page("/Literal", Navigable = true, NavOrder = 22, NavPlacement = 1)]
+        public partial class LiteralPage { }
+      }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    string registry = RegistryOf(generated);
+    registry.ShouldContain("global::Test.Pages.ConstPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.ChainPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.StaticPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.CastPage.Policy, \"\", \"\", 20) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.CastConstPage.Policy, \"\", \"\", 21) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.LiteralPage.Policy, \"\", \"\", 22) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Emit_NavPlacement_Bottom_When_The_Generated_Enum_Is_Unbound()
+  {
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages
+      {
+        [Page("/Alpha", Navigable = true, NavGroup = "Developer", NavOrder = 310, NavPlacement = NavPlacement.Bottom)]
+        public partial class AlphaPage { }
+        [Page("/Home", Navigable = true, NavOrder = 10, NavPlacement = Bottom)]
+        public partial class HomePage { }
+      }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    string registry = RegistryOf(generated);
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Keep_NavPlacement_Top_For_Any_Value_Other_Than_Bottom()
+  {
+    // The enum is not declared here. A known value other than 1, and a foreign Bottom name, stay Top.
+    (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
+      namespace Test.Pages
+      {
+        public static class Placements
+        {
+          public const TimeWarp.Architecture.NavPlacement Pin = TimeWarp.Architecture.NavPlacement.Top;
+          public const int Two = 2;
+        }
+        [Page("/TopMember", Navigable = true, NavGroup = "Developer", NavOrder = 310, NavPlacement = TimeWarp.Architecture.NavPlacement.Top)]
+        public partial class TopMemberPage { }
+        [Page("/TopConst", Navigable = true, NavOrder = 11, NavPlacement = Placements.Pin)]
+        public partial class TopConstPage { }
+        [Page("/CastZero", Navigable = true, NavOrder = 12, NavPlacement = (TimeWarp.Architecture.NavPlacement)0)]
+        public partial class CastZeroPage { }
+        [Page("/CastTwo", Navigable = true, NavOrder = 13, NavPlacement = (TimeWarp.Architecture.NavPlacement)Placements.Two)]
+        public partial class CastTwoPage { }
+        [Page("/Foreign", Navigable = true, NavOrder = 14, NavPlacement = Foo.Bottom)]
+        public partial class ForeignPage { }
+      }
+      """);
+
+    diagnostics.ShouldBeEmpty();
+    string registry = RegistryOf(generated);
+    registry.ShouldContain("global::Test.Pages.TopMemberPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.TopConstPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.CastZeroPage.Policy, \"\", \"\", 12) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.CastTwoPage.Policy, \"\", \"\", 13) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.ForeignPage.Policy, \"\", \"\", 14) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
     return Task.CompletedTask;
   }
 
@@ -322,7 +434,7 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     RegistryOf(generated).ShouldContain("""
-      "Line one.\nSay \"hi\" \\ done.", "", 0)
+      "Line one.\nSay \"hi\" \\ done.", "", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top }
       """.Trim());
     return Task.CompletedTask;
   }
@@ -341,7 +453,7 @@ public class PageSourceGenerator_Tests
 
     // The entry reads the page's generated Policy member, which is the const expression.
     generated.ShouldContain("public static string Policy { get; } = Policies.SettingsEdit;");
-    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\", \"\", 0)");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top }");
     return Task.CompletedTask;
   }
 

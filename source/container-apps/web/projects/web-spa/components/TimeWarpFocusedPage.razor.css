@@ -20,7 +20,7 @@
 }
 
 .twe-focused__logo {
-  height: 48px;
+  height: var(--twe-logo-height);
   width: auto;
   display: block;
 }

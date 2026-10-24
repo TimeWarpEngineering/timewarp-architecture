@@ -3,17 +3,21 @@
 
 @code
 {
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+
   public static Icon? NavIcon => new Icons.Regular.Size20.Home();
   public static string Title => "Home";
+
+  private string WelcomeTitle => "Welcome to " + BrandOptionsAccessor.Value.ProductName;
 
   private async Task GoToLoginAsync() =>
     await NoSubRouteState.ChangeRoute(newRoute: LoginPage.GetPageUrl());
 }
 
-<TimeWarpPage Title=@ApplicationState.Name>
+<TimeWarpPage Title=@BrandOptionsAccessor.Value.ProductName>
   <div class="twe-stack">
 
-    <Card Title="Welcome to TimeWarp.Architecture">
+    <Card Title="@WelcomeTitle">
       A distributed .NET reference application and project template by
       <NavLink href="https://timewarp.enterprises/" target="_blank">TimeWarp Enterprises</NavLink>.
       It demonstrates an opinionated, batteries-included architecture you can clone and build on.

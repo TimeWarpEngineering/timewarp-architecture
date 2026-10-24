@@ -1,0 +1,67 @@
+/* Role card — native button, CSS isolation. Tokens from tokens.css.
+   6px stack gap and 14px by 16px padding sit under the spacing steps so the
+   option stays a row, not a form field. */
+.twe-role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--twe-rule);
+  border-radius: var(--twe-radius-sm);
+  background: var(--twe-paper);
+  color: inherit;
+  font: inherit;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms;
+}
+
+.twe-role-card:hover {
+  border-color: var(--twe-ink-2);
+}
+
+.twe-role-card:focus {
+  outline: none;
+}
+
+.twe-role-card:focus-visible {
+  outline: 2px solid var(--twe-purple-deep);
+  outline-offset: 2px;
+}
+
+.twe-role-card.is-selected {
+  border-color: var(--twe-purple);
+  background: color-mix(in srgb, var(--twe-purple) 8%, var(--twe-paper));
+}
+
+.twe-role-card.is-selected:hover {
+  border-color: var(--twe-purple);
+}
+
+.twe-role-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--twe-space-2);
+}
+
+.twe-role-card__title {
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  color: var(--twe-ink);
+}
+
+.twe-role-card__check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--twe-purple-deep);
+}
+
+.twe-role-card__desc {
+  font-size: var(--twe-text-helper);
+  color: var(--twe-ink-2);
+  line-height: 1.5;
+}

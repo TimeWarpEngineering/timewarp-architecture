@@ -2,6 +2,9 @@
 .sg-header { margin-bottom: 8px; }
 .sg-title { font-size: var(--twe-text-page-title); font-weight: 700; margin: 0; color: var(--twe-ink); }
 .sg-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
+.sg-brand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--twe-space-2); margin-top: var(--twe-space-3); }
+.sg-brand__logo { height: var(--twe-logo-height); width: auto; display: block; }
+.sg-brand__fact { margin: 0; color: var(--twe-ink); font-size: var(--twe-text-body); }
 .sg-swatches { display: flex; flex-wrap: wrap; gap: 16px; }
 .sg-swatch { width: 132px; }
 .sg-swatch__chip { height: 64px; border-radius: 10px; border: 1px solid var(--twe-rule); }
@@ -10,3 +13,14 @@
 .sg-type { display: flex; flex-direction: column; gap: 10px; }
 .sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
 .sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sg-follow { margin-top: var(--twe-space-3); }
+.sg-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--twe-space-3);
+}
+.sg-chart-sample { display: block; width: 100%; height: 6rem; }
+.sg-chart-sample polyline { fill: none; stroke-width: 2; }
+.sg-chart-sample__a { stroke: var(--twe-ink); }
+.sg-chart-sample__b { stroke: var(--twe-primary); }
+.sg-chart-sample__c { stroke: var(--twe-positive); }

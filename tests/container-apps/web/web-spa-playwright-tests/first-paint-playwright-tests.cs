@@ -17,7 +17,12 @@
 // scan (no <style> in the served page contains an HTML entity). FluentLayout emits its own
 // container-query <style>; it is framework markup, so the HTML scan checks entities, not count.
 // Screenshots go to test output (PlaywrightScreenshot). CI uploads that folder.
+// The rail check uses a 1024x700 viewport: the nav is 68px, labels are clipped,
+// and the pinned card does not overlap the menu. Widening past 1279px drops the
+// link title, because that tooltip exists only in the rail.
 // Brand purple is --twe-purple (#55409c), the same value App.razor puts in data-theme-color.
+// GET /brand.css sends Cache-Control: no-cache and a strong ETag. A repeat with that tag,
+// and a repeat with the same tag weakened by a leading W/, are both 304.
 #endregion
 
 namespace FirstPaintPlaywright_;
@@ -79,6 +84,8 @@ public partial class FirstPaint_Given_PrerenderedShell
     await File.WriteAllTextAsync(ScreenshotPath("prerendered.html"), html);
     AssertStyleElementsAreNotEncoded(html);
     html.ShouldContain("data-theme-color=\"#55409c\"");
+    html.ShouldContain("href=\"brand.css\"");
+    html.ShouldContain("images/timewarp-horizontal.svg");
 
     IBrowser browser = session.Inner;
 
@@ -112,6 +119,100 @@ public partial class FirstPaint_Given_PrerenderedShell
     int green = Convert.ToInt32(settled.FluentBrand[3..5], 16);
     int blue = Convert.ToInt32(settled.FluentBrand[5..7], 16);
     (red > green && blue > green).ShouldBeTrue($"--colorBrandBackground {settled.FluentBrand} is not a purple brand ramp");
+  }
+
+  public static async Task Rail_Should_KeepTheCardClearOfTheMenu()
+  {
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.AddSingleton<IOptions<BlazorSettings>>(Options.Create(new BlazorSettings
+      {
+        RenderMode = TimeWarp.Architecture.Configuration.RenderMode.InteractiveAuto,
+        Prerender = true,
+      })));
+
+    PlaywrightBrowserSession session = await PlaywrightBrowserSession.GetAsync();
+    await using IBrowserContext context = await session.Inner.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      Locale = "en-US",
+      ViewportSize = new ViewportSize { Width = 1024, Height = 700 },
+      ExtraHTTPHeaders = new Dictionary<string, string> { ["X-TimeWarp-Mock-Principal-Id"] = MockPrincipalId },
+    });
+
+    IPage page = await context.NewPageAsync();
+    await page.GotoAsync(InProcTestPorts.WebHostUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+    await page.WaitForFunctionAsync(
+      "() => { const e = document.querySelector('.twe-footer__mode'); return e && e.textContent.trim() !== 'Static'; }",
+      null,
+      new PageWaitForFunctionOptions { Timeout = 120_000 });
+    await page.WaitForTimeoutAsync(1_000);
+    await page.WaitForFunctionAsync(
+      "() => { const link = document.querySelector('a[href=\"https://github.com/TimeWarpEngineering/timewarp-architecture\"]'); return link && link.getAttribute('title') === 'GitHub'; }",
+      null,
+      new PageWaitForFunctionOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("rail-1024.png") });
+
+    RailLayout rail = await ReadRailAsync(page);
+    Console.WriteLine($"[379-015 rail] {rail}");
+    ((double)rail.NavWidth).ShouldBe(68, 2, "rail nav width");
+    rail.OverflowY.ShouldBe("auto");
+    rail.LabelWidth.ShouldBeLessThanOrEqualTo(1);
+    rail.Overlaps.ShouldBeFalse("the menu overlaps the user card");
+    rail.MenuRight.ShouldBeLessThanOrEqualTo(rail.NavRight + 1);
+    rail.GitHubTitle.ShouldBe("GitHub");
+    rail.GitHubText.ShouldContain("GitHub");
+
+    ILocator github = page.GetByRole(AriaRole.Link, new() { Name = "GitHub", Exact = true });
+    (await github.CountAsync()).ShouldBe(1);
+
+    await page.SetViewportSizeAsync(1400, 800);
+    await page.WaitForFunctionAsync(
+      "() => { const link = document.querySelector('a[href=\"https://github.com/TimeWarpEngineering/timewarp-architecture\"]'); const label = document.querySelector('.twe-nav__label'); return link && !link.getAttribute('title') && label && label.getBoundingClientRect().width > 8; }",
+      null,
+      new PageWaitForFunctionOptions { Timeout = 10_000 });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("rail-widened.png") });
+    RailLayout wide = await ReadRailAsync(page);
+    Console.WriteLine($"[379-015 wide] {wide}");
+    ((double)wide.NavWidth).ShouldBe(240, 2, "full nav width");
+    wide.GitHubTitle.ShouldBeNull();
+    wide.LabelWidth.ShouldBeGreaterThan(8);
+    wide.Overlaps.ShouldBeFalse("the menu overlaps the user card");
+  }
+
+  private static async Task<RailLayout> ReadRailAsync(IPage page)
+  {
+    System.Text.Json.JsonElement raw = await page.EvaluateAsync<System.Text.Json.JsonElement>(
+      """
+      () => {
+        const nav = document.querySelector('.fluent-layout-item[area=nav]');
+        const menu = document.querySelector('.twe-nav-menu');
+        const card = document.querySelector('.twe-user-card');
+        const label = document.querySelector('.twe-nav__label');
+        const link = document.querySelector('a[href="https://github.com/TimeWarpEngineering/timewarp-architecture"]');
+        const box = element => element.getBoundingClientRect();
+        const navBox = box(nav);
+        const menuBox = box(menu);
+        const cardBox = card ? box(card) : null;
+        const overlaps = cardBox !== null
+          && menuBox.left < cardBox.right - 0.5
+          && menuBox.right > cardBox.left + 0.5
+          && menuBox.top < cardBox.bottom - 0.5
+          && menuBox.bottom > cardBox.top + 0.5;
+        return {
+          navWidth: Math.round(navBox.width),
+          navRight: Math.round(navBox.right),
+          menuRight: Math.round(menuBox.right),
+          labelWidth: label ? Math.round(label.getBoundingClientRect().width) : -1,
+          overflowY: getComputedStyle(menu).overflowY,
+          overlaps,
+          gitHubTitle: link ? link.getAttribute('title') : '',
+          gitHubText: link ? link.textContent : '',
+        };
+      }
+      """);
+    RailLayout? layout = raw.Deserialize<RailLayout>(JsonOptions);
+    layout.ShouldNotBeNull();
+    return layout;
   }
 
   private static void AssertShellLayout(string name, ShellMetrics metrics)
@@ -160,6 +261,37 @@ public partial class FirstPaint_Given_PrerenderedShell
     response.Ok.ShouldBeTrue($"GET / returned {response.Status}");
     string html = await response.TextAsync();
     html.ShouldContain("twe-appbar");
+
+    IAPIResponse brandCss = await request.GetAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css");
+    brandCss.Ok.ShouldBeTrue($"GET /brand.css returned {brandCss.Status}");
+    string css = await brandCss.TextAsync();
+    css.ShouldContain("--twe-purple: #55409c;");
+    css.ShouldContain("--twe-logo-height: 48px;");
+    css.ShouldNotContain("<");
+    brandCss.Headers["cache-control"].ShouldBe("no-cache");
+    string etag = brandCss.Headers["etag"];
+    etag.ShouldStartWith("\"");
+    etag.ShouldEndWith("\"");
+
+    IAPIResponse revalidated = await request.GetAsync
+    (
+      InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css",
+      new APIRequestContextOptions
+      {
+        Headers = new Dictionary<string, string> { ["If-None-Match"] = etag }
+      }
+    );
+    revalidated.Status.ShouldBe(304);
+
+    IAPIResponse weakened = await request.GetAsync
+    (
+      InProcTestPorts.WebHostUrl.TrimEnd('/') + "/brand.css",
+      new APIRequestContextOptions
+      {
+        Headers = new Dictionary<string, string> { ["If-None-Match"] = "W/" + etag }
+      }
+    );
+    weakened.Status.ShouldBe(304);
     return html;
   }
 
@@ -243,6 +375,16 @@ public partial class FirstPaint_Given_PrerenderedShell
 }
 
 public sealed record Box(int X, int Y, int Width, int Height);
+
+public sealed record RailLayout(
+  int NavWidth,
+  int NavRight,
+  int MenuRight,
+  int LabelWidth,
+  string OverflowY,
+  bool Overlaps,
+  string? GitHubTitle,
+  string GitHubText);
 
 public sealed record ShellMetrics(
   Box AppBar,

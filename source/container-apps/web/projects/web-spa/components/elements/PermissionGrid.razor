@@ -1,0 +1,57 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Capability groups — each row is granted or not.
+
+  Design: Native div root so CSS isolation stamps the scope attribute. Class is appended
+  on that root, and unmatched attributes splat onto it. The page passes Groups. A null
+  list renders the root and no rows. A blank group label is omitted. The mark is
+  decorative. The words Granted and Not granted sit in twe-perm-grid__state, visually
+  hidden, so the state is not colour alone. The capability text is twe-perm-grid__label.
+  This component wires no events and does not decide the grants.
+  Isolated CSS uses --twe-* tokens. The granted mark uses --twe-on-positive because
+  --twe-positive is 4.44:1 on paper. Denied text uses --twe-ink-2 because --twe-muted
+  is under 4.5:1 on paper.
+*@
+
+@code {
+  [Parameter] public IReadOnlyList<PermissionGroup>? Groups { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private IReadOnlyList<PermissionGroup> Rows => Groups ?? [];
+}
+
+<div class="twe-perm-grid @Class" @attributes="AdditionalAttributes">
+  @foreach (PermissionGroup group in Rows)
+  {
+    <section class="twe-perm-grid__group">
+      @if (!string.IsNullOrWhiteSpace(group.Label))
+      {
+        <p class="twe-perm-grid__eyebrow">@group.Label</p>
+      }
+      <ul class="twe-perm-grid__list">
+        @foreach (PermissionItem item in group.Items ?? [])
+        {
+          <li class="twe-perm-grid__row @(item.Granted ? null : "is-denied")">
+            @if (item.Granted)
+            {
+              <svg class="twe-perm-grid__mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M3.2 8.2 6.4 11.4 12.8 4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="twe-perm-grid__state">Granted</span>
+            }
+            else
+            {
+              <svg class="twe-perm-grid__mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <span class="twe-perm-grid__state">Not granted</span>
+            }
+            <span class="twe-perm-grid__label">@item.Label</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

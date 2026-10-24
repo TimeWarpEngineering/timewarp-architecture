@@ -23,7 +23,8 @@
   RFC 219 D8 / 219-006: AddPasskeyPrompt sits above ChildContent so post-login Home and
   Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
   mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
-  hosts this prompt. Soft dismiss is not a gate.
+  hosts this prompt. Soft dismiss is not a gate. SignInOptions.Mode other than Passkey
+  omits the prompt and does not hide ChildContent: those apps sign in with Microsoft 365.
   MessageBars sits above that prompt: it is the ONE notification region per page (task 247),
   painting NotificationState rows (pipeline failures, handler outcomes, AddNotification)
   directly below the breadcrumb and above the first card, without a toast provider. Pages
@@ -32,6 +33,8 @@
   ReadOnly and carries the CommandPaletteJsModule trigger attribute, so focusing or clicking it
   opens the CommandPalette modal (as Ctrl-K / Cmd-K anywhere on the page does). The palette is a
   ModalContainer beside AssemblyInfoModal and owns its JS registration; only this shell hosts it.
+  The app-bar logo is BrandOptions (source, alt, width, height). This shell authors the img so
+  the isolated .twe-brand__logo rule can match it. Height is --twe-logo-height from /brand.css.
   Task 290: all shell CSS is in TimeWarpPage.razor.css (CSS isolation), which the browser loads in
   <head> before first paint. A <style>@(...)</style> block here was HTML-encoded by prerender and
   dropped until interactive, so the shell flashed unstyled. Components author no <style> elements
@@ -53,15 +56,40 @@
   one copy of the document title and the h1, rendered from both branches so they cannot drift.
   This component still owns the only h1. Callers put buttons in Actions; this shell does not
   handle their clicks.
+  SearchMode chooses the app-bar search slot. Palette is the read-only Ctrl-K field. Hidden
+  omits it. Custom renders the Search fragment in that same slot. The command palette modal
+  stays mounted, so Ctrl-K still opens it.
+  The navigation column pins a user card under the menu when someone is signed in. The name
+  is the profile alias, the identity name, or Account. The detail is the profile email.
+  The card links to the profile page only when that policy allows it. A UserCard fragment
+  replaces that default. ShowUserCard false omits it. Signed out, the default card is absent.
+  NavPlacement.Bottom groups render in NavMenu's pinned nav. The navigation item's
+  Width is var(--twe-shell-nav-width). The rail (880px through 1279px) narrows that
+  column to --twe-shell-rail-width. Below 880px Fluent's drawer is unchanged.
 *@
 
 @code {
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+  [Inject] private IOptions<SignInOptions> SignInOptionsAccessor { get; set; } = null!;
+
+  private BrandOptions Brand => BrandOptionsAccessor.Value;
+  private SignInOptions SignIn => SignInOptionsAccessor.Value;
+
+  private bool BlockForPasskey =>
+    SignIn.OffersPasskey
+    && SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
+    && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false);
+
   [Parameter] public string? Title { get; set; }
   [Parameter] public RenderFragment? Description { get; set; }
   [Parameter] public RenderFragment? Actions { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
   [Parameter] public RenderFragment? Aside { get; set; }
   [Parameter] public bool ShowInBreadcrumbs { get; set; } = true;
+  [Parameter] public ShellSearchMode SearchMode { get; set; } = ShellSearchMode.Palette;
+  [Parameter] public RenderFragment? Search { get; set; }
+  [Parameter] public RenderFragment? UserCard { get; set; }
+  [Parameter] public bool ShowUserCard { get; set; } = true;
 
   // The attribute command-palette.js looks for; the name is CommandPaletteJsModule's constant.
   private static readonly Dictionary<string, object> CommandPaletteTrigger =
@@ -120,13 +148,25 @@
                stacked timewarp-logo.svg so the wordmark stays readable at bar height.
                Explicit width/height reserve the box before styles apply (no first-paint
                size flash). *@
-            <img class="twe-brand__logo" src="images/timewarp-horizontal.svg" alt="TimeWarp Architecture" width="201" height="48" />
+            <img class="twe-brand__logo"
+                 src="@Brand.LogoSrc"
+                 alt="@Brand.LogoAlt"
+                 width="@Brand.LogoWidth"
+                 height="@Brand.LogoHeight"
+                 data-qa="BrandLogo" />
           </div>
-          <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
-            <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
-              <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
-            </FluentTextInput>
-          </div>
+          @if (SearchMode == ShellSearchMode.Palette)
+          {
+            <div class="twe-appbar__search" @attributes=CommandPaletteTrigger>
+              <FluentTextInput Placeholder="Search pages and commands" Width="100%" ReadOnly="true" aria-label="Search pages and commands (Ctrl-K)">
+                <EndTemplate><span class="search-end">Ctrl-K</span></EndTemplate>
+              </FluentTextInput>
+            </div>
+          }
+          else if (SearchMode == ShellSearchMode.Custom && Search is not null)
+          {
+            <div class="twe-appbar__search">@Search</div>
+          }
           <div class="twe-appbar__actions">
             <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">@AgentSurfaceState.AskLabel</FluentButton>
             <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
@@ -137,8 +177,18 @@
         </header>
       </FluentLayoutItem>
 
-      <FluentLayoutItem Area="LayoutArea.Navigation" Width="240px">
-        <NavMenu />
+      <FluentLayoutItem Area="LayoutArea.Navigation" Width="var(--twe-shell-nav-width)">
+        <div class="twe-nav-column">
+          <NavMenu />
+          @if (UserCard is not null)
+          {
+            <div class="twe-nav-column__user">@UserCard</div>
+          }
+          else if (ShowUserCard)
+          {
+            <ShellUserCard />
+          }
+        </div>
       </FluentLayoutItem>
 
       <FluentLayoutItem Area="LayoutArea.Content">
@@ -172,9 +222,11 @@
           <div class="twe-page__body">
             <WebMcpAgentSurface />
             <MessageBars />
-            <AddPasskeyPrompt />
-            @if (!(SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required
-              && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false)))
+            @if (SignIn.OffersPasskey)
+            {
+              <AddPasskeyPrompt />
+            }
+            @if (!BlockForPasskey)
             {
               @ChildContent
             }

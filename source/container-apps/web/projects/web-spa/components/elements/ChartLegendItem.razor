@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One legend row — a coloured dot and a label.
+
+  Design: Native span root so CSS isolation stamps the scope attribute. Class is
+  appended on that root, and unmatched attributes splat onto it. Tone picks the
+  dot: ink, primary, or positive. The dot is aria-hidden; the label is the name.
+  This component wires no events. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter, EditorRequired] public string Label { get; set; } = "";
+  [Parameter] public ChartSeriesTone Tone { get; set; } = ChartSeriesTone.Ink;
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private string ToneClass => Tone switch
+  {
+    ChartSeriesTone.Primary => "primary",
+    ChartSeriesTone.Positive => "positive",
+    _ => "ink",
+  };
+}
+
+<span class="twe-chart-legend @Class" @attributes="AdditionalAttributes">
+  <span class="twe-chart-legend__dot twe-chart-legend__dot--@ToneClass" aria-hidden="true"></span>
+  <span class="twe-chart-legend__label">@Label</span>
+</span>

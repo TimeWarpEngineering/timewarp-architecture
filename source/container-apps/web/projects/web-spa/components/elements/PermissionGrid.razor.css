@@ -1,0 +1,60 @@
+/* Permission grid — native root, CSS isolation. Tokens from tokens.css.
+   260px is the narrowest group column. 4px row padding sits under the 8px step
+   so a row stays a list line, not a field. */
+.twe-perm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--twe-space-6);
+}
+
+.twe-perm-grid__eyebrow {
+  margin: 0 0 var(--twe-space-2);
+  font-size: var(--twe-text-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--twe-ink-2);
+}
+
+.twe-perm-grid__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.twe-perm-grid__row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: var(--twe-space-2);
+  padding-block: 4px;
+  font-size: var(--twe-text-body);
+  color: var(--twe-ink);
+}
+
+.twe-perm-grid__mark {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--twe-on-positive);
+}
+
+.twe-perm-grid__row.is-denied {
+  color: var(--twe-ink-2);
+}
+
+.twe-perm-grid__row.is-denied .twe-perm-grid__mark {
+  color: var(--twe-ink-2);
+}
+
+.twe-perm-grid__state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -36,6 +36,21 @@
   private static readonly string[] TabDemoItems = ["Overview", "Activity", "Notes"];
   private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
 
+  private static readonly IReadOnlyList<PermissionGroup> SamplePermissions =
+  [
+    new("Work",
+    [
+      new PermissionItem("View assigned work", true),
+      new PermissionItem("Edit shared records", true),
+      new PermissionItem("Delete records", false)
+    ]),
+    new("Administration",
+    [
+      new PermissionItem("Manage people", false),
+      new PermissionItem("Change billing", false)
+    ])
+  ];
+
   private static readonly Icon IntegrationConnectedIcon = new Icons.Regular.Size24.CloudSync();
   private static readonly Icon IntegrationWarningIcon = new Icons.Regular.Size24.Warning();
   private static readonly Icon IntegrationSyncIcon = new Icons.Regular.Size20.ArrowSync();
@@ -52,6 +67,12 @@
   private async Task TriggerException() =>
     await CounterState.ThrowException("Demo exception dispatched from the Style Guide.", CancellationToken);
 
+  [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+  [Inject] private IOptions<SignInOptions> SignInOptionsAccessor { get; set; } = null!;
+
+  private BrandOptions Brand => BrandOptionsAccessor.Value;
+  private SignInOptions SignIn => SignInOptionsAccessor.Value;
+
   private Task ConfirmSampleAsync() => NoSubStyleGuideState.ConfirmSample();
 }
 
@@ -63,6 +84,21 @@
   </Actions>
   <ChildContent>
     <div class="twe-stack">
+
+      <Card Title="Brand">
+        <p class="sg-subtitle">Product name, logo, shell tokens, and the Fluent ramp come from BrandOptions. This card is the checked-in brand.</p>
+        <div class="sg-brand">
+          <img class="sg-brand__logo"
+               src="@Brand.LogoSrc"
+               alt="@Brand.LogoAlt"
+               width="@Brand.LogoWidth"
+               height="@Brand.LogoHeight"
+               data-qa="StyleGuideBrandLogo" />
+          <p class="sg-brand__fact" data-qa="StyleGuideBrandName">@Brand.ProductName</p>
+          <p class="sg-brand__fact" data-qa="StyleGuideBrandSeed">@Brand.NormalizedSeedColor</p>
+          <p class="sg-brand__fact" data-qa="StyleGuideBrandRamp">@(Brand.ExactRamp ? "Exact" : "Harmonized")</p>
+        </div>
+      </Card>
 
       <Card Title="Color Tokens">
         <div class="sg-swatches">
@@ -163,6 +199,20 @@
         </div>
       </Card>
 
+      <Card Title="User card">
+        <p class="sg-subtitle">Pinned under the navigation menu. The row is a link when it has a destination. The shell shows the signed-in person here.</p>
+        <div class="twe-stack">
+          <UserCard Name="Ada Lovelace" Detail="ada@example.test" Href="@ProfilePage.GetPageUrl()" data-qa="StyleGuideUserCard" />
+          <UserCard Name="Ada Lovelace" Detail="Signed in" />
+        </div>
+        <p class="sg-subtitle">SearchMode is Palette (the Ctrl-K field), Hidden, or Custom. This page keeps Palette. The nav is 240px from 1280px up, a 68px rail from 880px through 1279px, and the drawer below 880px.</p>
+      </Card>
+
+      <Card Title="Sign-in">
+        <p class="sg-subtitle">SignInOptions.Mode is Passkey, Microsoft365Only, or Staff. Passkey keeps the passkey button and account creation, and shows Microsoft 365 when the site offers it. Microsoft365Only offers only Continue with Microsoft 365. Staff uses that button and adds the staff-only line. This app is <span data-qa="StyleGuideSignInMode">@SignIn.Mode</span>.</p>
+        <p data-qa="StyleGuideStaffNote">@SignInOptions.StaffNote</p>
+      </Card>
+
       <Card Title="Empty States">
         <p class="sg-subtitle">A full paper card, the same card with an action, and the inline form used inside a card or grid. The sample does not store a choice.</p>
         <div class="twe-stack">
@@ -197,6 +247,50 @@
           <KpiCard Label="On time" Value="49.5%" Caption="Last 12 months" />
           <KpiCard Label="Exceptions" Value="3" Tone="KpiTone.Danger" />
         </KpiStrip>
+      </Card>
+
+      <Card Title="Chart frame">
+        <p class="sg-subtitle">A paper frame. The page supplies the period control, the filter, and the plot. This sample draws three decorative lines.</p>
+        <ChartCard Title="Sample series" HeadingLevel="3" data-qa="StyleGuideChartCard">
+          <Header>
+            <SegmentedControl Items="SegmentDemoItems" Value="Week" AriaLabel="Sample period" />
+          </Header>
+          <Filter>
+            <span>All locations</span>
+          </Filter>
+          <ChildContent>
+            <svg class="sg-chart-sample" viewBox="0 0 320 96" aria-hidden="true" focusable="false">
+              <polyline class="sg-chart-sample__a" points="0,72 40,64 80,68 120,50 160,54 200,38 240,42 280,24 320,30" />
+              <polyline class="sg-chart-sample__b" points="0,40 40,44 80,36 120,42 160,34 200,40 240,30 280,36 320,28" />
+              <polyline class="sg-chart-sample__c" points="0,78 40,74 80,70 120,66 160,60 200,58 240,52 280,48 320,44" />
+            </svg>
+          </ChildContent>
+          <Legend>
+            <ChartLegendItem Label="Series A" Tone="ChartSeriesTone.Ink" />
+            <ChartLegendItem Label="Series B" Tone="ChartSeriesTone.Primary" />
+            <ChartLegendItem Label="Series C" Tone="ChartSeriesTone.Positive" />
+          </Legend>
+        </ChartCard>
+      </Card>
+
+      <Card Title="Trend, SLA, and class pills">
+        <p class="sg-subtitle">A move, an on-time tier, and a classification. The page passes the words. These samples change nothing.</p>
+        <div class="twe-stack">
+          <div class="sg-row">
+            <TrendPill Direction="TrendDirection.Up" Label="4.2%" />
+            <TrendPill Direction="TrendDirection.Down" Label="1.8%" />
+            <TrendPill Direction="TrendDirection.Flat" />
+          </div>
+          <div class="sg-row">
+            <SlaChip Tone="SlaTone.Good" Label="98%" />
+            <SlaChip Tone="SlaTone.Warn" Label="90%" />
+            <SlaChip Tone="SlaTone.Bad" Label="78%" />
+          </div>
+          <div class="sg-row">
+            <ClassPill Label="Operations" />
+            <ClassPill Label="Not mapped" Unmapped="true" />
+          </div>
+        </div>
       </Card>
 
       <Card Title="Integration Cards">
@@ -301,6 +395,42 @@
           <StatusBadge Status="BadgeStatus.Inactive" />
           <StatusBadge Status="BadgeStatus.Warning" />
           <StatusBadge Status="BadgeStatus.Info" />
+          <StatusBadge Status="BadgeStatus.Error" />
+          <StatusBadge Status="BadgeStatus.Error" Label="Lost" />
+        </div>
+      </Card>
+
+      <Card Title="Role badges">
+        <p class="sg-subtitle">A role name on a status pill. The page passes the word and the status. These samples change nothing.</p>
+        <div class="sg-row sg-follow" data-qa="StyleGuideRoleBadges">
+          <RoleBadge Role="Owner" Status="BadgeStatus.Warning" />
+          <RoleBadge Role="Admin" Status="BadgeStatus.Info" />
+          <RoleBadge Role="Staff" Status="BadgeStatus.Inactive" />
+        </div>
+      </Card>
+
+      <Card Title="Role cards">
+        <p class="sg-subtitle">One option in a single-select group. The page owns which one is selected, the roving tab stop, and the arrow keys. This sample sets the tab indexes and does not move selection.</p>
+        <div class="sg-choice-grid sg-follow" role="radiogroup" aria-label="Sample role" data-qa="StyleGuideRoleCards">
+          <RoleCard Title="Owner" Description="Full access to billing, people, and records." Selected="true" tabindex="0" />
+          <RoleCard Title="Admin" Description="Manage people and records. No billing." tabindex="-1" />
+          <RoleCard Title="Staff" Description="Work assigned records." tabindex="-1" />
+        </div>
+      </Card>
+
+      <Card Title="Permission grid">
+        <p class="sg-subtitle">Capability groups. A check is granted. A minus is not. The page passes the rows.</p>
+        <div class="sg-follow" data-qa="StyleGuidePermissionGrid">
+          <PermissionGrid Groups="SamplePermissions" />
+        </div>
+      </Card>
+
+      <Card Title="Dev note">
+        <p class="sg-subtitle">A callout with an eyebrow, a title, and a body. The body can include code.</p>
+        <div class="sg-follow" data-qa="StyleGuideDevNote">
+          <DevNote Eyebrow="Note" Title="How a note reads">
+            The body can include <code>inline code</code>.
+          </DevNote>
         </div>
       </Card>
 

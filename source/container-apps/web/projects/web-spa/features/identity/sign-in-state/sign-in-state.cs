@@ -16,6 +16,8 @@
 // sequence follow-up actions only after a success.
 // Microsoft365ChoiceValid: null = not checked yet, false = the parked Entra sign-in expired (load
 // said so, or a completion problem mentioned "expired").
+// Microsoft365Offered: null = not fetched, false = the server does not offer Microsoft 365
+// (including a failed read), true = offered. The unavailable line renders only for false.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -30,8 +32,11 @@ public sealed partial class SignInState : State<SignInState>
   /// <summary>Session presence from GetCurrentSession; null until fetched or when the session call failed.</summary>
   public bool? IsAuthenticated { get; private set; }
 
-  /// <summary>True when the server offers Microsoft 365 sign-in (scheme registered and site policy on).</summary>
-  public bool Microsoft365Offered { get; private set; }
+  /// <summary>
+  /// Whether the server offers Microsoft 365 sign-in (scheme registered and site policy on).
+  /// Null until <c>FetchMicrosoft365Offered</c> finishes.
+  /// </summary>
+  public bool? Microsoft365Offered { get; private set; }
 
   /// <summary>Whether a parked Microsoft 365 sign-in is still waiting for create / already-have; null until checked.</summary>
   public bool? Microsoft365ChoiceValid { get; private set; }
@@ -48,7 +53,7 @@ public sealed partial class SignInState : State<SignInState>
   public override void Initialize()
   {
     IsAuthenticated = null;
-    Microsoft365Offered = false;
+    Microsoft365Offered = null;
     Microsoft365ChoiceValid = null;
     CeremonyFailed = false;
     LastRegisteredCredentialId = null;

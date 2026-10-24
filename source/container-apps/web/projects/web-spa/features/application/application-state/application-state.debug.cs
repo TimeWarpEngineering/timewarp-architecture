@@ -11,11 +11,9 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState
 {
-  internal void Initialize(string name, string logo, bool isMenuExpanded)
+  internal void Initialize(bool isMenuExpanded)
   {
     ThrowIfNotTestAssembly(Assembly.GetCallingAssembly());
-    Name = name;
-    Logo = logo;
     IsMenuExpanded = isMenuExpanded;
   }
 }

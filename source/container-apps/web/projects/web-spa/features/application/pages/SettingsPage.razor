@@ -15,7 +15,7 @@
   private bool IsBusy => ActionTrackingState.IsActive;
   private IReadOnlyList<GetCredentials.CredentialSummary> Passkeys => CredentialsState.ActivePasskeys;
   private IReadOnlyList<GetCredentials.CredentialSummary> EntraAccounts => CredentialsState.ActiveEntraAccounts;
-  private bool ShowMicrosoft365 => SignInState.Microsoft365Offered;
+  private bool ShowMicrosoft365 => SignInState.Microsoft365Offered is true;
   private bool CanLinkMicrosoft365 => CredentialsState.CanLinkMicrosoft365;
 
   protected override async Task OnInitializedAsync()

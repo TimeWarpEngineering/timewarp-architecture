@@ -1,0 +1,41 @@
+/* Trend pill — native root, CSS isolation. Tokens from tokens.css.
+   2px block padding and the 4px glyph gap sit under the 8px spacing step. */
+.twe-trend {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  gap: 4px;
+  padding: 2px var(--twe-space-2);
+  border-radius: 999px;
+  font-size: var(--twe-text-eyebrow);
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+.twe-trend--up {
+  color: var(--twe-on-positive);
+  background: color-mix(in srgb, var(--twe-positive) 12%, var(--twe-paper));
+}
+
+.twe-trend--down {
+  color: var(--twe-danger);
+  background: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper));
+}
+
+.twe-trend--flat {
+  color: var(--twe-ink-2);
+  background: var(--twe-paper-2);
+}
+
+.twe-trend__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

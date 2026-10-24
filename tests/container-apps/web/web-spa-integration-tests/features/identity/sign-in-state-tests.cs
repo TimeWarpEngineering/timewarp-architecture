@@ -88,13 +88,15 @@ public class SignInActions_Should_
     using SignInSpa spa = new();
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
+    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeNull();
+
     spa.Api.Answer<GetEntraSignInOffered.Query>(_ => new GetEntraSignInOffered.Response(offered: true));
     await scope.Send(new SignInState.FetchMicrosoft365OfferedActionSet.Action());
-    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeTrue();
+    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBe(true);
 
     spa.Api.Answer<GetEntraSignInOffered.Query>(_ => throw new HttpRequestException("BFF down"));
     await scope.Send(new SignInState.FetchMicrosoft365OfferedActionSet.Action());
-    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeFalse();
+    scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBe(false);
   }
 
   public static async Task CreateAccountFromMicrosoft365_Navigate_To_The_Safe_Destination()

@@ -1,5 +1,8 @@
 @namespace TimeWarp.Architecture.Components
 @using TimeWarp.Architecture.Features.Applications
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@attribute [DirectComponentSideEffect("matchMedia chooses the icon rail so a nav link's title tooltip is set only while the label is clipped. The watch is presentational and has no store state.")]
 
 @code {
   // Purpose: Primary navigation for the app shell (rendered in TimeWarpPage's Navigation area).
@@ -8,23 +11,41 @@
   // in NavOrder. The same list is the Ctrl-K palette's pages and the agent's navigate and
   // site_map destinations, so the menu cannot drift from them. A page's [Page] NavGroup names
   // its FluentNavCategory; consecutive pages with the same group share one category and "" is
-  // the top level. There is no category gate: Admin, Demos and Developer show when one of their
-  // pages is permitted. Template flags need no markup here: a page excluded by a flag (api's
-  // Weather, grpc's Superheros) is not compiled, so it is not in the registry. Login is not a
-  // registry page (the profile menu and the palette's Sign in row reach it). The External
-  // category is plain links to other sites, not app pages. Destinations are re-read only when
-  // the cascaded authentication state task is replaced (sign-in and sign-out), not on every
-  // parent render.
+  // the top level. NavPlacement.Bottom renders that group in a second nav pinned to the bottom
+  // of this menu. FluentNavCategory must be a direct child of FluentNav, so the pin is a second
+  // nav rather than a wrapper. There is no category gate: Admin, Demos and Developer show when
+  // one of their pages is permitted. Template flags need no markup here: a page excluded by a
+  // flag (api's Weather, grpc's Superheros) is not compiled, so it is not in the registry. Login
+  // is not a registry page (the profile menu and the palette's Sign in row reach it). The
+  // External category is plain links to other sites, not app pages, and it shares the pinned nav.
+  // A category has no icon. In the rail its title is collapsed and the expand chevron is the mark.
+  // Link text stays in the tree (clipped, not display:none). The title tooltip is set only while
+  // the viewport is the rail, so a full-width label is not repeated. shell-rail watch returns a
+  // handle for this menu, and DisposeAsync stops that handle only. Destinations are re-read
+  // only when the cascaded authentication state task is replaced (sign-in and sign-out), not on
+  // every parent render.
 
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
   [Inject] private IAuthorizationService AuthorizationService { get; set; } = null!;
 
-  private List<(string Group, List<PageRegistryEntry> Pages)> Groups = [];
+  private List<(string Group, List<PageRegistryEntry> Pages)> TopGroups = [];
+
+  private List<(string Group, List<PageRegistryEntry> Pages)> BottomGroups = [];
 
   private Task<AuthenticationState>? LoadedAuthenticationState;
 
   private bool Loaded;
+
+  private bool Rail;
+
+  private bool RailDisposed;
+
+  private IJSObjectReference? RailWatch;
+
+  private DotNetObjectReference<NavMenu>? RailHost;
+
+  private string? ItemTooltip(string title) => Rail ? title : null;
 
   protected override async Task OnParametersSetAsync()
   {
@@ -38,44 +59,159 @@
     ClaimsPrincipal user = AuthenticationState is null
       ? new ClaimsPrincipal(new ClaimsIdentity())
       : (await AuthenticationState).User;
-    List<(string Group, List<PageRegistryEntry> Pages)> groups = [];
+    List<(string Group, List<PageRegistryEntry> Pages)> top = [];
+    List<(string Group, List<PageRegistryEntry> Pages)> bottom = [];
     foreach (PageRegistryEntry destination in await NavigationDestinations.ForAsync(user, AuthorizationService))
     {
-      if (groups.Count == 0 || !string.Equals(groups[^1].Group, destination.NavGroup, StringComparison.Ordinal))
-      {
-        groups.Add((destination.NavGroup, []));
-      }
-
-      groups[^1].Pages.Add(destination);
+      AddTo(destination.NavPlacement == NavPlacement.Bottom ? bottom : top, destination);
     }
 
-    Groups = groups;
+    TopGroups = top;
+    BottomGroups = bottom;
   }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || !RendererInfo.IsInteractive || RailWatch is not null || RailDisposed)
+    {
+      return;
+    }
+
+    IJSObjectReference? module = null;
+    DotNetObjectReference<NavMenu>? host = null;
+    try
+    {
+      host = DotNetObjectReference.Create(this);
+      module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/features/shell-rail.js");
+      IJSObjectReference watch = await module.InvokeAsync<IJSObjectReference>("watch", host);
+      if (RailDisposed)
+      {
+        await watch.InvokeVoidAsync("stop");
+        await watch.DisposeAsync();
+        host.Dispose();
+        return;
+      }
+
+      RailHost = host;
+      host = null;
+      RailWatch = watch;
+      bool rail = await RailWatch.InvokeAsync<bool>("matches");
+      if (!RailDisposed && rail)
+      {
+        Rail = true;
+        StateHasChanged();
+      }
+    }
+    catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+    {
+      host?.Dispose();
+      Rail = false;
+    }
+    finally
+    {
+      if (module is not null)
+      {
+        try
+        {
+          await module.DisposeAsync();
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+        }
+      }
+    }
+  }
+
+  [JSInvokable]
+  public void SetRail(bool rail)
+  {
+    if (Rail == rail)
+    {
+      return;
+    }
+
+    Rail = rail;
+    StateHasChanged();
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    RailDisposed = true;
+    try
+    {
+      if (RailWatch is not null)
+      {
+        await RailWatch.InvokeVoidAsync("stop");
+        await RailWatch.DisposeAsync();
+        RailWatch = null;
+      }
+    }
+    catch (Exception exception) when (exception is JSException or JSDisconnectedException or InvalidOperationException)
+    {
+    }
+
+    RailHost?.Dispose();
+    RailHost = null;
+  }
+
+  private static void AddTo
+  (
+    List<(string Group, List<PageRegistryEntry> Pages)> groups,
+    PageRegistryEntry destination
+  )
+  {
+    if (groups.Count == 0 || !string.Equals(groups[^1].Group, destination.NavGroup, StringComparison.Ordinal))
+    {
+      groups.Add((destination.NavGroup, []));
+    }
+
+    groups[^1].Pages.Add(destination);
+  }
+
+  private RenderFragment Groups(List<(string Group, List<PageRegistryEntry> Pages)> groups) => @<text>
+    @foreach ((string group, List<PageRegistryEntry> pages) in groups)
+    {
+      if (group.Length == 0)
+      {
+        foreach (PageRegistryEntry destination in pages)
+        {
+          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
+            <span class="twe-nav__label">@destination.Title</span>
+          </FluentNavItem>
+        }
+      }
+      else
+      {
+        <FluentNavCategory Title=@group Class="twe-nav__category">
+          @foreach (PageRegistryEntry destination in pages)
+          {
+            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
+              <span class="twe-nav__label">@destination.Title</span>
+            </FluentNavItem>
+          }
+        </FluentNavCategory>
+      }
+    }
+  </text>;
 }
 
-<FluentNav Class="twe-nav">
-  @foreach ((string group, List<PageRegistryEntry> pages) in Groups)
+<div class="twe-nav-menu">
+  @if (TopGroups.Count > 0)
   {
-    if (group.Length == 0)
-    {
-      foreach (PageRegistryEntry destination in pages)
-      {
-        <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All>@destination.Title</FluentNavItem>
-      }
-    }
-    else
-    {
-      <FluentNavCategory Title=@group>
-        @foreach (PageRegistryEntry destination in pages)
-        {
-          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All>@destination.Title</FluentNavItem>
-        }
-      </FluentNavCategory>
-    }
+    <FluentNav Class="twe-nav" aria-label="Primary">
+      @Groups(TopGroups)
+    </FluentNav>
   }
 
-  <FluentNavCategory Title="External">
-    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank">The Freeze Team</FluentNavItem>
-    <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target="LinkTarget.Blank">GitHub</FluentNavItem>
-  </FluentNavCategory>
-</FluentNav>
+  <FluentNav Class="twe-nav twe-nav--pin" aria-label="Pinned">
+    @Groups(BottomGroups)
+    <FluentNavCategory Title="External" Class="twe-nav__category">
+      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://thefreezeteam.com/" Target="LinkTarget.Blank" Tooltip=@ItemTooltip("The Freeze Team")>
+        <span class="twe-nav__label">The Freeze Team</span>
+      </FluentNavItem>
+      <FluentNavItem IconRest=@(new Icons.Regular.Size20.Link()) Href="https://github.com/TimeWarpEngineering/timewarp-architecture" Target="LinkTarget.Blank" Tooltip=@ItemTooltip("GitHub")>
+        <span class="twe-nav__label">GitHub</span>
+      </FluentNavItem>
+    </FluentNavCategory>
+  </FluentNav>
+</div>
