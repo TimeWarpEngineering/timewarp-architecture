@@ -164,7 +164,7 @@ public enum SignInMethod
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T20:05:17Z
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-25. 6 open (1 bug, 4 suggestion, 1 nit); fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T20:12:34Z
-- Fix pass for review round 1: implement-fix-2 (grok, model grok-4.7), session not reported — 2026-10-25. M1–M6 implemented on this branch. Review round 2 has not run.
+- Fix pass for review round 1: implement-fix-2 (grok, model grok-4.7), session not reported — 2026-10-25. M1–M6 implemented on this branch. Review round 2 has not run. The first fix commit dropped the executable bit on `site-settings-seeder-tests.cs`; restored `100755` so the shebang runfile stays executable.
 
 ## Results
 
@@ -223,6 +223,7 @@ not be loaded." plus Try again. A read that has not finished still paints nothin
 `./bin/dev build` 0/0 in 00:00:05.98. `./bin/dev template-smoke` succeeded (generated web Jaribu 405/405, api Jaribu 9/9, timewarp-testing 14/14). Targeted suites: SignInChoices 6, SignInOptions 5,
 SettingsPagePasskeyButtons 2, SignInActions 16, Microsoft365MethodList 5, PasskeySignInMethodGate 1,
 Compose publish 11, Kubernetes publish 12, ACA publish 14, ACA Neon publish 7. No browser pass.
+The content edit of `site-settings-seeder-tests.cs` dropped its executable bit (`100755` to `100644`). That shebang runfile is executable again.
 
 ### How to validate
 
