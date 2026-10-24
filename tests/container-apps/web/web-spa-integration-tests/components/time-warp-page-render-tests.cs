@@ -3,11 +3,12 @@
 #endregion
 
 #region Design
-// Static render over the SPA's TimeWarp.State container. The shell's children (nav, profile,
-// WebMCP surface, passkey prompt) resolve from that container; JS import throws so the WebMCP
-// publish treats the browser API as absent. CascadingAuthenticationState wraps the page because
-// Profile's AuthorizeView requires it and the shell does not host that cascade itself (Routes does).
-// Neither slot leaves the title, breadcrumb, and body in today's order with no header row.
+// Static render over StaticRenderHost, the SPA's TimeWarp.State container shared with
+// StyleGuidePage_Should_. The shell's children (nav, profile, WebMCP surface, passkey prompt)
+// resolve from that container; JS import throws so the WebMCP publish treats the browser API as
+// absent. CascadingAuthenticationState wraps the page because Profile's AuthorizeView requires
+// it and the shell does not host that cascade itself (Routes does).
+// Neither slot leaves the title, breadcrumb, and body in page order with no header row.
 // Scope attributes change when the stylesheet changes, so the empty-slot contract is that
 // structure, not a byte-for-byte snapshot.
 #endregion
@@ -17,25 +18,17 @@ namespace TimeWarpPageRender_;
 using System.Net;
 using System.Reflection;
 using System.Security.Claims;
-using Blazored.SessionStorage;
-using FakeItEasy;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Profiles;
-using TimeWarp.Architecture.Services;
-using TimeWarp.Architecture.Web.Spa;
-using TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
-using TimeWarp.State.Plus;
 
 [TestTag("Unit")]
 public class TimeWarpPage_Should_
@@ -54,7 +47,7 @@ public class TimeWarpPage_Should_
     html.ShouldNotContain("twe-page__header");
     html.ShouldNotContain("twe-page__description");
     html.ShouldNotContain("twe-page__actions");
-    Title(html).ShouldBe("Staff");
+    StaticRenderHost.Title(html).ShouldBe("Staff");
     html.ShouldContain("twe-page__crumbs");
     html.ShouldContain("Page body");
     int titleAt = html.IndexOf("twe-page__title", StringComparison.Ordinal);
@@ -65,7 +58,7 @@ public class TimeWarpPage_Should_
     crumbsAt.ShouldBeGreaterThan(titleAt);
     bodyAt.ShouldBeGreaterThan(crumbsAt);
     contentAt.ShouldBeGreaterThan(bodyAt);
-    CountOpen(html, "h1").ShouldBe(1);
+    StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
   }
 
   public static async Task Show_Description_When_Set_And_Omit_It_When_Unset()
@@ -81,7 +74,7 @@ public class TimeWarpPage_Should_
     shown.ShouldContain("twe-page__description");
     shown.ShouldContain("Manage the team.");
     shown.ShouldNotContain("twe-page__actions");
-    Title(shown).ShouldBe("Staff");
+    StaticRenderHost.Title(shown).ShouldBe("Staff");
 
     string hidden = await RenderAsync(new Dictionary<string, object>
     {
@@ -135,9 +128,9 @@ public class TimeWarpPage_Should_
       })
     });
 
-    CountOpen(html, "h1").ShouldBe(1);
-    Title(html).ShouldBe("Staff");
-    CountOpen(html, "h2").ShouldBe(1);
+    StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
+    StaticRenderHost.Title(html).ShouldBe("Staff");
+    StaticRenderHost.CountOpen(html, "h2").ShouldBe(1);
     html.ShouldContain("Reports");
     html.ShouldContain("Current period");
     html.ShouldContain("Manage the team.");
@@ -317,7 +310,7 @@ public class TimeWarpPage_Should_
       [new Claim(ClaimTypes.Name, "Ada Lovelace")],
       authenticationType: "Test"));
 
-    await using ServiceProvider provider = CreateServices(new BrandOptions(), user).BuildServiceProvider();
+    await using ServiceProvider provider = StaticRenderHost.CreateServices(new BrandOptions(), user).BuildServiceProvider();
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     HtmlRootComponent root = await renderer.Dispatcher.InvokeAsync(() =>
       renderer.RenderComponentAsync<ShellHost>(ParameterView.FromDictionary(new Dictionary<string, object?>
@@ -403,7 +396,7 @@ public class TimeWarpPage_Should_
     ClaimsPrincipal? user = null
   )
   {
-    await using ServiceProvider provider = CreateServices(brand ?? new BrandOptions(), user).BuildServiceProvider();
+    await using ServiceProvider provider = StaticRenderHost.CreateServices(brand ?? new BrandOptions(), user).BuildServiceProvider();
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
     {
@@ -418,7 +411,7 @@ public class TimeWarpPage_Should_
 
   private static async Task<string> RenderFocusedAsync(BrandOptions brand)
   {
-    await using ServiceProvider provider = CreateServices(brand).BuildServiceProvider();
+    await using ServiceProvider provider = StaticRenderHost.CreateServices(brand).BuildServiceProvider();
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
       (await renderer.RenderComponentAsync<TimeWarpFocusedPage>(ParameterView.Empty)).ToHtmlString());
@@ -432,73 +425,6 @@ public class TimeWarpPage_Should_
     int start = html.LastIndexOf('<', classAt, StringComparison.Ordinal);
     int end = html.IndexOf('>', classAt, StringComparison.Ordinal);
     return html.Substring(start, end - start + 1);
-  }
-
-  private static ServiceCollection CreateServices(BrandOptions brand, ClaimsPrincipal? user = null)
-  {
-    ServiceCollection services = new();
-    services.AddLogging();
-    services.AddFluentUIComponents();
-    services.AddAuthorizationCore(TimeWarp.Architecture.PolicyRegistration.AddPolicies);
-    services.AddScoped<AuthenticationStateProvider>(_ => new FixedAuthenticationStateProvider(user));
-    services.AddScoped<IJSRuntime, HeadlessJsRuntime>();
-    services.AddScoped(_ => A.Fake<ISessionStorageService>());
-    services.AddSingleton<IOptions<BrandOptions>>(Options.Create(brand));
-    services.AddSingleton<IOptions<SignInOptions>>(Options.Create(new SignInOptions()));
-    services.AddWebSpaGeneratedMediator();
-    services.AddTimeWarpState(options =>
-    {
-      options.Assemblies =
-      [
-        typeof(TimeWarpPage).Assembly,
-        typeof(AssemblyMarker).Assembly
-      ];
-    });
-    services.AddTimeWarpStateBlazor();
-    services.AddActionCatalog(typeof(TimeWarpPage).Assembly);
-    services.AddScoped<PageAgentRoute>();
-    services.AddScoped<AgentCallOutcome>();
-    services.AddScoped<WebMcpApprovalGate>();
-    services.AddScoped<WebMcpDispatcher>();
-    services.AddScoped<JsWebMcpModelContext>();
-    services.AddScoped<WebMcpPublisher>();
-    services.AddScoped<NavigationManager, TestNavigationManager>();
-    return services;
-  }
-
-  private static string Title(string html)
-  {
-    const string open = "<h1";
-    int start = html.IndexOf(open, StringComparison.Ordinal);
-    start.ShouldBeGreaterThan(-1, "page rendered no h1");
-    int content = html.IndexOf('>', start, StringComparison.Ordinal);
-    int end = html.IndexOf("</h1", content, StringComparison.Ordinal);
-    return html.Substring(content + 1, end - content - 1).Trim();
-  }
-
-  private static int CountOpen(string html, string tagName)
-  {
-    int count = 0;
-    string open = "<" + tagName;
-    int index = 0;
-    while (index < html.Length)
-    {
-      int found = html.IndexOf(open, index, StringComparison.Ordinal);
-      if (found < 0)
-      {
-        break;
-      }
-
-      int after = found + open.Length;
-      if (after >= html.Length || !char.IsAsciiLetterOrDigit(html[after]))
-      {
-        count++;
-      }
-
-      index = after;
-    }
-
-    return count;
   }
 
   private sealed class ShellHost : ComponentBase
@@ -515,42 +441,6 @@ public class TimeWarpPage_Should_
         child.CloseComponent();
       }));
       builder.CloseComponent();
-    }
-  }
-
-  private sealed class FixedAuthenticationStateProvider : AuthenticationStateProvider
-  {
-    private readonly ClaimsPrincipal User;
-
-    public FixedAuthenticationStateProvider(ClaimsPrincipal? user = null)
-    {
-      User = user ?? new ClaimsPrincipal(new ClaimsIdentity());
-    }
-
-    public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
-      Task.FromResult(new AuthenticationState(User));
-  }
-
-  private sealed class HeadlessJsRuntime : IJSRuntime
-  {
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
-    {
-      if (identifier == "import")
-      {
-        throw new JSException("no browser");
-      }
-
-      return ValueTask.FromResult(default(TValue)!);
-    }
-
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
-    {
-      if (identifier == "import")
-      {
-        throw new JSException("no browser");
-      }
-
-      return ValueTask.FromResult(default(TValue)!);
     }
   }
 }
