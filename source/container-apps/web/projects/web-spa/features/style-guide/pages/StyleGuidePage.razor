@@ -68,8 +68,10 @@
     await CounterState.ThrowException("Demo exception dispatched from the Style Guide.", CancellationToken);
 
   [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+  [Inject] private IOptions<SignInOptions> SignInOptionsAccessor { get; set; } = null!;
 
   private BrandOptions Brand => BrandOptionsAccessor.Value;
+  private SignInOptions SignIn => SignInOptionsAccessor.Value;
 
   private Task ConfirmSampleAsync() => NoSubStyleGuideState.ConfirmSample();
 }
@@ -204,6 +206,11 @@
           <UserCard Name="Ada Lovelace" Detail="Signed in" />
         </div>
         <p class="sg-subtitle">SearchMode is Palette (the Ctrl-K field), Hidden, or Custom. This page keeps Palette. The nav is 240px from 1280px up, a 68px rail from 880px through 1279px, and the drawer below 880px.</p>
+      </Card>
+
+      <Card Title="Sign-in">
+        <p class="sg-subtitle">SignInOptions.Mode is Passkey, Microsoft365Only, or Staff. Passkey keeps the passkey button and account creation, and shows Microsoft 365 when the site offers it. Microsoft365Only offers only Continue with Microsoft 365. Staff uses that button and adds the staff-only line. This app is <span data-qa="StyleGuideSignInMode">@SignIn.Mode</span>.</p>
+        <p data-qa="StyleGuideStaffNote">@SignInOptions.StaffNote</p>
       </Card>
 
       <Card Title="Empty States">

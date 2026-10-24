@@ -1,5 +1,4 @@
-/* LoginPage: CSS isolation. Both elements are authored here (inside Card/FluentStack
-   ChildContent), so isolation stamps them and no ::deep is needed. */
+/* SignInChoices: CSS isolation. These elements are authored here, so isolation stamps them. */
 .twe-login-divider {
   border: 0;
   border-top: 1px solid var(--twe-rule);
@@ -13,6 +12,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  color: var(--twe-ink-2);
+  font-size: var(--twe-text-body);
+}
+
+.twe-login-lead,
+.twe-login-note {
+  margin: 0;
   color: var(--twe-ink-2);
   font-size: var(--twe-text-body);
 }

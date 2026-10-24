@@ -444,6 +444,7 @@ public class TimeWarpPage_Should_
     services.AddScoped<IJSRuntime, HeadlessJsRuntime>();
     services.AddScoped(_ => A.Fake<ISessionStorageService>());
     services.AddSingleton<IOptions<BrandOptions>>(Options.Create(brand));
+    services.AddSingleton<IOptions<SignInOptions>>(Options.Create(new SignInOptions()));
     services.AddWebSpaGeneratedMediator();
     services.AddTimeWarpState(options =>
     {

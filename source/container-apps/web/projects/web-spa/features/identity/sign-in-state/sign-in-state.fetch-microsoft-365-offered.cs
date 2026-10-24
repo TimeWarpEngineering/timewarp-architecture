@@ -3,9 +3,10 @@
 #endregion
 
 #region Design
-// Any failure (transport, problem, mock 501) reads as "not offered": the section is an optional
-// path and must not break the page. The server challenge stays the authority (404 when the
-// scheme is not registered, 403 when site policy turns sign-in off).
+// The property starts null. This handler always writes true or false. Any failure (transport,
+// problem, mock 501) reads as not offered: the section is an optional path and must not break
+// the page. The server challenge stays the authority (404 when the scheme is not registered,
+// 403 when site policy turns sign-in off).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;

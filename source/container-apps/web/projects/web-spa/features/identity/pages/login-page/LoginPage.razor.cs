@@ -8,7 +8,9 @@
 // secondary is registration that mints Principal + session with no mandatory profile.
 // RFC 219 D10 / 219-006: optional "Continue with Microsoft 365" is a full navigation to the BFF
 // challenge (mode=bootstrap) when GetEntraSignInOffered.Offered is true (scheme registered AND
-// site settings EntraSignInEnabled). Passkey stays the primary CTA (lock #10). No WASM MSAL.
+// site settings EntraSignInEnabled). Passkey stays the primary CTA when SignInOptions.Mode is
+// Passkey (lock #10). Microsoft365Only and Staff hide the passkey button and account creation;
+// Staff adds the staff-only line. No WASM MSAL.
 // Markup uses TimeWarpFocusedPage (logo + centered card) — not TimeWarpPage — so login is not
 // "a page in the product shell". Progressive profile is 104-024 and stays out of this page.
 // Every button is one SignInState dispatch (SignInWithPasskey, CreateAccountWithPasskey,
