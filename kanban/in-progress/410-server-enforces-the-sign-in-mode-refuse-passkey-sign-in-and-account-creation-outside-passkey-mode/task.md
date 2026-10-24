@@ -151,6 +151,7 @@ public enum SignInMethod
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-24)
 - Implementation: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-24T20:05:17Z
+- Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-25. 6 open (1 bug, 4 suggestion, 1 nit); fix pass requested.
 
 ## Results
 
@@ -236,6 +237,27 @@ dotnet tests/tools/dev-cli-tests/bin/Release/net11.0/dev-cli-tests.dll --filter-
 This session: `./bin/dev build` 0/0 in 00:00:23. `./bin/dev template-smoke` succeeded (generated web Jaribu 405/405, api Jaribu 9/9, timewarp-testing 14/14). `ganda repo audit` exit 0 with the advisory above. Targeted suites earlier in the same implementation: passkey gate 1, Entra scheme registration 4, Entra public origin 2, Entra OIDC round trip 1, Entra options 12, Entra challenge 18, credential availability 16, site-settings seed 3, protected page (script exit 0), GetEntraSignInOffered 5, site-settings seeder 8, GetSiteSettings 5, UpdateSiteSettings 30, last-used 4, seed-on-read 11, Entra sign-in policy 10, dev CLI Entra 49, Aspire publish Compose 10 / Kubernetes 11 / ACA 13 / ACA Neon 7, SPA sign-in choices 5, sign-in options 4, Microsoft 365 account choice 2, sign-in state 16, style guide 2, settings page 1.
 
 **Not in scope:** a browser pass of the login page, a hardware WebAuthn authenticator, and agent keys or agent tokens.
+
+### Review
+
+Round 1 (general reviewer, effort 3) is open: 1 bug, 4 suggestions, 1 nit, all open, so there is no
+disposition yet. M1 (bug): AppHost publish bakes the sign-in list as literals, so the deploy-time
+`entra-enabled` parameter is dead and index 0 is forced to `Passkey`. M2: Settings passkey buttons
+403 when Passkey is not listed. M3: `CompleteEntraBootstrapExisting` is outside the gate. M4:
+`dev entra setup` forces `Methods:0=Passkey`. M5: the admin drift banner names the removed key.
+M6 (nit): a failed offered read leaves a blank login card. The reviewer re-ran `./bin/dev build`
+(0/0) and the gate, scheme-registration, sign-in-choices, sign-in-options and account-choice suites;
+all pass. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- No misread: the `## Goal (implementer restatement)` matches the task. The task itself conflicts:
+  Shape says the template default is `[ "Passkey", "Microsoft365" ]`, while Decisions make listing
+  Microsoft365 without Entra settings fail start, and the checked-in `ClientId` is empty. The
+  implementer checked in `[ "Passkey" ]` (the old effective default) and disclosed it in Results.
+  The review accepts this. why: review oracle round 1, 2026-10-25
+- The acceptance `rg` only catches `Entra:Enabled`. Copy that writes `Authentication:Entra Enabled`
+  survived (M5). Search the prose form too when a key is retired. why: review oracle round 1, 2026-10-25
 
 ## Notes
 
