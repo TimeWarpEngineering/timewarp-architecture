@@ -165,6 +165,7 @@ public enum SignInMethod
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-25. 6 open (1 bug, 4 suggestion, 1 nit); fix pass requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-24T20:12:34Z
 - Fix pass for review round 1: implement-fix-2 (grok, model grok-4.7), session not reported — 2026-10-25. M1–M6 implemented on this branch. Review round 2 has not run. The first fix commit dropped the executable bit on `site-settings-seeder-tests.cs`; restored `100755` so the shebang runfile stays executable.
+- Review oracle round 2: general reviewer (claude, model claude-opus-5-5), effort 2, max-turns 120, session not reported — 2026-10-25. M1–M6 fixed, no new findings; disposition clean.
 
 ## Results
 
@@ -280,8 +281,18 @@ This session: `./bin/dev build` 0/0 in 00:00:23. `./bin/dev template-smoke` succ
 ### Review
 
 Round 1 (general reviewer, effort 3) found 1 bug, 4 suggestions, and 1 nit. The fix pass
-implemented M1–M6. Review round 2 has not run, so there is no disposition yet. Paths:
-`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+fixed M1–M6. Round 2 (general reviewer, effort 2) re-verified the fix delta
+`1745d1b84..689d4f2af` and found no new issues.
+
+- Rounds: 2. Roster: general only (effort 3, then effort 2).
+- Final counts: bug 0 open / 1 fixed, suggestion 0 open / 4 fixed, nit 0 open / 1 fixed, 0 wontfix.
+- Disposition: **clean**. No exceptions and no escalations.
+- Round-2 re-run: `./bin/dev build` 0/0. Gate 1, scheme registration 4, sign-in choices 6, sign-in
+  options 5, settings passkey buttons 2, sign-in actions 16, Microsoft 365 account choice 2,
+  dev-cli Entra 54, method list 5, Compose 11, Kubernetes 12, ACA 14, ACA Neon 7, all passing.
+  `ganda repo audit` exit 0. `template-smoke` was not re-run by the reviewer.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Learnings
 
@@ -292,11 +303,14 @@ implemented M1–M6. Review round 2 has not run, so there is no disposition yet.
   The review accepts this. why: review oracle round 1, 2026-10-25
 - The acceptance `rg` only catches `Entra:Enabled`. Copy that writes `Authentication:Entra Enabled`
   survived (M5). Search the prose form too when a key is retired. why: review oracle round 1, 2026-10-25
+- No misread in round 2: the restatement's round-2 bullets match M1–M6. Disable no longer writes
+  `Passkey`. The Decisions line "disable removes it, keeping Passkey" still holds, because the
+  checked-in `[ "Passkey" ]` stays in effect. why: review oracle round 2, 2026-10-25
 
 ## Review
 
-- Round 1: findings M1–M6 implemented in the fix pass. Review round 2 has not closed them.
-
+- Round 1: findings M1–M6 implemented in the fix pass.
+- Round 2: Done
 ## Notes
 
 - Found while checking PR #569 (the 379-012..017 stack) before merge. Steve: merge, file this follow-up.
