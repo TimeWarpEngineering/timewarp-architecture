@@ -12,6 +12,8 @@
 // the one TWA0025 exception in the SPA (task 247).
 // The Confirmations card only dispatches StyleGuideState.ConfirmSample. The handler asks
 // through IConfirmationService, the same service ApiHandler.ConfirmAsync overrides call.
+// StyleGuidePage_Should_ is the page contract for the upstreamed catalog. The form fields are
+// the only stored choice. The sample drawer follows ApplicationState.
 #endregion
 
 namespace TimeWarp.Architecture.Features.StyleGuide;
