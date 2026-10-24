@@ -50,14 +50,35 @@ public enum SignInMethod
 - The web-server binds and validates `SignInOptions` on start (`ValidateOnStart`), from one
   checked-in section in the web-server appsettings. The validator rejects an empty list and
   duplicates.
-- Microsoft 365 is offered only when it is listed and `EntraSignInOffer.IsOfferedAsync` is true
-  (the scheme is registered and the site-settings toggle is on). Listing `Microsoft365` while the
-  Entra scheme is not configured fails validation on start, so it cannot half-work.
-  **Review point:** this leaves two configuration switches for Microsoft 365: the list and
-  `EntraAuthenticationOptions.Enabled`. The recommendation is to make the list the only one.
-  Register the Entra scheme when `Methods` contains `Microsoft365`, and remove `Enabled`. That is
-  the AGENTS.md rule that two things which must agree come from one source. The site-settings
-  runtime toggle (`EntraSignInEnabled`) stays as the admin's on/off. Steve confirms in review.
+- **The list is the only configuration switch for Microsoft 365** (Steve, 2026-10-25). Listing
+  `Microsoft365` in `SignInOptions.Methods` registers the Entra OIDC scheme. Not listing it means
+  no scheme. Remove `EntraAuthenticationOptions.Enabled`, the `Authentication:Entra:Enabled` key,
+  and the obsolete `UseEntra` synonym, with all their handling:
+  `MockAuthenticationDefaults.IsEntraEnabled` / `EntraEnabledKey` / `UseEntraKey` /
+  `UsedObsoleteUseEntraKey`, `EntraObsoleteKeyPostConfigure`, and the `entraEnabled` flag in
+  web-server `program.cs` `ConfigureAuthentication`. The admin's runtime toggle in site settings
+  (`EntraSignInEnabled`) stays.
+- Microsoft 365 is offered when it is listed and the site-settings toggle is on.
+  `EntraSignInOffer.IsOfferedAsync` reads the list in place of `options.Enabled`. Keep its
+  store-read-always rule (the read re-seeds an emptied table).
+- Listing `Microsoft365` without the Entra settings (tenant, client id and the rest the existing
+  validator checks) fails validation on start. Not listing it skips the Entra settings
+  validation, as `Enabled = false` does today.
+- Callers of the removed key move to the list. Find them with
+  `rg -n 'Entra:Enabled|Entra__Enabled|EntraEnabledKey|UseEntra' source tests tools skills`.
+  Known ones:
+  - the Aspire AppHost `program.cs`;
+  - web-server `appsettings.json` / `appsettings.Development.json`;
+  - `web-spa.csproj` and `wwwroot/auth.md`;
+  - `identity-session-defaults-server.cs`, `site-settings-seeder-application.cs`, and
+    `timewarp-identity/persistence/i-site-settings-store.cs` (doc comments);
+  - the dev CLI `entra-setup.cs` and `entra-disable-command.cs`. Those write `SignInOptions:Methods`
+    into user secrets: setup adds `Microsoft365`, and disable removes it, keeping `Passkey`.
+  - tests: `entra-scheme-registration-tests.cs`, `entra-oidc-handler-round-trip-tests.cs`,
+    `entra-public-origin-tests.cs`, `settings-page-microsoft-365-tests.cs`, `entra-setup-tests.cs`,
+    and `get-site-settings-tests.cs`, which constructs `Enabled = true`.
+  - `GetSiteSettings`' Configuration* fields: report whether Microsoft365 is listed, in place of
+    `Enabled`.
 - The SPA gets the enabled, currently offered methods from the server. Replace or extend
   `get-entra-sign-in-offered` / `SignInState.FetchMicrosoft365Offered` with one read that returns
   the offered `SignInMethod` list. Pick whichever is less code, and update `GetCredentials`'
@@ -87,14 +108,14 @@ public enum SignInMethod
 - Keep the sample role named "Staff" in the role card, TimeWarpPage and style guide role tests.
   That is example data, not sign-in.
 - Update the Purpose and Design regions that mention the mode or Staff.
-- After the change, `rg -n 'SignInMode|StaffNote|Staff only|Microsoft365Only' source tests skills`
+- After the change, `rg -n 'SignInMode|StaffNote|Staff only|Microsoft365Only|Entra:Enabled|Entra__Enabled|EntraEnabledKey|UseEntra' source tests tools skills`
   is empty.
 
 ## Checklist
 
 - [ ] `SignInMethod` enum and `SignInOptions.Methods`; `SignInMode`, `Microsoft365Only`, `Staff` removed
-- [ ] Web-server binds and validates `SignInOptions` on start (non-empty, no duplicates, Microsoft365 needs Entra)
-- [ ] Review point on the single Microsoft 365 switch applied as Steve decides
+- [ ] Web-server binds and validates `SignInOptions` on start (non-empty, no duplicates, Microsoft365 needs the Entra settings)
+- [ ] `EntraAuthenticationOptions.Enabled`, `Authentication:Entra:Enabled` and `UseEntra` removed; listing Microsoft365 registers the Entra scheme; every caller (AppHost, appsettings, dev CLI entra setup/disable, tests) moved to the list
 - [ ] One server read returns the offered methods; the SPA renders buttons from it; SPA binding and `wwwroot` section removed
 - [ ] Passkey endpoints return 403 with one problem type when `Passkey` is not listed, through one shared check
 - [ ] Tests: each refused passkey endpoint (including an existing passkey) when Passkey is not listed;
