@@ -171,7 +171,7 @@ Expect: The list shows `contoso.com` followed by its tenant GUID, and a later re
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Round 2: Blocked — open M6
-
+- Round 3: Done
 ## Learnings
 
 - Misread (round 2): the fix pass rewrote the goal restatement to say "when that tenant id is
