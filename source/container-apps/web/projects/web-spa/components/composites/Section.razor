@@ -4,10 +4,10 @@
 @*
   Purpose: Shared section card — title, optional description/tip, loading ring, child content.
 
-  Design: Port of COPIC CopicSection. Compose Card for chrome; do not duplicate border/title
+  Design: Compose Card for chrome; do not duplicate border/title
   styles. Loading is ActionTrackingState.IsAnyActive(LoadingActionType) → FluentSpinner
   (Fluent UI v5 rename of ProgressRing).
-  Policy, when set, hides the section via AuthorizeView (same as COPIC). No Policy means the
+  Policy, when set, hides the section via AuthorizeView. No Policy means the
   section is visible (AuthorizeView with a null policy would require an authenticated user).
   Handlers never chain actions; this component is how pages show in-flight work.
 *@

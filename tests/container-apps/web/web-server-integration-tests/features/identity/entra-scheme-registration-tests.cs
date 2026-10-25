@@ -78,7 +78,7 @@ public class ConfigureAuthentication_Given_
 
   public static async Task Entra_Enabled_Should_Keep_Identity_Session_Default_And_Register_Named_Entra()
   {
-    Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    Guid tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     WebApplicationBuilder builder = CreateBuilder(Environments.Development);
     builder.Configuration.AddInMemoryCollection
     (
@@ -150,7 +150,7 @@ public class ConfigureAuthentication_Given_
 
   public static async Task Organizations_Tenant_Should_Install_Entra_Issuer_Validator()
   {
-    Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    Guid tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     string expectedIssuer = Encoding.UTF8.GetString(EntraIssuerMaterial.FromTenantId(tenantId));
     WebApplicationBuilder builder = CreateBuilder(Environments.Development);
     builder.Configuration.AddInMemoryCollection

@@ -1,0 +1,8 @@
+# Names that must not appear in packed template content.
+# One token per line. The check matches each token as a case-insensitive substring.
+# A token shorter than 4 characters is refused.
+# This file stays unpacked: documentation/** is an unconditional exclude in
+# .template.config/template.json, and the timewarp-templates pack does not
+# include documentation/.
+crunchit
+copic

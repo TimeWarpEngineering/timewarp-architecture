@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Pattern from TimeWarp.Nuru samples / crunchit ccc group: [NuruRouteGroup] on abstract base,
+// [NuruRouteGroup] on an abstract base,
 // single-literal [NuruRoute] on each command class. Flat alias `db-update` stays outside the group.
 // Live AppHost verbs: update / drop / reset / status. Scaffolding: add-migration (design-time
 // `dotnet ef`, no running AppHost). Teardown: nuke (stops the AppHost and deletes its volumes;

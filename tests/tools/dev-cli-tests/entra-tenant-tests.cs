@@ -9,12 +9,12 @@ public class FormatTenantLine_Given_
   public static Task ResolvedWithDomain_Should_IncludeNameDomainAndId()
   {
     EntraTenant tenant = new(
-      "30f3971f-4719-4f20-9b6f-88916e0b95bd",
-      "CrunchIt, LLC",
-      "crunchitfs.com",
+      "00000000-0000-0000-0000-000000000001",
+      "Contoso, Ltd",
+      "contoso.com",
       NameResolved: true);
     EntraTenants.FormatTenantLine(tenant)
-      .ShouldBe("CrunchIt, LLC (crunchitfs.com) — 30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      .ShouldBe("Contoso, Ltd (contoso.com) — 00000000-0000-0000-0000-000000000001");
     return Task.CompletedTask;
   }
 
@@ -51,13 +51,13 @@ public class TryReadOrganization_Given_
   public static Task HappyGraphPayload_Should_ParseDefaultDomain()
   {
     const string json = """
-      {"value":[{"id":"30f3971f-4719-4f20-9b6f-88916e0b95bd","displayName":"CrunchIt, LLC","verifiedDomains":[{"name":"crunchitfs.onmicrosoft.com","isDefault":false,"isInitial":true},{"name":"crunchitfs.com","isDefault":true,"isInitial":false}]}]}
+      {"value":[{"id":"00000000-0000-0000-0000-000000000001","displayName":"Contoso, Ltd","verifiedDomains":[{"name":"contoso.onmicrosoft.com","isDefault":false,"isInitial":true},{"name":"contoso.com","isDefault":true,"isInitial":false}]}]}
       """;
     EntraTenants.TryReadOrganization(json, out string? id, out string? displayName, out string? defaultDomain)
       .ShouldBeTrue();
-    id.ShouldBe("30f3971f-4719-4f20-9b6f-88916e0b95bd");
-    displayName.ShouldBe("CrunchIt, LLC");
-    defaultDomain.ShouldBe("crunchitfs.com");
+    id.ShouldBe("00000000-0000-0000-0000-000000000001");
+    displayName.ShouldBe("Contoso, Ltd");
+    defaultDomain.ShouldBe("contoso.com");
     return Task.CompletedTask;
   }
 
@@ -76,12 +76,12 @@ public class TryReadTenantIdsFromTenantList_Given_
   public static Task TenantIdOrIdProperty_Should_CollectIds()
   {
     const string json = """
-      [{"tenantId":"30f3971f-4719-4f20-9b6f-88916e0b95bd"},{"id":"74ca6706-93ef-4a23-b05a-e9ab17b7f86f"}]
+      [{"tenantId":"00000000-0000-0000-0000-000000000001"},{"id":"74ca6706-93ef-4a23-b05a-e9ab17b7f86f"}]
       """;
     EntraTenants.TryReadTenantIdsFromTenantList(json, out IReadOnlyList<string> ids).ShouldBeTrue();
     ids.ShouldBe(
     [
-      "30f3971f-4719-4f20-9b6f-88916e0b95bd",
+      "00000000-0000-0000-0000-000000000001",
       "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"
     ]);
     return Task.CompletedTask;
@@ -96,11 +96,11 @@ public class CollectTenantIds_Given_
   public static Task Union_Should_DedupeCaseInsensitivePreserveFirstCasing()
   {
     IReadOnlyList<string> ids = EntraTenants.CollectTenantIds(
-      ["30f3971f-4719-4f20-9b6f-88916e0b95bd", ""],
-      ["30F3971F-4719-4F20-9B6F-88916E0B95BD", "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"]);
+      ["00000000-0000-0000-0000-000000000001", ""],
+      ["00000000-0000-0000-0000-000000000001", "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"]);
     ids.ShouldBe(
     [
-      "30f3971f-4719-4f20-9b6f-88916e0b95bd",
+      "00000000-0000-0000-0000-000000000001",
       "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"
     ]);
     return Task.CompletedTask;
@@ -114,15 +114,15 @@ public class MergeTenant_Given_
 
   public static Task ResolvedIncoming_Should_FillUnresolvedExisting()
   {
-    EntraTenant existing = new("30f3971f-4719-4f20-9b6f-88916e0b95bd", null, null, NameResolved: false);
+    EntraTenant existing = new("00000000-0000-0000-0000-000000000001", null, null, NameResolved: false);
     EntraTenant incoming = new(
-      "30f3971f-4719-4f20-9b6f-88916e0b95bd",
-      "CrunchIt, LLC",
-      "crunchitfs.com",
+      "00000000-0000-0000-0000-000000000001",
+      "Contoso, Ltd",
+      "contoso.com",
       NameResolved: true);
     EntraTenant merged = EntraTenants.MergeTenant(existing, incoming);
-    merged.DisplayName.ShouldBe("CrunchIt, LLC");
-    merged.DefaultDomain.ShouldBe("crunchitfs.com");
+    merged.DisplayName.ShouldBe("Contoso, Ltd");
+    merged.DefaultDomain.ShouldBe("contoso.com");
     merged.NameResolved.ShouldBeTrue();
     return Task.CompletedTask;
   }
@@ -133,10 +133,10 @@ public class SelectTenant_Given_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<SelectTenant_Given_>();
 
-  private static readonly EntraTenant CrunchIt = new(
-    "30f3971f-4719-4f20-9b6f-88916e0b95bd",
-    "CrunchIt, LLC",
-    "crunchitfs.com",
+  private static readonly EntraTenant Contoso = new(
+    "00000000-0000-0000-0000-000000000001",
+    "Contoso, Ltd",
+    "contoso.com",
     NameResolved: true);
 
   private static readonly EntraTenant Other = new(
@@ -148,40 +148,40 @@ public class SelectTenant_Given_
   public static Task MatchById_DifferentGuidCasing_Should_Select()
   {
     TenantSelection selection = EntraTenants.SelectTenant(
-      [CrunchIt, Other],
-      "30F3971F-4719-4F20-9B6F-88916E0B95BD");
+      [Contoso, Other],
+      "00000000-0000-0000-0000-000000000001");
     selection.Status.ShouldBe(TenantSelectionStatus.Selected);
-    selection.Selected.ShouldBe(CrunchIt);
+    selection.Selected.ShouldBe(Contoso);
     return Task.CompletedTask;
   }
 
   public static Task MatchByDomain_Should_Select()
   {
-    TenantSelection selection = EntraTenants.SelectTenant([CrunchIt, Other], "crunchitfs.com");
+    TenantSelection selection = EntraTenants.SelectTenant([Contoso, Other], "contoso.com");
     selection.Status.ShouldBe(TenantSelectionStatus.Selected);
-    selection.Selected.ShouldBe(CrunchIt);
+    selection.Selected.ShouldBe(Contoso);
     return Task.CompletedTask;
   }
 
   public static Task MatchByDisplayName_CaseInsensitive_Should_Select()
   {
-    TenantSelection selection = EntraTenants.SelectTenant([CrunchIt, Other], "crunchit, llc");
+    TenantSelection selection = EntraTenants.SelectTenant([Contoso, Other], "contoso, ltd");
     selection.Status.ShouldBe(TenantSelectionStatus.Selected);
-    selection.Selected.ShouldBe(CrunchIt);
+    selection.Selected.ShouldBe(Contoso);
     return Task.CompletedTask;
   }
 
   public static Task OmittedWithOneTenant_Should_Select()
   {
-    TenantSelection selection = EntraTenants.SelectTenant([CrunchIt], null);
+    TenantSelection selection = EntraTenants.SelectTenant([Contoso], null);
     selection.Status.ShouldBe(TenantSelectionStatus.Selected);
-    selection.Selected.ShouldBe(CrunchIt);
+    selection.Selected.ShouldBe(Contoso);
     return Task.CompletedTask;
   }
 
   public static Task OmittedWithTwoTenants_Should_BeAmbiguous()
   {
-    TenantSelection selection = EntraTenants.SelectTenant([CrunchIt, Other], "  ");
+    TenantSelection selection = EntraTenants.SelectTenant([Contoso, Other], "  ");
     selection.Status.ShouldBe(TenantSelectionStatus.Ambiguous);
     selection.Selected.ShouldBeNull();
     selection.Candidates.Count.ShouldBe(2);
@@ -190,7 +190,7 @@ public class SelectTenant_Given_
 
   public static Task ProvidedValueMatchesNothing_Should_BeNotFound()
   {
-    TenantSelection selection = EntraTenants.SelectTenant([CrunchIt, Other], "missing.example");
+    TenantSelection selection = EntraTenants.SelectTenant([Contoso, Other], "missing.example");
     selection.Status.ShouldBe(TenantSelectionStatus.NotFound);
     selection.Candidates.Count.ShouldBe(2);
     return Task.CompletedTask;
@@ -209,7 +209,7 @@ public class SelectTenant_Given_
       "two.onmicrosoft.com",
       NameResolved: true);
     TenantSelection selection = EntraTenants.SelectTenant(
-      [CrunchIt, firstDefault, secondDefault],
+      [Contoso, firstDefault, secondDefault],
       "Default Directory");
     selection.Status.ShouldBe(TenantSelectionStatus.Ambiguous);
     selection.Selected.ShouldBeNull();
@@ -225,8 +225,8 @@ public class DefaultAppDisplayName_Given_
 
   public static Task WithDomain_Should_Suffix()
   {
-    EntraTenants.DefaultAppDisplayName("crunchitfs.com")
-      .ShouldBe("TimeWarp Architecture Dev (crunchitfs.com)");
+    EntraTenants.DefaultAppDisplayName("contoso.com")
+      .ShouldBe("TimeWarp Architecture Dev (contoso.com)");
     return Task.CompletedTask;
   }
 
@@ -244,10 +244,10 @@ public class AppLookupNames_Given_
 
   public static Task Default_Should_ReturnSuffixedThenLegacy()
   {
-    IReadOnlyList<string> names = EntraTenants.AppLookupNames(null, "crunchitfs.com");
+    IReadOnlyList<string> names = EntraTenants.AppLookupNames(null, "contoso.com");
     names.ShouldBe(
     [
-      "TimeWarp Architecture Dev (crunchitfs.com)",
+      "TimeWarp Architecture Dev (contoso.com)",
       EntraSetup.DefaultDisplayName
     ]);
     return Task.CompletedTask;
@@ -255,7 +255,7 @@ public class AppLookupNames_Given_
 
   public static Task ExplicitName_Should_ReturnOnlyThat()
   {
-    IReadOnlyList<string> names = EntraTenants.AppLookupNames(" My App ", "crunchitfs.com");
+    IReadOnlyList<string> names = EntraTenants.AppLookupNames(" My App ", "contoso.com");
     names.ShouldBe(["My App"]);
     return Task.CompletedTask;
   }
@@ -340,9 +340,9 @@ public class SignInAudienceSummary_Given_
 
   public static Task WithDomain_Should_MentionAtDomain()
   {
-    EntraTenants.SignInAudienceSummary("crunchitfs.com")
+    EntraTenants.SignInAudienceSummary("contoso.com")
       .ShouldBe(
-        "Sign in with an @crunchitfs.com account (single-tenant app). Other tenants' accounts must be invited as guests first.");
+        "Sign in with an @contoso.com account (single-tenant app). Other tenants' accounts must be invited as guests first.");
     return Task.CompletedTask;
   }
 

@@ -9,9 +9,9 @@
 // `private new` shadowing is defeated by a base-type cast. Hence an analyzer, per the standing
 // "prefer analyzers over convention-by-memory" directive (task 196).
 //
-// Scope is ALL SPA client code with no carve-out for handlers or pipeline behaviors: the COPIC
-// sweep found 8/8 client-side direct sends replaceable, and every in-repo site — including ones
-// inside IRequestHandler implementations — was a one-line swap for an already-generated dispatcher.
+// Scope is ALL SPA client code with no carve-out for handlers or pipeline behaviors.
+// A client-side direct send is replaceable, including inside an IRequestHandler:
+// each site is a one-line swap for an already-generated dispatcher.
 //
 // SPA gating is `build_property.UsingMicrosoftNETSdkBlazorWebAssembly`, which the Blazor WASM SDK
 // sets itself, so the rule needs zero per-project opt-in and stays correct in generated apps.

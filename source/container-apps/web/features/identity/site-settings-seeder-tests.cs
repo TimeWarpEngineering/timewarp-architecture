@@ -37,7 +37,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
   [TestTag("Application")]
   public class SiteSettingsSeeder_Given_
   {
-    private static readonly Guid Tenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    private static readonly Guid Tenant = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<SiteSettingsSeeder_Given_>();

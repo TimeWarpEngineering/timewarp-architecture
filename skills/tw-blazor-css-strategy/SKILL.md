@@ -122,10 +122,9 @@ Other examples: `FormField.razor.css` (`.twe-form-field__control ::deep > fluent
 
 ## History
 
-- 2024-05-28 (Steven ↔ Pete, quoted in crunchit `kanban/done/022-research-css-strategy-…`):
-  Wall A — "you can't style it without wrapping it with a div"; `::deep` judged painful; inline
-  `style=` rejected for CSP; `global.css` disliked for lack of locality. Result: co-located
-  `<style>` blocks scoped by `.{Id}` or a fixed root class ("Exception B").
+- Wall A: styling a Fluent root needs a native wrapper; blanket `::deep` is painful; inline
+  `style=` is rejected for CSP; a global stylesheet is rejected for lack of locality. The first
+  shape was co-located `<style>` blocks scoped by `.{Id}` or a fixed root class ("Exception B").
 - Task 059-002 (2026-06-22) adopted the isolation-first hybrid with Exception B; commit
   `a2e107d7f2` made `TimeWarpPage` the canonical `<style>@(@"…")</style>` example, and it spread
   to FormField (task 234), LoginPage and Profile.

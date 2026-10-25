@@ -5,6 +5,9 @@
 // Discovers the repository root dynamically using Git.FindRoot()
 // Handler stores Command and Ct as fields so private methods are zero-parameter
 // Streams MSBuild output via Amuru RunAsync by default; --quiet uses CaptureAsync
+// Before MSBuild, scan packed trees for client names (the same scan as dev check-client-names).
+// CI's fast job runs this build. A skills-only PR does not, so dev lint-skills runs the scan too.
+// ganda repo audit has no word-list check.
 #endregion
 
 namespace DevCli.Commands;
@@ -36,6 +39,14 @@ internal sealed class BuildCommand : ICommand<Unit>
       Ct = ct;
 
       if (!FindRepoRoot()) return Unit.Value;
+      if (!ClientNameScan.Report(
+            RepoRoot,
+            message => Terminal.WriteLine(message),
+            message => Terminal.WriteErrorLine(message.Red())))
+      {
+        return Unit.Value;
+      }
+
       if (!await CleanAsync()) return Unit.Value;
       if (!await BuildAsync()) return Unit.Value;
 

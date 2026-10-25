@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// COPIC: page calls AgentLinksState.Approve(linkId). After success, the matching row's Status is
+// The page calls AgentLinksState.Approve(linkId). After success, the matching row's Status is
 // updated locally so a second click cannot race a stale Pending button.
 #endregion
 

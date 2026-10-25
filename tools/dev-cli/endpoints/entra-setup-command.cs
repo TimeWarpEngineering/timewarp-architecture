@@ -22,7 +22,7 @@ namespace DevCli.Commands;
 [NuruRoute("setup", Description = "Find-or-create the Entra app registration and write Web.Server user secrets")]
 [NuruRouteExample("entra setup", Description = "Create or reuse TimeWarp Architecture Dev and write user secrets")]
 [NuruRouteExample("entra setup --dry-run", Description = "Print az and user-secrets invocations without running them")]
-[NuruRouteExample("entra setup --tenant crunchitfs.com", Description = "Select the tenant by default domain when more than one is visible")]
+[NuruRouteExample("entra setup --tenant contoso.com", Description = "Select the tenant by default domain when more than one is visible")]
 [NuruRouteExample("entra setup --public-origin https://arch.timewarp.work --new-secret")]
 internal sealed class EntraSetupCommand : EntraGroup, ICommand<Unit>
 {

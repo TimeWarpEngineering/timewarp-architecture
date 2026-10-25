@@ -520,7 +520,7 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Emit_Additional_Static_Routes_With_Primary_Url_Crunchit_Clients()
+  public static Task Should_Emit_Additional_Static_Routes_With_Primary_Url()
   {
     (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
       namespace Test.Pages;
@@ -547,7 +547,7 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Emit_Root_Alias_Crunchit_Dashboard()
+  public static Task Should_Emit_Root_Alias()
   {
     (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
       namespace Test.Pages;
@@ -562,7 +562,7 @@ public class PageSourceGenerator_Tests
     return Task.CompletedTask;
   }
 
-  public static Task Should_Inherit_Primary_Token_Type_In_Parameterized_Alias_Crunchit_ClientDetail()
+  public static Task Should_Inherit_Primary_Token_Type_In_Parameterized_Alias()
   {
     (string generated, ImmutableArray<Diagnostic> diagnostics) = Run("""
       namespace Test.Pages;

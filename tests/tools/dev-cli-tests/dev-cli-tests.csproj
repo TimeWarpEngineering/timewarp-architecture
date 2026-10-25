@@ -34,6 +34,7 @@
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-publish-targets.cs" Link="services\aspire-publish-targets.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\test-parallelism.cs" Link="services\test-parallelism.cs" />
     <Compile Include="..\..\..\tools\dev-cli\services\skill-spec-lint.cs" Link="services\skill-spec-lint.cs" />
+    <Compile Include="..\..\..\tools\dev-cli\services\client-name-scan.cs" Link="services\client-name-scan.cs" />
     <Compile Include="..\..\common\timewarp-testing\in-proc-test-ports.cs" Link="services\in-proc-test-ports.cs" />
   </ItemGroup>
 </Project>

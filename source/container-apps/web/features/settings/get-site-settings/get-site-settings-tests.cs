@@ -48,7 +48,7 @@ namespace TimeWarp.Architecture.Features.Settings
     public static Task ValidResponse_Should_RoundTripThroughJson()
     {
       Guid configured = Guid.Parse("a16bcaef-ea01-44ad-be12-249a17658692");
-      Guid accepted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      Guid accepted = Guid.Parse("00000000-0000-0000-0000-000000000001");
       Response response = new(
         entraSignInEnabled: true,
         entraAllowBootstrap: true,

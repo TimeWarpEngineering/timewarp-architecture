@@ -4,8 +4,8 @@
 
 #region Design
 // Action ctor takes CreateRole.Command so the generator emits RoleState.CreateRole(Command).
-// RoleForm binds IRoleDetails (the Command) and submits via that method — COPIC
-// EducationHistorySearchForm, not Mediator.Send of a page-owned Action.
+// RoleForm binds IRoleDetails (the Command) and submits via that method,
+// not Mediator.Send of a page-owned Action.
 // UserId is IAuthApiRequest mock-mode only; stamp it here so the form never sees it
 // (same as FetchRoles GetRequest).
 // LastCreatedRoleId is recorded on success so a page can confirm the create round-trip.

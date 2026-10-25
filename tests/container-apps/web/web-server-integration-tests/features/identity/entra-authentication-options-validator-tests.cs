@@ -105,7 +105,7 @@ public class Validate_Should
       .AddInMemoryCollection(
         new Dictionary<string, string?>
         {
-          ["Authentication:Entra:TrustedTenants:0"] = "30f3971f-4719-4f20-9b6f-88916e0b95bd"
+          ["Authentication:Entra:TrustedTenants:0"] = "00000000-0000-0000-0000-000000000001"
         })
       .Build();
 

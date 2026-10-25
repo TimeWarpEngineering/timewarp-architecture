@@ -160,9 +160,9 @@ public class TryReadAccount_Given_
 
   public static Task TenantAndUser_Should_Parse()
   {
-    const string json = """{"tenantId":"30f3971f-4719-4f20-9b6f-88916e0b95bd","user":"dev@example.com"}""";
+    const string json = """{"tenantId":"00000000-0000-0000-0000-000000000001","user":"dev@example.com"}""";
     EntraSetup.TryReadAccount(json, out string tenantId, out string user).ShouldBeTrue();
-    tenantId.ShouldBe("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    tenantId.ShouldBe("00000000-0000-0000-0000-000000000001");
     user.ShouldBe("dev@example.com");
     return Task.CompletedTask;
   }
@@ -319,9 +319,9 @@ public class MintClientSecretMessages_Given_
   public static Task ChangedApp_DryRunTranscript_Should_NameTheReasonAndMaskTheSecret()
   {
     const string oldClient = "11111111-1111-1111-1111-111111111111";
-    string changed = EntraSetup.FormatAppRegistrationChangedMessage(oldClient, "CrunchIt, LLC");
+    string changed = EntraSetup.FormatAppRegistrationChangedMessage(oldClient, "Contoso, Ltd");
     changed.ShouldBe(
-      "App registration changed (was `11111111-1111-1111-1111-111111111111` in `CrunchIt, LLC`); minting a new client secret.");
+      "App registration changed (was `11111111-1111-1111-1111-111111111111` in `Contoso, Ltd`); minting a new client secret.");
     changed.ShouldNotContain("password");
 
     string decision = EntraSetup.FormatMintDryRunDecision(

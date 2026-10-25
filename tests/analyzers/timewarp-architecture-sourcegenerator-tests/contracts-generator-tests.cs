@@ -288,7 +288,7 @@ public class ContractsGenerator_Tests
 
   public static Task Should_Parse_Mixed_Bare_And_Constrained_Params()
   {
-    // Crunchit 033-003 repro plus sibling *Id names in one template.
+    // Bare and constrained route parameters, plus sibling *Id names, in one template.
     string generated = Run(RouteContract("api/ccc/locations/{LocationId}/exports/{Date}/validate/{ClientId:guid}/{StaffId}/{UserId:string}"));
 
     generated.ShouldContain("public string LocationId { get; set; }");

@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 167 product Settings UI; task 169 rehomes data through TimeWarp.State (COPIC rule):
+// Task 167 product Settings UI; task 169 rehomes data through TimeWarp.State:
 // every backend HTTP call is a CredentialsState ActionSet — never page-local List<> + ceremony
 // client GetResponse. Loading is Section + FetchCredentials; IsBusy = any tracked
 // credentials action. Create/merge sequence FetchCredentials only when CeremonyFailed is

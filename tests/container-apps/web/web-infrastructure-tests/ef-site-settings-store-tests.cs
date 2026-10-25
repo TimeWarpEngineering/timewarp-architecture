@@ -104,7 +104,7 @@ public class Round_Trip
 
     SiteSettings? a = await store.GetAsync();
     SiteSettings? b = await store.GetAsync();
-    Guid accepted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    Guid accepted = Guid.Parse("00000000-0000-0000-0000-000000000001");
     a!.ReplacePolicy(false, false, PasskeyPromptMode.Required);
     a.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [accepted]);
     await store.UpdateAsync(a);

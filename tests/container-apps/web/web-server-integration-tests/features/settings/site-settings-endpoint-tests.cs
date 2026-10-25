@@ -153,7 +153,7 @@ public class Returns_
         ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("GetSiteSettings deserialized to null.");
 
-    Guid acceptedTenant = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    Guid acceptedTenant = Guid.Parse("00000000-0000-0000-0000-000000000001");
     string body = JsonSerializer.Serialize(
       new
       {
