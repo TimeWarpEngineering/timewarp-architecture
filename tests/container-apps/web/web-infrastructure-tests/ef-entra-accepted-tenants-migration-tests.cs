@@ -4,8 +4,8 @@
 
 #region Design
 // Migrate to the migration before ConvertEntraAcceptedTenants, insert the old jsonb shape
-// with raw SQL, then migrate forward. The current model is not queried until the new column
-// exists. Sign-in acceptance still matches the tid. No live Microsoft call.
+// with raw SQL, then migrate to the latest migration. The current model maps every later
+// column too, so it is queried only after the whole chain has run. Sign-in acceptance still matches the tid. No live Microsoft call.
 #endregion
 
 namespace EntraAcceptedTenantsMigration_.Ef;
@@ -125,7 +125,9 @@ public class Convert_Given_
         0);
       """);
 
-    await db.GetService<IMigrator>().MigrateAsync(target);
+    // Migrate to the latest, not to target: the current model also maps columns that later
+    // migrations add, so reading SiteSettings needs the whole chain.
+    await db.GetService<IMigrator>().MigrateAsync();
 
     SiteSettings settings = await db.Set<SiteSettings>().SingleAsync();
     settings.EntraAcceptedTenants.Count.ShouldBe(2);
