@@ -9,7 +9,7 @@
 // or a different version, exits non-zero and prints the npm install for the pin (Node.js
 // required). A lint failure exits with vally's code. dev build does not call vally.
 // The client-name scan runs first, so a skills-only PR (skill-lint, not ci fast) still fails
-// when a packed skill names a client. dev build runs that same scan for every other PR.
+// when a tracked file names a client. dev build runs that same scan for every other PR.
 #endregion
 
 namespace DevCli.Commands;
@@ -33,10 +33,11 @@ internal sealed class LintSkillsCommand : ICommand<Unit>
       Ct = ct;
 
       if (!FindRepoRoot()) return Unit.Value;
-      if (!ClientNameScan.Report(
+      if (!await ClientNameScan.ReportAsync(
             RepoRoot,
             message => Terminal.WriteLine(message),
-            message => Terminal.WriteErrorLine(message.Red())))
+            message => Terminal.WriteErrorLine(message.Red()),
+            Ct))
       {
         return Unit.Value;
       }

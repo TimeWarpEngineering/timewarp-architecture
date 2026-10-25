@@ -13,6 +13,8 @@
   <ItemGroup>
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
+    <!-- client-name-scan.cs runs git grep through Amuru. The other compile-includes stay free of it. -->
+    <PackageReference Include="TimeWarp.Amuru" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\tools\dev-cli\services\aspire-run.cs" Link="services\aspire-run.cs" />
