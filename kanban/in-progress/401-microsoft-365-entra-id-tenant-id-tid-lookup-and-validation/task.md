@@ -138,6 +138,7 @@ passing.
 - Implemented 2026-10-25: `EntraTenantResolver`, `{tenantId, domain?}` entries, `ResolveEntraTenant`, abuse policy `entra-tenant-lookup`, Authentication list, migration `ConvertEntraAcceptedTenants`, version `2.0.0-beta.26`. `ganda repo audit` passed. The kanban-landed advisory names eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244); those are not this task.
 
 - Created: 691292 (2026-10-21)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T15:11:12Z
 
 ## Results
 
