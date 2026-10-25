@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 314
-- Effort: 2
+- Lines changed: 71
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Framework — task 417
 
@@ -25,3 +25,10 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+**Date:** 2026-10-26
+**Diff scope:** fix commit 53e4f4f24 vs round-1 base c1a0d6eaa (product paths only)
+**Effort:** 1 (by-diff budget, 71 lines) — roster general
+**Brief:** round-1 `merged.md` M1–M3

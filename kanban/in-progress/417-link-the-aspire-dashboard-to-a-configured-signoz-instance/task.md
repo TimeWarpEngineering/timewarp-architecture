@@ -71,6 +71,7 @@ See aspire.dev, "Define custom resource URLs".
 - Review round 1 (2026-10-26): review oracle (claude-opus-5-5, headless), effort 2, roster general. 0 bug, 2 suggestion, 1 nit, all open (`review/round-1/merged.md`). A fix pass is needed for M1–M3, followed by round 2. The Goal restatement matches the task (no misread).
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-25T19:28:04Z
 - Fix pass (2026-10-26): review M1–M3. The SigNoz subsection in `tw-deploy` now follows the complete rules list. The four in-proc publish fixtures pass `--Observability:SigNoz:Url=https://observability.example`. The AppHost Design paragraph for SigNoz follows the PublicOrigin sentences. `SigNozLinkModel` passed 6/6 and `Publish_Given_` passed 47/47. `./bin/dev build` reported 0 warnings and 0 errors.
+- Review round 2 (2026-10-26): review oracle (claude-opus-5-5, headless), effort 1, roster general. M1–M3 are fixed, with no new findings. Disposition is clean (`review/disposition.md`). The Goal restatement still matches the task (no misread).
 - Audit: `kanban-landed` is an error while this claim's branch-tip kitchen differs from origin-home. `ganda repo audit --fix` lands that kitchen. It does not merge the task branch. The eight other claims with no worktree stay a warning.
 
 ## Results
@@ -99,10 +100,16 @@ Expect:
 
 To see the link on a running dashboard, set `Observability:SigNoz:Url` in the AppHost user secrets (or `Observability__SigNoz__Url`) to an absolute `https` URL and run `dev run`. The resource list shows `signoz` with a link labeled SigNoz. This walk did not start the dashboard.
 
+### Review disposition
+
+- Outcome: **clean**. 2 rounds, general reviewer (round 1 effort 2, round 2 effort 1).
+- Final counts: bug 0, suggestion 2 fixed, nit 1 fixed. 0 open, 0 wontfix.
+- Artifacts: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-
+- Round 2: Done
 ## Notes
 
 Requested by Steve 2026-10-26.
