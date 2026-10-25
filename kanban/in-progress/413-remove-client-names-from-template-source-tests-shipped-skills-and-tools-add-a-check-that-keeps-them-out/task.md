@@ -150,8 +150,7 @@ Ledger: `review/round-2/merged.md` (round 1: `review/round-1/merged.md`). Framew
 ## Review
 
 - Round 1: fixed on this branch — M1, M2
-- Round 2: M1 and M2 verified fixed, no new findings — disposition clean
-
+- Round 2: Done
 ## Notes
 
 - Found while verifying PR #576 (task 410). Steve 2026-10-25: "yes file the clean up task".
