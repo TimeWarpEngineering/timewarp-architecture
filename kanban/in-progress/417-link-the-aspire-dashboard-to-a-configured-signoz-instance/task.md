@@ -109,8 +109,7 @@ To see the link on a running dashboard, set `Observability:SigNoz:Url` in the Ap
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3
-- Round 2: clean. M1–M3 fixed in 53e4f4f24, with no new findings. The reviewer re-ran `Publish_Given_` (47/47) and `SigNozLinkModel` (6/6).
-
+- Round 2: Done
 ## Notes
 
 Requested by Steve 2026-10-26.
