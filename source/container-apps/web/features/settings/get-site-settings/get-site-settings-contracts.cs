@@ -37,7 +37,7 @@ public static partial class GetSiteSettings
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public string AssistantName { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
-    public List<Guid> EntraAcceptedTenantIds { get; set; } = [];
+    public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public long Version { get; }
     public string? ConfigurationTenantId { get; }
     public string? ConfigurationTenantDisplayName { get; }
@@ -57,14 +57,14 @@ public static partial class GetSiteSettings
       bool configurationEnabled = false,
       bool configurationAllowBootstrap = false,
       EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
-      List<Guid>? entraAcceptedTenantIds = null)
+      List<EntraAcceptedTenant>? entraAcceptedTenants = null)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
       PasskeyPromptMode = passkeyPromptMode;
       AssistantName = assistantName;
       EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
-      EntraAcceptedTenantIds = entraAcceptedTenantIds is null ? [] : [.. entraAcceptedTenantIds];
+      EntraAcceptedTenants = entraAcceptedTenants is null ? [] : [.. entraAcceptedTenants];
       Version = version;
       ConfigurationTenantId = configurationTenantId;
       ConfigurationTenantDisplayName = configurationTenantDisplayName;

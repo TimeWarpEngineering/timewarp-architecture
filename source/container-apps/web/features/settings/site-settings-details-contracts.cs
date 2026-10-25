@@ -7,10 +7,11 @@
 // I*Details so the Settings Authentication section binds one shape. Version is not on this
 // interface — it is the concurrency token on Command/Response, not a form field the user types.
 // PasskeyPromptMode and EntraTenantAcceptanceMode use TimeWarp.Identity enums
-// (JsonStringEnumConverter). Validator: both enums must be defined. Accepted tenant ids call
-// EntraTenantIds.TryNormalize, the same check SiteSettings uses, so an empty Guid, the
-// distinct-count cap, and duplicate collapse cannot drift. An empty list is valid and means
-// Restricted accepts nobody. Null is refused. Task 306: this shape is the trust policy.
+// (JsonStringEnumConverter). Validator: both enums must be defined. Accepted tenants call
+// EntraTenantIds.TryNormalize, the same check SiteSettings uses, so an empty Guid, a bad
+// domain, the distinct-count cap, and duplicate collapse cannot drift. An empty list is valid
+// and means Restricted accepts nobody. Null is refused. Task 306: this shape is the trust
+// policy. Task 401: each entry is a tenant id plus an optional domain.
 // Task 361 added AssistantName: required, and trimmed it must be 1-32 plain-text characters.
 // Beyond NotEmpty (the required message) the validator calls AssistantNameRules.IsValid, the
 // same check SiteSettings.RenameAssistant runs, so they cannot drift.
@@ -27,7 +28,7 @@ public interface ISiteSettingsDetails
   PasskeyPromptMode PasskeyPromptMode { get; set; }
   string AssistantName { get; set; }
   EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
-  List<Guid> EntraAcceptedTenantIds { get; set; }
+  List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; }
 }
 
 public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettingsDetails>
@@ -38,10 +39,10 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
       .IsInEnum();
     RuleFor(details => details.EntraTenantAcceptanceMode)
       .IsInEnum();
-    RuleFor(details => details.EntraAcceptedTenantIds)
+    RuleFor(details => details.EntraAcceptedTenants)
       .NotNull()
       .WithMessage("Accepted tenant ids are required.");
-    RuleFor(details => details.EntraAcceptedTenantIds)
+    RuleFor(details => details.EntraAcceptedTenants)
       .Custom(static (ids, context) =>
       {
         if (ids is null)

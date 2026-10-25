@@ -18,8 +18,10 @@
 // offer/bootstrap from configuration and must keep the admin-set name and tenant acceptance.
 // Task 306: Entra tenant acceptance is this row (Restricted list or Any), not
 // Authentication:Entra:TenantId. That config value remains the OIDC authority segment.
-// EntraTenantAcceptanceInitialized is false only on rows migrated before the column existed;
-// the seeder copies a GUID authority into the restricted list once, then leaves admin edits alone.
+// Task 401: each accepted tenant is an id plus an optional domain. AcceptsEntraTenant still
+// matches the token tid only. EntraTenantAcceptanceInitialized is false only on rows migrated
+// before the column existed; the seeder copies a GUID authority into the restricted list once,
+// then leaves admin edits alone.
 // Do not fold PublicOrigin / client id / secret / authority tenant into this type.
 #endregion
 
@@ -44,7 +46,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     PasskeyPromptMode passkeyPromptMode,
     string assistantName,
     EntraTenantAcceptanceMode entraTenantAcceptanceMode,
-    IReadOnlyList<Guid> entraAcceptedTenantIds,
+    IReadOnlyList<EntraAcceptedTenant> entraAcceptedTenants,
     bool entraTenantAcceptanceInitialized,
     long version)
     : base(id, version)
@@ -54,7 +56,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     PasskeyPromptMode = passkeyPromptMode;
     AssistantName = assistantName;
     EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
-    EntraAcceptedTenantIds = entraAcceptedTenantIds;
+    EntraAcceptedTenants = entraAcceptedTenants;
     EntraTenantAcceptanceInitialized = entraTenantAcceptanceInitialized;
   }
 
@@ -74,10 +76,10 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; private set; }
 
   /// <summary>
-  /// Tenant ids accepted when <see cref="EntraTenantAcceptanceMode"/> is Restricted.
+  /// Tenants accepted when <see cref="EntraTenantAcceptanceMode"/> is Restricted.
   /// Kept when the mode is Any so switching back does not drop the list.
   /// </summary>
-  public IReadOnlyList<Guid> EntraAcceptedTenantIds { get; private set; }
+  public IReadOnlyList<EntraAcceptedTenant> EntraAcceptedTenants { get; private set; }
 
   /// <summary>
   /// False on a row that has not yet received a tenant-acceptance value.
@@ -95,7 +97,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     PasskeyPromptMode passkeyPromptMode = PasskeyPromptMode.Soft,
     string assistantName = AssistantNameRules.Default,
     EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
-    IEnumerable<Guid>? entraAcceptedTenantIds = null,
+    IEnumerable<EntraAcceptedTenant>? entraAcceptedTenants = null,
     bool entraTenantAcceptanceInitialized = true)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
@@ -107,7 +109,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       passkeyPromptMode,
       NormalizeAssistantName(assistantName),
       entraTenantAcceptanceMode,
-      NormalizeAcceptedTenantIds(entraAcceptedTenantIds),
+      NormalizeAcceptedTenants(entraAcceptedTenants),
       entraTenantAcceptanceInitialized,
       version: 0);
   }
@@ -123,7 +125,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       PasskeyPromptMode,
       AssistantName,
       EntraTenantAcceptanceMode,
-      EntraAcceptedTenantIds.ToArray(),
+      EntraAcceptedTenants.ToArray(),
       EntraTenantAcceptanceInitialized,
       version);
 
@@ -147,17 +149,17 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   /// </summary>
   public void ReplaceEntraTenantAcceptance(
     EntraTenantAcceptanceMode mode,
-    IEnumerable<Guid>? acceptedTenantIds)
+    IEnumerable<EntraAcceptedTenant>? acceptedTenants)
   {
     EnsureTenantAcceptanceMode(mode);
     EntraTenantAcceptanceMode = mode;
-    EntraAcceptedTenantIds = NormalizeAcceptedTenantIds(acceptedTenantIds);
+    EntraAcceptedTenants = NormalizeAcceptedTenants(acceptedTenants);
     EntraTenantAcceptanceInitialized = true;
   }
 
   /// <summary>
   /// True when <paramref name="tenantId"/> may sign in under the stored acceptance policy.
-  /// <see cref="Guid.Empty"/> is never accepted.
+  /// <see cref="Guid.Empty"/> is never accepted. The optional domain is not part of the match.
   /// </summary>
   public bool AcceptsEntraTenant(Guid tenantId)
   {
@@ -171,8 +173,20 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       return true;
     }
 
-    return EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Restricted
-      && EntraAcceptedTenantIds.Contains(tenantId);
+    if (EntraTenantAcceptanceMode != EntraTenantAcceptanceMode.Restricted)
+    {
+      return false;
+    }
+
+    foreach (EntraAcceptedTenant tenant in EntraAcceptedTenants)
+    {
+      if (tenant.TenantId == tenantId)
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// <summary>Renames the assistant; the name is trimmed and must pass <see cref="AssistantNameRules.IsValid"/>.</summary>
@@ -214,11 +228,12 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     }
   }
 
-  private static IReadOnlyList<Guid> NormalizeAcceptedTenantIds(IEnumerable<Guid>? tenantIds)
+  private static IReadOnlyList<EntraAcceptedTenant> NormalizeAcceptedTenants(
+    IEnumerable<EntraAcceptedTenant>? tenants)
   {
-    if (!EntraTenantIds.TryNormalize(tenantIds, out IReadOnlyList<Guid> normalized, out string? error))
+    if (!EntraTenantIds.TryNormalize(tenants, out IReadOnlyList<EntraAcceptedTenant> normalized, out string? error))
     {
-      throw new ArgumentException(error, nameof(tenantIds));
+      throw new ArgumentException(error, nameof(tenants));
     }
 
     return normalized;

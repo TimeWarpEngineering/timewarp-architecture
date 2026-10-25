@@ -100,12 +100,12 @@ public sealed class SiteSettingsSeeder
     if (existing is null)
     {
       EntraAuthenticationOptions options = Options.Value;
-      IReadOnlyList<Guid> homeTenant = ConfiguredHomeTenant(options);
+      IReadOnlyList<EntraAcceptedTenant> homeTenant = ConfiguredHomeTenant(options);
       var created = SiteSettings.Create(
         entraSignInEnabled: SignInOptions.Value.Lists(SignInMethod.Microsoft365),
         entraAllowBootstrap: options.AllowBootstrap,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: homeTenant,
+        entraAcceptedTenants: homeTenant,
         entraTenantAcceptanceInitialized: true);
 
       try
@@ -126,7 +126,7 @@ public sealed class SiteSettingsSeeder
     EntraAuthenticationOptions configured = Options.Value;
     if (!existing.EntraTenantAcceptanceInitialized)
     {
-      IReadOnlyList<Guid> homeTenant = ConfiguredHomeTenant(configured);
+      IReadOnlyList<EntraAcceptedTenant> homeTenant = ConfiguredHomeTenant(configured);
       existing.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Restricted, homeTenant);
       try
       {
@@ -189,11 +189,11 @@ public sealed class SiteSettingsSeeder
     return false;
   }
 
-  private static IReadOnlyList<Guid> ConfiguredHomeTenant(EntraAuthenticationOptions options)
+  private static IReadOnlyList<EntraAcceptedTenant> ConfiguredHomeTenant(EntraAuthenticationOptions options)
   {
     if (Guid.TryParse(options.TenantId, out Guid tenantId) && tenantId != Guid.Empty)
     {
-      return [tenantId];
+      return [EntraAcceptedTenant.IdOnly(tenantId)];
     }
 
     return [];

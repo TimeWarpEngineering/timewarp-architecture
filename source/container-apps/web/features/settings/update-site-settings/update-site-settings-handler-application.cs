@@ -49,7 +49,7 @@ public sealed class UpdateSiteSettings
         command.PasskeyPromptMode);
       settings.ReplaceEntraTenantAcceptance(
         command.EntraTenantAcceptanceMode,
-        command.EntraAcceptedTenantIds);
+        command.EntraAcceptedTenants);
       settings.RenameAssistant(command.AssistantName);
 
       try
@@ -74,5 +74,5 @@ public sealed class UpdateSiteSettings
       assistantName: settings.AssistantName,
       version: settings.Version,
       entraTenantAcceptanceMode: settings.EntraTenantAcceptanceMode,
-      entraAcceptedTenantIds: [.. settings.EntraAcceptedTenantIds]);
+      entraAcceptedTenants: [.. settings.EntraAcceptedTenants]);
 }

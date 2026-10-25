@@ -26,8 +26,12 @@ partial class SiteSettingsState : IAgentPageFacts
       ["passkeyPromptMode"] = PasskeyPromptMode.ToString(),
       ["assistantName"] = AssistantName,
       ["entraTenantAcceptanceMode"] = EntraTenantAcceptanceMode.ToString(),
-      ["entraAcceptedTenantIds"] = new JsonArray(
-        [.. EntraAcceptedTenantIds.Select(static id => JsonValue.Create(id.ToString("D")))]),
+      ["entraAcceptedTenants"] = new JsonArray(
+        [.. EntraAcceptedTenants.Select(static tenant => new JsonObject
+        {
+          ["tenantId"] = tenant.TenantId.ToString("D"),
+          ["domain"] = tenant.Domain,
+        })]),
       ["version"] = Version,
     };
   }

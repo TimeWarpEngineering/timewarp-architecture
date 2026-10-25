@@ -8,7 +8,10 @@
 // block. Slice Features.Settings; SettingsPage (Applications), AuthenticationPage (Admin.SiteSettings),
 // and AuthenticationStateListener (Identity) take CrossSliceReference. Configuration* is the
 // bound Entra section from GetSiteSettings, used for the Admin app-registration tenant line.
-// Task 306: EntraTenantAcceptanceMode and EntraAcceptedTenantIds are the admin trust policy.
+// Task 306: EntraTenantAcceptanceMode and EntraAcceptedTenants are the admin trust policy.
+// Task 401: each entry is a tenant id plus an optional domain. DraftAcceptedTenants is the
+// unsaved list the Authentication page edits. AcceptedTenantsMessage is the lookup or
+// edit failure for that list. The saved snapshot stays on EntraAcceptedTenants.
 // Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
 // AssistantName (task 361) is the admin form's copy; the labels read
 // AgentSurfaceState.AssistantName from the public query.
@@ -26,7 +29,9 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
   public string AssistantName { get; private set; } = AssistantNameRules.Default;
   public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; private set; }
-  public IReadOnlyList<Guid> EntraAcceptedTenantIds { get; private set; } = [];
+  public IReadOnlyList<EntraAcceptedTenant> EntraAcceptedTenants { get; private set; } = [];
+  public IReadOnlyList<EntraAcceptedTenant> DraftAcceptedTenants { get; private set; } = [];
+  public string? AcceptedTenantsMessage { get; private set; }
   public long Version { get; private set; }
   /// <summary>True when the last UpdateSiteSettings failed; the problem itself is on NotificationState.</summary>
   public bool SaveFailed { get; private set; }
@@ -57,7 +62,9 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     PasskeyPromptMode = PasskeyPromptMode.Soft;
     AssistantName = AssistantNameRules.Default;
     EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted;
-    EntraAcceptedTenantIds = [];
+    EntraAcceptedTenants = [];
+    DraftAcceptedTenants = [];
+    AcceptedTenantsMessage = null;
     Version = 0;
     SaveFailed = false;
     ConfigurationTenantId = null;

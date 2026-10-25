@@ -9,6 +9,8 @@
     <PackageReference Include="TimeWarp.Jaribu.TestingPlatform" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="System.Formats.Cbor" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" />

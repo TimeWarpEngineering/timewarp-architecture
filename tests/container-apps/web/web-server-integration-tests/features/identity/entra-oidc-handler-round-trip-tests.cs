@@ -150,7 +150,7 @@ public class Callback_Given_
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: [TrustedTenantId]));
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(TrustedTenantId)]));
     TestServer testServer = App.GetTestServer();
     Client = new HttpClient(testServer.CreateHandler())
     {

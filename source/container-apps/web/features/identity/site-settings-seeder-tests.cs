@@ -51,7 +51,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       seeded.EntraAllowBootstrap.ShouldBeTrue();
       seeded.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Soft);
       seeded.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
-      seeded.EntraAcceptedTenantIds.ShouldBe([Tenant]);
+      seeded.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(Tenant)]);
       seeded.EntraTenantAcceptanceInitialized.ShouldBeTrue();
     }
 
@@ -66,7 +66,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
         tenantId: "organizations");
       SiteSettings seeded = await seeder.GetOrSeedAsync();
       seeded.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
-      seeded.EntraAcceptedTenantIds.ShouldBeEmpty();
+      seeded.EntraAcceptedTenants.ShouldBeEmpty();
       seeded.EntraTenantAcceptanceInitialized.ShouldBeTrue();
     }
 
@@ -84,7 +84,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       SiteSettings after = await seeder.GetOrSeedAsync();
       after.EntraTenantAcceptanceInitialized.ShouldBeTrue();
       after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
-      after.EntraAcceptedTenantIds.ShouldBe([Tenant]);
+      after.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(Tenant)]);
       after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
       after.AssistantName.ShouldBe("Zawadi");
       after.EntraSignInEnabled.ShouldBeFalse();
@@ -145,7 +145,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       SiteSettings seeded = await first.GetOrSeedAsync();
       Guid kept = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
       seeded.ReplacePolicy(false, false, PasskeyPromptMode.Required);
-      seeded.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [kept]);
+      seeded.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [EntraAcceptedTenant.IdOnly(kept)]);
       await store.UpdateAsync(seeded);
 
       CapturingLogger logger = new();
@@ -162,7 +162,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       after.EntraAllowBootstrap.ShouldBeTrue();
       after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
       after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-      after.EntraAcceptedTenantIds.ShouldBe([kept]);
+      after.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(kept)]);
       logger.Messages.ShouldContain(message =>
         message.Contains("Overwrote EntraSignInEnabled", StringComparison.Ordinal));
     }

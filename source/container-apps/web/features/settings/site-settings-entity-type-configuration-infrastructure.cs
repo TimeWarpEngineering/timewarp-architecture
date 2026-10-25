@@ -6,7 +6,7 @@
 // Table identity.site_settings — alongside identity.principals, never inside principals.
 // SiteSettings is port-backed (ISiteSettingsStore), not IAggregateRoot; Version is store-CAS plus
 // .IsConcurrencyToken() like Principal. Task 306 stores tenant acceptance on the row:
-// EntraTenantAcceptanceMode (int), EntraAcceptedTenantIds (jsonb via EntraTenantIds), and
+// EntraTenantAcceptanceMode (int), EntraAcceptedTenants (jsonb entries via EntraTenantIds), and
 // EntraTenantAcceptanceInitialized (false on existing rows so the seeder copies a GUID authority
 // once). Slice placement: mapping lives under features/settings/*-infrastructure.cs (settings
 // product slice) even though the CLR type is TimeWarp.Identity — TWA0009 does not apply across
@@ -45,11 +45,11 @@ public sealed class SiteSettingsEntityTypeConfiguration : IEntityTypeConfigurati
     builder.Property(settings => settings.EntraTenantAcceptanceInitialized)
       .IsRequired()
       .HasDefaultValue(false);
-    builder.Property(settings => settings.EntraAcceptedTenantIds)
+    builder.Property(settings => settings.EntraAcceptedTenants)
       .HasColumnType("jsonb")
       .IsRequired()
       .HasDefaultValueSql("'[]'::jsonb")
-      .HasConversion(TenantIdListConverter, TenantIdListComparer);
+      .HasConversion(AcceptedTenantConverter, AcceptedTenantComparer);
     builder.Property(settings => settings.AssistantName)
       .IsRequired()
       .HasMaxLength(AssistantNameRules.MaxLength);
@@ -59,16 +59,18 @@ public sealed class SiteSettingsEntityTypeConfiguration : IEntityTypeConfigurati
       .UsePropertyAccessMode(PropertyAccessMode.Property);
   }
 
-  private static readonly ValueConverter<IReadOnlyList<Guid>, string> TenantIdListConverter = new(
-    ids => EntraTenantIds.ToJson(ids),
+  private static readonly ValueConverter<IReadOnlyList<EntraAcceptedTenant>, string> AcceptedTenantConverter = new(
+    tenants => EntraTenantIds.ToJson(tenants),
     json => EntraTenantIds.FromJson(json));
 
-  private static readonly ValueComparer<IReadOnlyList<Guid>> TenantIdListComparer = new(
-    (left, right) => TenantIdsEqual(left, right),
-    ids => TenantIdsHash(ids),
-    ids => ids.ToArray());
+  private static readonly ValueComparer<IReadOnlyList<EntraAcceptedTenant>> AcceptedTenantComparer = new(
+    (left, right) => TenantsEqual(left, right),
+    tenants => TenantsHash(tenants),
+    tenants => tenants.ToArray());
 
-  private static bool TenantIdsEqual(IReadOnlyList<Guid>? left, IReadOnlyList<Guid>? right)
+  private static bool TenantsEqual(
+    IReadOnlyList<EntraAcceptedTenant>? left,
+    IReadOnlyList<EntraAcceptedTenant>? right)
   {
     if (ReferenceEquals(left, right))
     {
@@ -91,12 +93,12 @@ public sealed class SiteSettingsEntityTypeConfiguration : IEntityTypeConfigurati
     return true;
   }
 
-  private static int TenantIdsHash(IReadOnlyList<Guid> ids)
+  private static int TenantsHash(IReadOnlyList<EntraAcceptedTenant> tenants)
   {
     HashCode hash = new();
-    foreach (Guid tenantId in ids)
+    foreach (EntraAcceptedTenant tenant in tenants)
     {
-      hash.Add(tenantId);
+      hash.Add(tenant);
     }
 
     return hash.ToHashCode();

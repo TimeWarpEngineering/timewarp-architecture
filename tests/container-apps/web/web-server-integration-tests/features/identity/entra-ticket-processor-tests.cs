@@ -50,7 +50,7 @@ public class Bootstrap_Given_
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: [TrustedTenantId]));
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(TrustedTenantId)]));
     EntraTicketProcessor processor = new(
       principalStore,
       new NoOpPrincipalRoleStore(),
@@ -81,7 +81,7 @@ public class Bootstrap_Given_
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: [TrustedTenantId]));
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(TrustedTenantId)]));
     EntraTicketProcessor processor = new(
       new InMemoryPrincipalStore(),
       new NoOpPrincipalRoleStore(),
@@ -665,7 +665,7 @@ public class Bootstrap_Given_
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: [TrustedTenantId]));
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(TrustedTenantId)]));
     return new EntraTicketProcessor(
       principalStore ?? new InMemoryPrincipalStore(),
       new NoOpPrincipalRoleStore(),

@@ -52,6 +52,14 @@ public sealed class AbuseRateLimitOptions
     WindowSeconds = 60,
     SegmentsPerWindow = 6,
   };
+
+  /// <summary>Admin domain-to-tenant lookup. Not a public existence oracle; still bounded per IP.</summary>
+  public SlidingWindowLimitOptions EntraTenantLookup { get; set; } = new()
+  {
+    PermitLimit = 20,
+    WindowSeconds = 60,
+    SegmentsPerWindow = 6,
+  };
 }
 
 /// <summary>Sliding-window parameters for one named ASP.NET rate-limit policy.</summary>

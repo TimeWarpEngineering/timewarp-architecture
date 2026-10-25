@@ -85,6 +85,26 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
   }
 
+  public static async Task Anonymous_Get_Entra_Tenant_Should_401()
+  {
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    HttpResponseMessage response = await client.GetAsync("api/settings/entra-tenant?domain=contoso.com");
+    response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+
+  public static async Task Member_Get_Entra_Tenant_Should_403()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    HttpResponseMessage response = await client.GetAsync("api/settings/entra-tenant?domain=contoso.com");
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
   public static async Task Member_Put_Should_403()
   {
     (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
@@ -125,7 +145,7 @@ public class Returns_
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName = current.AssistantName,
         entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
-        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
+        entraAcceptedTenants = current.EntraAcceptedTenants,
         version = current.Version + 100
       },
       ContractSerializationDefaults.Options);
@@ -162,7 +182,7 @@ public class Returns_
         passkeyPromptMode = "Required",
         assistantName = current.AssistantName,
         entraTenantAcceptanceMode = "Any",
-        entraAcceptedTenantIds = new[] { acceptedTenant },
+        entraAcceptedTenants = new[] { new { tenantId = acceptedTenant, domain = (string?)null } },
         version = current.Version
       },
       ContractSerializationDefaults.Options);
@@ -180,8 +200,61 @@ public class Returns_
     updated.EntraAllowBootstrap.ShouldBeTrue();
     updated.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
     updated.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-    updated.EntraAcceptedTenantIds.ShouldBe([acceptedTenant]);
+    updated.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(acceptedTenant)]);
     updated.Version.ShouldBe(current.Version + 1);
+  }
+
+  public static async Task Administrator_Put_Should_Persist_Tenant_Domain()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await GrantAdministratorAsync(principalId);
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    GetSiteSettings.Response before = await ReadSettingsAsync(client);
+    Guid acceptedTenant = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+
+    try
+    {
+      string body = JsonSerializer.Serialize(
+        new
+        {
+          entraSignInEnabled = before.EntraSignInEnabled,
+          entraAllowBootstrap = before.EntraAllowBootstrap,
+          passkeyPromptMode = before.PasskeyPromptMode.ToString(),
+          assistantName = before.AssistantName,
+          entraTenantAcceptanceMode = "Restricted",
+          entraAcceptedTenants = new[] { new { tenantId = acceptedTenant, domain = "Contoso.COM" } },
+          version = before.Version
+        },
+        ContractSerializationDefaults.Options);
+      HttpResponseMessage put = await client.PutAsync(
+        "api/settings",
+        new StringContent(body, Encoding.UTF8, "application/json"));
+      put.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+      GetSiteSettings.Response after = await ReadSettingsAsync(client);
+      after.EntraAcceptedTenants.ShouldBe([new EntraAcceptedTenant(acceptedTenant, "contoso.com")]);
+    }
+    finally
+    {
+      GetSiteSettings.Response current = await ReadSettingsAsync(client);
+      string restore = JsonSerializer.Serialize(
+        new
+        {
+          entraSignInEnabled = before.EntraSignInEnabled,
+          entraAllowBootstrap = before.EntraAllowBootstrap,
+          passkeyPromptMode = before.PasskeyPromptMode.ToString(),
+          assistantName = before.AssistantName,
+          entraTenantAcceptanceMode = before.EntraTenantAcceptanceMode.ToString(),
+          entraAcceptedTenants = before.EntraAcceptedTenants,
+          version = current.Version
+        },
+        ContractSerializationDefaults.Options);
+      HttpResponseMessage restored = await client.PutAsync(
+        "api/settings",
+        new StringContent(restore, Encoding.UTF8, "application/json"));
+      restored.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
   }
 
   public static async Task Anonymous_Assistant_Identity_Should_Return_Only_Name_And_Avatar()
@@ -246,7 +319,7 @@ public class Returns_
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName = "<b>Zawadi</b>",
         entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
-        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
+        entraAcceptedTenants = current.EntraAcceptedTenants,
         version = current.Version
       },
       ContractSerializationDefaults.Options);
@@ -287,7 +360,7 @@ public class Returns_
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
         assistantName,
         entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
-        entraAcceptedTenantIds = current.EntraAcceptedTenantIds,
+        entraAcceptedTenants = current.EntraAcceptedTenants,
         version = current.Version
       },
       ContractSerializationDefaults.Options);

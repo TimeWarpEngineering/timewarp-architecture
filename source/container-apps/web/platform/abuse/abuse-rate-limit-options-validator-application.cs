@@ -21,8 +21,10 @@ public sealed class AbuseRateLimitOptionsValidator : AbstractValidator<AbuseRate
   {
     RuleFor(options => options.PrincipalRegistration).NotNull();
     RuleFor(options => options.PaymentChallenge).NotNull();
+    RuleFor(options => options.EntraTenantLookup).NotNull();
     RuleFor(options => options.PrincipalRegistration).SetValidator(new SlidingWindowLimitOptionsValidator());
     RuleFor(options => options.PaymentChallenge).SetValidator(new SlidingWindowLimitOptionsValidator());
+    RuleFor(options => options.EntraTenantLookup).SetValidator(new SlidingWindowLimitOptionsValidator());
   }
 }
 

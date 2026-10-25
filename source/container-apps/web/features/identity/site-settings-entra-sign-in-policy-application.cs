@@ -8,7 +8,8 @@
 // host wired without the decorator) is treated as disabled (Sign-in disabled on Challenge;
 // untrusted on ticket modes) so it cannot fail-open. Challenge checks EntraSignInEnabled only.
 // SyncHit, Link, and BootstrapCreate call SiteSettings.AcceptsEntraTenant: Restricted requires the
-// token tid in EntraAcceptedTenantIds; Any accepts any non-empty tid. Authentication:Entra:TenantId
+// token tid against EntraAcceptedTenants (the domain is display-only). Any accepts any non-empty
+// tid. Authentication:Entra:TenantId
 // is the OIDC authority, not this check. BootstrapCreate also requires AllowBootstrap.
 // Untrusted title stays "Untrusted tenant"; bootstrap title stays "Bootstrap not allowed"
 // (219-002 tests). Issuer pinning stays in EntraIssuerValidator.

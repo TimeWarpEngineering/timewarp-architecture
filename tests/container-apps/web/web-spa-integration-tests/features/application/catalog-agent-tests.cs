@@ -116,7 +116,7 @@ public partial class CatalogAgent_Should
     bind.EntraSignInEnabled.ShouldBeTrue();
     bind.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
     bind.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
-    bind.EntraAcceptedTenantIds.ShouldBeEmpty();
+    bind.EntraAcceptedTenants.ShouldBeEmpty();
     bind.Version.ShouldBe(3);
 
     // The seam converter refuses integers, so the schema must advertise the member names.
@@ -965,7 +965,7 @@ public partial class CatalogAgent_Should
     settingsRecord.TryGetProperty("entraSignInEnabled", out _).ShouldBeTrue();
     settingsRecord.GetProperty("entraTenantAcceptanceMode").GetString()
       .ShouldBe(scope.Store.GetState<SiteSettingsState>().EntraTenantAcceptanceMode.ToString());
-    settingsRecord.TryGetProperty("entraAcceptedTenantIds", out _).ShouldBeTrue();
+    settingsRecord.TryGetProperty("entraAcceptedTenants", out _).ShouldBeTrue();
     return Task.CompletedTask;
   }
 

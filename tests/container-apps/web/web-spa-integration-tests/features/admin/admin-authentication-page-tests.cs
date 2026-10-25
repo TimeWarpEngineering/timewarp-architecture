@@ -14,6 +14,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.SiteSettings;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Features.Settings;
+using TimeWarp.Identity;
 
 [TestTag("Unit")]
 public class AuthenticationPage_Should_
@@ -35,6 +36,16 @@ public class AuthenticationPage_Should_
     SettingsPage.GetPageUrl().ShouldBe("/Settings");
     SettingsPage.Policy.ShouldBe(PermissionIds.SettingsRead);
     SettingsPage.Policy.ShouldNotBe(AuthenticationPage.Policy);
+    return Task.CompletedTask;
+  }
+
+  public static Task Format_Should_Show_The_Domain_Or_The_Bare_Guid()
+  {
+    Guid tenantId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+    AuthenticationPage.FormatAcceptedTenant(new EntraAcceptedTenant(tenantId, "contoso.com"))
+      .ShouldBe($"contoso.com ({tenantId:D})");
+    AuthenticationPage.FormatAcceptedTenant(EntraAcceptedTenant.IdOnly(tenantId))
+      .ShouldBe(tenantId.ToString("D"));
     return Task.CompletedTask;
   }
 }

@@ -16,7 +16,7 @@ public class SiteSettings_Given_
   {
     SiteSettings settings = SiteSettings.Create();
     settings.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Restricted);
-    settings.EntraAcceptedTenantIds.ShouldBeEmpty();
+    settings.EntraAcceptedTenants.ShouldBeEmpty();
     settings.EntraTenantAcceptanceInitialized.ShouldBeTrue();
     settings.AcceptsEntraTenant(Home).ShouldBeFalse();
     return Task.CompletedTask;
@@ -24,7 +24,7 @@ public class SiteSettings_Given_
 
   public static Task Restricted_Should_Accept_Only_Listed_Tenants()
   {
-    SiteSettings settings = SiteSettings.Create(entraAcceptedTenantIds: [Home]);
+    SiteSettings settings = SiteSettings.Create(entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(Home)]);
     settings.AcceptsEntraTenant(Home).ShouldBeTrue();
     settings.AcceptsEntraTenant(Other).ShouldBeFalse();
     settings.AcceptsEntraTenant(Guid.Empty).ShouldBeFalse();
@@ -36,22 +36,27 @@ public class SiteSettings_Given_
   {
     SiteSettings settings = SiteSettings.Create(
       entraTenantAcceptanceMode: EntraTenantAcceptanceMode.Any,
-      entraAcceptedTenantIds: [Home]);
+      entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(Home)]);
     settings.AcceptsEntraTenant(Other).ShouldBeTrue();
     settings.AcceptsEntraTenant(EntraTenantIds.Consumers).ShouldBeTrue();
     settings.AcceptsEntraTenant(Guid.Empty).ShouldBeFalse();
-    settings.EntraAcceptedTenantIds.ShouldBe([Home]);
+    settings.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(Home)]);
     return Task.CompletedTask;
   }
 
   public static Task Replace_Should_Collapse_Duplicates_Sort_And_Mark_Initialized()
   {
     SiteSettings settings = SiteSettings.Create(entraTenantAcceptanceInitialized: false);
-    settings.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Restricted, [Other, Home, Home]);
+    settings.ReplaceEntraTenantAcceptance(
+      EntraTenantAcceptanceMode.Restricted,
+      [EntraAcceptedTenant.IdOnly(Other), EntraAcceptedTenant.IdOnly(Home), EntraAcceptedTenant.IdOnly(Home)]);
     settings.EntraTenantAcceptanceInitialized.ShouldBeTrue();
-    EntraTenantIds.TryNormalize([Other, Home, Home], out IReadOnlyList<Guid> expected, out string? error)
+    EntraTenantIds.TryNormalize(
+      [EntraAcceptedTenant.IdOnly(Other), EntraAcceptedTenant.IdOnly(Home), EntraAcceptedTenant.IdOnly(Home)],
+      out IReadOnlyList<EntraAcceptedTenant> expected,
+      out string? error)
       .ShouldBeTrue(error);
-    settings.EntraAcceptedTenantIds.ShouldBe(expected);
+    settings.EntraAcceptedTenants.ShouldBe(expected);
     return Task.CompletedTask;
   }
 
@@ -59,17 +64,17 @@ public class SiteSettings_Given_
   {
     SiteSettings settings = SiteSettings.Create(
       entraTenantAcceptanceMode: EntraTenantAcceptanceMode.Any,
-      entraAcceptedTenantIds: [Home]);
+      entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(Home)]);
     settings.ReplacePolicy(true, true, PasskeyPromptMode.Required);
     settings.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-    settings.EntraAcceptedTenantIds.ShouldBe([Home]);
+    settings.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(Home)]);
     return Task.CompletedTask;
   }
 
   public static Task Empty_Guid_Should_Throw()
   {
     Should.Throw<ArgumentException>(() =>
-      SiteSettings.Create(entraAcceptedTenantIds: [Guid.Empty]));
+      SiteSettings.Create(entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(Guid.Empty)]));
     return Task.CompletedTask;
   }
 
@@ -92,10 +97,52 @@ public class SiteSettings_Given_
 
   public static Task Json_Should_Round_Trip_And_Ignore_Garbage()
   {
-    string json = EntraTenantIds.ToJson([Home]);
-    EntraTenantIds.FromJson(json).ShouldBe([Home]);
+    string json = EntraTenantIds.ToJson([EntraAcceptedTenant.IdOnly(Home)]);
+    EntraTenantIds.FromJson(json).ShouldBe([EntraAcceptedTenant.IdOnly(Home)]);
+    json.ShouldContain("\"tenantId\"");
+    json.ShouldContain("\"domain\":null");
     EntraTenantIds.FromJson("not-json").ShouldBeEmpty();
     EntraTenantIds.FromJson(null).ShouldBeEmpty();
+    EntraTenantIds.FromJson($"[\"{Home:D}\"]").ShouldBeEmpty();
+    return Task.CompletedTask;
+  }
+
+  public static Task Normalize_Should_Keep_One_Domain_And_Refuse_A_Conflict()
+  {
+    EntraAcceptedTenant bare = EntraAcceptedTenant.IdOnly(Home);
+    EntraAcceptedTenant named = new(Home, " Contoso.COM ");
+    EntraTenantIds.TryNormalize([bare, named], out IReadOnlyList<EntraAcceptedTenant> kept, out string? error)
+      .ShouldBeTrue(error);
+    kept.ShouldBe([new EntraAcceptedTenant(Home, "contoso.com")]);
+
+    EntraTenantIds.TryNormalize(
+      [new EntraAcceptedTenant(Home, "contoso.com"), new EntraAcceptedTenant(Home, "fabrikam.com")],
+      out _,
+      out string? conflict)
+      .ShouldBeFalse();
+    conflict.ShouldNotBeNull();
+    conflict.ShouldContain(Home.ToString("D"));
+    return Task.CompletedTask;
+  }
+
+  public static Task Normalize_Should_Refuse_An_Invalid_Domain()
+  {
+    EntraTenantIds.TryNormalize([new EntraAcceptedTenant(Home, "not a domain")], out _, out string? error)
+      .ShouldBeFalse();
+    error.ShouldBe("'not a domain' is not a domain name.");
+    return Task.CompletedTask;
+  }
+
+  public static Task Legacy_Guid_Array_Should_Convert_To_Null_Domains()
+  {
+    string? converted = EntraTenantIds.ConvertLegacyGuidArrayJson($"[\"{Other:D}\", \"{Home:D}\"]");
+    converted.ShouldNotBeNull();
+    EntraTenantIds.FromJson(converted).ShouldBe(
+      [EntraAcceptedTenant.IdOnly(Home), EntraAcceptedTenant.IdOnly(Other)]);
+    EntraTenantIds.ConvertLegacyGuidArrayJson("[]").ShouldBe("[]");
+    EntraTenantIds.ConvertLegacyGuidArrayJson("[\"not-a-guid\"]").ShouldBeNull();
+    string objects = EntraTenantIds.ToJson([new EntraAcceptedTenant(Home, "contoso.com")]);
+    EntraTenantIds.ConvertLegacyGuidArrayJson(objects).ShouldBe(objects);
     return Task.CompletedTask;
   }
 }

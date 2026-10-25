@@ -106,13 +106,13 @@ public class Round_Trip
     SiteSettings? b = await store.GetAsync();
     Guid accepted = Guid.Parse("00000000-0000-0000-0000-000000000001");
     a!.ReplacePolicy(false, false, PasskeyPromptMode.Required);
-    a.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [accepted]);
+    a.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, [EntraAcceptedTenant.IdOnly(accepted)]);
     await store.UpdateAsync(a);
     SiteSettings? after = await store.GetAsync();
     after!.Version.ShouldBe(EntityVersion.Next(0));
     after.PasskeyPromptMode.ShouldBe(PasskeyPromptMode.Required);
     after.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-    after.EntraAcceptedTenantIds.ShouldBe([accepted]);
+    after.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(accepted)]);
     after.AcceptsEntraTenant(Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")).ShouldBeTrue();
 
     b!.ReplacePolicy(true, true, PasskeyPromptMode.Soft);
