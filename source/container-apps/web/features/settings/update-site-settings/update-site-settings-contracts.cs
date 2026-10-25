@@ -33,6 +33,7 @@ public static partial class UpdateSiteSettings
     public string AssistantName { get; set; } = null!;
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
+    public XaiByokMode XaiByokMode { get; set; } = XaiByokMode.Allow;
     public long Version { get; set; }
   }
 
@@ -53,6 +54,7 @@ public static partial class UpdateSiteSettings
     public string AssistantName { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
+    public XaiByokMode XaiByokMode { get; set; }
     public long Version { get; }
 
     public Response(
@@ -62,7 +64,8 @@ public static partial class UpdateSiteSettings
       string assistantName,
       long version,
       EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
-      List<EntraAcceptedTenant>? entraAcceptedTenants = null)
+      List<EntraAcceptedTenant>? entraAcceptedTenants = null,
+      XaiByokMode xaiByokMode = XaiByokMode.Allow)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
@@ -71,6 +74,7 @@ public static partial class UpdateSiteSettings
       Version = version;
       EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
       EntraAcceptedTenants = entraAcceptedTenants is null ? [] : [.. entraAcceptedTenants];
+      XaiByokMode = xaiByokMode;
     }
   }
 

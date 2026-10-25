@@ -79,7 +79,8 @@ public sealed class GetSiteSettings
         configurationEnabled: signInOptions.Lists(SignInMethod.Microsoft365),
         configurationAllowBootstrap: configured.AllowBootstrap,
         entraTenantAcceptanceMode: settings.EntraTenantAcceptanceMode,
-        entraAcceptedTenants: [.. settings.EntraAcceptedTenants]);
+        entraAcceptedTenants: [.. settings.EntraAcceptedTenants],
+        xaiByokMode: settings.XaiByokMode);
     }
   }
 }

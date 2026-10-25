@@ -12,6 +12,8 @@
 // domain, the distinct-count cap, and duplicate collapse cannot drift. An empty list is valid
 // and means Restricted accepts nobody. Null is refused. Task 306: this shape is the trust
 // policy. Task 401: each entry is a tenant id plus an optional domain.
+// Task 399: XaiByokMode is whose key Ask uses below the host key. Allow is the zero value, so a
+// client that omits the field stays on Allow. Reseed does not write this field.
 // Task 361 added AssistantName: required, and trimmed it must be 1-32 plain-text characters.
 // Beyond NotEmpty (the required message) the validator calls AssistantNameRules.IsValid, the
 // same check SiteSettings.RenameAssistant runs, so they cannot drift.
@@ -29,6 +31,7 @@ public interface ISiteSettingsDetails
   string AssistantName { get; set; }
   EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
   List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; }
+  XaiByokMode XaiByokMode { get; set; }
 }
 
 public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettingsDetails>
@@ -38,6 +41,8 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
     RuleFor(details => details.PasskeyPromptMode)
       .IsInEnum();
     RuleFor(details => details.EntraTenantAcceptanceMode)
+      .IsInEnum();
+    RuleFor(details => details.XaiByokMode)
       .IsInEnum();
     RuleFor(details => details.EntraAcceptedTenants)
       .NotNull()

@@ -39,6 +39,13 @@ public static class CatalogAgentAvailability
     return string.IsNullOrWhiteSpace(state.ChatAdminHint) ? null : state.ChatAdminHint;
   }
 
+  /// <summary>Whose key to set when Ask is not configured, or null when a key resolved.</summary>
+  public static string? KeyHint(AgentSurfaceState state)
+  {
+    ArgumentNullException.ThrowIfNull(state);
+    return string.IsNullOrWhiteSpace(state.ChatKeyHint) ? null : state.ChatKeyHint;
+  }
+
   /// <summary>Status, title and detail of a failed probe; null unless readiness is Error.</summary>
   public static string? Problem(AgentSurfaceState state)
   {

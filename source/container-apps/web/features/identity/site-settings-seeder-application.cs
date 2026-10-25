@@ -20,7 +20,8 @@
 // Tenant acceptance is admin-owned, so there is no tenant-drift warning. ReseedSiteSettings
 // overwrites the offer from the method list and AllowBootstrap from configuration only when
 // isDevelopment is true (hosted service and SeedOnReadSiteSettingsStore pass
-// IHostEnvironment.IsDevelopment()). PasskeyPromptMode, assistant name, and tenant acceptance stay.
+// IHostEnvironment.IsDevelopment()). PasskeyPromptMode, assistant name, tenant acceptance, and
+// XaiByokMode stay. Reseed does not rewrite whose key Ask uses.
 // IsUndefinedTable (Postgres 42P01) lives here so the boot retry and the read path share one
 // string-based check (same convention as EfSiteSettingsStore.IsUniqueViolation) without an
 // Npgsql package reference in application or server layers.

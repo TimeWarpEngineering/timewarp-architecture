@@ -19,11 +19,15 @@ public static class AgentChatProblems
     Detail = "No authenticated principal."
   };
 
-  public static SharedProblemDetails NotConfigured(bool development) => new()
+  public static SharedProblemDetails NotConfigured(bool development) =>
+    NotConfigured(XaiChatDefaults.HostSetupText(development));
+
+  /// <summary>503 whose detail names the key the current policy still needs. The detail must not contain a key.</summary>
+  public static SharedProblemDetails NotConfigured(string detail) => new()
   {
     Title = "AI not configured",
     Status = 503,
-    Detail = XaiChatDefaults.HostSetupText(development)
+    Detail = detail
   };
 
   public static SharedProblemDetails TooManyRequests() => new()

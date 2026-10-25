@@ -21,13 +21,15 @@ using TimeWarp.Architecture.Features.AgentChats;
 /// <param name="Model">The configured model id when Configured.</param>
 /// <param name="Problem">Status, title and detail when Error.</param>
 /// <param name="AdminHint">Admin → AI sentence when the server says storage can hold a key.</param>
+/// <param name="KeyHint">Whose key to set when Ask is not configured.</param>
 public sealed record ChatProbeResult
 (
   CatalogAgentReadiness Readiness,
   string SetupCommand,
   string? Model,
   string? Problem,
-  string? AdminHint = null
+  string? AdminHint = null,
+  string? KeyHint = null
 );
 
 /// <summary>Maps the Ask configuration probe's outcome to a <see cref="ChatProbeResult"/>.</summary>
@@ -46,7 +48,8 @@ public static class ChatReadinessProbe
       string.IsNullOrWhiteSpace(response.SetupCommand) ? XaiChatDefaults.DeployedSetupHint : response.SetupCommand,
       response.Configured ? response.Model : null,
       null,
-      string.IsNullOrWhiteSpace(response.AdminHint) ? null : response.AdminHint.Trim()
+      string.IsNullOrWhiteSpace(response.AdminHint) ? null : response.AdminHint.Trim(),
+      string.IsNullOrWhiteSpace(response.KeyHint) ? null : response.KeyHint.Trim()
     );
   }
 

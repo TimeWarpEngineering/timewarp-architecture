@@ -80,6 +80,19 @@ namespace TimeWarp.Architecture.Features.AgentChats
       result.AsT1.Title.ShouldBe("AI not configured");
     }
 
+    public static async Task Missing_Key_Uses_The_Upstream_Detail()
+    {
+      const string detail = "Set your xAI API key on Profile.";
+      RecordingUpstream upstream = new(configured: false) { Detail = detail };
+      Handler handler = new(new FixedPrincipal(), upstream, new AgentChatAdmission(), Development());
+
+      OneOf<Response, SharedProblemDetails> result = await handler.Handle(UserTurn(), CancellationToken.None);
+
+      result.IsT1.ShouldBeTrue();
+      result.AsT1.Detail.ShouldBe(detail);
+      result.AsT1.Detail!.ShouldNotContain("xai-");
+    }
+
     public static async Task Missing_Key_Outside_Development_Does_Not_Name_User_Secrets()
     {
       Handler handler = new(
@@ -176,6 +189,11 @@ namespace TimeWarp.Architecture.Features.AgentChats
       }
 
       public string? Model => Configured ? XaiChatDefaults.DefaultModel : null;
+
+      public string? Detail { get; init; }
+
+      public string MissingKeyDetail(bool development) =>
+        Detail ?? XaiChatDefaults.HostSetupText(development);
 
       public int Calls { get; private set; }
 

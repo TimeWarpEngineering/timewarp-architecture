@@ -42,4 +42,13 @@ public interface IAgentChatUpstream
     Command command,
     CancellationToken cancellationToken
   );
+
+  /// <summary>Mode from the last resolution on this async flow. Allow when nothing has resolved.</summary>
+  XaiByokMode ResolvedMode => XaiByokMode.Allow;
+
+  /// <summary>
+  /// Sentence for a missing key. The default is the host setup text so a stub that does not
+  /// know the policy keeps the pre-BYOK sentence.
+  /// </summary>
+  string MissingKeyDetail(bool development) => XaiChatDefaults.HostSetupText(development);
 }

@@ -14,10 +14,15 @@ namespace TimeWarp.Architecture.Features.Identity.Application;
 
 using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Abstractions;
+using TimeWarp.Architecture.Features.AgentChats.Application;
+using TimeWarp.Foundation.Features;
 using static TimeWarp.Architecture.Features.Identity.CompleteAddExistingPasskey;
 
 public sealed partial class CompleteAddExistingPasskey
 {
+  [CrossSliceReference(
+    typeof(IUserXaiApiKey),
+    "Retiring a principal by merge deletes that user's xAI API key row.")]
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
     private static readonly Action<ILogger, WebAuthnFailureReason, string, Exception?> LogVerificationFailed =
@@ -42,6 +47,7 @@ public sealed partial class CompleteAddExistingPasskey
     private readonly IRequestHostAccessor RequestHostAccessor;
     private readonly IOptions<WebAuthnOptions> Options;
     private readonly ILogger<Handler> Logger;
+    private readonly IUserXaiApiKey? UserXaiApiKeys;
 
     public Handler(
       IPrincipalStore principalStore,
@@ -49,7 +55,8 @@ public sealed partial class CompleteAddExistingPasskey
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IRequestHostAccessor requestHostAccessor,
       IOptions<WebAuthnOptions> options,
-      ILogger<Handler> logger)
+      ILogger<Handler> logger,
+      IUserXaiApiKey? userXaiApiKeys = null)
     {
       PrincipalStore = principalStore;
       ChallengeStore = challengeStore;
@@ -57,6 +64,7 @@ public sealed partial class CompleteAddExistingPasskey
       RequestHostAccessor = requestHostAccessor;
       Options = options;
       Logger = logger;
+      UserXaiApiKeys = userXaiApiKeys;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -135,8 +143,30 @@ public sealed partial class CompleteAddExistingPasskey
         return IdentityProblems.TooMuchContention();
       }
 
+      await DeleteUserKeyAsync(source.Id.Value, cancellationToken).ConfigureAwait(false);
       LogMerged(Logger, source.Id.Value, callerId.Value.Value, credential.Id.Value, null);
       return new Response(moved, source.Id);
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+      "Design",
+      "CA1031:Do not catch general exception types",
+      Justification = "The merge already committed. A key-delete failure must not fail the retired principal.")]
+    private async Task DeleteUserKeyAsync(Guid userId, CancellationToken cancellationToken)
+    {
+      if (UserXaiApiKeys is null)
+      {
+        return;
+      }
+
+      try
+      {
+        await UserXaiApiKeys.DeleteForPrincipalAsync(userId, cancellationToken).ConfigureAwait(false);
+      }
+      catch (Exception exception) when (exception is not OperationCanceledException)
+      {
+        _ = exception;
+      }
     }
   }
 }

@@ -18,9 +18,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.AgentChats.Application;
 using TimeWarp.Architecture.Secrets;
+using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.AgentChats.CompleteAgentChat;
 
 public class XaiChatUpstream_Given_
@@ -216,6 +218,68 @@ public class XaiChatUpstream_Given_
     factory.Keys.ShouldBe([key]);
   }
 
+  public static async Task Allow_Sends_The_Signed_In_Users_Key_And_A_Policy_Change_Is_The_Next_Turn()
+  {
+    const string userKey = "xai-user-key-399-aaaa";
+    const string siteKey = "xai-site-key-399-ssss";
+    Guid userA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    Guid userB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    MemoryProtectedSecretStore store = new();
+    await store.SetAsync(
+      UserXaiApiKeyNames.NameFor(userA),
+      UserXaiApiKeyNames.PurposeFor(userA),
+      userKey,
+      userA,
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      siteKey,
+      userA,
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    InMemorySiteSettingsStore settings = new();
+    await settings.AddAsync(SiteSettings.Create());
+    SwitchingPrincipal principal = new() { Id = PrincipalId.From(userA) };
+    CapturingChatClientFactory factory = new();
+    await using ServiceProvider provider = Build(
+      "Production",
+      useFake: false,
+      apiKey: null,
+      store,
+      factory,
+      settings,
+      principal);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    OneOf<Response, SharedProblemDetails> userTurn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+    SiteSettings? current = await settings.GetAsync();
+    current.ShouldNotBeNull();
+    current.SetXaiByokMode(XaiByokMode.Off);
+    await settings.UpdateAsync(current);
+    OneOf<Response, SharedProblemDetails> offTurn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+    current = await settings.GetAsync();
+    current.ShouldNotBeNull();
+    current.SetXaiByokMode(XaiByokMode.Required);
+    await settings.UpdateAsync(current);
+    OneOf<Response, SharedProblemDetails> requiredTurn =
+      await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+    current = await settings.GetAsync();
+    current.ShouldNotBeNull();
+    current.SetXaiByokMode(XaiByokMode.Allow);
+    await settings.UpdateAsync(current);
+    principal.Id = PrincipalId.From(userB);
+    OneOf<Response, SharedProblemDetails> otherTurn = await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+
+    userTurn.IsT0.ShouldBeTrue();
+    offTurn.IsT0.ShouldBeTrue();
+    requiredTurn.IsT0.ShouldBeTrue();
+    otherTurn.IsT0.ShouldBeTrue();
+    factory.Keys.ShouldBe([userKey, siteKey, userKey, siteKey]);
+    upstream.MissingKeyDetail(development: false).ShouldNotContain(userKey);
+  }
+
   public static Task Tool_Declarations_Are_Not_Invocable()
   {
     List<AITool> tools = XaiChatMapping.ToTools
@@ -274,7 +338,9 @@ public class XaiChatUpstream_Given_
     bool useFake,
     string? apiKey,
     IProtectedSecretStore? store = null,
-    IXaiChatClientFactory? clients = null)
+    IXaiChatClientFactory? clients = null,
+    ISiteSettingsStore? settings = null,
+    ICurrentPrincipalAccessor? principal = null)
   {
     Dictionary<string, string?> values = new()
     {
@@ -299,8 +365,26 @@ public class XaiChatUpstream_Given_
       services.AddSingleton(clients);
     }
 
+    if (settings is not null)
+    {
+      services.AddSingleton(settings);
+    }
+
+    if (principal is not null)
+    {
+      services.AddSingleton(principal);
+    }
+
     XaiChatRegistration.ConfigureServices(services, configuration);
     return services.BuildServiceProvider();
+  }
+
+  private sealed class SwitchingPrincipal : ICurrentPrincipalAccessor
+  {
+    public PrincipalId? Id { get; set; }
+
+    public Task<PrincipalId?> GetCurrentPrincipalIdAsync(CancellationToken cancellationToken) =>
+      Task.FromResult(Id);
   }
 
   private sealed class CapturingChatClientFactory : IXaiChatClientFactory

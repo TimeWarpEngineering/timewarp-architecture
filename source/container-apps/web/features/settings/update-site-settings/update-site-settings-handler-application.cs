@@ -51,6 +51,7 @@ public sealed class UpdateSiteSettings
         command.EntraTenantAcceptanceMode,
         command.EntraAcceptedTenants);
       settings.RenameAssistant(command.AssistantName);
+      settings.SetXaiByokMode(command.XaiByokMode);
 
       try
       {
@@ -74,5 +75,6 @@ public sealed class UpdateSiteSettings
       assistantName: settings.AssistantName,
       version: settings.Version,
       entraTenantAcceptanceMode: settings.EntraTenantAcceptanceMode,
-      entraAcceptedTenants: [.. settings.EntraAcceptedTenants]);
+      entraAcceptedTenants: [.. settings.EntraAcceptedTenants],
+      xaiByokMode: settings.XaiByokMode);
 }

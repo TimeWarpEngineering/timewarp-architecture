@@ -59,7 +59,7 @@ public sealed class CompleteAgentChat
       Upstream.BeginKeyResolution();
       if (!await Upstream.IsConfiguredAsync(cancellationToken).ConfigureAwait(false))
       {
-        return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
+        return AgentChatProblems.NotConfigured(Upstream.MissingKeyDetail(Environment.IsDevelopment()));
       }
 
       using AgentChatAdmission.AdmissionLease lease = await Admission

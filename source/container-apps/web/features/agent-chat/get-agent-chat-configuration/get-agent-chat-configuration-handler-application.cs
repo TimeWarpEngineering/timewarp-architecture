@@ -77,7 +77,10 @@ public sealed class GetAgentChatConfiguration
       {
         Configured = configured,
         SetupCommand = XaiChatDefaults.HostSetupText(Environment.IsDevelopment()),
-        AdminHint = Keys.StorageAvailable ? XaiChatDefaults.AdminAiSentence : null,
+        AdminHint = Keys.StorageAvailable && Upstream.ResolvedMode != XaiByokMode.Required
+          ? XaiChatDefaults.AdminAiSentence
+          : null,
+        KeyHint = configured ? null : Upstream.MissingKeyDetail(Environment.IsDevelopment()),
         Model = model,
         RecordChats = options.RecordChats,
         PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)

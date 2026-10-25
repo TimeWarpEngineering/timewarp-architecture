@@ -470,6 +470,7 @@ vally-results/
 # Task-work resume journal beside kitchens (local; not product)
 task-work.journal.json
 stacked-task-set.journal.json
+stacked-task-set*.resume.json
 planning.journal.json
 rfc.journal.json
 debate.journal.json

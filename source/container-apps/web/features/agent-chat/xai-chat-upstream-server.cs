@@ -14,6 +14,9 @@
 // the key changes: disposing it
 // inside the swap can drop a concurrent GetResponseAsync. Retired clients are disposed with this
 // upstream.
+// ResolveApiKeyAsync asks IXaiApiKeyResolver when it is registered and otherwise the site key.
+// LastMode keeps the mode of that read so MissingKeyDetail can name Profile or an admin without
+// a second read. GetClientAsync does not clear LastMode.
 // Tools are AIFunctionDeclaration instances. Invoke on a declaration throws, so this process
 // cannot run a catalog action on the model's behalf. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
@@ -61,6 +64,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   private readonly IXaiChatClientFactory Clients;
   private readonly ILogger<XaiChatUpstream> Logger;
   private static readonly AsyncLocal<KeySlot?> OpenTurn = new();
+  private static readonly AsyncLocal<XaiByokMode> LastMode = new();
   private readonly Lock Gate = new();
   private readonly FakeChatClient Fake = new();
   private readonly List<IChatClient> RetiredClients = [];
@@ -148,7 +152,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
 
     if (client is null)
     {
-      return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
+      return AgentChatProblems.NotConfigured(MissingKeyDetail(Environment.IsDevelopment()));
     }
 
     ChatOptions chatOptions;
@@ -213,9 +217,25 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     Fake.Dispose();
   }
 
+  /// <inheritdoc />
+  public XaiByokMode ResolvedMode => LastMode.Value;
+
+  /// <inheritdoc />
+  public string MissingKeyDetail(bool development) =>
+    XaiByokCopy.MissingKeyDetail(LastMode.Value, development);
+
   private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
   {
     await using AsyncServiceScope scope = Scopes.CreateAsyncScope();
+    IXaiApiKeyResolver? resolver = scope.ServiceProvider.GetService<IXaiApiKeyResolver>();
+    if (resolver is not null)
+    {
+      ResolvedXaiApiKey resolved = await resolver.ResolveAsync(cancellationToken).ConfigureAwait(false);
+      LastMode.Value = resolved.Mode;
+      return resolved.ApiKey;
+    }
+
+    LastMode.Value = XaiByokMode.Allow;
     ISiteXaiApiKey keys = scope.ServiceProvider.GetRequiredService<ISiteXaiApiKey>();
     return await keys.ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
   }

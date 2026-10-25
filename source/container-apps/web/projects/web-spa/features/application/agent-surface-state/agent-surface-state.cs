@@ -59,6 +59,9 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
   /// <summary>Admin → AI sentence from the probe. Null when this host cannot store a key.</summary>
   public string? ChatAdminHint { get; private set; }
 
+  /// <summary>Whose key to set when Ask is not configured. Null when a key resolved.</summary>
+  public string? ChatKeyHint { get; private set; }
+
   public string? ChatModel { get; private set; }
 
   public string? ChatProblem { get; private set; }
@@ -150,6 +153,7 @@ public sealed partial class AgentSurfaceState : State<AgentSurfaceState>
     ChatReadiness = CatalogAgentReadiness.Unknown;
     ChatSetupCommand = XaiChatDefaults.DeployedSetupHint;
     ChatAdminHint = null;
+    ChatKeyHint = null;
     ChatModel = null;
     ChatProblem = null;
     IsPanelOpen = false;
