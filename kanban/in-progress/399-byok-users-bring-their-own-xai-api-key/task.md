@@ -67,6 +67,7 @@ same delete is what a user-deletion path calls.
 - Implemented: grok 01a17414-3cc0-7172-bbd7-08dcb08980b1 (2026-10-26) — Profile key, policy ladder, probe-before-save, merge delete
 - Audit: added `stacked-task-set*.resume.json` to `.gitignore`. `kanban-landed` still warns that eight other claims have no worktree; that warning is advisory and is not this task. The first commit's hook refused to attest because four Jaribu runfiles were not executable. Their executable bit is restored in the follow-up commit.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T18:10:02Z
+- Review oracle round 1: Claude Opus 5.5 (general reviewer), effort 3, 2026-10-26. Session id not exposed to the oracle. Found 3 bugs, 2 suggestions, 1 nit, all open, so a fix pass is requested. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ## Notes
 
@@ -146,3 +147,15 @@ Expect:
 - `GetAgentChatConfigurationHint` passes 7. Required omits `adminHint` and sets `keyHint` to the Profile sentence.
 - `Xai` integration passes 15. A 401 body that contains the key and a newline becomes 400 with `[redacted]` and no newline. A connection failure is 503 "xAI could not be reached. Nothing was saved." Allow sends the signed-in user's key, Off sends the site key, Required sends the user key again, and Allow for a user with no key sends the site key.
 - Profile and Admin were not clicked in a browser. The markup is `data-qa="UserXaiApiKeySettings"` on Profile (hidden until status `visible` is true) and `data-qa="XaiByokMode"` on Admin → Authentication.
+
+### Review
+
+- Status: round 1 is done and there is no disposition yet. Reviewer: general, effort 3.
+- Counts: bug 3 open, suggestion 2 open, nit 1 open (`review/round-1/merged.md`).
+- M1: the Required and Off missing-key text never reaches Ask. `LastMode` is an AsyncLocal set inside an async method, so callers always read Allow.
+- M2: under per-user keys the one-slot chat client cache rebuilds the client and keeps the old one on each user switch, so retired clients grow without bound.
+- M3: the post-merge key delete has a silent catch-all with a CA1031 suppression, and the EF merge already does that delete.
+- M4: the row name in `EfPrincipalStore` is copied by hand.
+- M5: the resolver falls back to Allow, with no log, when the settings read fails.
+- M6: the Design text in `UserXaiApiKey` does not match the code.
+- Framework: `review/review-framework.md`.
