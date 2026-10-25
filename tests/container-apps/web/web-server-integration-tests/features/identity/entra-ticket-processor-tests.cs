@@ -26,7 +26,7 @@ using TimeWarp.Identity;
 
 public class Bootstrap_Given_
 {
-  private static readonly Guid TrustedTenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+  private static readonly Guid TrustedTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
   private static readonly DateTimeOffset T0 = new(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 
   [System.Runtime.CompilerServices.ModuleInitializer]

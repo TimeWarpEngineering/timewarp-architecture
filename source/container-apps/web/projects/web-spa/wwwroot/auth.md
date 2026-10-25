@@ -160,7 +160,7 @@ From a repo checkout, with Azure CLI logged in (`az login`):
 ```bash
 dev entra setup
 # when more than one tenant is visible:
-dev entra setup --tenant crunchitfs.com
+dev entra setup --tenant contoso.com
 # optional: --name “TimeWarp Architecture Dev” --public-origin https://arch.timewarp.work
 #           --redirect-uri https://extra.example/signin-oidc --new-secret --dry-run
 dev entra status
@@ -183,7 +183,7 @@ to. When more than one tenant is visible, setup refuses with a candidate table a
 requires `--tenant` (non-interactive; it does not guess). `az account list` only shows
 tenants that have a subscription; `az account tenant list` also lists subscription-less
 tenants the identity can access. Sign in with an account from that tenant's default
-domain (for example `@crunchitfs.com`); other tenants' accounts must be invited as
+domain (for example `@contoso.com`); other tenants' accounts must be invited as
 guests first.
 
 ### Manual Entra configuration (redirect URIs and PublicOrigin)
@@ -198,7 +198,7 @@ browser actually uses:
 | Aspire YARP ingress | `https://localhost:63610/signin-oidc` | `https://localhost:63610` |
 | Shared hostname (Caddy → YARP) | `https://<public-host>/signin-oidc` | `https://<public-host>` |
 
-Any proxied deployment — including crunchit on Azure Container Apps — **must**
+Any proxied deployment — for example, Azure Container Apps — **must**
 set `PublicOrigin`. Web.Server is reached over **http** behind YARP/ACA and
 does not consume `X-Forwarded-*` (passkey RP-ID must not trust spoofable
 forwarded headers). Unset `PublicOrigin` would send Entra `http://…/signin-oidc`.

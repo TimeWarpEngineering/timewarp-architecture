@@ -7,7 +7,7 @@
   Design: web-api-contracts — EditForm binds the IRoleDetails interface; CreateRole.Command
   is the model (no view model). Blazilla FluentValidator takes the shared
   RoleDetailsValidator so only Name/Description are validated (no UserId noise).
-  COPIC UX — Action ctor takes Command; submit is RoleState.CreateRole(Command).
+  Action ctor takes Command; submit is RoleState.CreateRole(Command).
   UserId is stamped in the handler GetRequest, not here.
   After create, sequence RouteState.ChangeRoute to RoleDetailPage so membership can be
   assigned (task 206) — navigation is an action, never a component-side NavigateTo.

@@ -7,7 +7,9 @@
 // CI installs @microsoft/vally-cli from tools/dev-cli/vally-cli.version and calls this verb,
 // so a local run and the skill-lint job cannot drift. Output is vally's. A missing vally,
 // or a different version, exits non-zero and prints the npm install for the pin (Node.js
-// required). A lint failure exits with vally's code. dev build does not call this.
+// required). A lint failure exits with vally's code. dev build does not call vally.
+// The client-name scan runs first, so a skills-only PR (skill-lint, not ci fast) still fails
+// when a tracked file names a client. dev build runs that same scan for every other PR.
 #endregion
 
 namespace DevCli.Commands;
@@ -31,6 +33,15 @@ internal sealed class LintSkillsCommand : ICommand<Unit>
       Ct = ct;
 
       if (!FindRepoRoot()) return Unit.Value;
+      if (!await ClientNameScan.ReportAsync(
+            RepoRoot,
+            message => Terminal.WriteLine(message),
+            message => Terminal.WriteErrorLine(message.Red()),
+            Ct))
+      {
+        return Unit.Value;
+      }
+
       if (!await LintAsync()) return Unit.Value;
 
       Terminal.WriteLine("\nSkill specs linted successfully!".Green());

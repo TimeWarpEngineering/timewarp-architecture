@@ -14,9 +14,9 @@ using TimeWarp.Architecture.Features.Identity.Application;
 
 public class TryRead_Given_
 {
-  private static readonly Guid TenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+  private static readonly Guid TenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
   private static readonly Guid ObjectId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-  private const string Issuer = "https://login.microsoftonline.com/30f3971f-4719-4f20-9b6f-88916e0b95bd/v2.0";
+  private const string Issuer = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000001/v2.0";
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<TryRead_Given_>();

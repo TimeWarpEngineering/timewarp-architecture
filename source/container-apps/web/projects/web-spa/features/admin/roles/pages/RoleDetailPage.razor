@@ -6,7 +6,7 @@
   Purpose: Role detail/edit — grouped permission membership editor for one role.
 
   Design: Task 206. Route /Admin/Roles/{RoleId} (read policy so viewers can see the bundle).
-  Checkboxes and Save require admin.roles.manage (CheckAuthorization). COPIC stays
+  Checkboxes and Save require admin.roles.manage (CheckAuthorization). Membership edits stay
   RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
   Administrator admin.* grants are disabled when selected; last-admin lockout is
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.

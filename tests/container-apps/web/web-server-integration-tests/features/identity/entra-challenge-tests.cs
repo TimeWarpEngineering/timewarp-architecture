@@ -54,7 +54,7 @@ public class Challenge_Given_
   private const string TenantIdHeader = FakeEntraHeaders.TenantId;
   private const string ObjectIdHeader = FakeEntraHeaders.ObjectId;
 
-  private static readonly Guid TrustedTenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+  private static readonly Guid TrustedTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
   private static readonly Guid UntrustedTenantId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
   private static WebApplication? App;

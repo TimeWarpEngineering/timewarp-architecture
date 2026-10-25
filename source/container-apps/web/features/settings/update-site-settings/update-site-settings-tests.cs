@@ -116,7 +116,7 @@ namespace TimeWarp.Architecture.Features.Settings
 
     public static Task Duplicate_Accepted_Tenants_Past_The_Raw_Cap_Should_Pass_Validation()
     {
-      Guid tenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      Guid tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
       List<Guid> tenantIds = [];
       for (int index = 0; index < EntraTenantIds.MaxAcceptedCount + 1; index++)
       {
@@ -298,7 +298,7 @@ namespace TimeWarp.Architecture.Features.Settings
     {
       InMemorySiteSettingsStore store = new();
       await store.AddAsync(SiteSettings.Create());
-      Guid first = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+      Guid first = Guid.Parse("00000000-0000-0000-0000-000000000001");
       Guid second = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
       UpdateHandler handler = new(store);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(

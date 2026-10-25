@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// TimeWarp.State rule: every SPA → backend HTTP call goes through an ActionSet (COPIC / ProfileState).
+// TimeWarp.State rule: every SPA → backend HTTP call goes through an ActionSet (ProfileState).
 // Credentials are product data from GetCredentials / AddPasskey / AddExistingPasskey /
 // RevokeCredential — never page-local List<> fields. Null Credentials = no snapshot; empty list
 // = loaded with zero passkeys.

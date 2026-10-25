@@ -43,7 +43,7 @@ using TimeWarp.Identity;
 
 public class Callback_Given_
 {
-  private static readonly Guid TrustedTenantId = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+  private static readonly Guid TrustedTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
   private static readonly Guid ObjectId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
   private static readonly string ClientId = Guid.Parse("f6d55605-aed5-4b5e-8b54-6260de4b323a").ToString("D");
   private const string ClientSecret = "test-client-secret";

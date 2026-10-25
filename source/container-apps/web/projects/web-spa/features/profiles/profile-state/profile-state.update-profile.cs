@@ -4,7 +4,7 @@
 
 #region Design
 // Action ctor takes UpdateProfile.Command so the generator emits ProfileState.UpdateProfile(Command).
-// ProfilePage binds IProfileDetails (the Command) and submits via that method (COPIC, TWA0022).
+// ProfilePage binds IProfileDetails (the Command) and submits via that method (TWA0022).
 // On success the submitted fields are copied into state; Avatar is unchanged (GetProfile-only).
 // 401 (empty cookie challenge or unsigned-in Save): toast via DefaultApiHandler then
 // /Login?returnUrl=/Profile — GET AllowAnonymous must not hide that Save needs a session.

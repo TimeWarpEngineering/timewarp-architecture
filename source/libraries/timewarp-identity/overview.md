@@ -41,7 +41,7 @@ First boot copies `Enabled` and `AllowBootstrap` into settings once; after that
 `/Admin/Authentication` is the source of truth for those two. Disabling sign-in at runtime refuses
 **new** challenges (403 `Sign-in disabled`); existing Entra credentials and sessions stay.
 
-`IEntraSignInPolicy` is the application seam products replace in DI (crunchit 008-004) without
+`IEntraSignInPolicy` is the application seam products replace in DI without
 touching the named `entra` scheme. Do not fold `PublicOrigin`, client id, secret, or authority
 tenant into `SiteSettings`.
 

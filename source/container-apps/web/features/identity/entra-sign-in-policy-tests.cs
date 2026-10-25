@@ -32,7 +32,7 @@ namespace TimeWarp.Architecture.Features.Identity.EntraSignInPolicyTests
   [TestTag("Application")]
   public class SiteSettingsEntraSignInPolicy_Given_
   {
-    private static readonly Guid Trusted = Guid.Parse("30f3971f-4719-4f20-9b6f-88916e0b95bd");
+    private static readonly Guid Trusted = Guid.Parse("00000000-0000-0000-0000-000000000001");
     private static readonly Guid Untrusted = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
     [System.Runtime.CompilerServices.ModuleInitializer]

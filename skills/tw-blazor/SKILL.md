@@ -220,7 +220,8 @@ Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpA
 1. A handler does one thing. It never sends/dispatches another action (no `await XState.Y()`
    inside `Handle` / `HandleSuccess` / `HandleError`). Pages and components sequence actions.
 2. Loading UI comes from the shared `Section` component
-   (`web-spa/components/composites/Section.razor`, port of COPIC `CopicSection`) driven by
+   (`web-spa/components/composites/Section.razor`). Compose Card for chrome; do not duplicate
+   border or title styles. It is driven by
    `ActionTrackingState.IsAnyActive(LoadingActionType)`; no hand-written loading markup.
    Grids may bind `FluentDataGrid Loading=IsLoading` to `IsAnyActive(FetchX)` instead.
 
