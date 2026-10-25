@@ -66,6 +66,7 @@ same delete is what a user-deletion path calls.
 - Decisions recorded: ses_e8cbae678ffe6TePjMOOX5xy0N (2026-10-25) — precedence (host always wins, ladder per policy), policy switch (Required / Allow / Off, default Allow), provider scope (xAI only, provider + key storage shape)
 - Implemented: grok 01a17414-3cc0-7172-bbd7-08dcb08980b1 (2026-10-26) — Profile key, policy ladder, probe-before-save, merge delete
 - Audit: added `stacked-task-set*.resume.json` to `.gitignore`. `kanban-landed` still warns that eight other claims have no worktree; that warning is advisory and is not this task. The first commit's hook refused to attest because four Jaribu runfiles were not executable. Their executable bit is restored in the follow-up commit.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T18:10:02Z
 
 ## Notes
 
