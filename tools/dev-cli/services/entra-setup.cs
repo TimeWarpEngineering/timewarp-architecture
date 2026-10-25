@@ -245,7 +245,7 @@ internal static class EntraSetup
       return [];
     }
 
-    using JsonDocument document = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+    using var document = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
     if (!document.RootElement.TryGetProperty("SignInOptions", out JsonElement section)
       || !section.TryGetProperty("Methods", out JsonElement methods)
       || methods.ValueKind != JsonValueKind.Array)
