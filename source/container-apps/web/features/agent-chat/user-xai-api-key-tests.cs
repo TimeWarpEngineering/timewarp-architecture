@@ -210,6 +210,85 @@ namespace TimeWarp.Architecture.Features.AgentChats
       audit.ShouldNotContain(UserSecret);
     }
 
+    public static async Task Unreadable_Mode_Is_Logged_And_Does_Not_Use_The_Site_Key()
+    {
+      MemoryStore store = new();
+      await store.SetAsync(
+        UserXaiApiKeyNames.NameFor(UserA),
+        UserXaiApiKeyNames.PurposeFor(UserA),
+        UserSecret,
+        UserA,
+        DateTimeOffset.UnixEpoch,
+        CancellationToken.None);
+      await store.SetAsync(
+        SiteXaiApiKeyNames.Name,
+        SiteXaiApiKeyNames.Purpose,
+        SiteSecret,
+        UserA,
+        DateTimeOffset.UnixEpoch,
+        CancellationToken.None);
+      ListLogger<XaiApiKeyResolver> logger = new();
+      XaiApiKeyResolver resolver = ResolverFor(store, hostKey: null, logger);
+
+      ResolvedXaiApiKey resolved = await resolver.ResolveAsync(CancellationToken.None);
+
+      resolved.ApiKey.ShouldBe(UserSecret);
+      resolved.Mode.ShouldBe(XaiByokMode.Required);
+      resolved.Origin.ShouldBe(XaiApiKeyOrigin.User);
+      string log = string.Join('\n', logger.Lines);
+      log.ShouldContain("could not be read");
+      log.ShouldNotContain(UserSecret);
+      log.ShouldNotContain(SiteSecret);
+
+      MemoryStore siteOnly = new();
+      await siteOnly.SetAsync(
+        SiteXaiApiKeyNames.Name,
+        SiteXaiApiKeyNames.Purpose,
+        SiteSecret,
+        UserA,
+        DateTimeOffset.UnixEpoch,
+        CancellationToken.None);
+      XaiApiKeyResolver siteResolver = ResolverFor(siteOnly, hostKey: null, new ListLogger<XaiApiKeyResolver>());
+      ResolvedXaiApiKey siteResolved = await siteResolver.ResolveAsync(CancellationToken.None);
+      siteResolved.ApiKey.ShouldBeNull();
+      siteResolved.Origin.ShouldBe(XaiApiKeyOrigin.None);
+      siteResolved.Mode.ShouldBe(XaiByokMode.Required);
+
+      ListLogger<XaiApiKeyResolver> hostLogger = new();
+      XaiApiKeyResolver hostResolver = ResolverFor(store, HostSecret, hostLogger);
+      ResolvedXaiApiKey hostResolved = await hostResolver.ResolveAsync(CancellationToken.None);
+      hostResolved.ApiKey.ShouldBe(HostSecret);
+      hostResolved.Origin.ShouldBe(XaiApiKeyOrigin.Host);
+      string.Join('\n', hostLogger.Lines).ShouldContain("could not be read");
+    }
+
+    private static XaiApiKeyResolver ResolverFor(MemoryStore store, string? hostKey, ListLogger<XaiApiKeyResolver> logger)
+    {
+      FixedMonitor monitor = new(new XaiChatOptions { ApiKey = hostKey });
+      NamedHostEnvironment environment = new("Production");
+      UserXaiApiKey users = new(store, new ScriptedProbe(), monitor, environment, new ListLogger<UserXaiApiKey>());
+      SiteXaiApiKey site = new(store, monitor, environment, new ListLogger<SiteXaiApiKey>());
+      return new XaiApiKeyResolver(
+        monitor,
+        users,
+        site,
+        new ThrowingSiteSettings(),
+        new FixedPrincipal(PrincipalId.From(UserA)),
+        logger);
+    }
+
+    private sealed class ThrowingSiteSettings : ISiteSettingsStore
+    {
+      public Task<SiteSettings?> GetAsync(CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException("settings unavailable");
+
+      public Task AddAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException("settings unavailable");
+
+      public Task UpdateAsync(SiteSettings siteSettings, CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException("settings unavailable");
+    }
+
     private sealed class Harness
     {
       private Harness(

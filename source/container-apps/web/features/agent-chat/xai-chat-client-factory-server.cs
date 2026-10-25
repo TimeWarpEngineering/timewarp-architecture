@@ -3,11 +3,9 @@
 #endregion
 
 #region Design
-// The upstream asks for a client on each completion whose key differs from the previous one, so an
-// admin change does not keep the old credential. The previous IChatClient stays alive until the
-// upstream is disposed, so a call already in GetResponseAsync is not disposed under it. The key
-// is an argument and is not logged. The OpenAI client itself is not disposed; the IChatClient
-// pipeline is.
+// The upstream caches one client per key up to a bound and disposes a client that leaves the
+// cache once no completion is inside GetResponseAsync. The key is an argument and is not logged.
+// The OpenAI client itself is not disposed; the IChatClient pipeline is.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;

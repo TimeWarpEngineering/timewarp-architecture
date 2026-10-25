@@ -32,6 +32,7 @@
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Persistence;
 using TimeWarp.Architecture.Secrets;
 using TimeWarp.Foundation.Entities;
@@ -377,8 +378,7 @@ public sealed class EfPrincipalStore : IPrincipalStore
       AttachAsModified(Db.Credentials, next, originalVersion);
     }
 
-    // Same name as UserXaiApiKeyNames.NameFor. This project does not reference web-contracts.
-    string userKeyName = "user." + sourceId.Value.ToString("D") + ".xai.api-key";
+    string userKeyName = UserXaiApiKeyNames.NameFor(sourceId.Value);
     ProtectedSecret? userKey = await Db.ProtectedSecrets
       .FirstOrDefaultAsync(secret => secret.Name == userKeyName, cancellationToken)
       .ConfigureAwait(false);

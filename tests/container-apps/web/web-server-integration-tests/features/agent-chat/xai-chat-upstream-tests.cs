@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Abstractions;
 using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.AgentChats.Application;
@@ -280,6 +281,140 @@ public class XaiChatUpstream_Given_
     upstream.MissingKeyDetail(development: false).ShouldNotContain(userKey);
   }
 
+  public static async Task Required_Names_Profile_And_Omits_The_Admin_Hint()
+  {
+    const string siteKey = "xai-site-key-399-ssss";
+    Guid userA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    MemoryProtectedSecretStore store = new();
+    await store.SetAsync(
+      SiteXaiApiKeyNames.Name,
+      SiteXaiApiKeyNames.Purpose,
+      siteKey,
+      userA,
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    InMemorySiteSettingsStore settings = new();
+    await settings.AddAsync(SiteSettings.Create(xaiByokMode: XaiByokMode.Required));
+    SwitchingPrincipal principal = new() { Id = PrincipalId.From(userA) };
+    await using ServiceProvider provider = Build(
+      "Production",
+      useFake: false,
+      apiKey: null,
+      store,
+      new CapturingChatClientFactory(),
+      settings,
+      principal);
+    TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration.Response response =
+      await Configuration(provider, principal);
+
+    response.Configured.ShouldBeFalse();
+    response.AdminHint.ShouldBeNull();
+    response.KeyHint.ShouldBe(XaiByokCopy.SetYourKey);
+    response.KeyHint!.ShouldNotContain(siteKey);
+  }
+
+  public static async Task Off_Names_An_Admin_And_Does_Not_Use_The_User_Key()
+  {
+    const string userKey = "xai-user-key-399-aaaa";
+    Guid userA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    MemoryProtectedSecretStore store = new();
+    await store.SetAsync(
+      UserXaiApiKeyNames.NameFor(userA),
+      UserXaiApiKeyNames.PurposeFor(userA),
+      userKey,
+      userA,
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+    InMemorySiteSettingsStore settings = new();
+    await settings.AddAsync(SiteSettings.Create(xaiByokMode: XaiByokMode.Off));
+    SwitchingPrincipal principal = new() { Id = PrincipalId.From(userA) };
+    await using ServiceProvider provider = Build(
+      "Production",
+      useFake: false,
+      apiKey: null,
+      store,
+      new CapturingChatClientFactory(),
+      settings,
+      principal);
+    TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration.Response response =
+      await Configuration(provider, principal);
+
+    response.Configured.ShouldBeFalse();
+    response.AdminHint.ShouldBe(XaiChatDefaults.AdminAiSentence);
+    response.KeyHint.ShouldBe(XaiByokCopy.AskAdmin + " " + XaiChatDefaults.HostSetupText(development: false));
+    response.KeyHint!.ShouldNotContain(userKey);
+  }
+
+  public static async Task Two_Keys_Alternating_Reuse_The_Cached_Clients()
+  {
+    Guid userA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    Guid userB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    MemoryProtectedSecretStore store = new();
+    await StoreUserKeyAsync(store, userA, "xai-user-key-399-aaaa");
+    await StoreUserKeyAsync(store, userB, "xai-user-key-399-bbbb");
+    InMemorySiteSettingsStore settings = new();
+    await settings.AddAsync(SiteSettings.Create(xaiByokMode: XaiByokMode.Required));
+    SwitchingPrincipal principal = new() { Id = PrincipalId.From(userA) };
+    TrackingChatClientFactory factory = new();
+    await using ServiceProvider provider = Build(
+      "Production",
+      useFake: false,
+      apiKey: null,
+      store,
+      factory,
+      settings,
+      principal);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    for (int turn = 0; turn < 10; turn++)
+    {
+      principal.Id = PrincipalId.From(turn % 2 == 0 ? userA : userB);
+      OneOf<Response, SharedProblemDetails> result =
+        await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+      result.IsT0.ShouldBeTrue();
+    }
+
+    factory.Created.ShouldBe(2);
+    factory.Live.ShouldBe(2);
+  }
+
+  public static async Task Distinct_Keys_Past_The_Cache_Bound_Do_Not_Keep_Every_Client()
+  {
+    const int keys = XaiChatUpstream.MaxCachedClients + 4;
+    MemoryProtectedSecretStore store = new();
+    Guid[] users = new Guid[keys];
+    for (int index = 0; index < keys; index++)
+    {
+      users[index] = Guid.Parse($"00000000-0000-0000-0000-{index + 1:x12}");
+      await StoreUserKeyAsync(store, users[index], $"xai-user-key-399-{index:x4}");
+    }
+
+    InMemorySiteSettingsStore settings = new();
+    await settings.AddAsync(SiteSettings.Create(xaiByokMode: XaiByokMode.Required));
+    SwitchingPrincipal principal = new() { Id = PrincipalId.From(users[0]) };
+    TrackingChatClientFactory factory = new();
+    await using ServiceProvider provider = Build(
+      "Production",
+      useFake: false,
+      apiKey: null,
+      store,
+      factory,
+      settings,
+      principal);
+    IAgentChatUpstream upstream = provider.GetRequiredService<IAgentChatUpstream>();
+
+    foreach (Guid userId in users)
+    {
+      principal.Id = PrincipalId.From(userId);
+      OneOf<Response, SharedProblemDetails> result =
+        await upstream.CompleteAsync(UserTurn(), CancellationToken.None);
+      result.IsT0.ShouldBeTrue();
+    }
+
+    factory.Created.ShouldBe(keys);
+    factory.Live.ShouldBe(XaiChatUpstream.MaxCachedClients);
+  }
+
   public static Task Tool_Declarations_Are_Not_Invocable()
   {
     List<AITool> tools = XaiChatMapping.ToTools
@@ -327,6 +462,33 @@ public class XaiChatUpstream_Given_
       .Select(name => new ToolDefinition { Name = name, ParametersJson = """{"type":"object","properties":{}}""" })
       .ToList()
   };
+
+  private static async Task StoreUserKeyAsync(MemoryProtectedSecretStore store, Guid userId, string apiKey) =>
+    await store.SetAsync(
+      UserXaiApiKeyNames.NameFor(userId),
+      UserXaiApiKeyNames.PurposeFor(userId),
+      apiKey,
+      userId,
+      DateTimeOffset.UnixEpoch,
+      CancellationToken.None);
+
+  private static async Task<TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration.Response> Configuration(
+    ServiceProvider provider,
+    ICurrentPrincipalAccessor principal)
+  {
+    TimeWarp.Architecture.Features.AgentChats.Application.GetAgentChatConfiguration.Handler handler = new(
+      principal,
+      provider.GetRequiredService<IAgentChatUpstream>(),
+      provider.GetRequiredService<IOptions<XaiChatOptions>>(),
+      provider.GetRequiredService<IHostEnvironment>(),
+      provider.GetRequiredService<ISiteXaiApiKey>());
+    OneOf<TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration.Response, SharedProblemDetails> result =
+      await handler.Handle(
+        new TimeWarp.Architecture.Features.AgentChats.GetAgentChatConfiguration.Query(),
+        CancellationToken.None);
+    result.IsT0.ShouldBeTrue();
+    return result.AsT0;
+  }
 
   private static Command UserTurn() => new()
   {
@@ -395,13 +557,69 @@ public class XaiChatUpstream_Given_
     {
       _ = endpoint;
       _ = model;
-      Keys.Add(apiKey);
-      return new StubChatClient();
+      return new StubChatClient(apiKey, Keys);
     }
   }
 
   private sealed class StubChatClient : IChatClient
   {
+    private readonly string ApiKey;
+    private readonly List<string> Keys;
+
+    public StubChatClient(string apiKey, List<string> keys)
+    {
+      ApiKey = apiKey;
+      Keys = keys;
+    }
+
+    public Task<ChatResponse> GetResponseAsync(
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      CancellationToken cancellationToken = default)
+    {
+      _ = messages;
+      _ = options;
+      _ = cancellationToken;
+      Keys.Add(ApiKey);
+      return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, "ok")));
+    }
+
+    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+      IEnumerable<ChatMessage> messages,
+      ChatOptions? options = null,
+      CancellationToken cancellationToken = default) =>
+      throw new NotSupportedException();
+
+    public object? GetService(Type serviceType, object? serviceKey = null) => null;
+
+    public void Dispose()
+    {
+    }
+  }
+
+  private sealed class TrackingChatClientFactory : IXaiChatClientFactory
+  {
+    private readonly List<TrackingChatClient> Clients = [];
+
+    public int Created => Clients.Count;
+
+    public int Live => Clients.Count(client => !client.Disposed);
+
+    public IChatClient Create(string apiKey, string endpoint, string model)
+    {
+      _ = apiKey;
+      _ = endpoint;
+      _ = model;
+      TrackingChatClient client = new();
+      Clients.Add(client);
+      return client;
+    }
+  }
+
+  private sealed class TrackingChatClient : IChatClient
+  {
+    public bool Disposed { get; private set; }
+
     public Task<ChatResponse> GetResponseAsync(
       IEnumerable<ChatMessage> messages,
       ChatOptions? options = null,
@@ -421,9 +639,7 @@ public class XaiChatUpstream_Given_
 
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() => Disposed = true;
   }
 
   private sealed class MemoryProtectedSecretStore : IProtectedSecretStore

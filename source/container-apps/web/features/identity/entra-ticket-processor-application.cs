@@ -15,7 +15,8 @@
 // is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync
 // is link semantics for the already-have path.
 // Link: when the handle is owned by another active (non-revoked) unmerged principal B,
-// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. Revoked foreign
+// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. That save deletes
+// B's user xAI API key row. This processor does not delete it again. Revoked foreign
 // rows refuse with 403 (do not merge). 409 remains for already-on-this-account and for
 // merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and
@@ -62,12 +63,7 @@ namespace TimeWarp.Architecture.Features.Identity.Application;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.AgentChats.Application;
-using TimeWarp.Foundation.Features;
 
-[CrossSliceReference(
-  typeof(IUserXaiApiKey),
-  "Retiring a principal by merge deletes that user's xAI API key row.")]
 public sealed class EntraTicketProcessor
 {
   public const string ModeLink = "link";
@@ -86,7 +82,6 @@ public sealed class EntraTicketProcessor
   private readonly IEntraSignInPolicy EntraSignInPolicy;
   private readonly CredentialUsageRecorder UsageRecorder;
   private readonly ILogger<EntraTicketProcessor> Logger;
-  private readonly IUserXaiApiKey? UserXaiApiKeys;
 
   public EntraTicketProcessor
   (
@@ -94,8 +89,7 @@ public sealed class EntraTicketProcessor
     IPrincipalRoleStore principalRoleStore,
     IEntraSignInPolicy entraSignInPolicy,
     CredentialUsageRecorder usageRecorder,
-    ILogger<EntraTicketProcessor> logger,
-    IUserXaiApiKey? userXaiApiKeys = null
+    ILogger<EntraTicketProcessor> logger
   )
   {
     PrincipalStore = principalStore;
@@ -103,7 +97,6 @@ public sealed class EntraTicketProcessor
     EntraSignInPolicy = entraSignInPolicy;
     UsageRecorder = usageRecorder;
     Logger = logger;
-    UserXaiApiKeys = userXaiApiKeys;
   }
 
   public async Task<OneOf<PrincipalId, EntraChoiceRequired, SharedProblemDetails>> ProcessAsync
@@ -242,8 +235,6 @@ public sealed class EntraTicketProcessor
     {
       return IdentityProblems.TooMuchContention();
     }
-
-    await DeleteUserKeyAsync(existing.PrincipalId.Value, cancellationToken).ConfigureAwait(false);
 
     // Merge re-parented and re-versioned the row; stamp a fresh snapshot, not the pre-merge one.
     Credential? merged = await PrincipalStore.GetCredentialAsync(existing.Id, cancellationToken);
@@ -470,27 +461,6 @@ public sealed class EntraTicketProcessor
     }
 
     return principalId;
-  }
-
-  [System.Diagnostics.CodeAnalysis.SuppressMessage(
-    "Design",
-    "CA1031:Do not catch general exception types",
-    Justification = "The merge already committed. A key-delete failure must not fail the retired principal.")]
-  private async Task DeleteUserKeyAsync(Guid userId, CancellationToken cancellationToken)
-  {
-    if (UserXaiApiKeys is null)
-    {
-      return;
-    }
-
-    try
-    {
-      await UserXaiApiKeys.DeleteForPrincipalAsync(userId, cancellationToken).ConfigureAwait(false);
-    }
-    catch (Exception exception) when (exception is not OperationCanceledException)
-    {
-      _ = exception;
-    }
   }
 
   private async Task RecordSignInAsync(

@@ -4,9 +4,10 @@
 
 #region Design
 // IsConfiguredAsync is the fake flag, the host key, or one read of the admin secret. BeginKeyResolution
-// opens a slot on the caller's async flow; the server upstream fills it from that read and CompleteAsync
-// consumes it, so one turn does not read twice. A value set inside IsConfiguredAsync would not be
-// visible to the caller. A changed admin key is visible on the next call. CompleteAsync either
+// opens a slot on the caller's async flow; the server upstream fills it, including the mode, from
+// that read and CompleteAsync consumes the key, so one turn does not read twice. A value set inside
+// IsConfiguredAsync would not be visible to the caller, which is why the mode lives on the slot.
+// A changed admin key is visible on the next call. CompleteAsync either
 // returns the model's text and function calls or a problem whose detail is safe to show.
 // Implementations must not execute tool declarations. Model is the sync host-or-fake view; the
 // configuration handler computes the model from options once IsConfiguredAsync is true, so an

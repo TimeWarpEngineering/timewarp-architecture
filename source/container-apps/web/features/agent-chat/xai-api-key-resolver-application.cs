@@ -7,11 +7,14 @@
 // call. The mode is read from ISiteSettingsStore on every call, so an admin change is visible
 // on the next call. Required does not call the site store. Off does not read a user row. Allow
 // reads the user row first and the site row only when the user has none. A missing principal
-// skips the user tier. The plaintext is returned to the caller and is not logged.
+// skips the user tier. A missing settings store reads as Allow. A settings read that throws is
+// logged and treated as Required, so the site key is not used when the mode is unknown. The
+// plaintext is returned to the caller and is not logged.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
 
+using Microsoft.Extensions.Logging;
 using TimeWarp.Identity;
 
 /// <summary>Which tier supplied the key.</summary>
@@ -43,28 +46,40 @@ public interface IXaiApiKeyResolver
 /// <summary>Host key first. The mode selects the rest.</summary>
 public sealed class XaiApiKeyResolver : IXaiApiKeyResolver
 {
+  private static readonly Action<ILogger, string, Exception?> LogModeUnreadable =
+    LoggerMessage.Define<string>
+    (
+      LogLevel.Warning,
+      new EventId(1, nameof(LogModeUnreadable)),
+      "xAI BYOK mode could not be read ({ExceptionType})"
+    );
+
   private readonly IOptionsMonitor<XaiChatOptions> Options;
   private readonly ISiteSettingsStore? Settings;
   private readonly IUserXaiApiKey Users;
   private readonly ISiteXaiApiKey Site;
   private readonly ICurrentPrincipalAccessor? CurrentPrincipalAccessor;
+  private readonly ILogger<XaiApiKeyResolver>? Logger;
 
   /// <summary>
   /// Creates the resolver. A missing settings store reads as Allow. A missing principal accessor
-  /// skips the user tier, which is the host-then-site path.
+  /// skips the user tier, which is the host-then-site path. A missing logger still refuses the
+  /// site key when the settings read throws.
   /// </summary>
   public XaiApiKeyResolver(
     IOptionsMonitor<XaiChatOptions> options,
     IUserXaiApiKey users,
     ISiteXaiApiKey site,
     ISiteSettingsStore? settings = null,
-    ICurrentPrincipalAccessor? currentPrincipalAccessor = null)
+    ICurrentPrincipalAccessor? currentPrincipalAccessor = null,
+    ILogger<XaiApiKeyResolver>? logger = null)
   {
     Options = options ?? throw new ArgumentNullException(nameof(options));
     Users = users ?? throw new ArgumentNullException(nameof(users));
     Site = site ?? throw new ArgumentNullException(nameof(site));
     Settings = settings;
     CurrentPrincipalAccessor = currentPrincipalAccessor;
+    Logger = logger;
   }
 
   /// <inheritdoc />
@@ -118,7 +133,13 @@ public sealed class XaiApiKeyResolver : IXaiApiKeyResolver
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
     {
-      return XaiByokMode.Allow;
+      if (Logger is not null)
+      {
+        LogModeUnreadable(Logger, exception.GetType().Name, exception);
+      }
+
+      // Required skips the site tier. Allow would bill the site when the mode cannot be read.
+      return XaiByokMode.Required;
     }
   }
 

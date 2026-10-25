@@ -12,6 +12,7 @@
 // The chat-client factory is TryAdd so a test can capture the key Ask would send.
 // The probe, the user key, and the resolver are TryAdd. Settings and the current principal are
 // optional constructor parameters, so a host that has neither still resolves host-then-site.
+// The resolver logger is optional too. A missing logger still treats an unreadable mode as Required.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;

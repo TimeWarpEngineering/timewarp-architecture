@@ -5,9 +5,10 @@
 #region Design
 // The row name and Data Protection purpose both include the user id. Set trims, checks the
 // length bound, refuses when the site mode is Off, then asks IXaiApiKeyProbe. A probe problem
-// is returned as-is and the row is left unchanged. A readable row's suffix comes from the store,
-// which keeps the last four characters, so status does not unprotect just to render. Read
-// unprotects with that user's purpose only. Delete removes the row and does not unprotect.
+// is returned as-is and the row is left unchanged. Status loads the row for the suffix, which
+// the store keeps as the last four characters, and unprotects to tell a readable key from one
+// that needs replacement. The status value is the suffix, not the plaintext. Read unprotects
+// with that user's purpose only. Delete removes the row and does not unprotect.
 // Audit lines name the action and the user id. They do not include the key or the suffix.
 // A store failure is 503 from status, set, and clear, and is logged as the exception type.
 // The host key does not block a write: Ask ignores the row until the host key is cleared, and
