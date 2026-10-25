@@ -284,6 +284,8 @@ Rules for new code:
   template flag** — every flag combination must publish.
 - Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, the SigNoz link, dashboard commands) is run-mode or
   Development-only. Publish runs as Production.
+- Without the `yarp` flag there is no ingress: the published output exposes nothing, and the
+  operator adds their own edge.
 
 ### SigNoz link on the local dashboard
 
@@ -296,8 +298,6 @@ dotnet user-secrets set "Observability:SigNoz:Url" "https://observability.exampl
 ```bash
 Observability__SigNoz__Url=https://observability.example dev run
 ```
-- Without the `yarp` flag there is no ingress: the published output exposes nothing, and the
-  operator adds their own edge.
 
 ## Secrets and parameters
 

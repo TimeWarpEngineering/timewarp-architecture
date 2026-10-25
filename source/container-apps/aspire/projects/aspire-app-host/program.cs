@@ -104,6 +104,10 @@
 // Ingress:PublicUrl (unset by default; personal value belongs in user secrets, never committed —
 // this repo dogfoods as the template) adds a "public" display URL on the ingress resource so the
 // dashboard links to the externally shared hostname (e.g. https://arch.timewarp.work).
+// Authentication:Entra:PublicOrigin is Web.Server config and is not copied from Ingress:PublicUrl.
+// The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
+// the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
+// on Web.Server for any proxied Entra deployment.
 // SigNoz (task 417): Observability:SigNoz:Url is operator configuration (AppHost user secrets or
 // Observability__SigNoz__Url), never a committed template value, because this file ships in every
 // generated app. An absolute https URL adds a run-mode external service named signoz. The dashboard
@@ -112,10 +116,6 @@
 // the resource from the manifest; the call is also IsRunMode-only, so publish and deploy models
 // never contain it. There is no HTTP health check: the resource is a link, and a probe would mark
 // it unhealthy when that host is unreachable from this machine. No telemetry is exported there.
-// Authentication:Entra:PublicOrigin is Web.Server config and is not copied from Ingress:PublicUrl.
-// The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
-// the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
-// on Web.Server for any proxied Entra deployment.
 // Public-host forwarding (task 070-008, task 305): YARP sends the DESTINATION host as Host on every
 // route (its default) and the Web.Server routes chain WithTransformXForwarded(Set), which OVERWRITES
 // X-Forwarded-Proto and X-Forwarded-Host with Request.Scheme and Request.Host. Run mode executes the

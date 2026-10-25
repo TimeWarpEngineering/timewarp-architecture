@@ -42,7 +42,9 @@
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
-// SigNoz (task 417) is run-mode only: no signoz resource in the Bicep.
+// SigNoz (task 417) is run-mode only: the in-proc publish passes Observability:SigNoz:Url, and the
+// Bicep still does not name signoz. Without that argument the absence check would pass even if
+// the run-mode gate were removed.
 #endregion
 
 namespace Aspire.Tests;
@@ -53,6 +55,7 @@ public partial class AcaPublish_Given_
   internal const string OutputEnvironmentVariable = "TIMEWARP_ACA_OUTPUT";
   private const string IngressApp = "ingress";
   private const string WebServerApp = "web-server";
+  private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
   private const string PostgresModule = "postgres";
 
   private static string OutputDirectory = null!;
@@ -147,7 +150,7 @@ public partial class AcaPublish_Given_
 
   public static async Task Publish_Should_HaveNoSigNoz()
   {
-    // Task 417: the SigNoz dashboard link is a run-mode-only resource.
+    // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The Bicep still does not name signoz.
     foreach ((string module, string text) in Modules)
     {
       text.ShouldNotContain("signoz", Case.Insensitive, $"{module} declares SigNoz");
@@ -418,7 +421,7 @@ public partial class AcaPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca"],
+        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca", SigNozUrlArgument],
         // The testing builder defaults to Development; `aspire publish` defaults to Production.
         (_, settings) => settings.EnvironmentName = "Production");
 
