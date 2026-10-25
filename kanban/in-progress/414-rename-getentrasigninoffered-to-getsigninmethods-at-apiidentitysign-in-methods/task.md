@@ -74,6 +74,11 @@ Expect: HTTP 200 and a JSON object whose payload is `methods` (Passkey when it i
 - Implementation: implementer oracle (2026-10-25). Audit advisory `kanban-landed` names other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) and was left as-is.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T12:01:17Z
 - Review oracle: reviewer (claude, claude-opus-5-5), effort 1, roster general, 1 round, disposition clean — 2026-10-25
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 80 — 2026-10-25T12:04:15Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
