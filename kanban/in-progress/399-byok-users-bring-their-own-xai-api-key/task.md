@@ -23,6 +23,13 @@ A save calls xAI before it writes. A rejected key or an unreachable call does no
 error text does not contain the key. Retiring a principal (merge) deletes that user's row. The
 same delete is what a user-deletion path calls.
 
+Round-1 review fixes are part of this task. Ask must show the Required and Off missing-key
+sentences from the real upstream, including no admin hint under Required. The chat-client cache
+must stay bounded when keys alternate. Merge must not swallow a second key delete in an empty
+catch; the EF transaction is the delete. The user-key row name has one builder. A settings read
+that throws is logged and does not fall through to the site key. The Profile status Design text
+matches the unprotect the status read actually does.
+
 ## Decisions (recorded: Steve 2026-10-25)
 
 - Precedence: **host configuration always wins** (does not follow the earlier proposal of
@@ -67,6 +74,14 @@ same delete is what a user-deletion path calls.
 - Implemented: grok 01a17414-3cc0-7172-bbd7-08dcb08980b1 (2026-10-26) — Profile key, policy ladder, probe-before-save, merge delete
 - Audit: added `stacked-task-set*.resume.json` to `.gitignore`. `kanban-landed` still warns that eight other claims have no worktree; that warning is advisory and is not this task. The first commit's hook refused to attest because four Jaribu runfiles were not executable. Their executable bit is restored in the follow-up commit.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T18:10:02Z
+- Review oracle round 1: Claude Opus 5.5 (general reviewer), effort 3, 2026-10-26. Session id not exposed to the oracle. Found 3 bugs, 2 suggestions, 1 nit, all open, so a fix pass is requested. Files: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T18:14:20Z
+- Fix pass (review round 1): grok session 01a17445-4d3d-7ca1-b374-2cb1e9a6906e (2026-10-26). Mode rides the caller-opened slot. The chat-client cache holds eight keys. Merge no longer deletes the user key a second time. The EF row name uses `NameFor`. An unreadable mode is logged and treated as Required. Status Design text matches the unprotect.
+- Audit: `kanban-landed` is an error while this claim's branch-tip kitchen differs from origin-home. `ganda repo audit --fix` lands that kitchen. It does not merge the task branch. The eight other claims with no worktree stay a warning.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6
 
 ## Notes
 
@@ -76,9 +91,9 @@ same delete is what a user-deletion path calls.
   not save. The response shows the scrubbed provider error, or "xAI could not be reached.
   Nothing was saved." There is no unvalidated flag. Steve can override this if a stored-but-marked
   key is preferred.
-- There is no delete-user endpoint. `DeleteForPrincipalAsync` removes the row. Merge of a
-  principal into another account calls it for the retired id, and the EF merge deletes the same
-  row in that transaction.
+- There is no delete-user endpoint. `DeleteForPrincipalAsync` removes the row and logs a storage
+  failure. Merging a principal deletes that user's key in the EF `SaveChanges` for the merge.
+  The passkey and Entra handlers do not delete it again.
 
 ## Results
 
@@ -91,8 +106,15 @@ Signed-in users store an xAI API key at `user.{guid:D}.xai.api-key`, protected w
 (default Allow, stored as 0) picks the rest: Required is the user key only, Allow is the user key
 then the site key, and Off is the site key only. Off sets status `visible` false and PUT/DELETE
 return 409 "This site does not accept a personal xAI API key." A mode change is read on the next
-completion. The chat client is cached per key, so a mode change that resolves the same key reuses
-that client.
+completion. Ask and a completion open that read on the caller's slot before they check the key.
+The mode is a field on the slot, because a value written inside the check after an await does not
+flow back. The chat client is cached per key, up to eight live clients. A repeated key reuses its
+client. A key that falls out of the eight is disposed once no completion is still inside
+`GetResponseAsync`.
+
+When the settings read throws, the resolver logs the exception type and treats the mode as
+Required, so the site key is not used. A missing settings store still reads as Allow. The host
+key still wins. The log line does not contain the key.
 
 Save calls GET `{endpoint}/models` with the candidate key. A 401 or 403 does not save and returns
 400 with the provider text scrubbed (`[redacted]`, newlines removed, 200 characters). Any other
@@ -101,11 +123,15 @@ Nothing was saved."
 
 When no key resolves, Ask's `keyHint` is "Set your xAI API key on Profile." (Required), "Set your
 xAI API key on Profile, or ask an admin to set the site key." (Allow), or the admin sentence plus
-the existing host setup text (Off). `adminHint` stays off while the mode is Required.
+the existing host setup text (Off). `adminHint` stays off while the mode is Required. Those
+sentences come from the real upstream, not only from a stub.
 
-Retiring a principal deletes that user's row from `DeleteForPrincipalAsync` after the merge and
-again in the same EF `SaveChanges`. The Data Protection purpose is a derived protector, not its
-own key-ring row.
+Retiring a principal deletes that user's row in the EF merge `SaveChanges`. The row name is
+`UserXaiApiKeyNames.NameFor`. The passkey and Entra handlers do not call `DeleteForPrincipalAsync`
+after that save. `DeleteForPrincipalAsync` remains the explicit user-deletion path. The Data
+Protection purpose is a derived protector, not its own key-ring row. Profile status loads the row
+for the suffix and unprotects so it can tell a readable key from one that needs replacement. The
+status value is the suffix, not the plaintext.
 
 Admin → Authentication has an Ask API key select (Allow, Required, Off). Profile's section uses
 `UserXaiApiKeySettings`, `UserXaiApiKeyInput`, `UserXaiApiKeySave`, `UserXaiApiKeyClear`,
@@ -133,16 +159,24 @@ dotnet test -- --filter-class GetAgentChatConfigurationHint
 From `tests/container-apps/web/web-server-integration-tests`:
 
 ```bash
-dotnet test -- --filter-class Xai
+dotnet test -- --filter-class XaiChatUpstream
 ```
+
+Run each `dotnet test` from that project directory so the project `global.json` selects Microsoft.Testing.Platform. From the repo root the same command is refused.
 
 Expect:
 
-- `UserXaiApiKey` passes 11. The host key wins while Required. Required ignores the site key. Allow uses the user key, then the site key. Off ignores the user key. The next resolve sees Off, then Required. User A's purpose does not open B's row. A rejected probe is 400, does not write, and the detail does not contain the key. An unreachable probe is 503 and does not write. `DeleteForPrincipalAsync` removes A's row and leaves B and `site.xai.api-key`. Off status has `visible` false and PUT is 409. The audit line contains "set" and not the key. A write while the host key is set stores the user key with `supersededByHost` and suffix `aaaa`.
-- `XaiApiKeyStatus` passes 3. The user status JSON is camelCase, round-trips `mode` Allow, and has no `apiKey` property.
-- `SiteXaiApiKey` passes 6 (task 398 host-wins and storage failures still hold).
-- `SiteSettings` passes 66. Those tests still pass with the new mode property on the settings contract.
+- `UserXaiApiKey` passes 12. The host key wins while Required. Required ignores the site key. Allow uses the user key, then the site key. Off ignores the user key. The next resolve sees Off, then Required. User A's purpose does not open B's row. A rejected probe is 400, does not write, and the detail does not contain the key. An unreachable probe is 503 and does not write. `DeleteForPrincipalAsync` removes A's row and leaves B and `site.xai.api-key`. Off status has `visible` false and PUT is 409. The audit line contains "set" and not the key. A write while the host key is set stores the user key with `supersededByHost` and suffix `aaaa`. When the settings store throws, the log contains "could not be read" and neither secret, the mode is Required, a site-only store returns no key, and a host key still wins.
+- `XaiApiKeyStatus` passes 3. The user status JSON is camelCase, round-trips `mode` Allow, and has no `apiKey` property. This filter was not re-run on the fix pass; the contract file did not change.
+- `SiteXaiApiKey` passes 6 (task 398 host-wins and storage failures still hold). This filter was not re-run on the fix pass.
+- `SiteSettings` passes 66. Those tests still pass with the new mode property on the settings contract. This filter was not re-run on the fix pass.
 - `CompleteAgentChat` passes 21. A missing key uses the upstream detail when the stub sets one, and the existing host setup text when it does not.
-- `GetAgentChatConfigurationHint` passes 7. Required omits `adminHint` and sets `keyHint` to the Profile sentence.
-- `Xai` integration passes 15. A 401 body that contains the key and a newline becomes 400 with `[redacted]` and no newline. A connection failure is 503 "xAI could not be reached. Nothing was saved." Allow sends the signed-in user's key, Off sends the site key, Required sends the user key again, and Allow for a user with no key sends the site key.
-- Profile and Admin were not clicked in a browser. The markup is `data-qa="UserXaiApiKeySettings"` on Profile (hidden until status `visible` is true) and `data-qa="XaiByokMode"` on Admin → Authentication.
+- `GetAgentChatConfigurationHint` passes 7. The stub still omits `adminHint` and sets `keyHint` to the Profile sentence under Required.
+- `XaiChatUpstream` passes 16. A 401 body that contains the key and a newline becomes 400 with `[redacted]` and no newline. A connection failure is 503 "xAI could not be reached. Nothing was saved." Allow sends the signed-in user's key, Off sends the site key, Required sends the user key again, and Allow for a user with no key sends the site key, including turns that reuse a cached client. With a site key and no user key, Required leaves Ask unconfigured, `adminHint` null, and `keyHint` "Set your xAI API key on Profile." With a user key and no site key, Off leaves Ask unconfigured, `adminHint` "Or open Admin → AI.", and `keyHint` "Ask an admin to set the site xAI API key. Set XAI__ApiKey as an environment variable or a container-app secret." Ten turns alternating two users create 2 clients and leave both live. Twelve distinct users create 12 clients and leave 8 live.
+- Profile and Admin were not clicked in a browser. This pass did not change Razor. The markup is `data-qa="UserXaiApiKeySettings"` on Profile (hidden until status `visible` is true) and `data-qa="XaiByokMode"` on Admin → Authentication.
+
+### Review
+
+- Round 1 is recorded. Reviewer: general, effort 3. `review/round-1/merged.md` still lists bug 3, suggestion 2, nit 1 as open. That file was not edited on this pass; the host counts open findings from it. Disposition is not written. Review round 2 has not run.
+- This pass changed the product for those six findings. Ask reads the mode from the caller-opened slot, so Required and Off use the real upstream sentences. The chat-client cache is bounded at eight. Merge handlers no longer swallow a second delete. `EfPrincipalStore` calls `UserXaiApiKeyNames.NameFor`. An unreadable mode is logged and treated as Required. The status Design text matches the unprotect.
+- Framework: `review/review-framework.md`.
