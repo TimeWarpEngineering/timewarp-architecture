@@ -26,6 +26,7 @@
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
+// SigNoz (task 417) is run-mode only: no signoz service in the compose file.
 #endregion
 
 namespace Aspire.Tests;
@@ -136,6 +137,17 @@ public partial class ComposePublish_Given_
     }
 
     EnvFile.Keys.ShouldNotContain(key => key.Contains("DEVTOOLS", StringComparison.OrdinalIgnoreCase));
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoSigNoz()
+  {
+    // Task 417: the SigNoz dashboard link is a run-mode-only resource.
+    foreach (string service in ServiceNames())
+    {
+      service.ShouldNotContain("signoz");
+    }
 
     await Task.CompletedTask;
   }

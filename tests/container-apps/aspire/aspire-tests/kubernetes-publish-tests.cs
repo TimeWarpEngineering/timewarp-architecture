@@ -24,6 +24,7 @@
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
+// SigNoz (task 417) is run-mode only: no signoz workload in the chart.
 #endregion
 
 namespace Aspire.Tests;
@@ -159,6 +160,17 @@ public partial class KubernetesPublish_Given_
     {
       key.ShouldNotBe("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", $"{owner} points at State DevTools");
       key.ShouldNotContain("DEVTOOLS", Case.Insensitive, $"{owner} carries a State DevTools variable");
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoSigNoz()
+  {
+    // Task 417: the SigNoz dashboard link is a run-mode-only resource.
+    foreach (YamlMappingNode manifest in Manifests)
+    {
+      Name(manifest).ShouldNotContain("signoz");
     }
 
     await Task.CompletedTask;

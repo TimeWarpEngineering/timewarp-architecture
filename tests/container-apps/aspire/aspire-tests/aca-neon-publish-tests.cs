@@ -13,7 +13,8 @@
 // CPU is emitted as json('0.25'). Azure.Provisioning formats the double with the invariant culture.
 // The pooled-string fact compiles only with web and postgres: Neon is declared inside that AppHost block.
 // The passkey-host fact compiles only with web and yarp. Without yarp there is no ingress, so no
-// container app is external. Publish logs MissingParameterValueException while Aspire copies the two
+// container app is external. SigNoz (task 417) is run-mode only: the Bicep does not name signoz.
+// Publish logs MissingParameterValueException while Aspire copies the two
 // secret parameters into deployment state. They are @secure() with no default; the warning is not a
 // publish failure, and a default would put the connection string in the Bicep.
 #endregion
@@ -127,6 +128,7 @@ public partial class AcaNeonPublish_Given_
     all.ShouldNotContain("AspireDashboard");
     all.ShouldNotContain("Authentication__UseMock");
     all.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS");
+    all.ShouldNotContain("signoz");
 
     bool hasIngress = Modules.Values.Any(text => text.Contains("name: 'ingress'", StringComparison.Ordinal));
     int external = ExternalTrue().Count(all);

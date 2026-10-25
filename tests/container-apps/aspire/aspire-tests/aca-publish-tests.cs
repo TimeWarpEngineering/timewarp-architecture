@@ -42,6 +42,7 @@
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
+// SigNoz (task 417) is run-mode only: no signoz resource in the Bicep.
 #endregion
 
 namespace Aspire.Tests;
@@ -139,6 +140,17 @@ public partial class AcaPublish_Given_
       text.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", Case.Insensitive, $"{module} points at State DevTools");
       text.ShouldNotContain("DEVTOOLS_CORS_ORIGINS", Case.Insensitive, $"{module} carries the State DevTools CORS list");
       text.ShouldNotContain("DevTools__CorsOrigins", Case.Insensitive, $"{module} carries the State DevTools CORS list");
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoSigNoz()
+  {
+    // Task 417: the SigNoz dashboard link is a run-mode-only resource.
+    foreach ((string module, string text) in Modules)
+    {
+      text.ShouldNotContain("signoz", Case.Insensitive, $"{module} declares SigNoz");
     }
 
     await Task.CompletedTask;
