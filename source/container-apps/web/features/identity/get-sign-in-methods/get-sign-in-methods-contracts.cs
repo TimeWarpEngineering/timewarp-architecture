@@ -14,9 +14,9 @@ namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
 [EndpointAllowAnonymous("Login page needs a public read of the offered sign-in methods; the payload is that list.")]
-public static partial class GetEntraSignInOffered
+public static partial class GetSignInMethods
 {
-  [ApiRoute("api/identity/entra/offered", HttpVerb.Get)]
+  [ApiRoute("api/identity/sign-in-methods", HttpVerb.Get)]
   public sealed partial class Query : IApiRequest, IQuery<OneOf<Response, SharedProblemDetails>>;
 
   public sealed class Validator : AbstractValidator<Query>;

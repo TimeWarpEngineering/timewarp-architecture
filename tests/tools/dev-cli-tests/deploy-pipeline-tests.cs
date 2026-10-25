@@ -67,7 +67,7 @@ public class Stop_Given_
     string message = DeployPipeline.FailureMessage(DeployPipeline.Smoke, AspireDeploy.ContainerApps, 1);
     message.ShouldContain("The deployment is up");
     message.ShouldContain("/web-server/alive");
-    message.ShouldContain("/api/identity/entra/offered");
+    message.ShouldContain("/api/identity/sign-in-methods");
     message.ShouldNotContain("/api/health");
     message.ShouldContain("dev deploy --target aca");
     return Task.CompletedTask;
@@ -129,7 +129,7 @@ public class Smoke_Given_
 
   public static Task Paths_Should_BeTheAnonymousChecksAndNotHealth()
   {
-    DeployPipeline.SmokePaths.ShouldBe(["/web-server/alive", "/api/identity/entra/offered"]);
+    DeployPipeline.SmokePaths.ShouldBe(["/web-server/alive", "/api/identity/sign-in-methods"]);
     string.Join(' ', DeployPipeline.SmokePaths).ShouldNotContain("/api/health");
     return Task.CompletedTask;
   }

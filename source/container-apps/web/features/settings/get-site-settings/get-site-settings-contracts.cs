@@ -4,7 +4,7 @@
 
 #region Design
 // SettingsRead (every human role has it as self-service). Does not expose this payload
-// anonymously — the login page uses GetEntraSignInOffered (boolean only). Version is the
+// anonymously — the login page uses GetSignInMethods (the method list). Version is the
 // optimistic-concurrency token the editor must round-trip on UpdateSiteSettings.
 // Slice: Features.Settings (own product slice). Store lives in TimeWarp.Identity so Identity
 // policy can read it without TWA0009. SPA SettingsPage (Link Microsoft 365 / passkey prompt)

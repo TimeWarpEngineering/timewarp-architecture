@@ -15,7 +15,7 @@
 //   3. migrate, only when platform/postgres/migrations sits beside the AppHost. Otherwise the step
 //      is skipped and the skip line says so. The inner verb is `dev deploy migrate` with --yes,
 //      because this confirmation already covered the pipeline. There is no --no-migrate flag.
-//   4. smoke the two anonymous paths (/web-server/alive, /api/identity/entra/offered), then open
+//   4. smoke the two anonymous paths (/web-server/alive, /api/identity/sign-in-methods), then open
 //      the ingress URL through DeployBrowser, the same launcher as `dev open`. Smoke retries a
 //      cold start. It never requests /api/health. --no-browser prints the URL and opens nothing.
 //      --yes does not change that. No terminal, or no opener on PATH, prints the URL and is not

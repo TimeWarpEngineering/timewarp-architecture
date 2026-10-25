@@ -139,7 +139,7 @@ public class GetCredentialsAvailability_Returns_
 
   public static async Task No_CanLinkMicrosoft365_Given_Entra_Not_Offered()
   {
-    // The in-proc host starts with Entra disabled: GetEntraSignInOffered answers false.
+    // The in-proc host starts with Entra disabled: GetSignInMethods omits Microsoft365.
     using HttpClient client = await PrincipalWithCredentialsAsync(1);
 
     GetCredentials.Response response = await ListAsync(client);

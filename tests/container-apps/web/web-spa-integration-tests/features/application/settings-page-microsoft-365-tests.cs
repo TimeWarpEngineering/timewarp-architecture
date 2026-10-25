@@ -1,5 +1,5 @@
 #region Purpose
-// Settings Microsoft 365 section is gated on GetEntraSignInOffered, same server flag as Login.
+// Settings Microsoft 365 section is gated on GetSignInMethods, same server list as Login.
 #endregion
 
 #region Design
@@ -24,7 +24,7 @@ public class SettingsPage_Should_
   public static Task Gate_On_The_Same_Offered_Query_As_Login()
   {
     SettingsPage.GetPageUrl().ShouldBe("/Settings");
-    new GetEntraSignInOffered.Query().GetRoute().ShouldBe("api/identity/entra/offered");
+    new GetSignInMethods.Query().GetRoute().ShouldBe("api/identity/sign-in-methods");
     return Task.CompletedTask;
   }
 }

@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// One copy of the "offered" rule, read by GetEntraSignInOffered and GetCredentials (whose
+// One copy of the "offered" rule, read by GetSignInMethods and GetCredentials (whose
 // CanLinkMicrosoft365 flag uses it, task 282). Microsoft365 must be listed on SignInOptions, and
 // settings.EntraSignInEnabled must be on. Both must be true or the challenge would 404 (no scheme)
 // or 403 (policy). The registered store seeds on first read (SeedOnReadSiteSettingsStore, task 254),

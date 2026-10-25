@@ -17,7 +17,7 @@
 // RFC 219 D10: "Link Microsoft 365" runs CredentialsState.LinkMicrosoft365, whose handler does the
 // full navigation to the BFF challenge (mode=link) — the same action the Ctrl-K palette runs.
 // The Microsoft 365 section is gated on SignInState.Microsoft365Offered being true
-// (FetchOfferedSignInMethods, the same GetEntraSignInOffered list Login reads). Null hides the
+// (FetchOfferedSignInMethods, the same GetSignInMethods list Login reads). Null hides the
 // section the same way false does. The page injects no NavigationManager or API
 // service: every interaction here is a dispatch.
 // Task 225: site Entra policy moved to Admin/Authentication; this page keeps passkeys + link.

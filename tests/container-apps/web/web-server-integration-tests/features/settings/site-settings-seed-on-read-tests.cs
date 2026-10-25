@@ -89,11 +89,11 @@ public class Given_Emptied_Store_
   {
     Store.Clear();
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    HttpResponseMessage response = await client.GetAsync("api/identity/entra/offered");
+    HttpResponseMessage response = await client.GetAsync("api/identity/sign-in-methods");
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
-    GetEntraSignInOffered.Response? offered =
-      JsonSerializer.Deserialize<GetEntraSignInOffered.Response>(
+    GetSignInMethods.Response? offered =
+      JsonSerializer.Deserialize<GetSignInMethods.Response>(
         await response.Content.ReadAsStringAsync(),
         ContractSerializationDefaults.Options);
     offered.ShouldNotBeNull();

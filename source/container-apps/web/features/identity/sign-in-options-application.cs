@@ -13,7 +13,7 @@
 // section follows the initializer. Publish sets SignInOptions:IncludeMicrosoft365 from the
 // entra-enabled parameter. True appends Microsoft365 when the list does not already contain it
 // and never replaces another method. The browser does not bind this type; it renders the offered
-// list from GetEntraSignInOffered.
+// list from GetSignInMethods.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity.Application;

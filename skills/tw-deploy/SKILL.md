@@ -112,7 +112,7 @@ and names a nearby Azure region (`ap-southeast-1` → `southeastasia`). A locati
 region's nearby set (for example `us-east-1` with `eastus` or `eastus2`) stays quiet. The warning
 does not print the connection string and does not stop the deploy.
 
-Smoke is `GET /web-server/alive` and `GET /api/identity/entra/offered`. It retries a cold start
+Smoke is `GET /web-server/alive` and `GET /api/identity/sign-in-methods`. It retries a cold start
 (a Neon wake-up or a scale-to-zero replica). It does not request `/api/health`. A target with no
 `platform/postgres/migrations` folder beside the AppHost skips migrate and says so.
 
