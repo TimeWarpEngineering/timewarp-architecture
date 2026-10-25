@@ -53,30 +53,65 @@ release it when needed. Do not route around the library to avoid a release (Stev
 8. **Version:** this changes a published package. Bump `<Version>` and the platform package pins
    in the same commit (`dev check-version`, `tw-pr`).
 
+## Goal (implementer restatement)
+
+Admins should name a customer's primary domain and have the server resolve the Entra tenant id from
+Microsoft's OpenID discovery document. `GET https://login.microsoftonline.com/{domain}/.well-known/openid-configuration`
+returns an `issuer` of `https://login.microsoftonline.com/{guid}/v2.0`. That GUID is the tenant id.
+The client never parses the issuer.
+
+The resolver lives in `TimeWarp.Identity` next to `EntraTenantIds`, uses `IHttpClientFactory`, and
+returns typed outcomes: found, tenant not found, invalid domain, network failure, timeout, unexpected
+HTTP status, and unexpected issuer. Found and not-found results are cached in memory for a bounded
+time. Network failure, timeout, unexpected status, and unexpected issuer are logged. Nothing collapses
+to a silent null.
+
+Accepted tenants become entries of tenant id plus an optional domain (`EntraAcceptedTenant`). A pasted
+GUID has no domain. Duplicates collapse by tenant id. The aggregate, JSON, EF jsonb column, contracts,
+validator, seeder, sign-in policy, and every caller take the new shape. There is no reader for the old
+GUID array. An EF migration rewrites each stored GUID into an entry with a null domain. Sign-in still
+accepts or rejects on the `tid` claim only.
+
+The web server hosts `ResolveEntraTenant` (domain in, tenant id and domain out), authorized with
+`PermissionIds.SettingsWrite`, and rate-limited by the existing abuse module. The Authentication page
+replaces the raw-GUID textarea with a list: a domain lookup adds `{id, domain}` and shows
+`contoso.com (guid)`; a known GUID can still be added by hand and shows as a bare GUID. Saving stores
+both fields.
+
+Issuer and resolver rules live in the resolver's Design region. The tenant-acceptance section of
+`web-spa/wwwroot/auth.md` is updated. The published package version and platform pins move together
+when `dev check-version` says the current version is not already ahead of NuGet.
+
+Done when a valid domain yields the issuer GUID, an unknown domain is a distinct not-found result,
+network/timeout/bad issuer are their own logged results, callers without SettingsWrite are refused and
+the lookup is rate-limited, a repeat lookup hits the cache, the page adds and saves `{id, domain}`,
+existing rows migrate without changing `tid` acceptance, and `dev build` is 0/0 with `dev check-version`
+passing.
+
 ## Checklist
 
-- [ ] Resolver with typed results in `TimeWarp.Identity` (HttpClient via the factory)
-- [ ] Accepted-tenant entries carry an optional domain: aggregate, normalize/JSON, migration,
+- [x] Resolver with typed results in `TimeWarp.Identity` (HttpClient via the factory)
+- [x] Accepted-tenant entries carry an optional domain: aggregate, normalize/JSON, migration,
       contracts, validator, seeder, policy, callers
-- [ ] `ResolveEntraTenant` contract and endpoint, `SettingsWrite` only
-- [ ] Rate limit and cache
-- [ ] Authentication page: domain look-up adds `{id, domain}`; the list shows domains
-- [ ] Design region and `auth.md`
-- [ ] Version bump and pins
-- [ ] Tests
+- [x] `ResolveEntraTenant` contract and endpoint, `SettingsWrite` only
+- [x] Rate limit and cache
+- [x] Authentication page: domain look-up adds `{id, domain}`; the list shows domains
+- [x] Design region and `auth.md`
+- [x] Version bump and pins
+- [x] Tests
 
 ## Acceptance criteria
 
-- [ ] A valid domain returns the tenant GUID parsed from `issuer`
-- [ ] An unknown domain returns a distinct "tenant not found" result
-- [ ] A network failure, timeout, or unexpected issuer shape returns its own result and is logged
-- [ ] The lookup refuses callers without `SettingsWrite` and is rate-limited
-- [ ] A repeat lookup is served from cache
-- [ ] On the Authentication page, looking up a domain adds its tenant to the list with the
+- [x] A valid domain returns the tenant GUID parsed from `issuer`
+- [x] An unknown domain returns a distinct "tenant not found" result
+- [x] A network failure, timeout, or unexpected issuer shape returns its own result and is logged
+- [x] The lookup refuses callers without `SettingsWrite` and is rate-limited
+- [x] A repeat lookup is served from cache
+- [x] On the Authentication page, looking up a domain adds its tenant to the list with the
       domain shown, and saving stores both
-- [ ] Existing rows migrate: each stored GUID becomes an entry with no domain, and sign-in
+- [x] Existing rows migrate: each stored GUID becomes an entry with no domain, and sign-in
       acceptance is unchanged
-- [ ] `dev build` 0/0, `dev check-version` passes, and the ingress golden is regenerated if affected
+- [x] `dev build` 0/0, `dev check-version` passes, and the ingress golden is regenerated if affected
 
 ## Tests
 
@@ -100,5 +135,16 @@ release it when needed. Do not route around the library to avoid a release (Stev
 ## Session
 
 - Spec updated 2026-10-25 (Steve): resolver in TimeWarp.Identity (no routing around the library to avoid a release); accepted tenants store {id, domain?}; SettingsWrite; existing abuse rate limiter; notes in Design region + auth.md.
+- Implemented 2026-10-25: `EntraTenantResolver`, `{tenantId, domain?}` entries, `ResolveEntraTenant`, abuse policy `entra-tenant-lookup`, Authentication list, migration `ConvertEntraAcceptedTenants`, version `2.0.0-beta.26`. `ganda repo audit` passed. The kanban-landed advisory names eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244); those are not this task.
 
 - Created: 691292 (2026-10-21)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T15:11:12Z
+
+## Results
+
+An admin enters a primary domain. `EntraTenantResolver` reads the OpenID discovery `issuer` and stores `{tenantId, domain?}`. A pasted GUID stays an entry with no domain. `ResolveEntraTenant` requires `SettingsWrite`, is limited by `entra-tenant-lookup` (20 per 60 seconds), and caches found and not-found results for 10 minutes. Unknown domains, network failure, timeout, unexpected status, and unexpected issuer are separate results. Migration `ConvertEntraAcceptedTenants` rewrites a stored GUID array into null-domain entries; sign-in still matches the `tid` claim. Package version and the task-124 pins are `2.0.0-beta.26`. The ingress golden already lists `api/settings`, so it was left as it was. The Authentication page was not opened in a browser; the look-up action is covered by the in-proc SPA test.
+
+### How to validate
+
+Smoke: Sign in as an administrator, open `/Admin/Authentication`, enter `contoso.com`, choose Look up, then Save.
+Expect: The list shows `contoso.com` followed by its tenant GUID, and a later read of site settings returns that same tenant id and `contoso.com`. A value that is not a domain shows a domain error and does not call the server. A member GET of `api/settings/entra-tenant?domain=contoso.com` is 403. A third anonymous GET of that route inside the limit window is 429 with policy `entra-tenant-lookup`. A row that still holds a GUID array migrates to two fields per id, domain null, and those ids still pass the sign-in `tid` check.
