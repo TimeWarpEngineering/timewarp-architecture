@@ -42,6 +42,10 @@
          framework too) — not a third-party dependency in the Fido2NetLib sense; see the
          "CENTRAL DECISION" Design region in ceremonies/webauthn/webauthn-registration.cs. -->
     <PackageReference Include="System.Formats.Cbor" />
+    <!-- Domain lookup: named HttpClient plus an in-memory cache of found and not-found results.
+         Logging.Abstractions arrives transitively; a direct reference is NU1510 on net11. -->
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
 
   <!-- Community AAGUID → provider display names (task 168). Names only; no icon SVGs. -->

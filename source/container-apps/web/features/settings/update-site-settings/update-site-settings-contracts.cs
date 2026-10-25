@@ -7,7 +7,8 @@
 // concurrency token from GetSiteSettings; mismatch is 409. Validator composes
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
 // implements so the Authentication form binds once. Task 306: EntraTenantAcceptanceMode and
-// EntraAcceptedTenantIds are the trust policy on this command. Task 361: AssistantName rides
+// EntraAcceptedTenants are the trust policy on this command (id plus optional domain).
+// Task 361: AssistantName rides
 // the same command; the handler stores it trimmed.
 #endregion
 
@@ -31,7 +32,7 @@ public static partial class UpdateSiteSettings
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public string AssistantName { get; set; } = null!;
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
-    public List<Guid> EntraAcceptedTenantIds { get; set; } = [];
+    public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public long Version { get; set; }
   }
 
@@ -51,7 +52,7 @@ public static partial class UpdateSiteSettings
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public string AssistantName { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
-    public List<Guid> EntraAcceptedTenantIds { get; set; } = [];
+    public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public long Version { get; }
 
     public Response(
@@ -61,7 +62,7 @@ public static partial class UpdateSiteSettings
       string assistantName,
       long version,
       EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
-      List<Guid>? entraAcceptedTenantIds = null)
+      List<EntraAcceptedTenant>? entraAcceptedTenants = null)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
@@ -69,7 +70,7 @@ public static partial class UpdateSiteSettings
       AssistantName = assistantName;
       Version = version;
       EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
-      EntraAcceptedTenantIds = entraAcceptedTenantIds is null ? [] : [.. entraAcceptedTenantIds];
+      EntraAcceptedTenants = entraAcceptedTenants is null ? [] : [.. entraAcceptedTenants];
     }
   }
 

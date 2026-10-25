@@ -103,6 +103,23 @@ namespace TimeWarp.Architecture.Abuse
       await AssertStructured429(third, AbuseRateLimitingModule.PaymentChallengePolicy);
     }
 
+    public static async Task EntraTenantLookup_Should_Return_Structured_429_After_Limit()
+    {
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      const string path = "/api/settings/entra-tenant?domain=contoso.com";
+
+      HttpStatusCode first = (await client.GetAsync(path)).StatusCode;
+      HttpStatusCode second = (await client.GetAsync(path)).StatusCode;
+      using HttpResponseMessage third = await client.GetAsync(path);
+
+      // Anonymous, so the handler never runs and Microsoft is not called. The limiter still counts.
+      first.ShouldBe(HttpStatusCode.Unauthorized);
+      second.ShouldBe(HttpStatusCode.Unauthorized);
+      third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+      await AssertStructured429(third, AbuseRateLimitingModule.EntraTenantLookupPolicy);
+    }
+
     public static async Task UnrelatedRoute_Should_Not_Be_Rate_Limited_By_Abuse_Policies()
     {
       // Health is not on either policy; flood must not 429 from principal/payment limiters.
@@ -127,6 +144,9 @@ namespace TimeWarp.Architecture.Abuse
         options.PaymentChallenge.PermitLimit = 2;
         options.PaymentChallenge.WindowSeconds = 60;
         options.PaymentChallenge.SegmentsPerWindow = 6;
+        options.EntraTenantLookup.PermitLimit = 2;
+        options.EntraTenantLookup.WindowSeconds = 60;
+        options.EntraTenantLookup.SegmentsPerWindow = 6;
       });
     }
 

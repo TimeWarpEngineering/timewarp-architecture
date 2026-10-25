@@ -36,6 +36,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Threading.RateLimiting;
+using TimeWarp.Architecture.Features.Settings;
 using TimeWarp.Foundation.Types;
 using TimeWarp.Modules;
 
@@ -47,6 +48,9 @@ public sealed class AbuseRateLimitingModule : IModule
 
   /// <summary>Named policy for tip / metered paths that emit unpaid 402 challenges.</summary>
   public const string PaymentChallengePolicy = "payment-challenge";
+
+  /// <summary>Named policy for the admin Entra tenant-domain lookup.</summary>
+  public const string EntraTenantLookupPolicy = "entra-tenant-lookup";
 
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration)
   {
@@ -75,6 +79,9 @@ public sealed class AbuseRateLimitingModule : IModule
     normalizedRoute is
       "api/tip"
       or "api/demo/metered-capability";
+
+  internal static bool IsEntraTenantLookupRoute(string normalizedRoute) =>
+    normalizedRoute == ResolveEntraTenant.Route;
 
   private static string NormalizePath(PathString path) =>
     path.Value?.Trim().TrimStart('/').TrimEnd('/') ?? string.Empty;
@@ -105,6 +112,13 @@ public sealed class AbuseRateLimitingModule : IModule
       return SlidingPartition(
         partitionKey: $"{PaymentChallengePolicy}:{clientKey}",
         window: abuse.PaymentChallenge);
+    }
+
+    if (IsEntraTenantLookupRoute(normalizedPath))
+    {
+      return SlidingPartition(
+        partitionKey: $"{EntraTenantLookupPolicy}:{clientKey}",
+        window: abuse.EntraTenantLookup);
     }
 
     return RateLimitPartition.GetNoLimiter("exempt");
@@ -143,6 +157,7 @@ public sealed class AbuseRateLimitingModule : IModule
     string? policyName =
       IsPrincipalRegistrationRoute(normalizedPath) ? PrincipalRegistrationPolicy
       : IsPaymentChallengeRoute(normalizedPath) ? PaymentChallengePolicy
+      : IsEntraTenantLookupRoute(normalizedPath) ? EntraTenantLookupPolicy
       : null;
 
     string detail = policyName switch
@@ -151,6 +166,8 @@ public sealed class AbuseRateLimitingModule : IModule
         "Rate limit exceeded for principal registration. Retry later.",
       PaymentChallengePolicy =>
         "Rate limit exceeded for payment challenge. Retry later.",
+      EntraTenantLookupPolicy =>
+        "Rate limit exceeded for Entra tenant lookup. Retry later.",
       _ => "Rate limit exceeded. Retry later.",
     };
 

@@ -61,7 +61,7 @@ namespace TimeWarp.Architecture.Features.Settings
         configurationEnabled: true,
         configurationAllowBootstrap: false,
         entraTenantAcceptanceMode: EntraTenantAcceptanceMode.Any,
-        entraAcceptedTenantIds: [accepted]);
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(accepted)]);
 
       string json = JsonSerializer.Serialize(response, ContractSerializationDefaults.Options);
       Response? parsed = JsonSerializer.Deserialize<Response>(json, ContractSerializationDefaults.Options);
@@ -78,11 +78,12 @@ namespace TimeWarp.Architecture.Features.Settings
       parsed.ConfigurationEnabled.ShouldBeTrue();
       parsed.ConfigurationAllowBootstrap.ShouldBeFalse();
       parsed.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-      parsed.EntraAcceptedTenantIds.ShouldBe([accepted]);
+      parsed.EntraAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(accepted)]);
       json.ShouldContain("passkeyPromptMode");
       json.ShouldContain("configurationTenantId");
       json.ShouldContain("entraTenantAcceptanceMode");
-      json.ShouldContain("entraAcceptedTenantIds");
+      json.ShouldContain("entraAcceptedTenants");
+      json.ShouldContain("tenantId");
       json.ShouldNotContain("entraTrustedTenants");
       return Task.CompletedTask;
     }

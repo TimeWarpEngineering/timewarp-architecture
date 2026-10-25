@@ -212,6 +212,7 @@ public partial class Program : IAspNetProgram
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration, string? environmentName)
   {
     serviceCollection.AddHttpClient();
+    EntraTenantResolver.Register(serviceCollection);
     serviceCollection.AddTransient<IdentitySessionCookieForwardingHandler>();
     // Task 312: Aspire service discovery (AddServiceDefaults) resolves these; https+http prefers
     // https (run mode) and falls back to http (Compose, Kubernetes, ACA publish http only).

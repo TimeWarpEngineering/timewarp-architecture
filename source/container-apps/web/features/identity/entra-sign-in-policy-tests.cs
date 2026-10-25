@@ -153,7 +153,7 @@ namespace TimeWarp.Architecture.Features.Identity.EntraSignInPolicyTests
           allowBootstrap,
           PasskeyPromptMode.Soft,
           entraTenantAcceptanceMode: mode,
-          entraAcceptedTenantIds: acceptedTenantIds));
+          entraAcceptedTenants: acceptedTenantIds.Select(EntraAcceptedTenant.IdOnly).ToArray()));
       return new SiteSettingsEntraSignInPolicy(store);
     }
   }

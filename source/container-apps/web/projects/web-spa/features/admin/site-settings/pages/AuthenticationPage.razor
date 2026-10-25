@@ -8,8 +8,11 @@
 
   Design: web-api-contracts — EditForm binds ISiteSettingsDetails; UpdateSiteSettings.Command
   is the model (no view model). Version is the concurrency token, not a typed field.
-  Accepted tenant ids are a page-local textarea parsed into Command.EntraAcceptedTenantIds
-  on submit (one id per line). Any-tenant mode keeps the list and disables the box.
+  Accepted tenants are a list on SiteSettingsState.DraftAcceptedTenants. Look up, Add, and
+  Remove are state actions. A domain lookup asks the server for the tenant id and stores
+  the domain with it. A pasted GUID is stored with no domain. The page copies the draft
+  onto Command.EntraAcceptedTenants after each edit because OnParametersSet does not run
+  for a state action. Any-tenant mode keeps the list and disables the editors.
   Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
   SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Microsoft365 / AllowBootstrap
   drift banner stay outside the form (read-only / host config, not bindable policy).
@@ -39,10 +42,21 @@
   private ISiteSettingsDetails Details => Command;
 
   private bool DraftLoaded;
-  private string AcceptedTenantsDraft { get; set; } = "";
-  private string? AcceptedTenantsError { get; set; }
+  private string DomainDraft { get; set; } = "";
+  private string GuidDraft { get; set; } = "";
 
   private bool IsBusy => ActionTrackingState.IsActive;
+
+  private bool TenantEditorsDisabled =>
+    IsBusy || Details.EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Any;
+
+  /// <summary><c>contoso.com (guid)</c>, or the bare GUID when the entry has no domain.</summary>
+  public static string FormatAcceptedTenant(EntraAcceptedTenant tenant)
+  {
+    ArgumentNullException.ThrowIfNull(tenant);
+    string id = tenant.TenantId.ToString("D");
+    return tenant.Domain is null ? id : $"{tenant.Domain} ({id})";
+  }
 
   private static readonly PasskeyPromptMode[] PasskeyPromptModes =
   [
@@ -99,27 +113,42 @@
     Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
     Command.AssistantName = SiteSettingsState.AssistantName;
     Command.EntraTenantAcceptanceMode = SiteSettingsState.EntraTenantAcceptanceMode;
-    Command.EntraAcceptedTenantIds = [.. SiteSettingsState.EntraAcceptedTenantIds];
-    AcceptedTenantsDraft = string.Join('\n', Command.EntraAcceptedTenantIds.Select(id => id.ToString("D")));
-    AcceptedTenantsError = null;
+    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+    DomainDraft = "";
+    GuidDraft = "";
     Command.Version = SiteSettingsState.Version;
     DraftLoaded = true;
   }
 
+  private async Task LookUpAsync()
+  {
+    await NoSubSiteSettingsState.ResolveEntraTenant(DomainDraft);
+    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+    if (SiteSettingsState.AcceptedTenantsMessage is null)
+    {
+      DomainDraft = "";
+    }
+  }
+
+  private async Task AddAsync()
+  {
+    await NoSubSiteSettingsState.AddAcceptedTenant(GuidDraft);
+    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+    if (SiteSettingsState.AcceptedTenantsMessage is null)
+    {
+      GuidDraft = "";
+    }
+  }
+
+  private async Task RemoveAsync(Guid tenantId)
+  {
+    await NoSubSiteSettingsState.RemoveAcceptedTenant(tenantId);
+    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
+  }
+
   private async Task HandleValidSubmit()
   {
-    if (Command.EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Restricted)
-    {
-      if (!EntraTenantIds.TryParse(AcceptedTenantsDraft, out IReadOnlyList<Guid> tenantIds, out string? error))
-      {
-        AcceptedTenantsError = error;
-        return;
-      }
-
-      Command.EntraAcceptedTenantIds = [.. tenantIds];
-    }
-
-    AcceptedTenantsError = null;
+    Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
     await NoSubSiteSettingsState.UpdateSiteSettings(Command);
     if (!SiteSettingsState.SaveFailed)
     {
@@ -172,18 +201,55 @@
                           data-qa="TenantAcceptanceMode" />
             <ValidationMessage For="@(() => Details.EntraTenantAcceptanceMode)" />
           </FormField>
-          <FormField Label="Tenant ids">
-            <TextArea @bind-Value="AcceptedTenantsDraft"
-                      AriaLabel="Accepted tenant ids"
-                      Placeholder="One tenant id per line"
-                      Disabled="@(IsBusy || Details.EntraTenantAcceptanceMode == EntraTenantAcceptanceMode.Any)"
-                      MinHeight="6rem"
-                      data-qa="AcceptedTenantIds" />
-            @if (AcceptedTenantsError is not null)
+          <FormField Label="Accepted tenant list">
+            <FluentTextInput @bind-Value="DomainDraft"
+                             AriaLabel="Customer domain"
+                             Placeholder="contoso.com"
+                             Disabled=@TenantEditorsDisabled
+                             Width="100%"
+                             data-qa="AcceptedTenantDomain" />
+            <FluentButton Type=ButtonType.Button
+                          Appearance=ButtonAppearance.Outline
+                          Disabled=@TenantEditorsDisabled
+                          OnClick=LookUpAsync
+                          data-qa="AcceptedTenantLookup">
+              Look up
+            </FluentButton>
+            <FluentTextInput @bind-Value="GuidDraft"
+                             AriaLabel="Known tenant id"
+                             Placeholder="Tenant id"
+                             Disabled=@TenantEditorsDisabled
+                             Width="100%"
+                             data-qa="AcceptedTenantGuid" />
+            <FluentButton Type=ButtonType.Button
+                          Appearance=ButtonAppearance.Outline
+                          Disabled=@TenantEditorsDisabled
+                          OnClick=AddAsync
+                          data-qa="AcceptedTenantAdd">
+              Add tenant id
+            </FluentButton>
+            <ul data-qa="AcceptedTenants">
+              @foreach (EntraAcceptedTenant tenant in SiteSettingsState.DraftAcceptedTenants)
+              {
+                <li data-qa="AcceptedTenant">
+                  <span>@FormatAcceptedTenant(tenant)</span>
+                  <FluentButton Type=ButtonType.Button
+                                Appearance=ButtonAppearance.Subtle
+                                Disabled=@TenantEditorsDisabled
+                                OnClick="@(() => RemoveAsync(tenant.TenantId))"
+                                data-qa="AcceptedTenantRemove">
+                    Remove
+                  </FluentButton>
+                </li>
+              }
+            </ul>
+            @if (SiteSettingsState.AcceptedTenantsMessage is not null)
             {
-              <span data-qa="AcceptedTenantsError">@AcceptedTenantsError</span>
+              <span data-qa="AcceptedTenantsError">@SiteSettingsState.AcceptedTenantsMessage</span>
             }
             <p data-qa="TenantAcceptanceHelp">
+              Look up the customer's primary domain. The server stores that domain with the tenant id.
+              A known tenant id can still be added by hand and is shown without a domain.
               Restricted mode refuses any tenant that is not listed. Any Entra tenant accepts every non-empty tenant id that completes sign-in.
               Personal Microsoft accounts are included only when the app registration allows them and Authentication:Entra:TenantId is common (or consumers).
             </p>

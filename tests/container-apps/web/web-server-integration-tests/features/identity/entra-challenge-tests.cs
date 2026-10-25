@@ -173,7 +173,7 @@ public class Challenge_Given_
         entraSignInEnabled: true,
         entraAllowBootstrap: true,
         passkeyPromptMode: PasskeyPromptMode.Soft,
-        entraAcceptedTenantIds: [TrustedTenantId]));
+        entraAcceptedTenants: [EntraAcceptedTenant.IdOnly(TrustedTenantId)]));
   }
 
   public static async Task CleanUpOnce()
@@ -210,7 +210,7 @@ public class Challenge_Given_
     SiteSettings? current = await siteSettingsStore.GetAsync();
     current.ShouldNotBeNull();
     EntraTenantAcceptanceMode previousMode = current!.EntraTenantAcceptanceMode;
-    IReadOnlyList<Guid> previousTenants = current.EntraAcceptedTenantIds;
+    IReadOnlyList<EntraAcceptedTenant> previousTenants = current.EntraAcceptedTenants;
     current.ReplaceEntraTenantAcceptance(EntraTenantAcceptanceMode.Any, previousTenants);
     await siteSettingsStore.UpdateAsync(current);
     try

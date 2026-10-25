@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261021214830_AddProtectedSecrets";
+    public override string LastMigrationId => "20261025144841_ConvertEntraAcceptedTenants";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -392,7 +392,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                     .HasMaxLength(32)
                     .HasColumnType("character varying(32)");
 
-                b.Property<string>("EntraAcceptedTenantIds")
+                b.Property<string>("EntraAcceptedTenants")
                     .IsRequired()
                     .ValueGeneratedOnAdd()
                     .HasColumnType("jsonb")

@@ -58,7 +58,9 @@ partial class SiteSettingsState
         SiteSettingsState.PasskeyPromptMode = response.PasskeyPromptMode;
         SiteSettingsState.AssistantName = response.AssistantName;
         SiteSettingsState.EntraTenantAcceptanceMode = response.EntraTenantAcceptanceMode;
-        SiteSettingsState.EntraAcceptedTenantIds = response.EntraAcceptedTenantIds.ToArray();
+        SiteSettingsState.EntraAcceptedTenants = response.EntraAcceptedTenants.ToArray();
+        SiteSettingsState.DraftAcceptedTenants = response.EntraAcceptedTenants.ToArray();
+        SiteSettingsState.AcceptedTenantsMessage = null;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
         return Publisher.Publish

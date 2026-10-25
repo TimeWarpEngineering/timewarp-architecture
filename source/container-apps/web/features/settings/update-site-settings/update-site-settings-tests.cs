@@ -107,7 +107,7 @@ namespace TimeWarp.Architecture.Features.Settings
     public static Task Empty_Accepted_Tenant_Should_Fail_Validation()
     {
       Command command = ValidCommand(AssistantNameRules.Default);
-      command.EntraAcceptedTenantIds = [Guid.Empty];
+      command.EntraAcceptedTenants = [EntraAcceptedTenant.IdOnly(Guid.Empty)];
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.ErrorMessage == "Accepted tenant ids must be non-empty GUIDs.");
@@ -117,14 +117,14 @@ namespace TimeWarp.Architecture.Features.Settings
     public static Task Duplicate_Accepted_Tenants_Past_The_Raw_Cap_Should_Pass_Validation()
     {
       Guid tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-      List<Guid> tenantIds = [];
+      List<EntraAcceptedTenant> tenantIds = [];
       for (int index = 0; index < EntraTenantIds.MaxAcceptedCount + 1; index++)
       {
-        tenantIds.Add(tenantId);
+        tenantIds.Add(EntraAcceptedTenant.IdOnly(tenantId));
       }
 
       Command command = ValidCommand(AssistantNameRules.Default);
-      command.EntraAcceptedTenantIds = tenantIds;
+      command.EntraAcceptedTenants = tenantIds;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeTrue();
       return Task.CompletedTask;
@@ -132,14 +132,14 @@ namespace TimeWarp.Architecture.Features.Settings
 
     public static Task Too_Many_Distinct_Accepted_Tenants_Should_Fail_Validation()
     {
-      List<Guid> tenantIds = [];
+      List<EntraAcceptedTenant> tenantIds = [];
       for (int index = 1; index <= EntraTenantIds.MaxAcceptedCount + 1; index++)
       {
-        tenantIds.Add(Guid.Parse($"00000000-0000-0000-0000-{index:D12}"));
+        tenantIds.Add(EntraAcceptedTenant.IdOnly(Guid.Parse($"00000000-0000-0000-0000-{index:D12}")));
       }
 
       Command command = ValidCommand(AssistantNameRules.Default);
-      command.EntraAcceptedTenantIds = tenantIds;
+      command.EntraAcceptedTenants = tenantIds;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       result.Errors.ShouldContain(error => error.ErrorMessage == $"At most {EntraTenantIds.MaxAcceptedCount} accepted tenant ids.");
@@ -307,16 +307,21 @@ namespace TimeWarp.Architecture.Features.Settings
           PasskeyPromptMode = PasskeyPromptMode.Soft,
           AssistantName = AssistantNameRules.Default,
           EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Any,
-          EntraAcceptedTenantIds = [second, first, first],
+          EntraAcceptedTenants =
+          [
+            EntraAcceptedTenant.IdOnly(second),
+            EntraAcceptedTenant.IdOnly(first),
+            EntraAcceptedTenant.IdOnly(first),
+          ],
           Version = 0
         },
         default);
 
       result.IsT0.ShouldBeTrue();
       result.AsT0.EntraTenantAcceptanceMode.ShouldBe(EntraTenantAcceptanceMode.Any);
-      result.AsT0.EntraAcceptedTenantIds.Count.ShouldBe(2);
-      result.AsT0.EntraAcceptedTenantIds.ShouldContain(first);
-      result.AsT0.EntraAcceptedTenantIds.ShouldContain(second);
+      result.AsT0.EntraAcceptedTenants.Count.ShouldBe(2);
+      result.AsT0.EntraAcceptedTenants.ShouldContain(EntraAcceptedTenant.IdOnly(first));
+      result.AsT0.EntraAcceptedTenants.ShouldContain(EntraAcceptedTenant.IdOnly(second));
       SiteSettings stored = (await store.GetAsync()).ShouldNotBeNull();
       stored.AcceptsEntraTenant(Guid.NewGuid()).ShouldBeTrue();
       stored.EntraTenantAcceptanceInitialized.ShouldBeTrue();
