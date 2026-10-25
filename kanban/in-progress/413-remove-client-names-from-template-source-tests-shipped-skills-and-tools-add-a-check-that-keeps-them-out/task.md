@@ -97,6 +97,7 @@ would fail an ordinal compare, and build, tests, template smoke, skill lint, and
 - Review round 1 (2026-10-25): review oracle (claude-opus-5-5), effort 3, roster general. Wrote `review/round-1/general.md` and `review/round-1/merged.md`. 2 open findings (M1 bug, M2 suggestion), so a fix pass is needed.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T02:11:54Z
 - Fix pass (2026-10-25): implement-fix-2. The two Entra case tests use `aaaaaaaa-0000-0000-0000-000000000001` against its upper-case form, and the union keeps the first casing. `dev check-client-names` lists files from the pack allow-list (`Content`, and `None` with `Pack=true`) minus each item's `Exclude` and `skills/**/analysis/**`. An MSBuild property in an include or exclude fails the scan. `tests/tools/dev-cli-tests` Release: 353 passed. `dotnet run tools/dev-cli/dev.cs -- check-client-names` printed `Client-name scan passed.` Full solution build, template-smoke, and lint-skills were not re-run; the pack contents are unchanged and the scan verb is what `dev build` and `dev lint-skills` call first.
+- Review round 2 (2026-10-25): review oracle (claude-opus-5-5), effort 2, roster general, scope fix delta `f384c75b7..4ccd816aa`. Wrote `review/round-2/general.md`, `review/round-2/merged.md`, and `review/disposition.md`. M1 and M2 are fixed, nothing new was raised, and the disposition is clean.
 
 ## Results
 
@@ -117,7 +118,7 @@ git grep -n -i -E 'crunchit|copic' -- source tests tools skills ':!skills/*/anal
 dotnet run tools/dev-cli/dev.cs -- check-client-names
 ```
 
-Expect: the search prints nothing. The verb prints `Client-name scan passed.` and exits 0. A planted token in an allow-listed file (for example `msbuild/` or `readme.md`) fails the scan. The same token under `skills/*/analysis/`, in a `None` item without `Pack=true`, or in `kanban/done/*.md` does not. Those cases are `ClientNameScan_` in `tests/tools/dev-cli-tests` (fixture token `acmeclient`, so the denylist words stay out of packed tests). `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` expects the lower-case id `aaaaaaaa-0000-0000-0000-000000000001` when the second list has the upper-case form. `MatchById_DifferentGuidCasing_Should_Select` selects the tenant whose id is the lower-case form.
+Expect: the search prints nothing. The verb prints `Client-name scan passed.` and exits 0. A planted token in an allow-listed file (for example `msbuild/` or `readme.md`) fails the scan. The same token under `skills/*/analysis/`, in a `None` item without `Pack=true`, or in `kanban/done/*.md` does not. Those cases are in `tests/tools/dev-cli-tests/client-name-scan-tests.cs` (`FindHits_Given_`, `Unpack_Given_`, `PackedFiles_Given_`, `Scan_Given_`, `Ci_Given_`) (fixture token `acmeclient`, so the denylist words stay out of packed tests). `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` expects the lower-case id `aaaaaaaa-0000-0000-0000-000000000001` when the second list has the upper-case form. `MatchById_DifferentGuidCasing_Should_Select` selects the tenant whose id is the lower-case form.
 
 Fix-pass gates:
 
@@ -137,17 +138,19 @@ Earlier walk (still the pack-content evidence; not re-run on this fix pass):
 
 ### Review
 
-Round 1 (effort 3, general) found 1 bug and 1 suggestion. This fix pass addresses both. Round 2 has not run.
+Two rounds, roster general. Round 1 ran at effort 3 and round 2 at effort 2. Round 1 found 1 bug and 1 suggestion, and fix pass `70a5819ed` addressed both. Round 2 re-verified them on the fix delta and found nothing new. Round 2 re-ran `dev check-client-names` (exit 0) and the dev-cli tests (353/353).
+
+Final counts: bug 1 fixed, suggestion 1 fixed, nit 0. Nothing is open and nothing is wontfix. **Disposition: clean.**
 
 - M1 (bug): `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` and `MatchById_DifferentGuidCasing_Should_Select` again use a GUID with hex letters. The union keeps the first casing.
 - M2 (suggestion): the scan file set is the pack allow-list, so `msbuild/`, `.template.config/`, the root build and solution files, the kanban skeleton, and `readme.md` are scanned. `PackedFiles_Given_` and `RealPack_Should_CoverAllowListPaths` pin that set.
 
-Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
+Ledger: `review/round-2/merged.md` (round 1: `review/round-1/merged.md`). Framework: `review/review-framework.md`. Disposition: `review/disposition.md`.
 
 ## Review
 
-- Round 1: fixed on this branch — M1, M2 (round 2 not run)
-
+- Round 1: fixed on this branch — M1, M2
+- Round 2: Done
 ## Notes
 
 - Found while verifying PR #576 (task 410). Steve 2026-10-25: "yes file the clean up task".
