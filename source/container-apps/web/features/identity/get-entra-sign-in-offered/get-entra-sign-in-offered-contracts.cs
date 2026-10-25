@@ -1,18 +1,19 @@
 #region Purpose
-// Public boolean: whether the login page should offer Continue with Microsoft 365.
+// Public list of sign-in methods the browser should render right now.
 #endregion
 
 #region Design
-// Anonymous on purpose — the login page has no session. Response is Offered only; do not
-// leak TenantId, AllowBootstrap, or PasskeyPromptMode. Offered is scheme registered
-// (configuration Enabled) AND site settings EntraSignInEnabled so the button never 404s and
-// never shows when administrators disabled sign-in at runtime.
+// Anonymous on purpose — the login page has no session. Response is the offered method list
+// in enum order. Do not leak TenantId, AllowBootstrap, or PasskeyPromptMode. Passkey is offered
+// when it is listed. Microsoft365 is offered when it is listed AND site settings
+// EntraSignInEnabled is on, so the button never 404s and never shows when administrators
+// disabled sign-in at runtime.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
 
 [ApiEndpoint]
-[EndpointAllowAnonymous("Login page needs a public read of whether Entra sign-in is offered; the payload is a single boolean.")]
+[EndpointAllowAnonymous("Login page needs a public read of the offered sign-in methods; the payload is that list.")]
 public static partial class GetEntraSignInOffered
 {
   [ApiRoute("api/identity/entra/offered", HttpVerb.Get)]
@@ -22,14 +23,14 @@ public static partial class GetEntraSignInOffered
 
   public sealed class Response
   {
-    public bool Offered { get; }
+    public IReadOnlyList<SignInMethod> Methods { get; }
 
-    public Response(bool offered)
+    public Response(IReadOnlyList<SignInMethod> methods)
     {
-      Offered = offered;
+      Methods = methods;
     }
   }
 
   public static MockResponseFactory<Response> GetMockResponseFactory() =>
-    _ => new Response(offered: false);
+    _ => new Response([SignInMethod.Passkey]);
 }

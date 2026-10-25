@@ -164,7 +164,9 @@
 //     flag publishes no host port at all — the operator adds one for their own edge proxy, and the compose dashboard is disabled (it would publish an unauthenticated second port —
 //     point OTEL_EXPORTER_OTLP_ENDPOINT at your own collector instead);
 //   - secrets are .env parameters: postgres-password (AddPostgres' generated secret) and the Entra
-//     settings (entra-client-secret is a secret parameter; Entra defaults to off). An unset client
+//     settings (entra-client-secret is a secret parameter; Entra defaults to off). entra-enabled
+//     is published as SignInOptions__IncludeMicrosoft365 (${ENTRA_ENABLED}), not a literal method
+//     list. An unset client
 //     secret publishes the placeholder "unused" on every publish target: the value overload of
 //     AddParameter does not read configuration, and Azure Container Apps rejects an empty secret.
 //     With Entra enabled and that placeholder still set, sign-in fails with AADSTS invalid_client;
@@ -410,6 +412,10 @@ internal class Program
 
     // Task 070-003: published Entra settings are parameters, never literals. Defaults keep Entra off.
     // This block runs for every publish target, not only Azure Container Apps.
+    // entra-enabled stays a deploy-time parameter. It is published as
+    // SignInOptions__IncludeMicrosoft365, which asks web-server to append Microsoft365 to the
+    // checked-in Methods list. The AppHost does not write SignInOptions__Methods__0, so a
+    // checked-in Microsoft365-only list is not replaced with Passkey.
     // AddParameter(name, value, secret: true) ignores configuration (its value callback is constant).
     // Capture Parameters:entra-client-secret here. When it is unset, use "unused" (not a credential).
     // Azure Container Apps rejects an empty container-app secret; the same placeholder keeps the
@@ -423,8 +429,10 @@ internal class Program
       string entraClientSecret = string.IsNullOrWhiteSpace(configuredEntraClientSecret)
         ? unsetEntraClientSecret
         : configuredEntraClientSecret;
+      IResourceBuilder<ParameterResource> entraEnabledParameter =
+        builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true);
       webServer = webServer
-        .WithEnvironment("Authentication__Entra__Enabled", builder.AddParameter(EntraEnabledParameterName, "false", publishValueAsDefault: true))
+        .WithEnvironment("SignInOptions__IncludeMicrosoft365", entraEnabledParameter)
         // TenantId is the OIDC authority (organizations = any work/school tenant), not the trust list.
         // Acceptance is SiteSettings on /Admin/Authentication. A GUID here limits OIDC to that tenant.
         .WithEnvironment("Authentication__Entra__TenantId", builder.AddParameter(EntraTenantIdParameterName, "organizations", publishValueAsDefault: true))

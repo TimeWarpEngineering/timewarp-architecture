@@ -46,20 +46,20 @@ public sealed partial class GetCredentials
   {
     private readonly IPrincipalStore PrincipalStore;
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
-    private readonly IOptions<EntraAuthenticationOptions> EntraOptions;
+    private readonly IOptions<SignInOptions> SignInOptions;
     private readonly ISiteSettingsStore SiteSettingsStore;
 
     public Handler
     (
       IPrincipalStore principalStore,
       ICurrentPrincipalAccessor currentPrincipalAccessor,
-      IOptions<EntraAuthenticationOptions> entraOptions,
+      IOptions<SignInOptions> signInOptions,
       ISiteSettingsStore siteSettingsStore
     )
     {
       PrincipalStore = principalStore;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
-      EntraOptions = entraOptions;
+      SignInOptions = signInOptions;
       SiteSettingsStore = siteSettingsStore;
     }
 
@@ -95,7 +95,7 @@ public sealed partial class GetCredentials
         .Where(summary => CredentialSummary.Matches(summary, query.Search))
         .ToList();
 
-      bool microsoft365Offered = await EntraSignInOffer.IsOfferedAsync(EntraOptions.Value, SiteSettingsStore, cancellationToken);
+      bool microsoft365Offered = await EntraSignInOffer.IsOfferedAsync(SignInOptions.Value, SiteSettingsStore, cancellationToken);
       bool canLinkMicrosoft365 =
         CredentialRules.CanLinkMicrosoft365(microsoft365Offered, active.Select(static credential => credential.Type));
       return new Response(summaries, canLinkMicrosoft365);

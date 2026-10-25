@@ -9,7 +9,7 @@
 // Run standalone:  dotnet run source/container-apps/web/features/identity/site-settings-seeder-tests.cs
 
 #region Purpose
-// Jaribu runfile: seed-once from configuration; Enabled/AllowBootstrap drift warnings; Development-only reseed.
+// Jaribu runfile: seed-once from configuration; Microsoft365 list / AllowBootstrap drift warnings; Development-only reseed.
 #endregion
 
 //-:cnd:noEmit
@@ -28,6 +28,7 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
   using Microsoft.Extensions.Logging.Abstractions;
   using Microsoft.Extensions.Options;
   using Shouldly;
+  using TimeWarp.Architecture.Features.Identity;
   using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -203,14 +204,20 @@ namespace TimeWarp.Architecture.Features.Identity.SiteSettingsSeederTests
       IOptions<EntraAuthenticationOptions> options = Options.Create(
         new EntraAuthenticationOptions
         {
-          Enabled = enabled,
           AllowBootstrap = allowBootstrap,
           TenantId = tenantId ?? tenant.ToString("D"),
           ReseedSiteSettings = reseedSiteSettings
         });
+      SignInOptions signIn = new()
+      {
+        Methods = enabled
+          ? [SignInMethod.Passkey, SignInMethod.Microsoft365]
+          : [SignInMethod.Passkey]
+      };
       return new SiteSettingsSeeder(
         store,
         options,
+        Options.Create(signIn),
         logger ?? NullLogger<SiteSettingsSeeder>.Instance);
     }
 

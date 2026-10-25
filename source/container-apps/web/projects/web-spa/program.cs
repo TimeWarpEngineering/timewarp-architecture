@@ -291,10 +291,5 @@ public static class Program
       .AddFluentValidatedOptions<BrandOptions, BrandOptionsValidator>(configuration)
       .ValidateOnStart();
 
-    // SignInOptions: server prerender and the WebAssembly host each bind the configuration they
-    // were given. The default mode is Passkey when the section is absent.
-    serviceCollection
-      .AddFluentValidatedOptions<SignInOptions, SignInOptionsValidator>(configuration)
-      .ValidateOnStart();
   }
 }

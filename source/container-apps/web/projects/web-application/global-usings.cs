@@ -14,4 +14,6 @@ global using TimeWarp.Architecture.Payment;
 global using TimeWarp.Foundation.Behaviors;
 global using TimeWarp.Foundation.Types;
 global using TimeWarp.Identity;
+global using TimeWarp.Architecture.Features.Identity;
+global using TimeWarp.Architecture.Features.Identity.Application;
 global using TimeWarp.Mediator;

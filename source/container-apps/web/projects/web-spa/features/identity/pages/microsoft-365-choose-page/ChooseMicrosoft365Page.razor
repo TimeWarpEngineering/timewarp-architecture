@@ -1,12 +1,8 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
-@inject IOptions<SignInOptions> SignInOptionsAccessor
-
 @code {
   public static string Title => "Microsoft 365 account";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
-
-  private SignInOptions SignIn => SignInOptionsAccessor.Value;
 
   private bool IsBusy => ActionTrackingState.IsActive;
   private bool? IsValid => SignInState.Microsoft365ChoiceValid;
@@ -14,6 +10,7 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
+    await NoSubSignInState.FetchOfferedSignInMethods();
     await NoSubSignInState.FetchMicrosoft365Choice();
   }
 
@@ -50,7 +47,7 @@
       }
       else
       {
-        <Microsoft365AccountChoice SignIn="SignIn"
+        <Microsoft365AccountChoice Methods="SignInState.OfferedMethods"
                                    IsBusy="IsBusy"
                                    OnCreateAccount="CreateNewAccount"
                                    OnAlreadyHaveAccount="AlreadyHaveAccount" />

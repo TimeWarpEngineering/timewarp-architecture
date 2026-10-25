@@ -411,25 +411,15 @@ public partial class Program : IAspNetProgram
   private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
   {
     // RFC 219 D10: identity-session is always DefaultScheme. Entra is a named OIDC scheme when
-    // Authentication:Entra:Enabled (or obsolete UseEntra synonym) is true — never
-    // AddMicrosoftIdentityWebAppAuthentication (that helper steals DefaultScheme).
-    bool entraEnabled = MockAuthenticationDefaults.IsEntraEnabled(
-      configuration[MockAuthenticationDefaults.EntraEnabledKey],
-      configuration[MockAuthenticationDefaults.UseEntraKey]);
-    bool usedObsoleteUseEntra = MockAuthenticationDefaults.UsedObsoleteUseEntraKey(
-      configuration[MockAuthenticationDefaults.EntraEnabledKey],
-      configuration[MockAuthenticationDefaults.UseEntraKey]);
+    // SignInOptions lists Microsoft365 — never AddMicrosoftIdentityWebAppAuthentication (that
+    // helper steals DefaultScheme). The list is read from configuration here so scheme
+    // registration does not wait on options validation.
+    bool microsoft365Listed = SignInOptions.ConfigurationLists(configuration, SignInMethod.Microsoft365);
 
     serviceCollection.AddSingleton<IValidateOptions<EntraAuthenticationOptions>, EntraAuthenticationOptionsStartupValidator>();
     serviceCollection.AddOptions<EntraAuthenticationOptions>()
       .Bind(configuration.GetSection(EntraAuthenticationOptions.SectionKey))
       .ValidateOnStart();
-    serviceCollection.PostConfigure<EntraAuthenticationOptions>(options =>
-    {
-      options.Enabled = entraEnabled;
-      options.UsedObsoleteUseEntraKey = usedObsoleteUseEntra;
-    });
-    serviceCollection.AddSingleton<IPostConfigureOptions<EntraAuthenticationOptions>, EntraObsoleteKeyPostConfigure>();
 
     AuthenticationBuilder authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
 
@@ -495,7 +485,7 @@ public partial class Program : IAspNetProgram
       .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(MockIdentityPrincipalHandler.SchemeName, _ => { });
 
     serviceCollection.AddScoped<EntraTicketProcessor>();
-    if (entraEnabled)
+    if (microsoft365Listed)
     {
       EntraAuthenticationRegistration.AddNamedEntraScheme(authenticationBuilder, configuration);
     }
@@ -615,6 +605,11 @@ public partial class Program : IAspNetProgram
 
   private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
   {
+    serviceCollection
+      .AddFluentValidatedOptions<SignInOptions, SignInOptionsValidator>(configuration)
+      .PostConfigure<IConfiguration>((options, configuration) => options.ApplyConfiguredMethods(configuration))
+      .ValidateOnStart();
+
     serviceCollection
       .AddFluentValidatedOptions<SampleOptions, SampleOptionsValidator>(configuration)
       .ValidateOnStart();

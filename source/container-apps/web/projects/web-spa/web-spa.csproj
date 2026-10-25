@@ -17,7 +17,7 @@
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <!--<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>-->
     <!-- Auth is runtime-config-gated (tasks 145-009 + RFC 219 D10): Authentication:UseMock (dev mock),
-         else identity-session. Named Entra is a BFF challenge (Authentication:Entra:Enabled), not WASM
+         else identity-session. Named Entra is a BFF challenge when SignInOptions lists Microsoft365, not WASM
          MSAL. No MOCK_AUTHENTICATION / ENTRA DefineConstants — mock and identity-session compile always;
          activation is MockAuthenticationRegistration / IdentitySessionAuthenticationRegistration.
          Use Mock web API (optional offline SPA API fakes): -->

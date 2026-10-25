@@ -6,7 +6,7 @@
 #region Design
 // Real HTTP through the ASP.NET pipeline (not in-process mediator). First passkey claims
 // Administrator so SettingsWrite is present; ForceMemberOnly strips it for the write-403 case.
-// Anonymous offered read is a boolean only. Task 361: GetAssistantIdentity is anonymous and carries
+// Anonymous offered read is the offered method list only. Task 361: GetAssistantIdentity is anonymous and carries
 // only name and avatar (the exact JSON property set); the rename test restores the name it read
 // first, in a finally, so test order and a failed assertion do not matter.
 #endregion
@@ -56,19 +56,20 @@ public class Returns_
     response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
-  public static async Task Anonymous_Offered_Should_Return_Only_Boolean()
+  public static async Task Anonymous_Offered_Should_Return_Only_Methods()
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     HttpResponseMessage response = await client.GetAsync("api/identity/entra/offered");
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
-    json.ShouldContain("offered");
+    json.ShouldContain("methods");
     json.ShouldNotContain("tenant");
     json.ShouldNotContain("bootstrap");
     json.ShouldNotContain("trusted");
     GetEntraSignInOffered.Response? parsed =
       JsonSerializer.Deserialize<GetEntraSignInOffered.Response>(json, ContractSerializationDefaults.Options);
     parsed.ShouldNotBeNull();
+    parsed.Methods.ShouldContain(SignInMethod.Passkey);
   }
 
   public static async Task Member_Get_Should_200()

@@ -7,9 +7,8 @@
 // SeedOnReadSiteSettingsStore (task 254), so an empty store is seeded from Authentication:Entra
 // on this read — no boot-ordering dependency. A null read now means the table is not migrated
 // yet (42P01) and returns Unavailable (503).
-// Configuration* fields come from bound EntraAuthenticationOptions (Identity slice) so
-// Admin/Authentication can show the app-registration tenant without a second endpoint —
-// CrossSliceReference on Handler.
+// Configuration tenant fields come from bound EntraAuthenticationOptions. ConfigurationEnabled
+// reports whether SignInOptions lists Microsoft365. CrossSliceReference on Handler.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings.Application;
@@ -23,18 +22,24 @@ public sealed class GetSiteSettings
 {
   [CrossSliceReference(
     typeof(EntraAuthenticationOptions),
-    "Projects bound Authentication:Entra tenant and enablement onto GetSiteSettings so Admin/Authentication can show the app-registration tenant without a second endpoint.")]
+    "Projects bound Authentication:Entra tenant fields onto GetSiteSettings so Admin/Authentication can show the app-registration tenant without a second endpoint.")]
+  [CrossSliceReference(
+    typeof(SignInOptions),
+    "ConfigurationEnabled reports whether SignInOptions lists Microsoft365.")]
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly ISiteSettingsStore SiteSettingsStore;
     private readonly IOptions<EntraAuthenticationOptions> Options;
+    private readonly IOptions<SignInOptions> SignInOptions;
 
     public Handler(
       ISiteSettingsStore siteSettingsStore,
-      IOptions<EntraAuthenticationOptions> options)
+      IOptions<EntraAuthenticationOptions> options,
+      IOptions<SignInOptions> signInOptions)
     {
       SiteSettingsStore = siteSettingsStore;
       Options = options;
+      SignInOptions = signInOptions;
     }
 
     public async Task<OneOf<Response, SharedProblemDetails>> Handle(
@@ -49,10 +54,13 @@ public sealed class GetSiteSettings
         return SiteSettingsProblems.Unavailable();
       }
 
-      return ToResponse(settings, Options.Value);
+      return ToResponse(settings, Options.Value, SignInOptions.Value);
     }
 
-    private static Response ToResponse(SiteSettings settings, EntraAuthenticationOptions configured)
+    private static Response ToResponse(
+      SiteSettings settings,
+      EntraAuthenticationOptions configured,
+      SignInOptions signInOptions)
     {
       string? tenantId = string.IsNullOrWhiteSpace(configured.TenantId) ? null : configured.TenantId.Trim();
       string? displayName = string.IsNullOrWhiteSpace(configured.TenantDisplayName)
@@ -68,7 +76,7 @@ public sealed class GetSiteSettings
         configurationTenantId: tenantId,
         configurationTenantDisplayName: displayName,
         configurationTenantDomain: domain,
-        configurationEnabled: configured.Enabled,
+        configurationEnabled: signInOptions.Lists(SignInMethod.Microsoft365),
         configurationAllowBootstrap: configured.AllowBootstrap,
         entraTenantAcceptanceMode: settings.EntraTenantAcceptanceMode,
         entraAcceptedTenantIds: [.. settings.EntraAcceptedTenantIds]);

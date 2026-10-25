@@ -11,7 +11,7 @@
   Accepted tenant ids are a page-local textarea parsed into Command.EntraAcceptedTenantIds
   on submit (one id per line). Any-tenant mode keeps the list and disables the box.
   Blazilla FluentValidator takes SiteSettingsDetailsValidator. Submit is
-  SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Enabled/AllowBootstrap
+  SiteSettingsState.UpdateSiteSettings(Command). Tenant line and Microsoft365 / AllowBootstrap
   drift banner stay outside the form (read-only / host config, not bindable policy).
   Save is FluentButton submit Primary (RoleForm pattern), disabled while busy. Save outcomes
   (409 concurrency included) are painted by the shell's MessageBars region — no page-local
@@ -138,7 +138,7 @@
   {
     <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
       <span data-qa="ConfigurationPolicyDrift">
-        Saved policy differs from Authentication:Entra Enabled or AllowBootstrap. Edit here or run `dev entra reseed`.
+        Saved policy differs from SignInOptions:Methods (Microsoft365) or Authentication:Entra:AllowBootstrap. Edit here or run `dev entra reseed`.
       </span>
     </FluentMessageBar>
   }

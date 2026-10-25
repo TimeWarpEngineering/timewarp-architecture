@@ -1,18 +1,22 @@
 #region Purpose
-// Pins SignInOptions binding, the validator, and the three login-card predicates.
+// Pins SignInOptions binding and the startup validator.
 #endregion
 
 #region Design
-// No host. The validator is the same internal type ValidateOnStart runs. Both checked-in
-// SignInOptions sections bind through the configuration binder and must equal new SignInOptions().
-// An undefined numeric mode fails IsInEnum. A mode name the binder cannot parse throws.
+// No host. SignInOptions and SignInOptionsValidator live in web-application. The initializer lists
+// Passkey and Microsoft365. The checked-in web-server section lists Passkey only. The SPA
+// wwwroot file has no SignInOptions section. An unknown method name fails the validator, which
+// reads the raw configuration. Empty lists and duplicates fail too. IncludeMicrosoft365
+// appends Microsoft365 beside the configured list and does not replace index 0.
 #endregion
 
 namespace SignInOptions_;
 
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using TimeWarp.Architecture.Configuration;
+using TimeWarp.Architecture.Features.Identity;
+using SignInOptions = TimeWarp.Architecture.Features.Identity.Application.SignInOptions;
+using SignInOptionsValidator = TimeWarp.Architecture.Features.Identity.Application.SignInOptionsValidator;
 
 [TestTag("Unit")]
 public class SignInOptions_Should_
@@ -20,99 +24,103 @@ public class SignInOptions_Should_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<SignInOptions_Should_>();
 
-  public static Task Accept_The_Three_Modes_And_Reject_An_Undefined_Value()
+  public static Task Default_To_Both_Methods_And_Reject_Empty_Duplicates_And_Undefined_Values()
   {
-    SignInOptionsValidator validator = new();
-    validator.Validate(new SignInOptions()).IsValid.ShouldBeTrue();
-    validator.Validate(new SignInOptions { Mode = SignInMode.Microsoft365Only }).IsValid.ShouldBeTrue();
-    validator.Validate(new SignInOptions { Mode = SignInMode.Staff }).IsValid.ShouldBeTrue();
-    validator.Validate(new SignInOptions { Mode = (SignInMode)99 }).IsValid.ShouldBeFalse();
-    return Task.CompletedTask;
-  }
-
-  public static Task Describe_Passkey_As_The_Default_Card()
-  {
-    SignInOptions signIn = new();
-    signIn.Mode.ShouldBe(SignInMode.Passkey);
-    signIn.OffersPasskey.ShouldBeTrue();
-    signIn.ShowsWorkAccountLead.ShouldBeFalse();
-    signIn.ShowsStaffNote.ShouldBeFalse();
-    signIn.ShowMicrosoft365Unavailable(offered: null).ShouldBeFalse();
-    signIn.ShowMicrosoft365Unavailable(offered: false).ShouldBeFalse();
-    return Task.CompletedTask;
-  }
-
-  public static Task Describe_Microsoft365Only_Without_A_Passkey_Fallback()
-  {
-    SignInOptions signIn = new() { Mode = SignInMode.Microsoft365Only };
-    signIn.OffersPasskey.ShouldBeFalse();
-    signIn.ShowsWorkAccountLead.ShouldBeTrue();
-    signIn.ShowsStaffNote.ShouldBeFalse();
-    signIn.ShowMicrosoft365Unavailable(offered: null).ShouldBeFalse();
-    signIn.ShowMicrosoft365Unavailable(offered: true).ShouldBeFalse();
-    signIn.ShowMicrosoft365Unavailable(offered: false).ShouldBeTrue();
-    return Task.CompletedTask;
-  }
-
-  public static Task Describe_Staff_As_Microsoft365_Plus_The_Staff_Line()
-  {
-    SignInOptions signIn = new() { Mode = SignInMode.Staff };
-    signIn.OffersPasskey.ShouldBeFalse();
-    signIn.ShowsWorkAccountLead.ShouldBeTrue();
-    signIn.ShowsStaffNote.ShouldBeTrue();
-    SignInOptions.StaffNote.ShouldBe("Staff only.");
-    SignInOptions.WorkAccountLead.ShouldBe("Use your Microsoft 365 work account.");
-    return Task.CompletedTask;
-  }
-
-  public static Task Bind_Mode_Names_And_Reject_An_Unknown_Name()
-  {
-    SignInOptions staff = Bind(new Dictionary<string, string?>
-    {
-      ["SignInOptions:Mode"] = "Staff"
-    });
-    staff.Mode.ShouldBe(SignInMode.Staff);
-
-    SignInOptions microsoft365 = Bind(new Dictionary<string, string?>
-    {
-      ["SignInOptions:Mode"] = "microsoft365only"
-    });
-    microsoft365.Mode.ShouldBe(SignInMode.Microsoft365Only);
-
-    Should.Throw<InvalidOperationException>(() => Bind(new Dictionary<string, string?>
-    {
-      ["SignInOptions:Mode"] = "Nope"
-    }));
-    return Task.CompletedTask;
-  }
-
-  public static Task Bind_Both_Checked_In_Sections_To_The_Code_Default()
-  {
+    IConfiguration empty = new ConfigurationBuilder().Build();
+    SignInOptionsValidator validator = new(empty);
     SignInOptions defaults = new();
-    SignInOptions server = BindCheckedIn("source/container-apps/web/projects/web-server/appsettings.json");
-    SignInOptions spa = BindCheckedIn("source/container-apps/web/projects/web-spa/wwwroot/appsettings.json");
-    server.Mode.ShouldBe(defaults.Mode);
-    spa.Mode.ShouldBe(defaults.Mode);
-    server.Mode.ShouldBe(SignInMode.Passkey);
+    defaults.Methods.ShouldBe([SignInMethod.Passkey, SignInMethod.Microsoft365]);
+    validator.Validate(defaults).IsValid.ShouldBeTrue();
+    validator.Validate(new SignInOptions { Methods = [SignInMethod.Microsoft365] }).IsValid.ShouldBeTrue();
+    validator.Validate(new SignInOptions { Methods = [] }).IsValid.ShouldBeFalse();
+    validator.Validate(new SignInOptions
+    {
+      Methods = [SignInMethod.Passkey, SignInMethod.Passkey]
+    }).IsValid.ShouldBeFalse();
+    validator.Validate(new SignInOptions { Methods = [(SignInMethod)99] }).IsValid.ShouldBeFalse();
     return Task.CompletedTask;
   }
 
-  private static SignInOptions Bind(Dictionary<string, string?> values)
+  public static Task Reject_An_Unknown_Method_Name()
   {
-    ConfigurationBuilder builder = new();
-    builder.AddInMemoryCollection(values);
-    SignInOptions bound = new();
-    builder.Build().GetSection(SignInOptions.SectionName).Bind(bound);
-    return bound;
+    IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+    {
+      ["SignInOptions:Methods:0"] = "Nope"
+    }).Build();
+    SignInOptionsValidator validator = new(configuration);
+    validator.Validate(new SignInOptions { Methods = [SignInMethod.Passkey] }).IsValid.ShouldBeFalse();
+
+    IConfiguration wrongCase = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+    {
+      ["SignInOptions:Methods:0"] = "microsoft365"
+    }).Build();
+    new SignInOptionsValidator(wrongCase)
+      .Validate(new SignInOptions { Methods = [SignInMethod.Microsoft365] })
+      .IsValid.ShouldBeFalse();
+    return Task.CompletedTask;
   }
 
-  private static SignInOptions BindCheckedIn(string relativePath)
+  public static Task Replace_The_Initializer_With_The_Checked_In_Passkey_List()
+  {
+    SignInOptions server = new();
+    server.Methods.ShouldBe([SignInMethod.Passkey, SignInMethod.Microsoft365]);
+    server.ApplyConfiguredMethods(LoadCheckedIn("source/container-apps/web/projects/web-server/appsettings.json"));
+    server.Methods.ShouldBe([SignInMethod.Passkey]);
+    return Task.CompletedTask;
+  }
+
+  public static Task Leave_SignInOptions_Out_Of_The_Spa_Appsettings()
+  {
+    string json = File.ReadAllText(Path.Combine(
+      RepoRoot(),
+      "source/container-apps/web/projects/web-spa/wwwroot/appsettings.json"));
+    using JsonDocument document = JsonDocument.Parse(json);
+    document.RootElement.TryGetProperty("SignInOptions", out _).ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Append_Microsoft365_When_Asked_And_Leave_Index_Zero_Alone()
+  {
+    SignInOptions appended = new();
+    appended.ApplyConfiguredMethods(Methods("Passkey", includeMicrosoft365: "true"));
+    appended.Methods.ShouldBe([SignInMethod.Passkey, SignInMethod.Microsoft365]);
+    SignInOptions.ConfigurationLists(Methods("Passkey", includeMicrosoft365: "true"), SignInMethod.Microsoft365)
+      .ShouldBeTrue();
+    SignInOptions.RequestsMicrosoft365(Methods("Passkey", includeMicrosoft365: "1")).ShouldBeTrue();
+
+    SignInOptions untouched = new();
+    untouched.ApplyConfiguredMethods(Methods("Passkey", includeMicrosoft365: null));
+    untouched.Methods.ShouldBe([SignInMethod.Passkey]);
+    SignInOptions.ConfigurationLists(Methods("Passkey", includeMicrosoft365: "false"), SignInMethod.Microsoft365)
+      .ShouldBeFalse();
+
+    SignInOptions kept = new();
+    kept.ApplyConfiguredMethods(Methods("Microsoft365", includeMicrosoft365: "false"));
+    kept.Methods.ShouldBe([SignInMethod.Microsoft365]);
+    return Task.CompletedTask;
+  }
+
+  private static IConfiguration Methods(string method, string? includeMicrosoft365)
+  {
+    Dictionary<string, string?> values = new()
+    {
+      ["SignInOptions:Methods:0"] = method
+    };
+    if (includeMicrosoft365 is not null)
+    {
+      values["SignInOptions:IncludeMicrosoft365"] = includeMicrosoft365;
+    }
+
+    return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+  }
+
+  private static IConfiguration LoadCheckedIn(string relativePath)
   {
     using FileStream stream = File.OpenRead(Path.Combine(RepoRoot(), relativePath));
     using JsonDocument document = JsonDocument.Parse(stream);
     Dictionary<string, string?> values = new(StringComparer.OrdinalIgnoreCase);
     Flatten(SignInOptions.SectionName, document.RootElement.GetProperty(SignInOptions.SectionName), values);
-    return Bind(values);
+    return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
   }
 
   private static void Flatten(string prefix, JsonElement element, Dictionary<string, string?> values)
@@ -121,7 +129,24 @@ public class SignInOptions_Should_
     {
       foreach (JsonProperty property in element.EnumerateObject())
       {
+        if (property.NameEquals("_comment"))
+        {
+          continue;
+        }
+
         Flatten(prefix + ":" + property.Name, property.Value, values);
+      }
+
+      return;
+    }
+
+    if (element.ValueKind == JsonValueKind.Array)
+    {
+      int index = 0;
+      foreach (JsonElement item in element.EnumerateArray())
+      {
+        Flatten(prefix + ":" + index, item, values);
+        index++;
       }
 
       return;

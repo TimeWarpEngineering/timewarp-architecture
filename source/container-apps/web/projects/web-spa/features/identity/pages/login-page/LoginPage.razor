@@ -1,12 +1,8 @@
 @namespace TimeWarp.Architecture.Features.Identity
 @inherits BaseComponent
-@inject IOptions<SignInOptions> SignInOptionsAccessor
-
 @code {
   public static string Title => "Sign in";
   public static Icon? NavIcon => new Icons.Regular.Size20.PersonPasskey();
-
-  private SignInOptions SignIn => SignInOptionsAccessor.Value;
 
   [SuppressMessage
   (
@@ -17,13 +13,12 @@
   [Parameter] [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
 
   private bool IsBusy => ActionTrackingState.IsActive;
-  private bool? ShowMicrosoft365 => SignInState.Microsoft365Offered;
 
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
     await NoSubSignInState.FetchSession();
-    await NoSubSignInState.FetchMicrosoft365Offered();
+    await NoSubSignInState.FetchOfferedSignInMethods();
 
     // Lifecycle redirect: an already-signed-in visitor never sees this page. Still an action
     // (RouteState.ChangeRoute) — components only dispatch (TWA0026).
@@ -71,6 +66,8 @@
   private Task CreatePasskey() => NoSubSignInState.CreateAccountWithPasskey(GetSafeReturnUrl(ReturnUrl));
 
   private Task ContinueWithMicrosoft365() => NoSubSignInState.SignInWithMicrosoft365(GetSafeReturnUrl(ReturnUrl));
+
+  private Task RetryOfferedMethods() => NoSubSignInState.FetchOfferedSignInMethods();
 }
 
 <PageTitle>Sign in</PageTitle>
@@ -78,12 +75,13 @@
 <TimeWarpFocusedPage>
   <div class="twe-stack">
     <Card Title="Sign in">
-      <SignInChoices SignIn="SignIn"
-                     Microsoft365Offered="ShowMicrosoft365"
+      <SignInChoices Methods="SignInState.OfferedMethods"
                      IsBusy="IsBusy"
+                     LoadFailed="SignInState.OfferedMethodsFailed"
                      OnPasskey="ContinueWithPasskey"
                      OnCreateAccount="CreatePasskey"
-                     OnMicrosoft365="ContinueWithMicrosoft365" />
+                     OnMicrosoft365="ContinueWithMicrosoft365"
+                     OnRetry="RetryOfferedMethods" />
     </Card>
   </div>
 </TimeWarpFocusedPage>

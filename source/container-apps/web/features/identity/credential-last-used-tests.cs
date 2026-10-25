@@ -180,7 +180,10 @@ namespace TimeWarp.Architecture.Features.Identity
       (
         store,
         new StubCurrentPrincipalAccessor(principal.Id),
-        Microsoft.Extensions.Options.Options.Create(new Application.EntraAuthenticationOptions()),
+        Microsoft.Extensions.Options.Options.Create(new Application.SignInOptions
+        {
+          Methods = [SignInMethod.Passkey]
+        }),
         new InMemorySiteSettingsStore()
       );
       OneOf.OneOf<GetCredentials.Response, SharedProblemDetails> result =

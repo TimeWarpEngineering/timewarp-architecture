@@ -97,7 +97,7 @@ public class Given_Emptied_Store_
         await response.Content.ReadAsStringAsync(),
         ContractSerializationDefaults.Options);
     offered.ShouldNotBeNull();
-    offered.Offered.ShouldBeFalse();
+    offered.Methods.ShouldNotContain(SignInMethod.Microsoft365);
     SiteSettings? seeded = await Store.GetAsync();
     seeded.ShouldNotBeNull();
     seeded.EntraAllowBootstrap.ShouldBeFalse();
@@ -109,7 +109,6 @@ public class Given_Emptied_Store_
     services.AddKeyedSingleton<ISiteSettingsStore>(SeedOnReadSiteSettingsStore.InnerStoreKey, Store);
     services.PostConfigure<EntraAuthenticationOptions>(options =>
     {
-      options.Enabled = false;
       options.AllowBootstrap = false;
       options.ReseedSiteSettings = false;
     });

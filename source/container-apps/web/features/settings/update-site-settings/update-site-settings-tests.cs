@@ -29,6 +29,7 @@ namespace TimeWarp.Architecture.Features.Settings
   using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
+  using TimeWarp.Architecture.Features.Identity;
   using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Foundation.Types;
   using TimeWarp.Identity;
@@ -198,7 +199,11 @@ namespace TimeWarp.Architecture.Features.Settings
       UpdateHandler handler = new(
         new SeedOnReadSiteSettingsStore(
           store,
-          new SiteSettingsSeeder(store, configured, NullLogger<SiteSettingsSeeder>.Instance),
+          new SiteSettingsSeeder(
+            store,
+            configured,
+            Options.Create(new SignInOptions { Methods = [SignInMethod.Passkey] }),
+            NullLogger<SiteSettingsSeeder>.Instance),
           isDevelopment: false,
           NullLogger<SeedOnReadSiteSettingsStore>.Instance));
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(

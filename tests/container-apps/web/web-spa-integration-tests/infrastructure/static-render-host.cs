@@ -9,9 +9,9 @@
 // registered because FilterBar's search debounce injects that clock; a static render never
 // waits on it. Brand options and the signed-in principal are the only per-call inputs.
 // Title and CountOpen live here because both contracts read the h1 the same way.
-// Brand and sign-in options register through IOptions<>. The Options namespace is a global
+// Brand options register through IOptions<>. The Options namespace is a global
 // using only when the api template symbol is on, and this host compiles with that symbol off,
-// so the file imports the namespace itself.
+// so the file imports the namespace itself. Sign-in buttons read the server's offered list.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa.Integration.Tests.Infrastructure;
@@ -43,7 +43,6 @@ public static class StaticRenderHost
     serviceCollection.AddScoped<IJSRuntime, HeadlessJsRuntime>();
     serviceCollection.AddScoped(_ => A.Fake<ISessionStorageService>());
     serviceCollection.AddSingleton<IOptions<BrandOptions>>(Options.Create(brandOptions));
-    serviceCollection.AddSingleton<IOptions<SignInOptions>>(Options.Create(new SignInOptions()));
     serviceCollection.AddWebSpaGeneratedMediator();
     serviceCollection.AddTimeWarpState(options =>
     {

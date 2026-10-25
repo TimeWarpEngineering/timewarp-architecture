@@ -9,7 +9,7 @@
 // and AuthenticationStateListener (Identity) take CrossSliceReference. Configuration* is the
 // bound Entra section from GetSiteSettings, used for the Admin app-registration tenant line.
 // Task 306: EntraTenantAcceptanceMode and EntraAcceptedTenantIds are the admin trust policy.
-// Enabled/AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
+// Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
 // AssistantName (task 361) is the admin form's copy; the labels read
 // AgentSurfaceState.AssistantName from the public query.
 #endregion

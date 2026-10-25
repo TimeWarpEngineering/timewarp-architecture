@@ -29,6 +29,7 @@ namespace TimeWarp.Architecture.Features.Identity.SeedOnReadSiteSettingsStoreTes
   using Microsoft.Extensions.Logging.Abstractions;
   using Microsoft.Extensions.Options;
   using Shouldly;
+  using TimeWarp.Architecture.Features.Identity;
   using TimeWarp.Architecture.Features.Identity.Application;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
@@ -222,11 +223,20 @@ namespace TimeWarp.Architecture.Features.Identity.SeedOnReadSiteSettingsStoreTes
       IOptions<EntraAuthenticationOptions> options = Options.Create(
         new EntraAuthenticationOptions
         {
-          Enabled = enabled,
           AllowBootstrap = allowBootstrap,
           ReseedSiteSettings = reseedSiteSettings
         });
-      SiteSettingsSeeder seeder = new(inner, options, seederLogger ?? NullLogger<SiteSettingsSeeder>.Instance);
+      SignInOptions signIn = new()
+      {
+        Methods = enabled
+          ? [SignInMethod.Passkey, SignInMethod.Microsoft365]
+          : [SignInMethod.Passkey]
+      };
+      SiteSettingsSeeder seeder = new(
+        inner,
+        options,
+        Options.Create(signIn),
+        seederLogger ?? NullLogger<SiteSettingsSeeder>.Instance);
       return new SeedOnReadSiteSettingsStore(
         inner,
         seeder,
