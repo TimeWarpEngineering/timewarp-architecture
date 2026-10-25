@@ -27,7 +27,7 @@
 // Availability flags (task 282): CanRevoke / CanRename per row and CanLinkMicrosoft365 for the page
 // come from CredentialRules over the caller's ACTIVE credentials — the count RevokeCredential.Handler
 // checks and the types EntraTicketProcessor checks — plus EntraSignInOffer (the same answer
-// GetEntraSignInOffered gives the login page). With IncludeRevoked=true the revoked rows are listed
+// GetSignInMethods gives the login page). With IncludeRevoked=true the revoked rows are listed
 // but never counted, and get both flags false.
 // Search (task 345) narrows the returned rows to those whose DisplayName, label, nickname, account
 // hint or fingerprint contains the term, ignoring case. It runs after the flags, so availability

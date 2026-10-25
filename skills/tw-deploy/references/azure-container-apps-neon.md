@@ -212,7 +212,7 @@ dev deploy --target aca-neon   # publish, deploy, migrate, smoke, open the app (
 ```
 
 `dev deploy` publishes the migrations bundle, deploys, migrates on the direct connection, then
-requests `GET /web-server/alive` and `GET /api/identity/entra/offered`. It retries a Neon cold
+requests `GET /web-server/alive` and `GET /api/identity/sign-in-methods`. It retries a Neon cold
 start. It does not request `/api/health`.
 
 Operator steps, when you want one of them alone:
@@ -240,7 +240,7 @@ After migrate (the first request may wait while Neon wakes):
 
 ```bash
 curl -fsS "https://<ingress-fqdn>/web-server/alive"
-curl -fsS "https://<ingress-fqdn>/api/identity/entra/offered"
+curl -fsS "https://<ingress-fqdn>/api/identity/sign-in-methods"
 ```
 
 - `/web-server/alive` does not query Postgres. Expect HTTP 200. Publish emits no HTTP probe
@@ -248,8 +248,8 @@ curl -fsS "https://<ingress-fqdn>/api/identity/entra/offered"
   Development-only and is not mapped in this deployment.
 - `/api/health` is anonymous and runs the `PostgresDbContext` check. That opens a connection and
   wakes Neon. Do not point an uptime monitor at it.
-- `/api/identity/entra/offered` is anonymous and reads site settings from Postgres. Expect HTTP 200
-  and a small JSON body (`offered`). A 500 after a cold start usually means the replica is still
+- `/api/identity/sign-in-methods` is anonymous and reads site settings from Postgres. Expect HTTP 200
+  and a small JSON body (`methods`). A 500 after a cold start usually means the replica is still
   waiting on Neon, or migrate has not been run.
 
 `dev open --target aca-neon` prints or opens `https://<ingress-fqdn>`.

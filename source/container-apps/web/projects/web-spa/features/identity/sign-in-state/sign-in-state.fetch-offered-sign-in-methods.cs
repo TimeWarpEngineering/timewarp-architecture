@@ -34,11 +34,11 @@ partial class SignInState
       {
         try
         {
-          OneOf<GetEntraSignInOffered.Response, FileResponse, SharedProblemDetails> result =
-            await apiService.GetResponse<GetEntraSignInOffered.Response>(
-              new GetEntraSignInOffered.Query(),
+          OneOf<GetSignInMethods.Response, FileResponse, SharedProblemDetails> result =
+            await apiService.GetResponse<GetSignInMethods.Response>(
+              new GetSignInMethods.Query(),
               cancellationToken);
-          return result.TryPickT0(out GetEntraSignInOffered.Response response, out _)
+          return result.TryPickT0(out GetSignInMethods.Response response, out _)
             ? response.Methods
             : null;
         }

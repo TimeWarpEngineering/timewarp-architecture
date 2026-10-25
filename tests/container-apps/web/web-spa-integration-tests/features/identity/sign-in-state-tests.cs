@@ -91,21 +91,21 @@ public class SignInActions_Should_
     scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeNull();
     scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBeNull();
 
-    spa.Api.Answer<GetEntraSignInOffered.Query>(_ =>
-      new GetEntraSignInOffered.Response([SignInMethod.Passkey, SignInMethod.Microsoft365]));
+    spa.Api.Answer<GetSignInMethods.Query>(_ =>
+      new GetSignInMethods.Response([SignInMethod.Passkey, SignInMethod.Microsoft365]));
     await scope.Send(new SignInState.FetchOfferedSignInMethodsActionSet.Action());
     scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBe(true);
     scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBe(true);
 
-    spa.Api.Answer<GetEntraSignInOffered.Query>(_ => throw new HttpRequestException("BFF down"));
+    spa.Api.Answer<GetSignInMethods.Query>(_ => throw new HttpRequestException("BFF down"));
     await scope.Send(new SignInState.FetchOfferedSignInMethodsActionSet.Action());
     scope.Store.GetState<SignInState>().OfferedMethods.ShouldBeNull();
     scope.Store.GetState<SignInState>().Microsoft365Offered.ShouldBeNull();
     scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBeNull();
     scope.Store.GetState<SignInState>().OfferedMethodsFailed.ShouldBeTrue();
 
-    spa.Api.Answer<GetEntraSignInOffered.Query>(_ =>
-      new GetEntraSignInOffered.Response([SignInMethod.Passkey]));
+    spa.Api.Answer<GetSignInMethods.Query>(_ =>
+      new GetSignInMethods.Response([SignInMethod.Passkey]));
     await scope.Send(new SignInState.FetchOfferedSignInMethodsActionSet.Action());
     scope.Store.GetState<SignInState>().OfferedMethodsFailed.ShouldBeFalse();
     scope.Store.GetState<SignInState>().PasskeyOffered.ShouldBe(true);

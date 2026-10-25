@@ -33,7 +33,7 @@ internal static class DeployPipeline
   internal const string Smoke = "smoke";
 
   /// <summary>Anonymous ingress checks. Not <c>/api/health</c> (that opens Postgres and would keep Neon awake).</summary>
-  internal static readonly string[] SmokePaths = ["/web-server/alive", "/api/identity/entra/offered"];
+  internal static readonly string[] SmokePaths = ["/web-server/alive", "/api/identity/sign-in-methods"];
 
   /// <summary>How long smoke may retry a cold ingress or a waking Neon database.</summary>
   internal static readonly TimeSpan SmokeBudget = TimeSpan.FromMinutes(4);

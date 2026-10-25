@@ -6,8 +6,8 @@
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;CA2000;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
-// Co-located Jaribu: GetEntraSignInOffered returns the offered SignInMethod list.
-// Run standalone:  dotnet run source/container-apps/web/features/identity/get-entra-sign-in-offered/get-entra-sign-in-offered-tests.cs
+// Co-located Jaribu: GetSignInMethods returns the offered SignInMethod list.
+// Run standalone:  dotnet run source/container-apps/web/features/identity/get-sign-in-methods/get-sign-in-methods-tests.cs
 
 #region Purpose
 // Jaribu runfile: offered methods are the listed ones, Microsoft365 also needs settings; emptied store re-seeds; JSON has no tenant list.
@@ -33,14 +33,14 @@ namespace TimeWarp.Architecture.Features.Identity
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
-  using static TimeWarp.Architecture.Features.Identity.GetEntraSignInOffered;
-  using OfferedHandler = TimeWarp.Architecture.Features.Identity.Application.GetEntraSignInOffered.Handler;
+  using static TimeWarp.Architecture.Features.Identity.GetSignInMethods;
+  using MethodsHandler = TimeWarp.Architecture.Features.Identity.Application.GetSignInMethods.Handler;
 
   [TestTag("Contracts")]
-  public class GetEntraSignInOfferedResponse_Given_
+  public class GetSignInMethodsResponse_Given_
   {
     [System.Runtime.CompilerServices.ModuleInitializer]
-    internal static void Register() => RegisterTests<GetEntraSignInOfferedResponse_Given_>();
+    internal static void Register() => RegisterTests<GetSignInMethodsResponse_Given_>();
 
     public static Task Json_Should_Expose_Only_The_Method_List()
     {
@@ -55,28 +55,28 @@ namespace TimeWarp.Architecture.Features.Identity
   }
 
   [TestTag("Application")]
-  public class GetEntraSignInOfferedHandler_Given_
+  public class GetSignInMethodsHandler_Given_
   {
     [System.Runtime.CompilerServices.ModuleInitializer]
-    internal static void Register() => RegisterTests<GetEntraSignInOfferedHandler_Given_>();
+    internal static void Register() => RegisterTests<GetSignInMethodsHandler_Given_>();
 
     public static async Task Settings_Disabled_Should_Omit_Microsoft365()
     {
-      OfferedHandler handler = await HandlerAsync(microsoft365Listed: true, settingsEnabled: false);
+      MethodsHandler handler = await HandlerAsync(microsoft365Listed: true, settingsEnabled: false);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
       result.AsT0.Methods.ShouldBe([SignInMethod.Passkey]);
     }
 
     public static async Task Microsoft365_Not_Listed_Should_Omit_It()
     {
-      OfferedHandler handler = await HandlerAsync(microsoft365Listed: false, settingsEnabled: true);
+      MethodsHandler handler = await HandlerAsync(microsoft365Listed: false, settingsEnabled: true);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
       result.AsT0.Methods.ShouldBe([SignInMethod.Passkey]);
     }
 
     public static async Task Both_Listed_And_Enabled_Should_Offer_Both()
     {
-      OfferedHandler handler = await HandlerAsync(microsoft365Listed: true, settingsEnabled: true);
+      MethodsHandler handler = await HandlerAsync(microsoft365Listed: true, settingsEnabled: true);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(new Query(), default);
       result.AsT0.Methods.ShouldBe([SignInMethod.Passkey, SignInMethod.Microsoft365]);
     }
@@ -92,8 +92,8 @@ namespace TimeWarp.Architecture.Features.Identity
       });
       IOptions<EntraAuthenticationOptions> entra = Options.Create(
         new EntraAuthenticationOptions { AllowBootstrap = false });
-      OfferedHandler before = new(signIn, original);
-      OfferedHandler after = new(
+      MethodsHandler before = new(signIn, original);
+      MethodsHandler after = new(
         signIn,
         new SeedOnReadSiteSettingsStore(
           emptied,
@@ -108,7 +108,7 @@ namespace TimeWarp.Architecture.Features.Identity
       seeded.EntraSignInEnabled.ShouldBeTrue();
     }
 
-    private static async Task<OfferedHandler> HandlerAsync(bool microsoft365Listed, bool settingsEnabled)
+    private static async Task<MethodsHandler> HandlerAsync(bool microsoft365Listed, bool settingsEnabled)
     {
       InMemorySiteSettingsStore store = new();
       await store.AddAsync(SiteSettings.Create(settingsEnabled, false, PasskeyPromptMode.Soft));
@@ -118,7 +118,7 @@ namespace TimeWarp.Architecture.Features.Identity
           ? [SignInMethod.Passkey, SignInMethod.Microsoft365]
           : [SignInMethod.Passkey]
       });
-      return new OfferedHandler(signIn, store);
+      return new MethodsHandler(signIn, store);
     }
   }
 }

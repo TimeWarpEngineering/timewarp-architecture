@@ -79,7 +79,7 @@ public class SettingsPagePasskeyButtons_Should_
       _ = cancellationToken;
       object answer = request switch
       {
-        GetEntraSignInOffered.Query => new GetEntraSignInOffered.Response(methods),
+        GetSignInMethods.Query => new GetSignInMethods.Response(methods),
         GetCredentials.Query => new GetCredentials.Response([]),
         _ => throw new InvalidOperationException("No scripted response for " + request.GetType().Name + ".")
       };

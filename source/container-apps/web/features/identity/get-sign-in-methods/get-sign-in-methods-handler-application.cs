@@ -1,5 +1,5 @@
 #region Purpose
-// Server-side handler for GetEntraSignInOffered: the methods the browser should render.
+// Server-side handler for GetSignInMethods: the methods the browser should render.
 #endregion
 
 #region Design
@@ -12,9 +12,9 @@ namespace TimeWarp.Architecture.Features.Identity.Application;
 
 using Microsoft.Extensions.Options;
 using TimeWarp.Identity;
-using static TimeWarp.Architecture.Features.Identity.GetEntraSignInOffered;
+using static TimeWarp.Architecture.Features.Identity.GetSignInMethods;
 
-public sealed class GetEntraSignInOffered
+public sealed class GetSignInMethods
 {
   public sealed class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {

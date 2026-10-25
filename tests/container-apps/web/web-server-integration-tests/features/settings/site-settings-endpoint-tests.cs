@@ -59,15 +59,15 @@ public class Returns_
   public static async Task Anonymous_Offered_Should_Return_Only_Methods()
   {
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-    HttpResponseMessage response = await client.GetAsync("api/identity/entra/offered");
+    HttpResponseMessage response = await client.GetAsync("api/identity/sign-in-methods");
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string json = await response.Content.ReadAsStringAsync();
     json.ShouldContain("methods");
     json.ShouldNotContain("tenant");
     json.ShouldNotContain("bootstrap");
     json.ShouldNotContain("trusted");
-    GetEntraSignInOffered.Response? parsed =
-      JsonSerializer.Deserialize<GetEntraSignInOffered.Response>(json, ContractSerializationDefaults.Options);
+    GetSignInMethods.Response? parsed =
+      JsonSerializer.Deserialize<GetSignInMethods.Response>(json, ContractSerializationDefaults.Options);
     parsed.ShouldNotBeNull();
     parsed.Methods.ShouldContain(SignInMethod.Passkey);
   }
