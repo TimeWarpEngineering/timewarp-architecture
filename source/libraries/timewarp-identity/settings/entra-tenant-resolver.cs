@@ -13,11 +13,14 @@
 // Invalid domains never leave the process and are not cached.
 // Found and NotFound are cached in memory for CacheDuration, keyed by the normalized domain.
 // Network failure, timeout, unexpected status, and unexpected issuer are logged at Warning
-// and are not cached. A cancelled caller token is rethrown. The named HttpClient's Timeout
-// is Infinite so this type's LookupTimeout is the only deadline. The web server hosts the
-// query; this type owns the Microsoft call. Register wires the named client, the memory
-// cache, and the singleton. The five-argument constructor is for tests that need a short
-// timeout; DI uses the three-argument constructor.
+// and are not cached. A cancelled caller token is rethrown. Any other exception is
+// NetworkFailure, including a resilience timeout or a broken circuit. Register drops host
+// resilience handlers from the named client, and that client's Timeout is Infinite, so
+// LookupTimeout is the only deadline.
+// A cache entry sets Size so a host SizeLimit does not throw. The web server hosts the query;
+// this type owns the Microsoft call. Register wires the named client, the memory cache, and
+// the singleton. The five-argument constructor is for tests that need a short timeout; DI
+// uses the three-argument constructor.
 #endregion
 
 namespace TimeWarp.Identity;
@@ -102,9 +105,11 @@ public sealed class EntraTenantResolver
   {
     ArgumentNullException.ThrowIfNull(services);
     services.AddMemoryCache();
-    services.AddHttpClient(
-      HttpClientName,
-      static client => client.Timeout = Timeout.InfiniteTimeSpan);
+    services
+      .AddHttpClient(
+        HttpClientName,
+        static client => client.Timeout = Timeout.InfiniteTimeSpan)
+      .ConfigureAdditionalHttpMessageHandlers(static (handlers, _) => RemoveResilienceHandlers(handlers));
     services.AddSingleton<EntraTenantResolver>();
   }
 
@@ -126,7 +131,12 @@ public sealed class EntraTenantResolver
     EntraTenantLookupResult result = await LookupAsync(normalized, cancellationToken).ConfigureAwait(false);
     if (result.Outcome is EntraTenantLookupOutcome.Found or EntraTenantLookupOutcome.NotFound)
     {
-      Cache.Set(CacheKey(normalized), result, CacheDuration);
+      MemoryCacheEntryOptions entryOptions = new()
+      {
+        AbsoluteExpirationRelativeToNow = CacheDuration,
+        Size = 1
+      };
+      Cache.Set(CacheKey(normalized), result, entryOptions);
     }
 
     return result;
@@ -159,13 +169,17 @@ public sealed class EntraTenantResolver
       LogUnexpectedStatus(Logger, domain, status, null);
       return EntraTenantLookupResult.UnexpectedStatus(domain, status);
     }
-    catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+    // Resilience handlers throw types this assembly does not reference. Caller cancellation is excluded by the filter.
+#pragma warning disable CA1031
+    catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+#pragma warning restore CA1031
     {
-      LogTimedOut(Logger, domain, exception);
-      return EntraTenantLookupResult.TimedOut(domain);
-    }
-    catch (HttpRequestException exception)
-    {
+      if (exception is OperationCanceledException)
+      {
+        LogTimedOut(Logger, domain, exception);
+        return EntraTenantLookupResult.TimedOut(domain);
+      }
+
       LogNetworkFailure(Logger, domain, exception);
       return EntraTenantLookupResult.NetworkFailure(domain);
     }
@@ -238,4 +252,31 @@ public sealed class EntraTenantResolver
   }
 
   private static string CacheKey(string domain) => "entra-tenant:" + domain;
+
+  // Aspire AddStandardResilienceHandler adds ResilienceHandler through ConfigureHttpClientDefaults.
+  // This library does not reference Microsoft.Extensions.Http.Resilience, so the type is matched by name.
+  private static void RemoveResilienceHandlers(IList<DelegatingHandler> handlers)
+  {
+    for (int index = handlers.Count - 1; index >= 0; index--)
+    {
+      if (IsResilienceHandler(handlers[index]))
+      {
+        handlers.RemoveAt(index);
+      }
+    }
+  }
+
+  private static bool IsResilienceHandler(DelegatingHandler handler)
+  {
+    for (Type? type = handler.GetType(); type is not null; type = type.BaseType)
+    {
+      if (type.Name == "ResilienceHandler"
+        && type.Namespace == "Microsoft.Extensions.Http.Resilience")
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

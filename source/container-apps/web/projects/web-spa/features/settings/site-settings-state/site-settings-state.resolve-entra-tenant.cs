@@ -5,9 +5,9 @@
 #region Design
 // The server resolves the id. This handler never parses an issuer. An invalid domain skips
 // the HTTP call and sets AcceptedTenantsMessage. A problem is both the shell notification
-// and that same message. Success appends {tenant id, domain} through EntraTenantIds.TryNormalize
-// so a duplicate id refreshes the domain and two domains for one id are refused without
-// dropping the list. No success toast: the new row is the confirmation.
+// and that same message. A tenant id already on the draft is reported as already listed
+// under its stored domain, and the list is left as it is. A new id is appended through
+// EntraTenantIds.TryNormalize. No success toast: the new row is the confirmation.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -64,6 +64,19 @@ partial class SiteSettingsState
 
       protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
+        foreach (EntraAcceptedTenant entry in SiteSettingsState.DraftAcceptedTenants)
+        {
+          if (entry.TenantId != response.TenantId)
+          {
+            continue;
+          }
+
+          SiteSettingsState.AcceptedTenantsMessage = entry.Domain is null
+            ? $"Tenant {entry.TenantId:D} is already listed."
+            : $"Tenant {entry.TenantId:D} is already listed under {entry.Domain}.";
+          return Task.CompletedTask;
+        }
+
         List<EntraAcceptedTenant> next =
         [
           .. SiteSettingsState.DraftAcceptedTenants,

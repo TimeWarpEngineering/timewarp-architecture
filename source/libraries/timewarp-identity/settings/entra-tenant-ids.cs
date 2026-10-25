@@ -13,9 +13,9 @@
 // JSON is a camelCase array of { tenantId, domain } via JsonSerializerDefaults.Web, including
 // a null domain. There is no reader for the old GUID array. FromJson of that shape, or of
 // unreadable JSON, is an empty list. The column is migrated to entries before this reader
-// runs. ConvertLegacyGuidArrayJson is the conversion the migration test pins: a GUID array
-// becomes entries with a null domain; an object array is unchanged; mixed or unreadable
-// input returns null. Consumers is the Microsoft Account personal tenant. Policy does not
+// runs. Migration ConvertEntraAcceptedTenants rewrites a stored GUID array into null-domain
+// entries. That rewrite is pinned by ef-entra-accepted-tenants-migration-tests.cs. Consumers
+// is the Microsoft Account personal tenant. Policy does not
 // special-case it. TryParse still returns GUIDs for a hand-entered list; each id is stored
 // with a null domain.
 #endregion
@@ -198,79 +198,6 @@ public static class EntraTenantIds
     catch (JsonException)
     {
       return [];
-    }
-  }
-
-  /// <summary>
-  /// Rewrites a JSON array of GUID strings into accepted-tenant entries with a null domain.
-  /// An array of objects is returned unchanged. Mixed, empty-GUID, or unreadable input returns null.
-  /// </summary>
-  public static string? ConvertLegacyGuidArrayJson(string? json)
-  {
-    if (string.IsNullOrWhiteSpace(json))
-    {
-      return null;
-    }
-
-    try
-    {
-      using var document = JsonDocument.Parse(json);
-      if (document.RootElement.ValueKind != JsonValueKind.Array)
-      {
-        return null;
-      }
-
-      if (document.RootElement.GetArrayLength() == 0)
-      {
-        return "[]";
-      }
-
-      bool sawObject = false;
-      bool sawGuid = false;
-      List<EntraAcceptedTenant> entries = [];
-      foreach (JsonElement element in document.RootElement.EnumerateArray())
-      {
-        if (element.ValueKind == JsonValueKind.String)
-        {
-          if (sawObject || !Guid.TryParse(element.GetString(), out Guid tenantId) || tenantId == Guid.Empty)
-          {
-            return null;
-          }
-
-          sawGuid = true;
-          entries.Add(EntraAcceptedTenant.IdOnly(tenantId));
-          continue;
-        }
-
-        if (element.ValueKind == JsonValueKind.Object)
-        {
-          if (sawGuid)
-          {
-            return null;
-          }
-
-          sawObject = true;
-          continue;
-        }
-
-        return null;
-      }
-
-      if (sawObject)
-      {
-        return json;
-      }
-
-      if (!TryNormalize(entries, out IReadOnlyList<EntraAcceptedTenant> normalized, out _))
-      {
-        return null;
-      }
-
-      return ToJson(normalized);
-    }
-    catch (JsonException)
-    {
-      return null;
     }
   }
 

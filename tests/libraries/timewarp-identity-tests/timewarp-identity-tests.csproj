@@ -11,6 +11,7 @@
     <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\source\libraries\timewarp-identity\timewarp-identity.csproj" />

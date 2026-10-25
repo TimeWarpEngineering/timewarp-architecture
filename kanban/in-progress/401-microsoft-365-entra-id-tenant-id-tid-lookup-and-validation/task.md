@@ -55,38 +55,39 @@ release it when needed. Do not route around the library to avoid a release (Stev
 
 ## Goal (implementer restatement)
 
-Admins should name a customer's primary domain and have the server resolve the Entra tenant id from
-Microsoft's OpenID discovery document. `GET https://login.microsoftonline.com/{domain}/.well-known/openid-configuration`
-returns an `issuer` of `https://login.microsoftonline.com/{guid}/v2.0`. That GUID is the tenant id.
-The client never parses the issuer.
+An administrator names a customer's primary domain. The server reads Microsoft's OpenID discovery
+document for that domain and takes the tenant id from an issuer of
+`https://login.microsoftonline.com/{guid}/v2.0`. The browser never parses the issuer.
 
-The resolver lives in `TimeWarp.Identity` next to `EntraTenantIds`, uses `IHttpClientFactory`, and
-returns typed outcomes: found, tenant not found, invalid domain, network failure, timeout, unexpected
-HTTP status, and unexpected issuer. Found and not-found results are cached in memory for a bounded
-time. Network failure, timeout, unexpected status, and unexpected issuer are logged. Nothing collapses
-to a silent null.
+`EntraTenantResolver` in `TimeWarp.Identity` returns a typed outcome: found, not found, invalid
+domain, network failure, timeout, unexpected HTTP status, or unexpected issuer. Found and not-found
+results stay in memory for a bounded time, and each cache entry sets a size so a host `SizeLimit`
+does not throw. The other failures are logged. A cancelled caller token still throws. Every other
+exception is a network failure, so a host resilience timeout or a broken circuit cannot become an
+untyped 500. `Register` removes the host's standard resilience handlers from the named discovery
+client. `LookupTimeout` is the only deadline, and a 503 is one call that reports unexpected status.
 
-Accepted tenants become entries of tenant id plus an optional domain (`EntraAcceptedTenant`). A pasted
-GUID has no domain. Duplicates collapse by tenant id. The aggregate, JSON, EF jsonb column, contracts,
-validator, seeder, sign-in policy, and every caller take the new shape. There is no reader for the old
-GUID array. An EF migration rewrites each stored GUID into an entry with a null domain. Sign-in still
-accepts or rejects on the `tid` claim only.
+Accepted tenants are entries of tenant id plus an optional domain. A pasted GUID has no domain.
+Duplicates collapse by tenant id. Two different domains for one id are refused on save. Sign-in
+still matches the `tid` claim. There is no public converter for the old GUID-array JSON. Migration
+`ConvertEntraAcceptedTenants` rewrites stored GUID arrays into null-domain entries, and
+`ef-entra-accepted-tenants-migration-tests.cs` is the test that pins that rewrite.
 
-The web server hosts `ResolveEntraTenant` (domain in, tenant id and domain out), authorized with
-`PermissionIds.SettingsWrite`, and rate-limited by the existing abuse module. The Authentication page
-replaces the raw-GUID textarea with a list: a domain lookup adds `{id, domain}` and shows
-`contoso.com (guid)`; a known GUID can still be added by hand and shows as a bare GUID. Saving stores
-both fields.
+`ResolveEntraTenant` requires `SettingsWrite` and is limited by `entra-tenant-lookup` (20 permits
+per 60 seconds; the abuse test tightens that to 2). The Authentication page adds `{tenant id, domain}`
+after a lookup. When that tenant id is already on the draft, the page says it is already listed
+under its stored domain and leaves the list unchanged. A known GUID can still be added by hand.
 
-Issuer and resolver rules live in the resolver's Design region. The tenant-acceptance section of
-`web-spa/wwwroot/auth.md` is updated. The published package version and platform pins move together
-when `dev check-version` says the current version is not already ahead of NuGet.
+Issuer rules live in the resolver Design region. `web-spa/wwwroot/auth.md` describes tenant
+acceptance. The package version stays ahead of the last published release.
 
-Done when a valid domain yields the issuer GUID, an unknown domain is a distinct not-found result,
-network/timeout/bad issuer are their own logged results, callers without SettingsWrite are refused and
-the lookup is rate-limited, a repeat lookup hits the cache, the page adds and saves `{id, domain}`,
-existing rows migrate without changing `tid` acceptance, and `dev build` is 0/0 with `dev check-version`
-passing.
+Done when a valid domain yields the issuer GUID, an unknown domain is not-found, network failure,
+timeout, unexpected status, and unexpected issuer stay distinct and logged, a 503 under
+`ConfigureHttpClientDefaults(AddStandardResilienceHandler)` is unexpected status after one call,
+callers without SettingsWrite are refused, the lookup is rate-limited, a repeat found or not-found
+lookup hits the cache, the page adds and saves `{id, domain}`, a second domain for a listed tenant
+does not change the list, existing rows migrate without changing `tid` acceptance, and `dev build`
+is 0/0 with `dev check-version` passing.
 
 ## Checklist
 
@@ -99,6 +100,10 @@ passing.
 - [x] Design region and `auth.md`
 - [x] Version bump and pins
 - [x] Tests
+- [x] Discovery client drops host resilience handlers; a 503 is unexpected status after one call
+- [x] Exceptions other than caller cancellation are network failure; cache entries set Size
+- [x] Public GUID-array converter removed; migration test remains the pin
+- [x] A second domain for a listed tenant leaves the list unchanged
 
 ## Acceptance criteria
 
@@ -140,12 +145,18 @@ passing.
 - Created: 691292 (2026-10-21)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T15:11:12Z
 - Review round 1 (2026-10-25): review oracle (Claude Opus 5.5), effort 3, roster general, session not reported. The goal restatement matches the task, so there is no misread. Open findings: M1 bug, M2 and M3 suggestions, M4 and M5 nits (`review/round-1/merged.md`). The reviewer re-ran `dev build`, the TimeWarp.Identity tests, the resolve-entra-tenant runfile, web-infrastructure-tests (including the migration test against Postgres), and `dev check-version`; all passed. A fix pass is needed. No disposition yet.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T15:21:59Z
+- Fix pass (implement-fix-2, 2026-10-25): M1 drops `AddStandardResilienceHandler` from `entra-tenant-discovery` and maps every exception except caller cancellation to network failure. M2 deletes `ConvertLegacyGuidArrayJson`. M3 reports a tenant id already on the draft as already listed under its stored domain and leaves the list unchanged. M4 sets cache entry `Size` to 1. M5 names the default 20-per-60-second limit and the abuse-test `PermitLimit` of 2. Identity `Lookup_Given_` 15, `Issuer_Given_` 7, `SiteSettings_Given_` 25, SPA `ResolveEntraTenant_Action_Should_` 4, all passed. `dev check-version`: source `2.0.0-beta.26` is one prerelease ahead of NuGet `2.0.0-beta.25`.
 
 ## Results
 
-An admin enters a primary domain. `EntraTenantResolver` reads the OpenID discovery `issuer` and stores `{tenantId, domain?}`. A pasted GUID stays an entry with no domain. `ResolveEntraTenant` requires `SettingsWrite`, is limited by `entra-tenant-lookup` (20 per 60 seconds), and caches found and not-found results for 10 minutes. Unknown domains, network failure, timeout, unexpected status, and unexpected issuer are separate results. Migration `ConvertEntraAcceptedTenants` rewrites a stored GUID array into null-domain entries; sign-in still matches the `tid` claim. Package version and the task-124 pins are `2.0.0-beta.26`. The ingress golden already lists `api/settings`, so it was left as it was. The Authentication page was not opened in a browser; the look-up action is covered by the in-proc SPA test.
+An admin enters a primary domain. `EntraTenantResolver` reads the OpenID discovery `issuer` and stores `{tenantId, domain?}`. A pasted GUID stays an entry with no domain. `ResolveEntraTenant` requires `SettingsWrite`, is limited by `entra-tenant-lookup` (20 per 60 seconds), and caches found and not-found results for 10 minutes. Unknown domains, network failure, timeout, unexpected status, and unexpected issuer are separate results. The named client `entra-tenant-discovery` removes host resilience handlers, so a Microsoft 503 is unexpected status after one call, and `LookupTimeout` is the only deadline. Any exception other than caller cancellation is a network failure. Cache entries set `Size` to 1. Migration `ConvertEntraAcceptedTenants` rewrites a stored GUID array into null-domain entries; there is no public converter for that shape. Sign-in still matches the `tid` claim. Looking up a second domain for a tenant already on the draft says it is already listed under its stored domain and does not change the list. Package version and the task-124 pins are `2.0.0-beta.26`. The ingress golden already lists `api/settings`, so it was left as it was. The Authentication page was not opened in a browser; the look-up action is covered by the in-proc SPA test.
 
 ### How to validate
 
-Smoke: Sign in as an administrator, open `/Admin/Authentication`, enter `contoso.com`, choose Look up, then Save.
-Expect: The list shows `contoso.com` followed by its tenant GUID, and a later read of site settings returns that same tenant id and `contoso.com`. A value that is not a domain shows a domain error and does not call the server. A member GET of `api/settings/entra-tenant?domain=contoso.com` is 403. A third anonymous GET of that route inside the limit window is 429 with policy `entra-tenant-lookup`. A row that still holds a GUID array migrates to two fields per id, domain null, and those ids still pass the sign-in `tid` check.
+Smoke: Sign in as an administrator, open `/Admin/Authentication`, enter `contoso.com`, choose Look up, then Save. Look up a second verified domain of that same tenant.
+Expect: The list shows `contoso.com` followed by its tenant GUID, and a later read of site settings returns that same tenant id and `contoso.com`. The second domain shows that the tenant is already listed under `contoso.com` and does not add a row. A value that is not a domain shows a domain error and does not call the server. A member GET of `api/settings/entra-tenant?domain=contoso.com` is 403. The default `entra-tenant-lookup` limit is 20 permits per 60 seconds. The abuse test `EntraTenantLookup_Should_Return_Structured_429_After_Limit` overrides that to `PermitLimit` 2, and under that override a third anonymous GET of the route inside the window is 429 with policy `entra-tenant-lookup`. A row that still holds a GUID array migrates to two fields per id, domain null, and those ids still pass the sign-in `tid` check.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5

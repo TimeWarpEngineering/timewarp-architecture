@@ -132,17 +132,4 @@ public class SiteSettings_Given_
     error.ShouldBe("'not a domain' is not a domain name.");
     return Task.CompletedTask;
   }
-
-  public static Task Legacy_Guid_Array_Should_Convert_To_Null_Domains()
-  {
-    string? converted = EntraTenantIds.ConvertLegacyGuidArrayJson($"[\"{Other:D}\", \"{Home:D}\"]");
-    converted.ShouldNotBeNull();
-    EntraTenantIds.FromJson(converted).ShouldBe(
-      [EntraAcceptedTenant.IdOnly(Home), EntraAcceptedTenant.IdOnly(Other)]);
-    EntraTenantIds.ConvertLegacyGuidArrayJson("[]").ShouldBe("[]");
-    EntraTenantIds.ConvertLegacyGuidArrayJson("[\"not-a-guid\"]").ShouldBeNull();
-    string objects = EntraTenantIds.ToJson([new EntraAcceptedTenant(Home, "contoso.com")]);
-    EntraTenantIds.ConvertLegacyGuidArrayJson(objects).ShouldBe(objects);
-    return Task.CompletedTask;
-  }
 }

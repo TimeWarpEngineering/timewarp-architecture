@@ -4,16 +4,20 @@
 
 #region Design
 // Microsoft's endpoint is an externality. These tests never open a socket. The handler records
-// the request URI and returns a scripted status, a thrown HttpRequestException, or a delay that
-// honors the caller's token so a short LookupTimeout proves TimedOut. Found and NotFound stay
-// in the memory cache. Network failure, timeout, unexpected status, and unexpected issuer do not,
-// and each of those writes one Warning.
+// the request URI and returns a scripted status, a thrown exception, or a delay that honors the
+// caller's token so a short LookupTimeout proves TimedOut. Found and NotFound stay in the memory
+// cache, including when the cache has a SizeLimit. Network failure, timeout, unexpected status,
+// and unexpected issuer do not, and each of those writes one Warning. An exception other than
+// caller cancellation is NetworkFailure. Register removes handlers added by
+// ConfigureHttpClientDefaults(AddStandardResilienceHandler), so HTTP 503 is UnexpectedStatus
+// after one call.
 #endregion
 
 namespace EntraTenantResolver_;
 
 using System.Net;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 public class Issuer_Given_
@@ -233,6 +237,53 @@ public class Lookup_Given_
 
     result.Outcome.ShouldBe(EntraTenantLookupOutcome.InvalidDomain);
     harness.Handler.Calls.ShouldBe(0);
+  }
+
+  public static async Task Unexpected_Exception_Should_Be_Network_Failure()
+  {
+    using LookupHarness harness = LookupHarness.Script(_ => throw new InvalidOperationException("circuit open"));
+
+    EntraTenantLookupResult result = await harness.Resolver.ResolveAsync("contoso.com", CancellationToken.None);
+
+    result.Outcome.ShouldBe(EntraTenantLookupOutcome.NetworkFailure);
+    harness.Logger.Warnings.ShouldContain(message => message.Contains("network request", StringComparison.Ordinal));
+  }
+
+  public static async Task Cache_Should_Accept_A_Size_Limit()
+  {
+    ScriptedHandler handler = new((_, _) => Task.FromResult(Json(HttpStatusCode.OK, IssuerBody(Tenant))));
+    using MemoryCache cache = new(new MemoryCacheOptions { SizeLimit = 4 });
+    EntraTenantResolver resolver = new(
+      new ScriptedFactory(handler),
+      cache,
+      new CollectingLogger(),
+      TimeSpan.FromSeconds(2),
+      TimeSpan.FromMinutes(10));
+
+    EntraTenantLookupResult result = await resolver.ResolveAsync("contoso.com", CancellationToken.None);
+
+    result.Outcome.ShouldBe(EntraTenantLookupOutcome.Found);
+    handler.Calls.ShouldBe(1);
+  }
+
+  public static async Task Standard_Resilience_Should_Report_503_After_One_Call()
+  {
+    ScriptedHandler handler = new((_, _) => Task.FromResult(Json(HttpStatusCode.ServiceUnavailable, "unavailable")));
+    ServiceCollection services = new();
+    services.ConfigureHttpClientDefaults(static builder => builder.AddStandardResilienceHandler());
+    EntraTenantResolver.Register(services);
+    services
+      .AddHttpClient(EntraTenantResolver.HttpClientName)
+      .ConfigurePrimaryHttpMessageHandler(() => handler);
+
+    await using ServiceProvider provider = services.BuildServiceProvider();
+    EntraTenantResolver resolver = provider.GetRequiredService<EntraTenantResolver>();
+
+    EntraTenantLookupResult result = await resolver.ResolveAsync("contoso.com", CancellationToken.None);
+
+    result.Outcome.ShouldBe(EntraTenantLookupOutcome.UnexpectedStatus);
+    result.StatusCode.ShouldBe(503);
+    handler.Calls.ShouldBe(1);
   }
 
   public static async Task Caller_Cancellation_Should_Propagate()
