@@ -58,6 +58,10 @@ The anonymous read already returns every sign-in method the browser should rende
 
 `./bin/dev build` succeeded with 0 warnings and 0 errors. Co-located `get-sign-in-methods-tests.cs` passed 5/5. `dev-cli-tests` passed 342/342. `web-spa-integration-tests` passed 500/500. `web-server-integration-tests` passed 357 with 1 skipped and 0 failed. `./bin/dev template-smoke` succeeded (generated web Jaribu 405/405, api Jaribu 9/9, timewarp-testing 14/14). `./bin/dev lint-skills` passed 9/9. `ganda repo audit` exited 0. The only finding is the pre-existing `kanban-landed` warning for eight other claims that have no worktree on this machine.
 
+### Review
+
+The review ran 1 round with one general reviewer at effort 1 (by diff, 138 lines). It found 0 bugs, 0 suggestions and 0 nits, so 0 are open and none are wontfix. Disposition is **clean**. The reviewer re-ran the co-located `get-sign-in-methods-tests.cs` (5/5) and `./bin/dev build` (0 warnings, 0 errors). A search of the whole tree outside `kanban/` finds no old name, route or folder. Artifacts are `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md` and `review/disposition.md`.
+
 ### How to validate
 
 Smoke: from a running app, `curl -fsS "https://<ingress-or-local-host>/api/identity/sign-in-methods"`. The co-located stand-in is `dotnet run --file source/container-apps/web/features/identity/get-sign-in-methods/get-sign-in-methods-tests.cs`.
@@ -69,6 +73,7 @@ Expect: HTTP 200 and a JSON object whose payload is `methods` (Passkey when it i
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
 - Implementation: implementer oracle (2026-10-25). Audit advisory `kanban-landed` names other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) and was left as-is.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T12:01:17Z
+- Review oracle: reviewer (claude, claude-opus-5-5), effort 1, roster general, 1 round, disposition clean — 2026-10-25
 
 ## Notes
 
