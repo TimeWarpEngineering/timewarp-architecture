@@ -139,6 +139,7 @@ passing.
 
 - Created: 691292 (2026-10-21)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T15:11:12Z
+- Review round 1 (2026-10-25): review oracle (Claude Opus 5.5), effort 3, roster general, session not reported. The goal restatement matches the task, so there is no misread. Open findings: M1 bug, M2 and M3 suggestions, M4 and M5 nits (`review/round-1/merged.md`). The reviewer re-ran `dev build`, the TimeWarp.Identity tests, the resolve-entra-tenant runfile, web-infrastructure-tests (including the migration test against Postgres), and `dev check-version`; all passed. A fix pass is needed. No disposition yet.
 
 ## Results
 
