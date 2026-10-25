@@ -96,11 +96,11 @@ public class CollectTenantIds_Given_
   public static Task Union_Should_DedupeCaseInsensitivePreserveFirstCasing()
   {
     IReadOnlyList<string> ids = EntraTenants.CollectTenantIds(
-      ["00000000-0000-0000-0000-000000000001", ""],
-      ["00000000-0000-0000-0000-000000000001", "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"]);
+      ["aaaaaaaa-0000-0000-0000-000000000001", ""],
+      ["AAAAAAAA-0000-0000-0000-000000000001", "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"]);
     ids.ShouldBe(
     [
-      "00000000-0000-0000-0000-000000000001",
+      "aaaaaaaa-0000-0000-0000-000000000001",
       "74ca6706-93ef-4a23-b05a-e9ab17b7f86f"
     ]);
     return Task.CompletedTask;
@@ -147,11 +147,16 @@ public class SelectTenant_Given_
 
   public static Task MatchById_DifferentGuidCasing_Should_Select()
   {
+    EntraTenant tenant = new(
+      "aaaaaaaa-0000-0000-0000-000000000001",
+      "Contoso, Ltd",
+      "contoso.com",
+      NameResolved: true);
     TenantSelection selection = EntraTenants.SelectTenant(
-      [Contoso, Other],
-      "00000000-0000-0000-0000-000000000001");
+      [tenant, Other],
+      "AAAAAAAA-0000-0000-0000-000000000001");
     selection.Status.ShouldBe(TenantSelectionStatus.Selected);
-    selection.Selected.ShouldBe(Contoso);
+    selection.Selected.ShouldBe(tenant);
     return Task.CompletedTask;
   }
 

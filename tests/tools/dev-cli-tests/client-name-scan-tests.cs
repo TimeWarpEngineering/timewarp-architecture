@@ -121,6 +121,46 @@ public class Unpack_Given_
     return Task.CompletedTask;
   }
 
+  public static Task RealPack_Should_CoverAllowListPaths()
+  {
+    string root = ClientNameScanRepo.Root();
+    string project = File.ReadAllText(Path.Combine(root, ClientNameScan.TemplateProjectRelativePath));
+    ClientNameScan.TryListPackedFiles(root, project, out IReadOnlyList<string> files, out string? error)
+      .ShouldBeTrue();
+    error.ShouldBeNull();
+    files.ShouldContain("readme.md");
+    files.ShouldContain("Directory.Build.props");
+    files.ShouldContain("timewarp-architecture.slnx");
+    files.ShouldContain(".template.config/template.json");
+    files.ShouldContain("kanban/overview.md");
+    files.ShouldContain("kanban/task-template.md");
+    files.ShouldContain("kanban/to-do/.gitkeep");
+    files.ShouldContain("kanban/done/.gitkeep");
+    files.ShouldContain(path => path.StartsWith("msbuild/", StringComparison.Ordinal));
+    files.ShouldNotContain(ClientNameScan.NamesFileRelativePath);
+    files.ShouldNotContain(ClientNameScan.ToolsProbeRelativePath);
+    files.ShouldNotContain(path =>
+      path.StartsWith("kanban/", StringComparison.Ordinal)
+      && path != "kanban/archived/.gitkeep"
+      && path != "kanban/backlog/.gitkeep"
+      && path != "kanban/done/.gitkeep"
+      && path != "kanban/in-progress/.gitkeep"
+      && path != "kanban/overview.md"
+      && path != "kanban/task-template.md"
+      && path != "kanban/to-do/.gitkeep");
+    files.ShouldNotContain(path => path.StartsWith("documentation/", StringComparison.Ordinal));
+    foreach (string path in files)
+    {
+      string[] parts = path.Split('/');
+      if (parts[0] == "skills")
+      {
+        parts.ShouldNotContain("analysis");
+      }
+    }
+
+    return Task.CompletedTask;
+  }
+
   public static Task ToolsInclude_Should_CountAsPacked()
   {
     const string project = """
@@ -149,6 +189,100 @@ public class Unpack_Given_
     string? error = ClientNameScan.UnpackedError(template, project);
     error.ShouldNotBeNull();
     error.ShouldContain(ClientNameScan.NamesFileRelativePath);
+    return Task.CompletedTask;
+  }
+}
+
+public class PackedFiles_Given_
+{
+  [System.Runtime.CompilerServices.ModuleInitializer]
+  internal static void Register() => RegisterTests<PackedFiles_Given_>();
+
+  public static Task AllowList_Should_ListIncludedFilesAndSkipTheRest()
+  {
+    string root = Directory.CreateTempSubdirectory("client-name-scan-").FullName;
+    try
+    {
+      Directory.CreateDirectory(Path.Combine(root, "msbuild"));
+      File.WriteAllText(Path.Combine(root, "msbuild", "pack.props"), "acmeclient\n");
+      Directory.CreateDirectory(Path.Combine(root, "skills", "tw-sample", "analysis"));
+      File.WriteAllText(Path.Combine(root, "skills", "tw-sample", "SKILL.md"), "clean\n");
+      File.WriteAllText(Path.Combine(root, "skills", "tw-sample", "analysis", "note.md"), "acmeclient\n");
+      File.WriteAllText(Path.Combine(root, "readme.md"), "clean\n");
+      File.WriteAllText(Path.Combine(root, "secret.md"), "acmeclient\n");
+      File.WriteAllText(Path.Combine(root, "icon.txt"), "clean\n");
+      Directory.CreateDirectory(Path.Combine(root, "kanban", "done"));
+      File.WriteAllText(Path.Combine(root, "kanban", "overview.md"), "clean\n");
+      File.WriteAllText(Path.Combine(root, "kanban", "done", "task.md"), "acmeclient\n");
+      Directory.CreateDirectory(Path.Combine(root, "source", "bin"));
+      File.WriteAllText(Path.Combine(root, "source", "app.cs"), "clean\n");
+      File.WriteAllText(Path.Combine(root, "source", "bin", "app.cs"), "acmeclient\n");
+
+      const string project = """
+        <Project>
+          <ItemGroup>
+            <Content Include="../../../msbuild/**/*" />
+            <Content Include="../../../source/**/*" Exclude="../../../source/**/bin/**" />
+            <Content Include="../../../skills/**/*" Exclude="../../../skills/**/analysis/**" />
+            <Content Include="../../../kanban/overview.md" />
+            <Content Include="../../../left-out.md" Pack="false" />
+            <None Include="../../../readme.md">
+              <Pack>True</Pack>
+            </None>
+            <None Include="../../../icon.txt" Pack="true" />
+            <None Include="../../../secret.md" />
+            <Compile Remove="**\*" />
+          </ItemGroup>
+        </Project>
+        """;
+
+      ClientNameScan.TryListPackedFiles(root, project, out IReadOnlyList<string> files, out string? error)
+        .ShouldBeTrue();
+      error.ShouldBeNull();
+      files.ShouldBe(
+      [
+        "icon.txt",
+        "kanban/overview.md",
+        "msbuild/pack.props",
+        "readme.md",
+        "skills/tw-sample/SKILL.md",
+        "source/app.cs"
+      ]);
+
+      IReadOnlyList<ClientNameScan.Hit> hits = ClientNameScan.FindHitsInFiles(root, files, ["acmeclient"]);
+      hits.Count.ShouldBe(1);
+      hits[0].RelativePath.ShouldBe("msbuild/pack.props");
+      hits[0].Line.ShouldBe(1);
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
+    return Task.CompletedTask;
+  }
+
+  public static Task PropertyInclude_Should_Fail()
+  {
+    const string project = """
+      <Project>
+        <ItemGroup>
+          <Content Include="../../../$(Extra)/**/*" />
+        </ItemGroup>
+      </Project>
+      """;
+    string root = Directory.CreateTempSubdirectory("client-name-scan-").FullName;
+    try
+    {
+      ClientNameScan.TryListPackedFiles(root, project, out _, out string? error).ShouldBeFalse();
+      error.ShouldNotBeNull();
+      error.ShouldContain("$(Extra)");
+    }
+    finally
+    {
+      Directory.Delete(root, recursive: true);
+    }
+
     return Task.CompletedTask;
   }
 }

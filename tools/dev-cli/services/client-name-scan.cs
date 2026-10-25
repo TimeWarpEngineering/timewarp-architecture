@@ -6,11 +6,12 @@
 // The name list is documentation/developer/client-names.txt. That tree is an unconditional
 // exclude in .template.config/template.json, and timewarp-templates packs by allow-list, so
 // the list itself is not in the nupkg. ganda repo audit has no word-list check, so this scan
-// is the gate. It walks source/, tests/, and skills/ except skills/**/analysis/**, plus tools/
-// only when the pack allow-list includes tools/dev-cli/dev.cs. Matching is a case-insensitive
-// substring, the same match as a full-tree search, not a diff. dev build runs the scan, and
-// CI's fast job runs that build. dev lint-skills runs it too, because a skills-only PR does
-// not start the fast job.
+// is the gate. The file set is that allow-list: Content items, and None items with Pack=true,
+// minus each item's Exclude. skills/**/analysis/**, bin, obj, artifacts, and node_modules are
+// skipped as well. An include or exclude that uses an MSBuild property fails the scan, so a
+// new pattern cannot ship unseen. Matching is a case-insensitive substring. dev build runs
+// the scan, and CI's fast job runs that build. dev lint-skills runs it too, because a
+// skills-only PR does not start the fast job.
 #endregion
 
 namespace DevCli.Services;
@@ -100,13 +101,12 @@ internal static class ClientNameScan
       return ScanOutcome.Failed(unpacked);
     }
 
-    List<string> roots = ["source", "tests", "skills"];
-    if (PackIncludesRepoPath(project, ToolsProbeRelativePath))
+    if (!TryListPackedFiles(repoRoot, project, out IReadOnlyList<string> packedFiles, out string? listError))
     {
-      roots.Add("tools");
+      return ScanOutcome.Failed(listError ?? "Packed file list could not be built.");
     }
 
-    return new ScanOutcome(null, FindHits(repoRoot, roots, names));
+    return new ScanOutcome(null, FindHitsInFiles(repoRoot, packedFiles, names));
   }
 
   internal static bool TryReadNames(string repoRoot, out IReadOnlyList<string> names, out string? error)
@@ -271,6 +271,112 @@ internal static class ClientNameScan
     return false;
   }
 
+  /// <summary>Repo-relative files the template pack includes. Fails when an include or exclude uses an MSBuild property.</summary>
+  internal static bool TryListPackedFiles(
+    string repoRoot,
+    string templateProject,
+    out IReadOnlyList<string> relativePaths,
+    out string? error)
+  {
+    XDocument document;
+    try
+    {
+      document = XDocument.Parse(templateProject);
+    }
+    catch (System.Xml.XmlException exception)
+    {
+      relativePaths = [];
+      error = $"{TemplateProjectRelativePath} is not readable XML: {exception.Message}";
+      return false;
+    }
+
+    HashSet<string> files = new(StringComparer.Ordinal);
+    foreach (XElement item in document.Descendants())
+    {
+      if (!ItemPacks(item))
+      {
+        continue;
+      }
+
+      string? include = (string?)item.Attribute("Include");
+      if (string.IsNullOrWhiteSpace(include))
+      {
+        continue;
+      }
+
+      string? exclude = (string?)item.Attribute("Exclude");
+      if (exclude is not null)
+      {
+        foreach (string pattern in SplitList(exclude))
+        {
+          if (!TryNormalizeRepoPattern(pattern, out _, out string? excludeError))
+          {
+            relativePaths = [];
+            error = excludeError;
+            return false;
+          }
+        }
+      }
+
+      foreach (string oneInclude in SplitList(include))
+      {
+        if (!TryNormalizeRepoPattern(oneInclude, out string[] patternParts, out string? includeError))
+        {
+          relativePaths = [];
+          error = includeError;
+          return false;
+        }
+
+        foreach (string relative in EnumerateMatches(repoRoot, patternParts))
+        {
+          if (exclude is not null && ExcludeCovers(exclude, relative))
+          {
+            continue;
+          }
+
+          if (Skip(relative))
+          {
+            continue;
+          }
+
+          files.Add(relative);
+        }
+      }
+    }
+
+    List<string> ordered = [.. files];
+    ordered.Sort(StringComparer.Ordinal);
+    relativePaths = ordered;
+    error = null;
+    return true;
+  }
+
+  internal static IReadOnlyList<Hit> FindHitsInFiles(
+    string repoRoot,
+    IReadOnlyList<string> relativePaths,
+    IReadOnlyList<string> names)
+  {
+    List<Hit> hits = [];
+    foreach (string relative in relativePaths)
+    {
+      if (Skip(relative))
+      {
+        continue;
+      }
+
+      string file = Path.Combine(repoRoot, relative.Replace('/', Path.DirectorySeparatorChar));
+      if (!File.Exists(file))
+      {
+        continue;
+      }
+
+      Collect(file, relative, names, hits);
+    }
+
+    SortHits(hits);
+    return hits;
+  }
+
   internal static IReadOnlyList<Hit> FindHits(
     string repoRoot,
     IReadOnlyList<string> roots,
@@ -304,17 +410,7 @@ internal static class ClientNameScan
       }
     }
 
-    hits.Sort(static (left, right) =>
-    {
-      int path = string.CompareOrdinal(left.RelativePath, right.RelativePath);
-      if (path != 0)
-      {
-        return path;
-      }
-
-      int line = left.Line.CompareTo(right.Line);
-      return line != 0 ? line : string.CompareOrdinal(left.Name, right.Name);
-    });
+    SortHits(hits);
     return hits;
   }
 
@@ -414,11 +510,34 @@ internal static class ClientNameScan
 
   private static bool IncludeMatchesRepoPath(string include, string repoRelativePath)
   {
+    if (include.Contains('$', StringComparison.Ordinal))
+    {
+      return true;
+    }
+
+    if (!TryNormalizeRepoPattern(include, out string[] pattern, out _))
+    {
+      return false;
+    }
+
+    string[] path = repoRelativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+    return Match(pattern, 0, path, 0);
+  }
+
+  private static bool TryNormalizeRepoPattern(string pattern, out string[] parts, out string? error)
+  {
+    if (pattern.Contains('$', StringComparison.Ordinal))
+    {
+      parts = [];
+      error = $"Pack pattern uses an MSBuild property and cannot be scanned: {pattern}";
+      return false;
+    }
+
     string projectDirectory = Path.GetDirectoryName(TemplateProjectRelativePath)!.Replace('\\', '/');
-    string combined = projectDirectory + "/" + include.Replace('\\', '/');
-    string[] parts = combined.Split('/', StringSplitOptions.RemoveEmptyEntries);
+    string combined = projectDirectory + "/" + pattern.Replace('\\', '/');
+    string[] raw = combined.Split('/', StringSplitOptions.RemoveEmptyEntries);
     List<string> stack = [];
-    foreach (string part in parts)
+    foreach (string part in raw)
     {
       if (part == ".")
       {
@@ -427,8 +546,12 @@ internal static class ClientNameScan
 
       if (part == "..")
       {
-        if (stack.Count == 0 || stack[^1].Contains('*', StringComparison.Ordinal))
+        if (stack.Count == 0
+          || stack[^1].Contains('*', StringComparison.Ordinal)
+          || stack[^1].Contains('?', StringComparison.Ordinal))
         {
+          parts = [];
+          error = $"Pack pattern escapes the repository or a wildcard: {pattern}";
           return false;
         }
 
@@ -439,8 +562,103 @@ internal static class ClientNameScan
       stack.Add(part);
     }
 
-    string[] path = repoRelativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-    return Match([.. stack], 0, path, 0);
+    parts = [.. stack];
+    error = null;
+    return true;
+  }
+
+  private static IEnumerable<string> EnumerateMatches(string repoRoot, string[] patternParts)
+  {
+    string relativePattern = string.Join('/', patternParts);
+    if (relativePattern.IndexOfAny(['*', '?']) < 0)
+    {
+      string full = Path.Combine(repoRoot, relativePattern.Replace('/', Path.DirectorySeparatorChar));
+      if (File.Exists(full))
+      {
+        yield return relativePattern;
+      }
+
+      yield break;
+    }
+
+    int firstWild = Array.FindIndex(
+      patternParts,
+      static part => part.Contains('*', StringComparison.Ordinal) || part.Contains('?', StringComparison.Ordinal));
+    string relativeDirectory = string.Join('/', patternParts[..firstWild]);
+    string directory = firstWild <= 0
+      ? repoRoot
+      : Path.Combine(repoRoot, relativeDirectory.Replace('/', Path.DirectorySeparatorChar));
+    if (!Directory.Exists(directory))
+    {
+      yield break;
+    }
+
+    EnumerationOptions options = new()
+    {
+      RecurseSubdirectories = true,
+      IgnoreInaccessible = true,
+      AttributesToSkip = FileAttributes.ReparsePoint,
+    };
+
+    foreach (string file in Directory.EnumerateFiles(directory, "*", options))
+    {
+      string relative = Path.GetRelativePath(repoRoot, file).Replace('\\', '/');
+      string[] path = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+      if (Match(patternParts, 0, path, 0))
+      {
+        yield return relative;
+      }
+    }
+  }
+
+  private static bool ItemPacks(XElement item)
+  {
+    string pack = PackValue(item);
+    if (item.Name.LocalName == "None")
+    {
+      return pack.Equals("true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    if (item.Name.LocalName == "Content")
+    {
+      return !pack.Equals("false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    return false;
+  }
+
+  private static string PackValue(XElement item)
+  {
+    string? attribute = (string?)item.Attribute("Pack");
+    if (!string.IsNullOrWhiteSpace(attribute))
+    {
+      return attribute.Trim();
+    }
+
+    foreach (XElement child in item.Elements())
+    {
+      if (child.Name.LocalName == "Pack")
+      {
+        return child.Value.Trim();
+      }
+    }
+
+    return "";
+  }
+
+  private static void SortHits(List<Hit> hits)
+  {
+    hits.Sort(static (left, right) =>
+    {
+      int path = string.CompareOrdinal(left.RelativePath, right.RelativePath);
+      if (path != 0)
+      {
+        return path;
+      }
+
+      int line = left.Line.CompareTo(right.Line);
+      return line != 0 ? line : string.CompareOrdinal(left.Name, right.Name);
+    });
   }
 
   private static bool Match(string[] pattern, int patternIndex, string[] path, int pathIndex)
