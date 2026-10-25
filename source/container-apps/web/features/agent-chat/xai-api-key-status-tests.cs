@@ -21,6 +21,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
   using System.Text.Json;
   using Shouldly;
   using TimeWarp.Foundation.Types;
+  using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
 
@@ -68,6 +69,45 @@ namespace TimeWarp.Architecture.Features.AgentChats
       parsed.Configured.ShouldBeTrue();
       parsed.SetByPrincipalId.ShouldBe(response.SetByPrincipalId);
       parsed.SetupHint.ShouldBe(response.SetupHint);
+      return Task.CompletedTask;
+    }
+
+    public static Task User_Status_Should_RoundTrip_Without_An_ApiKey_Property()
+    {
+      GetUserXaiApiKeyStatus.Response response = new(
+        visible: true,
+        mode: XaiByokMode.Allow,
+        configured: true,
+        needsReplacement: false,
+        canChange: true,
+        storageAvailable: true,
+        supersededByHost: false,
+        suffix: "aaaa");
+
+      string json = JsonSerializer.Serialize(response, ContractSerializationDefaults.Options);
+      json.ShouldNotContain("xai-");
+      using JsonDocument document = JsonDocument.Parse(json);
+      string[] names = [.. document.RootElement.EnumerateObject().Select(static property => property.Name).Order(StringComparer.Ordinal)];
+      names.ShouldNotContain("apiKey");
+      names.ShouldBe(
+      [
+        "canChange",
+        "configured",
+        "mode",
+        "needsReplacement",
+        "storageAvailable",
+        "suffix",
+        "supersededByHost",
+        "visible"
+      ]);
+
+      GetUserXaiApiKeyStatus.Response? parsed =
+        JsonSerializer.Deserialize<GetUserXaiApiKeyStatus.Response>(json, ContractSerializationDefaults.Options);
+      parsed.ShouldNotBeNull();
+      parsed.Visible.ShouldBeTrue();
+      parsed.Mode.ShouldBe(XaiByokMode.Allow);
+      parsed.Suffix.ShouldBe("aaaa");
+      parsed.SupersededByHost.ShouldBeFalse();
       return Task.CompletedTask;
     }
 

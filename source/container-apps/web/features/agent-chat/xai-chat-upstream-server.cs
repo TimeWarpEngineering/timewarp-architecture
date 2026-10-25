@@ -8,12 +8,15 @@
 // use so startup never dials xAI and a PostConfigure in tests wins over the key.
 // UseFakeUpstream is honored only in Development or Testing, and then it wins over a real key.
 // BeginKeyResolution opens a slot on the caller's async flow. IsConfiguredAsync fills that slot
-// and GetClientAsync consumes it, so a completion that already checked configuration reads the
-// database once. The slot has to be opened by the caller: a value stored inside IsConfiguredAsync
-// does not flow back. A call that did not check resolves on its own. The old client is kept when
-// the key changes: disposing it
-// inside the swap can drop a concurrent GetResponseAsync. Retired clients are disposed with this
-// upstream.
+// with the key and the mode, and GetClientAsync consumes the key, so a completion that already
+// checked configuration reads the database once. The slot has to be opened by the caller: a value
+// stored inside IsConfiguredAsync does not flow back. The mode is a field on that slot, so
+// MissingKeyDetail and ResolvedMode read the same resolution. A call that did not open a slot
+// resolves on its own, and CompleteAsync uses the mode returned with the client.
+// Chat clients are cached per key, up to MaxCachedClients. A key that falls out of that bound is
+// disposed when no completion is still inside GetResponseAsync. Disposing it earlier would drop
+// that call. Dispose of this upstream disposes every cached client.
+// ResolveApiKeyAsync asks IXaiApiKeyResolver when it is registered and otherwise the site key.
 // Tools are AIFunctionDeclaration instances. Invoke on a declaration throws, so this process
 // cannot run a catalog action on the model's behalf. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
@@ -60,12 +63,15 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   private readonly IServiceScopeFactory Scopes;
   private readonly IXaiChatClientFactory Clients;
   private readonly ILogger<XaiChatUpstream> Logger;
+  /// <summary>Live chat clients kept per key. Older keys are evicted past this count.</summary>
+  internal const int MaxCachedClients = 8;
+
   private static readonly AsyncLocal<KeySlot?> OpenTurn = new();
   private readonly Lock Gate = new();
   private readonly FakeChatClient Fake = new();
-  private readonly List<IChatClient> RetiredClients = [];
-  private IChatClient? RealClient;
-  private string? CachedKey;
+  private readonly Dictionary<string, CachedChatClient> LiveClients = new(StringComparer.Ordinal);
+  private readonly List<CachedChatClient> IdleEvicted = [];
+  private long ClientClock;
 
   public XaiChatUpstream
   (
@@ -101,14 +107,15 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       return true;
     }
 
-    string? apiKey = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    ResolvedKey resolved = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
     if (OpenTurn.Value is { } slot)
     {
-      slot.Key = apiKey;
+      slot.Key = resolved.ApiKey;
+      slot.Mode = resolved.Mode;
       slot.Filled = true;
     }
 
-    return !string.IsNullOrWhiteSpace(apiKey);
+    return !string.IsNullOrWhiteSpace(resolved.ApiKey);
   }
 
   /// <inheritdoc />
@@ -136,9 +143,10 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   {
     XaiChatOptions options = Options.CurrentValue;
     IChatClient? client;
+    XaiByokMode mode;
     try
     {
-      client = await GetClientAsync(options, cancellationToken).ConfigureAwait(false);
+      (client, mode) = await GetClientAsync(options, cancellationToken).ConfigureAwait(false);
     }
     catch (Exception exception) when (exception is not OperationCanceledException)
     {
@@ -148,64 +156,79 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
 
     if (client is null)
     {
-      return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
+      return AgentChatProblems.NotConfigured(
+        XaiByokCopy.MissingKeyDetail(mode, Environment.IsDevelopment()));
     }
 
-    ChatOptions chatOptions;
-    List<ChatMessage> messages;
     try
     {
-      chatOptions = XaiChatMapping.ToChatOptions(command);
-      messages = XaiChatMapping.ToMessages(command);
-    }
-    catch (JsonException exception)
-    {
-      LogUpstreamFailed(Logger, exception);
-      return new SharedProblemDetails
+      ChatOptions chatOptions;
+      List<ChatMessage> messages;
+      try
       {
-        Title = "Invalid tool schema",
-        Status = 400,
-        Detail = "A tool schema or argument payload was not valid JSON."
-      };
-    }
+        chatOptions = XaiChatMapping.ToChatOptions(command);
+        messages = XaiChatMapping.ToMessages(command);
+      }
+      catch (JsonException exception)
+      {
+        LogUpstreamFailed(Logger, exception);
+        return new SharedProblemDetails
+        {
+          Title = "Invalid tool schema",
+          Status = 400,
+          Detail = "A tool schema or argument payload was not valid JSON."
+        };
+      }
 
-    ChatResponse chatResponse;
-    try
-    {
-      chatResponse = await client.GetResponseAsync(messages, chatOptions, cancellationToken)
-        .ConfigureAwait(false);
-    }
-    catch (Exception exception) when (exception is not OperationCanceledException)
-    {
-      LogUpstreamFailed(Logger, exception);
-      return AgentChatProblems.UpstreamFailed();
-    }
+      ChatResponse chatResponse;
+      try
+      {
+        chatResponse = await client.GetResponseAsync(messages, chatOptions, cancellationToken)
+          .ConfigureAwait(false);
+      }
+      catch (Exception exception) when (exception is not OperationCanceledException)
+      {
+        LogUpstreamFailed(Logger, exception);
+        return AgentChatProblems.UpstreamFailed();
+      }
 
-    var mapped = XaiChatMapping.ToResponse(chatResponse);
-    if (string.IsNullOrWhiteSpace(mapped.Text) && mapped.ToolCalls.Count == 0)
-    {
-      return AgentChatProblems.EmptyModelResponse();
-    }
+      var mapped = XaiChatMapping.ToResponse(chatResponse);
+      if (string.IsNullOrWhiteSpace(mapped.Text) && mapped.ToolCalls.Count == 0)
+      {
+        return AgentChatProblems.EmptyModelResponse();
+      }
 
-    return mapped;
+      return mapped;
+    }
+    finally
+    {
+      Release(client);
+    }
   }
 
-  /// <summary>Disposes the current client and any client retired by a key change.</summary>
+  /// <summary>Disposes every cached client. An in-flight completion may already have finished.</summary>
   public void Dispose()
   {
-    IChatClient? current;
-    IChatClient[] retired;
+    IChatClient[] clients;
     lock (Gate)
     {
-      current = RealClient;
-      retired = [.. RetiredClients];
-      RealClient = null;
-      RetiredClients.Clear();
-      CachedKey = null;
+      List<IChatClient> pending = [];
+      foreach (CachedChatClient entry in LiveClients.Values)
+      {
+        pending.Add(entry.Client);
+      }
+
+      foreach (CachedChatClient entry in IdleEvicted)
+      {
+        pending.Add(entry.Client);
+      }
+
+      clients = [.. pending];
+      LiveClients.Clear();
+      IdleEvicted.Clear();
     }
 
-    current?.Dispose();
-    foreach (IChatClient client in retired)
+    foreach (IChatClient client in clients)
     {
       client.Dispose();
     }
@@ -213,34 +236,55 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     Fake.Dispose();
   }
 
-  private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
+  /// <inheritdoc />
+  public XaiByokMode ResolvedMode => OpenTurn.Value?.Mode ?? XaiByokMode.Allow;
+
+  /// <inheritdoc />
+  public string MissingKeyDetail(bool development) =>
+    XaiByokCopy.MissingKeyDetail(ResolvedMode, development);
+
+  private async Task<ResolvedKey> ResolveApiKeyAsync(CancellationToken cancellationToken)
   {
     await using AsyncServiceScope scope = Scopes.CreateAsyncScope();
+    IXaiApiKeyResolver? resolver = scope.ServiceProvider.GetService<IXaiApiKeyResolver>();
+    if (resolver is not null)
+    {
+      ResolvedXaiApiKey resolved = await resolver.ResolveAsync(cancellationToken).ConfigureAwait(false);
+      return new ResolvedKey(resolved.ApiKey, resolved.Mode);
+    }
+
     ISiteXaiApiKey keys = scope.ServiceProvider.GetRequiredService<ISiteXaiApiKey>();
-    return await keys.ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    string? apiKey = await keys.ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+    return new ResolvedKey(apiKey, XaiByokMode.Allow);
   }
 
-  private async Task<IChatClient?> GetClientAsync(XaiChatOptions options, CancellationToken cancellationToken)
+  private async Task<(IChatClient? Client, XaiByokMode Mode)> GetClientAsync(
+    XaiChatOptions options,
+    CancellationToken cancellationToken)
   {
     if (AllowFake && options.UseFakeUpstream)
     {
-      return Fake;
+      return (Fake, OpenTurn.Value?.Mode ?? XaiByokMode.Allow);
     }
 
     string? apiKey;
+    XaiByokMode mode;
     if (OpenTurn.Value is { Filled: true } slot)
     {
       apiKey = slot.Key;
+      mode = slot.Mode;
       OpenTurn.Value = null;
     }
     else
     {
-      apiKey = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+      ResolvedKey resolved = await ResolveApiKeyAsync(cancellationToken).ConfigureAwait(false);
+      apiKey = resolved.ApiKey;
+      mode = resolved.Mode;
     }
 
     if (string.IsNullOrWhiteSpace(apiKey))
     {
-      return null;
+      return (null, mode);
     }
 
     string endpoint = string.IsNullOrWhiteSpace(options.Endpoint)
@@ -252,22 +296,116 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
 
     lock (Gate)
     {
-      if (RealClient is not null && string.Equals(CachedKey, apiKey, StringComparison.Ordinal))
-      {
-        return RealClient;
-      }
-
-      IChatClient created = Clients.Create(apiKey, endpoint, model);
-      if (RealClient is not null)
-      {
-        RetiredClients.Add(RealClient);
-      }
-
-      RealClient = created;
-      CachedKey = apiKey;
-      return RealClient;
+      return (RentLocked(apiKey, endpoint, model), mode);
     }
   }
+
+  /// <summary>Caller holds <see cref="Gate"/>.</summary>
+  private IChatClient RentLocked(string apiKey, string endpoint, string model)
+  {
+    ClientClock++;
+    if (LiveClients.TryGetValue(apiKey, out CachedChatClient? existing))
+    {
+      existing.Uses++;
+      existing.LastUsed = ClientClock;
+      return existing.Client;
+    }
+
+    while (LiveClients.Count >= MaxCachedClients)
+    {
+      CachedChatClient oldest = OldestLive();
+      LiveClients.Remove(oldest.Key);
+      oldest.Evicted = true;
+      if (oldest.Uses == 0)
+      {
+        oldest.Client.Dispose();
+      }
+      else
+      {
+        IdleEvicted.Add(oldest);
+      }
+    }
+
+    IChatClient created = Clients.Create(apiKey, endpoint, model);
+    LiveClients.Add(
+      apiKey,
+      new CachedChatClient
+      {
+        Key = apiKey,
+        Client = created,
+        Uses = 1,
+        LastUsed = ClientClock
+      });
+    return created;
+  }
+
+  /// <summary>Caller holds <see cref="Gate"/> and <see cref="LiveClients"/> is not empty.</summary>
+  private CachedChatClient OldestLive()
+  {
+    CachedChatClient? oldest = null;
+    foreach (CachedChatClient candidate in LiveClients.Values)
+    {
+      if (oldest is null || candidate.LastUsed < oldest.LastUsed)
+      {
+        oldest = candidate;
+      }
+    }
+
+    return oldest ?? throw new InvalidOperationException("The chat client cache was empty.");
+  }
+
+  private void Release(IChatClient client)
+  {
+    if (ReferenceEquals(client, Fake))
+    {
+      return;
+    }
+
+    lock (Gate)
+    {
+      CachedChatClient? entry = FindCached(client);
+      if (entry is null)
+      {
+        return;
+      }
+
+      if (entry.Uses > 0)
+      {
+        entry.Uses--;
+      }
+
+      if (entry.Evicted && entry.Uses == 0)
+      {
+        IdleEvicted.Remove(entry);
+        entry.Client.Dispose();
+      }
+    }
+  }
+
+  /// <summary>Caller holds <see cref="Gate"/>.</summary>
+  private CachedChatClient? FindCached(IChatClient client)
+  {
+    foreach (CachedChatClient entry in LiveClients.Values)
+    {
+      if (ReferenceEquals(entry.Client, client))
+      {
+        return entry;
+      }
+    }
+
+    foreach (CachedChatClient entry in IdleEvicted)
+    {
+      if (ReferenceEquals(entry.Client, client))
+      {
+        return entry;
+      }
+    }
+
+    return null;
+  }
+
+  /// <summary>Key and mode from one resolution. The mode travels with the return value.</summary>
+  private readonly record struct ResolvedKey(string? ApiKey, XaiByokMode Mode);
 
   /// <summary>One turn's resolved key. The caller opens it; <see cref="IsConfiguredAsync"/> fills it.</summary>
   private sealed class KeySlot
@@ -275,6 +413,22 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     public bool Filled { get; set; }
 
     public string? Key { get; set; }
+
+    public XaiByokMode Mode { get; set; }
+  }
+
+  /// <summary>One cached client and how many completions are still using it.</summary>
+  private sealed class CachedChatClient
+  {
+    public required string Key { get; init; }
+
+    public required IChatClient Client { get; init; }
+
+    public int Uses { get; set; }
+
+    public bool Evicted { get; set; }
+
+    public long LastUsed { get; set; }
   }
 
   private sealed class FakeChatClient : IChatClient

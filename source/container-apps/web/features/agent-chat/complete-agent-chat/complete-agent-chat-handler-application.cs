@@ -6,7 +6,8 @@
 // The endpoint policy already requires a principal. The handler checks again so a miswired
 // endpoint is not an open proxy to the key. A missing key returns 503 with the environment's
 // setup hint and does not call the provider. BeginKeyResolution runs before that check so the
-// completion reuses the same read. Admission covers the upstream call only. The lease is
+// completion reuses the same read and MissingKeyDetail sees that read's mode. Admission covers
+// the upstream call only. The lease is
 // disposed on every path, including cancellation.
 #endregion
 
@@ -59,7 +60,7 @@ public sealed class CompleteAgentChat
       Upstream.BeginKeyResolution();
       if (!await Upstream.IsConfiguredAsync(cancellationToken).ConfigureAwait(false))
       {
-        return AgentChatProblems.NotConfigured(Environment.IsDevelopment());
+        return AgentChatProblems.NotConfigured(Upstream.MissingKeyDetail(Environment.IsDevelopment()));
       }
 
       using AgentChatAdmission.AdmissionLease lease = await Admission

@@ -15,6 +15,9 @@
   OptionText → LabelFor. Theme FluentSelect already shows labels without that combobox path.
   Layout is FormSection / FormGrid / FormField / FormActions (full-width controls). Cancel
   reloads the draft from ProfileState (SyncCommandFromState) — no extra action-set.
+  The xAI key section is a second form after the profile form. It renders only when
+  UserXaiApiKeyState.Visible is true (site mode is not Off). The draft key is page-local,
+  a password field, and is cleared after a successful save. State never stores it.
 *@
 
 @code {
@@ -26,7 +29,30 @@
   private UpdateProfile.Command Command { get; } = new();
   private IProfileDetails Details => Command;
 
+  private static readonly SetUserXaiApiKey.Validator KeyValidator = new();
+
+  private SetUserXaiApiKey.Command KeyCommand { get; } = new();
+
   private bool IsBusy => ActionTrackingState.IsActive;
+
+  private string KeyStatusLine
+  {
+    get
+    {
+      if (UserXaiApiKeyState.NeedsReplacement)
+      {
+        string tail = UserXaiApiKeyState.Suffix is null ? "" : $" It ends in …{UserXaiApiKeyState.Suffix}.";
+        return "The stored key cannot be read. Paste a new one." + tail;
+      }
+
+      if (!UserXaiApiKeyState.Configured || UserXaiApiKeyState.Suffix is null)
+      {
+        return "No key stored.";
+      }
+
+      return $"Configured, ends in …{UserXaiApiKeyState.Suffix}.";
+    }
+  }
 
   protected override async Task OnInitializedAsync()
   {
@@ -36,6 +62,7 @@
     }
 
     await ProfileState.FetchProfileData();
+    await NoSubUserXaiApiKeyState.FetchUserXaiApiKeyStatus();
     SyncCommandFromState();
   }
 
@@ -56,6 +83,17 @@
   }
 
   private void HandleCancel() => SyncCommandFromState();
+
+  private async Task SaveKeyAsync()
+  {
+    await NoSubUserXaiApiKeyState.SetUserXaiApiKey(KeyCommand.ApiKey);
+    if (!UserXaiApiKeyState.SaveFailed)
+    {
+      KeyCommand.ApiKey = "";
+    }
+  }
+
+  private Task ClearKeyAsync() => NoSubUserXaiApiKeyState.ClearUserXaiApiKey();
 }
 
 <TimeWarpPage Title="Profile">
@@ -134,4 +172,62 @@
       </FormActions>
     </EditForm>
   </Section>
+  @if (UserXaiApiKeyState.Visible)
+  {
+    @if (!UserXaiApiKeyState.CanChange && !UserXaiApiKeyState.StorageAvailable)
+    {
+      <FormSection Title="xAI API key"
+                   Description="Ask can bill this key to your xAI account. The value is never shown again after you save it."
+                   data-qa="UserXaiApiKeySettings">
+        <p data-qa="UserXaiApiKeyStatus">This deployment cannot store a personal key.</p>
+      </FormSection>
+    }
+    else
+    {
+      <EditForm Model="KeyCommand" OnValidSubmit="SaveKeyAsync" FormName="UserXaiApiKeyForm" novalidate>
+        <FluentValidator Validator="@KeyValidator" />
+        <FormSection Title="xAI API key"
+                     Description="Ask can bill this key to your xAI account. The value is never shown again after you save it."
+                     data-qa="UserXaiApiKeySettings">
+          <p data-qa="UserXaiApiKeyStatus">@KeyStatusLine</p>
+          @if (UserXaiApiKeyState.SupersededByHost)
+          {
+            <p data-qa="UserXaiApiKeyHost">The deployment key is in use. Your key is saved and applies when that key is removed.</p>
+          }
+          <FormGrid>
+            <FormField Label="xAI API key">
+              <FluentTextInput @bind-Value="KeyCommand.ApiKey"
+                               Name="ApiKey"
+                               TextInputType="TextInputType.Password"
+                               AutoComplete="new-password"
+                               AriaLabel="xAI API key"
+                               Placeholder="Paste a key"
+                               Width="100%"
+                               Disabled="@IsBusy"
+                               data-qa="UserXaiApiKeyInput" />
+              <ValidationMessage For="@(() => KeyCommand.ApiKey)" />
+            </FormField>
+          </FormGrid>
+        </FormSection>
+        <FormActions>
+          <FluentButton Type="ButtonType.Submit"
+                        Appearance="ButtonAppearance.Primary"
+                        Disabled="@IsBusy"
+                        data-qa="UserXaiApiKeySave">
+            Save key
+          </FluentButton>
+          @if (UserXaiApiKeyState.Configured || UserXaiApiKeyState.NeedsReplacement)
+          {
+            <FluentButton Type="ButtonType.Button"
+                          Appearance="ButtonAppearance.Outline"
+                          Disabled="@IsBusy"
+                          OnClick="ClearKeyAsync"
+                          data-qa="UserXaiApiKeyClear">
+              Clear key
+            </FluentButton>
+          }
+        </FormActions>
+      </EditForm>
+    }
+  }
 </TimeWarpPage>

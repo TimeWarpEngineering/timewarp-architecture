@@ -61,6 +61,7 @@ partial class AgentSurfaceState
         AgentSurfaceState.ChatReadiness = result.Readiness;
         AgentSurfaceState.ChatSetupCommand = result.SetupCommand;
         AgentSurfaceState.ChatAdminHint = result.AdminHint;
+        AgentSurfaceState.ChatKeyHint = result.KeyHint;
         AgentSurfaceState.ChatModel = result.Model;
         AgentSurfaceState.ChatProblem = result.Problem;
         if (response is null)

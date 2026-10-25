@@ -29,6 +29,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public PasskeyPromptMode PasskeyPromptMode { get; private set; } = PasskeyPromptMode.Soft;
   public string AssistantName { get; private set; } = AssistantNameRules.Default;
   public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; private set; }
+  public XaiByokMode XaiByokMode { get; private set; } = XaiByokMode.Allow;
   public IReadOnlyList<EntraAcceptedTenant> EntraAcceptedTenants { get; private set; } = [];
   public IReadOnlyList<EntraAcceptedTenant> DraftAcceptedTenants { get; private set; } = [];
   public string? AcceptedTenantsMessage { get; private set; }
@@ -62,6 +63,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     PasskeyPromptMode = PasskeyPromptMode.Soft;
     AssistantName = AssistantNameRules.Default;
     EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted;
+    XaiByokMode = XaiByokMode.Allow;
     EntraAcceptedTenants = [];
     DraftAcceptedTenants = [];
     AcceptedTenantsMessage = null;

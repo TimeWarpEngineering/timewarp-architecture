@@ -40,8 +40,11 @@ public static partial class GetAgentChatConfiguration
 
     public string SetupCommand { get; set; } = null!;
 
-    /// <summary>Separate from <see cref="SetupCommand"/>. Null when this host cannot store an admin key.</summary>
+    /// <summary>Separate from <see cref="SetupCommand"/>. Null when this host cannot store an admin key, or when the mode is Required.</summary>
     public string? AdminHint { get; set; }
+
+    /// <summary>Whose key to set when Ask is not configured. Null when a key resolved.</summary>
+    public string? KeyHint { get; set; }
 
     public string? Model { get; set; }
 

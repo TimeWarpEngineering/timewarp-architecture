@@ -10,9 +10,11 @@
 // XaiChatDefaults.PrivacyNotice and a blank PrivacyUrl is sent as null (no link). StarterPrompts
 // goes through AgentChatStarterPrompts.Normalize, so an unset list sends the template defaults.
 // SetupCommand is the environment's host text and does not include the Admin sentence. AdminHint
-// is that sentence only when ISiteXaiApiKey.StorageAvailable is true. Configured reads
-// IsConfiguredAsync so an admin key counts without a restart. The model id comes from options,
-// not Upstream.Model, because that property only sees the host key and the fake.
+// is that sentence only when ISiteXaiApiKey.StorageAvailable is true and the mode is not Required.
+// BeginKeyResolution runs before IsConfiguredAsync so ResolvedMode and the missing-key sentence
+// are the mode of that read. Configured reads IsConfiguredAsync so an admin key counts without a
+// restart. The model id comes from options, not Upstream.Model, because that property only sees
+// the host key and the fake.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats.Application;
@@ -65,6 +67,7 @@ public sealed class GetAgentChatConfiguration
         return AgentChatProblems.Unauthenticated();
       }
 
+      Upstream.BeginKeyResolution();
       bool configured = await Upstream.IsConfiguredAsync(cancellationToken).ConfigureAwait(false);
       XaiChatOptions options = Options.Value;
       string? model = null;
@@ -77,7 +80,10 @@ public sealed class GetAgentChatConfiguration
       {
         Configured = configured,
         SetupCommand = XaiChatDefaults.HostSetupText(Environment.IsDevelopment()),
-        AdminHint = Keys.StorageAvailable ? XaiChatDefaults.AdminAiSentence : null,
+        AdminHint = Keys.StorageAvailable && Upstream.ResolvedMode != XaiByokMode.Required
+          ? XaiChatDefaults.AdminAiSentence
+          : null,
+        KeyHint = configured ? null : Upstream.MissingKeyDetail(Environment.IsDevelopment()),
         Model = model,
         RecordChats = options.RecordChats,
         PrivacyNotice = string.IsNullOrWhiteSpace(options.PrivacyNotice)

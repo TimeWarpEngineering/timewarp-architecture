@@ -53,6 +53,9 @@ public sealed class SiteSettingsEntityTypeConfiguration : IEntityTypeConfigurati
     builder.Property(settings => settings.AssistantName)
       .IsRequired()
       .HasMaxLength(AssistantNameRules.MaxLength);
+    builder.Property(settings => settings.XaiByokMode)
+      .IsRequired()
+      .HasDefaultValue(XaiByokMode.Allow);
 
     builder.Property(settings => settings.Version)
       .IsConcurrencyToken()

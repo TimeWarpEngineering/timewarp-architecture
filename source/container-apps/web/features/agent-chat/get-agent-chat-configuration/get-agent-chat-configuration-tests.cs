@@ -101,6 +101,24 @@ namespace TimeWarp.Architecture.Features.AgentChats
       response.AdminHint.ShouldBe(XaiChatDefaults.AdminAiSentence);
     }
 
+    public static async Task Required_Omits_The_Admin_Hint_And_Names_Profile()
+    {
+      Handler handler = new(
+        new FixedPrincipal(),
+        new UnconfiguredUpstream { Mode = XaiByokMode.Required },
+        Options.Create(new XaiChatOptions()),
+        new NamedHostEnvironment("Production"),
+        new FixedKeys(storageAvailable: true));
+
+      OneOf<GetAgentChatConfiguration.Response, SharedProblemDetails> result =
+        await handler.Handle(new GetAgentChatConfiguration.Query(), CancellationToken.None);
+
+      result.IsT0.ShouldBeTrue();
+      result.AsT0.AdminHint.ShouldBeNull();
+      result.AsT0.KeyHint.ShouldBe(XaiByokCopy.SetYourKey);
+      result.AsT0.KeyHint!.ShouldNotContain("Admin → AI");
+    }
+
     private static async Task<GetAgentChatConfiguration.Response> Handle(string environmentName, bool adminStorage)
     {
       Handler handler = new(
@@ -145,6 +163,13 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     private sealed class UnconfiguredUpstream : IAgentChatUpstream
     {
+      public XaiByokMode Mode { get; init; } = XaiByokMode.Allow;
+
+      public XaiByokMode ResolvedMode => Mode;
+
+      public string MissingKeyDetail(bool development) =>
+        XaiByokCopy.MissingKeyDetail(Mode, development);
+
       public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken)
       {
         _ = cancellationToken;

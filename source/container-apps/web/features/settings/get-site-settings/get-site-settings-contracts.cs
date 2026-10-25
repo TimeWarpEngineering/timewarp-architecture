@@ -38,6 +38,7 @@ public static partial class GetSiteSettings
     public string AssistantName { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
+    public XaiByokMode XaiByokMode { get; set; }
     public long Version { get; }
     public string? ConfigurationTenantId { get; }
     public string? ConfigurationTenantDisplayName { get; }
@@ -57,7 +58,8 @@ public static partial class GetSiteSettings
       bool configurationEnabled = false,
       bool configurationAllowBootstrap = false,
       EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
-      List<EntraAcceptedTenant>? entraAcceptedTenants = null)
+      List<EntraAcceptedTenant>? entraAcceptedTenants = null,
+      XaiByokMode xaiByokMode = XaiByokMode.Allow)
     {
       EntraSignInEnabled = entraSignInEnabled;
       EntraAllowBootstrap = entraAllowBootstrap;
@@ -65,6 +67,7 @@ public static partial class GetSiteSettings
       AssistantName = assistantName;
       EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
       EntraAcceptedTenants = entraAcceptedTenants is null ? [] : [.. entraAcceptedTenants];
+      XaiByokMode = xaiByokMode;
       Version = version;
       ConfigurationTenantId = configurationTenantId;
       ConfigurationTenantDisplayName = configurationTenantDisplayName;

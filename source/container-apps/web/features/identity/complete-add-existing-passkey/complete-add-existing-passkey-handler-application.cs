@@ -7,6 +7,7 @@
 //   credential on caller → 409 Already on this account
 //   source merged/quarantined → 403
 //   else MergePrincipalAsync(source, caller) and audit both ids + credential id.
+// The store deletes the source user's xAI API key row in that save.
 // Quarantine/merged check is post-Verify (same oracle posture as CompletePasskeyAuthentication).
 #endregion
 

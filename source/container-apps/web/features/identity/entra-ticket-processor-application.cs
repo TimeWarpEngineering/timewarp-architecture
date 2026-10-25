@@ -15,7 +15,8 @@
 // is the original mint (Principal.Create + EntraAccount + first-admin). AttachEntraToPrincipalAsync
 // is link semantics for the already-have path.
 // Link: when the handle is owned by another active (non-revoked) unmerged principal B,
-// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. Revoked foreign
+// MergePrincipalAsync(B, A) instead of 409 — the Entra sign-in is proof of B. That save deletes
+// B's user xAI API key row. This processor does not delete it again. Revoked foreign
 // rows refuse with 403 (do not merge). 409 remains for already-on-this-account and for
 // merged/quarantined owners. Sync-hit and AllowBootstrap-off are unchanged.
 // Concurrent first-login for the same tid:oid can miss both finds, create two principals, and

@@ -22,6 +22,8 @@
 // matches the token tid only. EntraTenantAcceptanceInitialized is false only on rows migrated
 // before the column existed; the seeder copies a GUID authority into the restricted list once,
 // then leaves admin edits alone.
+// Task 399: XaiByokMode is Allow unless an admin changes it. Reseed does not rewrite it.
+// The zero value is Allow so a writer that omits the field does not turn personal keys off.
 // Do not fold PublicOrigin / client id / secret / authority tenant into this type.
 #endregion
 
@@ -29,7 +31,7 @@ namespace TimeWarp.Identity;
 
 /// <summary>
 /// Singleton runtime admin policy for Entra offer/bootstrap, accepted tenants, the post-Entra
-/// passkey prompt, and the assistant's display name.
+/// passkey prompt, the assistant's display name, and whose xAI key Ask uses below the host key.
 /// </summary>
 public sealed class SiteSettings : Entity<SiteSettingsId>
 {
@@ -48,6 +50,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     EntraTenantAcceptanceMode entraTenantAcceptanceMode,
     IReadOnlyList<EntraAcceptedTenant> entraAcceptedTenants,
     bool entraTenantAcceptanceInitialized,
+    XaiByokMode xaiByokMode,
     long version)
     : base(id, version)
   {
@@ -58,6 +61,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     EntraTenantAcceptanceMode = entraTenantAcceptanceMode;
     EntraAcceptedTenants = entraAcceptedTenants;
     EntraTenantAcceptanceInitialized = entraTenantAcceptanceInitialized;
+    XaiByokMode = xaiByokMode;
   }
 
   /// <summary>Whether Entra sign-in is offered at runtime (separate from configured client secrets).</summary>
@@ -87,6 +91,9 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   /// </summary>
   public bool EntraTenantAcceptanceInitialized { get; private set; }
 
+  /// <summary>Whose xAI API key Ask uses when the host key is unset. Default Allow.</summary>
+  public XaiByokMode XaiByokMode { get; private set; }
+
   /// <summary>
   /// Creates the singleton row at version 0 with the given policy (defaults: Entra off, Soft prompt,
   /// assistant Akili, restricted tenant list empty and already initialized).
@@ -98,10 +105,12 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
     string assistantName = AssistantNameRules.Default,
     EntraTenantAcceptanceMode entraTenantAcceptanceMode = EntraTenantAcceptanceMode.Restricted,
     IEnumerable<EntraAcceptedTenant>? entraAcceptedTenants = null,
-    bool entraTenantAcceptanceInitialized = true)
+    bool entraTenantAcceptanceInitialized = true,
+    XaiByokMode xaiByokMode = XaiByokMode.Allow)
   {
     EnsurePasskeyPromptMode(passkeyPromptMode);
     EnsureTenantAcceptanceMode(entraTenantAcceptanceMode);
+    EnsureXaiByokMode(xaiByokMode);
     return new SiteSettings(
       SingletonId,
       entraSignInEnabled,
@@ -111,6 +120,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       entraTenantAcceptanceMode,
       NormalizeAcceptedTenants(entraAcceptedTenants),
       entraTenantAcceptanceInitialized,
+      xaiByokMode,
       version: 0);
   }
 
@@ -127,6 +137,7 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
       EntraTenantAcceptanceMode,
       EntraAcceptedTenants.ToArray(),
       EntraTenantAcceptanceInitialized,
+      XaiByokMode,
       version);
 
   /// <summary>
@@ -193,6 +204,13 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
   public void RenameAssistant(string assistantName) =>
     AssistantName = NormalizeAssistantName(assistantName);
 
+  /// <summary>Sets whose key Ask uses below the host key.</summary>
+  public void SetXaiByokMode(XaiByokMode xaiByokMode)
+  {
+    EnsureXaiByokMode(xaiByokMode);
+    XaiByokMode = xaiByokMode;
+  }
+
   private static string NormalizeAssistantName(string assistantName)
   {
     ArgumentNullException.ThrowIfNull(assistantName);
@@ -214,6 +232,17 @@ public sealed class SiteSettings : Entity<SiteSettingsId>
         nameof(passkeyPromptMode),
         passkeyPromptMode,
         "PasskeyPromptMode must be Soft or Required.");
+    }
+  }
+
+  private static void EnsureXaiByokMode(XaiByokMode xaiByokMode)
+  {
+    if (!Enum.IsDefined(xaiByokMode))
+    {
+      throw new ArgumentOutOfRangeException(
+        nameof(xaiByokMode),
+        xaiByokMode,
+        "XaiByokMode must be Allow, Required, or Off.");
     }
   }
 

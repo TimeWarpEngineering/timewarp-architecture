@@ -10,6 +10,9 @@
 // The protected-secret store is TryAdd: PostgresDbModule has already registered the EF store when
 // a connection string exists. Otherwise the unavailable store stays, and Admin → AI is host-only.
 // The chat-client factory is TryAdd so a test can capture the key Ask would send.
+// The probe, the user key, and the resolver are TryAdd. Settings and the current principal are
+// optional constructor parameters, so a host that has neither still resolves host-then-site.
+// The resolver logger is optional too. A missing logger still treats an unreadable mode as Required.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -34,7 +37,11 @@ public static class XaiChatRegistration
     services.AddSingleton<AgentChatAdmission>();
     services.TryAddSingleton<IProtectedSecretStore, UnavailableProtectedSecretStore>();
     services.TryAddSingleton<IXaiChatClientFactory, OpenAiXaiChatClientFactory>();
+    services.AddHttpClient(XaiApiKeyProbe.HttpClientName);
+    services.TryAddSingleton<IXaiApiKeyProbe, XaiApiKeyProbe>();
     services.TryAddScoped<ISiteXaiApiKey, SiteXaiApiKey>();
+    services.TryAddScoped<IUserXaiApiKey, UserXaiApiKey>();
+    services.TryAddScoped<IXaiApiKeyResolver, XaiApiKeyResolver>();
     services.AddSingleton<IAgentChatUpstream, XaiChatUpstream>();
   }
 }

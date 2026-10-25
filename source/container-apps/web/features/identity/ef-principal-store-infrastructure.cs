@@ -13,7 +13,8 @@
 //     principal Version bump only when the tier actually changes
 //   - Type/Handle/PrincipalId immutable on UpdateCredential (re-parent only via
 //     MergePrincipalAsync's own snapshot/replace path)
-//   - MergePrincipalAsync: one SaveChanges for re-parented credentials + both principals
+//   - MergePrincipalAsync: one SaveChanges for re-parented credentials, both principals, and
+//     that source principal's user xAI API key row when one exists
 //   - List ordered by CreatedAt ascending
 // Version authority is store-CAS, not AggregateDbContext: Principal/Credential are deliberately
 // NOT IAggregateRoot, so SaveChanges will not auto-increment Version or run DomainInvariantsGuard.
@@ -31,7 +32,9 @@
 namespace TimeWarp.Architecture.Features.Identity.Infrastructure;
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Persistence;
+using TimeWarp.Architecture.Secrets;
 using TimeWarp.Foundation.Entities;
 using TimeWarp.Identity;
 
@@ -375,6 +378,15 @@ public sealed class EfPrincipalStore : IPrincipalStore
       AttachAsModified(Db.Credentials, next, originalVersion);
     }
 
+    string userKeyName = UserXaiApiKeyNames.NameFor(sourceId.Value);
+    ProtectedSecret? userKey = await Db.ProtectedSecrets
+      .FirstOrDefaultAsync(secret => secret.Name == userKeyName, cancellationToken)
+      .ConfigureAwait(false);
+    if (userKey is not null)
+    {
+      Db.ProtectedSecrets.Remove(userKey);
+    }
+
     try
     {
       await Db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -386,6 +398,11 @@ public sealed class EfPrincipalStore : IPrincipalStore
       foreach ((Credential next, long _) in credentialReplacements)
       {
         DetachIfTracked(next);
+      }
+
+      if (userKey is not null)
+      {
+        DetachIfTracked(userKey);
       }
 
       throw TranslateConcurrency(exception, typeof(Principal), sourceId.ToString(), sourceStoredVersion);

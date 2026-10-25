@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// Task 398 stores the site xAI API key here. Task 399 (per-user keys) should add rows with their
-// own name and Data Protection purpose, not a second table. The record has no ciphertext and no
+// Task 398 stores the site xAI API key here. Task 399 stores each user's key as another row,
+// named user.{id}.xai.api-key with a purpose that includes that id, not a second table. The record has no ciphertext and no
 // plaintext: Find is the admin status, Unprotect is the server-side read. StorageAvailable is
 // false when this process has no durable ring (postgres off, or no connection string). The
 // unavailable implementation is that case. The EF implementation is registered only beside
