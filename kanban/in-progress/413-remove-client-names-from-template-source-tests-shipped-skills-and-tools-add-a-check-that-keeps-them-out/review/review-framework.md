@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 489
-- Effort: 2
+- Lines changed: 1099
+- Effort: 3
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 200 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -16,6 +16,7 @@
 **Plan / brief:** task.md Required outcome + `## Goal (implementer restatement)`
 **Effort:** round 1: 3; round 2: 2 (budget by-diff); roster axes: general
 **Round 2 scope:** fix-pass delta `f384c75b7..4ccd816aa` (product commit `70a5819ed`), kanban/ excluded
+**Round 3 scope:** plain-search rework `f04972a83..973480be5` (product commit `4fa6334cb`), kanban/ excluded; effort 3
 **Reviewer roster:** general (review oracle, claude-opus-5-5)
 **Session IDs:** review oracle (ganda task work headless; session id not exposed)
 
