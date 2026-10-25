@@ -84,6 +84,7 @@ name, and build, tests, template smoke, skill lint, and `ganda repo audit` pass.
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
 - Implementation: 01a170b0-8b68-7c61-9c79-7b9fa8da6a91 (2026-10-25). Reworded packed comments, replaced the sample tenant with Contoso and `00000000-0000-0000-0000-000000000001`, and added `dev check-client-names`. `ganda repo audit` exited 0. The `kanban-landed` warning is the same advisory as task 410 (eight other live claims have no worktree) and was left alone.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T02:08:21Z
+- Review round 1 (2026-10-25): review oracle (claude-opus-5-5), effort 3, roster general. Wrote `review/round-1/general.md` and `review/round-1/merged.md`. 2 open findings (M1 bug, M2 suggestion), so a fix pass is needed.
 
 ## Results
 
@@ -115,6 +116,15 @@ Gates run on this walk (all exit 0):
 - `dotnet run tools/dev-cli/dev.cs -- template-smoke` — Template smoke SUCCEEDED (SmokeDefault build 0/0).
 - `dotnet run tools/dev-cli/dev.cs -- lint-skills` — 9/9 skills, eval.yaml valid, scan passed first.
 - `ganda repo audit` — exit 0 (33 passed, 1 skipped, `kanban-landed` advisory only).
+
+### Review
+
+Round 1 (effort 3, general) is not dispositioned yet. It has 1 open bug and 1 open suggestion.
+
+- M1 (bug): `entra-tenant-tests.cs` lost its case-variant ids, because the all-digit GUID has no hex letters.
+- M2 (suggestion): the scan roots are hardcoded and skip the packed `msbuild/`, `.template.config/`, root files, kanban skeleton, and `readme.md`.
+
+Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
 
 ## Notes
 
