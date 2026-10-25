@@ -2,19 +2,19 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3310
-- Effort: 3
+- Lines changed: 793
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
-# Review framework — task 399
+## Round 2 scope
 
 **Date:** 2026-10-26
 **Host task:** kanban/in-progress/399-byok-users-bring-their-own-xai-api-key/
-**Diff scope:** branch `task/399-byok-users-bring-their-own-xai-api-key` vs master merge-base `8b1230367` (commits c13056590, bf5489d04, 2dab9dc03; 62 product files)
-**Plan / brief:** task.md `## Goal (implementer restatement)` and `## Decisions` (host key wins; Required / Allow / Off ladder; per-user row and Data Protection purpose; probe before save; merge deletes the row)
-**Effort:** 3 (by-diff budget), roster axes: general
+**Diff scope:** fix commit `fa3e2acfe` vs round-1 base `37ac90005` (13 product files, 1 test file)
+**Plan / brief:** `review/round-1/merged.md` M1–M6, and task.md `## Goal (implementer restatement)`
+**Effort:** 2, roster axes: general
 **Reviewer roster:** general (review oracle, Claude Opus 5.5)
 **Session IDs:** review oracle under `ganda task work` headless; session id not exposed to the oracle
 
