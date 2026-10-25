@@ -48,6 +48,28 @@ Find them all with:
     implementer confirms nothing simpler exists (for example an existing audit check that takes
     a word list).
 
+## Rework: plain search instead of pack-rule evaluation (Steve 2026-10-25)
+
+PR #577's `tools/dev-cli/services/client-name-scan.cs` re-implements the template's MSBuild
+pack rules (about 740 lines). Steve chose a plain search instead. Replace it:
+
+- **Scan:** search the tracked files (`git grep -i -F -f documentation/developer/client-names.txt`
+  or the same through Amuru) over the whole repo, excluding `documentation/`, `kanban/`, and
+  `skills/*/analysis/` with git pathspecs. Report `path:line: matched <name>` and fail. Do not read
+  `template.json` or the template csproj. Keep the service a few dozen lines.
+- **Keep:** the `dev check-client-names` verb, the calls from `dev build` and `dev lint-skills`,
+  the names file, and the `tw-pr` and `AGENTS.md` mentions (update any wording that describes
+  the pack-rule scan).
+- **Tests:** replace `client-name-scan-tests.cs` with a few tests against a temp git repo:
+  clean tree passes, a planted name fails with path and line, and a name under an excluded
+  folder passes. Do not write the string literal `"kanban` followed by `/`, `\` or `"` in any test
+  source. `screenshot-path-guard-tests.cs` (`Not_Reference_Kanban_As_A_Path`) fails on it, which
+  is what made PR #577's `ci (playwright)` red. Build excluded folder names some other way, or
+  test the exclusion with `documentation/` only.
+- **Gates:** `dev build` 0/0, dev-cli tests green, the web-spa-playwright-tests unit test
+  `Not_Reference_Kanban_As_A_Path` green, and `dev check-client-names` passes on the branch and
+  fails on a planted name.
+
 ## Goal (implementer restatement)
 
 Packed template files are copied into every generated app, so they must not name a client.
