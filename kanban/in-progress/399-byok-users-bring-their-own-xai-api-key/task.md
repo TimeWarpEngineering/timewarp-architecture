@@ -65,7 +65,7 @@ same delete is what a user-deletion path calls.
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-21)
 - Decisions recorded: ses_e8cbae678ffe6TePjMOOX5xy0N (2026-10-25) — precedence (host always wins, ladder per policy), policy switch (Required / Allow / Off, default Allow), provider scope (xAI only, provider + key storage shape)
 - Implemented: grok 01a17414-3cc0-7172-bbd7-08dcb08980b1 (2026-10-26) — Profile key, policy ladder, probe-before-save, merge delete
-- Audit: added `stacked-task-set*.resume.json` to `.gitignore`. `kanban-landed` still warns that eight other claims have no worktree; that warning is advisory and is not this task.
+- Audit: added `stacked-task-set*.resume.json` to `.gitignore`. `kanban-landed` still warns that eight other claims have no worktree; that warning is advisory and is not this task. The first commit's hook refused to attest because four Jaribu runfiles were not executable. Their executable bit is restored in the follow-up commit.
 
 ## Notes
 
