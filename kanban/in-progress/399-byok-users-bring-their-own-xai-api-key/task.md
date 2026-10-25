@@ -83,8 +83,7 @@ matches the unprotect the status read actually does.
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6
-- Round 2: clean — M1–M6 fixed, 0 open
-
+- Round 2: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, "I also want to implement BYOK".
