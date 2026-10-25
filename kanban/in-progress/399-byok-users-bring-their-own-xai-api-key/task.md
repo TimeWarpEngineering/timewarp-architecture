@@ -78,11 +78,12 @@ matches the unprotect the status read actually does.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T18:14:20Z
 - Fix pass (review round 1): grok session 01a17445-4d3d-7ca1-b374-2cb1e9a6906e (2026-10-26). Mode rides the caller-opened slot. The chat-client cache holds eight keys. Merge no longer deletes the user key a second time. The EF row name uses `NameFor`. An unreadable mode is logged and treated as Required. Status Design text matches the unprotect.
 - Audit: `kanban-landed` is an error while this claim's branch-tip kitchen differs from origin-home. `ganda repo audit --fix` lands that kitchen. It does not merge the task branch. The eight other claims with no worktree stay a warning.
+- Review oracle round 2: Claude Opus 5.5 (general reviewer), effort 2, 2026-10-26. Session id not exposed to the oracle. Scope was fix commit `fa3e2acfe`. M1–M6 are fixed and there are no new findings. Disposition is clean. Files: `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6
-
+- Round 2: Done
 ## Notes
 
 - Origin: Steve 2026-10-21, "I also want to implement BYOK".
@@ -177,6 +178,8 @@ Expect:
 
 ### Review
 
-- Round 1 is recorded. Reviewer: general, effort 3. `review/round-1/merged.md` still lists bug 3, suggestion 2, nit 1 as open. That file was not edited on this pass; the host counts open findings from it. Disposition is not written. Review round 2 has not run.
+- **Disposition: clean.** 2 rounds, general reviewer (round 1 effort 3, round 2 effort 2). Final counts (open/fixed/wontfix): bug 0/3/0, suggestion 0/2/0, nit 0/1/0. There were no wontfix items and no escalations. Files: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+- Round 2 re-ran `XaiChatUpstream` 16/16, `UserXaiApiKey` 12/12, `CompleteAgentChat` 21/21, and `GetAgentChatConfigurationHint` 7/7. All passed.
+- Round 1 is recorded. Reviewer: general, effort 3. `review/round-1/merged.md` is frozen with bug 3, suggestion 2, nit 1 open as of that round. The live statuses are in `review/round-2/merged.md`.
 - This pass changed the product for those six findings. Ask reads the mode from the caller-opened slot, so Required and Off use the real upstream sentences. The chat-client cache is bounded at eight. Merge handlers no longer swallow a second delete. `EfPrincipalStore` calls `UserXaiApiKeyNames.NameFor`. An unreadable mode is logged and treated as Required. The status Design text matches the unprotect.
 - Framework: `review/review-framework.md`.
