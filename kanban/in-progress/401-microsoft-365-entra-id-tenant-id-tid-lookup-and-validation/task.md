@@ -147,6 +147,7 @@ is 0/0 with `dev check-version` passing.
 - Review round 1 (2026-10-25): review oracle (Claude Opus 5.5), effort 3, roster general, session not reported. The goal restatement matches the task, so there is no misread. Open findings: M1 bug, M2 and M3 suggestions, M4 and M5 nits (`review/round-1/merged.md`). The reviewer re-ran `dev build`, the TimeWarp.Identity tests, the resolve-entra-tenant runfile, web-infrastructure-tests (including the migration test against Postgres), and `dev check-version`; all passed. A fix pass is needed. No disposition yet.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T15:21:59Z
 - Fix pass (implement-fix-2, 2026-10-25): M1 drops `AddStandardResilienceHandler` from `entra-tenant-discovery` and maps every exception except caller cancellation to network failure. M2 deletes `ConvertLegacyGuidArrayJson`. M3 reports a tenant id already on the draft as already listed under its stored domain and leaves the list unchanged. M4 sets cache entry `Size` to 1. M5 names the default 20-per-60-second limit and the abuse-test `PermitLimit` of 2. Identity `Lookup_Given_` 15, `Issuer_Given_` 7, `SiteSettings_Given_` 25, SPA `ResolveEntraTenant_Action_Should_` 4, all passed. `dev check-version`: source `2.0.0-beta.26` is one prerelease ahead of NuGet `2.0.0-beta.25`.
+- Review round 2 (2026-10-25): review oracle (Claude Opus 5.5), effort 2, roster general, session not reported. Scope was the fix delta `e1d6e20b9..81ad53928`. M1–M5 are fixed. New M6 (suggestion, open): a domain lookup no longer fills in the domain of a GUID-only or migrated row (`review/round-2/merged.md`). The reviewer re-ran `dev build` (0/0) and TimeWarp.Identity tests (316/316). A fix pass is needed. No disposition yet.
 
 ## Results
 
@@ -160,3 +161,12 @@ Expect: The list shows `contoso.com` followed by its tenant GUID, and a later re
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
+- Round 2: M1–M5 fixed; Blocked — open M6
+
+## Learnings
+
+- Misread (round 2): the fix pass rewrote the goal restatement to say "when that tenant id is
+  already on the draft, the page ... leaves the list unchanged". Task Scope 4 says a successful
+  lookup adds `{tenant ID, domain}`. Round-1 M3 was only about a second, *different* domain. The
+  restatement extended M3 to null-domain rows, so the lookup no longer fills in the domain of a
+  migrated row (M6).
