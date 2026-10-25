@@ -117,6 +117,8 @@ and fails when a name is planted in a tracked file.
 - Review round 2 (2026-10-25): review oracle (claude-opus-5-5), effort 2, roster general, scope fix delta `f384c75b7..4ccd816aa`. Wrote `review/round-2/general.md`, `review/round-2/merged.md`, and `review/disposition.md`. M1 and M2 are fixed, nothing new was raised, and the disposition is clean.
 - Plain-search rework (2026-10-25): Steve rejected the pack-rule scanner. `ClientNameScan` is now `git grep -i -F` over tracked files. Pathspecs skip `documentation/`, the kanban tree, and `skills/*/analysis/`. The service does not read the template pack files. `ganda repo audit` exited 0. The `kanban-landed` warning is the same advisory as task 410 (eight other live claims have no worktree) and was left alone.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T09:38:43Z
+- Review round 3 (2026-10-25): review oracle (claude-opus-5-5), effort 3, roster general, scope rework delta `f04972a83..973480be5`. Wrote `review/round-3/general.md` and `review/round-3/merged.md`, and updated `review/disposition.md`. Nothing new was raised, and the disposition stays clean.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T09:42:13Z
 
 ## Results
 
@@ -152,19 +154,20 @@ Rework gates:
 
 ### Review
 
-Two rounds, roster general. Round 1 ran at effort 3 and round 2 at effort 2. Round 1 found 1 bug and 1 suggestion, and fix pass `70a5819ed` addressed both. Round 2 re-verified them on the fix delta and found nothing new. Round 2 re-ran `dev check-client-names` (exit 0) and the dev-cli tests (353/353).
+Three rounds, roster general. Round 1 ran at effort 3, round 2 at effort 2, and round 3 at effort 3. Round 1 found 1 bug and 1 suggestion, and fix pass `70a5819ed` addressed both. Round 2 re-verified them on the fix delta and found nothing new. Round 2 re-ran `dev check-client-names` (exit 0) and the dev-cli tests (353/353). Round 3 reviewed the plain-search rework (`4fa6334cb`) and found nothing new. It re-ran `dev check-client-names` (exit 0), the dev-cli tests (342/342), `Not_Reference_Kanban_As_A_Path` (1/1), and `dev build` (succeeded, scan first).
 
 Final counts: bug 1 fixed, suggestion 1 fixed, nit 0. Nothing is open and nothing is wontfix. **Disposition: clean.**
 
 - M1 (bug): `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` and `MatchById_DifferentGuidCasing_Should_Select` again use a GUID with hex letters. The union keeps the first casing.
 - M2 (suggestion): the scan file set was the pack allow-list at round 2. The later plain-search rework replaced that set with `git grep` over tracked files. `PackedFiles_Given_` is gone.
 
-Ledger: `review/round-2/merged.md` (round 1: `review/round-1/merged.md`). Framework: `review/review-framework.md`. Disposition: `review/disposition.md`.
+Ledger: `review/round-3/merged.md` (earlier: `review/round-2/merged.md`, `review/round-1/merged.md`). Framework: `review/review-framework.md`. Disposition: `review/disposition.md`.
 
 ## Review
 
 - Round 1: fixed on this branch — M1, M2
 - Round 2: Done
+- Round 3: Done
 ## Notes
 
 - Found while verifying PR #576 (task 410). Steve 2026-10-25: "yes file the clean up task".
