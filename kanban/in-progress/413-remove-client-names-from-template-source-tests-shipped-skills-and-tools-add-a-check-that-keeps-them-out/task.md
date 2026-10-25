@@ -123,6 +123,7 @@ Fix-pass gates:
 
 - `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 353 passed, 0 failed.
 - `dotnet run tools/dev-cli/dev.cs -- check-client-names` — `Client-name scan passed.`, exit 0.
+- `ganda repo audit --fix` landed kitchen 413, then the audit exited 0. The only `kanban-landed` row is the same advisory as task 410: eight other live claims have no worktree.
 
 Earlier walk (still the pack-content evidence; not re-run on this fix pass):
 
