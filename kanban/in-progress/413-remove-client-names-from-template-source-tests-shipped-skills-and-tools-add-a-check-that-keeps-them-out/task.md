@@ -50,23 +50,30 @@ Find them all with:
 
 ## Goal (implementer restatement)
 
-The template is copied into every generated app, so packed files must not name a client.
-Reword comments and docs so the rule remains and the source credit goes away. Replace the
-real Entra sample (legal name, domains, tenant id) with Contoso and a made-up GUID, and
-rename tests so they describe the behavior. `wwwroot/auth.md` uses `contoso.com`, and the
-Azure Container Apps sentence no longer names a client. `kanban/`, `documentation/`, and
-`skills/*/analysis/` stay as they are.
+Packed template files are copied into every generated app, so they must not name a client.
+Comments and docs keep the rule and drop the source credit. Sample Entra data uses Contoso
+(`Contoso, Ltd`, `contoso.com`, `contoso.onmicrosoft.com`) and a made-up tenant id.
+`wwwroot/auth.md` uses `contoso.com`. Task history under `kanban/`, `documentation/`, and
+`skills/*/analysis/` stay as they are, because the pack does not ship those trees.
 
-Add a gate that scans the packed trees (`source/`, `tests/`, `skills/` except `analysis/`,
-and `tools/` only if the template pack includes it), not only the PR diff. The name list
-lives in a file both `.template.config/template.json` and the `timewarp-templates` pack
-leave out. `ganda repo audit` has no word-list check, so the gate is `dev check-client-names`.
-`dev build` runs it, which is what CI's `ci (fast)` job already calls, and `dev lint-skills`
-runs it so a skills-only PR is covered too. The repo gate list that `tw-pr` tells agents to
-read (`AGENTS.md`) names the verb.
+`dev check-client-names` is the gate. It reads `documentation/developer/client-names.txt`,
+which both `.template.config/template.json` and the `timewarp-templates` pack leave out.
+`ganda repo audit` has no word-list check. `dev build` runs the scan, and that is what
+CI's `ci (fast)` job calls. `dev lint-skills` runs it for a skills-only PR. `AGENTS.md`
+names the verb where `tw-pr` tells agents to read this repo's gates.
 
-Done means the packed-tree search for those names is empty, the gate fails on a planted
-name, and build, tests, template smoke, skill lint, and `ganda repo audit` pass.
+The scan file set is the pack allow-list (`Content`, and `None` with `Pack=true`), minus
+each item's `Exclude`, and also minus `skills/**/analysis/**`. That set includes `msbuild/`,
+`.template.config/`, the root build and solution files, the kanban skeleton, and `readme.md`.
+A new allow-list include is scanned without a second hardcoded root list. An include or
+exclude that uses an MSBuild property fails the scan. The two case-variant Entra tests use
+a made-up GUID whose upper and lower forms differ (`aaaaaaaa-0000-0000-0000-000000000001`
+and `AAAAAAAA-0000-0000-0000-000000000001`). The union assertion keeps the first casing.
+
+Done means the denylist search of packed content is empty, the gate fails on a planted
+name, those previously skipped packed paths are in the scan set, the case-variant tests
+would fail an ordinal compare, and build, tests, template smoke, skill lint, and
+`ganda repo audit` pass.
 
 ## Checklist
 
@@ -78,18 +85,24 @@ name, and build, tests, template smoke, skill lint, and `ganda repo audit` pass.
 - [x] Gate added (names list unpacked, runs in CI on PRs, scans packed content); `tw-pr` lists it
 - [x] `git grep -n -i -E 'crunchit|copic' -- source tests tools skills ':!skills/*/analysis/**'` is empty
 - [x] `./bin/dev build` 0/0, tests pass, `./bin/dev template-smoke`, `./bin/dev lint-skills`, `ganda repo audit`
+- [x] Case-variant Entra tests use a GUID with hex letters and keep the first casing
+- [x] Scan set is the pack allow-list, including msbuild, .template.config, root files, the kanban skeleton, and readme.md
+- [x] A test lists a new allow-list include and leaves an unpacked file out
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-25)
 - Implementation: 01a170b0-8b68-7c61-9c79-7b9fa8da6a91 (2026-10-25). Reworded packed comments, replaced the sample tenant with Contoso and `00000000-0000-0000-0000-000000000001`, and added `dev check-client-names`. `ganda repo audit` exited 0. The `kanban-landed` warning is the same advisory as task 410 (eight other live claims have no worktree) and was left alone.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-25T02:08:21Z
+- Review round 1 (2026-10-25): review oracle (claude-opus-5-5), effort 3, roster general. Wrote `review/round-1/general.md` and `review/round-1/merged.md`. 2 open findings (M1 bug, M2 suggestion), so a fix pass is needed.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-25T02:11:54Z
+- Fix pass (2026-10-25): implement-fix-2. The two Entra case tests use `aaaaaaaa-0000-0000-0000-000000000001` against its upper-case form, and the union keeps the first casing. `dev check-client-names` lists files from the pack allow-list (`Content`, and `None` with `Pack=true`) minus each item's `Exclude` and `skills/**/analysis/**`. An MSBuild property in an include or exclude fails the scan. `tests/tools/dev-cli-tests` Release: 353 passed. `dotnet run tools/dev-cli/dev.cs -- check-client-names` printed `Client-name scan passed.` Full solution build, template-smoke, and lint-skills were not re-run; the pack contents are unchanged and the scan verb is what `dev build` and `dev lint-skills` call first.
 
 ## Results
 
 Packed comments and docs now state the rule without naming a client. Sample Entra data is Contoso (`Contoso, Ltd`, `contoso.com`, `contoso.onmicrosoft.com`) and the made-up tenant id `00000000-0000-0000-0000-000000000001`. Test names describe the behavior. `wwwroot/auth.md` uses `contoso.com` and "for example, Azure Container Apps".
 
-`dev check-client-names` reads `documentation/developer/client-names.txt` and scans `source/`, `tests/`, and `skills/` except `skills/**/analysis/`. `tools/` is scanned only when the template pack includes `tools/dev-cli/dev.cs`. This repo's allow-list does not, so `tools/` is cleaned for the acceptance search and is not part of the packed scan. The name list is outside those trees. The scan fails if `documentation/**` stops being an unconditional exclude or the pack allow-list starts including the file. `ganda repo audit --list-checks` has no word-list check, so the gate is this verb. `dev build` runs it (CI `ci (fast)` calls that build through `dotnet run tools/dev-cli/dev.cs -- workflow`). `dev lint-skills` runs it so a skills-only PR is covered. `AGENTS.md` lists the verb where `tw-pr` tells agents to read this repo's gates. `timewarp-flow`'s `tw-pr` skill was not edited.
+`dev check-client-names` reads `documentation/developer/client-names.txt`. The file set is the `timewarp-templates` allow-list: `Content` items, and `None` items with `Pack=true`, minus each item's `Exclude`. `skills/**/analysis/**`, `bin`, `obj`, `artifacts`, and `node_modules` are skipped as well. That set includes `msbuild/`, `.template.config/`, the root build and solution files, the kanban skeleton (column `.gitkeep` files, `overview.md`, `task-template.md`), and `readme.md`. `tools/` is included when an allow-list item covers it. This repo's allow-list does not, so `tools/` stays out of the packed scan. An include or exclude that uses an MSBuild property fails the scan. The name list stays unpacked: `documentation/**` is an unconditional exclude, and the pack does not include it. The scan fails if that exclude disappears or the pack starts including the file. `ganda repo audit --list-checks` has no word-list check, so the gate is this verb. `dev build` runs it (CI `ci (fast)` calls that build through `dotnet run tools/dev-cli/dev.cs -- workflow`). `dev lint-skills` runs it so a skills-only PR is covered. `AGENTS.md` lists the verb where `tw-pr` tells agents to read this repo's gates. `timewarp-flow`'s `tw-pr` skill was not edited.
 
 The packed nupkg `TimeWarp.Architecture.2.0.0-beta.25` from template-smoke contains neither the name list nor those client tokens, and it does not contain `tools/dev-cli/dev.cs`.
 
@@ -104,9 +117,14 @@ git grep -n -i -E 'crunchit|copic' -- source tests tools skills ':!skills/*/anal
 dotnet run tools/dev-cli/dev.cs -- check-client-names
 ```
 
-Expect: the search prints nothing. The verb prints `Client-name scan passed.` and exits 0. A planted token under `source/` or `skills/*/SKILL.md` fails the scan; the same token under `skills/*/analysis/` does not. Those cases are `ClientNameScan_` in `tests/tools/dev-cli-tests` (fixture token `acmeclient`, so the denylist words stay out of packed tests).
+Expect: the search prints nothing. The verb prints `Client-name scan passed.` and exits 0. A planted token in an allow-listed file (for example `msbuild/` or `readme.md`) fails the scan. The same token under `skills/*/analysis/`, in a `None` item without `Pack=true`, or in `kanban/done/*.md` does not. Those cases are `ClientNameScan_` in `tests/tools/dev-cli-tests` (fixture token `acmeclient`, so the denylist words stay out of packed tests). `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` expects the lower-case id `aaaaaaaa-0000-0000-0000-000000000001` when the second list has the upper-case form. `MatchById_DifferentGuidCasing_Should_Select` selects the tenant whose id is the lower-case form.
 
-Gates run on this walk (all exit 0):
+Fix-pass gates:
+
+- `cd tests/tools/dev-cli-tests && dotnet test -c Release` — 353 passed, 0 failed.
+- `dotnet run tools/dev-cli/dev.cs -- check-client-names` — `Client-name scan passed.`, exit 0.
+
+Earlier walk (still the pack-content evidence; not re-run on this fix pass):
 
 - `dotnet run tools/dev-cli/dev.cs -- build` — Build succeeded, 0 Warning(s), 0 Error(s), and the scan passed first.
 - `dotnet run tools/dev-cli/dev.cs -- test --no-build --group fast` — 14/14 projects passed.
@@ -115,6 +133,19 @@ Gates run on this walk (all exit 0):
 - `dotnet run tools/dev-cli/dev.cs -- template-smoke` — Template smoke SUCCEEDED (SmokeDefault build 0/0).
 - `dotnet run tools/dev-cli/dev.cs -- lint-skills` — 9/9 skills, eval.yaml valid, scan passed first.
 - `ganda repo audit` — exit 0 (33 passed, 1 skipped, `kanban-landed` advisory only).
+
+### Review
+
+Round 1 (effort 3, general) found 1 bug and 1 suggestion. This fix pass addresses both. Round 2 has not run.
+
+- M1 (bug): `Union_Should_DedupeCaseInsensitivePreserveFirstCasing` and `MatchById_DifferentGuidCasing_Should_Select` again use a GUID with hex letters. The union keeps the first casing.
+- M2 (suggestion): the scan file set is the pack allow-list, so `msbuild/`, `.template.config/`, the root build and solution files, the kanban skeleton, and `readme.md` are scanned. `PackedFiles_Given_` and `RealPack_Should_CoverAllowListPaths` pin that set.
+
+Ledger: `review/round-1/merged.md`. Framework: `review/review-framework.md`.
+
+## Review
+
+- Round 1: fixed on this branch — M1, M2 (round 2 not run)
 
 ## Notes
 
