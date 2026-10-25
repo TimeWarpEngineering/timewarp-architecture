@@ -6,7 +6,8 @@
 // In-proc SPA container, same mediator and state registrations as StaticRenderHost, with a
 // scripted IWebServerApiService. The action is sent as its concrete type. The scripted
 // response is the only tenant id the client stores: this test never calls Microsoft.
-// A second domain for a tenant id already on the draft leaves the list unchanged.
+// A second domain for a tenant that already has one leaves the list unchanged.
+// A row with no domain takes the looked-up domain.
 #endregion
 
 namespace AuthenticationTenantLookup_;
@@ -70,7 +71,7 @@ public class ResolveEntraTenant_Action_Should_
     server.Calls.ShouldBe(2);
   }
 
-  public static async Task Leave_A_Guid_Only_Row_When_Lookup_Finds_That_Tenant()
+  public static async Task Fill_The_Domain_Of_A_Guid_Only_Row()
   {
     var server = new ScriptedWebServer(
       new ResolveEntraTenant.Response(TenantId, "contoso.com"));
@@ -81,8 +82,8 @@ public class ResolveEntraTenant_Action_Should_
     await scope.Send(new SiteSettingsState.ResolveEntraTenantActionSet.Action("contoso.com"));
 
     SiteSettingsState state = scope.Store.GetState<SiteSettingsState>();
-    state.DraftAcceptedTenants.ShouldBe([EntraAcceptedTenant.IdOnly(TenantId)]);
-    state.AcceptedTenantsMessage.ShouldBe($"Tenant {TenantId:D} is already listed.");
+    state.DraftAcceptedTenants.ShouldBe([new EntraAcceptedTenant(TenantId, "contoso.com")]);
+    state.AcceptedTenantsMessage.ShouldBeNull();
     server.Calls.ShouldBe(1);
   }
 

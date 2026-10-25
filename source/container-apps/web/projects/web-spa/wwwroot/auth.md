@@ -150,7 +150,9 @@ token `tid` only. On `/Admin/Authentication`, look up the customer's primary
 domain. The server reads the tenant id from the OpenID discovery `issuer`
 (`https://login.microsoftonline.com/{tenant-id}/v2.0`) and stores the domain with
 it. The list shows `contoso.com (guid)`. A known tenant id can still be added by
-hand and is shown as the bare GUID. The browser does not compute the id.
+hand and is shown as the bare GUID until its domain is looked up, which stores
+the domain on that same row. A different domain for a tenant that already has
+one leaves the list unchanged. The browser does not compute the id.
 
 First boot copies a GUID `TenantId` into the restricted list with no domain.
 `organizations` and `common` seed an empty list until an administrator chooses a
