@@ -66,6 +66,8 @@ of renaming through `UpdateSiteSettings`.
   (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) have no usable worktree. Left alone;
   those claims are not this task.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T08:52:19Z
+- Review oracle round 1 (2026-10-26): claude-opus-5-5, effort 3, roster general. Fix pass
+  requested for M1 and M2.
 
 ## Results
 
@@ -89,6 +91,18 @@ Expect: The top-bar button reads "Ask Zawadi", the Ctrl-K Ask row reads "Ask Zaw
 panel header, avatar, and greeting use Zawadi, without a full page reload. Admin → Authentication
 has no Assistant section. A member PUT to `api/settings/assistant` returns 403, a stale version
 returns 409, and a name that contains markup returns 400.
+
+### Review
+
+Round 1 (general, effort 3): 1 bug and 1 suggestion, both open. No disposition yet; a fix pass is
+needed. The reviewer re-ran the gates in the claim worktree: `dev build` 0/0, the fast group 14/14,
+the integration group 8/8, and both settings runfiles. The Playwright group was not re-run.
+Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+- M1 (bug): Admin → AI never refetches site settings, so the rename uses the sign-in `Version`.
+  After any other write, every save returns 409 until a full reload.
+- M2 (suggestion): an agent rename while Admin → AI is open leaves the form's name and `Version`
+  stale.
 
 ## Notes
 
