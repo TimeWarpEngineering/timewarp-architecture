@@ -19,7 +19,7 @@ partial class SiteSettingsState
   {
     [CatalogAction
     (
-      Description = "Save the site authentication policy settings and the assistant name.",
+      Description = "Save the site authentication policy settings.",
       Permissions = [PermissionIds.SettingsWrite],
       Visibility = ActionVisibility.Agent
     )]

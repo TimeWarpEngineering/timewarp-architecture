@@ -9,7 +9,7 @@
 // markup rendered with HtmlRenderer. HtmlRenderer does not run OnAfterRenderAsync, so the agent is
 // never built: the header and the signed-out state carry the name here, and the Playwright rename
 // test proves the greeting and the top-bar button in a browser. The refresh tests dispatch the real
-// UpdateSiteSettings and ResetStore actions and check that AssistantIdentityRefreshHandler reloads
+// UpdateAssistantName and ResetStore actions and check that AssistantIdentityRefreshHandler reloads
 // the identity, so a rename by any caller (the admin page or the agent) reaches every label.
 #endregion
 
@@ -28,7 +28,6 @@ using TimeWarp.Architecture.Services;
 using TimeWarp.Architecture.Web.Spa;
 using TimeWarp.Foundation.Features;
 using TimeWarp.Foundation.Types;
-using TimeWarp.Identity;
 
 [TestTag("Unit")]
 public class AssistantIdentity_Should_
@@ -136,20 +135,19 @@ public class AssistantIdentity_Should_
     html.ShouldNotContain("Ask runs");
   }
 
-  public static async Task Reload_The_Identity_After_A_Site_Settings_Save()
+  public static async Task Reload_The_Identity_After_An_Assistant_Rename()
   {
     ScriptedWebServer server = new(new GetAssistantIdentity.Response("Zawadi", ZawadiAvatar));
-    server.Outcomes[typeof(UpdateSiteSettings.Response)] =
-      new UpdateSiteSettings.Response(false, false, PasskeyPromptMode.Soft, "Zawadi", 1);
+    server.Outcomes[typeof(UpdateAssistantName.Response)] = new UpdateAssistantName.Response("Zawadi", 1);
     using AskSpa spa = new(server);
     using SpaTestScope scope = SpaTestScope.Create(spa);
     scope.Store.GetState<AgentSurfaceState>().AssistantName.ShouldBe("Akili");
 
     await scope.Send
     (
-      new SiteSettingsState.UpdateSiteSettingsActionSet.Action
+      new SiteSettingsState.UpdateAssistantNameActionSet.Action
       (
-        new UpdateSiteSettings.Command { PasskeyPromptMode = PasskeyPromptMode.Soft, AssistantName = "Zawadi", Version = 0 }
+        new UpdateAssistantName.Command { AssistantName = "Zawadi", Version = 0 }
       )
     );
 
@@ -159,22 +157,22 @@ public class AssistantIdentity_Should_
     state.AssistantAvatar.ShouldBe(ZawadiAvatar);
   }
 
-  public static async Task Skip_The_Reload_When_The_Save_Fails()
+  public static async Task Skip_The_Reload_When_The_Rename_Fails()
   {
     ScriptedWebServer server = new(new GetAssistantIdentity.Response("Zawadi", ZawadiAvatar));
-    server.Outcomes[typeof(UpdateSiteSettings.Response)] = new SharedProblemDetails { Status = 409, Title = "Conflict" };
+    server.Outcomes[typeof(UpdateAssistantName.Response)] = new SharedProblemDetails { Status = 409, Title = "Conflict" };
     using AskSpa spa = new(server);
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
     await scope.Send
     (
-      new SiteSettingsState.UpdateSiteSettingsActionSet.Action
+      new SiteSettingsState.UpdateAssistantNameActionSet.Action
       (
-        new UpdateSiteSettings.Command { PasskeyPromptMode = PasskeyPromptMode.Soft, AssistantName = "Zawadi", Version = 0 }
+        new UpdateAssistantName.Command { AssistantName = "Zawadi", Version = 0 }
       )
     );
 
-    scope.Store.GetState<SiteSettingsState>().SaveFailed.ShouldBeTrue();
+    scope.Store.GetState<SiteSettingsState>().AssistantNameSaveFailed.ShouldBeTrue();
     scope.Store.GetState<AgentSurfaceState>().AssistantName.ShouldBe("Akili");
     server.Calls.ShouldBe(1);
   }

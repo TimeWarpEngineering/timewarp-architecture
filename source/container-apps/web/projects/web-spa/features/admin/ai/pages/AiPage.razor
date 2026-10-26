@@ -1,11 +1,17 @@
 @namespace TimeWarp.Architecture.Features.Admin.Ai
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.AgentChats
+@using TimeWarp.Architecture.Features.Settings
 
 @*
-  Purpose: Admin → AI. Set, replace, or clear the site xAI API key, or show that the host owns it.
+  Purpose: Admin → AI. Rename the assistant, and set, replace, or clear the site xAI API key.
 
-  Design: The draft key is page-local and is cleared after a successful save. State never
+  Design: The assistant section binds UpdateAssistantName.Command (name and Version). The copy,
+  data-qa="AssistantSettings", and AssistantNameRules validation match the section that used to
+  sit on Authentication. Submit is SiteSettingsState.UpdateAssistantName. A successful save
+  reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
+  and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
+  The draft key is page-local and is cleared after a successful save. State never
   receives it back. The input is a password field. The editable branch shows the connection
   as an IntegrationCard; the status sentence stays the meta line, and save and clear stay
   outside the card. Host configuration and a deployment with no durable store render
@@ -18,9 +24,15 @@
 
   private static readonly SetXaiApiKey.Validator KeyValidator = new();
 
+  private static readonly UpdateAssistantName.Validator AssistantValidator = new();
+
   private static readonly Icon XaiKeyIcon = new Icons.Regular.Size24.Key();
 
   private SetXaiApiKey.Command Command { get; } = new();
+
+  private UpdateAssistantName.Command AssistantCommand { get; } = new();
+
+  private bool AssistantDraftLoaded;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -63,19 +75,56 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
+    SyncAssistantDraft();
     if (RendererInfo.IsInteractive)
     {
-      await NoSubXaiApiKeyState.FetchXaiApiKeyStatus();
+      await LoadAsync();
     }
   }
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await base.OnAfterRenderAsync(firstRender);
-    if (firstRender && RendererInfo.IsInteractive && !XaiApiKeyState.HasSnapshot)
+    if (firstRender && RendererInfo.IsInteractive && (!XaiApiKeyState.HasSnapshot || !SiteSettingsState.HasSnapshot))
+    {
+      await LoadAsync();
+      await InvokeAsync(StateHasChanged);
+    }
+  }
+
+  private async Task LoadAsync()
+  {
+    if (!XaiApiKeyState.HasSnapshot)
     {
       await NoSubXaiApiKeyState.FetchXaiApiKeyStatus();
-      await InvokeAsync(StateHasChanged);
+    }
+
+    if (!SiteSettingsState.HasSnapshot)
+    {
+      await NoSubSiteSettingsState.FetchSiteSettings();
+    }
+
+    SyncAssistantDraft();
+  }
+
+  private void SyncAssistantDraft()
+  {
+    if (!SiteSettingsState.HasSnapshot)
+    {
+      return;
+    }
+
+    AssistantCommand.AssistantName = SiteSettingsState.AssistantName;
+    AssistantCommand.Version = SiteSettingsState.Version;
+    AssistantDraftLoaded = true;
+  }
+
+  private async Task SaveAssistantAsync()
+  {
+    await NoSubSiteSettingsState.UpdateAssistantName(AssistantCommand);
+    if (!SiteSettingsState.AssistantNameSaveFailed)
+    {
+      SyncAssistantDraft();
     }
   }
 
@@ -92,6 +141,42 @@
 }
 
 <TimeWarpPage Title="AI">
+  @if (AssistantDraftLoaded)
+  {
+    <EditForm Model="AssistantCommand" OnValidSubmit="SaveAssistantAsync" FormName="AssistantNameForm" novalidate>
+      <FluentValidator Validator="@AssistantValidator" />
+      <FormSection Title="Assistant"
+                   Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
+                   data-qa="AssistantSettings">
+        <FormGrid>
+          <FormField Label="Assistant name">
+            <FluentTextInput @bind-Value="AssistantCommand.AssistantName"
+                             Name="AssistantName"
+                             AriaLabel="Assistant name"
+                             Width="100%"
+                             Disabled="@IsBusy"
+                             data-qa="AssistantName" />
+            <ValidationMessage For="@(() => AssistantCommand.AssistantName)" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+      <FormActions>
+        <FluentButton Type="ButtonType.Submit"
+                      Appearance="ButtonAppearance.Primary"
+                      Disabled="@IsBusy"
+                      data-qa="AssistantNameSave">
+          Save assistant name
+        </FluentButton>
+      </FormActions>
+    </EditForm>
+  }
+  else
+  {
+    <FormSection Title="Assistant"
+                 Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
+                 data-qa="AssistantSettings" />
+  }
+
   @if (!XaiApiKeyState.HasSnapshot)
   {
     <FormSection Title="xAI API key"

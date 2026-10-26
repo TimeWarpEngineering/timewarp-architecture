@@ -5,7 +5,7 @@
 #region Design
 // Task 361: one name labels every Ask entry point, the panel header, the greeting, the
 // answer-bar feedback titles, the system prompt and the Multiavatar seed. The aggregate and the
-// contract validator (SiteSettingsDetailsValidator, after its NotEmpty required-message rule)
+// contract validator (UpdateAssistantName.Validator, after its NotEmpty required-message rule)
 // both call IsValid, so the two cannot disagree.
 // Plain text is checked per Unicode scalar (Rune), not per UTF-16 char, so astral characters
 // are classified correctly. It means valid UTF-16 (no lone surrogates), no control characters

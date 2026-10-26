@@ -40,7 +40,7 @@
 // Task 301: signed in, Ask opens through Ctrl-K: "ask" highlights the derived OpenAskPanel row,
 // Enter closes the palette and opens [data-qa=AgentAsk] (screenshots ctrl-k-ask-row.png and
 // ctrl-k-ask-panel-open.png). Signed out the palette has no commands, so the app-bar button opens Ask.
-// Task 361: signed in as the first (Administrator) account, /Admin/Authentication renames the
+// Task 418: signed in as the first (Administrator) account, /Admin/AI renames the
 // assistant to Zawadi. Without a reload the top-bar button reads "Ask Zawadi", the derived Ctrl-K
 // row reads "Ask Zawadi", and the panel it opens has the header Zawadi with its avatar and the
 // greeting "Hi, I'm Zawadi"; no "Akili" is left in the panel (assistant-rename-*.png).
@@ -334,8 +334,8 @@ public class AskSignIn_Given_Wasm
     await Assertions.Expect(askButton).ToHaveTextAsync("Ask Akili", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
     await session.SignInWithNewPasskeyAsync();
 
-    // Rename through the admin form (same UpdateSiteSettings flow and Version token).
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
+    // Rename through the Admin AI form (UpdateAssistantName and its Version token).
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,
@@ -346,7 +346,7 @@ public class AskSignIn_Given_Wasm
     await nameInput.FillAsync("Zawadi");
     await nameInput.PressAsync("Tab");
     await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("assistant-rename-admin.png") });
-    await page.Locator("[data-qa=AuthenticationSave]").ClickAsync();
+    await page.Locator("[data-qa=AssistantNameSave]").ClickAsync();
 
     // Top bar: the page reloads the public identity after a successful save, so no page load.
     await Assertions.Expect(askButton).ToHaveTextAsync("Ask Zawadi", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });

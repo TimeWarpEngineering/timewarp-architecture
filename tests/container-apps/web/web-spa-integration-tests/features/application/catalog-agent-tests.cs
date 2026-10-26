@@ -146,6 +146,40 @@ public partial class CatalogAgent_Should
     acceptance.GetProperty("type").GetString().ShouldBe("string");
     string[] acceptanceMembers = [.. acceptance.GetProperty("enum").EnumerateArray().Select(member => member.GetString() ?? "")];
     acceptanceMembers.ShouldBe(Enum.GetNames<EntraTenantAcceptanceMode>());
+    schema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties")
+      .TryGetProperty("assistantName", out _)
+      .ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Binds_UpdateAssistantName_With_Name_And_Version()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    ActionCatalogEntry rename = catalog.Find("SiteSettings.UpdateAssistantName").ShouldNotBeNull();
+    string parameter = rename.Parameters[0].Name;
+    JsonElement command = JsonSerializer.Deserialize<JsonElement>
+    (
+      """{"assistantName":"Zawadi","version":2}"""
+    );
+
+    object?[] bound = CatalogAgentArguments.Bind(rename, new Dictionary<string, object?> { [parameter] = command });
+
+    bound.Length.ShouldBe(1);
+    UpdateAssistantName.Command bind = bound[0].ShouldBeOfType<UpdateAssistantName.Command>();
+    bind.AssistantName.ShouldBe("Zawadi");
+    bind.Version.ShouldBe(2);
+
+    using JsonDocument schema = JsonDocument.Parse(CatalogAgentSchema.For(rename));
+    JsonElement properties = schema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties");
+    properties.GetProperty("assistantName").GetProperty("type").GetString().ShouldBe("string");
+    properties.GetProperty("version").GetProperty("type").GetString().ShouldBe("integer");
     return Task.CompletedTask;
   }
 
@@ -966,6 +1000,12 @@ public partial class CatalogAgent_Should
     settingsRecord.GetProperty("entraTenantAcceptanceMode").GetString()
       .ShouldBe(scope.Store.GetState<SiteSettingsState>().EntraTenantAcceptanceMode.ToString());
     settingsRecord.TryGetProperty("entraAcceptedTenants", out _).ShouldBeTrue();
+
+    using JsonDocument ai = JsonDocument.Parse(PageAgentContext.Describe(scope.Store, "/Admin/AI"));
+    JsonElement aiRecord = ai.RootElement.GetProperty("siteSettings");
+    aiRecord.GetProperty("assistantName").GetString()
+      .ShouldBe(scope.Store.GetState<SiteSettingsState>().AssistantName);
+    aiRecord.GetProperty("version").GetInt64().ShouldBe(scope.Store.GetState<SiteSettingsState>().Version);
     return Task.CompletedTask;
   }
 

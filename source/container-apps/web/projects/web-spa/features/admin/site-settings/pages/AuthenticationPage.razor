@@ -25,11 +25,8 @@
   stay outside the EditForm. FormActions sits after FormSection (hairline above
   Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
   after a successful save; there is no cheap unused reset on the command.
-  Task 361: an Assistant section edits AssistantName on the same command (same Version, same
-  settings.write policy). The page only dispatches UpdateSiteSettings: after a successful save
-  AgentSurfaceState's AssistantIdentityRefreshHandler reloads the public assistant identity, so the
-  button, Ctrl-K row and panel show the new name and avatar without a reload, whether this page or
-  the agent saved.
+  The assistant name is not on this page. Admin → AI owns it through UpdateAssistantName, so this
+  save does not round-trip the name.
   Task 399: an Ask API key section edits XaiByokMode on the same command. Allow is the
   zero value. Off hides Profile's personal key section.
 *@
@@ -128,7 +125,6 @@
     Command.EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
     Command.EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
     Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
-    Command.AssistantName = SiteSettingsState.AssistantName;
     Command.XaiByokMode = SiteSettingsState.XaiByokMode;
     Command.EntraTenantAcceptanceMode = SiteSettingsState.EntraTenantAcceptanceMode;
     Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
@@ -281,21 +277,6 @@
                           Width="100%"
                           Disabled=@IsBusy />
             <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
-      <FormSection Title="Assistant"
-                   Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
-                   data-qa="AssistantSettings">
-        <FormGrid>
-          <FormField Label="Assistant name">
-            <FluentTextInput @bind-Value=Details.AssistantName
-                             Name="AssistantName"
-                             AriaLabel="Assistant name"
-                             Width="100%"
-                             Disabled=@IsBusy
-                             data-qa="AssistantName" />
-            <ValidationMessage For="@(() => Details.AssistantName)" />
           </FormField>
         </FormGrid>
       </FormSection>

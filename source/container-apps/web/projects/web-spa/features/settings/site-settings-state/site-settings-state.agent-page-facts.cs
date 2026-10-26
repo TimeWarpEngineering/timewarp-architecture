@@ -1,10 +1,12 @@
 #region Purpose
-// page_context facts for the page that declares SiteSettings.UpdateSiteSettings.
+// page_context facts for pages that declare a SiteSettingsState action.
 #endregion
 
 #region Design
-// UpdateSiteSettings replaces the whole record and carries a Version token, so the agent must
-// echo the current values and version. hasSnapshot is false until the settings have loaded.
+// UpdateSiteSettings replaces the authentication policy and carries a Version token, so the agent
+// must echo those fields and the version. It does not send assistantName. UpdateAssistantName
+// sends assistantName and the same version. hasSnapshot is false until the settings have loaded.
+// Both pages that declare an action on this state see the same snapshot.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;

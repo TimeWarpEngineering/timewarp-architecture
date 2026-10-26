@@ -10,8 +10,8 @@
 // Run standalone:  dotnet run source/container-apps/web/features/settings/update-site-settings/update-site-settings-tests.cs
 
 #region Purpose
-// Jaribu runfile: UpdateSiteSettings validator (passkey mode, assistant name, accepted tenants),
-// emptied store re-seeds at Version 0, 409, successful update, assistant rename stored trimmed.
+// Jaribu runfile: UpdateSiteSettings validator (passkey mode, accepted tenants),
+// emptied store re-seeds at Version 0, 409, successful update. A policy save leaves the assistant name.
 #endregion
 
 //-:cnd:noEmit
@@ -49,7 +49,6 @@ namespace TimeWarp.Architecture.Features.Settings
       Command command = new()
       {
         PasskeyPromptMode = (PasskeyPromptMode)99,
-        AssistantName = AssistantNameRules.Default,
         Version = 0
       };
 
@@ -65,7 +64,6 @@ namespace TimeWarp.Architecture.Features.Settings
         EntraSignInEnabled = true,
         EntraAllowBootstrap = true,
         PasskeyPromptMode = PasskeyPromptMode.Required,
-        AssistantName = AssistantNameRules.Default,
         Version = 0
       };
 
@@ -74,39 +72,9 @@ namespace TimeWarp.Architecture.Features.Settings
       return Task.CompletedTask;
     }
 
-    // Task 361: AssistantName is required, and trimmed it is 1-32 plain-text characters.
-    [Input("")]
-    [Input("   ")]
-    [Input("123456789012345678901234567890123")]
-    [Input("<b>Akili</b>")]
-    [Input("Ak<ili")]
-    [Input("Ak\u0007ili")]
-    [Input("Akili\nZawadi")]
-    [Input("Ak\u2028ili")]
-    [Input("Ak\u202Eili")]
-    [Input("Ak\u200Bili")]
-    [Input("Ak\U000E0041ili")]
-    public static Task Invalid_Assistant_Name_Should_Fail_Validation(string name)
-    {
-      ValidationResult result = new Validator().Validate(ValidCommand(name));
-      result.IsValid.ShouldBeFalse(name);
-      result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
-      return Task.CompletedTask;
-    }
-
-    // A lone surrogate cannot be an [Input] argument: attribute strings are stored as UTF-8 and the
-    // surrogate becomes U+FFFD, so the string is built here.
-    public static Task Lone_Surrogate_Assistant_Name_Should_Fail_Validation()
-    {
-      ValidationResult result = new Validator().Validate(ValidCommand(LoneSurrogateName()));
-      result.IsValid.ShouldBeFalse();
-      result.Errors.ShouldContain(error => error.ErrorMessage.StartsWith("Assistant name", System.StringComparison.Ordinal));
-      return Task.CompletedTask;
-    }
-
     public static Task Empty_Accepted_Tenant_Should_Fail_Validation()
     {
-      Command command = ValidCommand(AssistantNameRules.Default);
+      Command command = ValidCommand();
       command.EntraAcceptedTenants = [EntraAcceptedTenant.IdOnly(Guid.Empty)];
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
@@ -123,7 +91,7 @@ namespace TimeWarp.Architecture.Features.Settings
         tenantIds.Add(EntraAcceptedTenant.IdOnly(tenantId));
       }
 
-      Command command = ValidCommand(AssistantNameRules.Default);
+      Command command = ValidCommand();
       command.EntraAcceptedTenants = tenantIds;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeTrue();
@@ -138,7 +106,7 @@ namespace TimeWarp.Architecture.Features.Settings
         tenantIds.Add(EntraAcceptedTenant.IdOnly(Guid.Parse($"00000000-0000-0000-0000-{index:D12}")));
       }
 
-      Command command = ValidCommand(AssistantNameRules.Default);
+      Command command = ValidCommand();
       command.EntraAcceptedTenants = tenantIds;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
@@ -148,40 +116,17 @@ namespace TimeWarp.Architecture.Features.Settings
 
     public static Task Undefined_Tenant_Acceptance_Mode_Should_Fail_Validation()
     {
-      Command command = ValidCommand(AssistantNameRules.Default);
+      Command command = ValidCommand();
       command.EntraTenantAcceptanceMode = (EntraTenantAcceptanceMode)99;
       ValidationResult result = new Validator().Validate(command);
       result.IsValid.ShouldBeFalse();
       return Task.CompletedTask;
     }
 
-    public static Task Null_Assistant_Name_Should_Fail_Validation()
-    {
-      ValidationResult result = new Validator().Validate(ValidCommand(null!));
-      result.IsValid.ShouldBeFalse();
-      return Task.CompletedTask;
-    }
-
-    [Input("Akili")]
-    [Input("Zawadi")]
-    [Input("  Zawadi  ")]
-    [Input("Q&A Helper")]
-    [Input("12345678901234567890123456789012")]
-    [Input("Akili \U0001F916")]
-    public static Task Valid_Assistant_Name_Should_Pass_Validation(string name)
-    {
-      ValidationResult result = new Validator().Validate(ValidCommand(name));
-      result.IsValid.ShouldBeTrue(name);
-      return Task.CompletedTask;
-    }
-
-    private static string LoneSurrogateName() => "Ak" + (char)0xD800 + "ili";
-
-    private static Command ValidCommand(string assistantName) =>
+    private static Command ValidCommand() =>
       new()
       {
         PasskeyPromptMode = PasskeyPromptMode.Soft,
-        AssistantName = assistantName,
         Version = 0
       };
   }
@@ -212,7 +157,6 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
-          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -241,7 +185,6 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = false,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
-          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -264,7 +207,6 @@ namespace TimeWarp.Architecture.Features.Settings
           EntraSignInEnabled = true,
           EntraAllowBootstrap = true,
           PasskeyPromptMode = PasskeyPromptMode.Required,
-          AssistantName = AssistantNameRules.Default,
           Version = 0
         },
         default);
@@ -275,16 +217,17 @@ namespace TimeWarp.Architecture.Features.Settings
       result.AsT0.Version.ShouldBe(1);
     }
 
-    public static async Task Rename_Should_Store_The_Trimmed_Name_And_Echo_It()
+    public static async Task Policy_Save_Should_Leave_The_Assistant_Name()
     {
       InMemorySiteSettingsStore store = new();
-      await store.AddAsync(SiteSettings.Create());
+      SiteSettings created = SiteSettings.Create();
+      created.RenameAssistant("Zawadi");
+      await store.AddAsync(created);
       UpdateHandler handler = new(store);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(
         new Command
         {
           PasskeyPromptMode = PasskeyPromptMode.Soft,
-          AssistantName = "  Zawadi  ",
           Version = 0
         },
         default);
@@ -305,7 +248,6 @@ namespace TimeWarp.Architecture.Features.Settings
         new Command
         {
           PasskeyPromptMode = PasskeyPromptMode.Soft,
-          AssistantName = AssistantNameRules.Default,
           EntraTenantAcceptanceMode = EntraTenantAcceptanceMode.Any,
           EntraAcceptedTenants =
           [

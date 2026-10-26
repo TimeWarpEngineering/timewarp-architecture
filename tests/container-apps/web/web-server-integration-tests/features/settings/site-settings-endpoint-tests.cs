@@ -115,7 +115,7 @@ public class Returns_
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     const string body =
-      """{"entraSignInEnabled":false,"entraAllowBootstrap":false,"passkeyPromptMode":"Soft","assistantName":"Zawadi","version":0}""";
+      """{"entraSignInEnabled":false,"entraAllowBootstrap":false,"passkeyPromptMode":"Soft","version":0}""";
     HttpResponseMessage response = await client.PutAsync(
       "api/settings",
       new StringContent(body, Encoding.UTF8, "application/json"));
@@ -143,7 +143,6 @@ public class Returns_
         entraSignInEnabled = current.EntraSignInEnabled,
         entraAllowBootstrap = current.EntraAllowBootstrap,
         passkeyPromptMode = current.PasskeyPromptMode.ToString(),
-        assistantName = current.AssistantName,
         entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
         entraAcceptedTenants = current.EntraAcceptedTenants,
         version = current.Version + 100
@@ -180,7 +179,6 @@ public class Returns_
         entraSignInEnabled = true,
         entraAllowBootstrap = true,
         passkeyPromptMode = "Required",
-        assistantName = current.AssistantName,
         entraTenantAcceptanceMode = "Any",
         entraAcceptedTenants = new[] { new { tenantId = acceptedTenant, domain = (string?)null } },
         version = current.Version
@@ -221,7 +219,6 @@ public class Returns_
           entraSignInEnabled = before.EntraSignInEnabled,
           entraAllowBootstrap = before.EntraAllowBootstrap,
           passkeyPromptMode = before.PasskeyPromptMode.ToString(),
-          assistantName = before.AssistantName,
           entraTenantAcceptanceMode = "Restricted",
           entraAcceptedTenants = new[] { new { tenantId = acceptedTenant, domain = "Contoso.COM" } },
           version = before.Version
@@ -244,7 +241,6 @@ public class Returns_
           entraSignInEnabled = before.EntraSignInEnabled,
           entraAllowBootstrap = before.EntraAllowBootstrap,
           passkeyPromptMode = before.PasskeyPromptMode.ToString(),
-          assistantName = before.AssistantName,
           entraTenantAcceptanceMode = before.EntraTenantAcceptanceMode.ToString(),
           entraAcceptedTenants = before.EntraAcceptedTenants,
           version = current.Version
@@ -289,7 +285,7 @@ public class Returns_
     // The host is shared by the class: restore the name read first even when an assertion fails.
     try
     {
-      UpdateSiteSettings.Response renamed = await PutAssistantNameAsync(client, "  Zawadi  ");
+      UpdateAssistantName.Response renamed = await PutAssistantNameAsync(client, "  Zawadi  ");
       renamed.AssistantName.ShouldBe("Zawadi");
       GetAssistantIdentity.Response after = await ReadIdentityAsync(anonymous);
       after.Name.ShouldBe("Zawadi");
@@ -298,9 +294,42 @@ public class Returns_
     }
     finally
     {
-      UpdateSiteSettings.Response restored = await PutAssistantNameAsync(client, before.Name);
+      UpdateAssistantName.Response restored = await PutAssistantNameAsync(client, before.Name);
       restored.AssistantName.ShouldBe(before.Name);
     }
+  }
+
+  public static async Task Member_Put_Assistant_Name_Should_403()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    const string body = """{"assistantName":"Zawadi","version":0}""";
+    HttpResponseMessage response = await client.PutAsync(
+      "api/settings/assistant",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
+  public static async Task Administrator_Put_Assistant_Name_Stale_Version_Should_409()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await GrantAdministratorAsync(principalId);
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    GetSiteSettings.Response current = await ReadSettingsAsync(client);
+    string body = JsonSerializer.Serialize(
+      new { assistantName = "Zawadi", version = current.Version + 100 },
+      ContractSerializationDefaults.Options);
+    HttpResponseMessage put = await client.PutAsync(
+      "api/settings/assistant",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+    put.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    (await put.Content.ReadAsStringAsync()).ShouldContain("Concurrency conflict");
   }
 
   public static async Task Administrator_Put_Markup_Name_Should_400()
@@ -312,19 +341,10 @@ public class Returns_
     GetSiteSettings.Response current = await ReadSettingsAsync(client);
 
     string body = JsonSerializer.Serialize(
-      new
-      {
-        entraSignInEnabled = current.EntraSignInEnabled,
-        entraAllowBootstrap = current.EntraAllowBootstrap,
-        passkeyPromptMode = current.PasskeyPromptMode.ToString(),
-        assistantName = "<b>Zawadi</b>",
-        entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
-        entraAcceptedTenants = current.EntraAcceptedTenants,
-        version = current.Version
-      },
+      new { assistantName = "<b>Zawadi</b>", version = current.Version },
       ContractSerializationDefaults.Options);
     HttpResponseMessage put = await client.PutAsync(
-      "api/settings",
+      "api/settings/assistant",
       new StringContent(body, Encoding.UTF8, "application/json"));
     put.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
   }
@@ -349,29 +369,20 @@ public class Returns_
       ?? throw new InvalidOperationException("GetSiteSettings deserialized to null.");
   }
 
-  private static async Task<UpdateSiteSettings.Response> PutAssistantNameAsync(HttpClient client, string assistantName)
+  private static async Task<UpdateAssistantName.Response> PutAssistantNameAsync(HttpClient client, string assistantName)
   {
     GetSiteSettings.Response current = await ReadSettingsAsync(client);
     string body = JsonSerializer.Serialize(
-      new
-      {
-        entraSignInEnabled = current.EntraSignInEnabled,
-        entraAllowBootstrap = current.EntraAllowBootstrap,
-        passkeyPromptMode = current.PasskeyPromptMode.ToString(),
-        assistantName,
-        entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
-        entraAcceptedTenants = current.EntraAcceptedTenants,
-        version = current.Version
-      },
+      new { assistantName, version = current.Version },
       ContractSerializationDefaults.Options);
     HttpResponseMessage put = await client.PutAsync(
-      "api/settings",
+      "api/settings/assistant",
       new StringContent(body, Encoding.UTF8, "application/json"));
     put.StatusCode.ShouldBe(HttpStatusCode.OK);
-    return JsonSerializer.Deserialize<UpdateSiteSettings.Response>(
+    return JsonSerializer.Deserialize<UpdateAssistantName.Response>(
         await put.Content.ReadAsStringAsync(),
         ContractSerializationDefaults.Options)
-      ?? throw new InvalidOperationException("UpdateSiteSettings deserialized to null.");
+      ?? throw new InvalidOperationException("UpdateAssistantName deserialized to null.");
   }
 
   private static async Task GrantAdministratorAsync(PrincipalId principalId)
