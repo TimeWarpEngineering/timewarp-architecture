@@ -88,6 +88,7 @@ Done when:
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T07:43:17Z
 - Review oracle: claude (claude-opus-5-5), body tw-implementation-review, effort 2, roster
   general, 1 round, disposition clean — 2026-10-26. Session id not exposed in print mode.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-26T07:54:18Z
 
 ## Results
 
@@ -159,6 +160,10 @@ Expect:
 - `rg 11.0.0-rc.2.26504.105 Directory.Packages.props .config/dotnet-tools.json` shows only the
   EF Core family, the `dotnet-ef` tool, and the comments that record the Npgsql hold. Migration
   `ProductVersion` annotations still say RC2.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
