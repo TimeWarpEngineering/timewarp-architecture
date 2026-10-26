@@ -20,24 +20,24 @@ starts the local Postgres container.
 
 ## Why the registry stays ACR
 
-Aspire 13.6.2 provisions **ACR Basic** for this environment when every project points at a private
+Aspire 13.6.4 provisions **ACR Basic** for this environment when every project points at a private
 GitHub Container Registry. There is no monthly saving, so the template keeps the registry Aspire
 creates.
 
-Packages: `Aspire.Hosting` and `Aspire.Hosting.Azure.AppContainers` **13.6.2**
-(`13.6.2+af07e33f8d1ef733645138b3f8e36067d073148d`). Published Bicep comes from those AppHost
+Packages: `Aspire.Hosting` and `Aspire.Hosting.Azure.AppContainers` **13.6.4**
+(`13.6.4+c89352703f78ae46de90fbf751ed8b52b77b89bf`). Published Bicep comes from those AppHost
 packages. Docs: [ASPIRECOMPUTE003](https://aspire.dev/diagnostics/aspirecompute003/) (preview),
 [Container registry configuration](https://aspire.dev/app-host/container-registry/), and
 [Azure Container Registry integration](https://aspire.dev/integrations/cloud/azure/azure-container-registry/azure-container-registry-get-started/).
 Source for this build:
-[ContainerRegistryResourceBuilderExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting/ContainerRegistryResourceBuilderExtensions.cs),
-[AzureContainerAppExtensions.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/AzureContainerAppExtensions.cs),
-[ContainerRegistryInfrastructure.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Shared/ContainerRegistryInfrastructure.cs),
-[BaseContainerAppContext.cs](https://github.com/microsoft/aspire/blob/af07e33f8d1ef733645138b3f8e36067d073148d/src/Aspire.Hosting.Azure.AppContainers/BaseContainerAppContext.cs).
+[ContainerRegistryResourceBuilderExtensions.cs](https://github.com/microsoft/aspire/blob/c89352703f78ae46de90fbf751ed8b52b77b89bf/src/Aspire.Hosting/ContainerRegistryResourceBuilderExtensions.cs),
+[AzureContainerAppExtensions.cs](https://github.com/microsoft/aspire/blob/c89352703f78ae46de90fbf751ed8b52b77b89bf/src/Aspire.Hosting.Azure.AppContainers/AzureContainerAppExtensions.cs),
+[ContainerRegistryInfrastructure.cs](https://github.com/microsoft/aspire/blob/c89352703f78ae46de90fbf751ed8b52b77b89bf/src/Shared/ContainerRegistryInfrastructure.cs),
+[BaseContainerAppContext.cs](https://github.com/microsoft/aspire/blob/c89352703f78ae46de90fbf751ed8b52b77b89bf/src/Aspire.Hosting.Azure.AppContainers/BaseContainerAppContext.cs).
 
-### Per-project API (Aspire 13.6.2)
+### Per-project API (Aspire 13.6.4)
 
-These methods are on `Aspire.Hosting` 13.6.2 and match the authored source above:
+These methods are on `Aspire.Hosting` 13.6.4 and match the authored source above:
 
 | Method | Signature |
 |--------|-----------|
@@ -87,7 +87,7 @@ login server and its managed identity. The ingress resource is the public
 `WithContainerRegistry` on the ingress leaves that public image in place.
 
 `Azure.Provisioning.AppContainers` 1.2.0 `ContainerAppRegistryCredentials` also has `Username` and
-`PasswordSecretRef`. Aspire 13.6.2 writes `Server` and `Identity` only.
+`PasswordSecretRef`. Aspire 13.6.4 writes `Server` and `Identity` only.
 `PublishAsAzureContainerApp` runs after the registries list is assigned, so a callback can
 overwrite that list. The environment module still provisions ACR Basic, which is the cost a
 private registry has to remove.
@@ -103,7 +103,7 @@ line, and absent from the plan.
 
 ### Recommendation
 
-Keep ACR Basic on Aspire 13.6.2. Leave the template on the registry `AddAzureContainerAppEnvironment` provisions. The per-project hook can name a push target. It does not stop `{environment}-acr` from being published, and the container app pull credential stays a managed identity for that ACR. Revisit when an Aspire release can publish this environment with no `AzureContainerRegistryResource` and a container app can pull through `Username` and `PasswordSecretRef` without an ACR role assignment.
+Keep ACR Basic on Aspire 13.6.4. Leave the template on the registry `AddAzureContainerAppEnvironment` provisions. The per-project hook can name a push target. It does not stop `{environment}-acr` from being published, and the container app pull credential stays a managed identity for that ACR. Revisit when an Aspire release can publish this environment with no `AzureContainerRegistryResource` and a container app can pull through `Username` and `PasswordSecretRef` without an ACR role assignment.
 
 ## Neon project
 
