@@ -81,6 +81,8 @@ unedited, so the form and the top bar stay on the same name and the next save is
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-26T08:59:36Z
 - Fix pass (implement-fix-2, 2026-10-26): interactive Admin → AI always fetches site settings,
   and an unedited draft copies an agent rename's new name and version.
+- `ganda repo audit --fix` landed this kitchen onto origin-home. The remaining
+  `kanban-landed` warning is other live claims with no usable worktree. Left alone.
 
 ## Results
 
