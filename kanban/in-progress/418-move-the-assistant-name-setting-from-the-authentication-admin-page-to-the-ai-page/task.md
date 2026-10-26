@@ -150,8 +150,7 @@ Artifacts: `review/review-framework.md`, `review/round-2/general.md`,
 ## Review
 
 - Round 1: findings M1 and M2 were implemented on this branch.
-- Round 2: both are fixed, with no new findings. Disposition is clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 Requested by Steve 2026-10-26.
