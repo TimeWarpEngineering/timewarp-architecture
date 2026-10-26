@@ -81,6 +81,8 @@ unedited, so the form and the top bar stay on the same name and the next save is
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-26T08:59:36Z
 - Fix pass (implement-fix-2, 2026-10-26): interactive Admin → AI always fetches site settings,
   and an unedited draft copies an agent rename's new name and version.
+- Review oracle round 2 (2026-10-26): claude-opus-5-5, effort 2, roster general, session not
+  reported. M1 and M2 are fixed, with no new findings. Disposition is clean.
 - `ganda repo audit --fix` landed this kitchen onto origin-home. The remaining
   `kanban-landed` warning is other live claims with no usable worktree. Left alone.
 
@@ -117,8 +119,10 @@ returns 409, and a name that contains markup returns 400.
 
 ### Review
 
-Round 1 (general, effort 3): 1 bug and 1 suggestion. Fix pass implemented both. Round 2 has not
-run. The reviewer re-ran the gates in the claim worktree before the fix: `dev build` 0/0, the
+Disposition: **clean**. 2 rounds, roster general. The final counts are bug 1 fixed and
+suggestion 1 fixed, with 0 open and 0 wontfix.
+
+Round 1 (general, effort 3): 1 bug and 1 suggestion. The fix pass implemented both. The round-1 reviewer re-ran the gates in the claim worktree before the fix: `dev build` 0/0, the
 fast group 14/14, the integration group 8/8, and both settings runfiles. The Playwright group
 was not re-run. Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
 `review/round-1/merged.md`.
@@ -130,10 +134,23 @@ was not re-run. Artifacts: `review/review-framework.md`, `review/round-1/general
   when they advance and the field still matches the last sync.
   `AiPage_Should_.Copy_An_Agent_Rename_Into_An_Unedited_Draft` covers that. A typed edit stays.
 
+Round 2 (general, effort 2) reviewed the fix delta `0179bd7e5..f9cd37489` and confirmed that M1
+and M2 are fixed. It raised no new findings. The reviewer re-ran the checks in the claim
+worktree after the fix:
+
+- `./bin/dev build`: 0/0.
+- `AiPage_Should_`: 2/2.
+- `web-spa-integration-tests --filter-tag Unit`: 383/383.
+
+The Playwright and Aspire integration groups were not re-run in round 2.
+
+Artifacts: `review/review-framework.md`, `review/round-2/general.md`,
+`review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
-- Round 1: findings M1 and M2 implemented on this branch. Round 2 has not run.
-
+- Round 1: findings M1 and M2 were implemented on this branch.
+- Round 2: Done
 ## Notes
 
 Requested by Steve 2026-10-26.
