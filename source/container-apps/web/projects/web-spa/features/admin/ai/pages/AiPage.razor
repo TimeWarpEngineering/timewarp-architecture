@@ -8,7 +8,12 @@
 
   Design: The assistant section binds UpdateAssistantName.Command (name and Version). The copy,
   data-qa="AssistantSettings", and AssistantNameRules validation match the section that used to
-  sit on Authentication. Submit is SiteSettingsState.UpdateAssistantName. A successful save
+  sit on Authentication. Interactive init always dispatches FetchSiteSettings, including when
+  sign-in already loaded a snapshot, then copies that snapshot into the draft. An agent rename
+  while this page is open advances SiteSettingsState.Version. The render copies that name and
+  version into the draft when the field is still the last synced value, so the form matches the
+  top bar and the next save is not a 409. A typed edit is left in place.
+  Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
   The draft key is page-local and is cleared after a successful save. State never
@@ -33,6 +38,10 @@
   private UpdateAssistantName.Command AssistantCommand { get; } = new();
 
   private bool AssistantDraftLoaded;
+
+  private string SyncedAssistantName = "";
+
+  private long SyncedAssistantVersion;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -75,10 +84,9 @@
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
-    SyncAssistantDraft();
     if (RendererInfo.IsInteractive)
     {
-      await LoadAsync();
+      await LoadAsync(refreshSiteSettings: true);
     }
   }
 
@@ -87,19 +95,19 @@
     await base.OnAfterRenderAsync(firstRender);
     if (firstRender && RendererInfo.IsInteractive && (!XaiApiKeyState.HasSnapshot || !SiteSettingsState.HasSnapshot))
     {
-      await LoadAsync();
+      await LoadAsync(refreshSiteSettings: !SiteSettingsState.HasSnapshot);
       await InvokeAsync(StateHasChanged);
     }
   }
 
-  private async Task LoadAsync()
+  private async Task LoadAsync(bool refreshSiteSettings)
   {
-    if (!XaiApiKeyState.HasSnapshot)
+    if (!NoSubXaiApiKeyState.HasSnapshot)
     {
       await NoSubXaiApiKeyState.FetchXaiApiKeyStatus();
     }
 
-    if (!SiteSettingsState.HasSnapshot)
+    if (refreshSiteSettings || !NoSubSiteSettingsState.HasSnapshot)
     {
       await NoSubSiteSettingsState.FetchSiteSettings();
     }
@@ -109,14 +117,37 @@
 
   private void SyncAssistantDraft()
   {
-    if (!SiteSettingsState.HasSnapshot)
+    if (!NoSubSiteSettingsState.HasSnapshot)
     {
       return;
     }
 
-    AssistantCommand.AssistantName = SiteSettingsState.AssistantName;
-    AssistantCommand.Version = SiteSettingsState.Version;
+    AssistantCommand.AssistantName = NoSubSiteSettingsState.AssistantName;
+    AssistantCommand.Version = NoSubSiteSettingsState.Version;
+    SyncedAssistantName = AssistantCommand.AssistantName;
+    SyncedAssistantVersion = AssistantCommand.Version;
     AssistantDraftLoaded = true;
+  }
+
+  private void SyncUneditedAssistantDraft()
+  {
+    if (!AssistantDraftLoaded || !SiteSettingsState.HasSnapshot)
+    {
+      return;
+    }
+
+    if (SiteSettingsState.Version == SyncedAssistantVersion)
+    {
+      return;
+    }
+
+    if (AssistantCommand.AssistantName != SyncedAssistantName
+      || AssistantCommand.Version != SyncedAssistantVersion)
+    {
+      return;
+    }
+
+    SyncAssistantDraft();
   }
 
   private async Task SaveAssistantAsync()
@@ -140,6 +171,10 @@
   private Task ClearAsync() => NoSubXaiApiKeyState.ClearXaiApiKey();
 }
 
+@{
+  SyncUneditedAssistantDraft();
+}
+
 <TimeWarpPage Title="AI">
   @if (AssistantDraftLoaded)
   {
@@ -147,7 +182,9 @@
       <FluentValidator Validator="@AssistantValidator" />
       <FormSection Title="Assistant"
                    Description="The name the in-app assistant goes by on the top-bar button, Ctrl-K, the panel and its greeting. Its avatar is generated from the name."
-                   data-qa="AssistantSettings">
+                   data-qa="AssistantSettings"
+                   data-assistant-version="@AssistantCommand.Version"
+                   data-assistant-name="@AssistantCommand.AssistantName">
         <FormGrid>
           <FormField Label="Assistant name">
             <FluentTextInput @bind-Value="AssistantCommand.AssistantName"
