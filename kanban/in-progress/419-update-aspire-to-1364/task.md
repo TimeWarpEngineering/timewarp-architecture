@@ -79,6 +79,8 @@ golden diff, the aspire container-app tests, dev-cli tests, and `dev template-sm
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-26)
 - Implementation: task-work implementer (2026-10-26). Pins, the aca-neon reference, and the two AppHost version comments. `dotnet tool update -g Aspire.Cli --version 13.6.4` was already on 13.6.4. `<Version>` stayed at 2.0.0-beta.27.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T06:55:23Z
+- Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, session not reported). 1 round, disposition clean (2026-10-26).
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-26T07:00:51Z
 
 ## Results
 
@@ -89,6 +91,10 @@ golden diff, the aspire container-app tests, dev-cli tests, and `dev template-sm
 aca-neon publish behavior is the same on 13.6.4. `dev publish aca-neon` with CLI `13.6.4+c89352703f78ae46de90fbf751ed8b52b77b89bf` wrote `aca-env-acr.bicep` as `Microsoft.ContainerRegistry/registries` with `sku.name` `Basic`. `aca-env.bicep` references that registry as existing, assigns `AcrPull`, and outputs `AZURE_CONTAINER_REGISTRY_ENDPOINT` and `AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID`. api, grpc, and web `registries` entries set `server` and `identity` only. Ingress stays on `mcr.microsoft.com/dotnet/nightly/yarp` and has no `registries` entry. The four cited Aspire source files are byte-identical between commit `af07e33` (13.6.2) and `c893527` (13.6.4). `Azure.Provisioning.AppContainers` is still 1.2.0. The reference now cites 13.6.4 and `c89352703f78ae46de90fbf751ed8b52b77b89bf`.
 
 `dev build`: 0 warnings, 0 errors. `dev regenerate-generated`: golden diff empty. aspire-tests: 84 passed, 0 failed. dev-cli-tests: 342 passed, 0 failed. `dev template-smoke`: `Template smoke SUCCEEDED` (SmokeDefault build 0 warnings; web aggregator 427/427, api 9/9, timewarp-testing 14/14). `dev lint-skills`: 9/9. `dev publish aca-neon` safety suite: 7 passed. `ganda repo audit`: Passed 33, Failed 0 errors, one pre-existing advisory warning, exit 0. The warning is `kanban-landed` for eight other claims that have no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). That warning is not from this bump.
+
+### Review
+
+The review ran 1 round at effort 2 with a general reviewer. Final counts are 0 bug, 0 suggestion, and 0 nit, all statuses 0. The disposition is **clean**, with no wontfix and no escalation. The reviewer re-ran `dev build` (0/0) and `dev check-version` (pass). It confirmed that both `13.6.4-preview.1.26523.11` packages are on nuget.org and that tag `v13.6.4` is commit `c893527`. The four cited Aspire source files have the same blobs at 13.6.2 and 13.6.4. Artifacts are in `review/review-framework.md`, `review/round-1/merged.md`, and `review/disposition.md`.
 
 ### How to validate
 
@@ -102,6 +108,10 @@ rg -n "registries:|server:|identity:|username:|passwordSecretRef" artifacts/aspi
 ```
 
 Expect: the first `rg` prints nothing. Publish prints `Azure Container Apps + Neon publish output is production-safe`. `aca-env-acr.bicep` contains `name: 'Basic'`. api-server, grpc-server, and web-server set `server` and `identity` under `registries`. No module sets `username` or `passwordSecretRef`. Ingress has no `registries` entry.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
