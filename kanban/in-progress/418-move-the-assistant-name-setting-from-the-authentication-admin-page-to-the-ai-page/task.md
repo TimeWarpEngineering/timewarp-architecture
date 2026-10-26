@@ -65,6 +65,7 @@ of renaming through `UpdateSiteSettings`.
   `update-site-settings-tests.cs` without the executable bit. Restored both. Other live claims
   (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) have no usable worktree. Left alone;
   those claims are not this task.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T08:52:19Z
 
 ## Results
 
