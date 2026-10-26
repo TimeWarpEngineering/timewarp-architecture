@@ -8,8 +8,8 @@
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
 // implements so the Authentication form binds once. Task 306: EntraTenantAcceptanceMode and
 // EntraAcceptedTenants are the trust policy on this command (id plus optional domain).
-// Task 361: AssistantName rides
-// the same command; the handler stores it trimmed.
+// The assistant name is UpdateAssistantName. This command does not accept it. The response still
+// echoes the stored name so a policy save refreshes the SPA copy.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -30,7 +30,6 @@ public static partial class UpdateSiteSettings
     public bool EntraSignInEnabled { get; set; }
     public bool EntraAllowBootstrap { get; set; }
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
-    public string AssistantName { get; set; } = null!;
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
     public XaiByokMode XaiByokMode { get; set; } = XaiByokMode.Allow;

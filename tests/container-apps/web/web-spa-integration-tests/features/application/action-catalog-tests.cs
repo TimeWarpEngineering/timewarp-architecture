@@ -42,6 +42,7 @@ public class ActionCatalog_Should
     "Role.CreateRole",
     "Screenshot.CaptureScreenshot",
     "SiteSettings.ResolveEntraTenant",
+    "SiteSettings.UpdateAssistantName",
     "SiteSettings.UpdateSiteSettings",
   ];
 

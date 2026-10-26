@@ -180,6 +180,7 @@ public class CommandPalette_Should_
   [Input("Credentials.RevokeCredential")]
   [Input("Profile.UpdateProfile")]
   [Input("Role.CreateRole")]
+  [Input("SiteSettings.UpdateAssistantName")]
   [Input("SiteSettings.UpdateSiteSettings")]
   [Input("Application.FiveSecondTask")]
   [Input("Application.TwoSecondTask")]
@@ -218,6 +219,7 @@ public class CommandPalette_Should_
     foreach (string denied in new[]
     {
       "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
+      "/Admin/AI",
       "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
     {

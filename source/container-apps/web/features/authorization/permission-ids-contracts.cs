@@ -23,7 +23,8 @@
 // Server still enforces ProtectedCoreConflict.
 // Task 225: settings.read stays self-service (personal /Settings + GetSiteSettings for passkey
 // prompt and Link Microsoft 365). settings.write stays the site-policy write id (Administrator
-// seed, not Member) and gates /Admin/Authentication plus UpdateSiteSettings. Not renamed into
+// seed, not Member) and gates /Admin/Authentication plus UpdateSiteSettings, and /Admin/AI plus
+// UpdateAssistantName. Not renamed into
 // admin.* — SettingsRead is not an admin permission, and moving write-only would require a
 // role_permissions data migration plus a catalog break. Protected-core remains prefix admin
 // (roles/principals lockout). Stripping settings.write disables the editor; it does not lock
@@ -67,7 +68,7 @@ public static class PermissionIds
   /// <summary>Update own progressive profile (display name, email, prefs). Never a register/session gate.</summary>
   public const string ProfileWrite = "profile.write";
   public const string SettingsRead = "settings.read";
-  /// <summary>Update the site-settings singleton (Entra policy, passkey prompt) and open Admin/Authentication. Administrator only.</summary>
+  /// <summary>Update the site-settings singleton (Entra policy, passkey prompt, assistant name) and open Admin/Authentication and Admin/AI. Administrator only.</summary>
   public const string SettingsWrite = "settings.write";
   /// <summary>Request/approve/list own agent↔human links and fetch humanUx (task 205).</summary>
   public const string AgentLinkManageSelf = "agent-link.manage.self";

@@ -32,7 +32,7 @@
 // clears it, and AgentAsk clears it (ClearComposerFocus) once the composer took focus or the panel
 // settled in a state with no composer. It is state, not a panel field, because TimeWarpPage
 // remounts the panel on navigation and a remount must not refocus.
-// AssistantIdentityRefreshHandler reloads them after a successful UpdateSiteSettings and after
+// AssistantIdentityRefreshHandler reloads them after a successful UpdateAssistantName and after
 // ResetStore, whose Store.Reset puts them back to those defaults.
 // XaiApiKeyRefreshHandler reloads chat configuration after a successful admin set or clear.
 #endregion

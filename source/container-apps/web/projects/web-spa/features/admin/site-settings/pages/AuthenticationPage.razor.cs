@@ -8,6 +8,7 @@
 // /Settings and GetSiteSettings. Not moved into admin.* — see PermissionIds Design (task 225).
 // The menu lists it under Admin (NavGroup) for principals with settings.write. SiteSettingsState
 // is the Settings slice. The agent may run UpdateSiteSettings here (AgentActions).
+// The assistant name is Admin → AI (UpdateAssistantName), not this page.
 // Task 231: policy fields bind ISiteSettingsDetails via EditForm + FluentButton submit
 // (RoleForm pattern). Tenant line and drift banner stay outside the form.
 // Task 234: FormSection / FormGrid / FormField / FormActions; FluentSelect for

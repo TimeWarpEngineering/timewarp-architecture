@@ -13,8 +13,10 @@
 // unsaved list the Authentication page edits. AcceptedTenantsMessage is the lookup or
 // edit failure for that list. The saved snapshot stays on EntraAcceptedTenants.
 // Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
-// AssistantName (task 361) is the admin form's copy; the labels read
-// AgentSurfaceState.AssistantName from the public query.
+// AssistantName is the Admin AI form's copy of the stored name. Labels read
+// AgentSurfaceState.AssistantName from the public query. UpdateAssistantName writes the name;
+// AssistantNameSaveFailed keeps that draft when the rename fails. SaveFailed belongs to the
+// authentication policy save.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -36,6 +38,8 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public long Version { get; private set; }
   /// <summary>True when the last UpdateSiteSettings failed; the problem itself is on NotificationState.</summary>
   public bool SaveFailed { get; private set; }
+  /// <summary>True when the last UpdateAssistantName failed; the problem itself is on NotificationState.</summary>
+  public bool AssistantNameSaveFailed { get; private set; }
   public string? ConfigurationTenantId { get; private set; }
   public string? ConfigurationTenantDisplayName { get; private set; }
   public string? ConfigurationTenantDomain { get; private set; }
@@ -69,6 +73,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     AcceptedTenantsMessage = null;
     Version = 0;
     SaveFailed = false;
+    AssistantNameSaveFailed = false;
     ConfigurationTenantId = null;
     ConfigurationTenantDisplayName = null;
     ConfigurationTenantDomain = null;
