@@ -80,6 +80,7 @@ golden diff, the aspire container-app tests, dev-cli tests, and `dev template-sm
 - Implementation: task-work implementer (2026-10-26). Pins, the aca-neon reference, and the two AppHost version comments. `dotnet tool update -g Aspire.Cli --version 13.6.4` was already on 13.6.4. `<Version>` stayed at 2.0.0-beta.27.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T06:55:23Z
 - Review oracle: tw-implementation-review, effort 2, roster general (claude-opus-5-5, session not reported). 1 round, disposition clean (2026-10-26).
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-26T07:00:51Z
 
 ## Results
 
@@ -107,6 +108,10 @@ rg -n "registries:|server:|identity:|username:|passwordSecretRef" artifacts/aspi
 ```
 
 Expect: the first `rg` prints nothing. Publish prints `Azure Container Apps + Neon publish output is production-safe`. `aca-env-acr.bicep` contains `name: 'Basic'`. api-server, grpc-server, and web-server set `server` and `identity` under `registries`. No module sets `username` or `passwordSecretRef`. Ingress has no `registries` entry.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
