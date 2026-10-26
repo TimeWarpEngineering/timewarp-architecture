@@ -57,13 +57,13 @@
          are NU1510, so those pins are gone. Options stays pinned: one co-located runfile takes it
          with a versionless #:package directive, which Central Package Management resolves from here.
          A csproj must not PackageReference it (NU1510). -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.11.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
   <ItemGroup Label="Foundation Packages">
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
@@ -107,9 +107,9 @@
          real AppHost + an HTTP round-trip through api-server) passed 7/7 against MessagePack 3.1.8,
          verifying the DCP/StreamJsonRpc communication path tolerates the v3 major. -->
     <PackageVersion Include="MessagePack" Version="3.1.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.2.26504.105" />
@@ -120,12 +120,12 @@
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
 
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0-rc.3.26522.148" />
     <!-- Microsoft/MIT, BCL-adjacent (System.Formats.Cbor.dll ships in the ASP.NET Core shared
          framework too) — used by timewarp-identity's hand-rolled WebAuthn verifier (task 104-003)
          to parse attestationObject/authenticatorData COSE keys. timewarp-identity is a plain
          library (no FrameworkReference to the shared framework), so it needs the explicit package. -->
-    <PackageVersion Include="System.Formats.Cbor" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="System.Formats.Cbor" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="TimeWarp.Mediator.Contracts" Version="14.0.0" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="14.0.0" />
     <PackageVersion Include="TimeWarp.Mediator.Analyzers" Version="14.0.0" />
@@ -156,11 +156,20 @@
          [2.7.5, 3.0.0). FastEndpoints.OpenApi 9.0.0-beta.2 adds a net11.0 group on
          Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, which opens the 3.x path; that
          FastEndpoints major move is task 257. Pin moved to 2.13.0, the latest 2.x.
-         Shared-framework Microsoft.* / System.* pins on this train are 11.0.0-rc.2.26504.105,
-         matching SDK 11.0.100-rc.2.26504.105 (RC1 authorized 2026-10-09; RC2 task 362). EF Core
-         (Microsoft.EntityFrameworkCore*, HealthChecks.EntityFrameworkCore, dotnet-ef tool) and
-         Npgsql.EntityFrameworkCore.PostgreSQL moved to the RC2 train in task 389:
-         Npgsql 11.0.0-rc.2 pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.2.26504.105.
+         Re-checked task 420 (2026-10-26): Microsoft.AspNetCore.OpenApi 11.0.0-rc.3.26522.148
+         still declares Microsoft.OpenApi [3.10.2, 4.0.0). FastEndpoints.OpenApi 8.3.0 is still
+         the latest stable and still depends on Microsoft.AspNetCore.OpenApi 10.0.11
+         [2.7.5, 3.0.0). 8.4.0-beta.26 is net10.0 only (OpenApi 10.0.13). 9.0.0-beta.6's net11.0
+         group still depends on Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, not RC3.
+         The 2.x hold stands; latest 2.x is still 2.13.0. The FastEndpoints major move stays
+         task 257.
+         Shared-framework Microsoft.* / System.* pins on this train are 11.0.0-rc.3.26522.148,
+         matching SDK 11.0.100-rc.3.26522.148 (RC1 authorized 2026-10-09; RC2 task 362; RC3 task 420).
+         EF Core (Microsoft.EntityFrameworkCore*, Microsoft.AspNetCore.DataProtection.EntityFrameworkCore,
+         HealthChecks.EntityFrameworkCore, the dotnet-ef tool) and Npgsql.EntityFrameworkCore.PostgreSQL
+         stay on the RC2 train from task 389. nuget.org has no Npgsql RC3 (latest 11.0.0-rc.2), and
+         that package pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.2.26504.105. Moving the
+         EF family alone fails restore (NU1608/NU1107).
          Extensions monthly packages (Http.Resilience, ServiceDiscovery, Telemetry, AI) are 10.11.0;
          they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
@@ -168,9 +177,9 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.2" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.AI" Version="0.1.0-preview.1.26466.103" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
     <!-- Chat completions against api.x.ai. Pinned beside Microsoft.Extensions.AI (10.11.0, task 389).
          Do not float onto the Responses API. TypeLoadExceptions on tool calls when OpenAI 2.14
@@ -178,10 +187,10 @@
          not re-checked on 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="5.0.1" />
     <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="5.0.1" />
     <!-- Task 201: take 7.0.1 (native tsc-go). web-spa.csproj runs SetTscExecutable +
@@ -228,7 +237,7 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <PackageVersion Include="Roslynator.CodeAnalysis.Analyzers" Version="5.0.1" />
     <PackageVersion Include="Roslynator.Formatting.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="11.0.100-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
@@ -246,7 +255,7 @@
     <PackageVersion Include="AutoFixture" Version="4.18.1" />
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="11.0.0-rc.2.26504.105" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <!-- Lifts Analyzer.Testing 1.1.4's transitive NuGet.Packaging dependency past
