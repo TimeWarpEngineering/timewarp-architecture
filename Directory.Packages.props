@@ -10,7 +10,7 @@
     <!-- One Aspire version. The AppHost SDK (Sdk Version="$(AspireVersion)"), every Aspire.*
          package pin, and the CI Aspire.Cli install read this. Preview packages keep their own
          build suffix after the property: $(AspireVersion)-preview… -->
-    <AspireVersion>13.6.2</AspireVersion>
+    <AspireVersion>13.6.4</AspireVersion>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
     <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.5. `ganda nuget outdated` treats
@@ -93,9 +93,9 @@
     <PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="$(AspireVersion)" />
     <!-- Preview: task 070-004 Kubernetes publish environment (AddKubernetesEnvironment → Helm chart). Publish-only.
          The prefix is AspireVersion. The preview build suffix is this package's own build (no stable release of it). -->
-    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)-preview.1.26519.11" />
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)-preview.1.26523.11" />
     <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same AspireVersion prefix; own preview build suffix. -->
-    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26519.11" />
+    <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26523.11" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.11.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
