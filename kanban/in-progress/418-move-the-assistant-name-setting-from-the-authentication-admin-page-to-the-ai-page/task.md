@@ -60,9 +60,11 @@ of renaming through `UpdateSiteSettings`.
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-26)
-- Implementation: grok task-work (2026-10-26). `ganda repo audit` passed with one advisory:
-  `kanban-landed` warns that other live claims (070-001, 104-024, 104-025, 104-026, 123, 141,
-  198, 244) have no usable worktree. Left alone; those claims are not this task.
+- Implementation: grok task-work (2026-10-26). The product commit's attest skipped
+  signing because `runfile-executable` saw `update-assistant-name-tests.cs` and the restaged
+  `update-site-settings-tests.cs` without the executable bit. Restored both. Other live claims
+  (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) have no usable worktree. Left alone;
+  those claims are not this task.
 
 ## Results
 
