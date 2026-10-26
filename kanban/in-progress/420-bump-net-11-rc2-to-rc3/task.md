@@ -85,6 +85,7 @@ Done when:
 - `ganda repo audit` exits 0. The only finding is a pre-existing `kanban-landed` warning for
   eight other claims on this machine that have no worktree (070-001, 104-024, 104-025, 104-026,
   123, 141, 198, 244). `--fix` does not land or remove those; it reports them and changes nothing.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-26T07:43:17Z
 
 ## Results
 
