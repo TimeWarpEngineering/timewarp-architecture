@@ -108,6 +108,14 @@
 // The dashboard display URL and the OIDC callback origin can differ (https://localhost:63610 vs
 // the shared hostname); auto-copying would break one of those paths. Set PublicOrigin explicitly
 // on Web.Server for any proxied Entra deployment.
+// SigNoz (task 417): Observability:SigNoz:Url is operator configuration (AppHost user secrets or
+// Observability__SigNoz__Url), never a committed template value, because this file ships in every
+// generated app. An absolute https URL adds a run-mode external service named signoz. The dashboard
+// link text is "SigNoz" and the target is that URL. Unset or blank adds nothing. Any other value
+// throws at startup and names the key. AddExternalService (Aspire.Hosting 13.6.2) already excludes
+// the resource from the manifest; the call is also IsRunMode-only, so publish and deploy models
+// never contain it. There is no HTTP health check: the resource is a link, and a probe would mark
+// it unhealthy when that host is unreachable from this machine. No telemetry is exported there.
 // Public-host forwarding (task 070-008, task 305): YARP sends the DESTINATION host as Host on every
 // route (its default) and the Web.Server routes chain WithTransformXForwarded(Set), which OVERWRITES
 // X-Forwarded-Proto and X-Forwarded-Host with Request.Scheme and Request.Host. Run mode executes the
@@ -319,6 +327,7 @@ internal class Program
   private static void Main(string[] args)
   {
     IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
+    AddSigNozDashboardLink(builder);
 
     // Task 070-004: Aspire assigns each compute resource to exactly one compute environment, so the
     // publish target is a configuration switch (Publish:Target = compose | kubernetes | aca | aca-neon), read in
@@ -893,5 +902,38 @@ internal class Program
 
 #endif
     builder.Build().Run();
+  }
+
+  // Task 417. See the Design region. Outside every template flag: every generated app can link it.
+  private static void AddSigNozDashboardLink(IDistributedApplicationBuilder builder)
+  {
+    const string configurationKey = "Observability:SigNoz:Url";
+    const string resourceName = "signoz";
+    const string displayText = "SigNoz";
+
+    string? configuredUrl = builder.Configuration[configurationKey];
+    if (string.IsNullOrWhiteSpace(configuredUrl))
+    {
+      return;
+    }
+
+    string candidate = configuredUrl.Trim();
+    if (!Uri.TryCreate(candidate, UriKind.Absolute, out Uri? signozUri)
+      || signozUri.Scheme != Uri.UriSchemeHttps
+      || string.IsNullOrEmpty(signozUri.Host))
+    {
+      throw new InvalidOperationException(
+        $"{configurationKey} '{candidate}' must be an absolute https URL.");
+    }
+
+    if (!builder.ExecutionContext.IsRunMode)
+    {
+      return;
+    }
+
+    // AddExternalService already records the URL. A second WithUrl would add another link.
+    IResourceBuilder<ExternalServiceResource> signoz = builder.AddExternalService(resourceName, signozUri);
+    ResourceUrlAnnotation dashboardLink = signoz.Resource.Annotations.OfType<ResourceUrlAnnotation>().Single();
+    dashboardLink.DisplayText = displayText;
   }
 }

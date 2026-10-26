@@ -267,6 +267,7 @@ extend the suite when you add a new publish-mode branch.
 | Browser-log forwarding | ships client telemetry to a dev dashboard | Development-only; publish runs as Production |
 | Dashboard Postgres REPL (`WithRepl`) | an authenticated psql shell for anyone with dashboard access | Development-only |
 | TimeWarp.State DevTools inspector (`timewarp-state-devtools`, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT`, its CORS origin variables) | an unauthenticated UI showing every action and state snapshot of web-server and the browser | `AddTimeWarpStateDevTools()` / `WithTimeWarpStateDevTools()` and the ingress CORS origins run in the AppHost's `IsRunMode` block only. web-server exports spans and maps `/_timewarp/state-devtools` only in Development with the endpoint set. The browser exporter (`TimeWarp.State.DevTools.Wasm`) is a Debug-only reference and a Debug-only call, so no Release build or published WASM bundle contains it. In `dev run` the dashboard links it as **TimeWarp.State DevTools** |
+| SigNoz dashboard link (`signoz`) | an operator-chosen URL; committing one would point every generated app at one host | Run mode only, and only when `Observability:SigNoz:Url` is an absolute `https` URL. Unset adds nothing. Any other value fails AppHost startup and names the key. `AddExternalService` also excludes it from the manifest. In `dev run` the dashboard links it as **SigNoz**. This does not export telemetry |
 | Aspire dashboard in the deployment | a second, unauthenticated UI and port | `WithDashboard(false)` on every environment — point `OTEL_EXPORTER_OTLP_ENDPOINT` at your own collector. ACA deploys it as a public `dotNetComponents` resource unless disabled |
 | Any host port / externally reachable service besides the ingress | every extra exposure is an unaudited entry point | Compose: only the ingress publishes a port (`ingress-port`). Kubernetes: every Service is `ClusterIP`; the cluster Ingress is the only way in. ACA: only the ingress container app has `external: true`; web, api and grpc are internal |
 | Secret literals | literals end up in images, repos and logs | secrets are parameters (below) |
@@ -281,10 +282,22 @@ Rules for new code:
 
 - Gate publish-only behavior on `builder.ExecutionContext.IsPublishMode` / `IsRunMode`, **never on a
   template flag** — every flag combination must publish.
-- Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, dashboard commands) is run-mode or
+- Anything dev-convenient (REPL, mock auth, log forwarding, State DevTools, the SigNoz link, dashboard commands) is run-mode or
   Development-only. Publish runs as Production.
 - Without the `yarp` flag there is no ingress: the published output exposes nothing, and the
   operator adds their own edge.
+
+### SigNoz link on the local dashboard
+
+`dev run` can show a **SigNoz** link on the Aspire dashboard resource list. Set `Observability:SigNoz:Url` to an absolute `https` URL in the AppHost user secrets, or set `Observability__SigNoz__Url` for one session. The template does not commit a URL. A missing or blank value adds no resource. A value that is not an absolute `https` URL fails AppHost startup and names the key. Publish and deploy never include the resource, and the link does not export telemetry.
+
+```bash
+dotnet user-secrets set "Observability:SigNoz:Url" "https://observability.example" --project source/container-apps/aspire/projects/aspire-app-host/aspire-app-host.csproj
+```
+
+```bash
+Observability__SigNoz__Url=https://observability.example dev run
+```
 
 ## Secrets and parameters
 

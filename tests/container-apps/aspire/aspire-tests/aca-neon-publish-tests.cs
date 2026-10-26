@@ -13,7 +13,10 @@
 // CPU is emitted as json('0.25'). Azure.Provisioning formats the double with the invariant culture.
 // The pooled-string fact compiles only with web and postgres: Neon is declared inside that AppHost block.
 // The passkey-host fact compiles only with web and yarp. Without yarp there is no ingress, so no
-// container app is external. Publish logs MissingParameterValueException while Aspire copies the two
+// container app is external. SigNoz (task 417) is run-mode only: the in-proc publish passes
+// Observability:SigNoz:Url, and the Bicep still does not name signoz. Without that argument the
+// absence check would pass even if the run-mode gate were removed.
+// Publish logs MissingParameterValueException while Aspire copies the two
 // secret parameters into deployment state. They are @secure() with no default; the warning is not a
 // publish failure, and a default would put the connection string in the Bicep.
 #endregion
@@ -26,6 +29,7 @@ using System.Text.RegularExpressions;
 public partial class AcaNeonPublish_Given_
 {
   internal const string OutputEnvironmentVariable = "TIMEWARP_ACA_NEON_OUTPUT";
+  private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
 
   private static string OutputDirectory = null!;
   private static bool OwnsOutputDirectory;
@@ -127,6 +131,8 @@ public partial class AcaNeonPublish_Given_
     all.ShouldNotContain("AspireDashboard");
     all.ShouldNotContain("Authentication__UseMock");
     all.ShouldNotContain("TIMEWARP_STATE_DEVTOOLS");
+    // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The Bicep still does not name signoz.
+    all.ShouldNotContain("signoz");
 
     bool hasIngress = Modules.Values.Any(text => text.Contains("name: 'ingress'", StringComparison.Ordinal));
     int external = ExternalTrue().Count(all);
@@ -202,7 +208,7 @@ public partial class AcaNeonPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca-neon"],
+        ["--operation", "publish", "--step", "publish-azure-environment", "--output-path", outputDirectory, "--Publish:Target=aca-neon", SigNozUrlArgument],
         (_, settings) => settings.EnvironmentName = "Production");
 
     await using DistributedApplication app = await appHost.BuildAsync();

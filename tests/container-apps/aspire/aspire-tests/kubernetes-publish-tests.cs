@@ -24,6 +24,9 @@
 // State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
+// SigNoz (task 417) is run-mode only: the in-proc publish passes Observability:SigNoz:Url, and the
+// chart still has no signoz workload. Without that argument the absence check would pass even if
+// the run-mode gate were removed.
 #endregion
 
 namespace Aspire.Tests;
@@ -37,6 +40,7 @@ public partial class KubernetesPublish_Given_
   private const string IngressComponent = "ingress";
   private const string PostgresComponent = "postgres";
   private const string WebServerComponent = "web-server";
+  private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
   private const long HelmMaxFileBytes = 5 * 1024 * 1024;
 
   private static string OutputDirectory = null!;
@@ -159,6 +163,17 @@ public partial class KubernetesPublish_Given_
     {
       key.ShouldNotBe("TIMEWARP_STATE_DEVTOOLS_ENDPOINT", $"{owner} points at State DevTools");
       key.ShouldNotContain("DEVTOOLS", Case.Insensitive, $"{owner} carries a State DevTools variable");
+    }
+
+    await Task.CompletedTask;
+  }
+
+  public static async Task Publish_Should_HaveNoSigNoz()
+  {
+    // Task 417: PublishInProcAsync sets Observability:SigNoz:Url. The chart still has no signoz workload.
+    foreach (YamlMappingNode manifest in Manifests)
+    {
+      Name(manifest).ShouldNotContain("signoz");
     }
 
     await Task.CompletedTask;
@@ -315,7 +330,7 @@ public partial class KubernetesPublish_Given_
   {
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
-        ["--operation", "publish", "--step", "publish-k8s", "--output-path", outputDirectory, "--Publish:Target=kubernetes"],
+        ["--operation", "publish", "--step", "publish-k8s", "--output-path", outputDirectory, "--Publish:Target=kubernetes", SigNozUrlArgument],
         // The testing builder defaults to Development; `aspire publish` defaults to Production.
         (_, settings) => settings.EnvironmentName = "Production");
 
