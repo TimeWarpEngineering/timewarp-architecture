@@ -96,8 +96,7 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 ## Review
 
 - Round 1: M1, M2, and M3 fixed on this branch. Round 2 is the host re-review.
-- Round 2: no new findings. Disposition: clean (`review/disposition.md`).
-
+- Round 2: Done
 ## Notes
 
 - Today: `features/style-guide/pages/StyleGuidePage.razor` (476 lines, 29 `Card`/`Section` blocks in one `twe-stack` column), plus `StyleGuidePage.razor.css` and `StyleGuidePage.razor.cs` (route, policy, design notes).
