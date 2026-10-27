@@ -2,59 +2,99 @@
 
 ## Description
 
-The page breadcrumb has two problems. Steve found both on the style guide after task 421.
+Replace the history breadcrumb with a **location** breadcrumb (where this page sits in the app,
+as in the Azure portal), built from the page registry, and style it. Steve decided 2026-10-28:
+location-based only, no history trail.
 
-1. **Every style-guide part adds another "Style Guide" crumb.** Visiting `/StyleGuide/brand` and
-   then `/StyleGuide/color-tokens` shows `… / Style Guide / Style Guide / Style Guide`.
-   `TwBreadcrumb` (TimeWarp.State.Plus) renders the `RouteState` history stack. Each part is a
-   distinct URL, so `PushRouteInfo` pushes a new entry, and each entry takes the document title.
-   That title is "Style Guide" for every part (`StyleGuidePage.Title`), so the crumbs can't be
-   told apart.
-2. **The breadcrumb has no styling.** `TimeWarpPage.razor.css` styles Bootstrap class names
-   (`.breadcrumb`, `.breadcrumb-item`, `.active`, `.text-muted`). Since TimeWarp.State
-   12.0.0-beta.10, `TwBreadcrumb` renders its own classes instead (`tw-breadcrumb`,
-   `tw-breadcrumb__item`, `tw-breadcrumb__item--current`, `tw-breadcrumb__ellipsis`) and ships
-   isolated CSS, with an optional `--tw-breadcrumb-divider` property. The shell rules match
-   nothing. The pin here is 12.0.0-beta.15.
+Today `TimeWarpPage` renders `TwBreadcrumb` (TimeWarp.State.Plus), which shows the `RouteState`
+history stack: every visited URL, labelled with the document title. That has two problems:
+
+1. **It shows history, not location.** Every style-guide part has the title "Style Guide", so
+   clicking parts stacks `Style Guide / Style Guide / Style Guide`. Arriving from another page,
+   by Ctrl-K, a bookmark or a reload, gives a different trail for the same page. The browser's
+   Back button already covers history.
+2. **It is unstyled.** `TimeWarpPage.razor.css` styles Bootstrap class names (`.breadcrumb`,
+   `.breadcrumb-item`). `TwBreadcrumb` stopped rendering those in TimeWarp.State 12.0.0-beta.10,
+   so the rules match nothing.
 
 ## Requirements
 
-- **Part crumbs.** A style-guide part's crumb names the part (for example "Brand" or
-  "Color Tokens"), not "Style Guide". The "All" view keeps "Style Guide".
-- **Switching parts.** Moving from one style-guide part to another replaces the current crumb
-  instead of adding one. Brand, then Color Tokens, reads `Style Guide / Color Tokens`.
-  Steve chose replace over a crumb per part (2026-10-27).
-- **Styling.** Restyle the trail against the classes `TwBreadcrumb` renders now, with brand
-  tokens: link color, hover, current item, separator, ellipsis, spacing under the title. Delete
-  the dead Bootstrap-class rules and update the `TimeWarpPage` Design region note that says
-  `TwBreadcrumb` emits Bootstrap class names.
-- If the fix belongs in TimeWarp.State.Plus (for example a way for a page to replace its entry),
-  do it there and release it. Do not work around the library here
-  (`release-only-when-platform-packages-change`: we own it).
-- Browser tests: part crumb text, part-to-part switching, and that the computed style shows the
-  new rules applied (for example the separator and link color).
+- **Trail from the page registry.** The trail is Home, then each ancestor page, then the current
+  page. A page's parent is the registered page whose route is the longest literal prefix of its
+  route:
+  - `/StyleGuide/{Part}` → Style Guide;
+  - `/Admin/Roles/{id}` → Roles;
+  - and so on for every page.
+  
+  Ancestors are links. The current page is text with `aria-current="page"`. Nav groups
+  ("Developer", "Admin") are not crumbs, because they are not pages. If a group heading has its
+  own page, it is a crumb like any other page.
+- **Generate the hierarchy.** Derive the parent links from the routes the page source generator
+  already emits (`PageRegistryEntry` in
+  `source/analyzers/timewarp-architecture-analyzers/generators/page-source-generator.cs`), either
+  at generation time or from the registry at run time. Do not hand-keep a parent list
+  (`prefer-analyzers-sourcegen-over-inference`).
+- **Labels.** A crumb's label is the page's nav title. A page with route parameters supplies the
+  label for its own crumb. Examples:
+  - The style-guide part crumb is the part title ("Color Tokens"), and `/StyleGuide` (All) is
+    "Style Guide".
+  - The role editor crumb is the role name once loaded.
+  
+  Add the smallest `TimeWarpPage` parameter that allows this, or reuse `Title` where it already
+  matches.
+- **Every route to a page gives the same trail.** Examples:
+  - `/StyleGuide/color-tokens` reads `Home / Style Guide / Color Tokens`, whether you got there
+    by clicking parts, by Ctrl-K, by a direct URL or after a reload.
+  - `/Admin/Roles/{id}` reads `Home / Roles / <role name>`.
+- **Remove the history trail from the shell.** Remove `TwBreadcrumb`, `PushRouteInfo` and
+  `NoSubRouteState.PushRouteInfo()` from `TimeWarpPage`, plus the `ShowInBreadcrumbs`
+  push logic. Keep a way for 403, 404 and auth pages to show no trail. Keep `TwPageTitle` for
+  `document.title`. Leave other `RouteState` uses (for example `TodoItemFormContainer`'s
+  `ChangeRoute`) alone.
+- **Render and style it in this repo.** Render a native `<nav aria-label="Breadcrumb"><ol>`
+  trail, styled with brand tokens in `TimeWarpPage.razor.css`: link color, hover, current item,
+  separator, and space under the title. Delete the dead Bootstrap-class rules. Collapse long
+  trails with an ellipsis only if one actually exceeds the width.
+- **Docs.** Update the `TimeWarpPage` Design region (the trail lines and the `TwBreadcrumb`
+  note), the `RoleDetailPage`/`RolesListPage` comments that cite `TwBreadcrumb`, and
+  `tw-blazor-layout` where it describes the trail. The no-per-page-Back-button rule stays.
+- **This repo only.** Make no change in any other repository. Do not create tasks, branches or
+  PRs elsewhere. If a library change seems necessary, stop and report it in `## Results`;
+  Steve decides.
+- **Tests.**
+  - Unit tests for parent resolution: the longest literal prefix, a parameterized child, and a
+    page with no parent.
+  - Playwright:
+    - the part crumb reads `Home / Style Guide / Color Tokens`;
+    - part-to-part clicks keep one part crumb;
+    - opening a part from Ctrl-K on another page gives the same trail;
+    - the role editor trail;
+    - a computed style check that the new rules apply.
 
 ## Checklist
 
-- [x] Steve chooses replace vs a crumb per part (replace)
-- [ ] Part crumbs show the part name
-- [ ] Part-to-part navigation follows the chosen rule
-- [ ] Breadcrumb styled against `tw-breadcrumb*` classes; dead Bootstrap rules removed
-- [ ] `TimeWarpPage` Design region updated
-- [ ] Playwright coverage for crumbs and styling
-- [ ] `dev build` 0/0; spa integration and Playwright suites pass
+- [x] Steve chose a location breadcrumb only (2026-10-28)
+- [ ] Parent resolution generated from page routes, with unit tests
+- [ ] Parameterized pages supply their crumb label (style-guide part, role editor)
+- [ ] History trail (`TwBreadcrumb` / `PushRouteInfo`) removed from `TimeWarpPage`; error pages show no trail
+- [ ] Native breadcrumb styled with tokens; dead Bootstrap rules removed
+- [ ] Design region, page comments and `tw-blazor-layout` updated
+- [ ] Playwright coverage as listed
+- [ ] `dev build` 0/0; `dev regenerate-generated` golden diff empty; spa integration and
+      Playwright suites pass; `dev lint-skills` when `skills/` changes
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-27)
+- First run (2026-10-27) stopped. It built on a history-trail fix in another repo (timewarp-state
+  PR #660, task 131). Both were dropped when Steve chose a location breadcrumb.
 
 ## Notes
 
-- Code: `source/container-apps/web/projects/web-spa/components/TimeWarpPage.razor` (Design region
-  and `TwBreadcrumb` placement), `TimeWarpPage.razor.css` (the `.twe-page__crumbs` rules),
-  `features/style-guide/pages/StyleGuidePage.razor`.
-- Library: timewarp-state `source/timewarp-state-plus/features/routing/` (`TwBreadcrumb.razor`,
-  `tw-breadcrumb.md`, `route-state/route-state.push-route-info.cs`). `PushRouteInfo` updates the
-  top entry in place for the same URL and truncates on revisit. A different URL always pushes.
-- Part of Steve's style-guide feedback after task 421. Other items (the header demo buttons, the
-  page-action placement rule, the xAI key policy location) go into a separate task.
+- Shell: `source/container-apps/web/projects/web-spa/components/TimeWarpPage.razor` and
+  `TimeWarpPage.razor.css` (`.twe-page__crumbs`). Style guide:
+  `features/style-guide/pages/StyleGuidePage.razor` and `StyleGuideParts`. Roles:
+  `features/admin/roles/pages/`.
+- Page registry consumers to keep working: `navigation-destinations.cs`,
+  `command-palette-roster.cs`, `agent-navigate.cs`, `page-agent-context.cs`.
+- Part of Steve's style-guide feedback after task 421 (with tasks 424 and 426).
