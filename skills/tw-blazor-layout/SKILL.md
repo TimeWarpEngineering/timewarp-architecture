@@ -80,6 +80,24 @@ host paints a state store that holds the current bars; it is the single place an
   bar duplicates the region and breaks the one-region-per-page rule; report outcomes through the
   shared state store instead (see the `tw-blazor` skill, "Operation outcomes").
 
+## The shell owns the location breadcrumb
+
+The full shell renders one trail under the title: where this page sits, not the pages the person
+visited. The browser Back button is history. There is no per-page Back button.
+
+- **Home, then ancestors, then this page.** A parent is the registered page whose route is the
+  longest literal prefix of the current route. Ancestors are links and use the page's nav title.
+  The current page is text with `aria-current="page"`. Nav groups are not crumbs. A group heading
+  that is itself a page is a crumb like any other page.
+- **The current label.** `BreadcrumbLabel` names the current crumb when the nav title is not the
+  label (a style-guide part). `Title` is that label when it already matches (the role name, once
+  loaded). Every route to the same page shows the same trail.
+- **Opt out.** `ShowInBreadcrumbs` false omits the trail (403, 404, and auth pages that still use
+  the full shell) and uses `PageTitle` instead of `TwPageTitle`. `TwPageTitle` still sets
+  `document.title`. Focused pages (sign-in, sign-out) are not this shell, so they have no trail.
+- **Parents come from the registry.** `PageBreadcrumbTrail` walks the routes the page source
+  generator already emits. Do not keep a second parent list.
+
 ## Navigation destinations come from one registry
 
 The nav menu and any other destination surface (a command palette, a sitemap) read **one**
@@ -105,9 +123,12 @@ Concrete instance of the pattern in this repo:
   component → gives it the state `Id` and render-on-state-change, e.g. the footer activity spinner
   bound to `ActionTrackingState.IsActive`). Renders FluentUI `FluentLayout` zones + brand/search/nav/
   footer/`ModalController`, and `<CascadingValue Value=@this>`s itself. Parameters: `Title`,
-  `ChildContent`, optional `Aside`, optional `Description` and `Actions`, `SearchMode`
+  `ChildContent`, optional `Aside`, optional `Description` and `Actions`, optional
+  `BreadcrumbLabel`, `ShowInBreadcrumbs` (false omits the location trail), `SearchMode`
   (`Palette` default, `Hidden`, or `Custom` with a `Search` fragment), and an optional `UserCard`
-  fragment (`ShowUserCard` false omits the signed-in card). `FluentLayout` `MobileBreakdownWidth`
+  fragment (`ShowUserCard` false omits the signed-in card). The trail is a native
+  `<nav aria-label="Breadcrumb"><ol>` under the title, styled in `TimeWarpPage.razor.css`.
+  `FluentLayout` `MobileBreakdownWidth`
   is 880. Ask, when open, is the
   aside item (`LayoutArea.Aside`, 450px) so the grid reflows the page. The page `Aside` is that
   same column only while Ask is closed — two aside items would share one grid area. Below 880px,
