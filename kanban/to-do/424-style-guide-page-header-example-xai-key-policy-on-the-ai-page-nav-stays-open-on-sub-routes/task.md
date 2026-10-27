@@ -2,7 +2,7 @@
 
 ## Description
 
-Steve's feedback on the style guide and admin pages after task 421. There are five independent
+Steve's feedback on the style guide and admin pages after task 421. There are six independent
 fixes. Task 423 covers the breadcrumb separately.
 
 ### 1. Page-header example replaces the dummy header buttons
@@ -87,6 +87,35 @@ moving the parts into the app nav (2026-10-28).
 - The catalog column already scrolls on its own and stays in view (`position: sticky` in
   `StyleGuideCatalog.razor.css`). Keep that.
 
+### 6. Rename the Style Guide to Design System
+
+Steve chose "Design System" over "Style Guide" and "Component Library" (2026-10-28). The page
+covers foundations (brand, tokens, type), components, and usage patterns, so it documents a design
+system. Rename it completely (`no-churn-arguments-eliminate-debt`):
+
+- The title, nav entry, description and Ctrl-K rows (item 5's rows read
+  "Design system: Color Tokens").
+- Routes: `/StyleGuide` and `/StyleGuide/{Part}` become `/DesignSystem` and
+  `/DesignSystem/{Part}`. Add no redirect from the old URL; generated apps start fresh.
+- Folder `features/style-guide/` becomes `features/design-system/`, and namespace
+  `TimeWarp.Architecture.Features.StyleGuide` becomes `...Features.DesignSystem`, including
+  `_Imports.razor`. The concept is renamed, so the namespace follows
+  (`namespaces-do-not-track-folders` is about moves, not renames).
+- Types: `StyleGuidePage` becomes `DesignSystemPage`, `StyleGuideParts` becomes
+  `DesignSystemParts`, `StyleGuideCatalog` becomes `DesignSystemCatalog`, and so on. Use
+  roslynk `rename_symbol` so references and generated code follow.
+- CSS: the `sg-` prefix becomes `ds-`. Rename `data-qa` values (`StyleGuide*` becomes
+  `DesignSystem*`).
+- Tests: the integration folder `features/style-guide`, the Playwright files (for example
+  `style-guide-catalog-playwright-tests.cs` becomes `design-system-catalog-playwright-tests.cs`),
+  and the analyzer-test fixtures that use `StyleGuidePage` as a sample page name.
+- Skills and comments: `tw-blazor`, `tw-slice-isolation`, Design regions, and any prose that says
+  "style guide". `kanban/` history stays as written.
+- Finish with `git grep -i -E 'style-?guide'` outside `kanban/`. It should come back empty, or
+  each remaining hit should have a reason in `## Results`.
+- Do the rename after the other items in this task, or first, but not mixed into their diffs.
+  Task 423 (breadcrumb) edits `StyleGuidePage` too and merges before this task starts.
+
 ## Checklist
 
 - [ ] Dummy header buttons removed; Page header catalog part added with the action-placement rule
@@ -96,9 +125,10 @@ moving the parts into the app nav (2026-10-28).
 - [ ] Nav item active and group open on parameterized sub-routes, derived from the page registry
 - [ ] Catalog rows and group spacing compact
 - [ ] Style-guide parts in the Ctrl-K palette, from StyleGuideParts, gated by DeveloperAccess
+- [ ] Renamed to Design System everywhere (routes, folder, namespace, types, CSS prefix, data-qa, tests, skills); grep clean
 - [ ] Tests: contract and serialization for the new command; integration for the update and the
       stale-Version 409; Playwright for the Page header part, the AI page policy, the nav
-      staying open on `/StyleGuide/brand`, and a palette search opening a part
+      staying open on `/DesignSystem/brand`, and a palette search opening a part
 - [ ] `dev build` 0/0; `dev regenerate-generated` golden diff empty; affected suites pass;
       `dev lint-skills` when `skills/` changes
 
