@@ -1,4 +1,4 @@
-# Feedback: developer claim onto the board, optional email to Amina, and notifications on new feedback
+# Feedback: an outside agent reviews feedback through the API
 
 ## Description
 
