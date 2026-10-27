@@ -96,6 +96,7 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 ## Review
 
 - Round 1: M1, M2, and M3 fixed on this branch. Round 2 is the host re-review.
+- Round 2: no new findings. Disposition: clean (`review/disposition.md`).
 
 ## Notes
 
@@ -115,6 +116,7 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-27T14:53:18Z
 - Fix pass (implement-fix-2): group headings, the catalog product-name scan, and the notification rationale — 2026-10-27
 - Audit: `ganda repo audit --fix` landed kitchen 421 on origin-home. `kanban-landed` stays a warning for the same eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this id.
+- Review oracle round 2: general reviewer (claude, model claude-opus-5-5), effort 1, max-turns 80, session not reported — 2026-10-27. Scope was the fix delta `8e9eed258..0a49d867d`. It re-ran `dev build`, the integration group (8/8), and the Playwright group (passed). M1, M2, and M3 are confirmed fixed, and there are no new findings. Disposition: clean. The implementer restatement matches the task, so there is no misread.
 
 ## Results
 
@@ -122,7 +124,7 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 
 ### Review
 
-Round 1 has one general reviewer at effort 3. Counts after the fix pass: 0 bugs, 1 suggestion fixed, 2 nits fixed, 0 open. Disposition waits on the host's round 2 re-review. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
+Two rounds ran, each with one general reviewer: round 1 at effort 3 on the full branch diff, and round 2 at effort 1 on the fix delta. Final counts: 0 bugs, 1 suggestion fixed, 2 nits fixed, 0 wontfix, 0 open. Round 2 found no new issues. It re-ran `dev build`, the integration group (8/8), and the Playwright group (passed). **Disposition: clean.** Paths: `review/review-framework.md`, `review/round-2/merged.md`, and `review/disposition.md`.
 
 ### How to validate
 
