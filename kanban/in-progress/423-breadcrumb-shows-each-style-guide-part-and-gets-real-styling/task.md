@@ -99,6 +99,13 @@ history stack: every visited URL, labelled with the document title. That has two
   A Debug restore had left `TimeWarp.State.DevTools.Wasm` in the shared NuGet graph; a
   Release restore dropped it, and the Release boot manifest no longer requests that assembly.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-27T18:21:20Z
+- Review oracle (2026-10-28): reviewer Claude Opus 5.5 (general), effort 2, turn cap 120,
+  session not reported. Round 1 was clean.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-27T18:26:38Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -139,3 +146,13 @@ again. Open Admin → Roles and open Administrator.
 Expect: Every style-guide arrival reads Home / Style Guide / Color Tokens, with one part crumb.
 The link color is brand blue (`rgb(0, 133, 178)`) and the current crumb is ink (`rgb(59, 63, 77)`).
 The role editor reads Home / Roles / Administrator. A 403 or 404 page shows no breadcrumb.
+
+### Review disposition
+
+- **Outcome:** clean. 1 round. Roster: general only, effort 2.
+- **Counts (final):** bug 0, suggestion 0, nit 0. None open, fixed, or wontfix.
+- **Re-verified by the reviewer:** `dev build` was 0/0. The spa integration suite passed 519/519.
+  The `Breadcrumb_Given_Wasm` Playwright test passed 1/1. `goldens/` is unchanged. The vally skill
+  lint did not run because vally is not on PATH on the review machine. CI's skill-lint job covers it.
+- **Paths:** `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
