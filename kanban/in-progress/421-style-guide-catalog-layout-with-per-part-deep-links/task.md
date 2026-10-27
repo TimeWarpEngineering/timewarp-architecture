@@ -106,10 +106,15 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 - Implementation: catalog, samples, and tests (2026-10-27)
 - Audit: `ganda repo audit --fix` pinned TimeWarp.Nuru and TimeWarp.Nuru.DevCli to 4.0.0-beta.6 and refreshed `.githooks/pre-push.cs`. `kanban-landed` stays an advisory warning for eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this id.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-27T14:40:49Z
+- Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-27. Re-ran `dev build`, the integration group (8/8), and the Playwright group (passed). There are 0 bugs. Findings M1 (suggestion) and M2 and M3 (nits) are open, and a fix pass was requested. See `review/round-1/merged.md`.
 
 ## Results
 
 `/StyleGuide` is the All view and the only menu, palette, and agent destination. `/StyleGuide/{Part}` is a lowercase kebab alias. Each of the 29 cards is a sample under `features/style-guide/samples/`, shared by All and the single-part view. The single-part view adds a hand-written Usage block. An unknown slug stays on the page and says "No such part." Color chips and type rows use `data-token` rules, so the style-guide feature has no `style=` attributes. The pull request is left for the host open-pr node.
+
+### Review
+
+Round 1 has one general reviewer at effort 3. Counts: 0 bugs, 1 suggestion open, 2 nits open. There is no disposition yet, because a fix pass is pending for M1, M2, and M3. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
 
 ### How to validate
 
