@@ -2,7 +2,7 @@
 
 ## Description
 
-Steve's feedback on the style guide and admin pages after task 421. There are six independent
+Steve's feedback on the style guide and admin pages after task 421. There are seven independent
 fixes. Task 423 covers the breadcrumb separately.
 
 ### 1. Page-header example replaces the dummy header buttons
@@ -116,6 +116,19 @@ system. Rename it completely (`no-churn-arguments-eliminate-debt`):
 - Do the rename after the other items in this task, or first, but not mixed into their diffs.
   Task 423 (breadcrumb) edits `StyleGuidePage` too and merges before this task starts.
 
+### 7. Breadcrumb focus outline is clipped
+
+Steve confirmed task 423's breadcrumb works. The one flaw: the keyboard focus outline on the first
+crumb ("Home") is cut off. The trail list in `TimeWarpPage.razor.css` has `overflow: hidden`
+(with `white-space: nowrap` and `text-overflow: ellipsis`), and that clips the outline drawn
+outside the link box.
+
+- Keep the outline whole on every crumb: give the list enough inline and block padding for the
+  focus ring (with matching negative margin so the trail does not move), or use an inset
+  `outline-offset`. The long-trail ellipsis must keep working.
+- Playwright: focus the first crumb and check that the outline is not clipped (for example the
+  link's outline box sits inside the list's clip box).
+
 ## Checklist
 
 - [ ] Dummy header buttons removed; Page header catalog part added with the action-placement rule
@@ -125,6 +138,7 @@ system. Rename it completely (`no-churn-arguments-eliminate-debt`):
 - [ ] Nav item active and group open on parameterized sub-routes, derived from the page registry
 - [ ] Catalog rows and group spacing compact
 - [ ] Style-guide parts in the Ctrl-K palette, from StyleGuideParts, gated by DeveloperAccess
+- [ ] Breadcrumb focus outline not clipped; ellipsis still works
 - [ ] Renamed to Design System everywhere (routes, folder, namespace, types, CSS prefix, data-qa, tests, skills); grep clean
 - [ ] Tests: contract and serialization for the new command; integration for the update and the
       stale-Version 409; Playwright for the Page header part, the AI page policy, the nav
