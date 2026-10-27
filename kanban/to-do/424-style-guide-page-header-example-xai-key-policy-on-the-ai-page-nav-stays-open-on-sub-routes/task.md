@@ -2,7 +2,7 @@
 
 ## Description
 
-Steve's feedback on the style guide and admin pages after task 421. There are three independent
+Steve's feedback on the style guide and admin pages after task 421. There are four independent
 fixes. Task 423 covers the breadcrumb separately.
 
 ### 1. Page-header example replaces the dummy header buttons
@@ -59,6 +59,19 @@ collapses.
   light up on `/Admin/Roles`.
 - Check the other parameterized pages (for example role detail) for a sensible result.
 
+### 4. The catalog list is tight
+
+The style-guide catalog (`features/style-guide/components/StyleGuideCatalog.razor.css`) wastes
+vertical space, so the list scrolls early. Each link has `padding: var(--twe-space-2)` at body
+size, and groups add `--twe-space-3` above plus `--twe-space-2` under the heading. The reference
+Steve used (https://ryanlanciaux.com/native-surface/#playground) packs its catalog much tighter.
+
+- Make the rows compact: smaller vertical padding (horizontal can stay) and a smaller gap
+  between groups and under group headings, so more of the catalog fits without scrolling. Keep
+  the link a comfortable click target (about 28px tall), the current-item indicator, and the
+  hover state.
+- Use existing spacing tokens. Add a token only if none fits.
+
 ## Checklist
 
 - [ ] Dummy header buttons removed; Page header catalog part added with the action-placement rule
@@ -66,6 +79,7 @@ collapses.
 - [ ] Ask API key section moved to the AI page with its own command; removed from Authentication
 - [ ] Host-managed key shows the policy as having no effect
 - [ ] Nav item active and group open on parameterized sub-routes, derived from the page registry
+- [ ] Catalog rows and group spacing compact
 - [ ] Tests: contract and serialization for the new command; integration for the update and the
       stale-Version 409; Playwright for the Page header part, the AI page policy, and the nav
       staying open on `/StyleGuide/brand`
