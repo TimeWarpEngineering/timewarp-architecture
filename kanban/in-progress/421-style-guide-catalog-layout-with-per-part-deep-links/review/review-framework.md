@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2267
-- Effort: 3
+- Lines changed: 119
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Framework — task 421
 
@@ -17,6 +17,12 @@
 **Effort:** 3 (by-diff budget), roster axis general only
 **Reviewer roster:** general (review oracle, claude-opus-5-5)
 **Session IDs:** review oracle session not reported by host
+
+## Round 2 scope
+
+**Diff scope:** fix delta `8e9eed258..0a49d867d` (commits `ad83f400b` and `0a49d867d`), which is the fix pass for round-1 M1, M2, and M3
+**Effort:** 1 (by-diff budget, 119 lines), roster axis general only
+**Reviewer roster:** general (review oracle, claude-opus-5-5)
 
 ## Ground rules
 
