@@ -1,0 +1,15 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+@inherits BaseComponent
+
+@code {
+  private async Task ShowMessage(MessageBarIntent intent, string title) =>
+    await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
+}
+
+<Card Title="Section Header">
+  <SectionHeader Title="Reports" Subtitle="Summary for the current period.">
+    <Aside>
+      <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Details."))">Details</FluentButton>
+    </Aside>
+  </SectionHeader>
+</Card>

@@ -98,7 +98,7 @@ public class ClearXaiApiKey_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=MessageBars]")).ToContainTextAsync("xAI API key cleared.");
 
     await GrantDeveloperAsync(graph);
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide", new PageGotoOptions
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide/confirmations", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,

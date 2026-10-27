@@ -12,7 +12,7 @@
 // The style guide requires developer.access. The SPA does not use mock auth, so the test signs
 // in with a virtual passkey the way AskSignIn_Given_Wasm does. That first account is
 // Administrator, which does not include developer.access, so the test adds the Developer role
-// on the host store and loads /StyleGuide with a full navigation. Focus checks retry because
+// on the host store and loads /StyleGuide/drawers with a full navigation. Focus checks retry because
 // showModal runs after the dialog's script binds.
 // End sits on the inline-end edge and Start on the inline-start edge. The test flips the
 // document direction and the side class, then reads the settled box and the inner border.
@@ -54,7 +54,7 @@ public class StyleGuideDrawer_Given_Wasm
 
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide", new PageGotoOptions
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide/drawers", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,

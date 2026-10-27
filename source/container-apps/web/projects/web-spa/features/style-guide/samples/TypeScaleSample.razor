@@ -1,0 +1,21 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private static readonly (string Token, string Label)[] TypeScale =
+  [
+    ("twe-text-page-title", "28 — Page title"),
+    ("twe-text-section-title", "18 — Section title"),
+    ("twe-text-body", "14 — Body, button"),
+    ("twe-text-helper", "12 — Helper text"),
+    ("twe-text-eyebrow", "11 — Section eyebrow"),
+  ];
+}
+
+<Card Title="Type Scale">
+  <div class="sg-type">
+    @foreach ((string token, string label) in TypeScale)
+    {
+      <div class="sg-type__row" data-token="@token">@label</div>
+    }
+  </div>
+</Card>

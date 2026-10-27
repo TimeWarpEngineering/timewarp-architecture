@@ -13,11 +13,11 @@
     <AspireVersion>13.6.4</AspireVersion>
   </PropertyGroup>
   <ItemGroup Label="TimeWarp Packages">
-    <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.5. `ganda nuget outdated` treats
+    <!-- TimeWarp.Nuru and TimeWarp.Nuru.DevCli are 4.0.0-beta.6. `ganda nuget outdated` treats
          stable 3.0.0 as current, but `ganda repo audit` nuru check requires the 4.0.0 betas and
-         blocks signing on 3.0.0 (task 389). Audit fix bumped beta.4 to beta.5 (task 317). -->
-    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.5" />
-    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.5" />
+         blocks signing on 3.0.0 (task 389). Audit fix bumped beta.5 to beta.6 (task 421). -->
+    <PackageVersion Include="TimeWarp.Nuru" Version="4.0.0-beta.6" />
+    <PackageVersion Include="TimeWarp.Nuru.DevCli" Version="4.0.0-beta.6" />
     <PackageVersion Include="TimeWarp.Amuru" Version="2.0.0" />
     <PackageVersion Include="TimeWarp.Amuru.Tools" Version="2.0.0" />
     <PackageVersion Include="TimeWarp.Terminal" Version="1.0.2" />

@@ -42,6 +42,7 @@ public partial class CatalogAgent_Should
       .. PageAgentScope.KnownRoutes,
       "/",
       "/StyleGuide",
+      "/StyleGuide/drawers",
       "/Nope",
       "/Feedback/item",
       "/FeedbackExtra",

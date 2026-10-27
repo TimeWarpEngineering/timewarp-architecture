@@ -1,0 +1,14 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private static readonly string[] FilterDemoStatuses = ["Open", "Closed"];
+  private static readonly string[] FilterDemoKinds = ["", "Note"];
+}
+
+<Card Title="Filter Bar">
+  <p class="sg-subtitle">A paper toolbar. Search waits for a pause, then raises one callback. These values are sample text; the demo does not store them.</p>
+  <FilterBar SearchText="Report" SearchPlaceholder="Search…">
+    <FilterSelect Label="Status" Items="FilterDemoStatuses" Value="Open" />
+    <FilterSelect Label="Kind" Items="FilterDemoKinds" Value="" OptionText="@(static value => value.Length == 0 ? "All" : value)" />
+  </FilterBar>
+</Card>

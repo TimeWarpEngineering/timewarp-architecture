@@ -1,0 +1,11 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+@attribute [CrossSliceReference(typeof(ProfilePage), "Style guide sample links the profile page from the user card.")]
+
+<Card Title="User card">
+  <p class="sg-subtitle">Pinned under the navigation menu. The row is a link when it has a destination. The shell shows the signed-in person here.</p>
+  <div class="twe-stack">
+    <UserCard Name="Ada Lovelace" Detail="ada@example.test" Href="@ProfilePage.GetPageUrl()" data-qa="StyleGuideUserCard" />
+    <UserCard Name="Ada Lovelace" Detail="Signed in" />
+  </div>
+  <p class="sg-subtitle">SearchMode is Palette (the Ctrl-K field), Hidden, or Custom. This page keeps Palette. The nav is 240px from 1280px up, a 68px rail from 880px through 1279px, and the drawer below 880px.</p>
+</Card>

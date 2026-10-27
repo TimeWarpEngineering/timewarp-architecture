@@ -7,10 +7,14 @@
 // HtmlRenderer over StaticRenderHost, shared with TimeWarpPage_Should_, shows the catalog
 // without a browser. Scope attributes change with the stylesheet, so the contract is structure
 // and sample text. A closed drawer omits its title. The form fields are the only stored choice.
-// The source scan counts every @bind, rejects any Changed= callback, and requires the
-// ConfirmSample button's OnClick to be ConfirmSampleAsync, which calls
-// NoSubStyleGuideState.ConfirmSample(). A static render cannot see an unused callback parameter.
+// The source scan counts every @bind on the forms sample, rejects any Changed= callback
+// on the demos, and requires the ConfirmSample button's OnClick to be ConfirmSampleAsync,
+// which calls NoSubStyleGuideState.ConfirmSample(). The catalog filter is the one
+// ValueChanged, and it is component-local text, not a stored demo choice.
+// A static render cannot see an unused callback parameter.
 // The absent-name check composes its token so this file does not spell the source product name.
+// Slugs are lowercase kebab-case. Resolve is ordinal and case-insensitive. /StyleGuide/all
+// is not a part. Usage is rendered on the single-part view only.
 #endregion
 
 namespace StyleGuidePageContract_;
@@ -29,8 +33,25 @@ public class StyleGuidePage_Should_
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<StyleGuidePage_Should_>();
 
-  public static async Task Show_Every_Upstreamed_Part_In_Page_Order()
+  public static async Task List_Every_Part_In_Page_Order()
   {
+    StyleGuideParts.PageOrder.Length.ShouldBe(29);
+    StyleGuideParts.PageOrder.Select(static part => part.Slug).ShouldBeUnique();
+    foreach (StyleGuideParts.Part part in StyleGuideParts.PageOrder)
+    {
+      IsKebabSlug(part.Slug).ShouldBeTrue(part.Slug);
+      StyleGuideParts.TryGet(part.Slug, out StyleGuideParts.Part? resolved).ShouldBeTrue(part.Slug);
+      resolved!.Title.ShouldBe(part.Title);
+      StyleGuideParts.TryGet(part.Slug.ToUpperInvariant(), out StyleGuideParts.Part? ignoredCase).ShouldBeTrue(part.Slug);
+      ignoredCase!.Slug.ShouldBe(part.Slug);
+      StyleGuideParts.Url(part).ShouldBe("/StyleGuide/" + part.Slug);
+    }
+
+    StyleGuideParts.Resolve(null).Kind.ShouldBe(StyleGuideParts.SelectionKind.All);
+    StyleGuideParts.Resolve(" ").Kind.ShouldBe(StyleGuideParts.SelectionKind.All);
+    StyleGuideParts.Resolve("all").Kind.ShouldBe(StyleGuideParts.SelectionKind.Unknown);
+    StyleGuideParts.TryGet("no-such-part", out _).ShouldBeFalse();
+
     string html = await RenderAsync();
 
     StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
@@ -39,6 +60,10 @@ public class StyleGuidePage_Should_
     html.ShouldContain("twe-page__actions");
     html.Contains(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
     html.ShouldNotContain("Sample drawer");
+    html.ShouldNotContain("data-qa=\"StyleGuideUsage\"");
+    string catalog = Catalog(html);
+    Count(catalog, "aria-current=\"page\"").ShouldBe(1);
+    TagContaining(catalog, "data-qa=\"StyleGuideAll\"").ShouldContain("aria-current=\"page\"");
 
     ContainTitlesInOrder
     (
@@ -155,27 +180,86 @@ public class StyleGuidePage_Should_
     staff.ShouldNotContain("aria-checked=\"true\"");
     roles.IndexOf("aria-checked=\"true\"", StringComparison.Ordinal)
       .ShouldBeLessThan(roles.IndexOf(">Admin<", StringComparison.Ordinal));
+    CardTitles(html).Count.ShouldBe(StyleGuideParts.PageOrder.Length);
+  }
+
+  public static async Task Render_Each_Part_With_Its_Usage()
+  {
+    foreach (StyleGuideParts.Part part in StyleGuideParts.PageOrder)
+    {
+      string html = await RenderAsync(part.Slug);
+      List<string> titles = CardTitles(html);
+      titles.Count.ShouldBe(1, part.Slug);
+      titles[0].ShouldBe(part.Title);
+      html.ShouldContain("data-qa=\"StyleGuideUsage\"");
+      html.ShouldContain(part.Usage);
+      string catalog = Catalog(html);
+      Count(catalog, "aria-current=\"page\"").ShouldBe(1, part.Slug);
+      TagContaining(catalog, $"data-part=\"{part.Slug}\"").ShouldContain("aria-current=\"page\"");
+      StaticRenderHost.Title(html).ShouldBe("Style Guide");
+    }
+  }
+
+  public static async Task Show_An_Unknown_Slug_Inside_The_Page()
+  {
+    string html = await RenderAsync("no-such-part");
+    StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
+    StaticRenderHost.Title(html).ShouldBe("Style Guide");
+    html.ShouldContain("data-qa=\"StyleGuideUnknown\"");
+    html.ShouldContain("No such part.");
+    html.ShouldContain("href=\"/StyleGuide\"");
+    html.ShouldNotContain("data-qa=\"StyleGuideUsage\"");
+    Catalog(html).ShouldNotContain("aria-current=\"page\"");
+    CardTitles(html).ShouldBeEmpty();
+  }
+
+  public static Task Author_No_Inline_Style_Attributes()
+  {
+    foreach (string file in FeatureFiles())
+    {
+      File.ReadAllText(file).Contains("style=", StringComparison.Ordinal).ShouldBeFalse(file);
+    }
+
+    return Task.CompletedTask;
   }
 
   public static Task Keep_Stored_Choices_On_The_Form_Fields_Only()
   {
-    string source = File.ReadAllText(PagePath());
-    Count(source, "@bind").ShouldBe(2);
-    source.ShouldContain("@bind-Value=\"FormDemoName\"");
-    source.ShouldContain("@bind-Value=\"FormDemoEmail\"");
-    source.ShouldNotContain("Changed=\"");
-    source.ShouldNotContain("ValueChanged");
-    TagContaining(source, "data-qa=\"ConfirmSample\"").ShouldContain("OnClick=\"ConfirmSampleAsync\"");
-    int handler = source.IndexOf("ConfirmSampleAsync()", StringComparison.Ordinal);
+    string forms = File.ReadAllText(FeatureFile("samples", "FormsSample.razor"));
+    Count(forms, "@bind").ShouldBe(2);
+    forms.ShouldContain("@bind-Value=\"FormDemoName\"");
+    forms.ShouldContain("@bind-Value=\"FormDemoEmail\"");
+
+    string confirmations = File.ReadAllText(FeatureFile("samples", "ConfirmationsSample.razor"));
+    TagContaining(confirmations, "data-qa=\"ConfirmSample\"").ShouldContain("OnClick=\"ConfirmSampleAsync\"");
+    int handler = confirmations.IndexOf("ConfirmSampleAsync()", StringComparison.Ordinal);
     handler.ShouldBeGreaterThan(-1, "ConfirmSampleAsync()");
-    int statementEnd = source.IndexOf(';', handler, StringComparison.Ordinal);
+    int statementEnd = confirmations.IndexOf(';', handler, StringComparison.Ordinal);
     statementEnd.ShouldBeGreaterThan(handler);
-    source.Substring(handler, statementEnd - handler).ShouldContain("NoSubStyleGuideState.ConfirmSample()");
-    source.ShouldContain("ApplicationState.SetActiveModal(StyleGuideDrawerId)");
-    source.ShouldContain("ApplicationState.CloseModal()");
-    source.IndexOf(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBe(-1);
+    confirmations.Substring(handler, statementEnd - handler).ShouldContain("NoSubStyleGuideState.ConfirmSample()");
+
+    string drawers = File.ReadAllText(FeatureFile("samples", "DrawersSample.razor"));
+    drawers.ShouldContain("ApplicationState.SetActiveModal(StyleGuideDrawerId)");
+    drawers.ShouldContain("ApplicationState.CloseModal()");
+
+    foreach (string file in FeatureFiles())
+    {
+      if (file.EndsWith("StyleGuideCatalog.razor", StringComparison.Ordinal))
+      {
+        continue;
+      }
+
+      string source = File.ReadAllText(file);
+      source.ShouldNotContain("Changed=\"");
+      source.ShouldNotContain("ValueChanged");
+      source.IndexOf(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBe(-1);
+    }
+
     return Task.CompletedTask;
   }
+
+  private static string Catalog(string html) =>
+    Slice(html, "data-qa=\"StyleGuideCatalog\"", "data-qa=\"StyleGuideStage\"");
 
   private static void AppearInOrder(string html, params string[] markers)
   {
@@ -295,7 +379,7 @@ public class StyleGuidePage_Should_
     return count;
   }
 
-  private static string PagePath()
+  private static string FeatureRoot()
   {
     DirectoryInfo? dir = new(AppContext.BaseDirectory);
     while (dir is not null)
@@ -308,10 +392,8 @@ public class StyleGuidePage_Should_
         "projects",
         "web-spa",
         "features",
-        "style-guide",
-        "pages",
-        "StyleGuidePage.razor");
-      if (File.Exists(candidate))
+        "style-guide");
+      if (Directory.Exists(candidate))
       {
         return candidate;
       }
@@ -319,28 +401,82 @@ public class StyleGuidePage_Should_
       dir = dir.Parent;
     }
 
-    throw new InvalidOperationException("Could not locate StyleGuidePage.razor from " + AppContext.BaseDirectory);
+    throw new InvalidOperationException("Could not locate features/style-guide from " + AppContext.BaseDirectory);
   }
+
+  private static string FeatureFile(params string[] relative)
+  {
+    string[] parts = new string[relative.Length + 1];
+    parts[0] = FeatureRoot();
+    Array.Copy(relative, 0, parts, 1, relative.Length);
+    return Path.Combine(parts);
+  }
+
+  private static bool IsKebabSlug(string slug)
+  {
+    if (slug.Length == 0 || slug[0] == '-' || slug[^1] == '-')
+    {
+      return false;
+    }
+
+    bool hyphen = false;
+    foreach (char character in slug)
+    {
+      if (character == '-')
+      {
+        if (hyphen)
+        {
+          return false;
+        }
+
+        hyphen = true;
+        continue;
+      }
+
+      hyphen = false;
+      bool letter = character is >= 'a' and <= 'z';
+      bool digit = character is >= '0' and <= '9';
+      if (!letter && !digit)
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static IEnumerable<string> FeatureFiles() =>
+    Directory.EnumerateFiles(FeatureRoot(), "*", SearchOption.AllDirectories)
+      .Where(static file => file.EndsWith(".razor", StringComparison.Ordinal)
+        || file.EndsWith(".cs", StringComparison.Ordinal)
+        || file.EndsWith(".css", StringComparison.Ordinal));
 
   private static string SourceProductName() => string.Concat("cru", "nchit");
 
-  private static async Task<string> RenderAsync()
+  private static async Task<string> RenderAsync(string? part = null)
   {
     await using ServiceProvider provider = StaticRenderHost.CreateServices().BuildServiceProvider();
     await using HtmlRenderer renderer = new(provider, provider.GetRequiredService<ILoggerFactory>());
+    Dictionary<string, object?> parameters = new()
+    {
+      [nameof(PageHost.Part)] = part,
+    };
     string html = await renderer.Dispatcher.InvokeAsync(async () =>
-      (await renderer.RenderComponentAsync<PageHost>(ParameterView.Empty)).ToHtmlString());
+      (await renderer.RenderComponentAsync<PageHost>(ParameterView.FromDictionary(parameters))).ToHtmlString());
     return WebUtility.HtmlDecode(html);
   }
 
   private sealed class PageHost : ComponentBase
   {
+    [Parameter] public string? Part { get; set; }
+
     protected override void BuildRenderTree(RenderTreeBuilder builder)
     {
       builder.OpenComponent<CascadingAuthenticationState>(0);
       builder.AddAttribute(1, "ChildContent", (RenderFragment)(child =>
       {
         child.OpenComponent<StyleGuidePage>(0);
+        child.AddComponentParameter(1, nameof(StyleGuidePage.Part), Part);
         child.CloseComponent();
       }));
       builder.CloseComponent();

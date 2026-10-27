@@ -1,5 +1,11 @@
 # Style guide catalog layout with per-part deep links
 
+## Goal (implementer restatement)
+
+The style guide is one long page of 29 cards. Make that page a catalog: a grouped, filterable part list, one part on screen, a hand-written usage snippet, and a stable URL per part. `/StyleGuide` stays the full page (All) and the only menu, palette, and agent destination. `/StyleGuide/{Part}` is a route alias. An unknown slug stays on the page and says the part is missing. All and the deep link render the same sample components. The two inline `style=` attributes become `data-token` rules in the part stylesheet.
+
+Acceptance: All shows the 29 sections in today's order. Each slug shows only that part and its Usage block, with the list entry marked current, including a full page load. An unknown slug shows the missing-part state. The filter narrows the list as you type and clearing it restores the list. Choosing a part changes the URL, and Back returns. No `style=` remains under `features/style-guide`. The registry, nav, command palette, and catalog agent still list one Style Guide destination. `dev build` passes with 0 warnings, and the integration and Playwright suites are green.
+
 ## Description
 
 Replace the single 476-line, 29-section `/StyleGuide` page with an in-page catalog: a filterable part list, one part shown at a time, a usage snippet per part, and a deep link per part at `/StyleGuide/{Part}`. Keep an **All** entry that renders the full page as it does today. Fold in action G: remove the two inline `style=` uses that break `tw-blazor-css-strategy` rule 6.
@@ -75,16 +81,16 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 
 ## Checklist
 
-- [ ] Route aliases plus a part slug table; `/StyleGuide` = All; unknown-slug state
-- [ ] Split the 29 cards into per-part sample components with isolated CSS
-- [ ] G: replace both inline `style=` uses (lines 111 and 123)
-- [ ] `StyleGuideCatalog` list, grouped headings, All entry, `aria-current`
-- [ ] Filter input
-- [ ] Usage snippet per part
-- [ ] Rework the contract tests (index + per part); registry/nav alias assertions
-- [ ] New catalog Playwright test; retarget the drawer (and confirmation) Playwright tests
-- [ ] Update the `#region Design` in `StyleGuidePage.razor.cs`
-- [ ] `dev build` 0 warnings; integration and Playwright suites green; PR via `tw-pr`
+- [x] Route aliases plus a part slug table; `/StyleGuide` = All; unknown-slug state
+- [x] Split the 29 cards into per-part sample components with isolated CSS
+- [x] G: replace both inline `style=` uses (lines 111 and 123)
+- [x] `StyleGuideCatalog` list, grouped headings, All entry, `aria-current`
+- [x] Filter input
+- [x] Usage snippet per part
+- [x] Rework the contract tests (index + per part); registry/nav alias assertions
+- [x] New catalog Playwright test; retarget the drawer (and confirmation) Playwright tests
+- [x] Update the `#region Design` in `StyleGuidePage.razor.cs`
+- [x] `dev build` 0 warnings; integration and Playwright suites green; PR via `tw-pr`
 
 ## Notes
 
@@ -97,5 +103,15 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 ## Session
 
 - Created: 2834145 (2026-10-27)
+- Implementation: catalog, samples, and tests (2026-10-27)
+- Audit: `ganda repo audit --fix` pinned TimeWarp.Nuru and TimeWarp.Nuru.DevCli to 4.0.0-beta.6 and refreshed `.githooks/pre-push.cs`. `kanban-landed` stays an advisory warning for eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this id.
 
 ## Results
+
+`/StyleGuide` is the All view and the only menu, palette, and agent destination. `/StyleGuide/{Part}` is a lowercase kebab alias. Each of the 29 cards is a sample under `features/style-guide/samples/`, shared by All and the single-part view. The single-part view adds a hand-written Usage block. An unknown slug stays on the page and says "No such part." Color chips and type rows use `data-token` rules, so the style-guide feature has no `style=` attributes. The pull request is left for the host open-pr node.
+
+### How to validate
+
+Smoke: Sign in as a developer. Open `/StyleGuide`. Type `Drawers` in Filter parts, click Drawers, then use the browser Back button. Load `/StyleGuide/drawers` and `/StyleGuide/no-such-part` in the address bar.
+
+Expect: The filter leaves only Drawers. The click lands on `/StyleGuide/drawers`, marks Drawers current, and shows its Usage block. Back returns to All and every part. A direct drawers load shows only Drawers. An unknown slug stays on Style Guide and says "No such part." with a link back to All.

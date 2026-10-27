@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
+}
+
+<Card Title="Chart frame">
+  <p class="sg-subtitle">A paper frame. The page supplies the period control, the filter, and the plot. This sample draws three decorative lines.</p>
+  <ChartCard Title="Sample series" HeadingLevel="3" data-qa="StyleGuideChartCard">
+    <Header>
+      <SegmentedControl Items="SegmentDemoItems" Value="Week" AriaLabel="Sample period" />
+    </Header>
+    <Filter>
+      <span>All locations</span>
+    </Filter>
+    <ChildContent>
+      <svg class="sg-chart-sample" viewBox="0 0 320 96" aria-hidden="true" focusable="false">
+        <polyline class="sg-chart-sample__a" points="0,72 40,64 80,68 120,50 160,54 200,38 240,42 280,24 320,30" />
+        <polyline class="sg-chart-sample__b" points="0,40 40,44 80,36 120,42 160,34 200,40 240,30 280,36 320,28" />
+        <polyline class="sg-chart-sample__c" points="0,78 40,74 80,70 120,66 160,60 200,58 240,52 280,48 320,44" />
+      </svg>
+    </ChildContent>
+    <Legend>
+      <ChartLegendItem Label="Series A" Tone="ChartSeriesTone.Ink" />
+      <ChartLegendItem Label="Series B" Tone="ChartSeriesTone.Primary" />
+      <ChartLegendItem Label="Series C" Tone="ChartSeriesTone.Positive" />
+    </Legend>
+  </ChartCard>
+</Card>
