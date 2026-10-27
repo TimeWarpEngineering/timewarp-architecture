@@ -26,9 +26,11 @@
 .sg-catalog__heading {
   margin: 0 0 var(--twe-space-2);
   color: var(--twe-muted);
+  font-family: inherit;
   font-size: var(--twe-text-eyebrow);
   font-weight: 700;
   letter-spacing: 0.04em;
+  line-height: inherit;
   text-transform: uppercase;
 }
 

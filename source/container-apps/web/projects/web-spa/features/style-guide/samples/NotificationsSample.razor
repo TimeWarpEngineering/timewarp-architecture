@@ -3,9 +3,15 @@
 @attribute [CrossSliceReference(typeof(CounterState), "Living style guide deliberately exercises the counter throw-exception pipeline.")]
 
 @code {
+  // Message bars go through NotificationState (the generated ActionSet
+  // dispatcher), rather than a direct INotificationService call, so the demo
+  // exercises the app's own path.
   private async Task ShowMessage(MessageBarIntent intent, string title) =>
     await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
 
+  // A handler throws, StateTransactionBehavior publishes ExceptionNotification,
+  // and ExceptionNotificationHandler records a FluentMessageBar. Dispatched
+  // through the generated ActionSet method (TWA0022 bans direct mediator Send here).
   private async Task TriggerException() =>
     await CounterState.ThrowException("Demo exception dispatched from the Style Guide.", CancellationToken);
 }

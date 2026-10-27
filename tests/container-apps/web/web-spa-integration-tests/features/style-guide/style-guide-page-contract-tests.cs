@@ -10,7 +10,10 @@
 // The source scan counts every @bind on the forms sample, rejects any Changed= callback
 // on the demos, and requires the ConfirmSample button's OnClick to be ConfirmSampleAsync,
 // which calls NoSubStyleGuideState.ConfirmSample(). The catalog filter is the one
-// ValueChanged, and it is component-local text, not a stored demo choice.
+// ValueChanged, and it is component-local text, not a stored demo choice. That
+// exemption covers only the Changed= and ValueChanged assertions. The product-name
+// scan still reads StyleGuideCatalog.razor.
+// Group headings are h2 elements. Each nested part list is labelled by that heading id.
 // A static render cannot see an unused callback parameter.
 // The absent-name check composes its token so this file does not spell the source product name.
 // Slugs are lowercase kebab-case. Resolve is ordinal and case-insensitive. /StyleGuide/all
@@ -64,6 +67,18 @@ public class StyleGuidePage_Should_
     string catalog = Catalog(html);
     Count(catalog, "aria-current=\"page\"").ShouldBe(1);
     TagContaining(catalog, "data-qa=\"StyleGuideAll\"").ShouldContain("aria-current=\"page\"");
+    foreach (StyleGuideParts.Group group in Enum.GetValues<StyleGuideParts.Group>())
+    {
+      string headingId = "sg-catalog-" + group.ToString().ToLowerInvariant();
+      string heading = TagContaining(catalog, $"id=\"{headingId}\"");
+      heading.StartsWith("<h2", StringComparison.Ordinal).ShouldBeTrue(group.ToString());
+      heading.ShouldContain("sg-catalog__heading");
+      catalog.ShouldContain($">{group}</h2>");
+      string parts = TagContaining(catalog, $"aria-labelledby=\"{headingId}\"");
+      parts.StartsWith("<ul", StringComparison.Ordinal).ShouldBeTrue(group.ToString());
+    }
+
+    catalog.ShouldNotContain("<p class=\"sg-catalog__heading\"");
 
     ContainTitlesInOrder
     (
@@ -244,14 +259,15 @@ public class StyleGuidePage_Should_
 
     foreach (string file in FeatureFiles())
     {
-      if (file.EndsWith("StyleGuideCatalog.razor", StringComparison.Ordinal))
+      string source = File.ReadAllText(file);
+      // ValueChanged="@…" also contains the Changed=" substring, so both assertions
+      // skip the catalog filter. The product-name scan still reads that file.
+      if (!file.EndsWith("StyleGuideCatalog.razor", StringComparison.Ordinal))
       {
-        continue;
+        source.ShouldNotContain("Changed=\"");
+        source.ShouldNotContain("ValueChanged");
       }
 
-      string source = File.ReadAllText(file);
-      source.ShouldNotContain("Changed=\"");
-      source.ShouldNotContain("ValueChanged");
       source.IndexOf(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBe(-1);
     }
 

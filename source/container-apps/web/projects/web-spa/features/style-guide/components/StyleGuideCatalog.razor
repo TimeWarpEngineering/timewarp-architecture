@@ -8,6 +8,9 @@
   /StyleGuide/{slug}. The selected entry sets aria-current="page". The filter is
   component-local text (not a stored demo choice). Immediate delivers each
   keystroke. Wall A: the native filter div anchors ::deep to fluent-text-input.
+  Each group name is an h2, and the nested part list is labelled by that heading,
+  so the grouping is in the accessibility tree. The heading class keeps the
+  eyebrow look.
 *@
 
 @code {
@@ -41,6 +44,9 @@
 
   private bool IsCurrent(StyleGuideParts.Part part) =>
     Known && string.Equals(SelectedSlug, part.Slug, StringComparison.Ordinal);
+
+  private static string GroupHeadingId(StyleGuideParts.Group group) =>
+    "sg-catalog-" + group.ToString().ToLowerInvariant();
 
   private List<(StyleGuideParts.Group Group, StyleGuideParts.Part[] Parts)> VisibleGroups()
   {
@@ -91,8 +97,8 @@
     @foreach ((StyleGuideParts.Group group, StyleGuideParts.Part[] parts) in VisibleGroups())
     {
       <li class="sg-catalog__group">
-        <p class="sg-catalog__heading">@group</p>
-        <ul class="sg-catalog__parts">
+        <h2 class="sg-catalog__heading" id="@GroupHeadingId(group)">@group</h2>
+        <ul class="sg-catalog__parts" aria-labelledby="@GroupHeadingId(group)">
           @foreach (StyleGuideParts.Part part in parts)
           {
             <li>

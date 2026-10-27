@@ -7,6 +7,7 @@
 // The style guide requires developer.access. The first passkey account is Administrator, so the
 // test adds the Developer role and then fully navigates. Each case is a document load or a
 // real click, not a static render. The filter targets the shadow input of the catalog text field.
+// Group names are headings inside the catalog, and each nested list names its heading.
 #endregion
 
 namespace StyleGuideCatalogPlaywright_;
@@ -49,6 +50,16 @@ public class StyleGuideCatalog_Given_Wasm
     "Notifications (message bars)",
   ];
 
+  private static readonly string[] GroupNames =
+  [
+    "Foundations",
+    "Forms",
+    "Layout",
+    "Data",
+    "Feedback",
+    "Identity",
+  ];
+
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<StyleGuideCatalog_Given_Wasm>();
 
@@ -68,6 +79,7 @@ public class StyleGuideCatalog_Given_Wasm
     await GrantDeveloperAsync(graph);
 
     await GotoAsync(page, "/StyleGuide/drawers");
+    ILocator catalog = page.Locator("[data-qa=StyleGuideCatalog]");
     ILocator stage = page.Locator("[data-qa=StyleGuideStage]");
     ILocator titles = stage.Locator("h2.twe-card__title");
     await titles.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
@@ -77,6 +89,7 @@ public class StyleGuideCatalog_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=StyleGuidePartLink][data-part=drawers]"))
       .ToHaveAttributeAsync("aria-current", "page");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).Not.ToHaveAttributeAsync("aria-current", "page");
+    await ExpectGroupHeadingsAsync(catalog, GroupNames);
 
     await GotoAsync(page, "/StyleGuide");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).ToHaveAttributeAsync("aria-current", "page");
@@ -84,6 +97,10 @@ public class StyleGuideCatalog_Given_Wasm
     await Assertions.Expect(titles).ToHaveCountAsync(PartTitles.Length);
     IReadOnlyList<string> shown = await titles.AllInnerTextsAsync();
     shown.ShouldBe(PartTitles);
+    await ExpectGroupHeadingsAsync(catalog, GroupNames);
+    await Assertions.Expect(catalog.Locator("ul.sg-catalog__parts")).ToHaveCountAsync(GroupNames.Length);
+    await Assertions.Expect(catalog.Locator("ul.sg-catalog__parts[aria-labelledby='sg-catalog-layout']"))
+      .ToHaveAttributeAsync("aria-labelledby", "sg-catalog-layout");
 
     ILocator filter = page.Locator("[data-qa=StyleGuideFilter] input");
     await filter.ClickAsync();
@@ -91,10 +108,14 @@ public class StyleGuideCatalog_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=StyleGuidePartLink]")).ToHaveCountAsync(1);
     await Assertions.Expect(page.Locator("[data-qa=StyleGuidePartLink]")).ToHaveAttributeAsync("data-part", "drawers");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).ToHaveCountAsync(0);
+    await ExpectGroupHeadingsAsync(catalog, ["Layout"]);
+    await Assertions.Expect(catalog.Locator("ul.sg-catalog__parts"))
+      .ToHaveAttributeAsync("aria-labelledby", "sg-catalog-layout");
 
     await filter.FillAsync("");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).ToHaveCountAsync(1);
     await Assertions.Expect(page.Locator("[data-qa=StyleGuidePartLink]")).ToHaveCountAsync(PartTitles.Length);
+    await ExpectGroupHeadingsAsync(catalog, GroupNames);
 
     await page.Locator("[data-qa=StyleGuidePartLink][data-part=color-tokens]").ClickAsync();
     await page.WaitForURLAsync(
@@ -121,6 +142,16 @@ public class StyleGuideCatalog_Given_Wasm
       static url => url.EndsWith("/StyleGuide", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).ToHaveAttributeAsync("aria-current", "page");
+  }
+
+  private static async Task ExpectGroupHeadingsAsync(ILocator catalog, IReadOnlyList<string> names)
+  {
+    await Assertions.Expect(catalog.GetByRole(AriaRole.Heading)).ToHaveCountAsync(names.Count);
+    foreach (string name in names)
+    {
+      await Assertions.Expect(catalog.GetByRole(AriaRole.Heading, new() { Name = name, Exact = true }))
+        .ToHaveCountAsync(1);
+    }
   }
 
   private static async Task GotoAsync(IPage page, string path)

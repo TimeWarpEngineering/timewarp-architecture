@@ -91,6 +91,11 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 - [x] New catalog Playwright test; retarget the drawer (and confirmation) Playwright tests
 - [x] Update the `#region Design` in `StyleGuidePage.razor.cs`
 - [x] `dev build` 0 warnings; integration and Playwright suites green; PR via `tw-pr`
+- [x] Review round 1: group headings (M1), catalog product-name scan (M2), notification rationale (M3)
+
+## Review
+
+- Round 1: M1, M2, and M3 fixed on this branch. Round 2 is the host re-review.
 
 ## Notes
 
@@ -107,17 +112,19 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 - Audit: `ganda repo audit --fix` pinned TimeWarp.Nuru and TimeWarp.Nuru.DevCli to 4.0.0-beta.6 and refreshed `.githooks/pre-push.cs`. `kanban-landed` stays an advisory warning for eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this id.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-27T14:40:49Z
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-27. Re-ran `dev build`, the integration group (8/8), and the Playwright group (passed). There are 0 bugs. Findings M1 (suggestion) and M2 and M3 (nits) are open, and a fix pass was requested. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-27T14:53:18Z
+- Fix pass (implement-fix-2): group headings, the catalog product-name scan, and the notification rationale — 2026-10-27
 
 ## Results
 
-`/StyleGuide` is the All view and the only menu, palette, and agent destination. `/StyleGuide/{Part}` is a lowercase kebab alias. Each of the 29 cards is a sample under `features/style-guide/samples/`, shared by All and the single-part view. The single-part view adds a hand-written Usage block. An unknown slug stays on the page and says "No such part." Color chips and type rows use `data-token` rules, so the style-guide feature has no `style=` attributes. The pull request is left for the host open-pr node.
+`/StyleGuide` is the All view and the only menu, palette, and agent destination. `/StyleGuide/{Part}` is a lowercase kebab alias. Each of the 29 cards is a sample under `features/style-guide/samples/`, shared by All and the single-part view. The single-part view adds a hand-written Usage block. An unknown slug stays on the page and says "No such part." Color chips and type rows use `data-token` rules, so the style-guide feature has no `style=` attributes. Catalog groups are headings, and each part list is labelled by its group. NotificationsSample records why it uses NotificationState and the exception pipeline. The pull request is left for the host open-pr node.
 
 ### Review
 
-Round 1 has one general reviewer at effort 3. Counts: 0 bugs, 1 suggestion open, 2 nits open. There is no disposition yet, because a fix pass is pending for M1, M2, and M3. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
+Round 1 has one general reviewer at effort 3. Counts after the fix pass: 0 bugs, 1 suggestion fixed, 2 nits fixed, 0 open. Disposition waits on the host's round 2 re-review. Paths: `review/review-framework.md` and `review/round-1/merged.md`.
 
 ### How to validate
 
-Smoke: Sign in as a developer. Open `/StyleGuide`. Type `Drawers` in Filter parts, click Drawers, then use the browser Back button. Load `/StyleGuide/drawers` and `/StyleGuide/no-such-part` in the address bar.
+Smoke: Sign in as a developer. Open `/StyleGuide`. Confirm the catalog groups (Foundations, Forms, Layout, Data, Feedback, Identity) read as headings and that each part list is labelled by its group. Type `Drawers` in Filter parts and confirm only the Layout heading remains. Clear the filter, click Drawers, then use the browser Back button. Load `/StyleGuide/drawers` and `/StyleGuide/no-such-part` in the address bar.
 
-Expect: The filter leaves only Drawers. The click lands on `/StyleGuide/drawers`, marks Drawers current, and shows its Usage block. Back returns to All and every part. A direct drawers load shows only Drawers. An unknown slug stays on Style Guide and says "No such part." with a link back to All.
+Expect: The filter leaves only Drawers under the Layout heading. The click lands on `/StyleGuide/drawers`, marks Drawers current, and shows its Usage block. Back returns to All, every part, and all six group headings. A direct drawers load shows only the Drawers card, with the catalog headings still present. An unknown slug stays on Style Guide and says "No such part." with a link back to All.
