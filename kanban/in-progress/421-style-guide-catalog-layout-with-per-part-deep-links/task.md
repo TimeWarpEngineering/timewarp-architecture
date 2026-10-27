@@ -114,6 +114,7 @@ Replace each with a per-token class or a `data-token` attribute selected in the 
 - Review oracle round 1: general reviewer (claude, model claude-opus-5-5), effort 3, session not reported — 2026-10-27. Re-ran `dev build`, the integration group (8/8), and the Playwright group (passed). There are 0 bugs. Findings M1 (suggestion) and M2 and M3 (nits) are open, and a fix pass was requested. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-27T14:53:18Z
 - Fix pass (implement-fix-2): group headings, the catalog product-name scan, and the notification rationale — 2026-10-27
+- Audit: `ganda repo audit --fix` landed kitchen 421 on origin-home. `kanban-landed` stays a warning for the same eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this id.
 
 ## Results
 
