@@ -4,10 +4,10 @@
    block that prerender HTML-encoded, which dropped every rule until interactive render.
 
    Wall A: the scope attribute is stamped only on elements this component authors. FluentLayout,
-   FluentLayoutItem, FluentNav (NavMenu) and TwBreadcrumb render their own roots, which are never
-   stamped. Rules for those use the native .twe-shell root (or another authored element) as the
-   anchor and ::deep for the Fluent child. Elements authored here inside a Fluent ChildContent
-   (.twe-appbar, .twe-page, .twe-footer, ...) are stamped and need no ::deep. */
+   FluentLayoutItem and FluentNav (NavMenu) render their own roots, which are never stamped.
+   Rules for those use the native .twe-shell root (or another authored element) as the anchor
+   and ::deep for the Fluent child. Elements authored here inside a Fluent ChildContent
+   (.twe-appbar, .twe-page, .twe-footer, the breadcrumb nav, ...) are stamped and need no ::deep. */
 
 /* The wrapper exists only to anchor ::deep rules; it adds no box. Ask does not change this. */
 .twe-shell { display: contents; }
@@ -145,7 +145,7 @@
 
 .twe-page { padding: 20px 28px 28px; }
 .twe-page__title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--twe-space-2);
   font-size: var(--twe-text-page-title);
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -179,30 +179,37 @@
   gap: var(--twe-space-2);
 }
 
-/* Plus TwBreadcrumb (timewarp-state 081) ships Bootstrap class names and no CSS.
-   Style that contract from this shell wrapper only; do not load bootstrap.min.css. */
-.twe-page__crumbs { margin: 0 0 16px; }
-.twe-page__crumbs ::deep .breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  list-style: none;
+/* Location trail under the title. The line ellipsizes only when it is wider than the page.
+   Ancestors are links; the current page is text. Separators are aria-hidden. */
+.twe-page__crumbs {
+  margin: 0 0 var(--twe-space-3);
+  min-width: 0;
+}
+.twe-breadcrumb {
+  display: block;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  list-style: none;
   font-size: var(--twe-text-helper);
   color: var(--twe-muted);
 }
-.twe-page__crumbs ::deep .breadcrumb:empty { display: none; }
-.twe-page__crumbs ::deep .breadcrumb-item { display: inline-flex; align-items: center; }
-.twe-page__crumbs ::deep .breadcrumb-item + .breadcrumb-item::before {
-  content: "/";
-  padding: 0 8px;
+.twe-breadcrumb__item { display: inline; }
+.twe-breadcrumb__sep {
+  padding: 0 var(--twe-space-2);
   color: var(--twe-muted);
 }
-.twe-page__crumbs ::deep .breadcrumb-item a { color: var(--twe-blue); text-decoration: none; }
-.twe-page__crumbs ::deep .breadcrumb-item a:hover { text-decoration: underline; color: var(--twe-blue-deep); }
-.twe-page__crumbs ::deep .breadcrumb-item.active { color: var(--twe-ink-2); }
-.twe-page__crumbs ::deep .text-muted { color: var(--twe-muted); }
+.twe-breadcrumb__link {
+  color: var(--twe-blue);
+  text-decoration: none;
+}
+.twe-breadcrumb__link:hover {
+  color: var(--twe-blue-deep);
+  text-decoration: underline;
+}
+.twe-breadcrumb__current { color: var(--twe-ink-2); }
 .twe-page__body { color: var(--twe-ink); }
 
 .twe-aside { padding: 20px; border-left: 1px solid var(--twe-rule); height: 100%; }

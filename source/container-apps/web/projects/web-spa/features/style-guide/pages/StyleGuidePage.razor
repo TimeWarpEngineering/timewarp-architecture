@@ -7,11 +7,29 @@
 
   private StyleGuideParts.Selection Current => StyleGuideParts.Resolve(Part);
 
+  private string? CrumbLabel
+  {
+    get
+    {
+      if (Current.Kind == StyleGuideParts.SelectionKind.Part)
+      {
+        return Current.Part!.Title;
+      }
+
+      if (Current.Kind == StyleGuideParts.SelectionKind.Unknown)
+      {
+        return Part;
+      }
+
+      return null;
+    }
+  }
+
   private async Task ShowMessage(MessageBarIntent intent, string title) =>
     await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
 }
 
-<TimeWarpPage Title="Style Guide">
+<TimeWarpPage Title="Style Guide" BreadcrumbLabel="@CrumbLabel">
   <Description>Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</Description>
   <Actions>
     <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Outline action."))">Outline</FluentButton>

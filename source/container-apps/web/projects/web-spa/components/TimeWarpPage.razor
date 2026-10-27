@@ -11,15 +11,15 @@
   Design: Built on FluentUI v5 FluentLayout. MainLayout stays empty (FluentProviders only);
   this component owns the chrome so it gets TimeWarp.State render-trigger / Id /
   per-navigation lifecycle that a LayoutComponentBase can't.
-  Navigation trail is here (TwBreadcrumb under the h1), not per-page Back buttons.
-  TwPageTitle sets document.title and, with PushRouteInfo on after-render, feeds RouteState
-  so crumbs use the Title text. TwPageTitle only pushes on its first render; this shell
-  also PushRouteInfo when interactive so async titles (role name after FetchRoles) update
-  the current stack entry. PushRouteInfo reads document.title via JS — skip it during
-  prerender (RendererInfo.IsInteractive). ShowInBreadcrumbs=false still sets PageTitle
-  but does not push (403/404/auth must not pollute the trail). TwBreadcrumb emits
-  Bootstrap class names with no CSS of its own (timewarp-state 081); a thin wrapper
-  under .twe-shell styles that contract with tokens. Do not load Bootstrap.
+  The location breadcrumb sits under the h1: Home, then each ancestor page, then this
+  page. Parents are PageRegistry routes (longest literal prefix), not the RouteState
+  history stack. Ancestors are links. The current page is text with aria-current="page".
+  Nav groups are not crumbs. BreadcrumbLabel overrides the current crumb when the nav
+  title is not the label (a style-guide part). Title is that label when it already
+  matches (the role name). ShowInBreadcrumbs=false omits the trail (403, 404, auth)
+  and uses PageTitle instead of TwPageTitle. TwPageTitle still sets document.title.
+  There is no per-page Back button. The trail is a native nav/ol styled with brand
+  tokens in TimeWarpPage.razor.css.
   RFC 219 D8 / 219-006: AddPasskeyPrompt sits above ChildContent so post-login Home and
   Profile (and every other TimeWarpPage) can show the Entra add-passkey banner. Required
   mode hides ChildContent until a passkey exists. Login uses TimeWarpFocusedPage and never
@@ -71,6 +71,7 @@
 
 @code {
   [Inject] private IOptions<BrandOptions> BrandOptionsAccessor { get; set; } = null!;
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
   private BrandOptions Brand => BrandOptionsAccessor.Value;
 
@@ -80,6 +81,7 @@
     && PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: false);
 
   [Parameter] public string? Title { get; set; }
+  [Parameter] public string? BreadcrumbLabel { get; set; }
   [Parameter] public RenderFragment? Description { get; set; }
   [Parameter] public RenderFragment? Actions { get; set; }
   [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -105,15 +107,6 @@
         ? "twe-shell twe-shell--ask twe-shell--ask-expanded"
         : "twe-shell twe-shell--ask";
 
-  protected override async Task OnAfterRenderAsync(bool firstRender)
-  {
-    await base.OnAfterRenderAsync(firstRender);
-    if (ShowInBreadcrumbs && RendererInfo.IsInteractive)
-    {
-      await NoSubRouteState.PushRouteInfo();
-    }
-  }
-
   private RenderFragment TitleBlock => @<text>
     @if (!string.IsNullOrWhiteSpace(Title))
     {
@@ -128,6 +121,52 @@
       <h1 class="twe-page__title">@Title</h1>
     }
   </text>;
+
+  private RenderFragment? BreadcrumbBlock
+  {
+    get
+    {
+      if (!ShowInBreadcrumbs)
+      {
+        return null;
+      }
+
+      IReadOnlyList<PageBreadcrumbTrail.Crumb> crumbs = PageBreadcrumbTrail.Build
+      (
+        NavigationManager.ToBaseRelativePath(NavigationManager.Uri),
+        BreadcrumbLabel,
+        Title,
+        PageRegistry.All
+      );
+      if (crumbs.Count == 0)
+      {
+        return null;
+      }
+
+      return @<nav class="twe-page__crumbs" aria-label="Breadcrumb" data-qa="Breadcrumb">
+        <ol class="twe-breadcrumb">
+          @for (int index = 0; index < crumbs.Count; index++)
+          {
+            PageBreadcrumbTrail.Crumb crumb = crumbs[index];
+            <li class="twe-breadcrumb__item">
+              @if (index > 0)
+              {
+                <span class="twe-breadcrumb__sep" aria-hidden="true">/</span>
+              }
+              @if (crumb.Href is null)
+              {
+                <span class="twe-breadcrumb__current" aria-current="page" data-qa="BreadcrumbCurrent">@crumb.Label</span>
+              }
+              else
+              {
+                <a class="twe-breadcrumb__link" href="@crumb.Href" data-qa="BreadcrumbLink">@crumb.Label</a>
+              }
+            </li>
+          }
+        </ol>
+      </nav>;
+    }
+  }
 }
 
 <CascadingValue Value=@this>
@@ -212,12 +251,7 @@
               }
             </div>
           }
-          @if (ShowInBreadcrumbs)
-          {
-            <div class="twe-page__crumbs">
-              <TwBreadcrumb MaxLinks="4" />
-            </div>
-          }
+          @BreadcrumbBlock
           <div class="twe-page__body">
             <WebMcpAgentSurface />
             <MessageBars />

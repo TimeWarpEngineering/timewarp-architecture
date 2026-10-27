@@ -76,8 +76,8 @@ release to remove it.
 ## Canonical in-repo example (the app shell)
 
 `web-spa/components/TimeWarpPage.razor` renders `FluentLayout`, `FluentNav` (via `NavMenu`),
-`TwBreadcrumb` and `FluentTextInput`. Its root is a native `<div class="twe-shell">` with
-`display: contents`, and every rule is in `TimeWarpPage.razor.css`:
+a native breadcrumb `<nav>`, and `FluentTextInput`. Its root is a native `<div class="twe-shell">`
+with `display: contents`, and every rule is in `TimeWarpPage.razor.css`:
 
 ```razor
 <div class="twe-shell">
@@ -101,7 +101,7 @@ release to remove it.
 
 /* Elements this component authors are stamped: plain isolated selectors. */
 .twe-appbar { display: flex; align-items: center; }
-.twe-page__crumbs ::deep .breadcrumb { display: flex; }
+.twe-breadcrumb__link { color: var(--twe-blue); }
 ```
 
 Other examples: `FormField.razor.css` (`.twe-form-field__control ::deep > fluent-text-input`),
