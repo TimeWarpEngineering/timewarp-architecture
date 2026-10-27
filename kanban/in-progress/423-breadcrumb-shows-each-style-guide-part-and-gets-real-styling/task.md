@@ -98,6 +98,7 @@ history stack: every visited URL, labelled with the document title. That has two
   `PageRegistry.All` at run time, so the page generator and the ingress golden stayed put.
   A Debug restore had left `TimeWarp.State.DevTools.Wasm` in the shared NuGet graph; a
   Release restore dropped it, and the Release boot manifest no longer requests that assembly.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-27T18:21:20Z
 
 ## Notes
 
