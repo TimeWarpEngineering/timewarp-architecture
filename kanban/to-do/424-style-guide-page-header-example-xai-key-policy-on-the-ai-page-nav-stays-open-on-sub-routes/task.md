@@ -2,7 +2,7 @@
 
 ## Description
 
-Steve's feedback on the style guide and admin pages after task 421. There are four independent
+Steve's feedback on the style guide and admin pages after task 421. There are five independent
 fixes. Task 423 covers the breadcrumb separately.
 
 ### 1. Page-header example replaces the dummy header buttons
@@ -72,6 +72,21 @@ Steve used (https://ryanlanciaux.com/native-surface/#playground) packs its catal
   hover state.
 - Use existing spacing tokens. Add a token only if none fits.
 
+### 5. Style-guide parts are in the Ctrl-K palette
+
+Each catalog part is a palette row ("Style guide: Color Tokens") that opens
+`/StyleGuide/{slug}`, so a part is reachable without scrolling the catalog. Steve chose this over
+moving the parts into the app nav (2026-10-28).
+
+- Build the rows from `StyleGuideParts` (the one part list), not a second hand-kept list.
+- Show them only to users who can open the style guide (`PermissionIds.DeveloperAccess`), the
+  same way the palette already gates page rows.
+- The palette is in `features/application/command-palette/` (`command-palette-roster.cs`
+  builds rows, `command-palette-ranker.cs` ranks them). Fit the parts into that roster.
+  Don't add a side channel.
+- The catalog column already scrolls on its own and stays in view (`position: sticky` in
+  `StyleGuideCatalog.razor.css`). Keep that.
+
 ## Checklist
 
 - [ ] Dummy header buttons removed; Page header catalog part added with the action-placement rule
@@ -80,9 +95,10 @@ Steve used (https://ryanlanciaux.com/native-surface/#playground) packs its catal
 - [ ] Host-managed key shows the policy as having no effect
 - [ ] Nav item active and group open on parameterized sub-routes, derived from the page registry
 - [ ] Catalog rows and group spacing compact
+- [ ] Style-guide parts in the Ctrl-K palette, from StyleGuideParts, gated by DeveloperAccess
 - [ ] Tests: contract and serialization for the new command; integration for the update and the
-      stale-Version 409; Playwright for the Page header part, the AI page policy, and the nav
-      staying open on `/StyleGuide/brand`
+      stale-Version 409; Playwright for the Page header part, the AI page policy, the nav
+      staying open on `/StyleGuide/brand`, and a palette search opening a part
 - [ ] `dev build` 0/0; `dev regenerate-generated` golden diff empty; affected suites pass;
       `dev lint-skills` when `skills/` changes
 
