@@ -23,8 +23,7 @@ The page breadcrumb has two problems. Steve found both on the style guide after 
   "Color Tokens"), not "Style Guide". The "All" view keeps "Style Guide".
 - **Switching parts.** Moving from one style-guide part to another replaces the current crumb
   instead of adding one. Brand, then Color Tokens, reads `Style Guide / Color Tokens`.
-  **Pending Steve's decision**: the alternative is a crumb per part,
-  `Style Guide / Brand / Color Tokens`. Do not launch until he chooses.
+  Steve chose replace over a crumb per part (2026-10-27).
 - **Styling.** Restyle the trail against the classes `TwBreadcrumb` renders now, with brand
   tokens: link color, hover, current item, separator, ellipsis, spacing under the title. Delete
   the dead Bootstrap-class rules and update the `TimeWarpPage` Design region note that says
@@ -37,7 +36,7 @@ The page breadcrumb has two problems. Steve found both on the style guide after 
 
 ## Checklist
 
-- [ ] Steve chooses replace vs a crumb per part
+- [x] Steve chooses replace vs a crumb per part (replace)
 - [ ] Part crumbs show the part name
 - [ ] Part-to-part navigation follows the chosen rule
 - [ ] Breadcrumb styled against `tw-breadcrumb*` classes; dead Bootstrap rules removed
