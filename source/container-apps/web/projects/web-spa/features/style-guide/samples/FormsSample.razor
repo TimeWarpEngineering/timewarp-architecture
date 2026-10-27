@@ -1,0 +1,30 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private string FormDemoName { get; set; } = "Ada Lovelace";
+  private string FormDemoEmail { get; set; } = "ada@example.test";
+}
+
+<Card Title="Forms">
+  <p class="sg-subtitle">
+    Forms use FormSection / FormField / FormGrid / FormActions from components/forms.
+    Controls are full width by default (a field takes the whole row unless FormField.Span
+    pairs short fields). Spacing tokens: --twe-space-2 (8px label→control), --twe-space-6
+    (24px field row gap — Fluent 24px; Tailwind gap-y-8 is 32px, we pick 24), --twe-space-12
+    (48px section gap), --twe-space-3 (12px action gap). No page-local margins.
+  </p>
+  <FormSection Title="Profile" Description="Identity shown on the account.">
+    <FormGrid>
+      <FormField Label="Display name" Hint="Shown in the app bar.">
+        <FluentTextInput @bind-Value="FormDemoName" AriaLabel="Display name" Width="100%" data-qa="StyleGuideFormField" />
+      </FormField>
+      <FormField Label="Email" Hint="Optional.">
+        <FluentTextInput @bind-Value="FormDemoEmail" AriaLabel="Email" Width="100%" />
+      </FormField>
+    </FormGrid>
+  </FormSection>
+  <FormActions>
+    <FluentButton Appearance="ButtonAppearance.Subtle">Cancel</FluentButton>
+    <FluentButton Appearance="ButtonAppearance.Primary">Save</FluentButton>
+  </FormActions>
+</Card>

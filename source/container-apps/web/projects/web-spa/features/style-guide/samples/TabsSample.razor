@@ -1,0 +1,10 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private static readonly string[] TabDemoItems = ["Overview", "Activity", "Notes"];
+}
+
+<Card Title="Tabs">
+  <p class="sg-subtitle">An underline switcher. The sample does not store the value.</p>
+  <Tabs Items="TabDemoItems" Value="Overview" AriaLabel="Sample views" />
+</Card>

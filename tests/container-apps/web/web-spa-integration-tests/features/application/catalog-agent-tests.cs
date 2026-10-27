@@ -370,6 +370,17 @@ public partial class CatalogAgent_Should
       CancellationToken.None
     );
     Names(styleGuide).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    Names
+    (
+      await WebMcpPublisher.DescribeAsync
+      (
+        Principal(PermissionIds.DeveloperAccess),
+        authorization,
+        catalog,
+        "/StyleGuide/drawers",
+        CancellationToken.None
+      )
+    ).ShouldBe(Names(styleGuide));
 
     Names
     (

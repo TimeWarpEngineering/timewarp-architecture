@@ -74,6 +74,17 @@ public class All_Should_
     return Task.CompletedTask;
   }
 
+  public static Task Keep_The_Style_Guide_On_Its_Static_Route_Only()
+  {
+    PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
+    styleGuide.RouteTemplate.ShouldBe("/StyleGuide");
+    styleGuide.Url.ShouldBe("/StyleGuide");
+    PageRegistry.All.ShouldNotContain(static entry =>
+      entry.Url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase)
+      || entry.RouteTemplate.Contains("{Part}", StringComparison.Ordinal));
+    return Task.CompletedTask;
+  }
+
   public static Task Include_Every_Navigation_Destination()
   {
     // Reverse direction: a hand-written INavigationDestination without Navigable = true would

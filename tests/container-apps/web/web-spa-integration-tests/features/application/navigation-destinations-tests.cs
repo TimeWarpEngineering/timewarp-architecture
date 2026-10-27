@@ -370,6 +370,11 @@ public partial class Destinations_Should_
 
     string[] destinations = [.. (await NavigationDestinations.ForAsync(user, authorization)).Select(static page => page.Url)];
     destinations.ShouldContain("/", because);
+    destinations.ShouldNotContain(
+      static url => url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase),
+      because);
+    destinations.Count(static url => string.Equals(url, "/StyleGuide", StringComparison.OrdinalIgnoreCase))
+      .ShouldBeLessThanOrEqualTo(1, because);
 
     string[] menu = await MenuHrefsAsync(services, user);
     menu.ShouldBe(destinations, because);
@@ -395,7 +400,7 @@ public partial class Destinations_Should_
       destination.Description.ShouldNotBeNullOrWhiteSpace($"{because} {destination.Route}");
     }
 
-    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page"];
+    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page", "/StyleGuide/drawers"];
     if (signedIn)
     {
       refused.Add(signIn);

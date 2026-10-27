@@ -1,0 +1,116 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@*
+  Purpose: In-page part list for the style guide. Not a second FluentNav.
+
+  Design: Native nav and lists, because the shell already owns the one FluentNav
+  registry. All is the first entry and links to /StyleGuide. Each part links to
+  /StyleGuide/{slug}. The selected entry sets aria-current="page". The filter is
+  component-local text (not a stored demo choice). Immediate delivers each
+  keystroke. Wall A: the native filter div anchors ::deep to fluent-text-input.
+  Each group name is an h2, and the nested part list is labelled by that heading,
+  so the grouping is in the accessibility tree. The heading class keeps the
+  eyebrow look.
+*@
+
+@code {
+  [Parameter] public string? SelectedSlug { get; set; }
+  [Parameter] public bool Known { get; set; }
+
+  private string Filter { get; set; } = "";
+
+  private bool AllCurrent => Known && SelectedSlug is null;
+
+  private bool ShowAll
+  {
+    get
+    {
+      string query = Filter.Trim();
+      return query.Length == 0 || "All".Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+  }
+
+  private Task OnFilterChanged(string? value)
+  {
+    Filter = value ?? "";
+    return Task.CompletedTask;
+  }
+
+  private bool Matches(StyleGuideParts.Part part)
+  {
+    string query = Filter.Trim();
+    return query.Length == 0 || part.Title.Contains(query, StringComparison.OrdinalIgnoreCase);
+  }
+
+  private bool IsCurrent(StyleGuideParts.Part part) =>
+    Known && string.Equals(SelectedSlug, part.Slug, StringComparison.Ordinal);
+
+  private static string GroupHeadingId(StyleGuideParts.Group group) =>
+    "sg-catalog-" + group.ToString().ToLowerInvariant();
+
+  private List<(StyleGuideParts.Group Group, StyleGuideParts.Part[] Parts)> VisibleGroups()
+  {
+    List<(StyleGuideParts.Group Group, StyleGuideParts.Part[] Parts)> groups = [];
+    foreach (StyleGuideParts.Group group in Enum.GetValues<StyleGuideParts.Group>())
+    {
+      List<StyleGuideParts.Part> parts = [];
+      foreach (StyleGuideParts.Part part in StyleGuideParts.PageOrder)
+      {
+        if (part.Group == group && Matches(part))
+        {
+          parts.Add(part);
+        }
+      }
+
+      if (parts.Count > 0)
+      {
+        groups.Add((group, [.. parts]));
+      }
+    }
+
+    return groups;
+  }
+}
+
+<nav class="sg-catalog" aria-label="Style guide parts" data-qa="StyleGuideCatalog">
+  <div class="sg-catalog__filter">
+    <FluentTextInput Placeholder="Filter parts"
+                     Value="@Filter"
+                     ValueChanged="@OnFilterChanged"
+                     Immediate="true"
+                     ImmediateDelay="0"
+                     AriaLabel="Filter parts"
+                     Width="100%"
+                     data-qa="StyleGuideFilter" />
+  </div>
+  <ul class="sg-catalog__list">
+    @if (ShowAll)
+    {
+      <li>
+        <a class="sg-catalog__link"
+           href="@StyleGuidePage.GetPageUrl()"
+           aria-current="@(AllCurrent ? "page" : null)"
+           data-qa="StyleGuideAll"
+           data-part="all">All</a>
+      </li>
+    }
+    @foreach ((StyleGuideParts.Group group, StyleGuideParts.Part[] parts) in VisibleGroups())
+    {
+      <li class="sg-catalog__group">
+        <h2 class="sg-catalog__heading" id="@GroupHeadingId(group)">@group</h2>
+        <ul class="sg-catalog__parts" aria-labelledby="@GroupHeadingId(group)">
+          @foreach (StyleGuideParts.Part part in parts)
+          {
+            <li>
+              <a class="sg-catalog__link"
+                 href="@StyleGuideParts.Url(part)"
+                 aria-current="@(IsCurrent(part) ? "page" : null)"
+                 data-qa="StyleGuidePartLink"
+                 data-part="@part.Slug">@part.Title</a>
+            </li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+</nav>

@@ -1,0 +1,20 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+@attribute [PageLocalMessageBar("Style guide showcases the FluentMessageBar component itself; these bars are documentation, not operation outcomes.")]
+
+<Card Title="Message bars (FluentUI)">
+  <p class="sg-subtitle">Component reference only. Operation outcomes never render inline — they go to the shell's single notification region above (TWA0025); static Info/Warning guidance may stay in a component.</p>
+  <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+    <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
+      Operation completed successfully.
+    </FluentMessageBar>
+    <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
+      Something went wrong — you can select and copy this text.
+    </FluentMessageBar>
+    <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Warning" AllowDismiss="false">
+      Proceed with caution.
+    </FluentMessageBar>
+    <FluentMessageBar Intent="MessageBarIntent.Info" Title="Information" AllowDismiss="false">
+      Helpful context that does not require immediate action.
+    </FluentMessageBar>
+  </FluentStack>
+</Card>

@@ -1,0 +1,28 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+
+@code {
+  private static readonly (string Name, string Token, string Hex)[] ColorTokens =
+  [
+    ("Purple (primary)", "twe-purple", "#55409c"),
+    ("Blue (secondary)", "twe-blue", "#0085b2"),
+    ("Green (highlight)", "twe-green", "#69a144"),
+    ("Ink (text)", "twe-ink", "#1a1d28"),
+    ("Muted", "twe-muted", "#767a86"),
+    ("Background", "twe-background", "#fafafb"),
+    ("Paper", "twe-paper", "#ffffff"),
+    ("Danger", "twe-danger", "#c2342a"),
+  ];
+}
+
+<Card Title="Color Tokens">
+  <div class="sg-swatches">
+    @foreach ((string name, string token, string hex) in ColorTokens)
+    {
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" data-token="@token"></div>
+        <div class="sg-swatch__name">@name</div>
+        <div class="sg-swatch__hex">@hex</div>
+      </div>
+    }
+  </div>
+</Card>

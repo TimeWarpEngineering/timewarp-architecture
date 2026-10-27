@@ -1,26 +1,50 @@
-/* Style Guide page — content authored by this page, so CSS isolation applies. */
-.sg-header { margin-bottom: 8px; }
-.sg-title { font-size: var(--twe-text-page-title); font-weight: 700; margin: 0; color: var(--twe-ink); }
-.sg-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
-.sg-brand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--twe-space-2); margin-top: var(--twe-space-3); }
-.sg-brand__logo { height: var(--twe-logo-height); width: auto; display: block; }
-.sg-brand__fact { margin: 0; color: var(--twe-ink); font-size: var(--twe-text-body); }
-.sg-swatches { display: flex; flex-wrap: wrap; gap: 16px; }
-.sg-swatch { width: 132px; }
-.sg-swatch__chip { height: 64px; border-radius: 10px; border: 1px solid var(--twe-rule); }
-.sg-swatch__name { font-size: var(--twe-text-body); font-weight: 600; margin-top: 8px; color: var(--twe-ink); }
-.sg-swatch__hex { font-size: var(--twe-text-helper); color: var(--twe-muted); }
-.sg-type { display: flex; flex-direction: column; gap: 10px; }
-.sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
-.sg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.sg-follow { margin-top: var(--twe-space-3); }
-.sg-choice-grid {
+/* Catalog stage. Part chrome lives on each sample. */
+.sg-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: var(--twe-space-3);
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: var(--twe-space-6);
+  align-items: start;
 }
-.sg-chart-sample { display: block; width: 100%; height: 6rem; }
-.sg-chart-sample polyline { fill: none; stroke-width: 2; }
-.sg-chart-sample__a { stroke: var(--twe-ink); }
-.sg-chart-sample__b { stroke: var(--twe-primary); }
-.sg-chart-sample__c { stroke: var(--twe-positive); }
+
+.sg-stage { min-width: 0; }
+
+.sg-missing__title {
+  margin: 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-section-title);
+  font-weight: 700;
+}
+
+.sg-missing__body {
+  margin: var(--twe-space-2) 0;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-body);
+}
+
+.sg-usage { margin-top: var(--twe-space-6); }
+
+.sg-usage__label {
+  margin: 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-section-title);
+  font-weight: 700;
+}
+
+.sg-usage__code {
+  margin: var(--twe-space-2) 0 0;
+  overflow: auto;
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: 10px;
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  font-family: ui-monospace, monospace;
+  font-size: var(--twe-text-helper);
+  line-height: 1.4;
+  white-space: pre;
+}
+
+/* 879 matches FluentLayout MobileBreakdownWidth. Media queries cannot read the token. */
+@media (max-width: 879px) {
+  .sg-layout { grid-template-columns: minmax(0, 1fr); }
+}

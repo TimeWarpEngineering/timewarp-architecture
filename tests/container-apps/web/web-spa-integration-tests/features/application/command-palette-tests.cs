@@ -93,6 +93,9 @@ public class CommandPalette_Should_
     palette.Matches[0].Kind.ShouldBe(CommandPaletteRowKind.Page);
     palette.Matches[^1].Kind.ShouldBe(CommandPaletteRowKind.Command);
     palette.HighlightedIndex.ShouldBe(0);
+    palette.Roster.Count(static row => row.Target == "/StyleGuide").ShouldBe(1);
+    palette.Roster.ShouldNotContain(static row =>
+      row.Target.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase));
   }
 
   public static Task Opt_Out_Only_Explicitly_With_A_Reason()
