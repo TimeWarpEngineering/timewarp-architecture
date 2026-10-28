@@ -66,6 +66,8 @@ contain no client name.
 - Implementation: 01a18357-0027-7ba0-b21a-9c798017c084 (2026-10-28)
 - `ganda repo audit` passed. The kanban-landed advisory names other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) and was left alone.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18357-0027-7ba0-b21a-9c798017c084, max-turns 500, Done — 2026-10-28T16:52:52Z
+- Review oracle: claude-opus-5-5 (ganda task work headless), effort 2, roster general, 1 round — 2026-10-28
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session e6de2297-8c10-4cdc-9590-437e8779b540, max-turns 120 — 2026-10-28T16:56:04Z
 
 ## Results
 
@@ -82,6 +84,18 @@ The first Playwright run failed `Location_Trail_Should_Stay_The_Same_For_Every_R
 Smoke: `./bin/dev build` then `./bin/dev test --group playwright`. Also run `List_Every_Part_In_Page_Order` from `web-spa-integration-tests`.
 
 Expect: build reports 0 Warning(s) and 0 Error(s). The Playwright group passes, including `Catalog_Should_DeepLink_Filter_And_Reject_An_Unknown_Slug`. `List_Every_Part_In_Page_Order` passes with titles taken from `PageOrder`.
+
+### Review
+
+- Rounds: 1. Effort 2, roster: general.
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- Disposition: **clean**. No findings were raised. The goal restatement matches the task, so there was no misread.
+- The reviewer built both touched test projects (0 warnings, 0 errors) and reran `List_Every_Part_In_Page_Order` (1/1) and `Catalog_Should_DeepLink_Filter_And_Reject_An_Unknown_Slug` (1/1). Both passed.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
