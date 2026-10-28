@@ -96,11 +96,12 @@ token issuance, and the link request with `openssl` and `curl`. Two gaps:
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 62d82ad0-0853-4703-91f1-91110ba4cbb3, max-turns 120 — 2026-10-28T17:40:23Z
 - Fix pass round 1 (implement-fix-2): M1, M2, and M3 implemented on this id (2026-10-29)
 - Audit: `kanban-landed` failed because task 431's in-progress kitchen was still the to-do copy on origin-home. Reconciled 431 (same holder, session not a live pid) and this task's kitchen. 2026-10-29
+- Review oracle round 2: claude-opus-5-5 (headless ganda task work), effort 1, roster general, turn cap 80. 0 open. Disposition clean. 2026-10-29
 
 ## Review
 
-- Round 1: three findings (M1 suggestion, M2 nit, M3 nit). The fix pass implemented them on this id. Round 2 is the host review node.
-
+- Round 1: three findings (M1 suggestion, M2 nit, M3 nit). The fix pass implemented them on this id.
+- Round 2: Done
 ## Notes
 
 - Follow-up to task 428 (PR #590). Steve asked for both items on 2026-10-28.
@@ -131,7 +132,9 @@ The fix pass rebuilt with `./bin/dev build` (0 warnings, 0 errors, client-name s
 
 ### Review
 
-Round 1 had effort 2 and one general reviewer. There were 0 bugs, 1 suggestion, and 2 nits. The fix pass implements all three on this id. M1: the Playwright test reads `/llms.txt` and `/auth.md` from the rendered prompt and requires HTTP 200. M2: the prompt, Design region, page caption, and tests say the blocks are bash and do not run in PowerShell, and they scope the curl alias to Windows PowerShell. M3: the integration test asserts `printf '%s\n' "$data$pad" | tr '_-' '/+' | openssl base64 -d -A`. Round 2 disposition is still the host review node. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 had effort 2 and one general reviewer. There were 0 bugs, 1 suggestion, and 2 nits. The fix pass implements all three on this id. M1: the Playwright test reads `/llms.txt` and `/auth.md` from the rendered prompt and requires HTTP 200. M2: the prompt, Design region, page caption, and tests say the blocks are bash and do not run in PowerShell, and they scope the curl alias to Windows PowerShell. M3: the integration test asserts `printf '%s\n' "$data$pad" | tr '_-' '/+' | openssl base64 -d -A`.
+
+Round 2 had effort 1 and one general reviewer. It reviewed the fix delta `3d5ab53f3..191d64c14`, confirmed M1, M2, and M3 fixed, and found nothing new. It re-ran `Build_Should` and it passed 1/1. The Playwright test was not re-run in round 2. Final counts: 0 open, 3 fixed (1 suggestion, 2 nits), 0 wontfix. **Disposition: clean**, after 2 rounds. Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
