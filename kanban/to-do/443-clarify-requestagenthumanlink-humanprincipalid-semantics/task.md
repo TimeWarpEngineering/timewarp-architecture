@@ -2,12 +2,16 @@
 
 ## Description
 
-[Brief description of the task]
+`RequestAgentHumanLink_Command.humanPrincipalId` is optional (non-required
+uuid). Callers cannot tell from the spec alone what omitting it means
+(self-link? error?) vs the successful humanPrincipalId-pinned flow used on
+2026-10-28.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Document omitting vs providing humanPrincipalId
+- [ ] Mark required if pinning is the contract
+- [ ] Add description + example; align auth.md/llms.txt wording
 
 ## Session
 
@@ -15,4 +19,4 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
