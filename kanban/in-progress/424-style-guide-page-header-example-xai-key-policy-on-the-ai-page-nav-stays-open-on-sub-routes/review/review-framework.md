@@ -2,26 +2,31 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2350
+- Lines changed: 1385
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
 - Turn cap: 200 (--max-turns; cursor uncapped)
 
-# Review framework — task 424
+## Round 2
 
 **Date:** 2026-10-28
 **Host task:** kanban/in-progress/424-style-guide-page-header-example-xai-key-policy-on-the-ai-page-nav-stays-open-on-sub-routes/
-**Diff scope:** branch `task/424-style-guide-page-header-example-xai-key-policy-on` at
-`0d475995b` vs merge-base `aea778347` with master (commits 95858acc5, e4fa8ccc8, 623201076).
-**Plan / brief:** task.md Description items 1–7 and `## Goal (implementer restatement)`.
-**Effort:** 3. Three general reviewers, each on one slice of the diff.
+**Diff scope:** the fix-pass delta since round 1, `0d475995b..31bdd4ae7` (product commit `0c0c617af`),
+excluding `kanban/`.
+**Plan / brief:** `review/round-1/merged.md` M1–M19, and task.md `## Goal (implementer restatement)`.
+**Effort:** 3. Three general reviewers on the same slices as round 1.
 **Reviewer roster:**
-- general-1: xAI key policy move (item 2)
-- general-2: nav match from the page registry and design-system parts in Ctrl-K (items 3, 5)
-- general-3: Page header part, compact catalog, breadcrumb focus ring, rename (items 1, 4, 6, 7)
-**Session IDs:** review oracle (claude-opus-5-5, headless ganda task work); reviewer subagents
-abfcef1c21f175cfa, a1e79616ebde5ed6a, a5aa812952a2f275c.
+- general-1: xAI key policy (M1, M2, M4, M5, M14, M15)
+- general-2: nav match, registry, palette (M6–M9, M13, M16, M18)
+- general-3: page header, CSS, skills (M3, M10–M12, M17, M19)
+
+**Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`); reviewer subagents
+(sonnet) a931bee9961c5891c, af53d92a36f8141f0, a08f3135265eb010c.
+
+Round 1's framework header (scope `0d475995b` vs `aea778347`) was replaced when the host rewrote this
+file for the round 2 budget. The round 1 scope is still in `review/round-1/merged.md` and task.md
+`## Session`.
 
 ## Ground rules
 
