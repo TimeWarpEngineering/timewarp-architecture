@@ -36,14 +36,16 @@ a code instead of the raw id) is noted but out of scope here.
    save KeyId), mint a token with `identity:read` (the `AgentLinkManageSelf` policy expands from it),
    then `POST api/agent-links` with the human's principal id shown on this page. The prompt must
    reference a shipped client or shipped skill, not `tools/` (see item 3).
-3. **Ship an AOT-compiled agent identity client** — the CLI uses TimeWarp.Nuru source generation and
-   AOT is supported (`tw-nuru`), but `dotnet run tools/agent-identity-cli/agent.cs --` requires the
-   .NET SDK plus the repo checkout, which most visiting agents and non-developer humans will not
-   have. Decide and implement the artifact: e.g. AOT self-contained binary (linux-x64 / win-x64 /
-   arm64) packed with the template and/or posted per-release, referenced by the copy-paste prompt.
-   Open question to settle in Design region before build: pack path in the template, per-OS naming,
-   and whether `keygen` state lives beside the binary or in a documented default store path
-   (`~/.config/timewarp/agent-identity/`).
+3. **No shipped client required for agent targets** — proven live (2026-10-28, session
+   ses_e7d6c83cfffebh1UD5myX7NDeE): a shell-capable agent completes the entire ceremony with only
+   `openssl` + `curl` — keygen (`openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256`),
+   register (sign `TimeWarp.Identity.AgentKey.Register.v1:` ‖ challenge with
+   `openssl dgst -sha256 -sign`, DER = the server's required `Rfc3279DerSequence`), token issuance
+   (same with the `Token.v1:` prefix, challenge delivered and voiced as a fresh token 200). The
+   copy-paste prompt in requirement 2 is therefore a self-contained bash recipe; the CLI in
+   `tools/agent-identity-cli/` stays maintainer-only and does NOT pack.
+   OPTIONAL (demoted): an AOT-compiled client only serves a human with NO shell-capable agent; a
+   decision to skip it entirely is acceptable and the copy-paste prompt must not depend on it.
 4. **Show the human's principal id on the page** — display "Your account id" with a copy button
    (from `GetCurrentSession.Response.PrincipalId`, already claimed by the auth provider as
    `timewarp:principal_id`) so the copy-paste prompt can itself carry the human's id without leaving
@@ -53,8 +55,8 @@ a code instead of the raw id) is noted but out of scope here.
 ## Checklist
 
 - [ ] Page copy: what linking means (open agent links page onboarding section)
-- [ ] Copy-paste agent prompt block (copy button; references the shipped client/skill, not repo tools/)
-- [ ] AOT ship decision + artifact for the agent identity client (Design region first)
+- [ ] Copy-paste agent prompt block: pure openssl + curl recipe (copy button; no dotnet/SDK dependency)
+- [ ] AOT client: explicit SKIP-or-ship decision recorded in the kitchen (agent targets proven not to need it)
 - [ ] Surface the human's PrincipalId on AgentLinksPage with copy support
 - [ ] Playwright test coverage on the web-spa page changes
 - [ ] `dev build`, `dev template-smoke` per PR gates in AGENTS.md
