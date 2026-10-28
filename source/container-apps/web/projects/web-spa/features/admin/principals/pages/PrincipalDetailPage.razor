@@ -51,15 +51,14 @@
       }
       else if (PrincipalState.Current is { } principal)
       {
-        <dl class="admin-principal-facts" data-qa="AdminPrincipalStatus">
-          <dt>Principal</dt><dd><code>@principal.PrincipalId.Value</code></dd>
-          <dt>Kind</dt><dd>@principal.Kind</dd>
-          <dt>Trust</dt><dd>@principal.TrustTier</dd>
-          <dt>Active</dt><dd>@(principal.IsActive ? "yes" : "no")</dd>
-          <dt>Quarantined</dt><dd>@(principal.IsQuarantined ? "yes" : "no")</dd>
-          <dt>Roles</dt>
-          <dd>@string.Join(", ", principal.RoleIds.Select(static roleId => RoleIds.GetRoleNameByGuid(roleId)))</dd>
-        </dl>
+        <DefinitionList data-qa="AdminPrincipalStatus">
+          <DefinitionItem Term="Principal"><code>@principal.PrincipalId.Value</code></DefinitionItem>
+          <DefinitionItem Term="Kind">@principal.Kind</DefinitionItem>
+          <DefinitionItem Term="Trust">@principal.TrustTier</DefinitionItem>
+          <DefinitionItem Term="Active">@(principal.IsActive ? "yes" : "no")</DefinitionItem>
+          <DefinitionItem Term="Quarantined">@(principal.IsQuarantined ? "yes" : "no")</DefinitionItem>
+          <DefinitionItem Term="Roles">@string.Join(", ", principal.RoleIds.Select(static roleId => RoleIds.GetRoleNameByGuid(roleId)))</DefinitionItem>
+        </DefinitionList>
       }
     </Section>
 
@@ -70,14 +69,14 @@
           <Section Title="Profile" LoadingActionType="typeof(PrincipalState.OpenPrincipalActionSet.Action)">
             @if (current.Profile is { } profile)
             {
-              <dl class="admin-principal-facts" data-qa="AdminPrincipalProfile">
-                <dt>Display name</dt><dd data-qa="AdminPrincipalDisplayName">@profile.DisplayName</dd>
-                <dt>Email</dt><dd data-qa="AdminPrincipalEmail">@OrDash(profile.Email)</dd>
-                <dt>Language</dt><dd>@profile.Language</dd>
-                <dt>Region</dt><dd>@profile.Region</dd>
-                <dt>Theme</dt><dd>@profile.Theme</dd>
-                <dt>Notifications</dt><dd>@(profile.Notifications ? "on" : "off")</dd>
-              </dl>
+              <DefinitionList data-qa="AdminPrincipalProfile">
+                <DefinitionItem Term="Display name" data-qa="AdminPrincipalDisplayName">@profile.DisplayName</DefinitionItem>
+                <DefinitionItem Term="Email" data-qa="AdminPrincipalEmail">@OrDash(profile.Email)</DefinitionItem>
+                <DefinitionItem Term="Language">@profile.Language</DefinitionItem>
+                <DefinitionItem Term="Region">@profile.Region</DefinitionItem>
+                <DefinitionItem Term="Theme">@profile.Theme</DefinitionItem>
+                <DefinitionItem Term="Notifications">@(profile.Notifications ? "on" : "off")</DefinitionItem>
+              </DefinitionList>
             }
             else
             {

@@ -1,5 +1,20 @@
 # Add the remaining portal design-system primitives
 
+## Goal (implementer restatement)
+
+A generated app should get six missing portal primitives from the template, so the next product does not copy them into page CSS. Nothing in the new code names a client.
+
+Acceptance:
+
+- A definition list is a wrapping grid. Each item is a term plus arbitrary content, not two strings. A blank term is left out. Principal detail and role detail use it in place of their one-off fact layouts.
+- A line chart fills the `ChartCard` plot slot. The page passes points, a label and `ChartSeriesTone` per series, and axis labels that are already formatted. The plot draws gridlines, the lines, and a dot on each series' last point. It formats no money and picks no colors. `ChartCard` stays a frame. The chart-frame sample and its usage snippet show the plot inside `ChartCard`.
+- A period stepper is previous, a label, and next. Either end can be disabled. It does not know years, days, or ranges. The page owns the label. It raises `ValueChanged` the way `SegmentedControl` does, and it is not that control.
+- Compact `IntegrationCard` takes a tone, default or warning. Warning paints that row with the warning surface. Full is unchanged. There is no second sync bar. The integration-cards sample shows a compact warning row.
+- A page split has a primary column and a secondary column, about 1.6fr and 1fr. At 1100px and below it stacks, primary first. There is no third column.
+- One table utility class right-aligns a cell and sets tabular numerals. It lives with the existing table rules. The grouped-table sample puts it on one numeric column's `th` and `td`.
+- Each new part has a catalog entry, a usage snippet, and an overview row. The numeric class and the compact tone are recorded on the existing table and integration rows.
+- HtmlRenderer tests follow the KPI card render tests. `dev build` reports 0 errors and 0 warnings. Source, tests, and skills contain no client name.
+
 ## Description
 
 Epic 379, the style-guide catalog (421), and the location breadcrumb (423) cover the portal
@@ -59,19 +74,33 @@ test in the same style as `kpi-card-render-tests.cs`.
 
 ## Checklist
 
-- [ ] Definition list, adopted on principal detail and role detail
-- [ ] Line chart in the `ChartCard` plot slot; chart-frame sample uses it
-- [ ] Period stepper, distinct from `SegmentedControl`
-- [ ] Compact `IntegrationCard` warning tone; full variant unchanged; no second sync bar
-- [ ] Page split, stacks at 1100px
-- [ ] Numeric table utility, shown on the grouped-table sample
-- [ ] Style-guide part, usage snippet, and `components/overview.md` row for each
-- [ ] HtmlRenderer tests; `dev build` 0/0; no client name in source, tests, or skills
+- [x] Definition list, adopted on principal detail and role detail
+- [x] Line chart in the `ChartCard` plot slot; chart-frame sample uses it
+- [x] Period stepper, distinct from `SegmentedControl`
+- [x] Compact `IntegrationCard` warning tone; full variant unchanged; no second sync bar
+- [x] Page split, stacks at 1100px
+- [x] Numeric table utility, shown on the grouped-table sample
+- [x] Style-guide part, usage snippet, and `components/overview.md` row for each
+- [x] HtmlRenderer tests; `dev build` 0/0; no client name in source, tests, or skills
 
 ## Session
 
 - Created: 3422483 (2026-10-28)
 - Specified: follow-up after the portal design review (379, 421, 423, 424)
+- Implementation: grok task-work (2026-10-28). Definition list, line chart, period stepper, page split, compact integration tone, and `twe-numeric`.
+- `ganda repo audit --fix` landed kitchen 428 (same holder, drifted from origin-home). Eight claims still warn that they have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). That warning is pre-existing and not fixable from this id. Audit then passed with that advisory.
+
+## Results
+
+The template now carries the six primitives. Principal detail and role detail use `DefinitionList`. The chart-frame sample plots `LineChart` inside `ChartCard`. `PeriodStepper` raises `ValueChanged` and stays separate from `SegmentedControl`. Compact `IntegrationCard` warning uses `IntegrationCardTone.Warning`; full still uses `Status`. `PageSplit` is 1.6fr and 1fr and stacks at 1100px. `twe-numeric` sits with `.twe-table`. Catalog parts are definition list (Data), period stepper (Forms), and page split (Layout). The line chart, the tone, and the numeric class update the existing chart-frame, integration-cards, and grouped-table parts. `./bin/dev build` finished with 0 warnings and 0 errors, and its client-name scan passed. `git diff -- source tests skills` has no client name.
+
+HtmlRenderer, Release, from `tests/container-apps/web/web-spa-integration-tests`: `DefinitionList_Should_` 5/5, `LineChart_Should_` 6/6, `PeriodStepper_Should_` 4/4, `PageSplit_Should_` 4/4, `TableNumeric_Should_` 2/2, `IntegrationCard_Should_` 10/10, `DesignSystemPage_Should_` 6/6, plus `GroupedTable_Should_` 9/9 and `ChartCard_Should_` 5/5. The live design-system page was not opened in a browser. The catalog contract renders every part with HtmlRenderer.
+
+### How to validate
+
+Smoke: `./bin/dev build`, then from `tests/container-apps/web/web-spa-integration-tests` run `dotnet test -c Release -- --filter-class DefinitionList_Should_`, `LineChart_Should_`, `PeriodStepper_Should_`, `PageSplit_Should_`, `TableNumeric_Should_`, `IntegrationCard_Should_`, and `DesignSystemPage_Should_`.
+
+Expect: build reports 0 warnings and 0 errors. Those classes pass (5, 6, 4, 4, 2, 10, and 6). The all-parts page contains the definition list, the line chart inside the chart frame, the period stepper, a compact integration warning row, the page split, and `twe-numeric` on the grouped table, and it does not show the omitted blank term.
 
 ## Notes
 

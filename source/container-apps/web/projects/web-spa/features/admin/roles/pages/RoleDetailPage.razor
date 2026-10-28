@@ -12,6 +12,7 @@
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
   No per-page Back button. Document title comes from TimeWarpPage Title via TwPageTitle.
+  The description is a DefinitionList item, not a page-local fact grid.
 *@
 
 @code {
@@ -58,7 +59,9 @@
       }
       else
       {
-        <p class="twe-role-description">@Role.Description</p>
+        <DefinitionList data-qa="RoleFacts">
+          <DefinitionItem Term="Description">@Role.Description</DefinitionItem>
+        </DefinitionList>
         <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" />
         @if (CanManage)
         {

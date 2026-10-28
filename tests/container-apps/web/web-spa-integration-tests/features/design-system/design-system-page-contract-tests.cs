@@ -40,7 +40,7 @@ public class DesignSystemPage_Should_
 
   public static async Task List_Every_Part_In_Page_Order()
   {
-    DesignSystemParts.PageOrder.Length.ShouldBe(30);
+    DesignSystemParts.PageOrder.Length.ShouldBe(33);
     DesignSystemParts.PageOrder.Select(static part => part.Slug).ShouldBeUnique();
     foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
     {
@@ -66,6 +66,7 @@ public class DesignSystemPage_Should_
     html.Contains(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
     html.ShouldNotContain("Sample drawer");
     html.ShouldNotContain("data-qa=\"DesignSystemUsage\"");
+    html.ShouldNotContain(">Omitted<");
     string catalog = Catalog(html);
     Count(catalog, "aria-current=\"page\"").ShouldBe(1);
     TagContaining(catalog, "data-qa=\"DesignSystemAll\"").ShouldContain("aria-current=\"page\"");
@@ -92,15 +93,18 @@ public class DesignSystemPage_Should_
       "Section",
       "Section Header",
       "Page header",
+      "Page split",
       "Filter Bar",
       "Tabs",
       "Segmented Control",
+      "Period stepper",
       "Avatars",
       "User card",
       "Sign-in",
       "Empty States",
       "Drawers",
       "KPI Cards",
+      "Definition list",
       "Chart frame",
       "Trend, SLA, and class pills",
       "Integration Cards",
@@ -132,9 +136,11 @@ public class DesignSystemPage_Should_
       "data-qa=\"DesignSystemFormField\"",
       "Reports",
       "Summary for the current period.",
+      "data-qa=\"DesignSystemPageSplit\"",
       "Search…",
       "aria-label=\"Sample views\"",
       "aria-label=\"Sample period\"",
+      "data-qa=\"DesignSystemPeriodStepper\"",
       "href=\"/Profile\"",
       "data-qa=\"DesignSystemUserCard\"",
       "data-qa=\"DesignSystemSignInOne\"",
@@ -149,8 +155,10 @@ public class DesignSystemPage_Should_
       "49.5%",
       "Last 12 months",
       "Exceptions",
+      "data-qa=\"DesignSystemDefinitionList\"",
       "data-qa=\"DesignSystemChartCard\"",
       "All locations",
+      "twe-line-chart",
       "Series A",
       "Series B",
       "Series C",
@@ -163,7 +171,9 @@ public class DesignSystemPage_Should_
       "Not mapped",
       "Connected",
       "Needs attention",
+      "data-qa=\"DesignSystemIntegrationWarning\"",
       "data-qa=\"DesignSystemGroupedTable\"",
+      "twe-numeric",
       ">Alpha<",
       "In progress",
       "data-qa=\"ConfirmSample\"",

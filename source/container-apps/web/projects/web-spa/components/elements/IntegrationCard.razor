@@ -5,7 +5,10 @@
 
   Design: One component. Variant Full (the default) is the identity banner. Compact adds
   twe-integration-card--compact and is the thin pull-status row, so there is no separate
-  sync bar. Native div root so CSS isolation stamps the scope attribute. Class is appended
+  sync bar. Tone Warning adds twe-integration-card--warning only on that compact row
+  and paints the warning surface. Full ignores Tone and keeps its paper surface; a
+  warning on the banner still goes through Status. Native div root so CSS isolation
+  stamps the scope attribute. Class is appended
   on that root the way Card does, and unmatched attributes splat onto it.
   Full stacks the title and the meta. Compact puts them on one line and, when both are
   set, puts an aria-hidden middle dot between them. A blank title or meta is omitted, so
@@ -25,6 +28,7 @@
   [Parameter, EditorRequired] public string Title { get; set; } = "";
   [Parameter] public string? Meta { get; set; }
   [Parameter] public IntegrationCardVariant Variant { get; set; } = IntegrationCardVariant.Full;
+  [Parameter] public IntegrationCardTone Tone { get; set; } = IntegrationCardTone.Default;
   [Parameter] public Microsoft.FluentUI.AspNetCore.Components.Icon? Icon { get; set; }
   [Parameter] public BadgeStatus? Status { get; set; }
   [Parameter] public string? StatusLabel { get; set; }
@@ -40,9 +44,14 @@
 
   private string? VariantClass =>
     Variant == IntegrationCardVariant.Compact ? "twe-integration-card--compact" : null;
+
+  private string? ToneClass =>
+    Variant == IntegrationCardVariant.Compact && Tone == IntegrationCardTone.Warning
+      ? "twe-integration-card--warning"
+      : null;
 }
 
-<div class="twe-integration-card @VariantClass @Class" @attributes="AdditionalAttributes">
+<div class="twe-integration-card @VariantClass @ToneClass @Class" @attributes="AdditionalAttributes">
   @if (Icon is not null)
   {
     <div class="twe-integration-card__icon" aria-hidden="true">

@@ -1,0 +1,28 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: One term and its value inside a DefinitionList.
+
+  Design: The value is ChildContent, so the page can pass text, a badge, or a link.
+  A blank or missing term renders nothing, including the value. Native div root so
+  CSS isolation stamps the scope attribute. HTML allows that div to group a dt and
+  a dd inside a dl. Class is appended on the div, and unmatched attributes splat
+  onto it. This component wires no events. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter] public string? Term { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private bool HasTerm => !string.IsNullOrWhiteSpace(Term);
+}
+
+@if (HasTerm)
+{
+  <div class="twe-definition-list__item @Class" @attributes="AdditionalAttributes">
+    <dt class="twe-definition-list__term">@Term</dt>
+    <dd class="twe-definition-list__value">@ChildContent</dd>
+  </div>
+}

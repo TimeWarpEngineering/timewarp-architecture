@@ -1,0 +1,284 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Line plot for the ChartCard child slot — gridlines, one line per series, a dot on the last point.
+
+  Design: The page passes points, a label and ChartSeriesTone per series, and axis labels
+  that are already formatted. This plot formats no money and chooses no color: the tone
+  classes use the same ink, primary, and positive tokens as ChartLegendItem. Native svg
+  root so CSS isolation stamps the scope attribute. Class is appended on that root, and
+  unmatched attributes splat onto it, so a caller can override role or aria-label.
+  Axis labels are svg text elements built in code because a Razor text tag does not emit
+  an element. A series with no finite points is omitted. One finite point draws the dot
+  and no line. The accessible name is the series labels, then the axis labels. This
+  component wires no events. Isolated CSS uses --twe-* tokens.
+*@
+
+@code {
+  private const double Width = 640;
+  private const double Height = 200;
+  private const double PadLeft = 12;
+  private const double PadRight = 12;
+  private const double PadTop = 12;
+  private const double PadBottom = 32;
+  private const int GridlineCount = 4;
+
+  private static readonly string ViewBox = string.Concat("0 0 ", Format(Width), " ", Format(Height));
+
+  [Parameter] public IReadOnlyList<LineChartSeries>? Series { get; set; }
+  [Parameter] public IReadOnlyList<string>? AxisLabels { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private readonly record struct PlottedSeries(string ToneClass, string? Points, string LastX, string LastY);
+
+  private readonly record struct AxisMark(string Text, string X);
+
+  private IReadOnlyList<LineChartSeries> Rows => Series ?? [];
+
+  private IReadOnlyList<string> Labels => AxisLabels ?? [];
+
+  private double PlotWidth => Width - PadLeft - PadRight;
+
+  private double PlotHeight => Height - PadTop - PadBottom;
+
+  private string AccessibleName
+  {
+    get
+    {
+      List<string> seriesLabels = [];
+      foreach (LineChartSeries series in Rows)
+      {
+        if (!string.IsNullOrWhiteSpace(series.Label))
+        {
+          seriesLabels.Add(series.Label);
+        }
+      }
+
+      List<string> axisLabels = [];
+      foreach (string label in Labels)
+      {
+        if (!string.IsNullOrWhiteSpace(label))
+        {
+          axisLabels.Add(label);
+        }
+      }
+
+      if (seriesLabels.Count == 0 && axisLabels.Count == 0)
+      {
+        return "Line chart";
+      }
+
+      if (axisLabels.Count == 0)
+      {
+        return string.Join(", ", seriesLabels);
+      }
+
+      if (seriesLabels.Count == 0)
+      {
+        return string.Join(", ", axisLabels);
+      }
+
+      return string.Concat(string.Join(", ", seriesLabels), ". ", string.Join(", ", axisLabels));
+    }
+  }
+
+  private int CategoryCount
+  {
+    get
+    {
+      int count = Labels.Count;
+      foreach (LineChartSeries series in Rows)
+      {
+        int length = Usable(series).Count;
+        if (length > count)
+        {
+          count = length;
+        }
+      }
+
+      return count;
+    }
+  }
+
+  private string GridY(int index)
+  {
+    double y = PadTop;
+    if (GridlineCount > 1)
+    {
+      y += PlotHeight * index / (GridlineCount - 1);
+    }
+
+    return Format(y);
+  }
+
+  private IReadOnlyList<PlottedSeries> Plotted()
+  {
+    List<PlottedSeries> plotted = [];
+    (double Min, double Max) scale = Scale();
+    int categories = CategoryCount;
+    foreach (LineChartSeries series in Rows)
+    {
+      List<double> points = Usable(series);
+      if (points.Count == 0)
+      {
+        continue;
+      }
+
+      string tone = ToneClass(series.Tone);
+      double lastX = XAt(points.Count - 1, categories);
+      double lastY = YAt(points[points.Count - 1], scale.Min, scale.Max);
+      string? polyline = null;
+      if (points.Count >= 2)
+      {
+        string[] pairs = new string[points.Count];
+        for (int index = 0; index < points.Count; index++)
+        {
+          pairs[index] = string.Concat(Format(XAt(index, categories)), ",", Format(YAt(points[index], scale.Min, scale.Max)));
+        }
+
+        polyline = string.Join(' ', pairs);
+      }
+
+      plotted.Add(new PlottedSeries(tone, polyline, Format(lastX), Format(lastY)));
+    }
+
+    return plotted;
+  }
+
+  private IReadOnlyList<AxisMark> Marks()
+  {
+    List<AxisMark> marks = [];
+    int categories = CategoryCount;
+    for (int index = 0; index < Labels.Count; index++)
+    {
+      string label = Labels[index];
+      if (string.IsNullOrWhiteSpace(label))
+      {
+        continue;
+      }
+
+      marks.Add(new AxisMark(label, Format(XAt(index, categories))));
+    }
+
+    return marks;
+  }
+
+  private RenderFragment AxisMarkup => builder =>
+  {
+    foreach (AxisMark mark in Marks())
+    {
+      builder.OpenElement(0, "text");
+      builder.AddAttribute(1, "class", "twe-line-chart__label");
+      builder.AddAttribute(2, "x", mark.X);
+      builder.AddAttribute(3, "y", Format(Height - 10));
+      builder.AddAttribute(4, "text-anchor", "middle");
+      builder.AddContent(5, mark.Text);
+      builder.CloseElement();
+    }
+  };
+
+  private (double Min, double Max) Scale()
+  {
+    bool any = false;
+    double min = 0;
+    double max = 0;
+    foreach (LineChartSeries series in Rows)
+    {
+      foreach (double point in Usable(series))
+      {
+        if (!any)
+        {
+          min = point;
+          max = point;
+          any = true;
+          continue;
+        }
+
+        if (point < min)
+        {
+          min = point;
+        }
+
+        if (point > max)
+        {
+          max = point;
+        }
+      }
+    }
+
+    return (min, max);
+  }
+
+  private double XAt(int index, int count)
+  {
+    if (count <= 1)
+    {
+      return PadLeft + PlotWidth / 2;
+    }
+
+    return PadLeft + PlotWidth * index / (count - 1);
+  }
+
+  private double YAt(double value, double min, double max)
+  {
+    double span = max - min;
+    if (span == 0)
+    {
+      return PadTop + PlotHeight / 2;
+    }
+
+    return PadTop + PlotHeight * (1 - (value - min) / span);
+  }
+
+  private static List<double> Usable(LineChartSeries series)
+  {
+    List<double> points = [];
+    if (series.Points is null)
+    {
+      return points;
+    }
+
+    foreach (double point in series.Points)
+    {
+      if (double.IsFinite(point))
+      {
+        points.Add(point);
+      }
+    }
+
+    return points;
+  }
+
+  private static string ToneClass(ChartSeriesTone tone) => tone switch
+  {
+    ChartSeriesTone.Primary => "primary",
+    ChartSeriesTone.Positive => "positive",
+    _ => "ink",
+  };
+
+  private static string Format(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+}
+
+<svg class="twe-line-chart @Class"
+     viewBox="@ViewBox"
+     role="img"
+     aria-label="@AccessibleName"
+     focusable="false"
+     @attributes="AdditionalAttributes">
+  <g class="twe-line-chart__grid" aria-hidden="true">
+    @for (int index = 0; index < GridlineCount; index++)
+    {
+      <line x1="@Format(PadLeft)" x2="@Format(PadLeft + PlotWidth)" y1="@GridY(index)" y2="@GridY(index)" />
+    }
+  </g>
+  @foreach (PlottedSeries series in Plotted())
+  {
+    if (series.Points is not null)
+    {
+      <polyline class="twe-line-chart__line twe-line-chart__line--@series.ToneClass" points="@series.Points" />
+    }
+    <circle class="twe-line-chart__dot twe-line-chart__dot--@series.ToneClass" cx="@series.LastX" cy="@series.LastY" r="3.5" />
+  }
+  @AxisMarkup
+</svg>

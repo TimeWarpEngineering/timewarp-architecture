@@ -2,10 +2,19 @@
 
 @code {
   private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
+
+  private static readonly string[] AxisLabels = ["W1", "W2", "W3", "W4", "W5"];
+
+  private static readonly LineChartSeries[] ChartSeries =
+  [
+    new("Series A", ChartSeriesTone.Ink, [12, 18, 15, 22, 19]),
+    new("Series B", ChartSeriesTone.Primary, [8, 9, 11, 10, 14]),
+    new("Series C", ChartSeriesTone.Positive, [4, 5, 6, 7, 8]),
+  ];
 }
 
 <Card Title="Chart frame">
-  <p class="ds-subtitle">A paper frame. The page supplies the period control, the filter, and the plot. This sample draws three decorative lines.</p>
+  <p class="ds-subtitle">A paper frame. The page supplies the period control, the filter, and the plot.</p>
   <ChartCard Title="Sample series" HeadingLevel="3" data-qa="DesignSystemChartCard">
     <Header>
       <SegmentedControl Items="SegmentDemoItems" Value="Week" AriaLabel="Sample period" />
@@ -14,11 +23,7 @@
       <span>All locations</span>
     </Filter>
     <ChildContent>
-      <svg class="ds-chart-sample" viewBox="0 0 320 96" aria-hidden="true" focusable="false">
-        <polyline class="ds-chart-sample__a" points="0,72 40,64 80,68 120,50 160,54 200,38 240,42 280,24 320,30" />
-        <polyline class="ds-chart-sample__b" points="0,40 40,44 80,36 120,42 160,34 200,40 240,30 280,36 320,28" />
-        <polyline class="ds-chart-sample__c" points="0,78 40,74 80,70 120,66 160,60 200,58 240,52 280,48 320,44" />
-      </svg>
+      <LineChart AxisLabels="AxisLabels" Series="ChartSeries" />
     </ChildContent>
     <Legend>
       <ChartLegendItem Label="Series A" Tone="ChartSeriesTone.Ink" />

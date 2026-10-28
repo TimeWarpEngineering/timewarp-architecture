@@ -1,0 +1,22 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Wrapping grid of term and value pairs.
+
+  Design: Native dl root so CSS isolation stamps the scope attribute. Class is appended
+  on that root, and unmatched attributes splat onto it. Each child is a DefinitionItem:
+  a term plus arbitrary content, not two strings. A blank term is that item's concern
+  and is omitted there. This list does not format values and wires no events. The grid
+  wraps pairs with auto-fill. Isolated CSS uses --twe-* tokens. There is no FluentUI
+  child, so the stylesheet needs no ::deep.
+*@
+
+@code {
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<dl class="twe-definition-list @Class" @attributes="AdditionalAttributes">
+  @ChildContent
+</dl>
