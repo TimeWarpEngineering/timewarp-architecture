@@ -168,10 +168,12 @@ it is not a second registry row.
 
 The command-palette Design region names both slice edges (`LoginPage` and `DesignSystemParts`).
 
-One `PageTitleBar` owns the title-bar markup and CSS. The shell uses heading level 1. The sample
-uses another level so the page still has one `h1`. The description is a `div` with the shell
-margin. When both description and actions are empty, the header wrapper is omitted. The sample
-frame uses the `ds-page-header` prefix. The example buttons show placement and do not post toasts.
+One `PageTitleBar` owns the title-bar markup and CSS. `IsPageHeading` defaults to true and
+renders an `h1`. The sample passes false and renders a `div`, so the page still has one `h1`.
+A blank title omits only that heading. Description and Actions still render. The description is
+a `div` with the shell margin. When both description and actions are empty, the header wrapper
+is omitted. The sample frame uses the `ds-page-header` prefix. The example buttons show
+placement and do not post toasts.
 
 `--twe-space-1` (4px) stays. Scale comments name 4, 8, 12, 24, 48. The token exists so catalog
 rows stay near 28px and the breadcrumb focus ring fits inside the clip.
@@ -185,6 +187,17 @@ Palette labels use `DesignSystemPage.Title`, so the visible prefix is "Design Sy
 
 Acceptance: those behaviors hold in code and tests; skill lint and `ganda repo audit` pass;
 Results include Smoke and Expect; the task branch is committed and pushed.
+
+This pass closes the open round-2 findings. An edited key-policy draft keeps its old version
+and the typed mode when the server reports a different mode and a newer version. The assistant
+name draft does the same. The design system page passes its own `Title` into `TimeWarpPage`,
+so the visible heading and the Ctrl-K prefix stay the same string. `PageTitleBar` takes
+`IsPageHeading` (default true): true is an `h1`, false is a `div` with the same class, and the
+Page header sample passes false. A blank title omits only that heading. Description and Actions
+still render. M21 and M22 stay wontfix.
+
+Acceptance for this pass: those four behaviors hold in code and tests; `ganda repo audit` passes;
+Results name the suites; the task branch is committed and pushed.
 
 ## Checklist
 
@@ -203,6 +216,7 @@ Results include Smoke and Expect; the task branch is committed and pushed.
 - [x] `dev build` 0/0; `dev regenerate-generated` golden diff empty; affected suites pass;
       `dev lint-skills` when `skills/` changes
 - [x] Review round 1 findings M1–M19 fixed on this branch
+- [x] Review round 2 findings M20, M23, M24, and M25 fixed on this branch. M21 and M22 stay wontfix
 
 ## Session
 
@@ -214,11 +228,19 @@ Results include Smoke and Expect; the task branch is committed and pushed.
   ids abfcef1c21f175cfa, a1e79616ebde5ed6a, a5aa812952a2f275c. Outcome: fix pass needed.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-28T01:43:43Z
 - Fix pass (implement-fix-2): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-28. Addressed M1–M19 in product and tests.
+- Review oracle round 2 (2026-10-28): claude-opus-5-5, headless, effort 3. Reviewers general-1,
+  general-2, and general-3 (sonnet) took the round 1 slices. Subagent ids a931bee9961c5891c,
+  af53d92a36f8141f0, a08f3135265eb010c. Outcome: M1–M19 are fixed. A fix pass is needed for M20,
+  M23, M24, and M25.
+- Fix pass (implement-fix-3): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-28. Addressed M20, M23, M24, and M25. M21 and M22 stay wontfix.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19
 - Fix pass: those findings are addressed on this branch. Dispositions in `review/round-1/merged.md` are unchanged. Round 2 is the host review node.
+- Round 2: Blocked — open M20, M23, M24, M25
+  The ledger is `review/round-2/merged.md`.
+- Fix pass: M20, M23, M24, and M25 are addressed on this branch. M21 and M22 stay wontfix. Dispositions in `review/round-2/merged.md` are unchanged. Round 3 is the host review node.
 
 ## Notes
 
@@ -238,6 +260,10 @@ Results include Smoke and Expect; the task branch is committed and pushed.
     (M11).
 
   Otherwise the restatement matches items 1–7. why: review oracle round 1, 2026-10-28
+- Review round 2: the updated restatement matches items 1–7 and M1–M19. It found no new misread.
+  The task asked for Ctrl-K rows that read "Design system: Color Tokens". The restatement deliberately
+  derives the prefix from `DesignSystemPage.Title` ("Design System: "), because M18 asked for that.
+  That choice is not a misread. why: review oracle round 2, 2026-10-28
 
 ## Results
 
@@ -298,9 +324,10 @@ Review round 1 is addressed in code:
   list routes and Home stay `NavLinkMatch.All`.
 - `PageRegistryEntry.RouteTemplates` is init-only and is assigned in the registry initializer.
   The side dictionary and static constructor are gone.
-- `PageTitleBar` owns the title-bar markup and CSS. The shell uses heading level 1. The sample
-  uses another level, so the page still has one `h1`. Empty description and actions omit the
-  header wrapper. The sample frame is `ds-page-header`.
+- `PageTitleBar` owns the title-bar markup and CSS. `IsPageHeading` true renders an `h1`. The
+  sample passes false and renders a `div`, so the page still has one `h1`. A blank title omits
+  only the heading. Description and Actions still render. Empty description and actions omit
+  the header wrapper. The sample frame is `ds-page-header`.
 - `--twe-space-1` stays 4px. Scale comments name 4, 8, 12, 24, 48. Catalog rows target about 28px
   (20px line-height plus 4px padding on each side). `--twe-space-2` (8px) would make those rows
   about 36px. The same 4px pad keeps the breadcrumb focus ring inside the clip.
@@ -318,22 +345,64 @@ Round 1 (effort 3, three general reviewers) found 19 issues: 3 bugs, 9 suggestio
 This pass implements them. The ledger dispositions are still open until round 2. Ledger:
 `review/round-1/merged.md`. Framework: `review/review-framework.md`.
 
+Round 2 (effort 3, three general reviewers) reviewed the fix delta `0d475995b..31bdd4ae7`. M1–M19
+are fixed. It raised six new findings, M20–M25.
+
+- Totals: bugs 0 open / 3 fixed; suggestions 2 open / 9 fixed; nits 2 open / 7 fixed / 2 wontfix.
+- Open:
+  - M20: no test covers an edited draft keeping its old Version when its own server field changed.
+  - M23: `DesignSystemPage` passes a literal title, not `Title`.
+  - M24: `PageTitleBar.HeadingLevel` is an int where only `1` means anything.
+  - M25: a blank `Title` now drops Description and Actions.
+- Wontfix:
+  - M21: an A→B→A server change is harmless.
+  - M22: one 101-character comment line, in a file with no enforced width.
+
+Re-run suites: `AiPage_Should_` 5/5, `CatalogAgent_Should` 47/47, `PageSourceGenerator_Tests` 36/36,
+`PageRegistry_` 7/7, `CommandPalette_Should_` 45/45, `PageBreadcrumbTrail_Should_` 4/4,
+`DesignSystemPage_Should_` 5/5, `TimeWarpPage_Should_` 15/15. Disposition is pending a fix pass.
+Ledger: `review/round-2/merged.md`.
+
+Review round 2 is addressed in code:
+
+- An edited policy draft that the server then reports as a different mode at a newer version
+  keeps Off and the old version. The name draft does the same for a server rename. The other
+  draft, whose own field did not change, still copies the new version.
+- `DesignSystemPage` passes `Title="@Title"`.
+- `PageTitleBar.IsPageHeading` defaults to true (`h1`). False renders a `div`. The Page header
+  sample passes false. `HeadingLevel` is gone.
+- A blank title omits the heading only. Description and Actions still render in `twe-page__header`.
+
+`./bin/dev build --quiet` exited 0. `ganda repo audit` exited 0. `kanban-landed` remains an
+advisory for the same eight other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244).
+Those claims are outside this id. This pass did not rerun `./bin/dev regenerate-generated` or
+`./bin/dev lint-skills`. No route and no skill changed.
+
+Suites: `AiPage_Should_` 7/7, `TimeWarpPage_Should_` 16/16, `DesignSystemPage_Should_` 6/6.
+HtmlRenderer is the proof for the title bar and the draft conflict. There was no separate
+interactive browser session.
+
 ### How to validate
 
-Smoke: Sign in as a developer. Open `/DesignSystem/brand`. Open Ctrl-K and search `color tokens`.
-Open `/Admin/AI` with no host key, set the key policy to Off, change the assistant name, and save
-the name. Repeat `/Admin/AI` with `XAI:ApiKey` set. Open `/Admin/Roles`, then Administrator, and
-open `/Admin/Roles/New`. Tab to the Home crumb on a page that shows the trail.
+Smoke: Sign in as a developer. Open `/DesignSystem/brand`. Open `/DesignSystem/page-header`.
+Open Ctrl-K and search `color tokens`. Open `/Admin/AI` with no host key, set the key policy to
+Off, change the assistant name, and save the name. Repeat `/Admin/AI` with `XAI:ApiKey` set.
+Open `/Admin/Roles`, then Administrator, and open `/Admin/Roles/New`. Tab to the Home crumb on a
+page that shows the trail.
 
 Expect: The Developer group stays open and the Design System item stays active on
-`/DesignSystem/brand`. The page has one `h1`, "Design System". The Page header part shows Sync
-and Add item and the FormActions rule, and that sample has no `h1`. The only `twe-page__actions`
-is inside that example. Ctrl-K `color tokens` highlights "Design System: Color Tokens" and Enter
-opens `/DesignSystem/color-tokens`. On `/Admin/AI` the Ask API key section sits next to the xAI
-API key. Saving the name after a local policy edit keeps Off and copies the new site-settings
-version into the policy draft, so the policy save does not 409. When `XAI:ApiKey` is set, the
-select is gone and the host reason is shown. Authentication has no Ask API key section. On a
-role detail URL and on `/Admin/Roles/New`, the Admin group is expanded and the Roles item is not
-active. A principal detail and a feedback item do the same for their list items. The Home crumb's
-focus outline is fully inside the trail, and a long trail still ellipsizes. `/Admin` does not
-stay active on `/Admin/Roles`.
+`/DesignSystem/brand`. The page has one `h1`, "Design System", the same string `DesignSystemPage.Title`
+uses for the Ctrl-K prefix. The Page header part shows Sync and Add item and the FormActions
+rule. That sample's "Reports" title is a `div`, not an `h1`. The only `twe-page__actions` is
+inside that example. A page whose title is blank still shows its description and actions, and
+has no `twe-page__title`. Ctrl-K `color tokens` highlights "Design System: Color Tokens" and
+Enter opens `/DesignSystem/color-tokens`. On `/Admin/AI` the Ask API key section sits next to
+the xAI API key. Saving the name after a local policy edit keeps Off and copies the new
+site-settings version into the policy draft, so the policy save does not 409. If the server
+then reports a different policy at a newer version, the edited draft stays Off and keeps the
+old version. The name draft does the same when the server renames the assistant under a local
+edit. When `XAI:ApiKey` is set, the select is gone and the host reason is shown. Authentication
+has no Ask API key section. On a role detail URL and on `/Admin/Roles/New`, the Admin group is
+expanded and the Roles item is not active. A principal detail and a feedback item do the same
+for their list items. The Home crumb's focus outline is fully inside the trail, and a long
+trail still ellipsizes. `/Admin` does not stay active on `/Admin/Roles`.
