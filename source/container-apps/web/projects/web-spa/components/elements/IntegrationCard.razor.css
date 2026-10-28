@@ -1,6 +1,6 @@
 /* Integration card — native root, CSS isolation. Tokens from tokens.css.
    Full is the identity banner. Compact is the thin pull-status row.
-   The full tile is the 48px step. 40px is not on the scale (8, 12, 24, 48).
+   The full tile is the 48px step. 40px is not on the scale (4, 8, 12, 24, 48).
    The compact tile is the 24px step. The body min-width is a wrap floor, not a
    spacing step. FluentIcon draws its own svg, so this sheet does not size the glyph. */
 .twe-integration-card {

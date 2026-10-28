@@ -8,7 +8,9 @@
 // receives Developer before any navigation. Ctrl-K lists each design-system part, so one case
 // opens Color Tokens from the palette. Another opens Design System, then clicks Color Tokens.
 // The trail must not keep Counter. A part-to-part click keeps one part crumb. The role editor
-// crumb is the role name once the list has loaded. Computed color and margin read the isolated
+// crumb is the role name once the list has loaded. That case requires the Roles item to exist
+// in the menu (not the Roles crumb, which uses the same href) and not be active, and the Admin
+// group to be expanded. Computed color and margin read the isolated
 // rules. The first crumb's focus ring must sit inside the trail list, which still ellipsizes.
 #endregion
 
@@ -81,14 +83,14 @@ public class Breadcrumb_Given_Wasm
       new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 }
     );
     await ExpectTrailAsync(page, "Administrator", "Home", "Roles");
-    bool rolesActive = await page.EvaluateAsync<bool>(
-      """
-      () => {
-        const item = document.querySelector("a[href='/Admin/Roles']");
-        return item !== null && item.classList.contains('active');
-      }
-      """);
-    rolesActive.ShouldBeFalse("role detail is a separate page, so the Roles list item stays an exact match");
+    ILocator rolesLink = page.Locator(".twe-nav-menu a[href='/Admin/Roles']");
+    await Assertions.Expect(rolesLink).ToHaveCountAsync(1);
+    string rolesClass = await rolesLink.GetAttributeAsync("class") ?? "";
+    rolesClass.Split(' ', StringSplitOptions.RemoveEmptyEntries).ShouldNotContain("active");
+    ILocator adminGroup = page.Locator("button[aria-expanded='true']")
+      .GetByText("Admin", new LocatorGetByTextOptions { Exact = true });
+    await Assertions.Expect(adminGroup).ToHaveCountAsync(1);
+    await Assertions.Expect(adminGroup).ToBeVisibleAsync();
   }
 
   private static async Task ExpectTrailAsync(IPage page, string current, params string[] links)
@@ -226,7 +228,7 @@ public class Breadcrumb_Given_Wasm
     await input.FillAsync("color tokens");
     ILocator active = page.Locator(".twe-palette__row--active");
     await Assertions.Expect(active.Locator(".twe-palette__name")).ToHaveTextAsync(
-      "Design system: Color Tokens",
+      "Design System: Color Tokens",
       new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
     await input.PressAsync("Enter");
     await page.WaitForURLAsync(

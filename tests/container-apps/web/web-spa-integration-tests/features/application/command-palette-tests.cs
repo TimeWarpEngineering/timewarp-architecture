@@ -101,7 +101,7 @@ public class CommandPalette_Should_
     palette.HighlightedIndex.ShouldBe(0);
     palette.Roster.Count(static row => row.Target == "/DesignSystem").ShouldBe(1);
     CommandPaletteRow colorTokens = palette.Roster.Single(static row => row.Target == "/DesignSystem/color-tokens");
-    colorTokens.Name.ShouldBe("Design system: Color Tokens");
+    colorTokens.Name.ShouldBe(DesignSystemPage.Title + ": Color Tokens");
     colorTokens.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }
 
@@ -278,7 +278,7 @@ public class CommandPalette_Should_
     scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull().Name.ShouldBe("Sign in");
   }
 
-  public static async Task Rank_A_Style_Guide_Part_From_Its_Title()
+  public static async Task Rank_A_Design_System_Part_From_Its_Title()
   {
     using PaletteSpa spa = new(Everything);
     using SpaTestScope scope = SpaTestScope.Create(spa);
@@ -287,7 +287,7 @@ public class CommandPalette_Should_
     await scope.Send(new CommandPaletteState.FilterActionSet.Action("color tokens"));
 
     CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
-    highlighted.Name.ShouldBe("Design system: Color Tokens");
+    highlighted.Name.ShouldBe(DesignSystemPage.Title + ": Color Tokens");
     highlighted.Target.ShouldBe("/DesignSystem/color-tokens");
     highlighted.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }

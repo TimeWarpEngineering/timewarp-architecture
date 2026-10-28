@@ -1,6 +1,6 @@
 /* Filter bar — native root, CSS isolation. Tokens from tokens.css.
    The search field's 200px / 380px bounds are a control size, not a spacing step
-   (the scale is 8, 12, 24, 48). The 3px focus ring is the same kind of hairline. */
+   (the scale is 4, 8, 12, 24, 48). The 3px focus ring is the same kind of hairline. */
 .twe-filter-bar {
   display: flex;
   align-items: center;

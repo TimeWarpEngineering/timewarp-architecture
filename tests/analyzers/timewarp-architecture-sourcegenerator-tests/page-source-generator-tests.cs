@@ -210,7 +210,7 @@ public class PageSourceGenerator_Tests
     string registry = RegistryOf(generated);
     registry.ShouldContain(
       "new(typeof(global::Test.Pages.CounterPage), \"/Counter\", global::Test.Pages.CounterPage.GetPageUrl(), "
-      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+      + "global::Test.Pages.CounterPage.Title, global::Test.Pages.CounterPage.NavIcon, global::Test.Pages.CounterPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     registry.ShouldContain("new(typeof(global::Test.Pages.SettingsPage), \"/settings\"");
     registry.ShouldNotContain("LoginPage");
     registry.ShouldNotContain("LogoutPage");
@@ -252,8 +252,8 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("public string NavGroup { get; set; }");
     generated.ShouldContain("public int NavOrder { get; set; }");
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
-    registry.ShouldContain("global::Test.Pages.ZuluPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.ZuluPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     // NavOrder wins over the route: "/Zulu" (10) before "/Alpha" (200).
     registry.IndexOf("ZuluPage", StringComparison.Ordinal)
       .ShouldBeLessThan(registry.IndexOf("AlphaPage", StringComparison.Ordinal));
@@ -270,7 +270,7 @@ public class PageSourceGenerator_Tests
       """);
 
     diagnostics.ShouldBeEmpty();
-    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.AlphaPage.Policy, \"Admin page.\", \"Admin\", 200) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -289,8 +289,8 @@ public class PageSourceGenerator_Tests
     diagnostics.ShouldBeEmpty();
     generated.ShouldContain("public NavPlacement NavPlacement { get; set; }");
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -324,12 +324,12 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.ConstPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.ChainPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.StaticPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.CastPage.Policy, \"\", \"\", 20) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.CastConstPage.Policy, \"\", \"\", 21) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.LiteralPage.Policy, \"\", \"\", 22) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.ConstPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.ChainPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.StaticPage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.CastPage.Policy, \"\", \"\", 20) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.CastConstPage.Policy, \"\", \"\", 21) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.LiteralPage.Policy, \"\", \"\", 22) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -347,8 +347,8 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
-    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom },");
+    registry.ShouldContain("global::Test.Pages.AlphaPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.HomePage.Policy, \"\", \"\", 10) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Bottom, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -378,11 +378,11 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     string registry = RegistryOf(generated);
-    registry.ShouldContain("global::Test.Pages.TopMemberPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
-    registry.ShouldContain("global::Test.Pages.TopConstPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
-    registry.ShouldContain("global::Test.Pages.CastZeroPage.Policy, \"\", \"\", 12) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
-    registry.ShouldContain("global::Test.Pages.CastTwoPage.Policy, \"\", \"\", 13) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
-    registry.ShouldContain("global::Test.Pages.ForeignPage.Policy, \"\", \"\", 14) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top },");
+    registry.ShouldContain("global::Test.Pages.TopMemberPage.Policy, \"\", \"Developer\", 310) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.TopConstPage.Policy, \"\", \"\", 11) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.CastZeroPage.Policy, \"\", \"\", 12) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.CastTwoPage.Policy, \"\", \"\", 13) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
+    registry.ShouldContain("global::Test.Pages.ForeignPage.Policy, \"\", \"\", 14) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -419,11 +419,12 @@ public class PageSourceGenerator_Tests
       "new(typeof(global::Test.Pages.CounterPage), [\"/Counter\", \"/Counter/{Amount:int}\"], "
       + "[typeof(global::Test.States.CounterState.IncrementActionSet.Action)]),");
     // A page without AgentActions is not an action scope; a non-navigable page with them is.
-    // RouteTemplatesByPage follows the scopes and does list every navigable page, including PlainPage.
+    generated.ShouldContain("RouteTemplates { get; init; }");
+    generated.ShouldNotContain("RouteTemplates { get; set; }");
+    registry.ShouldNotContain("RouteTemplatesByPage");
+    registry.ShouldNotContain("static PageRegistry()");
+    registry.ShouldContain("RouteTemplates = [\"/Plain\"]");
     string scopes = registry.Substring(registry.IndexOf("ActionScopes", StringComparison.Ordinal));
-    int templates = scopes.IndexOf("RouteTemplatesByPage", StringComparison.Ordinal);
-    templates.ShouldBeGreaterThan(0);
-    scopes = scopes[..templates];
     scopes.ShouldNotContain("PlainPage");
     return Task.CompletedTask;
   }
@@ -438,7 +439,7 @@ public class PageSourceGenerator_Tests
 
     diagnostics.ShouldBeEmpty();
     RegistryOf(generated).ShouldContain("""
-      "Line one.\nSay \"hi\" \\ done.", "", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top }
+      "Line one.\nSay \"hi\" \\ done.", "", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [
       """.Trim());
     return Task.CompletedTask;
   }
@@ -457,7 +458,7 @@ public class PageSourceGenerator_Tests
 
     // The entry reads the page's generated Policy member, which is the const expression.
     generated.ShouldContain("public static string Policy { get; } = Policies.SettingsEdit;");
-    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top }");
+    RegistryOf(generated).ShouldContain("global::Test.Pages.SettingsPage.Policy, \"\", \"\", 0) { NavPlacement = global::TimeWarp.Architecture.NavPlacement.Top, RouteTemplates = [");
     return Task.CompletedTask;
   }
 
@@ -543,15 +544,15 @@ public class PageSourceGenerator_Tests
     // Policy is emitted once per page, not per route.
     generated.Split("public static string Policy").Length.ShouldBe(2);
     generated.ShouldContain("public static string Policy { get; } = Policies.ClientsRead;");
-    // Only the primary route is a registry row.
+    // Only the primary route is a registry row. Aliases stay on that row's init-only list.
     string registry = RegistryOf(generated);
-    int dictionary = registry.IndexOf("RouteTemplatesByPage", StringComparison.Ordinal);
-    dictionary.ShouldBeGreaterThan(0);
-    string all = registry[..dictionary];
-    all.ShouldContain("new(typeof(global::Test.Pages.ClientsPage), \"/clients\"");
-    all.ShouldNotContain("revenue");
-    all.ShouldNotContain("me-close");
-    registry.ShouldContain("[typeof(global::Test.Pages.ClientsPage)] = [\"/clients\", \"/clients/revenue\", \"/clients/me-close\"],");
+    generated.ShouldContain("RouteTemplates { get; init; }");
+    generated.ShouldNotContain("RouteTemplates { get; set; }");
+    registry.ShouldNotContain("RouteTemplatesByPage");
+    registry.ShouldNotContain("static PageRegistry()");
+    registry.Split("new(typeof(global::Test.Pages.ClientsPage)", StringSplitOptions.None).Length.ShouldBe(2);
+    registry.ShouldContain("new(typeof(global::Test.Pages.ClientsPage), \"/clients\"");
+    registry.ShouldContain("RouteTemplates = [\"/clients\", \"/clients/revenue\", \"/clients/me-close\"]");
     return Task.CompletedTask;
   }
 
@@ -605,7 +606,8 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("partial class ClientsPage : INavigableComponent, IStaticRoute, INavigationDestination");
     generated.ShouldContain("public static string GetPageUrl() =>");
     RegistryOf(generated).ShouldContain("typeof(global::Test.Pages.ClientsPage), \"/clients\"");
-    RegistryOf(generated).ShouldContain("[typeof(global::Test.Pages.ClientsPage)] = [\"/clients\", \"/clients/{ClientId}/revenue\"],");
+    RegistryOf(generated).ShouldContain("RouteTemplates = [\"/clients\", \"/clients/{ClientId}/revenue\"]");
+    RegistryOf(generated).ShouldNotContain("RouteTemplatesByPage");
     return Task.CompletedTask;
   }
 

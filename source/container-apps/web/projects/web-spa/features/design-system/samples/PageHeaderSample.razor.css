@@ -1,45 +1,11 @@
-/* Sample-only copy of the shell title bar. The page's own h1 stays on TimeWarpPage. */
-.ph-sample {
+/* The title bar itself is PageTitleBar. This frame is the sample's own box. */
+.ds-page-header {
   padding: var(--twe-space-3);
   border: 1px solid var(--twe-rule);
   border-radius: 8px;
 }
 
-.twe-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
-}
-
-.twe-page__lead { min-width: 0; flex: 1 1 auto; }
-
-.twe-page__title {
-  margin: 0 0 var(--twe-space-2);
-  font-size: var(--twe-text-page-title);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--twe-ink);
-}
-
-.twe-page__description {
-  max-width: 40rem;
-  margin: 0;
-  color: var(--twe-muted);
-  font-size: var(--twe-text-body);
-  line-height: 1.55;
-}
-
-.twe-page__actions {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--twe-space-2);
-}
-
-.ph-sample__rule {
+.ds-page-header__rule {
   margin: var(--twe-space-3) 0 0;
   color: var(--twe-ink);
   font-size: var(--twe-text-body);

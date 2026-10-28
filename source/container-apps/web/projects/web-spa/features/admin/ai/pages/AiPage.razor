@@ -13,7 +13,10 @@
   sign-in already loaded a snapshot, then copies that snapshot into the draft. An agent rename
   while this page is open advances SiteSettingsState.Version. The render copies that name and
   version into the draft when the field is still the last synced value, so the form matches the
-  top bar and the next save is not a 409. A typed edit is left in place.
+  top bar and the next save is not a 409. A typed edit is left in place. Both drafts share that
+  version. When it advances and this draft's own server field still equals the last synced value,
+  the draft copies the version and keeps the edit, so saving the other form does not leave a
+  stale token.
   Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
@@ -171,6 +174,13 @@
       return;
     }
 
+    if (string.Equals(SiteSettingsState.AssistantName, SyncedAssistantName, StringComparison.Ordinal))
+    {
+      AssistantCommand.Version = SiteSettingsState.Version;
+      SyncedAssistantVersion = SiteSettingsState.Version;
+      return;
+    }
+
     if (AssistantCommand.AssistantName != SyncedAssistantName
       || AssistantCommand.Version != SyncedAssistantVersion)
     {
@@ -203,6 +213,13 @@
 
     if (SiteSettingsState.Version == SyncedByokVersion)
     {
+      return;
+    }
+
+    if (SiteSettingsState.XaiByokMode == SyncedByokMode)
+    {
+      ByokCommand.Version = SiteSettingsState.Version;
+      SyncedByokVersion = SiteSettingsState.Version;
       return;
     }
 
@@ -384,7 +401,8 @@
       <FormSection Title="Ask API key"
                    Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
                    data-qa="XaiByokModeSettings"
-                   data-xai-byok-version="@ByokCommand.Version">
+                   data-xai-byok-version="@ByokCommand.Version"
+                   data-xai-byok-mode="@ByokCommand.XaiByokMode">
         <FormGrid>
           <FormField Label="Personal xAI API key">
             <FluentSelect TOption="XaiByokMode" TValue="XaiByokMode"

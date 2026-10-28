@@ -80,7 +80,7 @@
   --twe-space-6: 24px;
   --twe-space-12: 48px;
 
-  /* KPI tile padding. 18px by 20px matches no spacing step (8, 12, 24, 48). */
+  /* KPI tile padding. 18px by 20px matches no spacing step (4, 8, 12, 24, 48). */
   --twe-kpi-pad: 18px 20px;
 
   /* App shell chrome heights (TimeWarpPage.razor.css feeds them to FluentLayout).

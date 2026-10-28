@@ -1,4 +1,4 @@
-/* Pill group. 3px and 5px sit below the spacing scale (8, 12, 24, 48). 6px is the inset
+/* Pill group. 3px and 5px sit below the spacing scale (4, 8, 12, 24, 48). 6px is the inset
    corner inside the 8px track; no radius token is 6. The 12.5px label maps to the helper
    token. The active pill uses the small elevation token. */
 .twe-segmented {

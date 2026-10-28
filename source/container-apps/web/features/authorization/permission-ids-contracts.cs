@@ -24,7 +24,7 @@
 // Task 225: settings.read stays self-service (personal /Settings + GetSiteSettings for passkey
 // prompt and Link Microsoft 365). settings.write stays the site-policy write id (Administrator
 // seed, not Member) and gates /Admin/Authentication plus UpdateSiteSettings, and /Admin/AI plus
-// UpdateAssistantName. Not renamed into
+// UpdateAssistantName and UpdateXaiByokMode. Not renamed into
 // admin.* — SettingsRead is not an admin permission, and moving write-only would require a
 // role_permissions data migration plus a catalog break. Protected-core remains prefix admin
 // (roles/principals lockout). Stripping settings.write disables the editor; it does not lock

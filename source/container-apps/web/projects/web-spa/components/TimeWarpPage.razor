@@ -52,12 +52,12 @@
   The `twe-shell--ask` class is only the hook for that treatment. It does not change display.
   Description and Actions are optional header slots. Both unset leaves the title and breadcrumb
   markup unchanged, so existing pages keep one h1 and no extra row. Either slot set lays the
-  title and description on the left and the actions (wrapping) on the right. TitleBlock is the
-  one copy of the document title and the h1, rendered from both branches so they cannot drift.
-  This component still owns the only h1. Callers put buttons in Actions; this shell does not
-  handle their clicks. Page-wide actions (create, sync, export) go in Actions, with at most
-  one Primary. A form's submit button goes at the bottom of that form, in FormActions, after
-  the fields it saves. A sample of the title bar must not render a second h1.
+  title and description on the left and the actions (wrapping) on the right. The document title
+  stays here. PageTitleBar is the one copy of the heading, description, and actions. This
+  component passes heading level 1, so the shell still owns the only h1. Callers put buttons in
+  Actions; this shell does not handle their clicks. Page-wide actions (create, sync, export) go
+  in Actions, with at most one Primary. A form's submit button goes at the bottom of that form,
+  in FormActions, after the fields it saves. A sample of the title bar must not render a second h1.
   SearchMode chooses the app-bar search slot. Palette is the read-only Ctrl-K field. Hidden
   omits it. Custom renders the Search fragment in that same slot. The command palette modal
   stays mounted, so Ctrl-K still opens it.
@@ -120,7 +120,6 @@
       {
         <PageTitle>@Title</PageTitle>
       }
-      <h1 class="twe-page__title">@Title</h1>
     }
   </text>;
 
@@ -233,26 +232,8 @@
 
       <FluentLayoutItem Area="LayoutArea.Content">
         <div class="twe-page">
-          @if (Description is null && Actions is null)
-          {
-            @TitleBlock
-          }
-          else
-          {
-            <div class="twe-page__header">
-              <div class="twe-page__lead">
-                @TitleBlock
-                @if (Description is not null)
-                {
-                  <div class="twe-page__description">@Description</div>
-                }
-              </div>
-              @if (Actions is not null)
-              {
-                <div class="twe-page__actions">@Actions</div>
-              }
-            </div>
-          }
+          @TitleBlock
+          <PageTitleBar Title="@Title" HeadingLevel="1" Description="Description" Actions="Actions" />
           @BreadcrumbBlock
           <div class="twe-page__body">
             <WebMcpAgentSurface />

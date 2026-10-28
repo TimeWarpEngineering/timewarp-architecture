@@ -1053,6 +1053,8 @@ public partial class CatalogAgent_Should
     JsonElement aiRecord = ai.RootElement.GetProperty("siteSettings");
     aiRecord.GetProperty("assistantName").GetString()
       .ShouldBe(scope.Store.GetState<SiteSettingsState>().AssistantName);
+    aiRecord.GetProperty("xaiByokMode").GetString()
+      .ShouldBe(scope.Store.GetState<SiteSettingsState>().XaiByokMode.ToString());
     aiRecord.GetProperty("version").GetInt64().ShouldBe(scope.Store.GetState<SiteSettingsState>().Version);
     return Task.CompletedTask;
   }

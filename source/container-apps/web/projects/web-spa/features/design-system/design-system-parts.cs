@@ -10,6 +10,8 @@
 // /DesignSystem/. An empty slug is All, not a part named all.
 // Usage is a hand-written snippet. The single-part view renders it. All does not,
 // so the full page stays the section list.
+// PaletteName prefixes a part title with DesignSystemPage.Title. Ctrl-K uses it so
+// the visible prefix stays the page title.
 #endregion
 
 namespace TimeWarp.Architecture.Features.DesignSystem;
@@ -35,6 +37,8 @@ internal static class DesignSystemParts
   }
 
   internal sealed record Part(string Slug, string Title, Group Group, string Usage, Type Sample);
+
+  internal static string PaletteName(Part part) => DesignSystemPage.Title + ": " + part.Title;
 
   internal readonly record struct Selection(SelectionKind Kind, Part? Part);
 

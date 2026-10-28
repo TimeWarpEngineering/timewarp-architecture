@@ -1,0 +1,55 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: The one title bar: heading, optional description, and optional actions.
+
+  Design: TimeWarpPage passes heading level 1, so the shell page has one h1. Any other
+  level renders a div with the same class, so a sample is not a second h1. Description is
+  a div with the shell margin. When Description and Actions are both unset, only the
+  heading renders and twe-page__header is omitted. The document title stays on TimeWarpPage.
+*@
+
+@code {
+  [Parameter] public string? Title { get; set; }
+
+  [Parameter] public int HeadingLevel { get; set; } = 1;
+
+  [Parameter] public RenderFragment? Description { get; set; }
+
+  [Parameter] public RenderFragment? Actions { get; set; }
+
+  private RenderFragment Heading => @<text>
+    @if (HeadingLevel == 1)
+    {
+      <h1 class="twe-page__title">@Title</h1>
+    }
+    else
+    {
+      <div class="twe-page__title">@Title</div>
+    }
+  </text>;
+}
+
+@if (!string.IsNullOrWhiteSpace(Title))
+{
+  @if (Description is null && Actions is null)
+  {
+    @Heading
+  }
+  else
+  {
+    <div class="twe-page__header">
+      <div class="twe-page__lead">
+        @Heading
+        @if (Description is not null)
+        {
+          <div class="twe-page__description">@Description</div>
+        }
+      </div>
+      @if (Actions is not null)
+      {
+        <div class="twe-page__actions">@Actions</div>
+      }
+    </div>
+  }
+}

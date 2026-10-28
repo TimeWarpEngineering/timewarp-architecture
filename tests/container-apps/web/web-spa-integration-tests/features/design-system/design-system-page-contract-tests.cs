@@ -18,6 +18,8 @@
 // The absent-name check composes its token so this file does not spell the source product name.
 // Slugs are lowercase kebab-case. Resolve is ordinal and case-insensitive. /DesignSystem/all
 // is not a part. Usage is rendered on the single-part view only.
+// The shell header has no actions. twe-page__actions appears once, after the Page header
+// example, and a non-header part renders none.
 #endregion
 
 namespace DesignSystemPageContract_;
@@ -60,7 +62,7 @@ public class DesignSystemPage_Should_
     StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
     StaticRenderHost.Title(html).ShouldBe("Design System");
     html.ShouldContain("twe-page__description");
-    html.ShouldContain("twe-page__actions");
+    AssertPageHeaderOwnsTheOnlyActions(html, "all");
     html.Contains(SourceProductName(), StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
     html.ShouldNotContain("Sample drawer");
     html.ShouldNotContain("data-qa=\"DesignSystemUsage\"");
@@ -213,6 +215,7 @@ public class DesignSystemPage_Should_
       Count(catalog, "aria-current=\"page\"").ShouldBe(1, part.Slug);
       TagContaining(catalog, $"data-part=\"{part.Slug}\"").ShouldContain("aria-current=\"page\"");
       StaticRenderHost.Title(html).ShouldBe("Design System");
+      AssertPageHeaderOwnsTheOnlyActions(html, part.Slug);
     }
   }
 
@@ -375,6 +378,24 @@ public class DesignSystemPage_Should_
     }
 
     return titles;
+  }
+
+  private static void AssertPageHeaderOwnsTheOnlyActions(string html, string slug)
+  {
+    int count = Count(html, "twe-page__actions");
+    if (slug is "all" or "page-header")
+    {
+      count.ShouldBe(1, slug);
+      int example = html.IndexOf("data-qa=\"PageHeaderExample\"", StringComparison.Ordinal);
+      int actions = html.IndexOf("twe-page__actions", StringComparison.Ordinal);
+      example.ShouldBeGreaterThan(-1, slug);
+      actions.ShouldBeGreaterThan(example, slug);
+      html.LastIndexOf("twe-page__actions", StringComparison.Ordinal).ShouldBe(actions, slug);
+    }
+    else
+    {
+      count.ShouldBe(0, slug);
+    }
   }
 
   private static int Count(string source, string marker)

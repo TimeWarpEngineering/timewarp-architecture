@@ -6,9 +6,10 @@
 #region Design
 // Sources (task 239): pages come from NavigationDestinations (task 300), the policy-filtered
 // PageRegistry that NavMenu, Ask and WebMCP read too. Design-system parts are extra Page rows
-// from DesignSystemParts, added only when that filtered list still contains the Design System page.
-// They are not menu
-// items and not agent navigate destinations. Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
+// from DesignSystemParts, added only when that filtered list still contains the Design System
+// page. They are not menu items and not agent navigate destinations. The row name is
+// DesignSystemParts.PaletteName, so the prefix stays DesignSystemPage.Title.
+// Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
 // ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
 // command. No attribute opts an action in. Nothing is hand-listed.
 // Exclusion is explicit: [CommandPaletteOptOut("reason")] on the Action. A blank reason does not opt
@@ -41,8 +42,10 @@
 // user.Identity?.IsAuthenticated != true; the target carries the current path as ?returnUrl
 // (LoginPage validates it with GetSafeReturnUrl), omitted on "/" as RedirectToLogin does. The
 // description says "Log in" and names the route so "login" and "log in" rank it as well as "sign".
-// Applications is the platform tier, which must not reach a product slice; LoginPage is the one
-// edge, opted out below like HomePage's first-run CTA.
+// Applications is the platform tier, which must not reach a product slice. Two edges are opted
+// out below. LoginPage is the signed-out Sign in row: login stays out of the registry, and one
+// signed-out destination does not earn a new [Page] opt-in. DesignSystemParts is the catalog
+// table: Ctrl-K lists each part from that one table, and the parts are not a second menu.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -152,7 +155,7 @@ public static class CommandPaletteRoster
       {
         string url = DesignSystemParts.Url(part);
         rows.Add(new CommandPaletteRow(
-          "Design system: " + part.Title,
+          DesignSystemParts.PaletteName(part),
           $"Go to {url}",
           CommandPaletteRowKind.Page,
           url));

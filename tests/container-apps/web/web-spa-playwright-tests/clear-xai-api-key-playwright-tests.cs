@@ -1,14 +1,17 @@
 #region Purpose
 // Browser proof that Clear key asks, Cancel and Escape leave the stored key, Enter does not
 // confirm, and the dialog's Clear key removes it. The design-system sample asks the same way.
+// A host key shows the saved policy as having no effect.
 #endregion
 
 #region Design
 // Same host shape as the design-system drawer: in-process Web.Server, shared Chromium, en-US,
 // a virtual passkey. The first account is Administrator, which can open Admin → AI. The default
-// host has no durable secret store, so this test registers a memory store and clears any host
-// XAI:ApiKey. The page saves a key, then the real FluentUI dialog runs. Developer is granted
-// after that so /DesignSystem can open the sample confirmation.
+// host has no durable secret store, so the clear-key case registers a memory store and clears
+// any host XAI:ApiKey. The page saves a key, then the real FluentUI dialog runs. Developer is
+// granted after that so /DesignSystem can open the sample confirmation.
+// HostKey_Should_Show_The_Policy_As_Having_No_Effect sets XAI:ApiKey. The select is absent.
+// The saved policy and the host reason are shown.
 #endregion
 
 namespace ClearXaiApiKeyPlaywright_;

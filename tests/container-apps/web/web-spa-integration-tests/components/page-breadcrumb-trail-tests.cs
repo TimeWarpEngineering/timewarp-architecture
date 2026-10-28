@@ -46,7 +46,7 @@ public class PageBreadcrumbTrail_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Name_Style_Guide_Parts_And_The_Role_Editor()
+  public static Task Name_Design_System_Parts_And_The_Role_Editor()
   {
     string[] routes = [.. PageRegistry.All.Select(static entry => entry.RouteTemplate)];
     PageBreadcrumbTrail.ParentRoute("/DesignSystem/color-tokens", routes).ShouldBe("/DesignSystem");

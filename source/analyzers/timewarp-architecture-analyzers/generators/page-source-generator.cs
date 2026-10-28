@@ -38,6 +38,9 @@
 // - Primary owns the page surface: GetPageUrl, IStaticRoute, RouteTemplate, PageRegistry, and the
 //   TWE009 Navigable judgment. Additional routes are emitted as [Route] aliases only — never registry
 //   rows, never URL helpers — so a parameterized alias on a static navigable page is fine.
+// - PageRegistryEntry.RouteTemplates is init-only and lists every [Page] template, including
+//   parameterized aliases. Nav match reads it. It is not a second registry row and not a URL
+//   helper. The positional RouteTemplate stays the static primary.
 // - Policy (TWE005) is per page, not per route: every route of the page is the same component.
 // - An alias token named like an earlier route's token inherits its type when untyped ({ClientId}
 //   after {ClientId:string}) and must agree when typed (else TWE011) — also between two aliases,
@@ -599,7 +602,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("    /// <summary>Bottom pins this entry's NavGroup in the lower nav. Top is the default.</summary>\n");
     sb.Append("    internal global::").Append(rootNamespace).Append(".NavPlacement NavPlacement { get; init; }\n");
     sb.Append("    /// <summary>Every route template on [Page], including parameterized aliases. The positional RouteTemplate stays the static primary.</summary>\n");
-    sb.Append("    public global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates { get; set; } = [];\n");
+    sb.Append("    public global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates { get; init; } = [];\n");
     sb.Append("  }\n\n");
     sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates and the actions the agent may run on it.</summary>\n");
     sb.Append("  public sealed record PageActionScope(\n");
@@ -628,7 +631,9 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
         .Append(page.NavOrder.ToString(System.Globalization.CultureInfo.InvariantCulture))
         .Append(") { NavPlacement = global::").Append(rootNamespace)
         .Append(page.NavPinBottom ? ".NavPlacement.Bottom" : ".NavPlacement.Top")
-        .Append(" },\n");
+        .Append(", RouteTemplates = [")
+        .Append(string.Join(", ", page.RouteTemplates.Select(CSharpString)))
+        .Append("] },\n");
     }
 
     sb.Append("    ];\n\n");
@@ -647,32 +652,7 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       sb.Append("]),\n");
     }
 
-    sb.Append("    ];\n\n");
-    sb.Append("    private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, string[]> RouteTemplatesByPage = new()\n");
-    sb.Append("    {\n");
-    foreach (PageModel page in pages
-      .Where(static p => p.Errors.IsEmpty && p.Navigable)
-      .OrderBy(static p => p.NavOrder)
-      .ThenBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
-      .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
-    {
-      string type = "global::" + page.Namespace + "." + page.ClassName;
-      sb.Append("      [typeof(").Append(type).Append(")] = [");
-      sb.Append(string.Join(", ", page.RouteTemplates.Select(CSharpString)));
-      sb.Append("],\n");
-    }
-
-    sb.Append("    };\n\n");
-    sb.Append("    static PageRegistry()\n");
-    sb.Append("    {\n");
-    sb.Append("      foreach (PageRegistryEntry entry in All)\n");
-    sb.Append("      {\n");
-    sb.Append("        if (RouteTemplatesByPage.TryGetValue(entry.PageType, out string[]? templates))\n");
-    sb.Append("        {\n");
-    sb.Append("          entry.RouteTemplates = templates;\n");
-    sb.Append("        }\n");
-    sb.Append("      }\n");
-    sb.Append("    }\n");
+    sb.Append("    ];\n");
     sb.Append("  }\n}\n");
     return sb.ToString();
   }

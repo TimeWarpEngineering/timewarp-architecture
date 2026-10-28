@@ -144,39 +144,6 @@
 }
 
 .twe-page { padding: 20px 28px 28px; }
-.twe-page__title {
-  margin: 0 0 var(--twe-space-2);
-  font-size: var(--twe-text-page-title);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--twe-ink);
-}
-.twe-page__title:focus { outline: none; }
-
-/* Optional description and actions. The markup omits this row when both slots are empty.
-   The row gap is --twe-space-3 and the action gap is --twe-space-2. */
-.twe-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
-}
-.twe-page__lead { min-width: 0; flex: 1 1 auto; }
-.twe-page__description {
-  max-width: 40rem;
-  margin: 0 0 var(--twe-space-2);
-  color: var(--twe-muted);
-  font-size: var(--twe-text-body);
-  line-height: 1.55;
-}
-.twe-page__actions {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--twe-space-2);
-}
 
 /* Location trail under the title. The line ellipsizes only when it is wider than the page.
    Ancestors are links; the current page is text. Separators are aria-hidden. */
