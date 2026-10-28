@@ -1,11 +1,26 @@
 @namespace TimeWarp.Architecture.Features.AgentLinks
+@using TimeWarp.Architecture.Services
 @inherits BaseComponent
 
 @code {
   public static string Title => "Agent links";
   public static Icon? NavIcon => new Icons.Regular.Size20.Link();
 
+  [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  private string? AccountId;
+
   private bool IsBusy => ActionTrackingState.IsActive;
+
+  private bool AccountCopied => AgentLinksState.CopiedSlot == AgentLinksState.AccountIdSlot;
+
+  private bool PromptCopied => AgentLinksState.CopiedSlot == AgentLinksState.PromptSlot;
+
+  private string ServerOrigin => NavigationManager.ToAbsoluteUri("/").GetLeftPart(UriPartial.Authority);
+
+  private string? Prompt => AccountId is null ? null : AgentLinkOnboardingPrompt.Build(AccountId, ServerOrigin);
 
   protected override async Task OnInitializedAsync()
   {
@@ -17,17 +32,80 @@
     await AgentLinksState.Fetch();
   }
 
+  protected override async Task OnParametersSetAsync()
+  {
+    await base.OnParametersSetAsync();
+    AccountId = AuthenticationStateTask is null
+      ? null
+      : (await AuthenticationStateTask).User
+        .FindFirst(IdentitySessionAuthenticationStateProvider.PrincipalIdClaimType)?.Value;
+  }
+
   private async Task ApproveAsync(Guid linkId) =>
     await AgentLinksState.Approve(linkId);
 
   private async Task DenyAsync(Guid linkId) =>
     await AgentLinksState.Deny(linkId);
+
+  private async Task CopyAccountIdAsync()
+  {
+    if (AccountId is null)
+    {
+      return;
+    }
+
+    await AgentLinksState.CopyOnboarding(AgentLinksState.AccountIdSlot, AccountId);
+  }
+
+  private async Task CopyPromptAsync()
+  {
+    if (Prompt is null)
+    {
+      return;
+    }
+
+    await AgentLinksState.CopyOnboarding(AgentLinksState.PromptSlot, Prompt);
+  }
 }
 
 <TimeWarpPage Title="Agent links">
-  <div class="twe-stack">
+  <div class="twe-onboarding">
+    <Section Title="What linking means">
+      <p data-qa="LinkingExplanation">
+        Linking an agent means the agent proves it holds its own key and asks to link to you.
+        You approve or deny that request.
+        Paid service does not require a linked human.
+        After you approve, the agent can fetch the timewarp.humanUx/v1 handoff document (GetHumanUx).
+      </p>
+    </Section>
+
+    <Section Title="Your account id">
+      @if (AccountId is null)
+      {
+        <p data-qa="AccountIdMissing">Your account id appears here after you are signed in.</p>
+      }
+      else
+      {
+        <div class="twe-account-id">
+          <code data-qa="AccountId">@AccountId</code>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="CopyAccountId"
+                        data-copied="@(AccountCopied ? "true" : "false")"
+                        OnClick="CopyAccountIdAsync">@(AccountCopied ? "Copied" : "Copy")</FluentButton>
+        </div>
+        <p>Paste this prompt to your agent. It carries the account id above and a bash recipe that uses openssl and curl.</p>
+        <div class="twe-prompt">
+          <pre data-qa="AgentLinkPrompt">@Prompt</pre>
+          <FluentButton Appearance="ButtonAppearance.Outline"
+                        data-qa="CopyAgentPrompt"
+                        data-copied="@(PromptCopied ? "true" : "false")"
+                        OnClick="CopyPromptAsync">@(PromptCopied ? "Copied" : "Copy prompt")</FluentButton>
+        </div>
+      }
+    </Section>
+
     <Section Title="Optional agent ↔ human links" LoadingActionType="typeof(AgentLinksState.FetchActionSet.Action)">
-      <p>Agents can request a link to you. Paid service does not require a linked human.</p>
+      <p>Agents can request a link to you.</p>
       @if (AgentLinksState.Items.Count == 0)
       {
         <p>No agent links yet.</p>

@@ -7,7 +7,9 @@
 // Role claims carry RoleIds (GUID strings) for diagnostics/UserClaims display; permission claims
 // (PermissionIds.ClaimType) feed SPA AddPermissionClaimPolicies (task 182-003). Catalog All is
 // projected so mock SystemAdmin exercises every gated surface offline. The "oid" claim mirrors
-// historical Entra claim shapes. MockUserIds live under Features.Identity (task 104-021).
+// historical Entra claim shapes. PrincipalIdClaimType carries MockUserIds.SystemAdmin so pages
+// that read the identity-session principal id (Agent links) work while UseMock is on.
+// MockUserIds live under Features.Identity (task 104-021).
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -31,6 +33,7 @@ public partial class MockAuthenticationStateProvider : AuthenticationStateProvid
     [
       new("oid", MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.NameIdentifier, MockUserIds.SystemAdmin.ToString()),
+      new(IdentitySessionAuthenticationStateProvider.PrincipalIdClaimType, MockUserIds.SystemAdmin.ToString()),
       new(ClaimTypes.Name, "Mock User"),
       new(ClaimTypes.Role, RoleIds.Member.ToString()),
       new(ClaimTypes.Role, RoleIds.Administrator.ToString()),
