@@ -77,7 +77,7 @@
                         data-copied="@(AccountCopied ? "true" : "false")"
                         OnClick="CopyAccountIdAsync">@(AccountCopied ? "Copied" : "Copy")</FluentButton>
         </div>
-        <p>The agent-link prompt (a bash recipe that uses openssl and curl) opens in a modal. Copy it to your agent after you have the account id above.</p>
+        <p>The agent-link prompt (a bash recipe that uses openssl and curl) opens in a modal. Copy it to your agent after you have the account id above. On Windows, the agent runs it in Git Bash or WSL. It does not run in PowerShell.</p>
         <FluentButton Appearance="ButtonAppearance.Outline"
                       data-qa="OpenAgentLinkPrompt"
                       OnClick="OpenPromptAsync">View agent prompt</FluentButton>

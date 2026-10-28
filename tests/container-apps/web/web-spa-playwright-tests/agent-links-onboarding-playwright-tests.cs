@@ -9,6 +9,9 @@
 // are granted so the copy buttons can be read back. The prompt carries that id and the
 // ceremony text, and must not send the person to tools/ or a dotnet client. Task 431: the
 // prompt opens from the compact page into AgentLinkPromptModal and is read from there.
+// The rendered prompt's OpenAPI URL is fetched from this host. HTTP 200 and an OpenAPI
+// document are the check that the path the prompt names is the document the server serves.
+// The same request GETs the /llms.txt and /auth.md URLs the prompt names and requires HTTP 200.
 #endregion
 
 namespace AgentLinksOnboardingPlaywright_;
@@ -90,6 +93,28 @@ public class AgentLinksOnboarding_Given_Wasm
     prompt.ShouldContain("curl");
     prompt.ShouldNotContain("tools/");
     prompt.ShouldNotContain("dotnet");
+    prompt.ShouldContain("These blocks need bash, openssl, and curl.");
+    prompt.ShouldContain("On Windows, run them in Git Bash or WSL.");
+    prompt.ShouldContain("They do not run in PowerShell");
+    prompt.ShouldContain("in Windows PowerShell curl is an alias for Invoke-WebRequest");
+    prompt.ShouldContain("describes every endpoint, request, and response");
+    prompt.ShouldContain("Authorization: Bearer");
+    prompt.ShouldContain(origin + "/llms.txt");
+    prompt.ShouldContain(origin + "/auth.md");
+
+    await RequireHttp200Async(page, PromptUrl(prompt, origin, "/llms.txt"));
+    await RequireHttp200Async(page, PromptUrl(prompt, origin, "/auth.md"));
+
+    string openApiUrl = OpenApiDocumentUrl(prompt, origin);
+    IAPIResponse openApi = await page.APIRequest.GetAsync(openApiUrl);
+    openApi.Status.ShouldBe(200, $"GET {openApiUrl} returned {openApi.Status}");
+    using JsonDocument document = JsonDocument.Parse(await openApi.TextAsync());
+    document.RootElement.TryGetProperty("openapi", out JsonElement openApiVersion).ShouldBeTrue();
+    string? openApiVersionText = openApiVersion.GetString();
+    openApiVersionText.ShouldNotBeNullOrWhiteSpace();
+    document.RootElement.TryGetProperty("paths", out JsonElement paths).ShouldBeTrue();
+    paths.ValueKind.ShouldBe(JsonValueKind.Object);
+    paths.GetRawText().ShouldContain("\"/");
 
     await page.Locator("[data-qa=CopyAgentPrompt]").ClickAsync();
     await Assertions.Expect(page.Locator("[data-qa=CopyAgentPrompt]")).ToHaveAttributeAsync("data-copied", "true", new() { Timeout = 15_000 });
@@ -97,6 +122,30 @@ public class AgentLinksOnboarding_Given_Wasm
     copiedPrompt.ShouldBe(prompt);
 
     _ = graph;
+  }
+
+  private static string OpenApiDocumentUrl(string prompt, string origin)
+  {
+    string needle = origin + "/openapi/";
+    int start = prompt.IndexOf(needle, StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0);
+    int end = prompt.IndexOf(".json", start, StringComparison.Ordinal);
+    end.ShouldBeGreaterThan(start);
+    return prompt.Substring(start, end + ".json".Length - start);
+  }
+
+  private static string PromptUrl(string prompt, string origin, string path)
+  {
+    string url = origin + path;
+    int start = prompt.IndexOf(url, StringComparison.Ordinal);
+    start.ShouldBeGreaterThanOrEqualTo(0);
+    return prompt.Substring(start, url.Length);
+  }
+
+  private static async Task RequireHttp200Async(IPage page, string url)
+  {
+    IAPIResponse response = await page.APIRequest.GetAsync(url);
+    response.Status.ShouldBe(200, $"GET {url} returned {response.Status}");
   }
 
   private static async Task<string> OpenPromptAndReadAsync(IPage page)
