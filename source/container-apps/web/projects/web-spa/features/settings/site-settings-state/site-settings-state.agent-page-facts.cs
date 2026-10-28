@@ -5,8 +5,10 @@
 #region Design
 // UpdateSiteSettings replaces the authentication policy and carries a Version token, so the agent
 // must echo those fields and the version. It does not send assistantName. UpdateAssistantName
-// sends assistantName and the same version. hasSnapshot is false until the settings have loaded.
-// Both pages that declare an action on this state see the same snapshot.
+// sends assistantName and the same version. UpdateXaiByokMode sends xaiByokMode and the same
+// version. The host key lives on XaiApiKeyState, so this snapshot does not carry it. hasSnapshot
+// is false until the settings have loaded. Both pages that declare an action on this state see
+// the same snapshot.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -27,6 +29,7 @@ partial class SiteSettingsState : IAgentPageFacts
       ["entraAllowBootstrap"] = EntraAllowBootstrap,
       ["passkeyPromptMode"] = PasskeyPromptMode.ToString(),
       ["assistantName"] = AssistantName,
+      ["xaiByokMode"] = XaiByokMode.ToString(),
       ["entraTenantAcceptanceMode"] = EntraTenantAcceptanceMode.ToString(),
       ["entraAcceptedTenants"] = new JsonArray(
         [.. EntraAcceptedTenants.Select(static tenant => new JsonObject

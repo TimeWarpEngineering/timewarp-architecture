@@ -1,0 +1,60 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: The one title bar: heading, optional description, and optional actions.
+
+  Design: IsPageHeading defaults to true and renders an h1. TimeWarpPage passes true, so
+  the shell page has one h1. False renders a div with the same class, so a sample is not
+  a second h1. A blank Title omits that heading only. Description and Actions still render
+  inside twe-page__header. When both slots are unset, only the heading renders and the
+  header wrapper is omitted. A blank Title with both slots unset renders nothing.
+  Description is a div with the shell margin. The document title stays on TimeWarpPage.
+*@
+
+@code {
+  [Parameter] public string? Title { get; set; }
+
+  [Parameter] public bool IsPageHeading { get; set; } = true;
+
+  [Parameter] public RenderFragment? Description { get; set; }
+
+  [Parameter] public RenderFragment? Actions { get; set; }
+
+  private RenderFragment Heading => @<text>
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+      @if (IsPageHeading)
+      {
+        <h1 class="twe-page__title">@Title</h1>
+      }
+      else
+      {
+        <div class="twe-page__title">@Title</div>
+      }
+    }
+  </text>;
+}
+
+@if (!string.IsNullOrWhiteSpace(Title) || Description is not null || Actions is not null)
+{
+  @if (Description is null && Actions is null)
+  {
+    @Heading
+  }
+  else
+  {
+    <div class="twe-page__header">
+      <div class="twe-page__lead">
+        @Heading
+        @if (Description is not null)
+        {
+          <div class="twe-page__description">@Description</div>
+        }
+      </div>
+      @if (Actions is not null)
+      {
+        <div class="twe-page__actions">@Actions</div>
+      }
+    </div>
+  }
+}

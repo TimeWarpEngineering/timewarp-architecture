@@ -29,7 +29,7 @@ public static class RoleIds
   /// <summary>Tenant admin — principals, roles, system settings.</summary>
   public static readonly Guid Administrator = new("834B9073-D5FF-40B3-938A-968C23FA76CC");
 
-  /// <summary>Template dogfood — demos, style guide, diagnostics. Not production end-users.</summary>
+  /// <summary>Template dogfood — demos, design system, diagnostics. Not production end-users.</summary>
   public static readonly Guid Developer = new("80EE3E0C-A8B6-45D6-BA27-7DEE2691AA42");
 
   public static string GetRoleNameByGuid(Guid roleId)

@@ -2,6 +2,7 @@
 @using TimeWarp.Architecture.Features.Applications
 @implements IAsyncDisposable
 @inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
 @attribute [DirectComponentSideEffect("matchMedia chooses the icon rail so a nav link's title tooltip is set only while the label is clipped. The watch is presentational and has no store state.")]
 
 @code {
@@ -9,10 +10,14 @@
   // Design: Rendered from NavigationDestinations (task 300): the generated PageRegistry
   // ([Page(Navigable = true)]) filtered by each page's own Policy for the signed-in principal,
   // in NavOrder. The same list is the Ctrl-K palette's pages and the agent's navigate and
-  // site_map destinations, so the menu cannot drift from them. A page's [Page] NavGroup names
-  // its FluentNavCategory; consecutive pages with the same group share one category and "" is
-  // the top level. NavPlacement.Bottom renders that group in a second nav pinned to the bottom
-  // of this menu, and only when a permitted page uses Bottom. This template's pages stay Top,
+  // site_map destinations, so the menu cannot drift from them. A page whose [Page] templates
+  // include a route parameter uses NavLinkMatch.Prefix (NavigationMatch, from the registry),
+  // so a design system part keeps that item active and its group open. A plain route stays
+  // exact. A path under an item's Url + "/" opens that category without activating the item,
+  // so Admin stays open on a role, principal, or feedback detail. A page's [Page] NavGroup
+  // names its FluentNavCategory; consecutive pages with the same group share one category and
+  // "" is the top level. NavPlacement.Bottom renders that group in a second nav pinned to the
+  // bottom of this menu, and only when a permitted page uses Bottom. This template's pages stay Top,
   // so that second nav is absent here. FluentNavCategory must be a direct child of FluentNav,
   // so the pin is a second nav rather than a wrapper. There is no category gate: Admin, Demos
   // and Developer show when one of their pages is permitted. Template flags need no markup here:
@@ -170,27 +175,35 @@
     groups[^1].Pages.Add(destination);
   }
 
+  private bool CategoryOwnsPath(IEnumerable<PageRegistryEntry> pages) =>
+    NavigationMatch.ContainsChildPath(pages, NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
+
+  private RenderFragment Items(IEnumerable<PageRegistryEntry> pages) => @<text>
+    @foreach (PageRegistryEntry destination in pages)
+    {
+      <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=@NavigationMatch.For(destination) Tooltip=@ItemTooltip(destination.Title)>
+        <span class="twe-nav__label">@destination.Title</span>
+      </FluentNavItem>
+    }
+  </text>;
+
   private RenderFragment Groups(List<(string Group, List<PageRegistryEntry> Pages)> groups) => @<text>
     @foreach ((string group, List<PageRegistryEntry> pages) in groups)
     {
       if (group.Length == 0)
       {
-        foreach (PageRegistryEntry destination in pages)
-        {
-          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
-            <span class="twe-nav__label">@destination.Title</span>
-          </FluentNavItem>
-        }
+        @Items(pages)
+      }
+      else if (CategoryOwnsPath(pages))
+      {
+        <FluentNavCategory Title=@group Class="twe-nav__category" Expanded="true">
+          @Items(pages)
+        </FluentNavCategory>
       }
       else
       {
         <FluentNavCategory Title=@group Class="twe-nav__category">
-          @foreach (PageRegistryEntry destination in pages)
-          {
-            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
-              <span class="twe-nav__label">@destination.Title</span>
-            </FluentNavItem>
-          }
+          @Items(pages)
         </FluentNavCategory>
       }
     }

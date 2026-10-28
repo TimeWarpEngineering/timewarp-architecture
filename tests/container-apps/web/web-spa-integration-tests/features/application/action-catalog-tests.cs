@@ -44,6 +44,7 @@ public class ActionCatalog_Should
     "SiteSettings.ResolveEntraTenant",
     "SiteSettings.UpdateAssistantName",
     "SiteSettings.UpdateSiteSettings",
+    "SiteSettings.UpdateXaiByokMode",
   ];
 
   [System.Runtime.CompilerServices.ModuleInitializer]

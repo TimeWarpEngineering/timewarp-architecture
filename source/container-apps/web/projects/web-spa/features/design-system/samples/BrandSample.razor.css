@@ -1,0 +1,4 @@
+.ds-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
+.ds-brand { display: flex; flex-direction: column; align-items: flex-start; gap: var(--twe-space-2); margin-top: var(--twe-space-3); }
+.ds-brand__logo { height: var(--twe-logo-height); width: auto; display: block; }
+.ds-brand__fact { margin: 0; color: var(--twe-ink); font-size: var(--twe-text-body); }

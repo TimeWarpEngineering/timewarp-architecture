@@ -1,0 +1,116 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+@*
+  Purpose: In-page part list for the design system. Not a second FluentNav.
+
+  Design: Native nav and lists, because the shell already owns the one FluentNav
+  registry. All is the first entry and links to /DesignSystem. Each part links to
+  /DesignSystem/{slug}. The selected entry sets aria-current="page". The filter is
+  component-local text (not a stored demo choice). Immediate delivers each
+  keystroke. Wall A: the native filter div anchors ::deep to fluent-text-input.
+  Each group name is an h2, and the nested part list is labelled by that heading,
+  so the grouping is in the accessibility tree. The heading class keeps the
+  eyebrow look.
+*@
+
+@code {
+  [Parameter] public string? SelectedSlug { get; set; }
+  [Parameter] public bool Known { get; set; }
+
+  private string Filter { get; set; } = "";
+
+  private bool AllCurrent => Known && SelectedSlug is null;
+
+  private bool ShowAll
+  {
+    get
+    {
+      string query = Filter.Trim();
+      return query.Length == 0 || "All".Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+  }
+
+  private Task OnFilterChanged(string? value)
+  {
+    Filter = value ?? "";
+    return Task.CompletedTask;
+  }
+
+  private bool Matches(DesignSystemParts.Part part)
+  {
+    string query = Filter.Trim();
+    return query.Length == 0 || part.Title.Contains(query, StringComparison.OrdinalIgnoreCase);
+  }
+
+  private bool IsCurrent(DesignSystemParts.Part part) =>
+    Known && string.Equals(SelectedSlug, part.Slug, StringComparison.Ordinal);
+
+  private static string GroupHeadingId(DesignSystemParts.Group group) =>
+    "ds-catalog-" + group.ToString().ToLowerInvariant();
+
+  private List<(DesignSystemParts.Group Group, DesignSystemParts.Part[] Parts)> VisibleGroups()
+  {
+    List<(DesignSystemParts.Group Group, DesignSystemParts.Part[] Parts)> groups = [];
+    foreach (DesignSystemParts.Group group in Enum.GetValues<DesignSystemParts.Group>())
+    {
+      List<DesignSystemParts.Part> parts = [];
+      foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
+      {
+        if (part.Group == group && Matches(part))
+        {
+          parts.Add(part);
+        }
+      }
+
+      if (parts.Count > 0)
+      {
+        groups.Add((group, [.. parts]));
+      }
+    }
+
+    return groups;
+  }
+}
+
+<nav class="ds-catalog" aria-label="Design system parts" data-qa="DesignSystemCatalog">
+  <div class="ds-catalog__filter">
+    <FluentTextInput Placeholder="Filter parts"
+                     Value="@Filter"
+                     ValueChanged="@OnFilterChanged"
+                     Immediate="true"
+                     ImmediateDelay="0"
+                     AriaLabel="Filter parts"
+                     Width="100%"
+                     data-qa="DesignSystemFilter" />
+  </div>
+  <ul class="ds-catalog__list">
+    @if (ShowAll)
+    {
+      <li>
+        <a class="ds-catalog__link"
+           href="@DesignSystemPage.GetPageUrl()"
+           aria-current="@(AllCurrent ? "page" : null)"
+           data-qa="DesignSystemAll"
+           data-part="all">All</a>
+      </li>
+    }
+    @foreach ((DesignSystemParts.Group group, DesignSystemParts.Part[] parts) in VisibleGroups())
+    {
+      <li class="ds-catalog__group">
+        <h2 class="ds-catalog__heading" id="@GroupHeadingId(group)">@group</h2>
+        <ul class="ds-catalog__parts" aria-labelledby="@GroupHeadingId(group)">
+          @foreach (DesignSystemParts.Part part in parts)
+          {
+            <li>
+              <a class="ds-catalog__link"
+                 href="@DesignSystemParts.Url(part)"
+                 aria-current="@(IsCurrent(part) ? "page" : null)"
+                 data-qa="DesignSystemPartLink"
+                 data-part="@part.Slug">@part.Title</a>
+            </li>
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+</nav>

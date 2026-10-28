@@ -1,5 +1,5 @@
 /* KPI tile — native root, CSS isolation. Tokens from tokens.css.
-   The value/unit gap is 6px, under the spacing scale (8, 12, 24, 48), so it stays a hairline. */
+   The value/unit gap is 6px, under the spacing scale (4, 8, 12, 24, 48), so it stays a hairline. */
 .twe-kpi {
   background: var(--twe-paper);
   border: 1px solid var(--twe-rule);

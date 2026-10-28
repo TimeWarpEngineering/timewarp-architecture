@@ -1,8 +1,0 @@
-@namespace TimeWarp.Architecture.Features.StyleGuide
-@attribute [CrossSliceReference(typeof(CounterState), "The section demo binds LoadingActionType to the counter increment action.")]
-
-<Section Title="Section"
-         Description="Loading UI is FluentSpinner while the bound action is active; loaded content is the child. Pages sequence actions; handlers never chain a fetch."
-         LoadingActionType="typeof(CounterState.IncrementCounterActionSet.Action)">
-  <p>Loaded section content. Bind <code>LoadingActionType</code> to the in-flight action (for example FetchPrincipals).</p>
-</Section>

@@ -15,8 +15,9 @@
 // Microsoft365 list / AllowBootstrap drift is still on this snapshot for the seeder/admin copy.
 // AssistantName is the Admin AI form's copy of the stored name. Labels read
 // AgentSurfaceState.AssistantName from the public query. UpdateAssistantName writes the name;
-// AssistantNameSaveFailed keeps that draft when the rename fails. SaveFailed belongs to the
-// authentication policy save.
+// AssistantNameSaveFailed keeps that draft when the rename fails. UpdateXaiByokMode writes
+// whose key Ask uses; XaiByokModeSaveFailed keeps that draft when the write fails. SaveFailed
+// belongs to the authentication policy save.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -40,6 +41,8 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
   public bool SaveFailed { get; private set; }
   /// <summary>True when the last UpdateAssistantName failed; the problem itself is on NotificationState.</summary>
   public bool AssistantNameSaveFailed { get; private set; }
+  /// <summary>True when the last UpdateXaiByokMode failed; the problem itself is on NotificationState.</summary>
+  public bool XaiByokModeSaveFailed { get; private set; }
   public string? ConfigurationTenantId { get; private set; }
   public string? ConfigurationTenantDisplayName { get; private set; }
   public string? ConfigurationTenantDomain { get; private set; }
@@ -74,6 +77,7 @@ public sealed partial class SiteSettingsState : State<SiteSettingsState>
     Version = 0;
     SaveFailed = false;
     AssistantNameSaveFailed = false;
+    XaiByokModeSaveFailed = false;
     ConfigurationTenantId = null;
     ConfigurationTenantDisplayName = null;
     ConfigurationTenantDomain = null;

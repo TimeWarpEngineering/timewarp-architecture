@@ -1,5 +1,5 @@
 /* Chart frame — native root, CSS isolation. Tokens from tokens.css.
-   20px 24px matches Card. 20px is not a spacing step (8, 12, 24, 48). */
+   20px 24px matches Card. 20px is not a spacing step (4, 8, 12, 24, 48). */
 .twe-chart-card {
   background: var(--twe-paper);
   border: 1px solid var(--twe-rule);

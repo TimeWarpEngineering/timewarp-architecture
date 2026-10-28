@@ -152,6 +152,43 @@ public partial class CatalogAgent_Should
       .GetProperty("properties")
       .TryGetProperty("assistantName", out _)
       .ShouldBeFalse();
+    schema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties")
+      .TryGetProperty("xaiByokMode", out _)
+      .ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Binds_UpdateXaiByokMode_With_Mode_And_Version()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    ActionCatalogEntry update = catalog.Find("SiteSettings.UpdateXaiByokMode").ShouldNotBeNull();
+    string parameter = update.Parameters[0].Name;
+    JsonElement command = JsonSerializer.Deserialize<JsonElement>
+    (
+      """{"xaiByokMode":"Required","version":2}"""
+    );
+
+    object?[] bound = CatalogAgentArguments.Bind(update, new Dictionary<string, object?> { [parameter] = command });
+
+    bound.Length.ShouldBe(1);
+    UpdateXaiByokMode.Command bind = bound[0].ShouldBeOfType<UpdateXaiByokMode.Command>();
+    bind.XaiByokMode.ShouldBe(XaiByokMode.Required);
+    bind.Version.ShouldBe(2);
+
+    using JsonDocument modeSchema = JsonDocument.Parse(CatalogAgentSchema.For(update));
+    JsonElement properties = modeSchema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties");
+    JsonElement mode = properties.GetProperty("xaiByokMode");
+    mode.GetProperty("type").GetString().ShouldBe("string");
+    string[] members = [.. mode.GetProperty("enum").EnumerateArray().Select(member => member.GetString() ?? "")];
+    members.ShouldBe(Enum.GetNames<XaiByokMode>());
+    properties.GetProperty("version").GetProperty("type").GetString().ShouldBe("integer");
     return Task.CompletedTask;
   }
 
@@ -361,15 +398,15 @@ public partial class CatalogAgent_Should
     settings.ShouldContain(tool => tool.Name == "Credentials.AddPasskey");
     settings.ShouldNotContain(tool => tool.Name == "Credentials.LinkMicrosoft365");
 
-    IReadOnlyList<WebMcpToolDescriptor> styleGuide = await WebMcpPublisher.DescribeAsync
+    IReadOnlyList<WebMcpToolDescriptor> designSystem = await WebMcpPublisher.DescribeAsync
     (
       Principal(PermissionIds.DeveloperAccess),
       authorization,
       catalog,
-      "/StyleGuide",
+      "/DesignSystem",
       CancellationToken.None
     );
-    Names(styleGuide).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    Names(designSystem).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Names
     (
       await WebMcpPublisher.DescribeAsync
@@ -377,10 +414,10 @@ public partial class CatalogAgent_Should
         Principal(PermissionIds.DeveloperAccess),
         authorization,
         catalog,
-        "/StyleGuide/drawers",
+        "/DesignSystem/drawers",
         CancellationToken.None
       )
-    ).ShouldBe(Names(styleGuide));
+    ).ShouldBe(Names(designSystem));
 
     Names
     (
@@ -1016,6 +1053,8 @@ public partial class CatalogAgent_Should
     JsonElement aiRecord = ai.RootElement.GetProperty("siteSettings");
     aiRecord.GetProperty("assistantName").GetString()
       .ShouldBe(scope.Store.GetState<SiteSettingsState>().AssistantName);
+    aiRecord.GetProperty("xaiByokMode").GetString()
+      .ShouldBe(scope.Store.GetState<SiteSettingsState>().XaiByokMode.ToString());
     aiRecord.GetProperty("version").GetInt64().ShouldBe(scope.Store.GetState<SiteSettingsState>().Version);
     return Task.CompletedTask;
   }

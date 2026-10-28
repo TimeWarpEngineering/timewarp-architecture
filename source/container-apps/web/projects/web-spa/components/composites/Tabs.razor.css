@@ -1,5 +1,5 @@
 /* Underline tablist. The 2px gap, the 1px overlap, and the 10/14 padding are below the
-   spacing scale (8, 12, 24, 48). The table-cell size maps to the body token. The active
+   spacing scale (4, 8, 12, 24, 48). The table-cell size maps to the body token. The active
    underline and label use the accent, not a second hue. */
 .twe-tabs {
   display: flex;

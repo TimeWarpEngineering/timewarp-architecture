@@ -3,12 +3,15 @@
 #endregion
 
 #region Design
-// Same host as the style-guide catalog: in-process Web.Server, shared Chromium, en-US.
-// The style guide needs developer.access, so the first passkey account (Administrator) also
-// receives Developer before any navigation. Ctrl-K has no style-guide part rows, so the
-// palette case opens Style Guide from Counter and then clicks Color Tokens. The trail must
-// not keep Counter. A part-to-part click keeps one part crumb. The role editor crumb is the
-// role name once the list has loaded. Computed color and margin read the isolated rules.
+// Same host as the design-system catalog: in-process Web.Server, shared Chromium, en-US.
+// The design system needs developer.access, so the first passkey account (Administrator) also
+// receives Developer before any navigation. Ctrl-K lists each design-system part, so one case
+// opens Color Tokens from the palette. Another opens Design System, then clicks Color Tokens.
+// The trail must not keep Counter. A part-to-part click keeps one part crumb. The role editor
+// crumb is the role name once the list has loaded. That case requires the Roles item to exist
+// in the menu (not the Roles crumb, which uses the same href) and not be active, and the Admin
+// group to be expanded. Computed color and margin read the isolated
+// rules. The first crumb's focus ring must sit inside the trail list, which still ellipsizes.
 #endregion
 
 namespace BreadcrumbPlaywright_;
@@ -36,32 +39,36 @@ public class Breadcrumb_Given_Wasm
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
 
-    await GotoAsync(page, "/StyleGuide/color-tokens");
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await GotoAsync(page, "/DesignSystem/color-tokens");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await ExpectTrailStylesAsync(page);
+    await ExpectFocusRingInsideTheTrailAsync(page);
 
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=drawers]").ClickAsync();
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=drawers]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/drawers", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/drawers", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Drawers", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Drawers", "Home", "Design System");
 
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=color-tokens]").ClickAsync();
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=color-tokens]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/color-tokens", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
 
     await GotoAsync(page, "/Counter");
-    await OpenStyleGuideFromPaletteAsync(page);
-    await ExpectTrailAsync(page, "Style Guide", "Home");
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=color-tokens]").ClickAsync();
+    await OpenDesignSystemFromPaletteAsync(page);
+    await ExpectTrailAsync(page, "Design System", "Home");
+    await GotoAsync(page, "/Counter");
+    await OpenPartFromPaletteAsync(page);
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=color-tokens]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/color-tokens", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     (await page.Locator("[data-qa=Breadcrumb]").InnerTextAsync()).ShouldNotContain("Counter");
 
     await GotoAsync(page, "/Admin/Roles");
@@ -76,6 +83,14 @@ public class Breadcrumb_Given_Wasm
       new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 }
     );
     await ExpectTrailAsync(page, "Administrator", "Home", "Roles");
+    ILocator rolesLink = page.Locator(".twe-nav-menu a[href='/Admin/Roles']");
+    await Assertions.Expect(rolesLink).ToHaveCountAsync(1);
+    string rolesClass = await rolesLink.GetAttributeAsync("class") ?? "";
+    rolesClass.Split(' ', StringSplitOptions.RemoveEmptyEntries).ShouldNotContain("active");
+    ILocator adminGroup = page.Locator("button[aria-expanded='true']")
+      .GetByText("Admin", new LocatorGetByTextOptions { Exact = true });
+    await Assertions.Expect(adminGroup).ToHaveCountAsync(1);
+    await Assertions.Expect(adminGroup).ToBeVisibleAsync();
   }
 
   private static async Task ExpectTrailAsync(IPage page, string current, params string[] links)
@@ -116,7 +131,45 @@ public class Breadcrumb_Given_Wasm
     marginBottom.ShouldBe("12px");
   }
 
-  private static async Task OpenStyleGuideFromPaletteAsync(IPage page)
+  private static async Task ExpectFocusRingInsideTheTrailAsync(IPage page)
+  {
+    string within = await page.EvaluateAsync<string>(
+      """
+      () => {
+        const link = document.querySelector('[data-qa=BreadcrumbLink]');
+        link.focus({ focusVisible: true });
+        const linkRect = link.getBoundingClientRect();
+        const style = getComputedStyle(link);
+        const width = parseFloat(style.outlineWidth) || 0;
+        const offset = Math.max(parseFloat(style.outlineOffset) || 0, 0);
+        const expand = width + offset;
+        const list = link.closest('ol');
+        const clip = list.getBoundingClientRect();
+        const listStyle = getComputedStyle(list);
+        const inside = linkRect.left - expand >= clip.left - 0.5
+          && linkRect.top - expand >= clip.top - 0.5
+          && linkRect.right + expand <= clip.right + 0.5
+          && linkRect.bottom + expand <= clip.bottom + 0.5;
+        return JSON.stringify({
+          inside,
+          overflow: listStyle.overflowX,
+          textOverflow: listStyle.textOverflow,
+          whiteSpace: listStyle.whiteSpace,
+          outlineWidth: style.outlineWidth,
+          outlineOffset: style.outlineOffset,
+        });
+      }
+      """);
+    using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(within);
+    document.RootElement.GetProperty("inside").GetBoolean().ShouldBeTrue(within);
+    document.RootElement.GetProperty("overflow").GetString().ShouldBe("hidden");
+    document.RootElement.GetProperty("textOverflow").GetString().ShouldBe("ellipsis");
+    document.RootElement.GetProperty("whiteSpace").GetString().ShouldBe("nowrap");
+    document.RootElement.GetProperty("outlineWidth").GetString().ShouldBe("2px");
+    document.RootElement.GetProperty("outlineOffset").GetString().ShouldBe("2px");
+  }
+
+  private static async Task OpenDesignSystemFromPaletteAsync(IPage page)
   {
     ILocator input = page.Locator("[data-qa=CommandPaletteInput]");
     bool opened = false;
@@ -135,7 +188,7 @@ public class Breadcrumb_Given_Wasm
     }
 
     opened.ShouldBeTrue("Ctrl-K did not open the palette");
-    await input.FillAsync("style guide");
+    await input.FillAsync("design system");
     ILocator active = page.Locator(".twe-palette__row--active");
     await Assertions.Expect(active.Locator(".twe-palette__kind")).ToHaveTextAsync
     (
@@ -144,12 +197,42 @@ public class Breadcrumb_Given_Wasm
     );
     await Assertions.Expect(active.Locator(".twe-palette__name")).ToHaveTextAsync
     (
-      "Style Guide",
+      "Design System",
       new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 }
     );
     await input.PressAsync("Enter");
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem", StringComparison.Ordinal),
+      new PageWaitForURLOptions { Timeout = 30_000 });
+  }
+
+  private static async Task OpenPartFromPaletteAsync(IPage page)
+  {
+    ILocator input = page.Locator("[data-qa=CommandPaletteInput]");
+    bool opened = false;
+    for (int attempt = 0; attempt < 20 && !opened; attempt++)
+    {
+      await page.Keyboard.PressAsync("Control+k");
+      try
+      {
+        await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 2_000, State = WaitForSelectorState.Visible });
+        opened = true;
+      }
+      catch (TimeoutException)
+      {
+        await page.Keyboard.PressAsync("Escape");
+      }
+    }
+
+    opened.ShouldBeTrue("Ctrl-K did not open the palette");
+    await input.FillAsync("color tokens");
+    ILocator active = page.Locator(".twe-palette__row--active");
+    await Assertions.Expect(active.Locator(".twe-palette__name")).ToHaveTextAsync(
+      "Design System: Color Tokens",
+      new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
+    await input.PressAsync("Enter");
+    await page.WaitForURLAsync(
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
   }
 

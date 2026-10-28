@@ -1,0 +1,13 @@
+/* The title bar itself is PageTitleBar. This frame is the sample's own box. */
+.ds-page-header {
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: 8px;
+}
+
+.ds-page-header__rule {
+  margin: var(--twe-space-3) 0 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-body);
+  line-height: 1.55;
+}

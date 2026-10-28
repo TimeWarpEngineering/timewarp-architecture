@@ -1,5 +1,5 @@
 /* Section header — native root, CSS isolation. Tokens from tokens.css.
-   16px is not a spacing token (the scale is 8, 12, 24, 48), so the row gap is --twe-space-3.
+   16px is not a spacing token (the scale is 4, 8, 12, 24, 48), so the row gap is --twe-space-3.
    The subtitle's 2px offset is below that scale, so it stays a hairline under the title. */
 .twe-section-header {
   display: flex;

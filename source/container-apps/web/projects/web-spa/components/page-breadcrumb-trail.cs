@@ -7,7 +7,7 @@
 // route, on a segment boundary. "/" is a prefix of every other route, so Home is the root
 // ancestor and a page whose only prefix is Home has no nearer parent. A route equal to the
 // subject is not its own parent. Parameterized routes are not parents: a "{" candidate is
-// skipped, and a template such as /StyleGuide/{Part} still matches the literal /StyleGuide.
+// skipped, and a template such as /DesignSystem/{Part} still matches the literal /DesignSystem.
 // Nav groups are not routes, so they are not crumbs. The generator already emits the routes
 // on PageRegistryEntry; this walk reads that list and does not keep a second parent table.
 // Ancestor labels are the registry nav titles. The current crumb uses BreadcrumbLabel when

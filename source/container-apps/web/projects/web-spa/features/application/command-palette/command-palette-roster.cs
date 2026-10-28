@@ -5,8 +5,11 @@
 
 #region Design
 // Sources (task 239): pages come from NavigationDestinations (task 300), the policy-filtered
-// PageRegistry that NavMenu, Ask and WebMCP read too, so the palette lists exactly the menu's
-// pages. Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
+// PageRegistry that NavMenu, Ask and WebMCP read too. Design-system parts are extra Page rows
+// from DesignSystemParts, added only when that filtered list still contains the Design System
+// page. They are not menu items and not agent navigate destinations. The row name is
+// DesignSystemParts.PaletteName, so the prefix stays DesignSystemPage.Title.
+// Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
 // ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
 // command. No attribute opts an action in. Nothing is hand-listed.
 // Exclusion is explicit: [CommandPaletteOptOut("reason")] on the Action. A blank reason does not opt
@@ -39,15 +42,20 @@
 // user.Identity?.IsAuthenticated != true; the target carries the current path as ?returnUrl
 // (LoginPage validates it with GetSafeReturnUrl), omitted on "/" as RedirectToLogin does. The
 // description says "Log in" and names the route so "login" and "log in" rank it as well as "sign".
-// Applications is the platform tier, which must not reach a product slice; LoginPage is the one
-// edge, opted out below like HomePage's first-run CTA.
+// Applications is the platform tier, which must not reach a product slice. Two edges are opted
+// out below. LoginPage is the signed-out Sign in row: login stays out of the registry, and one
+// signed-out destination does not earn a new [Page] opt-in. DesignSystemParts is the catalog
+// table: Ctrl-K lists each part from that one table, and the parts are not a second menu.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
 using System.Text;
 
+using TimeWarp.Architecture.Features.DesignSystem;
+
 [CrossSliceReference(typeof(LoginPage), "Signed-out palette row navigates to Identity login (task 259).")]
+[CrossSliceReference(typeof(DesignSystemParts), "Ctrl-K lists each design-system part from the one part table (task 424).")]
 public static class CommandPaletteRoster
 {
   /// <summary>The palette roster: pages plus commands derived from <paramref name="actions"/> (the generated ActionRoster).</summary>
@@ -129,9 +137,29 @@ public static class CommandPaletteRoster
       rows.Add(SignInRow(currentPath));
     }
 
+    bool designSystemOpen = false;
     foreach (PageRegistryEntry page in await NavigationDestinations.ForAsync(user, authorizationService, pages))
     {
       rows.Add(new CommandPaletteRow(page.Title, $"Go to {page.Url}", CommandPaletteRowKind.Page, page.Url));
+      if (page.PageType == typeof(DesignSystemPage))
+      {
+        designSystemOpen = true;
+      }
+    }
+
+    // Parts follow the Design System row. The same policy filter that hid that page hides its parts,
+    // and a caller that passed no pages (a command-only probe) does not grow a catalog.
+    if (designSystemOpen)
+    {
+      foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
+      {
+        string url = DesignSystemParts.Url(part);
+        rows.Add(new CommandPaletteRow(
+          DesignSystemParts.PaletteName(part),
+          $"Go to {url}",
+          CommandPaletteRowKind.Page,
+          url));
+      }
     }
 
     if (!isAuthenticated)

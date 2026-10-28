@@ -39,6 +39,7 @@ using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Architecture.Features.DesignSystem;
 using TimeWarp.Architecture.Web.Spa;
 
 [TestTag("Unit")]
@@ -58,7 +59,12 @@ public class CommandPalette_Should_
     CommandPaletteState palette = scope.Store.GetState<CommandPaletteState>();
 
     palette.Roster.Where(static row => row.Kind == CommandPaletteRowKind.Page).Select(static row => row.Target)
-      .ShouldBe(PageRegistry.All.Select(static page => page.Url), ignoreOrder: true);
+      .ShouldBe(
+        [
+          .. PageRegistry.All.Select(static page => page.Url),
+          .. DesignSystemParts.PageOrder.Select(static part => DesignSystemParts.Url(part)),
+        ],
+        ignoreOrder: true);
 
     // Derived, not hand-listed (task 301): every eligible roster action is a row, every other is absent.
     Dictionary<Type, ActionCatalogEntry> catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>().Entries
@@ -93,9 +99,10 @@ public class CommandPalette_Should_
     palette.Matches[0].Kind.ShouldBe(CommandPaletteRowKind.Page);
     palette.Matches[^1].Kind.ShouldBe(CommandPaletteRowKind.Command);
     palette.HighlightedIndex.ShouldBe(0);
-    palette.Roster.Count(static row => row.Target == "/StyleGuide").ShouldBe(1);
-    palette.Roster.ShouldNotContain(static row =>
-      row.Target.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase));
+    palette.Roster.Count(static row => row.Target == "/DesignSystem").ShouldBe(1);
+    CommandPaletteRow colorTokens = palette.Roster.Single(static row => row.Target == "/DesignSystem/color-tokens");
+    colorTokens.Name.ShouldBe(DesignSystemPage.Title + ": Color Tokens");
+    colorTokens.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }
 
   public static Task Opt_Out_Only_Explicitly_With_A_Reason()
@@ -185,6 +192,7 @@ public class CommandPalette_Should_
   [Input("Role.CreateRole")]
   [Input("SiteSettings.UpdateAssistantName")]
   [Input("SiteSettings.UpdateSiteSettings")]
+  [Input("SiteSettings.UpdateXaiByokMode")]
   [Input("Application.FiveSecondTask")]
   [Input("Application.TwoSecondTask")]
   [Input("Counter.ThrowException")]
@@ -221,13 +229,15 @@ public class CommandPalette_Should_
     targets.ShouldContain("Profile.SignOut");
     foreach (string denied in new[]
     {
-      "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
+      "/Counter", "/Chat", "/DesignSystem", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
       "/Admin/AI",
       "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
     {
       targets.ShouldNotContain(denied);
     }
+
+    targets.ShouldNotContain(static target => target.StartsWith("/DesignSystem/", StringComparison.OrdinalIgnoreCase));
   }
 
   public static async Task Offer_Anonymous_Visitors_Only_Unrestricted_Pages()
@@ -266,6 +276,20 @@ public class CommandPalette_Should_
     await scope.Send(new CommandPaletteState.FilterActionSet.Action(query));
 
     scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull().Name.ShouldBe("Sign in");
+  }
+
+  public static async Task Rank_A_Design_System_Part_From_Its_Title()
+  {
+    using PaletteSpa spa = new(Everything);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new CommandPaletteState.OpenActionSet.Action());
+
+    await scope.Send(new CommandPaletteState.FilterActionSet.Action("color tokens"));
+
+    CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
+    highlighted.Name.ShouldBe(DesignSystemPage.Title + ": Color Tokens");
+    highlighted.Target.ShouldBe("/DesignSystem/color-tokens");
+    highlighted.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }
 
   [Input("microsoft")]

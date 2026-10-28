@@ -1,6 +1,6 @@
 /* Empty state — native root, CSS isolation. Tokens from tokens.css.
    The description measure is 32rem. That is a reading width, not a spacing step
-   (the scale is 8, 12, 24, 48). The icon tile is the 48px step. FluentIcon draws a
+   (the scale is 4, 8, 12, 24, 48). The icon tile is the 48px step. FluentIcon draws a
    24px svg itself, so this sheet does not size the glyph. */
 .twe-empty-state {
   display: flex;

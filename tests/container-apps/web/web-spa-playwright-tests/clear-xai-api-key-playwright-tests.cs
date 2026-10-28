@@ -1,14 +1,17 @@
 #region Purpose
 // Browser proof that Clear key asks, Cancel and Escape leave the stored key, Enter does not
-// confirm, and the dialog's Clear key removes it. The style-guide sample asks the same way.
+// confirm, and the dialog's Clear key removes it. The design-system sample asks the same way.
+// A host key shows the saved policy as having no effect.
 #endregion
 
 #region Design
-// Same host shape as the style-guide drawer: in-process Web.Server, shared Chromium, en-US,
+// Same host shape as the design-system drawer: in-process Web.Server, shared Chromium, en-US,
 // a virtual passkey. The first account is Administrator, which can open Admin → AI. The default
-// host has no durable secret store, so this test registers a memory store and clears any host
-// XAI:ApiKey. The page saves a key, then the real FluentUI dialog runs. Developer is granted
-// after that so /StyleGuide can open the sample confirmation.
+// host has no durable secret store, so the clear-key case registers a memory store and clears
+// any host XAI:ApiKey. The page saves a key, then the real FluentUI dialog runs. Developer is
+// granted after that so /DesignSystem can open the sample confirmation.
+// HostKey_Should_Show_The_Policy_As_Having_No_Effect sets XAI:ApiKey. The select is absent.
+// The saved policy and the host reason are shown.
 #endregion
 
 namespace ClearXaiApiKeyPlaywright_;
@@ -61,6 +64,21 @@ public class ClearXaiApiKey_Given_Wasm
       throw new TimeoutException($"Admin AI key field was not shown at {page.Url}. Page:\n{text}", exception);
     }
 
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokMode]")).ToBeVisibleAsync();
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await Assertions.Expect(page.Locator("[data-qa=AuthenticationSave]")).ToBeVisibleAsync();
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeSettings]")).ToHaveCountAsync(0);
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+
     await input.Locator("input").FillAsync(Secret);
     await page.Locator("[data-qa=XaiApiKeySave]").ClickAsync();
     ILocator status = page.Locator("[data-qa=XaiApiKeyStatus]");
@@ -98,7 +116,7 @@ public class ClearXaiApiKey_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=MessageBars]")).ToContainTextAsync("xAI API key cleared.");
 
     await GrantDeveloperAsync(graph);
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide/confirmations", new PageGotoOptions
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/DesignSystem/confirmations", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,
@@ -119,6 +137,34 @@ public class ClearXaiApiKey_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=MessageBars]")).ToContainTextAsync(
       "Sample confirmed.",
       new LocatorAssertionsToContainTextOptions { Timeout = 10_000 });
+  }
+
+  public static async Task HostKey_Should_Show_The_Policy_As_Having_No_Effect()
+  {
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.PostConfigure<XaiChatOptions>(options => options.ApiKey = "playwright-host-key"));
+    graph.Web.ShouldNotBeNull();
+
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    await SignInWithNewPasskeyAsync(page, context);
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await Assertions.Expect(page.Locator("[data-qa=XaiApiKeyManagedByHost]")).ToBeVisibleAsync(
+      new LocatorAssertionsToBeVisibleOptions { Timeout = 120_000 });
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokMode]")).ToHaveCountAsync(0);
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeReadOnly]")).ToBeVisibleAsync();
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeHostReason]")).ToContainTextAsync(
+      "this policy has no effect");
   }
 
   private static async Task GrantDeveloperAsync(HostGraph graph)

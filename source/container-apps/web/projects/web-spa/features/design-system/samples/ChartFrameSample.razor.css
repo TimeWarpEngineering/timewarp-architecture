@@ -1,0 +1,6 @@
+.ds-subtitle { color: var(--twe-muted); margin: 4px 0 0; font-size: var(--twe-text-body); }
+.ds-chart-sample { display: block; width: 100%; height: 6rem; }
+.ds-chart-sample polyline { fill: none; stroke-width: 2; }
+.ds-chart-sample__a { stroke: var(--twe-ink); }
+.ds-chart-sample__b { stroke: var(--twe-primary); }
+.ds-chart-sample__c { stroke: var(--twe-positive); }

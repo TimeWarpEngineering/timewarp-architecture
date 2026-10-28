@@ -8,13 +8,16 @@
 // is registered, closing the hand-implemented-marker gap): the unconditional demo/product pages are present,
 // parameterized and auth-ceremony pages are absent, and every entry is a well-formed static
 // destination. Names are compared as strings so the test needs no per-slice usings.
+// ContainsChildPath opens a category for a path under an item Url without making that item active.
 #endregion
 
 namespace PageRegistry_;
 
+using Microsoft.AspNetCore.Components.Routing;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Common.Interfaces;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Applications;
 
 [TestTag("Unit")]
 public class All_Should_
@@ -32,7 +35,7 @@ public class All_Should_
       "HomePage", "SettingsPage", "AgentLinksPage", "ProfilePage",
       "RolesListPage", "PrincipalsPage", "FeedbackAdminListPage", "AuthenticationPage",
       "CounterPage", "ChatPage", "PasskeysPage",
-      "StyleGuidePage", "TestPage", "ServicesPage", "UserClaimsPage",
+      "DesignSystemPage", "TestPage", "ServicesPage", "UserClaimsPage",
     })
     {
       names.ShouldContain(expected);
@@ -74,14 +77,54 @@ public class All_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Keep_The_Style_Guide_On_Its_Static_Route_Only()
+  public static Task Keep_The_Design_System_On_Its_Static_Route_Only()
   {
-    PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
-    styleGuide.RouteTemplate.ShouldBe("/StyleGuide");
-    styleGuide.Url.ShouldBe("/StyleGuide");
+    PageRegistryEntry designSystem = PageRegistry.All.Single(static entry => entry.PageType.Name == "DesignSystemPage");
+    designSystem.RouteTemplate.ShouldBe("/DesignSystem");
+    designSystem.Url.ShouldBe("/DesignSystem");
+    designSystem.RouteTemplates.ShouldBe(["/DesignSystem", "/DesignSystem/{Part}"]);
     PageRegistry.All.ShouldNotContain(static entry =>
-      entry.Url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase)
+      entry.Url.StartsWith("/DesignSystem/", StringComparison.OrdinalIgnoreCase)
       || entry.RouteTemplate.Contains("{Part}", StringComparison.Ordinal));
+    return Task.CompletedTask;
+  }
+
+  public static Task Match_Prefix_Only_When_A_Template_Has_A_Parameter()
+  {
+    PageRegistryEntry designSystem = PageRegistry.All.Single(static entry => entry.PageType.Name == "DesignSystemPage");
+    PageRegistryEntry roles = PageRegistry.All.Single(static entry => entry.PageType.Name == "RolesListPage");
+    PageRegistryEntry home = PageRegistry.All.Single(static entry => entry.PageType.Name == "HomePage");
+    NavigationMatch.For(designSystem).ShouldBe(NavLinkMatch.Prefix);
+    NavigationMatch.For(roles).ShouldBe(NavLinkMatch.All);
+    NavigationMatch.For(home).ShouldBe(NavLinkMatch.All);
+    home.RouteTemplate.ShouldBe("/");
+    roles.RouteTemplates.ShouldBe(["/Admin/Roles"]);
+    // Role detail is its own non-navigable page, so the Roles list item stays an exact match.
+    PageRegistry.All.ShouldAllBe(entry =>
+      entry.PageType.Name == "DesignSystemPage"
+      || entry.RouteTemplates.All(template => !template.Contains('{', StringComparison.Ordinal)));
+    return Task.CompletedTask;
+  }
+
+  public static Task Open_A_Group_On_A_Child_Of_An_Item_Without_Activating_It()
+  {
+    PageRegistryEntry roles = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Roles");
+    PageRegistryEntry principals = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Principals");
+    PageRegistryEntry feedback = PageRegistry.All.Single(static entry => entry.Url == "/Admin/Feedback");
+    PageRegistryEntry home = PageRegistry.All.Single(static entry => entry.Url == "/");
+    PageRegistryEntry[] admin = [roles, principals, feedback];
+    const string roleId = "11111111-1111-1111-1111-111111111111";
+
+    NavigationMatch.For(roles).ShouldBe(NavLinkMatch.All);
+    NavigationMatch.ContainsChildPath(admin, "/Admin/Roles/" + roleId).ShouldBeTrue();
+    NavigationMatch.ContainsChildPath(admin, "/Admin/Roles/New").ShouldBeTrue();
+    NavigationMatch.ContainsChildPath(admin, "/Admin/Principals/" + roleId).ShouldBeTrue();
+    NavigationMatch.ContainsChildPath(admin, "/Admin/Feedback/" + roleId).ShouldBeTrue();
+    NavigationMatch.ContainsChildPath(admin, "/Admin/Roles").ShouldBeFalse();
+    NavigationMatch.ContainsChildPath(admin, "/Admin/RolesExtra").ShouldBeFalse();
+    NavigationMatch.ContainsChildPath([home], "/Admin/Roles/" + roleId).ShouldBeFalse();
+    NavigationMatch.ContainsChildPath(admin, "/admin/roles/" + roleId + "?x=1").ShouldBeTrue();
+    NavigationMatch.ContainsChildPath(admin, "/ADMIN/ROLES/NEW").ShouldBeTrue();
     return Task.CompletedTask;
   }
 

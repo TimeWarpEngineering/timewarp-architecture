@@ -225,7 +225,7 @@ Reference: `web-spa/features/application/agent/` and `web-spa/components/WebMcpA
    `ActionTrackingState.IsAnyActive(LoadingActionType)`; no hand-written loading markup.
    Grids may bind `FluentDataGrid Loading=IsLoading` to `IsAnyActive(FetchX)` instead.
 
-Reference: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+Reference: `source/container-apps/web/projects/web-spa/features/design-system/samples/SectionSample.razor`
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
 
@@ -292,14 +292,14 @@ Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.ra
 
 # Actions, navigation, and forms
 
-Actions are `FluentButton` with a style-guide appearance (Primary / Outline / Subtle /
+Actions are `FluentButton` with a design system appearance (Primary / Outline / Subtle /
 Transparent; danger via `--twe-danger`). Navigation is `FluentAnchor`; the menu is `NavMenu` over the page registry.
 Persisting a model is `EditForm` + `FluentButton` submit (RoleForm). Never raw `<button>` or
 page-local button/link classes; reuse `components/elements` and existing feature components
 before writing markup. Multi-line text is the shared `TextArea` (`components/forms/TextArea.razor`),
 never a raw `FluentTextArea` (TWA0032; opt out with `[DirectFluentTextArea("reason")]`).
 
-Reference appearances: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+Reference appearances: `source/container-apps/web/projects/web-spa/features/design-system/samples/ButtonsSample.razor`
 (Primary, Outline, Subtle, Transparent, and Outline + `Class="twe-button-danger"`).
 
 Form submit reference: `source/container-apps/web/projects/web-spa/features/admin/roles/components/RoleForm.razor`
@@ -313,7 +313,7 @@ short fields such as City / State / ZIP). Spacing via the `--twe-space-*` tokens
 (`--twe-space-2` label→control, `--twe-space-6` field row gap, `--twe-space-12` section gap,
 `--twe-space-3` action gap). No page-local margins.
 
-Reference: `source/container-apps/web/projects/web-spa/features/style-guide/pages/StyleGuidePage.razor`
+Reference: `source/container-apps/web/projects/web-spa/features/design-system/samples/FormsSample.razor`
 (Forms card). Applied on ProfilePage, RoleForm, and AuthenticationPage.
 
 # Browser console logs in the Aspire dashboard

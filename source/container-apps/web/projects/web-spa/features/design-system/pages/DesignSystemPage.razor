@@ -1,0 +1,66 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+@inherits BaseComponent
+
+@code {
+  public static Icon? NavIcon => new Icons.Regular.Size20.Color();
+  public static string Title => "Design System";
+
+  private DesignSystemParts.Selection Current => DesignSystemParts.Resolve(Part);
+
+  private string? CrumbLabel
+  {
+    get
+    {
+      if (Current.Kind == DesignSystemParts.SelectionKind.Part)
+      {
+        return Current.Part!.Title;
+      }
+
+      if (Current.Kind == DesignSystemParts.SelectionKind.Unknown)
+      {
+        return Part;
+      }
+
+      return null;
+    }
+  }
+
+}
+
+<TimeWarpPage Title="@Title" BreadcrumbLabel="@CrumbLabel">
+  <Description>Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</Description>
+  <ChildContent>
+    <div class="ds-layout">
+      <DesignSystemCatalog SelectedSlug="@Current.Part?.Slug" Known="@(Current.Kind != DesignSystemParts.SelectionKind.Unknown)" />
+      <div class="ds-stage" data-qa="DesignSystemStage">
+        @if (Current.Kind == DesignSystemParts.SelectionKind.Unknown)
+        {
+          <div class="ds-missing" data-qa="DesignSystemUnknown">
+            <p class="ds-missing__title">No such part.</p>
+            <p class="ds-missing__body">This slug is not in the catalog.</p>
+            <FluentAnchorButton Appearance="ButtonAppearance.Subtle" Href="@DesignSystemPage.GetPageUrl()" data-qa="DesignSystemUnknownAll">All</FluentAnchorButton>
+          </div>
+        }
+        else if (Current.Kind == DesignSystemParts.SelectionKind.All)
+        {
+          <div class="twe-stack">
+            @foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
+            {
+              @DesignSystemParts.Render(part)
+            }
+          </div>
+        }
+        else
+        {
+          <div class="twe-stack" data-qa="DesignSystemPart" data-part="@Current.Part!.Slug">
+            @DesignSystemParts.Render(Current.Part)
+            <section class="ds-usage" data-qa="DesignSystemUsage">
+              <h2 class="ds-usage__label">Usage</h2>
+              <pre class="ds-usage__code"><code>@Current.Part.Usage</code></pre>
+            </section>
+          </div>
+        }
+      </div>
+    </div>
+  </ChildContent>
+</TimeWarpPage>

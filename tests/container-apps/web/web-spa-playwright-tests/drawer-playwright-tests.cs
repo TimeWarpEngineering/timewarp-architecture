@@ -1,5 +1,5 @@
 #region Purpose
-// Browser proof that the style-guide drawer moves focus in, keeps Tab inside, and returns
+// Browser proof that the design-system drawer moves focus in, keeps Tab inside, and returns
 // focus to the opener on Escape. The same run checks the dialog stays in the render tree,
 // matches :modal, paints above the app bar, and refuses focus on the opener. It also checks
 // the inline edges under both writing directions, a native dialog close, a module close that
@@ -9,10 +9,10 @@
 
 #region Design
 // Same host shape as AskFocus_Given_Wasm: in-process Web.Server, shared Chromium, en-US locale.
-// The style guide requires developer.access. The SPA does not use mock auth, so the test signs
+// The design system requires developer.access. The SPA does not use mock auth, so the test signs
 // in with a virtual passkey the way AskSignIn_Given_Wasm does. That first account is
 // Administrator, which does not include developer.access, so the test adds the Developer role
-// on the host store and loads /StyleGuide/drawers with a full navigation. Focus checks retry because
+// on the host store and loads /DesignSystem/drawers with a full navigation. Focus checks retry because
 // showModal runs after the dialog's script binds.
 // End sits on the inline-end edge and Start on the inline-start edge. The test flips the
 // document direction and the side class, then reads the settled box and the inner border.
@@ -29,15 +29,15 @@
 // page uses Blazor.navigateTo so the open dialog is disposed in place.
 #endregion
 
-namespace StyleGuideDrawerPlaywright_;
+namespace DesignSystemDrawerPlaywright_;
 
 using TimeWarp.Architecture.Features;
 using TimeWarp.Identity;
 
-public class StyleGuideDrawer_Given_Wasm
+public class DesignSystemDrawer_Given_Wasm
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<StyleGuideDrawer_Given_Wasm>();
+  internal static void Register() => RegisterTests<DesignSystemDrawer_Given_Wasm>();
 
   public static async Task Open_Should_MoveFocusIn_TrapTab_And_ReturnFocusOnEscape()
   {
@@ -54,7 +54,7 @@ public class StyleGuideDrawer_Given_Wasm
 
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide/drawers", new PageGotoOptions
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/DesignSystem/drawers", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,
@@ -68,7 +68,7 @@ public class StyleGuideDrawer_Given_Wasm
     catch (TimeoutException exception)
     {
       string text = await page.Locator("body").InnerTextAsync();
-      throw new TimeoutException($"Style guide drawer opener was not shown at {page.Url}. Page:\n{text}", exception);
+      throw new TimeoutException($"Design system drawer opener was not shown at {page.Url}. Page:\n{text}", exception);
     }
 
     await AssertNativeModalLetsTabLeaveAsync(page);

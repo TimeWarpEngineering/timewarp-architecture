@@ -5,7 +5,7 @@
 #region Design
 // Parents are PageRegistry route templates, walked at run time. These cases use a small route
 // list so a longer lookalike (/Admin/RolesNew) cannot win, then the generated registry so
-// /StyleGuide/{Part} and /Admin/Roles/{id} resolve to the pages the shell actually links.
+// /DesignSystem/{Part} and /Admin/Roles/{id} resolve to the pages the shell actually links.
 #endregion
 
 namespace PageBreadcrumbTrail_;
@@ -31,11 +31,11 @@ public class PageBreadcrumbTrail_Should_
 
   public static Task Resolve_A_Parameterized_Child()
   {
-    string[] routes = ["/", "/StyleGuide", "/Admin/Roles"];
+    string[] routes = ["/", "/DesignSystem", "/Admin/Roles"];
 
-    PageBreadcrumbTrail.ParentRoute("/StyleGuide/{Part}", routes).ShouldBe("/StyleGuide");
+    PageBreadcrumbTrail.ParentRoute("/DesignSystem/{Part}", routes).ShouldBe("/DesignSystem");
     PageBreadcrumbTrail.ParentRoute("/Admin/Roles/{RoleId:Guid}", routes).ShouldBe("/Admin/Roles");
-    PageBreadcrumbTrail.ParentRoute("/StyleGuide/color-tokens", routes).ShouldBe("/StyleGuide");
+    PageBreadcrumbTrail.ParentRoute("/DesignSystem/color-tokens", routes).ShouldBe("/DesignSystem");
     return Task.CompletedTask;
   }
 
@@ -46,23 +46,23 @@ public class PageBreadcrumbTrail_Should_
     return Task.CompletedTask;
   }
 
-  public static Task Name_Style_Guide_Parts_And_The_Role_Editor()
+  public static Task Name_Design_System_Parts_And_The_Role_Editor()
   {
     string[] routes = [.. PageRegistry.All.Select(static entry => entry.RouteTemplate)];
-    PageBreadcrumbTrail.ParentRoute("/StyleGuide/color-tokens", routes).ShouldBe("/StyleGuide");
+    PageBreadcrumbTrail.ParentRoute("/DesignSystem/color-tokens", routes).ShouldBe("/DesignSystem");
     PageBreadcrumbTrail.ParentRoute("/Admin/Roles/" + RoleIds.Administrator, routes).ShouldBe("/Admin/Roles");
     PageBreadcrumbTrail.ParentRoute("/", routes).ShouldBeNull();
 
     IReadOnlyList<PageBreadcrumbTrail.Crumb> part = PageBreadcrumbTrail.Build
     (
-      "/StyleGuide/color-tokens",
+      "/DesignSystem/color-tokens",
       "Color Tokens",
-      "Style Guide",
+      "Design System",
       PageRegistry.All
     );
-    Labels(part).ShouldBe(["Home", "Style Guide", "Color Tokens"]);
+    Labels(part).ShouldBe(["Home", "Design System", "Color Tokens"]);
     part[0].Href.ShouldBe("/");
-    part[1].Href.ShouldBe("/StyleGuide");
+    part[1].Href.ShouldBe("/DesignSystem");
     part[2].Href.ShouldBeNull();
 
     IReadOnlyList<PageBreadcrumbTrail.Crumb> role = PageBreadcrumbTrail.Build

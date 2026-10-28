@@ -144,40 +144,6 @@
 }
 
 .twe-page { padding: 20px 28px 28px; }
-.twe-page__title {
-  margin: 0 0 var(--twe-space-2);
-  font-size: var(--twe-text-page-title);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--twe-ink);
-}
-.twe-page__title:focus { outline: none; }
-
-/* Optional description and actions. The markup omits this row when both slots are empty.
-   16px is not a spacing token (the scale is 8, 12, 24, 48), so the row gap is
-   --twe-space-3 and the action gap is --twe-space-2. */
-.twe-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--twe-space-3);
-}
-.twe-page__lead { min-width: 0; flex: 1 1 auto; }
-.twe-page__description {
-  max-width: 40rem;
-  margin: 0 0 var(--twe-space-2);
-  color: var(--twe-muted);
-  font-size: var(--twe-text-body);
-  line-height: 1.55;
-}
-.twe-page__actions {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--twe-space-2);
-}
 
 /* Location trail under the title. The line ellipsizes only when it is wider than the page.
    Ancestors are links; the current page is text. Separators are aria-hidden. */
@@ -187,8 +153,10 @@
 }
 .twe-breadcrumb {
   display: block;
-  margin: 0;
-  padding: 0;
+  /* Padding keeps a 2px focus ring with a 2px offset inside the clip. The matching
+     negative margin leaves the trail where it was. overflow still ellipsizes a long line. */
+  margin: calc(-1 * var(--twe-space-1));
+  padding: var(--twe-space-1);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -208,6 +176,10 @@
 .twe-breadcrumb__link:hover {
   color: var(--twe-blue-deep);
   text-decoration: underline;
+}
+.twe-breadcrumb__link:focus-visible {
+  outline: 2px solid var(--twe-blue);
+  outline-offset: 2px;
 }
 .twe-breadcrumb__current { color: var(--twe-ink-2); }
 .twe-page__body { color: var(--twe-ink); }

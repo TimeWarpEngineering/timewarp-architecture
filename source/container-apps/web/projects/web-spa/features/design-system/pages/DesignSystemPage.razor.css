@@ -1,0 +1,50 @@
+/* Catalog stage. Part chrome lives on each sample. */
+.ds-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: var(--twe-space-6);
+  align-items: start;
+}
+
+.ds-stage { min-width: 0; }
+
+.ds-missing__title {
+  margin: 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-section-title);
+  font-weight: 700;
+}
+
+.ds-missing__body {
+  margin: var(--twe-space-2) 0;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-body);
+}
+
+.ds-usage { margin-top: var(--twe-space-6); }
+
+.ds-usage__label {
+  margin: 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-section-title);
+  font-weight: 700;
+}
+
+.ds-usage__code {
+  margin: var(--twe-space-2) 0 0;
+  overflow: auto;
+  padding: var(--twe-space-3);
+  border: 1px solid var(--twe-rule);
+  border-radius: 10px;
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  font-family: ui-monospace, monospace;
+  font-size: var(--twe-text-helper);
+  line-height: 1.4;
+  white-space: pre;
+}
+
+/* 879 matches FluentLayout MobileBreakdownWidth. Media queries cannot read the token. */
+@media (max-width: 879px) {
+  .ds-layout { grid-template-columns: minmax(0, 1fr); }
+}
