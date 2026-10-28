@@ -51,6 +51,8 @@ Raise the flatcontainer wait to 90 minutes. Steve approved 90 on 2026-10-28.
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implementation: 01a183c5-00e6-7f72-8b5b-f434f7e51008 (2026-10-29)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a183c5-00e6-7f72-8b5b-f434f7e51008, max-turns 500, Done — 2026-10-28T18:36:21Z
+- Review oracle: claude-opus-5-5, effort 1, roster general, 1 round, accepted-exceptions — 2026-10-29
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session b594f050-d36d-4940-a0c4-502a4f9540d0, max-turns 80 — 2026-10-28T18:38:10Z
 
 ## Results
 
@@ -65,6 +67,17 @@ The poll still starts at 5 seconds and doubles. `FlatcontainerPollDelayCap` stop
 `dotnet run tools/dev-cli/dev.cs -- build` finished with 0 warnings and 0 errors. The client-name scan in that build passed. `dotnet run tools/dev-cli/dev.cs -- --help` exited 0, so the runfile compiled. `./bin/dev` was not used.
 
 `ganda repo audit` exited 0 (34 passed, 1 warning, 2 skipped). The warning is `kanban-landed`: claims 070-001, 104-024, 104-025, 104-026, 123, 141, 198, and 244 have no usable worktree. Those claims are not this task. `kanban-landed --fix` does not remove that warning, so it was left as-is.
+
+### Review disposition
+
+Round 1 used one general reviewer at effort 1. Disposition is `accepted-exceptions` with 0 open
+findings: 0 bugs, 0 suggestions, and 1 nit marked wontfix (M1). M1 notes that the Design region
+repeats the 90, 1, and 15 minute values beside the constants. It was accepted because the task asked
+the Design region to state the new span, and the runtime messages are derived from the constants.
+The reviewer re-ran `dotnet run tools/dev-cli/dev.cs -- --help` (exit 0). It also confirmed that
+`workflow.yml` has no `timeout-minutes` and that no doc in this repo states 12 minutes. Paths:
+`review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+`review/disposition.md`.
 
 ### How to validate
 
@@ -85,6 +98,10 @@ Acceptance:
 - `InstallRetryBudget` stays 15 minutes.
 - `dev build` is 0 warnings and 0 errors, and `dotnet run tools/dev-cli/dev.cs -- --help` compiles the runfile.
 - No client name is added to source, tests, or skills.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
