@@ -1,0 +1,76 @@
+@namespace TimeWarp.Architecture.Features.AgentLinks
+@inherits BaseComponent
+
+@*
+  Purpose: modal view of the agent-link onboarding prompt (task 431).
+
+  Design: Prompt built by AgentLinkOnboardingPrompt.Build, the same source the page uses,
+  deferred to Activate so the prompt (and its cascade reads) exist only while the modal
+  holds ActiveModalId (ApplicationState.SetActiveModal). Content mirrors the page copy flow:
+  CopyAgentPrompt dispatches AgentLinksState.CopyOnboarding into PromptSlot. Cascade of
+  AuthenticationState reaches ModalContainer because ModalController is hosted inside
+  TimeWarpPage under CascadingAuthenticationState (Routes.razor).
+*@
+
+@code {
+  public const string ModalId = nameof(AgentLinkPromptModal);
+
+  [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+  private string? Prompt;
+
+  private bool PromptCopied => AgentLinksState.CopiedSlot == AgentLinksState.PromptSlot;
+
+  protected async Task Activate()
+  {
+    if (!RendererInfo.IsInteractive)
+    {
+      return;
+    }
+
+    string? accountId = AuthenticationStateTask is null
+      ? null
+      : (await AuthenticationStateTask).User
+        .FindFirst(IdentitySessionAuthenticationStateProvider.PrincipalIdClaimType)?.Value;
+    if (accountId is null)
+    {
+      Prompt = null;
+      return;
+    }
+
+    string origin = NavigationManager.ToAbsoluteUri("/").GetLeftPart(UriPartial.Authority);
+    Prompt = AgentLinkOnboardingPrompt.Build(accountId, origin);
+  }
+
+  private async Task CopyPromptAsync()
+  {
+    if (Prompt is null)
+    {
+      return;
+    }
+
+    await AgentLinksState.CopyOnboarding(AgentLinksState.PromptSlot, Prompt);
+  }
+}
+
+<ModalContainer ModalId=@ModalId OnActivate=Activate>
+  <MainContent>
+    <div class="twe-agent-prompt">
+      <p>Paste this prompt to your shell-capable agent. It carries your account id and a bash recipe that uses openssl and curl.</p>
+      @if (Prompt is null)
+      {
+        <p data-qa="AgentLinkPromptMissing">The prompt appears after you are signed in.</p>
+      }
+      else
+      {
+        <pre data-qa="AgentLinkPrompt">@Prompt</pre>
+        <FluentButton Appearance="ButtonAppearance.Outline"
+                      data-qa="CopyAgentPrompt"
+                      data-copied="@(PromptCopied ? "true" : "false")"
+                      OnClick="CopyPromptAsync">@(PromptCopied ? "Copied" : "Copy prompt")</FluentButton>
+      }
+    </div>
+  </MainContent>
+</ModalContainer>
