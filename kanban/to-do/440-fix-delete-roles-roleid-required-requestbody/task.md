@@ -2,12 +2,16 @@
 
 ## Description
 
-[Brief description of the task]
+`DELETE /api/Roles/{roleId}` declares `requestBody.required: true` with `*/*`
++ `application/json` DeleteRole_Command. DELETE-with-required-body is
+unusual, breaks many clients/codegen, and no other DELETE in the spec does
+this.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Confirm whether the command body is actually required
+- [ ] If not, make it optional or drop it (roleId path param suffices)
+- [ ] If required, document why and give an example body
 
 ## Session
 
@@ -15,4 +19,4 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
