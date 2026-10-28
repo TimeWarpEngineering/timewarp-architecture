@@ -3,10 +3,10 @@
 #endregion
 
 #region Design
-// Same host as the style-guide catalog: in-process Web.Server, shared Chromium, en-US.
-// The style guide needs developer.access, so the first passkey account (Administrator) also
-// receives Developer before any navigation. Ctrl-K lists each style-guide part, so one case
-// opens Color Tokens from the palette. Another opens Style Guide, then clicks Color Tokens.
+// Same host as the design-system catalog: in-process Web.Server, shared Chromium, en-US.
+// The design system needs developer.access, so the first passkey account (Administrator) also
+// receives Developer before any navigation. Ctrl-K lists each design-system part, so one case
+// opens Color Tokens from the palette. Another opens Design System, then clicks Color Tokens.
 // The trail must not keep Counter. A part-to-part click keeps one part crumb. The role editor
 // crumb is the role name once the list has loaded. Computed color and margin read the isolated
 // rules. The first crumb's focus ring must sit inside the trail list, which still ellipsizes.
@@ -37,36 +37,36 @@ public class Breadcrumb_Given_Wasm
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
 
-    await GotoAsync(page, "/StyleGuide/color-tokens");
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await GotoAsync(page, "/DesignSystem/color-tokens");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await ExpectTrailStylesAsync(page);
     await ExpectFocusRingInsideTheTrailAsync(page);
 
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=drawers]").ClickAsync();
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=drawers]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/drawers", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/drawers", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Drawers", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Drawers", "Home", "Design System");
 
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=color-tokens]").ClickAsync();
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=color-tokens]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/color-tokens", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
 
     await GotoAsync(page, "/Counter");
-    await OpenStyleGuideFromPaletteAsync(page);
-    await ExpectTrailAsync(page, "Style Guide", "Home");
+    await OpenDesignSystemFromPaletteAsync(page);
+    await ExpectTrailAsync(page, "Design System", "Home");
     await GotoAsync(page, "/Counter");
     await OpenPartFromPaletteAsync(page);
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
-    await page.Locator("[data-qa=StyleGuidePartLink][data-part=color-tokens]").ClickAsync();
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
+    await page.Locator("[data-qa=DesignSystemPartLink][data-part=color-tokens]").ClickAsync();
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/color-tokens", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-    await ExpectTrailAsync(page, "Color Tokens", "Home", "Style Guide");
+    await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     (await page.Locator("[data-qa=Breadcrumb]").InnerTextAsync()).ShouldNotContain("Counter");
 
     await GotoAsync(page, "/Admin/Roles");
@@ -167,7 +167,7 @@ public class Breadcrumb_Given_Wasm
     document.RootElement.GetProperty("outlineOffset").GetString().ShouldBe("2px");
   }
 
-  private static async Task OpenStyleGuideFromPaletteAsync(IPage page)
+  private static async Task OpenDesignSystemFromPaletteAsync(IPage page)
   {
     ILocator input = page.Locator("[data-qa=CommandPaletteInput]");
     bool opened = false;
@@ -186,7 +186,7 @@ public class Breadcrumb_Given_Wasm
     }
 
     opened.ShouldBeTrue("Ctrl-K did not open the palette");
-    await input.FillAsync("style guide");
+    await input.FillAsync("design system");
     ILocator active = page.Locator(".twe-palette__row--active");
     await Assertions.Expect(active.Locator(".twe-palette__kind")).ToHaveTextAsync
     (
@@ -195,12 +195,12 @@ public class Breadcrumb_Given_Wasm
     );
     await Assertions.Expect(active.Locator(".twe-palette__name")).ToHaveTextAsync
     (
-      "Style Guide",
+      "Design System",
       new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 }
     );
     await input.PressAsync("Enter");
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
   }
 
@@ -226,11 +226,11 @@ public class Breadcrumb_Given_Wasm
     await input.FillAsync("color tokens");
     ILocator active = page.Locator(".twe-palette__row--active");
     await Assertions.Expect(active.Locator(".twe-palette__name")).ToHaveTextAsync(
-      "Style guide: Color Tokens",
+      "Design system: Color Tokens",
       new LocatorAssertionsToHaveTextOptions { Timeout = 10_000 });
     await input.PressAsync("Enter");
     await page.WaitForURLAsync(
-      static url => url.EndsWith("/StyleGuide/color-tokens", StringComparison.Ordinal),
+      static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
   }
 

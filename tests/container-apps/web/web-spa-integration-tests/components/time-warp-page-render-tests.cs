@@ -4,7 +4,7 @@
 
 #region Design
 // Static render over StaticRenderHost, the SPA's TimeWarp.State container shared with
-// StyleGuidePage_Should_. The shell's children (nav, profile, WebMCP surface, passkey prompt)
+// DesignSystemPage_Should_. The shell's children (nav, profile, WebMCP surface, passkey prompt)
 // resolve from that container; JS import throws so the WebMCP publish treats the browser API as
 // absent. CascadingAuthenticationState wraps the page because Profile's AuthorizeView requires
 // it and the shell does not host that cascade itself (Routes does).

@@ -10,7 +10,7 @@
 // with HtmlRenderer under the principal's cascaded authentication state and its internal hrefs
 // are read; they must equal NavigationDestinations, the palette's Page rows (less Sign in), the
 // navigate enum and site_map rows on Home (less Sign in), in the same order. A principal who can
-// open the style guide also gets one palette Page row per catalog part; those rows are not menu
+// open the design system also gets one palette Page row per catalog part; those rows are not menu
 // items and not agent navigate destinations. Signed out, Sign in
 // is the one extra row on the palette, navigate and site_map, as on Ctrl-K. Every registry page
 // the principal may not open, Login while signed in, and an unknown url are refused by navigate.
@@ -44,7 +44,7 @@ using Microsoft.JSInterop;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
-using TimeWarp.Architecture.Features.StyleGuide;
+using TimeWarp.Architecture.Features.DesignSystem;
 using TimeWarp.Architecture.Web.Spa;
 
 [TestTag("Unit")]
@@ -96,9 +96,9 @@ public partial class Destinations_Should_
     using DestinationSpa administrator = new([.. PermissionIds.All]);
     string signedIn = await MenuHtmlAsync(administrator.ServiceProvider, administrator.User);
     string primary = PrimaryNav(signedIn);
-    primary.ShouldContain("/StyleGuide");
+    primary.ShouldContain("/DesignSystem");
     primary.ShouldContain("https://thefreezeteam.com/");
-    primary.IndexOf("/StyleGuide", StringComparison.Ordinal)
+    primary.IndexOf("/DesignSystem", StringComparison.Ordinal)
       .ShouldBeLessThan(primary.IndexOf("https://thefreezeteam.com/", StringComparison.Ordinal));
     signedIn.ShouldNotContain("aria-label=\"Pinned\"");
     signedIn.ShouldNotContain("twe-nav--pin");
@@ -374,9 +374,9 @@ public partial class Destinations_Should_
     string[] destinations = [.. (await NavigationDestinations.ForAsync(user, authorization)).Select(static page => page.Url)];
     destinations.ShouldContain("/", because);
     destinations.ShouldNotContain(
-      static url => url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase),
+      static url => url.StartsWith("/DesignSystem/", StringComparison.OrdinalIgnoreCase),
       because);
-    destinations.Count(static url => string.Equals(url, "/StyleGuide", StringComparison.OrdinalIgnoreCase))
+    destinations.Count(static url => string.Equals(url, "/DesignSystem", StringComparison.OrdinalIgnoreCase))
       .ShouldBeLessThanOrEqualTo(1, because);
 
     string[] menu = await MenuHrefsAsync(services, user);
@@ -387,7 +387,7 @@ public partial class Destinations_Should_
     string signIn = CommandPaletteRoster.SignInRow("/").Target;
     string[] expected = signedIn ? destinations : [signIn, .. destinations];
     string[] partUrls = await NavigationDestinations.IsAuthorizedAsync(user, authorization, PermissionIds.DeveloperAccess)
-      ? [.. StyleGuideParts.PageOrder.Select(static part => StyleGuideParts.Url(part))]
+      ? [.. DesignSystemParts.PageOrder.Select(static part => DesignSystemParts.Url(part))]
       : [];
     palette.ShouldBe([.. expected, .. partUrls], because);
 
@@ -406,7 +406,7 @@ public partial class Destinations_Should_
       destination.Description.ShouldNotBeNullOrWhiteSpace($"{because} {destination.Route}");
     }
 
-    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page", "/StyleGuide/drawers"];
+    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page", "/DesignSystem/drawers"];
     if (signedIn)
     {
       refused.Add(signIn);

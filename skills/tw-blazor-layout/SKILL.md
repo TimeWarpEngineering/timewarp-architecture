@@ -90,7 +90,7 @@ visited. The browser Back button is history. There is no per-page Back button.
   The current page is text with `aria-current="page"`. Nav groups are not crumbs. A group heading
   that is itself a page is a crumb like any other page.
 - **The current label.** `BreadcrumbLabel` names the current crumb when the nav title is not the
-  label (a style-guide part). `Title` is that label when it already matches (the role name, once
+  label (a design system part). `Title` is that label when it already matches (the role name, once
   loaded). Every route to the same page shows the same trail.
 - **Opt out.** `ShowInBreadcrumbs` false omits the trail (403, 404, and auth pages that still use
   the full shell) and uses `PageTitle` instead of `TwPageTitle`. `TwPageTitle` still sets
@@ -103,7 +103,7 @@ visited. The browser Back button is history. There is no per-page Back button.
 Page-wide actions (create, sync, export) go top right in `TimeWarpPage` `Actions`, with at most
 one Primary. A form's submit button goes at the bottom of that form, in `FormActions`, after the
 fields it saves. A sample of the title bar must not render a second `h1`; the shell's Design
-region owns the only one. The style-guide Page header part shows the bar.
+region owns the only one. The design system Page header part shows the bar.
 
 ## Navigation destinations come from one registry
 

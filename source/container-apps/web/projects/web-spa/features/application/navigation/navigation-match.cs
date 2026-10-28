@@ -4,7 +4,7 @@
 
 #region Design
 // NavMenu used NavLinkMatch.All for every item. A page whose [Page] alias contains a route
-// parameter (Style Guide: /StyleGuide and /StyleGuide/{Part}) then matches nothing on the
+// parameter (Design System: /DesignSystem and /DesignSystem/{Part}) then matches nothing on the
 // alias, and its group collapses. Prefix is derived from PageRegistryEntry.RouteTemplates,
 // which the page generator fills from those [Page] templates. A page with only plain routes
 // stays All, so /Admin does not light up on /Admin/Roles. Home is "/" and has no parameter,

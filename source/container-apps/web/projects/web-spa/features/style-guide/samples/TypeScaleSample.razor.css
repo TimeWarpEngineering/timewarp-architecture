@@ -1,7 +1,0 @@
-.sg-type { display: flex; flex-direction: column; gap: 10px; }
-.sg-type__row { color: var(--twe-ink); font-weight: 600; line-height: 1.1; }
-.sg-type__row[data-token="twe-text-page-title"] { font-size: var(--twe-text-page-title); }
-.sg-type__row[data-token="twe-text-section-title"] { font-size: var(--twe-text-section-title); }
-.sg-type__row[data-token="twe-text-body"] { font-size: var(--twe-text-body); }
-.sg-type__row[data-token="twe-text-helper"] { font-size: var(--twe-text-helper); }
-.sg-type__row[data-token="twe-text-eyebrow"] { font-size: var(--twe-text-eyebrow); }

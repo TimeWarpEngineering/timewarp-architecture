@@ -5,8 +5,8 @@
 
 #region Design
 // Sources (task 239): pages come from NavigationDestinations (task 300), the policy-filtered
-// PageRegistry that NavMenu, Ask and WebMCP read too. Style-guide parts are extra Page rows
-// from StyleGuideParts, added only when that filtered list still contains the Style Guide page.
+// PageRegistry that NavMenu, Ask and WebMCP read too. Design-system parts are extra Page rows
+// from DesignSystemParts, added only when that filtered list still contains the Design System page.
 // They are not menu
 // items and not agent navigate destinations. Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
 // ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
@@ -49,10 +49,10 @@ namespace TimeWarp.Architecture.Features.Applications;
 
 using System.Text;
 
-using TimeWarp.Architecture.Features.StyleGuide;
+using TimeWarp.Architecture.Features.DesignSystem;
 
 [CrossSliceReference(typeof(LoginPage), "Signed-out palette row navigates to Identity login (task 259).")]
-[CrossSliceReference(typeof(StyleGuideParts), "Ctrl-K lists each style-guide part from the one part table (task 424).")]
+[CrossSliceReference(typeof(DesignSystemParts), "Ctrl-K lists each design-system part from the one part table (task 424).")]
 public static class CommandPaletteRoster
 {
   /// <summary>The palette roster: pages plus commands derived from <paramref name="actions"/> (the generated ActionRoster).</summary>
@@ -134,25 +134,25 @@ public static class CommandPaletteRoster
       rows.Add(SignInRow(currentPath));
     }
 
-    bool styleGuideOpen = false;
+    bool designSystemOpen = false;
     foreach (PageRegistryEntry page in await NavigationDestinations.ForAsync(user, authorizationService, pages))
     {
       rows.Add(new CommandPaletteRow(page.Title, $"Go to {page.Url}", CommandPaletteRowKind.Page, page.Url));
-      if (page.PageType == typeof(StyleGuidePage))
+      if (page.PageType == typeof(DesignSystemPage))
       {
-        styleGuideOpen = true;
+        designSystemOpen = true;
       }
     }
 
-    // Parts follow the Style Guide row. The same policy filter that hid that page hides its parts,
+    // Parts follow the Design System row. The same policy filter that hid that page hides its parts,
     // and a caller that passed no pages (a command-only probe) does not grow a catalog.
-    if (styleGuideOpen)
+    if (designSystemOpen)
     {
-      foreach (StyleGuideParts.Part part in StyleGuideParts.PageOrder)
+      foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
       {
-        string url = StyleGuideParts.Url(part);
+        string url = DesignSystemParts.Url(part);
         rows.Add(new CommandPaletteRow(
-          "Style guide: " + part.Title,
+          "Design system: " + part.Title,
           $"Go to {url}",
           CommandPaletteRowKind.Page,
           url));

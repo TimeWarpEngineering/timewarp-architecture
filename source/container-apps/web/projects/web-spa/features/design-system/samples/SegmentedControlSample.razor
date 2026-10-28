@@ -1,0 +1,10 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+@code {
+  private static readonly string[] SegmentDemoItems = ["Day", "Week", "Month"];
+}
+
+<Card Title="Segmented Control">
+  <p class="ds-subtitle">A pill group of mutually exclusive options. The sample does not store the value.</p>
+  <SegmentedControl Items="SegmentDemoItems" Value="Week" AriaLabel="Sample period" />
+</Card>

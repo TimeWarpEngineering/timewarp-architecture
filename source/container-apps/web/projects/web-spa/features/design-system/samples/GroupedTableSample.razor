@@ -1,0 +1,40 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+<Card Title="Grouped Table">
+  <p class="ds-subtitle">One table, with a row group for each title. The page supplies the groups, the order, and the cells.</p>
+  <GroupedTable ColumnCount="3" Label="Work items" data-qa="DesignSystemGroupedTable">
+    <thead>
+      <tr>
+        <TableHeader>Item</TableHeader>
+        <TableHeader>Note</TableHeader>
+        <TableHeader>Updated</TableHeader>
+      </tr>
+    </thead>
+    <TableGroup Title="Open" Count="2" Meta="2 items">
+      <tr>
+        <Cell>Alpha</Cell>
+        <Cell>First pass</Cell>
+        <Cell>Today</Cell>
+      </tr>
+      <tr>
+        <Cell>Beta</Cell>
+        <Cell>First pass</Cell>
+        <Cell>Yesterday</Cell>
+      </tr>
+    </TableGroup>
+    <TableGroup Title="In progress" Count="1">
+      <tr>
+        <Cell>Gamma</Cell>
+        <Cell>Second pass</Cell>
+        <Cell>Monday</Cell>
+      </tr>
+    </TableGroup>
+    <TableGroup Title="Closed">
+      <tr>
+        <Cell>Delta</Cell>
+        <Cell>Filed</Cell>
+        <Cell>Last week</Cell>
+      </tr>
+    </TableGroup>
+  </GroupedTable>
+</Card>

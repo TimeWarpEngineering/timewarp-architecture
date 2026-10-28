@@ -1,0 +1,10 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+<Card Title="Role cards">
+  <p class="ds-subtitle">One option in a single-select group. The page owns which one is selected, the roving tab stop, and the arrow keys. This sample sets the tab indexes and does not move selection.</p>
+  <div class="ds-choice-grid ds-follow" role="radiogroup" aria-label="Sample role" data-qa="DesignSystemRoleCards">
+    <RoleCard Title="Owner" Description="Full access to billing, people, and records." Selected="true" tabindex="0" />
+    <RoleCard Title="Admin" Description="Manage people and records. No billing." tabindex="-1" />
+    <RoleCard Title="Staff" Description="Work assigned records." tabindex="-1" />
+  </div>
+</Card>

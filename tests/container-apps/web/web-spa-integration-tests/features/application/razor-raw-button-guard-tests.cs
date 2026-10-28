@@ -50,7 +50,7 @@ public class FeaturesRazor_Should_
     }
 
     offenders.ShouldBeEmpty(
-      "Raw <button> is banned under web-spa/features. Use FluentButton (see StyleGuidePage). Offenders: "
+      "Raw <button> is banned under web-spa/features. Use FluentButton (see DesignSystemPage). Offenders: "
       + string.Join(", ", offenders));
     return Task.CompletedTask;
   }

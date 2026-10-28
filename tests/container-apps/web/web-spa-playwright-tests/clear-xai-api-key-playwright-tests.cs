@@ -1,14 +1,14 @@
 #region Purpose
 // Browser proof that Clear key asks, Cancel and Escape leave the stored key, Enter does not
-// confirm, and the dialog's Clear key removes it. The style-guide sample asks the same way.
+// confirm, and the dialog's Clear key removes it. The design-system sample asks the same way.
 #endregion
 
 #region Design
-// Same host shape as the style-guide drawer: in-process Web.Server, shared Chromium, en-US,
+// Same host shape as the design-system drawer: in-process Web.Server, shared Chromium, en-US,
 // a virtual passkey. The first account is Administrator, which can open Admin → AI. The default
 // host has no durable secret store, so this test registers a memory store and clears any host
 // XAI:ApiKey. The page saves a key, then the real FluentUI dialog runs. Developer is granted
-// after that so /StyleGuide can open the sample confirmation.
+// after that so /DesignSystem can open the sample confirmation.
 #endregion
 
 namespace ClearXaiApiKeyPlaywright_;
@@ -113,7 +113,7 @@ public class ClearXaiApiKey_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=MessageBars]")).ToContainTextAsync("xAI API key cleared.");
 
     await GrantDeveloperAsync(graph);
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/StyleGuide/confirmations", new PageGotoOptions
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/DesignSystem/confirmations", new PageGotoOptions
     {
       WaitUntil = WaitUntilState.DOMContentLoaded,
       Timeout = 120_000,

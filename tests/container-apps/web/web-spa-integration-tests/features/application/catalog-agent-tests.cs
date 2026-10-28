@@ -398,15 +398,15 @@ public partial class CatalogAgent_Should
     settings.ShouldContain(tool => tool.Name == "Credentials.AddPasskey");
     settings.ShouldNotContain(tool => tool.Name == "Credentials.LinkMicrosoft365");
 
-    IReadOnlyList<WebMcpToolDescriptor> styleGuide = await WebMcpPublisher.DescribeAsync
+    IReadOnlyList<WebMcpToolDescriptor> designSystem = await WebMcpPublisher.DescribeAsync
     (
       Principal(PermissionIds.DeveloperAccess),
       authorization,
       catalog,
-      "/StyleGuide",
+      "/DesignSystem",
       CancellationToken.None
     );
-    Names(styleGuide).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
+    Names(designSystem).ShouldBe(["Screenshot.CaptureScreenshot", AgentNavigate.ToolName, AgentSiteMap.ToolName, PageAgentContext.ToolName]);
     Names
     (
       await WebMcpPublisher.DescribeAsync
@@ -414,10 +414,10 @@ public partial class CatalogAgent_Should
         Principal(PermissionIds.DeveloperAccess),
         authorization,
         catalog,
-        "/StyleGuide/drawers",
+        "/DesignSystem/drawers",
         CancellationToken.None
       )
-    ).ShouldBe(Names(styleGuide));
+    ).ShouldBe(Names(designSystem));
 
     Names
     (

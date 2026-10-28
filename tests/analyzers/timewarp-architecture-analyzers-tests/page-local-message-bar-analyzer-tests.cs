@@ -298,7 +298,7 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
     const string source =
       """
       #region Purpose
-      // Component with PageLocalMessageBar opt-out (style guide showcase).
+      // Component with PageLocalMessageBar opt-out (design system showcase).
       #endregion
       using Microsoft.AspNetCore.Components;
       using Microsoft.AspNetCore.Components.Rendering;
@@ -306,8 +306,8 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
       using Microsoft.AspNetCore.Components.CompilerServices;
       using TimeWarp.Architecture.Attributes;
 
-      [PageLocalMessageBar("Style guide showcases the component itself")]
-      public class StyleGuidePage
+      [PageLocalMessageBar("Design system showcases the component itself")]
+      public class DesignSystemPage
       {
         protected RenderTreeBuilder __builder;
 
@@ -322,7 +322,7 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
       }
       """;
 
-    CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "StyleGuidePage_razor.g.cs");
+    CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "DesignSystemPage_razor.g.cs");
     await test.RunAsync();
   }
 
@@ -501,7 +501,7 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
       using Microsoft.FluentUI.AspNetCore.Components;
       using Microsoft.AspNetCore.Components.CompilerServices;
 
-      public class StyleGuidePage
+      public class DesignSystemPage
       {
         protected RenderTreeBuilder __builder;
 
@@ -509,12 +509,12 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
         {
           builder.OpenComponent<FluentMessageBar>(155);
           builder.AddComponentParameter(156, nameof(FluentMessageBar.
-      #line 125 "StyleGuidePage.razor"
+      #line 125 "DesignSystemPage.razor"
       Intent
       #line default
       #line hidden
       ), RuntimeHelpers.TypeCheck<MessageBarIntent?>(
-      #line 125 "StyleGuidePage.razor"
+      #line 125 "DesignSystemPage.razor"
       MessageBarIntent.Success
       #line default
       #line hidden
@@ -525,8 +525,8 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
       }
       """;
 
-    CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "StyleGuidePage_razor.g.cs");
-    test.ExpectedDiagnostics.Add(Flag("StyleGuidePage_razor.g.cs", 23, 1, 25, "Success"));
+    CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "DesignSystemPage_razor.g.cs");
+    test.ExpectedDiagnostics.Add(Flag("DesignSystemPage_razor.g.cs", 23, 1, 25, "Success"));
     await test.RunAsync();
   }
 }

@@ -39,7 +39,7 @@ using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
-using TimeWarp.Architecture.Features.StyleGuide;
+using TimeWarp.Architecture.Features.DesignSystem;
 using TimeWarp.Architecture.Web.Spa;
 
 [TestTag("Unit")]
@@ -62,7 +62,7 @@ public class CommandPalette_Should_
       .ShouldBe(
         [
           .. PageRegistry.All.Select(static page => page.Url),
-          .. StyleGuideParts.PageOrder.Select(static part => StyleGuideParts.Url(part)),
+          .. DesignSystemParts.PageOrder.Select(static part => DesignSystemParts.Url(part)),
         ],
         ignoreOrder: true);
 
@@ -99,9 +99,9 @@ public class CommandPalette_Should_
     palette.Matches[0].Kind.ShouldBe(CommandPaletteRowKind.Page);
     palette.Matches[^1].Kind.ShouldBe(CommandPaletteRowKind.Command);
     palette.HighlightedIndex.ShouldBe(0);
-    palette.Roster.Count(static row => row.Target == "/StyleGuide").ShouldBe(1);
-    CommandPaletteRow colorTokens = palette.Roster.Single(static row => row.Target == "/StyleGuide/color-tokens");
-    colorTokens.Name.ShouldBe("Style guide: Color Tokens");
+    palette.Roster.Count(static row => row.Target == "/DesignSystem").ShouldBe(1);
+    CommandPaletteRow colorTokens = palette.Roster.Single(static row => row.Target == "/DesignSystem/color-tokens");
+    colorTokens.Name.ShouldBe("Design system: Color Tokens");
     colorTokens.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }
 
@@ -229,7 +229,7 @@ public class CommandPalette_Should_
     targets.ShouldContain("Profile.SignOut");
     foreach (string denied in new[]
     {
-      "/Counter", "/Chat", "/StyleGuide", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
+      "/Counter", "/Chat", "/DesignSystem", "/Admin/Roles", "/Admin/Principals", "/Admin/Feedback", "/Admin/Authentication",
       "/Admin/AI",
       "/AgentLinks", "/Feedback", "Feedback.ListMyFeedback", "Credentials.AddPasskey", "Credentials.AddExistingPasskey", "Credentials.LinkMicrosoft365",
     })
@@ -237,7 +237,7 @@ public class CommandPalette_Should_
       targets.ShouldNotContain(denied);
     }
 
-    targets.ShouldNotContain(static target => target.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase));
+    targets.ShouldNotContain(static target => target.StartsWith("/DesignSystem/", StringComparison.OrdinalIgnoreCase));
   }
 
   public static async Task Offer_Anonymous_Visitors_Only_Unrestricted_Pages()
@@ -287,8 +287,8 @@ public class CommandPalette_Should_
     await scope.Send(new CommandPaletteState.FilterActionSet.Action("color tokens"));
 
     CommandPaletteRow highlighted = scope.Store.GetState<CommandPaletteState>().Highlighted.ShouldNotBeNull();
-    highlighted.Name.ShouldBe("Style guide: Color Tokens");
-    highlighted.Target.ShouldBe("/StyleGuide/color-tokens");
+    highlighted.Name.ShouldBe("Design system: Color Tokens");
+    highlighted.Target.ShouldBe("/DesignSystem/color-tokens");
     highlighted.Kind.ShouldBe(CommandPaletteRowKind.Page);
   }
 

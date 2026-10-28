@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// StyleGuidePage_Should_ and TimeWarpPage_Should_ both render through this host so the
+// DesignSystemPage_Should_ and TimeWarpPage_Should_ both render through this host so the
 // registrations stay one list. JS import throws, so WebMCP treats the browser API as absent.
 // A fixed authentication state supplies the cascade Routes would host. TimeProvider.System is
 // registered because FilterBar's search debounce injects that clock; a static render never

@@ -128,8 +128,8 @@ Living anchors (timewarp-architecture template):
 ```csharp
 using TimeWarp.Foundation.Features;
 
-[CrossSliceReference(typeof(CounterState), "Living style guide exercises the counter throw-exception pipeline.")]
-partial class StyleGuidePage;
+[CrossSliceReference(typeof(CounterState), "Living design system exercises the counter throw-exception pipeline.")]
+partial class DesignSystemPage;
 ```
 
 Rules:
@@ -143,7 +143,7 @@ Rules:
 
 Living examples:
 
-- Style guide → Counters: `web-spa/features/style-guide/pages/StyleGuidePage.razor.cs`
+- Design system → Counters: `web-spa/features/design-system/pages/DesignSystemPage.razor.cs`
 - Auth pipeline deliberate edges: authentication code-behinds with multiple
   `[CrossSliceReference(...)]` when needed
 
@@ -198,7 +198,7 @@ Deleting a SPA demo touches, at minimum:
 3. `global-usings.cs` / `_Imports.razor` — its namespace usings.
 4. Tests under `tests/container-apps/web/web-spa-integration-tests/` plus shared pipeline
    tests that exercise its state (e.g. `CloneStateBehavior` uses `CounterState`).
-5. Cross-slice opt-outs that targeted it — e.g. Style Guide's
+5. Cross-slice opt-outs that targeted it — e.g. Design System's
    `[CrossSliceReference(typeof(CounterState), …)]`.
 
 SPA-only demos have no EF mapping. If you remove a **mapped** entity (one that participates

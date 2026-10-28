@@ -1,0 +1,21 @@
+@namespace TimeWarp.Architecture.Features.DesignSystem
+
+<Card Title="Trend, SLA, and class pills">
+  <p class="ds-subtitle">A move, an on-time tier, and a classification. The page passes the words. These samples change nothing.</p>
+  <div class="twe-stack">
+    <div class="ds-row">
+      <TrendPill Direction="TrendDirection.Up" Label="4.2%" />
+      <TrendPill Direction="TrendDirection.Down" Label="1.8%" />
+      <TrendPill Direction="TrendDirection.Flat" />
+    </div>
+    <div class="ds-row">
+      <SlaChip Tone="SlaTone.Good" Label="98%" />
+      <SlaChip Tone="SlaTone.Warn" Label="90%" />
+      <SlaChip Tone="SlaTone.Bad" Label="78%" />
+    </div>
+    <div class="ds-row">
+      <ClassPill Label="Operations" />
+      <ClassPill Label="Not mapped" Unmapped="true" />
+    </div>
+  </div>
+</Card>

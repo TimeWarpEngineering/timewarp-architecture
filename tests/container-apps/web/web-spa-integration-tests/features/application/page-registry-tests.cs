@@ -34,7 +34,7 @@ public class All_Should_
       "HomePage", "SettingsPage", "AgentLinksPage", "ProfilePage",
       "RolesListPage", "PrincipalsPage", "FeedbackAdminListPage", "AuthenticationPage",
       "CounterPage", "ChatPage", "PasskeysPage",
-      "StyleGuidePage", "TestPage", "ServicesPage", "UserClaimsPage",
+      "DesignSystemPage", "TestPage", "ServicesPage", "UserClaimsPage",
     })
     {
       names.ShouldContain(expected);
@@ -78,29 +78,29 @@ public class All_Should_
 
   public static Task Keep_The_Style_Guide_On_Its_Static_Route_Only()
   {
-    PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
-    styleGuide.RouteTemplate.ShouldBe("/StyleGuide");
-    styleGuide.Url.ShouldBe("/StyleGuide");
-    styleGuide.RouteTemplates.ShouldBe(["/StyleGuide", "/StyleGuide/{Part}"]);
+    PageRegistryEntry designSystem = PageRegistry.All.Single(static entry => entry.PageType.Name == "DesignSystemPage");
+    designSystem.RouteTemplate.ShouldBe("/DesignSystem");
+    designSystem.Url.ShouldBe("/DesignSystem");
+    designSystem.RouteTemplates.ShouldBe(["/DesignSystem", "/DesignSystem/{Part}"]);
     PageRegistry.All.ShouldNotContain(static entry =>
-      entry.Url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase)
+      entry.Url.StartsWith("/DesignSystem/", StringComparison.OrdinalIgnoreCase)
       || entry.RouteTemplate.Contains("{Part}", StringComparison.Ordinal));
     return Task.CompletedTask;
   }
 
   public static Task Match_Prefix_Only_When_A_Template_Has_A_Parameter()
   {
-    PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
+    PageRegistryEntry designSystem = PageRegistry.All.Single(static entry => entry.PageType.Name == "DesignSystemPage");
     PageRegistryEntry roles = PageRegistry.All.Single(static entry => entry.PageType.Name == "RolesListPage");
     PageRegistryEntry home = PageRegistry.All.Single(static entry => entry.PageType.Name == "HomePage");
-    NavigationMatch.For(styleGuide).ShouldBe(NavLinkMatch.Prefix);
+    NavigationMatch.For(designSystem).ShouldBe(NavLinkMatch.Prefix);
     NavigationMatch.For(roles).ShouldBe(NavLinkMatch.All);
     NavigationMatch.For(home).ShouldBe(NavLinkMatch.All);
     home.RouteTemplate.ShouldBe("/");
     roles.RouteTemplates.ShouldBe(["/Admin/Roles"]);
     // Role detail is its own non-navigable page, so the Roles list item stays an exact match.
     PageRegistry.All.ShouldAllBe(entry =>
-      entry.PageType.Name == "StyleGuidePage"
+      entry.PageType.Name == "DesignSystemPage"
       || entry.RouteTemplates.All(template => !template.Contains('{', StringComparison.Ordinal)));
     return Task.CompletedTask;
   }

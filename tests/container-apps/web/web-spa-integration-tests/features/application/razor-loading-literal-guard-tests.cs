@@ -41,7 +41,7 @@ public class FeaturesRazor_Should_
     }
 
     offenders.ShouldBeEmpty(
-      "Hand-written Loading… is banned under web-spa/features. Use Section (see StyleGuidePage). Offenders: "
+      "Hand-written Loading… is banned under web-spa/features. Use Section (see DesignSystemPage). Offenders: "
       + string.Join(", ", offenders));
     return Task.CompletedTask;
   }

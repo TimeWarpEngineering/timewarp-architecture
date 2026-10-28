@@ -211,7 +211,7 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
 
       public class Ping : IRequest { }
 
-      public class StyleGuidePage
+      public class DesignSystemPage
       {
         protected IMediator Mediator { get; } = default!;
 
@@ -223,8 +223,8 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
       """;
 
     CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test =
-      Test(source, sourcePath: "Pages_StyleGuidePage_razor.g.cs");
-    test.ExpectedDiagnostics.Add(Flag("Pages_StyleGuidePage_razor.g.cs", 15, 11, 36, "IMediator"));
+      Test(source, sourcePath: "Pages_DesignSystemPage_razor.g.cs");
+    test.ExpectedDiagnostics.Add(Flag("Pages_DesignSystemPage_razor.g.cs", 15, 11, 36, "IMediator"));
     await test.RunAsync();
   }
 
