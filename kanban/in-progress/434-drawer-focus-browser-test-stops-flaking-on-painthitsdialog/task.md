@@ -131,3 +131,4 @@ dotnet test -c Release -- --filter-class DesignSystemDrawer_Given_Wasm
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implementation: settled the paint sample after the open slide (2026-10-29). `ganda repo audit` exited 0. `kanban-landed` warns that other claims have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 437). Left alone. `dev build` already runs the client-name scan.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a183eb-3f11-7290-8cb1-eee1f99a4a62, max-turns 500, Done — 2026-10-28T19:36:04Z
