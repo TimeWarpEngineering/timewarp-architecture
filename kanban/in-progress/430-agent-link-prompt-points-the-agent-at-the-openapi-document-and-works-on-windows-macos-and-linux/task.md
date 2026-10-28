@@ -83,6 +83,7 @@ token issuance, and the link request with `openssl` and `curl`. Two gaps:
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18374-969e-7912-83a2-d3297ead0cd3, max-turns 500, Blocked — 2026-10-28T17:00:44Z
 - Implement oracle resumed by implementer-grok (grok, model grok-4.7) after the placeholder block (2026-10-29)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18376-4e20-79b0-9f58-e957007e6d70, max-turns 500, Done — 2026-10-28T17:36:07Z
 
 ## Notes
 
