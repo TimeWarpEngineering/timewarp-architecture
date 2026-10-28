@@ -20,7 +20,8 @@
 // AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
 // those explicit OpenAPI tags. UseScalarApiReference must run after UseFastEndpoints;
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
-// DocumentName via AddDocument.
+// DocumentName via AddDocument. OpenApiPublicServer then replaces servers with the
+// forwarded public origin. Scalar's Servers list stays empty and follows that document.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -103,8 +104,12 @@ public class CommonServerModule : IAspNetModule
         // Disable route-segment auto-tags so they do not compete with those explicit tags.
         options.AutoTagPathSegmentIndex = 0;
         options.ExcludeNonFastEndpoints = true;
+        options.ConfigureOpenApi = static openApiOptions => OpenApiPublicServer.Register(openApiOptions);
       }
     );
+    // The server transformer reads the request through IHttpContextAccessor. Hosts that already
+    // register it are unchanged (TryAdd).
+    serviceCollection.AddHttpContextAccessor();
   }
 
   /// <summary>
