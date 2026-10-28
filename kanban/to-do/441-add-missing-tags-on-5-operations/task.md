@@ -2,12 +2,17 @@
 
 ## Description
 
-[Brief description of the task]
+These ops have no `tags` (breaks Scalar grouping/codegen):
+`POST /api/Feedback/attachments`,
+`GET /api/Feedback/attachments/{attachmentId}`,
+`GET /api/identity/entra/challenge`, `POST /identity/sign-out`,
+`GET /identity/sign-out/antiforgery-token`.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Add tags (Feedback, Identity, or appropriate group)
+- [ ] Verify Scalar groups render
+- [ ] Check for other tag gaps
 
 ## Session
 
@@ -15,4 +20,4 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
