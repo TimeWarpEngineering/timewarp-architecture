@@ -127,8 +127,24 @@ dotnet test -c Release -- --filter-class DesignSystemDrawer_Given_Wasm
 ./bin/dev test --group playwright
 ```
 
+### Review
+
+- Rounds: 1. Roster: general (effort 2, by-diff budget). Reviewer: review oracle (claude-opus-5-5).
+- Final counts: bug 0, suggestion 0, nit 0. Open 0, fixed 0, wontfix 0.
+- Disposition: **clean**. No wontfix, no escalation.
+- The reviewer checked the cause against `Drawer.razor.css` (`twe-drawer-in-end`, 180ms, `translateX(100%)`). The assertion
+  is the same and stricter, not widened. The reviewer re-ran
+  `dotnet test -c Release -- --filter-class DesignSystemDrawer_Given_Wasm` in the claim worktree: 1 passed, 0 failed.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implementation: settled the paint sample after the open slide (2026-10-29). `ganda repo audit` exited 0. `kanban-landed` warns that other claims have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 437). Left alone. `dev build` already runs the client-name scan.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a183eb-3f11-7290-8cb1-eee1f99a4a62, max-turns 500, Done — 2026-10-28T19:36:04Z
+- Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 1, disposition clean, 0 open — 2026-10-29
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 204281e4-db50-42d7-bdb4-ed527a68d914, max-turns 120 — 2026-10-28T19:38:34Z
+
+## Review
+
+- Round 1: Done
