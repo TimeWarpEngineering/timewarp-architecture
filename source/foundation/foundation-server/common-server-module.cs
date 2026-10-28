@@ -18,9 +18,14 @@
 // come from generator Description.WithTags (namespace leaf under Features, plus additive
 // [OpenApiTags]); FE Tags() is filter-only and does not set OpenAPI operation tags.
 // AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
-// those explicit OpenAPI tags. UseScalarApiReference must run after UseFastEndpoints;
+// those explicit OpenAPI tags. EnableJWTBearerAuth stays off: the automatic scheme is
+// named JWTBearerAuth and FastEndpoints attaches it only when AuthSchemeNames contains
+// that string, which product endpoints never do (they list agent-token). AddAuth
+// registers JWTBearerAuth, and OpenApiBearerSecurity copies it onto agent-token
+// operations with the policy's scope. UseScalarApiReference must run after UseFastEndpoints;
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
-// DocumentName via AddDocument. OpenApiPublicServer then replaces servers with the
+// DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
+// applies the bearer. OpenApiPublicServer then replaces servers with the
 // forwarded public origin. Scalar's Servers list stays empty and follows that document.
 #endregion
 
@@ -104,7 +109,15 @@ public class CommonServerModule : IAspNetModule
         // Disable route-segment auto-tags so they do not compete with those explicit tags.
         options.AutoTagPathSegmentIndex = 0;
         options.ExcludeNonFastEndpoints = true;
-        options.ConfigureOpenApi = static openApiOptions => OpenApiPublicServer.Register(openApiOptions);
+        // The automatic JWTBearerAuth scheme is never referenced: FastEndpoints matches it
+        // against AuthSchemeNames, and those names are the ASP.NET schemes (agent-token).
+        options.EnableJWTBearerAuth = false;
+        options.AddAuth(OpenApiBearerSecurity.SchemeName, OpenApiBearerSecurity.CreateScheme());
+        options.ConfigureOpenApi = static openApiOptions =>
+        {
+          OpenApiBearerSecurity.Register(openApiOptions);
+          OpenApiPublicServer.Register(openApiOptions);
+        };
       }
     );
     // The server transformer reads the request through IHttpContextAccessor. Hosts that already
@@ -133,6 +146,7 @@ public class CommonServerModule : IAspNetModule
         options
           .WithTitle(apiTitle)
           .AddDocument(apiVersion, apiTitle)
+          .AddPreferredSecuritySchemes([OpenApiBearerSecurity.SchemeName])
           .SortTagsAlphabetically()
           .ExpandAllTags();
       }
