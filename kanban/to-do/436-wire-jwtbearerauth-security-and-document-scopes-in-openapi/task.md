@@ -2,12 +2,17 @@
 
 ## Description
 
-[Brief description of the task]
+`components.securitySchemes.JWTBearerAuth` (Bearer/JWT) is defined but no
+global `security` and zero per-operation `security` entries exist across all
+60 paths. Scope requirements (`identity:read`, `credential:manage`,
+`demo:invoke`) live only in `auth.md`/`llms.txt`, not the spec.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Add global or per-operation security referencing JWTBearerAuth
+- [ ] Annotate which ops need which scopes (agent/me=identity:read, credentials*=credential:manage, metered=demo:invoke)
+- [ ] Confirm Scalar shows Authorize
+- [ ] Document 401/403 + WWW-Authenticate problem+json behavior
 
 ## Session
 
@@ -15,4 +20,5 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
+No per-operation security anywhere; global security absent.
