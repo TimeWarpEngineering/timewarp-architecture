@@ -131,22 +131,60 @@ outside the link box.
 
 ## Goal (implementer restatement)
 
-The page shell's title bar is documented with a real Page header example (an Outline "Sync" and a
-Primary "Add item", each with an icon) instead of the dummy toast buttons on the style guide's own
-header. That example is not a second `h1`. The placement rule is written where page authors look:
-page-wide actions go in `TimeWarpPage` `Actions` (at most one Primary); a form's submit goes in
-`FormActions` at the bottom of that form. The personal xAI key policy (`XaiByokMode`) moves off
-Authentication onto the AI page as its own `SettingsWrite` command with an optimistic `Version`,
-so saving one page cannot overwrite or fail on the other's fields. When the host sets `XAI:ApiKey`,
-the policy is shown as having no effect. A nav item whose `[Page]` declares a parameterized route
-stays active, and its group stays open, on those URLs; the match comes from the generated page
-registry, and a page with only a plain route stays an exact match. The catalog packs tighter while
-keeping a comfortable click target, the current-item mark, and hover. Each catalog part is a Ctrl-K
-row built from the one part list and shown only to someone who can open the style guide. The
-breadcrumb focus ring stays inside the trail's clip box, and a long trail still ellipsizes. After
-those changes, Style Guide is renamed to Design System (routes, folder, namespace, types, CSS
-prefix, `data-qa`, tests, and skills) and a case-insensitive `style-guide` grep outside `kanban/`
-is clean or explained. Build, golden regeneration, the affected suites, and skill lint pass.
+The shipped work stays: a Page header example (Outline "Sync", Primary "Add item") that is not a
+second `h1`; page-wide actions in `TimeWarpPage` `Actions` and form submit in `FormActions`;
+`XaiByokMode` on the AI page as its own `SettingsWrite` command; a host `XAI:ApiKey` shown as
+having no effect; parameterized design-system routes keeping their nav item active and the group
+open; a tighter catalog; Ctrl-K rows from the one part list; the breadcrumb focus ring inside the
+clip; and the rename from Style Guide to Design System.
+
+This pass closes review round 1 (M1–M19).
+
+The assistant-name draft and the key-policy draft share `SiteSettingsState.Version`. When that
+version advances and the server value of a draft's own field still equals the value that draft
+last synced, the draft copies the new version and keeps a local edit. An unedited draft still
+takes a server change to its own field. Saving one form no longer leaves the other form on a
+stale version that 409s.
+
+`tw-deploy` says the BYOK policy is set on Admin → AI and that the select is read-only when the
+host key is set.
+
+The design-system contract asserts the shell header has no actions: the only `twe-page__actions`
+is inside the Page header example, and a non-header part renders none.
+
+Policy draft-sync render tests cover a stale snapshot, an agent update copied into an unedited
+draft, and a cross-form save advancing the other draft's version in both directions.
+
+Agent page facts include `xaiByokMode`. The Design region lists `UpdateXaiByokMode`. The host key
+is not part of that snapshot.
+
+A nav category opens when the current path is under one of its items' `Url + "/"`, taken from the
+registry, without marking that item active. Exact list routes and Home stay exact matches.
+
+`PageRegistryEntry.RouteTemplates` is init-only and is set in the registry object initializer.
+The side dictionary and static constructor are gone. The generator Design region says the list
+holds every `[Page]` template, including parameterized aliases, that nav match reads it, and that
+it is not a second registry row.
+
+The command-palette Design region names both slice edges (`LoginPage` and `DesignSystemParts`).
+
+One `PageTitleBar` owns the title-bar markup and CSS. The shell uses heading level 1. The sample
+uses another level so the page still has one `h1`. The description is a `div` with the shell
+margin. When both description and actions are empty, the header wrapper is omitted. The sample
+frame uses the `ds-page-header` prefix. The example buttons show placement and do not post toasts.
+
+`--twe-space-1` (4px) stays. Scale comments name 4, 8, 12, 24, 48. The token exists so catalog
+rows stay near 28px and the breadcrumb focus ring fits inside the clip.
+
+`tw-blazor` points the section, button, and forms references at the sample files.
+
+The three `Style_Guide` test names are renamed. The host-key Playwright regions cover the
+read-only policy. The `SettingsWrite` note includes `UpdateXaiByokMode`. The role-detail
+Playwright asserts the Roles item exists and is not active, and that the Admin group is expanded.
+Palette labels use `DesignSystemPage.Title`, so the visible prefix is "Design System: ".
+
+Acceptance: those behaviors hold in code and tests; skill lint and `ganda repo audit` pass;
+Results include Smoke and Expect; the task branch is committed and pushed.
 
 ## Checklist
 
@@ -164,12 +202,23 @@ is clean or explained. Build, golden regeneration, the affected suites, and skil
       staying open on `/DesignSystem/brand`, and a palette search opening a part
 - [x] `dev build` 0/0; `dev regenerate-generated` golden diff empty; affected suites pass;
       `dev lint-skills` when `skills/` changes
+- [x] Review round 1 findings M1–M19 fixed on this branch
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-27)
 - Implementation: 01a17fee-eaee-7431-874e-5b29f604f11f (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session not reported, max-turns 500, Done — 2026-10-28T01:34:59Z
+- Review oracle round 1 (2026-10-28): claude-opus-5-5, headless, effort 3. Reviewers general-1
+  (xAI policy), general-2 (nav, palette), general-3 (page header, CSS, breadcrumb, rename). Subagent
+  ids abfcef1c21f175cfa, a1e79616ebde5ed6a, a5aa812952a2f275c. Outcome: fix pass needed.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-28T01:43:43Z
+- Fix pass (implement-fix-2): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-28. Addressed M1–M19 in product and tests.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19
+- Fix pass: those findings are addressed on this branch. Dispositions in `review/round-1/merged.md` are unchanged. Round 2 is the host review node.
 
 ## Notes
 
@@ -178,6 +227,17 @@ is clean or explained. Build, golden regeneration, the affected suites, and skil
 - `XaiByokMode`: `source/libraries/timewarp-identity/settings/xai-byok-mode.cs` and
   `site-settings.cs`; the spa state is `features/settings/site-settings-state/`. A change to
   TimeWarp.Identity that is more than a comment means a platform package release.
+
+## Learnings
+
+- Misread (review round 1): `## Goal (implementer restatement)` dropped two constraints from the
+  task. Both gaps became findings.
+  - Item 3 says "Check the other parameterized pages for a sensible result". The detail pages under
+    Admin still collapse their group (M6).
+  - Item 4 says "Add a token only if none fits". `--twe-space-1` was added without a stated reason
+    (M11).
+
+  Otherwise the restatement matches items 1–7. why: review oracle round 1, 2026-10-28
 
 ## Results
 
@@ -199,7 +259,8 @@ Catalog rows use `--twe-space-1` vertical padding and a 20px line-height (about 
 gaps use `--twe-space-2` and `--twe-space-1`.
 
 Ctrl-K rows come from `DesignSystemParts` and appear only when the filtered destinations still
-include `DesignSystemPage`. The row name is `Design system: {title}`.
+include `DesignSystemPage`. The row name is `DesignSystemPage.Title` plus the part title
+(`Design System: {title}`), from `DesignSystemParts.PaletteName`.
 
 The first breadcrumb focus ring sits inside the trail list. The list keeps overflow hidden,
 nowrap, and ellipsis, with `--twe-space-1` padding and a matching negative margin.
@@ -211,32 +272,68 @@ redirect, folder `features/design-system/`, namespace `Features.DesignSystem`, t
 Kanban history is unchanged. `rename_symbol` returned NotSupported because the namespace token
 sits in generated Razor scaffolding, so the identifiers were renamed in source.
 
-`ganda repo audit` passes. `kanban-landed` warns that eight other claims have no usable
-worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). `--fix` landed nothing and
-did not change this tree.
+`ganda repo audit` passes (exit 0). `kanban-landed` remains an advisory: eight other claims have
+no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). `ganda repo audit --fix`
+landed no kitchen and did not change this tree. Those claims are outside this id.
 
-`./bin/dev build` 0 warnings, 0 errors. `./bin/dev regenerate-generated` left no golden diff.
-`./bin/dev lint-skills` passed (9 skills).
+`./bin/dev build` exited 0 after two test-project fixes (`new Regex` became an exact Playwright
+text query, and a role id became `const`). `./bin/dev lint-skills` passed (9 skills). This pass
+did not rerun `./bin/dev regenerate-generated`. That command rewrites only the ingress prefix
+golden, and this pass adds no API route. The earlier ship left that golden unchanged.
+`git grep -i -E 'style[ _-]?guide'` outside `kanban/` is empty.
 
-Release suites after the rename: PageSourceGenerator_Tests 36/36, analyzer `Should_Ban` 39/39,
-PageRegistry_ 6/6, CommandPalette_ 45/45, Destinations_Should_ 8/8, DesignSystemPage_Should_
-5/5, PageBreadcrumbTrail_Should_ 4/4, FeaturesRazor_Should_ 2/2, CatalogAgent_Should 47/47,
-DesignSystemCatalog Playwright 1/1, Breadcrumb Playwright 1/1, DesignSystemDrawer Playwright
-1/1, ClearXaiApiKey Playwright 2/2. Before the rename, the same behavior passed as
-UpdateXaiByokMode 10/10, UpdateSiteSettingsHandler 5/5, ActionCatalog 10/10, and
-SiteSettingsEndpoints 17/17.
+Review round 1 is addressed in code:
+
+- The assistant-name draft and the key-policy draft share `SiteSettingsState.Version`. When that
+  version advances and a draft's own server field still equals the value it last synced, the
+  draft copies the version and keeps a local edit. An unedited draft still takes a server change
+  to its own field.
+- `tw-deploy` says the policy is Required, Allow, or Off on Admin → AI, and that the select is
+  read-only when the host key is set.
+- The design-system contract counts `twe-page__actions` once, after the Page header example, and
+  zero times on any other part. The shell header itself has no actions.
+- Agent page facts include `xaiByokMode`. The host key stays on `XaiApiKeyState`.
+- A nav category opens when the current path is under an item `Url + "/"`, without activating
+  that item. Role, principal, and feedback details, and `/Admin/Roles/New`, open Admin. Exact
+  list routes and Home stay `NavLinkMatch.All`.
+- `PageRegistryEntry.RouteTemplates` is init-only and is assigned in the registry initializer.
+  The side dictionary and static constructor are gone.
+- `PageTitleBar` owns the title-bar markup and CSS. The shell uses heading level 1. The sample
+  uses another level, so the page still has one `h1`. Empty description and actions omit the
+  header wrapper. The sample frame is `ds-page-header`.
+- `--twe-space-1` stays 4px. Scale comments name 4, 8, 12, 24, 48. Catalog rows target about 28px
+  (20px line-height plus 4px padding on each side). `--twe-space-2` (8px) would make those rows
+  about 36px. The same 4px pad keeps the breadcrumb focus ring inside the clip.
+- Palette labels use `DesignSystemPage.Title`, so the visible prefix is "Design System: ".
+
+Fix-pass suites: PageSourceGenerator_Tests 36/36, AiPage_Should_ 5/5, DesignSystemPage_Should_
+5/5, PageRegistry_ 7/7, CommandPalette_ 45/45, PageBreadcrumbTrail_Should_ 4/4,
+TimeWarpPage_Should_ 15/15, CatalogAgent_Should 47/47, Breadcrumb Playwright 1/1,
+ClearXaiApiKey Playwright 2/2, DesignSystemCatalog Playwright 1/1. Browser proof is those
+Playwright hosts. There was no separate interactive browser session.
+
+### Review
+
+Round 1 (effort 3, three general reviewers) found 19 issues: 3 bugs, 9 suggestions, and 7 nits.
+This pass implements them. The ledger dispositions are still open until round 2. Ledger:
+`review/round-1/merged.md`. Framework: `review/review-framework.md`.
 
 ### How to validate
 
 Smoke: Sign in as a developer. Open `/DesignSystem/brand`. Open Ctrl-K and search `color tokens`.
-Open `/Admin/AI` with and without `XAI:ApiKey`. Tab to the Home crumb on a page that shows the trail.
+Open `/Admin/AI` with no host key, set the key policy to Off, change the assistant name, and save
+the name. Repeat `/Admin/AI` with `XAI:ApiKey` set. Open `/Admin/Roles`, then Administrator, and
+open `/Admin/Roles/New`. Tab to the Home crumb on a page that shows the trail.
 
 Expect: The Developer group stays open and the Design System item stays active on
 `/DesignSystem/brand`. The page has one `h1`, "Design System". The Page header part shows Sync
-and Add item and the FormActions rule, and that sample has no `h1`. Ctrl-K `color tokens`
-highlights "Design system: Color Tokens" and Enter opens `/DesignSystem/color-tokens`. On
-`/Admin/AI` the Ask API key section sits next to the xAI API key. Saving it does not require
-authentication fields. When `XAI:ApiKey` is set, the select is gone and the host reason is
-shown. Authentication has no Ask API key section. The Home crumb's focus outline is fully
-inside the trail, and a long trail still ellipsizes. `/Admin` does not stay active on
-`/Admin/Roles`. The Roles list item is not active on a role detail URL.
+and Add item and the FormActions rule, and that sample has no `h1`. The only `twe-page__actions`
+is inside that example. Ctrl-K `color tokens` highlights "Design System: Color Tokens" and Enter
+opens `/DesignSystem/color-tokens`. On `/Admin/AI` the Ask API key section sits next to the xAI
+API key. Saving the name after a local policy edit keeps Off and copies the new site-settings
+version into the policy draft, so the policy save does not 409. When `XAI:ApiKey` is set, the
+select is gone and the host reason is shown. Authentication has no Ask API key section. On a
+role detail URL and on `/Admin/Roles/New`, the Admin group is expanded and the Roles item is not
+active. A principal detail and a feedback item do the same for their list items. The Home crumb's
+focus outline is fully inside the trail, and a long trail still ellipsizes. `/Admin` does not
+stay active on `/Admin/Roles`.
