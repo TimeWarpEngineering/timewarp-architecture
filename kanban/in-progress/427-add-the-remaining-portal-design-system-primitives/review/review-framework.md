@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1819
-- Effort: 3
+- Lines changed: 244
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Framework — task 427
 
@@ -25,3 +25,8 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 scope
+
+- Diff scope: fix delta `247c4282a..f06c3c019` (product commit fe8206a19), per round-1 `base.sha`
+- Effort: 2 (by-diff budget, 244 lines); roster: general (review oracle, claude-opus-5-5)
