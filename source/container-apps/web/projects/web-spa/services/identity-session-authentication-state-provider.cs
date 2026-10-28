@@ -8,7 +8,7 @@
 // (Entra is a BFF named-scheme challenge, not a WASM MSAL session). Still needs an
 // AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
 // Reads GET api/identity/session (cookie ambient auth) and projects:
-//   - PrincipalId → NameIdentifier + timewarp:principal_id
+//   - PrincipalId → NameIdentifier + PrincipalIdClaimType (timewarp:principal_id)
 //   - Response.RoleIds → ClaimTypes.Role (diagnostics / UserClaims display; task 147-004 D4)
 //   - Response.Permissions → PermissionIds.ClaimType claims (task 182-003) so SPA policies
 //     registered via AddPermissionClaimPolicies can AuthorizeView without an evaluator in WASM
@@ -41,6 +41,9 @@ public class IdentitySessionAuthenticationStateProvider : AuthenticationStatePro
 {
   private const string AuthenticationType = "identity-session";
 
+  /// <summary>Claim carrying the session principal id (GetCurrentSession.PrincipalId).</summary>
+  public const string PrincipalIdClaimType = "timewarp:principal_id";
+
   /// <summary>Claim carrying the session principal's account fingerprint (GetCurrentSession.AccountFingerprint).</summary>
   public const string AccountFingerprintClaimType = "timewarp:account_fingerprint";
 
@@ -69,7 +72,7 @@ public class IdentitySessionAuthenticationStateProvider : AuthenticationStatePro
         List<Claim> claims =
         [
           new(ClaimTypes.NameIdentifier, principalIdValue),
-          new("timewarp:principal_id", principalIdValue),
+          new(PrincipalIdClaimType, principalIdValue),
         ];
 
         IEnumerable<Guid> roleIds = session.RoleIds is { Count: > 0 }

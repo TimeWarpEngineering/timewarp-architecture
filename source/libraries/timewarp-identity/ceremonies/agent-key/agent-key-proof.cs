@@ -15,6 +15,8 @@
 // be reused even within one ceremony type (TryConsume is one-time). BuildSignedData is PUBLIC
 // deliberately — fixtures/tests and eventual agent SDKs need to construct EXACTLY these bytes to
 // sign, and a private/duplicated construction would risk silently drifting from what Verify checks.
+// GetPrefix is public for the same reason: the onboarding prompt and tests must copy the
+// domain-separated strings Verify checks, not a second copy of those literals.
 // Signature format is DER (Rfc3279DerSequence) ONLY, matching 104-003's WebAuthn assertion path —
 // P1363 (raw r‖s) is deliberately not accepted: supporting both formats for the same curve is a
 // documented malleability/confusion surface for no Wave-1 benefit (single format, one way to verify).
@@ -84,7 +86,9 @@ public static class AgentKeyProof
     }
   }
 
-  private static string GetPrefix(AgentKeyCeremonyType ceremonyType) => ceremonyType switch
+  /// <summary>Domain-separated prefix for one ceremony. Sign UTF-8 of this prefix followed by the raw challenge.</summary>
+  /// <exception cref="ArgumentOutOfRangeException"><paramref name="ceremonyType"/> is <see cref="AgentKeyCeremonyType.None"/> or an unnamed value.</exception>
+  public static string GetPrefix(AgentKeyCeremonyType ceremonyType) => ceremonyType switch
   {
     AgentKeyCeremonyType.Registration => RegistrationPrefix,
     AgentKeyCeremonyType.TokenIssuance => TokenIssuancePrefix,
