@@ -6,8 +6,9 @@
 // Same host as the other WASM proofs: server UseMock from this project's appsettings, wwwroot
 // UseMock left false, so the page's account id is the identity-session principal claim. The
 // first passkey account is Administrator and holds agent-link.manage.self. Clipboard permissions
-// are granted so the copy buttons can be read back. The prompt must carry that id and the
-// ceremony text, and must not send the person to tools/ or a dotnet client.
+// are granted so the copy buttons can be read back. The prompt carries that id and the
+// ceremony text, and must not send the person to tools/ or a dotnet client. Task 431: the
+// prompt opens from the compact page into AgentLinkPromptModal and is read from there.
 #endregion
 
 namespace AgentLinksOnboardingPlaywright_;
@@ -54,7 +55,13 @@ public class AgentLinksOnboarding_Given_Wasm
     explanation.ShouldContain("timewarp.humanUx/v1");
     explanation.ShouldContain("GetHumanUx");
 
-    string prompt = await page.Locator("[data-qa=AgentLinkPrompt]").InnerTextAsync();
+    // Copy the account id while the page is not covered by the modal (task 431).
+    await page.Locator("[data-qa=CopyAccountId]").ClickAsync();
+    await Assertions.Expect(page.Locator("[data-qa=CopyAccountId]")).ToHaveAttributeAsync("data-copied", "true", new() { Timeout = 15_000 });
+    string copiedId = await page.EvaluateAsync<string>("() => navigator.clipboard.readText()");
+    copiedId.ShouldBe(id);
+
+    string prompt = await OpenPromptAndReadAsync(page);
     prompt.ShouldContain(id);
     prompt.ShouldContain(origin);
     prompt.ShouldContain("openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256");
@@ -84,17 +91,21 @@ public class AgentLinksOnboarding_Given_Wasm
     prompt.ShouldNotContain("tools/");
     prompt.ShouldNotContain("dotnet");
 
-    await page.Locator("[data-qa=CopyAccountId]").ClickAsync();
-    await Assertions.Expect(page.Locator("[data-qa=CopyAccountId]")).ToHaveAttributeAsync("data-copied", "true", new() { Timeout = 15_000 });
-    string copiedId = await page.EvaluateAsync<string>("() => navigator.clipboard.readText()");
-    copiedId.ShouldBe(id);
-
     await page.Locator("[data-qa=CopyAgentPrompt]").ClickAsync();
     await Assertions.Expect(page.Locator("[data-qa=CopyAgentPrompt]")).ToHaveAttributeAsync("data-copied", "true", new() { Timeout = 15_000 });
     string copiedPrompt = await page.EvaluateAsync<string>("() => navigator.clipboard.readText()");
     copiedPrompt.ShouldBe(prompt);
 
     _ = graph;
+  }
+
+  private static async Task<string> OpenPromptAndReadAsync(IPage page)
+  {
+    // Task 431: the prompt is compact on the page and lives in AgentLinkPromptModal.
+    await page.Locator("[data-qa=OpenAgentLinkPrompt]").ClickAsync();
+    ILocator promptLocator = page.Locator("[data-qa=AgentLinkPrompt]");
+    await promptLocator.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    return (await promptLocator.InnerTextAsync()).Trim();
   }
 
   private static async Task SignInWithNewPasskeyAsync(IPage page, IBrowserContext context)
