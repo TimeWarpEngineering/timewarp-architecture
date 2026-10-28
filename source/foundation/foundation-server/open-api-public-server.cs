@@ -12,17 +12,16 @@
 // A direct request keeps the framework server, so local Scalar still targets the listening address.
 // The document is built per request, so a forged header changes only the caller's own document.
 // Scalar leaves its Servers list empty and reads this document, so the UI base URL follows it.
-// Same first-value rule as the mail public-origin accessor: first header value, then the first
-// comma-separated entry; proto is honored only for http and https.
+// The origin comes from PublicRequestOrigin, the same rule mail and link previews use: first
+// header value, then the first comma-separated entry; proto is honored only for http and https;
+// a forwarded host that is not a host is refused. This transformer applies that origin only when
+// a forwarded value is present, so a direct request keeps the framework server.
 #endregion
 
 namespace TimeWarp.Foundation;
 
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
 using Microsoft.OpenApi;
 
 /// <summary>
@@ -58,65 +57,6 @@ internal static class OpenApiPublicServer
   {
     IHttpContextAccessor? httpContextAccessor = services.GetService<IHttpContextAccessor>();
     HttpRequest? request = httpContextAccessor?.HttpContext?.Request;
-    if (request is null)
-    {
-      return null;
-    }
-
-    string? forwardedHost = FirstValue(request.Headers[ForwardedHeadersDefaults.XForwardedHostHeaderName]);
-    string? forwardedProto = FirstValue(request.Headers[ForwardedHeadersDefaults.XForwardedProtoHeaderName]);
-    bool protoIsHttp = forwardedProto is not null
-      && (string.Equals(forwardedProto, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(forwardedProto, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase));
-
-    if (forwardedHost is null && !protoIsHttp)
-    {
-      return null;
-    }
-
-    if (forwardedHost is not null && !IsHost(forwardedHost))
-    {
-      return null;
-    }
-
-    string scheme = protoIsHttp ? forwardedProto!.ToLowerInvariant() : request.Scheme;
-    HostString host = forwardedHost is not null ? new HostString(forwardedHost) : request.Host;
-    if (!host.HasValue)
-    {
-      return null;
-    }
-
-    string serverUrl = UriHelper.BuildAbsolute(scheme, host, request.PathBase);
-    return Uri.TryCreate(serverUrl, UriKind.Absolute, out Uri? uri)
-      && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
-      ? serverUrl
-      : null;
-  }
-
-  private static bool IsHost(string host)
-  {
-    if (host.Contains("://", StringComparison.Ordinal)
-      || host.Contains('/', StringComparison.Ordinal)
-      || host.Contains('\\', StringComparison.Ordinal)
-      || host.Contains('@', StringComparison.Ordinal))
-    {
-      return false;
-    }
-
-    foreach (char character in host)
-    {
-      if (char.IsWhiteSpace(character) || char.IsControl(character))
-      {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private static string? FirstValue(StringValues values)
-  {
-    string? first = values.FirstOrDefault()?.Split(',')[0].Trim();
-    return string.IsNullOrEmpty(first) ? null : first;
+    return request is null ? null : PublicRequestOrigin.ForwardedServerUrl(request);
   }
 }

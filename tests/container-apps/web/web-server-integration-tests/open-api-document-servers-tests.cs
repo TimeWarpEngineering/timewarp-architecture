@@ -89,6 +89,18 @@ public class Servers_Given_
     serverUrl.ShouldNotContain("arch.timewarp.work");
   }
 
+  public static async Task MalformedForwardedHost_Should_KeepTheListenAddress()
+  {
+    using HttpRequestMessage request = DocumentRequest();
+    request.Headers.TryAddWithoutValidation("X-Forwarded-Proto", "https");
+    request.Headers.TryAddWithoutValidation("X-Forwarded-Host", "user@evil.test");
+
+    string serverUrl = await ReadServerUrlAsync(request);
+
+    serverUrl.ShouldStartWith("http://127.0.0.1:");
+    serverUrl.ShouldNotContain("evil.test");
+  }
+
   public static async Task ScalarPage_Should_NotEmbedALoopbackServer()
   {
     using HttpRequestMessage request = new(HttpMethod.Get, "/scalar/v1");
