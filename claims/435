@@ -1,1 +1,1 @@
-{"task":"435","holder":"cramer","session":"2852225","machine":"TWE-001","acquiredAt":"2026-10-28T20:32:01.975323+00:00"}
+{"task":"435","holder":"cramer","session":"2852225","machine":"TWE-001","worktree":"/home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-435-fix-openapi-servers-url-localhost-leak","branch":"task/435-fix-openapi-servers-url-localhost-leak","acquiredAt":"2026-10-28T20:32:01.975323+00:00"}
