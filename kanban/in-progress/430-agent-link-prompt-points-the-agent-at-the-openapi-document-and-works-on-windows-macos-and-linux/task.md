@@ -95,6 +95,7 @@ token issuance, and the link request with `openssl` and `curl`. Two gaps:
 - Review oracle round 1: claude-opus-5-5 (headless ganda task work), effort 2, roster general. Three findings are open (M1 suggestion, M2 and M3 nits), so a fix pass is needed. 2026-10-29
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 62d82ad0-0853-4703-91f1-91110ba4cbb3, max-turns 120 — 2026-10-28T17:40:23Z
 - Fix pass round 1 (implement-fix-2): M1, M2, and M3 implemented on this id (2026-10-29)
+- Audit: `kanban-landed` failed because task 431's in-progress kitchen was still the to-do copy on origin-home. Reconciled 431 (same holder, session not a live pid) and this task's kitchen. 2026-10-29
 
 ## Review
 
