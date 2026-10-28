@@ -1,39 +1,39 @@
 @namespace TimeWarp.Architecture.Features.DesignSystem
 
 <Card Title="Grouped Table">
-  <p class="ds-subtitle">One table, with a row group for each title. The page supplies the groups, the order, and the cells.</p>
+  <p class="ds-subtitle">One table, with a row group for each title. The page supplies the groups, the order, and the cells. Count uses the numeric cell class.</p>
   <GroupedTable ColumnCount="3" Label="Work items" data-qa="DesignSystemGroupedTable">
     <thead>
       <tr>
         <TableHeader>Item</TableHeader>
         <TableHeader>Note</TableHeader>
-        <TableHeader>Updated</TableHeader>
+        <th class="twe-numeric">Count</th>
       </tr>
     </thead>
     <TableGroup Title="Open" Count="2" Meta="2 items">
       <tr>
         <Cell>Alpha</Cell>
         <Cell>First pass</Cell>
-        <Cell>Today</Cell>
+        <td class="twe-numeric">2</td>
       </tr>
       <tr>
         <Cell>Beta</Cell>
         <Cell>First pass</Cell>
-        <Cell>Yesterday</Cell>
+        <td class="twe-numeric">1</td>
       </tr>
     </TableGroup>
     <TableGroup Title="In progress" Count="1">
       <tr>
         <Cell>Gamma</Cell>
         <Cell>Second pass</Cell>
-        <Cell>Monday</Cell>
+        <td class="twe-numeric">4</td>
       </tr>
     </TableGroup>
     <TableGroup Title="Closed">
       <tr>
         <Cell>Delta</Cell>
         <Cell>Filed</Cell>
-        <Cell>Last week</Cell>
+        <td class="twe-numeric">0</td>
       </tr>
     </TableGroup>
   </GroupedTable>

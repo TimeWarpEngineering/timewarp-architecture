@@ -1,0 +1,23 @@
+/* One term and value. The list owns the wrapping grid; this item owns the pair. */
+.twe-definition-list__item {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--twe-space-2) var(--twe-space-3);
+  align-items: baseline;
+  margin: 0;
+  min-width: 0;
+}
+
+.twe-definition-list__term {
+  margin: 0;
+  color: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+}
+
+.twe-definition-list__value {
+  margin: 0;
+  min-width: 0;
+  color: var(--twe-ink);
+  font-size: var(--twe-text-body);
+}

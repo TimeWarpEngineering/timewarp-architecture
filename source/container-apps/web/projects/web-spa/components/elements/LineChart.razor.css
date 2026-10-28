@@ -1,0 +1,33 @@
+/* Line plot — native root, CSS isolation. Tokens from tokens.css.
+   Stroke and fill come from ChartSeriesTone. The plot chooses no color of its own. */
+.twe-line-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.twe-line-chart__grid line {
+  stroke: var(--twe-rule);
+  stroke-width: 1;
+}
+
+.twe-line-chart__line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.twe-line-chart__line--ink { stroke: var(--twe-ink); }
+.twe-line-chart__line--primary { stroke: var(--twe-primary); }
+.twe-line-chart__line--positive { stroke: var(--twe-positive); }
+
+.twe-line-chart__dot--ink { fill: var(--twe-ink); }
+.twe-line-chart__dot--primary { fill: var(--twe-primary); }
+.twe-line-chart__dot--positive { fill: var(--twe-positive); }
+
+.twe-line-chart__label {
+  fill: var(--twe-muted);
+  font-size: var(--twe-text-helper);
+  font-family: var(--twe-font-sans);
+}

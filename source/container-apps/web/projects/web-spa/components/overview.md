@@ -21,6 +21,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Card.razor`
 - `StatusBadge.razor` — status pill (`twe-badge`); Active, Inactive, Warning, Info, and Error (the red lost/error status; the label carries the word); the caller can pass a label and extra attributes
 - `ChartCard.razor` — chart frame (`twe-chart-card`); title, optional header, filter, plot slot, and legend; the page draws the plot
+- `LineChart.razor` — plot for that slot (`twe-line-chart`); gridlines, one line per series, a dot on the last point; the page passes points, tones, and axis labels
 - `ChartLegendItem.razor` — one legend row (`twe-chart-legend`); ink, primary, or positive dot
 - `TrendPill.razor` — period move (`twe-trend`); up, down, or flat; the direction word is in the accessible name
 - `SlaChip.razor` — on-time tier (`twe-sla-chip`); good, warning, or behind
@@ -32,9 +33,12 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `Avatar.razor` — initials circle (`twe-avatar`); one or two letters; one brand fill; small, medium, and large
 - `UserCard.razor` (composites) — identity row (`twe-user-card`); name, optional detail, optional link; the shell pins the signed-in person under the menu
 - `EmptyState.razor` — empty list or panel (`twe-empty-state`); full paper card or inline; optional description, FluentUI icon, and actions
-- `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; optional FluentUI icon, meta, status badge, and actions
+- `IntegrationCard.razor` — external system row (`twe-integration-card`); full identity banner or compact pull-status line; compact warning tone paints the warning surface; full is unchanged; optional FluentUI icon, meta, status badge, and actions
 - `CountChip.razor` — number pill (`twe-count-chip`); neutral or accent; tabular numerals
 - `GroupedTable.razor` — one table in a paper container (`twe-grouped-table`); the page supplies the header and the groups
+- `twe-numeric` in `app.css`, beside `.twe-table` — right-aligned tabular numerals; the page puts it on `th` and `td`
+- `DefinitionList.razor` / `DefinitionItem.razor` — wrapping grid of term and value (`twe-definition-list`); the value is any content; a blank term is omitted
+- `PageSplit.razor` — primary and secondary columns (`twe-page-split`); 1.6fr and 1fr; stacks at 1100px, primary first
 - `TableGroup.razor` — one row group (`twe-table-group`); title, optional count chip, optional meta; the page supplies the rows
 - `Drawer.razor` — slide-over shell (`twe-drawer`); native modal dialog; end or start; medium or wide; optional footer
 - `FormContainer.razor` (Card shell; `ActionContent` renders in `FormActions`)
@@ -45,6 +49,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `FilterSelect.razor` (composites) — muted inline label and `FluentSelect`
 - `Tabs.razor` (composites) — underline sub-view switcher (`role="tablist"`); items raise `ValueChanged`
 - `SegmentedControl.razor` (composites) — pill group of mutually exclusive options (`role="radiogroup"`)
+- `PeriodStepper.razor` (composites) — previous, a label, and next (`twe-period-stepper`); each end can be disabled; the page owns the label and `ValueChanged`
 - `DataGridFrame.razor` (composites) — frame around every `FluentDataGrid`: scrolls sideways below the grid's minimum width, ellipsis headers; columns use `GridTemplateColumns` minmax tracks (tw-blazor)
 
 **Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.

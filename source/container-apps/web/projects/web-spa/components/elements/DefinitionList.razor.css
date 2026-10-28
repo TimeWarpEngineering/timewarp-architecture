@@ -1,0 +1,9 @@
+/* Definition list — native root, CSS isolation. Tokens from tokens.css.
+   16rem is the pair's wrap floor, not a spacing step. Pairs flow into new columns
+   when the row has room, and stack to one pair when it does not. */
+.twe-definition-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--twe-space-3) var(--twe-space-6);
+  margin: 0;
+}

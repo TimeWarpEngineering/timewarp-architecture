@@ -12,6 +12,9 @@
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
   No per-page Back button. Document title comes from TimeWarpPage Title via TwPageTitle.
+  The description is a DefinitionList item when it is not blank. A blank description
+  is omitted. The list and the permission editor sit in twe-stack, whose 16px gap
+  is the space under the description. The page does not own a fact-grid stylesheet.
 *@
 
 @code {
@@ -58,8 +61,15 @@
       }
       else
       {
-        <p class="twe-role-description">@Role.Description</p>
-        <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" />
+        <div class="twe-stack">
+          @if (!string.IsNullOrWhiteSpace(Role.Description))
+          {
+            <DefinitionList data-qa="RoleFacts">
+              <DefinitionItem Term="Description">@Role.Description</DefinitionItem>
+            </DefinitionList>
+          }
+          <RolePermissionEditor RoleId="RoleId" CanManage="CanManage" />
+        </div>
         @if (CanManage)
         {
           <FluentButton

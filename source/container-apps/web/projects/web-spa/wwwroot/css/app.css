@@ -73,6 +73,15 @@ button { font-family: inherit; }
 .twe-table th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-muted); font-weight: 600; }
 .twe-table td { padding: 8px 12px; border-bottom: 1px solid var(--twe-rule); color: var(--twe-ink); }
 
+/* Numeric cell. The page puts twe-numeric on th and td. Isolation cannot stamp
+   cells the page authors inside a table component, so the rule lives with .twe-table.
+   The two-class form beats the left-aligned th rule above. */
+.twe-table th.twe-numeric,
+.twe-table td.twe-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Exception A — FluentButton shadow DOM. Destructive Outline appearance for row actions.
    Design system is the reference; CredentialList and Settings reuse this class. */
 fluent-button.twe-button-danger {

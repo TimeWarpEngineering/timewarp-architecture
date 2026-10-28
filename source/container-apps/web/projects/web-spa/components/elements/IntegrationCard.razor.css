@@ -20,6 +20,13 @@
   color: var(--twe-muted);
 }
 
+/* Warning surface is the compact pull-status row only. 12% warning into paper
+   is the readable warning fill named beside --twe-on-warning in tokens.css. */
+.twe-integration-card--compact.twe-integration-card--warning {
+  background: color-mix(in srgb, var(--twe-warning) 12%, var(--twe-paper));
+  color: var(--twe-on-warning);
+}
+
 .twe-integration-card__icon {
   display: flex;
   align-items: center;
@@ -73,6 +80,12 @@
   font-size: var(--twe-text-helper);
   font-weight: 600;
   color: var(--twe-ink-2);
+}
+
+.twe-integration-card--compact.twe-integration-card--warning .twe-integration-card__title,
+.twe-integration-card--compact.twe-integration-card--warning .twe-integration-card__line,
+.twe-integration-card--compact.twe-integration-card--warning .twe-integration-card__meta {
+  color: var(--twe-on-warning);
 }
 
 .twe-integration-card__actions {

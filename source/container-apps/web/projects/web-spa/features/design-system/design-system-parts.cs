@@ -138,6 +138,23 @@ internal static class DesignSystemParts
     ),
     new
     (
+      "page-split",
+      "Page split",
+      Group.Layout,
+      """
+      <PageSplit>
+        <Primary>
+          <p>Primary column</p>
+        </Primary>
+        <Secondary>
+          <p>Secondary column</p>
+        </Secondary>
+      </PageSplit>
+      """,
+      typeof(PageSplitSample)
+    ),
+    new
+    (
       "filter-bar",
       "Filter Bar",
       Group.Forms,
@@ -167,6 +184,16 @@ internal static class DesignSystemParts
       <SegmentedControl Items="Items" Value="Week" AriaLabel="Sample period" />
       """,
       typeof(SegmentedControlSample)
+    ),
+    new
+    (
+      "period-stepper",
+      "Period stepper",
+      Group.Forms,
+      """
+      <PeriodStepper Label="This period" PreviousDisabled="true" />
+      """,
+      typeof(PeriodStepperSample)
     ),
     new
     (
@@ -239,6 +266,21 @@ internal static class DesignSystemParts
     ),
     new
     (
+      "definition-list",
+      "Definition list",
+      Group.Data,
+      """
+      <DefinitionList>
+        <DefinitionItem Term="Kind">Human</DefinitionItem>
+        <DefinitionItem Term="Status">
+          <StatusBadge Status="BadgeStatus.Active" />
+        </DefinitionItem>
+      </DefinitionList>
+      """,
+      typeof(DefinitionListSample)
+    ),
+    new
+    (
       "chart-frame",
       "Chart frame",
       Group.Data,
@@ -247,6 +289,9 @@ internal static class DesignSystemParts
         <Header>
           <SegmentedControl Items="Items" Value="Week" AriaLabel="Sample period" />
         </Header>
+        <ChildContent>
+          <LineChart AxisLabels="Labels" Series="Series" />
+        </ChildContent>
         <Legend>
           <ChartLegendItem Label="Series A" Tone="ChartSeriesTone.Ink" />
         </Legend>
@@ -275,6 +320,7 @@ internal static class DesignSystemParts
       <IntegrationCard Title="External system" Meta="Last data pull 2 hours ago" Status="BadgeStatus.Active" StatusLabel="Connected">
         <FluentButton Appearance="ButtonAppearance.Outline">Sync now</FluentButton>
       </IntegrationCard>
+      <IntegrationCard Variant="IntegrationCardVariant.Compact" Tone="IntegrationCardTone.Warning" Title="External system" Meta="The connection cannot be used." />
       """,
       typeof(IntegrationCardsSample)
     ),
@@ -284,15 +330,17 @@ internal static class DesignSystemParts
       "Grouped Table",
       Group.Data,
       """
-      <GroupedTable ColumnCount="3" Label="Work items">
+      <GroupedTable ColumnCount="2" Label="Work items">
         <thead>
           <tr>
             <TableHeader>Item</TableHeader>
+            <th class="twe-numeric">Count</th>
           </tr>
         </thead>
         <TableGroup Title="Open" Count="1">
           <tr>
             <Cell>Alpha</Cell>
+            <td class="twe-numeric">12</td>
           </tr>
         </TableGroup>
       </GroupedTable>

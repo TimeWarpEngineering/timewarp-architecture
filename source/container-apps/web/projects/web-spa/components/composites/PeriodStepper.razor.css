@@ -1,0 +1,39 @@
+/* Period stepper. 5px sits below the spacing scale, the same inset SegmentedControl uses. */
+.twe-period-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--twe-space-2);
+}
+
+.twe-period-stepper__button {
+  border: 1px solid var(--twe-rule);
+  background: var(--twe-paper);
+  color: var(--twe-ink);
+  font-family: inherit;
+  font-size: var(--twe-text-helper);
+  font-weight: 600;
+  padding: 5px var(--twe-space-3);
+  border-radius: var(--twe-radius-sm);
+  cursor: pointer;
+}
+
+.twe-period-stepper__button:hover { color: var(--twe-ink-2); }
+
+.twe-period-stepper__button:disabled,
+.twe-period-stepper__button:disabled:hover {
+  color: var(--twe-muted);
+  cursor: default;
+}
+
+.twe-period-stepper__button:focus-visible {
+  outline: 2px solid var(--twe-primary);
+  outline-offset: 1px;
+}
+
+.twe-period-stepper__label {
+  min-width: 6rem;
+  text-align: center;
+  font-size: var(--twe-text-body);
+  font-weight: 600;
+  color: var(--twe-ink);
+}

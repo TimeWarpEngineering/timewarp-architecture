@@ -6,6 +6,8 @@
 // IntegrationCard's icon is a FluentUI icon, so the renderer needs FluentUI services and a
 // no-op JS runtime. The component itself injects nothing. The root is a native div.
 // Full adds no modifier. Compact adds twe-integration-card--compact.
+// Tone Warning adds twe-integration-card--warning only together with compact.
+// Full ignores Tone, so the banner surface stays the paper rule.
 // A blank title or meta is omitted. The compact separator is aria-hidden and appears only
 // when both are set. Status null omits the badge. ChildContent is the actions row.
 // Class and unmatched attributes land on the root. The icon tile is aria-hidden. The root is not.
@@ -201,6 +203,43 @@ public class IntegrationCard_Should_
     metaOnly.ShouldContain("twe-integration-card__meta");
     metaOnly.ShouldNotContain("twe-integration-card__separator");
     metaOnly.ShouldNotContain("twe-integration-card__title");
+  }
+
+  public static async Task Paint_Warning_Only_On_The_Compact_Row()
+  {
+    string compact = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Title"] = "External system",
+      ["Meta"] = "The connection cannot be used.",
+      ["Variant"] = IntegrationCardVariant.Compact,
+      ["Tone"] = IntegrationCardTone.Warning
+    });
+
+    string root = RootTag(compact);
+    root.ShouldContain("twe-integration-card--compact");
+    root.ShouldContain("twe-integration-card--warning");
+    compact.ShouldContain("The connection cannot be used.");
+
+    string compactDefault = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Title"] = "External system",
+      ["Variant"] = IntegrationCardVariant.Compact,
+      ["Tone"] = IntegrationCardTone.Default
+    });
+
+    RootTag(compactDefault).ShouldNotContain("twe-integration-card--warning");
+
+    string full = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["Title"] = "External system",
+      ["Meta"] = "The connection cannot be used.",
+      ["Variant"] = IntegrationCardVariant.Full,
+      ["Tone"] = IntegrationCardTone.Warning
+    });
+
+    string fullRoot = RootTag(full);
+    fullRoot.ShouldNotContain("twe-integration-card--warning");
+    fullRoot.ShouldNotContain("twe-integration-card--compact");
   }
 
   public static async Task Merge_Class_And_Pass_Data_Qa()

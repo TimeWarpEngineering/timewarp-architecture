@@ -1,0 +1,20 @@
+/* Page split — native root, CSS isolation. Tokens from tokens.css.
+   1.6fr is the wide column and 1fr is the narrow one. 1100px is the stack
+   breakpoint. A media query cannot read a custom property. */
+.twe-page-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--twe-space-6);
+  align-items: start;
+}
+
+.twe-page-split__primary,
+.twe-page-split__secondary {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .twe-page-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

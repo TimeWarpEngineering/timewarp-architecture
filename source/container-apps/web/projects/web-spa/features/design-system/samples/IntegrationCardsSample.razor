@@ -11,7 +11,7 @@
 }
 
 <Card Title="Integration Cards">
-  <p class="ds-subtitle">A full identity banner, and the compact pull-status row. The sample buttons post a note and change nothing.</p>
+  <p class="ds-subtitle">A full identity banner, and the compact pull-status row. Warning paints only the compact row. The sample buttons post a note and change nothing.</p>
   <div class="twe-stack">
     <IntegrationCard Title="External system"
                      Meta="Last data pull 2 hours ago"
@@ -38,5 +38,13 @@
     <IntegrationCard Variant="IntegrationCardVariant.Compact"
                      Title=""
                      Meta="Last data pull 2 hours ago" />
+    <IntegrationCard Variant="IntegrationCardVariant.Compact"
+                     Tone="IntegrationCardTone.Warning"
+                     Title="External system"
+                     Meta="The connection cannot be used."
+                     Icon="@IntegrationSyncIcon"
+                     data-qa="DesignSystemIntegrationWarning">
+      <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Review connection."))">Review</FluentButton>
+    </IntegrationCard>
   </div>
 </Card>

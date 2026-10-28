@@ -10,6 +10,8 @@
 // still 409s a strip. Last-admin is SetPrincipalRoles, not this page.
 // Save sequences SetRolePermissions then FetchRoles only when
 // LastSetRolePermissionsSucceeded (handlers do not chain a fetch; failed 409 keeps drafts).
+// The description is one DefinitionList item when it is not blank. twe-stack keeps the
+// 16px gap above the permission editor. The page does not own a fact-grid stylesheet.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;

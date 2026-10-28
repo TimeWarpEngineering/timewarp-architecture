@@ -1,0 +1,24 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Primary column and secondary column.
+
+  Design: Wide layout is 1.6fr and 1fr. At 1100px and below the columns stack,
+  primary first, because primary is the first child. There is no third column.
+  Native div root so CSS isolation stamps the scope attribute. Class is appended
+  on that root, and unmatched attributes splat onto it. The page owns both
+  fragments. This component wires no events. Isolated CSS uses --twe-* tokens.
+  The 1100px breakpoint is the layout rule; a media query cannot read a token.
+*@
+
+@code {
+  [Parameter] public RenderFragment? Primary { get; set; }
+  [Parameter] public RenderFragment? Secondary { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+}
+
+<div class="twe-page-split @Class" @attributes="AdditionalAttributes">
+  <div class="twe-page-split__primary">@Primary</div>
+  <div class="twe-page-split__secondary">@Secondary</div>
+</div>

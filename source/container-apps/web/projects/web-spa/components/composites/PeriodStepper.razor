@@ -1,0 +1,47 @@
+@namespace TimeWarp.Architecture.Components
+
+@*
+  Purpose: Previous, a label, and next. The page owns the label.
+
+  Design: SegmentedControl stays the mutually exclusive choice. This stepper does
+  not know years, days, or ranges, and it does not change the label. Each end can
+  be disabled. A disabled end does not raise ValueChanged. An enabled end raises
+  ValueChanged with PeriodStep, the same way SegmentedControl raises ValueChanged
+  and leaves the value with the page. The label span is aria-live="polite", so a
+  screen reader hears the page's new label. The root is role="group". Native div
+  root so CSS isolation stamps the scope attribute. Class is appended on that root,
+  and unmatched attributes splat onto it. The buttons are type="button". Isolated
+  CSS uses --twe-* tokens.
+*@
+
+@code {
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public bool PreviousDisabled { get; set; }
+  [Parameter] public bool NextDisabled { get; set; }
+  [Parameter] public EventCallback<PeriodStep> ValueChanged { get; set; }
+  [Parameter] public string? Class { get; set; }
+  [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+  private Task StepAsync(PeriodStep step)
+  {
+    bool disabled = step == PeriodStep.Previous ? PreviousDisabled : NextDisabled;
+    if (disabled)
+    {
+      return Task.CompletedTask;
+    }
+
+    return ValueChanged.InvokeAsync(step);
+  }
+}
+
+<div class="twe-period-stepper @Class" role="group" @attributes="AdditionalAttributes">
+  <button type="button"
+          class="twe-period-stepper__button"
+          disabled="@PreviousDisabled"
+          @onclick="() => StepAsync(PeriodStep.Previous)">Previous</button>
+  <span class="twe-period-stepper__label" aria-live="polite">@Label</span>
+  <button type="button"
+          class="twe-period-stepper__button"
+          disabled="@NextDisabled"
+          @onclick="() => StepAsync(PeriodStep.Next)">Next</button>
+</div>
