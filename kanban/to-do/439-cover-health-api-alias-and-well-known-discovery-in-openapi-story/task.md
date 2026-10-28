@@ -2,12 +2,16 @@
 
 ## Description
 
-[Brief description of the task]
+`llms.txt` advertises `GET /api/health`, `GET|POST /api` (tip alias), and
+`/.well-known/*` (mcp/server-card.json, agent-skills/index.json,
+agent-card.json, webmcp.json). None appear in `/openapi/v1.json` (expected —
+Web.Server-only doc — but agents infer not-in-spec = not-exist).
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Decide include-vs-exclude for each path
+- [ ] Either add them to OpenAPI or add an explicit documented exclusion note + link from Scalar/llms.txt
+- [ ] Verify /api/health exists and is documented somewhere machine-readable
 
 ## Session
 
@@ -15,4 +19,6 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json (60 paths, no
+health/api-alias/well-known) + https://arch.timewarp.work/llms.txt,
+2026-10-28.
