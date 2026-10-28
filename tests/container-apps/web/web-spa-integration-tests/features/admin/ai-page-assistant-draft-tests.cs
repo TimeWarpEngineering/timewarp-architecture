@@ -10,6 +10,7 @@
 // the form keeping the sign-in token after state could already have been refreshed. An agent
 // update of one field copies into an unedited draft. A cross-form save advances the other
 // draft's version and keeps that draft's edit when its own server field did not change.
+// An edited draft whose own server field also changed keeps the old version and the edit.
 #endregion
 
 namespace AiPageAssistantDraft_;
@@ -163,6 +164,64 @@ public class AiPage_Should_
     html.ShouldContain("data-assistant-version=\"11\"");
     html.ShouldContain("data-xai-byok-mode=\"Off\"");
     html.ShouldContain("data-xai-byok-version=\"11\"");
+  }
+
+  public static async Task Keep_The_Old_Byok_Version_When_The_Server_Mode_Changes()
+  {
+    ScriptedWebServer server = new();
+    server.Settings = Settings("Akili", version: 3);
+    server.ByokUpdated = new UpdateXaiByokMode.Response(XaiByokMode.Required, 11);
+    using DraftSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new SiteSettingsState.FetchSiteSettingsActionSet.Action());
+
+    string html = await RenderAsync(scope, async page =>
+    {
+      SetByokMode(page, XaiByokMode.Off);
+      await scope.Send
+      (
+        new SiteSettingsState.UpdateXaiByokModeActionSet.Action
+        (
+          new UpdateXaiByokMode.Command { XaiByokMode = XaiByokMode.Required, Version = 3 }
+        )
+      );
+    });
+
+    html.ShouldContain("data-xai-byok-version=\"3\"");
+    html.ShouldContain("data-xai-byok-mode=\"Off\"");
+    html.ShouldNotContain("data-xai-byok-version=\"11\"");
+    html.ShouldNotContain("data-xai-byok-mode=\"Required\"");
+    html.ShouldContain("data-assistant-version=\"11\"");
+    html.ShouldContain("data-assistant-name=\"Akili\"");
+  }
+
+  public static async Task Keep_The_Old_Name_Version_When_The_Server_Name_Changes()
+  {
+    ScriptedWebServer server = new();
+    server.Settings = Settings("Akili", version: 3);
+    server.Renamed = new UpdateAssistantName.Response("Zawadi", 9);
+    using DraftSpa spa = new(server);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new SiteSettingsState.FetchSiteSettingsActionSet.Action());
+
+    string html = await RenderAsync(scope, async page =>
+    {
+      SetAssistantName(page, "Local");
+      await scope.Send
+      (
+        new SiteSettingsState.UpdateAssistantNameActionSet.Action
+        (
+          new UpdateAssistantName.Command { AssistantName = "Zawadi", Version = 3 }
+        )
+      );
+    });
+
+    html.ShouldContain("data-assistant-name=\"Local\"");
+    html.ShouldContain("data-assistant-version=\"3\"");
+    html.ShouldNotContain("data-assistant-version=\"9\"");
+    html.ShouldNotContain("data-assistant-name=\"Zawadi\"");
+    html.ShouldContain("data-xai-byok-version=\"9\"");
+    html.ShouldContain("data-xai-byok-mode=\"Allow\"");
   }
 
   private static GetSiteSettings.Response Settings(string name, long version, XaiByokMode mode = XaiByokMode.Allow) =>

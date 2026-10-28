@@ -9,6 +9,7 @@
 // absent. CascadingAuthenticationState wraps the page because Profile's AuthorizeView requires
 // it and the shell does not host that cascade itself (Routes does).
 // Neither slot leaves the title, breadcrumb, and body in page order with no header row.
+// A blank title still renders a set description or actions and omits the heading.
 // Scope attributes change when the stylesheet changes, so the empty-slot contract is that
 // structure, not a byte-for-byte snapshot.
 #endregion
@@ -110,6 +111,40 @@ public class TimeWarpPage_Should_
 
     hidden.ShouldNotContain("twe-page__actions");
     hidden.ShouldNotContain("data-qa=\"PageAction\"");
+  }
+
+  public static async Task Keep_Description_And_Actions_When_The_Title_Is_Blank()
+  {
+    string html = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "   ",
+      ["Description"] = Text("Manage the team."),
+      ["Actions"] = Mark("PageAction", "Add item"),
+      ["ChildContent"] = Text("Page body")
+    });
+
+    html.ShouldContain("twe-page__header");
+    html.ShouldContain("twe-page__description");
+    html.ShouldContain("Manage the team.");
+    html.ShouldContain("twe-page__actions");
+    html.ShouldContain("data-qa=\"PageAction\"");
+    html.ShouldContain("Add item");
+    html.ShouldNotContain("twe-page__title");
+    StaticRenderHost.CountOpen(html, "h1").ShouldBe(0);
+
+    string actionsOnly = await RenderAsync(new Dictionary<string, object>
+    {
+      ["Title"] = "",
+      ["Actions"] = Mark("PageAction", "Add item"),
+      ["ChildContent"] = Text("Page body")
+    });
+
+    actionsOnly.ShouldContain("twe-page__header");
+    actionsOnly.ShouldContain("twe-page__actions");
+    actionsOnly.ShouldContain("Add item");
+    actionsOnly.ShouldNotContain("twe-page__description");
+    actionsOnly.ShouldNotContain("twe-page__title");
+    StaticRenderHost.CountOpen(actionsOnly, "h1").ShouldBe(0);
   }
 
   public static async Task Render_Exactly_One_H1_With_Slots_And_A_Section_Header()

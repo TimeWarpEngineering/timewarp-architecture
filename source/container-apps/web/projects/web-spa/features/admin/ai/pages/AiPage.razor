@@ -16,7 +16,8 @@
   top bar and the next save is not a 409. A typed edit is left in place. Both drafts share that
   version. When it advances and this draft's own server field still equals the last synced value,
   the draft copies the version and keeps the edit, so saving the other form does not leave a
-  stale token.
+  stale token. When that field changed on the server as well, the edited draft keeps its old
+  version.
   Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.

@@ -19,7 +19,7 @@
 // Slugs are lowercase kebab-case. Resolve is ordinal and case-insensitive. /DesignSystem/all
 // is not a part. Usage is rendered on the single-part view only.
 // The shell header has no actions. twe-page__actions appears once, after the Page header
-// example, and a non-header part renders none.
+// example, and a non-header part renders none. That example's title is a div, not an h1.
 #endregion
 
 namespace DesignSystemPageContract_;
@@ -217,6 +217,17 @@ public class DesignSystemPage_Should_
       StaticRenderHost.Title(html).ShouldBe("Design System");
       AssertPageHeaderOwnsTheOnlyActions(html, part.Slug);
     }
+  }
+
+  public static async Task Render_The_Page_Header_Sample_Without_An_H1()
+  {
+    string html = await RenderAsync("page-header");
+    string example = Slice(html, "data-qa=\"PageHeaderExample\"", "data-qa=\"PageHeaderRule\"");
+    example.ShouldContain("twe-page__title");
+    example.ShouldContain("Reports");
+    example.IndexOf("<h1", StringComparison.Ordinal).ShouldBe(-1);
+    StaticRenderHost.CountOpen(html, "h1").ShouldBe(1);
+    StaticRenderHost.Title(html).ShouldBe("Design System");
   }
 
   public static async Task Show_An_Unknown_Slug_Inside_The_Page()

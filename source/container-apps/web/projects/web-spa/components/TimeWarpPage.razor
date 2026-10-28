@@ -54,7 +54,8 @@
   markup unchanged, so existing pages keep one h1 and no extra row. Either slot set lays the
   title and description on the left and the actions (wrapping) on the right. The document title
   stays here. PageTitleBar is the one copy of the heading, description, and actions. This
-  component passes heading level 1, so the shell still owns the only h1. Callers put buttons in
+  component passes IsPageHeading true, so the shell still owns the only h1. A blank Title
+  omits that heading and still renders Description and Actions. Callers put buttons in
   Actions; this shell does not handle their clicks. Page-wide actions (create, sync, export) go
   in Actions, with at most one Primary. A form's submit button goes at the bottom of that form,
   in FormActions, after the fields it saves. A sample of the title bar must not render a second h1.
@@ -233,7 +234,7 @@
       <FluentLayoutItem Area="LayoutArea.Content">
         <div class="twe-page">
           @TitleBlock
-          <PageTitleBar Title="@Title" HeadingLevel="1" Description="Description" Actions="Actions" />
+          <PageTitleBar Title="@Title" IsPageHeading="true" Description="Description" Actions="Actions" />
           @BreadcrumbBlock
           <div class="twe-page__body">
             <WebMcpAgentSurface />
