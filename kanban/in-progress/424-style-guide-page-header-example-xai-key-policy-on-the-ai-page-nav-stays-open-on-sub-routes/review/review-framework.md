@@ -2,11 +2,22 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1385
-- Effort: 3
+- Lines changed: 577
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
+
+## Round 3
+
+**Date:** 2026-10-28
+**Diff scope:** the fix-pass delta since round 2, `31bdd4ae7..0057d58aa` (product commit `727527b21`),
+excluding `kanban/`.
+**Plan / brief:** the open round-2 findings M20, M23, M24, and M25 (`review/round-2/merged.md`), and
+task.md `## Goal (implementer restatement)`.
+**Effort:** 2 (by-diff budget above). Roster: general. The delta is 130 lines added and 18 removed,
+so the oracle reviewed it inline as the single general reviewer (`review/round-3/general.md`).
+**Session IDs:** review oracle (claude-opus-5-5, headless `ganda task work`). No subagents.
 
 ## Round 2
 
