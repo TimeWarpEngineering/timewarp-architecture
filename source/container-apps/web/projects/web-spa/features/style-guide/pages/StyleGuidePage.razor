@@ -25,16 +25,10 @@
     }
   }
 
-  private async Task ShowMessage(MessageBarIntent intent, string title) =>
-    await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
 }
 
 <TimeWarpPage Title="Style Guide" BreadcrumbLabel="@CrumbLabel">
   <Description>Live brand tokens, type scale, and components — TimeWarp Enterprises brand.</Description>
-  <Actions>
-    <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Outline action."))">Outline</FluentButton>
-    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="@(() => ShowMessage(MessageBarIntent.Success, "Primary action."))">Primary</FluentButton>
-  </Actions>
   <ChildContent>
     <div class="sg-layout">
       <StyleGuideCatalog SelectedSlug="@Current.Part?.Slug" Known="@(Current.Kind != StyleGuideParts.SelectionKind.Unknown)" />

@@ -25,6 +25,7 @@ public class StyleGuideCatalog_Given_Wasm
     "Forms",
     "Section",
     "Section Header",
+    "Page header",
     "Filter Bar",
     "Tabs",
     "Segmented Control",
@@ -90,6 +91,20 @@ public class StyleGuideCatalog_Given_Wasm
       .ToHaveAttributeAsync("aria-current", "page");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).Not.ToHaveAttributeAsync("aria-current", "page");
     await ExpectGroupHeadingsAsync(catalog, GroupNames);
+    await ExpectStyleGuideNavOpenAsync(page);
+
+    await GotoAsync(page, "/StyleGuide/brand");
+    await ExpectStyleGuideNavOpenAsync(page);
+    await Assertions.Expect(titles).ToHaveTextAsync("Brand");
+
+    await GotoAsync(page, "/StyleGuide/page-header");
+    await Assertions.Expect(page.Locator("h1")).ToHaveCountAsync(1);
+    await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync("Style Guide");
+    await Assertions.Expect(page.Locator("[data-qa=PageHeaderExample] h1")).ToHaveCountAsync(0);
+    await Assertions.Expect(page.Locator("[data-qa=PageHeaderSync]")).ToContainTextAsync("Sync");
+    await Assertions.Expect(page.Locator("[data-qa=PageHeaderAdd]")).ToContainTextAsync("Add item");
+    await Assertions.Expect(page.Locator("[data-qa=PageHeaderRule]")).ToContainTextAsync("FormActions");
+    await ExpectStyleGuideNavOpenAsync(page);
 
     await GotoAsync(page, "/StyleGuide");
     await Assertions.Expect(page.Locator("[data-qa=StyleGuideAll]")).ToHaveAttributeAsync("aria-current", "page");
@@ -97,6 +112,9 @@ public class StyleGuideCatalog_Given_Wasm
     await Assertions.Expect(titles).ToHaveCountAsync(PartTitles.Length);
     IReadOnlyList<string> shown = await titles.AllInnerTextsAsync();
     shown.ShouldBe(PartTitles);
+    double rowHeight = await page.EvaluateAsync<double>(
+      "() => document.querySelector('[data-qa=StyleGuidePartLink]').getBoundingClientRect().height");
+    rowHeight.ShouldBeInRange(26, 32);
     await ExpectGroupHeadingsAsync(catalog, GroupNames);
     await Assertions.Expect(catalog.Locator("ul.sg-catalog__parts")).ToHaveCountAsync(GroupNames.Length);
     await Assertions.Expect(catalog.Locator("ul.sg-catalog__parts[aria-labelledby='sg-catalog-layout']"))
@@ -151,6 +169,46 @@ public class StyleGuideCatalog_Given_Wasm
     {
       await Assertions.Expect(catalog.GetByRole(AriaRole.Heading, new() { Name = name, Exact = true }))
         .ToHaveCountAsync(1);
+    }
+  }
+
+  private static async Task ExpectStyleGuideNavOpenAsync(IPage page)
+  {
+    const string probe =
+      """
+      () => {
+        const item = document.querySelector('a[href="/StyleGuide"]');
+        const group = item && item.closest('.fluent-navsubitemgroup');
+        const active = item !== null && item.classList.contains('active');
+        const expanded = group !== null && group.classList.contains('expanded');
+        return JSON.stringify({
+          open: active && expanded,
+          active,
+          expanded,
+          group: group ? group.className : null,
+        });
+      }
+      """;
+    try
+    {
+      await page.WaitForFunctionAsync(
+        """
+        () => {
+          const item = document.querySelector('a[href="/StyleGuide"]');
+          const group = item && item.closest('.fluent-navsubitemgroup');
+          return item !== null && item.classList.contains('active')
+            && group !== null && group.classList.contains('expanded');
+        }
+        """,
+        null,
+        new PageWaitForFunctionOptions { Timeout = 30_000 });
+    }
+    catch (TimeoutException exception)
+    {
+      string state = await page.EvaluateAsync<string>(probe);
+      throw new TimeoutException(
+        "the Style Guide nav item stays active and its group stays open: " + state,
+        exception);
     }
   }
 

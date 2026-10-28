@@ -9,7 +9,10 @@
   // Design: Rendered from NavigationDestinations (task 300): the generated PageRegistry
   // ([Page(Navigable = true)]) filtered by each page's own Policy for the signed-in principal,
   // in NavOrder. The same list is the Ctrl-K palette's pages and the agent's navigate and
-  // site_map destinations, so the menu cannot drift from them. A page's [Page] NavGroup names
+  // site_map destinations, so the menu cannot drift from them. A page whose [Page] templates
+  // include a route parameter uses NavLinkMatch.Prefix (NavigationMatch, from the registry),
+  // so a style-guide part keeps that item active and its group open. A plain route stays
+  // exact. A page's [Page] NavGroup names
   // its FluentNavCategory; consecutive pages with the same group share one category and "" is
   // the top level. NavPlacement.Bottom renders that group in a second nav pinned to the bottom
   // of this menu, and only when a permitted page uses Bottom. This template's pages stay Top,
@@ -177,7 +180,7 @@
       {
         foreach (PageRegistryEntry destination in pages)
         {
-          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
+          <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=@NavigationMatch.For(destination) Tooltip=@ItemTooltip(destination.Title)>
             <span class="twe-nav__label">@destination.Title</span>
           </FluentNavItem>
         }
@@ -187,7 +190,7 @@
         <FluentNavCategory Title=@group Class="twe-nav__category">
           @foreach (PageRegistryEntry destination in pages)
           {
-            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=NavLinkMatch.All Tooltip=@ItemTooltip(destination.Title)>
+            <FluentNavItem IconRest=destination.NavIcon Href=@destination.Url Match=@NavigationMatch.For(destination) Tooltip=@ItemTooltip(destination.Title)>
               <span class="twe-nav__label">@destination.Title</span>
             </FluentNavItem>
           }

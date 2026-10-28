@@ -1,0 +1,39 @@
+@namespace TimeWarp.Architecture.Features.StyleGuide
+@inherits BaseComponent
+
+@code {
+  private static readonly Icon SyncIcon = new Icons.Regular.Size20.ArrowSync();
+  private static readonly Icon AddIcon = new Icons.Regular.Size20.Add();
+
+  private async Task ShowMessage(MessageBarIntent intent, string title) =>
+    await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
+}
+
+<Card Title="Page header">
+  <div class="ph-sample" data-qa="PageHeaderExample">
+    <div class="twe-page__header">
+      <div class="twe-page__lead">
+        <div class="twe-page__title">Reports</div>
+        <p class="twe-page__description">Summary for the current period.</p>
+      </div>
+      <div class="twe-page__actions">
+        <FluentButton Appearance="ButtonAppearance.Outline"
+                      IconStart="@SyncIcon"
+                      OnClick="@(() => ShowMessage(MessageBarIntent.Info, "Sync."))"
+                      data-qa="PageHeaderSync">
+          Sync
+        </FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary"
+                      IconStart="@AddIcon"
+                      OnClick="@(() => ShowMessage(MessageBarIntent.Success, "Add item."))"
+                      data-qa="PageHeaderAdd">
+          Add item
+        </FluentButton>
+      </div>
+    </div>
+  </div>
+  <p class="ph-sample__rule" data-qa="PageHeaderRule">
+    Page-wide actions (create, sync, export) go top right in TimeWarpPage Actions, with at most one Primary.
+    A form's submit button goes at the bottom of that form, in FormActions, after the fields it saves.
+  </p>
+</Card>

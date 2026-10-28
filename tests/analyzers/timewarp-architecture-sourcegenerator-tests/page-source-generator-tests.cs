@@ -419,7 +419,11 @@ public class PageSourceGenerator_Tests
       "new(typeof(global::Test.Pages.CounterPage), [\"/Counter\", \"/Counter/{Amount:int}\"], "
       + "[typeof(global::Test.States.CounterState.IncrementActionSet.Action)]),");
     // A page without AgentActions is not an action scope; a non-navigable page with them is.
+    // RouteTemplatesByPage follows the scopes and does list every navigable page, including PlainPage.
     string scopes = registry.Substring(registry.IndexOf("ActionScopes", StringComparison.Ordinal));
+    int templates = scopes.IndexOf("RouteTemplatesByPage", StringComparison.Ordinal);
+    templates.ShouldBeGreaterThan(0);
+    scopes = scopes[..templates];
     scopes.ShouldNotContain("PlainPage");
     return Task.CompletedTask;
   }
@@ -541,9 +545,13 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("public static string Policy { get; } = Policies.ClientsRead;");
     // Only the primary route is a registry row.
     string registry = RegistryOf(generated);
-    registry.ShouldContain("new(typeof(global::Test.Pages.ClientsPage), \"/clients\"");
-    registry.ShouldNotContain("revenue");
-    registry.ShouldNotContain("me-close");
+    int dictionary = registry.IndexOf("RouteTemplatesByPage", StringComparison.Ordinal);
+    dictionary.ShouldBeGreaterThan(0);
+    string all = registry[..dictionary];
+    all.ShouldContain("new(typeof(global::Test.Pages.ClientsPage), \"/clients\"");
+    all.ShouldNotContain("revenue");
+    all.ShouldNotContain("me-close");
+    registry.ShouldContain("[typeof(global::Test.Pages.ClientsPage)] = [\"/clients\", \"/clients/revenue\", \"/clients/me-close\"],");
     return Task.CompletedTask;
   }
 
@@ -597,6 +605,7 @@ public class PageSourceGenerator_Tests
     generated.ShouldContain("partial class ClientsPage : INavigableComponent, IStaticRoute, INavigationDestination");
     generated.ShouldContain("public static string GetPageUrl() =>");
     RegistryOf(generated).ShouldContain("typeof(global::Test.Pages.ClientsPage), \"/clients\"");
+    RegistryOf(generated).ShouldContain("[typeof(global::Test.Pages.ClientsPage)] = [\"/clients\", \"/clients/{ClientId}/revenue\"],");
     return Task.CompletedTask;
   }
 

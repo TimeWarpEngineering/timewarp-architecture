@@ -118,6 +118,22 @@ internal static class StyleGuideParts
     ),
     new
     (
+      "page-header",
+      "Page header",
+      Group.Layout,
+      """
+      <TimeWarpPage Title="Reports">
+        <Description>Summary for the current period.</Description>
+        <Actions>
+          <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.ArrowSync())">Sync</FluentButton>
+          <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Add())">Add item</FluentButton>
+        </Actions>
+      </TimeWarpPage>
+      """,
+      typeof(PageHeaderSample)
+    ),
+    new
+    (
       "filter-bar",
       "Filter Bar",
       Group.Forms,

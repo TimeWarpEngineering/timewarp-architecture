@@ -12,9 +12,11 @@
 
 namespace PageRegistry_;
 
+using Microsoft.AspNetCore.Components.Routing;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Common.Interfaces;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.Applications;
 
 [TestTag("Unit")]
 public class All_Should_
@@ -79,9 +81,27 @@ public class All_Should_
     PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
     styleGuide.RouteTemplate.ShouldBe("/StyleGuide");
     styleGuide.Url.ShouldBe("/StyleGuide");
+    styleGuide.RouteTemplates.ShouldBe(["/StyleGuide", "/StyleGuide/{Part}"]);
     PageRegistry.All.ShouldNotContain(static entry =>
       entry.Url.StartsWith("/StyleGuide/", StringComparison.OrdinalIgnoreCase)
       || entry.RouteTemplate.Contains("{Part}", StringComparison.Ordinal));
+    return Task.CompletedTask;
+  }
+
+  public static Task Match_Prefix_Only_When_A_Template_Has_A_Parameter()
+  {
+    PageRegistryEntry styleGuide = PageRegistry.All.Single(static entry => entry.PageType.Name == "StyleGuidePage");
+    PageRegistryEntry roles = PageRegistry.All.Single(static entry => entry.PageType.Name == "RolesListPage");
+    PageRegistryEntry home = PageRegistry.All.Single(static entry => entry.PageType.Name == "HomePage");
+    NavigationMatch.For(styleGuide).ShouldBe(NavLinkMatch.Prefix);
+    NavigationMatch.For(roles).ShouldBe(NavLinkMatch.All);
+    NavigationMatch.For(home).ShouldBe(NavLinkMatch.All);
+    home.RouteTemplate.ShouldBe("/");
+    roles.RouteTemplates.ShouldBe(["/Admin/Roles"]);
+    // Role detail is its own non-navigable page, so the Roles list item stays an exact match.
+    PageRegistry.All.ShouldAllBe(entry =>
+      entry.PageType.Name == "StyleGuidePage"
+      || entry.RouteTemplates.All(template => !template.Contains('{', StringComparison.Ordinal)));
     return Task.CompletedTask;
   }
 

@@ -38,7 +38,7 @@ public class StyleGuidePage_Should_
 
   public static async Task List_Every_Part_In_Page_Order()
   {
-    StyleGuideParts.PageOrder.Length.ShouldBe(29);
+    StyleGuideParts.PageOrder.Length.ShouldBe(30);
     StyleGuideParts.PageOrder.Select(static part => part.Slug).ShouldBeUnique();
     foreach (StyleGuideParts.Part part in StyleGuideParts.PageOrder)
     {
@@ -89,6 +89,7 @@ public class StyleGuidePage_Should_
       "Forms",
       "Section",
       "Section Header",
+      "Page header",
       "Filter Bar",
       "Tabs",
       "Segmented Control",

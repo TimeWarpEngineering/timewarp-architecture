@@ -61,6 +61,21 @@ public class ClearXaiApiKey_Given_Wasm
       throw new TimeoutException($"Admin AI key field was not shown at {page.Url}. Page:\n{text}", exception);
     }
 
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokMode]")).ToBeVisibleAsync();
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await Assertions.Expect(page.Locator("[data-qa=AuthenticationSave]")).ToBeVisibleAsync();
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeSettings]")).ToHaveCountAsync(0);
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await input.WaitForAsync(new LocatorWaitForOptions { Timeout = 120_000 });
+
     await input.Locator("input").FillAsync(Secret);
     await page.Locator("[data-qa=XaiApiKeySave]").ClickAsync();
     ILocator status = page.Locator("[data-qa=XaiApiKeyStatus]");
@@ -119,6 +134,34 @@ public class ClearXaiApiKey_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=MessageBars]")).ToContainTextAsync(
       "Sample confirmed.",
       new LocatorAssertionsToContainTextOptions { Timeout = 10_000 });
+  }
+
+  public static async Task HostKey_Should_Show_The_Policy_As_Having_No_Effect()
+  {
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.PostConfigure<XaiChatOptions>(options => options.ApiKey = "playwright-host-key"));
+    graph.Web.ShouldNotBeNull();
+
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+    await using IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      IgnoreHTTPSErrors = true,
+      ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+      Locale = "en-US",
+    });
+    IPage page = await context.NewPageAsync();
+    await SignInWithNewPasskeyAsync(page, context);
+    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions
+    {
+      WaitUntil = WaitUntilState.DOMContentLoaded,
+      Timeout = 120_000,
+    });
+    await Assertions.Expect(page.Locator("[data-qa=XaiApiKeyManagedByHost]")).ToBeVisibleAsync(
+      new LocatorAssertionsToBeVisibleOptions { Timeout = 120_000 });
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokMode]")).ToHaveCountAsync(0);
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeReadOnly]")).ToBeVisibleAsync();
+    await Assertions.Expect(page.Locator("[data-qa=XaiByokModeHostReason]")).ToContainTextAsync(
+      "this policy has no effect");
   }
 
   private static async Task GrantDeveloperAsync(HostGraph graph)

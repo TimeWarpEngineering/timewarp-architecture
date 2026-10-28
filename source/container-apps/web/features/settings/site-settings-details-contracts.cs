@@ -11,11 +11,10 @@
 // domain, the distinct-count cap, and duplicate collapse cannot drift. An empty list is valid
 // and means Restricted accepts nobody. Null is refused. Task 306: this shape is the trust
 // policy. Task 401: each entry is a tenant id plus an optional domain.
-// Task 399: XaiByokMode is whose key Ask uses below the host key. Allow is the zero value, so a
-// client that omits the field stays on Allow. Reseed does not write this field.
 // AssistantName is not on this shape. UpdateAssistantName owns the name so an authentication
-// save does not round-trip it. GetSiteSettings.Response and UpdateSiteSettings.Response still
-// echo the stored name.
+// save does not round-trip it. XaiByokMode is not on this shape either. UpdateXaiByokMode owns
+// the mode so an authentication save cannot overwrite it. GetSiteSettings.Response and
+// UpdateSiteSettings.Response still echo the stored name and the stored mode.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -29,7 +28,6 @@ public interface ISiteSettingsDetails
   PasskeyPromptMode PasskeyPromptMode { get; set; }
   EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
   List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; }
-  XaiByokMode XaiByokMode { get; set; }
 }
 
 public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettingsDetails>
@@ -39,8 +37,6 @@ public sealed class SiteSettingsDetailsValidator : AbstractValidator<ISiteSettin
     RuleFor(details => details.PasskeyPromptMode)
       .IsInEnum();
     RuleFor(details => details.EntraTenantAcceptanceMode)
-      .IsInEnum();
-    RuleFor(details => details.XaiByokMode)
       .IsInEnum();
     RuleFor(details => details.EntraAcceptedTenants)
       .NotNull()

@@ -332,6 +332,78 @@ public class Returns_
     (await put.Content.ReadAsStringAsync()).ShouldContain("Concurrency conflict");
   }
 
+  public static async Task Administrator_Put_Xai_Byok_Mode_Should_Survive_An_Authentication_Save()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await GrantAdministratorAsync(principalId);
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    GetSiteSettings.Response before = await ReadSettingsAsync(client);
+    try
+    {
+      UpdateXaiByokMode.Response updated = await PutXaiByokModeAsync(client, XaiByokMode.Required);
+      updated.XaiByokMode.ShouldBe(XaiByokMode.Required);
+      updated.Version.ShouldBe(before.Version + 1);
+
+      GetSiteSettings.Response current = await ReadSettingsAsync(client);
+      current.XaiByokMode.ShouldBe(XaiByokMode.Required);
+      string authBody = JsonSerializer.Serialize(
+        new
+        {
+          entraSignInEnabled = current.EntraSignInEnabled,
+          entraAllowBootstrap = current.EntraAllowBootstrap,
+          passkeyPromptMode = current.PasskeyPromptMode.ToString(),
+          entraTenantAcceptanceMode = current.EntraTenantAcceptanceMode.ToString(),
+          entraAcceptedTenants = current.EntraAcceptedTenants,
+          version = current.Version,
+        },
+        ContractSerializationDefaults.Options);
+      HttpResponseMessage auth = await client.PutAsync(
+        "api/settings",
+        new StringContent(authBody, Encoding.UTF8, "application/json"));
+      auth.StatusCode.ShouldBe(HttpStatusCode.OK);
+      (await ReadSettingsAsync(client)).XaiByokMode.ShouldBe(XaiByokMode.Required);
+    }
+    finally
+    {
+      await PutXaiByokModeAsync(client, before.XaiByokMode);
+    }
+  }
+
+  public static async Task Administrator_Put_Xai_Byok_Mode_Stale_Version_Should_409()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await GrantAdministratorAsync(principalId);
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    GetSiteSettings.Response current = await ReadSettingsAsync(client);
+    string body = JsonSerializer.Serialize(
+      new { xaiByokMode = XaiByokMode.Off.ToString(), version = current.Version + 100 },
+      ContractSerializationDefaults.Options);
+    HttpResponseMessage put = await client.PutAsync(
+      "api/settings/xai-byok",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+    put.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    (await put.Content.ReadAsStringAsync()).ShouldContain("Concurrency conflict");
+    (await ReadSettingsAsync(client)).XaiByokMode.ShouldBe(current.XaiByokMode);
+  }
+
+  public static async Task Member_Put_Xai_Byok_Mode_Should_403()
+  {
+    (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
+    await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
+
+    using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
+    const string body = """{"xaiByokMode":"Required","version":0}""";
+    HttpResponseMessage response = await client.PutAsync(
+      "api/settings/xai-byok",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+    response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+  }
+
   public static async Task Administrator_Put_Markup_Name_Should_400()
   {
     (PrincipalId principalId, string sessionCookie) = await RegisterPasskeyAndMintSessionAsync(Web);
@@ -383,6 +455,22 @@ public class Returns_
         await put.Content.ReadAsStringAsync(),
         ContractSerializationDefaults.Options)
       ?? throw new InvalidOperationException("UpdateAssistantName deserialized to null.");
+  }
+
+  private static async Task<UpdateXaiByokMode.Response> PutXaiByokModeAsync(HttpClient client, XaiByokMode mode)
+  {
+    GetSiteSettings.Response current = await ReadSettingsAsync(client);
+    string body = JsonSerializer.Serialize(
+      new { xaiByokMode = mode.ToString(), version = current.Version },
+      ContractSerializationDefaults.Options);
+    HttpResponseMessage put = await client.PutAsync(
+      "api/settings/xai-byok",
+      new StringContent(body, Encoding.UTF8, "application/json"));
+    put.StatusCode.ShouldBe(HttpStatusCode.OK);
+    return JsonSerializer.Deserialize<UpdateXaiByokMode.Response>(
+        await put.Content.ReadAsStringAsync(),
+        ContractSerializationDefaults.Options)
+      ?? throw new InvalidOperationException("UpdateXaiByokMode deserialized to null.");
   }
 
   private static async Task GrantAdministratorAsync(PrincipalId principalId)

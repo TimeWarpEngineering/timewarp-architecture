@@ -8,8 +8,9 @@
 // SiteSettingsDetailsValidator. PUT of the same ISiteSettingsDetails shape the Get response
 // implements so the Authentication form binds once. Task 306: EntraTenantAcceptanceMode and
 // EntraAcceptedTenants are the trust policy on this command (id plus optional domain).
-// The assistant name is UpdateAssistantName. This command does not accept it. The response still
-// echoes the stored name so a policy save refreshes the SPA copy.
+// The assistant name is UpdateAssistantName. The xAI key mode is UpdateXaiByokMode. This command
+// accepts neither. The response still echoes the stored name and mode so a policy save refreshes
+// the SPA copy.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Settings;
@@ -32,7 +33,6 @@ public static partial class UpdateSiteSettings
     public PasskeyPromptMode PasskeyPromptMode { get; set; }
     public EntraTenantAcceptanceMode EntraTenantAcceptanceMode { get; set; }
     public List<EntraAcceptedTenant> EntraAcceptedTenants { get; set; } = [];
-    public XaiByokMode XaiByokMode { get; set; } = XaiByokMode.Allow;
     public long Version { get; set; }
   }
 

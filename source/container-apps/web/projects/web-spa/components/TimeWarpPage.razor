@@ -55,7 +55,9 @@
   title and description on the left and the actions (wrapping) on the right. TitleBlock is the
   one copy of the document title and the h1, rendered from both branches so they cannot drift.
   This component still owns the only h1. Callers put buttons in Actions; this shell does not
-  handle their clicks.
+  handle their clicks. Page-wide actions (create, sync, export) go in Actions, with at most
+  one Primary. A form's submit button goes at the bottom of that form, in FormActions, after
+  the fields it saves. A sample of the title bar must not render a second h1.
   SearchMode chooses the app-bar search slot. Palette is the read-only Ctrl-K field. Hidden
   omits it. Custom renders the Search fragment in that same slot. The command palette modal
   stays mounted, so Ctrl-K still opens it.

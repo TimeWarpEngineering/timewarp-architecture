@@ -598,6 +598,8 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
     sb.Append("  {\n");
     sb.Append("    /// <summary>Bottom pins this entry's NavGroup in the lower nav. Top is the default.</summary>\n");
     sb.Append("    internal global::").Append(rootNamespace).Append(".NavPlacement NavPlacement { get; init; }\n");
+    sb.Append("    /// <summary>Every route template on [Page], including parameterized aliases. The positional RouteTemplate stays the static primary.</summary>\n");
+    sb.Append("    public global::System.Collections.Generic.IReadOnlyList<string> RouteTemplates { get; set; } = [];\n");
     sb.Append("  }\n\n");
     sb.Append("  /// <summary>A page that declares [Page(AgentActions = ...)]: its route templates and the actions the agent may run on it.</summary>\n");
     sb.Append("  public sealed record PageActionScope(\n");
@@ -645,7 +647,33 @@ public sealed partial class PageSourceGenerator : IIncrementalGenerator
       sb.Append("]),\n");
     }
 
-    sb.Append("    ];\n  }\n}\n");
+    sb.Append("    ];\n\n");
+    sb.Append("    private static readonly global::System.Collections.Generic.Dictionary<global::System.Type, string[]> RouteTemplatesByPage = new()\n");
+    sb.Append("    {\n");
+    foreach (PageModel page in pages
+      .Where(static p => p.Errors.IsEmpty && p.Navigable)
+      .OrderBy(static p => p.NavOrder)
+      .ThenBy(static p => p.RouteTemplate, System.StringComparer.Ordinal)
+      .ThenBy(static p => p.HintName, System.StringComparer.Ordinal))
+    {
+      string type = "global::" + page.Namespace + "." + page.ClassName;
+      sb.Append("      [typeof(").Append(type).Append(")] = [");
+      sb.Append(string.Join(", ", page.RouteTemplates.Select(CSharpString)));
+      sb.Append("],\n");
+    }
+
+    sb.Append("    };\n\n");
+    sb.Append("    static PageRegistry()\n");
+    sb.Append("    {\n");
+    sb.Append("      foreach (PageRegistryEntry entry in All)\n");
+    sb.Append("      {\n");
+    sb.Append("        if (RouteTemplatesByPage.TryGetValue(entry.PageType, out string[]? templates))\n");
+    sb.Append("        {\n");
+    sb.Append("          entry.RouteTemplates = templates;\n");
+    sb.Append("        }\n");
+    sb.Append("      }\n");
+    sb.Append("    }\n");
+    sb.Append("  }\n}\n");
     return sb.ToString();
   }
 

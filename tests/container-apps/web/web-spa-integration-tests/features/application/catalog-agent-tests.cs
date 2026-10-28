@@ -152,6 +152,43 @@ public partial class CatalogAgent_Should
       .GetProperty("properties")
       .TryGetProperty("assistantName", out _)
       .ShouldBeFalse();
+    schema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties")
+      .TryGetProperty("xaiByokMode", out _)
+      .ShouldBeFalse();
+    return Task.CompletedTask;
+  }
+
+  public static Task Binds_UpdateXaiByokMode_With_Mode_And_Version()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    ActionCatalogEntry update = catalog.Find("SiteSettings.UpdateXaiByokMode").ShouldNotBeNull();
+    string parameter = update.Parameters[0].Name;
+    JsonElement command = JsonSerializer.Deserialize<JsonElement>
+    (
+      """{"xaiByokMode":"Required","version":2}"""
+    );
+
+    object?[] bound = CatalogAgentArguments.Bind(update, new Dictionary<string, object?> { [parameter] = command });
+
+    bound.Length.ShouldBe(1);
+    UpdateXaiByokMode.Command bind = bound[0].ShouldBeOfType<UpdateXaiByokMode.Command>();
+    bind.XaiByokMode.ShouldBe(XaiByokMode.Required);
+    bind.Version.ShouldBe(2);
+
+    using JsonDocument modeSchema = JsonDocument.Parse(CatalogAgentSchema.For(update));
+    JsonElement properties = modeSchema.RootElement
+      .GetProperty("properties")
+      .GetProperty(parameter)
+      .GetProperty("properties");
+    JsonElement mode = properties.GetProperty("xaiByokMode");
+    mode.GetProperty("type").GetString().ShouldBe("string");
+    string[] members = [.. mode.GetProperty("enum").EnumerateArray().Select(member => member.GetString() ?? "")];
+    members.ShouldBe(Enum.GetNames<XaiByokMode>());
+    properties.GetProperty("version").GetProperty("type").GetString().ShouldBe("integer");
     return Task.CompletedTask;
   }
 

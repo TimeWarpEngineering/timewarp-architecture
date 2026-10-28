@@ -9,7 +9,9 @@
 // permissions a signed-in person gets), developer, and anonymous. For each, NavMenu is rendered
 // with HtmlRenderer under the principal's cascaded authentication state and its internal hrefs
 // are read; they must equal NavigationDestinations, the palette's Page rows (less Sign in), the
-// navigate enum and site_map rows on Home (less Sign in), in the same order. Signed out, Sign in
+// navigate enum and site_map rows on Home (less Sign in), in the same order. A principal who can
+// open the style guide also gets one palette Page row per catalog part; those rows are not menu
+// items and not agent navigate destinations. Signed out, Sign in
 // is the one extra row on the palette, navigate and site_map, as on Ctrl-K. Every registry page
 // the principal may not open, Login while signed in, and an unknown url are refused by navigate.
 // Each principal's set is also pinned: anonymous sees only Home, the plain user exactly Home,
@@ -42,6 +44,7 @@ using Microsoft.JSInterop;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.StyleGuide;
 using TimeWarp.Architecture.Web.Spa;
 
 [TestTag("Unit")]
@@ -383,7 +386,10 @@ public partial class Destinations_Should_
     string[] palette = [.. rows.Where(static row => row.Kind == CommandPaletteRowKind.Page).Select(static row => row.Target)];
     string signIn = CommandPaletteRoster.SignInRow("/").Target;
     string[] expected = signedIn ? destinations : [signIn, .. destinations];
-    palette.ShouldBe(expected, because);
+    string[] partUrls = await NavigationDestinations.IsAuthorizedAsync(user, authorization, PermissionIds.DeveloperAccess)
+      ? [.. StyleGuideParts.PageOrder.Select(static part => StyleGuideParts.Url(part))]
+      : [];
+    palette.ShouldBe([.. expected, .. partUrls], because);
 
     IReadOnlyList<CatalogAgentTool> tools = await CatalogAgentToolSet.SelectAsync(user, authorization, catalog.Entries, "/", CancellationToken.None);
     CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);

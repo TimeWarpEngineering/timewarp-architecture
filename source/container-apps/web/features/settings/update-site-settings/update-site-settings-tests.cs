@@ -222,6 +222,7 @@ namespace TimeWarp.Architecture.Features.Settings
       InMemorySiteSettingsStore store = new();
       SiteSettings created = SiteSettings.Create();
       created.RenameAssistant("Zawadi");
+      created.SetXaiByokMode(XaiByokMode.Required);
       await store.AddAsync(created);
       UpdateHandler handler = new(store);
       OneOf<Response, SharedProblemDetails> result = await handler.Handle(
@@ -234,7 +235,10 @@ namespace TimeWarp.Architecture.Features.Settings
 
       result.IsT0.ShouldBeTrue();
       result.AsT0.AssistantName.ShouldBe("Zawadi");
-      (await store.GetAsync())!.AssistantName.ShouldBe("Zawadi");
+      result.AsT0.XaiByokMode.ShouldBe(XaiByokMode.Required);
+      SiteSettings stored = (await store.GetAsync()).ShouldNotBeNull();
+      stored.AssistantName.ShouldBe("Zawadi");
+      stored.XaiByokMode.ShouldBe(XaiByokMode.Required);
     }
 
     public static async Task Any_Mode_Should_Persist_The_Accepted_List()

@@ -17,8 +17,9 @@
 // is labelled by that heading. Within a group, entries follow
 // StyleGuideParts.PageOrder, which is also the All view order.
 // A usage snippet is hand-written and shown only on the single-part view.
-// The page actions dispatch NotificationState. Confirmations dispatch
-// StyleGuideState.ConfirmSample. The sample drawer follows ApplicationState.
+// The page itself has no header actions. The Page header part shows where page-wide
+// actions go. Confirmations dispatch StyleGuideState.ConfirmSample. The sample drawer
+// follows ApplicationState.
 // The exception demo dispatches CounterState.ThrowException.
 // MessageBarsSample carries the PageLocalMessageBar opt-out (TWA0025). The bars
 // are component documentation, not operation outcomes.

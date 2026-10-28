@@ -98,6 +98,13 @@ visited. The browser Back button is history. There is no per-page Back button.
 - **Parents come from the registry.** `PageBreadcrumbTrail` walks the routes the page source
   generator already emits. Do not keep a second parent list.
 
+## Page-wide actions sit in the shell
+
+Page-wide actions (create, sync, export) go top right in `TimeWarpPage` `Actions`, with at most
+one Primary. A form's submit button goes at the bottom of that form, in `FormActions`, after the
+fields it saves. A sample of the title bar must not render a second `h1`; the shell's Design
+region owns the only one. The style-guide Page header part shows the bar.
+
 ## Navigation destinations come from one registry
 
 The nav menu and any other destination surface (a command palette, a sitemap) read **one**

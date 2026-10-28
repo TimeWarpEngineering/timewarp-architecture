@@ -2,9 +2,10 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.AgentChats
 @using TimeWarp.Architecture.Features.Settings
+@using TimeWarp.Identity
 
 @*
-  Purpose: Admin → AI. Rename the assistant, and set, replace, or clear the site xAI API key.
+  Purpose: Admin → AI. Rename the assistant, choose whose xAI key Ask uses, and set, replace, or clear the site xAI API key.
 
   Design: The assistant section binds UpdateAssistantName.Command (name and Version). The copy,
   data-qa="AssistantSettings", and AssistantNameRules validation match the section that used to
@@ -16,6 +17,9 @@
   Submit is SiteSettingsState.UpdateAssistantName. A successful save
   reloads the public identity from AssistantIdentityRefreshHandler, so the button, Ctrl-K row
   and panel update without a page reload. AssistantNameSaveFailed keeps the draft.
+  The Ask API key section binds UpdateXaiByokMode.Command the same way. It sits next to the
+  site key. XaiByokModeSaveFailed keeps that draft. When the host has set XAI:ApiKey the
+  select is replaced by the saved label and the reason the policy has no effect.
   The draft key is page-local and is cleared after a successful save. State never
   receives it back. The input is a password field. The editable branch shows the connection
   as an IntegrationCard; the status sentence stays the meta line, and save and clear stay
@@ -31,17 +35,34 @@
 
   private static readonly UpdateAssistantName.Validator AssistantValidator = new();
 
+  private static readonly UpdateXaiByokMode.Validator ByokValidator = new();
+
   private static readonly Icon XaiKeyIcon = new Icons.Regular.Size24.Key();
+
+  private static readonly XaiByokMode[] XaiByokModes =
+  [
+    XaiByokMode.Allow,
+    XaiByokMode.Required,
+    XaiByokMode.Off
+  ];
 
   private SetXaiApiKey.Command Command { get; } = new();
 
   private UpdateAssistantName.Command AssistantCommand { get; } = new();
 
+  private UpdateXaiByokMode.Command ByokCommand { get; } = new();
+
   private bool AssistantDraftLoaded;
+
+  private bool ByokDraftLoaded;
 
   private string SyncedAssistantName = "";
 
   private long SyncedAssistantVersion;
+
+  private XaiByokMode SyncedByokMode;
+
+  private long SyncedByokVersion;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
@@ -81,6 +102,14 @@
         ? "Configured"
         : "No key";
 
+  private static string XaiByokModeLabel(XaiByokMode mode) =>
+    mode switch
+    {
+      XaiByokMode.Required => "Required (user key only)",
+      XaiByokMode.Off => "Off (site key only)",
+      _ => "Allow (user key, then the site key)"
+    };
+
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
@@ -113,6 +142,7 @@
     }
 
     SyncAssistantDraft();
+    SyncByokDraft();
   }
 
   private void SyncAssistantDraft()
@@ -150,12 +180,56 @@
     SyncAssistantDraft();
   }
 
+  private void SyncByokDraft()
+  {
+    if (!NoSubSiteSettingsState.HasSnapshot)
+    {
+      return;
+    }
+
+    ByokCommand.XaiByokMode = NoSubSiteSettingsState.XaiByokMode;
+    ByokCommand.Version = NoSubSiteSettingsState.Version;
+    SyncedByokMode = ByokCommand.XaiByokMode;
+    SyncedByokVersion = ByokCommand.Version;
+    ByokDraftLoaded = true;
+  }
+
+  private void SyncUneditedByokDraft()
+  {
+    if (!ByokDraftLoaded || !SiteSettingsState.HasSnapshot)
+    {
+      return;
+    }
+
+    if (SiteSettingsState.Version == SyncedByokVersion)
+    {
+      return;
+    }
+
+    if (ByokCommand.XaiByokMode != SyncedByokMode
+      || ByokCommand.Version != SyncedByokVersion)
+    {
+      return;
+    }
+
+    SyncByokDraft();
+  }
+
   private async Task SaveAssistantAsync()
   {
     await NoSubSiteSettingsState.UpdateAssistantName(AssistantCommand);
     if (!SiteSettingsState.AssistantNameSaveFailed)
     {
       SyncAssistantDraft();
+    }
+  }
+
+  private async Task SaveByokAsync()
+  {
+    await NoSubSiteSettingsState.UpdateXaiByokMode(ByokCommand);
+    if (!SiteSettingsState.XaiByokModeSaveFailed)
+    {
+      SyncByokDraft();
     }
   }
 
@@ -173,6 +247,7 @@
 
 @{
   SyncUneditedAssistantDraft();
+  SyncUneditedByokDraft();
 }
 
 <TimeWarpPage Title="AI">
@@ -283,6 +358,54 @@
             Clear key
           </FluentButton>
         }
+      </FormActions>
+    </EditForm>
+  }
+
+  @if (!SiteSettingsState.HasSnapshot || !XaiApiKeyState.HasSnapshot)
+  {
+    <FormSection Title="Ask API key"
+                 Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
+                 data-qa="XaiByokModeSettings" />
+  }
+  else if (XaiApiKeyState.ManagedByHost)
+  {
+    <FormSection Title="Ask API key"
+                 Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
+                 data-qa="XaiByokModeSettings">
+      <p data-qa="XaiByokModeReadOnly">@XaiByokModeLabel(SiteSettingsState.XaiByokMode)</p>
+      <p data-qa="XaiByokModeHostReason">XAI:ApiKey is set in configuration, so this policy has no effect. The deployment key always wins.</p>
+    </FormSection>
+  }
+  else if (ByokDraftLoaded)
+  {
+    <EditForm Model="ByokCommand" OnValidSubmit="SaveByokAsync" FormName="XaiByokModeForm" novalidate>
+      <FluentValidator Validator="@ByokValidator" />
+      <FormSection Title="Ask API key"
+                   Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
+                   data-qa="XaiByokModeSettings"
+                   data-xai-byok-version="@ByokCommand.Version">
+        <FormGrid>
+          <FormField Label="Personal xAI API key">
+            <FluentSelect TOption="XaiByokMode" TValue="XaiByokMode"
+                          Items="@XaiByokModes"
+                          OptionText="@XaiByokModeLabel"
+                          @bind-Value="ByokCommand.XaiByokMode"
+                          AriaLabel="Personal xAI API key"
+                          Width="100%"
+                          Disabled="@IsBusy"
+                          data-qa="XaiByokMode" />
+            <ValidationMessage For="@(() => ByokCommand.XaiByokMode)" />
+          </FormField>
+        </FormGrid>
+      </FormSection>
+      <FormActions>
+        <FluentButton Type="ButtonType.Submit"
+                      Appearance="ButtonAppearance.Primary"
+                      Disabled="@IsBusy"
+                      data-qa="XaiByokModeSave">
+          Save xAI key policy
+        </FluentButton>
       </FormActions>
     </EditForm>
   }

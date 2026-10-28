@@ -26,9 +26,8 @@
   Save), matching Profile / RoleForm. No Cancel — draft reload is SyncDraftFromState
   after a successful save; there is no cheap unused reset on the command.
   The assistant name is not on this page. Admin → AI owns it through UpdateAssistantName, so this
-  save does not round-trip the name.
-  Task 399: an Ask API key section edits XaiByokMode on the same command. Allow is the
-  zero value. Off hides Profile's personal key section.
+  save does not round-trip the name. Whose xAI key Ask uses is UpdateXaiByokMode on that same
+  page, so this save does not round-trip the mode either.
 *@
 
 @code {
@@ -79,21 +78,6 @@
       ? "Any Entra tenant"
       : "Only these tenant ids";
 
-  private static readonly XaiByokMode[] XaiByokModes =
-  [
-    XaiByokMode.Allow,
-    XaiByokMode.Required,
-    XaiByokMode.Off
-  ];
-
-  private static string XaiByokModeLabel(XaiByokMode mode) =>
-    mode switch
-    {
-      XaiByokMode.Required => "Required (user key only)",
-      XaiByokMode.Off => "Off (site key only)",
-      _ => "Allow (user key, then the site key)"
-    };
-
   protected override async Task OnInitializedAsync()
   {
     await base.OnInitializedAsync();
@@ -125,7 +109,6 @@
     Command.EntraSignInEnabled = SiteSettingsState.EntraSignInEnabled is true;
     Command.EntraAllowBootstrap = SiteSettingsState.EntraAllowBootstrap is true;
     Command.PasskeyPromptMode = SiteSettingsState.PasskeyPromptMode;
-    Command.XaiByokMode = SiteSettingsState.XaiByokMode;
     Command.EntraTenantAcceptanceMode = SiteSettingsState.EntraTenantAcceptanceMode;
     Command.EntraAcceptedTenants = [.. SiteSettingsState.DraftAcceptedTenants];
     DomainDraft = "";
@@ -277,23 +260,6 @@
                           Width="100%"
                           Disabled=@IsBusy />
             <ValidationMessage For="@(() => Details.PasskeyPromptMode)" />
-          </FormField>
-        </FormGrid>
-      </FormSection>
-      <FormSection Title="Ask API key"
-                   Description="Whose xAI API key Ask uses when the deployment has not set XAI:ApiKey. The deployment key always wins."
-                   data-qa="XaiByokModeSettings">
-        <FormGrid>
-          <FormField Label="Personal xAI API key">
-            <FluentSelect TOption="XaiByokMode" TValue="XaiByokMode"
-                          Items="@XaiByokModes"
-                          OptionText="@XaiByokModeLabel"
-                          @bind-Value="Details.XaiByokMode"
-                          AriaLabel="Personal xAI API key"
-                          Width="100%"
-                          Disabled=@IsBusy
-                          data-qa="XaiByokMode" />
-            <ValidationMessage For="@(() => Details.XaiByokMode)" />
           </FormField>
         </FormGrid>
       </FormSection>
