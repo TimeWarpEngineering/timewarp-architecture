@@ -46,6 +46,7 @@ global `security` and zero per-operation `security` entries exist across all
 
 - Created: ses_e7c126e60ffeQQKOK3tf1mfEiJ (2026-10-28)
 - Implementation: grok task-work (2026-10-29). Per-operation `JWTBearerAuth` on `agent-token` operations, with the policy-to-scope map and 401/403 `problem+json` plus `WWW-Authenticate`. `ganda repo audit` exited 0. The advisory `kanban-landed` warning is eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). Left untouched. Version stays `2.0.0-beta.29` from task 435; `dev check-version` reports it one prerelease ahead of NuGet `2.0.0-beta.28`.
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a184c1-775f-71b2-97cb-2a68acefad23, max-turns 500, Done — 2026-10-28T23:30:58Z
 
 ## Results
 
