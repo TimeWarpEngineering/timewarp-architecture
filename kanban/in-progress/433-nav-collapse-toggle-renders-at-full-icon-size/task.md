@@ -43,8 +43,13 @@ name and clicks it, so it passes with an icon too small to see.
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
+- Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a183c5-e0e5-7011-b1f1-f6638b017ff1, max-turns 500, Blocked — 2026-10-28T18:29:18Z
 
 ## Notes
 
 - Steve's screenshot: the bottom of the nav column shows the "Member" user card, then a divider,
   then a tiny two-dot glyph where the toggle should be.
+
+## Blocked
+
+2026-10-28: (no reason given)
