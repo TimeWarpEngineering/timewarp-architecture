@@ -233,6 +233,9 @@ Results name the suites; the task branch is committed and pushed.
   af53d92a36f8141f0, a08f3135265eb010c. Outcome: M1–M19 are fixed. A fix pass is needed for M20,
   M23, M24, and M25.
 - Fix pass (implement-fix-3): implemented by implementer-grok (grok, model grok-4.7), session not reported — 2026-10-28. Addressed M20, M23, M24, and M25. M21 and M22 stay wontfix.
+- Review oracle round 3 (2026-10-28): claude-opus-5-5, headless, effort 2. One general reviewer:
+  the oracle reviewed the 130-line delta inline and spawned no subagents. Outcome: M20, M23, M24,
+  and M25 are fixed. The disposition is accepted-exceptions.
 
 ## Review
 
@@ -241,7 +244,9 @@ Results name the suites; the task branch is committed and pushed.
 - Round 2: Blocked — open M20, M23, M24, M25
   The ledger is `review/round-2/merged.md`.
 - Fix pass: M20, M23, M24, and M25 are addressed on this branch. M21 and M22 stay wontfix. Dispositions in `review/round-2/merged.md` are unchanged. Round 3 is the host review node.
-
+- Round 3: Done
+  is accepted-exceptions (M21 and M22 are wontfix), with 0 open. Ledger: `review/round-3/merged.md`.
+  Disposition: `review/disposition.md`.
 ## Notes
 
 - Task 418 (PR #584) is the reference for moving a setting: `UpdateAssistantName`,
@@ -264,6 +269,8 @@ Results name the suites; the task branch is committed and pushed.
   The task asked for Ctrl-K rows that read "Design system: Color Tokens". The restatement deliberately
   derives the prefix from `DesignSystemPage.Title` ("Design System: "), because M18 asked for that.
   That choice is not a misread. why: review oracle round 2, 2026-10-28
+- Review round 3: the restatement's round-2 fix-pass paragraph matches M20, M23, M24, and M25, and
+  the code matches it. No new misread. why: review oracle round 3, 2026-10-28
 
 ## Results
 
@@ -381,6 +388,17 @@ Those claims are outside this id. This pass did not rerun `./bin/dev regenerate-
 Suites: `AiPage_Should_` 7/7, `TimeWarpPage_Should_` 16/16, `DesignSystemPage_Should_` 6/6.
 HtmlRenderer is the proof for the title bar and the draft conflict. There was no separate
 interactive browser session.
+
+Round 3 (effort 2, one general reviewer) reviewed the fix delta `31bdd4ae7..0057d58aa` (product
+commit `727527b21`). M20, M23, M24, and M25 are fixed, and the round raised no new findings. The
+reviewer re-ran `AiPage_Should_` 7/7, `TimeWarpPage_Should_` 16/16, and `DesignSystemPage_Should_`
+6/6 from a Release build (0 warnings, 0 errors).
+
+- Review disposition: **accepted-exceptions**, after 3 rounds. Final open count: 0.
+- Final totals (M1–M25): bugs 3 fixed; suggestions 11 fixed; nits 9 fixed, 2 wontfix.
+- Wontfix: M21 (an A→B→A server change loses nothing) and M22 (a 101-character comment line in a
+  file with no enforced width). The rationale is in the disposition.
+- Paths: `review/review-framework.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
