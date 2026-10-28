@@ -2,7 +2,9 @@
 
 ## Goal (implementer restatement)
 
-A generated app should get six missing portal primitives from the template, so the next product does not copy them into page CSS. Nothing in the new code names a client.
+Ship the six missing portal primitives in the template. A later product should use them instead of copying the same layout into page CSS. The new source must not name a client.
+
+Round-1 review stays in scope for this pass: a non-finite chart value keeps its category, role detail keeps the gap under the description and hides a blank one, principal name and email hooks sit on the value, and the period label announces when it changes.
 
 Acceptance:
 
@@ -90,18 +92,30 @@ test in the same style as `kpi-card-render-tests.cs`.
 - Implementation: grok task-work (2026-10-28). Definition list, line chart, period stepper, page split, compact integration tone, and `twe-numeric`.
 - `ganda repo audit --fix` landed kitchen 428 (same holder, drifted from origin-home). Eight claims still warn that they have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). That warning is pre-existing and not fixable from this id. Audit then passed with that advisory.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a1829d-b0a7-7370-83d4-18815849f0ff, max-turns 500, Done — 2026-10-28T13:33:45Z
+- Review round 1 (2026-10-28): review oracle (claude-opus-5-5), effort 3, roster general. The reviewer re-ran `dev build` (0/0) and the seven test classes (all passed). Open: M1 bug (a LineChart `NaN` gap moves later points left), M2 suggestion (role detail lost its 16px gap), M3 nit, M4 nit. A fix pass is needed. See `review/round-1/merged.md`. No disposition yet.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-28T13:37:47Z
+- Fix pass (2026-10-28): M1 places each finite point at its original index and joins the line across a non-finite gap. Category count uses the raw point list. M2 puts the description list and the permission editor in `twe-stack` and omits a blank description. M3 puts the principal name and email hooks on a span inside the value. M4 sets `aria-live="polite"` on the period label and `role="group"` on the stepper root.
+- `ganda repo audit --fix` landed kitchen 428 again (same drift the first implement pass landed). Eight claims still warn that they have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). That warning is pre-existing and not fixable from this id. Audit then passed with that advisory.
 
 ## Results
 
-The template now carries the six primitives. Principal detail and role detail use `DefinitionList`. The chart-frame sample plots `LineChart` inside `ChartCard`. `PeriodStepper` raises `ValueChanged` and stays separate from `SegmentedControl`. Compact `IntegrationCard` warning uses `IntegrationCardTone.Warning`; full still uses `Status`. `PageSplit` is 1.6fr and 1fr and stacks at 1100px. `twe-numeric` sits with `.twe-table`. Catalog parts are definition list (Data), period stepper (Forms), and page split (Layout). The line chart, the tone, and the numeric class update the existing chart-frame, integration-cards, and grouped-table parts. `./bin/dev build` finished with 0 warnings and 0 errors, and its client-name scan passed. `git diff -- source tests skills` has no client name.
+The template now carries the six primitives. Principal detail and role detail use `DefinitionList`. The chart-frame sample plots `LineChart` inside `ChartCard`. `PeriodStepper` raises `ValueChanged` and stays separate from `SegmentedControl`. Compact `IntegrationCard` warning uses `IntegrationCardTone.Warning`; full still uses `Status`. `PageSplit` is 1.6fr and 1fr and stacks at 1100px. `twe-numeric` sits with `.twe-table`. Catalog parts are definition list (Data), period stepper (Forms), and page split (Layout). The line chart, the tone, and the numeric class update the existing chart-frame, integration-cards, and grouped-table parts.
 
-HtmlRenderer, Release, from `tests/container-apps/web/web-spa-integration-tests`: `DefinitionList_Should_` 5/5, `LineChart_Should_` 6/6, `PeriodStepper_Should_` 4/4, `PageSplit_Should_` 4/4, `TableNumeric_Should_` 2/2, `IntegrationCard_Should_` 10/10, `DesignSystemPage_Should_` 6/6, plus `GroupedTable_Should_` 9/9 and `ChartCard_Should_` 5/5. The live design-system page was not opened in a browser. The catalog contract renders every part with HtmlRenderer.
+Round-1 fixes: a non-finite chart value keeps its category and the line joins across the gap; role detail keeps a 16px gap under a non-blank description and hides a blank one; principal display-name and email hooks sit on the value; the period label is `aria-live="polite"` and the stepper root is `role="group"`.
+
+`./bin/dev build` finished with 0 warnings and 0 errors, and its client-name scan passed. `git diff -- source tests skills` has no client name.
+
+HtmlRenderer, Release, from `tests/container-apps/web/web-spa-integration-tests`: `DefinitionList_Should_` 5/5, `LineChart_Should_` 7/7 (the new case is `[10, NaN, 30]` with labels A, B, C), `PeriodStepper_Should_` 4/4, `PageSplit_Should_` 4/4, `TableNumeric_Should_` 2/2, `IntegrationCard_Should_` 10/10, `DesignSystemPage_Should_` 6/6, plus `GroupedTable_Should_` 9/9 and `ChartCard_Should_` 5/5. The live design-system page was not opened in a browser. The catalog contract renders every part with HtmlRenderer.
 
 ### How to validate
 
 Smoke: `./bin/dev build`, then from `tests/container-apps/web/web-spa-integration-tests` run `dotnet test -c Release -- --filter-class DefinitionList_Should_`, `LineChart_Should_`, `PeriodStepper_Should_`, `PageSplit_Should_`, `TableNumeric_Should_`, `IntegrationCard_Should_`, and `DesignSystemPage_Should_`.
 
-Expect: build reports 0 warnings and 0 errors. Those classes pass (5, 6, 4, 4, 2, 10, and 6). The all-parts page contains the definition list, the line chart inside the chart frame, the period stepper, a compact integration warning row, the page split, and `twe-numeric` on the grouped table, and it does not show the omitted blank term.
+Expect: build reports 0 warnings and 0 errors, and the client-name scan passes. Those classes pass (5, 7, 4, 4, 2, 10, and 6). `LineChart_Should_.Keep_A_Gap_On_Its_Original_Category` puts the dot on the same x as label C, and the line's vertices are A and C. The period stepper root has `role="group"` and the label has `aria-live="polite"`. The all-parts page contains the definition list, the line chart inside the chart frame, the period stepper, a compact integration warning row, the page split, and `twe-numeric` on the grouped table, and it does not show the omitted blank term.
+
+## Review
+
+- Round 1: open M1, M2, M3, M4. Fix pass implemented them. Round 2 has not run.
 
 ## Notes
 
