@@ -21,10 +21,15 @@
 //
 // Two independent availability waits (task 130): flatcontainer (WaitForFlatcontainerAsync) gates
 // restore-path packages, including TimeWarp.Contracts (Foundation.Contracts depends on it; the id
-// is not TimeWarp.Foundation.*), and is correct as a one-shot poll-then-proceed. `dotnet new install`
-// resolves through nuget.org's search/registration index instead, which lags flatcontainer, so
+// is not TimeWarp.Foundation.*), and is correct as a one-shot poll-then-proceed.
+// FlatcontainerWaitBudget is 90 minutes. The deadline and the "budget N min" line both read that
+// span, so the printed budget cannot disagree with the deadline. Poll delay starts at 5 seconds,
+// doubles, and caps at FlatcontainerPollDelayCap (1 minute) so the longer window still notices
+// soon after the packages appear. `dotnet new install` resolves through nuget.org's
+// search/registration index instead, which lags flatcontainer, so
 // InstallPublishedTemplateAsync retries the install itself with the same bounded-backoff shape —
 // the install call IS the availability probe for the index it uses, no second endpoint to model.
+// InstallRetryBudget stays 15 minutes and starts only after flatcontainer is satisfied.
 //
 // Monorepo namespace-literal pre-scan runs before network wait (same gate as template-smoke) so
 // the publish path cannot pass what smoke would fail on sourceName-rewritable literals.
@@ -38,11 +43,18 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
   private const string TemplatePackageId = "TimeWarp.Architecture";
   private const string TemplateShortName = "timewarp-architecture";
 
-  // Run 30332386426 (v2.0.0-beta.8, 2026-07-28): flatcontainer saw all packages live at attempt 9
-  // (well under its 12 min budget), but the immediately-following `dotnet new install` still 103'd
-  // as "not found in NuGet feeds" — the registration/search index it resolves through lagged past
-  // flatcontainer. A manual `--failed` rerun ~20 min later passed. Sized generously above the
-  // observed lag.
+  // Run 40728399501 (v2.0.0-beta.28, 2026-10-28): nuget.org took about 15 minutes to list
+  // TimeWarp.Architecture and TimeWarp.Contracts. One span is the deadline and the budget line.
+  private static readonly TimeSpan FlatcontainerWaitBudget = TimeSpan.FromMinutes(90);
+
+  // Doubling past a minute would hide a package that appeared just after a poll.
+  private static readonly TimeSpan FlatcontainerPollDelayCap = TimeSpan.FromMinutes(1);
+
+  // Run 30332386426 (v2.0.0-beta.8, 2026-07-28): flatcontainer saw all packages live at attempt 9,
+  // but the immediately-following `dotnet new install` still 103'd as "not found in NuGet feeds" —
+  // the registration/search index it resolves through lagged past flatcontainer. A manual
+  // `--failed` rerun ~20 min later passed. Sized generously above the observed lag, and
+  // independent of FlatcontainerWaitBudget.
   private static readonly TimeSpan InstallRetryBudget = TimeSpan.FromMinutes(15);
 
   private static readonly string[] RequiredPublishedPackageIds =
@@ -254,12 +266,13 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
 
     private async Task<bool> WaitForFlatcontainerAsync()
     {
-      Terminal.WriteLine($"Waiting for nuget.org flatcontainer availability of {Version} (budget 12 min)...");
+      Terminal.WriteLine(
+        $"Waiting for nuget.org flatcontainer availability of {Version} (budget {FlatcontainerWaitBudget.TotalMinutes:0} min)...");
 
       using System.Net.Http.HttpClient http = new();
       http.Timeout = TimeSpan.FromSeconds(30);
 
-      DateTimeOffset deadline = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(12);
+      DateTimeOffset deadline = DateTimeOffset.UtcNow + FlatcontainerWaitBudget;
       int delaySeconds = 5;
       int attempt = 0;
 
@@ -294,7 +307,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         if (DateTimeOffset.UtcNow >= deadline)
         {
           Terminal.WriteErrorLine(
-            $"Flatcontainer wait timed out after 12 min. Still missing: {string.Join(", ", missing)}".Red());
+            $"Flatcontainer wait timed out after {FlatcontainerWaitBudget.TotalMinutes:0} min. Still missing: {string.Join(", ", missing)}".Red());
           Environment.ExitCode = 1;
           return false;
         }
@@ -312,7 +325,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
           return false;
         }
 
-        delaySeconds = Math.Min(delaySeconds * 2, 60);
+        delaySeconds = Math.Min(delaySeconds * 2, (int)FlatcontainerPollDelayCap.TotalSeconds);
       }
     }
 
