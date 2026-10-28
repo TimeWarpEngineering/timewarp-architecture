@@ -118,6 +118,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="web-spa-integration-tests"/>
+    <InternalsVisibleTo Include="web-spa-playwright-tests"/>
     <InternalsVisibleTo Include="web-server-integration-tests"/>
     <InternalsVisibleTo Include="api-server-integration-tests"/>
     <InternalsVisibleTo Include="timewarp-testing"/>

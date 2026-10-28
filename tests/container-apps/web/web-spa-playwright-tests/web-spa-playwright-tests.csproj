@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-spa\web-spa.csproj" />
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-server\web-server.csproj" />
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
   </ItemGroup>

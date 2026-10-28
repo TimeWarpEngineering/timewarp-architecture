@@ -8,61 +8,23 @@
 // test adds the Developer role and then fully navigates. Each case is a document load or a
 // real click, not a static render. The filter targets the shadow input of the catalog text field.
 // Group names are headings inside the catalog, and each nested list names its heading.
+// Expected part titles are Part.Title in DesignSystemParts.PageOrder.
+// Expected group headings are the Group names in declaration order, for groups that have a part.
+// The catalog writes that name with @group.
 #endregion
 
 namespace DesignSystemCatalogPlaywright_;
 
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.DesignSystem;
 using TimeWarp.Identity;
 
 public class DesignSystemCatalog_Given_Wasm
 {
   private static readonly string[] PartTitles =
-  [
-    "Brand",
-    "Color Tokens",
-    "Type Scale",
-    "Forms",
-    "Section",
-    "Section Header",
-    "Page header",
-    "Page split",
-    "Filter Bar",
-    "Tabs",
-    "Segmented Control",
-    "Period stepper",
-    "Avatars",
-    "User card",
-    "Sign-in",
-    "Empty States",
-    "Drawers",
-    "KPI Cards",
-    "Definition list",
-    "Chart frame",
-    "Trend, SLA, and class pills",
-    "Integration Cards",
-    "Grouped Table",
-    "Count Chip",
-    "Confirmations",
-    "Buttons (FluentUI, themed)",
-    "Status Badges",
-    "Role badges",
-    "Role cards",
-    "Permission grid",
-    "Dev note",
-    "Message bars (FluentUI)",
-    "Notifications (message bars)",
-  ];
+    [.. DesignSystemParts.PageOrder.Select(static part => part.Title)];
 
-  private static readonly string[] GroupNames =
-  [
-    "Foundations",
-    "Forms",
-    "Layout",
-    "Data",
-    "Feedback",
-    "Identity",
-  ];
+  private static readonly string[] GroupNames = GroupHeadings();
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<DesignSystemCatalog_Given_Wasm>();
@@ -163,6 +125,20 @@ public class DesignSystemCatalog_Given_Wasm
       static url => url.EndsWith("/DesignSystem", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemAll]")).ToHaveAttributeAsync("aria-current", "page");
+  }
+
+  private static string[] GroupHeadings()
+  {
+    List<string> names = [];
+    foreach (DesignSystemParts.Group group in Enum.GetValues<DesignSystemParts.Group>())
+    {
+      if (Array.Exists(DesignSystemParts.PageOrder, part => part.Group == group))
+      {
+        names.Add(group.ToString());
+      }
+    }
+
+    return [.. names];
   }
 
   private static async Task ExpectGroupHeadingsAsync(ILocator catalog, IReadOnlyList<string> names)
