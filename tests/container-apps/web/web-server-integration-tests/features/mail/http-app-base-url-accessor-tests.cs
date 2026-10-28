@@ -93,6 +93,19 @@ public class GetBaseUrl_Should
     return Task.CompletedTask;
   }
 
+  public static Task Return_Null_For_A_Forwarded_Host_That_Is_Not_A_Host()
+  {
+    DefaultHttpContext httpContext = new();
+    httpContext.Request.Scheme = "https";
+    httpContext.Request.Host = new HostString("localhost", 7000);
+    httpContext.Request.Headers["X-Forwarded-Proto"] = "https";
+    httpContext.Request.Headers["X-Forwarded-Host"] = "user@evil.test";
+
+    Accessor(httpContext).GetBaseUrl().ShouldBeNull();
+
+    return Task.CompletedTask;
+  }
+
   private static HttpAppBaseUrlAccessor Accessor(HttpContext? httpContext, string? publicBaseUrl = null) =>
     new(
       new HttpContextAccessor { HttpContext = httpContext },

@@ -28,9 +28,14 @@
     <PackageReference Include="Microsoft.Extensions.AI" />
   </ItemGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-contracts\web-contracts.csproj" />
     <ProjectReference Include="..\..\..\..\source\container-apps\web\projects\web-server\web-server.csproj" />
     <ProjectReference Include="..\..\..\common\timewarp-testing\timewarp-testing.csproj" />
+    <ProjectReference Include="..\..\..\..\source\foundation\foundation-server\foundation-server.csproj" Condition="'$(UseFoundationPackages)' != 'true'" />
+    <PackageReference Include="TimeWarp.Foundation.Server" Condition="'$(UseFoundationPackages)' == 'true'" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
