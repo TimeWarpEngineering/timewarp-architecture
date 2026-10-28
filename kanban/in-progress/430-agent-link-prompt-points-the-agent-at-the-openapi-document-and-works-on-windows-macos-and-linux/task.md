@@ -1,5 +1,20 @@
 # Agent link prompt points the agent at the OpenAPI document and works on Windows, macOS, and Linux
 
+## Goal (implementer restatement)
+
+The Agent links paste prompt should keep the task 428 bash ceremony and also tell the agent where the rest of the API lives. After the link steps, the prompt names this server's OpenAPI document as a full URL (the page origin plus the document path), says that document describes every endpoint, request, and response, and says later calls send `Authorization: Bearer` plus a token from a fresh token ceremony with the scopes that operation needs. `/llms.txt` and `/auth.md` are named in the same short paragraph. The document path is written once. A test fetches the path the prompt actually names from the running web server and requires HTTP 200 plus an OpenAPI document.
+
+The same prompt stays one bash script. It says the script needs bash, openssl, and curl, and that Windows must use Git Bash or WSL rather than PowerShell. The script uses forms that GNU, BSD, and Git Bash can run (POSIX `sed`, no GNU-only flags). Linux is executed here. macOS and Windows are judged from tool documentation, and anything not executed is marked unverified. There is no second PowerShell recipe and no client product name.
+
+Acceptance:
+
+- The prompt names the OpenAPI URL and bearer authentication, and the prompt tests cover that paragraph.
+- The OpenAPI path is not a second unchecked copy: one constant feeds the prompt, and the Playwright host fetches the URL the rendered prompt names.
+- Results record Linux, macOS, and Windows, with unverified points marked.
+- The script is portable where a portable form exists, and the prompt states the bash + openssl + curl requirement.
+- `dev build` is 0 warnings and 0 errors, and `dev test` passes.
+- Source, tests, and skills do not name a client product.
+
 ## Description
 
 Task 428 added a copy-paste prompt to the Agent links page
@@ -56,22 +71,47 @@ token issuance, and the link request with `openssl` and `curl`. Two gaps:
 
 ## Checklist
 
-- [ ] Prompt names the OpenAPI document URL and how to authenticate calls
-- [ ] OpenAPI path agreement: shared constant or a test against the served document
-- [ ] Per-OS result recorded (Linux, macOS, Windows), with unverified points marked
-- [ ] Script portability fixes; prompt states the bash + openssl + curl requirement
-- [ ] Prompt tests extended; `dev build` 0/0; `dev test` passes
-- [ ] No client name in source, tests, or skills
+- [x] Prompt names the OpenAPI document URL and how to authenticate calls
+- [x] OpenAPI path agreement: shared constant or a test against the served document
+- [x] Per-OS result recorded (Linux, macOS, Windows), with unverified points marked
+- [x] Script portability fixes; prompt states the bash + openssl + curl requirement
+- [x] Prompt tests extended; `dev build` 0/0; `dev test` passes
+- [x] No client name in source, tests, or skills
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18374-969e-7912-83a2-d3297ead0cd3, max-turns 500, Blocked — 2026-10-28T17:00:44Z
+- Implement oracle resumed by implementer-grok (grok, model grok-4.7) after the placeholder block (2026-10-29)
 
 ## Notes
 
 - Follow-up to task 428 (PR #590). Steve asked for both items on 2026-10-28.
 
-## Blocked
+## Results
 
-2026-10-28: placeholder
+The prompt ends with one paragraph. It names the page origin plus `AgentLinkOnboardingPrompt.OpenApiDocumentPath` (`/openapi/v1.json`), says that document describes every endpoint, request, and response, and says later calls send `Authorization: Bearer` plus a token from a fresh token ceremony with the scopes that operation needs. The same paragraph names `{origin}/llms.txt` and `{origin}/auth.md`. The path literal lives only on that constant. The spa integration test asserts the built prompt contains the origin plus the constant. The Playwright project does not reference web-spa, so its test reads the URL the rendered prompt names (`origin + "/openapi/"` through the next `.json`) and GETs it through the page API request. It requires status 200, a JSON `openapi` string, and a `paths` object whose raw text contains `" /`. OpenAPI publication is unchanged.
+
+The opening sentence says the blocks need bash, openssl, and curl, and that Windows runs them in Git Bash or WSL, not PowerShell. The Agent links page caption says the same. There is one script.
+
+Portability changes in the shared helpers: `json_string` strips CR and LF before POSIX `sed` (`sed -n` with BRE groups and `[[:space:]]`, no GNU-only flags). `b64url_decode` writes a trailing newline before `openssl base64 -d -A`. `bash -n` of the helper text succeeded.
+
+### Operating systems
+
+**Linux (executed).** OpenSSL 3.5.5 (27 Jan 2026) and GNU bash 5.3.9. `date -u +%Y%m%dT%H%M%SZ` matched `^[0-9]{8}T[0-9]{6}Z$`. `tr -d '\r\n'` strips CR and LF. `openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256` then `openssl pkey -in agent.pem -pubout -outform DER` produced a 91-byte SPKI (`BEGIN PUBLIC KEY`, DER starts `30 59`). `openssl base64 -A` and `openssl base64 -d -A` round-tripped `hello-challenge` with and without a trailing newline. `openssl dgst -sha256 -sign` produced a 70-byte DER SEQUENCE of two INTEGERs. POSIX sed extracted a string from spaced JSON and from CRLF JSON. The greedy `.*` still matches the last key of that name. That behavior is pre-existing and was left as-is. `bash -n` of a representative block succeeded.
+
+**macOS (unverified; not executed on macOS).** Judged from the OpenBSD openssl(1) manual, which documents `genpkey -pkeyopt ec_paramgen_curve:curve`, `enc -A` (base64 on one line), and `pkey` as converting public and private keys, plus `-outform der|pem` on key commands including genpkey. Apple `/usr/bin/openssl` is LibreSSL. Homebrew OpenSSL 3 matches the Linux OpenSSL 3 flags when that binary is first on PATH. BSD `date -u` accepts this POSIX strftime stamp. POSIX `sed -n` with `s///p` accepts `[[:space:]]` and BRE groups. POSIX `tr` accepts `\n` and `\r`. macOS `/bin/bash` 3.2 supports `pipefail`, `${#var}`, `${DIR:?}`, and functions. The script uses no bash 4 feature. `chmod` and `$HOME` are standard. The conclusion that `openssl pkey -pubout -outform DER` succeeds on Apple LibreSSL was not executed on macOS.
+
+**Windows (unverified; not executed on Windows).** PowerShell 5 aliases `curl` to `Invoke-WebRequest`, which rejects `curl -fsS`. The prompt tells the agent to use Git Bash or WSL, not PowerShell. Git Bash ships bash, GNU-like sed, tr, and date, plus openssl and curl. Quoted `$HOME` paths stay in the MSYS profile (`/c/Users/...`). The script does not use drive letters. MSYS `chmod` typically exits 0 and does not apply Unix mode bits on NTFS. WSL is a Linux userspace equivalent to the Linux run and was not executed here.
+
+### Build and tests
+
+`./bin/dev build` finished with 0 warnings and 0 errors. The client-name scan passed (`crunchit` and `copic` are absent).
+
+`./bin/dev test --no-build` ran twice. Both times 21 of 23 projects passed. `web-spa-playwright-tests` passed 32/32 both times, and `web-spa-integration-tests` passed both times. The two failures were `web-jaribu-tests` and `web-server-integration-tests`, both assigned port base 21500. Each failed in `HostGraphFactory.EnsurePortIsFree` because port 21500 was already in use while another project still held that base. Those projects do not cover this prompt. Run alone on free bases, `web-server-integration-tests` with `TIMEWARP_TEST_PORT_BASE=42000` exited 0, and `web-jaribu-tests` with `TIMEWARP_TEST_PORT_BASE=40000` passed 441/441.
+
+### How to validate
+
+Smoke: Sign in, open the Agent links page, and read the prompt. It names bash, openssl, and curl, says Windows uses Git Bash or WSL, and ends with the origin plus `/openapi/v1.json`, bearer authentication, `/llms.txt`, and `/auth.md`.
+
+Expect: `./bin/dev build` is 0 warnings and 0 errors. The spa integration tests and the Playwright onboarding test pass, including the OpenAPI paragraph and a GET of the URL the rendered prompt names (HTTP 200, an `openapi` string, and a `paths` object).

@@ -9,6 +9,9 @@
 // this test until the recipe follows. Routes and ceremony prefixes are the contract and
 // AgentKeyProof surfaces. The bearer is checked by absence: the recipe never redirects it
 // into a file and it unsets the shell variable before each block exits.
+// The OpenAPI paragraph uses AgentLinkOnboardingPrompt.OpenApiDocumentPath, names bearer calls,
+// and names /llms.txt and /auth.md. The shell requirement names bash, openssl, curl, Git Bash,
+// WSL, and PowerShell.
 #endregion
 
 namespace AgentLinkOnboardingPrompt_;
@@ -97,6 +100,17 @@ public class Build_Should
     prompt.ShouldNotContain($"> '{accessTokenName}'");
     prompt.ShouldContain("mints a fresh token");
     Count(prompt, "unset access").ShouldBe(2);
+    prompt.ShouldContain("These blocks need bash, openssl, and curl.");
+    prompt.ShouldContain("Git Bash or WSL, not PowerShell");
+    prompt.ShouldContain("Invoke-WebRequest");
+    prompt.ShouldContain(Origin + AgentLinkOnboardingPrompt.OpenApiDocumentPath);
+    prompt.ShouldContain("describes every endpoint, request, and response");
+    prompt.ShouldContain("Authorization: Bearer");
+    prompt.ShouldContain("fresh token ceremony");
+    prompt.ShouldContain(Origin + "/llms.txt");
+    prompt.ShouldContain(Origin + "/auth.md");
+    prompt.ShouldContain("tr -d '\\r\\n'");
+    prompt.ShouldContain("printf '%s\\n'");
 
     return Task.CompletedTask;
   }

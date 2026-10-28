@@ -19,6 +19,15 @@
 // link id into the directory it prints. After the person approves, the second script mints a
 // fresh bearer from those files and GETs the human-ux route. The page fills in the server origin
 // and the human account id before the person copies the block.
+// OpenApiDocumentPath is the only OpenAPI path literal. The prompt appends it to the page origin
+// and names /llms.txt and /auth.md beside it. The Playwright test reads that URL from the rendered
+// prompt and requires HTTP 200 with an OpenAPI document. Later calls send Authorization: Bearer
+// from a fresh token ceremony, with the scopes the operation needs.
+// The blocks are bash and need openssl and curl. Windows runs them in Git Bash or WSL, not
+// PowerShell, where curl is an alias for Invoke-WebRequest. There is no second shell recipe.
+// Helpers use POSIX sed (BRE groups, [[:space:]], no GNU-only flags), tr, and date -u with a
+// POSIX strftime stamp. json_string drops CR as well as LF so a CRLF body still matches.
+// b64url_decode writes a trailing newline before openssl base64 -d -A.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks;
@@ -28,6 +37,9 @@ using TimeWarp.Identity;
 /// <summary>Paste-ready agent instructions for the optional human link ceremony.</summary>
 public static class AgentLinkOnboardingPrompt
 {
+  /// <summary>Path of the OpenAPI document served for the page origin.</summary>
+  public const string OpenApiDocumentPath = "/openapi/v1.json";
+
   private const string Helpers =
     """
     b64url() {
@@ -40,11 +52,11 @@ public static class AgentLinkOnboardingPrompt
       mod=$(( ${#data} % 4 ))
       pad=
       if [ "$mod" -eq 2 ]; then pad='=='; elif [ "$mod" -eq 3 ]; then pad='='; elif [ "$mod" -eq 1 ]; then echo 'challenge is not base64url' >&2; exit 1; fi
-      printf '%s' "$data$pad" | tr '_-' '/+' | openssl base64 -d -A > "$out"
+      printf '%s\n' "$data$pad" | tr '_-' '/+' | openssl base64 -d -A > "$out"
     }
 
     json_string() {
-      printf '%s' "$1" | tr -d '\n' | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p"
+      printf '%s' "$1" | tr -d '\r\n' | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p"
     }
 
     sign_ceremony() {
@@ -99,7 +111,7 @@ public static class AgentLinkOnboardingPrompt
     const string humanUxSpec = GetHumanUx.Response.SpecId;
 
     return $$"""
-      Link this agent to my TimeWarp account. Use openssl and curl only. Do not install a .NET SDK, and do not look for a packed client.
+      Link this agent to my TimeWarp account. These blocks need bash, openssl, and curl. On Windows, run them in Git Bash or WSL, not PowerShell, where curl is an alias for Invoke-WebRequest. Do not install a .NET SDK, and do not look for a packed client.
 
       My account id is {{accountId}}.
       The server origin is {{origin}}.
@@ -187,6 +199,8 @@ public static class AgentLinkOnboardingPrompt
       printf '%s\n' "$ux_json"
       unset access
       ```
+
+      The OpenAPI document at {{origin}}{{OpenApiDocumentPath}} describes every endpoint, request, and response. Call an operation with Authorization: Bearer and a token from a fresh token ceremony (the second block), using the scopes that operation requires. Discovery notes are {{origin}}/llms.txt and {{origin}}/auth.md.
       """;
   }
 

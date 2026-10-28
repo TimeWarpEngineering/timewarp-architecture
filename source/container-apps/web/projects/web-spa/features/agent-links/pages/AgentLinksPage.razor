@@ -93,7 +93,7 @@
                         data-copied="@(AccountCopied ? "true" : "false")"
                         OnClick="CopyAccountIdAsync">@(AccountCopied ? "Copied" : "Copy")</FluentButton>
         </div>
-        <p>Paste this prompt to your agent. It carries the account id above and a bash recipe that uses openssl and curl.</p>
+        <p>Paste this prompt to your agent. It carries the account id above and a bash recipe that uses openssl and curl. On Windows, paste it into Git Bash or WSL, not PowerShell.</p>
         <div class="twe-prompt">
           <pre data-qa="AgentLinkPrompt">@Prompt</pre>
           <FluentButton Appearance="ButtonAppearance.Outline"
