@@ -103,11 +103,15 @@ Round 1 (effort 2, roster: general): 2 open (bug 1, suggestion 1), 0 fixed, 0 wo
 
 Round 2 (effort 2, roster: general, delta `f029de790..309942e66`): bug 1 open / 1 fixed, suggestion 1 fixed, 0 wontfix. Disposition is pending a fix pass. M1 and M2 are fixed and re-verified. M3 (new, bug): `AgentKeyProof.GetPrefix` is now public and the template's web-spa calls it. `<Version>` and the `TimeWarp.Identity` pin are still the published 2.0.0-beta.27, so generated apps (package mode) fail with CS0122, and `dev check-version` fails. Fix: bump `<Version>` and all platform pins to 2.0.0-beta.28 in one commit. Re-run this round: the web-spa-integration-tests build had 0 warnings and 0 errors, `Build_Should` passed 1/1, and `dev check-version` failed. Ledger: `review/round-2/merged.md`.
 
+Round 3 (effort 1, roster: general, delta `309942e66..c9a40020e`): 0 open. Bug: 2 fixed (M1, M3). Suggestion: 1 fixed (M2). Nit: none. Wontfix: 0. M3 is fixed: both `<Version>` properties and the eleven platform pins are `2.0.0-beta.28`, and `GetPrefix` stays public. This round re-ran `dev check-version`, which passed, and confirmed `master` merges cleanly. `dev build` and `dev template-smoke` were not re-run, because the delta changes only the version and the package-mode pins.
+
+**Disposition: clean.** Three rounds, three findings, all fixed, none wontfix. Framework: `review/review-framework.md`. Final ledger: `review/round-3/merged.md`. Disposition file: `review/disposition.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2
 - Round 2: Blocked — open M3
-
+- Round 3: Done
 ## Notes
 
 - Server contracts touched (none expected): `RequestAgentHumanLink`, `GetHumanUx` under
@@ -128,3 +132,4 @@ Round 2 (effort 2, roster: general, delta `f029de790..309942e66`): bug 1 open / 
 - Fix pass (implement-fix-2): grok task-work (2026-10-28). M1 saves key id and link id and mints a fresh token for human-ux. M2 derives routes, verbs, JSON names, prefixes, and the scope from the contracts. `ganda repo audit` advisory `kanban-landed` is other claims with no worktree; left untouched.
 - Review oracle round 2: claude (claude-opus-5-5), tw-implementation-review effort 2, roster general — 2026-10-28. M1 and M2 fixed; a fix pass is needed for M3 (version and pin bump).
 - Fix pass (implement-fix-3): grok task-work (2026-10-28). M3 bumps `<Version>` and the platform pins to `2.0.0-beta.28` and leaves `GetPrefix` public. `dev check-version` passed. `ganda repo audit` advisory `kanban-landed` is the same other claims with no worktree; left untouched.
+- Review oracle round 3: claude (claude-opus-5-5), tw-implementation-review effort 1, roster general — 2026-10-28. M3 fixed and re-verified with `dev check-version`. Disposition clean.
