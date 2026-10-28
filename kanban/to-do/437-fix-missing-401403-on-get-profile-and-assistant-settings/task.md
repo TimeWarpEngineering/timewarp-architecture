@@ -2,12 +2,16 @@
 
 ## Description
 
-[Brief description of the task]
+`GET /api/Users/Current/Profile` documents only 200 while `PUT` documents
+401+403. Same for `GET /api/settings/assistant` (only 200) vs `PUT`
+(401+403). Either the GETs are intentionally anonymous (surprising for
+Current/Profile) or the spec is missing responses.
 
 ## Checklist
 
-- [ ] Item 1
-- [ ] Item 2
+- [ ] Decide anon-vs-authed for both GETs
+- [ ] Add 401/403 responses if authed, or document anonymous intent if not
+- [ ] Audit remaining GETs without 401 (Hello, entra/challenge, entra/choice, session, sign-in-methods, tip, antiforgery-token)
 
 ## Session
 
@@ -15,4 +19,4 @@
 
 ## Notes
 
-[Additional context]
+Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
