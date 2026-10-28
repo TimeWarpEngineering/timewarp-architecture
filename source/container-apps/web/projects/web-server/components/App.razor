@@ -27,6 +27,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  @* Before the body is parsed, so a stored rail does not paint full and then snap. *@
+  <script>
+@((MarkupString)ShellNavScript.Render())
+  </script>
   <title>@Brand.ProductName</title>
   @* Static shell, outside HeadOutlet: crawlers do not run Blazor, and Prerender may be off. *@
   <LinkPreviewMeta />

@@ -1,30 +1,45 @@
 #region Purpose
-// ApplicationState action that flips the navigation menu between expanded and collapsed.
+// ApplicationState action that flips the navigation column between the full width and the icon rail.
 #endregion
 
 #region Design
-// Menu expansion lives in ApplicationState rather than in the nav component so any part of
-// the shell can toggle or react to it; the default (expanded) is set in Initialize.
+// The button under the user card dispatches ToggleMenu. With no stored choice the effective width
+// follows the breakpoint: full at 1280px and wider, rail from 880px through 1279px. The action
+// stores the opposite (twe.shellNav) and sets data-twe-nav through ShellNavScript, which is the
+// same script that paints the choice before the body. IsMenuExpanded is that explicit choice
+// (true is full). A runtime without the page functions still flips the in-memory choice so a
+// headless send changes state. The handler does not dispatch another action.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
 
 partial class ApplicationState
 {
-  public static class ToggleMenu
+  public static class ToggleMenuActionSet
   {
-    public class Action : IBaseAction;
+    public sealed class Action : IBaseAction;
 
-    internal class Handler
+    internal sealed class Handler
     (
-      IStore store
+      IStore store,
+      IJSRuntime jsRuntime
     ) : BaseHandler<Action>(store)
     {
-
-      public override ValueTask Handle(Action action, CancellationToken cancellationToken)
+      public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        ApplicationState.IsMenuExpanded = !ApplicationState.IsMenuExpanded;
-        return default;
+        string? stored = await ShellNavScript.ReadAsync(jsRuntime, cancellationToken);
+        bool wide = await ShellNavScript.IsWideAsync(jsRuntime, cancellationToken);
+        bool effectiveFull = stored == ShellNavScript.Full
+          || (stored != ShellNavScript.Rail && wide);
+        if (stored != ShellNavScript.Full && stored != ShellNavScript.Rail && ApplicationState.HasShellNavChoice)
+        {
+          effectiveFull = ApplicationState.IsMenuExpanded;
+        }
+
+        string next = effectiveFull ? ShellNavScript.Rail : ShellNavScript.Full;
+        ApplicationState.HasShellNavChoice = true;
+        ApplicationState.IsMenuExpanded = next == ShellNavScript.Full;
+        await ShellNavScript.ApplyAsync(jsRuntime, next, cancellationToken);
       }
     }
   }

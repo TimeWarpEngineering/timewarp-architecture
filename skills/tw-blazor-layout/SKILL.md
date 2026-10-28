@@ -160,9 +160,16 @@ Concrete instance of the pattern in this repo:
   (`twe-nav--pin`, `margin-top: auto`) only when a permitted page uses Bottom. External links
   stay in the primary nav, after the top groups. `.twe-nav-menu` is the one scroll container;
   each `FluentNav` is `flex: none` and `overflow: visible`, so the menu scrolls as one list.
-  The signed-in user card sits under the menu. From 1280px up the nav is 240px; from 880px through 1279px it is a 68px icon rail
-  (`--twe-shell-rail-width`); below 880px the drawer is unchanged. Media queries repeat 880 and
-  1279 because they cannot read the tokens. There is no category
+  The signed-in user card sits under the menu. A button under that card dispatches a state
+  action that collapses the column to the icon rail and expands it again. The choice is a
+  per-browser preference (`twe.shellNav`). A blocking head script sets `data-twe-nav` before
+  the body is parsed, so a reload does not paint the full column and then snap. From 1280px up
+  the nav defaults to 240px; from 880px through 1279px it defaults to the 68px rail
+  (`--twe-shell-rail-width`). The preference overrides that default at both widths. Below 880px
+  the drawer is unchanged and the toggle is hidden. The rail rules are one set, selected by
+  `--twe-nav-rail`. The breakpoint and the preference both set that variable; they do not copy
+  the rules. 880 and 1279 stay in `tokens.css` because media queries cannot read the width
+  tokens. There is no category
   gate; a category shows when one of its pages is permitted. The Ctrl-K palette, Ask's `navigate`
   and `site_map` tools, and WebMCP read the same list, so a new menu page is one `[Page]` edit.
   `Navigable = true` on a parameterized route (or a non-literal value) is **TWE009**.

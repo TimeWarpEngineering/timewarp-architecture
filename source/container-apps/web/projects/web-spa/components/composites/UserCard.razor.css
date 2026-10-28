@@ -1,6 +1,6 @@
 /* Identity row. The link and the static card share one rule. The rail clips the
    name and detail so the circle fits the 68px nav and the text stays the
-   accessible name. 880 and 1279 match TimeWarpPage.razor.css. */
+   accessible name. The rail is --twe-nav-rail (tokens.css), the same gate as the menu. */
 .twe-user-card {
   display: flex;
   align-items: center;
@@ -40,7 +40,7 @@ a.twe-user-card:hover {
   white-space: nowrap;
 }
 
-@media (max-width: 1279px) and (min-width: 880px) {
+@container twe-shell-nav style(--twe-nav-rail: 1) {
   .twe-user-card {
     position: relative;
     justify-content: center;

@@ -27,8 +27,9 @@
   // follows the top groups in the primary nav.
   // A category has no icon. In the rail its title is collapsed and the expand chevron is the mark.
   // Link text stays in the tree (clipped, not display:none). The title tooltip is set only while
-  // the viewport is the rail, so a full-width label is not repeated. shell-rail watch returns a
-  // handle for this menu, and DisposeAsync stops that handle only. Destinations are re-read
+  // the column is the rail (the 880–1279 default, or data-twe-nav="rail"), so a full-width label
+  // is not repeated. shell-rail watch returns a handle for this menu, and DisposeAsync stops that
+  // handle only. Destinations are re-read
   // only when the cascaded authentication state task is replaced (sign-in and sign-out), not on
   // every parent render.
 

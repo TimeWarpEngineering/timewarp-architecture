@@ -6,7 +6,7 @@
 #region Design
 // C-create AnalyticsSpaTestApplication (recording IWebServerApiService) rather than
 // SpaSessionFixture: these facts assert the POST, which requires DI substitution.
-// IncrementCounterActionSet.Action is the tagged demo; ToggleMenu.Action is an untagged
+// IncrementCounterActionSet.Action is the tagged demo; ToggleMenuActionSet.Action is an untagged
 // IAction that still succeeds. Re-fetch CounterState after Send — clone-on-dispatch replaces
 // the instance. EventName is the action FullName because nested Action types all share Name
 // "Action".
@@ -67,7 +67,7 @@ public class Handle_Should
   {
     using SpaTestScope scope = SpaTestScope.Create(Spa!);
 
-    await scope.Send(new ToggleMenu.Action());
+    await scope.Send(new ToggleMenuActionSet.Action());
 
     Spa!.Recording.Requests.ShouldBeEmpty();
   }

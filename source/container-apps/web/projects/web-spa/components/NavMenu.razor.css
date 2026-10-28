@@ -8,7 +8,7 @@
    pin is a second nav rather than a wrapper.
    The rail clips link text (the words stay the accessible name) and collapses
    a category title onto its expand chevron. Categories have no icon of their own.
-   880 and 1279 match TimeWarpPage.razor.css. */
+   The rail is --twe-nav-rail (tokens.css), not a second copy of the breakpoint. */
 .twe-nav-menu {
   display: flex;
   flex: 1 1 auto;
@@ -27,7 +27,7 @@
   margin-top: auto;
 }
 
-@media (max-width: 1279px) and (min-width: 880px) {
+@container twe-shell-nav style(--twe-nav-rail: 1) {
   .twe-nav__label {
     position: absolute;
     width: 1px;

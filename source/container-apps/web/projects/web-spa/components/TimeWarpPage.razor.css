@@ -113,10 +113,11 @@
 .twe-brand { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; padding: 0 6px; }
 .twe-brand__logo { height: var(--twe-logo-height); width: auto; flex: none; display: block; }
 
-/* The nav column owns the rule and the paper fill, including the pinned user card.
-   FluentNav is NavMenu's root (a child component), so it is reached from the shell anchor.
-   From 880px through 1279px the column is the icon rail. Below 880px FluentLayout's
-   drawer (MobileBreakdownWidth) takes over. Those two numbers match tokens.css. */
+/* The nav column owns the rule and the paper fill, including the pinned user card and the
+   width toggle. FluentNav is NavMenu's root (a child component), so it is reached from the
+   shell anchor. The rail (icons, 68px) is --twe-nav-rail from tokens.css: the 880–1279 default
+   and a stored rail at 880px and wider. Below 880px FluentLayout's drawer takes over and the
+   toggle is hidden. 879 is one pixel under MobileBreakdownWidth, matching the aside cover. */
 .twe-nav-column {
   display: flex;
   flex-direction: column;
@@ -131,15 +132,46 @@
   padding: 0 var(--twe-space-2) var(--twe-space-2);
 }
 
+.twe-nav-column__toggle {
+  flex: none;
+  display: flex;
+  justify-content: flex-start;
+  padding: var(--twe-space-2);
+  border-top: 1px solid var(--twe-rule);
+}
+
+.twe-nav-column__toggle ::deep .twe-nav-toggle--expand {
+  display: none;
+}
+
 .twe-shell ::deep .twe-nav {
   padding: 8px;
   background: transparent;
 }
 
-@media (max-width: 1279px) and (min-width: 880px) {
+@media (max-width: 879px) {
+  .twe-nav-column__toggle {
+    display: none;
+  }
+}
+
+@container twe-shell-nav style(--twe-nav-rail: 1) {
   .twe-shell ::deep .fluent-layout-item[area=nav] {
     width: var(--twe-shell-rail-width) !important;
     max-width: var(--twe-shell-rail-width) !important;
+  }
+
+  .twe-nav-column__toggle {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .twe-nav-column__toggle ::deep .twe-nav-toggle--collapse {
+    display: none;
+  }
+
+  .twe-nav-column__toggle ::deep .twe-nav-toggle--expand {
+    display: inline-flex;
   }
 }
 
