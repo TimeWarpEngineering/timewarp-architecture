@@ -14,6 +14,11 @@
 // Administrator, which does not include developer.access, so the test adds the Developer role
 // on the host store and loads /DesignSystem/drawers with a full navigation. Focus checks retry because
 // showModal runs after the dialog's script binds.
+// The end drawer slides with translateX(100%) for 180ms. The paint sample is 24px inside the dialog
+// border box and in the top 16px, where the app bar sits. That box follows the transform, so early
+// in the slide the sample is past the viewport edge and elementFromPoint misses, while the scrim
+// point still hits ::backdrop. The probe finishes the dialog animations before it measures, and it
+// counts a hit only when that sample lies inside the settled box and the viewport.
 // End sits on the inline-end edge and Start on the inline-start edge. The test flips the
 // document direction and the side class, then reads the settled box and the inner border.
 // A form with method dialog closes the dialog without the module's Close, and the title
@@ -145,7 +150,22 @@ public class DesignSystemDrawer_Given_Wasm
           return JSON.stringify({ error: "missing drawer, shell, opener, or close button" });
         }
 
+        // The open slide is translateX(100%) on the dialog. Finish it before reading the box so
+        // the sample is not taken while the panel still sits past the viewport edge.
+        for (const animation of dialog.getAnimations()) {
+          const state = animation.playState;
+          if (state === "running" || state === "pending" || state === "paused") {
+            animation.finish();
+          }
+        }
+
         const rect = dialog.getBoundingClientRect();
+        const sampleX = rect.left + 24;
+        const sampleY = Math.min(rect.top + 12, 16);
+        const sampleInside = sampleX >= rect.left && sampleX < rect.right
+          && sampleY >= rect.top && sampleY < rect.bottom
+          && sampleX >= 0 && sampleY >= 0
+          && sampleX < window.innerWidth && sampleY < window.innerHeight;
         const hitsDialog = (x, y) => {
           let node = document.elementFromPoint(x, y);
           while (node) {
@@ -185,8 +205,15 @@ public class DesignSystemDrawer_Given_Wasm
           focusBeforeOpener,
           openerTookFocus,
           focusAfterOpenerAttempt,
-          paintHitsDialog: hitsDialog(rect.left + 24, Math.min(rect.top + 12, 16)),
-          scrimHitsDialog: hitsDialog(24, Math.round(window.innerHeight / 2))
+          paintHitsDialog: sampleInside && hitsDialog(sampleX, sampleY),
+          scrimHitsDialog: hitsDialog(24, Math.round(window.innerHeight / 2)),
+          sampleInside,
+          sampleX,
+          sampleY,
+          rectLeft: rect.left,
+          rectTop: rect.top,
+          rectRight: rect.right,
+          rectBottom: rect.bottom
         });
       }
       """);
