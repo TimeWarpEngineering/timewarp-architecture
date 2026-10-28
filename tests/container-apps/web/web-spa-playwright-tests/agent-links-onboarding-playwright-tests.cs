@@ -12,6 +12,12 @@
 
 namespace AgentLinksOnboardingPlaywright_;
 
+using System.Text.Json;
+using TimeWarp.Architecture.Features.AgentLinks;
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Foundation.Types;
+using TimeWarp.Identity;
+
 public class AgentLinksOnboarding_Given_Wasm
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -53,14 +59,27 @@ public class AgentLinksOnboarding_Given_Wasm
     prompt.ShouldContain(origin);
     prompt.ShouldContain("openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256");
     prompt.ShouldContain("openssl dgst -sha256 -sign");
-    prompt.ShouldContain("TimeWarp.Identity.AgentKey.Register.v1:");
-    prompt.ShouldContain("TimeWarp.Identity.AgentKey.Token.v1:");
-    prompt.ShouldContain("identity:read");
-    prompt.ShouldContain("/api/identity/agent/register/options");
-    prompt.ShouldContain("/api/identity/agent/register");
-    prompt.ShouldContain("/api/identity/agent/token");
-    prompt.ShouldContain("/api/agent-links");
-    prompt.ShouldContain("humanPrincipalId");
+    JsonNamingPolicy namingPolicy = ContractSerializationDefaults.Options.PropertyNamingPolicy
+      ?? throw new InvalidOperationException("Contract serialization has no property naming policy.");
+    const string humanUx = GetHumanUx.Query.RouteTemplate;
+    int open = humanUx.IndexOf('{', StringComparison.Ordinal);
+    int close = humanUx.IndexOf('}', StringComparison.Ordinal);
+    string humanUxShell = string.Concat(humanUx.AsSpan(0, open), "${link_id}", humanUx.AsSpan(close + 1));
+
+    prompt.ShouldContain(AgentKeyProof.GetPrefix(AgentKeyCeremonyType.Registration));
+    prompt.ShouldContain(AgentKeyProof.GetPrefix(AgentKeyCeremonyType.TokenIssuance));
+    prompt.ShouldContain(AgentScopes.IdentityRead);
+    prompt.ShouldContain(StartAgentKeyRegistration.Command.RouteTemplate);
+    prompt.ShouldContain(CompleteAgentKeyRegistration.Command.RouteTemplate);
+    prompt.ShouldContain(StartAgentTokenIssuance.Command.RouteTemplate);
+    prompt.ShouldContain(CompleteAgentTokenIssuance.Command.RouteTemplate);
+    prompt.ShouldContain(RequestAgentHumanLink.Command.RouteTemplate);
+    prompt.ShouldContain(humanUxShell);
+    prompt.ShouldContain(namingPolicy.ConvertName(nameof(RequestAgentHumanLink.Command.HumanPrincipalId)));
+    prompt.ShouldContain(GetHumanUx.Response.SpecId);
+    prompt.ShouldContain("mints a fresh token");
+    prompt.ShouldNotContain("same bearer");
+    prompt.ShouldNotContain("{LinkId");
     prompt.ShouldContain("curl");
     prompt.ShouldNotContain("tools/");
     prompt.ShouldNotContain("dotnet");

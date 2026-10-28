@@ -1,0 +1,21 @@
+# Round 1 — general
+**Date:** 2026-10-28
+**Scope reviewed:** branch `task/428-improve-agent-links-page-onboarding` vs merge-base `5510b6096` (HEAD `f029de790`), product paths under `source/` and `tests/`, plus `task.md`.
+
+## Summary
+
+The change adds a "What linking means" section, a "Your account id" block with a copy button, and a copyable openssl + curl prompt (`AgentLinkOnboardingPrompt`) to the Agent links page. Copy buttons dispatch `AgentLinksState.CopyOnboarding`, and a Playwright test covers the new copy and the clipboard. I checked the recipe against the server contracts. Routes, JSON member names (`publicKey`, `challenge`, `signature`, `nickname`, `keyId`, `scopes`, `accessToken`, `humanPrincipalId`), both ceremony prefixes, the base64url challenge decoded to raw bytes before signing (`WebAuthnPayloadDecoder.TryDecode` → `AgentKeyProof.BuildSignedData`), DER signatures, and `identity:read` → `AgentLinkManageSelf` all match. The `timewarp:principal_id` claim the page reads is set by the WASM provider, the hosted (server-render) provider, and the mock provider. The goal restatement matches the task (requirement 3 supersedes requirement 2's "shipped client or skill" wording with a self-contained recipe), so there is no misread. The main defect is the prompt's follow-up step. The prompt tells the agent to fetch `human-ux` "with the same bearer" after approval, but the script never keeps that bearer. Gates (`dev build`, `dev template-smoke`) were self-reported and not re-run in this round.
+
+## Issues
+
+### Issue 1 — Severity: bug
+- File: source/container-apps/web/projects/web-spa/features/agent-links/agent-link-onboarding-prompt.cs:32
+- Description: After approval, the prompt says "GET {origin}/api/agent-links/<linkId>/human-ux with the same bearer". The script holds the bearer only in the shell variable `$access` and never prints or saves it. `key_id` is only printed, and the link id is only inside the printed `link_json`. When the script exits, the bearer is gone. Even if it were kept, the agent token lifetime defaults to 15 minutes (`web-server/appsettings.json` `TokenLifetimeMinutes: 15`, no refresh), and the human's approval can come later than that. So the step that delivers the acceptance outcome ("an approved link lets the agent fetch the `timewarp.humanUx/v1` handoff") cannot run as written. The agent has to improvise a second token ceremony from a KeyId it may not have kept.
+- Suggestion: Save the KeyId (and the link id from the response) to files in `$dir` (for example `key-id`, `link-id`), and print `$dir`. Change the text so that after approval the agent mints a fresh token: re-run the Token.v1 ceremony with the saved key and KeyId, then GET `human-ux` with that bearer. Optionally split the token step into a reusable function or a second small block so the follow-up is copyable rather than inferred. Do not persist the bearer itself.
+- Status: open
+
+### Issue 2 — Severity: suggestion
+- File: source/container-apps/web/projects/web-spa/features/agent-links/agent-link-onboarding-prompt.cs:74
+- Description: The prompt hard-codes routes and JSON member names that must agree with six server contracts (`StartAgentKeyRegistration`, `CompleteAgentKeyRegistration`, `StartAgentTokenIssuance`, `CompleteAgentTokenIssuance`, `RequestAgentHumanLink`, and `GetHumanUx`). The Playwright test asserts the same literals again, so it is a second copy, not a check against the contracts. A contract rename (for example the 248-001 `label` → `nickname` wire break, where unknown members are silently ignored) would leave the page shipping a broken recipe with green tests. AGENTS.md hard rule: "When two things must agree, generate one from the other or add a build check." The end-to-end recipe was proven only manually (session ses_e7d6c83cfffebh1UD5myX7NDeE).
+- Suggestion: Add a check that ties the prompt to the contracts. Preferred: a Jaribu test that runs the built prompt's bash block (bash + openssl + curl on the CI Linux runner) against the in-proc web host with a real passkey human, and asserts a `Pending` link for that human. A cheaper alternative is to build the routes and member names in `Build` from the contract types (`ApiRoute` values, camelCase `nameof` of the Command properties) so a rename breaks compilation or the existing Playwright assertions.
+- Status: open

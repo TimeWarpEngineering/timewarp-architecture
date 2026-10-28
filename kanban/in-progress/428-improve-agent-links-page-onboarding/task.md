@@ -13,6 +13,8 @@ Acceptance:
 - A Playwright test covers those page changes.
 - `dev build` and `dev template-smoke` pass.
 
+Fix pass (review round 1): the copied recipe must still work after the person approves. The first script saves the key id and the link id in the directory it prints, and it does not keep the bearer. The instructions after that tell the agent to mint a fresh token with the saved key, then GET the human-ux document. Routes and JSON member names in that recipe come from the contract types, and a test fails if the recipe drops a name the serializer or the route template actually uses.
+
 ## Description
 
 The AgentLinks page experiences a gap in the flow discovered while linking a live agent
@@ -73,6 +75,8 @@ a code instead of the raw id) is noted but out of scope here.
 - [x] Surface the human's PrincipalId on AgentLinksPage with copy support
 - [x] Playwright test coverage on the web-spa page changes
 - [x] `dev build`, `dev template-smoke` per PR gates in AGENTS.md
+- [x] M1: the recipe saves the key id and link id, drops the bearer, and mints a fresh token before human-ux
+- [x] M2: routes and JSON member names come from the contracts, and a test fails when the recipe drops one
 
 ## Decision
 
@@ -80,13 +84,21 @@ AOT client: **SKIP**. A shell-capable agent finishes key registration, token iss
 
 ## Results
 
-The Agent links page explains what a link is, shows the signed-in account id, and copies a prompt the person can paste to their agent. The id is the `timewarp:principal_id` claim from `GetCurrentSession` (mock auth carries the same claim). Copy buttons dispatch `AgentLinksState.CopyOnboarding`, which writes the clipboard. The prompt is a bash recipe: P-256 keygen, register (`TimeWarp.Identity.AgentKey.Register.v1:`), token with `identity:read` (`Token.v1`), then `POST api/agent-links` with this account id. No packed client ships.
+The Agent links page explains what a link is, shows the signed-in account id, and copies a prompt the person can paste to their agent. The id is the `timewarp:principal_id` claim from `GetCurrentSession` (mock auth carries the same claim). Copy buttons dispatch `AgentLinksState.CopyOnboarding`, which writes the clipboard. The prompt is a bash recipe: P-256 keygen, register, token with `identity:read`, then the agent-link POST with this account id. The first block writes the key id and the link id into the directory it prints and unsets the bearer. After approval, the second block mints a fresh token from those files and GETs human-ux. Routes are the contract `RouteTemplate` values. JSON member names are the contract naming policy applied to the property names. Ceremony prefixes come from `AgentKeyProof.GetPrefix`. No packed client ships.
 
 ### How to validate
 
-Smoke: Sign in, open `/AgentLinks`, read "What linking means" and "Your account id", then click Copy and Copy prompt.
+Smoke: Sign in, open `/AgentLinks`, read "What linking means" and "Your account id", then click Copy and Copy prompt. Read both bash blocks in the prompt.
 
-Expect: The explanation contains `Paid service does not require a linked human.` and says you approve or deny, then the agent can fetch the `timewarp.humanUx/v1` handoff (`GetHumanUx`). The account id is the session principal guid. The prompt includes that id, the server origin, `openssl genpkey` for P-256, both ceremony prefixes, `identity:read`, and `POST api/agent-links`. Each copy button writes that text to the clipboard. Playwright `AgentLinksOnboarding_Given_Wasm.Page_Should_ShowTheAccountId_And_CopyThePrompt` passed. `dev build` completed with 0 warnings and 0 errors. `dev template-smoke` passed (exit 0, Template smoke SUCCEEDED): SmokeDefault built with 0 warnings, the initializer import graph was OK, and the smoke suites passed (create-role 5/5, get-weather-forecasts 5/5, hello 2/2, web-jaribu-tests 441/441, api-jaribu-tests 9/9, timewarp-testing-tests 14/14).
+Expect: The explanation contains `Paid service does not require a linked human.` and says you approve or deny, then the agent can fetch the `timewarp.humanUx/v1` handoff (`GetHumanUx`). The account id is the session principal guid. The first block includes that id, the server origin, `openssl genpkey` for P-256, both ceremony prefixes, `identity:read`, and `POST api/agent-links`. It writes `keyId` and `linkId` and runs `unset access`. It does not say "same bearer". The second block reads those files, repeats the token ceremony, and `GET`s `api/agent-links/${link_id}/human-ux`. Each copy button writes that text to the clipboard. `Build_Should.FollowTheContracts_And_MintAFreshTokenAfterApproval` passed. Playwright `AgentLinksOnboarding_Given_Wasm.Page_Should_ShowTheAccountId_And_CopyThePrompt` passed. `dev build` completed successfully. `dev template-smoke` passed (exit 0, Template smoke SUCCEEDED): SmokeDefault built with 0 warnings, the initializer import graph was OK, and the smoke suites passed (create-role 5/5, get-weather-forecasts 5/5, hello 2/2, web-jaribu-tests 441/441, api-jaribu-tests 9/9, timewarp-testing-tests 14/14). `ganda repo audit` passed with one pre-existing advisory (`kanban-landed`: other claims have no usable worktree). Both bash blocks pass `bash -n`.
+
+### Review
+
+Round 1 (effort 2, roster: general): 2 open (bug 1, suggestion 1), 0 fixed, 0 wontfix. Disposition pending a fix pass. M1: the prompt's after-approval `human-ux` step relies on a bearer the script discards, and the token expires after 15 minutes. M2: nothing ties the prompt's routes and field names to the contracts. Ledger: `review/round-1/merged.md`; framework: `review/review-framework.md`.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
 
 ## Notes
 
@@ -103,3 +115,6 @@ Expect: The explanation contains `Paid service does not require a linked human.`
 - Created: ses_e7d6c83cfffebh1UD5myX7NDeE (2026-10-28)
 - Implementation: grok task-work (2026-10-28)
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18301-4e35-7d91-9082-f95316c1078f, max-turns 500, Done — 2026-10-28T15:13:46Z
+- Review oracle round 1: claude (claude-opus-5-5), tw-implementation-review effort 2, roster general — 2026-10-28. Requests a fix pass for M1, M2. Gates were not re-run this round.
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session da6518cb-816b-4d8f-893b-ef93c9809549, max-turns 120 — 2026-10-28T15:16:36Z
+- Fix pass (implement-fix-2): grok task-work (2026-10-28). M1 saves key id and link id and mints a fresh token for human-ux. M2 derives routes, verbs, JSON names, prefixes, and the scope from the contracts. `ganda repo audit` advisory `kanban-landed` is other claims with no worktree; left untouched.
