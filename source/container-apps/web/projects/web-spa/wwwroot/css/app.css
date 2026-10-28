@@ -33,6 +33,14 @@ a:hover { color: var(--twe-secondary-active); text-decoration: underline; }
 
 img, svg { display: block; max-width: 100%; }
 
+/* Exception B — icon-only FluentButton. max-width: 100% above collapses the slotted svg
+   inside <fluent-button icon-only> to a few px: the svg is a flex item of the component's
+   span.content (display: inherit), whose containing block resolves from the icon itself.
+   FluentButton's shadow CSS sizes the svg at 20px (::slotted(svg)); max-width: none lets
+   that hold. Precedent was per-slice ::deep patches (AgentAsk, AskAnswerBar, AskEditModePill,
+   AskPrivacyBanner); this rule covers every present and future icon-only button. Task 433. */
+fluent-button[icon-only] > svg { max-width: none; }
+
 button { font-family: inherit; }
 
 /* Blazor framework error toast (markup lives in App.razor) */

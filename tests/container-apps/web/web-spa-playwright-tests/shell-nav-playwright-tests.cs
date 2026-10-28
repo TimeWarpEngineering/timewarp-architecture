@@ -90,6 +90,59 @@ public class NavWidth_Given_Shell
     _ = graph;
   }
 
+  public static async Task Toggle_Icon_Should_Render_At_Full_Size()
+  {
+    await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
+      services.AddSingleton<IOptions<BlazorSettings>>(Options.Create(new BlazorSettings
+      {
+        RenderMode = TimeWarp.Architecture.Configuration.RenderMode.InteractiveWebAssembly,
+        Prerender = true,
+      })));
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+
+    await using IBrowserContext wide = await NewContextAsync(browser, 1440, 900);
+    IPage page = await wide.NewPageAsync();
+    await GotoAsync(page);
+    await WaitInteractiveAsync(page);
+
+    // Full column: the collapse toggle must be a normal icon button.
+    await AssertToggleSizeAsync(page, "Collapse navigation");
+
+    // Rail: the expand toggle replaces it, centered, still a normal icon button.
+    await page.Locator("[data-qa=NavWidthToggle] [aria-label='Collapse navigation']").ClickAsync();
+    await page.WaitForFunctionAsync
+    (
+      "() => document.documentElement.getAttribute('data-twe-nav') === 'rail'",
+      null,
+      new PageWaitForFunctionOptions { Timeout = 10_000 }
+    );
+    await AssertToggleSizeAsync(page, "Expand navigation");
+
+    _ = graph;
+  }
+
+  private static async Task AssertToggleSizeAsync(IPage page, string name)
+  {
+    ILocator button = page.GetByRole(AriaRole.Button, new() { Name = name, Exact = true });
+    await Assertions.Expect(button).ToBeVisibleAsync();
+
+    double buttonWidth = await button.EvaluateAsync<double>("el => el.getBoundingClientRect().width");
+    double buttonHeight = await button.EvaluateAsync<double>("el => el.getBoundingClientRect().height");
+    buttonWidth.ShouldBeGreaterThanOrEqualTo(24.0, customMessage: $"[{name}] visible button width");
+    buttonHeight.ShouldBeGreaterThanOrEqualTo(24.0, customMessage: $"[{name}] visible button height");
+
+    double iconWidth = await button.EvaluateAsync<double>
+    (
+      "el => { const icon = el.querySelector('fluent-icon') || el.querySelector('svg') || el; return icon.getBoundingClientRect().width; }"
+    );
+    double iconHeight = await button.EvaluateAsync<double>
+    (
+      "el => { const icon = el.querySelector('fluent-icon') || el.querySelector('svg') || el; return icon.getBoundingClientRect().height; }"
+    );
+    iconWidth.ShouldBeGreaterThanOrEqualTo(16.0, customMessage: $"[{name}] visible icon width");
+    iconHeight.ShouldBeGreaterThanOrEqualTo(16.0, customMessage: $"[{name}] visible icon height");
+  }
+
   private static async Task<IBrowserContext> NewContextAsync(IBrowser browser, int width, int height) =>
     await browser.NewContextAsync(new BrowserNewContextOptions
     {

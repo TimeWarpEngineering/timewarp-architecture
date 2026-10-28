@@ -34,11 +34,11 @@ name and clicks it, so it passes with an icon too small to see.
 
 ## Checklist
 
-- [ ] Root cause recorded in Results
-- [ ] Toggle icon renders at 20px in the full column and the rail
-- [ ] Playwright size assertion at 1440px and 1100px (fails before, passes after)
-- [ ] `dev build` 0/0; `dev test --group playwright` passes
-- [ ] No client name in source, tests, or skills
+- [x] Root cause recorded in Results
+- [x] Toggle icon renders at 20px in the full column and the rail
+- [x] Playwright size assertion at 1440px and 1100px (fails before, passes after)
+- [x] `dev build` 0/0; `dev test --group playwright` passes
+- [x] No client name in source, tests, or skills
 
 ## Session
 
@@ -53,3 +53,35 @@ name and clicks it, so it passes with an icon too small to see.
 ## Blocked
 
 2026-10-28: (no reason given)
+
+## Results
+
+- **Root cause (recorded).** `wwwroot/css/app.css` global reset `img, svg { display: block;
+  max-width: 100%; }` collapses the slotted svg inside `<fluent-button icon-only>`. The svg is
+  a flex item of the component's shadow `span.content` (`display: inherit`), whose containing
+  block resolves from the icon itself, so `max-width: 100%` clamps the icon to 6px while the
+  32px button frame stays intact (measured live: button 32x32, svg 6x20). FluentButton's own
+  shadow CSS sizes the svg correctly (`::slotted(svg) { font-size: 20px; height: 20px;
+  width: 20px; }`). Not specific to `.twe-nav-toggle`: a class-stripped clone of the button
+  still rendered 6px. The repo already carried four per-slice patches of this same defect
+  (`.twe-agent-ask__header-actions`, `.twe-agent-ask__answer-bar`, `.twe-ask-edit-mode`,
+  `.twe-ask-privacy` — all `fluent-button > svg { max-width: none; }`); the toggle is the
+  fifth instance.
+- **Fix.** One global accommodation in `app.css` next to the reset it qualifies:
+  `fluent-button[icon-only] > svg { max-width: none; }` (labeled Exception B). This covers the
+  nav toggle AND every other present/future icon-only button; the four Ask patches become
+  redundant but harmless and are left in place. No markup change, no script, no FluentUI
+  internals touched — `tw-blazor-css-strategy` compliant.
+- **Fail-first proof.** New `Toggle_Icon_Should_Render_At_Full_Size` (shell-nav suite)
+  asserts button >= 24px and icon >= 16px at 1440px (full: Collapse) and 1100px (rail:
+  Expand). Ran before the fix: failed with `iconWidth should be >= 16 but was 6`. Ran after:
+  green, and the original `Toggle_Should_Collapse_Expand_And_Remember` still passes (both
+  states hold; the rail keeps the expand button centered).
+
+## Session
+
+- Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
+- Implemented: ses_e7d6c83cfffebh1UD5myX7NDeE (2026-10-28). The implementer-grok oracle walk
+  returned Blocked with no detail after one turn (prompt conflict in its own log); implementation
+  taken over manually in the claimed worktree. Gates: dev build 0/0, dev test -g playwright
+  33/33 pass, ganda repo audit clean, dev template-smoke SUCCEEDED.
