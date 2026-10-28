@@ -1,5 +1,5 @@
 #region Purpose
-// Application shell UI state: active modal, menu expansion, and displayed version.
+// Application shell UI state: active modal, nav width choice, and displayed version.
 #endregion
 
 #region Design
@@ -9,6 +9,8 @@
 // deployed build.
 // Setters are private; mutation happens only via action-set handlers in sibling partials.
 // The product name and the logo are BrandOptions. This store does not keep a second copy.
+// HasShellNavChoice false means the nav follows the breakpoint. IsMenuExpanded is the explicit
+// choice once ToggleMenu or LoadShellNav has one: true is the full column, false is the rail.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -29,9 +31,16 @@ public sealed partial class ApplicationState : State<ApplicationState>
   public string? ActiveModalId { get; private set; }
 
   /// <summary>
-  /// Gets a value indicating whether the application menu is expanded.
+  /// Gets a value indicating whether the explicit nav choice is the full column.
+  /// Meaningful once <see cref="HasShellNavChoice"/> is true; otherwise the breakpoint decides.
   /// </summary>
   public bool IsMenuExpanded { get; private set; }
+
+  /// <summary>
+  /// Gets a value indicating whether this browser has stored a nav width.
+  /// False follows the breakpoint: full from 1280px, rail from 880px through 1279px.
+  /// </summary>
+  public bool HasShellNavChoice { get; private set; }
 
   /// <summary>
   /// Gets the version of the assembly containing this state type.
@@ -46,5 +55,6 @@ public sealed partial class ApplicationState : State<ApplicationState>
   public override void Initialize()
   {
     IsMenuExpanded = true;
+    HasShellNavChoice = false;
   }
 }

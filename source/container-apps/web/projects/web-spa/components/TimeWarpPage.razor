@@ -68,8 +68,15 @@
   replaces that default. ShowUserCard false omits it. Signed out, the default card is absent.
   NavPlacement.Bottom groups render in NavMenu's pinned nav, and only when a
   permitted page uses Bottom. External stays in the primary nav. The navigation item's
-  Width is var(--twe-shell-nav-width). The rail (880px through 1279px) narrows that
-  column to --twe-shell-rail-width. Below 880px Fluent's drawer is unchanged.
+  Width is var(--twe-shell-nav-width). A button under the user card dispatches ToggleMenu.
+  That action stores full or rail for this browser (twe.shellNav). From 1280px up the column
+  starts full. From 880px through 1279px it starts as the --twe-shell-rail-width rail. The
+  stored choice overrides both. Below 880px Fluent's drawer is unchanged and the toggle is
+  hidden. Rail rules (clipped labels, centered items, rail user card, 68px column) are one
+  set, gated by --twe-nav-rail. The breakpoint and data-twe-nav both set that variable.
+  App.razor runs ShellNavScript in the head before the body is parsed. Prerender cannot know
+  the stored choice; the script sets data-twe-nav before first paint, so the full column does
+  not flash. Without JavaScript the breakpoint default remains.
 *@
 
 @code {
@@ -100,8 +107,21 @@
     new() { [TimeWarp.Architecture.Services.CommandPaletteJsModule.TriggerAttribute] = true };
 
   private string? ActiveModalId => ApplicationState.ActiveModalId;
+  private bool ShellNavLoaded;
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
   private Task OpenAskPanelAsync() => AgentSurfaceState.OpenAskPanel();
+  private Task ToggleNavAsync() => ApplicationState.ToggleMenu();
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (!firstRender || !RendererInfo.IsInteractive || ShellNavLoaded)
+    {
+      return;
+    }
+
+    ShellNavLoaded = true;
+    await ApplicationState.LoadShellNav();
+  }
 
   private string ShellClass =>
     !AgentSurfaceState.IsPanelOpen
@@ -228,6 +248,24 @@
           {
             <ShellUserCard />
           }
+          <div class="twe-nav-column__toggle" data-qa="NavWidthToggle">
+            <FluentButton Class="twe-nav-toggle twe-nav-toggle--collapse"
+                          Appearance="ButtonAppearance.Subtle"
+                          IconOnly="true"
+                          IconStart="@(new Icons.Regular.Size20.PanelLeftContract())"
+                          Title="Collapse navigation"
+                          aria-label="Collapse navigation"
+                          aria-expanded="true"
+                          OnClick="ToggleNavAsync" />
+            <FluentButton Class="twe-nav-toggle twe-nav-toggle--expand"
+                          Appearance="ButtonAppearance.Subtle"
+                          IconOnly="true"
+                          IconStart="@(new Icons.Regular.Size20.PanelLeftExpand())"
+                          Title="Expand navigation"
+                          aria-label="Expand navigation"
+                          aria-expanded="false"
+                          OnClick="ToggleNavAsync" />
+          </div>
         </div>
       </FluentLayoutItem>
 
