@@ -96,6 +96,7 @@ test in the same style as `kpi-card-render-tests.cs`.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session not reported, max-turns 200 — 2026-10-28T13:37:47Z
 - Fix pass (2026-10-28): M1 places each finite point at its original index and joins the line across a non-finite gap. Category count uses the raw point list. M2 puts the description list and the permission editor in `twe-stack` and omits a blank description. M3 puts the principal name and email hooks on a span inside the value. M4 sets `aria-live="polite"` on the period label and `role="group"` on the stepper root.
 - `ganda repo audit --fix` landed kitchen 428 again (same drift the first implement pass landed). Eight claims still warn that they have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). That warning is pre-existing and not fixable from this id. Audit then passed with that advisory.
+- Review round 2 (2026-10-28): review oracle (claude-opus-5-5), effort 2, roster general. Scope was the fix delta `247c4282a..f06c3c019`. M1–M4 are fixed and there are no new findings. The reviewer re-ran `./bin/dev build` (0/0) and LineChart 7/7, PeriodStepper 4/4, DefinitionList 5/5, DesignSystemPage 6/6. Disposition: clean.
 
 ## Results
 
@@ -113,10 +114,17 @@ Smoke: `./bin/dev build`, then from `tests/container-apps/web/web-spa-integratio
 
 Expect: build reports 0 warnings and 0 errors, and the client-name scan passes. Those classes pass (5, 7, 4, 4, 2, 10, and 6). `LineChart_Should_.Keep_A_Gap_On_Its_Original_Category` puts the dot on the same x as label C, and the line's vertices are A and C. The period stepper root has `role="group"` and the label has `aria-live="polite"`. The all-parts page contains the definition list, the line chart inside the chart frame, the period stepper, a compact integration warning row, the page split, and `twe-numeric` on the grouped table, and it does not show the omitted blank term.
 
+### Review disposition
+
+- Rounds: 2, roster general (round 1 effort 3, round 2 effort 2).
+- Final counts: bug 1 fixed, suggestion 1 fixed, nit 2 fixed. 0 open and 0 wontfix.
+- Disposition: **clean**. There were no exceptions or escalations.
+- Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
-- Round 1: open M1, M2, M3, M4. Fix pass implemented them. Round 2 has not run.
-
+- Round 1: open M1, M2, M3, M4. The fix pass (fe8206a19) implemented all four.
+- Round 2: Done
 ## Notes
 
 - Source design: the portal's definition grid, revenue line chart, year and day steppers,
