@@ -1,0 +1,18 @@
+# Improve agent links page onboarding
+
+## Description
+
+[Brief description of the task]
+
+## Checklist
+
+- [ ] Item 1
+- [ ] Item 2
+
+## Session
+
+- Created: ses_e7d6c83cfffebh1UD5myX7NDeE (2026-10-28)
+
+## Notes
+
+[Additional context]
