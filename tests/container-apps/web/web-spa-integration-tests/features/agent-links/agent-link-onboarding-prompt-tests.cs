@@ -10,8 +10,9 @@
 // AgentKeyProof surfaces. The bearer is checked by absence: the recipe never redirects it
 // into a file and it unsets the shell variable before each block exits.
 // The OpenAPI paragraph uses AgentLinkOnboardingPrompt.OpenApiDocumentPath, names bearer calls,
-// and names /llms.txt and /auth.md. The shell requirement names bash, openssl, curl, Git Bash,
-// WSL, and PowerShell.
+// and names /llms.txt and /auth.md. The shell requirement says the blocks are bash, need
+// openssl and curl, run on Windows in Git Bash or WSL, and do not run in PowerShell. The curl
+// alias remark is limited to Windows PowerShell. b64url_decode is pinned by its full line.
 #endregion
 
 namespace AgentLinkOnboardingPrompt_;
@@ -101,8 +102,9 @@ public class Build_Should
     prompt.ShouldContain("mints a fresh token");
     Count(prompt, "unset access").ShouldBe(2);
     prompt.ShouldContain("These blocks need bash, openssl, and curl.");
-    prompt.ShouldContain("Git Bash or WSL, not PowerShell");
-    prompt.ShouldContain("Invoke-WebRequest");
+    prompt.ShouldContain("On Windows, run them in Git Bash or WSL.");
+    prompt.ShouldContain("They do not run in PowerShell");
+    prompt.ShouldContain("in Windows PowerShell curl is an alias for Invoke-WebRequest");
     prompt.ShouldContain(Origin + AgentLinkOnboardingPrompt.OpenApiDocumentPath);
     prompt.ShouldContain("describes every endpoint, request, and response");
     prompt.ShouldContain("Authorization: Bearer");
@@ -110,7 +112,7 @@ public class Build_Should
     prompt.ShouldContain(Origin + "/llms.txt");
     prompt.ShouldContain(Origin + "/auth.md");
     prompt.ShouldContain("tr -d '\\r\\n'");
-    prompt.ShouldContain("printf '%s\\n'");
+    prompt.ShouldContain("printf '%s\\n' \"$data$pad\" | tr '_-' '/+' | openssl base64 -d -A");
 
     return Task.CompletedTask;
   }

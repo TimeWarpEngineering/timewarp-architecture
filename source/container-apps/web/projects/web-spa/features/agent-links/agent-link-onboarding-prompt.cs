@@ -21,10 +21,12 @@
 // and the human account id before the person copies the block.
 // OpenApiDocumentPath is the only OpenAPI path literal. The prompt appends it to the page origin
 // and names /llms.txt and /auth.md beside it. The Playwright test reads that URL from the rendered
-// prompt and requires HTTP 200 with an OpenAPI document. Later calls send Authorization: Bearer
+// prompt and requires HTTP 200 with an OpenAPI document. It also GETs the /llms.txt and /auth.md
+// URLs that prompt names and requires HTTP 200. Later calls send Authorization: Bearer
 // from a fresh token ceremony, with the scopes the operation needs.
-// The blocks are bash and need openssl and curl. Windows runs them in Git Bash or WSL, not
-// PowerShell, where curl is an alias for Invoke-WebRequest. There is no second shell recipe.
+// The blocks are bash and need openssl and curl. They do not run in PowerShell. Windows runs
+// them in Git Bash or WSL. In Windows PowerShell, curl is an alias for Invoke-WebRequest.
+// There is no second shell recipe.
 // Helpers use POSIX sed (BRE groups, [[:space:]], no GNU-only flags), tr, and date -u with a
 // POSIX strftime stamp. json_string drops CR as well as LF so a CRLF body still matches.
 // b64url_decode writes a trailing newline before openssl base64 -d -A.
@@ -111,7 +113,7 @@ public static class AgentLinkOnboardingPrompt
     const string humanUxSpec = GetHumanUx.Response.SpecId;
 
     return $$"""
-      Link this agent to my TimeWarp account. These blocks need bash, openssl, and curl. On Windows, run them in Git Bash or WSL, not PowerShell, where curl is an alias for Invoke-WebRequest. Do not install a .NET SDK, and do not look for a packed client.
+      Link this agent to my TimeWarp account. These blocks need bash, openssl, and curl. On Windows, run them in Git Bash or WSL. They do not run in PowerShell, and in Windows PowerShell curl is an alias for Invoke-WebRequest. Do not install a .NET SDK, and do not look for a packed client.
 
       My account id is {{accountId}}.
       The server origin is {{origin}}.
