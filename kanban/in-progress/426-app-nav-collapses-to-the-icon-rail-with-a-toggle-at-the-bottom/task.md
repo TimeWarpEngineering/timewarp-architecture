@@ -52,6 +52,8 @@ The shell nav needs a bottom toggle that switches the existing icon rail and the
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-27)
 - `ganda repo audit --fix` scaffolded an empty `glossary.md`. The check was failing because the file was missing. `kanban-landed` still warns that claims 070-001, 104-024, 104-025, 104-026, 123, 141, 198, and 244 have no usable worktree. Those claims were left as they are. Audit exit code after the fix is 0.
 - Implement oracle: implemented by implementer-grok (grok, model grok-4.7), session 01a18147-0fee-7b82-925e-c7ce440a1184, max-turns 500, Done — 2026-10-28T07:36:10Z
+- Review oracle: claude (claude-opus-5-5), tw-implementation-review at effort 2 with a general reviewer, 1 round, disposition accepted-exceptions — 2026-10-28
+- Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 1d663ecd-68e7-4bbf-996f-2c813d797289, max-turns 120 — 2026-10-28T07:46:51Z
 
 ## Results
 
@@ -62,6 +64,20 @@ The nav column has a width toggle under the user card. Two icon buttons share on
 Smoke: At 1440px open `/`. Click Collapse navigation. Reload. Click Expand navigation. Reload. At 1100px open `/` and click Expand navigation. At 600px open `/` and look for the toggle. With `twe.shellNav=rail` already stored, load `/` at 1440px with `blazor.web.js` blocked.
 
 Expect: At 1440px the nav starts at 240px, the collapse button is shown with `aria-expanded=true`, the click narrows it to 68px, labels clip, the GitHub item's title is "GitHub", storage is `rail`, and a reload stays at 68px with Expand navigation. Expand returns 240px and `full`, and a reload stays there. At 1100px the nav starts at 68px and the toggle widens it to 240px with storage `full`. At 600px `[data-qa=NavWidthToggle]` is hidden. The blocked-script load at 1440px paints the 68px column and `data-twe-nav=rail` before Blazor runs. `./bin/dev build` is 0 warnings and 0 errors. `web-spa-integration-tests` passed 531. `web-spa-playwright-tests` passed. `./bin/dev lint-skills` passed.
+
+### Review
+
+- Rounds: 1. Effort 2, roster: general. The review re-ran `./bin/dev build` (0 warnings, 0 errors) and `dev test -g playwright --no-build` (31 of 31 passed) in this worktree.
+- Final counts: bug 0. Suggestion 1, wontfix. Nit 1, wontfix. Open 0.
+- Disposition: **accepted-exceptions**.
+  - M1: the rail gate is the repo's first custom-property container style query. Where that is unsupported, the column stays at the full 240px. Accepted because that fallback is usable.
+  - M2: the `ToggleMenuActionSet` rename also lists ToggleMenu in the Ctrl-K palette. Accepted as a keyboard path.
+- The implementer restatement matches the task. There was no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
