@@ -16,26 +16,3 @@
   font-size: var(--twe-text-body);
   color: var(--twe-ink);
 }
-
-.twe-prompt {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--twe-space-3);
-}
-
-.twe-prompt pre {
-  box-sizing: border-box;
-  width: 100%;
-  max-height: 24rem;
-  margin: 0;
-  overflow: auto;
-  padding: var(--twe-space-3);
-  border-radius: var(--twe-radius-sm);
-  background: var(--twe-paper-2);
-  color: var(--twe-ink);
-  font-family: var(--twe-font-mono);
-  font-size: var(--twe-text-helper);
-  line-height: 1.45;
-  white-space: pre-wrap;
-}

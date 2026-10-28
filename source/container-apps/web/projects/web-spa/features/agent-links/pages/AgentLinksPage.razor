@@ -8,19 +8,11 @@
 
   [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
-  [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-
   private string? AccountId;
 
   private bool IsBusy => ActionTrackingState.IsActive;
 
   private bool AccountCopied => AgentLinksState.CopiedSlot == AgentLinksState.AccountIdSlot;
-
-  private bool PromptCopied => AgentLinksState.CopiedSlot == AgentLinksState.PromptSlot;
-
-  private string ServerOrigin => NavigationManager.ToAbsoluteUri("/").GetLeftPart(UriPartial.Authority);
-
-  private string? Prompt => AccountId is null ? null : AgentLinkOnboardingPrompt.Build(AccountId, ServerOrigin);
 
   protected override async Task OnInitializedAsync()
   {
@@ -57,15 +49,7 @@
     await AgentLinksState.CopyOnboarding(AgentLinksState.AccountIdSlot, AccountId);
   }
 
-  private async Task CopyPromptAsync()
-  {
-    if (Prompt is null)
-    {
-      return;
-    }
-
-    await AgentLinksState.CopyOnboarding(AgentLinksState.PromptSlot, Prompt);
-  }
+  private Task OpenPromptAsync() => ApplicationState.SetActiveModal(AgentLinkPromptModal.ModalId);
 }
 
 <TimeWarpPage Title="Agent links">
@@ -93,14 +77,10 @@
                         data-copied="@(AccountCopied ? "true" : "false")"
                         OnClick="CopyAccountIdAsync">@(AccountCopied ? "Copied" : "Copy")</FluentButton>
         </div>
-        <p>Paste this prompt to your agent. It carries the account id above and a bash recipe that uses openssl and curl. On Windows, paste it into Git Bash or WSL. The blocks do not run in PowerShell.</p>
-        <div class="twe-prompt">
-          <pre data-qa="AgentLinkPrompt">@Prompt</pre>
-          <FluentButton Appearance="ButtonAppearance.Outline"
-                        data-qa="CopyAgentPrompt"
-                        data-copied="@(PromptCopied ? "true" : "false")"
-                        OnClick="CopyPromptAsync">@(PromptCopied ? "Copied" : "Copy prompt")</FluentButton>
-        </div>
+        <p>The agent-link prompt (a bash recipe that uses openssl and curl) opens in a modal. Copy it to your agent after you have the account id above. On Windows, the agent runs it in Git Bash or WSL. It does not run in PowerShell.</p>
+        <FluentButton Appearance="ButtonAppearance.Outline"
+                      data-qa="OpenAgentLinkPrompt"
+                      OnClick="OpenPromptAsync">View agent prompt</FluentButton>
       }
     </Section>
 
@@ -116,7 +96,17 @@
           @foreach (ListAgentHumanLinks.LinkSummary item in AgentLinksState.Items)
           {
             <li>
-              <div>Agent @item.AgentPrincipalId</div>
+              <div>
+                Agent
+                <AuthorizeView Policy="@PermissionIds.AdminPrincipalsRead">
+                  <Authorized>
+                    <FluentLink Href="@($"/Admin/Principals/{item.AgentPrincipalId:D}")" data-qa="AgentPrincipalLink"><code>@item.AgentPrincipalId</code></FluentLink>
+                  </Authorized>
+                  <NotAuthorized>
+                    <code data-qa="AgentPrincipalText">@item.AgentPrincipalId</code>
+                  </NotAuthorized>
+                </AuthorizeView>
+              </div>
               <div>Status: @item.Status</div>
               @if (item.Status == "Pending")
               {

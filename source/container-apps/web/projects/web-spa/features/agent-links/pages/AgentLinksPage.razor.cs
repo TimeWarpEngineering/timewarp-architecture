@@ -7,8 +7,12 @@
 // this page. Policy AgentLinkManageSelf is self-service (RolePermissionSeed).
 // Task 428: the page also explains the link, shows the signed-in principal id
 // (IdentitySessionAuthenticationStateProvider.PrincipalIdClaimType, projected from
-// GetCurrentSession), and offers a copyable openssl + curl prompt (AgentLinkOnboardingPrompt).
-// Copy buttons dispatch AgentLinksState.CopyOnboarding. No AOT client ships with that prompt.
+// GetCurrentSession), and offers the openssl + curl prompt (AgentLinkOnboardingPrompt).
+// Task 431: the prompt lives in AgentLinkPromptModal (opened with ApplicationState.SetActiveModal)
+// so the page stays a short read; the list links each agent principal id to
+// /Admin/Principals/{id} only when the viewer holds the detail page's policy
+// (admin.principals.read) and shows plain text otherwise. Copy buttons dispatch
+// AgentLinksState.CopyOnboarding. No AOT client ships with that prompt.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentLinks;
