@@ -70,8 +70,8 @@
             @if (current.Profile is { } profile)
             {
               <DefinitionList data-qa="AdminPrincipalProfile">
-                <DefinitionItem Term="Display name" data-qa="AdminPrincipalDisplayName">@profile.DisplayName</DefinitionItem>
-                <DefinitionItem Term="Email" data-qa="AdminPrincipalEmail">@OrDash(profile.Email)</DefinitionItem>
+                <DefinitionItem Term="Display name"><span data-qa="AdminPrincipalDisplayName">@profile.DisplayName</span></DefinitionItem>
+                <DefinitionItem Term="Email"><span data-qa="AdminPrincipalEmail">@OrDash(profile.Email)</span></DefinitionItem>
                 <DefinitionItem Term="Language">@profile.Language</DefinitionItem>
                 <DefinitionItem Term="Region">@profile.Region</DefinitionItem>
                 <DefinitionItem Term="Theme">@profile.Theme</DefinitionItem>

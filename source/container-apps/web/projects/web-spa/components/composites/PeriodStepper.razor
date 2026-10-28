@@ -7,9 +7,11 @@
   not know years, days, or ranges, and it does not change the label. Each end can
   be disabled. A disabled end does not raise ValueChanged. An enabled end raises
   ValueChanged with PeriodStep, the same way SegmentedControl raises ValueChanged
-  and leaves the value with the page. Native div root so CSS isolation stamps the
-  scope attribute. Class is appended on that root, and unmatched attributes splat
-  onto it. The buttons are type="button". Isolated CSS uses --twe-* tokens.
+  and leaves the value with the page. The label span is aria-live="polite", so a
+  screen reader hears the page's new label. The root is role="group". Native div
+  root so CSS isolation stamps the scope attribute. Class is appended on that root,
+  and unmatched attributes splat onto it. The buttons are type="button". Isolated
+  CSS uses --twe-* tokens.
 *@
 
 @code {
@@ -32,12 +34,12 @@
   }
 }
 
-<div class="twe-period-stepper @Class" @attributes="AdditionalAttributes">
+<div class="twe-period-stepper @Class" role="group" @attributes="AdditionalAttributes">
   <button type="button"
           class="twe-period-stepper__button"
           disabled="@PreviousDisabled"
           @onclick="() => StepAsync(PeriodStep.Previous)">Previous</button>
-  <span class="twe-period-stepper__label">@Label</span>
+  <span class="twe-period-stepper__label" aria-live="polite">@Label</span>
   <button type="button"
           class="twe-period-stepper__button"
           disabled="@NextDisabled"

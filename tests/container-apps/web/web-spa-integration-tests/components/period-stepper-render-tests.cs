@@ -41,6 +41,8 @@ public class PeriodStepper_Should_
     html.ShouldNotContain("disabled");
     html.ShouldNotContain("<style");
     Count(html, "<button").ShouldBe(2);
+    html.ShouldContain("aria-live=\"polite\"");
+    RootTag(html).ShouldContain("role=\"group\"");
   }
 
   public static async Task Disable_Either_End_On_Its_Own()

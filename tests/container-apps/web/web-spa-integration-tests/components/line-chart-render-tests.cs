@@ -6,6 +6,7 @@
 // LineChart is a leaf with no services, so a bare ServiceCollection host is enough.
 // The root is a native svg. The page passes points, a tone, and already-formatted axis labels.
 // The plot draws gridlines, a line when a series has two finite points, and a dot on the last point.
+// A non-finite value stays at its category: the line joins across it, and the dot uses the original index.
 // A money-looking label is copied through. The plot does not invent a currency sign.
 // The script case asserts the raw markup, before HtmlDecode, so the label stays encoded.
 #endregion
@@ -69,6 +70,34 @@ public class LineChart_Should_
     Count(html, "$1,240").ShouldBe(2);
     html.ShouldNotContain("<polyline");
     Count(html, "<circle ").ShouldBe(1);
+  }
+
+  public static async Task Keep_A_Gap_On_Its_Original_Category()
+  {
+    string html = await RenderAsync(new Dictionary<string, object?>
+    {
+      ["AxisLabels"] = new[] { "A", "B", "C" },
+      ["Series"] = new LineChartSeries[]
+      {
+        new("Series A", ChartSeriesTone.Ink, [10, double.NaN, 30])
+      }
+    });
+
+    string labelA = Attribute(TagContaining(html, ">A<"), "x");
+    string labelB = Attribute(TagContaining(html, ">B<"), "x");
+    string labelC = Attribute(TagContaining(html, ">C<"), "x");
+    string dot = TagContaining(html, "twe-line-chart__dot--ink");
+    dot.ShouldContain("cx=\"" + labelC + "\"");
+    dot.ShouldNotContain("cx=\"" + labelB + "\"");
+    Count(html, "<circle ").ShouldBe(1);
+
+    string[] vertices = Attribute(TagContaining(html, "twe-line-chart__line--ink"), "points")
+      .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    vertices.Length.ShouldBe(2);
+    vertices[0].Split(',')[0].ShouldBe(labelA);
+    vertices[1].Split(',')[0].ShouldBe(labelC);
+    vertices[0].Split(',')[0].ShouldNotBe(labelB);
+    vertices[1].Split(',')[0].ShouldNotBe(labelB);
   }
 
   public static async Task Omit_A_Series_With_No_Finite_Points()

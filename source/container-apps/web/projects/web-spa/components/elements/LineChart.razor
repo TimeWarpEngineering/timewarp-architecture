@@ -9,9 +9,13 @@
   root so CSS isolation stamps the scope attribute. Class is appended on that root, and
   unmatched attributes splat onto it, so a caller can override role or aria-label.
   Axis labels are svg text elements built in code because a Razor text tag does not emit
-  an element. A series with no finite points is omitted. One finite point draws the dot
-  and no line. The accessible name is the series labels, then the axis labels. This
-  component wires no events. Isolated CSS uses --twe-* tokens.
+  an element. A non-finite value stays in the category count and is not a vertex. The
+  line joins the finite neighbors across that gap, so a single finite value is not
+  dropped. Each finite value is placed at its original index. Category count is the
+  longer of the axis labels and each series' point list, counting non-finite entries.
+  The dot sits on the last finite value. A series with no finite points is omitted.
+  One finite point draws the dot and no line. The accessible name is the series labels,
+  then the axis labels. This component wires no events. Isolated CSS uses --twe-* tokens.
 *@
 
 @code {
@@ -90,7 +94,7 @@
       int count = Labels.Count;
       foreach (LineChartSeries series in Rows)
       {
-        int length = Usable(series).Count;
+        int length = series.Points?.Count ?? 0;
         if (length > count)
         {
           count = length;
@@ -119,24 +123,37 @@
     int categories = CategoryCount;
     foreach (LineChartSeries series in Rows)
     {
-      List<double> points = Usable(series);
-      if (points.Count == 0)
+      IReadOnlyList<double>? source = series.Points;
+      if (source is null || source.Count == 0)
       {
         continue;
       }
 
       string tone = ToneClass(series.Tone);
-      double lastX = XAt(points.Count - 1, categories);
-      double lastY = YAt(points[points.Count - 1], scale.Min, scale.Max);
-      string? polyline = null;
-      if (points.Count >= 2)
+      List<string> pairs = [];
+      double lastX = 0;
+      double lastY = 0;
+      for (int index = 0; index < source.Count; index++)
       {
-        string[] pairs = new string[points.Count];
-        for (int index = 0; index < points.Count; index++)
+        double point = source[index];
+        if (!double.IsFinite(point))
         {
-          pairs[index] = string.Concat(Format(XAt(index, categories)), ",", Format(YAt(points[index], scale.Min, scale.Max)));
+          continue;
         }
 
+        lastX = XAt(index, categories);
+        lastY = YAt(point, scale.Min, scale.Max);
+        pairs.Add(string.Concat(Format(lastX), ",", Format(lastY)));
+      }
+
+      if (pairs.Count == 0)
+      {
+        continue;
+      }
+
+      string? polyline = null;
+      if (pairs.Count >= 2)
+      {
         polyline = string.Join(' ', pairs);
       }
 
