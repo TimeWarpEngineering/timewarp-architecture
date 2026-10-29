@@ -40,11 +40,15 @@ Acceptance:
   Fix pass requested for M1, M2; next round under `review/round-2/`.
 - Fix pass (implement-fix-2 oracle, claude-opus-5-5, 2026-10-29): M1 and M2 fixed in auth.md.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session e2fb4198-9ffb-4400-bdee-d55ee91e5c92, max-turns 120 — 2026-10-29T15:44:08Z
+- Review oracle, round 2 (ganda task work, 2026-10-29): review oracle claude-fable-5-1 as the general
+  reviewer, inline (effort 1, host Budget.ByDiff 49 lines, turn cap 80). Scope: fix commit `e6b00753c`
+  vs round-1 base `7afc5224a`. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`,
+  `review/disposition.md`. Outcome: M1, M2 verified fixed; 0 new; 0 open. Disposition clean.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
@@ -98,6 +102,24 @@ Disposition: **not yet closed — fix pass requested** (round 1 ledger `review/r
   agent-links contracts and their schemes, the scope seed, and `AgentLinkOnboardingPrompt.HttpMethod<TRequest>`
   (`new()` constraint confirmed). Restatement matches the task; no misread.
 - `review/disposition.md` is written when the next round reaches 0 open.
+
+### Review (round 2, 2026-10-29) — disposition
+
+Disposition: **clean** (`review/disposition.md`). Rounds: 2.
+
+- Round 2 roster: general, performed inline by the review oracle (claude-fable-5-1). Effort 1
+  (host Budget.ByDiff, 49 lines). Scope: fix commit `e6b00753c` vs round-1 base `7afc5224a`;
+  product delta is 15 lines of `auth.md`.
+- Final counts: bug 0; suggestion 1 fixed (M1); nit 1 fixed (M2); 0 wontfix; 0 open. No new
+  findings on the fix delta.
+- Verification: M1, the credential-management paragraph is at auth.md:290-292 inside "Onboarding
+  tools", ahead of `### Optional human link` at 294. M2, auth.md:309-310 now gives 401 for no valid
+  agent bearer and 403 for a non-agent bearer; checked against `HandleChallengeAsync` in the
+  agent-token scheme (401) and the handler's `PrincipalKind.Agent` check (403). Only auth.md changed
+  since round 1, so the round-1 gate results (build 0/0, schema tests 2/2, repo audit pass) still
+  describe the tree.
+- Paths: `review/review-framework.md` (round 1 and round 2 sections), `review/round-2/merged.md`
+  (last ledger), `review/disposition.md`.
 
 ### Fix pass (round 1 findings, 2026-10-29)
 
