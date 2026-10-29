@@ -48,8 +48,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Round 2: Done — M1, M2 fixed, 0 open; disposition `clean` (`review/disposition.md`)
-
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
