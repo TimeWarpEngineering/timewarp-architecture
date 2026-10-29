@@ -24,6 +24,7 @@ this.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session c7ee9cf8-9465-4eab-a189-2cba4c678127, max-turns 500, Done — 2026-10-29T07:12:44Z
 - 2026-10-29 review oracle (claude-fable-5-1, effort 2, roster general via sonnet subagent aa4b403fdc754d4bc): round 1 written under `review/round-1/`. Gates re-run: `dev build` 0/0, `DeleteRoles_Given_` 3/3, `dev check-version` safe (source already ahead), `ganda repo audit` passes. 0 bugs; 1 suggestion (M1, untested Design-region branches) and 1 nit (M2, `SchemaFor` fallback formats) open. Fix pass requested on this id; next review is `review/round-2/`.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 518eadd6-b300-4678-9d6e-6a5d43c6b413, max-turns 120 — 2026-10-29T07:23:00Z
+- 2026-10-29 review-2 oracle (claude-fable-5-1, effort 1, roster general via sonnet subagent a4364a44abccc6485): round 2 written under `review/round-2/`. Re-verified M1 and M2 as fixed on the delta `33384f091..778ebb0c5`; no new findings. Gates re-run: `dev build` 0/0, `DeleteRoles_Given_` 5/5. Disposition `clean` in `review/disposition.md`.
 - 2026-10-29 implement-fix-2 oracle (claude-opus-5-5): fixed M1 and M2 from round 1. Added two probe DELETE endpoints to the test file, one with nullable scalars and one with a collection property. Fixed the `SchemaFor` fallback types and documented the enum fallback in the Design region. Red check: when the code forced `required: true` on the leftover query parameters and the kept body, both new tests failed. The source was then restored.
 
 ## Results
@@ -38,6 +39,8 @@ this.
   - M1 fixed. `open-api-delete-request-body-tests.cs` adds `DeleteProbeOptionalEndpoint` (route `id`, `int? Limit`, `string? Note`) and `DeleteProbePayloadEndpoint` (route `id`, `IReadOnlyList<Guid> Items`). The FastEndpoints filter includes them only from the test namespace. The new tests check that the optional scalars become query parameters without `required`, and that the collection variant keeps `requestBody` with `required: false`.
   - M2 fixed. In the `SchemaFor` fallback, `DateOnly` is now `date`, `TimeOnly` is now `time`, and `sbyte`, `ushort`, `uint`, and `ulong` are now integers. The Design region says the body property schema is the primary source and that the fallback publishes an enum as a plain string, because the app's JSON options decide the enum wire format.
   - Gates: `dev build` has 0 warnings and 0 errors. `DeleteRoles_Given_` passed 5/5. In the web-server-integration-tests project, 401 tests passed and 1 was skipped, out of 402.
+- Review (round 2, effort 1, roster general): M1 and M2 re-verified as fixed on the delta; 0 new findings. Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 1 / 0; nit 0 / 1 / 0. Findings `review/round-2/general.md`; ledger `review/round-2/merged.md`.
+- Review disposition: `clean` (every raised finding fixed, no wontfix, no escalations). Rounds: 2. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -47,6 +50,7 @@ this.
 ## Review
 
 - Round 1: Blocked — open M1, M2
+- Round 2: Done — M1, M2 fixed; 0 open; disposition clean
 
 ## Notes
 
