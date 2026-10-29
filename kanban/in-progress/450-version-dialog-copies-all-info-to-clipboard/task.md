@@ -87,8 +87,8 @@ Acceptance:
 - Fix pass (2026-10-30) gates: `dev build` 0 warnings / 0 errors. AssemblyInfoCopy_ 7/7,
   CopyMessage 16/16, CommandPalette 45/45. `CopyOnboarding` has no test class; it compiles and
   its outcomes are unchanged. `ganda repo audit`: kanban-landed needed this kitchen landed on
-  origin-home (fixed with `ganda kanban publish 450`); the other entries are advisory warns on
-  other tasks.
+  origin-home (fixed with `ganda kanban reconcile`); the remaining Warning lists
+  other tasks with no worktree. Audit exits 0.
 - Not run: the ActionCatalog and Catalog classes use the Aspire session lane. In this headless
   worker they fail at DCP environment setup (portForServing web-server-https), which is not
   caused by this change.
