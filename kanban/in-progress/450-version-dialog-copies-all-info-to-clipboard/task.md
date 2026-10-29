@@ -11,19 +11,84 @@ Configuration, Company, Product, Version, FileVersion, InformationalVersion,
 InternalsVisibleTo, CommitHash, ShortHash, CommitDate, CommitUrl,
 RepositoryUrl).
 
+## Goal (implementer restatement)
+
+The footer version dialog (AssemblyInfoModal) gets an icon-only Copy button that puts
+everything the dialog shows on the clipboard as plain text, so a user can paste the build
+identity into a bug report.
+
+Acceptance:
+
+- Copy button (FluentUI Copy glyph, `data-qa="AssemblyInfoCopy"`) renders only once the
+  assembly record is loaded; it is absent while AssemblyInfo is null (the spinner state).
+- The text is one `Name: value` line per displayed property, plus `CommitUrl` and
+  `RepositoryUrl`, in display order. Blank values are skipped exactly as PropertyDisplay skips
+  them (the display and the copy come from one list so they cannot drift).
+- The button only dispatches an action (TWA0026); the handler writes through
+  ClipboardJsModule. A clipboard rejection or interop timeout becomes a Warning bar; a success
+  swaps the icon to a Checkmark labelled "Copied" until the dialog is reopened.
+- Jaribu test: the copied text contains the commit hash and both URLs and omits blank
+  properties; the button is not rendered when AssemblyInfo is null; denial yields the Warning.
+
 ## Checklist
 
-- [ ] Add a copy button (FluentUI copy glyph, data-qa AssemblyInfoCopy) to
+- [x] Add a copy button (FluentUI copy glyph, data-qa AssemblyInfoCopy) to
   AssemblyInfoModal that serializes every displayed property plus the two URLs
   as "Name: value" lines and writes it via AskAiJsModule.CopyTextAsync (or the
   ClipboardJsModule WriteText path with a Warning bar on denial).
-- [ ] Omit blank properties the same way PropertyDisplay does.
-- [ ] Cover with a test (serialized text contains the commit hash and both
+- [x] Omit blank properties the same way PropertyDisplay does.
+- [x] Cover with a test (serialized text contains the commit hash and both
   URLs; button hidden while AssemblyInfo is null).
 
 ## Session
 
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
+
+## Results
+
+- `AssemblyInfoText` (`features/application/modals/assembly-info/assembly-info-text.cs`) is the
+  one list of dialog rows. `Properties` feeds the modal's PropertyDisplay loop; `ClipboardText`
+  writes `Title`, those rows, then `CommitUrl` and `RepositoryUrl` as `Name: value` lines.
+  Blank values are dropped with PropertyDisplay's IsNullOrWhiteSpace test.
+- `AssemblyInfoCopyButton.razor`: an icon-only FluentButton (Copy glyph, `data-qa="AssemblyInfoCopy"`,
+  aria-label "Copy version info") that renders only when AssemblyInfo is non-null and only
+  dispatches. It swaps to Checkmark / "Copied" after a successful copy.
+- `ApplicationState.CopyAssemblyInfo` (`application-state.copy-assembly-info.cs`) writes through
+  `ClipboardJsModule` (the WriteText path). A JSException or interop timeout publishes a Warning
+  OutcomeNotification ("Couldn't copy the version info."). `IsAssemblyInfoCopied` is cleared by
+  `SetActiveModal` and `Initialize`. The action is `[CommandPaletteOptOut]`, like CopyOnboarding.
+- AssemblyInfoModal now renders its rows from `AssemblyInfoText.Properties` and uses
+  `ActionContent` for Copy plus its own Close (`data-qa="ModalButton"` is kept).
+- Tests: `tests/container-apps/web/web-spa-integration-tests/features/application/assembly-info-copy-tests.cs`
+  (5 tests, in-proc C-create, reusing the NotificationCopy_ recording doubles). They use a
+  dynamic-assembly AssemblyInfo fixture: exact text including the commit hash and both URLs,
+  blanks omitted, button absent when AssemblyInfo is null, click writes and confirms, reopen
+  clears, denial and timeout give the Warning.
+- Gates run: `ganda repo audit` passes (one advisory: kanban-landed lists other tasks' stale
+  claims, which are not on this id). `dev build` gives 0 warnings and 0 errors. The new class
+  passed 5/5. CopyMessage passed 16/16, CommandPalette 45/45, and the RazorRaw and RazorLoading
+  guards 1/1 each. `dev template-smoke` (default variant) succeeded.
+- Not run: the ActionCatalog and Catalog classes use the Aspire session lane. In this headless
+  worker they fail at DCP environment setup (portForServing web-server-https), which is not
+  caused by this change.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet build tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj
+dotnet run --project tests/container-apps/web/web-spa-integration-tests/web-spa-integration-tests.csproj --no-build -- --filter-class AssemblyInfoCopy_
+```
+
+Then, manually: run the app with `dev run`, click the footer version button, click the copy icon
+beside Close, and paste.
+
+Expect: the test run shows `total: 5 failed: 0 succeeded: 5`. In the app, the icon turns into a
+checkmark labelled "Copied". The pasted text is `Title: Web.Spa` followed by one `Name: value`
+line per row the dialog shows (blank rows absent), ending with
+`CommitUrl: …/commit/<hash>` and `RepositoryUrl: …`. If the browser denies clipboard access, a
+Warning bar reads "Couldn't copy the version info.".
 
 ## Notes
 

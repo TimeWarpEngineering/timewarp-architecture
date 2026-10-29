@@ -7,6 +7,7 @@
 // one modal shows at a time.
 // The string id is the contract with ModalController/ModalContainer, which match against it
 // to render and fire OnActivate; CloseModalActionSet nulls it to dismiss.
+// Opening a modal clears IsAssemblyInfoCopied, so the version dialog's Copy starts unconfirmed.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -32,6 +33,7 @@ partial class ApplicationState
       public override ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
         ApplicationState.ActiveModalId = action.ModalId;
+        ApplicationState.IsAssemblyInfoCopied = false;
         return default;
       }
     }

@@ -11,6 +11,7 @@
 // The product name and the logo are BrandOptions. This store does not keep a second copy.
 // HasShellNavChoice false means the nav follows the breakpoint. IsMenuExpanded is the explicit
 // choice once ToggleMenu or LoadShellNav has one: true is the full column, false is the rail.
+// IsAssemblyInfoCopied is the version dialog's Copy confirmation (CopyAssemblyInfo).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -56,5 +57,6 @@ public sealed partial class ApplicationState : State<ApplicationState>
   {
     IsMenuExpanded = true;
     HasShellNavChoice = false;
+    IsAssemblyInfoCopied = false;
   }
 }
