@@ -42,11 +42,12 @@ Acceptance:
 - Review oracle round 1 (ganda task work, claude-fable-5-1, effort 2, roster general via sonnet subagent ab729f8beaa0331ff): gates re-run, 0 bugs, 1 suggestion + 1 nit open, 1 nit wontfix; fix pass requested for M1, M3 — 2026-10-30
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session e7e96d6c-8edb-40cb-9d81-6643abe8e7cf, max-turns 120 — 2026-10-29T18:40:35Z
 - 2026-10-30 implement-fix-2 (ganda task work, claude-opus-5-5): fix pass for round-1 M1 and M3.
+- Review oracle round 2 (ganda task work, claude-fable-5-1, effort 1, roster general via sonnet subagent aecad7dafd978a4bc + orchestrator verification): delta cadb4b0df reviewed, M1 and M3 verified fixed, 0 new findings, gates re-run; disposition accepted-exceptions (M2 wontfix) — 2026-10-30
 
 ## Review
 
 - Round 1: Blocked — open M1, M3
-
+- Round 2: Done
 ## Notes
 
 Evidence: AgentAsk.razor Reject is approval.Reject("Declined.") on a
@@ -125,8 +126,16 @@ AppHost. CI runs them.
   post-filter `lastUser` meaning), 1 wontfix (M2: keep the capture helpers with the screenshot proof).
 - Fix pass after round 1 (2026-10-30): M1 and M3 implemented (see Fix pass above). Gates: `dev
   build` 0/0, `--filter-tag Unit` 430/430, AskRejection 4/4.
-- Disposition: pending round 2 after the fix pass. Paths: `review/review-framework.md`,
-  `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (2026-10-30), effort 1, roster general + orchestrator verification, scope = fix-pass delta
+  cadb4b0df. M1 and M3 verified fixed (single `IsEmpty` rule shared by validator and relay; post-filter
+  `lastUser` traced through the new picture test). No new findings. Gates re-run after the fix pass:
+  build 0/0, `ganda repo audit` exit 0 (only the pre-existing kanban-landed advisory about other tasks),
+  Unit 430/430, AskRejection 4/4.
+- Final counts: bug 0; suggestion 1 fixed; nit 1 fixed, 1 wontfix. 0 open.
+- Disposition: **accepted-exceptions**. M2 (nit) wontfix: the capture helpers stay with the screenshot
+  proof that owns them; relocate when a third consumer appears. No escalations.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
