@@ -198,8 +198,16 @@ public class Should_Require_Iso_Date_Rendering
           day.ToString("yyyy-MM-dd", provider),
           $"Set {at.UtcDateTime:yyyy-MM-dd'T'HH:mm:ss'Z'}.",
           string.Create(CultureInfo.CurrentCulture, $"Set {day:yyyy-MM-dd}."),
+          string.Format(CultureInfo.InvariantCulture, $"Set {day:yyyy-MM-dd}."),
+          Text.Of(CultureInfo.InvariantCulture, $"Set {day:yyyy-MM-dd}."),
           at.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         ];
+      }
+
+      public static class Text
+      {
+        // A provider beside a plain string parameter: the string is built before Of sees it.
+        public static string Of(IFormatProvider provider, string text) => text;
       }
       """;
 
@@ -209,6 +217,8 @@ public class Should_Require_Iso_Date_Rendering
     test.ExpectedDiagnostics.Add(Flag(13, 5, 41, "ToString(\"yyyy-MM-dd\") without CultureInfo.InvariantCulture"));
     test.ExpectedDiagnostics.Add(Flag(14, 11, 52, "Interpolation format \":yyyy-MM-dd'T'HH:mm:ss'Z'\" without CultureInfo.InvariantCulture"));
     test.ExpectedDiagnostics.Add(Flag(15, 53, 69, "Interpolation format \":yyyy-MM-dd\" without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(16, 55, 71, "Interpolation format \":yyyy-MM-dd\" without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(17, 49, 65, "Interpolation format \":yyyy-MM-dd\" without CultureInfo.InvariantCulture"));
     await test.RunAsync();
   }
 

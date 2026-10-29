@@ -33,6 +33,13 @@ Acceptance:
   given the invariant provider). `text += date` is flagged. The handler (`AppendFormatted`) path
   has its own test. The new shapes of CreatedText, ExpiryText, and the screenshot FileName are
   pinned. The tw-blazor date rule is its own section, not a grid-recipe clause.
+- Fix pass (review round 2, M6): the provider-call exemption for a hole only holds when the
+  interpolated string binds to a handler whose constructor takes that call's invariant provider
+  (`string.Create`, `StringBuilder.Append(provider, …)`). An interpolated string passed as a plain
+  `string`/`object`/`FormattableString` parameter is built under the current culture first, so
+  `Foo(CultureInfo.InvariantCulture, $"{at:yyyy-MM-dd}")` and
+  `string.Format(CultureInfo.InvariantCulture, $"{at:yyyy-MM-dd}")` flag. `FormattableString.Invariant`
+  stays exempt. Flagged test rows prove it; the Design region says "handler-taking call".
 - `dev build` 0 warnings 0 errors; affected test suites pass; `ganda repo audit` clean.
 
 ## Checklist
@@ -65,11 +72,12 @@ Acceptance:
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 4bec0c25-dfa9-451d-b1ff-ffd4a89289ee, max-turns 120 — 2026-10-29T21:32:31Z
 - Fix pass for round 1 (2026-10-30, ganda task work implement-fix-2 oracle, Claude Opus 5.5): M1–M5 implemented; round 2 review is next.
 - Review oracle round 2 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a8b7dccb3ea1223e3 (claude-sonnet-5-5, read-only). Result: M1–M5 fixed; 1 suggestion open (M6); fix pass requested.
+- Fix pass for round 2 (2026-10-30, ganda task work implement-fix-3 oracle, Claude Opus 5.5): M6 implemented; round 3 review is next.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
-- Round 2: Blocked — open M6 (M1–M5 fixed)
+- Round 2: Blocked — open M6
 
 ## Notes
 
@@ -174,6 +182,31 @@ Fix-pass gates (2026-10-30, this worktree):
   `kanban-landed` warning is the same advisory as before (8 other tasks' claims with no usable
   worktree), not this id's.
 
+### Fix pass (review round 2, M6)
+
+- `iso-date-rendering-analyzer.cs` `IsInInvariantInterpolation` exempts a hole through a
+  provider call only when the climb passed an `IInterpolatedStringHandlerCreationOperation`
+  whose handler constructor takes an `IFormatProvider` from the call's arguments
+  (`HandlerTakesCallProvider`: a `CallsiteArgument` placeholder), and the call passes the
+  invariant provider. `FormattableString.Invariant` stays its own check. A plain `string`
+  parameter beside an invariant provider no longer exempts the hole. `IsFormatProviderType`
+  is shared with `HasInvariantProviderArgument`. Design region now says "a handler-taking call
+  given the invariant provider" and names the two shapes that still flag.
+- `Given_Iso_Custom_Format_Without_Invariant_Culture_Flags` gained two flagged rows:
+  `string.Format(CultureInfo.InvariantCulture, $"Set {day:yyyy-MM-dd}.")` and a
+  `Text.Of(IFormatProvider, string)` stub given `CultureInfo.InvariantCulture`. With the old
+  analyzer restored, the case fails (expected 7, actual 5); with the fix it passes. The
+  `string.Create(InvariantCulture, …)` and `StringBuilder.Append(InvariantCulture, …)` rows still pass.
+
+Fix-pass gates (2026-10-30, this worktree):
+
+- `./bin/dev build`: 0 warnings, 0 errors.
+- `tests/analyzers/timewarp-architecture-analyzers-tests`: 259/259.
+- `tests/container-apps/web/web-spa-integration-tests`: 578/578.
+- `ganda repo audit`: exit 0 once this kitchen is committed (kanban-landed compares the live kitchen
+  to the branch).
+- Smoke 5a run on `SuperheroPage.razor`: web-spa build fails with TWA0036 at (31,69); reverted.
+
 ### How to validate
 
 Smoke:
@@ -185,6 +218,8 @@ Smoke:
    `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release`. Revert it.
 5. Add `<Cell>@hero.BirthDate.ToString("yyyy-MM-dd")</Cell>` (no provider) to
    `SuperheroPage.razor` and build web-spa again. Revert it.
+5a. Add `<Cell>@(string.Format(CultureInfo.InvariantCulture, $"{hero.BirthDate:yyyy-MM-dd}"))</Cell>`
+   to `SuperheroPage.razor` and build web-spa again. Revert it.
 6. Optional: `dev run`, open Settings → credentials and the Ask settings menu.
 
 Expect:
@@ -196,6 +231,9 @@ Expect:
    SuperheroPage.razor line.
 5. The build fails with `TWA0036: ToString("yyyy-MM-dd") without CultureInfo.InvariantCulture
    does not render ISO 8601 …` at that line.
+5a. The build fails with `TWA0036: Interpolation format ":yyyy-MM-dd" without
+   CultureInfo.InvariantCulture …` at that line: a plain `string` parameter does not carry the
+   provider into the interpolation.
 6. The credential row reads `Created 2026-10-05T19:51:51-04:00` (your local offset). The
    expiry reads `Expires at <yyyy-MM-ddTHH:mm:ss±hh:mm>`. Feedback timestamps read
    `yyyy-MM-ddTHH:mm:ssZ`.

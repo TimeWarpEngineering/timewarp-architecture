@@ -17,8 +17,12 @@
 //     under the host culture.
 //   - An interpolation hole of a date type with no format or a non-ISO one, or with an approved
 //     custom format outside an invariant call. Invariant calls are FormattableString.Invariant and
-//     any invocation that passes the invariant provider to an IFormatProvider parameter
-//     (string.Create(CultureInfo.InvariantCulture, $"…"), StringBuilder.Append(provider, $"…")).
+//     a handler-taking call given the invariant provider (string.Create(CultureInfo.InvariantCulture,
+//     $"…"), StringBuilder.Append(provider, $"…")): the interpolated string binds to a handler whose
+//     constructor takes that call's IFormatProvider argument. An interpolated string passed as a
+//     plain string, object, or FormattableString parameter is built under the current culture
+//     before the callee sees the provider, so Foo(CultureInfo.InvariantCulture, $"…") and
+//     string.Format(CultureInfo.InvariantCulture, $"…") still flag.
 //     The interpolated string must be that call's argument directly. Both hole shapes are
 //     covered: an interpolated string converted to string, object, or FormattableString binds
 //     as IInterpolationOperation (the DefaultInterpolatedStringHandler rewrite happens in
@@ -241,10 +245,12 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     invocation.Arguments.Any
     (
       argument =>
-        argument.Parameter?.Type is INamedTypeSymbol { Name: "IFormatProvider" } providerType
-        && providerType.ContainingNamespace?.ToDisplayString() == "System"
-        && IsInvariantProvider(argument.Value)
+        IsFormatProviderType(argument.Parameter?.Type) && IsInvariantProvider(argument.Value)
     );
+
+  private static bool IsFormatProviderType(ITypeSymbol? type) =>
+    type is INamedTypeSymbol { Name: "IFormatProvider" } providerType
+    && providerType.ContainingNamespace?.ToDisplayString() == "System";
 
   private static bool IsInvariantProvider(IOperation provider) =>
     Unwrap(provider) is IPropertyReferenceOperation { Property: { IsStatic: true } property }
@@ -253,8 +259,8 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
       or ("InvariantInfo", "System.Globalization.DateTimeFormatInfo");
 
   /// <summary>
-  /// True when the hole's interpolated string is the direct argument of FormattableString.Invariant
-  /// or of a call that passes the invariant provider.
+  /// True when the hole's interpolated string is the direct argument of FormattableString.Invariant,
+  /// or binds to a handler that takes the invariant provider the call passes.
   /// </summary>
   private static bool IsInInvariantInterpolation(IOperation hole)
   {
@@ -265,8 +271,10 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     }
 
     current = current?.Parent;
+    IInterpolatedStringHandlerCreationOperation? handler = null;
     while (current is IConversionOperation or IInterpolatedStringHandlerCreationOperation)
     {
+      handler ??= current as IInterpolatedStringHandlerCreationOperation;
       current = current.Parent;
     }
 
@@ -275,8 +283,25 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     IMethodSymbol method = call.TargetMethod;
     bool formattableInvariant =
       method.Name == "Invariant" && method.ContainingType?.ToDisplayString() == "System.FormattableString";
-    return formattableInvariant || HasInvariantProviderArgument(call);
+    return formattableInvariant
+      || (handler is not null && HandlerTakesCallProvider(handler) && HasInvariantProviderArgument(call));
   }
+
+  /// <summary>
+  /// True when the handler's constructor receives an IFormatProvider from the enclosing call's
+  /// arguments ([InterpolatedStringHandlerArgument("provider")]), so the holes format under it.
+  /// </summary>
+  private static bool HandlerTakesCallProvider(IInterpolatedStringHandlerCreationOperation handler) =>
+    handler.HandlerCreation is IObjectCreationOperation creation
+    && creation.Arguments.Any
+    (
+      argument =>
+        IsFormatProviderType(argument.Parameter?.Type)
+        && Unwrap(argument.Value) is IInterpolatedStringHandlerArgumentPlaceholderOperation
+        {
+          PlaceholderKind: InterpolatedStringArgumentPlaceholderKind.CallsiteArgument,
+        }
+    );
 
   private static IArgumentOperation? FormatArgument(IInvocationOperation invocation) =>
     invocation.Arguments.FirstOrDefault
