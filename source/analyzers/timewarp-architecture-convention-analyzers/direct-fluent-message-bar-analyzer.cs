@@ -14,12 +14,15 @@
 // analyzed, other generated trees are exempt. Non-WASM compilations (analyzer test fixtures that
 // stub FluentMessageBar, server projects) are never analyzed.
 //
-// Host exemption is by project-relative path, as in TWA0032: components/MessageBar.razor (the
-// control) and components/MessageBars.razor (the shell host). Each is matched by the Razor
-// generator's hint name (components/MessageBar_razor.g.cs), the flattened file name
-// (components_MessageBar_razor.g.cs), or the #line mapped path, with either separator. The
-// folder survives a template root namespace rename; a same-named file in another folder is
-// still reported.
+// Host exemption is by type identity: the invocation's containing type is MessageBar (the
+// control) or MessageBars (the shell host) in namespace {RootNamespace}.Components, read from
+// build_property.RootNamespace so it survives a template root namespace rename. Both razor files
+// declare @namespace {RootNamespace}.Components, and a type name is unique per namespace, so no
+// other file can claim the exemption. A same-named component in a feature folder (for example
+// features/identity/components/MessageBar.razor, namespace ...Features.Identity.Components or the
+// feature's own @namespace) is still reported. The file path is not consulted: TWA0032's
+// path-suffix match would exempt any .../components/MessageBar.razor. With no RootNamespace
+// there is no exemption.
 // No opt-out attribute: a bar that should not offer Copy is a MessageBar parameter, not a raw
 // FluentMessageBar.
 #endregion
@@ -36,6 +39,8 @@ public sealed class DirectFluentMessageBarAnalyzer : DiagnosticAnalyzer
   public const string DiagnosticId = "TWA0037";
 
   private const string BlazorWasmSdkProperty = "build_property.UsingMicrosoftNETSdkBlazorWebAssembly";
+  private const string RootNamespaceProperty = "build_property.RootNamespace";
+  private const string ComponentsNamespaceSuffix = ".Components";
   private const string FluentMessageBarTypeName = "FluentMessageBar";
   private const string FluentUiNamespace = "Microsoft.FluentUI.AspNetCore.Components";
   private const string OpenComponentMethodName = "OpenComponent";
@@ -67,7 +72,12 @@ public sealed class DirectFluentMessageBarAnalyzer : DiagnosticAnalyzer
     {
       if (!IsBlazorWebAssemblyCompilation(startContext.Options)) return;
 
-      startContext.RegisterOperationAction(AnalyzeInvocation, OperationKind.Invocation);
+      string? hostNamespace = ResolveHostNamespace(startContext.Options);
+      startContext.RegisterOperationAction
+      (
+        operationContext => AnalyzeInvocation(operationContext, hostNamespace),
+        OperationKind.Invocation
+      );
     });
   }
 
@@ -76,7 +86,14 @@ public sealed class DirectFluentMessageBarAnalyzer : DiagnosticAnalyzer
       .TryGetValue(BlazorWasmSdkProperty, out string? value)
     && string.Equals(value?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
 
-  private static void AnalyzeInvocation(OperationAnalysisContext context)
+  private static string? ResolveHostNamespace(AnalyzerOptions options) =>
+    options.AnalyzerConfigOptionsProvider.GlobalOptions
+      .TryGetValue(RootNamespaceProperty, out string? rootNamespace)
+    && !string.IsNullOrWhiteSpace(rootNamespace)
+      ? rootNamespace.Trim() + ComponentsNamespaceSuffix
+      : null;
+
+  private static void AnalyzeInvocation(OperationAnalysisContext context, string? hostNamespace)
   {
     var invocation = (IInvocationOperation)context.Operation;
     if (!string.Equals(invocation.TargetMethod.Name, OpenComponentMethodName, StringComparison.Ordinal))
@@ -93,11 +110,7 @@ public sealed class DirectFluentMessageBarAnalyzer : DiagnosticAnalyzer
     if (!IsRazorGeneratedPath(path) && IsGeneratedPath(path))
       return;
 
-    if (IsHostPath(path))
-      return;
-
-    FileLinePositionSpan mapped = invocation.Syntax.GetLocation().GetMappedLineSpan();
-    if (mapped.HasMappedPath && IsHostPath(mapped.Path))
+    if (hostNamespace is not null && IsHostType(context.ContainingSymbol, hostNamespace))
       return;
 
     context.ReportDiagnostic(Diagnostic.Create(Rule, ReportLocation(invocation)));
@@ -141,31 +154,17 @@ public sealed class DirectFluentMessageBarAnalyzer : DiagnosticAnalyzer
     type.Name == FluentMessageBarTypeName
     && type.ContainingNamespace.ToDisplayString() == FluentUiNamespace;
 
-  private static bool IsHostPath(string path)
+  // The outermost type containing the render call. Razor emits BuildRenderTree on the component
+  // class itself; walking out of nested types keeps a helper type inside the control exempt.
+  private static bool IsHostType(ISymbol containingSymbol, string hostNamespace)
   {
-    string normalized = path.Replace("\\", "/", StringComparison.Ordinal);
-    string fileName = Path.GetFileName(normalized);
-    foreach (string name in HostNames)
-    {
-      if (EndsWithSegment(normalized, $"components/{name}.razor", '/')
-        || EndsWithSegment(normalized, $"components/{name}_razor.g.cs", '/')
-        || EndsWithSegment(fileName, $"components_{name}_razor.g.cs", '_'))
-      {
-        return true;
-      }
-    }
+    INamedTypeSymbol? type = containingSymbol as INamedTypeSymbol ?? containingSymbol.ContainingType;
+    while (type?.ContainingType is not null)
+      type = type.ContainingType;
 
-    return false;
-  }
-
-  // True when path is suffix or ends with separator + suffix, so "xcomponents/…" does not match.
-  private static bool EndsWithSegment(string path, string suffix, char separator)
-  {
-    if (!path.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-      return false;
-
-    int start = path.Length - suffix.Length;
-    return start == 0 || path[start - 1] == separator || path[start - 1] == '/';
+    return type is not null
+      && Array.IndexOf(HostNames, type.Name) >= 0
+      && string.Equals(type.ContainingNamespace.ToDisplayString(), hostNamespace, StringComparison.Ordinal);
   }
 
   private static bool IsRazorGeneratedPath(string path) =>

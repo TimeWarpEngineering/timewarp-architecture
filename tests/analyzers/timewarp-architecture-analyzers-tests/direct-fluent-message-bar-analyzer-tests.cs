@@ -6,9 +6,9 @@
 #region Design
 // Gated on the Blazor WASM SDK like TWA0032, so these stubbed fixtures only report under the
 // global config. Razor-generated trees and ordinary .cs trees are analyzed; other .g.cs trees
-// are exempt. Both hosts are matched by their components path (generated tree name or
-// #line-mapped path, either separator); a same-named file elsewhere is not. There is no opt-out
-// attribute.
+// are exempt. Both hosts are matched by type: MessageBar or MessageBars in {RootNamespace}.Components.
+// The file path is not consulted, so a same-named component in a feature components/ folder, or a
+// non-host type in a host-named file, is reported. There is no opt-out attribute.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Tests;
@@ -21,6 +21,13 @@ public class Should_Require_The_Shared_MessageBar
   internal static void Register() => RegisterTests<Should_Require_The_Shared_MessageBar>();
 
   private const string BlazorWasmGlobalConfig =
+    """
+    is_global = true
+    build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
+    build_property.RootNamespace = TimeWarp.Architecture
+    """;
+
+  private const string NoRootNamespaceGlobalConfig =
     """
     is_global = true
     build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
@@ -39,7 +46,7 @@ public class Should_Require_The_Shared_MessageBar
 
     namespace TimeWarp.Architecture.Components
     {
-      public class MessageBar { }
+      public partial class MessageBar { }
     }
 
     namespace Microsoft.AspNetCore.Components.Rendering
@@ -67,6 +74,28 @@ public class Should_Require_The_Shared_MessageBar
       {
         builder.OpenComponent<FluentMessageBar>(1);
         builder.CloseComponent();
+      }
+    }
+    """;
+
+  // A component type rendering a raw FluentMessageBar; OpenComponent is on line 13, columns 7-49.
+  private static string Component(string namespaceName, string typeName) =>
+    $$"""
+    #region Purpose
+    // {{typeName}} rendering a raw FluentMessageBar.
+    #endregion
+    using Microsoft.AspNetCore.Components.Rendering;
+    using Microsoft.FluentUI.AspNetCore.Components;
+
+    namespace {{namespaceName}}
+    {
+      public partial class {{typeName}}
+      {
+        protected void BuildRenderTree(RenderTreeBuilder builder)
+        {
+          builder.OpenComponent<FluentMessageBar>(1);
+          builder.CloseComponent();
+        }
       }
     }
     """;
@@ -140,59 +169,75 @@ public class Should_Require_The_Shared_MessageBar
     await test.RunAsync();
   }
 
-  public static async Task Given_Shared_MessageBar_Tree_Does_Not_Flag()
+  public static async Task Given_Shared_MessageBar_Control_Does_Not_Flag()
   {
-    await Test(RawPage, "components_MessageBar_razor.g.cs").RunAsync();
+    await Test(Component("TimeWarp.Architecture.Components", "MessageBar"), "components_MessageBar_razor.g.cs").RunAsync();
   }
 
-  public static async Task Given_Shell_MessageBars_Host_Tree_Does_Not_Flag()
+  public static async Task Given_Shell_MessageBars_Host_Does_Not_Flag()
   {
-    await Test(RawPage, "components_MessageBars_razor.g.cs").RunAsync();
+    await Test(Component("TimeWarp.Architecture.Components", "MessageBars"), "components_MessageBars_razor.g.cs").RunAsync();
   }
 
-  public static async Task Given_Razor_Generator_Hint_Path_For_Hosts_Does_Not_Flag()
+  public static async Task Given_Host_Under_Renamed_Root_Namespace_Does_Not_Flag()
   {
-    await Test(RawPage, "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/components/MessageBar_razor.g.cs").RunAsync();
-    await Test(RawPage, "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/components/MessageBars_razor.g.cs").RunAsync();
-  }
-
-  public static async Task Given_Line_Mapped_To_MessageBar_Razor_Does_Not_Flag()
-  {
-    const string source =
+    const string renamed =
       """
-      #region Purpose
-      // Generated tree whose markup maps back to MessageBar.razor through a Windows path.
-      #endregion
-      using Microsoft.AspNetCore.Components.Rendering;
-      using Microsoft.FluentUI.AspNetCore.Components;
-
-      public class MessageBarControl
-      {
-        protected void BuildRenderTree(RenderTreeBuilder builder)
-        {
-      #line 70 "C:\src\web-spa\components\MessageBar.razor"
-          builder.OpenComponent<FluentMessageBar>(1);
-      #line default
-          builder.CloseComponent();
-        }
-      }
+      is_global = true
+      build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
+      build_property.RootNamespace = Acme.Portal
       """;
 
-    await Test(source, "obj_MessageBar_generated_razor.g.cs").RunAsync();
+    await Test(Component("Acme.Portal.Components", "MessageBar"), "components_MessageBar_razor.g.cs", renamed).RunAsync();
   }
 
-  public static async Task Given_Same_Named_Component_In_Other_Folder_Flags()
+  public static async Task Given_Host_Code_Behind_In_Ordinary_Cs_Does_Not_Flag()
   {
-    const string path = "Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/features/notes/MessageBar_razor.g.cs";
-    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test = Test(RawPage, path);
-    test.ExpectedDiagnostics.Add(Flag(path, 11, 5, 47));
+    await Test(Component("TimeWarp.Architecture.Components", "MessageBar"), "message-bar.cs").RunAsync();
+  }
+
+  public static async Task Given_MessageBar_In_Feature_Components_Folder_Flags()
+  {
+    // features/identity/components/MessageBar.razor: the default razor namespace keeps the folder.
+    const string path = "features_identity_components_MessageBar_razor.g.cs";
+    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test =
+      Test(Component("TimeWarp.Architecture.Features.Identity.Components", "MessageBar"), path);
+    test.ExpectedDiagnostics.Add(Flag(path, 13, 7, 49));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_MessageBar_With_Feature_Namespace_Flags()
+  {
+    // Same folder with the feature's own @namespace, as AddPasskeyPrompt.razor declares.
+    const string path = "features_identity_components_MessageBar_razor.g.cs";
+    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test =
+      Test(Component("TimeWarp.Architecture.Features.Identity", "MessageBar"), path);
+    test.ExpectedDiagnostics.Add(Flag(path, 13, 7, 49));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Other_Type_In_Host_Named_File_Flags()
+  {
+    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test = Test(RawPage, "components_MessageBar_razor.g.cs");
+    test.ExpectedDiagnostics.Add(Flag("components_MessageBar_razor.g.cs", 11, 5, 47));
     await test.RunAsync();
   }
 
   public static async Task Given_Similarly_Named_Component_Flags()
   {
-    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test = Test(RawPage, "components_MyMessageBar_razor.g.cs");
-    test.ExpectedDiagnostics.Add(Flag("components_MyMessageBar_razor.g.cs", 11, 5, 47));
+    const string path = "components_MyMessageBar_razor.g.cs";
+    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test =
+      Test(Component("TimeWarp.Architecture.Components", "MyMessageBar"), path);
+    test.ExpectedDiagnostics.Add(Flag(path, 13, 7, 49));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_No_Root_Namespace_Host_Flags()
+  {
+    const string path = "components_MessageBar_razor.g.cs";
+    CSharpAnalyzerTest<DirectFluentMessageBarAnalyzer, RoslynTestVerifier> test =
+      Test(Component("TimeWarp.Architecture.Components", "MessageBar"), path, NoRootNamespaceGlobalConfig);
+    test.ExpectedDiagnostics.Add(Flag(path, 13, 7, 49));
     await test.RunAsync();
   }
 

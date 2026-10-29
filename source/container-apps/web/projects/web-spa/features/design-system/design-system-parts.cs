@@ -435,7 +435,7 @@ internal static class DesignSystemParts
     new
     (
       "message-bars",
-      "Message bars (FluentUI)",
+      "Message bars",
       Group.Feedback,
       """
       <MessageBar Intent="MessageBarIntent.Info"

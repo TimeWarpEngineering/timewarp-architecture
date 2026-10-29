@@ -63,6 +63,8 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
 - Implement: ganda task work implementer, Claude Opus 5.5 (2026-10-29)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session c192672d-1610-4f51-acc0-b722d1d2a4f0, max-turns 500, Done — 2026-10-29T16:54:36Z
 - Review oracle round 1: Claude Fable 5.1 (`ganda task work`, headless, effort 3, roster general, turn cap 200); `general` reviewer sub-agent Claude Sonnet — 2026-10-30. Outcome: Blocked, fix pass needed for M1-M4 (`review/round-1/merged.md`).
+- Implement fix-2 (round 1 findings M1-M4): ganda task work implementer, Claude Opus 5.5 (2026-10-30)
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 199d19aa-d5a5-471f-992b-50a05e2ab744, max-turns 200 — 2026-10-29T17:05:47Z
 
 ## Results
 
@@ -86,10 +88,12 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
   Skip and Add a passkey / Later stay), and the four `MessageBarsSample` bars. The
   design-system "Message bars" snippet in `DesignSystemParts` shows the `MessageBar` markup.
 - Analyzer **TWA0037** (`DirectFluentMessageBarAnalyzer`): raw `FluentMessageBar` outside
-  `components/MessageBar.razor` and `components/MessageBars.razor` fails the build. Path-matched
-  like TWA0032; WASM-only, so analyzer test stubs are exempt; no opt-out attribute. Recorded in
-  `AnalyzerReleases.Unshipped.md`. TWA0036 is skipped because to-do task 452's spec names it;
-  the reserved-ids comment says so.
+  `components/MessageBar.razor` and `components/MessageBars.razor` fails the build. The host
+  exemption is by type: `MessageBar` / `MessageBars` in `{RootNamespace}.Components`
+  (`build_property.RootNamespace`), not a path suffix, so a same-named component in a feature
+  `components/` folder is still reported (review M1). WASM-only, so analyzer test stubs are
+  exempt; no opt-out attribute. Recorded in `AnalyzerReleases.Unshipped.md`. TWA0036 is left
+  free; the reserved-ids comment reserves it for the ISO date rendering rule.
 - **TWA0025** now also checks the shared `MessageBar` (type named `MessageBar` in a namespace
   whose last segment is `Components`). Without this, converting bars to the control would hide
   Error/Success page bars from the rule. `MessageBarsSample` keeps its `[PageLocalMessageBar]`
@@ -127,6 +131,29 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
   note names a kanban task state in a packed file; M4 stale "FluentMessageBar" / "(FluentUI)"
   wording in the design-system samples.
 - Disposition: **pending** — fix pass requested on this task id for M1-M4, then `review/round-2/`.
+
+### Fix pass (round 1 findings)
+
+- M1 fixed (option a): TWA0037 exempts by type identity (`{RootNamespace}.Components.MessageBar`
+  / `.MessageBars`), and the path is no longer consulted. Design regions in the analyzer and the
+  test file say so, and `MessageBar.razor` notes that its `@namespace` carries the exemption.
+  New tests: feature `components/` folder with the default namespace flags, feature
+  `@namespace` flags, a non-host type in a host-named file flags, renamed root namespace exempts,
+  host code-behind `.cs` exempts, no `RootNamespace` means no exemption. Path-form tests were removed
+  because paths no longer matter. `Should_Require_The_Shared_MessageBar` 16/16.
+- M2 fixed: `Clear_Confirmation_When_The_Copied_Row_Expires_First` (copied Success row expires
+  before `CopiedUntil` → row gone, `CopiedMessageId` null) and
+  `Keep_Page_Bar_Confirmation_When_An_Unrelated_Row_Expires` (page bar copied, unrelated Success
+  row expires → row gone, `CopiedMessageId` still `bar-1`). A backdated internal `AddMessage`
+  makes the row expire before `CopiedUntil`. Mutation check: with the `copiedRowExpired` clause
+  disabled, the first test fails.
+- M3 fixed: `AnalyzerReleases.Unshipped.md` reads "TWA0036 is reserved for the ISO date rendering
+  rule."
+- M4 fixed: `NotificationsSample.razor` says the handler records a NotificationState row. The
+  sample card and part title are now "Message bars"; no test asserted "(FluentUI)".
+- Gates after the fix pass: `dev build` 0 warnings / 0 errors; Copy tests 16/16;
+  analyzer `MessageBar` 16/16 and `Message_Bars` 15/15; `DesignSystemPage_Should_` 6/6;
+  `ganda repo audit` (see Session).
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
@@ -156,6 +183,10 @@ dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -- --
 ```
 
 (`dev test` has no `--filter-class`; the filter is a Jaribu option on the test project.)
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4
 
 ## Notes
 

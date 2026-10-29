@@ -22,8 +22,9 @@
   // Ask Tag (task 346): the bar is pickable as AskTagMark.MessageBarKind(intent) with its title
   // as the label. Unmatched attributes (BaseComponent.Attributes: data-qa, ...) win and land on
   // the fluent-message-bar.
-  // Raw FluentMessageBar anywhere else in the SPA is TWA0037; this file and the shell
-  // MessageBars host are exempt. TWA0025 checks this control's Intent like FluentMessageBar's.
+  // Raw FluentMessageBar anywhere else in the SPA is TWA0037; this type and the shell
+  // MessageBars host are exempt by name in {RootNamespace}.Components, so keep the @namespace.
+  // TWA0025 checks this control's Intent like FluentMessageBar's.
 
   [Parameter, EditorRequired] public MessageBarIntent Intent { get; set; }
   [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;

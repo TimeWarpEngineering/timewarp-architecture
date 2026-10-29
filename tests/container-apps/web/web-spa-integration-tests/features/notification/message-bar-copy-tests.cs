@@ -11,6 +11,9 @@
 // Title and Body, keeps the bar's own action working, and swaps its label to "Copied" (read from
 // the diff, because a fresh host would be a new bar with a new id). The design-system test
 // clicks each of MessageBarsSample's four Copy buttons and checks each copies its own bar.
+// RemoveExpired clears Copied only when CopiedUntil passes or the copied row itself expires; the
+// two expiry tests add a backdated Success row so it dismisses before CopiedUntil and each branch
+// is reached on its own.
 #endregion
 
 namespace NotificationCopy_;
@@ -73,6 +76,39 @@ public class CopyMessageBar_Should_
     await scope.Send(new ExpireMessagesActionSet.Action(copiedUntil - TimeSpan.FromSeconds(1)));
 
     scope.Store.GetState<NotificationState>().CopiedMessageId.ShouldBe("bar-1");
+  }
+
+  public static async Task Clear_Confirmation_When_The_Copied_Row_Expires_First()
+  {
+    using CopySpa spa = new(clipboardThrows: false);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    NotificationMessage row = AddSuccessRowNearItsExpiry(scope);
+
+    await scope.Send(new CopyMessageActionSet.Action(row.Id));
+    NotificationState state = scope.Store.GetState<NotificationState>();
+    state.CopiedMessageId.ShouldBe(row.Id);
+    row.AutoDismissAt!.Value.ShouldBeLessThan(state.CopiedUntil!.Value, "the row expires while Copied still shows");
+
+    await scope.Send(new ExpireMessagesActionSet.Action(row.AutoDismissAt.Value));
+
+    state = scope.Store.GetState<NotificationState>();
+    state.Messages.ShouldBeEmpty();
+    state.CopiedMessageId.ShouldBeNull("the copied row is gone, so its confirmation goes with it");
+  }
+
+  public static async Task Keep_Page_Bar_Confirmation_When_An_Unrelated_Row_Expires()
+  {
+    using CopySpa spa = new(clipboardThrows: false);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new CopyMessageBarActionSet.Action("bar-1", DriftTitle, DriftBody));
+    NotificationMessage row = AddSuccessRowNearItsExpiry(scope);
+    row.AutoDismissAt!.Value.ShouldBeLessThan(scope.Store.GetState<NotificationState>().CopiedUntil!.Value);
+
+    await scope.Send(new ExpireMessagesActionSet.Action(row.AutoDismissAt.Value));
+
+    NotificationState state = scope.Store.GetState<NotificationState>();
+    state.Messages.ShouldBeEmpty("the Success row auto-dismissed");
+    state.CopiedMessageId.ShouldBe("bar-1", "another row expiring leaves the page bar's Copied in place");
   }
 
   public static async Task Report_Warning_When_Clipboard_Rejects()
@@ -164,6 +200,16 @@ public class CopyMessageBar_Should_
     }
 
     spa.JsRuntime.Module.Calls.Count.ShouldBe(expected.Length);
+  }
+
+  // A Success row added one second before its auto-dismiss, so it expires before a copy made now
+  // stops showing Copied. Backdating AddMessage stands in for waiting out the dismiss interval.
+  private static NotificationMessage AddSuccessRowNearItsExpiry(SpaTestScope scope)
+  {
+    NotificationState state = scope.Store.GetState<NotificationState>();
+    DateTimeOffset addedAt = DateTimeOffset.UtcNow - SuccessAutoDismissInterval + TimeSpan.FromSeconds(1);
+    state.AddMessage(MessageBarIntent.Success, "Saved", body: null, addedAt);
+    return state.Messages.ShouldHaveSingleItem();
   }
 
   private static void SaveButton(RenderTreeBuilder builder, Action onClick)
