@@ -12,11 +12,15 @@
 // with the 400 problem the real endpoint returns, so a malformed relay request puts the context in
 // Error the way the panel saw it. Its scripted model asks for a capture on "Filter bar" and
 // otherwise answers in text. FailNext fails one request so Retry can be proved.
+// The relay cases call RelayChatClient directly. They pin the message kinds that map to an empty
+// turn (CompleteAgentChat.IsEmpty) and that a picture taken before a rejected call in the same turn
+// is still sent.
 #endregion
 
 namespace AskRejection_;
 
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -31,6 +35,7 @@ public class AskRejection_Should
 {
   private const string CaptureTool = "Screenshot.CaptureScreenshot";
   private const string CaptureCallId = "call-capture";
+  private static readonly byte[] FakePng = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4];
   private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
   [System.Runtime.CompilerServices.ModuleInitializer]
@@ -126,6 +131,62 @@ public class AskRejection_Should
       .ShouldBe("user|assistant|tool|assistant|user");
   }
 
+  public static async Task Relay_Leaves_Out_Messages_That_Map_To_An_Empty_Turn()
+  {
+    ScriptedModelApi api = new();
+    using RelayChatClient client = new(api);
+    ChatMessage[] history =
+    [
+      new(ChatRole.User, "show me the Filter bar"),
+      new(ChatRole.Assistant, [new TextReasoningContent("Thinking about the Filter bar.")]),
+      new(ChatRole.Assistant, "   "),
+      new(ChatRole.User, [new DataContent(new byte[] { 1, 2, 3 }, "application/pdf")]),
+      new(ChatRole.User, [new DataContent(FakePng, "image/png")]),
+      new(ChatRole.Assistant, "Here it is."),
+      new(ChatRole.User, "why?"),
+    ];
+
+    await client.GetResponseAsync(history);
+
+    api.Failures.ShouldBeEmpty();
+    List<CompleteAgentChat.Turn> turns = api.Commands.Single().Messages;
+    turns.ShouldAllBe(static turn => !CompleteAgentChat.IsEmpty(turn));
+    string.Join("|", turns.Select(static turn => turn.Role)).ShouldBe("user|user|assistant|user");
+    turns[1].Images.ShouldHaveSingleItem().Data.ShouldBe(Convert.ToBase64String(FakePng), "an image-only message is sent");
+  }
+
+  public static async Task Relay_Sends_A_Picture_Taken_Before_A_Rejected_Call_In_The_Same_Turn()
+  {
+    ScriptedModelApi api = new();
+    using RelayChatClient client = new(api);
+    const string pictureCallId = "call-picture";
+    FunctionCallContent rejectedCall = new(CaptureCallId, CaptureTool, new Dictionary<string, object?>());
+    ToolApprovalRequestContent request = new("req-1", rejectedCall);
+    ChatMessage[] history =
+    [
+      new(ChatRole.User, "show me the Filter bar"),
+      new(ChatRole.Assistant, [new FunctionCallContent(pictureCallId, "Picture.Take", new Dictionary<string, object?>())]),
+      new
+      (
+        ChatRole.Tool,
+        [new FunctionResultContent(pictureCallId, new PictureResult("""{"width":640}""", new DataContent(FakePng, "image/png")))]
+      ),
+      new(ChatRole.Assistant, [request]),
+      new(ChatRole.User, [request.CreateResponse(approved: false, "Declined.")]),
+      new(ChatRole.Assistant, [rejectedCall]),
+      new(ChatRole.Tool, [new FunctionResultContent(CaptureCallId, "Tool call invocation was rejected.")]),
+    ];
+
+    await client.GetResponseAsync(history);
+
+    api.Failures.ShouldBeEmpty();
+    List<CompleteAgentChat.Turn> turns = api.Commands.Single().Messages;
+    string.Join("|", turns.Select(static turn => turn.Role)).ShouldBe("user|assistant|tool|user|assistant|tool");
+    CompleteAgentChat.Turn pictureTurn = turns[3];
+    pictureTurn.Text.ShouldBe(RelayChatClient.ToolPictureText, "the approval response is not the person's message");
+    pictureTurn.Images.ShouldHaveSingleItem().Data.ShouldBe(Convert.ToBase64String(FakePng));
+  }
+
   private static void Configure(UIAgentOptions agentOptions, ChatOptions options, AskConversationThread thread)
   {
     agentOptions.ChatOptions = options;
@@ -148,6 +209,9 @@ public class AskRejection_Should
       "/Settings",
       CancellationToken.None
     );
+
+  /// <summary>A tool result that carries a picture, as CatalogAgentFunctions returns for a capture.</summary>
+  private sealed record PictureResult(string Summary, [property: JsonIgnore] DataContent? Image) : IToolResultImage;
 
   /// <summary>web-server's completion endpoint: validates like the real one, then scripts the model.</summary>
   private sealed class ScriptedModelApi : IWebServerApiService

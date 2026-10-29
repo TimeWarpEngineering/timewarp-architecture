@@ -25,7 +25,11 @@
 // stay in the Ask history so a restored card shows its decision. FunctionInvokingChatClient
 // removes a pair only while its call is not InformationalOnly, and a rejection marks the call
 // InformationalOnly. A rejected pair therefore reaches this client on every later turn, and an
-// empty turn fails the CompleteAgentChat validator. The model still sees the rejected call and
+// empty turn fails the CompleteAgentChat validator. Each message is mapped with ToTurn and kept
+// only when CompleteAgentChat.IsEmpty, the validator's own rule, says the turn is not empty, so
+// the filter cannot drift from the mapping or the validator. The person's last message is found
+// after that filter, so a surviving approval response never counts as it, and tool pictures from
+// calls made earlier in the same turn are still sent. The model still sees the rejected call and
 // its result turn.
 #endregion
 
@@ -111,15 +115,24 @@ internal sealed class RelayChatClient : IChatClient
 
   private static List<Turn> ToTurns(List<ChatMessage> history)
   {
-    List<ChatMessage> messages = history.FindAll(ReachesModel);
-    int lastUser = messages.FindLastIndex(static message => message.Role == ChatRole.User);
+    List<(ChatMessage Message, Turn Turn)> sent = [];
+    foreach (ChatMessage message in history)
+    {
+      Turn turn = ToTurn(message);
+      if (!IsEmpty(turn))
+      {
+        sent.Add((message, turn));
+      }
+    }
+
+    int lastUser = sent.FindLastIndex(static pair => pair.Message.Role == ChatRole.User);
     List<Turn> turns = [];
     List<Turn> pictureTurns = [];
     List<TurnImage> pictures = [];
-    for (int index = 0; index < messages.Count; index++)
+    for (int index = 0; index < sent.Count; index++)
     {
-      ChatMessage message = messages[index];
-      turns.Add(ToTurn(message));
+      (ChatMessage message, Turn turn) = sent[index];
+      turns.Add(turn);
       if (index > lastUser)
       {
         foreach (FunctionResultContent result in message.Contents.OfType<FunctionResultContent>())
@@ -131,7 +144,7 @@ internal sealed class RelayChatClient : IChatClient
         }
       }
 
-      bool runEnds = index + 1 == messages.Count || messages[index + 1].Role != ChatRole.Tool;
+      bool runEnds = index + 1 == sent.Count || sent[index + 1].Message.Role != ChatRole.Tool;
       if (pictures.Count > 0 && runEnds)
       {
         Turn pictureTurn = new() { Role = ChatRole.User.Value, Text = ToolPictureText, Images = [.. pictures] };
@@ -156,33 +169,6 @@ internal sealed class RelayChatClient : IChatClient
     }
 
     return turns;
-  }
-
-  /// <summary>
-  /// Whether <paramref name="message"/> maps to a turn the relay accepts: text, a tool call, a tool
-  /// result, or a picture the person attached. Approval requests and responses are Ask UI content.
-  /// </summary>
-  private static bool ReachesModel(ChatMessage message)
-  {
-    if (!string.IsNullOrWhiteSpace(message.Text))
-    {
-      return true;
-    }
-
-    foreach (AIContent content in message.Contents)
-    {
-      if (content is FunctionCallContent or FunctionResultContent)
-      {
-        return true;
-      }
-
-      if (content is DataContent data && message.Role == ChatRole.User && ToImage(data) is not null)
-      {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /// <summary>Keeps the newest images of <paramref name="turn"/> that fit in <paramref name="room"/>.</summary>

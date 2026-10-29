@@ -40,6 +40,12 @@ Acceptance:
 - 2026-10-30 implementer (ganda task work, claude-opus-5-5): repro, fix, test, gates.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 33de1603-903d-4d98-9713-bb22f153af07, max-turns 500, Done — 2026-10-29T18:32:18Z
 - Review oracle round 1 (ganda task work, claude-fable-5-1, effort 2, roster general via sonnet subagent ab729f8beaa0331ff): gates re-run, 0 bugs, 1 suggestion + 1 nit open, 1 nit wontfix; fix pass requested for M1, M3 — 2026-10-30
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session e7e96d6c-8edb-40cb-9d81-6643abe8e7cf, max-turns 120 — 2026-10-29T18:40:35Z
+- 2026-10-30 implement-fix-2 (ganda task work, claude-opus-5-5): fix pass for round-1 M1 and M3.
+
+## Review
+
+- Round 1: Blocked — open M1, M3
 
 ## Notes
 
@@ -90,6 +96,18 @@ ToolApprovalResponseContent with the rejection turn, and AgentAsk maps
 - `catalog-agent-screenshot-tests.cs`: CaptureSpa and CaptureJsRuntime are now `internal`, so the
   new class can reuse them without the Aspire session SetupOnce.
 
+**Fix pass (round 1 M1, M3).** `CompleteAgentChat.IsEmpty(Turn)` is now a public static on the
+contract, and the validator calls it. `RelayChatClient.ToTurns` maps each message with `ToTurn`
+and keeps it only when `IsEmpty` says the turn is not empty, so the hand-written `ReachesModel`
+predicate is gone and the filter cannot drift from the mapping or the validator (AGENTS.md: two
+things that must agree). `lastUser` and the picture-turn loop run over the kept `(message, turn)`
+pairs. The relay Design note says `lastUser` is found after the filter, so an approval response
+never counts as the person's message. Two new relay cases pin this:
+`Relay_Leaves_Out_Messages_That_Map_To_An_Empty_Turn` (reasoning-only assistant, whitespace-only
+text, non-image user DataContent dropped; image-only user message kept) and
+`Relay_Sends_A_Picture_Taken_Before_A_Rejected_Call_In_The_Same_Turn` (a tool picture before a
+surviving rejected pair is sent as the `ToolPictureText` user turn).
+
 **Proof.** Before the fix both new tests failed with the 400 above, on the follow-up turn. After
 the fix both pass. `--filter-tag Unit` passes 428/428. `ganda repo audit` passes, with one
 advisory kanban-landed warning about other tasks' claims and nothing on this task. `dev build`
@@ -105,6 +123,8 @@ AppHost. CI runs them.
 - Counts after round 1: bug 0; suggestion 1 open (M1: `ReachesModel` restates `ToTurn` + validator
   `IsEmpty` by hand, derive the filter from the produced turn); nit 1 open (M3: Design note on the
   post-filter `lastUser` meaning), 1 wontfix (M2: keep the capture helpers with the screenshot proof).
+- Fix pass after round 1 (2026-10-30): M1 and M3 implemented (see Fix pass above). Gates: `dev
+  build` 0/0, `--filter-tag Unit` 430/430, AskRejection 4/4.
 - Disposition: pending round 2 after the fix pass. Paths: `review/review-framework.md`,
   `review/round-1/general.md`, `review/round-1/merged.md`.
 
@@ -118,9 +138,10 @@ dotnet build -v q
 dotnet run --no-build -- --filter-class AskRejection
 ```
 
-Expect: `total: 2 failed: 0 succeeded: 2`. Revert the `history.FindAll(ReachesModel)` line in
-relay-chat-client.cs and rerun. Both tests then fail with `400 One or more validation errors
-occurred.: A turn needs text, a tool call, or a tool result.`
+Expect: `total: 4 failed: 0 succeeded: 4`. In relay-chat-client.cs `ToTurns`, drop the
+`if (!IsEmpty(turn))` check (add every pair) and rerun. The two rejection tests and the empty-turn
+case then fail with `400 One or more validation errors occurred.: A turn needs text, a tool call,
+or a tool result.`
 
 Manual check (live Ask): on a page with a capture tool, ask "show me the Filter bar" and click
 Reject. The assistant answers that it was declined. Then ask "why didn't you find the route?".

@@ -42,7 +42,10 @@
   Add a case for the edge kinds (reasoning-only assistant message, whitespace-only text, non-image
   user DataContent, image-only user message) so a drift fails a test.
 - Source: general, orchestrator (raised independently by both)
-- Disposition notes:
+- Disposition notes: implemented in fix pass (implement-fix-2, 2026-10-30). `CompleteAgentChat.IsEmpty`
+  is public and the validator calls it; `ToTurns` keeps `(message, ToTurn(message))` pairs that are
+  not empty, and `ReachesModel` is gone. Edge kinds pinned by
+  `Relay_Leaves_Out_Messages_That_Map_To_An_Empty_Turn`.
 
 ### M2 — Severity: nit — Status: wontfix
 - File: tests/container-apps/web/web-spa-integration-tests/features/application/ask-rejection-tests.cs:27
@@ -68,7 +71,8 @@
   approval response never counts as the person's message). Optionally pin it with a case that puts
   a tool-image result before a surviving rejected pair and asserts the picture turn is sent.
 - Source: general
-- Disposition notes:
+- Disposition notes: implemented in fix pass (implement-fix-2, 2026-10-30). Design note clause added;
+  pinned by `Relay_Sends_A_Picture_Taken_Before_A_Rejected_Call_In_The_Same_Turn`.
 
 ## Duplicates / conflicts
 
