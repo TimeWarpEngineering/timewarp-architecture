@@ -26,6 +26,13 @@ Acceptance:
   with no format or a non-ISO one, and string concatenation of a date. Razor `@date` content
   (implicit ToString) is flagged too. Approved shapes are ISO 8601 extended and basic forms plus
   `O`/`o`/`s`. Registered in `AnalyzerReleases.Unshipped.md` with Jaribu tests.
+- Fix pass (review round 1, M1–M5): an ISO-shaped custom format only passes with
+  `CultureInfo.InvariantCulture`, because custom formats follow the culture's separators and
+  calendar and the server renders under the host culture. A hole with a custom format passes only
+  inside `string.Create(InvariantCulture, …)` / `FormattableString.Invariant(…)` (or another call
+  given the invariant provider). `text += date` is flagged. The handler (`AppendFormatted`) path
+  has its own test. The new shapes of CreatedText, ExpiryText, and the screenshot FileName are
+  pinned. The tw-blazor date rule is its own section, not a grid-recipe clause.
 - `dev build` 0 warnings 0 errors; affected test suites pass; `ganda repo audit` clean.
 
 ## Checklist
@@ -55,6 +62,12 @@ Acceptance:
 - Implemented 2026-10-30 (ganda task work implement oracle, Claude Opus 5.5)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 3bea41c0-e2cf-4643-be7c-e275aabfee89, max-turns 500, Done — 2026-10-29T21:20:26Z
 - Review oracle round 1 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a12e5e15df9cffc89 (claude-sonnet-5-5, read-only). Result: 0 bug, 3 suggestion, 2 nit open (M1–M5); fix pass requested.
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 4bec0c25-dfa9-451d-b1ff-ffd4a89289ee, max-turns 120 — 2026-10-29T21:32:31Z
+- Fix pass for round 1 (2026-10-30, ganda task work implement-fix-2 oracle, Claude Opus 5.5): M1–M5 implemented; round 2 review is next.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5
 
 ## Notes
 
@@ -123,6 +136,41 @@ Gates run (2026-10-30, this worktree):
   with no usable worktree: 070-001, 104-024/025/026, 123, 141, 198, 244). Those belong to other
   tasks' holders, so they are not released from this id.
 
+### Fix pass (review round 1, M1–M5)
+
+- M1: `iso-date-rendering-analyzer.cs` flags an approved custom format (anything but `O`/`o`/`s`)
+  when `ToString` has no `CultureInfo.InvariantCulture` / `DateTimeFormatInfo.InvariantInfo`
+  provider, and an interpolation hole with one unless the interpolated string is the direct
+  argument of `FormattableString.Invariant` or of a call that passes the invariant provider
+  (`string.Create`, `StringBuilder.Append(provider, …)`). The message now ends "with
+  CultureInfo.InvariantCulture". Design region updated. Converted to
+  `ToString(fmt, CultureInfo.InvariantCulture)`: `AiPage.razor`, `screenshot-capture.cs`,
+  `development-email-sender-server.cs`, and one more the build found,
+  `tools/dev-cli/services/entra-setup.cs` (`CredentialDisplayName`, `:yyyyMMdd`).
+- M2: new test `Given_Interpolated_String_Handler_Flags_Each_Non_Iso_Hole_Once`
+  (`StringBuilder.Append($"…")`: no format, `:u`, `:yyyy-MM-dd`, `,10` each flag once; `:O` and
+  the invariant-provider overload pass).
+- M4: `OperationKind.CompoundAssignment` registered; `text += day` flags as concatenation.
+- M1 tests: `Given_Iso_Custom_Format_Without_Invariant_Culture_Flags` (no provider,
+  `CurrentCulture`, a provider variable, a bare hole, `string.Create(CurrentCulture, …)` flag;
+  `InvariantCulture` passes). The approved-forms test gained `ToString("O")`, `InvariantInfo`,
+  `string.Create(InvariantCulture, …)`, `FormattableString.Invariant`, and `{at:O}`.
+- M3: `Created_Text_Is_A_Local_Iso_Instant` (regex plus parse-back to the same instant);
+  `Show_Active_With_Its_Expiry` now matches the visible expiry text against the local-instant
+  regex and parses it back; `Screenshot_File_Name_Is_An_Iso_Basic_Utc_Stamp` pins
+  `screenshot-20261028T123456Z-7.png` from a -04:00 capture.
+- M5: `skills/tw-blazor/SKILL.md` has a standalone `# Rendered dates` section (invariant culture,
+  local vs UTC shapes, the interpolation rule); grid item 6 points at it.
+
+Fix-pass gates (2026-10-30, this worktree):
+
+- `./bin/dev build`: 0 warnings, 0 errors.
+- `tests/analyzers/timewarp-architecture-analyzers-tests`: 259/259.
+- `tests/container-apps/web/web-spa-integration-tests`: 578/578.
+- `./bin/dev lint-skills`: 9/9 skills pass.
+- `ganda repo audit`: see the session note on the commit; `kanban-landed` is cleared by
+  `ganda kanban publish 452` after the push.
+
 ### How to validate
 
 Smoke:
@@ -132,16 +180,20 @@ Smoke:
 3. `(cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release)`.
 4. Add `<Cell>@hero.BirthDate.ToShortDateString()</Cell>` to `SuperheroPage.razor`, then run
    `dotnet build source/container-apps/web/projects/web-spa/web-spa.csproj -c Release`. Revert it.
-5. Optional: `dev run`, open Settings → credentials and the Ask settings menu.
+5. Add `<Cell>@hero.BirthDate.ToString("yyyy-MM-dd")</Cell>` (no provider) to
+   `SuperheroPage.razor` and build web-spa again. Revert it.
+6. Optional: `dev run`, open Settings → credentials and the Ask settings menu.
 
 Expect:
 
 1. 0 warnings, 0 errors.
-2. All tests pass, including the 8 `Should_Require_Iso_Date_Rendering` cases.
+2. All tests pass, including the 10 `Should_Require_Iso_Date_Rendering` cases.
 3. All tests pass (credential presenter, assembly-info copy, ask settings menu).
 4. The build fails with `TWA0036: ToShortDateString() does not render ISO 8601` at the
    SuperheroPage.razor line.
-5. The credential row reads `Created 2026-10-05T19:51:51-04:00` (your local offset). The
+5. The build fails with `TWA0036: ToString("yyyy-MM-dd") without CultureInfo.InvariantCulture
+   does not render ISO 8601 …` at that line.
+6. The credential row reads `Created 2026-10-05T19:51:51-04:00` (your local offset). The
    expiry reads `Expires at <yyyy-MM-ddTHH:mm:ss±hh:mm>`. Feedback timestamps read
    `yyyy-MM-ddTHH:mm:ssZ`.
 

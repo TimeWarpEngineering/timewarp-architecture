@@ -1,6 +1,7 @@
 #region Purpose
 // TWA0036: dates and times render as ISO 8601 — culture shortcuts, format-less ToString,
-// non-ISO formats, interpolation holes, concatenation, and razor content are flagged.
+// non-ISO formats, custom formats without the invariant culture, interpolation holes (both
+// lowerings), concatenation, and razor content are flagged.
 #endregion
 
 #region Design
@@ -164,7 +165,11 @@ public class Should_Require_Iso_Date_Rendering
           at.ToLocalTime().ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture),
           at.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
           time.ToString("HH:mm", CultureInfo.InvariantCulture),
-          $"screenshot-{at.UtcDateTime:yyyyMMdd'T'HHmmss'Z'}.png",
+          at.ToString("O"),
+          day.ToString("yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo),
+          string.Create(CultureInfo.InvariantCulture, $"screenshot-{at.UtcDateTime:yyyyMMdd'T'HHmmss'Z'}.png"),
+          FormattableString.Invariant($"on {day:yyyy-MM-dd}"),
+          $"at {at:O}",
           at.ToString(runtimeFormat, CultureInfo.InvariantCulture),
           "on " + day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
         ];
@@ -174,12 +179,81 @@ public class Should_Require_Iso_Date_Rendering
     await Test(source).RunAsync();
   }
 
+  public static async Task Given_Iso_Custom_Format_Without_Invariant_Culture_Flags()
+  {
+    const string source =
+      """
+      #region Purpose
+      // ISO-shaped custom formats that still follow the current culture.
+      #endregion
+      using System;
+      using System.Globalization;
+
+      public static class Render
+      {
+        public static string[] All(DateTimeOffset at, DateOnly day, IFormatProvider provider) =>
+        [
+          at.ToString("yyyy-MM-dd"),
+          at.ToString("yyyy-MM-dd", CultureInfo.CurrentCulture),
+          day.ToString("yyyy-MM-dd", provider),
+          $"Set {at.UtcDateTime:yyyy-MM-dd'T'HH:mm:ss'Z'}.",
+          string.Create(CultureInfo.CurrentCulture, $"Set {day:yyyy-MM-dd}."),
+          at.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        ];
+      }
+      """;
+
+    CSharpAnalyzerTest<IsoDateRenderingAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag(11, 5, 30, "ToString(\"yyyy-MM-dd\") without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(12, 5, 58, "ToString(\"yyyy-MM-dd\") without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(13, 5, 41, "ToString(\"yyyy-MM-dd\") without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(14, 11, 52, "Interpolation format \":yyyy-MM-dd'T'HH:mm:ss'Z'\" without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(15, 53, 69, "Interpolation format \":yyyy-MM-dd\" without CultureInfo.InvariantCulture"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Interpolated_String_Handler_Flags_Each_Non_Iso_Hole_Once()
+  {
+    // StringBuilder.Append($"…") binds a handler conversion: holes are AppendFormatted calls.
+    const string source =
+      """
+      #region Purpose
+      // Interpolated-string handler holes (AppendFormatted).
+      #endregion
+      using System;
+      using System.Globalization;
+      using System.Text;
+
+      public static class Render
+      {
+        public static string All(DateTimeOffset at)
+        {
+          StringBuilder builder = new();
+          builder.Append($"{at}");
+          builder.Append($"{at:u}");
+          builder.Append($"{at:yyyy-MM-dd}");
+          builder.Append($"{at,10}");
+          builder.Append($"{at:O}");
+          builder.Append(CultureInfo.InvariantCulture, $"{at:yyyy-MM-dd}");
+          return builder.ToString();
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<IsoDateRenderingAnalyzer, RoslynTestVerifier> test = Test(source);
+    test.ExpectedDiagnostics.Add(Flag(13, 22, 26, "An interpolation hole without a format"));
+    test.ExpectedDiagnostics.Add(Flag(14, 22, 28, "Interpolation format \":u\""));
+    test.ExpectedDiagnostics.Add(Flag(15, 22, 37, "Interpolation format \":yyyy-MM-dd\" without CultureInfo.InvariantCulture"));
+    test.ExpectedDiagnostics.Add(Flag(16, 22, 29, "An interpolation hole without a format"));
+    await test.RunAsync();
+  }
+
   public static async Task Given_Interpolation_And_Concatenation_Flags()
   {
     const string source =
       """
       #region Purpose
-      // Implicit ToString through interpolation and concatenation.
+      // Implicit ToString through interpolation, concatenation, and +=.
       #endregion
       using System;
 
@@ -192,6 +266,12 @@ public class Should_Require_Iso_Date_Rendering
           (FormattableString)$"Set {day}.",
           "on " + day,
         ];
+
+        public static string Append(string text, DateOnly day)
+        {
+          text += day;
+          return text;
+        }
       }
       """;
 
@@ -200,6 +280,7 @@ public class Should_Require_Iso_Date_Rendering
     test.ExpectedDiagnostics.Add(Flag(11, 11, 17, "Interpolation format \":u\""));
     test.ExpectedDiagnostics.Add(Flag(12, 30, 35, "An interpolation hole without a format"));
     test.ExpectedDiagnostics.Add(Flag(13, 13, 16, "String concatenation of a date"));
+    test.ExpectedDiagnostics.Add(Flag(18, 13, 16, "String concatenation of a date"));
     await test.RunAsync();
   }
 

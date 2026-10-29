@@ -10,10 +10,22 @@
 //     the culture's "G" shape.
 //   - ToString with a constant format that is not an approved ISO shape. A non-constant format
 //     is not flagged; the analyzer cannot see it.
-//   - An interpolation hole of a date type with no format or a non-ISO one. Both lowerings are
-//     covered: AppendFormatted on an interpolated-string handler, and IInterpolationOperation for
-//     FormattableString / pre-handler targets. Only one shape exists per hole, so no double report.
-//   - String concatenation of a date (`"on " + date`): implicit ToString().
+//   - ToString with an approved custom format and no CultureInfo.InvariantCulture (or
+//     DateTimeFormatInfo.InvariantInfo) provider. Custom formats follow the provider: `:` renders
+//     the culture's TimeSeparator and `yyyy` its calendar (th-TH gives 2569). Only "O", "o", and
+//     "s" are invariant on their own. WASM forces en-US, but the server renders the same razor
+//     under the host culture.
+//   - An interpolation hole of a date type with no format or a non-ISO one, or with an approved
+//     custom format outside an invariant call. Invariant calls are FormattableString.Invariant and
+//     any invocation that passes the invariant provider to an IFormatProvider parameter
+//     (string.Create(CultureInfo.InvariantCulture, $"…"), StringBuilder.Append(provider, $"…")).
+//     The interpolated string must be that call's argument directly. Both hole shapes are
+//     covered: an interpolated string converted to string, object, or FormattableString binds
+//     as IInterpolationOperation (the DefaultInterpolatedStringHandler rewrite happens in
+//     lowering, which IOperation does not see); a bind-time handler conversion (string.Create,
+//     StringBuilder.Append) binds AppendFormatted invocations. Only one shape exists per hole, so
+//     no double report.
+//   - String concatenation of a date (`"on " + date`, `text += date`): implicit ToString().
 //   - Razor `@date` content: RenderTreeBuilder.AddContent(int, object) with a boxed date.
 //     Attribute values are not flagged, because component parameters share that path.
 // Not covered: string.Format / StringBuilder.Append / Console.Write of a date. Those are rare
@@ -48,6 +60,7 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
   private const string GeneratedCodeAttributeFullName = "System.CodeDom.Compiler.GeneratedCodeAttribute";
   private const string InterpolatedStringHandlerAttributeFullName = "System.Runtime.CompilerServices.InterpolatedStringHandlerAttribute";
   private const string RenderTreeBuilderFullName = "Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder";
+  private const string WithoutInvariant = " without CultureInfo.InvariantCulture";
 
   private static readonly string[] DateTypeNames =
     ["System.DateTime", "System.DateTimeOffset", "System.DateOnly", "System.TimeOnly"];
@@ -79,11 +92,11 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     (
       DiagnosticId,
       title: "Dates and times render as ISO 8601",
-      messageFormat: "{0} does not render ISO 8601; use an ISO 8601 format (yyyy-MM-dd for a date, yyyy-MM-ddTHH:mm:sszzz for an instant)",
+      messageFormat: "{0} does not render ISO 8601; use an ISO 8601 format (yyyy-MM-dd for a date, yyyy-MM-ddTHH:mm:sszzz for an instant) with CultureInfo.InvariantCulture",
       category: "Design",
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
-      description: "Every user-visible date or time is ISO 8601. Culture shortcuts (ToShortDateString and friends), format-less ToString, string concatenation, and non-ISO format strings render in whatever shape the current culture or the author chose."
+      description: "Every user-visible date or time is ISO 8601. Culture shortcuts (ToShortDateString and friends), format-less ToString, string concatenation, and non-ISO format strings render in whatever shape the current culture or the author chose. A custom format also follows the culture's separators and calendar unless the provider is CultureInfo.InvariantCulture."
     );
 
   /// <summary>Diagnostics this analyzer reports.</summary>
@@ -108,6 +121,7 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
       startContext.RegisterOperationAction(c => AnalyzeInvocation(c, dateTypes), OperationKind.Invocation);
       startContext.RegisterOperationAction(c => AnalyzeInterpolation(c, dateTypes), OperationKind.Interpolation);
       startContext.RegisterOperationAction(c => AnalyzeBinary(c, dateTypes), OperationKind.Binary);
+      startContext.RegisterOperationAction(c => AnalyzeCompoundAssignment(c, dateTypes), OperationKind.CompoundAssignment);
     });
   }
 
@@ -139,7 +153,11 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     IArgumentOperation? format = FormatArgument(invocation);
     if (format is null) return "ToString() without a format";
 
-    return NonIsoConstantFormat(format.Value) is string text ? $"ToString(\"{text}\")" : null;
+    if (NonIsoConstantFormat(format.Value) is string text) return $"ToString(\"{text}\")";
+
+    return NeedsInvariantProvider(format.Value) && !HasInvariantProviderArgument(invocation)
+      ? $"ToString(\"{format.Value.ConstantValue.Value}\"){WithoutInvariant}"
+      : null;
   }
 
   private static string? DescribeAppendFormatted(IInvocationOperation invocation, ImmutableArray<INamedTypeSymbol> dateTypes)
@@ -153,7 +171,7 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     IArgumentOperation? format = FormatArgument(invocation);
     if (format is null || format.ArgumentKind == ArgumentKind.DefaultValue) return "An interpolation hole without a format";
 
-    return NonIsoConstantFormat(format.Value) is string text ? $"Interpolation format \":{text}\"" : null;
+    return DescribeHoleFormat(format.Value, invocation);
   }
 
   private static string? DescribeAddContent(IInvocationOperation invocation, ImmutableArray<INamedTypeSymbol> dateTypes)
@@ -175,7 +193,7 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     string? description =
       interpolation.FormatString is null
         ? "An interpolation hole without a format"
-        : NonIsoConstantFormat(interpolation.FormatString) is string text ? $"Interpolation format \":{text}\"" : null;
+        : DescribeHoleFormat(interpolation.FormatString, interpolation);
 
     if (description is null || IsExemptGeneratedCode(context)) return;
 
@@ -194,6 +212,70 @@ public sealed partial class IsoDateRenderingAnalyzer : DiagnosticAnalyzer
     if (dateOperand is null || IsExemptGeneratedCode(context)) return;
 
     context.ReportDiagnostic(Diagnostic.Create(Rule, dateOperand.Syntax.GetLocation(), "String concatenation of a date"));
+  }
+
+  private static void AnalyzeCompoundAssignment(OperationAnalysisContext context, ImmutableArray<INamedTypeSymbol> dateTypes)
+  {
+    var assignment = (ICompoundAssignmentOperation)context.Operation;
+    if (assignment.OperatorKind != BinaryOperatorKind.Add) return;
+    if (assignment.Target.Type?.SpecialType != SpecialType.System_String) return;
+    if (!IsDateType(Unwrap(assignment.Value).Type, dateTypes) || IsExemptGeneratedCode(context)) return;
+
+    context.ReportDiagnostic(Diagnostic.Create(Rule, assignment.Value.Syntax.GetLocation(), "String concatenation of a date"));
+  }
+
+  private static string? DescribeHoleFormat(IOperation format, IOperation hole)
+  {
+    if (NonIsoConstantFormat(format) is string text) return $"Interpolation format \":{text}\"";
+
+    return NeedsInvariantProvider(format) && !IsInInvariantInterpolation(hole)
+      ? $"Interpolation format \":{format.ConstantValue.Value}\"{WithoutInvariant}"
+      : null;
+  }
+
+  /// <summary>True when the format is an approved custom shape, which follows the provider's culture.</summary>
+  private static bool NeedsInvariantProvider(IOperation format) =>
+    format.ConstantValue is { HasValue: true, Value: string text } && !ApprovedStandardFormats.Contains(text);
+
+  private static bool HasInvariantProviderArgument(IInvocationOperation invocation) =>
+    invocation.Arguments.Any
+    (
+      argument =>
+        argument.Parameter?.Type is INamedTypeSymbol { Name: "IFormatProvider" } providerType
+        && providerType.ContainingNamespace?.ToDisplayString() == "System"
+        && IsInvariantProvider(argument.Value)
+    );
+
+  private static bool IsInvariantProvider(IOperation provider) =>
+    Unwrap(provider) is IPropertyReferenceOperation { Property: { IsStatic: true } property }
+    && (property.Name, property.ContainingType?.ToDisplayString()) is
+      ("InvariantCulture", "System.Globalization.CultureInfo")
+      or ("InvariantInfo", "System.Globalization.DateTimeFormatInfo");
+
+  /// <summary>
+  /// True when the hole's interpolated string is the direct argument of FormattableString.Invariant
+  /// or of a call that passes the invariant provider.
+  /// </summary>
+  private static bool IsInInvariantInterpolation(IOperation hole)
+  {
+    IOperation? current = hole.Parent;
+    while (current is not null and not IInterpolatedStringOperation)
+    {
+      current = current.Parent;
+    }
+
+    current = current?.Parent;
+    while (current is IConversionOperation or IInterpolatedStringHandlerCreationOperation)
+    {
+      current = current.Parent;
+    }
+
+    if (current is not IArgumentOperation { Parent: IInvocationOperation call }) return false;
+
+    IMethodSymbol method = call.TargetMethod;
+    bool formattableInvariant =
+      method.Name == "Invariant" && method.ContainingType?.ToDisplayString() == "System.FormattableString";
+    return formattableInvariant || HasInvariantProviderArgument(call);
   }
 
   private static IArgumentOperation? FormatArgument(IInvocationOperation invocation) =>
