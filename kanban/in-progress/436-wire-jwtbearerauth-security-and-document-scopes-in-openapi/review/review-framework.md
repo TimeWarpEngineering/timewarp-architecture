@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 715
+- Lines changed: 773
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -28,3 +28,8 @@
 - Do not invent issues. Zero issues is a valid outcome.
 - Review the diff and the call sites around it. Re-check any claim that can be tested against the repo.
 - Prior rounds are immutable. New work goes in `round-(N+1)/`.
+
+## Round 2
+
+**Diff scope:** fix delta `10bd0ffa8..da2cb14ac` (round-1 `base.sha` → fix commit).
+**Reviewer roster:** general (review oracle claude-opus-5-5, no subagents). Re-verifies M1 and M2 and scans the delta for new defects.

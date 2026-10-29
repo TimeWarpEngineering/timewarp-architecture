@@ -62,6 +62,8 @@ global `security` and zero per-operation `security` entries exist across all
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session 6901262d-7915-46e1-abe0-28ca80be3467, max-turns 120 — 2026-10-28T23:34:58Z
 - Fix pass (implement-fix-2, 2026-10-29): hosts pass `OpenApiAgentBearer`. Web inverts `AgentScopePermissionSeed.DefaultGrants`. Api `AddPolicy` stays two compile-time constants because TWA0024 ignores a loop, and `AgentBearerPolicies` builds the document map from those same constants and `AgentScopes`. 403 text is appended, including an `EndpointSummary` response when FastEndpoints has not copied it yet, and `WWW-Authenticate` is optional. `OpenApiBearerSecurity_` 13 passed (seed walk plus the human-ux sentence). `OpenApiDocument_` 4 passed. `api-server` build 0 warnings. `dev check-version` still reports `2.0.0-beta.29` one prerelease ahead of NuGet `2.0.0-beta.28`. `ganda repo audit` exited 0. The same advisory `kanban-landed` warning remains for the eight other claims; those worktrees are not this task.
 
+- Review round 2 (2026-10-29): review oracle claude-opus-5-5, effort 2, roster general. Scope was the fix delta `10bd0ffa8..da2cb14ac`. Re-ran `OpenApiBearerSecurity_` (13/13) and `OpenApiDocument_` (4/4), and built `api-server` (0 warnings). M1 and M2 are fixed, with no new findings. Disposition clean. The goal restatement (expanded by the fix pass with the round-1 criteria) still covers the original Description and Checklist, so no misread.
+
 ## Results
 
 `OpenApiBearerSecurity` is an operation transformer registered from `CommonServerModule.AddOpenApi` when the host passes an `OpenApiAgentBearer`. `EnableJWTBearerAuth` stays off. `AddAuth` registers `JWTBearerAuth` as an HTTP bearer scheme whose description lists the host's scopes. The transformer adds one security requirement only when the endpoint lists the host scheme and the verb is not anonymous. The document has no global `security` entry, so cookie-only and anonymous operations stay unsigned. A null bearer (the three-argument `AddOpenApi`) registers neither the scheme nor the transformer, and Scalar names no preferred scheme.
@@ -78,10 +80,14 @@ Smoke: from `tests/container-apps/web/web-server-integration-tests` (its `global
 
 Expect: `OpenApiBearerSecurity_` 13 passed, including a walk of every `AgentScopePermissionSeed.DefaultGrants` pair (`identity.read` and `agent-link.manage.self` on `identity:read`, `credential.manage.self` on `credential:manage`, `demo.invoke` on `demo:invoke`, and the four feedback permissions on `feedback:read`, `feedback:note`, `feedback:severity`, and `feedback:status`). The registered scheme equals `AuthenticationSchemeNames.AgentToken` and web `AgentTokenDefaults.Scheme`. `GET /api/agent-links/human-ux` keeps "This link belongs to a different agent.", mentions handler-level rejection, and marks `WWW-Authenticate` optional. `PUT /api/settings/site` requires `JWTBearerAuth` with an empty scope array. `GET /api/hello` and cookie-only `PUT /api/profile` omit `security`. The document root has no `security`. The scheme description names `identity:read`, `credential:manage`, `demo:invoke`, `application/problem+json`, `invalid_token`, and `insufficient_scope`. Bearer operations include 401 and 403 `application/problem+json` and an optional `WWW-Authenticate` header. `GET /scalar/v1` returns 200 and the HTML contains `JWTBearerAuth`. `OpenApiDocument_` 4 passed (forwarded public origin unchanged, three-argument `AddOpenApi`). `api-server` builds, so TWA0024 still sees the two `AddPolicy` constants. `check-version` reports source `2.0.0-beta.29` one prerelease ahead of NuGet `2.0.0-beta.28`. `ganda repo audit` exits 0.
 
+### Review disposition
+
+**clean.** Two rounds, effort 2, roster general (review oracle claude-opus-5-5). Final counts: bug 1 fixed, suggestion 1 fixed, nit 0, open 0, wontfix 0. M1 was a hand-copied scope map with no drift check, fixed by the host-supplied `OpenApiAgentBearer` and the seed-walk test. M2 was a 403 description that was overwritten and a required `WWW-Authenticate`, fixed by appending the text and making the header optional. Paths: `review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2
-
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
