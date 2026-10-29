@@ -112,7 +112,7 @@
           <dt>Kind</dt><dd>@item.Kind</dd>
           <dt>Status</dt><dd data-qa="AdminFeedbackStatusValue">@item.Status</dd>
           <dt>Severity</dt><dd data-qa="AdminFeedbackSeverityValue">@item.Severity</dd>
-          <dt>Filed</dt><dd>@item.FiledAt.ToString("u")</dd>
+          <dt>Filed</dt><dd>@item.FiledAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)</dd>
           <dt>Owner</dt>
           <dd><FeedbackOwnerLink OwnerPrincipalId="@item.OwnerPrincipalId" OwnerDisplayName="@item.OwnerDisplayName" /></dd>
         </dl>
@@ -137,7 +137,7 @@
                 class="@((entry.Kind is FeedbackActivityKind.InternalNote or FeedbackActivityKind.SeverityChange) ? "admin-feedback-entry admin-feedback-note" : "admin-feedback-entry")"
                 data-qa="@($"AdminFeedback{entry.Kind}")">
                 <strong>@ActivityLabel(entry.Kind)</strong>
-                <span class="admin-feedback-when">@entry.At.ToString("u")</span>
+                <span class="admin-feedback-when">@entry.At.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)</span>
                 @if (entry.Kind == FeedbackActivityKind.StatusChange)
                 {
                   <p>@entry.FromStatus → @entry.ToStatus</p>

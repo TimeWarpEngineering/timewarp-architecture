@@ -47,7 +47,7 @@ public class AssemblyInfoCopy_Should_
     + "InformationalVersion: 1.2.3+" + CommitHash + "\n"
     + "CommitHash: " + CommitHash + "\n"
     + "ShortHash: 234567\n"
-    + "CommitDate: 2026-10-28 12:34:56\n"
+    + "CommitDate: 2026-10-28T12:34:56\n"
     + "CommitUrl: " + RepositoryUrl + "/commit/" + CommitHash + "\n"
     + "RepositoryUrl: " + RepositoryUrl;
 

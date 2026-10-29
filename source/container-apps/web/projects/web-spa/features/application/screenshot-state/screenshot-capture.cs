@@ -59,7 +59,7 @@ public sealed class ScreenshotCapture
   public string ImageSource { get; }
 
   /// <summary>The attachment name Feedback uploads it under; the id keeps two captures in one second apart.</summary>
-  public string FileName => $"screenshot-{CapturedAt.UtcDateTime:yyyyMMdd-HHmmss}-{Id}.png";
+  public string FileName => $"screenshot-{CapturedAt.UtcDateTime:yyyyMMdd'T'HHmmss'Z'}-{Id}.png";
 
   /// <summary>Short text for a thumbnail caption: size and route.</summary>
   public string Caption => $"{Width}×{Height} of {Path}";

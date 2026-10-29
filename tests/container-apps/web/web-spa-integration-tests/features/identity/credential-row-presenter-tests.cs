@@ -148,7 +148,7 @@ public class Row_Should_
     CredentialRowPresenter.RelativeTime(now.AddMinutes(5), now).ShouldBe("just now", "clock skew never reads as negative age");
     CredentialRowPresenter.RelativeTime(now.AddDays(-45), now).ShouldStartWith("on ");
     CredentialRowPresenter.RelativeTime(now.AddDays(-45), now)
-      .ShouldBe("on " + now.AddDays(-45).ToLocalTime().ToString("M/d/yyyy", System.Globalization.CultureInfo.InvariantCulture));
+      .ShouldBe("on " + now.AddDays(-45).ToLocalTime().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
     return Task.CompletedTask;
   }
 

@@ -252,7 +252,8 @@ shows the wrong order across pages. The pattern is grid sort â†’ State action â†
 5. `Loading` binds to `IsAnyActive(typeof(FetchX.Action))`. The grid's `Section` has no
    `LoadingActionType`: `Section` swaps its content for a spinner, which would destroy the grid.
 6. Enum and date cells use `TemplateColumn` (`@context.Kind`). `PropertyColumn` renders enums
-   lowercased.
+   lowercased. Every rendered date is ISO 8601 (TWA0036): `yyyy-MM-dd` for a date, and
+   `yyyy-MM-dd'T'HH:mm:sszzz` (local) or `yyyy-MM-dd'T'HH:mm:ss'Z'` (UTC) for an instant.
 7. Narrow widths: wrap the grid in `DataGridFrame` and size columns with
    `DisplayMode="DataGridDisplayMode.Grid"` plus `GridTemplateColumns` of `minmax` tracks. The
    primary column (the one with the row link) gets `minmax(14rem, 2fr)`; the others get smaller
