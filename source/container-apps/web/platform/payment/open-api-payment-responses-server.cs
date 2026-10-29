@@ -9,7 +9,9 @@
 // carries contentEncoding base64 and the decoded object as contentSchema.
 // Routes come from the contract RouteTemplate constants. The bare /api alias is a rewrite
 // onto the tip jar, not its own operation. Free and discovery operations are left without
-// 402 or 503. The document description says so, so a 402 on a paid operation is not read
+// 402 or 503. Challenge resource.url is TipOptions.Resource or MeteredCapabilityOptions.Resource,
+// read from the host services, not a second copy of the route. The document description says
+// so, so a 402 on a paid operation is not read
 // as a response of this document, health, or identity ceremonies.
 // Metered calls still require bearer scope demo:invoke. That scope authorizes the attempt;
 // payment is separate, and a 200 debits the ledger.
@@ -33,8 +35,6 @@ internal static class OpenApiPaymentResponses
 
   private static readonly string TipRoute = Normalize(SubmitTip.Query.RouteTemplate);
   private static readonly string MeteredRoute = Normalize(InvokeMeteredCapability.Query.RouteTemplate);
-  private static readonly string TipResource = TipDiscoveryAlias.CanonicalTipPath.Value ?? "/api/tip";
-  private static readonly string MeteredResource = "/" + MeteredRoute;
 
   private const string FreeRoutesNever402 =
     "Free and discovery operations never return HTTP 402. "
@@ -82,11 +82,11 @@ internal static class OpenApiPaymentResponses
     string? method = context.Description.HttpMethod;
     if (IsTip(path, method))
     {
-      DocumentTip(operation);
+      DocumentTip(operation, ReadTipResource(context.ApplicationServices));
     }
     else if (IsMetered(path, method))
     {
-      DocumentMetered(operation);
+      DocumentMetered(operation, ReadMeteredResource(context.ApplicationServices));
     }
 
     return Task.CompletedTask;
@@ -101,7 +101,7 @@ internal static class OpenApiPaymentResponses
     string.Equals(path, MeteredRoute, StringComparison.OrdinalIgnoreCase)
     && string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase);
 
-  private static void DocumentTip(OpenApiOperation operation)
+  private static void DocumentTip(OpenApiOperation operation, string resource)
   {
     operation.Description = AppendNote
     (
@@ -110,13 +110,13 @@ internal static class OpenApiPaymentResponses
       + "Enabled unpaid payment returns 402 with PAYMENT-REQUIRED. "
       + "Disabled or misconfigured payment returns 503 and does not return 402. "
       + "Free and discovery routes never return 402. "
-      + "Challenge resource.url is " + TipResource + ", including when the caller used the /api discovery alias."
+      + "Challenge resource.url is " + resource + ", including when the caller used the /api discovery alias."
     );
-    DocumentPaymentRequired(operation, TipResource, includeTip: true);
+    DocumentPaymentRequired(operation, resource, includeTip: true);
     DocumentUnavailable(operation, includeTip: true);
   }
 
-  private static void DocumentMetered(OpenApiOperation operation)
+  private static void DocumentMetered(OpenApiOperation operation, string resource)
   {
     operation.Description = AppendNote
     (
@@ -128,7 +128,7 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402."
     );
     NoteSuccessDebit(operation);
-    DocumentPaymentRequired(operation, MeteredResource, includeTip: false);
+    DocumentPaymentRequired(operation, resource, includeTip: false);
     DocumentUnavailable(operation, includeTip: false);
   }
 
@@ -316,6 +316,12 @@ internal static class OpenApiPaymentResponses
 
     return path.Trim().TrimStart('/');
   }
+
+  private static string ReadTipResource(IServiceProvider services) =>
+    services.GetRequiredService<IOptions<TipOptions>>().Value.Resource;
+
+  private static string ReadMeteredResource(IServiceProvider services) =>
+    services.GetRequiredService<IOptions<MeteredCapabilityOptions>>().Value.Resource;
 
   private static string AppendNote(string? existing, string note)
   {

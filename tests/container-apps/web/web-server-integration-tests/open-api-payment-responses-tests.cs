@@ -9,6 +9,9 @@
 // Tip GET and POST share /api/tip. Metered GET requires demo:invoke. A free GET must not
 // gain 402 or 503. The bare /api alias is not its own operation. The document description
 // keeps the free-routes-never-402 statement.
+// Stub routes and asserted paths are the contract RouteTemplate values. The host sets
+// TipOptions.Resource and MeteredCapabilityOptions.Resource to paths other than those routes,
+// and the document must repeat the options values.
 #endregion
 
 namespace OpenApiPaymentResponses_;
@@ -18,15 +21,23 @@ using System.Text.Json;
 using FastEndpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.MeteredCapability;
+using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Architecture.Payment;
 using TimeWarp.Architecture.Web.Server;
 using TimeWarp.Foundation;
+using MeteredCapabilityOptions = TimeWarp.Architecture.Features.MeteredCapability.Application.MeteredCapabilityOptions;
+using TipOptions = TimeWarp.Architecture.Features.Tip.Application.TipOptions;
 
 [TestTag("OpenApi")]
 public class Document_Given_
 {
+  private const string ConfiguredTipResource = "/pay/configured-tip";
+  private const string ConfiguredMeteredResource = "/pay/configured-meter";
   private static WebApplication? App;
   private static HttpClient? Client;
 
@@ -59,6 +70,8 @@ public class Document_Given_
       OpenApiAgentBearerRegistration.Create(),
       OpenApiPaymentResponses.Register
     );
+    builder.Services.Configure<TipOptions>(static options => options.Resource = ConfiguredTipResource);
+    builder.Services.Configure<MeteredCapabilityOptions>(static options => options.Resource = ConfiguredMeteredResource);
     App = builder.Build();
     App.UseFastEndpoints(config =>
     {
@@ -86,8 +99,8 @@ public class Document_Given_
     using JsonDocument document = await DocumentAsync();
     string description = document.RootElement.GetProperty("info").GetProperty("description").GetString()!;
     description.ShouldContain("never return HTTP 402");
-    description.ShouldContain("/api/tip");
-    description.ShouldContain("/api/demo/metered-capability");
+    description.ShouldContain(TipPath);
+    description.ShouldContain(MeteredPath);
     description.ShouldContain("bare /api");
     description.ShouldContain("discovery alias");
     document.RootElement.GetProperty("paths").TryGetProperty("/api", out _).ShouldBeFalse();
@@ -95,27 +108,49 @@ public class Document_Given_
 
   public static async Task TipGet_Should_Document402And503()
   {
-    JsonElement operation = await OperationAsync("/api/tip", "get");
+    JsonElement operation = await OperationAsync(TipPath, "get");
     operation.TryGetProperty("security", out _).ShouldBeFalse();
-    AssertPaidResponses(operation, "/api/tip", includeTip: true);
+    AssertPaidResponses(operation, TipResource(), includeTip: true);
   }
 
   public static async Task TipPost_Should_Document402And503()
   {
-    JsonElement operation = await OperationAsync("/api/tip", "post");
+    TipPostPath.ShouldBe(TipPath);
+    JsonElement operation = await OperationAsync(TipPostPath, "post");
     operation.TryGetProperty("security", out _).ShouldBeFalse();
-    AssertPaidResponses(operation, "/api/tip", includeTip: true);
+    AssertPaidResponses(operation, TipResource(), includeTip: true);
   }
 
   public static async Task Metered_Should_Document402503AndDemoInvoke()
   {
-    JsonElement operation = await OperationAsync("/api/demo/metered-capability", "get");
+    JsonElement operation = await OperationAsync(MeteredPath, "get");
     JsonElement scopes = operation.GetProperty("security")[0].GetProperty("JWTBearerAuth");
     scopes.GetArrayLength().ShouldBe(1);
     scopes[0].GetString().ShouldBe("demo:invoke");
     operation.GetProperty("description").GetString()!.ShouldContain("demo:invoke");
     operation.GetProperty("responses").GetProperty("200").GetProperty("description").GetString()!.ShouldContain("balanceAfter");
-    AssertPaidResponses(operation, "/api/demo/metered-capability", includeTip: false);
+    AssertPaidResponses(operation, MeteredResource(), includeTip: false);
+  }
+
+  public static async Task ConfiguredResource_Should_DocumentTheOptionsValue()
+  {
+    string tipResource = TipResource();
+    string meteredResource = MeteredResource();
+    tipResource.ShouldBe(ConfiguredTipResource);
+    meteredResource.ShouldBe(ConfiguredMeteredResource);
+    tipResource.ShouldNotBe(TipPath);
+    meteredResource.ShouldNotBe(MeteredPath);
+
+    JsonElement tip = await OperationAsync(TipPath, "get");
+    string tipChallenge = tip.GetProperty("responses").GetProperty("402").GetProperty("description").GetString()!;
+    tip.GetProperty("description").GetString()!.ShouldContain(tipResource);
+    tipChallenge.ShouldContain(tipResource);
+    tipChallenge.ShouldNotContain(TipPath);
+
+    JsonElement metered = await OperationAsync(MeteredPath, "get");
+    string meteredChallenge = metered.GetProperty("responses").GetProperty("402").GetProperty("description").GetString()!;
+    meteredChallenge.ShouldContain(meteredResource);
+    meteredChallenge.ShouldNotContain(MeteredPath);
   }
 
   public static async Task FreeRoute_Should_Omit402And503()
@@ -181,13 +216,28 @@ public class Document_Given_
     string json = await response.Content.ReadAsStringAsync();
     return JsonDocument.Parse(json);
   }
+
+  private static string OpenApiPath(string routeTemplate) =>
+    routeTemplate.StartsWith('/', StringComparison.Ordinal) ? routeTemplate : "/" + routeTemplate;
+
+  private static string TipPath => OpenApiPath(SubmitTip.Query.RouteTemplate);
+
+  private static string TipPostPath => OpenApiPath(SubmitTipPost.Command.RouteTemplate);
+
+  private static string MeteredPath => OpenApiPath(InvokeMeteredCapability.Query.RouteTemplate);
+
+  private static string TipResource() =>
+    App!.Services.GetRequiredService<IOptions<TipOptions>>().Value.Resource;
+
+  private static string MeteredResource() =>
+    App!.Services.GetRequiredService<IOptions<MeteredCapabilityOptions>>().Value.Resource;
 }
 
 public sealed class TipGetEndpoint : EndpointWithoutRequest
 {
   public override void Configure()
   {
-    Get("/api/tip");
+    Get(SubmitTip.Query.RouteTemplate);
     AllowAnonymous();
   }
 
@@ -202,7 +252,7 @@ public sealed class TipPostEndpoint : EndpointWithoutRequest
 {
   public override void Configure()
   {
-    Post("/api/tip");
+    Post(SubmitTipPost.Command.RouteTemplate);
     AllowAnonymous();
   }
 
@@ -217,7 +267,7 @@ public sealed class MeteredCapabilityEndpoint : EndpointWithoutRequest
 {
   public override void Configure()
   {
-    Get("/api/demo/metered-capability");
+    Get(InvokeMeteredCapability.Query.RouteTemplate);
     AuthSchemes(AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.DemoInvoke);
   }
