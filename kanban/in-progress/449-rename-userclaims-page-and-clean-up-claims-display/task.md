@@ -49,6 +49,7 @@ Acceptance criteria:
 - 2026-10-30 implementer (claude-opus-5-5, ganda task work): rename + display cleanup, gates green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session abbc8da5-7380-48cf-b4ac-f129f7a9c206, max-turns 500, Done — 2026-10-29T19:46:43Z
 - 2026-10-30 review oracle (claude-fable-5-1, ganda task work, effort 2, roster general, turn cap 120): round 1, 0 bugs, 0 suggestions, 1 nit wontfix; disposition accepted-exceptions. Gates re-run in worktree: build 0/0, fast 14/14, web-spa-integration 569/569, audit passes.
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session ed4db093-892d-444e-86ab-5dd6c4047c84, max-turns 120 — 2026-10-29T19:53:01Z
 
 ## Results
 
@@ -101,6 +102,10 @@ session (or mock with UseMock); there is no "… is authenticated." line; a Type
 `nameidentifier`, `timewarp:principal_id`, `role` (RoleId GUIDs), and permission claims. An account
 without `DeveloperClaimsRead` does not see the nav item and gets Forbidden at the route. The old
 `/Developer/UserClaims` returns Not Found.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
