@@ -31,6 +31,7 @@ Round-1 review acceptance: the documented challenge `resource.url` is the config
 - Review oracle round 1: general reviewer (claude-opus-5-5, effort 2), 2026-10-29. Findings M1–M3 open, so a fix pass is requested.
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session dae4a414-145c-40a1-8f22-c2a65b22724c, max-turns 120 — 2026-10-29T01:13:11Z
 - Implement-fix-2: addressed M1–M3 (2026-10-29). The document reads the configured resource from the host options, and the payment OpenAPI test uses the contract route templates.
+- Review oracle round 2: general reviewer (claude-opus-5-5, effort 2, headless), 2026-10-29. M1–M3 are fixed and there are no new findings. Disposition clean.
 
 ## Results
 
@@ -51,12 +52,19 @@ Expect: 6 passed. `GET` and `POST /api/tip` are anonymous and document 402 (head
   `context.ApplicationServices`. M2 builds the stub routes and asserted paths from the contract
   `RouteTemplate` constants. M3 removed the `CanonicalTipPath` fallback with M1. Smoke filter
   `OpenApiPaymentResponses_` passed 6 (2026-10-29).
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (effort 2, roster: general) re-verified the fix delta `1e59e8258..0264769f3`. M1,
+  M2, and M3 are fixed, and there are no new findings. `--filter-class OpenApi` passed 23 of 23
+  (2026-10-29).
+- Final counts: bug 0/0/0, suggestion 0 open / 2 fixed / 0 wontfix, nit 0 open / 1 fixed /
+  0 wontfix.
+- Disposition: **clean** (2 rounds, 0 open, no wontfix, no escalations).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
-- Round 1: M1, M2, M3 implemented in the fix pass. Round 2 is the host review node.
-
+- Round 1: M1, M2, M3 implemented in the fix pass.
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json +
