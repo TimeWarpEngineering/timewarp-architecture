@@ -68,6 +68,7 @@ Done means:
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
 - Implemented 2026-10-30: shared `PlaywrightPageLoad` helper; catalog, breadcrumb, and clear-key
   tests use it. Gates green (see Results).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session bf8cf537-22e2-47cb-b81a-d0e5d5e7172f, max-turns 500, Done — 2026-10-29T19:18:13Z
 
 ## Results
 
