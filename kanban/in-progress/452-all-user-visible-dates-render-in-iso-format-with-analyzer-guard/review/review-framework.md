@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 791
+- Lines changed: 309
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -25,3 +25,10 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 (2026-10-30)
+
+**Diff scope:** delta 542d1d24e..HEAD (fix pass for round 1 M1–M5: fd2e5c0be product, cd2fe21d0 kanban), product paths only
+**Effort:** 2 (host Budget.ByDiff: 309 lines changed)
+**Reviewer roster:** general (read-only sub-agent, claude-sonnet-5-5, id a8b7dccb3ea1223e3) plus orchestrator verification (Claude Fable 5.1: build, analyzer tests, web-spa integration tests, lint-skills, analyzer code read)
+**Result:** M1–M5 fixed; one new suggestion M6 open (provider-call exemption in `IsInInvariantInterpolation` over-accepts non-handler parameters). Fix pass requested; round 3 next.

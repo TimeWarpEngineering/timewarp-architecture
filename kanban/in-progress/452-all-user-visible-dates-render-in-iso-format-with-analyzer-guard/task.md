@@ -64,10 +64,12 @@ Acceptance:
 - Review oracle round 1 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a12e5e15df9cffc89 (claude-sonnet-5-5, read-only). Result: 0 bug, 3 suggestion, 2 nit open (M1–M5); fix pass requested.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 4bec0c25-dfa9-451d-b1ff-ffd4a89289ee, max-turns 120 — 2026-10-29T21:32:31Z
 - Fix pass for round 1 (2026-10-30, ganda task work implement-fix-2 oracle, Claude Opus 5.5): M1–M5 implemented; round 2 review is next.
+- Review oracle round 2 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a8b7dccb3ea1223e3 (claude-sonnet-5-5, read-only). Result: M1–M5 fixed; 1 suggestion open (M6); fix pass requested.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
+- Round 2: Blocked — open M6 (M1–M5 fixed)
 
 ## Notes
 
@@ -213,3 +215,18 @@ Expect:
   recipe and names the invariant provider.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
   `review/disposition.md` is written when a round closes with 0 open.
+- Round 2 (2026-10-30), effort 2, roster: general (sub-agent) + orchestrator verification, scope
+  = the fix-pass delta 542d1d24e..HEAD.
+- Orchestrator re-ran the gates in this worktree: `./bin/dev build` 0/0; analyzer tests 259/259;
+  web-spa integration tests 578/578; `./bin/dev lint-skills` 9/9; no TWA0036 suppression; every
+  custom-format date `ToString` passes `CultureInfo.InvariantCulture`.
+- Round 2 counts: bug 0; suggestion 1 open, 3 fixed; nit 0 open, 2 fixed. M1–M5 verified fixed
+  against the delta. Disposition: pending (fix pass requested for M6, then round 3).
+- M6 (suggestion): `IsInInvariantInterpolation` exempts a hole whenever the interpolated string is
+  the argument of any call that also receives an invariant `IFormatProvider`, including a plain
+  `string` parameter (`Foo(CultureInfo.InvariantCulture, $"{at:yyyy-MM-dd}")`,
+  `string.Format(CultureInfo.InvariantCulture, $"…")`), where the string is built under the
+  current culture first. Fix: require the climb to pass through an
+  `IInterpolatedStringHandlerCreationOperation` (keep `FormattableString.Invariant` as its own
+  check), add a flagged test row, tighten the Design sentence. No in-repo site hits it.
+- Paths: `review/round-2/general.md`, `review/round-2/merged.md` (live ledger).
