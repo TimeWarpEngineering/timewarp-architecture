@@ -44,6 +44,7 @@ Acceptance:
 
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 224a923e-4224-4f0b-86cd-4ab674ed19a6, max-turns 500, Done — 2026-10-29T20:19:14Z
+- Review oracle round 1: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 120), effort 2, roster general (sonnet subagent) + orchestrator verification — 2026-10-30. Blocked: fix pass requested for M1–M5.
 
 ## Results
 
@@ -72,6 +73,19 @@ Acceptance:
 - Not run: the ActionCatalog and Catalog classes use the Aspire session lane. In this headless
   worker they fail at DCP environment setup (portForServing web-server-https), which is not
   caused by this change.
+
+### Review
+
+- Round 1 (2026-10-30), effort 2, roster general + orchestrator verification. Reviewer re-ran the
+  build (0/0) and the tests (AssemblyInfoCopy_ 5/5, CopyMessage regressions 16/16). Goal
+  restatement matches the task; no misread.
+- Counts: bug 0 · suggestion 2 open · nit 3 open · fixed 0 · wontfix 0.
+- Open: M1 links and Title are not on the shared list the "cannot drift" claim names; M2 the
+  modal's ActionContent/Close wiring has no render test although a ModalController harness
+  exists; M3 third copy of the clipboard-failure filter and body string; M4 fixture skips the
+  reformatted CommitDate row; M5 redundant `TimeWarp.State.Plus.Extensions` usings.
+- Disposition: pending. Fix pass requested on this id; re-review lands in `review/round-2/`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
 
