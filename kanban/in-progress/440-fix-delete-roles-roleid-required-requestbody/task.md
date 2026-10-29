@@ -22,6 +22,7 @@ this.
 - Created: ses_e7c126e60ffeQQKOK3tf1mfEiJ (2026-10-28)
 - 2026-10-29 implement oracle: picked up uncommitted work from the earlier session. Fixed RCS1146 and CA1307 build errors in the new transformer. Ran a red check: with the transformer unregistered, the DELETE test fails on `requestBody`. Build, tests, template smoke, and audit are green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session c7ee9cf8-9465-4eab-a189-2cba4c678127, max-turns 500, Done — 2026-10-29T07:12:44Z
+- 2026-10-29 review oracle (claude-fable-5-1, effort 2, roster general via sonnet subagent aa4b403fdc754d4bc): round 1 written under `review/round-1/`. Gates re-run: `dev build` 0/0, `DeleteRoles_Given_` 3/3, `dev check-version` safe (source already ahead), `ganda repo audit` passes. 0 bugs; 1 suggestion (M1, untested Design-region branches) and 1 nit (M2, `SchemaFor` fallback formats) open. Fix pass requested on this id; next review is `review/round-2/`.
 
 ## Results
 
@@ -30,6 +31,7 @@ this.
 - `delete-role-contracts.cs`: the Design region now says why no body is published.
 - `tests/container-apps/web/web-server-integration-tests/open-api-delete-request-body-tests.cs` (new, tag `OpenApi`). It covers DELETE Roles, which has no `requestBody`, a required `roleId` path parameter, and a required `userId` query parameter (uuid). It also checks that GET Roles is unchanged and that DELETE xai-api-key stays without a body.
 - Gates: `dev build` has 0 warnings and 0 errors. `DeleteRoles_Given_` passed 3/3. All tests in the web-server-integration-tests project passed (376/376). `dev template-smoke` (default variant) succeeded. `ganda repo audit` passes. Its one advisory is a `kanban-landed` warning that other tasks' claims have no worktree, which is outside this task.
+- Review (round 1, effort 2, roster general): 0 bugs, 1 suggestion, 1 nit, both open; disposition pending the fix pass. Framework `review/review-framework.md`; findings `review/round-1/general.md`; ledger `review/round-1/merged.md`.
 
 ### How to validate
 
