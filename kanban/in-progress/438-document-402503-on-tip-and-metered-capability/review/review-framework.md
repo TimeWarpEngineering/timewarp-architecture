@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3
+- Lines changed: 21
 - Effort: 1
 - TCB hits: none
 - Roster axes: general
@@ -51,3 +51,14 @@ product change.
 **Session IDs:** review-2 oracle, claude-fable-5-1 (headless print mode; no session id exposed).
 **Outcome:** no new findings. M4 (bug) and M5 (nit) stay open because the tree is identical to round 3.
 Fix pass requested again; the disposition stays reopened until round 5.
+
+## Round 5 — 2026-10-29
+
+**Why:** re-review after the fix pass requested in round 4 (host review-3, implement-fix-3).
+**Diff scope:** `828e09324..b1a6cb150` outside `kanban/` (round-4 base to HEAD): one commit touching
+`api-server/program.cs` (`DisableAutoDiscovery = true`) and `open-api-payment-responses-server.cs`
+(`FreeRoutesNever402` built from the route constants); 5 insertions, 2 deletions.
+**Effort:** 1 (host by-diff budget above, 21 lines). **Roster:** general.
+**Session IDs:** review-3 oracle, claude-fable-5-1 (headless print mode; no session id exposed).
+**Outcome:** M4 and M5 verified fixed; no new findings. `dev build` 0 warnings; `dev test --group
+integration` 8 of 8 projects passed with no `Duplicate routes detected!`. Disposition: clean.
