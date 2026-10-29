@@ -155,7 +155,9 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   whose visibility includes Agent is a tool on every page. Human-only commands are never tools.
 - The agent knows the whole app, not only the page on screen. `site_map` (read-only, never
   approval-wrapped) returns every destination the person's navigation menu shows: title, URL,
-  menu group, icon and the `[Page]` Description, plus Sign in while signed out.
+  menu group, icon and the `[Page]` Description, plus Sign in while signed out. The deep links
+  Ctrl-K lists under a permitted page (`CommandPaletteRoster.DeepLinks`, the design-system parts)
+  follow, each with its `parent` page URL.
   `navigate` takes one of those URLs (a URL enum) and refuses anything else; it goes through
   `RouteState.ChangeRoute` like the palette and asks for approval in Ask before editing. Both read
   `NavigationDestinations`, the list NavMenu and Ctrl-K render, so the four surfaces cannot drift;
