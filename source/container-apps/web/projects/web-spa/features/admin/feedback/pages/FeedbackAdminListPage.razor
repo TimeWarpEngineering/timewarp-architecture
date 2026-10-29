@@ -203,7 +203,7 @@
                 <TemplateColumn Title="Filed" ColumnId="@nameof(FeedbackListSortColumn.FiledAt)"
                   Sortable="true" SortBy="@FiledSort"
                   IsDefaultSortColumn="@IsSortColumn(FeedbackListSortColumn.FiledAt)" InitialSortDirection="@SortDirection">
-                  @context.FiledAt.ToString("u")
+                  @context.FiledAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)
                 </TemplateColumn>
                 <TemplateColumn Title="Owner" Tooltip="true" TooltipText="@(static row => row.OwnerPrincipalId.ToString())">
                   <FeedbackOwnerLink OwnerPrincipalId="@context.OwnerPrincipalId" OwnerDisplayName="@context.OwnerDisplayName" />

@@ -2,8 +2,7 @@
 ; https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.Analyzers/ReleaseTrackingAnalyzers.Help.md
 ; Retired / reserved — do not reuse: TWA0005 (MVC verb vs [ApiRoute]; FastEndpoints take the verb
 ; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
-; availability flags and page-scoped actions). TWA0036 is reserved for the ISO date
-; rendering rule.
+; availability flags and page-scoped actions).
 
 ### New Rules
 
@@ -36,4 +35,5 @@ TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea ou
 TWA0033 | Design | Warning | ReferenceableResourceAnalyzer: [ReferenceableResource] contract lacks a Search query, a typed-id or Guid item id, or a string label
 TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableResource] contracts share an @ prefix
 TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)
+TWA0036 | Design | Warning | IsoDateRenderingAnalyzer: date or time rendered as text in a non-ISO 8601 shape
 TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host

@@ -161,6 +161,17 @@ public partial class CatalogAgent_Should
     return Task.CompletedTask;
   }
 
+  public static Task Screenshot_File_Name_Is_An_Iso_Basic_Utc_Stamp()
+  {
+    // Task 452: the attachment name carries the capture instant as ISO 8601 basic UTC, whatever
+    // offset the capture was taken in.
+    DateTimeOffset capturedAt = new(2026, 10, 28, 8, 34, 56, TimeSpan.FromHours(-4));
+    ScreenshotCapture capture = new(7, FakePng, 640, 480, "/Settings", selector: null, masked: 0, capturedAt);
+
+    capture.FileName.ShouldBe("screenshot-20261028T123456Z-7.png");
+    return Task.CompletedTask;
+  }
+
   public static async Task Relay_Sends_Ask_Screenshot_And_Tool_Picture_As_Images()
   {
     CapturingChatApi api = new();

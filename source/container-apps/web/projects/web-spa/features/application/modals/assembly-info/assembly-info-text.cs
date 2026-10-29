@@ -47,7 +47,7 @@ public static class AssemblyInfoText
       (nameof(AssemblyInfo.KeyName), assemblyInfo.KeyName),
       (nameof(AssemblyInfo.CommitHash), assemblyInfo.CommitHash),
       (nameof(AssemblyInfo.ShortHash), assemblyInfo.ShortHash),
-      (nameof(AssemblyInfo.CommitDate), assemblyInfo.CommitDate?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))
+      (nameof(AssemblyInfo.CommitDate), assemblyInfo.CommitDate?.ToString("yyyy-MM-dd'T'HH:mm:ssK", CultureInfo.InvariantCulture))
     );
   }
 

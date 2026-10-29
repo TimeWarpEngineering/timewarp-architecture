@@ -65,6 +65,10 @@ public partial class AskSettingsMenu_Should_
     TagOf(html, "AskAgentAccessExpiry")
       .ShouldContain($"datetime=\"{expiresAt.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)}\"");
     html.ShouldContain("Expires at ");
+    // Task 452: the visible expiry is a local ISO 8601 instant with its offset.
+    string expiry = System.Net.WebUtility.HtmlDecode(ExpiryText().Match(html).Groups["expiry"].Value);
+    expiry.ShouldMatch(LocalIsoInstant);
+    DateTimeOffset.Parse(expiry, CultureInfo.InvariantCulture).ShouldBe(expiresAt.AddTicks(-(expiresAt.Ticks % TimeSpan.TicksPerSecond)));
     html.ShouldNotContain("data-qa=\"AskRenewAgentAccess\"");
   }
 
@@ -137,6 +141,11 @@ public partial class AskSettingsMenu_Should_
 
   [GeneratedRegex("<[^>]+>")]
   private static partial Regex OpeningTag();
+
+  private const string LocalIsoInstant = @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$";
+
+  [GeneratedRegex("data-qa=\"AskAgentAccessExpiry\"[^>]*>Expires at (?<expiry>[^<]+)<")]
+  private static partial Regex ExpiryText();
 
   /// <summary>In-proc SPA container; the menu needs only state and FluentUI.</summary>
   private sealed class MenuSpa : ISpaTestApplication, IDisposable

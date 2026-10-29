@@ -231,6 +231,23 @@ Reference: `source/container-apps/web/projects/web-spa/features/design-system/sa
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
 
+# Rendered dates
+
+Every date or time rendered as text is ISO 8601, in razor and C# alike. Analyzer TWA0036 enforces
+it. Format with `ToString(format, CultureInfo.InvariantCulture)`:
+
+- A calendar date: `yyyy-MM-dd`.
+- An instant shown in local time: `.ToLocalTime()` with `yyyy-MM-dd'T'HH:mm:sszzz`.
+- An instant shown in UTC: `.UtcDateTime` with `yyyy-MM-dd'T'HH:mm:ss'Z'`.
+
+The invariant culture is required. A custom format follows the culture it renders under: `:`
+becomes the culture's time separator and `yyyy` its calendar year. WebAssembly forces en-US, but
+the server renders the same component under the host culture. An interpolation hole with a custom
+format (`$"{at:yyyy-MM-dd}"`) is flagged unless the string is passed straight to
+`string.Create(CultureInfo.InvariantCulture, …)` or `FormattableString.Invariant(…)`. Only `O`,
+`o`, and `s` are invariant without a provider. `u` is not ISO, because it puts a space between
+the date and the time.
+
 # Server-sorted FluentDataGrid
 
 A list that the server pages must also be sorted by the server. Sorting one page in the browser
@@ -252,7 +269,7 @@ shows the wrong order across pages. The pattern is grid sort → State action �
 5. `Loading` binds to `IsAnyActive(typeof(FetchX.Action))`. The grid's `Section` has no
    `LoadingActionType`: `Section` swaps its content for a spinner, which would destroy the grid.
 6. Enum and date cells use `TemplateColumn` (`@context.Kind`). `PropertyColumn` renders enums
-   lowercased.
+   lowercased. Date cells follow [Rendered dates](#rendered-dates).
 7. Narrow widths: wrap the grid in `DataGridFrame` and size columns with
    `DisplayMode="DataGridDisplayMode.Grid"` plus `GridTemplateColumns` of `minmax` tracks. The
    primary column (the one with the row link) gets `minmax(14rem, 2fr)`; the others get smaller

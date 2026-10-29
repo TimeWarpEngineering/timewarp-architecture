@@ -126,6 +126,19 @@ public class Row_Should_
     return Task.CompletedTask;
   }
 
+  public static Task Created_Text_Is_A_Local_Iso_Instant()
+  {
+    // Task 452: was "M/d/yyyy, h:mm:ss tt". The offset is the suite's zone, so the shape is
+    // pinned by pattern and the value by parsing it back to the same instant.
+    CredentialSummary credential = Summary();
+
+    string created = CredentialRowPresenter.CreatedText(credential);
+
+    created.ShouldMatch(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$");
+    DateTimeOffset.Parse(created, System.Globalization.CultureInfo.InvariantCulture).ShouldBe(credential.CreatedAt);
+    return Task.CompletedTask;
+  }
+
   public static Task Last_Used_Text_Is_Never_Used_Or_Relative()
   {
     DateTimeOffset now = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);
@@ -148,7 +161,7 @@ public class Row_Should_
     CredentialRowPresenter.RelativeTime(now.AddMinutes(5), now).ShouldBe("just now", "clock skew never reads as negative age");
     CredentialRowPresenter.RelativeTime(now.AddDays(-45), now).ShouldStartWith("on ");
     CredentialRowPresenter.RelativeTime(now.AddDays(-45), now)
-      .ShouldBe("on " + now.AddDays(-45).ToLocalTime().ToString("M/d/yyyy", System.Globalization.CultureInfo.InvariantCulture));
+      .ShouldBe("on " + now.AddDays(-45).ToLocalTime().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
     return Task.CompletedTask;
   }
 

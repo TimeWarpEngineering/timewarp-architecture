@@ -14,6 +14,7 @@
 
 namespace TimeWarp.Architecture.Mail;
 
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 using TimeWarp.Architecture.Compliance;
 
@@ -45,7 +46,7 @@ public sealed partial class DevelopmentEmailSender : IEmailSender
     Directory.CreateDirectory(Options.PickupDirectory);
     string path = Path.Combine(
       Options.PickupDirectory,
-      $"{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}.eml");
+      $"{DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss.fff'Z'", CultureInfo.InvariantCulture)}-{Guid.NewGuid():N}.eml");
     string content =
       $"""
       From: {FromAddress}
