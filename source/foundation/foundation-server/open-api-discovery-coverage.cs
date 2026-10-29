@@ -28,9 +28,9 @@ internal static class OpenApiDiscoveryCoverage
 {
   internal const string ExtensionName = "x-timewarp-excluded-routes";
 
-  internal const string HealthPath = "/api/health";
+  internal const string HealthPath = TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath;
 
-  internal const string TipAliasPath = "/api";
+  internal const string TipAliasPath = TimeWarp.Foundation.Configuration.IngressPaths.TipDiscoveryAliasPath;
 
   internal const string TipPath = "/api/tip";
 

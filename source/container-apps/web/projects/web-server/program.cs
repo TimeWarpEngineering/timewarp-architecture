@@ -606,7 +606,7 @@ public partial class Program : IAspNetProgram
       );
 
     // Anonymous on purpose: the OpenAPI health operation says so, and a fallback policy must not hide it.
-    webApplication.MapHealthChecks("/api/health").AllowAnonymous();
+    webApplication.MapHealthChecks(TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath).AllowAnonymous();
 
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);
