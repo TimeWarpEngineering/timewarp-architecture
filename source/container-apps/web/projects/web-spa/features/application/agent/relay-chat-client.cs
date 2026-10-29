@@ -21,6 +21,16 @@
 // OmittedPictureText so the model knows one existed. AskScreenshotChatClient sits outside the
 // tool loop, so the Ask attachment stays on the person's message for every loop iteration; without
 // this cap an Ask screenshot plus two capture calls in one turn would exceed it.
+// A message with nothing the model reads is not sent (task 447). Approval requests and responses
+// stay in the Ask history so a restored card shows its decision. FunctionInvokingChatClient
+// removes a pair only while its call is not InformationalOnly, and a rejection marks the call
+// InformationalOnly. A rejected pair therefore reaches this client on every later turn, and an
+// empty turn fails the CompleteAgentChat validator. Each message is mapped with ToTurn and kept
+// only when CompleteAgentChat.IsEmpty, the validator's own rule, says the turn is not empty, so
+// the filter cannot drift from the mapping or the validator. The person's last message is found
+// after that filter, so a surviving approval response never counts as it, and tool pictures from
+// calls made earlier in the same turn are still sent. The model still sees the rejected call and
+// its result turn.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -103,16 +113,26 @@ internal sealed class RelayChatClient : IChatClient
     return command;
   }
 
-  private static List<Turn> ToTurns(List<ChatMessage> messages)
+  private static List<Turn> ToTurns(List<ChatMessage> history)
   {
-    int lastUser = messages.FindLastIndex(static message => message.Role == ChatRole.User);
+    List<(ChatMessage Message, Turn Turn)> sent = [];
+    foreach (ChatMessage message in history)
+    {
+      Turn turn = ToTurn(message);
+      if (!IsEmpty(turn))
+      {
+        sent.Add((message, turn));
+      }
+    }
+
+    int lastUser = sent.FindLastIndex(static pair => pair.Message.Role == ChatRole.User);
     List<Turn> turns = [];
     List<Turn> pictureTurns = [];
     List<TurnImage> pictures = [];
-    for (int index = 0; index < messages.Count; index++)
+    for (int index = 0; index < sent.Count; index++)
     {
-      ChatMessage message = messages[index];
-      turns.Add(ToTurn(message));
+      (ChatMessage message, Turn turn) = sent[index];
+      turns.Add(turn);
       if (index > lastUser)
       {
         foreach (FunctionResultContent result in message.Contents.OfType<FunctionResultContent>())
@@ -124,7 +144,7 @@ internal sealed class RelayChatClient : IChatClient
         }
       }
 
-      bool runEnds = index + 1 == messages.Count || messages[index + 1].Role != ChatRole.Tool;
+      bool runEnds = index + 1 == sent.Count || sent[index + 1].Message.Role != ChatRole.Tool;
       if (pictures.Count > 0 && runEnds)
       {
         Turn pictureTurn = new() { Role = ChatRole.User.Value, Text = ToolPictureText, Images = [.. pictures] };
