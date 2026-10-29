@@ -124,7 +124,7 @@ public class CopyMessageBar_Should_
     NotificationMessage warning = state.Messages.ShouldHaveSingleItem();
     warning.Intent.ShouldBe(MessageBarIntent.Warning);
     warning.Title.ShouldBe(CopyFailedTitle);
-    warning.Body.ShouldBe(CopyFailedBody);
+    warning.Body.ShouldBe(ClipboardJsModule.DeniedBody);
   }
 
   public static async Task Report_Warning_When_Clipboard_Times_Out()

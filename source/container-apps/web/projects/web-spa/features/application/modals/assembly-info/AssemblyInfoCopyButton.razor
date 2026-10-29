@@ -1,0 +1,33 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+@code {
+  // Purpose: The version dialog's icon-only Copy button (task 450).
+  // Design: Renders nothing until the dialog has loaded AssemblyInfo, so there is never an empty
+  // copy. Copy only dispatches (TWA0026): ApplicationState.CopyAssemblyInfo writes
+  // AssemblyInfoText.ClipboardText, the same rows the dialog shows. Confirmation is the
+  // MessageBar icon swap (Copy → Checkmark, label "Copied") while IsAssemblyInfoCopied; opening
+  // a modal clears it. A clipboard failure is a Warning bar from the handler.
+
+  [Parameter] public AssemblyInfo? AssemblyInfo { get; set; }
+
+  private bool IsCopied => ApplicationState.IsAssemblyInfoCopied;
+
+  private string CopyLabel => IsCopied ? "Copied" : "Copy version info";
+
+  private Task CopyAsync() =>
+    AssemblyInfo is null
+      ? Task.CompletedTask
+      : ApplicationState.CopyAssemblyInfo(AssemblyInfoText.ClipboardText(AssemblyInfo), CancellationToken);
+}
+
+@if (AssemblyInfo is not null)
+{
+  <FluentButton Appearance="ButtonAppearance.Subtle"
+                IconOnly="true"
+                IconStart="@(IsCopied ? new Icons.Regular.Size20.Checkmark() : new Icons.Regular.Size20.Copy())"
+                Title="@CopyLabel"
+                aria-label="@CopyLabel"
+                data-qa="AssemblyInfoCopy"
+                OnClick="CopyAsync" />
+}

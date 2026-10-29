@@ -10,11 +10,10 @@
 // bar: a Success bar would push the oldest bar behind "+N more" and could hide the very error
 // being copied. MarkCopied stamps CopiedUntil, which NextExpiry includes, so the host's existing
 // ExpireMessages timer swaps the icon back — no second timer.
-// A clipboard rejection (permission denied, insecure context) is a JSException and becomes a
-// Warning bar; nothing throws. A JS-interop timeout (OperationCanceledException while the
-// caller's token is live, e.g. a stalled permission prompt on Server) is the same failure. A
-// cancelled caller token means the host was disposed, so it is swallowed. ClipboardJsModule
-// already swallows a dropped Server circuit. An unknown id (the bar was dismissed or expired
+// ClipboardJsModule.TryWriteTextAsync classifies the write: Denied (a rejection or an interop
+// timeout) becomes a Warning bar with ClipboardJsModule.DeniedBody; nothing throws. Cancelled
+// (the host was disposed) does nothing. ClipboardJsModule already swallows a dropped Server
+// circuit. An unknown id (the bar was dismissed or expired
 // before the click landed) is a no-op.
 // WriteAndConfirmAsync is shared with CopyMessageBar (task 445), so a page-local bar copies,
 // confirms, and warns exactly like a shell row.
@@ -27,7 +26,6 @@ using TimeWarp.Architecture.Services;
 partial class NotificationState
 {
   public const string CopyFailedTitle = "Couldn't copy the message.";
-  public const string CopyFailedBody = "The browser blocked clipboard access. Select the text and copy it instead.";
 
   /// <summary>Plain text the Copy button writes: Title, plus a blank line and Body when present.</summary>
   public static string ClipboardText(NotificationMessage message)
@@ -50,19 +48,17 @@ partial class NotificationState
     CancellationToken cancellationToken
   )
   {
-    try
+    switch (await ClipboardJsModule.TryWriteTextAsync(jsRuntime, text, cancellationToken))
     {
-      await ClipboardJsModule.WriteTextAsync(jsRuntime, text, cancellationToken);
-      state.MarkCopied(copiedId, DateTimeOffset.UtcNow);
-    }
-    catch (Exception exception) when
-      (exception is JSException || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
-    {
-      state.AddMessage(MessageBarIntent.Warning, CopyFailedTitle, CopyFailedBody, DateTimeOffset.UtcNow);
-    }
-    catch (OperationCanceledException)
-    {
-      // The host was disposed mid-copy; there is no bar left to confirm or warn on.
+      case ClipboardJsModule.WriteResult.Written:
+        state.MarkCopied(copiedId, DateTimeOffset.UtcNow);
+        break;
+      case ClipboardJsModule.WriteResult.Denied:
+        state.AddMessage(MessageBarIntent.Warning, CopyFailedTitle, ClipboardJsModule.DeniedBody, DateTimeOffset.UtcNow);
+        break;
+      case ClipboardJsModule.WriteResult.Cancelled:
+        // The host was disposed mid-copy; there is no bar left to confirm or warn on.
+        break;
     }
   }
 
