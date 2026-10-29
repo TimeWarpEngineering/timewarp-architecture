@@ -25,6 +25,9 @@
 // Copy (task 313): CopyMessage marks the copied row with CopiedMessageId until CopiedUntil
 // (now + CopiedConfirmationInterval). NextExpiry includes CopiedUntil, so the same host timer
 // that expires Success bars also ends the "Copied" icon swap in RemoveExpired.
+// Task 445: page-local bars copy through CopyMessageBar with the MessageBar control's own id,
+// so CopiedMessageId may name a bar that is not in the list. RemoveExpired therefore clears it
+// only when the confirmation ran out or the copied row itself expired.
 // Namespace is Features substrate (not a product slice): DefaultApiHandler and other base
 // handlers publish failures here, so every product may depend on it without TWA0009 opt-outs.
 #endregion
@@ -45,7 +48,7 @@ public sealed partial class NotificationState : State<NotificationState>
 
   private List<NotificationMessage> MessageBarList { get; set; } = [];
 
-  /// <summary>Row currently showing its "Copied" confirmation, or null.</summary>
+  /// <summary>Shell row id or MessageBar control id showing its "Copied" confirmation, or null.</summary>
   public string? CopiedMessageId { get; private set; }
 
   /// <summary>When the "Copied" confirmation ends, or null when none is showing.</summary>
@@ -153,9 +156,10 @@ public sealed partial class NotificationState : State<NotificationState>
 
   internal void RemoveExpired(DateTimeOffset now)
   {
+    bool copiedRowExpired = MessageBarList.Exists(message =>
+      message.Id == CopiedMessageId && message.AutoDismissAt is not null && message.AutoDismissAt <= now);
     MessageBarList.RemoveAll(message => message.AutoDismissAt is not null && message.AutoDismissAt <= now);
-    if ((CopiedUntil is not null && CopiedUntil <= now)
-      || (CopiedMessageId is not null && !MessageBarList.Exists(message => message.Id == CopiedMessageId)))
+    if (copiedRowExpired || (CopiedUntil is not null && CopiedUntil <= now))
     {
       ClearCopied();
     }

@@ -1,0 +1,90 @@
+@namespace TimeWarp.Architecture.Components
+@inherits BaseComponent
+
+@code {
+  // Purpose: The one message bar. Wraps FluentMessageBar so every bar gets the icon-only Copy
+  // button (task 313 on shell rows, task 445 everywhere else).
+  // Design: Title and Body are text, and they are what Copy writes (NotificationState
+  // .ClipboardText: Title, plus a blank line and Body when there is a body). ChildContent is
+  // extra markup under the body, such as an input, and is never copied. ActionsTemplate holds
+  // the bar's own buttons; Copy sits first in the same actions slot, so button labels are not
+  // copied either.
+  // Copy only dispatches (TWA0026). A shell row passes NotificationId and dispatches
+  // CopyMessage(id), which reads the row from state. A page-local bar dispatches
+  // CopyMessageBar with this instance's LocalBarId and its own Title and Body. Both handlers
+  // write through ClipboardJsModule and report a failure as a Warning bar.
+  // Confirmation: when CopiedMessageId is this bar's id, the icon is a Checkmark labelled
+  // "Copied". The shell MessageBars host's ExpireMessages timer swaps it back after
+  // CopiedConfirmationInterval, so a bar outside a TimeWarpPage shell keeps "Copied" until the
+  // next copy.
+  // Layout defaults to Notification (title only) or MultiLine (body or child content).
+  // AllowDismiss is false: FluentMessageBar's built-in dismiss does not notify state.
+  // Ask Tag (task 346): the bar is pickable as AskTagMark.MessageBarKind(intent) with its title
+  // as the label. Unmatched attributes (BaseComponent.Attributes: data-qa, ...) win and land on
+  // the fluent-message-bar.
+  // Raw FluentMessageBar anywhere else in the SPA is TWA0037; this file and the shell
+  // MessageBars host are exempt. TWA0025 checks this control's Intent like FluentMessageBar's.
+
+  [Parameter, EditorRequired] public MessageBarIntent Intent { get; set; }
+  [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+  [Parameter] public string? Body { get; set; }
+  [Parameter] public MessageBarLayout? Layout { get; set; }
+  [Parameter] public string? NotificationId { get; set; }
+  [Parameter] public RenderFragment? ChildContent { get; set; }
+  [Parameter] public RenderFragment? ActionsTemplate { get; set; }
+
+  private readonly string LocalBarId = Guid.NewGuid().ToString("N");
+
+  private string? BodyText => string.IsNullOrWhiteSpace(Body) ? null : Body;
+
+  private bool IsCopied => NotificationState.CopiedMessageId == (NotificationId ?? LocalBarId);
+
+  private string CopyLabel => IsCopied ? "Copied" : "Copy message";
+
+  private MessageBarLayout BarLayout =>
+    Layout ?? (BodyText is null && ChildContent is null ? MessageBarLayout.Notification : MessageBarLayout.MultiLine);
+
+  private Dictionary<string, object> BarAttributes
+  {
+    get
+    {
+      Dictionary<string, object> attributes = new(AskTagMark.For(AskTagMark.MessageBarKind(Intent), Title));
+      foreach (KeyValuePair<string, object> attribute in Attributes)
+      {
+        attributes[attribute.Key] = attribute.Value;
+      }
+
+      return attributes;
+    }
+  }
+
+  private Task CopyAsync() =>
+    NotificationId is null
+      ? NotificationState.CopyMessageBar(LocalBarId, Title, BodyText ?? string.Empty, CancellationToken)
+      : NotificationState.CopyMessage(NotificationId, CancellationToken);
+}
+
+<FluentMessageBar Intent="@Intent"
+                  Title="@Title"
+                  AllowDismiss="false"
+                  Layout="@BarLayout"
+                  @attributes="BarAttributes">
+  <ChildContent>
+    @if (BodyText is not null)
+    {
+      <span data-qa="MessageBarBody">@BodyText</span>
+    }
+    @ChildContent
+  </ChildContent>
+  <ActionsTemplate>
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  Size="ButtonSize.Small"
+                  IconOnly="true"
+                  IconStart="@(IsCopied ? new Icons.Regular.Size20.Checkmark() : new Icons.Regular.Size20.Copy())"
+                  Title="@CopyLabel"
+                  aria-label="@CopyLabel"
+                  data-qa="MessageBarCopy"
+                  OnClick="CopyAsync" />
+    @ActionsTemplate
+  </ActionsTemplate>
+</FluentMessageBar>

@@ -1,20 +1,12 @@
 @namespace TimeWarp.Architecture.Features.DesignSystem
-@attribute [PageLocalMessageBar("Design system showcases the FluentMessageBar component itself; these bars are documentation, not operation outcomes.")]
+@attribute [PageLocalMessageBar("Design system showcases the MessageBar component itself; these bars are documentation, not operation outcomes.")]
 
 <Card Title="Message bars (FluentUI)">
-  <p class="ds-subtitle">Component reference only. Operation outcomes never render inline — they go to the shell's single notification region above (TWA0025); static Info/Warning guidance may stay in a component.</p>
+  <p class="ds-subtitle">Component reference only. Every bar is the shared MessageBar, so each one has Copy. Operation outcomes never render inline — they go to the shell's single notification region above (TWA0025); static Info/Warning guidance may stay in a component.</p>
   <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
-    <FluentMessageBar Intent="MessageBarIntent.Success" Title="Success" AllowDismiss="false">
-      Operation completed successfully.
-    </FluentMessageBar>
-    <FluentMessageBar Intent="MessageBarIntent.Error" Title="Error" AllowDismiss="false">
-      Something went wrong — you can select and copy this text.
-    </FluentMessageBar>
-    <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Warning" AllowDismiss="false">
-      Proceed with caution.
-    </FluentMessageBar>
-    <FluentMessageBar Intent="MessageBarIntent.Info" Title="Information" AllowDismiss="false">
-      Helpful context that does not require immediate action.
-    </FluentMessageBar>
+    <MessageBar Intent="MessageBarIntent.Success" Title="Success" Body="Operation completed successfully." />
+    <MessageBar Intent="MessageBarIntent.Error" Title="Error" Body="Something went wrong — you can select and copy this text." />
+    <MessageBar Intent="MessageBarIntent.Warning" Title="Warning" Body="Proceed with caution." />
+    <MessageBar Intent="MessageBarIntent.Info" Title="Information" Body="Helpful context that does not require immediate action." />
   </FluentStack>
 </Card>

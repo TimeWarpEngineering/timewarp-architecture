@@ -264,7 +264,7 @@ Reference: `web-spa/features/admin/feedback/pages/FeedbackAdminListPage.razor` w
 
 # Operation outcomes
 
-No page, card, or feature component renders its own `FluentMessageBar` for an operation outcome
+No page, card, or feature component renders its own message bar for an operation outcome
 (success or failure) — the shell's single notification region owns that (`tw-blazor-layout`, "The
 shell owns the notification region"). Components and handlers only *report* outcomes:
 
@@ -283,12 +283,22 @@ shell owns the notification region"). Components and handlers only *report* outc
 - Field-level validation is a different class — it stays next to the field (`ValidationMessage`
   via Blazilla), never in the notification region.
 - Static, contextual guidance that isn't an outcome (an inline Info/Warning such as "Add a passkey
-  to continue") may stay inline. The analyzer `TWA0025` flags an `Error`/`Success` `FluentMessageBar`
+  to continue") may stay inline. The analyzer `TWA0025` flags an `Error`/`Success` message bar
   outside the shell's host; opt out with `[PageLocalMessageBar("reason")]` on the component when a
   case is genuinely local.
+- Every bar, shell or inline, is the shared `MessageBar` (`components/MessageBar.razor`), never a
+  raw `FluentMessageBar` (TWA0037). It paints an icon-only Copy button that copies `Title`, plus a
+  blank line and `Body` when there is one. Pass the text as `Title` and `Body`; `ChildContent`
+  (such as an input) is not copied, and `ActionsTemplate` buttons sit beside Copy.
 
-Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.razor` (host) and
-`features/notification/notification-state/` (state).
+```razor
+<MessageBar Intent="MessageBarIntent.Warning"
+            Title="Session expired"
+            Body="Sign in with Microsoft 365 again." />
+```
+
+Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.razor` (host),
+`components/MessageBar.razor` (the bar), and `features/notification/notification-state/` (state).
 
 # Actions, navigation, and forms
 

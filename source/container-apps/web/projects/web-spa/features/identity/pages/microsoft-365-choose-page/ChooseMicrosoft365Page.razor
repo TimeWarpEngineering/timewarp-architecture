@@ -36,9 +36,9 @@
       }
       else if (IsValid is false)
       {
-        <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Session expired" AllowDismiss="false">
-          Session expired, sign in with Microsoft 365 again.
-        </FluentMessageBar>
+        <MessageBar Intent="MessageBarIntent.Warning"
+                    Title="Session expired"
+                    Body="Session expired, sign in with Microsoft 365 again." />
         <FluentButton Appearance="ButtonAppearance.Primary"
                       data-qa="SignInWithMicrosoft365Again"
                       OnClick="SignInAgain">

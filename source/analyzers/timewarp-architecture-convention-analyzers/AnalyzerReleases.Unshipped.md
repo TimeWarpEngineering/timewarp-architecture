@@ -2,7 +2,8 @@
 ; https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.Analyzers/ReleaseTrackingAnalyzers.Help.md
 ; Retired / reserved — do not reuse: TWA0005 (MVC verb vs [ApiRoute]; FastEndpoints take the verb
 ; from the contract), TWA0029 TWA0030 TWA0031 (server-offers agreement; replaced by typed
-; availability flags and page-scoped actions).
+; availability flags and page-scoped actions). TWA0036 is named by to-do task 452's spec
+; (ISO date rendering); leave it for that rule.
 
 ### New Rules
 
@@ -27,7 +28,7 @@ TWA0021 | Security | Warning | MockAuthenticationRegistrationAnalyzer: mock auth
 TWA0022 | Design | Warning | SpaMediatorSendAnalyzer: direct mediator Send in SPA client code instead of a generated ActionSet method
 TWA0023 | Naming | Disabled | DisabledByDefault: TypeStemIdentifierAnalyzer — identifier must end with the type stem (interface I-strip)
 TWA0024 | Design | Warning | EndpointAuthorizePolicyAgreementAnalyzer: [EndpointAuthorize] Policy is not registered by this server
-TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar with Error/Success intent outside the shell MessageBars host
+TWA0025 | Design | Warning | PageLocalMessageBarAnalyzer: FluentMessageBar or shared MessageBar with Error/Success intent outside the shell MessageBars host
 TWA0026 | Design | Warning | ComponentSideEffectAnalyzer: component calls navigation / JS / API / HttpClient / storage-write / [SideEffectService] directly instead of dispatching an action
 TWA0027 | Design | Warning | ComponentSideEffectAnalyzer: [DirectComponentSideEffect] opt-out has an empty reason
 TWA0028 | Design | Warning | EnumerationMemberShapeAnalyzer: Enumeration subclass member is not a public static readonly field
@@ -35,3 +36,4 @@ TWA0032 | Design | Warning | DirectFluentTextAreaAnalyzer: raw FluentTextArea ou
 TWA0033 | Design | Warning | ReferenceableResourceAnalyzer: [ReferenceableResource] contract lacks a Search query, a typed-id or Guid item id, or a string label
 TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableResource] contracts share an @ prefix
 TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)
+TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host

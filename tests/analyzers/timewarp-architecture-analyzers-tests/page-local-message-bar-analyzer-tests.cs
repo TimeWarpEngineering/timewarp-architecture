@@ -10,6 +10,8 @@
 // do not report (false negatives are preferable to false positives in edge cases).
 // Opt-out: [PageLocalMessageBar("non-empty-reason")] on the component suppresses all
 // diagnostics in that type hierarchy. Empty reason does not opt out.
+// The shared MessageBar control (namespace ending in Components) is checked like
+// FluentMessageBar; a same-named type in another namespace is not.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers.Tests;
@@ -46,6 +48,23 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
       {
         public MessageBarIntent? Intent { get; set; }
         public string? Title { get; set; }
+      }
+    }
+
+    namespace TimeWarp.Architecture.Components
+    {
+      public class MessageBar
+      {
+        public Microsoft.FluentUI.AspNetCore.Components.MessageBarIntent Intent { get; set; }
+        public string? Title { get; set; }
+      }
+    }
+
+    namespace TimeWarp.Architecture.Features.Notes
+    {
+      public class MessageBar
+      {
+        public Microsoft.FluentUI.AspNetCore.Components.MessageBarIntent Intent { get; set; }
       }
     }
 
@@ -528,5 +547,63 @@ public class Should_Ban_Page_Local_Outcome_Message_Bars
     CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "DesignSystemPage_razor.g.cs");
     test.ExpectedDiagnostics.Add(Flag("DesignSystemPage_razor.g.cs", 23, 1, 25, "Success"));
     await test.RunAsync();
+  }
+
+  public static async Task Given_Error_Intent_On_Shared_MessageBar_Flags()
+  {
+    const string source =
+      """
+      #region Purpose
+      // Razor page with a local Error bar through the shared MessageBar control.
+      #endregion
+      using Microsoft.AspNetCore.Components;
+      using Microsoft.AspNetCore.Components.Rendering;
+      using Microsoft.FluentUI.AspNetCore.Components;
+      using Microsoft.AspNetCore.Components.CompilerServices;
+      using TimeWarp.Architecture.Components;
+
+      public class SharedBarPage
+      {
+        protected void BuildRenderTree(RenderTreeBuilder builder)
+        {
+          builder.OpenComponent<MessageBar>(1);
+          builder.AddComponentParameter(2, nameof(MessageBar.Intent),
+            RuntimeHelpers.TypeCheck<MessageBarIntent>(MessageBarIntent.Error));
+          builder.AddComponentParameter(3, nameof(MessageBar.Title), "Save failed");
+          builder.CloseComponent();
+        }
+      }
+      """;
+
+    CSharpAnalyzerTest<PageLocalMessageBarAnalyzer, RoslynTestVerifier> test = Test(source, "SharedBarPage_razor.g.cs");
+    test.ExpectedDiagnostics.Add(Flag("SharedBarPage_razor.g.cs", 16, 50, 72, "Error"));
+    await test.RunAsync();
+  }
+
+  public static async Task Given_Same_Named_Type_Outside_Components_Namespace_Does_Not_Flag()
+  {
+    const string source =
+      """
+      #region Purpose
+      // A feature type that happens to be called MessageBar is not the shared control.
+      #endregion
+      using Microsoft.AspNetCore.Components;
+      using Microsoft.AspNetCore.Components.Rendering;
+      using Microsoft.FluentUI.AspNetCore.Components;
+      using Microsoft.AspNetCore.Components.CompilerServices;
+
+      public class NotesPage
+      {
+        protected void BuildRenderTree(RenderTreeBuilder builder)
+        {
+          builder.OpenComponent<TimeWarp.Architecture.Features.Notes.MessageBar>(1);
+          builder.AddComponentParameter(2, "Intent",
+            RuntimeHelpers.TypeCheck<MessageBarIntent>(MessageBarIntent.Error));
+          builder.CloseComponent();
+        }
+      }
+      """;
+
+    await Test(source, "NotesPage_razor.g.cs").RunAsync();
   }
 }
