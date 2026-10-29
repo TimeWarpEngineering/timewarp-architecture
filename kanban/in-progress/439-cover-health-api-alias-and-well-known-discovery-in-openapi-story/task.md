@@ -36,6 +36,7 @@ Api-server does not opt in. Those routes are not on that host.
 - Review oracle round 2 (claude-opus-5-5, effort 1, roster: general), 2026-10-29. Delta since round 1 had no product change, so M1 and M2 stay open. Fix pass requested.
 - Review oracle round 3 (claude-opus-5-5, effort 1, roster: general), 2026-10-29. Fix pass 2 also made no product change, so M1 and M2 stay open. implementer-grok has ended after one turn on two fix passes in a row. Check that profile before the next fix pass.
 - Fix pass 3 (implement-fix-4, claude-opus-5-5), 2026-10-29. Fixed round-3 M1 and M2 in both ingress builders (standalone yarp in-memory routes and the AppHost `#if web` block). M1: added an exact `/api/health` route to web-server. M2: dropped the duplicate `/api/` route; the single `/api` route also matches `/api/`. Both paths are now `IngressPaths.WebServerHealthPath` and `IngressPaths.TipDiscoveryAliasPath`, which web-server's `MapHealthChecks` and `OpenApiDiscoveryCoverage` read too. New `StandaloneYarpIngress_` tests request `/api/health`, `/api`, and `/api/` through the gateway. With the old routes put back, both tests failed; with the fix, the suite passed 19 of 19. `dev build` had 0 warnings. The AppHost route is not covered by an in-proc test (aspire-tests boots the AppHost; not run here).
+- Review oracle round 4 (reviewer-claude-fable, claude-fable-5-1, effort 2, roster: general, turn cap 120), 2026-10-29. Delta `2ebd4893d` reviewed. M1 and M2 verified fixed: `dev build` 0 warnings, yarp suite 19 of 19 (both new gateway tests also pass alone), discovery coverage 6 of 6, tip runfile 7 of 7. No new findings. Disposition `clean`. Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`, `review/disposition.md`. Goal restatement matches the task; no misread.
 
 ## Results
 
@@ -52,6 +53,13 @@ Smoke: from `tests/container-apps/web/web-server-integration-tests`, `dotnet tes
 
 Expect: discovery coverage 6 passed. The tip class includes `Api Health_ Should_ Return Plaintext Status` passed (plaintext status name, 200 or 503). The yarp suite passes 19 of 19, including `ApiHealthThroughStandaloneYarp_Should_ReachWebServer` (text/plain status through the gateway) and `TipAliasThroughStandaloneYarp_Should_MatchWebServerTip` (`/api` and `/api/` through the gateway return the same status as web-server's `/api/tip`, not 500). After deploy, `curl -i https://arch.timewarp.work/api/health` returns a plaintext status, and `/api` returns the tip response instead of 500. Api-server still builds; it does not opt in, so its document omits `/api/health` and `x-timewarp-excluded-routes`.
 
+### Review disposition
+
+- Rounds: 4. Roster: general. Effort: 2 (rounds 1 and 4), 1 (rounds 2 and 3).
+- Final counts (round 4): bug 0 open / 2 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 / 0 / 0.
+- Disposition: `clean`. No wontfix, no escalation. M1 (`/api/health` 404 at ingress) and M2 (`/api` alias 500 at ingress) were fixed in `2ebd4893d` and re-verified in round 4.
+- Paths: `review/review-framework.md`, `review/round-4/merged.md`, `review/disposition.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1, M2
@@ -59,6 +67,8 @@ Expect: discovery coverage 6 passed. The tip class includes `Api Health_ Should_
 - Round 2: Blocked — open M1, M2
 - Round 3 (effort 1, general): Blocked. M1 and M2 are still open. Fix pass 2 (implement-fix-3) made no product change. HEAD is still `3f596ae40`, and the implementer ended after 1 model call. Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`. No disposition yet.
 - Round 3: Blocked — open M1, M2
+- Round 4 (effort 2, general): Done. Delta `2ebd4893d` fixes M1 and M2 in both ingress builders. Verified: `dev build` 0 warnings, yarp 19 of 19, discovery coverage 6 of 6, tip runfile 7 of 7. 0 open. Disposition `clean` in `review/disposition.md`. Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`.
+
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json (60 paths, no
