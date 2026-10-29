@@ -79,8 +79,7 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Round 2: Blocked — open M6
-- Round 3: Done — 0 open; disposition `clean` (`review/disposition.md`)
-
+- Round 3: Done
 ## Notes
 
 TS side is clean (no toLocale/toDateString in web-spa source/). The relative
