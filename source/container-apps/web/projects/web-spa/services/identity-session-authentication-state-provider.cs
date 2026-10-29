@@ -9,7 +9,7 @@
 // AuthenticationStateProvider for CascadingAuthenticationState / AuthorizeView.
 // Reads GET api/identity/session (cookie ambient auth) and projects:
 //   - PrincipalId → NameIdentifier + PrincipalIdClaimType (timewarp:principal_id)
-//   - Response.RoleIds → ClaimTypes.Role (diagnostics / UserClaims display; task 147-004 D4)
+//   - Response.RoleIds → ClaimTypes.Role (diagnostics / developer Claims page; task 147-004 D4)
 //   - Response.Permissions → PermissionIds.ClaimType claims (task 182-003) so SPA policies
 //     registered via AddPermissionClaimPolicies can AuthorizeView without an evaluator in WASM
 //   - Response.AccountFingerprint → AccountFingerprintClaimType (task 253) so Settings can show
