@@ -46,6 +46,12 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implemented under ganda task work (implement oracle, 2026-10-30).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 513ba748-4b05-4267-91d4-33a1e7c542f7, max-turns 500, Done — 2026-10-29T18:00:49Z
+- Review oracle: Claude Fable 5.1 (claude-fable-5-1) under ganda task work, effort 2, roster general, max-turns 120, round 1, disposition clean — 2026-10-30
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 2b25d4f2-f618-4211-b37e-31b98eb5afac, max-turns 120 — 2026-10-29T18:06:38Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -91,6 +97,16 @@ Gates (2026-10-30, this worktree):
 - `ganda repo audit`: exit 0, 34 passed. The one finding is the `kanban-landed` warning: 8 other
   tasks' claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) have no worktree on this
   machine. Not fixed here, because `--fix` would change those tasks' claims on the shared board.
+
+### Review
+
+- Rounds: 1. Roster: general. Effort: 2 (by diff, 415 lines).
+- Final counts: bug 0 / suggestion 0 / nit 0 (open 0, fixed 0, wontfix 0).
+- Disposition: **clean**. No findings raised; no wontfix; no escalation.
+- Reviewer re-ran in this worktree: `./bin/dev build` 0/0; Destinations_Should_ 8/8, CatalogAgent_Should 48/48,
+  CommandPalette_Should_ 45/45, AskReference_Should_ 9/9, AskTag_Should_ 10/10, DesignSystemPage_Should_ 6/6;
+  `./bin/dev lint-skills` 9/9. Goal restatement matches the task (no misread).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
