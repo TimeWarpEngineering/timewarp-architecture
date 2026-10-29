@@ -49,6 +49,7 @@ Acceptance:
 - Implement-fix oracle (round 1 fix pass): implementer-claude (claude, model claude-opus-5-5), headless print mode — 2026-10-30. Fixed M1–M5; review round 2 is next.
 - Review oracle round 2: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 120), effort 2, roster general (sonnet subagent) + orchestrator verification — 2026-10-30. M1–M5 confirmed fixed; Blocked: fix pass requested for M6–M8 (nits).
 - Implement-fix oracle (round 2 fix pass): implementer-claude (claude, model claude-opus-5-5), headless print mode — 2026-10-30. Fixed M6–M8; review round 3 is next.
+- Review oracle round 3: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 80), effort 1, roster general (sonnet subagent a5fb2dd97881b9fe8) + orchestrator verification — 2026-10-30. M6–M8 confirmed fixed, no new findings. Disposition: clean.
 
 ## Results
 
@@ -133,8 +134,18 @@ Acceptance:
   re-wrapped. M7: the two `Microsoft.AspNetCore.Components.Web` usings swapped into ordinal
   order. M8: `ClipboardJsModule.WriteTextAsync` is `private`; its Design region states that a
   handler cannot bypass `TryWriteTextAsync`.
-- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
-  `review/round-2/merged.md`.
+- Round 3 (2026-10-30), effort 1, roster general + orchestrator verification, scope = fix-pass commit
+  769e9eec9 only (5 files, Design-region wording, one visibility change, one using swap). Reviewer
+  re-ran the build (0/0) and the tests (AssemblyInfoCopy_ 7/7, CopyMessage 16/16), grepped
+  `WriteTextAsync` callers (only `TryWriteTextAsync`), and read the modal markup against
+  `ClipboardText` order (Title, Properties, Links: same). Goal restatement still matches the task;
+  no misread.
+- Round 3 counts: bug 0 · suggestion 0 open / 2 fixed · nit 0 open / 6 fixed · wontfix 0.
+  M6–M8 confirmed fixed. No new findings.
+- Review disposition: **clean**. 3 rounds, 8 raised (M1–M8), 8 fixed, 0 open, 0 wontfix, no
+  escalations.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/merged.md`,
+  `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -160,7 +171,7 @@ Warning bar reads "Couldn't copy the version info.".
 - Round 1 fix pass: M1–M5 implemented; awaiting round 2.
 - Round 2: Blocked — open M6, M7, M8
 - Round 2 fix pass: M6–M8 implemented; awaiting round 3.
-
+- Round 3: Done
 ## Notes
 
 Modal lives at features/application/modals/assembly-info/AssemblyInfoModal.razor.
