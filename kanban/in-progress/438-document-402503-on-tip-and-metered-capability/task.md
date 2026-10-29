@@ -35,6 +35,8 @@ Round-1 review acceptance: the documented challenge `resource.url` is the config
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 01a18528-d963-7fb2-9d37-b4a636af295b, max-turns 500, Done — 2026-10-29T06:08:45Z
 - Review oracle round 3: general reviewer (claude-fable-5-1, effort 3, headless), 2026-10-29. The resumed implement oracle returned Done in 26 ms with no product change, so the recorded CI failure is still present. M4 (bug, duplicate routes from the test stubs) and M5 (nit) are open; a fix pass is requested. Disposition reopened.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session c319385f-6a59-4dfe-9bf1-7355a56e3545, max-turns 200 — 2026-10-29T06:15:20Z
+- Implement-fix-2 oracle (implementer-claude, headless): Done in 26 ms, no product change (2026-10-29). Same session id and duration as the resumed implement oracle before round 3; the fix for M4 was not made.
+- Review oracle round 4 (host round 2, fix pass 1 of 5): general reviewer (claude-fable-5-1, effort 1 by-diff, headless), 2026-10-29. Product tree identical to round 3, so M4 (bug) and M5 (nit) stay open; no new findings. Fix pass requested again.
 
 ## Results
 
@@ -93,14 +95,22 @@ then prove it by running the whole integration group, not only this file:
   `DisableAutoDiscovery = true` in api-server (after confirming it needs no auto-discovered
   endpoints), keep the stubs on the contract routes, prove with the whole integration group. New M5
   (nit, open): `FreeRoutesNever402` repeats the routes as literals.
-- Current counts (round 3): bug 1 open / 0 fixed / 0 wontfix, suggestion 0 open / 2 fixed / 0 wontfix,
+- Round 4 (effort 1 by-diff, roster: general), re-review of `e9f8e11bc..866e57a34`. The delta outside
+  `kanban/` is empty: the implement-fix-2 oracle returned Done in 26 ms and made no product change. The
+  stubs at `open-api-payment-responses-tests.cs:236–282` are still public, `api-server/program.cs:104`
+  still has no `DisableAutoDiscovery`, and `FreeRoutesNever402` still holds route literals. M4 (bug) and
+  M5 (nit) carry open unchanged; no new findings.
+- Current counts (round 4): bug 1 open / 0 fixed / 0 wontfix, suggestion 0 open / 2 fixed / 0 wontfix,
   nit 1 open / 1 fixed / 0 wontfix.
 - Disposition: **reopened** — fix pass requested for M4 (and M5 if cheap). The earlier `clean`
-  outcome is withdrawn until round 4 re-verifies the fix.
+  outcome stays withdrawn until round 5 re-verifies the fix. If the next fix pass again lands no product
+  change, an operator should check the host journal replay instead of requesting another pass.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`,
-  `review/round-3/merged.md` (live ledger), `review/disposition.md`.
+  `review/round-3/merged.md`, `review/round-4/general.md`, `review/round-4/merged.md` (live ledger),
+  `review/disposition.md`.
 - Round 3: Blocked — open M4, M5
+- Round 4: Blocked — open M4, M5
 ## Review
 
 - Round 1: M1, M2, M3 implemented in the fix pass.

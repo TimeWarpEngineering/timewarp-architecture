@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3142
-- Effort: 3
+- Lines changed: 3
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope — task 438
 
@@ -40,3 +40,14 @@ commit `3ebc8b917`). The product tree is unchanged since `0264769f3`.
 **Session IDs:** review oracle, claude-fable-5-1 (headless print mode; no session id exposed).
 **Outcome:** M1–M3 stay fixed; new M4 (bug, open) and M5 (nit, open). Fix pass requested; the
 disposition is reopened until round 4.
+
+## Round 4 — 2026-10-29
+
+**Why:** re-review after the fix pass requested in round 3 (host round 2, fix pass 1 of 5).
+**Diff scope:** `e9f8e11bc..866e57a34` outside `kanban/` (round-3 base to HEAD). The delta is empty: the
+only commit is a `task.md` landing commit. The implement-fix-2 oracle returned Done in 26 ms with no
+product change.
+**Effort:** 1 (host by-diff budget above, 3 lines). **Roster:** general.
+**Session IDs:** review-2 oracle, claude-fable-5-1 (headless print mode; no session id exposed).
+**Outcome:** no new findings. M4 (bug) and M5 (nit) stay open because the tree is identical to round 3.
+Fix pass requested again; the disposition stays reopened until round 5.
