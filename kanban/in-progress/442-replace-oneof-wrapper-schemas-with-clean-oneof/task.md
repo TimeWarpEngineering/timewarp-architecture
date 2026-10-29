@@ -221,8 +221,7 @@ lists the operations with both responses.
 ## Review
 
 - Round 1: Blocked — open M2, M3, M5
-- Round 2: Done — M2, M3, M5 fixed; N1 wontfix; disposition accepted-exceptions, 0 open
-
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 71 OneOf wrappers of
