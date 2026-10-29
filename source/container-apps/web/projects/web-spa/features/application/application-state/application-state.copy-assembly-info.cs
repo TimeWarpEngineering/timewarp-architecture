@@ -6,10 +6,10 @@
 // Task 450. The dialog's Copy button only dispatches (TWA0026); this handler calls
 // ClipboardJsModule. The action takes the text the dialog built from AssemblyInfoText, so the
 // clipboard matches the screen. Success sets IsAssemblyInfoCopied for the button's Checkmark;
-// SetActiveModal clears it, so a reopened dialog starts at Copy. A clipboard rejection
-// (JSException) or a JS-interop timeout becomes a Warning bar through OutcomeNotification; the
-// handler does not dispatch another action. A cancelled caller token means the host was
-// disposed, so it is swallowed. It is dialog plumbing: the Copy button is the only caller.
+// SetActiveModal clears it, so a reopened dialog starts at Copy. A Denied write
+// (ClipboardJsModule.TryWriteTextAsync: a rejection or a JS-interop timeout) becomes a Warning
+// bar with ClipboardJsModule.DeniedBody through OutcomeNotification; the handler does not
+// dispatch another action. Cancelled (the host was disposed) does nothing. It is dialog plumbing: the Copy button is the only caller.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -19,7 +19,6 @@ using TimeWarp.Architecture.Services;
 partial class ApplicationState
 {
   public const string AssemblyInfoCopyFailedTitle = "Couldn't copy the version info.";
-  public const string AssemblyInfoCopyFailedBody = "The browser blocked clipboard access. Select the text and copy it instead.";
 
   /// <summary>Whether the version dialog's Copy last succeeded since a modal opened.</summary>
   public bool IsAssemblyInfoCopied { get; private set; }
@@ -50,24 +49,22 @@ partial class ApplicationState
 
       public override async ValueTask Handle(Action action, CancellationToken cancellationToken)
       {
-        try
+        switch (await ClipboardJsModule.TryWriteTextAsync(JsRuntime, action.Text, cancellationToken))
         {
-          await ClipboardJsModule.WriteTextAsync(JsRuntime, action.Text, cancellationToken);
-          ApplicationState.IsAssemblyInfoCopied = true;
-        }
-        catch (Exception exception) when
-          (exception is JSException || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
-        {
-          ApplicationState.IsAssemblyInfoCopied = false;
-          await Publisher.Publish
-          (
-            new OutcomeNotification(MessageBarIntent.Warning, AssemblyInfoCopyFailedTitle, AssemblyInfoCopyFailedBody),
-            cancellationToken
-          );
-        }
-        catch (OperationCanceledException)
-        {
-          // The host was disposed mid-copy.
+          case ClipboardJsModule.WriteResult.Written:
+            ApplicationState.IsAssemblyInfoCopied = true;
+            break;
+          case ClipboardJsModule.WriteResult.Denied:
+            ApplicationState.IsAssemblyInfoCopied = false;
+            await Publisher.Publish
+            (
+              new OutcomeNotification(MessageBarIntent.Warning, AssemblyInfoCopyFailedTitle, ClipboardJsModule.DeniedBody),
+              cancellationToken
+            );
+            break;
+          case ClipboardJsModule.WriteResult.Cancelled:
+            // The host was disposed mid-copy.
+            break;
         }
       }
     }

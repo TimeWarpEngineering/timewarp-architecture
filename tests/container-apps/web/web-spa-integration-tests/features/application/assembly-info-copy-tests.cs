@@ -7,21 +7,28 @@
 // Same C-create in-proc shape and doubles as CopyMessageBar_Should_ (notification-copy-test-
 // doubles.cs): the clipboard is a recording IJSRuntime. AssemblyInfo reads attributes from an
 // Assembly, so the fixture is a dynamic assembly with a known title, version, informational
-// version (carrying the commit hash), RepositoryUrl metadata, and a blank Description that
-// must be omitted. The button is rendered on its own: ModalContainer needs a ModalController
-// cascade, and the null case is the button's own guard.
+// version (carrying the commit hash), RepositoryUrl and CommitDate metadata, and a blank
+// Description that must be omitted. The button tests render it on its own, since the null case
+// is the button's own guard. The modal tests render AssemblyInfoModal inside a ModalController
+// (the command-palette RenderShellModalsAsync precedent) through ModalHost, which first renders
+// with no active modal and then opens AssemblyInfoModal, so ModalController runs OnActivate the
+// way the shell does and the dialog loads the real Web.Spa AssemblyInfo.
 #endregion
 
 namespace AssemblyInfoCopy_;
 
 using System.Reflection;
 using System.Reflection.Emit;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web.HtmlRendering;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Logging;
 using NotificationCopy_;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Applications;
 using TimeWarp.Architecture.Services;
-using TimeWarp.State.Plus.Extensions;
 using static TimeWarp.Architecture.Features.NotificationState;
 
 [TestTag("Integration")]
@@ -32,6 +39,7 @@ public class AssemblyInfoCopy_Should_
 
   private const string CommitHash = "0123456789abcdef0123456789abcdef01234567";
   private const string RepositoryUrl = "https://github.com/Example/fake-spa";
+  private const string CommitDate = "2026-10-28T12:34:56";
 
   private const string ExpectedText =
     "Title: Fake.Spa\n"
@@ -39,6 +47,7 @@ public class AssemblyInfoCopy_Should_
     + "InformationalVersion: 1.2.3+" + CommitHash + "\n"
     + "CommitHash: " + CommitHash + "\n"
     + "ShortHash: 234567\n"
+    + "CommitDate: 2026-10-28 12:34:56\n"
     + "CommitUrl: " + RepositoryUrl + "/commit/" + CommitHash + "\n"
     + "RepositoryUrl: " + RepositoryUrl;
 
@@ -96,6 +105,51 @@ public class AssemblyInfoCopy_Should_
     scope.Store.GetState<ApplicationState>().IsAssemblyInfoCopied.ShouldBeFalse("reopening the dialog clears Copied");
   }
 
+  public static async Task Render_Copy_Beside_One_Close_In_The_Open_Dialog()
+  {
+    using CopySpa spa = new(clipboardThrows: false);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    ModalHost? host = null;
+
+    await using HtmlRenderer renderer = new(scope.ServiceProvider, scope.ServiceProvider.GetRequiredService<ILoggerFactory>());
+    HtmlRootComponent root = await renderer.Dispatcher.InvokeAsync(() =>
+      renderer.RenderComponentAsync<ModalHost>
+      (
+        ParameterView.FromDictionary(new Dictionary<string, object?> { [nameof(ModalHost.Registered)] = (Action<ModalHost>)(h => host = h) })
+      ));
+    string closed = await renderer.Dispatcher.InvokeAsync(() => root.ToHtmlString());
+    closed.ShouldNotContain("data-qa=\"ModalButton\"");
+
+    await host!.OpenAsync(AssemblyInfoModal.ModalId);
+    string open = await renderer.Dispatcher.InvokeAsync(() => root.ToHtmlString());
+
+    Occurrences(open, "data-qa=\"ModalButton\"").ShouldBe(1, "ActionContent replaces the container's default Close");
+    Occurrences(open, "data-qa=\"AssemblyInfoCopy\"").ShouldBe(1, "Copy renders once the dialog loads AssemblyInfo");
+    open.IndexOf("data-qa=\"AssemblyInfoCopy\"", StringComparison.Ordinal)
+      .ShouldBeLessThan(open.IndexOf("data-qa=\"ModalButton\"", StringComparison.Ordinal), "Copy sits before Close");
+    open.ShouldContain(">Version:<", Case.Sensitive, "the Properties loop renders the rows");
+  }
+
+  public static async Task Close_The_Dialog_From_Its_Own_Close_Button()
+  {
+    using CopySpa spa = new(clipboardThrows: false);
+    using SpaTestScope scope = SpaTestScope.Create(spa);
+    await scope.Send(new ApplicationState.SetActiveModalActionSet.Action(AssemblyInfoModal.ModalId));
+    ModalHost? host = null;
+
+    await using ClickRenderer renderer = new(scope.ServiceProvider);
+    await renderer.RenderAsync<ModalHost>
+    (
+      new Dictionary<string, object?> { [nameof(ModalHost.Registered)] = (Action<ModalHost>)(h => host = h) }
+    );
+    await host!.OpenAsync(AssemblyInfoModal.ModalId);
+    renderer.ClickHandlers.ShouldContainKey("AssemblyInfoCopy");
+
+    await renderer.ClickAsync("ModalButton");
+
+    scope.Store.GetState<ApplicationState>().ActiveModalId.ShouldBeNull("the re-declared Close dispatches CloseModal");
+  }
+
   public static async Task Report_Warning_When_Clipboard_Rejects()
   {
     using CopySpa spa = new(clipboardThrows: true);
@@ -108,7 +162,7 @@ public class AssemblyInfoCopy_Should_
     NotificationMessage warning = scope.Store.GetState<NotificationState>().Messages.ShouldHaveSingleItem();
     warning.Intent.ShouldBe(MessageBarIntent.Warning);
     warning.Title.ShouldBe(ApplicationState.AssemblyInfoCopyFailedTitle);
-    warning.Body.ShouldBe(ApplicationState.AssemblyInfoCopyFailedBody);
+    warning.Body.ShouldBe(ClipboardJsModule.DeniedBody);
   }
 
   public static async Task Report_Warning_When_Clipboard_Times_Out()
@@ -133,16 +187,53 @@ public class AssemblyInfoCopy_Should_
         Attribute<AssemblyTitleAttribute>("Fake.Spa"),
         Attribute<AssemblyDescriptionAttribute>("  "),
         Attribute<AssemblyInformationalVersionAttribute>($"1.2.3+{CommitHash}"),
-        new CustomAttributeBuilder
-        (
-          typeof(AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!,
-          ["RepositoryUrl", RepositoryUrl]
-        )
+        Metadata("RepositoryUrl", RepositoryUrl),
+        Metadata("CommitDate", CommitDate),
       ]
     );
     return new AssemblyInfo(assembly);
   }
 
+  private static CustomAttributeBuilder Metadata(string key, string value) =>
+    new(typeof(AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!, [key, value]);
+
   private static CustomAttributeBuilder Attribute<TAttribute>(string value) where TAttribute : Attribute =>
     new(typeof(TAttribute).GetConstructor([typeof(string)])!, [value]);
+
+  private static int Occurrences(string text, string token) => text.Split(token).Length - 1;
+
+  // Hosts AssemblyInfoModal in a ModalController the way the shell does; OpenAsync changes
+  // ActiveModalId after the first render so ModalController invokes OnActivate.
+  private sealed class ModalHost : ComponentBase
+  {
+    private string? ActiveModalId;
+
+    [Parameter] public Action<ModalHost>? Registered { get; set; }
+
+    public Task OpenAsync(string modalId) =>
+      InvokeAsync(() =>
+      {
+        ActiveModalId = modalId;
+        StateHasChanged();
+      });
+
+    protected override void OnInitialized() => Registered?.Invoke(this);
+
+    protected override void BuildRenderTree(RenderTreeBuilder builder)
+    {
+      builder.OpenComponent<ModalController>(0);
+      builder.AddComponentParameter(1, nameof(ModalController.ActiveModalId), ActiveModalId);
+      builder.AddComponentParameter
+      (
+        2,
+        nameof(ModalController.ModalContainers),
+        (RenderFragment)(modals =>
+        {
+          modals.OpenComponent<AssemblyInfoModal>(0);
+          modals.CloseComponent();
+        })
+      );
+      builder.CloseComponent();
+    }
+  }
 }

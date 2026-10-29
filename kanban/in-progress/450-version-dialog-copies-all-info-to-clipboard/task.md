@@ -45,31 +45,50 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 224a923e-4224-4f0b-86cd-4ab674ed19a6, max-turns 500, Done — 2026-10-29T20:19:14Z
 - Review oracle round 1: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 120), effort 2, roster general (sonnet subagent) + orchestrator verification — 2026-10-30. Blocked: fix pass requested for M1–M5.
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session a0253f08-39dd-478a-872f-807baa310f45, max-turns 120 — 2026-10-29T20:25:57Z
+- Implement-fix oracle (round 1 fix pass): implementer-claude (claude, model claude-opus-5-5), headless print mode — 2026-10-30. Fixed M1–M5; review round 2 is next.
 
 ## Results
 
 - `AssemblyInfoText` (`features/application/modals/assembly-info/assembly-info-text.cs`) is the
-  one list of dialog rows. `Properties` feeds the modal's PropertyDisplay loop; `ClipboardText`
-  writes `Title`, those rows, then `CommitUrl` and `RepositoryUrl` as `Name: value` lines.
-  Blank values are dropped with PropertyDisplay's IsNullOrWhiteSpace test.
+  one source for everything the dialog shows: `Title` (the Section heading), `Properties` (the
+  PropertyDisplay loop), and `Links` (the LinkDisplay loop, `CommitUrl` / `RepositoryUrl` with
+  their display text). `ClipboardText` is built from those same three members as `Name: value`
+  lines. Blank values are dropped with PropertyDisplay's IsNullOrWhiteSpace test.
 - `AssemblyInfoCopyButton.razor`: an icon-only FluentButton (Copy glyph, `data-qa="AssemblyInfoCopy"`,
   aria-label "Copy version info") that renders only when AssemblyInfo is non-null and only
   dispatches. It swaps to Checkmark / "Copied" after a successful copy.
 - `ApplicationState.CopyAssemblyInfo` (`application-state.copy-assembly-info.cs`) writes through
-  `ClipboardJsModule` (the WriteText path). A JSException or interop timeout publishes a Warning
-  OutcomeNotification ("Couldn't copy the version info."). `IsAssemblyInfoCopied` is cleared by
+  `ClipboardJsModule.TryWriteTextAsync`. A Denied write (JSException or interop timeout)
+  publishes a Warning OutcomeNotification ("Couldn't copy the version info."). `IsAssemblyInfoCopied` is cleared by
   `SetActiveModal` and `Initialize`. The action is `[CommandPaletteOptOut]`, like CopyOnboarding.
-- AssemblyInfoModal now renders its rows from `AssemblyInfoText.Properties` and uses
+- AssemblyInfoModal renders its heading, rows, and links from `AssemblyInfoText` and uses
   `ActionContent` for Copy plus its own Close (`data-qa="ModalButton"` is kept).
+- `ClipboardJsModule` now owns the clipboard-failure shape the three copy handlers shared:
+  `TryWriteTextAsync` returns `Written`, `Denied` (JSException, or OperationCanceledException
+  with a live caller token), or `Cancelled` (caller token cancelled), and `DeniedBody` is the one
+  Warning body. `NotificationState.WriteAndConfirmAsync`, `AgentLinksState.CopyOnboarding`, and
+  `ApplicationState.CopyAssemblyInfo` switch on it and keep their own titles and state updates.
+  The three duplicate `CopyFailedBody` / `AssemblyInfoCopyFailedBody` constants are gone; the
+  notification tests assert `ClipboardJsModule.DeniedBody`.
 - Tests: `tests/container-apps/web/web-spa-integration-tests/features/application/assembly-info-copy-tests.cs`
-  (5 tests, in-proc C-create, reusing the NotificationCopy_ recording doubles). They use a
-  dynamic-assembly AssemblyInfo fixture: exact text including the commit hash and both URLs,
-  blanks omitted, button absent when AssemblyInfo is null, click writes and confirms, reopen
-  clears, denial and timeout give the Warning.
+  (7 tests, in-proc C-create, reusing the NotificationCopy_ recording doubles). They use a
+  dynamic-assembly AssemblyInfo fixture (including CommitDate metadata): exact text including
+  the commit hash, the CommitDate line, and both URLs, blanks omitted, button absent when
+  AssemblyInfo is null, click writes and confirms, reopen clears, denial and timeout give the
+  Warning. Two modal tests host AssemblyInfoModal in a ModalController (closed, then opened so
+  OnActivate runs): the open dialog has exactly one `ModalButton` and one `AssemblyInfoCopy`,
+  Copy before Close, and a `Version:` row; clicking `ModalButton` clears `ActiveModalId`.
+  Deleting the re-declared Close fails both (mutation-checked).
 - Gates run: `ganda repo audit` passes (one advisory: kanban-landed lists other tasks' stale
   claims, which are not on this id). `dev build` gives 0 warnings and 0 errors. The new class
   passed 5/5. CopyMessage passed 16/16, CommandPalette 45/45, and the RazorRaw and RazorLoading
   guards 1/1 each. `dev template-smoke` (default variant) succeeded.
+- Fix pass (2026-10-30) gates: `dev build` 0 warnings / 0 errors. AssemblyInfoCopy_ 7/7,
+  CopyMessage 16/16, CommandPalette 45/45. `CopyOnboarding` has no test class; it compiles and
+  its outcomes are unchanged. `ganda repo audit`: kanban-landed needed this kitchen landed on
+  origin-home (fixed with `ganda kanban publish 450`); the other entries are advisory warns on
+  other tasks.
 - Not run: the ActionCatalog and Catalog classes use the Aspire session lane. In this headless
   worker they fail at DCP environment setup (portForServing web-server-https), which is not
   caused by this change.
@@ -84,7 +103,13 @@ Acceptance:
   modal's ActionContent/Close wiring has no render test although a ModalController harness
   exists; M3 third copy of the clipboard-failure filter and body string; M4 fixture skips the
   reformatted CommitDate row; M5 redundant `TimeWarp.State.Plus.Extensions` usings.
-- Disposition: pending. Fix pass requested on this id; re-review lands in `review/round-2/`.
+- Disposition: fix pass done on this id (2026-10-30), all five addressed. M1 fixed:
+  `AssemblyInfoText.Title` and `Links` join `Properties`, the modal renders from them, and
+  `ClipboardText` is built from all three. M2 fixed: two ModalController-hosted modal tests; the
+  test Design region no longer claims the modal cannot be rendered. M3 fixed:
+  `ClipboardJsModule.TryWriteTextAsync` + `DeniedBody`, used by all three copy handlers. M4
+  fixed: CommitDate metadata and its expected line. M5 fixed: both redundant usings removed.
+  Re-review lands in `review/round-2/`.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
@@ -99,11 +124,16 @@ dotnet run --project tests/container-apps/web/web-spa-integration-tests/web-spa-
 Then, manually: run the app with `dev run`, click the footer version button, click the copy icon
 beside Close, and paste.
 
-Expect: the test run shows `total: 5 failed: 0 succeeded: 5`. In the app, the icon turns into a
+Expect: the test run shows `total: 7 failed: 0 succeeded: 7`. In the app, the icon turns into a
 checkmark labelled "Copied". The pasted text is `Title: Web.Spa` followed by one `Name: value`
 line per row the dialog shows (blank rows absent), ending with
 `CommitUrl: …/commit/<hash>` and `RepositoryUrl: …`. If the browser denies clipboard access, a
 Warning bar reads "Couldn't copy the version info.".
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5
+- Round 1 fix pass: M1–M5 implemented; awaiting round 2.
 
 ## Notes
 

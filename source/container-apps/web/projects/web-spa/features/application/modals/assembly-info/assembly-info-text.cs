@@ -1,21 +1,25 @@
 #region Purpose
-// AssemblyInfoText: the version dialog's property rows and the plain text its Copy button writes.
+// AssemblyInfoText: the version dialog's heading, rows, and links, and the plain text its Copy
+// button writes.
 #endregion
 
 #region Design
-// One list feeds both the dialog's PropertyDisplay rows and ClipboardText, so the clipboard
-// matches the screen. Blank values are dropped here with the same IsNullOrWhiteSpace test
-// PropertyDisplay applies. ClipboardText is one "Name: value" line per row: Title (the section
-// heading) first, then the property rows in display order, then the two LinkDisplay URLs as
-// CommitUrl and RepositoryUrl. Lines join with "\n", like NotificationState.ClipboardText.
+// Everything the dialog shows comes from here, and ClipboardText is built from the same three
+// members, so the clipboard matches the screen. Title is the Section heading, Properties are
+// the PropertyDisplay rows, and Links are the LinkDisplay rows. Blank values are dropped here
+// with the same IsNullOrWhiteSpace test PropertyDisplay and LinkDisplay apply. ClipboardText is
+// one "Name: value" line per row: Title first, then the property rows in display order, then
+// each link's URL under its Name. Lines join with "\n", like NotificationState.ClipboardText.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
 
-using TimeWarp.State.Plus.Extensions;
-
 public static class AssemblyInfoText
 {
+  /// <summary>The dialog's Section heading; null when the record is not loaded or has no title.</summary>
+  public static string? Title(AssemblyInfo? assemblyInfo) =>
+    string.IsNullOrWhiteSpace(assemblyInfo?.Title) ? null : assemblyInfo.Title;
+
   /// <summary>The dialog's property rows, in display order, with blank values omitted.</summary>
   public static IReadOnlyList<(string Name, string Value)> Properties(AssemblyInfo assemblyInfo)
   {
@@ -45,21 +49,26 @@ public static class AssemblyInfoText
     );
   }
 
+  /// <summary>The dialog's LinkDisplay rows, in display order, with blank URLs omitted.</summary>
+  public static IReadOnlyList<(string Name, string Url, string DisplayText)> Links(AssemblyInfo assemblyInfo)
+  {
+    ArgumentNullException.ThrowIfNull(assemblyInfo);
+    (string Name, string? Url, string DisplayText)[] links =
+    [
+      (nameof(AssemblyInfo.CommitUrl), assemblyInfo.CommitUrl, "View Commit Details"),
+      (nameof(AssemblyInfo.RepositoryUrl), assemblyInfo.RepositoryUrl, "View Repository"),
+    ];
+    return [.. links.Where(link => !string.IsNullOrWhiteSpace(link.Url)).Select(link => (link.Name, link.Url!, link.DisplayText))];
+  }
+
   /// <summary>Everything the dialog shows as "Name: value" lines, blank values omitted.</summary>
   public static string ClipboardText(AssemblyInfo assemblyInfo)
   {
     ArgumentNullException.ThrowIfNull(assemblyInfo);
     IEnumerable<(string Name, string Value)> rows =
-      NonBlank((nameof(AssemblyInfo.Title), assemblyInfo.Title))
+      NonBlank((nameof(AssemblyInfo.Title), Title(assemblyInfo)))
         .Concat(Properties(assemblyInfo))
-        .Concat
-        (
-          NonBlank
-          (
-            (nameof(AssemblyInfo.CommitUrl), assemblyInfo.CommitUrl),
-            (nameof(AssemblyInfo.RepositoryUrl), assemblyInfo.RepositoryUrl)
-          )
-        );
+        .Concat(Links(assemblyInfo).Select(link => (link.Name, link.Url)));
     return string.Join("\n", rows.Select(row => $"{row.Name}: {row.Value}"));
   }
 

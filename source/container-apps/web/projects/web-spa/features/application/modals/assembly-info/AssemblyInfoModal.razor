@@ -4,8 +4,8 @@
 @code
 {
   // Purpose: The footer version dialog: the Web.Spa assembly record and its Copy button.
-  // Design: The rows come from AssemblyInfoText.Properties, the same list the Copy button
-  // writes, so the clipboard matches the screen (task 450). ActionContent replaces the
+  // Design: The heading, rows, and links come from AssemblyInfoText (Title, Properties, Links),
+  // the same members ClipboardText writes, so the clipboard matches the screen (task 450). ActionContent replaces the
   // container's default Close, so this dialog renders Copy beside its own Close.
 
   public const string ModalId = nameof(AssemblyInfoModal);
@@ -22,15 +22,17 @@
 
 <ModalContainer ModalId=@ModalId OnActivate=Activate>
   <MainContent>
-    <Section Title="@(AssemblyInfo?.Title ?? "Assembly")">
+    <Section Title="@(AssemblyInfoText.Title(AssemblyInfo) ?? "Assembly")">
     @if (AssemblyInfo != null)
     {
       @foreach ((string name, string value) in AssemblyInfoText.Properties(AssemblyInfo))
       {
         <PropertyDisplay PropertyName=@name Value=@value/>
       }
-      <LinkDisplay Url=@AssemblyInfo.CommitUrl DisplayText="View Commit Details"/>
-      <LinkDisplay Url=@AssemblyInfo.RepositoryUrl DisplayText="View Repository"/>
+      @foreach ((string _, string url, string displayText) in AssemblyInfoText.Links(AssemblyInfo))
+      {
+        <LinkDisplay Url=@url DisplayText=@displayText/>
+      }
     }
     else
     {
