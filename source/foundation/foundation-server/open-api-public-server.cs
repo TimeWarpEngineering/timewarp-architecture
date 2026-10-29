@@ -20,7 +20,6 @@
 
 namespace TimeWarp.Foundation;
 
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 

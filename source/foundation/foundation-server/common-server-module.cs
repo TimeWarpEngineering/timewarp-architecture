@@ -31,6 +31,8 @@
 // documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
 // and records /.well-known discovery documents in info.description plus
 // x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
+// configureOpenApi runs after those transformers so a host can add product responses
+// (payment 402/503) without putting product routes in this assembly.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -118,13 +120,17 @@ public class CommonServerModule : IAspNetModule
   /// and records the <c>/.well-known/*</c> discovery documents as excluded routes.
   /// Api-server leaves this false: those routes are not on that host.
   /// </param>
+  /// <param name="configureOpenApi">
+  /// Host callback invoked after the shared transformers. Null adds none.
+  /// </param>
   public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
     string apiVersion,
     string apiTitle,
     OpenApiAgentBearer? agentBearer,
-    bool documentPublicWebRoutes = false
+    bool documentPublicWebRoutes = false,
+    Action<OpenApiOptions>? configureOpenApi = null
   )
   {
     if (agentBearer is not null)
@@ -168,6 +174,8 @@ public class CommonServerModule : IAspNetModule
           {
             OpenApiDiscoveryCoverage.Register(openApiOptions);
           }
+
+          configureOpenApi?.Invoke(openApiOptions);
         };
       }
     );

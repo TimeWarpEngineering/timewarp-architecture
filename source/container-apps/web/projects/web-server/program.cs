@@ -391,7 +391,8 @@ public partial class Program : IAspNetProgram
       ApiVersion,
       ApiTitle,
       OpenApiAgentBearerRegistration.Create(),
-      documentPublicWebRoutes: true
+      documentPublicWebRoutes: true,
+      configureOpenApi: OpenApiPaymentResponses.Register
     );
   }
 

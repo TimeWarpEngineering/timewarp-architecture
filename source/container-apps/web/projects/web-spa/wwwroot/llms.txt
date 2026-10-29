@@ -72,6 +72,7 @@ curl -sS https://<host>/.well-known/agent-card.json
 
 - Library: **TimeWarp.402** (challenge / verify / settle; disabled or misconfigured payment → **503**, never 402 on free/discovery paths).
 - Free and discovery routes (this file, `/auth.md`, OpenAPI, health, identity ceremonies, SPA pages) **never** return HTTP 402.
+- The OpenAPI document lists **402** and **503** on `GET`/`POST /api/tip` and `GET /api/demo/metered-capability` only. Fetching `/openapi/v1.json` never returns 402.
 
 ### Voluntary tip jar (commerce-scanner path)
 
