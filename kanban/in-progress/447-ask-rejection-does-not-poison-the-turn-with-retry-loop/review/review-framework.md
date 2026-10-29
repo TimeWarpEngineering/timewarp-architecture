@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 414
-- Effort: 2
+- Lines changed: 175
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -24,6 +24,16 @@ Retry replayed the same history. Fix: RelayChatClient sends only messages the mo
 **Effort:** 2 (general)
 **Reviewer roster:** general (sonnet subagent, read-only) + orchestrator verification (Fable 5.1)
 **Session IDs:** review oracle session recorded on task.md `## Session`
+
+## Round 2 scope (2026-10-30)
+
+**Diff scope:** fix-pass delta only, commit cadb4b0df (round-1 base cc160a6ee):
+- `source/container-apps/web/features/agent-chat/complete-agent-chat/complete-agent-chat-contracts.cs`
+- `source/container-apps/web/projects/web-spa/features/application/agent/relay-chat-client.cs`
+- `tests/container-apps/web/web-spa-integration-tests/features/application/ask-rejection-tests.cs`
+**Effort:** 1 (general), per the Budget block above (175 lines changed)
+**Reviewer roster:** general (sonnet subagent aecad7dafd978a4bc, read-only) + orchestrator verification (Fable 5.1)
+**Purpose:** re-verify M1 and M3 against the delta; scan the delta for new defects.
 
 ## Ground rules
 
