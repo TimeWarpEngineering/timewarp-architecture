@@ -153,7 +153,9 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
   sample card and part title are now "Message bars"; no test asserted "(FluentUI)".
 - Gates after the fix pass: `dev build` 0 warnings / 0 errors; Copy tests 16/16;
   analyzer `MessageBar` 16/16 and `Message_Bars` 15/15; `DesignSystemPage_Should_` 6/6;
-  `ganda repo audit` (see Session).
+  `ganda repo audit` exit 0 after `ganda kanban reconcile` landed this kitchen (the remaining
+  `kanban-landed` warning is 8 other claims with no local worktree); `dev template-smoke`
+  (default variant) succeeded.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
