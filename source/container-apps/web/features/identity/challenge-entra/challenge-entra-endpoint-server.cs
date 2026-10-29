@@ -14,6 +14,8 @@
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
 // FastEndpoints auto-sends 204 unless Send.* or MarkResponseStart runs — Challenge/Redirect write
 // headers without HasStarted on TestServer, so we mark after ChallengeAsync.
+// WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
+// groups this operation with them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -44,6 +46,7 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
       builder =>
       {
         builder
+          .WithTags("Identity")
           .ProducesProblem(400)
           .Produces(401)
           .ProducesProblem(403)
