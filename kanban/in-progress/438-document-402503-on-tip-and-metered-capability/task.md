@@ -43,7 +43,32 @@ Smoke: from `tests/container-apps/web/web-server-integration-tests` (its `global
 
 Expect: 6 passed. `GET` and `POST /api/tip` are anonymous and document 402 (header `PAYMENT-REQUIRED` required, description and schema include `x402Version`, `accepts`, `payTo`, and `base64`) and 503 (no `PAYMENT-REQUIRED`). `GET /api/demo/metered-capability` documents the same pair, `security` scope `demo:invoke`, and a 200 description that contains `balanceAfter`. Those operation paths come from `SubmitTip.Query.RouteTemplate`, `SubmitTipPost.Command.RouteTemplate`, and `InvokeMeteredCapability.Query.RouteTemplate`. The test host sets `TipOptions.Resource` to `/pay/configured-tip` and `MeteredCapabilityOptions.Resource` to `/pay/configured-meter`, and the 402 descriptions contain those values and not the HTTP routes. `GET /api/hello` has neither 402 nor 503. `info.description` contains `never return HTTP 402`, and `paths` has no `/api` operation.
 
-### Review
+### CI failure (open, must fix)
+
+PR #600 `ci (integration)` failed twice, both times with 199 failures in
+`web-server-integration-tests` (run 40803144337, attempts 1 and 2). This is deterministic, not a flake.
+
+Cause: `tests/container-apps/web/web-server-integration-tests/open-api-payment-responses-tests.cs`
+declares stub FastEndpoints classes (`TipGetEndpoint`, `TipPostEndpoint`,
+`MeteredCapabilityEndpoint`, `HelloEndpoint`) in the shared integration test assembly. Other test
+hosts in the same process (for example `HostGraphFactory.CreateWebWithApiAsync`, which starts
+api-server through `ApiTestServerApplication`) run FastEndpoints discovery over the loaded
+assemblies. They pick up the stubs next to the real endpoints and fail at startup:
+
+```
+The route [GET:api/tip] has 2 endpoints registered to handle requests!
+The route [POST:api/tip] has 2 endpoints registered to handle requests!
+The route [GET:/api/hello] has 2 endpoints registered to handle requests!
+The route [GET:api/demo/metered-capability] has 2 endpoints registered to handle requests!
+Duplicate routes detected!
+   at TimeWarp.Architecture.Api.Server.Program.ConfigureMiddleware (api-server/program.cs:130)
+```
+
+Fix so the stubs cannot reach any other host's discovery (or the test needs no endpoint classes),
+then prove it by running the whole integration group, not only this file:
+`dotnet run tools/dev-cli/dev.cs -- test --group integration`.
+
+## Review
 
 - Round 1 (effort 2, roster: general). The documented 402 and 503 shapes match the handlers and
   the x402 payload. Counts: 0 bug, 2 suggestion, 1 nit. M1: `resource.url` was hard-coded.
