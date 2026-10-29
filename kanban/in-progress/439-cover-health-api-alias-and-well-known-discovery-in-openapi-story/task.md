@@ -68,7 +68,7 @@ Expect: discovery coverage 6 passed. The tip class includes `Api Health_ Should_
 - Round 3 (effort 1, general): Blocked. M1 and M2 are still open. Fix pass 2 (implement-fix-3) made no product change. HEAD is still `3f596ae40`, and the implementer ended after 1 model call. Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`. No disposition yet.
 - Round 3: Blocked — open M1, M2
 - Round 4 (effort 2, general): Done. Delta `2ebd4893d` fixes M1 and M2 in both ingress builders. Verified: `dev build` 0 warnings, yarp 19 of 19, discovery coverage 6 of 6, tip runfile 7 of 7. 0 open. Disposition `clean` in `review/disposition.md`. Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`.
-
+- Round 4: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json (60 paths, no
