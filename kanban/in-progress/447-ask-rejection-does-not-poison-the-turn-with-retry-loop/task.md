@@ -38,6 +38,7 @@ Acceptance:
 
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - 2026-10-30 implementer (ganda task work, claude-opus-5-5): repro, fix, test, gates.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 33de1603-903d-4d98-9713-bb22f153af07, max-turns 500, Done — 2026-10-29T18:32:18Z
 
 ## Notes
 
