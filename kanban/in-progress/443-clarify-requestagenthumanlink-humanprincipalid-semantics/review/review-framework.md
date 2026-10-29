@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 264
-- Effort: 2
+- Lines changed: 49
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Round 1 framework — task 443
 
@@ -17,6 +17,15 @@
 **Effort:** 2 (host Budget.ByDiff, 264 lines) — roster axis general
 **Reviewer roster:** general (reviewer-general sub-agent, claude-sonnet-5-5, read-only) + orchestrator gate re-run (build, new tests, repo audit) and claim verification
 **Session IDs:** implement oracle session c5708c32-27fc-453a-b85b-abc0d8c7985c (claude-opus-5-5); review oracle: ganda task work review round 1, 2026-10-29, claude-fable-5-1; reviewer-general agent id a6b5c07a7a4582d67
+
+## Round 2 framework — task 443
+
+**Date:** 2026-10-29
+**Diff scope:** fix commit `e6b00753c` vs round-1 base `7afc5224a` (round-1 `base.sha`). Product delta: `source/container-apps/web/projects/web-spa/wwwroot/auth.md` only.
+**Plan / brief:** `review/round-1/merged.md` (M1 suggestion, M2 nit; fix pass requested).
+**Effort:** 1 (host Budget.ByDiff, 49 lines) — roster axis general
+**Reviewer roster:** general, performed inline by the review oracle (claude-fable-5-1); the delta is 15 doc lines, so no sub-agent was spawned
+**Session IDs:** fix pass implement-fix-2 oracle (claude-opus-5-5, 2026-10-29); review oracle round 2, ganda task work, 2026-10-29, claude-fable-5-1
 
 ## Ground rules
 
