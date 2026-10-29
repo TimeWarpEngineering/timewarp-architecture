@@ -39,9 +39,9 @@ public class Breadcrumb_Given_Wasm
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
 
-    await GotoAsync(page, "/DesignSystem/color-tokens");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem/color-tokens");
     await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
-    await page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+    await PlaywrightPageLoad.ReloadAsync(page);
     await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await ExpectTrailStylesAsync(page);
     await ExpectFocusRingInsideTheTrailAsync(page);
@@ -58,10 +58,10 @@ public class Breadcrumb_Given_Wasm
       new PageWaitForURLOptions { Timeout = 30_000 });
     await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
 
-    await GotoAsync(page, "/Counter");
+    await PlaywrightPageLoad.GotoAsync(page, "/Counter");
     await OpenDesignSystemFromPaletteAsync(page);
     await ExpectTrailAsync(page, "Design System", "Home");
-    await GotoAsync(page, "/Counter");
+    await PlaywrightPageLoad.GotoAsync(page, "/Counter");
     await OpenPartFromPaletteAsync(page);
     await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     await page.Locator("[data-qa=DesignSystemPartLink][data-part=color-tokens]").ClickAsync();
@@ -71,7 +71,7 @@ public class Breadcrumb_Given_Wasm
     await ExpectTrailAsync(page, "Color Tokens", "Home", "Design System");
     (await page.Locator("[data-qa=Breadcrumb]").InnerTextAsync()).ShouldNotContain("Counter");
 
-    await GotoAsync(page, "/Admin/Roles");
+    await PlaywrightPageLoad.GotoAsync(page, "/Admin/Roles");
     ILocator administrator = page.Locator("[data-qa=RoleDetail]").Filter(new LocatorFilterOptions { HasText = "Administrator" });
     await administrator.ClickAsync();
     await page.WaitForURLAsync(
@@ -234,15 +234,6 @@ public class Breadcrumb_Given_Wasm
     await page.WaitForURLAsync(
       static url => url.EndsWith("/DesignSystem/color-tokens", StringComparison.Ordinal),
       new PageWaitForURLOptions { Timeout = 30_000 });
-  }
-
-  private static async Task GotoAsync(IPage page, string path)
-  {
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + path, new PageGotoOptions
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded,
-      Timeout = 120_000,
-    });
   }
 
   private static async Task GrantDeveloperAsync(HostGraph graph)
