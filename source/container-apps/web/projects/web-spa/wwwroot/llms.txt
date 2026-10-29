@@ -32,6 +32,7 @@ There is **no** email/password registration form and **no** “create account wi
   - `POST /api/identity/agent/token/options`
   - `POST /api/identity/agent/token`
 - Who am I: `GET /api/identity/agent/me` with `Authorization: Bearer <token>` (scope `identity:read`)
+- Optional human link: `POST /api/agent-links` with scope `identity:read` and body `{"humanPrincipalId":"<human account id>"}`. `humanPrincipalId` is required and has no default: an omitted or empty id is 400, and there is no self-link. The human approves on the Agent links page. Details: [auth.md](/auth.md).
 
 ### Onboarding (preferred)
 

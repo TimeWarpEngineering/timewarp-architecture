@@ -291,6 +291,30 @@ Credential management (list/add/revoke) uses `/api/identity/credentials*` under 
 policy that accepts either an identity-session cookie **or** a bearer token with
 scope `credential:manage`.
 
+### Optional human link
+
+An agent can ask to be linked to a human account. The link is optional; paid service
+never needs it. The agent calls with a bearer that has scope `identity:read`, and the
+human approves or denies the request on the **Agent links** page.
+
+| Step | Method | Route | Notes |
+|------|--------|-------|-------|
+| Request link | `POST` | `/api/agent-links` | Body: `humanPrincipalId` (**required** uuid) → `linkId`, `status` (`Pending`) |
+| List links | `GET` | `/api/agent-links` | The caller's own links (agent bearer or human session) |
+| Approve / deny | `POST` | `/api/agent-links/{linkId}/approve`, `/deny` | Human session only |
+| Human handoff | `GET` | `/api/agent-links/{linkId}/human-ux` | Agent bearer; only after approval |
+
+`humanPrincipalId` is the human's account id, which the Agent links page shows to the
+signed-in human. It has no default. The server never links an agent to itself or
+guesses a human. An omitted or empty id is **400**. A request with no valid agent
+bearer gets **401**. A bearer whose principal is not an agent gets **403**. An id that
+is not a human account gets **404**. A pending or approved link for the same pair
+already existing is **409**. A denied link can be requested again.
+
+```json
+{ "humanPrincipalId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301" }
+```
+
 ---
 
 ## Payment — x402 (not identity)
