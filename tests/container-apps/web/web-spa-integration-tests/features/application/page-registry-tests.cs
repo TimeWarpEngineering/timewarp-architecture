@@ -35,7 +35,7 @@ public class All_Should_
       "HomePage", "SettingsPage", "AgentLinksPage", "ProfilePage",
       "RolesListPage", "PrincipalsPage", "FeedbackAdminListPage", "AuthenticationPage",
       "CounterPage", "ChatPage", "PasskeysPage",
-      "DesignSystemPage", "TestPage", "ServicesPage", "UserClaimsPage",
+      "DesignSystemPage", "TestPage", "ServicesPage", "ClaimsPage",
     })
     {
       names.ShouldContain(expected);

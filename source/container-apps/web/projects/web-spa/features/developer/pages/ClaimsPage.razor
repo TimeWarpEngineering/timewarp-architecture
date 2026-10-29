@@ -1,0 +1,29 @@
+@namespace TimeWarp.Architecture.Features.Developer
+@using TimeWarp.Architecture.Features.Developer.Components
+@using TimeWarp.Architecture.Services
+@inherits BaseComponent
+
+@code {
+  public static string Title => "Claims";
+  public static Icon? NavIcon => new Icons.Regular.Size20.Question();
+
+  private bool IsMockAuthentication => AuthenticationStateProvider is MockAuthenticationStateProvider;
+}
+
+<TimeWarpPage Title="@Title">
+  <Description>
+    @if (IsMockAuthentication)
+    {
+      <span data-qa="ClaimsSource">Claims from AuthenticationState. Source: mock authentication (Authentication:UseMock).</span>
+    }
+    else
+    {
+      <span data-qa="ClaimsSource">Claims from AuthenticationState. Source: identity session (GetCurrentSession, GET api/identity/session).</span>
+    }
+  </Description>
+  <ChildContent>
+    <Card>
+      <ClaimList />
+    </Card>
+  </ChildContent>
+</TimeWarpPage>
