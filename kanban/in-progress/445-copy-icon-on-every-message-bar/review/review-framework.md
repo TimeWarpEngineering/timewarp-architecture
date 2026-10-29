@@ -10,11 +10,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1791
-- Effort: 3
+- Lines changed: 292
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Gates re-run by the review oracle (round 1)
 
@@ -29,6 +29,24 @@
 | `dev template-smoke` (default variant) | SUCCEEDED (441/441, 9/9, 14/14 aggregators) |
 
 Goal restatement vs task: no misread. The restatement adds that TWA0025 must also match the shared control; that is a consequence of the task's own "one shared control" requirement, not a divergence from it.
+
+## Round 2 (fix-pass delta)
+
+**Diff scope:** commit 1a7797596 (round-1 base ecfc574f0 → HEAD), 8 product/test files, 171+/80-.
+**Effort:** 2 (host Budget.ByDiff, 292 lines); roster axes: general; turn cap 120.
+**Session IDs:** review oracle Claude Fable 5.1 (`ganda task work`, headless print mode, 2026-10-30); `general` reviewer sub-agent Claude Sonnet (read-only, no builds, wrote `round-2/general.md`).
+
+| Gate | Result |
+|------|--------|
+| `dev build` (`./bin/dev`) | 0 warnings, 0 errors |
+| `web-spa-integration-tests --filter-class Copy` | 16/16 |
+| `web-spa-integration-tests --filter-class DesignSystemPage` | 6/6 |
+| `timewarp-architecture-analyzers-tests --filter-class MessageBar` | 16/16 |
+| `timewarp-architecture-analyzers-tests --filter-class Message_Bars` | 15/15 |
+| `ganda repo audit` | exit 0; 1 advisory (`kanban-landed`: 8 other tasks' claims, not 445) |
+| `dev template-smoke` (default variant) | SUCCEEDED (441/441, 9/9, 14/14 aggregators) |
+
+`dev lint-skills` not re-run: the delta does not touch `skills/`. Outcome: M1-M4 fixed, 0 new findings, 0 open → `disposition.md` clean.
 
 ## Ground rules
 
