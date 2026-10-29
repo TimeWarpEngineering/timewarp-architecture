@@ -435,12 +435,12 @@ internal static class DesignSystemParts
     new
     (
       "message-bars",
-      "Message bars (FluentUI)",
+      "Message bars",
       Group.Feedback,
       """
-      <FluentMessageBar Intent="MessageBarIntent.Info" Title="Information" AllowDismiss="false">
-        Helpful context that does not require immediate action.
-      </FluentMessageBar>
+      <MessageBar Intent="MessageBarIntent.Info"
+                  Title="Information"
+                  Body="Helpful context that does not require immediate action." />
       """,
       typeof(MessageBarsSample)
     ),

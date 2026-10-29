@@ -52,7 +52,7 @@ Underscores in component names represent **hierarchical relationships** and are 
 - `PeriodStepper.razor` (composites) — previous, a label, and next (`twe-period-stepper`); each end can be disabled; the page owns the label and `ValueChanged`
 - `DataGridFrame.razor` (composites) — frame around every `FluentDataGrid`: scrolls sideways below the grid's minimum width, ellipsis headers; columns use `GridTemplateColumns` minmax tracks (tw-blazor)
 
-**Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local `FluentMessageBar` (TWA0025). Static Info/Warning guidance may stay inline. Buttons: `FluentButton`.
+**Status and outcomes:** operation outcomes (success/failure) go to the shell's single notification region (`MessageBars.razor` painting `NotificationState`) — never a page-local outcome bar (TWA0025). Static Info/Warning guidance may stay inline. Every bar is the shared `MessageBar.razor` with its Copy button, never a raw `FluentMessageBar` (TWA0037). Buttons: `FluentButton`.
 
 #### **Tier 2: Complex Components** 
 **Pattern**: Flat structure with underscore hierarchy  

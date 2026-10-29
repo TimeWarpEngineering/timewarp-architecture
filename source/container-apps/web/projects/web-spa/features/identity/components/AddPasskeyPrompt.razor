@@ -26,6 +26,8 @@
   the sessionStorage key; first interactive render only reads it back to restore the dismissal.
   Required (site settings PasskeyPromptMode): Later is hidden; TimeWarpPage hides page body
   until a passkey exists. Never a route policy — this is UX plus a chrome gate.
+  Task 445: both bars are the shared MessageBar, so each has Copy beside its own actions. Copy
+  writes the title and body text only: the nickname input is ChildContent and is not copied.
 *@
 
 @code {
@@ -40,6 +42,9 @@
   private bool CanSaveNickname =>
     !IsRenaming && NicknameDraft.Trim().Length is >= 1 and <= TimeWarp.Identity.Credential.MaxNicknameLength;
   private bool IsRequired => SiteSettingsState.PasskeyPromptMode == PasskeyPromptMode.Required;
+  private string PromptBody => IsRequired
+    ? "You signed in with Microsoft 365. Add a passkey to continue using this app."
+    : "You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.";
   private bool ShouldShow =>
     PasskeySoftPrompt.ShouldShow(CredentialsState.Credentials, dismissed: IsRequired ? false : CredentialsState.PasskeySoftPromptDismissed);
 
@@ -101,10 +106,9 @@
 @if (ShouldShowNicknameForm)
 {
   <div class="twe-passkey-prompt" data-qa="AddPasskeyNicknamePrompt">
-    <FluentMessageBar Intent="MessageBarIntent.Info"
-                      Title="Name this passkey"
-                      AllowDismiss="false"
-                      Layout="MessageBarLayout.MultiLine">
+    <MessageBar Intent="MessageBarIntent.Info"
+                Title="Name this passkey"
+                Layout="MessageBarLayout.MultiLine">
       <ChildContent>
         <FluentTextInput @bind-Value="NicknameDraft"
                          AriaLabel="Nickname"
@@ -124,27 +128,17 @@
           Skip
         </FluentButton>
       </ActionsTemplate>
-    </FluentMessageBar>
+    </MessageBar>
   </div>
 }
 
 @if (ShouldShow)
 {
   <div class="twe-passkey-prompt" data-qa="AddPasskeySoftPrompt">
-    <FluentMessageBar Intent="@(IsRequired ? MessageBarIntent.Warning : MessageBarIntent.Info)"
-                      Title="Add a passkey"
-                      AllowDismiss="false"
-                      Layout="MessageBarLayout.MultiLine">
-      <ChildContent>
-        @if (IsRequired)
-        {
-          <text>You signed in with Microsoft 365. Add a passkey to continue using this app.</text>
-        }
-        else
-        {
-          <text>You signed in with Microsoft 365. Add a passkey for this site so you can sign in without Entra next time.</text>
-        }
-      </ChildContent>
+    <MessageBar Intent="@(IsRequired ? MessageBarIntent.Warning : MessageBarIntent.Info)"
+                Title="Add a passkey"
+                Body="@PromptBody"
+                Layout="MessageBarLayout.MultiLine">
       <ActionsTemplate>
         <FluentButton Appearance="ButtonAppearance.Primary"
                       data-qa="AddPasskeySoftPromptCta"
@@ -160,6 +154,6 @@
           </FluentButton>
         }
       </ActionsTemplate>
-    </FluentMessageBar>
+    </MessageBar>
   </div>
 }
