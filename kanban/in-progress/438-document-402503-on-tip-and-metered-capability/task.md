@@ -43,6 +43,7 @@ Round-3/4 acceptance: the test stub endpoints must not reach any other in-proces
 - Implement-fix-2 oracle (implementer-claude, headless): Done in 26 ms, no product change (2026-10-29). Same session id and duration as the resumed implement oracle before round 3; the fix for M4 was not made.
 - Review oracle round 4 (host round 2, fix pass 1 of 5): general reviewer (claude-fable-5-1, effort 1 by-diff, headless), 2026-10-29. Product tree identical to round 3, so M4 (bug) and M5 (nit) stay open; no new findings. Fix pass requested again.
 - Implement-fix-3 (implementer-claude, headless), 2026-10-29: fixed M4 and M5. `api-server/program.cs` sets `DisableAutoDiscovery = true` beside its explicit `Assemblies`; api-server endpoints are all generated into the api-server assembly (foundation-server holds only the abstract base), so nothing auto-discovered is lost (still 74 endpoints registered). The collision was also between the new stubs and the older `open-api-bearer-security-tests.cs` stubs (`/api/hello`, `/api/demo/metered-capability`), which api-server had been picking up silently. `FreeRoutesNever402` is now `static readonly` and interpolates `/{TipRoute}` and `/{MeteredRoute}`. `dev test --group integration`: 8 of 8 projects passed (web-server-integration-tests 396 passed, 0 failed, 1 skipped). `dev build` 0 warnings. `ganda repo audit`: only `kanban-landed` failed (this kitchen differs from origin-home); cleared by publishing the kitchen.
+- Review oracle round 5 (host review-3): general reviewer (claude-fable-5-1, effort 1 by-diff, headless), 2026-10-29. Re-verified `828e09324..b1a6cb150`: M4 and M5 fixed, no new findings. `dev build` 0 warnings; `dev test --group integration` 8 of 8 projects passed with no duplicate-route failure. Disposition clean.
 
 ## Results
 
@@ -83,6 +84,14 @@ then prove it by running the whole integration group, not only this file:
 
 Fix: `source/container-apps/api/projects/api-server/program.cs` sets `options.DisableAutoDiscovery = true`, so api-server scans only `Api.Server` and `Api.Contracts`, as web-server already does. Proof: `dotnet run tools/dev-cli/dev.cs -- test --group integration` passed 8 of 8 projects (web-server-integration-tests +396/x0/?1), 2026-10-29.
 
+### Review disposition
+
+Five rounds, roster `general` throughout (effort 2, 2, 3, 1, 1). Final counts: bug 0 open / 1 fixed,
+suggestion 0 open / 2 fixed, nit 0 open / 2 fixed, 0 wontfix. Disposition **clean** (2026-10-29, round 5):
+M1–M3 fixed in `0264769f3`, M4 and M5 fixed in `b1a6cb150` and re-verified with `dev build` (0 warnings)
+and the whole integration group (8 of 8 projects). No escalations. Trail: `review/review-framework.md`,
+`review/round-5/merged.md` (final ledger), `review/disposition.md`.
+
 ## Review
 
 - Round 1 (effort 2, roster: general). The documented 402 and 503 shapes match the handlers and
@@ -110,17 +119,24 @@ Fix: `source/container-apps/api/projects/api-server/program.cs` sets `options.Di
   stubs at `open-api-payment-responses-tests.cs:236–282` are still public, `api-server/program.cs:104`
   still has no `DisableAutoDiscovery`, and `FreeRoutesNever402` still holds route literals. M4 (bug) and
   M5 (nit) carry open unchanged; no new findings.
-- Current counts (round 4): bug 1 open / 0 fixed / 0 wontfix, suggestion 0 open / 2 fixed / 0 wontfix,
-  nit 1 open / 1 fixed / 0 wontfix.
-- Disposition: **reopened** — fix pass requested for M4 (and M5 if cheap). The earlier `clean`
-  outcome stays withdrawn until round 5 re-verifies the fix. If the next fix pass again lands no product
-  change, an operator should check the host journal replay instead of requesting another pass.
+- Round 5 (effort 1 by-diff, roster: general), re-review of `828e09324..b1a6cb150`. The fix commit sets
+  `DisableAutoDiscovery = true` in `api-server/program.cs:105` beside the explicit `Assemblies`, mirroring
+  web-server; no api-server endpoint lives outside `Api.Server` and `Api.Contracts`, so nothing served
+  before is lost. `FreeRoutesNever402` is now `static readonly`, interpolated from `TipRoute` and
+  `MeteredRoute` in declaration order, and renders the same sentence. Re-run on this tree: `dev build`
+  0 warnings; `dotnet run tools/dev-cli/dev.cs -- test --group integration` 8 of 8 projects passed with no
+  `Duplicate routes detected!` in the log. M4 and M5 fixed; no new findings.
+- Final counts (round 5): bug 0 open / 1 fixed / 0 wontfix, suggestion 0 open / 2 fixed / 0 wontfix,
+  nit 0 open / 2 fixed / 0 wontfix.
+- Disposition: **clean** — every raised finding (M1–M5) is fixed; no wontfix, no escalation. Rounds run: 5,
+  roster general throughout (effort 2, 2, 3, 1, 1).
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`,
-  `review/round-3/merged.md`, `review/round-4/general.md`, `review/round-4/merged.md` (live ledger),
-  `review/disposition.md`.
+  `review/round-3/merged.md`, `review/round-4/general.md`, `review/round-4/merged.md`,
+  `review/round-5/general.md`, `review/round-5/merged.md` (final ledger), `review/disposition.md`.
 - Round 3: Blocked — open M4, M5
 - Round 4: Blocked — open M4, M5
+- Round 5: Done — clean
 ## Review
 
 - Round 1: M1, M2, M3 implemented in the fix pass.
