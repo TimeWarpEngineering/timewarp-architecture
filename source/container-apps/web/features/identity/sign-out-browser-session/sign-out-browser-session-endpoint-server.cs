@@ -14,6 +14,8 @@
 // 400 with nothing cleared. AllowAnonymous at HTTP metadata: an already-expired session still
 // signs out (idempotent, like EndBrowserSession).
 // MarkResponseStart after writing the redirect so FastEndpoints does not replace it with 204.
+// WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
+// groups this operation with them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -28,6 +30,7 @@ public sealed class SignOutBrowserSessionEndpoint : EndpointWithoutRequest
     Post(SignOutBrowserSession.Path.TrimStart('/'));
     AllowAnonymous();
     AllowFormData(urlEncoded: true);
+    Description(builder => builder.WithTags("Identity"));
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken)

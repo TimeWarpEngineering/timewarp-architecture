@@ -6,7 +6,9 @@
 // Same host shape as the drawer proof: in-process Web.Server, shared Chromium, en-US locale.
 // The design system requires developer.access. The first passkey account is Administrator, so the
 // test adds the Developer role and then fully navigates. Each case is a document load or a
-// real click, not a static render. The filter targets the shadow input of the catalog text field.
+// real click, not a static render. Each document load goes through PlaywrightPageLoad, which
+// waits for the page to finish authorizing before the case asserts. The filter targets the
+// shadow input of the catalog text field.
 // Group names are headings inside the catalog, and each nested list names its heading.
 // Expected part titles are Part.Title in DesignSystemParts.PageOrder.
 // Expected group headings are the Group names in declaration order, for groups that have a part.
@@ -44,7 +46,7 @@ public class DesignSystemCatalog_Given_Wasm
     await SignInWithNewPasskeyAsync(page, context);
     await GrantDeveloperAsync(graph);
 
-    await GotoAsync(page, "/DesignSystem/drawers");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem/drawers");
     ILocator catalog = page.Locator("[data-qa=DesignSystemCatalog]");
     ILocator stage = page.Locator("[data-qa=DesignSystemStage]");
     ILocator titles = stage.Locator("h2.twe-card__title");
@@ -58,11 +60,11 @@ public class DesignSystemCatalog_Given_Wasm
     await ExpectGroupHeadingsAsync(catalog, GroupNames);
     await ExpectDesignSystemNavOpenAsync(page);
 
-    await GotoAsync(page, "/DesignSystem/brand");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem/brand");
     await ExpectDesignSystemNavOpenAsync(page);
     await Assertions.Expect(titles).ToHaveTextAsync("Brand");
 
-    await GotoAsync(page, "/DesignSystem/page-header");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem/page-header");
     await Assertions.Expect(page.Locator("h1")).ToHaveCountAsync(1);
     await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync("Design System");
     await Assertions.Expect(page.Locator("[data-qa=PageHeaderExample] h1")).ToHaveCountAsync(0);
@@ -71,7 +73,7 @@ public class DesignSystemCatalog_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=PageHeaderRule]")).ToContainTextAsync("FormActions");
     await ExpectDesignSystemNavOpenAsync(page);
 
-    await GotoAsync(page, "/DesignSystem");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem");
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemAll]")).ToHaveAttributeAsync("aria-current", "page");
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemUsage]")).ToHaveCountAsync(0);
     await Assertions.Expect(titles).ToHaveCountAsync(PartTitles.Length);
@@ -115,7 +117,7 @@ public class DesignSystemCatalog_Given_Wasm
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemAll]")).ToHaveAttributeAsync("aria-current", "page");
     await Assertions.Expect(titles).ToHaveCountAsync(PartTitles.Length);
 
-    await GotoAsync(page, "/DesignSystem/no-such-part");
+    await PlaywrightPageLoad.GotoAsync(page, "/DesignSystem/no-such-part");
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemUnknown]")).ToContainTextAsync("No such part.");
     await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync("Design System");
     await Assertions.Expect(page.Locator("[data-qa=DesignSystemUsage]")).ToHaveCountAsync(0);
@@ -189,15 +191,6 @@ public class DesignSystemCatalog_Given_Wasm
         "the Design System nav item stays active and its group stays open: " + state,
         exception);
     }
-  }
-
-  private static async Task GotoAsync(IPage page, string path)
-  {
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + path, new PageGotoOptions
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded,
-      Timeout = 120_000,
-    });
   }
 
   private static async Task GrantDeveloperAsync(HostGraph graph)

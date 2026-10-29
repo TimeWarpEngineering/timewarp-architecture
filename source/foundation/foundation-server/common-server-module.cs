@@ -26,8 +26,10 @@
 // host's policy-to-scope map. UseScalarApiReference must run after UseFastEndpoints;
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
-// applies the bearer. OpenApiPublicServer then replaces servers with the
-// forwarded public origin. Scalar's Servers list stays empty and follows that document.
+// applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
+// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
+// the document's servers with the forwarded public origin, and Scalar's Servers list stays
+// empty and follows that document.
 // documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
 // and records /.well-known discovery documents in info.description plus
 // x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
@@ -164,6 +166,9 @@ public class CommonServerModule : IAspNetModule
 
         options.ConfigureOpenApi = openApiOptions =>
         {
+          // After FastEndpoints' operation transformer, which is registered before this callback.
+          OpenApiOneOf.Register(openApiOptions);
+          OpenApiDeleteRequestBody.Register(openApiOptions);
           if (agentBearer is not null)
           {
             OpenApiBearerSecurity.Register(openApiOptions, agentBearer);

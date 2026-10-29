@@ -14,7 +14,7 @@
 // matching the palette's sign-in rule for commands, so an anonymous visitor gets navigate and
 // site_map alone.
 // navigate and site_map share AgentSiteMap.DestinationsAsync, the menu's destinations for this
-// principal (Sign in included while signed out), so both answer and move across the whole app
+// principal (Sign in included while signed out, Ctrl-K's deep links last), so both answer and move across the whole app
 // from every page, including Home (task 300). site_map is read-only and never needs approval.
 // navigate needs approval in Ask before editing and runs at once in Automatically edit.
 // FindOfferedAsync re-checks permission for the principal at call time. A global tool survives

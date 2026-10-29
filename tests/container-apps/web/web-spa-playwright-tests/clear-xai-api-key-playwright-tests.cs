@@ -65,11 +65,7 @@ public class ClearXaiApiKey_Given_Wasm
     }
 
     await Assertions.Expect(page.Locator("[data-qa=XaiByokMode]")).ToBeVisibleAsync();
-    await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Authentication", new PageGotoOptions
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded,
-      Timeout = 120_000,
-    });
+    await PlaywrightPageLoad.GotoAsync(page, "/Admin/Authentication");
     await Assertions.Expect(page.Locator("[data-qa=AuthenticationSave]")).ToBeVisibleAsync();
     await Assertions.Expect(page.Locator("[data-qa=XaiByokModeSettings]")).ToHaveCountAsync(0);
     await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/AI", new PageGotoOptions

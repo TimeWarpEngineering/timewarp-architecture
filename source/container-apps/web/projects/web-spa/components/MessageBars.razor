@@ -2,27 +2,27 @@
 @inherits BaseComponent
 
 @code {
-  // Purpose: The one notification region — paints NotificationState as FluentMessageBar rows.
+  // Purpose: The one notification region — paints NotificationState as MessageBar rows.
   // Design: Section and Card have no error slot. Operation outcomes are application-surface
   // status, so this host sits at the top of TimeWarpPage and TimeWarpFocusedPage, directly
-  // below the header/breadcrumb and above the first card, and is the ONLY place a
-  // FluentMessageBar with Error/Success intent may render (TWA0025). Pages report through
-  // NotificationState; they never paint their own bars.
-  // Shape: Title + optional Body (Notification layout when there is no body, MultiLine when
-  // there is). AllowDismiss is false: FluentMessageBar's built-in dismiss does not notify
-  // state. Dismiss dispatches DismissMessage so the row stays gone across re-renders.
+  // below the header/breadcrumb and above the first card, and is the ONLY place a message bar
+  // with Error/Success intent may render (TWA0025). Pages report through NotificationState;
+  // they never paint their own outcome bars.
+  // Shape: each row is the shared MessageBar control (Title + optional Body; Notification
+  // layout when there is no body, MultiLine when there is). Dismiss dispatches DismissMessage
+  // so the row stays gone across re-renders.
   // Cap: NotificationState.VisibleMessages is the newest MaxVisible; "+N more" toggles the
   // full list (ShowAll is view-only state, reset per page because this host is re-created).
   // Lifetime: after each render the host schedules ExpireMessages for NotificationState
-  // .NextExpiry (Success auto-dismiss); navigation clearing lives in NavigationListener.
-  // Copy (task 313): each row has an icon-only Copy button next to Dismiss that dispatches
-  // CopyMessage (the handler owns the clipboard interop and reports a failure as a Warning).
-  // Confirmation is an icon swap: the row matching CopiedMessageId shows a Checkmark labelled
-  // "Copied" until the ExpireMessages timer clears it (NextExpiry includes CopiedUntil).
+  // .NextExpiry (Success auto-dismiss, and the end of any bar's "Copied" confirmation);
+  // navigation clearing lives in NavigationListener.
+  // Copy (task 313, shared in task 445): MessageBar paints the Copy button before Dismiss. Rows
+  // pass NotificationId, so Copy dispatches CopyMessage(id) and the row matching
+  // CopiedMessageId shows the "Copied" check until the ExpireMessages timer clears it.
   // Spacing: MessageBars.razor.css owns the bar gap and bottom margin via tokens; the
   // fluent-message-bar actions slot spaces Copy and Dismiss itself.
-  // Ask Tag (task 346): each bar is pickable as AskTagMark.MessageBarKind(intent) ("Error bar")
-  // with its title as the label.
+  // Ask Tag (task 346): MessageBar marks each bar as AskTagMark.MessageBarKind(intent) ("Error
+  // bar") with its title as the label.
   // No INotificationService and no FluentMessageBarProvider — headless tests never render this.
 
   private bool ShowAll;
@@ -36,11 +36,6 @@
 
   private Task DismissAsync(string id) =>
     NotificationState.DismissMessage(id, CancellationToken);
-
-  private Task CopyAsync(string id) =>
-    NotificationState.CopyMessage(id, CancellationToken);
-
-  private bool IsCopied(string id) => NotificationState.CopiedMessageId == id;
 
   private void ToggleShowAll() => ShowAll = !ShowAll;
 
@@ -109,32 +104,17 @@
   <div class="twe-message-bars" data-qa="MessageBars">
     @foreach (NotificationState.NotificationMessage message in Rows)
     {
-      <FluentMessageBar @key="message.Id"
-                        Intent="@message.Intent"
-                        Title="@message.Title"
-                        AllowDismiss="false"
-                        Layout="@(message.Body is null ? MessageBarLayout.Notification : MessageBarLayout.MultiLine)"
-                        @attributes="AskTagMark.For(AskTagMark.MessageBarKind(message.Intent), message.Title)">
-        <ChildContent>
-          @if (message.Body is not null)
-          {
-            <span data-qa="MessageBarBody">@message.Body</span>
-          }
-        </ChildContent>
+      <MessageBar @key="message.Id"
+                  NotificationId="@message.Id"
+                  Intent="@message.Intent"
+                  Title="@message.Title"
+                  Body="@message.Body">
         <ActionsTemplate>
-          <FluentButton Appearance="ButtonAppearance.Subtle"
-                        Size="ButtonSize.Small"
-                        IconOnly="true"
-                        IconStart="@(IsCopied(message.Id) ? new Icons.Regular.Size20.Checkmark() : new Icons.Regular.Size20.Copy())"
-                        Title="@(IsCopied(message.Id) ? "Copied" : "Copy message")"
-                        aria-label="@(IsCopied(message.Id) ? "Copied" : "Copy message")"
-                        data-qa="MessageBarCopy"
-                        OnClick="@(() => CopyAsync(message.Id))" />
           <FluentButton Size="ButtonSize.Small" data-qa="MessageBarDismiss" OnClick="@(() => DismissAsync(message.Id))">
             Dismiss
           </FluentButton>
         </ActionsTemplate>
-      </FluentMessageBar>
+      </MessageBar>
     }
     @if (HiddenCount > 0)
     {

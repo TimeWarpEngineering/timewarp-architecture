@@ -10,7 +10,7 @@
     await NotificationState.AddNotification(intent, title, externalCancellationToken: CancellationToken);
 
   // A handler throws, StateTransactionBehavior publishes ExceptionNotification,
-  // and ExceptionNotificationHandler records a FluentMessageBar. Dispatched
+  // and ExceptionNotificationHandler records a NotificationState row. Dispatched
   // through the generated ActionSet method (TWA0022 bans direct mediator Send here).
   private async Task TriggerException() =>
     await CounterState.ThrowException("Demo exception dispatched from the Design System.", CancellationToken);

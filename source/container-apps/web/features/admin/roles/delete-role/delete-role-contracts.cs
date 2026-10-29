@@ -14,6 +14,9 @@
 // AuthenticationSchemeNames' Design region for why.
 // [Operation] names it roles.delete for every transport. IIdempotentCommand: a retried delete
 // leaves the role gone; the second call may report not found but changes nothing.
+// The handler reads RoleId only. UserId is the mock-mode caller id on the query string
+// (IQueryStringRouteProvider). OpenApiDeleteRequestBody publishes that query parameter and
+// omits a request body: FastEndpoints would otherwise require a JSON body for this DELETE.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
