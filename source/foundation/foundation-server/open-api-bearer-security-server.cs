@@ -21,7 +21,6 @@
 
 namespace TimeWarp.Foundation;
 
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 /// <summary>

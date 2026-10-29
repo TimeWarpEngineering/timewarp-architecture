@@ -388,7 +388,8 @@ public partial class Program : IAspNetProgram
       serviceCollection,
       ApiVersion,
       ApiTitle,
-      OpenApiAgentBearerRegistration.Create()
+      OpenApiAgentBearerRegistration.Create(),
+      OpenApiPaymentResponses.Register
     );
   }
 
