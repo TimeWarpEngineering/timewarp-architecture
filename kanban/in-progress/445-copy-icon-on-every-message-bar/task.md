@@ -199,8 +199,7 @@ dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -- --
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-- Round 2: Done — M1-M4 fixed, 0 open, disposition clean
-
+- Round 2: Done
 ## Notes
 
 Task 313 format and confirmation live in `NotificationState.ClipboardText`, `CopiedConfirmationInterval`, and `MessageBars.razor`. Reuse them.
