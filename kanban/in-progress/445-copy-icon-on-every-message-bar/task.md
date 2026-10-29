@@ -25,18 +25,121 @@ Shell notification rows already do this (done task 313): `MessageBars.razor` put
 
 Leave these as page-local bars. TWA0025 already allows static Info and Warning guidance outside the shell host. Moving them into `NotificationState` is out of scope.
 
+## Goal (implementer restatement)
+
+Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cannot skip it.
+
+- One shared `MessageBar` component (`components/MessageBar.razor`) wraps `FluentMessageBar`
+  and paints the icon-only Copy button ("Copy message", swaps to a "Copied" check for
+  `CopiedConfirmationInterval`). The shell `MessageBars` host paints its rows through it.
+- The four page-local call sites (Configuration drift, Session expired, both passkey bars,
+  the four design-system samples) render `MessageBar` instead of `FluentMessageBar`. Their own
+  actions (Save / Skip, Add a passkey / Later) stay beside Copy.
+- Copy only dispatches. Shell rows keep `CopyMessage(id)`; page bars dispatch a new
+  `NotificationState` action that writes `ClipboardText(title, body)` through
+  `ClipboardJsModule`. A failure is the same Warning ("Couldn't copy the message.") and
+  never throws. Copied text is title, or title + blank line + body; button labels and the
+  nickname input are not copied.
+- A new convention analyzer reports `FluentMessageBar` rendered anywhere except the shared
+  control and the shell host, recorded in `AnalyzerReleases.Unshipped.md`. TWA0025 keeps
+  catching Error/Success page bars now that they render through `MessageBar`.
+- The design-system "Message bars" `<pre>` snippet shows the `MessageBar` markup.
+- Acceptance: tests for copied text, the failure Warning, and the Copy button dispatching
+  on the shared control and each design-system sample; analyzer tests; `dev build` clean;
+  `ganda repo audit` passes.
+
 ## Checklist
 
-- [ ] Shared copy control used by the shell host and every other message bar
-- [ ] Copy icon on the four call sites listed above, including both passkey bars
-- [ ] Analyzer so a new product `FluentMessageBar` cannot skip the control
-- [ ] Tests: copied text, failure Warning, and that each new button dispatches the action
-- [ ] `dev build` 0 warnings / 0 errors and `ganda repo audit` pass
+- [x] Shared copy control used by the shell host and every other message bar
+- [x] Copy icon on the four call sites listed above, including both passkey bars
+- [x] Analyzer so a new product `FluentMessageBar` cannot skip the control
+- [x] Tests: copied text, failure Warning, and that each new button dispatches the action
+- [x] `dev build` 0 warnings / 0 errors and `ganda repo audit` pass
 
 ## Session
 
 - Created: 01a18418-875e-7d10-9d0a-d9d22584627c (2026-10-28)
 - Spec: 01a18418-875e-7d10-9d0a-d9d22584627c (2026-10-29)
+- Implement: ganda task work implementer, Claude Opus 5.5 (2026-10-29)
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session c192672d-1610-4f51-acc0-b722d1d2a4f0, max-turns 500, Done — 2026-10-29T16:54:36Z
+
+## Results
+
+- `components/MessageBar.razor` is the one message bar. It wraps `FluentMessageBar` and paints
+  the icon-only Copy button first in the actions slot, then the caller's `ActionsTemplate`.
+  `Title` and `Body` are the copied text; `ChildContent` (the passkey nickname input) is not
+  copied. It carries the Ask Tag mark that used to sit on the shell rows.
+- `MessageBars.razor` paints each row as `<MessageBar NotificationId=…>`, so shell rows still
+  dispatch `CopyMessage(id)` (task 313, unchanged behavior).
+- New `NotificationState.CopyMessageBar(barId, title, body)` for page-local bars. It shares
+  `WriteAndConfirmAsync` with `CopyMessage`: same `ClipboardText`, same
+  `CopiedConfirmationInterval`, same "Couldn't copy the message." Warning, no throw.
+  `ClipboardText(title, body)` is the shared overload (a blank body is no body). Body is a
+  plain string because the generated dispatch method drops nullability. The action carries
+  `[CommandPaletteOptOut]`.
+- `RemoveExpired` now clears the "Copied" confirmation only when it ran out or the copied row
+  itself expired. Before, any expiry pass cleared an id that was not a shell row, which would
+  cut a page-local bar's confirmation short.
+- Call sites converted: Authentication "Configuration drift" (`data-qa="ConfigurationPolicyDrift"`
+  now sits on the bar), Microsoft 365 "Session expired", both `AddPasskeyPrompt` bars (Save /
+  Skip and Add a passkey / Later stay), and the four `MessageBarsSample` bars. The
+  design-system "Message bars" snippet in `DesignSystemParts` shows the `MessageBar` markup.
+- Analyzer **TWA0037** (`DirectFluentMessageBarAnalyzer`): raw `FluentMessageBar` outside
+  `components/MessageBar.razor` and `components/MessageBars.razor` fails the build. Path-matched
+  like TWA0032; WASM-only, so analyzer test stubs are exempt; no opt-out attribute. Recorded in
+  `AnalyzerReleases.Unshipped.md`. TWA0036 is skipped because to-do task 452's spec names it;
+  the reserved-ids comment says so.
+- **TWA0025** now also checks the shared `MessageBar` (type named `MessageBar` in a namespace
+  whose last segment is `Components`). Without this, converting bars to the control would hide
+  Error/Success page bars from the rule. `MessageBarsSample` keeps its `[PageLocalMessageBar]`
+  opt-out for that reason.
+- Docs: `skills/tw-blazor` "Operation outcomes" names the shared `MessageBar` and TWA0037;
+  `components/overview.md` matches.
+- Tests: the task 313 doubles moved to `notification-copy-test-doubles.cs` (ClickRenderer gained
+  parameters, per-index clicks, and diff-set aria-labels). New `CopyMessageBar_Should_` (7 tests):
+  format, write + confirm + expiry, confirmation survives an earlier expiry pass, rejection
+  Warning, timeout Warning, control Copy dispatches and swaps to "Copied" with ChildContent not
+  copied and the bar's own action still working, and each of the four design-system sample
+  buttons copies its own bar. Analyzer tests: `Should_Require_The_Shared_MessageBar` (13) and two
+  new TWA0025 cases (shared MessageBar Error flags; same-named type elsewhere does not).
+- The passkey, Authentication, and Microsoft 365 bars are not rendered in a test: their state
+  setup needs the closed-box Aspire host, which workers do not start. They get the button from
+  the same control, and TWA0037 stops them from going back to a raw bar.
+- Gates run in this worktree: `dev build` 0 warnings / 0 errors; `CopyMessage_Should_` +
+  `CopyMessageBar_Should_` 14/14; `CommandPalette_Should_` 45/45; `DesignSystemPage_Should_` 6/6;
+  analyzer message-bar classes 28/28; `dev lint-skills` pass; `dev template-smoke` (default
+  variant) succeeded; `dev check-version` source 2.0.0-beta.29 ahead of NuGet beta.28;
+  `ganda repo audit` passes with one advisory (`kanban-landed`: 8 other tasks' claims have no
+  local worktree; not this task's claim, nothing to fix here). A temporary raw bar on
+  `ChooseMicrosoft365Page.razor` produced `error TWA0037` in the real build (reverted).
+
+### How to validate
+
+**Smoke**
+
+1. `dev run`, then raise a shell notification (Design System → Notifications), open the
+   Authentication page with config drift, the Microsoft 365 choose page with an expired
+   session, both passkey prompts, and Design System → Message bars.
+2. On each bar, activate the Copy icon and paste into a text field.
+
+**Expect**
+
+- Pasted text is the title, plus a blank line and the body when the bar has body text. "Name
+  this passkey" pastes only its title, never the nickname draft.
+- The icon reads "Copied" for about two seconds, then returns to "Copy message".
+- Passkey Save, Skip, Add a passkey, and Later still work; shell bars still copy and dismiss.
+- With clipboard permission denied, a Warning bar "Couldn't copy the message." appears.
+
+**Automated gate**
+
+```bash
+dev build
+dotnet run --project tests/container-apps/web/web-spa-integration-tests -- --filter-class Copy
+dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -- --filter-class MessageBar
+dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -- --filter-class Message_Bars
+```
+
+(`dev test` has no `--filter-class`; the filter is a Jaribu option on the test project.)
 
 ## Notes
 
