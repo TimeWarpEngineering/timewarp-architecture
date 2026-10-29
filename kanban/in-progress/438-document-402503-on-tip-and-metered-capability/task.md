@@ -32,6 +32,7 @@ Round-1 review acceptance: the documented challenge `resource.url` is the config
 - Review oracle: review by reviewer-claude (claude, model claude-opus-5-5), session dae4a414-145c-40a1-8f22-c2a65b22724c, max-turns 120 — 2026-10-29T01:13:11Z
 - Implement-fix-2: addressed M1–M3 (2026-10-29). The document reads the configured resource from the host options, and the payment OpenAPI test uses the contract route templates.
 - Review oracle round 2: general reviewer (claude-opus-5-5, effort 2, headless), 2026-10-29. M1–M3 are fixed and there are no new findings. Disposition clean.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 01a18528-d963-7fb2-9d37-b4a636af295b, max-turns 500, Done — 2026-10-29T06:08:45Z
 
 ## Results
 
