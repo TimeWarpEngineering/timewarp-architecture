@@ -3,16 +3,17 @@
 #endregion
 
 #region Design
-// Same import-a-named-export shape as SignOutJsModule. A clipboard rejection (permission denied,
-// insecure context) surfaces as JSException so the caller can report it. A dropped Server
-// circuit (JSDisconnectedException) is swallowed: there is no page left to report to.
-// TryWriteTextAsync is the one place the copy handlers classify a failure: a JSException, or an
-// OperationCanceledException while the caller's token is live (a JS-interop timeout, e.g. a
-// stalled permission prompt on Server), is Denied; a cancelled caller token means the host was
-// disposed, so it is Cancelled and the caller does nothing. DeniedBody is the one Warning body
-// every copy handler shows on Denied; each handler keeps its own title and state update.
-// [SideEffectService]: components never call this directly (TWA0026); the copy handlers do.
-// wwwroot/js is emitted by TypeScript.MSBuild and is not committed.
+// Same import-a-named-export shape as SignOutJsModule. A clipboard rejection (permission
+// denied, insecure context) surfaces as JSException so the caller can report it. A dropped
+// Server circuit (JSDisconnectedException) is swallowed: there is no page left to report to.
+// TryWriteTextAsync is the one place the copy handlers classify a failure; WriteTextAsync is
+// private, so a handler cannot bypass it. A JSException, or an OperationCanceledException while
+// the caller's token is live (a JS-interop timeout, e.g. a stalled permission prompt on
+// Server), is Denied; a cancelled caller token means the host was disposed, so it is Cancelled
+// and the caller does nothing. DeniedBody is the one Warning body every copy handler shows on
+// Denied; each handler keeps its own title and state update. [SideEffectService]: components
+// never call this directly (TWA0026); the copy handlers do. wwwroot/js is emitted by
+// TypeScript.MSBuild and is not committed.
 #endregion
 
 namespace TimeWarp.Architecture.Services;
@@ -50,7 +51,7 @@ internal static class ClipboardJsModule
     }
   }
 
-  internal static async Task WriteTextAsync(IJSRuntime jsRuntime, string text, CancellationToken cancellationToken)
+  private static async Task WriteTextAsync(IJSRuntime jsRuntime, string text, CancellationToken cancellationToken)
   {
     ArgumentNullException.ThrowIfNull(jsRuntime);
     ArgumentNullException.ThrowIfNull(text);

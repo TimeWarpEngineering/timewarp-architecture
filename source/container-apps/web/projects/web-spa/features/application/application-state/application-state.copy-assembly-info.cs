@@ -9,7 +9,8 @@
 // SetActiveModal clears it, so a reopened dialog starts at Copy. A Denied write
 // (ClipboardJsModule.TryWriteTextAsync: a rejection or a JS-interop timeout) becomes a Warning
 // bar with ClipboardJsModule.DeniedBody through OutcomeNotification; the handler does not
-// dispatch another action. Cancelled (the host was disposed) does nothing. It is dialog plumbing: the Copy button is the only caller.
+// dispatch another action. Cancelled (the host was disposed) does nothing. It is dialog
+// plumbing: the Copy button is the only caller.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

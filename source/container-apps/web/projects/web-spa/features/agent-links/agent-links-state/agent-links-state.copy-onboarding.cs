@@ -4,8 +4,9 @@
 
 #region Design
 // The Agent links buttons only dispatch (TWA0026). This handler calls ClipboardJsModule.
-// CopiedSlot names which button shows "Copied". A Denied write (ClipboardJsModule.TryWriteTextAsync)
-// becomes a Warning bar with ClipboardJsModule.DeniedBody through OutcomeNotification; the handler does not dispatch another action. The action takes
+// CopiedSlot names which button shows "Copied". A Denied write
+// (ClipboardJsModule.TryWriteTextAsync) becomes a Warning bar with ClipboardJsModule.DeniedBody
+// through OutcomeNotification; the handler does not dispatch another action. The action takes
 // the text the page already rendered, so the clipboard matches the screen. It is palette
 // plumbing: the page is the only caller.
 #endregion

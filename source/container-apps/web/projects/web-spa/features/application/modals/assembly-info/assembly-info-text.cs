@@ -4,12 +4,14 @@
 #endregion
 
 #region Design
-// Everything the dialog shows comes from here, and ClipboardText is built from the same three
-// members, so the clipboard matches the screen. Title is the Section heading, Properties are
-// the PropertyDisplay rows, and Links are the LinkDisplay rows. Blank values are dropped here
-// with the same IsNullOrWhiteSpace test PropertyDisplay and LinkDisplay apply. ClipboardText is
-// one "Name: value" line per row: Title first, then the property rows in display order, then
-// each link's URL under its Name. Lines join with "\n", like NotificationState.ClipboardText.
+// Every value the dialog shows comes from here (the loading state and the "Assembly" fallback
+// heading aside), and ClipboardText is built from the same three members, so the clipboard
+// matches the screen. Title is the Section heading, Properties are the PropertyDisplay rows,
+// and Links are the LinkDisplay rows. Blank values are dropped here with the same
+// IsNullOrWhiteSpace test PropertyDisplay and LinkDisplay apply. ClipboardText is one "Name:
+// value" line per row: Title first, then the property rows in display order, then each link's
+// URL under its Name; the modal markup renders them in that same order. Lines join with "\n",
+// like NotificationState.ClipboardText.
 #endregion
 
 namespace TimeWarp.Architecture.Components;
