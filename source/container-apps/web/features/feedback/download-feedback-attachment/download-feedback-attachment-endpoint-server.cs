@@ -12,6 +12,8 @@
 // may hold feedback.read, and a role on that principal is not consulted (tasks 314 and 378).
 // A feedback.file.self route policy would 403 a read-only feedback admin whose role lacks
 // the filing permission.
+// Description.WithTags("Feedback") is the tag the generator gives its siblings (namespace leaf),
+// so Scalar groups this operation with them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -32,6 +34,7 @@ public sealed class DownloadFeedbackAttachmentEndpoint
       AuthenticationSchemeNames.IdentitySession,
       AuthenticationSchemeNames.MockIdentitySession,
       AuthenticationSchemeNames.AgentToken);
+    Description(builder => builder.WithTags("Feedback"));
   }
 
   /// <inheritdoc />
