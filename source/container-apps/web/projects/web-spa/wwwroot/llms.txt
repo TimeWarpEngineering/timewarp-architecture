@@ -46,12 +46,15 @@ Commands: `keygen`, `register`, `token`, `whoami`, `demo`. Default server: `http
 ## API surface
 
 - OpenAPI document: [/openapi/v1.json](/openapi/v1.json)
-- Scalar UI: [/scalar/v1](/scalar/v1)
-- Health: [/api/health](/api/health)
+  - Includes FastEndpoints operations, `GET /api/health`, and `GET|POST /api` (rewrite alias of `/api/tip`, including `/api/`).
+  - Excludes the `/.well-known/*` documents in Protocol discovery and WebMCP. That exclusion is the document description (Scalar renders it) and `x-timewarp-excluded-routes`.
+- Scalar UI: [/scalar/v1](/scalar/v1) (shows the exclusion note from the OpenAPI description)
+- Health: [/api/health](/api/health) — also an operation in the OpenAPI document. Body is `text/plain` (`Healthy`, `Degraded`, or `Unhealthy`). It can open Postgres. Not an uptime probe; liveness is `GET /web-server/alive`.
 
 ## Protocol discovery (v1 minimal)
 
 Stable well-known paths. Stubs are **honest**: empty MCP tools and no live A2A JSON-RPC task endpoint yet.
+These paths are not operations in [/openapi/v1.json](/openapi/v1.json). The document records that exclusion in its description and in `x-timewarp-excluded-routes`.
 
 | Surface | Path | Notes |
 |---------|------|-------|
@@ -121,7 +124,7 @@ Browser requests (Accept: text/html) are unchanged — Blazor SPA hosting is not
 
 Backend MCP (`/mcp`, card [`/.well-known/mcp/server-card.json`](/.well-known/mcp/server-card.json)) and frontend WebMCP are separate transports. The card stays honest: `capabilities.tools` is false, `tools` is empty, and `status` is `stub`. Do not call `/mcp` expecting `tools/list`.
 
-WebMCP registers tools in the browser through `document.modelContext.registerTool` (fallback `navigator.modelContext`). The generated document is [`/.well-known/webmcp.json`](/.well-known/webmcp.json), built from the page registry. `/` registers `navigate` during HTML parse (the site-wide page goto; the person approves first). `site_map` and `page_context` join it once the page is interactive. Route-scoped tools run only on the matching SPA route: `/Feedback` adds the feedback actions, and `/Settings` adds credential actions such as `Credentials.AddPasskey`. A call from any other route returns a navigate offer and does not run.
+WebMCP registers tools in the browser through `document.modelContext.registerTool` (fallback `navigator.modelContext`). The generated document is [`/.well-known/webmcp.json`](/.well-known/webmcp.json), built from the page registry. That path is a discovery document, not an OpenAPI operation (`x-timewarp-excluded-routes`). `/` registers `navigate` during HTML parse (the site-wide page goto; the person approves first). `site_map` and `page_context` join it once the page is interactive. Route-scoped tools run only on the matching SPA route: `/Feedback` adds the feedback actions, and `/Settings` adds credential actions such as `Credentials.AddPasskey`. A call from any other route returns a navigate offer and does not run.
 
 Inspector steps: in the page, `typeof navigator.modelContext`. Use Chrome Canary with the flag `#enable-webmcp-testing`, or the MCP-B polyfill. In the inspector, Copy trace.
 

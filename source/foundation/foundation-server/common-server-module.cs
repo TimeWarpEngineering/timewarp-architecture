@@ -28,6 +28,9 @@
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiPublicServer then replaces servers with the
 // forwarded public origin. Scalar's Servers list stays empty and follows that document.
+// documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
+// and records /.well-known discovery documents in info.description plus
+// x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -110,12 +113,18 @@ public class CommonServerModule : IAspNetModule
   /// <param name="agentBearer">
   /// Scheme name and policy-to-scope map. When null, the document does not advertise agent bearer auth.
   /// </param>
+  /// <param name="documentPublicWebRoutes">
+  /// When true, the document lists <c>GET /api/health</c> and the <c>GET|POST /api</c> tip alias,
+  /// and records the <c>/.well-known/*</c> discovery documents as excluded routes.
+  /// Api-server leaves this false: those routes are not on that host.
+  /// </param>
   public static void AddOpenApi
   (
     IServiceCollection serviceCollection,
     string apiVersion,
     string apiTitle,
-    OpenApiAgentBearer? agentBearer
+    OpenApiAgentBearer? agentBearer,
+    bool documentPublicWebRoutes = false
   )
   {
     if (agentBearer is not null)
@@ -155,6 +164,10 @@ public class CommonServerModule : IAspNetModule
           }
 
           OpenApiPublicServer.Register(openApiOptions);
+          if (documentPublicWebRoutes)
+          {
+            OpenApiDiscoveryCoverage.Register(openApiOptions);
+          }
         };
       }
     );
