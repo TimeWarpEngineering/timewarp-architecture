@@ -38,6 +38,8 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implemented: ganda task work implement oracle, Claude Opus 5.5 (2026-10-29)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 3e392671-ddab-4ea0-adaf-6a945a18238f, max-turns 500, Done — 2026-10-29T16:16:22Z
+- Review oracle: review round 1 by Claude Fable 5.1 (claude-fable-5-1), effort 1, roster general, turn cap 80, disposition accepted-exceptions — 2026-10-29
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 7d88bd43-5a0f-4472-9dc5-79e7ece6d1ad, max-turns 80 — 2026-10-29T16:21:56Z
 
 ## Results
 
@@ -60,6 +62,18 @@ Acceptance:
   (070-001, 104-024..026, 123, 141, 198, 244) that have no worktree. Those are other
   sessions' claims, so this task did not change them.
 
+### Review
+
+- Rounds: 1. Roster: general, effort 1. Reviewer re-ran `dev build` (0 warnings) and the
+  `AskSurface_Given_Wasm` Playwright test (passed; the first cold run timed out at the final
+  Configure-permissions navigation, after the new assertions had passed, which is not in this diff).
+- Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 open / 0 fixed / 1 wontfix.
+- Disposition: accepted-exceptions. M1 (nit): the task 444 Design sentences left one 170-character
+  comment line in `AskAnswerBar.razor`; accepted because the repo has no line-length rule and the
+  text is prose only. The restatement matched the task; no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 Smoke: `cd tests/container-apps/web/web-spa-playwright-tests && dotnet run -c Release -- --filter-class AskSurface_Given_Wasm`
@@ -68,6 +82,10 @@ Smoke: `cd tests/container-apps/web/web-spa-playwright-tests && dotnet run -c Re
 
 Expect: the test passes (1/1). By hand, the clipboard holds both prompts under `You:` and both
 replies under the assistant's name, in order. Copy still copies only the last answer.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
