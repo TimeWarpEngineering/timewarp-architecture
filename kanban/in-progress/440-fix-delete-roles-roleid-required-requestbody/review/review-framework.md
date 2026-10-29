@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 562
-- Effort: 2
+- Lines changed: 138
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Framework — task 440
 
@@ -26,6 +26,18 @@
 - `dev check-version`: source `2.0.0-beta.29`, NuGet latest `2.0.0-beta.28`; source is already ahead, no bump needed on this diff.
 - `ganda repo audit`: passes; one `kanban-landed` warning about other tasks' claims, outside this task.
 - Live spec `https://arch.timewarp.work/openapi/v1.json` (2026-10-29): DELETE Roles still carries the body there; GET Roles publishes `userId` (query, camelCase); the other DELETEs are bodyless. The transformer changes only DELETE Roles in this repo.
+
+## Round 2 — 2026-10-29
+
+**Diff scope:** delta `33384f091..778ebb0c5` (`source/`, `tests/`), the fix pass for round 1 M1 and M2. Round 1 is frozen (`round-1/closed`).
+**Effort:** 1 (host by-diff budget, 138 lines); roster general only
+**Reviewer roster:** general (claude sonnet subagent `a4364a44abccc6485`, read-only)
+**Orchestrator:** review-2 oracle (claude-fable-5-1) under `ganda task work 440`
+
+Gates re-run by the orchestrator on `778ebb0c5`:
+
+- `dev build` (./bin/dev): Build succeeded, 0 warnings, 0 errors.
+- `dotnet run -c Release -- --filter-class DeleteRoles_Given_` in web-server-integration-tests: 5/5 passed.
 
 ## Ground rules
 
