@@ -39,13 +39,96 @@ WASM start plus authorization took longer than 5 seconds after a full page load.
 - Changing authorization or page code.
 - Any change outside this repository. If something here seems to need one, stop and report.
 
+## Goal (implementer restatement)
+
+The browser tests run with prerender off, so after a full-page navigation the DOM is empty, then
+shows the router's `Authorizing...` placeholder, then the page. `GotoAsync` returns at
+`DOMContentLoaded`, and the next assertion only has Playwright's 5-second default. On a loaded
+machine WASM start plus authorization can take longer, and the test fails on a correct page.
+
+Done means:
+
+- One shared helper navigates (full page load or reload) and then waits up to 30 seconds for the
+  shell's app bar, which renders only after authorization finishes (the whole page is inside
+  `AuthorizeRouteView`). The Design System catalog test uses it for every full-page navigation.
+- Other tests that do a full-page navigation followed by a default-timeout expect use the same
+  helper. Every assertion stays as strict as before; only the wait before it changes.
+- An idle-machine run shows the wait is short (no hidden product delay); if it is not, report it.
+- `dev build` 0/0, `dev test --group playwright` passes, `ganda repo audit` clean.
+
 ## Checklist
 
-- [ ] Full-page navigation waits for the page to finish authorizing before asserting
-- [ ] Other tests with the same pattern checked; list changed or "none"
-- [ ] `dev build` 0/0; `dev test --group playwright` passes
-- [ ] No client name in source, tests, or skills
+- [x] Full-page navigation waits for the page to finish authorizing before asserting
+- [x] Other tests with the same pattern checked; list changed or "none"
+- [x] `dev build` 0/0; `dev test --group playwright` passes
+- [x] No client name in source, tests, or skills
 
 ## Session
 
 - Created: c2bec172-f0eb-4648-9edb-30256e7756e3 (2026-10-28)
+- Implemented 2026-10-30: shared `PlaywrightPageLoad` helper; catalog, breadcrumb, and clear-key
+  tests use it. Gates green (see Results).
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session bf8cf537-22e2-47cb-b81a-d0e5d5e7172f, max-turns 500, Done — 2026-10-29T19:18:13Z
+
+## Results
+
+New file `tests/container-apps/web/web-spa-playwright-tests/playwright-page-load.cs`:
+`PlaywrightPageLoad.GotoAsync(page, path)` and `PlaywrightPageLoad.ReloadAsync(page)` load the
+document (`DOMContentLoaded`, 120 s navigation timeout as before), then wait up to 30 s for the
+shell's `.twe-appbar`. The whole page sits inside `AuthorizeRouteView` and the suite runs with
+prerender off, so the app bar appears only after `Authorizing...` is gone and the page has
+rendered. On timeout it throws with the URL and page text. The app bar, not the `Design System`
+`h1`, is the landmark because every `TimeWarpPage` renders it whatever its title, so other tests
+can share the helper.
+
+Tests changed (assertions unchanged; only the wait before them):
+
+- `design-system-catalog-playwright-tests.cs`: the private `GotoAsync` is gone; all five document
+  loads (`/DesignSystem/drawers`, `/brand`, `/page-header`, `/DesignSystem`, `/no-such-part`) use
+  the helper. The Design region says so.
+- `breadcrumb-playwright-tests.cs`: same private `GotoAsync` removed; `/DesignSystem/color-tokens`,
+  both `/Counter` loads, and `/Admin/Roles` use the helper, and the `ReloadAsync` before
+  `ExpectTrailAsync` uses `PlaywrightPageLoad.ReloadAsync`.
+- `clear-xai-api-key-playwright-tests.cs`: the `/Admin/Authentication` load (followed by a
+  default-timeout `ToBeVisibleAsync`) uses the helper.
+
+Checked, no change needed: every other full-page load in the project already waits on a landmark
+with a 30–120 s timeout before asserting (sign-in helpers, Ask tests, drawer, feedback, admin AI,
+passkey, shell-nav, first-paint, state dev tools, web MCP, agent links).
+
+No hidden product delay: temporary timing (removed before commit) showed the new wait at
+2.3–4.2 s per load with load average about 13 (other work running). That is close to the old 5 s
+default, which explains the flake, and it is not many seconds on an idle machine.
+
+Gates (2026-10-30):
+
+- `dev build`: 0 warnings, 0 errors.
+- `dev test --group playwright`: 33/33 passed.
+- `dev check-client-names`: passed.
+- `ganda repo audit`: exit 0, 34 passed. One warning, `kanban-landed`: 8 live claims for other
+  tasks (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244) have no worktree on this machine.
+  Its fix would release other workers' claims, which is out of scope for this task, so it is left
+  as is.
+
+### How to validate
+
+Smoke:
+
+```
+./bin/dev build
+./bin/dev test --group playwright
+```
+
+Or one class at a time, after a build:
+
+```
+tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/web-spa-playwright-tests --filter-class DesignSystemCatalog
+tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/web-spa-playwright-tests --filter-class Breadcrumb
+tests/container-apps/web/web-spa-playwright-tests/bin/Release/net11.0/web-spa-playwright-tests --filter-class ClearXaiApiKey
+```
+
+Expect: build 0/0; the playwright group passes 33/33, including
+`Catalog_Should_DeepLink_Filter_And_Reject_An_Unknown_Slug`. Under load (for example, another
+worker's browser tests running) the unknown-slug step waits for the shell instead of failing on
+the `Authorizing...` placeholder after 5 s. If the page never finishes authorizing, the failure
+reads "The page did not finish authorizing at <url>" with the page text.
