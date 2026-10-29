@@ -26,6 +26,9 @@
 // Auth (task 110, fail-closed default):
 // [EndpointAuthorize] → Policies/Roles/AuthSchemes; [EndpointAllowAnonymous] → AllowAnonymous();
 // NEITHER attribute → emit nothing (FastEndpoints requires authentication by default).
+// The anonymous reason is copied into EndpointSummary.Description so OpenAPI states the
+// public choice instead of looking like a forgotten 401. Authorized endpoints keep the
+// 401/403 metadata FastEndpoints adds when the verb is not anonymous.
 // Empty request DTOs (no public properties) get EmptyRequestBinder — FE's default binder rejects them.
 // Summary/Description only — no weather-specific ExampleRequest.
 // OpenAPI feature grouping: FE Tags() is endpoint-filter metadata only (no relationship with
@@ -356,22 +359,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       ? $".WithTags({tagArgs})"
       : "";
 
-    string summary = !string.IsNullOrEmpty(metadata.Summary)
-      ? $$"""
-            Summary(s =>
-            {
-              s.Summary = "{{EscapeForStringLiteral(metadata.Summary)}}";
-              s.Description = "{{EscapeForStringLiteral(metadata.Description)}}";
-            });
-
-            Description(d => d{{withTagsChain}}.Produces<{{metadata.ClassName}}.Response>(200, "Success").ProducesProblem(400, "Bad Request")
-            );
-          """
-      : metadata.Tags.Length > 0
-        ? $$"""
-            Description(d => d.WithTags({{tagArgs}}));
-          """
-        : "";
+    string summary = BuildOpenApiConfiguration(metadata, withTagsChain, tagArgs);
 
     string requestType = metadata.RequestTypeName;
 
@@ -402,6 +390,67 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
                }
              }
              """;
+  }
+
+  /// <summary>
+  /// Emits Summary/Description for OpenAPI. XML summary still drives the 200/400 Produces chain.
+  /// An anonymous reason is appended to the description even when the request has no XML docs,
+  /// and that path does not invent a 400 response.
+  /// </summary>
+  private static string BuildOpenApiConfiguration(EndpointEmitModel metadata, string withTagsChain, string tagArgs)
+  {
+    string openApiDescription = metadata.Description;
+    if (!string.IsNullOrEmpty(metadata.AnonymousReason))
+    {
+      string note = "Intentionally anonymous. " + metadata.AnonymousReason;
+      openApiDescription = string.IsNullOrEmpty(openApiDescription)
+        ? note
+        : openApiDescription + " " + note;
+    }
+
+    bool hasSummary = !string.IsNullOrEmpty(metadata.Summary);
+    bool hasDescription = !string.IsNullOrEmpty(openApiDescription);
+    string summaryBlock = string.Empty;
+    if (hasSummary || hasDescription)
+    {
+      List<string> lines =
+      [
+        "            Summary(s =>",
+        "            {"
+      ];
+      if (hasSummary)
+      {
+        lines.Add($"              s.Summary = \"{EscapeForStringLiteral(metadata.Summary)}\";");
+      }
+
+      if (hasDescription)
+      {
+        lines.Add($"              s.Description = \"{EscapeForStringLiteral(openApiDescription)}\";");
+      }
+
+      lines.Add("            });");
+      lines.Add(string.Empty);
+      summaryBlock = string.Join('\n', lines);
+    }
+
+    if (hasSummary)
+    {
+      summaryBlock +=
+        $"            Description(d => d{withTagsChain}.Produces<{metadata.ClassName}.Response>(200, \"Success\").ProducesProblem(400, \"Bad Request\")\n            );";
+      return summaryBlock;
+    }
+
+    if (metadata.Tags.Length > 0)
+    {
+      if (summaryBlock.Length > 0)
+      {
+        summaryBlock += "\n";
+      }
+
+      summaryBlock += $"            Description(d => d.WithTags({tagArgs}));";
+    }
+
+    return summaryBlock;
   }
 
   /// <summary>

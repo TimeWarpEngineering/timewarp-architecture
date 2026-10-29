@@ -7,7 +7,8 @@
 // One flat DTO decouples template emission from Roslyn symbol traversal, so the generated-code
 // template can change without touching symbol-walking logic.
 // OpenAPI summary/description come from the Query/Command XML docs — the contract is the single
-// authoring point for API documentation.
+// authoring point for API documentation. An [EndpointAllowAnonymous] reason is appended to that
+// description ("Intentionally anonymous. …") so a public GET is not mistaken for a dropped 401.
 // Tags default to the leaf namespace under Features (…Features.Admin.Roles → "Roles"), keeping
 // OpenAPI grouping aligned with the vertical-slice Id without per-endpoint annotation.
 // [OpenApiTags] is additive; Distinct() de-dupes.
@@ -65,7 +66,8 @@ internal sealed record EndpointEmitModel(
   string? OperationGroup = null,
   string? OperationTitle = null,
   bool? OperationDestructive = null,
-  bool? OperationOpenWorld = null)
+  bool? OperationOpenWorld = null,
+  string? AnonymousReason = null)
 {
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
   private const string DestructiveAttributeFullName = "TimeWarp.Contracts.DestructiveAttribute";
@@ -104,7 +106,8 @@ internal sealed record EndpointEmitModel(
       && OperationGroup == other.OperationGroup
       && OperationTitle == other.OperationTitle
       && OperationDestructive == other.OperationDestructive
-      && OperationOpenWorld == other.OperationOpenWorld;
+      && OperationOpenWorld == other.OperationOpenWorld
+      && AnonymousReason == other.AnonymousReason;
   }
 
   public override int GetHashCode()
@@ -136,6 +139,7 @@ internal sealed record EndpointEmitModel(
     hashCode.Add(OperationTitle);
     hashCode.Add(OperationDestructive);
     hashCode.Add(OperationOpenWorld);
+    hashCode.Add(AnonymousReason);
     return hashCode.ToHashCode();
   }
 
@@ -175,7 +179,8 @@ internal sealed record EndpointEmitModel(
         OperationGroup: null,
         OperationTitle: null,
         OperationDestructive: null,
-        OperationOpenWorld: null);
+        OperationOpenWorld: null,
+        AnonymousReason: null);
     }
 
     string requestTypeName = requestClass.Name;
@@ -244,6 +249,7 @@ internal sealed record EndpointEmitModel(
     string? authenticationSchemes = null;
     string? roles = null;
     bool allowAnonymous = false;
+    string? anonymousReason = null;
 
     AttributeData? endpointAuthorize = symbol.GetAttributes()
       .FirstOrDefault(static attr => attr.AttributeClass?.Name == "EndpointAuthorizeAttribute");
@@ -260,6 +266,7 @@ internal sealed record EndpointEmitModel(
     else if (endpointAllowAnonymous is not null)
     {
       allowAnonymous = true;
+      anonymousReason = ReadAnonymousReason(endpointAllowAnonymous);
     }
 
     ImmutableArray<string> tags = CollectTags(symbol);
@@ -294,7 +301,23 @@ internal sealed record EndpointEmitModel(
       OperationGroup: operationGroup,
       OperationTitle: operationTitle,
       OperationDestructive: operationDestructive,
-      OperationOpenWorld: operationOpenWorld);
+      OperationOpenWorld: operationOpenWorld,
+      AnonymousReason: anonymousReason);
+  }
+
+  /// <summary>
+  /// Positional reason on [EndpointAllowAnonymous]. Whitespace is treated as absent.
+  /// [EndpointAuthorize] wins when both markers are present, so this is not called then.
+  /// </summary>
+  private static string? ReadAnonymousReason(AttributeData attribute)
+  {
+    if (attribute.ConstructorArguments.Length == 0)
+    {
+      return null;
+    }
+
+    string? reason = attribute.ConstructorArguments[0].Value as string;
+    return string.IsNullOrWhiteSpace(reason) ? null : reason;
   }
 
   private static (string? Name, string? Description, string? Group, string? Title, bool? Destructive, bool? OpenWorld) ReadOperation(
