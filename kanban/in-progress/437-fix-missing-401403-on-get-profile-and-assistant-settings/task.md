@@ -36,6 +36,7 @@ operations on the responses FastEndpoints already emits.
 - Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), effort 1, roster general, turn cap 80. Delta empty (HEAD `0c6ffb48`). implement-fix-2 and implement-fix-3 each ran `num_turns: 1` with no tool calls. M1 still open. Escalated to the operator, because the implementer is not acting. Files: `review/round-3/general.md`, `review/round-3/merged.md` (2026-10-29)
 - Review oracle round 4 (the walk resumed at the review-3 node): Claude Opus 5.5 (claude-opus-5-5), effort 1, roster general, turn cap 80. The delta was empty (HEAD `0c6ffb48`), and no operator ruling was recorded. M1 is still open. Fix pass requested. Files: `review/round-4/general.md`, `review/round-4/merged.md` (2026-10-29)
 - implement-fix-4: Claude Opus 5.5 (claude-opus-5-5). Fixed M1: the GetProfile `[EndpointAllowAnonymous]` reason is spec-reader prose with no task ids. `OpenApiAnonymousIntent_` 6/6 passed, `dev build` 0 warnings 0 errors, `ganda repo audit` exit 0 (the same advisory `kanban-landed` warning). (2026-10-29)
+- Review oracle round 5 (review-4 node): Claude Opus 5.5 (claude-opus-5-5), effort 2, roster general, turn cap 120. Delta `0c6ffb48..75b50b45`. M1 is verified fixed, and the reviewer re-ran `OpenApiAnonymousIntent_` (6/6 passed). No new findings. Disposition: clean. Files: `review/round-5/general.md`, `review/round-5/merged.md`, `review/disposition.md` (2026-10-29)
 
 ## Results
 
@@ -73,11 +74,16 @@ Round 4 (effort 1, general): the walk resumed with no product commits and no ope
 
 Fix pass after round 4: M1 fixed. The GetProfile anonymous reason in OpenAPI now reads "This read is dual-mode: an anonymous caller gets the demo profile, and a signed-in caller gets their stored profile." The task history stays in the Design region.
 
+Round 5 (effort 2, general): reviewed the fix delta `0c6ffb48..75b50b45`. M1 is verified fixed: `OpenApiAnonymousIntent_` passed 6/6 on a re-run, and no other published anonymous reason contains a task id. No new findings.
+
+**Review disposition: clean.** 5 rounds, general reviewer only. Final counts: 0 bugs, 1 suggestion (fixed), 0 nits. 0 open and 0 wontfix. Ledger: `review/round-5/merged.md`. Disposition: `review/disposition.md`. Framework: `review/review-framework.md`.
+
 ## Review
 
 - Round 1: Blocked — open M1
 - Round 2: Blocked — open M1
 - Round 4: Blocked — open M1
+- Round 5: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
@@ -85,3 +91,5 @@ Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
 ## Blocked
 
 2026-10-29: stalemate — operator decision needed: implementer-grok fix passes are no-ops (num_turns 1, no tool calls, no commits); check the implementer harness or fix/wontfix the carried suggestion by hand
+
+2026-10-29: resolved. implement-fix-4 (Claude) fixed M1 in `75b50b45`, and the round-5 disposition is clean.
