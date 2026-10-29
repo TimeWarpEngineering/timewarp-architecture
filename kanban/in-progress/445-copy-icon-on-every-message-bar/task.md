@@ -65,6 +65,7 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
 - Review oracle round 1: Claude Fable 5.1 (`ganda task work`, headless, effort 3, roster general, turn cap 200); `general` reviewer sub-agent Claude Sonnet — 2026-10-30. Outcome: Blocked, fix pass needed for M1-M4 (`review/round-1/merged.md`).
 - Implement fix-2 (round 1 findings M1-M4): ganda task work implementer, Claude Opus 5.5 (2026-10-30)
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 199d19aa-d5a5-471f-992b-50a05e2ab744, max-turns 200 — 2026-10-29T17:05:47Z
+- Review oracle round 2: Claude Fable 5.1 (`ganda task work`, headless, effort 2, roster general, turn cap 120); `general` reviewer sub-agent Claude Sonnet — 2026-10-30. Outcome: Done, M1-M4 fixed, 0 open, disposition clean (`review/round-2/merged.md`, `review/disposition.md`).
 
 ## Results
 
@@ -130,7 +131,16 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
   M2 the rewritten `RemoveExpired` branch has no test that reaches it; M3 the TWA0036 reservation
   note names a kanban task state in a packed file; M4 stale "FluentMessageBar" / "(FluentUI)"
   wording in the design-system samples.
-- Disposition: **pending** — fix pass requested on this task id for M1-M4, then `review/round-2/`.
+- Round 1 disposition: fix pass requested on this task id for M1-M4, then `review/round-2/`.
+- Round 2 (2026-10-30), effort 2, roster `general`, scope = fix-pass delta (commit 1a7797596): review
+  oracle re-verified each fix against the tree and re-ran the gates (`dev build` 0/0, Copy 16/16,
+  `DesignSystemPage_Should_` 6/6, analyzer MessageBar 16/16 and Message_Bars 15/15, `ganda repo audit`
+  exit 0 with the same unrelated advisory, `dev template-smoke` default variant succeeded). No new
+  finding on the delta. Goal restatement matches the task; no misread.
+- Final counts: bug 0; suggestion 0 open / 2 fixed; nit 0 open / 2 fixed. No wontfix, no escalation.
+- Disposition: **clean** (`review/disposition.md`). Rounds: 2.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ### Fix pass (round 1 findings)
 
@@ -189,7 +199,7 @@ dotnet run --project tests/analyzers/timewarp-architecture-analyzers-tests -- --
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
-
+- Round 2: Done
 ## Notes
 
 Task 313 format and confirmation live in `NotificationState.ClipboardText`, `CopiedConfirmationInterval`, and `MessageBars.razor`. Reuse them.
