@@ -21,6 +21,12 @@
 // OmittedPictureText so the model knows one existed. AskScreenshotChatClient sits outside the
 // tool loop, so the Ask attachment stays on the person's message for every loop iteration; without
 // this cap an Ask screenshot plus two capture calls in one turn would exceed it.
+// A message with nothing the model reads is not sent (task 447). Approval requests and responses
+// stay in the Ask history so a restored card shows its decision. FunctionInvokingChatClient
+// removes a pair only while its call is not InformationalOnly, and a rejection marks the call
+// InformationalOnly. A rejected pair therefore reaches this client on every later turn, and an
+// empty turn fails the CompleteAgentChat validator. The model still sees the rejected call and
+// its result turn.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;
@@ -103,8 +109,9 @@ internal sealed class RelayChatClient : IChatClient
     return command;
   }
 
-  private static List<Turn> ToTurns(List<ChatMessage> messages)
+  private static List<Turn> ToTurns(List<ChatMessage> history)
   {
+    List<ChatMessage> messages = history.FindAll(ReachesModel);
     int lastUser = messages.FindLastIndex(static message => message.Role == ChatRole.User);
     List<Turn> turns = [];
     List<Turn> pictureTurns = [];
@@ -149,6 +156,33 @@ internal sealed class RelayChatClient : IChatClient
     }
 
     return turns;
+  }
+
+  /// <summary>
+  /// Whether <paramref name="message"/> maps to a turn the relay accepts: text, a tool call, a tool
+  /// result, or a picture the person attached. Approval requests and responses are Ask UI content.
+  /// </summary>
+  private static bool ReachesModel(ChatMessage message)
+  {
+    if (!string.IsNullOrWhiteSpace(message.Text))
+    {
+      return true;
+    }
+
+    foreach (AIContent content in message.Contents)
+    {
+      if (content is FunctionCallContent or FunctionResultContent)
+      {
+        return true;
+      }
+
+      if (content is DataContent data && message.Role == ChatRole.User && ToImage(data) is not null)
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// <summary>Keeps the newest images of <paramref name="turn"/> that fit in <paramref name="room"/>.</summary>

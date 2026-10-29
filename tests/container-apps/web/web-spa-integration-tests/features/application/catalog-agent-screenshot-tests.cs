@@ -15,7 +15,8 @@
 // that keeps ScreenshotState.MaxBytes equal to FeedbackAttachmentRules.MaxBytes. The cap proof
 // sends an Ask screenshot plus two tool pictures in one turn and checks the command stays within
 // CompleteAgentChat.MaxImagesPerRequest and validates. CaptureSpa registers no API service:
-// nothing in these proofs calls web-server.
+// nothing in these proofs calls web-server. CaptureSpa and CaptureJsRuntime are internal so the
+// Ask rejection tests (AskRejection_Should, no Aspire session) select the same real tools.
 #endregion
 
 namespace CatalogAgent_;
@@ -268,7 +269,7 @@ public partial class CatalogAgent_Should
 
   /// <summary>Stands in for the browser: import returns a module whose capture and takeBytes answer the fixture.</summary>
   /// <remarks>Both overloads read <see cref="CaptureExports"/>, a plain type, so no call here is to a JS runtime.</remarks>
-  private sealed class CaptureJsRuntime(ScreenshotJsModule.BrowserCapture capture) : IJSRuntime, IJSObjectReference
+  internal sealed class CaptureJsRuntime(ScreenshotJsModule.BrowserCapture capture) : IJSRuntime, IJSObjectReference
   {
     private readonly CaptureExports Exports = new(capture);
 
@@ -333,7 +334,7 @@ public partial class CatalogAgent_Should
   }
 
   /// <summary>In-proc SPA: real catalog, WebMCP dispatcher, and store; signed in with every permission; the browser is <see cref="CaptureJsRuntime"/>.</summary>
-  private sealed class CaptureSpa : ISpaTestApplication, IDisposable
+  internal sealed class CaptureSpa : ISpaTestApplication, IDisposable
   {
     public IServiceProvider ServiceProvider { get; }
 
