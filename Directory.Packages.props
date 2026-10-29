@@ -65,7 +65,7 @@
     <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
   <ItemGroup Label="Foundation Packages">
-    <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
+    <PackageVersion Include="Ardalis.GuardClauses" Version="[5.0.0]" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.41" />
