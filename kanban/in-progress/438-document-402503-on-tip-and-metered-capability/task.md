@@ -34,6 +34,7 @@ Round-1 review acceptance: the documented challenge `resource.url` is the config
 - Review oracle round 2: general reviewer (claude-opus-5-5, effort 2, headless), 2026-10-29. M1–M3 are fixed and there are no new findings. Disposition clean.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 01a18528-d963-7fb2-9d37-b4a636af295b, max-turns 500, Done — 2026-10-29T06:08:45Z
 - Review oracle round 3: general reviewer (claude-fable-5-1, effort 3, headless), 2026-10-29. The resumed implement oracle returned Done in 26 ms with no product change, so the recorded CI failure is still present. M4 (bug, duplicate routes from the test stubs) and M5 (nit) are open; a fix pass is requested. Disposition reopened.
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session c319385f-6a59-4dfe-9bf1-7355a56e3545, max-turns 200 — 2026-10-29T06:15:20Z
 
 ## Results
 
@@ -99,7 +100,7 @@ then prove it by running the whole integration group, not only this file:
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
   `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`,
   `review/round-3/merged.md` (live ledger), `review/disposition.md`.
-
+- Round 3: Blocked — open M4, M5
 ## Review
 
 - Round 1: M1, M2, M3 implemented in the fix pass.
