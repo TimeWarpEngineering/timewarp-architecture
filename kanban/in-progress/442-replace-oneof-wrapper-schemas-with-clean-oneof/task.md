@@ -39,6 +39,11 @@ Acceptance:
   the evidence was reproduced from a local in-process document: 71 wrappers of 238 schemas, every
   one referenced from a 200 `application/json` response on a generated contract endpoint.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 1acdb70d-6b58-41ca-aa17-1fea632bb94d, max-turns 500, Done — 2026-10-29T14:22:28Z
+- Review oracle, round 1 (ganda task work, 2026-10-29): review oracle claude-fable-5-1 (orchestrator,
+  gates re-run, document dump); reviewer-general sub-agent claude-sonnet-5-5 (agent a648a9338e0772f73).
+  Effort 2, roster general. Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`. Outcome: 0 bug, 3 open (M2, M3 suggestion; M5 nit), 2 wontfix (M1, M4).
+  Fix pass requested for M2, M3, M5; next round under `review/round-2/`.
 
 ## Results
 
@@ -85,6 +90,21 @@ Gates run in this worktree:
 - `dev check-version`: 2.0.0-beta.29 in source, one ahead of nuget 2.0.0-beta.28. No bump needed.
 - `dev template-smoke` (default variant): SUCCEEDED (generated web 441/441, api 9/9, testing 14/14).
 
+### Review (round 1, 2026-10-29)
+
+Disposition: **not yet closed — fix pass requested** (round 1 ledger `review/round-1/merged.md`).
+
+- Rounds: 1 so far. Roster: general (claude-sonnet-5-5) plus orchestrator verification. Effort 2.
+- Counts after merge: bug 0 open; suggestion 2 open (M2 test pins every contract operation's `default`
+  and the 4xx rewrite; M3 loud guard instead of silent no-op), 1 wontfix (M1, refuted against the real
+  document); nit 1 open (M5 comment wrap and "when absent" wording), 1 wontfix (M4 nullable OneOf
+  property, no wire path).
+- Orchestrator re-ran the gates: `dev build` 0 warnings / 0 errors; web-server-integration-tests 415
+  passed, 1 skipped, 0 failed; `OpenApiOneOf_` 6 passed. A dump of the real web document showed 167
+  schemas, 0 `OneOf*` components or refs, and all 71 contract operations with `200 → …_Response` and
+  `default → SharedProblemDetails`, which confirms the Results numbers above.
+- `review/disposition.md` is written when the next round reaches 0 open.
+
 ### How to validate
 
 Smoke:
@@ -100,6 +120,21 @@ prints `0`, and `jq '.paths["/Analytics/TrackEvent"].post.responses'` shows `200
 `TimeWarpArchitectureFeaturesAnalyticsTrackEvent_Response` (application/json) and `default` →
 `TimeWarpFoundationTypesSharedProblemDetails` (application/problem+json). `/scalar/v1` loads and
 lists the operations with both responses.
+
+## Learnings
+
+- Restatement vs task (review round 1): the checklist says "Emit clean `oneOf: [Response,
+  SharedProblemDetails]` (+ problem+json content type where apt)", while the implementer restatement
+  publishes `200 → Response` and the problem arm under `application/problem+json` (`default`), with
+  `oneOf` only where a union really is one-of. The two differ on the literal 200 shape. The review judges
+  this a deliberate, recorded deviation rather than a misread: a 200 never carries a problem
+  (`BaseFastEndpoint`), so the literal checklist shape would misdescribe the wire, and the task's own
+  "problem+json where apt" clause points the same way. Recorded so the checklist wording and the shipped
+  shape are not mistaken for each other later.
+- Reviewer claims about generator and FastEndpoints behaviour (explicit `Produces(200)` suppressing the
+  OneOf 200) were right in the abstract but did not reproduce in the real document; the review dumped the
+  document before accepting the finding. Verify a predicted document shape against the generated document,
+  not against decompiled library logic alone.
 
 ## Notes
 
