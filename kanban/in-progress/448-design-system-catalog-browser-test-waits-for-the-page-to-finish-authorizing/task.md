@@ -69,6 +69,8 @@ Done means:
 - Implemented 2026-10-30: shared `PlaywrightPageLoad` helper; catalog, breadcrumb, and clear-key
   tests use it. Gates green (see Results).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session bf8cf537-22e2-47cb-b81a-d0e5d5e7172f, max-turns 500, Done — 2026-10-29T19:18:13Z
+- Review oracle: reviewed by reviewer-claude (claude, model claude-fable-5-1), effort 2, roster general, round 1, disposition clean — 2026-10-30
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session a60dbd64-7824-4559-9796-d9720c40ef2f, max-turns 120 — 2026-10-29T19:25:44Z
 
 ## Results
 
@@ -110,6 +112,19 @@ Gates (2026-10-30):
   Its fix would release other workers' claims, which is out of scope for this task, so it is left
   as is.
 
+### Review
+
+- Rounds: 1. Roster: general (effort 2 by diff size, 287 lines).
+- Final counts: bug 0 / suggestion 0 / nit 0; open 0, fixed 0, wontfix 0.
+- Disposition: clean. No findings were raised.
+- Reviewer re-ran `dev build` (0/0), the `DesignSystemCatalog`, `Breadcrumb`, and `ClearXaiApiKey`
+  classes (4/4 pass), and `ganda repo audit` (exit 0, same pre-existing `kanban-landed` warning).
+  A read-only scan of all 37 other `GotoAsync` / `ReloadAsync` call sites confirmed none is
+  followed by a default-timeout expect. The three changed classes run in 22–30 s each including
+  host start and sign-in, so the new wait hides no product delay.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
 ### How to validate
 
 Smoke:
@@ -132,3 +147,7 @@ Expect: build 0/0; the playwright group passes 33/33, including
 worker's browser tests running) the unknown-slug step waits for the shell instead of failing on
 the `Authorizing...` placeholder after 5 s. If the page never finishes authorizing, the failure
 reads "The page did not finish authorizing at <url>" with the page text.
+
+## Review
+
+- Round 1: Done
