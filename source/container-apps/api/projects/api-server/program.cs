@@ -11,7 +11,10 @@
 // Mediator pipeline behaviors run in registration order: Generic wraps FluentValidation.
 // Oakton runs the host so the binary exposes diagnostic commands alongside serving.
 // Permissive CORS and Scalar (OpenAPI document UI) are development-only surfaces.
-// OpenAPI document registration lives in CommonServerModule.AddOpenApi (FastEndpoints.OpenApi);
+// OpenAPI document registration lives in CommonServerModule.AddOpenApi (FastEndpoints.OpenApi).
+// Agent bearer scopes on that document come from AgentBearerPolicies, which names the same
+// AgentTokenDefaults policies and AgentScopes values the AddPolicy calls require. TWA0024
+// reads those AddPolicy names only when they are compile-time constants, so the calls stay here.
 // Scalar maps after UseFastEndpoints so endpoint metadata is available.
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (EmptyRequestBinder
 // already handles runtime binding; without the flag document generation throws).
@@ -105,7 +108,13 @@ public class Program : IAspNetProgram
       };
     });
 
-    CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
+    CommonServerModule.AddOpenApi
+    (
+      serviceCollection,
+      ApiVersion,
+      ApiTitle,
+      AgentBearerPolicies.OpenApiBearer()
+    );
     serviceCollection.AddGeneratedMediator();
   }
 

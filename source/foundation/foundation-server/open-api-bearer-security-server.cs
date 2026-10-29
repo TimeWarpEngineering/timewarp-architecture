@@ -1,22 +1,22 @@
 #region Purpose
-// Attaches JWTBearerAuth to OpenAPI operations that accept the agent-token scheme, including scopes and bearer failure responses.
+// Attaches JWTBearerAuth to OpenAPI operations that accept the host's agent bearer scheme, including scopes and bearer failure responses.
 #endregion
 
 #region Design
 // FastEndpoints.OpenApi inserts a scheme named JWTBearerAuth and then copies it onto an
 // operation only when EndpointDefinition.AuthSchemeNames contains that same string.
-// Product endpoints call AuthSchemes("agent-token"), so the scheme stayed unused and
-// Scalar had nothing to authorize. EnableJWTBearerAuth stays off and AddAuth registers
-// the same scheme name with a description of the opaque bearer.
-// Scopes are not Roles and not runtime Scopes() checks. They are the OpenAPI reading of
-// the policy name already on the endpoint: PermissionIds and the api-server
-// agent-scope:* policies. foundation-server cannot reference those catalogs, so the
-// strings live here and the integration test pins them.
-// identity:read is the scope for agent self-lookup and for agent-link.manage.self
-// (AgentScopePermissionSeed expands that permission from identity:read).
-// 401/403 bodies match AgentTokenAuthenticationHandler: application/problem+json and
-// the RFC 6750 WWW-Authenticate values. Cookie-only and anonymous operations are left
-// alone so a public ceremony is not documented as requiring a bearer.
+// Product endpoints list the host's agent scheme, so EnableJWTBearerAuth stays off and
+// AddAuth registers JWTBearerAuth for the opaque bearer.
+// The host passes OpenApiAgentBearer: the scheme name and the policy → scope map. This
+// file has no product policy names, scope strings, or scheme name.
+// Scopes are the OpenAPI reading of the policy already on the endpoint, not Roles and
+// not runtime Scopes() checks. An unmapped policy still requires the bearer and an empty
+// scope list.
+// 401 and 403 bodies are application/problem+json. WWW-Authenticate follows RFC 6750 when
+// the bearer handler challenges, and is omitted on a handler-level 401 or 403. An existing
+// response description is kept and the bearer note is appended. The header is not required.
+// Cookie-only and anonymous operations are left alone so a public ceremony is not
+// documented as requiring a bearer.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -30,55 +30,73 @@ using Microsoft.OpenApi;
 internal static class OpenApiBearerSecurity
 {
   internal const string SchemeName = "JWTBearerAuth";
-  internal const string AgentTokenSchemeName = "agent-token";
 
   private const string ProblemJson = "application/problem+json";
   private const string WwwAuthenticate = "WWW-Authenticate";
 
-  private static readonly Dictionary<string, string> PolicyScopes = new(StringComparer.Ordinal)
-  {
-    ["identity.read"] = AgentScopes.IdentityRead,
-    ["agent-scope:identity:read"] = AgentScopes.IdentityRead,
-    ["credential.manage.self"] = AgentScopes.CredentialManage,
-    ["demo.invoke"] = AgentScopes.DemoInvoke,
-    ["agent-scope:demo:invoke"] = AgentScopes.DemoInvoke,
-    ["agent-link.manage.self"] = AgentScopes.IdentityRead,
-    ["feedback.read"] = AgentScopes.FeedbackRead,
-    ["feedback.note"] = AgentScopes.FeedbackNote,
-    ["feedback.severity"] = AgentScopes.FeedbackSeverity,
-    ["feedback.status"] = AgentScopes.FeedbackStatus,
-  };
+  private const string UnauthorizedDescription =
+    "Missing or rejected agent bearer, or a handler-level 401. The body is application/problem+json. "
+    + "WWW-Authenticate is present for a bearer challenge and absent on a handler-level 401.";
 
-  internal static OpenApiSecurityScheme CreateScheme()
+  private const string ForbiddenDescription =
+    "Insufficient scope from the bearer handler, or a handler-level 403. The body is application/problem+json. "
+    + "WWW-Authenticate is Bearer error=\"insufficient_scope\" only when the scope is missing, "
+    + "and is absent on a handler-level 403.";
+
+  private const string UnauthorizedHeader =
+    "Present for an RFC 6750 challenge only. Bearer when no credential was presented; "
+    + "Bearer error=\"invalid_token\" when a presented bearer was rejected. Absent on a handler-level 401.";
+
+  private const string ForbiddenHeader =
+    "Present only when the bearer lacks the required scope. The value is Bearer error=\"insufficient_scope\". "
+    + "Absent on a handler-level 403.";
+
+  internal static OpenApiSecurityScheme CreateScheme(IReadOnlyCollection<string> scopes)
   {
+    ArgumentNullException.ThrowIfNull(scopes);
+    List<string> ordered = [];
+    HashSet<string> seen = new(StringComparer.Ordinal);
+    foreach (string scope in scopes)
+    {
+      if (!string.IsNullOrWhiteSpace(scope) && seen.Add(scope))
+      {
+        ordered.Add(scope);
+      }
+    }
+
+    ordered.Sort(StringComparer.Ordinal);
+    string scopeSentence = ordered.Count == 0
+      ? "Operations name the required scope."
+      : "Known scopes: " + string.Join(", ", ordered) + ".";
+
     return new OpenApiSecurityScheme
     {
       Type = SecuritySchemeType.Http,
       Scheme = "bearer",
       Description =
-        "Opaque agent access token from POST /api/identity/agent/token. "
-        + "Send it as Authorization: Bearer. "
-        + "Operations name the required scope: identity:read (agent self and human-link calls), "
-        + "credential:manage (credential list, add, and revoke), "
-        + "demo:invoke (metered capability), "
-        + "or a feedback scope (feedback:read, feedback:note, feedback:severity, feedback:status). "
+        "Opaque agent access token. Send it as Authorization: Bearer. "
+        + scopeSentence + " "
         + "401 and 403 bodies are application/problem+json. "
         + "401 WWW-Authenticate is Bearer when no credential was presented, "
-        + "or Bearer error=\"invalid_token\" when a bearer was rejected. "
-        + "403 WWW-Authenticate is Bearer error=\"insufficient_scope\"."
+        + "or Bearer error=\"invalid_token\" when a presented bearer was rejected. "
+        + "403 WWW-Authenticate is Bearer error=\"insufficient_scope\" only when the scope is missing, "
+        + "and is absent on a handler-level 403."
     };
   }
 
-  internal static void Register(OpenApiOptions openApiOptions)
+  internal static void Register(OpenApiOptions openApiOptions, OpenApiAgentBearer agentBearer)
   {
     ArgumentNullException.ThrowIfNull(openApiOptions);
-    openApiOptions.AddOperationTransformer(TransformAsync);
+    ArgumentNullException.ThrowIfNull(agentBearer);
+    openApiOptions.AddOperationTransformer((operation, context, cancellationToken) =>
+      TransformAsync(operation, context, agentBearer, cancellationToken));
   }
 
   private static Task TransformAsync
   (
     OpenApiOperation operation,
     OpenApiOperationTransformerContext context,
+    OpenApiAgentBearer agentBearer,
     CancellationToken cancellationToken
   )
   {
@@ -86,12 +104,12 @@ internal static class OpenApiBearerSecurity
     EndpointDefinition? endpoint = context.Description.ActionDescriptor.EndpointMetadata
       .OfType<EndpointDefinition>()
       .SingleOrDefault();
-    if (endpoint is null || context.Document is null || !AcceptsAgentToken(endpoint, context.Description.HttpMethod))
+    if (endpoint is null || context.Document is null || !AcceptsAgentToken(endpoint, context.Description.HttpMethod, agentBearer.SchemeName))
     {
       return Task.CompletedTask;
     }
 
-    List<string> scopes = ScopesFor(endpoint);
+    List<string> scopes = ScopesFor(endpoint, agentBearer);
     operation.Security =
     [
       new OpenApiSecurityRequirement
@@ -100,26 +118,14 @@ internal static class OpenApiBearerSecurity
       }
     ];
     NoteRequiredScopes(operation, scopes);
-    DocumentBearerFailure
-    (
-      operation,
-      "401",
-      "Missing or rejected agent bearer. The body is application/problem+json with title Unauthorized.",
-      "RFC 6750 challenge. Bearer when no credential was presented; Bearer error=\"invalid_token\" when a presented bearer was rejected."
-    );
-    DocumentBearerFailure
-    (
-      operation,
-      "403",
-      "The bearer authenticated but does not carry the required scope. The body is application/problem+json with title Forbidden.",
-      "RFC 6750. The value is Bearer error=\"insufficient_scope\"."
-    );
+    DocumentBearerFailure(operation, endpoint, "401", UnauthorizedDescription, UnauthorizedHeader);
+    DocumentBearerFailure(operation, endpoint, "403", ForbiddenDescription, ForbiddenHeader);
     return Task.CompletedTask;
   }
 
-  private static bool AcceptsAgentToken(EndpointDefinition endpoint, string? httpMethod)
+  private static bool AcceptsAgentToken(EndpointDefinition endpoint, string? httpMethod, string schemeName)
   {
-    if (endpoint.AuthSchemeNames?.Contains(AgentTokenSchemeName, StringComparer.Ordinal) != true)
+    if (endpoint.AuthSchemeNames?.Contains(schemeName, StringComparer.Ordinal) != true)
     {
       return false;
     }
@@ -140,7 +146,7 @@ internal static class OpenApiBearerSecurity
     return true;
   }
 
-  private static List<string> ScopesFor(EndpointDefinition endpoint)
+  private static List<string> ScopesFor(EndpointDefinition endpoint, OpenApiAgentBearer agentBearer)
   {
     HashSet<string> scopes = new(StringComparer.Ordinal);
     if (endpoint.AllowedScopes is not null)
@@ -158,14 +164,14 @@ internal static class OpenApiBearerSecurity
     {
       foreach (string policy in endpoint.PreBuiltUserPolicies)
       {
-        if (PolicyScopes.TryGetValue(policy, out string? scope))
+        if (agentBearer.PolicyScopes.TryGetValue(policy, out string? scope))
         {
           scopes.Add(scope);
         }
       }
     }
 
-    var ordered = scopes.ToList();
+    List<string> ordered = [.. scopes];
     ordered.Sort(StringComparer.Ordinal);
     return ordered;
   }
@@ -179,23 +185,13 @@ internal static class OpenApiBearerSecurity
       _ => $"Requires bearer scopes {string.Join(", ", scopes)} (JWTBearerAuth)."
     };
 
-    if (string.IsNullOrEmpty(operation.Description))
-    {
-      operation.Description = note;
-      return;
-    }
-
-    if (operation.Description.Contains(note, StringComparison.Ordinal))
-    {
-      return;
-    }
-
-    operation.Description = operation.Description.TrimEnd() + " " + note;
+    operation.Description = AppendNote(operation.Description, note);
   }
 
   private static void DocumentBearerFailure
   (
     OpenApiOperation operation,
+    EndpointDefinition endpoint,
     string statusCode,
     string description,
     string headerDescription
@@ -213,7 +209,15 @@ internal static class OpenApiBearerSecurity
       operation.Responses[statusCode] = response;
     }
 
-    response.Description = description;
+    string? described = response.Description;
+    if (string.IsNullOrEmpty(described)
+      && int.TryParse(statusCode, out int status)
+      && endpoint.EndpointSummary?.Responses.TryGetValue(status, out string? summaryDescription) == true)
+    {
+      described = summaryDescription;
+    }
+
+    response.Description = AppendNote(described, description);
     response.Content ??= new Dictionary<string, OpenApiMediaType>();
     if (!response.Content.ContainsKey(ProblemJson))
     {
@@ -233,26 +237,33 @@ internal static class OpenApiBearerSecurity
     }
 
     response.Headers ??= new Dictionary<string, IOpenApiHeader>();
-    if (!response.Headers.ContainsKey(WwwAuthenticate))
+    if (response.Headers.TryGetValue(WwwAuthenticate, out IOpenApiHeader? existingHeader) && existingHeader is OpenApiHeader header)
     {
-      response.Headers[WwwAuthenticate] = new OpenApiHeader
-      {
-        Required = true,
-        Description = headerDescription,
-        Schema = new OpenApiSchema { Type = JsonSchemaType.String }
-      };
+      header.Required = false;
+      header.Description = AppendNote(header.Description, headerDescription);
+      return;
     }
+
+    response.Headers[WwwAuthenticate] = new OpenApiHeader
+    {
+      Required = false,
+      Description = headerDescription,
+      Schema = new OpenApiSchema { Type = JsonSchemaType.String }
+    };
   }
 
-  /// <summary>Scope strings carried by an agent access token. Kept beside the policy map so the document does not reference the identity library.</summary>
-  private static class AgentScopes
+  private static string AppendNote(string? existing, string note)
   {
-    internal const string IdentityRead = "identity:read";
-    internal const string DemoInvoke = "demo:invoke";
-    internal const string CredentialManage = "credential:manage";
-    internal const string FeedbackRead = "feedback:read";
-    internal const string FeedbackNote = "feedback:note";
-    internal const string FeedbackSeverity = "feedback:severity";
-    internal const string FeedbackStatus = "feedback:status";
+    if (string.IsNullOrEmpty(existing))
+    {
+      return note;
+    }
+
+    if (existing.Contains(note, StringComparison.Ordinal))
+    {
+      return existing;
+    }
+
+    return existing.TrimEnd() + " " + note;
   }
 }

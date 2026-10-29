@@ -4,8 +4,11 @@
 
 #region Design
 // A tiny FastEndpoints host, not the full web graph. CommonServerModule.AddOpenApi is the
-// document pipeline under test. Probe endpoints use the same policy strings the contracts
-// use, so a drift in the policy-to-scope map fails here. Cookie-only and anonymous
+// document pipeline under test, with the same OpenApiAgentBearer web-server registers
+// (seed inverse + AuthenticationSchemeNames.AgentToken). The seed walk reads every grant
+// back from a probe operation, so a new permission with no probe, or the wrong scope,
+// fails here. A domain 403
+// description is kept and WWW-Authenticate stays optional. Cookie-only and anonymous
 // operations must stay without a bearer requirement. Scalar's page must name JWTBearerAuth
 // so Authorize has a scheme to apply.
 #endregion
@@ -18,7 +21,9 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
+using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Web.Server;
 using TimeWarp.Foundation;
 
 [TestTag("OpenApi")]
@@ -45,9 +50,16 @@ public class Document_Given_
       options.DisableAutoDiscovery = true;
       options.Assemblies = [typeof(AgentMeEndpoint).Assembly];
       options.Filter = type => type.Namespace == typeof(AgentMeEndpoint).Namespace
+        && !type.IsAbstract
         && type.Name.EndsWith("Endpoint", StringComparison.Ordinal);
     });
-    CommonServerModule.AddOpenApi(builder.Services, "v1", "Test API");
+    CommonServerModule.AddOpenApi
+    (
+      builder.Services,
+      "v1",
+      "Test API",
+      OpenApiAgentBearerRegistration.Create()
+    );
     App = builder.Build();
     App.UseFastEndpoints(config =>
     {
@@ -102,10 +114,51 @@ public class Document_Given_
     operation.GetProperty("description").GetString()!.ShouldContain("identity:read");
   }
 
-  public static async Task ApiIdentityPolicy_Should_RequireIdentityRead()
+  public static void Registration_Should_MatchTheSeedAndTheAgentTokenScheme()
   {
-    JsonElement operation = await OperationAsync("/api/agent/bearer-me", "get");
+    OpenApiAgentBearer bearer = OpenApiAgentBearerRegistration.Create();
+    bearer.SchemeName.ShouldBe(AuthenticationSchemeNames.AgentToken);
+    Type? agentTokenDefaults = typeof(OpenApiAgentBearerRegistration).Assembly
+      .GetType("TimeWarp.Architecture.Configuration.AgentTokenDefaults");
+    string? scheme = agentTokenDefaults?.GetField("Scheme")?.GetValue(null) as string;
+    scheme.ShouldBe(AuthenticationSchemeNames.AgentToken);
+    foreach ((string scope, IReadOnlyList<string> permissions) in AgentScopePermissionSeed.DefaultGrants)
+    {
+      foreach (string permission in permissions)
+      {
+        bearer.PolicyScopes[permission].ShouldBe(scope);
+      }
+    }
+  }
+
+  public static async Task SeedGrant_Should_DocumentTheGrantingScope()
+  {
+    using JsonDocument document = await DocumentAsync();
+    JsonElement paths = document.RootElement.GetProperty("paths");
+    foreach ((string scope, IReadOnlyList<string> permissions) in AgentScopePermissionSeed.DefaultGrants)
+    {
+      foreach (string permission in permissions)
+      {
+        ProbePaths.TryGetValue(permission, out string? path).ShouldBeTrue(
+          $"Add an agent-token probe for permission {permission}.");
+        paths.TryGetProperty(path!, out JsonElement pathItem).ShouldBeTrue(path);
+        JsonElement scopes = pathItem.GetProperty("get").GetProperty("security")[0].GetProperty("JWTBearerAuth");
+        scopes.GetArrayLength().ShouldBe(1);
+        scopes[0].GetString().ShouldBe(scope);
+      }
+    }
+  }
+
+  public static async Task DomainForbidden_Should_KeepTheHandlerDetail()
+  {
+    JsonElement operation = await OperationAsync(DomainForbiddenEndpoint.Route, "get");
     AssertBearer(operation, "identity:read");
+    string forbidden = operation.GetProperty("responses").GetProperty("403").GetProperty("description").GetString()!;
+    forbidden.ShouldContain(DomainForbiddenEndpoint.DomainDetail);
+    forbidden.ShouldContain("handler-level");
+    JsonElement header = operation.GetProperty("responses").GetProperty("403").GetProperty("headers").GetProperty("WWW-Authenticate");
+    AssertHeaderOptional(header);
+    header.GetProperty("description").GetString()!.ShouldContain("only when");
   }
 
   public static async Task AgentLinks_Should_RequireIdentityRead()
@@ -181,9 +234,20 @@ public class Document_Given_
     challenge.ShouldContain("Bearer");
 
     JsonElement forbidden = operation.GetProperty("responses").GetProperty("403");
+    forbidden.GetProperty("description").GetString()!.ShouldContain("handler-level");
     forbidden.GetProperty("content").TryGetProperty("application/problem+json", out _).ShouldBeTrue();
-    forbidden.GetProperty("headers").GetProperty("WWW-Authenticate").GetProperty("description").GetString()!
-      .ShouldContain("insufficient_scope");
+    JsonElement forbiddenHeader = forbidden.GetProperty("headers").GetProperty("WWW-Authenticate");
+    forbiddenHeader.GetProperty("description").GetString()!.ShouldContain("insufficient_scope");
+    AssertHeaderOptional(forbiddenHeader);
+    AssertHeaderOptional(unauthorized.GetProperty("headers").GetProperty("WWW-Authenticate"));
+  }
+
+  private static void AssertHeaderOptional(JsonElement header)
+  {
+    if (header.TryGetProperty("required", out JsonElement required))
+    {
+      required.GetBoolean().ShouldBeFalse();
+    }
   }
 
   private static async Task<JsonElement> OperationAsync(string path, string method)
@@ -206,7 +270,7 @@ public sealed class AgentMeEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Get("/api/identity/agent/me");
-    AuthSchemes("agent-token");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.IdentityRead);
   }
 
@@ -217,13 +281,17 @@ public sealed class AgentMeEndpoint : EndpointWithoutRequest
   }
 }
 
-public sealed class ApiPolicyEndpoint : EndpointWithoutRequest
+public sealed class DomainForbiddenEndpoint : EndpointWithoutRequest
 {
+  internal const string Route = "/api/agent-links/human-ux";
+  internal const string DomainDetail = "This link belongs to a different agent.";
+
   public override void Configure()
   {
-    Get("/api/agent/bearer-me");
-    AuthSchemes("agent-token");
-    Policies("agent-scope:identity:read");
+    Get(Route);
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
+    Policies(PermissionIds.AgentLinkManageSelf);
+    Summary(summary => summary.Responses[403] = DomainDetail);
   }
 
   public override Task HandleAsync(CancellationToken ct)
@@ -233,12 +301,30 @@ public sealed class ApiPolicyEndpoint : EndpointWithoutRequest
   }
 }
 
+internal static class ProbePaths
+{
+  private static readonly Dictionary<string, string> Paths = new(StringComparer.Ordinal)
+  {
+    [PermissionIds.IdentityRead] = "/api/identity/agent/me",
+    [PermissionIds.AgentLinkManageSelf] = "/api/agent-links",
+    [PermissionIds.CredentialManageSelf] = "/api/identity/credentials",
+    [PermissionIds.DemoInvoke] = "/api/demo/metered-capability",
+    [PermissionIds.FeedbackRead] = "/api/feedback",
+    [PermissionIds.FeedbackNote] = "/api/feedback/notes",
+    [PermissionIds.FeedbackSeverity] = "/api/feedback/severity",
+    [PermissionIds.FeedbackStatus] = "/api/feedback/status",
+  };
+
+  internal static bool TryGetValue(string permission, out string? path) =>
+    Paths.TryGetValue(permission, out path);
+}
+
 public sealed class AgentLinksEndpoint : EndpointWithoutRequest
 {
   public override void Configure()
   {
     Get("/api/agent-links");
-    AuthSchemes("identity-session", "agent-token");
+    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.AgentLinkManageSelf);
   }
 
@@ -254,7 +340,7 @@ public sealed class CredentialsEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Get("/api/identity/credentials");
-    AuthSchemes("identity-session", "agent-token");
+    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.CredentialManageSelf);
   }
 
@@ -270,7 +356,7 @@ public sealed class MeteredEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Get("/api/demo/metered-capability");
-    AuthSchemes("agent-token");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.DemoInvoke);
   }
 
@@ -286,8 +372,56 @@ public sealed class FeedbackReadEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Get("/api/feedback");
-    AuthSchemes("identity-session", "agent-token");
+    AuthSchemes(AuthenticationSchemeNames.IdentitySession, AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.FeedbackRead);
+  }
+
+  public override Task HandleAsync(CancellationToken ct)
+  {
+    _ = ct;
+    return Task.CompletedTask;
+  }
+}
+
+public sealed class FeedbackNoteEndpoint : EndpointWithoutRequest
+{
+  public override void Configure()
+  {
+    Get("/api/feedback/notes");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
+    Policies(PermissionIds.FeedbackNote);
+  }
+
+  public override Task HandleAsync(CancellationToken ct)
+  {
+    _ = ct;
+    return Task.CompletedTask;
+  }
+}
+
+public sealed class FeedbackSeverityEndpoint : EndpointWithoutRequest
+{
+  public override void Configure()
+  {
+    Get("/api/feedback/severity");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
+    Policies(PermissionIds.FeedbackSeverity);
+  }
+
+  public override Task HandleAsync(CancellationToken ct)
+  {
+    _ = ct;
+    return Task.CompletedTask;
+  }
+}
+
+public sealed class FeedbackStatusEndpoint : EndpointWithoutRequest
+{
+  public override void Configure()
+  {
+    Get("/api/feedback/status");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
+    Policies(PermissionIds.FeedbackStatus);
   }
 
   public override Task HandleAsync(CancellationToken ct)
@@ -302,7 +436,7 @@ public sealed class UnmappedAgentEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Put("/api/settings/site");
-    AuthSchemes("agent-token");
+    AuthSchemes(AuthenticationSchemeNames.AgentToken);
     Policies(PermissionIds.SettingsWrite);
   }
 
@@ -333,7 +467,7 @@ public sealed class CookieProfileEndpoint : EndpointWithoutRequest
   public override void Configure()
   {
     Put("/api/profile");
-    AuthSchemes("identity-session");
+    AuthSchemes(AuthenticationSchemeNames.IdentitySession);
     Policies(PermissionIds.ProfileWrite);
   }
 
