@@ -171,8 +171,7 @@ Warning bar reads "Couldn't copy the version info.".
 - Round 1 fix pass: M1–M5 implemented; awaiting round 2.
 - Round 2: Blocked — open M6, M7, M8
 - Round 2 fix pass: M6–M8 implemented; awaiting round 3.
-- Round 3: Done — 0 open; disposition clean (`review/disposition.md`).
-
+- Round 3: Done
 ## Notes
 
 Modal lives at features/application/modals/assembly-info/AssemblyInfoModal.razor.
