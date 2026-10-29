@@ -383,7 +383,13 @@ public partial class Program : IAspNetProgram
     // would CS0121 with a second generator in this compilation (Mediator issue 63).
     serviceCollection.AddWebApplicationGeneratedMediator();
 
-    CommonServerModule.AddOpenApi(serviceCollection, ApiVersion, ApiTitle);
+    CommonServerModule.AddOpenApi
+    (
+      serviceCollection,
+      ApiVersion,
+      ApiTitle,
+      OpenApiAgentBearerRegistration.Create()
+    );
   }
 
   /// <summary>
