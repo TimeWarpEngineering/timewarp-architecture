@@ -38,6 +38,7 @@ Acceptance:
 - Implemented 2026-10-29 (implement oracle, ganda task work). arch.timewarp.work returned 502, so
   the evidence was reproduced from a local in-process document: 71 wrappers of 238 schemas, every
   one referenced from a 200 `application/json` response on a generated contract endpoint.
+- Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 1acdb70d-6b58-41ca-aa17-1fea632bb94d, max-turns 500, Done — 2026-10-29T14:22:28Z
 
 ## Results
 
