@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 597
+- Lines changed: 265
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -25,3 +25,13 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 2 framework — task 442
+
+**Date:** 2026-10-29
+**Diff scope:** delta since round 1 closed, `3848a0aec..HEAD` (fix-pass commit `0b63e2c89`), product files only: `source/foundation/foundation-server/open-api-one-of.cs`, `source/foundation/foundation-server/common-server-module.cs`, `tests/container-apps/web/web-server-integration-tests/open-api-one-of-tests.cs` (177 insertions, 24 deletions). Round 1 findings M2, M3, M5 re-verified against this delta; M1 and M4 stay wontfix.
+**Plan / brief:** round 1 ledger `review/round-1/merged.md` plus task.md `## Results` → "Fix pass (review round 1 findings)".
+**Effort:** 2 (host Budget.ByDiff, 265 lines) — roster axis general
+**Reviewer roster:** general (reviewer-general-r2 sub-agent, claude-sonnet-5-5, read-only, agent ac106983bae88f949) + orchestrator gate re-run (build, OpenApiOneOf_ and full web-server suite, template smoke)
+**Session IDs:** fix-pass oracle: ganda task work implement-fix-2, 2026-10-29; review oracle round 2: reviewer-claude-fable (claude-fable-5-1), session 089264dd-6d97-4701-a33d-c1ddef4bf936
+**Outcome:** 0 open; M2, M3, M5 fixed; N1 (nit) wontfix; disposition `accepted-exceptions` in `review/disposition.md`.

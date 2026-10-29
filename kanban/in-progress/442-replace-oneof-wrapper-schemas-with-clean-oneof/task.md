@@ -58,6 +58,11 @@ Fix pass for review round 1 (M2, M3, M5 open):
 - Fix pass for review round 1 (implement-fix-2 oracle, ganda task work, 2026-10-29): M2, M3, M5
   implemented; gates and negative controls under Results → Fix pass.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 089264dd-6d97-4701-a33d-c1ddef4bf936, max-turns 120 — 2026-10-29T14:43:19Z
+- Review oracle, round 2 (ganda task work, 2026-10-29): review oracle claude-fable-5-1 (orchestrator, gates
+  re-run including template smoke); reviewer-general-r2 sub-agent claude-sonnet-5-5 (agent ac106983bae88f949).
+  Effort 2, roster general, delta `3848a0aec..0b63e2c89`. Artifacts: `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`. Outcome: M2, M3, M5 fixed; N1 nit wontfix; 0 open;
+  disposition accepted-exceptions.
 
 ## Results
 
@@ -118,6 +123,25 @@ Disposition: **not yet closed — fix pass requested** (round 1 ledger `review/r
   schemas, 0 `OneOf*` components or refs, and all 71 contract operations with `200 → …_Response` and
   `default → SharedProblemDetails`, which confirms the Results numbers above.
 - `review/disposition.md` is written when the next round reaches 0 open.
+
+### Review (round 2, 2026-10-29) — disposition
+
+Disposition: **accepted-exceptions** (`review/disposition.md`). 0 open findings.
+
+- Rounds: 2. Roster: general (claude-sonnet-5-5 sub-agent) plus orchestrator verification (claude-fable-5-1).
+  Effort 2 both rounds.
+- Final counts: bug 0; suggestion 2 fixed (M2, M3), 1 wontfix (M1); nit 1 fixed (M5), 2 wontfix (M4, N1).
+- Round 2 re-verified M2, M3, M5 against the fix-pass delta (`0b63e2c89`) and found them fixed. One new nit,
+  N1 (the `> 1` bound on scanned operations in `Every_Problem_Arm_Endpoint_Should_Publish_Default_Problem`
+  is met by the two probes alone), closed wontfix: probes and contracts share one discovery mechanism, and
+  the TrackEvent contract test on the same host fails if a contract leaves the document.
+- Wontfix rationale for M1 and M4 is unchanged from round 1 and repeated in the disposition exception log.
+- Orchestrator re-ran the gates on `0b63e2c89`: `dev build` 0 warnings / 0 errors; `OpenApiOneOf_` 9 passed;
+  web-server-integration-tests 419 total, 418 passed, 1 skipped, 0 failed; `dev template-smoke` default
+  variant SUCCEEDED (generated web 441/441, api 9/9, testing 14/14). The api-server Aspire lane was not
+  re-run from a worker (no AppHost), as in round 1.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`, `review/disposition.md`.
 
 ### Fix pass (review round 1 findings, 2026-10-29)
 
@@ -197,7 +221,7 @@ lists the operations with both responses.
 ## Review
 
 - Round 1: Blocked — open M2, M3, M5
-
+- Round 2: Done
 ## Notes
 
 Evidence: https://arch.timewarp.work/openapi/v1.json, 71 OneOf wrappers of
