@@ -168,8 +168,9 @@ Fix-pass gates (2026-10-30, this worktree):
 - `tests/analyzers/timewarp-architecture-analyzers-tests`: 259/259.
 - `tests/container-apps/web/web-spa-integration-tests`: 578/578.
 - `./bin/dev lint-skills`: 9/9 skills pass.
-- `ganda repo audit`: see the session note on the commit; `kanban-landed` is cleared by
-  `ganda kanban publish 452` after the push.
+- `ganda repo audit`: exit 0 after `ganda kanban reconcile` landed this kitchen. The remaining
+  `kanban-landed` warning is the same advisory as before (8 other tasks' claims with no usable
+  worktree), not this id's.
 
 ### How to validate
 
