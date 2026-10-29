@@ -136,7 +136,7 @@ and the whole integration group (8 of 8 projects). No escalations. Trail: `revie
   `review/round-5/general.md`, `review/round-5/merged.md` (final ledger), `review/disposition.md`.
 - Round 3: Blocked — open M4, M5
 - Round 4: Blocked — open M4, M5
-- Round 5: Done — clean
+- Round 5: Done
 ## Review
 
 - Round 1: M1, M2, M3 implemented in the fix pass.
