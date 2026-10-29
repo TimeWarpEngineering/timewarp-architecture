@@ -2,13 +2,15 @@
 @inherits BaseComponent
 @using Ai = Microsoft.AspNetCore.Components.AI
 @using TimeWarp.Architecture.Services
-@attribute [DirectComponentSideEffect("Copy writes the last answer text to the browser clipboard. Thumbs file feedback through SubmitFeedback.")]
+@attribute [DirectComponentSideEffect("Copy writes the last answer text, and Copy conversation the whole transcript, to the browser clipboard. Thumbs file feedback through SubmitFeedback.")]
 
 @*
-  Purpose: Copy, feedback, and Support actions under an Ask answer.
+  Purpose: Copy, Copy conversation, feedback, and Support actions under an Ask answer.
 
   Design: Copy and thumbs use the same text: the last response block with raw text (LastAnswer),
-  not the whole transcript. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
+  not the whole transcript. Copy conversation (task 444) walks the turns from the first and writes
+  each prompt under "You:" and each reply under "{AssistantName}:", one paragraph per side,
+  using the raw markdown of the rich text blocks (Transcript). A turn side with no text is skipped. Thumbs are a human SubmitFeedback, not an agent tool call, so they are
   not approval-gated. Support is hidden when configuration has no url; LoadChatConfiguration has
   already limited it to a relative path or http/https (AskSupportLink).
   The bar renders only once the conversation has an answer, so the empty state shows no Copy or
@@ -50,6 +52,8 @@
 
   private async Task CopyAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, LastAnswer() ?? NoAnswer);
 
+  private async Task CopyConversationAsync() => await AskAiJsModule.CopyTextAsync(JsRuntime, Transcript());
+
   private Task HelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs up");
 
   private Task UnhelpfulAsync() => FileAsync($"{AgentSurfaceState.AssistantName} thumbs down");
@@ -86,6 +90,40 @@
 
     return null;
   }
+
+  private string Transcript()
+  {
+    if (Conversation is null)
+    {
+      return NoAnswer;
+    }
+
+    List<string> paragraphs = [];
+    foreach (Ai.ConversationTurn turn in Conversation.Turns)
+    {
+      AddParagraph(paragraphs, "You", turn.RequestBlocks);
+      AddParagraph(paragraphs, AgentSurfaceState.AssistantName, turn.ResponseBlocks);
+    }
+
+    return paragraphs.Count == 0 ? NoAnswer : string.Join("\n\n", paragraphs);
+  }
+
+  private static void AddParagraph(List<string> paragraphs, string speaker, IEnumerable<Ai.ContentBlock> blocks)
+  {
+    List<string> texts = [];
+    foreach (Ai.ContentBlock block in blocks)
+    {
+      if (block is Ai.RichContentBlock rich && !string.IsNullOrWhiteSpace(rich.RawText))
+      {
+        texts.Add(rich.RawText.Trim());
+      }
+    }
+
+    if (texts.Count > 0)
+    {
+      paragraphs.Add($"{speaker}:\n{string.Join("\n\n", texts)}");
+    }
+  }
 }
 
 @if (LastAnswer() is not null)
@@ -99,6 +137,14 @@
                   aria-label="Copy"
                   data-qa="AskCopy"
                   OnClick="CopyAsync" />
+    <FluentButton Appearance="ButtonAppearance.Subtle"
+                  IconOnly="true"
+                  IconStart="@(new Icons.Regular.Size20.DocumentCopy())"
+                  Title="Copy conversation"
+                  Tooltip="Copy conversation"
+                  aria-label="Copy conversation"
+                  data-qa="AskCopyConversation"
+                  OnClick="CopyConversationAsync" />
     <FluentButton Appearance="ButtonAppearance.Subtle"
                   IconOnly="true"
                   IconStart="@(new Icons.Regular.Size20.ThumbLike())"
