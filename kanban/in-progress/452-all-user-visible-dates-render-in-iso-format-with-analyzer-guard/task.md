@@ -54,6 +54,7 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implemented 2026-10-30 (ganda task work implement oracle, Claude Opus 5.5)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 3bea41c0-e2cf-4643-be7c-e275aabfee89, max-turns 500, Done — 2026-10-29T21:20:26Z
+- Review oracle round 1 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a12e5e15df9cffc89 (claude-sonnet-5-5, read-only). Result: 0 bug, 3 suggestion, 2 nit open (M1–M5); fix pass requested.
 
 ## Notes
 
@@ -61,6 +62,18 @@ TS side is clean (no toLocale/toDateString in web-spa source/). The relative
 buckets in RelativeTime ("3 minutes ago") are not dates and stay. Decided
 format examples: instant `2026-10-05T19:51:51-04:00` (O), date `2026-10-05`.
 Implementer confirms exact shapes before editing pinned tests.
+
+## Learnings
+
+- Restatement vs task (review round 1): the checklist says "instants as round-trip `O`" while the
+  Notes example `2026-10-05T19:51:51-04:00` has no fractional seconds, which `O` cannot produce.
+  The restatement followed the Notes example (`yyyy-MM-dd'T'HH:mm:sszzz`) and said why in Results.
+  The spec contradicted itself; the implementer resolved it toward the example the reporter was
+  shown, which is the right reading. Future specs: name one shape, not a specifier and an example
+  that disagree.
+- The checklist named `AssemblyInfoModal.razor:40` for the CommitDate format, but task 450 had
+  already moved that formatting into `assembly-info-text.cs`. The implementer edited the live
+  site, not the stale line reference. Not a misread.
 
 ## Results
 
@@ -131,3 +144,19 @@ Expect:
 5. The credential row reads `Created 2026-10-05T19:51:51-04:00` (your local offset). The
    expiry reads `Expires at <yyyy-MM-ddTHH:mm:ss±hh:mm>`. Feedback timestamps read
    `yyyy-MM-ddTHH:mm:ssZ`.
+
+### Review (tw-implementation-review)
+
+- Round 1 (2026-10-30), effort 2, roster: general (sub-agent) + orchestrator verification.
+- Orchestrator re-ran the gates in this worktree: `./bin/dev build` 0/0; analyzer tests 257/257;
+  web-spa integration tests 576/576; no TWA0036 suppression; no leftover culture-shaped render.
+- Round 1 counts: bug 0; suggestion 3 open; nit 2 open. Disposition: pending (fix pass requested
+  for M1–M5, then round 2).
+- M1 is the one that matters: the analyzer approves ISO-shaped custom formats without requiring
+  `CultureInfo.InvariantCulture`, so `:` and `yyyy` still follow the thread culture on
+  server-side renders; three interpolation sites rely on that. M2 adds the missing
+  `AppendFormatted` handler test; M3 pins the new shapes for CreatedText, ExpiryText, and the
+  screenshot file name; M4 covers `+=` concatenation; M5 moves the SKILL.md rule out of the grid
+  recipe and names the invariant provider.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+  `review/disposition.md` is written when a round closes with 0 open.
