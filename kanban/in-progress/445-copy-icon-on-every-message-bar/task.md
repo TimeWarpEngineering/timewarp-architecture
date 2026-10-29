@@ -62,6 +62,7 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
 - Spec: 01a18418-875e-7d10-9d0a-d9d22584627c (2026-10-29)
 - Implement: ganda task work implementer, Claude Opus 5.5 (2026-10-29)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session c192672d-1610-4f51-acc0-b722d1d2a4f0, max-turns 500, Done — 2026-10-29T16:54:36Z
+- Review oracle round 1: Claude Fable 5.1 (`ganda task work`, headless, effort 3, roster general, turn cap 200); `general` reviewer sub-agent Claude Sonnet — 2026-10-30. Outcome: Blocked, fix pass needed for M1-M4 (`review/round-1/merged.md`).
 
 ## Results
 
@@ -112,6 +113,21 @@ Every message bar the SPA paints gets the task 313 Copy icon, and a new bar cann
   `ganda repo audit` passes with one advisory (`kanban-landed`: 8 other tasks' claims have no
   local worktree; not this task's claim, nothing to fix here). A temporary raw bar on
   `ChooseMicrosoft365Page.razor` produced `error TWA0037` in the real build (reverted).
+
+### Review (tw-implementation-review)
+
+- Round 1 (2026-10-30), effort 3, roster `general`: review oracle re-ran every gate in this
+  worktree and all pass (`dev build` 0/0, Copy tests 14/14, analyzer MessageBar 13/13 and
+  Message_Bars 15/15, `ganda repo audit` pass with the same unrelated advisory, `dev lint-skills`
+  9/9, `dev template-smoke` default variant succeeded). Goal restatement matches the task; no
+  misread.
+- Round 1 counts: bug 0; suggestion 2 open; nit 2 open. M1 TWA0037 host exemption is a suffix
+  match that exempts any `…/components/MessageBar.razor` while the Design region says otherwise;
+  M2 the rewritten `RemoveExpired` branch has no test that reaches it; M3 the TWA0036 reservation
+  note names a kanban task state in a packed file; M4 stale "FluentMessageBar" / "(FluentUI)"
+  wording in the design-system samples.
+- Disposition: **pending** — fix pass requested on this task id for M1-M4, then `review/round-2/`.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
 
