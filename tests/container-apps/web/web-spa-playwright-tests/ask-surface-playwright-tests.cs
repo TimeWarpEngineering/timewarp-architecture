@@ -14,7 +14,9 @@
 // transcript survives an edit-mode rebuild and Close plus reopen; Close resets the mode to Ask
 // before editing; @ insertion does not double the @
 // and adds one space unless whitespace already follows;
-// Copy writes the last answer (not the whole panel) to the clipboard.
+// Copy writes the last answer (not the whole panel) to the clipboard. Copy conversation (task 444)
+// writes the two-turn thread in order: "You:" then the prompt, then "{AssistantName}:" then the
+// answer, for each turn. The name is not pinned here because another suite may rename it.
 // Geometry (task 296): at 1280 the aside is the right 450px — panel x about 830, its right
 // edge on the viewport, the layout wider than 800, and FluentLayout has no mobile attribute.
 // Closed, the layout is the viewport. Below 880 and when expanded, the panel covers the
@@ -189,10 +191,12 @@ public class AskSurface_Given_Wasm
       await page.Locator("[data-qa=AskThumbsUp]").WaitForAsync();
       await page.Locator("[data-qa=AskThumbsDown]").WaitForAsync();
       await AssertIconButtonAsync(page, "AskCopy", "Copy");
+      await AssertIconButtonAsync(page, "AskCopyConversation", "Copy conversation");
       await AssertIconButtonAsync(page, "AskThumbsUp", "Thumbs up");
       await AssertIconButtonAsync(page, "AskThumbsDown", "Thumbs down");
       await page.Locator("[data-qa=AskSupport]").WaitForAsync();
       await AssertCopyWritesTheLastAnswerAsync(page);
+      await AssertCopyConversationWritesBothTurnsAsync(page);
       await AssertReferenceInsertReplacesTypedAtAsync(page);
 
       await ModeShouldBeAsync(page, "AskBeforeEditing");
@@ -694,6 +698,26 @@ public class AskSurface_Given_Wasm
     copied.ShouldStartWith("page_context:");
     copied.ShouldNotContain("Thumbs up");
     copied.ShouldNotContain("What is on this page?");
+  }
+
+  private static async Task AssertCopyConversationWritesBothTurnsAsync(IPage page)
+  {
+    await page.EvaluateAsync("() => navigator.clipboard.writeText('')");
+    await page.Locator("[data-qa=AskCopyConversation]").ClickAsync();
+    string copied = "";
+    for (int attempt = 0; attempt < 50 && !copied.StartsWith("You:", StringComparison.Ordinal); attempt++)
+    {
+      copied = await page.EvaluateAsync<string>("() => navigator.clipboard.readText()");
+      await Task.Delay(100);
+    }
+
+    copied.ShouldStartWith("You:\none\ntwo\nthree\n\n");
+    int second = copied.IndexOf("\n\nYou:\nWhat is on this page?\n\n", StringComparison.Ordinal);
+    second.ShouldBeGreaterThan(0, copied);
+    // Each turn has one "{AssistantName}:" paragraph whose answer starts with page_context:.
+    (copied[..second].Split(":\npage_context:").Length - 1).ShouldBe(1, copied);
+    (copied[second..].Split(":\npage_context:").Length - 1).ShouldBe(1, copied);
+    copied.ShouldNotContain("Thumbs up");
   }
 
   private static async Task AssertReferenceInsertReplacesTypedAtAsync(IPage page)
