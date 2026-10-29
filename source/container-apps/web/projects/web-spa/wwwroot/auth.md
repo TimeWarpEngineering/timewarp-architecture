@@ -298,6 +298,8 @@ scope `credential:manage`.
 - Package: **TimeWarp.402** (challenge, verify, settle).
 - **Free / discovery surfaces never 402** (this file, `/llms.txt`, OpenAPI, health,
   identity register/token ceremonies, SPA pages, etc.).
+- The OpenAPI document lists **402** and **503** on the paid paths in the table below.
+  Fetching `/openapi/v1.json` never returns 402.
 - Disabled or misconfigured payment configuration → **503** on paid routes only.
 - Paying is enough for an agent to buy service; a human sponsor is not required.
 - Trust tiers (Keyed → Funded, etc.) separate cheap identity from expensive power.

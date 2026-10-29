@@ -28,6 +28,8 @@
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiPublicServer then replaces servers with the
 // forwarded public origin. Scalar's Servers list stays empty and follows that document.
+// configureOpenApi runs after those transformers so a host can add product responses
+// (payment 402/503) without putting product routes in this assembly.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -118,6 +120,30 @@ public class CommonServerModule : IAspNetModule
     OpenApiAgentBearer? agentBearer
   )
   {
+    AddOpenApi(serviceCollection, apiVersion, apiTitle, agentBearer, null);
+  }
+
+  /// <summary>
+  /// Registers a FastEndpoints OpenAPI document for Scalar (and any other document consumers).
+  /// </summary>
+  /// <param name="serviceCollection">Host service collection.</param>
+  /// <param name="apiVersion">Document name and version (e.g. "v1"); must match AddDocument.</param>
+  /// <param name="apiTitle">Human-readable document title shown in Scalar.</param>
+  /// <param name="agentBearer">
+  /// Scheme name and policy-to-scope map. When null, the document does not advertise agent bearer auth.
+  /// </param>
+  /// <param name="configureOpenApi">
+  /// Host callback invoked after the shared transformers. Null adds none.
+  /// </param>
+  public static void AddOpenApi
+  (
+    IServiceCollection serviceCollection,
+    string apiVersion,
+    string apiTitle,
+    OpenApiAgentBearer? agentBearer,
+    Action<OpenApiOptions>? configureOpenApi
+  )
+  {
     if (agentBearer is not null)
     {
       serviceCollection.AddSingleton(agentBearer);
@@ -155,6 +181,7 @@ public class CommonServerModule : IAspNetModule
           }
 
           OpenApiPublicServer.Register(openApiOptions);
+          configureOpenApi?.Invoke(openApiOptions);
         };
       }
     );
