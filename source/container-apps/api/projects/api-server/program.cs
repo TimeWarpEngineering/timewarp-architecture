@@ -101,6 +101,9 @@ public class Program : IAspNetProgram
     serviceCollection.AddFastEndpoints(options =>
     {
       options.IncludeAbstractValidators = false; //This will run all AbstractValidators in the FastEndpoints pipeline.
+      // Endpoints come only from these assemblies. Auto-discovery would also scan every loaded
+      // assembly, so an in-process test host picks up test stub endpoints → duplicate routes.
+      options.DisableAutoDiscovery = true;
       options.Assemblies = new[]
       {
         typeof(TimeWarp.Architecture.Api.Server.IAssemblyMarker).Assembly,

@@ -36,9 +36,9 @@ internal static class OpenApiPaymentResponses
   private static readonly string TipRoute = Normalize(SubmitTip.Query.RouteTemplate);
   private static readonly string MeteredRoute = Normalize(InvokeMeteredCapability.Query.RouteTemplate);
 
-  private const string FreeRoutesNever402 =
+  private static readonly string FreeRoutesNever402 =
     "Free and discovery operations never return HTTP 402. "
-    + "HTTP 402 and HTTP 503 are documented only on GET and POST /api/tip and on GET /api/demo/metered-capability. "
+    + $"HTTP 402 and HTTP 503 are documented only on GET and POST /{TipRoute} and on GET /{MeteredRoute}. "
     + "This document, health, identity ceremonies, and other free routes are not payment challenges. "
     + "The bare /api path is a discovery alias of the tip jar, not a separate operation, and follows the tip jar. "
     + "Disabled or misconfigured payment returns 503 on those paid routes and does not return 402.";
