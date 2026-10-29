@@ -39,6 +39,7 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - 2026-10-30 implementer (ganda task work, claude-opus-5-5): repro, fix, test, gates.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 33de1603-903d-4d98-9713-bb22f153af07, max-turns 500, Done — 2026-10-29T18:32:18Z
+- Review oracle round 1 (ganda task work, claude-fable-5-1, effort 2, roster general via sonnet subagent ab729f8beaa0331ff): gates re-run, 0 bugs, 1 suggestion + 1 nit open, 1 nit wontfix; fix pass requested for M1, M3 — 2026-10-30
 
 ## Notes
 
@@ -95,6 +96,17 @@ advisory kanban-landed warning about other tasks' claims and nothing on this tas
 has 0 warnings and 0 errors. `dev template-smoke` (default variant) succeeded. The Aspire
 integration tests in CatalogAgent_Should were not run locally, because workers do not start an
 AppHost. CI runs them.
+
+### Review
+
+- Round 1 (2026-10-30), effort 2, roster general + orchestrator verification. Root cause and the
+  Design-region claim re-verified against the decompiled Microsoft.Extensions.AI 10.11.0 assembly.
+  Gates re-run: build 0/0, audit pass, AskRejection 2/2.
+- Counts after round 1: bug 0; suggestion 1 open (M1: `ReachesModel` restates `ToTurn` + validator
+  `IsEmpty` by hand, derive the filter from the produced turn); nit 1 open (M3: Design note on the
+  post-filter `lastUser` meaning), 1 wontfix (M2: keep the capture helpers with the screenshot proof).
+- Disposition: pending round 2 after the fix pass. Paths: `review/review-framework.md`,
+  `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
 
