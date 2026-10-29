@@ -70,6 +70,7 @@ Done means:
   tests use it. Gates green (see Results).
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session bf8cf537-22e2-47cb-b81a-d0e5d5e7172f, max-turns 500, Done — 2026-10-29T19:18:13Z
 - Review oracle: reviewed by reviewer-claude (claude, model claude-fable-5-1), effort 2, roster general, round 1, disposition clean — 2026-10-30
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session a60dbd64-7824-4559-9796-d9720c40ef2f, max-turns 120 — 2026-10-29T19:25:44Z
 
 ## Results
 
@@ -146,3 +147,7 @@ Expect: build 0/0; the playwright group passes 33/33, including
 worker's browser tests running) the unknown-slug step waits for the shell instead of failing on
 the `Authorizing...` placeholder after 5 s. If the page never finishes authorizing, the failure
 reads "The page did not finish authorizing at <url>" with the page text.
+
+## Review
+
+- Round 1: Done
