@@ -175,6 +175,8 @@ public class CommonServerModule : IAspNetModule
 
         options.ConfigureOpenApi = openApiOptions =>
         {
+          // After FastEndpoints' operation transformer, which is registered before this callback.
+          OpenApiDeleteRequestBody.Register(openApiOptions);
           if (agentBearer is not null)
           {
             OpenApiBearerSecurity.Register(openApiOptions, agentBearer);
