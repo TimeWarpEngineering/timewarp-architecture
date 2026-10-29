@@ -47,6 +47,8 @@ Acceptance:
 - Review oracle round 1: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 120), effort 2, roster general (sonnet subagent) + orchestrator verification — 2026-10-30. Blocked: fix pass requested for M1–M5.
 - Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session a0253f08-39dd-478a-872f-807baa310f45, max-turns 120 — 2026-10-29T20:25:57Z
 - Implement-fix oracle (round 1 fix pass): implementer-claude (claude, model claude-opus-5-5), headless print mode — 2026-10-30. Fixed M1–M5; review round 2 is next.
+- Review oracle round 2: review-claude (claude, model claude-fable-5-1, headless print mode, turn cap 120), effort 2, roster general (sonnet subagent) + orchestrator verification — 2026-10-30. M1–M5 confirmed fixed; Blocked: fix pass requested for M6–M8 (nits).
+- Implement-fix oracle (round 2 fix pass): implementer-claude (claude, model claude-opus-5-5), headless print mode — 2026-10-30. Fixed M6–M8; review round 3 is next.
 
 ## Results
 
@@ -92,6 +94,9 @@ Acceptance:
 - Not run: the ActionCatalog and Catalog classes use the Aspire session lane. In this headless
   worker they fail at DCP environment setup (portForServing web-server-https), which is not
   caused by this change.
+- Round 2 fix pass gates: web-spa-integration-tests build 0 warnings / 0 errors (compiles
+  web-spa with `WriteTextAsync` private, so no caller outside `ClipboardJsModule` remains).
+  AssemblyInfoCopy_ 7/7, CopyMessage 16/16. `ganda repo audit` after landing this kitchen.
 
 ### Review
 
@@ -110,7 +115,26 @@ Acceptance:
   `ClipboardJsModule.TryWriteTextAsync` + `DeniedBody`, used by all three copy handlers. M4
   fixed: CommitDate metadata and its expected line. M5 fixed: both redundant usings removed.
   Re-review lands in `review/round-2/`.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (2026-10-30), effort 2, roster general + orchestrator verification, scope = fix-pass commit
+  92906f076 only. Reviewer re-ran the build (0/0) and the tests (AssemblyInfoCopy_ 7/7, CopyMessage
+  16/16) and grepped for the collapsed clipboard-failure strings (one copy left, in
+  ClipboardJsModule). Goal restatement still matches the task; no misread.
+- Round 2 counts: bug 0 · suggestion 0 open / 2 fixed · nit 3 open / 3 fixed · wontfix 0.
+  M1–M5 fixed. New: M6 the `assembly-info-text.cs` Design claim "Everything the dialog shows comes
+  from here" still overstates (fallback heading and spinner); M7 two test usings out of ordinal
+  order; M8 `ClipboardJsModule.WriteTextAsync` should be private so handlers cannot bypass
+  `TryWriteTextAsync`.
+- Round 2 disposition: fix pass requested on this id for M6–M8; re-review in `review/round-3/`.
+- Round 2 fix pass (2026-10-30), all three nits fixed. M6: the `assembly-info-text.cs` Design
+  region now says "Every value the dialog shows comes from here (the loading state and the
+  'Assembly' fallback heading aside)" and notes the markup renders Title, Properties, Links in
+  the same order as `ClipboardText`; the over-long Design lines in
+  `agent-links-state.copy-onboarding.cs` and `application-state.copy-assembly-info.cs` were
+  re-wrapped. M7: the two `Microsoft.AspNetCore.Components.Web` usings swapped into ordinal
+  order. M8: `ClipboardJsModule.WriteTextAsync` is `private`; its Design region states that a
+  handler cannot bypass `TryWriteTextAsync`.
+- Paths: `review/review-framework.md`, `review/round-1/merged.md`, `review/round-2/general.md`,
+  `review/round-2/merged.md`.
 
 ### How to validate
 
@@ -134,6 +158,8 @@ Warning bar reads "Couldn't copy the version info.".
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Round 1 fix pass: M1–M5 implemented; awaiting round 2.
+- Round 2: Blocked — open M6, M7, M8
+- Round 2 fix pass: M6–M8 implemented; awaiting round 3.
 
 ## Notes
 
