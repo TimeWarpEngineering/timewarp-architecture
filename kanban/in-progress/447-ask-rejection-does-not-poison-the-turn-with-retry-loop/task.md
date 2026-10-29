@@ -47,8 +47,7 @@ Acceptance:
 ## Review
 
 - Round 1: Blocked — open M1, M3
-- Round 2: Done — M1, M3 fixed; 0 open; disposition accepted-exceptions (M2 wontfix)
-
+- Round 2: Done
 ## Notes
 
 Evidence: AgentAsk.razor Reject is approval.Reject("Declined.") on a
