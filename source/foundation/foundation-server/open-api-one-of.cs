@@ -14,16 +14,22 @@
 //   the union is inlined at each use. Other types keep the FastEndpoints names.
 // - The schema transformer replaces a OneOf schema with oneOf over its asT0… member schemas.
 //   The FastEndpoints transformers have already run on those members, and reference resolution
-//   walks oneOf, so each arm stays a $ref to the component of its type. A shape without the
-//   expected asT members is left alone rather than guessed at. A DTO property typed as a OneOf
+//   walks oneOf, so each arm stays a $ref to the component of its type. A OneOf schema without
+//   its asT members throws, naming the type. A DTO property typed as a OneOf
 //   gets the same oneOf. The contract JSON options register no OneOf converter, and the default
 //   serializer throws on the inactive AsT getter, so the response union is the only OneOf on the
 //   wire today; the property rule keeps the document free of wrappers either way.
 // - The operation transformer splits a response union that contains SharedProblemDetails. The
 //   2xx content keeps the success arm, or oneOf over the success arms when there are several.
 //   The problem arm is published under application/problem+json: on a 4xx or 5xx response that
-//   already lists that media type, and on default, because the status is whatever the handler
-//   put on the problem (400 when it sets none).
+//   already lists that media type, and on default when the operation has none, because the status
+//   is whatever the handler put on the problem (400 when it sets none). An endpoint whose union
+//   has a problem arm but no matching union at 2xx throws, naming the endpoint.
+//
+// Both guards throw rather than log. A serializer naming change or a OneOf package change would
+// otherwise publish the wrapper again with no diagnostic. The throw makes /openapi/{doc}.json
+// return 500 with the cause, and the OpenApiOneOf_ tests fail on it, instead of the document
+// quietly drifting from the wire.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -83,8 +89,9 @@ internal static class OpenApiOneOf
   )
   {
     _ = cancellationToken;
-    Type[]? arms = Arms(context.JsonTypeInfo.Type);
-    if (arms is null || schema.Properties is null)
+    Type unionType = context.JsonTypeInfo.Type;
+    Type[]? arms = Arms(unionType);
+    if (arms is null)
     {
       return Task.CompletedTask;
     }
@@ -92,12 +99,17 @@ internal static class OpenApiOneOf
     List<IOpenApiSchema> oneOf = [];
     for (int index = 0; index < arms.Length; index++)
     {
-      IOpenApiSchema? arm = schema.Properties
-        .FirstOrDefault(property => string.Equals(property.Key, $"asT{index}", StringComparison.OrdinalIgnoreCase))
+      string member = $"asT{index}";
+      IOpenApiSchema? arm = schema.Properties?
+        .FirstOrDefault(property => string.Equals(property.Key, member, StringComparison.OrdinalIgnoreCase))
         .Value;
       if (arm is null)
       {
-        return Task.CompletedTask;
+        throw new InvalidOperationException
+        (
+          $"OpenApiOneOf: the schema of {unionType} has no '{member}' member, so its arms cannot be "
+          + "published as oneOf. The OneOf package or the serializer naming policy changed."
+        );
       }
 
       oneOf.Add(arm);
@@ -123,13 +135,13 @@ internal static class OpenApiOneOf
       .FirstOrDefault();
     Type[]? arms = Arms(endpoint?.ResDtoType);
     int problemIndex = arms is null ? -1 : Array.IndexOf(arms, typeof(SharedProblemDetails));
-    if (arms is null || problemIndex < 0 || operation.Responses is null)
+    if (arms is null || problemIndex < 0)
     {
       return Task.CompletedTask;
     }
 
     IOpenApiSchema? problem = null;
-    foreach (KeyValuePair<string, IOpenApiResponse> response in operation.Responses)
+    foreach (KeyValuePair<string, IOpenApiResponse> response in operation.Responses ?? [])
     {
       if (!IsStatusClass(response.Key, '2') || response.Value.Content is null)
       {
@@ -149,9 +161,14 @@ internal static class OpenApiOneOf
       }
     }
 
-    if (problem is null)
+    if (problem is null || operation.Responses is null)
     {
-      return Task.CompletedTask;
+      throw new InvalidOperationException
+      (
+        $"OpenApiOneOf: {context.Description.HttpMethod} /{context.Description.RelativePath} returns "
+        + $"{endpoint!.ResDtoType} but no 2xx response carries a oneOf over its {arms.Length} arms, so "
+        + "the problem arm cannot be published as problem+json. Check the endpoint's Produces metadata."
+      );
     }
 
     foreach (KeyValuePair<string, IOpenApiResponse> response in operation.Responses)

@@ -27,8 +27,9 @@
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
 // DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
 // applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
-// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer then replaces servers with the
-// forwarded public origin. Scalar's Servers list stays empty and follows that document.
+// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
+// the document's servers with the forwarded public origin, and Scalar's Servers list stays
+// empty and follows that document.
 // configureOpenApi runs after those transformers so a host can add product responses
 // (payment 402/503) without putting product routes in this assembly.
 #endregion

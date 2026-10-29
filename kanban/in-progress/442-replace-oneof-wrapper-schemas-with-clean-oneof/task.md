@@ -32,6 +32,17 @@ Acceptance:
   clients call contracts through `HttpApiService`, and the repo has no OpenAPI codegen (no NSwag,
   Kiota, or openapi-generator), so "clients still work" is checked by the build and the suites.
 
+Fix pass for review round 1 (M2, M3, M5 open):
+
+- M2: the tests pin "every contract operation publishes the problem response" against the endpoint
+  metadata, not only the `default`s that happen to exist. Probes cover the 4xx problem+json rewrite
+  and a OneOf with no problem arm (200 stays `oneOf`, no `default`).
+- M3: the transformer stops no-oping silently. A OneOf schema without its `asT{n}` members, or a
+  problem-arm endpoint with no matching union at 2xx, throws `InvalidOperationException` naming
+  the type or endpoint, and the Design region says so.
+- M5: re-wrap the CommonServerModule Design comment so the OpenApiPublicServer sentence reads in
+  order, and say the problem arm goes on `default` only when it is absent.
+
 ## Session
 
 - Created: ses_e7c126e60ffeQQKOK3tf1mfEiJ (2026-10-28)
@@ -44,6 +55,9 @@ Acceptance:
   Effort 2, roster general. Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
   `review/round-1/merged.md`. Outcome: 0 bug, 3 open (M2, M3 suggestion; M5 nit), 2 wontfix (M1, M4).
   Fix pass requested for M2, M3, M5; next round under `review/round-2/`.
+- Fix pass for review round 1 (implement-fix-2 oracle, ganda task work, 2026-10-29): M2, M3, M5
+  implemented; gates and negative controls under Results → Fix pass.
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 089264dd-6d97-4701-a33d-c1ddef4bf936, max-turns 120 — 2026-10-29T14:43:19Z
 
 ## Results
 
@@ -105,6 +119,50 @@ Disposition: **not yet closed — fix pass requested** (round 1 ledger `review/r
   `default → SharedProblemDetails`, which confirms the Results numbers above.
 - `review/disposition.md` is written when the next round reaches 0 open.
 
+### Fix pass (review round 1 findings, 2026-10-29)
+
+- M3: both guards in `OpenApiOneOf` now throw `InvalidOperationException` instead of returning.
+  A OneOf schema without its `asT{n}` member names the OneOf type and the missing member. An
+  endpoint whose union has a `SharedProblemDetails` arm but no matching union at 2xx names the
+  verb, route, and response type. The Design region says the guards throw rather than log, and why:
+  the document returns 500 with the cause and the `OpenApiOneOf_` tests fail on it.
+- M2: `open-api-one-of-tests.cs` gains three tests (9 total).
+  `Every_Problem_Arm_Endpoint_Should_Publish_Default_Problem` starts from the endpoint data
+  sources, not the document: every FastEndpoints endpoint whose `ResDtoType` is a OneOf with a
+  `SharedProblemDetails` arm must publish `default → SharedProblemDetails` under problem+json. It
+  checks 73 operations (71 contracts plus 2 probes). `Explicit_Problem_Status_…` uses a probe with
+  `ProducesProblem(422)` and pins the 4xx rewrite. `Union_Without_Problem_Arm_…` pins that a
+  `OneOf<Cat, Dog>` stays `oneOf` at 200 with no `default`. `DocumentRootAsync` puts the response
+  body in the status assertion message.
+- M5: the CommonServerModule Design comment is re-wrapped to the file's width, and the
+  OpenApiPublicServer sentence no longer reads as following OneOf. The OpenApiOneOf Design says the
+  problem arm goes on `default` when the operation has none.
+
+Negative controls (each reverted after the run):
+
+- Never adding `default` and skipping the 4xx rewrite: 5 of 9 fail. The new endpoint-driven test
+  lists all 73 operations. The older `Every_Default_…` test also fails here, but only because no
+  `default` is left at all; it would pass if a single operation lost its `default`, which is the
+  case the endpoint-driven test pins.
+- Skipping only the 4xx rewrite: 1 of 9 fails (`Explicit_Problem_Status_…`).
+- Renaming the expected member to `asX{n}`: the document request throws
+  `OpenApiOneOf: the schema of OneOf.OneOf`2[…GetAssistantIdentity+Response, …SharedProblemDetails]
+  has no 'asX0' member…`, and every document test fails with that message.
+
+Gates run in this worktree for the fix pass:
+
+- `dev build`: 0 warnings, 0 errors.
+- web-server-integration-tests, full suite: 419 total, 418 passed, 1 skipped, 0 failed.
+- `--filter-class OpenApiOneOf_`: 9 passed.
+- `dev template-smoke` (default variant): SUCCEEDED (generated web 441/441, api 9/9, testing 14/14).
+- api-server-integration-tests (Aspire lane) was not re-run: workers do not start an AppHost. The
+  api contracts (weather-forecast, agent-bearer-sample) have no `<summary>` on the request class,
+  so they take the same generated path as the web contracts the guard passed on.
+- `ganda repo audit`: the only error before commit was `kanban-landed` on this task's own
+  uncommitted kitchen (task.md and the review files not yet on origin-home). The host's land step
+  lands them. The other-task warnings (070-001, 104-024/025/026, 123, 141, 198, 244) are unchanged
+  board state.
+
 ### How to validate
 
 Smoke:
@@ -114,7 +172,7 @@ cd tests/container-apps/web/web-server-integration-tests
 dotnet run -- --filter-class OpenApiOneOf_
 ```
 
-Expect: 6 passed, 0 failed. Then, on a running web-server (or arch.timewarp.work once deployed),
+Expect: 9 passed, 0 failed. Then, on a running web-server (or arch.timewarp.work once deployed),
 `curl -s <origin>/openapi/v1.json | jq '[.components.schemas | keys[] | select(startswith("OneOf"))] | length'`
 prints `0`, and `jq '.paths["/Analytics/TrackEvent"].post.responses'` shows `200` →
 `TimeWarpArchitectureFeaturesAnalyticsTrackEvent_Response` (application/json) and `default` →
@@ -135,6 +193,10 @@ lists the operations with both responses.
   OneOf 200) were right in the abstract but did not reproduce in the real document; the review dumped the
   document before accepting the finding. Verify a predicted document shape against the generated document,
   not against decompiled library logic alone.
+
+## Review
+
+- Round 1: Blocked — open M2, M3, M5
 
 ## Notes
 
