@@ -34,6 +34,12 @@ Acceptance criteria:
 - Created: ses_e7c126e60ffeQQKOK3tf1mfEiJ (2026-10-28)
 - Implemented under `ganda task work` (implement node), 2026-10-29.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 04b2d5c9-79ac-44b2-86b3-50fc076474c6, max-turns 500, Done — 2026-10-29T13:13:51Z
+- Review oracle: tw-implementation-review, effort 2, roster general (sub-agent a8e57b9543f31cee2, claude-sonnet-5-5), orchestrator claude-fable-5-1, round 1, disposition clean — 2026-10-29
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 0585e958-5bbd-4ffb-b328-4bc231dd548f, max-turns 120 — 2026-10-29T13:18:58Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -60,6 +66,13 @@ Evidence: https://arch.timewarp.work/openapi/v1.json, 2026-10-28.
 - Negative proof: with the source edits reverted, the guard failed 2/2 and printed the five
   routes above. With the fix, all 36 `OpenApi*` test methods pass and the full
   web-server-integration-tests suite passes (386/386).
+
+### Review
+
+- Rounds: 1. Roster: general (effort 2). Disposition: **clean**, 0 open, 0 wontfix.
+- Counts: bug 0 / suggestion 0 / nit 0.
+- Reviewer re-ran the guard: build 0 warnings, `--filter-class OpenApiOperationTags` 2/2 passed over 74 registered endpoints. Confirmed the five files are the only hand-written `Configure()` overrides under `source/container-apps`, the api-server has none, and the tag names match the generator's namespace-leaf emission. Restatement matches the original task; no misread.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
