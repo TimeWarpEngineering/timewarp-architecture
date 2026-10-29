@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 366
-- Effort: 2
+- Lines changed: 62
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -26,6 +26,15 @@
 **Effort:** 2 (host Budget.ByDiff, 366 lines); roster axis general
 **Reviewer roster:** general (sonnet subagent, read-only) + orchestrator verification (build, test run, call-site checks)
 **Session IDs:** review oracle claude-fable-5-1 (headless `ganda task work`, print mode, turn cap 120); general reviewer claude-sonnet-5-5 subagent
+
+## Round 3 scope
+
+**Date:** 2026-10-30
+**Diff scope:** fix-pass commit 769e9eec9 (`fix(web-spa): version dialog copy review round 2 fixes`), `git diff ce654d715..HEAD -- . ':!kanban'`, product paths only. 5 files: `agent-links-state.copy-onboarding.cs`, `application-state.copy-assembly-info.cs`, `assembly-info-text.cs`, `services/clipboard-js-module.cs`, `tests/.../application/assembly-info-copy-tests.cs`.
+**Brief:** re-verify round-2 M6–M8 against the post-fix tree and scan the fix delta for new defects. Rounds 1 and 2 are frozen.
+**Effort:** 1 (host Budget.ByDiff, 62 lines); roster axis general
+**Reviewer roster:** general (sonnet subagent, read-only) + orchestrator verification (build, test run, call-site and markup-order checks)
+**Session IDs:** review oracle claude-fable-5-1 (headless `ganda task work`, print mode, turn cap 80); general reviewer claude-sonnet-5-5 subagent a5fb2dd97881b9fe8
 
 ## Ground rules
 
