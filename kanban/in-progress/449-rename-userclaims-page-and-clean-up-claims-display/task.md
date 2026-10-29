@@ -48,6 +48,7 @@ Acceptance criteria:
 - Created: ses_e7bddb50dffeHlwyQEr0G4OEzc (2026-10-28)
 - 2026-10-30 implementer (claude-opus-5-5, ganda task work): rename + display cleanup, gates green.
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session abbc8da5-7380-48cf-b4ac-f129f7a9c206, max-turns 500, Done — 2026-10-29T19:46:43Z
+- 2026-10-30 review oracle (claude-fable-5-1, ganda task work, effort 2, roster general, turn cap 120): round 1, 0 bugs, 0 suggestions, 1 nit wontfix; disposition accepted-exceptions. Gates re-run in worktree: build 0/0, fast 14/14, web-spa-integration 569/569, audit passes.
 
 ## Results
 
@@ -74,6 +75,20 @@ Acceptance criteria:
   this task, so it was not changed here).
 - I did not do a live browser check of the admin and developer views here (headless, and workers do
   not run AppHost). Use the steps below.
+
+### Review
+
+- Rounds: 1. Roster: general (review oracle, claude-fable-5-1), effort 2.
+- Final counts: bug 0 / suggestion 0 / nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the "Verify admin + developer views" checklist
+  tick has no live browser check behind it; workers must not run the AppHost in a task worktree,
+  Results disclose the gap, and the "How to validate" steps are the operator smoke. No product
+  change requested. Restatement matches the task; no misread.
+- Reviewer re-verified gates in this worktree: `dev build` 0 warnings / 0 errors, `dev test -g fast`
+  14/14, web-spa-integration-tests 569/569, `ganda repo audit` passes (same `kanban-landed`
+  advisory). Repo sweep for `UserClaims` / `User Claims` outside `kanban/`: no hits.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
