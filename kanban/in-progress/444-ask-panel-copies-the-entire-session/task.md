@@ -39,6 +39,7 @@ Acceptance:
 - Implemented: ganda task work implement oracle, Claude Opus 5.5 (2026-10-29)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 3e392671-ddab-4ea0-adaf-6a945a18238f, max-turns 500, Done — 2026-10-29T16:16:22Z
 - Review oracle: review round 1 by Claude Fable 5.1 (claude-fable-5-1), effort 1, roster general, turn cap 80, disposition accepted-exceptions — 2026-10-29
+- Review oracle: review by reviewer-claude-fable (claude, model claude-fable-5-1), session 7d88bd43-5a0f-4472-9dc5-79e7ece6d1ad, max-turns 80 — 2026-10-29T16:21:56Z
 
 ## Results
 
@@ -81,6 +82,10 @@ Smoke: `cd tests/container-apps/web/web-spa-playwright-tests && dotnet run -c Re
 
 Expect: the test passes (1/1). By hand, the clipboard holds both prompts under `You:` and both
 replies under the assistant's name, in order. Copy still copies only the last answer.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
