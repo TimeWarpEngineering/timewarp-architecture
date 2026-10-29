@@ -38,6 +38,7 @@ Acceptance:
 - Created: ses_e7be8301fffeuQA2WOJDPvWuQh (2026-10-28)
 - Implemented: ganda task work implement oracle, Claude Opus 5.5 (2026-10-29)
 - Implement oracle: implemented by implementer-claude (claude, model claude-opus-5-5), session 3e392671-ddab-4ea0-adaf-6a945a18238f, max-turns 500, Done — 2026-10-29T16:16:22Z
+- Review oracle: review round 1 by Claude Fable 5.1 (claude-fable-5-1), effort 1, roster general, turn cap 80, disposition accepted-exceptions — 2026-10-29
 
 ## Results
 
@@ -59,6 +60,18 @@ Acceptance:
   Its one finding is a kanban-landed warning about 8 live claims held by other tasks
   (070-001, 104-024..026, 123, 141, 198, 244) that have no worktree. Those are other
   sessions' claims, so this task did not change them.
+
+### Review
+
+- Rounds: 1. Roster: general, effort 1. Reviewer re-ran `dev build` (0 warnings) and the
+  `AskSurface_Given_Wasm` Playwright test (passed; the first cold run timed out at the final
+  Configure-permissions navigation, after the new assertions had passed, which is not in this diff).
+- Final counts: bug 0 open / 0 fixed / 0 wontfix; suggestion 0 / 0 / 0; nit 0 open / 0 fixed / 1 wontfix.
+- Disposition: accepted-exceptions. M1 (nit): the task 444 Design sentences left one 170-character
+  comment line in `AskAnswerBar.razor`; accepted because the repo has no line-length rule and the
+  text is prose only. The restatement matched the task; no misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
