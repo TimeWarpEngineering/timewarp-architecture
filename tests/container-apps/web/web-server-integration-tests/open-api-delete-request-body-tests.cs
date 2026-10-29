@@ -5,8 +5,11 @@
 #region Design
 // The role id is the path parameter. UserId is the mock-mode caller id and travels on the query
 // string, matching GetRole and HttpApiService. A bodyless DELETE (clear xAI key) stays bodyless.
-// The host is the OpenAPI pipeline only: FastEndpoints discovers the generated endpoints and
-// CommonServerModule.AddOpenApi runs the document transformers. No mediator graph.
+// Two probe DELETE endpoints in this file cover the other transformer branches: nullable leftover
+// scalars become optional query parameters, and a leftover collection keeps the body with
+// required false. The host is the OpenAPI pipeline only: FastEndpoints discovers the generated
+// endpoints plus the probes, and CommonServerModule.AddOpenApi runs the document transformers.
+// No mediator graph.
 #endregion
 
 namespace OpenApiDeleteRequestBody_;
@@ -28,6 +31,8 @@ public class DeleteRoles_Given_
     "DeleteRoleEndpoint",
     "GetRoleEndpoint",
     "ClearUserXaiApiKeyEndpoint",
+    nameof(DeleteProbeOptionalEndpoint),
+    nameof(DeleteProbePayloadEndpoint),
   };
 
   private static WebApplication? App;
@@ -49,8 +54,10 @@ public class DeleteRoles_Given_
     builder.Services.AddFastEndpoints(options =>
     {
       options.DisableAutoDiscovery = true;
-      options.Assemblies = [typeof(Program).Assembly];
-      options.Filter = type => EndpointNames.Contains(type.Name);
+      options.Assemblies = [typeof(Program).Assembly, typeof(DeleteProbeOptionalEndpoint).Assembly];
+      options.Filter = type => EndpointNames.Contains(type.Name)
+        && (type.Assembly == typeof(Program).Assembly
+          || type.Namespace == typeof(DeleteProbeOptionalEndpoint).Namespace);
     });
     CommonServerModule.AddOpenApi(builder.Services, "v1", "Test API");
     App = builder.Build();
@@ -105,6 +112,28 @@ public class DeleteRoles_Given_
     operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
   }
 
+  public static async Task Optional_Scalars_Should_Publish_Optional_Query_Parameters()
+  {
+    JsonElement operation = await OperationAsync(DeleteProbeOptionalEndpoint.Route, "delete");
+    operation.TryGetProperty("requestBody", out _).ShouldBeFalse();
+
+    IsRequired(Parameter(operation, "id", "path")).ShouldBeTrue();
+    IsRequired(Parameter(operation, "limit", "query")).ShouldBeFalse();
+    IsRequired(Parameter(operation, "note", "query")).ShouldBeFalse();
+  }
+
+  public static async Task Collection_Property_Should_Keep_An_Optional_RequestBody()
+  {
+    JsonElement operation = await OperationAsync(DeleteProbePayloadEndpoint.Route, "delete");
+    operation.TryGetProperty("requestBody", out JsonElement requestBody).ShouldBeTrue();
+    IsRequired(requestBody).ShouldBeFalse();
+    Parameter(operation, "id", "path");
+  }
+
+  // The OpenAPI writer omits required when it is false.
+  private static bool IsRequired(JsonElement element) =>
+    element.TryGetProperty("required", out JsonElement required) && required.GetBoolean();
+
   private static JsonElement Parameter(JsonElement operation, string name, string location)
   {
     JsonElement parameters = operation.GetProperty("parameters");
@@ -146,5 +175,54 @@ public class DeleteRoles_Given_
 
     string known = string.Join(", ", paths.EnumerateObject().Select(static item => item.Name));
     throw new InvalidOperationException($"Missing {method} {path}. Paths: {known}");
+  }
+}
+
+public sealed class DeleteProbeOptionalRequest
+{
+  public Guid Id { get; set; }
+  public int? Limit { get; set; }
+  public string? Note { get; set; }
+}
+
+public sealed class DeleteProbeOptionalEndpoint : Endpoint<DeleteProbeOptionalRequest>
+{
+  internal const string Route = "/probe/delete-optional/{id}";
+
+  public override void Configure()
+  {
+    Delete(Route);
+    AllowAnonymous();
+  }
+
+  public override Task HandleAsync(DeleteProbeOptionalRequest req, CancellationToken ct)
+  {
+    _ = req;
+    _ = ct;
+    return Task.CompletedTask;
+  }
+}
+
+public sealed class DeleteProbePayloadRequest
+{
+  public Guid Id { get; set; }
+  public IReadOnlyList<Guid> Items { get; set; } = [];
+}
+
+public sealed class DeleteProbePayloadEndpoint : Endpoint<DeleteProbePayloadRequest>
+{
+  internal const string Route = "/probe/delete-payload/{id}";
+
+  public override void Configure()
+  {
+    Delete(Route);
+    AllowAnonymous();
+  }
+
+  public override Task HandleAsync(DeleteProbePayloadRequest req, CancellationToken ct)
+  {
+    _ = req;
+    _ = ct;
+    return Task.CompletedTask;
   }
 }

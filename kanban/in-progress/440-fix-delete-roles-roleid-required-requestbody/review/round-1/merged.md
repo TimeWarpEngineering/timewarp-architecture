@@ -7,24 +7,24 @@
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
 | bug | 0 | 0 | 0 |
-| suggestion | 1 | 0 | 0 |
-| nit | 1 | 0 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 1 | 0 |
 
 ## Issues
 
-### M1 — Severity: suggestion — Status: open
+### M1 — Severity: suggestion — Status: fixed
 - File: tests/container-apps/web/web-server-integration-tests/open-api-delete-request-body-tests.cs:92
 - Description: The transformer ships in `TimeWarp.Foundation.Server` to every generated app, and its Design region (source/foundation/foundation-server/open-api-delete-request-body.cs:11-13) promises two behaviors that no test exercises: a leftover object or collection property keeps the request body with `required: false`, and a nullable leftover scalar publishes a query parameter with `required: false`. Only the DELETE Roles test exercises the new code, and only for one shape (a required `Guid`). The GET Roles and Clear xAI key tests pass without the transformer. The repo rule is that when two things must agree (here the Design claim and the code) a check enforces it.
 - Suggestion: Add a synthetic DELETE FastEndpoint to the test assembly (the test project already references FastEndpoints and filters endpoints by name) with a route id, an optional scalar, and a second variant with a complex property. Include them in `EndpointNames`. Assert that the optional scalar publishes `required: false` and that the complex variant keeps `requestBody` with `required: false`. Keep the existing three tests.
 - Source: general
-- Disposition notes:
+- Disposition notes: Fixed in the implement-fix-2 pass. The probe endpoints `DeleteProbeOptionalEndpoint` and `DeleteProbePayloadEndpoint` are in the test file. New tests `Optional_Scalars_Should_Publish_Optional_Query_Parameters` and `Collection_Property_Should_Keep_An_Optional_RequestBody` cover them. Red check: forcing `required: true` makes both fail.
 
-### M2 — Severity: nit — Status: open
+### M2 — Severity: nit — Status: fixed
 - File: source/foundation/foundation-server/open-api-delete-request-body.cs:309
 - Description: The `SchemaFor` fallback (used when the body schema lookup finds no matching property) is wrong for some types that `IsScalar` accepts. `DateOnly` maps to `format: date-time` instead of `date`. `uint`, `ulong`, `ushort`, and `sbyte` are not in the integer list, so they publish as `type: string`. Enums publish as a bare `string` with no values. The test's `uuid` assertion is produced by either path, so it cannot show which path ran.
 - Suggestion: Map `DateOnly` to `format: date` and `TimeOnly` to `format: time`. Include the unsigned and signed-byte integer types in the integer branch. For enums, emit `type: string` with the enum names, or state in the Design region that the fallback is approximate and the body schema is the primary source.
 - Source: general
-- Disposition notes:
+- Disposition notes: Fixed in the implement-fix-2 pass. `DateOnly` is now `date`, `TimeOnly` is now `time`, and `sbyte`, `ushort`, `uint`, and `ulong` are now integers. The Design region says the body schema is the primary source and that the fallback publishes an enum as a plain string, because the app's JSON options decide the enum format.
 
 ## Duplicates / conflicts
 

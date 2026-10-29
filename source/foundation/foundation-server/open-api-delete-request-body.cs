@@ -10,7 +10,10 @@
 // [QueryParam]: web-contracts does not reference that package. This transformer runs after the
 // FastEndpoints operation transformer, moves leftover scalar properties to query parameters, and
 // removes the body. A leftover object or collection stays, with required set to false, so a real
-// payload is not rewritten into query parameters.
+// payload is not rewritten into query parameters. A nullable leftover scalar is an optional query
+// parameter. Each query schema comes from the matching body property. SchemaFor is the fallback
+// when no body property matches: it maps the scalar CLR types, and an enum is a plain string with
+// no values because the enum wire format belongs to the app's JSON options.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -319,9 +322,19 @@ internal static class OpenApiDeleteRequestBody
       return new OpenApiSchema { Type = JsonSchemaType.String, Format = "uri" };
     }
 
-    if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(DateOnly))
+    if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset))
     {
       return new OpenApiSchema { Type = JsonSchemaType.String, Format = "date-time" };
+    }
+
+    if (underlying == typeof(DateOnly))
+    {
+      return new OpenApiSchema { Type = JsonSchemaType.String, Format = "date" };
+    }
+
+    if (underlying == typeof(TimeOnly))
+    {
+      return new OpenApiSchema { Type = JsonSchemaType.String, Format = "time" };
     }
 
     if (underlying == typeof(bool))
@@ -329,7 +342,14 @@ internal static class OpenApiDeleteRequestBody
       return new OpenApiSchema { Type = JsonSchemaType.Boolean };
     }
 
-    if (underlying == typeof(byte) || underlying == typeof(short) || underlying == typeof(int) || underlying == typeof(long))
+    if (underlying == typeof(byte)
+      || underlying == typeof(sbyte)
+      || underlying == typeof(short)
+      || underlying == typeof(ushort)
+      || underlying == typeof(int)
+      || underlying == typeof(uint)
+      || underlying == typeof(long)
+      || underlying == typeof(ulong))
     {
       return new OpenApiSchema { Type = JsonSchemaType.Integer };
     }
