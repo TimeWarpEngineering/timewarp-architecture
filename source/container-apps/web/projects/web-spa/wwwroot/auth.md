@@ -287,6 +287,10 @@ dotnet run tools/agent-identity-cli/agent.cs -- demo
 kanban task **104-004** Results (openssl keygen + register/token/me). Signing
 cannot be pure curl — the agent must ECDSA-sign the domain-separated challenge.
 
+Credential management (list/add/revoke) uses `/api/identity/credentials*` under a
+policy that accepts either an identity-session cookie **or** a bearer token with
+scope `credential:manage`.
+
 ### Optional human link
 
 An agent can ask to be linked to a human account. The link is optional; paid service
@@ -302,17 +306,14 @@ human approves or denies the request on the **Agent links** page.
 
 `humanPrincipalId` is the human's account id, which the Agent links page shows to the
 signed-in human. It has no default. The server never links an agent to itself or
-guesses a human. An omitted or empty id is **400**. A caller that is not an agent
-gets **403**. An id that is not a human account gets **404**. A pending or approved
-link for the same pair already existing is **409**. A denied link can be requested again.
+guesses a human. An omitted or empty id is **400**. A request with no valid agent
+bearer gets **401**. A bearer whose principal is not an agent gets **403**. An id that
+is not a human account gets **404**. A pending or approved link for the same pair
+already existing is **409**. A denied link can be requested again.
 
 ```json
 { "humanPrincipalId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301" }
 ```
-
-Credential management (list/add/revoke) uses `/api/identity/credentials*` under a
-policy that accepts either an identity-session cookie **or** a bearer token with
-scope `credential:manage`.
 
 ---
 
