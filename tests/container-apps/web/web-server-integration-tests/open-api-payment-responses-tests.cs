@@ -68,7 +68,7 @@ public class Document_Given_
       "v1",
       "Test API",
       OpenApiAgentBearerRegistration.Create(),
-      OpenApiPaymentResponses.Register
+      configureOpenApi: OpenApiPaymentResponses.Register
     );
     builder.Services.Configure<TipOptions>(static options => options.Resource = ConfiguredTipResource);
     builder.Services.Configure<MeteredCapabilityOptions>(static options => options.Resource = ConfiguredMeteredResource);

@@ -30,6 +30,9 @@
 // (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
 // the document's servers with the forwarded public origin, and Scalar's Servers list stays
 // empty and follows that document.
+// documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
+// and records /.well-known discovery documents in info.description plus
+// x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
 // configureOpenApi runs after those transformers so a host can add product responses
 // (payment 402/503) without putting product routes in this assembly.
 #endregion
@@ -114,25 +117,10 @@ public class CommonServerModule : IAspNetModule
   /// <param name="agentBearer">
   /// Scheme name and policy-to-scope map. When null, the document does not advertise agent bearer auth.
   /// </param>
-  public static void AddOpenApi
-  (
-    IServiceCollection serviceCollection,
-    string apiVersion,
-    string apiTitle,
-    OpenApiAgentBearer? agentBearer
-  )
-  {
-    AddOpenApi(serviceCollection, apiVersion, apiTitle, agentBearer, null);
-  }
-
-  /// <summary>
-  /// Registers a FastEndpoints OpenAPI document for Scalar (and any other document consumers).
-  /// </summary>
-  /// <param name="serviceCollection">Host service collection.</param>
-  /// <param name="apiVersion">Document name and version (e.g. "v1"); must match AddDocument.</param>
-  /// <param name="apiTitle">Human-readable document title shown in Scalar.</param>
-  /// <param name="agentBearer">
-  /// Scheme name and policy-to-scope map. When null, the document does not advertise agent bearer auth.
+  /// <param name="documentPublicWebRoutes">
+  /// When true, the document lists <c>GET /api/health</c> and the <c>GET|POST /api</c> tip alias,
+  /// and records the <c>/.well-known/*</c> discovery documents as excluded routes.
+  /// Api-server leaves this false: those routes are not on that host.
   /// </param>
   /// <param name="configureOpenApi">
   /// Host callback invoked after the shared transformers. Null adds none.
@@ -143,7 +131,8 @@ public class CommonServerModule : IAspNetModule
     string apiVersion,
     string apiTitle,
     OpenApiAgentBearer? agentBearer,
-    Action<OpenApiOptions>? configureOpenApi
+    bool documentPublicWebRoutes = false,
+    Action<OpenApiOptions>? configureOpenApi = null
   )
   {
     if (agentBearer is not null)
@@ -186,6 +175,11 @@ public class CommonServerModule : IAspNetModule
           }
 
           OpenApiPublicServer.Register(openApiOptions);
+          if (documentPublicWebRoutes)
+          {
+            OpenApiDiscoveryCoverage.Register(openApiOptions);
+          }
+
           configureOpenApi?.Invoke(openApiOptions);
         };
       }

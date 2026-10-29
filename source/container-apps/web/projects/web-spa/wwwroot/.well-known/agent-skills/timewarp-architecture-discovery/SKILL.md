@@ -20,6 +20,8 @@ Stable root-relative paths. Resolve against the origin that served this skill.
 | Scalar UI | `/scalar/v1` |
 | Health | `/api/health` |
 
+`/openapi/v1.json` includes the FastEndpoints operations, `GET /api/health`, and `GET|POST /api` (rewrite alias of `/api/tip`, including `/api/`). It excludes the protocol cards below and `/.well-known/webmcp.json`. That exclusion is the document description and `x-timewarp-excluded-routes`. Scalar (`/scalar/v1`) shows the description. The index is `/llms.txt`.
+
 ## Protocol cards (v1 minimal)
 
 | Card | Path |

@@ -28,6 +28,8 @@
 // antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
+// documentPublicWebRoutes: this host serves /api/health, the /api tip alias, and the SPA
+// discovery documents. The OpenAPI note is how an agent learns a missing path is an exclusion.
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
 // empty Queries already use EmptyRequestBinder at runtime).
 // Task 145-009 R2-1: ConfigureServices has an explicit-environment 3-arg overload (Main passes
@@ -389,7 +391,8 @@ public partial class Program : IAspNetProgram
       ApiVersion,
       ApiTitle,
       OpenApiAgentBearerRegistration.Create(),
-      OpenApiPaymentResponses.Register
+      documentPublicWebRoutes: true,
+      configureOpenApi: OpenApiPaymentResponses.Register
     );
   }
 
@@ -603,7 +606,8 @@ public partial class Program : IAspNetProgram
         typeof(TimeWarp.Architecture.Web.Spa.IAssemblyMarker).Assembly
       );
 
-    webApplication.MapHealthChecks("/api/health");
+    // Anonymous on purpose: the OpenAPI health operation says so, and a fallback policy must not hide it.
+    webApplication.MapHealthChecks(TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath).AllowAnonymous();
 
     CommonServerModule.ConfigureEndpoints(webApplication);
     webApplication.MapHub<ChatHub>(ChatHubConstants.Route);

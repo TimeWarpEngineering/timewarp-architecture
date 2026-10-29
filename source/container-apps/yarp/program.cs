@@ -16,9 +16,12 @@
 // leaves Host as the destination, matching the config WebRoute and the AppHost ingress (task
 // 070-008). Web.Server's per-request passkey RP-ID selection reads it in HttpRequestHostAccessor,
 // where it only selects among the approved AllowedRpIds (see that file's Design region).
-// Task 104-020: exact /api and /api/ also pin to Web.Server so the tip discovery alias (bare API
-// root → /api/tip rewrite on web-server) is reachable through ingress; without this, bare /api
-// would hit Api.Server's /api/{**catch-all}. Not a generated prefix (TWA0018 forbids bare `api`).
+// Task 104-020: exact /api also pins to Web.Server so the tip discovery alias (bare API root →
+// /api/tip rewrite on web-server) is reachable through ingress; without this, bare /api would hit
+// Api.Server's /api/{**catch-all}. Not a generated prefix (TWA0018 forbids bare `api`). The one
+// route also matches /api/ (task 439: a separate "/api/" route tied with it and returned 500).
+// Task 439: exact /api/health pins to Web.Server too, because the OpenAPI document advertises it on
+// the ingress origin. Paths: IngressPaths (see its Design region).
 // AddServiceDiscoveryDestinationResolver lets cluster destinations use Aspire logical service
 // names instead of hard-coded addresses.
 // Task 305: UseTrustedProxyForwardedHeaders runs before MapReverseProxy. It copies
@@ -37,6 +40,7 @@ namespace TimeWarp.Architecture.Yarp.Server;
 // global:: — inside namespace TimeWarp.Architecture.Yarp.Server, a bare "Yarp" binds to the app's
 // own namespace, not the YARP package root.
 using global::Yarp.ReverseProxy.Configuration;
+using TimeWarp.Foundation.Configuration;
 #endif
 
 public class Program : IAspNetProgram
@@ -100,19 +104,20 @@ public class Program : IAspNetProgram
       })
       .ToList();
 
-    // Tip discovery alias (104-020): exact bare /api → Web.Server (web rewrites to /api/tip).
+    // Tip discovery alias (104-020) and public health (task 439): exact routes to Web.Server.
+    // One alias route only: "/api" also matches /api/, and a second "/api/" route ties with it.
     generatedWebRoutes.Add(new RouteConfig
     {
       RouteId = "TipDiscoveryAlias-api",
       ClusterId = "Web.Server",
-      Match = new RouteMatch { Path = "/api" },
+      Match = new RouteMatch { Path = IngressPaths.TipDiscoveryAliasPath },
       Transforms = forwardPublicHostTransform,
     });
     generatedWebRoutes.Add(new RouteConfig
     {
-      RouteId = "TipDiscoveryAlias-api-slash",
+      RouteId = "WebHealth-api-health",
       ClusterId = "Web.Server",
-      Match = new RouteMatch { Path = "/api/" },
+      Match = new RouteMatch { Path = IngressPaths.WebServerHealthPath },
       Transforms = forwardPublicHostTransform,
     });
 
