@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 309
-- Effort: 2
+- Lines changed: 91
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Review framework — task 452
 
@@ -32,3 +32,10 @@
 **Effort:** 2 (host Budget.ByDiff: 309 lines changed)
 **Reviewer roster:** general (read-only sub-agent, claude-sonnet-5-5, id a8b7dccb3ea1223e3) plus orchestrator verification (Claude Fable 5.1: build, analyzer tests, web-spa integration tests, lint-skills, analyzer code read)
 **Result:** M1–M5 fixed; one new suggestion M6 open (provider-call exemption in `IsInInvariantInterpolation` over-accepts non-handler parameters). Fix pass requested; round 3 next.
+
+## Round 3 (2026-10-30)
+
+**Diff scope:** delta 9dae2b281..20ac05ecd (fix pass for round 2 M6), product paths only
+**Effort:** 1 (host Budget.ByDiff: 91 lines changed)
+**Reviewer roster:** general (read-only sub-agent, claude-sonnet-5-5) plus orchestrator verification (Claude Fable 5.1: build, analyzer tests, suppression grep, analyzer code read, span hand-count)
+**Result:** M6 fixed; no new findings. 0 open. Disposition `clean` (`review/disposition.md`).

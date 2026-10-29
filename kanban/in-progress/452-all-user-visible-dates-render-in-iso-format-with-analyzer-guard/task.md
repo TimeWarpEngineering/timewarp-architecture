@@ -73,12 +73,13 @@ Acceptance:
 - Fix pass for round 1 (2026-10-30, ganda task work implement-fix-2 oracle, Claude Opus 5.5): M1–M5 implemented; round 2 review is next.
 - Review oracle round 2 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 2, turn cap 120); general reviewer sub-agent a8b7dccb3ea1223e3 (claude-sonnet-5-5, read-only). Result: M1–M5 fixed; 1 suggestion open (M6); fix pass requested.
 - Fix pass for round 2 (2026-10-30, ganda task work implement-fix-3 oracle, Claude Opus 5.5): M6 implemented; round 3 review is next.
+- Review oracle round 3 (2026-10-30): orchestrator Claude Fable 5.1 (ganda task work, headless, effort 1, turn cap 80); general reviewer sub-agent (claude-sonnet-5-5, read-only). Result: M6 fixed; 0 open; disposition clean.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Round 2: Blocked — open M6
-
+- Round 3: Done
 ## Notes
 
 TS side is clean (no toLocale/toDateString in web-spa source/). The relative
@@ -268,3 +269,14 @@ Expect:
   `IInterpolatedStringHandlerCreationOperation` (keep `FormattableString.Invariant` as its own
   check), add a flagged test row, tighten the Design sentence. No in-repo site hits it.
 - Paths: `review/round-2/general.md`, `review/round-2/merged.md` (live ledger).
+- Round 3 (2026-10-30), effort 1, roster: general (sub-agent) + orchestrator verification, scope
+  = the fix-pass delta 9dae2b281..20ac05ecd (analyzer and its test only).
+- Orchestrator re-ran the gates in this worktree: `./bin/dev build` 0/0 (every compilation the
+  analyzer attaches to builds clean under the tightened rule); analyzer tests 259/259; no TWA0036
+  suppression in `source/`, `tests/`, `tools/`. Orchestrator read `IsInInvariantInterpolation` and
+  `HandlerTakesCallProvider` and hand-counted the two new spans; both match.
+- Round 3 counts (final): bug 0; suggestion 0 open, 4 fixed; nit 0 open, 2 fixed; 0 wontfix.
+  M6 verified fixed against the delta; no new findings.
+- Disposition: `clean` (every raised finding M1–M6 is fixed; no exceptions, no escalations).
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`
+  (final ledger), `review/disposition.md`.
