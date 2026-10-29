@@ -1,13 +1,17 @@
 #region Purpose
-// One navigate tool whose destinations are the navigation menu's pages the principal may open.
+// One navigate tool whose destinations are the navigation menu's pages the principal may open,
+// plus the deep links Ctrl-K lists under them.
 #endregion
 
 #region Design
 // Destinations are AgentSiteMap.DestinationsAsync: NavigationDestinations (the policy-filtered
 // PageRegistry that NavMenu and Ctrl-K read) plus the palette's Sign in row while signed out
-// (task 300). site_map lists the same rows, so every site_map URL is a navigate target and
-// nothing else is. A single tool with a JSON-schema enum of permitted URLs stays short. One tool
-// per destination was rejected: it would duplicate every menu row.
+// (task 300) and the palette's deep links (task 446, the design-system parts). site_map lists the
+// same rows, so every site_map URL is a navigate target and nothing else is. A single tool with a
+// JSON-schema enum of permitted URLs stays short. One tool per destination was rejected: it would
+// duplicate every menu row. The description names each page, then one AgentSiteMap.DeepLinkLines
+// line per parent, so 30+ parts stay under the contract's tool-description cap; the enum still
+// lists every url.
 // The enum is a hint. Invoke rebuilds the destinations for the principal on the current path and
 // refuses any url that is not one of them, then calls RouteState.ChangeRoute, the palette's path.
 // Approval follows the edit mode (task 300): in Ask before editing the tool is approval-wrapped
@@ -69,6 +73,11 @@ public static class AgentNavigate
       }
 
       urls.Add(destination.Route);
+      if (destination.Parent is not null)
+      {
+        continue;
+      }
+
       if (!first)
       {
         described.Append("; ");
@@ -76,6 +85,11 @@ public static class AgentNavigate
 
       first = false;
       described.Append(destination.Route).Append(" (").Append(destination.Title).Append(')');
+    }
+
+    foreach (string line in AgentSiteMap.DeepLinkLines(destinations))
+    {
+      described.Append("; ").Append(line);
     }
 
     JsonObject schema = new()

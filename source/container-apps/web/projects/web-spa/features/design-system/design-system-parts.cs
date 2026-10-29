@@ -12,6 +12,8 @@
 // so the full page stays the section list.
 // PaletteName prefixes a part title with DesignSystemPage.Title. Ctrl-K uses it so
 // the visible prefix stays the page title.
+// Description is the agent's one-line summary of a part (site_map, task 446): the
+// title and group, so the Ask model can match "the filter bar" to its deep link.
 #endregion
 
 namespace TimeWarp.Architecture.Features.DesignSystem;
@@ -39,6 +41,8 @@ internal static class DesignSystemParts
   internal sealed record Part(string Slug, string Title, Group Group, string Usage, Type Sample);
 
   internal static string PaletteName(Part part) => DesignSystemPage.Title + ": " + part.Title;
+
+  internal static string Description(Part part) => $"Live {part.Title} sample and its usage snippet ({part.Group}).";
 
   internal readonly record struct Selection(SelectionKind Kind, Part? Part);
 

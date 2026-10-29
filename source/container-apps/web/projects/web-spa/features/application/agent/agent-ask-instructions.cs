@@ -8,7 +8,8 @@
 // the preface tells the model it may answer about and move to any permitted destination, to link
 // a page as [Title](url), and that navigate asks first in Ask before editing. The site map
 // (AgentSiteMap.Summary, bounded by SiteMapCap) is the menu's destinations for this principal,
-// the same rows the site_map tool returns. Callers build the page_context copy with
+// the same rows the site_map tool returns, with Ctrl-K's deep links (the design-system parts,
+// task 446) as one "{parent}/<part>" line per page. Callers build the page_context copy with
 // PageAgentContext.Describe and ContextCapFor, which is what is left of MaxLength after the
 // identity, preface and site map (never below MinContextCap); Describe drops surface text whole
 // so the JSON stays valid. For still clips the result under MaxLength as a last guard (page facts

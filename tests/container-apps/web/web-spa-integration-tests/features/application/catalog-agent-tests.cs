@@ -21,6 +21,8 @@
 // same scope the panel passes in. A wrapper that answers NavigationManager with a manager stuck
 // at the base URI still returns the observed /Feedback route. RelayChatClient is asserted to send
 // tool arguments and tool results as JSON, never a dictionary's CLR type name.
+// site_map and navigate list the design-system parts Ctrl-K lists for a principal who may open the
+// Design System page, and refuse them for one who may not (task 446).
 #endregion
 
 namespace CatalogAgent_;
@@ -938,6 +940,66 @@ public partial class CatalogAgent_Should
     (await dispatcher.InvokeTool("navigate", """{"url":"/Settings"}""").WaitAsync(Timeout))
       .ShouldContain("\"navigated\":true");
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+  }
+
+  public static async Task Site_Map_And_Navigate_Include_Design_System_Parts()
+  {
+    using SpaTestScope scope = SpaTestScope.Create(Spa!);
+    IActionCatalog catalog = scope.ServiceProvider.GetRequiredService<IActionCatalog>();
+    IAuthorizationService authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal developer = Principal(PermissionIds.DeveloperAccess);
+
+    AgentSiteMap.Result map = await AgentSiteMap.InvokeAsync(developer, authorization, scope.Store, "/", CancellationToken.None);
+    map.Error.ShouldBeNull();
+    AgentSiteMap.Destination filterBar = map.Destinations.Single(destination => destination.Route == "/DesignSystem/filter-bar");
+    filterBar.Title.ShouldBe("Design System: Filter Bar");
+    filterBar.Parent.ShouldBe("/DesignSystem");
+    filterBar.Description.ShouldContain("Filter Bar");
+    map.Destinations.ShouldContain(destination => destination.Route == "/DesignSystem/buttons");
+
+    IReadOnlyList<CatalogAgentTool> tools = await CatalogAgentToolSet.SelectAsync
+    (
+      developer, authorization, catalog.Entries, "/", CancellationToken.None
+    );
+    CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
+    navigate.InputSchema.ShouldContain("\"/DesignSystem/filter-bar\"");
+    navigate.Description.ShouldContain("/DesignSystem/<part> for Design System parts:");
+    navigate.Description.ShouldContain("filter-bar");
+
+    string summary = AgentSiteMap.Summary(map.Destinations, AgentAskInstructions.SiteMapCap);
+    summary.ShouldContain("filter-bar");
+    summary.ShouldContain("buttons");
+
+    NavigationManager navigation = scope.ServiceProvider.GetRequiredService<NavigationManager>();
+    AgentNavigate.Result moved = await AgentNavigate.InvokeAsync
+    (
+      developer,
+      authorization,
+      scope.Store,
+      "/",
+      new Dictionary<string, object?> { ["url"] = "/DesignSystem/filter-bar" },
+      CancellationToken.None
+    );
+    moved.Navigated.ShouldBeTrue();
+    moved.Destination.ShouldBe("/DesignSystem/filter-bar");
+    moved.Title.ShouldBe("Design System: Filter Bar");
+    navigation.Uri.ShouldEndWith("/DesignSystem/filter-bar");
+
+    // Without the Design System page, its parts are neither listed nor reachable.
+    ClaimsPrincipal member = Principal(PermissionIds.ProfileRead, PermissionIds.SettingsRead);
+    AgentSiteMap.Result memberMap = await AgentSiteMap.InvokeAsync(member, authorization, scope.Store, "/", CancellationToken.None);
+    memberMap.Destinations.ShouldNotContain(destination => destination.Parent != null);
+    AgentNavigate.Result refused = await AgentNavigate.InvokeAsync
+    (
+      member,
+      authorization,
+      scope.Store,
+      "/",
+      new Dictionary<string, object?> { ["url"] = "/DesignSystem/filter-bar" },
+      CancellationToken.None
+    );
+    refused.Navigated.ShouldBeFalse();
+    refused.Error.ShouldBe(AgentNavigate.Refusal);
   }
 
   public static async Task AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs()
