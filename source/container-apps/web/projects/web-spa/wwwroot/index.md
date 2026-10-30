@@ -19,9 +19,11 @@ negotiation). Discovery index: [/llms.txt](/llms.txt). Auth story: [/auth.md](/a
 - .NET 11 and Blazor WebAssembly
 - [FluentUI Blazor v5](https://github.com/microsoft/fluentui-blazor) + plain CSS design tokens
 - [TimeWarp.State](https://timewarpengineering.github.io/timewarp-state/) (Redux-style state)
+  with TimeWarp DevTools
 - [TimeWarp.Mediator](https://github.com/TimeWarpEngineering/timewarp-mediator) for CQRS and
   [FastEndpoints](https://fast-endpoints.com/) for APIs
-- [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/) orchestration + YARP ingress
+- [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/) orchestration +
+  [YARP](https://github.com/dotnet/yarp) ingress
 
 ## Agent-first surfaces
 
