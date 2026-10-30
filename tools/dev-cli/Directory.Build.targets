@@ -1,0 +1,13 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- DevCli 4.0.0-beta.9 content calls GetTypeInfo(Type) (CA2263). services/repo-config-service.cs
+       is that type with GetTypeInfo<RepoConfig>(). Drop this target with that file when the pin
+       uses the generic overload (task 457). -->
+  <Target Name="OmitPackagedRepoConfigService" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="@(Compile)"
+                Condition="$([System.String]::Copy('%(Identity)').Contains('timewarp.nuru.devcli')) and $([System.String]::Copy('%(Filename)').Equals('repo-config-service'))" />
+    </ItemGroup>
+  </Target>
+</Project>
