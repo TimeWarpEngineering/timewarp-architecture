@@ -33,6 +33,9 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 - Implementation: 01a18c6e-5da6-72f2-b81b-b1eb58f0500b (2026-10-30)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a18c6e-5da6-72f2-b81b-b1eb58f0500b, max-turns 500, Done — 2026-10-30T11:16:51Z
 
+- Review oracle: claude (claude-opus-5-5), effort 1, roster general, round 1 — 2026-10-30. Blocked: operator decision needed on the RCS1194 NoWarn.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 998e140e-6f24-473e-acc3-6ed85f62ee16, max-turns 80 — 2026-10-30T11:20:03Z
+
 ## Goal (implementer restatement)
 
 Take the published TimeWarp.Nuru 4.0.0-beta.8 pin in this repo. Both central package pins,
@@ -110,3 +113,17 @@ ganda repo audit
 ./bin/dev template-smoke
 ./bin/dev check-version
 ```
+
+### Review
+
+- Round 1, effort 1, roster `general`. The restatement matches the task, so there is no misread.
+- Counts: bug 1 open; suggestion 0; nit 0.
+- Disposition: none yet. M1 is still open: the dev CLI `NoWarn` adds `RCS1194` for the sealed
+  `PackageFeedUnreadableException` in DevCli 4.0.0-beta.8 package content. That conflicts with
+  "Do not suppress warnings". The fix is upstream in Nuru. The operator chooses between accepting
+  it as a documented exception and taking an upstream Nuru fix.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Blocked
+
+2026-10-30: stalemate — operator decision needed: accept the dev CLI RCS1194 NoWarn for sealed DevCli 4.0.0-beta.8 package content as a documented exception, or take an upstream Nuru fix first (cross-repo, not authorized by this spec)
