@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 162
-- Effort: 1
+- Lines changed: 293
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -17,6 +17,9 @@
 **Effort:** 1 (general only)
 **Reviewer roster:** general
 **Session IDs:** review oracle (claude, claude-opus-5-5), this ganda task work review node
+
+**Round 2 (2026-10-30):** effort 2 by diff, roster `general`. Same product scope, checked against
+the requirements retargeted to beta.9 (task.md, commit `9e44b197e`).
 
 ## Ground rules
 
