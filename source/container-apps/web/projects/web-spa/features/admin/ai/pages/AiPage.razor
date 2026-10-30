@@ -87,7 +87,7 @@
 
       string when = XaiApiKeyState.SetAt is null
         ? ""
-        : $" Set {XaiApiKeyState.SetAt.Value:u} by {XaiApiKeyState.SetByPrincipalId:D}.";
+        : $" Set {XaiApiKeyState.SetAt.Value.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)} by {XaiApiKeyState.SetByPrincipalId:D}.";
       return $"Configured, ends in …{XaiApiKeyState.Suffix}.{when}";
     }
   }

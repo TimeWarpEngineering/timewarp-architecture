@@ -15,6 +15,8 @@
 // counted in MaxRequestCharacters. Data is base64 without a data: prefix, and the decoded bytes
 // must start with the PNG or JPEG signature that matches MediaType. Images and image elements
 // must not be null; the upstream mapping relies on that.
+// IsEmpty is the one rule for a turn with nothing the model reads (task 447). The validator rejects
+// such a turn and RelayChatClient drops it, so the two cannot drift.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
@@ -43,6 +45,18 @@ public static partial class CompleteAgentChat
   public const int MaxImageDataLength = 7_000_000;
 
   public static readonly IReadOnlyList<string> ImageMediaTypes = ["image/png", "image/jpeg"];
+
+  /// <summary>
+  /// Whether <paramref name="turn"/> has nothing the model reads: no text, image, tool call, or tool
+  /// result. The validator rejects such a turn, and the browser relay leaves it out of the command.
+  /// </summary>
+  public static bool IsEmpty(Turn turn)
+  {
+    bool hasText = !string.IsNullOrWhiteSpace(turn.Text) || turn.Images is { Count: > 0 };
+    bool hasCalls = turn.ToolCalls is { Count: > 0 };
+    bool hasResult = !string.IsNullOrWhiteSpace(turn.ToolResult) || !string.IsNullOrWhiteSpace(turn.ToolCallId);
+    return !hasText && !hasCalls && !hasResult;
+  }
 
   [ApiRoute("api/agent-chat/completions", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
@@ -228,14 +242,6 @@ public static partial class CompleteAgentChat
         "image/jpeg" => bytes.StartsWith(JpegSignature),
         _ => false
       };
-    }
-
-    private static bool IsEmpty(Turn turn)
-    {
-      bool hasText = !string.IsNullOrWhiteSpace(turn.Text) || turn.Images is { Count: > 0 };
-      bool hasCalls = turn.ToolCalls is { Count: > 0 };
-      bool hasResult = !string.IsNullOrWhiteSpace(turn.ToolResult) || !string.IsNullOrWhiteSpace(turn.ToolCallId);
-      return !hasText && !hasCalls && !hasResult;
     }
 
     private static bool FitsBudget(Command command)

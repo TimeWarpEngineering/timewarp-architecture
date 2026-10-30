@@ -155,7 +155,9 @@ One catalog-to-tools mapping drives both the in-app model and an external browse
   whose visibility includes Agent is a tool on every page. Human-only commands are never tools.
 - The agent knows the whole app, not only the page on screen. `site_map` (read-only, never
   approval-wrapped) returns every destination the person's navigation menu shows: title, URL,
-  menu group, icon and the `[Page]` Description, plus Sign in while signed out.
+  menu group, icon and the `[Page]` Description, plus Sign in while signed out. The deep links
+  Ctrl-K lists under a permitted page (`CommandPaletteRoster.DeepLinks`, the design-system parts)
+  follow, each with its `parent` page URL.
   `navigate` takes one of those URLs (a URL enum) and refuses anything else; it goes through
   `RouteState.ChangeRoute` like the palette and asks for approval in Ask before editing. Both read
   `NavigationDestinations`, the list NavMenu and Ctrl-K render, so the four surfaces cannot drift;
@@ -229,6 +231,23 @@ Reference: `source/container-apps/web/projects/web-spa/features/design-system/sa
 (Section card). Applied on PrincipalsPage, RolesListPage, RoleDetailPage, and the other
 former `Loading…` pages.
 
+# Rendered dates
+
+Every date or time rendered as text is ISO 8601, in razor and C# alike. Analyzer TWA0036 enforces
+it. Format with `ToString(format, CultureInfo.InvariantCulture)`:
+
+- A calendar date: `yyyy-MM-dd`.
+- An instant shown in local time: `.ToLocalTime()` with `yyyy-MM-dd'T'HH:mm:sszzz`.
+- An instant shown in UTC: `.UtcDateTime` with `yyyy-MM-dd'T'HH:mm:ss'Z'`.
+
+The invariant culture is required. A custom format follows the culture it renders under: `:`
+becomes the culture's time separator and `yyyy` its calendar year. WebAssembly forces en-US, but
+the server renders the same component under the host culture. An interpolation hole with a custom
+format (`$"{at:yyyy-MM-dd}"`) is flagged unless the string is passed straight to
+`string.Create(CultureInfo.InvariantCulture, …)` or `FormattableString.Invariant(…)`. Only `O`,
+`o`, and `s` are invariant without a provider. `u` is not ISO, because it puts a space between
+the date and the time.
+
 # Server-sorted FluentDataGrid
 
 A list that the server pages must also be sorted by the server. Sorting one page in the browser
@@ -250,7 +269,7 @@ shows the wrong order across pages. The pattern is grid sort → State action �
 5. `Loading` binds to `IsAnyActive(typeof(FetchX.Action))`. The grid's `Section` has no
    `LoadingActionType`: `Section` swaps its content for a spinner, which would destroy the grid.
 6. Enum and date cells use `TemplateColumn` (`@context.Kind`). `PropertyColumn` renders enums
-   lowercased.
+   lowercased. Date cells follow [Rendered dates](#rendered-dates).
 7. Narrow widths: wrap the grid in `DataGridFrame` and size columns with
    `DisplayMode="DataGridDisplayMode.Grid"` plus `GridTemplateColumns` of `minmax` tracks. The
    primary column (the one with the row link) gets `minmax(14rem, 2fr)`; the others get smaller
@@ -264,7 +283,7 @@ Reference: `web-spa/features/admin/feedback/pages/FeedbackAdminListPage.razor` w
 
 # Operation outcomes
 
-No page, card, or feature component renders its own `FluentMessageBar` for an operation outcome
+No page, card, or feature component renders its own message bar for an operation outcome
 (success or failure) — the shell's single notification region owns that (`tw-blazor-layout`, "The
 shell owns the notification region"). Components and handlers only *report* outcomes:
 
@@ -283,12 +302,22 @@ shell owns the notification region"). Components and handlers only *report* outc
 - Field-level validation is a different class — it stays next to the field (`ValidationMessage`
   via Blazilla), never in the notification region.
 - Static, contextual guidance that isn't an outcome (an inline Info/Warning such as "Add a passkey
-  to continue") may stay inline. The analyzer `TWA0025` flags an `Error`/`Success` `FluentMessageBar`
+  to continue") may stay inline. The analyzer `TWA0025` flags an `Error`/`Success` message bar
   outside the shell's host; opt out with `[PageLocalMessageBar("reason")]` on the component when a
   case is genuinely local.
+- Every bar, shell or inline, is the shared `MessageBar` (`components/MessageBar.razor`), never a
+  raw `FluentMessageBar` (TWA0037). It paints an icon-only Copy button that copies `Title`, plus a
+  blank line and `Body` when there is one. Pass the text as `Title` and `Body`; `ChildContent`
+  (such as an input) is not copied, and `ActionsTemplate` buttons sit beside Copy.
 
-Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.razor` (host) and
-`features/notification/notification-state/` (state).
+```razor
+<MessageBar Intent="MessageBarIntent.Warning"
+            Title="Session expired"
+            Body="Sign in with Microsoft 365 again." />
+```
+
+Reference: `source/container-apps/web/projects/web-spa/components/MessageBars.razor` (host),
+`components/MessageBar.razor` (the bar), and `features/notification/notification-state/` (state).
 
 # Actions, navigation, and forms
 

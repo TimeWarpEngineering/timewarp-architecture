@@ -10,6 +10,9 @@
 // a signed-out browser gets an anonymous token and the POST stays an idempotent no-op.
 // JSON via ContractSerializationDefaults (camelCase seam options); MarkResponseStart so
 // FastEndpoints does not append its own response.
+// OpenAPI Summary states the anonymous choice. The handler does not return 401 or 403.
+// WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
+// groups this operation with them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -23,6 +26,13 @@ public sealed class SignOutAntiforgeryTokenEndpoint : EndpointWithoutRequest
   {
     Get(SignOutBrowserSession.AntiforgeryTokenPath.TrimStart('/'));
     AllowAnonymous();
+    Summary(summary =>
+    {
+      summary.Description =
+        "Intentionally anonymous. A signed-out browser receives an anonymous antiforgery token "
+        + "and the sign-out POST stays an idempotent no-op.";
+    });
+    Description(builder => builder.WithTags("Identity"));
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken)

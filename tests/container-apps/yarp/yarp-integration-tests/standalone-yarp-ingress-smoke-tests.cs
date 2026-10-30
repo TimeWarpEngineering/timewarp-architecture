@@ -4,6 +4,7 @@
 // http cluster, including foreign-Host (the 107 https→http / RemoteCertificateNameMismatch path),
 // and that the gateway SETS X-Forwarded-Host from the request after trusted-proxy forwarding
 // (task 070-008, task 305). Loopback is trusted. An untrusted peer's headers are ignored.
+// The exact /api/health and /api tip-alias routes reach Web.Server too (task 439).
 // Aspire AppHost ingress remains aspire-tests; this suite boots yarp + web-server in-proc.
 #endregion
 
@@ -217,6 +218,33 @@ public class Smoke_Given_
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string body = await response.Content.ReadAsStringAsync();
     body.ShouldContain("uthenticated");
+  }
+
+  public static async Task ApiHealthThroughStandaloneYarp_Should_ReachWebServer()
+  {
+    // Task 439: the OpenAPI document advertises GET /api/health on the ingress origin. Without the
+    // exact route it falls to the Api.Server catch-all (404 on the live host).
+    HttpResponseMessage response = await YarpClient.GetAsync(TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath);
+
+    response.Content.Headers.ContentType.ShouldNotBeNull();
+    response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
+    string body = (await response.Content.ReadAsStringAsync()).Trim();
+    (body is "Healthy" or "Degraded" or "Unhealthy").ShouldBeTrue(body);
+  }
+
+  public static async Task TipAliasThroughStandaloneYarp_Should_MatchWebServerTip()
+  {
+    // Task 439: separate "/api" and "/api/" routes tied (500 AmbiguousMatchException). Both paths
+    // must reach web-server's alias and answer what /api/tip answers there.
+    Graph.ShouldNotBeNull();
+    Graph.Web.ShouldNotBeNull();
+    using HttpResponseMessage direct = await Graph.Web.HttpClient.GetAsync("/api/tip");
+
+    foreach (string path in new[] { "/api", "/api/" })
+    {
+      using HttpResponseMessage response = await YarpClient.GetAsync(path);
+      response.StatusCode.ShouldBe(direct.StatusCode, customMessage: $"{path} through ingress");
+    }
   }
 
   public static async Task RolesThroughStandaloneYarp_Should_ReachWebServerAndRequireAuth()

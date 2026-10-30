@@ -64,7 +64,7 @@
           {
             <li @key="entry.Sequence" data-qa="@($"Feedback{entry.Kind}")">
               <strong>@ActivityLabel(entry.Kind)</strong>
-              <span>@entry.At.ToString("u")</span>
+              <span>@entry.At.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture)</span>
               @if (entry.Kind == FeedbackActivityKind.StatusChange)
               {
                 <p>@entry.FromStatus → @entry.ToStatus</p>

@@ -16,6 +16,8 @@
 // reaches the handler and gets its 413 problem. Kestrel still stops a larger body (or a
 // Content-Length over the limit) on the first read with BadHttpRequestException; HandleAsync
 // turns that 413 into the same application/problem+json response instead of an unhandled error.
+// WithTags("Feedback") is the tag the generator gives its siblings (namespace leaf), so Scalar
+// groups this operation with them. Tags are not accepts metadata, so ClearDefaultAccepts keeps it.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -40,6 +42,7 @@ public sealed class UploadFeedbackAttachmentEndpoint
     Description(builder =>
     {
       string[] contentTypes = FeedbackAttachmentRules.AllowedContentTypes;
+      builder.WithTags("Feedback");
       builder.ClearDefaultAccepts();
       builder.Finally(endpointBuilder =>
       {

@@ -4,7 +4,7 @@
 
 #region Design
 // Registered only via MockAuthenticationRegistration (Development/Testing + Authentication:UseMock).
-// Role claims carry RoleIds (GUID strings) for diagnostics/UserClaims display; permission claims
+// Role claims carry RoleIds (GUID strings) for diagnostics/developer Claims page display; permission claims
 // (PermissionIds.ClaimType) feed SPA AddPermissionClaimPolicies (task 182-003). Catalog All is
 // projected so mock SystemAdmin exercises every gated surface offline. The "oid" claim mirrors
 // historical Entra claim shapes. PrincipalIdClaimType carries MockUserIds.SystemAdmin so pages

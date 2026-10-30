@@ -6,9 +6,10 @@
 #region Design
 // Sources (task 239): pages come from NavigationDestinations (task 300), the policy-filtered
 // PageRegistry that NavMenu, Ask and WebMCP read too. Design-system parts are extra Page rows
-// from DesignSystemParts, added only when that filtered list still contains the Design System
-// page. They are not menu items and not agent navigate destinations. The row name is
-// DesignSystemParts.PaletteName, so the prefix stays DesignSystemPage.Title.
+// from DeepLinks, added after the pages only when that filtered list still contains the Design
+// System page. They are not menu items. They are agent destinations (task 446): AgentSiteMap reads
+// the same DeepLinks, so site_map, navigate and Ask list exactly the parts Ctrl-K lists. The row
+// name is DesignSystemParts.PaletteName, so the prefix stays DesignSystemPage.Title.
 // Commands are derived (task 301): every *ActionSet.Action in web-spa, from the generated
 // ActionRoster (ActionRosterSourceGenerator), so registering an action is what makes it a
 // command. No attribute opts an action in. Nothing is hand-listed.
@@ -137,29 +138,18 @@ public static class CommandPaletteRoster
       rows.Add(SignInRow(currentPath));
     }
 
-    bool designSystemOpen = false;
+    List<PageDeepLink> deepLinks = [];
     foreach (PageRegistryEntry page in await NavigationDestinations.ForAsync(user, authorizationService, pages))
     {
       rows.Add(new CommandPaletteRow(page.Title, $"Go to {page.Url}", CommandPaletteRowKind.Page, page.Url));
-      if (page.PageType == typeof(DesignSystemPage))
-      {
-        designSystemOpen = true;
-      }
+      deepLinks.AddRange(DeepLinks(page));
     }
 
-    // Parts follow the Design System row. The same policy filter that hid that page hides its parts,
+    // Parts follow the pages. The same policy filter that hid the Design System page hides its parts,
     // and a caller that passed no pages (a command-only probe) does not grow a catalog.
-    if (designSystemOpen)
+    foreach (PageDeepLink link in deepLinks)
     {
-      foreach (DesignSystemParts.Part part in DesignSystemParts.PageOrder)
-      {
-        string url = DesignSystemParts.Url(part);
-        rows.Add(new CommandPaletteRow(
-          DesignSystemParts.PaletteName(part),
-          $"Go to {url}",
-          CommandPaletteRowKind.Page,
-          url));
-      }
+      rows.Add(new CommandPaletteRow(link.Title, $"Go to {link.Route}", CommandPaletteRowKind.Page, link.Route));
     }
 
     if (!isAuthenticated)
@@ -179,6 +169,29 @@ public static class CommandPaletteRoster
   }
 
   private sealed record Command(string Name, string Label, string Description, IReadOnlyList<string> Permissions);
+
+  /// <summary>A deep link into a permitted page: its title, route and what it shows.</summary>
+  public sealed record PageDeepLink(string Title, string Route, string Description);
+
+  /// <summary>The deep links under <paramref name="page"/>: each design-system part for the Design System page, else none.</summary>
+  public static IReadOnlyList<PageDeepLink> DeepLinks(PageRegistryEntry page)
+  {
+    ArgumentNullException.ThrowIfNull(page);
+    if (page.PageType != typeof(DesignSystemPage))
+    {
+      return [];
+    }
+
+    return
+    [
+      .. DesignSystemParts.PageOrder.Select(static part => new PageDeepLink
+      (
+        DesignSystemParts.PaletteName(part),
+        DesignSystemParts.Url(part),
+        DesignSystemParts.Description(part)
+      ))
+    ];
+  }
 
   /// <summary>The signed-out Sign in row; <paramref name="currentPath"/> becomes the login ?returnUrl.</summary>
   public static CommandPaletteRow SignInRow(string currentPath)

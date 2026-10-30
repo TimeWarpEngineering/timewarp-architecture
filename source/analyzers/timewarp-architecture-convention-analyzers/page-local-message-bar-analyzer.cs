@@ -1,7 +1,8 @@
 #region Purpose
 // TWA0025: Operation-outcome message bars (Error/Success intent) belong in the shell's
 // MessageBars.razor host, fed by NotificationState. Pages/cards/features must never render
-// their own FluentMessageBar for operation outcomes; static Info/Warning guidance is allowed.
+// their own FluentMessageBar or shared MessageBar for operation outcomes; static Info/Warning
+// guidance is allowed.
 #endregion
 
 #region Design
@@ -31,6 +32,12 @@
 // reason string suppresses the diagnostic for the entire type hierarchy (any FluentMessageBar
 // in that component, or in a containing type). Empty reason does not opt out — the rule still
 // fires; there is no separate diagnostic for that case.
+//
+// Both component types are checked: FluentMessageBar (Microsoft.FluentUI.AspNetCore.Components)
+// and the app's shared MessageBar control, matched by simple name in a namespace whose last
+// segment is Components (the root namespace is renamed per generated app). TWA0037 makes every
+// product bar a MessageBar, so matching only FluentMessageBar would miss them all. The control
+// itself passes Intent="@Intent", a property reference, so the silence bias leaves it alone.
 #endregion
 
 namespace TimeWarp.Architecture.Analyzers;
@@ -46,6 +53,8 @@ public sealed class PageLocalMessageBarAnalyzer : DiagnosticAnalyzer
 
   private const string BlazorWasmSdkProperty = "build_property.UsingMicrosoftNETSdkBlazorWebAssembly";
   private const string FluentMessageBarTypeName = "FluentMessageBar";
+  private const string SharedMessageBarTypeName = "MessageBar";
+  private const string SharedComponentsNamespaceSegment = "Components";
   private const string MessageBarIntentTypeName = "MessageBarIntent";
   private const string FluentUiNamespace = "Microsoft.FluentUI.AspNetCore.Components";
   private const string OpenComponentMethodName = "OpenComponent";
@@ -61,7 +70,7 @@ public sealed class PageLocalMessageBarAnalyzer : DiagnosticAnalyzer
     (
       DiagnosticId,
       title: "Operation-outcome message bars belong to the shell's MessageBars host",
-      messageFormat: "FluentMessageBar with Intent '{0}' outside shell's MessageBars host. Report outcomes through NotificationState so the shell paints them. [PageLocalMessageBar(reason)] on the component opts out.",
+      messageFormat: "Message bar with Intent '{0}' outside shell's MessageBars host. Report outcomes through NotificationState so the shell paints them. [PageLocalMessageBar(reason)] on the component opts out.",
       category: "Design",
       DiagnosticSeverity.Warning,
       isEnabledByDefault: true,
@@ -95,7 +104,7 @@ public sealed class PageLocalMessageBarAnalyzer : DiagnosticAnalyzer
   {
     var invocation = (IInvocationOperation)context.Operation;
 
-    // Check if this is an OpenComponent invocation with FluentMessageBar as type argument.
+    // Check if this is an OpenComponent invocation with FluentMessageBar or MessageBar as type argument.
     if (!string.Equals(invocation.TargetMethod.Name, OpenComponentMethodName, StringComparison.Ordinal))
       return;
 
@@ -332,8 +341,13 @@ public sealed class PageLocalMessageBarAnalyzer : DiagnosticAnalyzer
 
   private static bool IsFluentMessageBarType(ITypeSymbol type)
   {
-    return type.Name == FluentMessageBarTypeName
-      && type.ContainingNamespace.ToDisplayString() == FluentUiNamespace;
+    if (type.Name == FluentMessageBarTypeName)
+      return type.ContainingNamespace.ToDisplayString() == FluentUiNamespace;
+
+    return type.Name == SharedMessageBarTypeName
+      && type.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace
+      && containingNamespace.Name == SharedComponentsNamespaceSegment
+      && containingNamespace.ToDisplayString() != FluentUiNamespace;
   }
 
   private static bool IsMessageBarIntentEnum(ITypeSymbol? type)

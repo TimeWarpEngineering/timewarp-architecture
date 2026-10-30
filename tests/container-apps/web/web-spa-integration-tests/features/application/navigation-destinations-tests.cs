@@ -10,10 +10,13 @@
 // with HtmlRenderer under the principal's cascaded authentication state and its internal hrefs
 // are read; they must equal NavigationDestinations, the palette's Page rows (less Sign in), the
 // navigate enum and site_map rows on Home (less Sign in), in the same order. A principal who can
-// open the design system also gets one palette Page row per catalog part; those rows are not menu
-// items and not agent navigate destinations. Signed out, Sign in
-// is the one extra row on the palette, navigate and site_map, as on Ctrl-K. Every registry page
-// the principal may not open, Login while signed in, and an unknown url are refused by navigate.
+// open the design system also gets one Page row per catalog part after the pages, on the palette,
+// the navigate enum and site_map (task 446); those rows are not menu items. Each site_map part
+// row names /DesignSystem as its parent. The navigate description stays under the chat
+// contract's tool-description cap and the Ask summary keeps the parts line under SiteMapCap.
+// Signed out, Sign in is the one extra row on the palette, navigate and site_map, as on Ctrl-K.
+// Every registry page the principal may not open, a part url when the design system is not
+// permitted, Login while signed in, and an unknown url are refused by navigate.
 // Each principal's set is also pinned: anonymous sees only Home, the plain user exactly Home,
 // Settings, Profile, AgentLinks and Feedback, the developer no Admin page and no Settings, and the
 // administrator every registry page, so a filter that lets everything through fails.
@@ -44,6 +47,7 @@ using Microsoft.JSInterop;
 using TimeWarp.Architecture;
 using TimeWarp.Architecture.Components;
 using TimeWarp.Architecture.Features;
+using TimeWarp.Architecture.Features.AgentChats;
 using TimeWarp.Architecture.Features.DesignSystem;
 using TimeWarp.Architecture.Web.Spa;
 
@@ -395,18 +399,35 @@ public partial class Destinations_Should_
     CatalogAgentTool navigate = tools.Single(tool => tool.Name == AgentNavigate.ToolName);
     JsonNode schema = JsonNode.Parse(navigate.InputSchema).ShouldNotBeNull();
     string[] enumerated = [.. schema["properties"]!["url"]!["enum"]!.AsArray().Select(static node => node!.GetValue<string>())];
-    enumerated.ShouldBe(expected, because);
+    enumerated.ShouldBe([.. expected, .. partUrls], because);
+    navigate.Description.Length.ShouldBeLessThanOrEqualTo(CompleteAgentChat.MaxToolDescriptionLength, because);
     tools.ShouldContain(tool => tool.Name == AgentSiteMap.ToolName && !tool.RequiresApproval, because);
 
     AgentSiteMap.Result map = await AgentSiteMap.InvokeAsync(user, authorization, scope.Store, "/", CancellationToken.None);
     map.Error.ShouldBeNull(because);
-    map.Destinations.Select(static destination => destination.Route).ShouldBe(expected, because);
+    map.Destinations.Select(static destination => destination.Route).ShouldBe([.. expected, .. partUrls], because);
+    map.Destinations.Where(static destination => destination.Parent is not null).Select(static destination => destination.Route)
+      .ShouldBe(partUrls, because);
+    map.Destinations.Where(static destination => destination.Parent is not null)
+      .ShouldAllBe(static destination => destination.Parent == "/DesignSystem", because);
+    string summary = AgentSiteMap.Summary(map.Destinations, AgentAskInstructions.SiteMapCap);
+    if (partUrls.Length > 0)
+    {
+      summary.ShouldContain("/DesignSystem/<part> for Design System parts: brand,", customMessage: because);
+      summary.ShouldContain(", filter-bar,", customMessage: because);
+    }
+
     foreach (AgentSiteMap.Destination destination in map.Destinations.Where(destination => destination.Route != signIn))
     {
       destination.Description.ShouldNotBeNullOrWhiteSpace($"{because} {destination.Route}");
     }
 
-    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page", "/DesignSystem/drawers"];
+    List<string> refused = [.. PageRegistry.All.Select(static page => page.Url).Except(destinations), "/not-a-page"];
+    if (partUrls.Length == 0)
+    {
+      refused.Add("/DesignSystem/drawers");
+    }
+
     if (signedIn)
     {
       refused.Add(signIn);

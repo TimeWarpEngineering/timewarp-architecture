@@ -856,9 +856,11 @@ internal class Program
 
         // Tip discovery alias (104-020): exact bare /api → web so UseTipDiscoveryAlias can rewrite
         // to /api/tip. Without this, /api hits the Api.Server catch-all above. Not generated
-        // (TWA0018 forbids bare `api` as a contracts prefix).
-        ForwardPublicHost(yarpConfiguration.AddRoute("/api", webServerHttp));
-        ForwardPublicHost(yarpConfiguration.AddRoute("/api/", webServerHttp));
+        // (TWA0018 forbids bare `api` as a contracts prefix). One route: it also matches /api/, and
+        // a second "/api/" route tied with it (500 AmbiguousMatchException, task 439).
+        ForwardPublicHost(yarpConfiguration.AddRoute(global::TimeWarp.Foundation.Configuration.IngressPaths.TipDiscoveryAliasPath, webServerHttp));
+        // Public readiness (task 439): the OpenAPI document advertises GET /api/health on this origin.
+        ForwardPublicHost(yarpConfiguration.AddRoute(global::TimeWarp.Foundation.Configuration.IngressPaths.WebServerHealthPath, webServerHttp));
 
         // Ingress health route (task 377): the literal probe path outranks the catch-all below and is
         // rewritten to web-server's liveness endpoint. Mirrors the Development WebAliveRoute.

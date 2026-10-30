@@ -4,9 +4,10 @@
 
 #region Design
 // Origin order matches outbound mail: SiteMetadata.BaseUrl when it is an absolute http(s) URL,
-// else HttpAppBaseUrlAccessor.GetRequestOrigin, the one shared forwarded-header policy: first
-// X-Forwarded-Proto (http/https only), first X-Forwarded-Host (port kept), else Request.Scheme +
-// Request.Host, plus PathBase. A configured BaseUrl already includes any public path prefix. YARP
+// else HttpAppBaseUrlAccessor.GetRequestOrigin, which delegates to PublicRequestOrigin: first
+// X-Forwarded-Proto (http/https only), first X-Forwarded-Host (port kept; a host that is not a
+// host is refused), else Request.Scheme + Request.Host, plus PathBase. A configured BaseUrl
+// already includes any public path prefix. YARP
 // sets those headers with action Set. The ingress first applies X-Forwarded-Proto and
 // X-Forwarded-Host from a trusted proxy only (task 305), so the Set value is the client-facing
 // origin. Where web-server is reached directly, a client can forge them, the same posture as

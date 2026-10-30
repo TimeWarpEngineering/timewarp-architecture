@@ -99,7 +99,7 @@ public static class CredentialRowPresenter
   }
 
   public static string CreatedText(CredentialSummary credential) =>
-    credential.CreatedAt.ToLocalTime().ToString("M/d/yyyy, h:mm:ss tt", CultureInfo.InvariantCulture);
+    credential.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture);
 
   public const string NeverUsedText = "Never used";
 
@@ -116,7 +116,7 @@ public static class CredentialRowPresenter
       : "never used";
 
   /// <summary>
-  /// just now · N minute(s) ago · N hour(s) ago · yesterday · N days ago (under 30) · on M/d/yyyy.
+  /// just now · N minute(s) ago · N hour(s) ago · yesterday · N days ago (under 30) · on yyyy-MM-dd.
   /// A future instant reads as "just now".
   /// </summary>
   public static string RelativeTime(DateTimeOffset at, DateTimeOffset now)
@@ -145,7 +145,7 @@ public static class CredentialRowPresenter
       return days == 1 ? "yesterday" : $"{days} days ago";
     }
 
-    return "on " + at.ToLocalTime().ToString("M/d/yyyy", CultureInfo.InvariantCulture);
+    return "on " + at.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
   }
 
   public static string NicknameDefault(CredentialSummary credential, string fallbackLabel) =>

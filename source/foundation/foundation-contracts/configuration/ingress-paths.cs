@@ -14,6 +14,12 @@
 // catch-all and rewrites to web-server's liveness endpoint, so a probe proves ingress-to-web-server
 // routing without prerendering the SPA shell. The Development WebAliveRoute spells it as a literal;
 // the yarp integration test WebAliveRouteIngressPath_ is the agreement check.
+// WebServerHealthPath and TipDiscoveryAliasPath (task 439) are web-server routes under /api that are
+// not ApiRoute prefixes, so WebServerApiRoutePrefixes.All does not carry them. Both ingress builders
+// add each as one exact route to web-server, so it outranks the Api.Server /api/{**catch-all}. The
+// alias is one route: a route template ignores a trailing slash, so /api/ matches it, and a second
+// "/api/" route ties with it (AmbiguousMatchException). The OpenAPI document advertises both paths
+// on the ingress origin; StandaloneYarpIngress_ requests them through the gateway.
 #endregion
 
 namespace TimeWarp.Foundation.Configuration;
@@ -33,4 +39,15 @@ public static class IngressPaths
   /// <see cref="HealthEndpointPaths.Alive"/>.
   /// </summary>
   public const string WebServerAlivePath = "/web-server" + HealthEndpointPaths.Alive;
+
+  /// <summary>
+  /// Public readiness path the ingress routes to web-server unchanged (every registered health check).
+  /// </summary>
+  public const string WebServerHealthPath = "/api/health";
+
+  /// <summary>
+  /// Bare API root the ingress routes to web-server, which rewrites it to the tip action.
+  /// Also matches <c>/api/</c>.
+  /// </summary>
+  public const string TipDiscoveryAliasPath = "/api";
 }

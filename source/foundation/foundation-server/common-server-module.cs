@@ -18,9 +18,23 @@
 // come from generator Description.WithTags (namespace leaf under Features, plus additive
 // [OpenApiTags]); FE Tags() is filter-only and does not set OpenAPI operation tags.
 // AutoTagPathSegmentIndex=0 disables route-segment auto-tags so they do not compete with
-// those explicit OpenAPI tags. UseScalarApiReference must run after UseFastEndpoints;
+// those explicit OpenAPI tags. EnableJWTBearerAuth stays off: the automatic scheme is
+// named JWTBearerAuth and FastEndpoints attaches it only when AuthSchemeNames contains
+// that string, which product endpoints never do (they list agent-token). AddAuth
+// registers JWTBearerAuth when the host passes OpenApiAgentBearer, and
+// OpenApiBearerSecurity copies it onto operations that list that scheme, with the
+// host's policy-to-scope map. UseScalarApiReference must run after UseFastEndpoints;
 // MapOpenApi serves /openapi/{doc}.json and MapScalarApiReference points at that
-// DocumentName via AddDocument.
+// DocumentName via AddDocument, with JWTBearerAuth as the preferred scheme so Authorize
+// applies the bearer. OpenApiOneOf publishes the OneOf response union as its wire shape
+// (success body at 200, SharedProblemDetails as problem+json). OpenApiPublicServer replaces
+// the document's servers with the forwarded public origin, and Scalar's Servers list stays
+// empty and follows that document.
+// documentPublicWebRoutes (web-server only) adds GET /api/health and the /api tip alias,
+// and records /.well-known discovery documents in info.description plus
+// x-timewarp-excluded-routes. ExcludeNonFastEndpoints stays on. Api-server does not opt in.
+// configureOpenApi runs after those transformers so a host can add product responses
+// (payment 402/503) without putting product routes in this assembly.
 #endregion
 
 namespace TimeWarp.Foundation;
@@ -91,6 +105,41 @@ public class CommonServerModule : IAspNetModule
     string apiTitle
   )
   {
+    AddOpenApi(serviceCollection, apiVersion, apiTitle, null);
+  }
+
+  /// <summary>
+  /// Registers a FastEndpoints OpenAPI document for Scalar (and any other document consumers).
+  /// </summary>
+  /// <param name="serviceCollection">Host service collection.</param>
+  /// <param name="apiVersion">Document name and version (e.g. "v1"); must match AddDocument.</param>
+  /// <param name="apiTitle">Human-readable document title shown in Scalar.</param>
+  /// <param name="agentBearer">
+  /// Scheme name and policy-to-scope map. When null, the document does not advertise agent bearer auth.
+  /// </param>
+  /// <param name="documentPublicWebRoutes">
+  /// When true, the document lists <c>GET /api/health</c> and the <c>GET|POST /api</c> tip alias,
+  /// and records the <c>/.well-known/*</c> discovery documents as excluded routes.
+  /// Api-server leaves this false: those routes are not on that host.
+  /// </param>
+  /// <param name="configureOpenApi">
+  /// Host callback invoked after the shared transformers. Null adds none.
+  /// </param>
+  public static void AddOpenApi
+  (
+    IServiceCollection serviceCollection,
+    string apiVersion,
+    string apiTitle,
+    OpenApiAgentBearer? agentBearer,
+    bool documentPublicWebRoutes = false,
+    Action<OpenApiOptions>? configureOpenApi = null
+  )
+  {
+    if (agentBearer is not null)
+    {
+      serviceCollection.AddSingleton(agentBearer);
+    }
+
     // FastEndpoints.OpenApi — not services.AddOpenApi() — so FE transformers and Description.WithTags metadata wire up.
     serviceCollection.OpenApiDocument
     (
@@ -103,8 +152,41 @@ public class CommonServerModule : IAspNetModule
         // Disable route-segment auto-tags so they do not compete with those explicit tags.
         options.AutoTagPathSegmentIndex = 0;
         options.ExcludeNonFastEndpoints = true;
+        // The automatic JWTBearerAuth scheme is never referenced: FastEndpoints matches it
+        // against AuthSchemeNames, and those names are the host's agent scheme.
+        options.EnableJWTBearerAuth = false;
+        if (agentBearer is not null)
+        {
+          options.AddAuth
+          (
+            OpenApiBearerSecurity.SchemeName,
+            OpenApiBearerSecurity.CreateScheme(agentBearer.PolicyScopes.Values.ToList())
+          );
+        }
+
+        options.ConfigureOpenApi = openApiOptions =>
+        {
+          // After FastEndpoints' operation transformer, which is registered before this callback.
+          OpenApiOneOf.Register(openApiOptions);
+          OpenApiDeleteRequestBody.Register(openApiOptions);
+          if (agentBearer is not null)
+          {
+            OpenApiBearerSecurity.Register(openApiOptions, agentBearer);
+          }
+
+          OpenApiPublicServer.Register(openApiOptions);
+          if (documentPublicWebRoutes)
+          {
+            OpenApiDiscoveryCoverage.Register(openApiOptions);
+          }
+
+          configureOpenApi?.Invoke(openApiOptions);
+        };
       }
     );
+    // The server transformer reads the request through IHttpContextAccessor. Hosts that already
+    // register it are unchanged (TryAdd).
+    serviceCollection.AddHttpContextAccessor();
   }
 
   /// <summary>
@@ -130,6 +212,10 @@ public class CommonServerModule : IAspNetModule
           .AddDocument(apiVersion, apiTitle)
           .SortTagsAlphabetically()
           .ExpandAllTags();
+        if (webApplication.Services.GetService<OpenApiAgentBearer>() is not null)
+        {
+          options.AddPreferredSecuritySchemes([OpenApiBearerSecurity.SchemeName]);
+        }
       }
     );
   }

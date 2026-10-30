@@ -162,11 +162,10 @@
   @if (SiteSettingsState.HasSnapshot
     && (SiteSettingsState.ConfigurationEnabledDiffers || SiteSettingsState.ConfigurationAllowBootstrapDiffers))
   {
-    <FluentMessageBar Intent="MessageBarIntent.Warning" Title="Configuration drift" AllowDismiss="false">
-      <span data-qa="ConfigurationPolicyDrift">
-        Saved policy differs from SignInOptions:Methods (Microsoft365) or Authentication:Entra:AllowBootstrap. Edit here or run `dev entra reseed`.
-      </span>
-    </FluentMessageBar>
+    <MessageBar Intent="MessageBarIntent.Warning"
+                Title="Configuration drift"
+                Body="Saved policy differs from SignInOptions:Methods (Microsoft365) or Authentication:Entra:AllowBootstrap. Edit here or run `dev entra reseed`."
+                data-qa="ConfigurationPolicyDrift" />
   }
 
   @if (DraftLoaded)
