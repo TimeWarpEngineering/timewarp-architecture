@@ -26,28 +26,28 @@
          itself uses project refs). Per task-124 policy, these pins equal the release <Version> and
          bump in the same commit as it — packages and template publish together in one release run,
          so pins always reference versions that exist by the time a generated app restores. -->
-    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.29" />
-    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.29" />
-    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.29" />
-    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.29" />
-    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.29" />
-    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.29" />
+    <PackageVersion Include="TimeWarp.Foundation.Domain" Version="2.0.0-beta.30" />
+    <PackageVersion Include="TimeWarp.Foundation.Contracts" Version="2.0.0-beta.30" />
+    <PackageVersion Include="TimeWarp.Foundation.Application" Version="2.0.0-beta.30" />
+    <PackageVersion Include="TimeWarp.Foundation.Infrastructure" Version="2.0.0-beta.30" />
+    <PackageVersion Include="TimeWarp.Foundation.Server" Version="2.0.0-beta.30" />
+    <PackageVersion Include="TimeWarp.Modules" Version="2.0.0-beta.30" />
     <!-- Analyzer/generator packages (task 092). Package IDs composed via properties so template
          sourceName cannot rewrite them (task 115). Per task-124 policy, these pins equal the
          release <Version> and bump in the same commit as it. -->
-    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.29" />
-    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.29" />
-    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.29" />
+    <PackageVersion Include="$(TwArchitectureAnalyzersPackageId)" Version="2.0.0-beta.30" />
+    <PackageVersion Include="$(TwArchitectureGeneratorsPackageId)" Version="2.0.0-beta.30" />
+    <PackageVersion Include="$(TwArchitectureAttributesPackageId)" Version="2.0.0-beta.30" />
     <!-- TimeWarp.Identity has been published since 2.0.0-beta.6 (task 124). Per task-124 policy,
          this pin equals the release <Version> and bumps in the same commit as it, same as the
          TimeWarp.Foundation.* and analyzer/generator pins above. This pin is inert for this
          repo/CI (UseIdentityPackages resolves to ProjectReference mode when identity source is
          present) and only matters for package-mode consumers (generated apps always package-mode). -->
-    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.29" />
+    <PackageVersion Include="TimeWarp.Identity" Version="2.0.0-beta.30" />
     <!-- TimeWarp.402: packed by the release run (workflow-command.cs) and template-smoke's local
          feed; first nuget.org publish rides the next release. Same task-124 pin policy as
          TimeWarp.Identity above — equals <Version>, bumps in the same commit (task 104-035). -->
-    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.29" />
+    <PackageVersion Include="TimeWarp.402" Version="2.0.0-beta.30" />
     <PackageVersion Include="TimeWarp.Multiavatar" Version="1.0.0-beta.13" />
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
@@ -68,18 +68,18 @@
     <PackageVersion Include="Ardalis.GuardClauses" Version="[5.0.0]" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
-    <PackageVersion Include="libphonenumber-csharp" Version="9.0.41" />
+    <PackageVersion Include="libphonenumber-csharp" Version="9.0.42" />
     <PackageVersion Include="OneOf" Version="3.0.271" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.84.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.84.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.84.0" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.84.0" />
-    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.84.0" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.85.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.85.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Web" Version="2.85.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.85.0" />
+    <PackageVersion Include="Grpc.Net.Client.Web" Version="2.85.0" />
     <PackageVersion Include="protobuf-net.Grpc" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.3.14" />
-    <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="10.1.0" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
     <PackageVersion Include="Aspire.Hosting.Yarp" Version="$(AspireVersion)" />
@@ -109,13 +109,13 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0-rc.2.26504.105" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.2" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.3" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
 
@@ -170,10 +170,22 @@
          that package pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.2.26504.105. Moving the
          EF family alone fails restore (NU1608/NU1107).
          Extensions monthly packages (Http.Resilience, ServiceDiscovery, Telemetry, AI) are 10.11.0;
-         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802. -->
+         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802.
+         Re-checked task 456 (2026-10-30): tried Microsoft.OpenApi 3.11.0. foundation-server restore
+         raised NU1608 (warning as error): Microsoft.AspNetCore.OpenApi 10.0.11 requires
+         Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but 3.11.0 was resolved. FastEndpoints.OpenApi 8.3.0
+         is still the latest stable and still depends on that 10.0.11 package. 8.4.0-beta.26 is
+         net10.0 only (Microsoft.AspNetCore.OpenApi 10.0.13, range [2.12.2, 3.0.0)). 9.0.0-beta.6's
+         net11.0 group still depends on Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, not RC3.
+         Microsoft.AspNetCore.OpenApi 11.0.0-rc.3.26522.148 declares Microsoft.OpenApi [3.10.2, 4.0.0).
+         Latest 2.x is still 2.13.0, so the pin stays. The FastEndpoints 9 move stays task 257.
+         Task 456 moves the EF Core family (Microsoft.EntityFrameworkCore*, DataProtection.EntityFrameworkCore,
+         HealthChecks.EntityFrameworkCore, dotnet-ef) and Npgsql.EntityFrameworkCore.PostgreSQL onto RC3.
+         Npgsql 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.3.26522.148.
+         System.ServiceModel.Primitives moves to 10.1.0 (still no 11.x). -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.2" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.6" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />
     <PackageVersion Include="BlazorComponentUtilities" Version="1.8.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.3.26522.148" />
@@ -185,7 +197,7 @@
          is resolved (GlobalMcpToolCallApprovalPolicy) were observed on adapter 10.10.0 and were
          not re-checked on 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
-    <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
+    <PackageVersion Include="Microsoft.Playwright" Version="1.64.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0-rc.3.26522.148" />
@@ -200,7 +212,7 @@
     <PackageVersion Include="Blazilla" Version="2.4.2" />
     <!-- Task 353: CommonMark parser for SafeMarkdown. Raw HTML is off and the SPA renders the AST
          itself, so no HTML string from Markdig reaches the DOM. -->
-    <PackageVersion Include="Markdig" Version="1.4.2" />
+    <PackageVersion Include="Markdig" Version="1.5.1" />
     <PackageVersion Include="TimeWarp.State" Version="12.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.State.Blazor" Version="12.0.0-beta.15" />
     <PackageVersion Include="TimeWarp.State.Plus" Version="12.0.0-beta.15" />
@@ -223,9 +235,9 @@
     <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.11.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
   </ItemGroup>
   
   <ItemGroup Label="Code Analyzers">
@@ -259,9 +271,10 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <!-- Lifts Analyzer.Testing 1.1.4's transitive NuGet.Packaging dependency past
          GHSA-846f-f764-76mx / GHSA-2fmv-rv2c-59x7 (NU1902/NU1903). Task 389 takes 10.0.13,
-         the latest `ganda nuget outdated` reported (9.0.21 was the first patched 9.x).
+         the latest `ganda nuget outdated` reported then (9.0.21 was the first patched 9.x).
+         Task 456 takes 10.0.14.
          Referenced directly by the two analyzer test projects. -->
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.9.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="TimeWarp.Jaribu" Version="1.0.0-beta.15" />

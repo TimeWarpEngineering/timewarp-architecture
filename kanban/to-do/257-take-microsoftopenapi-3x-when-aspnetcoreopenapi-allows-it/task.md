@@ -41,3 +41,10 @@ on the pinned train accepts it.
   FastEndpoints.OpenApi 9.0.0-beta.2 has a net11.0 group on Microsoft.AspNetCore.OpenApi
   11.0.0-rc.2.26504.105, range [3.10.0, 4.0.0). The gate opens once this repo takes
   FastEndpoints 9 (currently beta).
+- Re-checked task 456 (2026-10-30): Microsoft.OpenApi 3.11.0 restore of foundation-server raised
+  NU1608. Microsoft.AspNetCore.OpenApi 10.0.11 (the package FastEndpoints.OpenApi 8.3.0, latest
+  stable, still depends on) requires Microsoft.OpenApi (>= 2.7.5 && < 3.0.0). FastEndpoints.OpenApi
+  8.4.0-beta.26 is net10.0 only and depends on Microsoft.AspNetCore.OpenApi 10.0.13
+  ([2.12.2, 3.0.0)). 9.0.0-beta.6's net11.0 group still depends on Microsoft.AspNetCore.OpenApi
+  11.0.0-rc.2.26504.105, not 11.0.0-rc.3.26522.148 (range [3.10.2, 4.0.0)). Latest 2.x remains
+  2.13.0. This task did not take FastEndpoints 9 betas.
