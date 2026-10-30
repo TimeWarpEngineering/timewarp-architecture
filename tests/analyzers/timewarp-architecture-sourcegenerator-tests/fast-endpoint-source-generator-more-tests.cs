@@ -175,6 +175,41 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
 
     return Task.CompletedTask;
   }
+
+  public static Task Should_Append_Anonymous_Reason_To_Xml_Remarks()
+  {
+    MetadataReference contract = GeneratorTestHarness.CompileContractAssembly("""
+      using TimeWarp.Architecture;
+      using TimeWarp.Architecture.Attributes;
+
+      namespace Test.Features.Profiles;
+
+      [ApiEndpoint]
+      [EndpointAllowAnonymous("Dual-mode demo read.")]
+      public static partial class GetProfile
+      {
+          /// <summary>Loads the current profile.</summary>
+          /// <remarks>Anonymous callers receive the demo profile.</remarks>
+          [ApiRoute("api/Users/Current/Profile", HttpVerb.Get)]
+          public sealed partial class Query { }
+
+          public sealed class Response { }
+      }
+      """);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(contract, enabled: true);
+    string generatedCode = runResult.Results
+      .SelectMany(static result => result.GeneratedSources)
+      .Single()
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("Loads the current profile.");
+    generatedCode.ShouldContain(
+      "Anonymous callers receive the demo profile. Intentionally anonymous. Dual-mode demo read.");
+    generatedCode.ShouldContain("ProducesProblem(400, \"Bad Request\")");
+
+    return Task.CompletedTask;
+  }
 }
 
 public class FastEndpointSourceGenerator_ShapeAndVerb_Tests

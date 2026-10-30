@@ -22,6 +22,8 @@
 // Anonymous: no agent bearer. C-create HostGraphFactory per class; isolated HttpClient per call.
 // Distinct from metered (104-011): no ledger debit, no agent scope.
 // 104-020: alias + free-route regression share this host (tip enabled) so scanners/docs claims hold.
+// ApiHealth_Should_ReturnPlaintextStatus uses this same host: it is the web-server that maps
+// /api/health, which the OpenAPI health operation describes.
 #endregion
 
 //-:cnd:noEmit
@@ -150,6 +152,25 @@ namespace TimeWarp.Architecture.Features.Tip
           customMessage: $"{path} must not return 402 when tip is enabled");
         response.Headers.Contains(PaymentHeaders.PaymentRequired).ShouldBeFalse(
           customMessage: $"{path} must not carry PAYMENT-REQUIRED");
+      }
+    }
+
+    public static async Task ApiHealth_Should_ReturnPlaintextStatus()
+    {
+      using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+      using HttpResponseMessage response = await client.GetAsync("/api/health");
+      string body = (await response.Content.ReadAsStringAsync()).Trim();
+
+      response.Content.Headers.ContentType.ShouldNotBeNull();
+      response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
+      (body is "Healthy" or "Degraded" or "Unhealthy").ShouldBeTrue(body);
+      if (body == "Unhealthy")
+      {
+        response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+      }
+      else
+      {
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
       }
     }
 

@@ -19,6 +19,7 @@
 
 namespace DevCli.Services;
 
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -126,7 +127,7 @@ internal static class EntraSetup
   }
 
   internal static string CredentialDisplayName(DateTimeOffset timestamp) =>
-    $"dev-{timestamp.UtcDateTime:yyyyMMdd}";
+    $"dev-{timestamp.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}";
 
   internal static string FormatInvocation(string executable, IReadOnlyList<string> arguments)
   {

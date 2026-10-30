@@ -54,7 +54,7 @@
     : Expired ? new Icons.Regular.Size20.Warning() : new Icons.Regular.Size20.CheckmarkCircle();
 
   private static string ExpiryText(DateTimeOffset expiresAt) =>
-    "Expires at " + expiresAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
+    "Expires at " + expiresAt.ToLocalTime().ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture);
 
   private Task RenewAsync() => AgentSurfaceState.NewConversation();
 

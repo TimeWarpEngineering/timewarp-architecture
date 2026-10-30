@@ -27,7 +27,7 @@
               <Cell>@hero.Id</Cell>
               <Cell>@hero.Name</Cell>
               <Cell>@hero.Age</Cell>
-              <Cell>@hero.BirthDate.ToString("MM/dd/yyyy")</Cell>
+              <Cell>@hero.BirthDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</Cell>
               <Cell>@hero.Power</Cell>
             </tr>
           }

@@ -15,7 +15,8 @@
 // that keeps ScreenshotState.MaxBytes equal to FeedbackAttachmentRules.MaxBytes. The cap proof
 // sends an Ask screenshot plus two tool pictures in one turn and checks the command stays within
 // CompleteAgentChat.MaxImagesPerRequest and validates. CaptureSpa registers no API service:
-// nothing in these proofs calls web-server.
+// nothing in these proofs calls web-server. CaptureSpa and CaptureJsRuntime are internal so the
+// Ask rejection tests (AskRejection_Should, no Aspire session) select the same real tools.
 #endregion
 
 namespace CatalogAgent_;
@@ -160,6 +161,17 @@ public partial class CatalogAgent_Should
     return Task.CompletedTask;
   }
 
+  public static Task Screenshot_File_Name_Is_An_Iso_Basic_Utc_Stamp()
+  {
+    // Task 452: the attachment name carries the capture instant as ISO 8601 basic UTC, whatever
+    // offset the capture was taken in.
+    DateTimeOffset capturedAt = new(2026, 10, 28, 8, 34, 56, TimeSpan.FromHours(-4));
+    ScreenshotCapture capture = new(7, FakePng, 640, 480, "/Settings", selector: null, masked: 0, capturedAt);
+
+    capture.FileName.ShouldBe("screenshot-20261028T123456Z-7.png");
+    return Task.CompletedTask;
+  }
+
   public static async Task Relay_Sends_Ask_Screenshot_And_Tool_Picture_As_Images()
   {
     CapturingChatApi api = new();
@@ -268,7 +280,7 @@ public partial class CatalogAgent_Should
 
   /// <summary>Stands in for the browser: import returns a module whose capture and takeBytes answer the fixture.</summary>
   /// <remarks>Both overloads read <see cref="CaptureExports"/>, a plain type, so no call here is to a JS runtime.</remarks>
-  private sealed class CaptureJsRuntime(ScreenshotJsModule.BrowserCapture capture) : IJSRuntime, IJSObjectReference
+  internal sealed class CaptureJsRuntime(ScreenshotJsModule.BrowserCapture capture) : IJSRuntime, IJSObjectReference
   {
     private readonly CaptureExports Exports = new(capture);
 
@@ -333,7 +345,7 @@ public partial class CatalogAgent_Should
   }
 
   /// <summary>In-proc SPA: real catalog, WebMCP dispatcher, and store; signed in with every permission; the browser is <see cref="CaptureJsRuntime"/>.</summary>
-  private sealed class CaptureSpa : ISpaTestApplication, IDisposable
+  internal sealed class CaptureSpa : ISpaTestApplication, IDisposable
   {
     public IServiceProvider ServiceProvider { get; }
 

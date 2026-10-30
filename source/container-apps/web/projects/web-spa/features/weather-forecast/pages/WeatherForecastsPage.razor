@@ -31,7 +31,7 @@
           @foreach (var forecast in WeatherForecastsState.WeatherForecasts ?? [])
           {
             <tr>
-              <Cell>@forecast.Date.ToShortDateString()</Cell>
+              <Cell>@forecast.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)</Cell>
               <Cell>@forecast.TemperatureC</Cell>
               <Cell>@forecast.TemperatureF</Cell>
               <Cell><StatusBadge Status="BadgeStatus.Info" Label=@forecast.Summary /></Cell>

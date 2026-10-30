@@ -14,7 +14,7 @@
 // disagreeing pair can never be constructed (and therefore never serialized), not merely one the
 // handler happens to avoid producing.
 // RoleIds (task 147-004 D4): effective product role Guids for the session principal so the SPA
-// can emit ClaimTypes.Role for diagnostics/display (UserClaims). Unauthenticated → empty list.
+// can emit ClaimTypes.Role for diagnostics/display (developer Claims page). Unauthenticated → empty list.
 // Permissions (task 182-003): expanded permission ids from IPermissionEvaluator under the
 // identity-session scheme — SPA IdentitySessionAuthenticationStateProvider projects each as a
 // PermissionIds.ClaimType claim so AuthorizeView / [Authorize] policies use RequireClaim (WASM

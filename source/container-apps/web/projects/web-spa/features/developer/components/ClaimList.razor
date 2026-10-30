@@ -1,0 +1,87 @@
+@namespace TimeWarp.Architecture.Features.Developer.Components
+@*
+  Purpose: Lists every claim on the current Blazor AuthenticationState principal as a
+  Type / Value table for the developer Claims page.
+
+  Design: The SPA holds no ID token. The principal comes from the registered
+  AuthenticationStateProvider (identity session or mock; ClaimsPage names which), so this
+  list is the projection the SPA authorizes with, not a token dump. It re-reads on
+  AuthenticationStateChanged so sign-in and sign-out refresh the table. URI claim types
+  (ClaimTypes.Role and similar) show their last segment; the full type is the cell title.
+*@
+
+@implements IDisposable
+@code
+{
+  [Inject]
+  private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = null!;
+
+  private IReadOnlyList<Claim> Claims = [];
+
+  protected override async Task OnInitializedAsync()
+  {
+    AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    await LoadClaims();
+  }
+
+  private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+  {
+    _ = await task;
+    await InvokeAsync(LoadClaims);
+  }
+
+  public void Dispose() =>
+    AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+
+  private async Task LoadClaims()
+  {
+    AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    ClaimsPrincipal user = authenticationState.User;
+    Claims = user.Identity is { IsAuthenticated: true } ? [.. user.Claims] : [];
+    StateHasChanged();
+  }
+
+  private static string ShortClaimType(string claimType)
+  {
+    int lastSlash = claimType.LastIndexOf('/');
+    return lastSlash >= 0 && lastSlash < claimType.Length - 1 ? claimType[(lastSlash + 1)..] : claimType;
+  }
+}
+
+<AuthorizeView>
+  <Authorized>
+    @if (Claims.Count > 0)
+    {
+      <table class="twe-table" data-qa="ClaimList">
+        <thead>
+          <tr>
+            <TableHeader>Type</TableHeader>
+            <TableHeader>Value</TableHeader>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach (Claim claim in Claims)
+          {
+            <tr>
+              <td title="@claim.Type"><code>@ShortClaimType(claim.Type)</code></td>
+              <td><code>@claim.Value</code></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    else
+    {
+      <EmptyState Variant="EmptyStateVariant.Inline"
+                  Title="No claims"
+                  Description="The signed-in principal carries no claims."
+                  data-qa="ClaimListEmpty" />
+    }
+  </Authorized>
+  <NotAuthorized>
+    <EmptyState Variant="EmptyStateVariant.Inline"
+                Title="Not signed in"
+                Description="Sign in to see your claims."
+                data-qa="ClaimListSignedOut" />
+  </NotAuthorized>
+</AuthorizeView>

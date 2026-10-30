@@ -415,6 +415,9 @@ public class FastEndpointSourceGenerator_Authorization_Tests
       .SourceText.ToString();
 
     generatedCode.ShouldContain("AllowAnonymous()");
+    generatedCode.ShouldContain(
+      "Intentionally anonymous. Public demo endpoint; no security surface.");
+    generatedCode.ShouldNotContain("ProducesProblem(400");
 
     return Task.CompletedTask;
   }

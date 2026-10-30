@@ -9,9 +9,13 @@
 // Scheme not registered (Microsoft365 not listed) is 404 so the route does not advertise a
 // scheme that is not registered. Runtime policy (IEntraSignInPolicy / site settings) refuses new
 // challenges with 403 Sign-in disabled when EntraSignInEnabled is false — existing sessions stay.
+// OpenAPI would omit 401 and 403 because AllowAnonymous suppresses them. Summary states the
+// anonymous bootstrap choice, and Description lists the handler statuses (400, 401, 403, 404).
 // prompt=select_account is on OpenIdConnectOptions; the test fake handler ignores it.
 // FastEndpoints auto-sends 204 unless Send.* or MarkResponseStart runs — Challenge/Redirect write
 // headers without HasStarted on TestServer, so we mark after ChallengeAsync.
+// WithTags("Identity") is the tag the generator gives its siblings (namespace leaf), so Scalar
+// groups this operation with them.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -25,6 +29,30 @@ public sealed class ChallengeEntraEndpoint : EndpointWithoutRequest
   {
     Get(ChallengeEntra.Path.TrimStart('/'));
     AllowAnonymous();
+    Summary(summary =>
+    {
+      summary.Description =
+        "Intentionally anonymous. A visitor with no session can start Microsoft 365 bootstrap. "
+        + "Link mode returns 401 when identity-session is missing. "
+        + "Sign-in disabled returns 403. An unlisted Microsoft 365 method returns 404. "
+        + "mode must be link or bootstrap (400). Success is an OIDC redirect.";
+      summary.Responses[400] = "mode must be link or bootstrap.";
+      summary.Responses[401] = "Link mode without an identity session.";
+      summary.Responses[403] = "Entra sign-in is disabled.";
+      summary.Responses[404] = "Microsoft 365 is not a listed sign-in method.";
+    });
+    Description
+    (
+      builder =>
+      {
+        builder
+          .WithTags("Identity")
+          .ProducesProblem(400)
+          .Produces(401)
+          .ProducesProblem(403)
+          .Produces(404);
+      }
+    );
   }
 
   public override async Task HandleAsync(CancellationToken cancellationToken)
