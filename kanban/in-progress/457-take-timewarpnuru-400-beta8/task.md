@@ -12,7 +12,11 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 
 ## Requirements
 
-- Bump both pins to `4.0.0-beta.8`. No `VersionOverride`, no backward pins.
+- Bump both pins to `4.0.0-beta.9` (operator decision 2026-10-30, see Session). No
+  `VersionOverride`, no backward pins.
+- Remove `RCS1194` from the `NoWarn` list in `tools/dev-cli/Directory.Build.props`, along with its
+  comment. DevCli 4.0.0-beta.9 adds the `HttpRequestError` constructor to
+  `PackageFeedUnreadableException`, so the warning no longer fires.
 - Fix any API breaks in the dev CLI and other consumers. Do not suppress warnings.
 - After the bump, rebuild the dev CLI (`dev self-install`, or run it from source) so the gates
   run the new Nuru, not the stale `bin/dev`.
@@ -24,8 +28,10 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 ## Checklist
 
 - [x] Pins bumped to 4.0.0-beta.8
+- [ ] Pins bumped to 4.0.0-beta.9
+- [ ] `RCS1194` NoWarn and its comment removed
 - [x] Breaks fixed; dev CLI rebuilt
-- [x] Gates green
+- [ ] Gates green on beta.9
 
 ## Session
 
@@ -123,7 +129,9 @@ ganda repo audit
   "Do not suppress warnings". The fix is upstream in Nuru. The operator chooses between accepting
   it as a documented exception and taking an upstream Nuru fix.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Operator decision (Steve, 2026-10-30): do not accept the RCS1194 suppression; wait for the Nuru fix.
+  Nuru shipped 4.0.0-beta.9 the same day, and its DevCli `package-feed-lookup.cs` now has
+  `PackageFeedUnreadableException(HttpRequestError, string?, Exception?, HttpStatusCode?)`. Fix pass:
+  move both pins to beta.9, drop `RCS1194` from the dev CLI `NoWarn`, and re-run the gates. This
+  resolves M1.
 
-## Blocked
-
-2026-10-30: stalemate — operator decision needed: accept the dev CLI RCS1194 NoWarn for sealed DevCli 4.0.0-beta.8 package content as a documented exception, or take an upstream Nuru fix first (cross-repo, not authorized by this spec)
