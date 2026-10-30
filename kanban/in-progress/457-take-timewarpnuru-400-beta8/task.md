@@ -111,9 +111,11 @@ passed (5/5, 5/5, 2/2).
 `_framework/dotnet.js`. A later `./bin/dev test --group playwright`, alone, passed 33/33
 in 5m 09s.
 
-`nuru` audit says TimeWarp.Nuru is up to date. `kanban-landed` still warns for eight
-other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244).
-Those claims are outside this id. `kanban-landed --fix` does not remove them.
+`ganda repo audit` exited 0 after `ganda repo audit --fix` landed this kitchen:
+Passed 34, Failed 1 advisory. `nuru` says TimeWarp.Nuru is up to date.
+`kanban-landed` still warns for eight other claims with no worktree (070-001,
+104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this
+id. `kanban-landed --fix` does not remove them.
 
 The release job in `.github/workflows/workflow.yml` does not run `check-version` or
 `dev release`. It still has `contents: read` and `id-token: write` only. A later step that
