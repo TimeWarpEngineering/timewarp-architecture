@@ -9,8 +9,12 @@
          IDE0005/IDE0022/IDE0046/IDE0055/IDE0058/IDE0065/IDE0066/IDE0078/IDE0160/IDE0290 fire in
          TimeWarp.Nuru.DevCli content files that this runfile compiles in. Those sources live in
          the NuGet package (outside this repo, so .editorconfig cannot mark them generated) and
-         follow the package's style. Our own CLI files do not emit these ids under `dotnet build dev.cs`. -->
-    <NoWarn>$(NoWarn);CA1031;CA1034;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;CA5399;RCS1046;IDE0005;IDE0022;IDE0046;IDE0055;IDE0058;IDE0065;IDE0066;IDE0078;IDE0160;IDE0211;IDE0290</NoWarn>
+         follow the package's style. Our own CLI files do not emit these ids under `dotnet build dev.cs`.
+         RCS1194 fires on PackageFeedUnreadableException in DevCli 4.0.0-beta.8
+         content/any/services/package-feed-lookup.cs (task 457). The type is sealed in that package,
+         so this repo cannot add the HttpRequestException constructor the analyzer still wants.
+         The same id is already NoWarn under source/container-apps. -->
+    <NoWarn>$(NoWarn);CA1031;CA1034;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;CA5399;RCS1046;RCS1194;IDE0005;IDE0022;IDE0046;IDE0055;IDE0058;IDE0065;IDE0066;IDE0078;IDE0160;IDE0211;IDE0290</NoWarn>
 
     <!-- No XML documentation file. The root props turn GenerateDocumentationFile on only so IDE0005
          (unnecessary usings) can run during build (Roslyn #41640); IDE0005 is in NoWarn above, so the
