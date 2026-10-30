@@ -87,11 +87,12 @@ Re-run `ganda nuget outdated` at the start. If newer versions have appeared, tak
 - Review oracle round 1: claude-opus-5-5 (anthropic), headless ganda task work, effort 2, roster general, turn cap 120 — 2026-10-30
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-30T05:39:36Z
 - Fix pass 2: grok task-work (2026-10-30). Rewrote the present-tense EF/Npgsql and ServiceModel sentences so they match the pins, and trimmed the task-456 OpenApi re-check to the NU1608 result.
+- Review oracle round 2: claude-opus-5-5 (anthropic), headless ganda task work, effort 1, roster general, turn cap 80, session not reported — 2026-10-30. Disposition clean.
 
 ## Review
 
-- Round 1: M1 open at review time. Fix pass 2 rewrote the pin comment. Round 2 has not run.
-
+- Round 1: M1 open at review time. Fix pass 2 rewrote the pin comment.
+- Round 2: Done
 ## Notes
 
 - Related: task 257 (Microsoft.OpenApi 3.x, gated on FastEndpoints 9).
@@ -136,4 +137,8 @@ Expect: The comment says the EF family, dotnet-ef, and Npgsql are on RC3 (`11.0.
 
 ### Review
 
-Round 1 ran on 2026-10-30 at effort 2, with a general reviewer only. One finding was open: M1, a bug, at `Directory.Packages.props:166`. The pin comment block still said the EF/Npgsql family was on RC2 and System.ServiceModel.Primitives stayed 10.0.652802. Counts: bug 1 open; suggestion 0; nit 0. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors) and `./bin/dev check-version` (pass). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Fix pass 2 rewrote that comment. Round 2 has not dispositioned M1.
+Round 1 ran on 2026-10-30 at effort 2, with a general reviewer only. One finding was open: M1, a bug, at `Directory.Packages.props:166`. The pin comment block still said the EF/Npgsql family was on RC2 and System.ServiceModel.Primitives stayed 10.0.652802. Counts: bug 1 open; suggestion 0; nit 0. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors) and `./bin/dev check-version` (pass). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Fix pass 2 rewrote that comment.
+
+Round 2 ran on 2026-10-30 at effort 1, with a general reviewer only, over the fix delta `ae1bc9d72..f79283653`. The rewritten comment matches the pins: EF family `11.0.0-rc.3.26522.148`, Npgsql `11.0.0-rc.3`, dotnet-ef `11.0.0-rc.3.26522.148`, and System.ServiceModel.Primitives `10.1.0`. Historical re-check lines are unchanged. No new findings. The change is comment-only, so build/test/smoke were not re-run.
+
+Final counts: bug 0 open / 1 fixed / 0 wontfix; suggestion 0; nit 0. Disposition: **clean** (2 rounds). Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`, `review/disposition.md`.
