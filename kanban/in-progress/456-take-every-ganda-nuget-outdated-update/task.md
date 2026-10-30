@@ -1,5 +1,21 @@
 # Take every ganda nuget outdated update
 
+## Goal (implementer restatement)
+
+Bring every package `ganda nuget outdated` still reports up to the version it names, in
+`Directory.Packages.props` and any other pin file that holds the same id. Re-check the feed
+first and take a newer target when one has appeared. Leave `Microsoft.OpenApi` on 2.x only
+if a restore against 3.x fails with NU1608 because FastEndpoints.OpenApi or
+Microsoft.AspNetCore.OpenApi still caps it below 3.0.0; in that case record the versions
+checked and add a dated note on task 257. Do not take FastEndpoints 9 betas, do not add
+`VersionOverride`, and do not downgrade anything else to make the graph resolve. After the
+Playwright pin moves, install the matching browsers before that lane. Fix product code,
+tests, and analyzers that break, without suppressing warnings. Because these pins ship in
+the template, bump `<Version>` and the platform package pins in the same commit so
+`dev check-version` passes. Finish only when `ganda repo audit`, `dev build` (0 warnings,
+0 errors), `dev test`, `dev template-smoke`, and `dev check-version` are green, and a final
+`ganda nuget outdated` shows only rows that Results explains.
+
 ## Description
 
 Take every update that `ganda nuget outdated` reports for this repo. Bump the pins in
@@ -54,19 +70,53 @@ Re-run `ganda nuget outdated` at the start. If newer versions have appeared, tak
 
 ## Checklist
 
-- [ ] Re-run `ganda nuget outdated` and confirm the list
-- [ ] Bump all pins (EF Core / Npgsql / DataProtection rc.3 together)
-- [ ] Microsoft.OpenApi 3.x attempted; result recorded (and task 257 updated if still gated)
-- [ ] Breaking changes fixed
-- [ ] Version bumped per `dev check-version`
-- [ ] Gates green; final `ganda nuget outdated` recorded in Results
+- [x] Re-run `ganda nuget outdated` and confirm the list
+- [x] Bump all pins (EF Core / Npgsql / DataProtection rc.3 together)
+- [x] Microsoft.OpenApi 3.x attempted; result recorded (and task 257 updated if still gated)
+- [x] Breaking changes fixed
+- [x] Version bumped per `dev check-version`
+- [x] Gates green; final `ganda nuget outdated` recorded in Results
 
 ## Session
 
 - Created: 8d5a7906-5253-4dc5-b6d4-729819f6f6b0 (2026-10-30)
+- Implementation: grok task-work (2026-10-30)
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a18b29-c08b-74e0-afa6-97ea293ae17f, max-turns 500, Done — 2026-10-30T05:34:06Z
 
 ## Notes
 
 - Related: task 257 (Microsoft.OpenApi 3.x, gated on FastEndpoints 9).
 
 ## Results
+
+Re-ran `ganda nuget outdated` on 2026-10-30. The same 22 packages were outdated, at the versions in the description. No newer target had appeared.
+
+Took 21 of them. `Microsoft.OpenApi` stays `2.13.0`.
+
+Tried `Microsoft.OpenApi` 3.11.0. `dotnet restore` of `source/foundation/foundation-server/foundation-server.csproj` failed with NU1608 (warning as error): Microsoft.AspNetCore.OpenApi 10.0.11 requires Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but 3.11.0 was resolved.
+
+Versions checked 2026-10-30:
+
+- FastEndpoints and FastEndpoints.OpenApi latest stable are still 8.3.0. That OpenApi package depends on Microsoft.AspNetCore.OpenApi 10.0.11, range [2.7.5, 3.0.0).
+- FastEndpoints.OpenApi 8.4.0-beta.26 is net10.0 only and depends on Microsoft.AspNetCore.OpenApi 10.0.13, range [2.12.2, 3.0.0).
+- FastEndpoints.OpenApi 9.0.0-beta.6 net11.0 depends on Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, not RC3. This task did not take that beta.
+- Microsoft.AspNetCore.OpenApi 11.0.0-rc.3.26522.148 declares Microsoft.OpenApi [3.10.2, 4.0.0).
+- Latest Microsoft.OpenApi 2.x is still 2.13.0. Latest overall is 3.11.0.
+
+A dated note is on task 257.
+
+`dotnet-ef` in `.config/dotnet-tools.json` moved from `11.0.0-rc.2.26504.105` to `11.0.0-rc.3.26522.148` with the EF Core family. Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore exactly at `11.0.0-rc.3.26522.148`.
+
+No product C# changes. The new pins compiled as they are. Playwright Chromium 156.0.8078.4 (driver 1.64.1, revision 1248) was installed before the Playwright lane.
+
+`dev check-version` reported source `2.0.0-beta.29` already published. Bumped `<Version>` in `source/Directory.Build.props` and `timewarp-templates/Directory.Build.props`, and the eleven platform pins in `Directory.Packages.props`, to `2.0.0-beta.30`. The re-check says source is one prerelease ahead of NuGet `2.0.0-beta.29`.
+
+`ganda repo audit` exited 0. The advisory `kanban-landed` warning is eight other claims with no worktree (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244). `--fix` would land those kitchens, so it was left alone.
+
+Final `ganda nuget outdated` (exit 0): one outdated package, Microsoft.OpenApi 2.13.0 -> 3.11.0 (major), for the NU1608 reason above. A first attempt aborted on an HttpClient timeout after package 57; the retry completed all 132.
+
+### How to validate
+
+Smoke: `ganda nuget outdated`; `./bin/dev build`; `./bin/dev test`; `./bin/dev template-smoke`; `./bin/dev check-version`; `ganda repo audit`.
+
+Expect: `ganda nuget outdated` lists only Microsoft.OpenApi 2.13.0 -> 3.11.0. `./bin/dev build` completes with 0 warnings and 0 errors. `./bin/dev test` passes 23 of 23 projects, including web-spa-playwright-tests 33/33. `./bin/dev template-smoke` succeeds and packs TimeWarp.Architecture 2.0.0-beta.30, with SmokeDefault building at 0 warnings. `./bin/dev check-version` reports source 2.0.0-beta.30 one prerelease ahead of NuGet 2.0.0-beta.29. `ganda repo audit` exits 0.
