@@ -14,7 +14,8 @@ tests, and analyzers that break, without suppressing warnings. Because these pin
 the template, bump `<Version>` and the platform package pins in the same commit so
 `dev check-version` passes. Finish only when `ganda repo audit`, `dev build` (0 warnings,
 0 errors), `dev test`, `dev template-smoke`, and `dev check-version` are green, and a final
-`ganda nuget outdated` shows only rows that Results explains.
+`ganda nuget outdated` shows only rows that Results explains. A comment that states a
+current pin must name the version that pin has. Historical re-check lines stay as written.
 
 ## Description
 
@@ -76,6 +77,7 @@ Re-run `ganda nuget outdated` at the start. If newer versions have appeared, tak
 - [x] Breaking changes fixed
 - [x] Version bumped per `dev check-version`
 - [x] Gates green; final `ganda nuget outdated` recorded in Results
+- [x] Pin comments name the RC3 and 10.1.0 versions they describe (review M1)
 
 ## Session
 
@@ -83,6 +85,12 @@ Re-run `ganda nuget outdated` at the start. If newer versions have appeared, tak
 - Implementation: grok task-work (2026-10-30)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a18b29-c08b-74e0-afa6-97ea293ae17f, max-turns 500, Done — 2026-10-30T05:34:06Z
 - Review oracle round 1: claude-opus-5-5 (anthropic), headless ganda task work, effort 2, roster general, turn cap 120 — 2026-10-30
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 120 — 2026-10-30T05:39:36Z
+- Fix pass 2: grok task-work (2026-10-30). Rewrote the present-tense EF/Npgsql and ServiceModel sentences so they match the pins, and trimmed the task-456 OpenApi re-check to the NU1608 result.
+
+## Review
+
+- Round 1: M1 open at review time. Fix pass 2 rewrote the pin comment. Round 2 has not run.
 
 ## Notes
 
@@ -116,12 +124,16 @@ No product C# changes. The new pins compiled as they are. Playwright Chromium 15
 
 Final `ganda nuget outdated` (exit 0): one outdated package, Microsoft.OpenApi 2.13.0 -> 3.11.0 (major), for the NU1608 reason above. A first attempt aborted on an HttpClient timeout after package 57; the retry completed all 132.
 
+### Fix pass 2 (review M1)
+
+The comment above `Microsoft.OpenApi` still said, in the present tense, that the EF family and Npgsql stay on the RC2 train and that System.ServiceModel.Primitives stays 10.0.652802. A task-456 paragraph after it described RC3 and 10.1.0 and repeated the task-420 OpenApi re-check. The present-tense sentences now say the EF family, dotnet-ef, and Npgsql are on RC3 as of task 456 and move together, because Npgsql 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore at 11.0.0-rc.3.26522.148, and that System.ServiceModel.Primitives is 10.1.0 with no 11.x. The task-456 OpenApi note is only the 2026-10-30 NU1608 restore of 3.11.0. The earlier "Re-checked task" lines are unchanged. No package version changed in this pass.
+
 ### How to validate
 
-Smoke: `ganda nuget outdated`; `./bin/dev build`; `./bin/dev test`; `./bin/dev template-smoke`; `./bin/dev check-version`; `ganda repo audit`.
+Smoke: In `Directory.Packages.props`, read the comment above the `Microsoft.OpenApi` pin. `rg -n "stay on the RC2 train|stays 10.0.652802|no Npgsql RC3" Directory.Packages.props`. `ganda repo audit`. The pin bump's earlier gates remain `ganda nuget outdated`, `./bin/dev build`, `./bin/dev test`, `./bin/dev template-smoke`, and `./bin/dev check-version`.
 
-Expect: `ganda nuget outdated` lists only Microsoft.OpenApi 2.13.0 -> 3.11.0. `./bin/dev build` completes with 0 warnings and 0 errors. `./bin/dev test` passes 23 of 23 projects, including web-spa-playwright-tests 33/33. `./bin/dev template-smoke` succeeds and packs TimeWarp.Architecture 2.0.0-beta.30, with SmokeDefault building at 0 warnings. `./bin/dev check-version` reports source 2.0.0-beta.30 one prerelease ahead of NuGet 2.0.0-beta.29. `ganda repo audit` exits 0.
+Expect: The comment says the EF family, dotnet-ef, and Npgsql are on RC3 (`11.0.0-rc.3.26522.148` and `11.0.0-rc.3`) and move together, and that System.ServiceModel.Primitives is 10.1.0. The task-456 OpenApi note is the 2026-10-30 NU1608 result for 3.11.0. `rg` prints no matches. `ganda repo audit` exits 0. From the pin bump, which this pass did not re-run: `ganda nuget outdated` lists only Microsoft.OpenApi 2.13.0 -> 3.11.0; `./bin/dev build` is 0 warnings and 0 errors; `./bin/dev test` passes 23 of 23 projects, including web-spa-playwright-tests 33/33; `./bin/dev template-smoke` packs TimeWarp.Architecture 2.0.0-beta.30 with SmokeDefault at 0 warnings; `./bin/dev check-version` reports source 2.0.0-beta.30 one prerelease ahead of NuGet 2.0.0-beta.29.
 
 ### Review
 
-Round 1 ran on 2026-10-30 at effort 2, with a general reviewer only. One finding is open: M1, a bug, at `Directory.Packages.props:166`. The pin comment block still says the EF/Npgsql family is on RC2 and System.ServiceModel.Primitives stays 10.0.652802. That fails the requirement to update pin comments. Counts: bug 1 open; suggestion 0; nit 0. Disposition is pending until a fix pass and round 2. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors) and `./bin/dev check-version` (pass). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1 ran on 2026-10-30 at effort 2, with a general reviewer only. One finding was open: M1, a bug, at `Directory.Packages.props:166`. The pin comment block still said the EF/Npgsql family was on RC2 and System.ServiceModel.Primitives stayed 10.0.652802. Counts: bug 1 open; suggestion 0; nit 0. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors) and `./bin/dev check-version` (pass). Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Fix pass 2 rewrote that comment. Round 2 has not dispositioned M1.

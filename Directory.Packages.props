@@ -166,23 +166,14 @@
          matching SDK 11.0.100-rc.3.26522.148 (RC1 authorized 2026-10-09; RC2 task 362; RC3 task 420).
          EF Core (Microsoft.EntityFrameworkCore*, Microsoft.AspNetCore.DataProtection.EntityFrameworkCore,
          HealthChecks.EntityFrameworkCore, the dotnet-ef tool) and Npgsql.EntityFrameworkCore.PostgreSQL
-         stay on the RC2 train from task 389. nuget.org has no Npgsql RC3 (latest 11.0.0-rc.2), and
-         that package pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.2.26504.105. Moving the
-         EF family alone fails restore (NU1608/NU1107).
+         are on RC3 as of task 456. Npgsql 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore exactly at
+         11.0.0-rc.3.26522.148, so the EF family and Npgsql move together. Moving the EF family alone
+         fails restore (NU1608/NU1107).
          Extensions monthly packages (Http.Resilience, ServiceDiscovery, Telemetry, AI) are 10.11.0;
-         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and stays 10.0.652802.
+         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and is 10.1.0.
          Re-checked task 456 (2026-10-30): tried Microsoft.OpenApi 3.11.0. foundation-server restore
          raised NU1608 (warning as error): Microsoft.AspNetCore.OpenApi 10.0.11 requires
-         Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but 3.11.0 was resolved. FastEndpoints.OpenApi 8.3.0
-         is still the latest stable and still depends on that 10.0.11 package. 8.4.0-beta.26 is
-         net10.0 only (Microsoft.AspNetCore.OpenApi 10.0.13, range [2.12.2, 3.0.0)). 9.0.0-beta.6's
-         net11.0 group still depends on Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, not RC3.
-         Microsoft.AspNetCore.OpenApi 11.0.0-rc.3.26522.148 declares Microsoft.OpenApi [3.10.2, 4.0.0).
-         Latest 2.x is still 2.13.0, so the pin stays. The FastEndpoints 9 move stays task 257.
-         Task 456 moves the EF Core family (Microsoft.EntityFrameworkCore*, DataProtection.EntityFrameworkCore,
-         HealthChecks.EntityFrameworkCore, dotnet-ef) and Npgsql.EntityFrameworkCore.PostgreSQL onto RC3.
-         Npgsql 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore exactly at 11.0.0-rc.3.26522.148.
-         System.ServiceModel.Primitives moves to 10.1.0 (still no 11.x). -->
+         Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but 3.11.0 was resolved. Pin stays 2.13.0. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.6" />
