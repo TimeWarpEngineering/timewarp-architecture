@@ -16,7 +16,8 @@ Reported 2026-10-28 with screenshot.
 - [x] HomePage.razor: "with Redux DevTools" becomes "with TimeWarp DevTools";
   YARP becomes a NavLink to https://github.com/dotnet/yarp.
 - [x] wwwroot/index.md twin: same two updates in markdown form.
-- [ ] Verify: grep shows no remaining "Redux DevTools" in web-spa UI surfaces.
+- [x] Verify: grep shows no remaining "Redux DevTools" in web-spa UI surfaces
+  (only hit: a code comment in base-component.cs, not UI).
 
 ## Session
 
@@ -29,6 +30,3 @@ Reported 2026-10-28 with screenshot.
 No twin-consistency test covers the list text (only "Built with" heading in
 catalog-agent-tests.cs), so both files are edited by hand.
 
-## Blocked
-
-2026-10-30: Work was not started: the previous turn returned Done without a commit. Unblock by letting this walk run `ganda context --json`, finish the Redux DevTools verification, then commit and push on task 451.
