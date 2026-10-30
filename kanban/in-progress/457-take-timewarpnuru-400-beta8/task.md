@@ -45,6 +45,10 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f75ae191-a44c-49ad-a9a9-928c665369c9, max-turns 120 — 2026-10-30T15:16:09Z
 - Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 3, turn cap 120 — 2026-10-30. Blocked: stalemate, operator decision needed on the local copy of RepoConfigService.
 - Fix pass: 01a18d61-f891-7273-9b4f-db6312f1c44b (2026-10-30). Pins at beta.9, RCS1194 removed, CA2263 fixed in the runfile without a new NoWarn entry.
+- Operator decision (Steve, 2026-10-31) on M4/M5 (CA2263 in DevCli beta.9 RepoConfigService):
+  file the bug with Nuru. Filed as timewarp-nuru task 562 (generic `GetTypeInfo<RepoConfig>()`).
+  Wait for the Nuru beta that ships it, then take that pin and delete the local
+  `tools/dev-cli/services/repo-config-service.cs` copy and its Directory.Build.targets removal step.
 
 ## Goal (implementer restatement)
 
