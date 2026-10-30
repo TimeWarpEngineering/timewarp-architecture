@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 293
+- Lines changed: 300
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -20,6 +20,10 @@
 
 **Round 2 (2026-10-30):** effort 2 by diff, roster `general`. Same product scope, checked against
 the requirements retargeted to beta.9 (task.md, commit `9e44b197e`).
+
+**Round 3 (2026-10-30):** effort 2 by diff, roster `general`, turn cap 120. Scope is the fix-pass
+delta `9e44b197e..018ef652d`, which adds `tools/dev-cli/Directory.Build.targets` and
+`tools/dev-cli/services/repo-config-service.cs`.
 
 ## Ground rules
 

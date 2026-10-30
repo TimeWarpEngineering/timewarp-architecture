@@ -43,6 +43,7 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 998e140e-6f24-473e-acc3-6ed85f62ee16, max-turns 80 — 2026-10-30T11:20:03Z
 - Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 2, turn cap 120 — 2026-10-30. Blocked: fix pass needed for open findings M1, M2, M3.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f75ae191-a44c-49ad-a9a9-928c665369c9, max-turns 120 — 2026-10-30T15:16:09Z
+- Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 3, turn cap 120 — 2026-10-30. Blocked: stalemate, operator decision needed on the local copy of RepoConfigService.
 - Fix pass: 01a18d61-f891-7273-9b4f-db6312f1c44b (2026-10-30). Pins at beta.9, RCS1194 removed, CA2263 fixed in the runfile without a new NoWarn entry.
 
 ## Goal (implementer restatement)
@@ -68,6 +69,8 @@ published. Then run `ganda repo audit`, `dev build`, `dev test`, `dev template-s
 ## Review
 
 - Round 2: Blocked — open M1, M2, M3
+- Round 3: Blocked. M1, M2, and M3 are fixed. M4 (an unguarded target) and M5 (the local copy of Nuru
+  internals) are open. Operator decision needed: accept the copy or wait for Nuru.
 
 ## Notes
 
@@ -174,4 +177,22 @@ ganda repo audit
 - No misread. The Goal restatement matched the task as written; the task was retargeted after it.
 - Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`.
 - Fix pass after round 2: both pins are `4.0.0-beta.9`, `RCS1194` is out of the dev CLI `NoWarn`, and Goal, Results, and Checklist describe beta.9. CA2263 is a local `RepoConfigService`, not a suppression. See ## Results.
+- Round 3, effort 2, roster `general`, turn cap 120. This round reviewed the fix-pass delta
+  `9e44b197e..018ef652d`. `dotnet build tools/dev-cli/dev.cs --no-incremental` succeeds clean. The
+  local `RepoConfigService` matches the beta.9 package source except for its header regions and the
+  `GetTypeInfo<RepoConfig>()` line.
+- Counts: bug 1 open, 2 fixed (M1, M2); suggestion 1 open, 1 fixed (M3); nit 0.
+- M4 (bug, open): `OmitPackagedRepoConfigService` in `tools/dev-cli/Directory.Build.targets` removes the
+  packaged file for every DevCli version. The rule to delete the copy is only a comment, which breaks the
+  AGENTS.md "add a build check" rule. Fix: guard the removal to `4.0.0-beta.9` so another pin hits CS0101.
+- M5 (suggestion, open, operator decision): the copy works around a CA2263 defect in DevCli beta.9, a
+  package this org owns. Nuru master `edaa9982` still has `GetTypeInfo(typeof(RepoConfig))`, and no Nuru task
+  for it was found. Either (a) accept the copy as a temporary exception, with M4's guard and an upstream Nuru
+  task, or (b) wait for a Nuru release with the generic overload, as round 1 did for RCS1194.
+- Disposition: none yet. Blocked on that operator decision. M4 is moot under (b).
+- No misread. The Goal restatement matches the beta.9 task.
+- Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`.
 
+## Blocked
+
+2026-10-30: stalemate — operator decision needed: accept the local copy of the Nuru DevCli RepoConfigService (CA2263 workaround) as a temporary exception with a Nuru upstream task, or wait for a Nuru release that uses GetTypeInfo<RepoConfig>()
