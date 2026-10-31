@@ -12,11 +12,15 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 
 ## Requirements
 
-- Bump both pins to `4.0.0-beta.9` (operator decision 2026-10-30, see Session). No
+- Bump both pins to `4.0.0-beta.10` (operator decisions 2026-10-30 and 2026-10-31, see Session). No
   `VersionOverride`, no backward pins.
 - Remove `RCS1194` from the `NoWarn` list in `tools/dev-cli/Directory.Build.props`, along with its
   comment. DevCli 4.0.0-beta.9 adds the `HttpRequestError` constructor to
   `PackageFeedUnreadableException`, so the warning no longer fires.
+- Delete the local copy `tools/dev-cli/services/repo-config-service.cs` and the
+  `Directory.Build.targets` step that drops the package's copy. DevCli 4.0.0-beta.10
+  (timewarp-nuru task 562) deserializes with `JsonContext.RepoConfig`, so CA2263 no longer fires.
+  No NoWarn and no copied package files remain.
 - Fix any API breaks in the dev CLI and other consumers. Do not suppress warnings.
 - After the bump, rebuild the dev CLI (`dev self-install`, or run it from source) so the gates
   run the new Nuru, not the stale `bin/dev`.
@@ -49,6 +53,9 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
   file the bug with Nuru. Filed as timewarp-nuru task 562 (generic `GetTypeInfo<RepoConfig>()`).
   Wait for the Nuru beta that ships it, then take that pin and delete the local
   `tools/dev-cli/services/repo-config-service.cs` copy and its Directory.Build.targets removal step.
+- Nuru 4.0.0-beta.10 shipped 2026-10-31 with task 562: `RepoConfigService.Parse` uses
+  `JsonSerializer.Deserialize(json, JsonContext.RepoConfig)`. Fix pass: pins to beta.10, delete the
+  local RepoConfigService copy and its targets step, re-run every gate. This resolves M4 and M5.
 
 ## Goal (implementer restatement)
 
