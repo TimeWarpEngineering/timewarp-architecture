@@ -12,11 +12,15 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 
 ## Requirements
 
-- Bump both pins to `4.0.0-beta.9` (operator decision 2026-10-30, see Session). No
+- Bump both pins to `4.0.0-beta.10` (operator decisions 2026-10-30 and 2026-10-31, see Session). No
   `VersionOverride`, no backward pins.
 - Remove `RCS1194` from the `NoWarn` list in `tools/dev-cli/Directory.Build.props`, along with its
   comment. DevCli 4.0.0-beta.9 adds the `HttpRequestError` constructor to
   `PackageFeedUnreadableException`, so the warning no longer fires.
+- Delete the local copy `tools/dev-cli/services/repo-config-service.cs` and the
+  `Directory.Build.targets` step that drops the package's copy. DevCli 4.0.0-beta.10
+  (timewarp-nuru task 562) deserializes with `JsonContext.RepoConfig`, so CA2263 no longer fires.
+  No NoWarn and no copied package files remain.
 - Fix any API breaks in the dev CLI and other consumers. Do not suppress warnings.
 - After the bump, rebuild the dev CLI (`dev self-install`, or run it from source) so the gates
   run the new Nuru, not the stale `bin/dev`.
@@ -29,9 +33,10 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 
 - [x] Pins bumped to 4.0.0-beta.9
 - [x] `RCS1194` NoWarn and its comment removed
-- [x] CA2263 fixed without a new suppression
-- [x] `bin/dev` rebuilt from beta.9
-- [x] Gates green on beta.9
+- [x] Pins bumped to 4.0.0-beta.10
+- [x] Local `RepoConfigService` copy and `OmitPackagedRepoConfigService` deleted
+- [x] `bin/dev` rebuilt from beta.10
+- [x] Gates green on beta.10
 
 ## Session
 
@@ -45,21 +50,31 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session f75ae191-a44c-49ad-a9a9-928c665369c9, max-turns 120 — 2026-10-30T15:16:09Z
 - Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 3, turn cap 120 — 2026-10-30. Blocked: stalemate, operator decision needed on the local copy of RepoConfigService.
 - Fix pass: 01a18d61-f891-7273-9b4f-db6312f1c44b (2026-10-30). Pins at beta.9, RCS1194 removed, CA2263 fixed in the runfile without a new NoWarn entry.
+- Fix pass: 01a18fc8-fb95-7420-9093-379aaf589041 (2026-10-31). Pins at beta.10. Deleted the local RepoConfigService copy and OmitPackagedRepoConfigService. Gates re-run.
+- Operator decision (Steve, 2026-10-31) on M4/M5 (CA2263 in DevCli beta.9 RepoConfigService):
+  file the bug with Nuru. Filed as timewarp-nuru task 562 (generic `GetTypeInfo<RepoConfig>()`).
+  Wait for the Nuru beta that ships it, then take that pin and delete the local
+  `tools/dev-cli/services/repo-config-service.cs` copy and its Directory.Build.targets removal step.
+- Nuru 4.0.0-beta.10 shipped 2026-10-31 with task 562: `RepoConfigService.Parse` uses
+  `JsonSerializer.Deserialize(json, JsonContext.RepoConfig)`. Fix pass: pins to beta.10, delete the
+  local RepoConfigService copy and its targets step, re-run every gate. This resolves M4 and M5.
+- Review oracle: claude (claude-opus-5-5), effort 1, roster general, round 4, turn cap 80 — 2026-10-31. Blocked: fix pass needed for open findings M4, M5, M6, M7.
 
 ## Goal (implementer restatement)
 
-Take the published TimeWarp.Nuru 4.0.0-beta.9 pin. Both central package pins, `TimeWarp.Nuru` and
-`TimeWarp.Nuru.DevCli`, move from `4.0.0-beta.8` to `4.0.0-beta.9` in `Directory.Packages.props`.
-No other package stays on beta.8, and no project uses `VersionOverride` or a backward pin.
+Take the published TimeWarp.Nuru 4.0.0-beta.10 pin. Both central package pins, `TimeWarp.Nuru` and
+`TimeWarp.Nuru.DevCli`, move from `4.0.0-beta.9` to `4.0.0-beta.10` in `Directory.Packages.props`.
+No project uses `VersionOverride` or a backward pin.
 
-DevCli 4.0.0-beta.9 adds
-`PackageFeedUnreadableException(HttpRequestError, string?, Exception?, HttpStatusCode?)`. Remove
-`RCS1194` from the `NoWarn` list in `tools/dev-cli/Directory.Build.props` and delete the comment
-that justified that suppression. Do not add a replacement suppression. If beta.9 changes a public
-API the dev CLI or another consumer calls, update the call site so the solution still builds with
-warnings as errors.
+DevCli 4.0.0-beta.10 deserializes repo config with `JsonContext.RepoConfig`, so CA2263 no longer
+fires in package content. Delete `tools/dev-cli/services/repo-config-service.cs` and the
+`tools/dev-cli/Directory.Build.targets` target that dropped the packaged compile item. Do not add a
+suppression. If beta.10 changes a public API the dev CLI or another consumer calls, update the call
+site so the solution still builds with warnings as errors.
 
-Rebuild `bin/dev` from this pin so the gates run beta.9, not the installed beta.8 binary.
+`RCS1194` stays out of the dev CLI `NoWarn` list. That removal shipped with the beta.9 pin.
+
+Rebuild `bin/dev` from this pin so the gates run beta.10, not the installed beta.9 binary.
 
 `dev check-version` should accept the current `<Version>` (`2.0.0-beta.30`). That version is not
 on NuGet yet (task 456), so leave `<Version>` alone unless check-version says it is already
@@ -71,7 +86,8 @@ published. Then run `ganda repo audit`, `dev build`, `dev test`, `dev template-s
 - Round 2: Blocked — open M1, M2, M3
 - Round 3: Blocked. M1, M2, and M3 are fixed. M4 (an unguarded target) and M5 (the local copy of Nuru
   internals) are open. Operator decision needed: accept the copy or wait for Nuru.
-
+- Round 4: Blocked — open M4, M5, M6, M7
+  and its target, update the task text).
 ## Notes
 
 - Nuru releases itself; this task only takes the pin.
@@ -81,44 +97,42 @@ published. Then run `ganda repo audit`, `dev build`, `dev test`, `dev template-s
 
 ## Results
 
-Pinned `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` from 4.0.0-beta.8 to 4.0.0-beta.9 in
+Pinned `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` to `4.0.0-beta.10` in
 `Directory.Packages.props`. No `VersionOverride`. `<Version>` stays `2.0.0-beta.30`.
 
-Removed `RCS1194` and its comment from `tools/dev-cli/Directory.Build.props`. DevCli
-4.0.0-beta.9 declares
-`PackageFeedUnreadableException(HttpRequestError, string?, Exception?, HttpStatusCode?)`.
+Deleted `tools/dev-cli/services/repo-config-service.cs` and
+`tools/dev-cli/Directory.Build.targets`. DevCli 4.0.0-beta.10
+`content/any/services/repo-config-service.cs` deserializes with
+`JsonSerializer.Deserialize(json, JsonContext.RepoConfig)`, so CA2263 no longer
+fires and the runfile compiles the packaged type. `RCS1194` stays out of the
+dev CLI `NoWarn`. `source/container-apps` still has its own `RCS1194` NoWarn.
+That line predates this task.
 
-That same package content calls `JsonSerializerOptions.GetTypeInfo(Type)` in
-`repo-config-service.cs`. Warnings are errors, so CA2263 fails the runfile. The type is
-not partial and the source lives in the package, so this repo does not add a suppression.
-`tools/dev-cli/services/repo-config-service.cs` is that type with
-`GetTypeInfo<RepoConfig>()`. `tools/dev-cli/Directory.Build.targets` drops the packaged
-Compile item (`OmitPackagedRepoConfigService`). Delete both when a later pin uses the
-generic overload. `source/container-apps` still has its own `RCS1194` NoWarn. That line
-predates this task.
-
-`dotnet build tools/dev-cli/dev.cs`: 0 warnings, 0 errors. `bin/dev` was self-installed
-from this pin. It is gitignored.
+`dotnet build tools/dev-cli/dev.cs --no-incremental`: 0 warnings, 0 errors.
+`bin/dev` was self-installed from this pin. It is gitignored.
 
 `dev check-version` read both feeds. Source `2.0.0-beta.30` is one prerelease increment
 ahead of published `2.0.0-beta.29`, so no version bump.
 
 `dev build`: 0 warnings, 0 errors.
 
-`dev template-smoke` succeeded. SmokeDefault built with 0 warnings. Generated Jaribu
-aggregators: web 442/442, api 9/9, timewarp-testing 14/14. Standalone co-located tests
-passed (5/5, 5/5, 2/2).
+`dev template-smoke` succeeded. SmokeDefault built with 0 warnings and 0 errors.
+Generated Jaribu aggregators: web 442/442, api 9/9, timewarp-testing 14/14.
+Standalone co-located tests passed (5/5, 5/5, 2/2).
 
-`dev test`: 22 of 23 projects passed. `web-spa-playwright-tests` failed 26 of 33 while
-`template-smoke` ran on the same machine. The browser could not load
-`_framework/dotnet.js`. A later `./bin/dev test --group playwright`, alone, passed 33/33
-in 5m 09s.
+`dev test`: 22 of 23 projects passed. `web-spa-playwright-tests` produced no
+banner for 37 minutes while the other projects ran; its host answered HTTP 200
+on the test ports and the log stopped growing. That overlap matches the earlier
+beta.9 run, which lost `_framework/dotnet.js` while `template-smoke` shared the
+machine. This walk stopped that suite and ran `./bin/dev test --group playwright`
+alone. It passed 33/33 in 5m 25s.
 
-`ganda repo audit` exited 0 after `ganda repo audit --fix` landed this kitchen:
-Passed 34, Failed 1 advisory. `nuru` says TimeWarp.Nuru is up to date.
-`kanban-landed` still warns for eight other claims with no worktree (070-001,
-104-024, 104-025, 104-026, 123, 141, 198, 244). Those claims are outside this
-id. `kanban-landed --fix` does not remove them.
+`ganda repo audit`: Passed 34, Failed 1. The failure is `kanban-landed` for this
+kitchen, which is the unpushed task-branch edit. `nuru` says TimeWarp.Nuru is up
+to date. `kanban-landed` still warns for other claims with no worktree (070-001,
+104-024, 104-025, 104-026, 123, 141, 198, 244, 454). Those claims are outside
+this id. `kanban-landed --fix` does not remove them. The exit is 1 until the
+kitchen land runs.
 
 The release job in `.github/workflows/workflow.yml` does not run `check-version` or
 `dev release`. It still has `contents: read` and `id-token: write` only. A later step that
@@ -130,7 +144,8 @@ calls those gates in that job needs `packages: read` (Nuru 536).
 
 ```bash
 grep -n 'PackageVersion Include="TimeWarp.Nuru' Directory.Packages.props
-grep -n RCS1194 tools/dev-cli/Directory.Build.props || echo 'RCS1194 absent'
+test ! -e tools/dev-cli/services/repo-config-service.cs && echo 'local copy absent'
+test ! -e tools/dev-cli/Directory.Build.targets && echo 'dev-cli targets absent'
 dotnet build tools/dev-cli/dev.cs
 ./bin/dev check-version
 ./bin/dev build
@@ -138,8 +153,8 @@ dotnet build tools/dev-cli/dev.cs
 
 **Expect**
 
-- Both `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` are `4.0.0-beta.9`.
-- `tools/dev-cli/Directory.Build.props` has no `RCS1194`.
+- Both `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` are `4.0.0-beta.10`.
+- `tools/dev-cli/services/repo-config-service.cs` and `tools/dev-cli/Directory.Build.targets` are absent.
 - `dotnet build tools/dev-cli/dev.cs` ends with `0 Warning(s)` and `0 Error(s)`.
 - `./bin/dev check-version` prints `Version in source: 2.0.0-beta.30`, `Latest NuGet version: 2.0.0-beta.29`, and `safe to release`.
 - `./bin/dev build` ends with `0 Warning(s)` and `0 Error(s)`.
@@ -192,7 +207,20 @@ ganda repo audit
 - Disposition: none yet. Blocked on that operator decision. M4 is moot under (b).
 - No misread. The Goal restatement matches the beta.9 task.
 - Paths: `review/review-framework.md`, `review/round-3/general.md`, `review/round-3/merged.md`.
+- Round 4, effort 1, roster `general`, turn cap 80. This round reviewed the delta since round 3,
+  `018ef652d..6143384cd`. That delta has kanban changes only (the operator decision and the beta.10
+  retarget). No fix pass has touched product files: the pins are still beta.9, and
+  `tools/dev-cli/services/repo-config-service.cs` and `OmitPackagedRepoConfigService` are still there.
+  Both beta.10 nupkgs are on the nuget.org flat container (HTTP 200).
+- Counts: bug 3 open (M4, M5, M6), 2 fixed (M1, M2); suggestion 1 open (M7), 1 fixed (M3); nit 0.
+- M4 and M5 are carried. Under the operator decision, the targets step and the local copy are now
+  deleted, not guarded. M5 is raised to bug because deleting the copy is now a requirement.
+- M6 (bug): bump both pins to `4.0.0-beta.10`. M7 (suggestion): Goal, Checklist, Results, and How to
+  validate still describe beta.9.
+- Disposition: none yet. Fix pass needed for M4, M5, M6, and M7.
+- No misread. The Goal restatement matched the beta.9 task it was written for. Its update is M7.
+- Paths: `review/review-framework.md`, `review/round-4/general.md`, `review/round-4/merged.md`.
+- Fix pass after round 4: both pins are `4.0.0-beta.10`, the local `RepoConfigService` and
+  `OmitPackagedRepoConfigService` are deleted, and Goal, Checklist, Results, and How to validate
+  describe beta.10. See ## Results.
 
-## Blocked
-
-2026-10-30: stalemate — operator decision needed: accept the local copy of the Nuru DevCli RepoConfigService (CA2263 workaround) as a temporary exception with a Nuru upstream task, or wait for a Nuru release that uses GetTypeInfo<RepoConfig>()
