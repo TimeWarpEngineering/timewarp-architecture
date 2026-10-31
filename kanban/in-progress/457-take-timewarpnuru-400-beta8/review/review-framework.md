@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 300
-- Effort: 2
+- Lines changed: 149
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -24,6 +24,10 @@ the requirements retargeted to beta.9 (task.md, commit `9e44b197e`).
 **Round 3 (2026-10-30):** effort 2 by diff, roster `general`, turn cap 120. Scope is the fix-pass
 delta `9e44b197e..018ef652d`, which adds `tools/dev-cli/Directory.Build.targets` and
 `tools/dev-cli/services/repo-config-service.cs`.
+
+**Round 4 (2026-10-31):** effort 1 by diff, roster `general`, turn cap 80. Scope is the delta
+since round 3, `018ef652d..6143384cd`. It contains kanban changes only: the operator decision and
+the retarget to beta.10.
 
 ## Ground rules
 
