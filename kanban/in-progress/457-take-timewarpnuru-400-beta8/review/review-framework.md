@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 149
-- Effort: 1
+- Lines changed: 316
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope
 
@@ -28,6 +28,10 @@ delta `9e44b197e..018ef652d`, which adds `tools/dev-cli/Directory.Build.targets`
 **Round 4 (2026-10-31):** effort 1 by diff, roster `general`, turn cap 80. Scope is the delta
 since round 3, `018ef652d..6143384cd`. It contains kanban changes only: the operator decision and
 the retarget to beta.10.
+
+**Round 5 (2026-10-31, review-3 node):** effort 2 by diff, roster `general`, turn cap 120. Scope is
+the fix-pass delta since round 4, `6143384cd..ba9795f43`: the pins move to beta.10, and the local
+`RepoConfigService` and `tools/dev-cli/Directory.Build.targets` are deleted.
 
 ## Ground rules
 

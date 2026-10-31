@@ -59,6 +59,7 @@ index still listed beta.7 when this task was filed. That is why the `nuru` audit
   `JsonSerializer.Deserialize(json, JsonContext.RepoConfig)`. Fix pass: pins to beta.10, delete the
   local RepoConfigService copy and its targets step, re-run every gate. This resolves M4 and M5.
 - Review oracle: claude (claude-opus-5-5), effort 1, roster general, round 4, turn cap 80 — 2026-10-31. Blocked: fix pass needed for open findings M4, M5, M6, M7.
+- Review oracle: claude (claude-opus-5-5), effort 2, roster general, round 5 (review-3 node), turn cap 120 — 2026-10-31. Done: disposition `clean`.
 
 ## Goal (implementer restatement)
 
@@ -87,7 +88,7 @@ published. Then run `ganda repo audit`, `dev build`, `dev test`, `dev template-s
 - Round 3: Blocked. M1, M2, and M3 are fixed. M4 (an unguarded target) and M5 (the local copy of Nuru
   internals) are open. Operator decision needed: accept the copy or wait for Nuru.
 - Round 4: Blocked — open M4, M5, M6, M7
-  and its target, update the task text).
+- Round 5: Done
 ## Notes
 
 - Nuru releases itself; this task only takes the pin.
@@ -223,4 +224,17 @@ ganda repo audit
 - Fix pass after round 4: both pins are `4.0.0-beta.10`, the local `RepoConfigService` and
   `OmitPackagedRepoConfigService` are deleted, and Goal, Checklist, Results, and How to validate
   describe beta.10. See ## Results.
+- Round 5 (review-3 node), effort 2, roster `general`, turn cap 120. This round reviewed the fix-pass
+  delta `6143384cd..ba9795f43`. It re-ran `dotnet build tools/dev-cli/dev.cs --no-incremental`,
+  `dotnet build tools/agent-identity-cli/agent.cs --no-incremental`, and
+  `dotnet run tools/dev-cli/dev.cs -- build`. Each reported 0 warnings and 0 errors. DevCli beta.10
+  `repo-config-service.cs:63` uses `JsonContext.RepoConfig`. There is no new `NoWarn`, no
+  `VersionOverride`, and no file still references the deleted copy or target.
+- Final counts: bug 5 fixed (M1, M2, M4, M5, M6); suggestion 2 fixed (M3, M7); nit 1 fixed (M8, a
+  stray fragment in the task `## Review` ledger that the review oracle fixed in the kitchen). 0 open,
+  0 wontfix.
+- Disposition: **clean**. The operator escalations are recorded in `review/disposition.md`.
+- No misread. The Goal restatement matches the beta.10 Requirements.
+- Paths: `review/review-framework.md`, `review/round-5/general.md`, `review/round-5/merged.md`,
+  `review/disposition.md`.
 
