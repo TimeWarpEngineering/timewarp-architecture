@@ -44,6 +44,11 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
   that point at the old source path get the new repo instead.
 - Gates: `dev build` (0 warnings, 0 errors), both test projects above, `dev template-smoke`,
   `dev check-version`, `ganda repo audit`, `dev lint-skills`.
+- Audit fix rides along. When this spec was published, `ganda repo audit` failed two checks:
+  `nuru` (TimeWarp.Nuru 4.0.0-beta.10 pinned, 4.0.0-beta.11 latest on nuget.org) and
+  `required-gitignore-entries` (root `.gitignore` missing required entries). Run
+  `ganda repo audit --fix` and commit what it changes. Bump the Nuru pin to the latest version
+  at implement time and fix whatever that bump breaks. `ganda repo audit` must be clean.
 
 ## Checklist
 
@@ -54,6 +59,7 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 - [ ] Moved tests deleted here
 - [ ] dev-cli smoke commands stop packing it
 - [ ] Skills and AGENTS.md updated; `dev lint-skills` green
+- [ ] `ganda repo audit --fix` committed; Nuru pin at latest; audit clean
 - [ ] Gates green
 
 ## Notes
