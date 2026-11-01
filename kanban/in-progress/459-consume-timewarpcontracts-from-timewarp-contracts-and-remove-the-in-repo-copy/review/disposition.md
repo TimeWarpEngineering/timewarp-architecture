@@ -1,6 +1,8 @@
 # Disposition — task 459
 
 > **Reopened 2026-11-01 by round 2.** The package-roll scope add (commit `97ff4440a`) reopened the review. `review/round-2/merged.md` has 2 open findings (M1 bug, M2 nit). The text below is the round-1 disposition and is no longer final. The round that closes the loop rewrites this file.
+>
+> **Round 3 (2026-11-01):** M1 and M2 are fixed. One new nit is open: M3, the Design-region antecedent in `catalog-agent-tests.cs`. See `review/round-3/merged.md`. The loop is still open.
 
 **Date:** 2026-11-01
 **Outcome:** clean

@@ -15,11 +15,11 @@
 // stalling the suite. The feedback submit receipt runs on an in-proc FeedbackSpa (C-create) whose
 // scripted IWebServerApiService answers SubmitFeedback with a fresh id: the closed-box Aspire SPA
 // registers no web-server BFF client and its mock session has no profile store to file against.
+// That test drives the real path — dispatcher, approval, ActionSet handler, AgentCallOutcome, and
+// the dispatcher's own result serialization — and asserts the JSON the agent receives.
 // AddPasskey on Settings uses that same closed box. Mediator 15 activates the handler inside the
 // pipeline, so the missing client becomes an ExceptionNotification error bar and the dispatcher
 // returns completed. That bar is the proof the call executed rather than offering navigation.
-// That test drives the real path — dispatcher, approval, ActionSet handler, AgentCallOutcome, and
-// the dispatcher's own result serialization — and asserts the JSON the agent receives.
 // page_context on /Feedback is driven through CatalogAgentSession.CreateInvokingClient with the
 // same scope the panel passes in. A wrapper that answers NavigationManager with a manager stuck
 // at the base URI still returns the observed /Feedback route. RelayChatClient is asserted to send
