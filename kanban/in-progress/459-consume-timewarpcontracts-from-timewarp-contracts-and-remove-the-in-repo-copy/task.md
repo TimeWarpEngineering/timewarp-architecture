@@ -12,14 +12,15 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 
 ## Goal (implementer restatement)
 
-This repository consumes the published `TimeWarp.Contracts` package and no longer builds that project. The open pull request also takes the nuget.org pins that restore cleanly, including `TimeWarp.Mediator` `15.0.0-beta.4`, and leaves `Microsoft.OpenApi` at `2.13.0` because ASP.NET Core's OpenAPI package rejects 3.x. The extraction, that roll, and the round-2 test fixes are already on the branch. Review round 3 accepted those fixes. This walk repairs the comment order in `catalog-agent-tests.cs`: the AddPasskey sentences had been inserted in front of the sentence that describes the feedback receipt test, so "That test" read as AddPasskey.
+CI on PR #620 failed `aspire-tests` after the State `12.0.0-beta.16` pin. `TimeWarp.State.DevTools.Hosting` `12.0.0-beta.16` still adds an `ExecutableResource` with an `http` endpoint, still sets `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` on the inspected app, and still makes that app wait for the inspector. The default resource name changed from `timewarp-state-devtools` to `timewarp-devtools`, and the dashboard link text changed from `TimeWarp.State DevTools` to `TimeWarp DevTools`. The AppHost calls `AddTimeWarpStateDevTools()` with no name, so it takes that default. This walk follows the package. It does not pin State backward and does not change timewarp-state. The extraction, the package pins, and the earlier review fixes stay as they are.
 
 This walk is done when:
 
-- In the `catalog-agent-tests.cs` Design region, the three AddPasskey sentences sit after "That test drives the real path…". That sentence still describes the feedback receipt test: dispatcher, approval, ActionSet handler, AgentCallOutcome, and the JSON the agent receives. The AddPasskey sentences still say the on-Settings call uses the same closed box, that Mediator 15 records the missing client as an error bar, and that the bar is the proof the call executed.
-- `CatalogAgent_Should.AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs` still proves the on-Settings call executed rather than offering navigation. Mediator 15 resolves the handler inside the pipeline, so the missing `IWebServerApiService` is caught by `StateTransactionBehavior` and recorded as one `NotificationState` error whose Title contains `IWebServerApiService`. The dispatcher returns `completed: true`, and there is no pending approval. The product is not changed to rethrow: handler-body failures already take this path, and `RethrowHandlerExceptions` stays at its default of false.
-- `SpaMediatorSendAnalyzer` Design text and its test stub describe Mediator 15. `ISender.Send` returns `ValueTask`, and `CreateStream` is gone.
-- `web-spa-integration-tests` still passes. `dev build` is 0 warnings and 0 errors, and `ganda repo audit` is clean. The extraction and the pins named in Results stay as they are.
+- `StateDevToolsModel_Given_.RunMode_Should_AddDevToolsAndPointWebServerAtIt` finds the `timewarp-devtools` executable, its `http` endpoint, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` on web-server pointing at that resource, and a wait from web-server to it.
+- The ingress smoke waits on `timewarp-devtools` and reads its `http` endpoint.
+- Compose, Kubernetes, and ACA publish assertions reject `timewarp-devtools`, so a leaked inspector still fails those suites.
+- AppHost Design text and `skills/tw-deploy` name `timewarp-devtools` and the dashboard link TimeWarp DevTools. The discovery route `/_timewarp/state-devtools` stays.
+- `aspire-tests` passes and the pass count is recorded. `dev build` is 0 warnings and 0 errors. `ganda repo audit` is clean. `TimeWarp.State*` stays at `12.0.0-beta.16`.
 
 ## Requirements
 
@@ -79,6 +80,7 @@ This walk is done when:
 - [x] M2: SPA Send analyzer text and stub describe Mediator 15
 - [x] `web-spa-integration-tests` 578/578 and architecture analyzer tests 259/259
 - [x] M3: AddPasskey Design sentences follow the feedback-receipt "That test" sentence
+- [x] DevTools resource name follows TimeWarp.State.DevTools.Hosting 12.0.0-beta.16 (`timewarp-devtools`); aspire-tests pass
 
 ## Results
 
@@ -125,6 +127,15 @@ Gates after that fix:
 - `web-spa-integration-tests` (Release, from the project directory): 578 passed, 0 failed (1m 11s).
 - `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454).
 
+CI fix (2026-11-01, PR #620 run 41281550727). `TimeWarp.State.DevTools.Hosting` `12.0.0-beta.16` still returns `IResourceBuilder<ExecutableResource>`, still declares the `http` endpoint, and still sets `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` and the wait through `WithTimeWarpStateDevTools`. `DefaultResourceName` changed from `timewarp-state-devtools` to `timewarp-devtools`, and `DashboardLinkText` changed from `TimeWarp.State DevTools` to `TimeWarp DevTools`. The AppHost call stays `AddTimeWarpStateDevTools()` with no name. Assertions, the AppHost Design comment, and `skills/tw-deploy` follow that name. Publish suites reject `timewarp-devtools`. State stays at `12.0.0-beta.16`. The discovery route `/_timewarp/state-devtools` is unchanged.
+
+Gates after that fix:
+
+- `dev build`: 0 warnings, 0 errors (14.14s).
+- `aspire-tests` (Release, from the project directory): 84 passed, 0 failed (1m 26s). That run includes `RunMode_Should_AddDevToolsAndPointWebServerAtIt`, the ingress smoke that serves the inspector UI, and the compose, Kubernetes, and ACA publish facts that reject the inspector.
+- `dev lint-skills`: 9/9, eval.yaml valid.
+- `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454).
+
 ### How to validate
 
 **Smoke:**
@@ -135,6 +146,7 @@ Gates after that fix:
 ( cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release )
 ( cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release )
 ( cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release )
+( cd tests/container-apps/aspire/aspire-tests && dotnet test -c Release )
 ./bin/dev check-version
 ./bin/dev template-smoke
 ./bin/dev lint-skills
@@ -143,7 +155,7 @@ ganda repo audit
 
 Run each `dotnet test` from that project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK. Each suite's `global.json` selects the runner.
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. In `catalog-agent-tests.cs`, the Design sentence "That test drives the real path…" follows the feedback-receipt sentences, and the AddPasskey sentences follow it. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
+**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. In `catalog-agent-tests.cs`, the Design sentence "That test drives the real path…" follows the feedback-receipt sentences, and the AddPasskey sentences follow it. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent. `aspire-tests` passes, including `RunMode_Should_AddDevToolsAndPointWebServerAtIt`: the run-mode model has an `ExecutableResource` named `timewarp-devtools` with an `http` endpoint, web-server's `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` points at that resource, and web-server waits on it. Compose, Kubernetes, and ACA publish output do not name `timewarp-devtools`.
 
 ### Review disposition
 
@@ -212,3 +224,4 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - Fix pass: Grok 4.7 (ganda task work), session 01a195c8-961a-7b50-a49e-e101d8829c2c (2026-11-01). M3 moves the AddPasskey Design sentences to after the feedback-receipt "That test" sentence. Assertions and product dispatch are unchanged.
 - Review oracle round 4: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 1, roster general, turn cap 80, session not reported. Scope was fix-pass delta `285351c94..3cd8eef26`. M3 is fixed, there are no new findings, and the disposition is `clean`. The goal restatement matches the round-3 finding and the task, so nothing was misread. — 2026-11-01
 - CI red 2026-11-01 on PR #620 (run 41281550727, `ci (integration)`): `aspire-tests` failed `StateDevToolsModel_Given_.RunMode_Should_AddDevToolsAndPointWebServerAtIt` at `tests/container-apps/aspire/aspire-tests/state-dev-tools-model-tests.cs:48`: `Sequence contains no matching element`. No `ExecutableResource` named the DevTools resource exists. `master` CI is green, so a bump in this PR caused it, most likely `TimeWarp.State.DevTools.Hosting` 12.0.0-beta.16 changing the AppHost resource (type or name). Find what beta.16 changed (read its release notes or inspect the package; do not change timewarp-state). Fix the AppHost wiring or the test so the dev-tools model still holds: a DevTools resource with its endpoint, web-server env pointing at that endpoint, and web-server waiting on it. Run `aspire-tests` locally (`dev test` for the integration lane, or that project directly) and record the pass count. Never pin State backward.
+- CI fix: Grok 4.7 (ganda task work), session 01a195e4-90b8-76b3-a066-4cec94384c5b (2026-11-01). DevTools.Hosting 12.0.0-beta.16 renamed the default resource to `timewarp-devtools` and the dashboard link to TimeWarp DevTools. The AppHost already calls `AddTimeWarpStateDevTools()` with no name. Tests, the AppHost Design comment, and `skills/tw-deploy` follow that name. `aspire-tests` 84/84. State stays `12.0.0-beta.16`.

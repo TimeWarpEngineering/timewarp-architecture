@@ -10,7 +10,9 @@
 // against a run-mode context; the TIMEWARP_STATE_DEVTOOLS_ENDPOINT value is the unresolved
 // EndpointReference, so the fact checks it names the inspector's http endpoint. Names are literals,
 // not TimeWarp.State.DevTools.Hosting constants: that package is absent with the web flag off, where
-// the facts assert there is no inspector at all. The publish-output half lives in the compose,
+// the facts assert there is no inspector at all. TimeWarp.State.DevTools.Hosting 12.0.0-beta.16 names
+// the executable timewarp-devtools (12.0.0-beta.15 named it timewarp-state-devtools) and labels the
+// dashboard link TimeWarp DevTools. The publish-output half lives in the compose,
 // kubernetes and aca suites (Publish_Should_HaveNoStateDevTools).
 // Task 335-002: the inspector's TimeWarp__State__DevTools__CorsOrigins value is an unresolved
 // ReferenceExpression; the fact checks its value providers are the ingress https and http endpoints.
@@ -22,7 +24,7 @@ namespace Aspire.Tests;
 [TestTag("Integration")]
 public class StateDevToolsModel_Given_
 {
-  private const string DevToolsResourceName = "timewarp-state-devtools";
+  private const string DevToolsResourceName = "timewarp-devtools";
   private const string DevToolsEndpointName = "http";
   private const string EndpointVariable = "TIMEWARP_STATE_DEVTOOLS_ENDPOINT";
   private const string WebServerResourceName = "web-server";

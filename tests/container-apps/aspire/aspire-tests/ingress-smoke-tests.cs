@@ -250,8 +250,8 @@ public partial class IngressSmoke_Given_
     // Task 335-001: web-server waits for the packaged inspector, so it is Running by now. Its http
     // endpoint answering proves the AppHost found and started the inspector dll, not only declared it.
     using CancellationTokenSource cts = new(TimeSpan.FromMinutes(1));
-    await App!.ResourceNotifications.WaitForResourceAsync("timewarp-state-devtools", KnownResourceStates.Running, cts.Token);
-    HttpClient httpClient = App.CreateHttpClient("timewarp-state-devtools", "http");
+    await App!.ResourceNotifications.WaitForResourceAsync("timewarp-devtools", KnownResourceStates.Running, cts.Token);
+    HttpClient httpClient = App.CreateHttpClient("timewarp-devtools", "http");
 
     HttpResponseMessage response = await httpClient.GetAsync("/", cts.Token);
 
