@@ -39,32 +39,31 @@ FastEndpoints.OpenApi 8.3.0. Take the FastEndpoints 9 prerelease, whose net11.0 
 
 ## Goal (implementer restatement)
 
-The repo still pins FastEndpoints 8.3.0, which pulls Microsoft.AspNetCore.OpenApi 10.0.11 and
-locks Microsoft.OpenApi below 3.0. Take FastEndpoints 9.0.0-beta.6 (latest 9.x prerelease on
-nuget.org at implement time; FastEndpoints and FastEndpoints.OpenApi stay on that same version),
-pin Microsoft.AspNetCore.OpenApi to the existing ASP.NET Core RC train
-`11.0.0-rc.3.26522.148` so the FastEndpoints net11.0 floor of 11.0.0-rc.2 is lifted, and pin
-Microsoft.OpenApi to 3.11.0, the latest 3.x. Replace the long historical pin comment with the
-constraint that is true after the move.
+Move FastEndpoints and FastEndpoints.OpenApi together onto the latest 9.x prerelease
+(9.0.0-beta.6 unless nuget.org has a newer 9.x). Pin Microsoft.AspNetCore.OpenApi to the repo's
+ASP.NET Core train, `11.0.0-rc.3.26522.148`, so the FastEndpoints net11.0 floor of 11.0.0-rc.2
+is lifted. Pin Microsoft.OpenApi to 3.11.0. The comments on that pin, in `Directory.Packages.props`
+and `foundation-server.csproj`, have to say what is true after the move: AspNetCore.OpenApi 11
+RC3 allows Microsoft.OpenApi `[3.10.2, 4.0.0)`, and the direct reference only lifts 3.10.2 to
+3.11.0. Drop the old 2.0.0 / GHSA wording.
 
-Then make the product compile and behave on those packages: OpenAPI document transformers,
-Scalar wiring, and the FastEndpoints source generator. Do not use VersionOverride and do not
-downgrade another package to force the graph. If a break can only be fixed by a FastEndpoints
-release we do not have, stop and report the exact error.
+Fix the product for FastEndpoints 9 and the OpenApi 3 object model (document transformers,
+Scalar, generator output). No `VersionOverride`, and no downgrade to force the graph. If a break
+needs a FastEndpoints release we do not have, stop and report the exact error.
 
-Done means `dev build` is clean, `dev test` covers the integration lane, `dev template-smoke`
-and `dev regenerate-generated` pass (commit a golden only when a route change is intentional),
-`ganda repo audit` passes, and `ganda nuget outdated` shows no remaining FastEndpoints or
-Microsoft.OpenApi update. The OpenAPI document and Scalar UI still respond on web-server and
-api-server, with that evidence written under Results.
+Done means the product diff is committed and pushed, the checklist is ticked, and Results record
+the gates: `dev build` clean, `dev test` including the integration lane, `dev template-smoke`,
+`dev regenerate-generated` with no unintended golden diff, `ganda repo audit`, and
+`ganda nuget outdated` with no remaining FastEndpoints or Microsoft.OpenApi update. Results also
+record that web-server and api-server still serve the OpenAPI document and the Scalar UI.
 
 ## Checklist
 
-- [ ] FastEndpoints* on 9.x prerelease
-- [ ] Microsoft.AspNetCore.OpenApi pinned to the RC train; Microsoft.OpenApi on 3.x; comment rewritten
-- [ ] FastEndpoints 9 / OpenApi 3 call sites and generator output fixed
-- [ ] OpenAPI document and Scalar served (evidence recorded)
-- [ ] Gates green
+- [x] FastEndpoints* on 9.x prerelease
+- [x] Microsoft.AspNetCore.OpenApi pinned to the RC train; Microsoft.OpenApi on 3.x; comment rewritten
+- [x] FastEndpoints 9 / OpenApi 3 call sites and generator output fixed
+- [x] OpenAPI document and Scalar served (evidence recorded)
+- [x] Gates green
 
 ## Session
 
@@ -73,6 +72,13 @@ api-server, with that evidence written under Results.
 - Review oracle round 1: reviewer-claude (claude, model claude-opus-5-5), effort 1, roster general,
   max-turns 80, 2026-11-01. 2 open (M1 bug: uncommitted diff, no Results, gates not recorded;
   M2 suggestion: stale 2.0.0 pin comment). Fix pass requested. See `review/round-1/merged.md`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 80 — 2026-11-01T07:59:29Z
+- Fix pass 2 (implement-fix-2, 2026-11-01): reworded both pin comments to the 3.10.2 → 3.11.0 lift, ran the gates in the foreground, and committed the product diff. Round 2 is the host's next node.
+
+## Review
+
+- Round 1: Blocked — open M1, M2
+- Fix pass 2: M1 and M2 addressed on this branch; round 2 has not run
 
 ## Notes
 
@@ -89,3 +95,30 @@ api-server, with that evidence written under Results.
   ([2.12.2, 3.0.0)). 9.0.0-beta.6's net11.0 group still depends on Microsoft.AspNetCore.OpenApi
   11.0.0-rc.2.26504.105, not 11.0.0-rc.3.26522.148 (range [3.10.2, 4.0.0)). Latest 2.x remains
   2.13.0. This task did not take FastEndpoints 9 betas.
+
+## Results
+
+FastEndpoints and FastEndpoints.OpenApi are `9.0.0-beta.6` (still the latest 9.x on nuget.org).
+`Microsoft.AspNetCore.OpenApi` is `11.0.0-rc.3.26522.148`. `Microsoft.OpenApi` is `3.11.0`.
+foundation-server `project.assets.json` shows AspNetCore.OpenApi depending on Microsoft.OpenApi
+`[3.10.2, 4.0.0)` and resolving `3.11.0`. No `VersionOverride`. The pin comments name that
+3.10.2 → 3.11.0 lift. OpenApi 3 call sites use `IOpenApiMediaType`. The request-agent example
+assertion reads the `examples` array FastEndpoints 9 writes.
+
+Observed this pass: `./bin/dev build` succeeded with 0 warnings and 0 errors.
+`./bin/dev test` passed 23 of 23 projects: api-server-integration-tests 2/2,
+web-server-integration-tests 426 passed and 1 skipped, aspire-tests 84/84,
+yarp-integration-tests 19/19, and web-spa-playwright-tests 33/33.
+`./bin/dev template-smoke` printed `Template smoke SUCCEEDED`; SmokeDefault built with 0 warnings.
+`./bin/dev regenerate-generated` exited 0 and left no diff under `goldens/`.
+`ganda nuget outdated` checked 133 packages and printed `All packages are up to date!`.
+
+`ganda repo audit` exited 0 (34 passed, 1 advisory, 2 skipped). The advisory is `kanban-landed`:
+nine other live claims have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141,
+198, 244, 454). Those claims are not this task.
+
+### How to validate
+
+Smoke: `./bin/dev build`. `./bin/dev test`. `./bin/dev template-smoke`. `./bin/dev regenerate-generated`, then `git status --short -- goldens`. `ganda repo audit`. `ganda nuget outdated`. Read the comments above the OpenApi pins in `Directory.Packages.props` and `foundation-server.csproj`.
+
+Expect: Build is 0 warnings and 0 errors. `./bin/dev test` reports 23 of 23 projects passed, including api-server-integration-tests 2/2 (OpenAPI document 200 with a WeatherForecasts tag, and `/scalar/v1` 200 containing `openapi/v1.json`), web-server-integration-tests 426 passed and 1 skipped (the suite's OpenAPI and Scalar tests, including `/openapi/v1.json` 200), aspire-tests 84/84, and yarp-integration-tests 19/19. `./bin/dev template-smoke` prints `Template smoke SUCCEEDED` and SmokeDefault builds with 0 warnings. `./bin/dev regenerate-generated` exits 0 and leaves no diff under `goldens/ingress`. `ganda repo audit` exits 0. `ganda nuget outdated` prints `All packages are up to date!`, including FastEndpoints 9.0.0-beta.6 and Microsoft.OpenApi 3.11.0. Neither pin comment mentions Microsoft.OpenApi 2.0.0 or GHSA-v5pm-xwqc-g5wc.
