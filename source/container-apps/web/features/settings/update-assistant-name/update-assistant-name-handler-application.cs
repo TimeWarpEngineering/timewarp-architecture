@@ -27,7 +27,7 @@ public sealed class UpdateAssistantName
       SiteSettingsStore = siteSettingsStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {

@@ -132,12 +132,12 @@ partial class ScreenshotState
     return capture;
   }
 
-  private Task FailAsync(string error, CaptureServices services, CancellationToken cancellationToken)
+  private async Task FailAsync(string error, CaptureServices services, CancellationToken cancellationToken)
   {
     LastError = error;
     string description = Describe(error);
     services.AgentCallOutcome.Set(new ScreenshotRefused(error, description));
-    return services.Publisher.Publish
+    await services.Publisher.Publish
     (
       new OutcomeNotification(MessageBarIntent.Error, "Screenshot not captured", description),
       cancellationToken

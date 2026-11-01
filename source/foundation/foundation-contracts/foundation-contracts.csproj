@@ -12,8 +12,7 @@
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="libphonenumber-csharp" />
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
-    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <!-- Microsoft.Extensions.Options is in the net11 shared framework (NU1510). -->
     <PackageReference Include="OneOf" />

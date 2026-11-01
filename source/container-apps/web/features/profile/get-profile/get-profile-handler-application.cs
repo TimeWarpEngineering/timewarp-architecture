@@ -49,7 +49,7 @@ public sealed class GetProfile
       ProfileStore = profileStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query request,
       CancellationToken cancellationToken)
     {

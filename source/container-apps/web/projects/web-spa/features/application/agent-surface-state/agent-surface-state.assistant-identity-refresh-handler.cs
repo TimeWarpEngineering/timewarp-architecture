@@ -25,7 +25,7 @@ partial class AgentSurfaceState
   [CrossSliceReference(typeof(SiteSettingsState), "A successful assistant rename reloads the shell identity.")]
   internal sealed class AssistantIdentityRefreshHandler(IStore store) : INotificationHandler<PostPipelineNotification>
   {
-    public async Task Handle(PostPipelineNotification postPipelineNotification, CancellationToken cancellationToken)
+    public async ValueTask Handle(PostPipelineNotification postPipelineNotification, CancellationToken cancellationToken)
     {
       bool refresh = postPipelineNotification.Request switch
       {

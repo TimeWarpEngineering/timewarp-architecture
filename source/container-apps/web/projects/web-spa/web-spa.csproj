@@ -81,7 +81,7 @@
          the assembly nor the call. -->
     <PackageReference Include="TimeWarp.State.DevTools.Wasm" Condition="'$(Configuration)' == 'Debug'"/>
     <PackageReference Include="TimeWarp.Mediator.Generators" PrivateAssets="all" />
-    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Timewarp.OptionsValidation"/>
     <PackageReference Include="protobuf-net.Grpc"/>
     <PackageReference Include="timewarp-heroicons"/>

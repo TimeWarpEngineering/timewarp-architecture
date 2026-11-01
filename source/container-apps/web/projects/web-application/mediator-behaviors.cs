@@ -3,8 +3,8 @@
 #endregion
 
 #region Design
-// Generators run in this assembly (not web-server) so AddGeneratedMediator is not CS0121 with
-// Web.Spa's identically named DI extension. FluentValidationBehavior lives in
+// Generators run in this assembly (not web-server). AddGeneratedMediator is internal to the
+// emitting assembly, so web-server calls the public wrapper. FluentValidationBehavior lives in
 // Foundation.Contracts; app behaviors start at 500. PasskeySignInMethodGateBehavior is 400 so a
 // disabled passkey ceremony is refused before validation and before the handler.
 #endregion

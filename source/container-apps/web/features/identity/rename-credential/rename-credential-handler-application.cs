@@ -37,7 +37,7 @@ public sealed partial class RenameCredential
       CurrentPrincipalAccessor = currentPrincipalAccessor;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       PrincipalId? callerId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken);
       if (callerId is null)

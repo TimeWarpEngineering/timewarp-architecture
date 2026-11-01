@@ -67,7 +67,7 @@ public sealed partial class CompleteAgentTokenIssuance
       UsageRecorder = usageRecorder;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       if (!WebAuthnPayloadDecoder.TryDecode(command.KeyId, out byte[] keyId)
         || !WebAuthnPayloadDecoder.TryDecode(command.Challenge, out byte[] challengeBytes)

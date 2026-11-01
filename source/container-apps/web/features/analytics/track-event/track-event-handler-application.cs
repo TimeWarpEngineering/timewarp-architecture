@@ -34,7 +34,7 @@ public sealed partial class TrackEvent
       Logger = logger;
     }
 
-    public Task<OneOf<Response, SharedProblemDetails>> Handle
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle
     (
       Command command,
       CancellationToken cancellationToken
@@ -55,7 +55,7 @@ public sealed partial class TrackEvent
         Debug.WriteLine(exception);
       }
 
-      return Task.FromResult((OneOf<Response, SharedProblemDetails>)new Response());
+      return ValueTask.FromResult((OneOf<Response, SharedProblemDetails>)new Response());
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Analytics event {event.name}")]

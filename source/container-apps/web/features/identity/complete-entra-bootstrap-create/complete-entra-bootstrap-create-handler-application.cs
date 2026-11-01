@@ -33,7 +33,7 @@ public sealed partial class CompleteEntraBootstrapCreate
       ChoiceTicketAccessor = choiceTicketAccessor;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       if (!ChoiceTicketAccessor.TryReadParkId(out string parkId)
         || !ParkedStore.TryConsume(parkId, out ParkedEntraClaims? parked)

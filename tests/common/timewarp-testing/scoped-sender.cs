@@ -17,21 +17,7 @@ public class ScopedSender : ISender
     ServiceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
   }
 
-  // TODO: Implement this method when needed
-  public IAsyncEnumerable<TResponse> CreateStream<TResponse>
-  (
-    IStreamRequest<TResponse> request,
-    CancellationToken cancellationToken = default
-  ) => throw new NotImplementedException();
-
-  // TODO: Implement this method when needed
-  public IAsyncEnumerable<object> CreateStream
-  (
-    object request,
-    CancellationToken cancellationToken = default
-  ) => throw new NotImplementedException();
-
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
+  public ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest
   {
     return ExecuteInScope
     (
@@ -39,44 +25,44 @@ public class ScopedSender : ISender
       {
         ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return sender.Send(request);
+        return sender.Send(request, cancellationToken);
       }
     );
   }
 
-  public async Task<object?> Send(object request, CancellationToken cancellationToken = default)
+  public ValueTask<object?> Send(object request, CancellationToken cancellationToken = default)
   {
-    return await ExecuteInScope
+    return ExecuteInScope
     (
       serviceProvider =>
       {
         ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return sender.Send(request);
+        return sender.Send(request, cancellationToken);
       }
     );
   }
 
-  public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+  public ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
   {
-    return await ExecuteInScope
+    return ExecuteInScope
     (
       serviceProvider =>
       {
         ISender sender = serviceProvider.GetRequiredService<ISender>();
 
-        return sender.Send(request);
+        return sender.Send(request, cancellationToken);
       }
     );
   }
 
-  internal async Task<T> ExecuteInScope<T>(Func<IServiceProvider, Task<T>> action)
+  internal async ValueTask<T> ExecuteInScope<T>(Func<IServiceProvider, ValueTask<T>> action)
   {
     using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
     return await action(serviceScope.ServiceProvider).ConfigureAwait(false);
   }
 
-  internal async Task ExecuteInScope(Func<IServiceProvider, Task> action)
+  internal async ValueTask ExecuteInScope(Func<IServiceProvider, ValueTask> action)
   {
     using IServiceScope serviceScope = ServiceScopeFactory.CreateScope();
     await action(serviceScope.ServiceProvider).ConfigureAwait(false);

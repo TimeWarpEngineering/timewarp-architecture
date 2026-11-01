@@ -53,10 +53,10 @@ partial class UserXaiApiKeyState
       }
 
       /// <inheritdoc />
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         UserXaiApiKeyState.Apply(response);
-        return Publisher.Publish(
+        await Publisher.Publish(
           new OutcomeNotification(MessageBarIntent.Success, "xAI API key saved."),
           cancellationToken);
       }

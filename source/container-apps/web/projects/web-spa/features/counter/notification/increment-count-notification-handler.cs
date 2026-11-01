@@ -21,7 +21,7 @@ internal class IncrementCountNotificationHandler : INotificationHandler<PostPipe
     Logger = logger;
   }
 
-  public Task Handle
+  public ValueTask Handle
   (
     PostPipelineNotification postPipelineNotification,
     CancellationToken cancellationToken
@@ -30,11 +30,11 @@ internal class IncrementCountNotificationHandler : INotificationHandler<PostPipe
     _ = cancellationToken;
     if (postPipelineNotification.Request is not IncrementCounterActionSet.Action)
     {
-      return Task.CompletedTask;
+      return ValueTask.CompletedTask;
     }
 
     Logger.LogDebug(postPipelineNotification.Request.GetType().Name);
     Logger.LogDebug($"{nameof(IncrementCountNotificationHandler)} handled");
-    return Task.CompletedTask;
+    return ValueTask.CompletedTask;
   }
 }

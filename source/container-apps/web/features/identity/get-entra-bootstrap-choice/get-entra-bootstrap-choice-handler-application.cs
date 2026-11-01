@@ -24,16 +24,16 @@ public sealed partial class GetEntraBootstrapChoice
       ChoiceTicketAccessor = choiceTicketAccessor;
     }
 
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
     {
       if (!ChoiceTicketAccessor.TryReadParkId(out string parkId)
         || !ParkedStore.TryGet(parkId, out ParkedEntraClaims? parked)
         || parked is null)
       {
-        return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(valid: false, "/"));
+        return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(valid: false, "/"));
       }
 
-      return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(valid: true, parked.Destination));
+      return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(valid: true, parked.Destination));
     }
   }
 }

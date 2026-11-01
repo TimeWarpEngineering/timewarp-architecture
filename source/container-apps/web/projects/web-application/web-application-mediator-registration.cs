@@ -3,13 +3,14 @@
 #endregion
 
 #region Design
-// Web.Spa and this assembly both emit GeneratedMediatorServiceCollectionExtensions in
-// Microsoft.Extensions.DependencyInjection (TimeWarp.Mediator 14.0.0-beta.1 / issue 63).
-// web-server references both, so it must not call AddGeneratedMediator. This uniquely named
-// wrapper is compiled here, where Web.Spa is not referenced.
+// Each host emits an internal AddGeneratedMediator in TimeWarp.Mediator.Generated.
+// web-server references both Web.Spa and this assembly, so it calls this wrapper
+// instead of the generated method. The wrapper is compiled here, where Web.Spa is not referenced.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Application;
+
+using TimeWarp.Mediator.Generated;
 
 public static class WebApplicationMediatorRegistration
 {

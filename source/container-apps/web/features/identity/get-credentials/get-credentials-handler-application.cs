@@ -63,7 +63,7 @@ public sealed partial class GetCredentials
       SiteSettingsStore = siteSettingsStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
     {
       PrincipalId? callerId = await CurrentPrincipalAccessor.GetCurrentPrincipalIdAsync(cancellationToken);
       if (callerId is null)

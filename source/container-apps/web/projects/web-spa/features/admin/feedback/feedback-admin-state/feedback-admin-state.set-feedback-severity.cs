@@ -41,10 +41,10 @@ partial class FeedbackAdminState
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Command?>(new Command { FeedbackItemId = action.FeedbackItemId, Severity = action.Severity });
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackAdminState.Current = response.Item;
-        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Severity set."), cancellationToken);
+        await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Severity set."), cancellationToken);
       }
     }
   }

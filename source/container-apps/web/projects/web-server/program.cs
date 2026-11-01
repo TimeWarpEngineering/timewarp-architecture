@@ -381,8 +381,8 @@ public partial class Program : IAspNetProgram
       serviceCollection.AddScoped<AuthenticationStateProvider, HostedIdentitySessionAuthenticationStateProvider>();
     }
 
-    // Unique wrapper: web-server references Web.Spa, whose generated AddGeneratedMediator
-    // would CS0121 with a second generator in this compilation (Mediator issue 63).
+    // Unique wrapper: AddGeneratedMediator is internal to the emitting assembly, and web-server
+    // references Web.Spa, so this host calls the public wrapper instead of the generated method.
     serviceCollection.AddWebApplicationGeneratedMediator();
 
     CommonServerModule.AddOpenApi

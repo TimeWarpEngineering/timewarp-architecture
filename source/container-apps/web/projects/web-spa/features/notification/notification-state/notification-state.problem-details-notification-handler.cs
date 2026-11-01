@@ -21,7 +21,7 @@ partial class NotificationState
     Subscriptions subscriptions
   ) : INotificationHandler<ProblemDetailsNotification>
   {
-    public Task Handle
+    public ValueTask Handle
     (
       ProblemDetailsNotification problemDetailsNotification,
       CancellationToken cancellationToken
@@ -31,13 +31,13 @@ partial class NotificationState
       SharedProblemDetails problem = problemDetailsNotification.SharedProblemDetails;
       if (problem.Status == Constants.OperationCancelled)
       {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
       }
 
       (string title, string? body) = FromProblem(problem);
       store.GetState<NotificationState>().AddMessage(MessageBarIntent.Error, title, body, DateTimeOffset.UtcNow);
       subscriptions.ReRenderSubscribers<NotificationState>();
-      return Task.CompletedTask;
+      return ValueTask.CompletedTask;
     }
   }
 }

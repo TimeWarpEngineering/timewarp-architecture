@@ -29,6 +29,6 @@ internal abstract class FileResponseApiHandler<TAction, TRequest> : ApiHandler<T
 
   protected override Task HandleSuccess(Stream response, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-  protected override Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken) =>
-    Publisher.Publish(new ProblemDetailsNotification(problemDetails), cancellationToken);
+  protected override async Task HandleError(SharedProblemDetails problemDetails, CancellationToken cancellationToken) =>
+    await Publisher.Publish(new ProblemDetailsNotification(problemDetails), cancellationToken);
 }

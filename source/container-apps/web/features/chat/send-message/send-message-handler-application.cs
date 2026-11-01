@@ -20,7 +20,7 @@ public sealed class SendMessageHandler : IRequestHandler<SendMessage.Command, On
     ChatHubService = chatHubClients;
   }
 
-  public async Task<OneOf<Success, SharedProblemDetails>> Handle(SendMessage.Command request, CancellationToken cancellationToken)
+  public async ValueTask<OneOf<Success, SharedProblemDetails>> Handle(SendMessage.Command request, CancellationToken cancellationToken)
   {
     try
     {

@@ -17,15 +17,15 @@ public partial class GenericPipelineBehavior<TRequest, TResponse>(ILogger<Generi
   : IPipelineBehavior<TRequest, TResponse>
   where TRequest : notnull
 {
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
     TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    MessageHandlerDelegate<TRequest, TResponse> next,
     CancellationToken cancellationToken
   )
   {
     LogHandling(logger, typeof(TRequest).Name);
-    TResponse response = await next().ConfigureAwait(false);
+    TResponse response = await next(request, cancellationToken).ConfigureAwait(false);
     LogFinished(logger, typeof(TRequest).Name);
     return response;
   }

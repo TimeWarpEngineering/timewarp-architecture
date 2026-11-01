@@ -42,7 +42,7 @@ public sealed class GetSiteSettings
       SignInOptions = signInOptions;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query request,
       CancellationToken cancellationToken)
     {

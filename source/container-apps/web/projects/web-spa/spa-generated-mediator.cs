@@ -3,12 +3,14 @@
 #endregion
 
 #region Design
-// Web.Server and SPA integration tests reference this assembly, whose generated
-// AddGeneratedMediator would CS0121 with their own generator (Mediator issue 63).
-// This uniquely named wrapper is compiled here, where only this host's generator exists.
+// AddGeneratedMediator is internal to TimeWarp.Mediator.Generated in the emitting assembly.
+// Web.Server and the SPA integration tests call this public wrapper. The wrapper is compiled
+// here, where only this host's generator exists.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Spa;
+
+using TimeWarp.Mediator.Generated;
 
 public static class SpaGeneratedMediator
 {

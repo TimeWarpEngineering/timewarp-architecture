@@ -31,14 +31,14 @@ public sealed partial class StartPasskeyAuthentication
       Options = options;
     }
 
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       // Select the RP ID FIRST — a disallowed host must never burn a challenge (task 104-031).
       OneOf<WebAuthnRelyingParty, SharedProblemDetails> relyingPartyResult =
         WebAuthnRelyingPartySelection.Select(RequestHostAccessor.GetRequestHost(), Options.Value);
       if (relyingPartyResult.IsT1)
       {
-        return Task.FromResult<OneOf<Response, SharedProblemDetails>>(relyingPartyResult.AsT1);
+        return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(relyingPartyResult.AsT1);
       }
 
       WebAuthnRelyingParty relyingParty = relyingPartyResult.AsT0;
@@ -46,7 +46,7 @@ public sealed partial class StartPasskeyAuthentication
       byte[] challenge = ChallengeStore.Issue(WebAuthnCeremonyType.Authentication);
       string optionsJson = WebAuthnAuthentication.BuildOptionsJson(relyingParty, challenge);
 
-      return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(optionsJson));
+      return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(optionsJson));
     }
   }
 }

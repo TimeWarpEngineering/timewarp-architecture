@@ -15,13 +15,13 @@ public sealed partial class UpdateRole
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       OneOf<Response, SharedProblemDetails> result = RoleStore.Roles.ContainsKey(command.RoleId)
         ? OnUpdate(command)
         : GetRole.Handler.RoleNotFound(command.RoleId);
 
-      return Task.FromResult(result);
+      return ValueTask.FromResult(result);
     }
 
     private static OneOf<Response, SharedProblemDetails> OnUpdate(Command command)

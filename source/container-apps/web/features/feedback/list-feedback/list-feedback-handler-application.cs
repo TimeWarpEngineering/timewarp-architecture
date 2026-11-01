@@ -33,7 +33,7 @@ public sealed class ListFeedback
       OwnerNames = ownerNames;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query request,
       CancellationToken cancellationToken)
     {

@@ -59,7 +59,7 @@ public sealed partial class CompleteEntraBootstrapExisting
       Logger = logger;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       if (!ChoiceTicketAccessor.TryReadParkId(out string parkId)
         || !ParkedStore.TryGet(parkId, out ParkedEntraClaims? parkedPeek)

@@ -122,10 +122,10 @@ partial class CredentialsState
         }
       }
 
-      private Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
+      private async Task FailAsync(SharedProblemDetails problem, CancellationToken cancellationToken)
       {
         CredentialsState.CeremonyFailed = true;
-        return Publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
+        await Publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
       }
 
       private static SharedProblemDetails ToProblem<TResponse>(

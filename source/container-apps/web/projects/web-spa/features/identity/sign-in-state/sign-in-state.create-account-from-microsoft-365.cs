@@ -60,7 +60,7 @@ partial class SignInState
   }
 
   /// <summary>Records a failed Microsoft 365 create / already-have completion and reports it to the shell region.</summary>
-  private Task FailMicrosoft365ChoiceAsync
+  private async Task FailMicrosoft365ChoiceAsync
   (
     SharedProblemDetails problem,
     IPublisher<ClientPipeline> publisher,
@@ -73,7 +73,7 @@ partial class SignInState
       Microsoft365ChoiceValid = false;
     }
 
-    return publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
+    await publisher.Publish(new ProblemDetailsNotification(problem), cancellationToken);
   }
 
   internal static bool IsExpired(SharedProblemDetails problem) =>

@@ -24,7 +24,7 @@ public sealed partial class EndBrowserSession
       BrowserSessionService = browserSessionService;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {

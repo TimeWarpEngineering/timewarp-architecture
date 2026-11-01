@@ -35,7 +35,7 @@ public sealed class RequestAgentHumanLink
       LinkStore = linkStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {

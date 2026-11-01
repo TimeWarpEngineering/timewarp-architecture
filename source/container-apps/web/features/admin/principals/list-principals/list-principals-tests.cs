@@ -317,8 +317,8 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
       return principal;
     }
 
-    public Task<OneOf.OneOf<ListPrincipals.Response, SharedProblemDetails>> HandleAsync(ListPrincipals.Query query) =>
-      Handler.Handle(query, CancellationToken.None);
+    public async Task<OneOf.OneOf<ListPrincipals.Response, SharedProblemDetails>> HandleAsync(ListPrincipals.Query query) =>
+      await Handler.Handle(query, CancellationToken.None);
 
     public async Task<ListPrincipals.Response> ListAsync(ListPrincipals.Query query) =>
       (await HandleAsync(query)).AsT0;

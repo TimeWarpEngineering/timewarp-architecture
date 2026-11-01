@@ -43,7 +43,7 @@ public sealed class CompleteAgentChat
     }
 
     /// <summary>Returns the model text and function calls, or a problem.</summary>
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle
     (
       Command request,
       CancellationToken cancellationToken

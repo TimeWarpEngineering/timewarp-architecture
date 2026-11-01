@@ -25,7 +25,7 @@ public sealed partial class SetRolePermissions
         ?? throw new ArgumentNullException(nameof(rolePermissionStore));
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {

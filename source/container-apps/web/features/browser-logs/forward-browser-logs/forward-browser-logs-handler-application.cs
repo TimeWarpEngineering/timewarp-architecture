@@ -32,11 +32,11 @@ public sealed partial class ForwardBrowserLogs
       Logger = loggerFactory.CreateLogger(BrowserLogForwarding.CategoryName);
     }
 
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       if (!BrowserLogForwarding.IsEnabled(Environment))
       {
-        return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new SharedProblemDetails
+        return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new SharedProblemDetails
         {
           Title = "Not found",
           Status = 404
@@ -45,7 +45,7 @@ public sealed partial class ForwardBrowserLogs
 
       if (!RateLimiter.TryAcquire(command.Entries.Count))
       {
-        return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new SharedProblemDetails
+        return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new SharedProblemDetails
         {
           Title = "Too many requests",
           Status = 429,
@@ -68,7 +68,7 @@ public sealed partial class ForwardBrowserLogs
         }
       }
 
-      return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new Response { Accepted = command.Entries.Count });
+      return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new Response { Accepted = command.Entries.Count });
     }
 
     private static LogLevel ToLogLevel(string level) => level switch

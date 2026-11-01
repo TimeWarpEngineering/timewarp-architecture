@@ -21,8 +21,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation"/>
     <PackageReference Include="OneOf"/>
-    <PackageReference Include="TimeWarp.Mediator.Contracts"/>
-    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization"/>
     <!-- DependencyInjection.Abstractions, Configuration.Abstractions, and Options are in the
          net11 shared framework (NU1510). Options.ConfigurationExtensions is not. -->

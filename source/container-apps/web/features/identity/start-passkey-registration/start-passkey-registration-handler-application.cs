@@ -56,7 +56,7 @@ public sealed partial class StartPasskeyRegistration
       Options = options;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       PrincipalId? callerId = null;
       if (command.ForCurrentAccount)

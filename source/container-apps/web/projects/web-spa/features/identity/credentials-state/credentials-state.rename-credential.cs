@@ -65,7 +65,7 @@ partial class CredentialsState
         return new Command { CredentialId = action.CredentialId, UserId = userId, Nickname = action.Nickname };
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
         if (CredentialsState.PendingNicknameCredentialId == RenamedCredentialId)
@@ -75,7 +75,7 @@ partial class CredentialsState
           CredentialsState.PendingNicknameOwnedByPrompt = false;
         }
 
-        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Nickname saved."), cancellationToken);
+        await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Nickname saved."), cancellationToken);
       }
 
       private async Task<Guid> ResolveUserIdAsync()

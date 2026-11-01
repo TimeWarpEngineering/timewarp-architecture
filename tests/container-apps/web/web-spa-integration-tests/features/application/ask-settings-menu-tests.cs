@@ -121,7 +121,7 @@ public partial class AskSettingsMenu_Should_
         expiresAt,
         "Test conversation"
       )
-    );
+    ).AsTask();
 
   private static async Task<string> RenderAsync(SpaTestScope scope)
   {

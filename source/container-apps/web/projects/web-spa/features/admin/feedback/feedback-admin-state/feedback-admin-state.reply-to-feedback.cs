@@ -42,12 +42,12 @@ partial class FeedbackAdminState
         return Task.FromResult<Command?>(new Command { FeedbackItemId = action.FeedbackItemId, Body = action.Body });
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackAdminState.Current = response.Item;
         FeedbackAdminState.LastReplySucceeded = true;
         string title = response.FilerEmailed ? "Reply sent. The filer was emailed." : "Reply sent.";
-        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, title), cancellationToken);
+        await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, title), cancellationToken);
       }
     }
   }
