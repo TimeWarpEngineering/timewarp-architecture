@@ -136,57 +136,16 @@
          that dependency is not a direct pin. -->
     <PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />
     <PackageVersion Include="TimeWarp.Mediator.Generators" Version="15.0.0-beta.4" />
-    <PackageVersion Include="FastEndpoints" Version="8.3.0" />
-    <PackageVersion Include="FastEndpoints.OpenApi" Version="8.3.0" />
-    <!-- FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi 10.0.x transitively pull
-         Microsoft.OpenApi 2.0.0 (NU1903 / GHSA-v5pm-xwqc-g5wc circular-schema stack overflow).
-         Patched 2.x floor: 2.7.5+; this repo pins the latest 2.x (task 201, same major). Direct pin on
-         foundation-server lifts the graph without jumping to 3.x.
-         Re-attempted task 201: Microsoft.OpenApi 3.10.2 fails restore — Microsoft.AspNetCore.OpenApi
-         10.0.11 now declares Microsoft.OpenApi (>= 2.7.5 && < 3.0.0), so NU1608 is a warning-as-error
-         (TreatWarningsAsErrors). There is no product usage to patch; the upper bound is in
-         AspNetCore.OpenApi's own nuspec. Stay on 2.12.2 until a .NET version ships an
-         AspNetCore.OpenApi built against the OpenApi 3.x object model (.NET 11).
-         Re-checked task 249: Microsoft.AspNetCore.OpenApi 10.0.12 still declares
-         Microsoft.OpenApi [2.12.0, 3.0.0).
-         Re-checked task 272 on .NET 11 RC1 (11.0.0-rc.1.26425.128): Microsoft.AspNetCore.OpenApi
-         11 declares Microsoft.OpenApi [3.10.0, 4.0.0). FastEndpoints.OpenApi 8.3.0 (latest stable)
-         and 8.4.0-beta.22 still depend on Microsoft.AspNetCore.OpenApi 10.0.11, whose nuspec
-         keeps Microsoft.OpenApi [2.7.5, 3.0.0). Taking 3.10.2 is not a clean restore — task 257
-         stays open. Pin stays 2.12.2.
-         Re-checked task 389 (2026-10-19): ganda nuget outdated (update) wrote 3.10.2.
-         FastEndpoints.OpenApi 8.3.0 (still the latest stable) depends on Microsoft.AspNetCore.OpenApi
-         10.0.11, whose nuspec is Microsoft.OpenApi [2.7.5, 3.0.0). 3.10.2 is outside that range
-         (NU1608, warnings as errors). Pin reverted to 2.12.2.
-         Re-checked task 392 (2026-10-20): outdated wrote 3.11.0. FastEndpoints.OpenApi 8.3.0 is still
-         the latest stable and still depends on Microsoft.AspNetCore.OpenApi 10.0.11
-         [2.7.5, 3.0.0). FastEndpoints.OpenApi 9.0.0-beta.2 adds a net11.0 group on
-         Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, which opens the 3.x path; that
-         FastEndpoints major move is task 257. Pin moved to 2.13.0, the latest 2.x.
-         Re-checked task 420 (2026-10-26): Microsoft.AspNetCore.OpenApi 11.0.0-rc.3.26522.148
-         still declares Microsoft.OpenApi [3.10.2, 4.0.0). FastEndpoints.OpenApi 8.3.0 is still
-         the latest stable and still depends on Microsoft.AspNetCore.OpenApi 10.0.11
-         [2.7.5, 3.0.0). 8.4.0-beta.26 is net10.0 only (OpenApi 10.0.13). 9.0.0-beta.6's net11.0
-         group still depends on Microsoft.AspNetCore.OpenApi 11.0.0-rc.2.26504.105, not RC3.
-         The 2.x hold stands; latest 2.x is still 2.13.0. The FastEndpoints major move stays
-         task 257.
-         Shared-framework Microsoft.* / System.* pins on this train are 11.0.0-rc.3.26522.148,
-         matching SDK 11.0.100-rc.3.26522.148 (RC1 authorized 2026-10-09; RC2 task 362; RC3 task 420).
-         EF Core (Microsoft.EntityFrameworkCore*, Microsoft.AspNetCore.DataProtection.EntityFrameworkCore,
-         HealthChecks.EntityFrameworkCore, the dotnet-ef tool) and Npgsql.EntityFrameworkCore.PostgreSQL
-         are on RC3 as of task 456. Npgsql 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore exactly at
-         11.0.0-rc.3.26522.148, so the EF family and Npgsql move together. Moving the EF family alone
-         fails restore (NU1608/NU1107).
-         Extensions monthly packages (Http.Resilience, ServiceDiscovery, Telemetry, AI) are 10.11.0;
-         they still have no 11.x. System.ServiceModel.Primitives has no 11.x and is 10.1.0.
-         Re-checked task 456 (2026-10-30): tried Microsoft.OpenApi 3.11.0. foundation-server restore
-         raised NU1608 (warning as error): Microsoft.AspNetCore.OpenApi 10.0.11 requires
-         Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but 3.11.0 was resolved. Pin stays 2.13.0.
-         Re-checked task 459 (2026-11-01): tried 3.11.0 again. foundation-server restore raised
-         NU1608 (warning as error): Microsoft.AspNetCore.OpenApi 10.0.11 requires
-         Microsoft.OpenApi (>= 2.7.5 && < 3.0.0) but version Microsoft.OpenApi 3.11.0 was resolved.
-         Pin stays 2.13.0. The FastEndpoints major move stays task 257. -->
-    <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
+    <!-- FastEndpoints 9.0.0-beta.6 (task 257) is the latest 9.x prerelease. Its net11.0 group
+         depends on Microsoft.AspNetCore.OpenApi >= 11.0.0-rc.2.26504.105. The direct
+         Microsoft.AspNetCore.OpenApi reference on foundation-server lifts that floor to this
+         repo's ASP.NET Core train (11.0.0-rc.3.26522.148). That package allows Microsoft.OpenApi
+         [3.10.2, 4.0.0). The foundation-server Microsoft.OpenApi reference lifts that 3.10.2
+         floor to the 3.11.0 pin. -->
+    <PackageVersion Include="FastEndpoints" Version="9.0.0-beta.6" />
+    <PackageVersion Include="FastEndpoints.OpenApi" Version="9.0.0-beta.6" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="3.11.0" />
     <PackageVersion Include="Oakton" Version="6.3.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.7" />
     <PackageVersion Include="Timewarp.OptionsValidation" Version="1.0.0-beta.5" />

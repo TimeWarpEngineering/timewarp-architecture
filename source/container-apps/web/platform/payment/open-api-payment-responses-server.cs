@@ -158,7 +158,7 @@ internal static class OpenApiPaymentResponses
       + "Challenge resource.url is " + resource + ".";
 
     OpenApiResponse response = EnsureResponse(operation, "402", description);
-    response.Content ??= new Dictionary<string, OpenApiMediaType>();
+    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
     if (!response.Content.ContainsKey(ProblemJson))
     {
       response.Content[ProblemJson] = new OpenApiMediaType { Schema = ProblemSchema(includeTip) };
@@ -237,7 +237,7 @@ internal static class OpenApiPaymentResponses
       + "Free and discovery routes never return 402.";
 
     OpenApiResponse response = EnsureResponse(operation, "503", description);
-    response.Content ??= new Dictionary<string, OpenApiMediaType>();
+    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
     if (!response.Content.ContainsKey(ProblemJson))
     {
       response.Content[ProblemJson] = new OpenApiMediaType { Schema = UnavailableSchema(includeTip) };

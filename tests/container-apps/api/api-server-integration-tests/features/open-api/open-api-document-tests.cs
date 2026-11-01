@@ -10,7 +10,8 @@
 // DistributedApplication (145-003 Jaribu shape). ASPNETCORE_ENVIRONMENT is Development under
 // the testing AppHost so CommonServerModule.UseScalarApiReference maps /openapi/{doc}.json.
 // Asserts HTTP 200 and that at least one operation carries the generator-emitted feature tag
-// (namespace leaf …Features.WeatherForecasts → "WeatherForecasts").
+// (namespace leaf …Features.WeatherForecasts → "WeatherForecasts"). The same host serves
+// the Scalar UI at /scalar/v1, which points at that document.
 #endregion
 
 namespace OpenApiDocument_;
@@ -96,5 +97,16 @@ public class OpenApiDocument_Given_
 
     hasWeatherForecastsTag.ShouldBeTrue(
       "OpenAPI document should tag at least one operation with WeatherForecasts (generator Description.WithTags from …Features.WeatherForecasts).");
+  }
+
+  public static async Task Scalar_Ui_Should_Point_At_The_Document()
+  {
+    using HttpClient httpClient = App!.CreateHttpClient(AspireConstants.ApiServerProjectResourceName);
+
+    HttpResponseMessage response = await httpClient.GetAsync("/scalar/v1");
+
+    response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    string html = await response.Content.ReadAsStringAsync();
+    html.ShouldContain("openapi/v1.json");
   }
 }

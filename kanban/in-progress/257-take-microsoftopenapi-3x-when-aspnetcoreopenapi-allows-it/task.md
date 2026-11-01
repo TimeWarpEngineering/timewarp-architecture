@@ -70,6 +70,9 @@ api-server, with that evidence written under Results.
 
 - Created: 943834 (2026-09-29), follow-up from task 249
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1960d-9a54-7072-bd5d-d3e0602b0acf, max-turns 500, Done — 2026-11-01T07:56:23Z
+- Review oracle round 1: reviewer-claude (claude, model claude-opus-5-5), effort 1, roster general,
+  max-turns 80, 2026-11-01. 2 open (M1 bug: uncommitted diff, no Results, gates not recorded;
+  M2 suggestion: stale 2.0.0 pin comment). Fix pass requested. See `review/round-1/merged.md`.
 
 ## Notes
 
