@@ -116,6 +116,18 @@ Run the two `dotnet test` commands from each project directory. Microsoft.Testin
 
 **Expect:** `dev build` reports 0 warnings and 0 errors. Both test suites pass, and the foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.30" />`, and `source/foundation/timewarp-contracts/` is absent.
 
+### Review disposition
+
+- **Outcome:** clean. 1 round, effort 3, roster `general`.
+- **Final counts:** bug 0, suggestion 0, nit 0. None open, fixed, or wontfix.
+- **Verified:** the deleted `.cs` sources and the six deleted tests are byte-identical to timewarp-contracts commit `0b1c70e`, the commit in the `2.0.0-beta.30` nuspec. The package assembly is `timewarp-contracts.dll`, so the type forward test holds.
+- **Gates the reviewer re-ran on 2026-11-01:** `dev build` (0 warnings, 0 errors), foundation-contracts-tests 25/25, sourcegenerator-tests 154/154, `dev check-version` exit 0, `dev lint-skills` 9/9, `dev template-smoke` SUCCEEDED, `ganda repo audit` exit 0. The audit's only failure is the `kanban-landed` warning about other tasks' claims.
+- **Artifacts:** `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
+
 ## Notes
 
 - Waits on timewarp-contracts task 002 (cross-repo; nuget.org release, not just merge).
@@ -128,3 +140,5 @@ Run the two `dotnet test` commands from each project directory. Microsoft.Testin
 - Created: 8c10267a-9869-468f-94f3-f663f4e20b06 (2026-10-31)
 - Implementation: Grok 4.7 (ganda task work), grok session 01a19559-359c-7fd0-9997-88a47bd70dd2 (2026-11-01). Pinned TimeWarp.Contracts 2.0.0-beta.30, deleted the in-repo project, bumped TimeWarp.Nuru to 4.0.0-beta.11, and committed the audit gitignore lines. `kanban-landed` advisory is other claims.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19559-359c-7fd0-9997-88a47bd70dd2, max-turns 500, Done — 2026-11-01T04:45:38Z
+- Review oracle: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 3, roster general, turn cap 200 — round 1, disposition clean (0 findings). The goal restatement matches the task and nothing was misread. The task asked to update `dev check-version`. The restatement found that discovery drops the deleted project, and the reviewer verified that. — 2026-11-01
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 200 — 2026-11-01T04:55:07Z
