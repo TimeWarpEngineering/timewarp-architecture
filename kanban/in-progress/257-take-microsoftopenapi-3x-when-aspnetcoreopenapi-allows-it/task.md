@@ -59,6 +59,8 @@ record that web-server and api-server still serve the OpenAPI document and the S
 
 Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite deleted go back as short comments beside the pins they explain, with no task-by-task history. Shared-framework Microsoft.* and System.* pins on this train are `11.0.0-rc.3.26522.148` and match SDK `11.0.100-rc.3.26522.148`. `Npgsql.EntityFrameworkCore.PostgreSQL` `11.0.0-rc.3` pins `Microsoft.EntityFrameworkCore` exactly, so the EF family and Npgsql move together; moving EF alone fails restore with NU1608/NU1107. Extensions monthly packages are `10.11.0` and `System.ServiceModel.Primitives` is `10.1.0` because neither line has an 11.x. The auth-schemes test Design region drops the FastEndpoints 8.3 and ASP.NET Core 10 version numbers. This pass is done when those comments are in place, the diff is committed and pushed, and Results record the gates run for the comment-only change.
 
+PR #621's publish job is red. `aspire publish` fails at `web-migrations-generate-migration-bundle` after `Build failed. Use --verbose to see errors.` The migration script step before it succeeds, and master publish is green, so this branch caused it. Reproduce with a verbose `dotnet ef migrations bundle` (framework-dependent, current RID — `PublishAsMigrationBundle()` does not pass `--self-contained`) and then `./bin/dev workflow --phase publish`. Fix the cause. Do not skip or disable the bundle step, and do not downgrade a package to force the graph. This pass is done when publish succeeds locally, the root cause is in Results, and the fix is committed and pushed.
+
 ## Checklist
 
 - [x] FastEndpoints* on 9.x prerelease
@@ -68,6 +70,7 @@ Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite
 - [x] Gates green
 - [x] RC-train facts restored beside the pins they explain
 - [x] Auth-schemes Design region no longer names FastEndpoints 8.3 or ASP.NET Core 10
+- [x] Publish migration bundle restores (Oakton stays on web-server; NU1107 gone)
 
 ## Session
 
@@ -87,6 +90,10 @@ Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite
 - Review oracle round 3: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), effort 1,
   roster general, max-turns 80, session not reported, 2026-11-01. Reviewed the delta since round 2
   (925b61eb3, comments only). M3 and M4 are fixed, and there are no new findings. Disposition: clean.
+- CI fix (implement, 2026-11-01): PR #621 `ci (publish)` run 41289504501 failed in
+  `web-migrations-generate-migration-bundle` with `Build failed. Use --verbose to see errors.`
+  Verbose `dotnet ef migrations bundle` showed NU1107. Oakton on web-server is now
+  `PrivateAssets=all`. `./bin/dev workflow --phase publish` exited 0.
 
 ## Review
 
@@ -134,6 +141,10 @@ nine other live claims have no usable worktree (070-001, 104-024, 104-025, 104-0
 
 Fix pass 3 restored the RC-train facts beside the pins they explain. Shared-framework Microsoft.* and System.* pins on this train match SDK `11.0.100-rc.3.26522.148`. The EF family and `Npgsql.EntityFrameworkCore.PostgreSQL` move together. Extensions monthly packages (`Telemetry.Abstractions`, `ServiceDiscovery.Yarp`, `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`, `Compliance.Redaction`, `Http.Resilience`, `ServiceDiscovery`, `Telemetry`, `Diagnostics.Testing`) are `10.11.0` because they have no 11.x. `System.ServiceModel.Primitives` is `10.1.0` for the same reason. The auth-schemes Design region names FastEndpoints `Policies()` and `AuthSchemes()` against ASP.NET Core `PolicyEvaluator.AuthenticateAsync`, with no 8.3 or ASP.NET Core 10 version. This pass re-ran `./bin/dev build` (0 warnings, 0 errors, including `web-server-integration-tests`) and `ganda repo audit` (exit 0, same advisory). The integration suite, template smoke, regenerate-generated, and nuget outdated were not re-run: the diff is comments only, and the earlier pass already recorded those gates.
 
+PR #621 publish failed while generating the EF migration bundle. `PublishAsMigrationBundle()` does not pass `--self-contained`. `dotnet ef` still publishes a generated `Microsoft.NET.Sdk` exe with `--runtime linux-x64 --no-self-contained`. That project re-resolves package nuspecs. `Microsoft.AspNetCore.OpenApi` 11.0.0-rc.3.26522.148 requires `Microsoft.Extensions.Hosting` >= 11.0.0-rc.3.26522.148. Oakton 6.3.0 (latest on nuget.org; no net10/net11 dependency group) requires Hosting `[6.0.0, 10.0.0)`. The Web SDK prunes the OpenApi Hosting dependency against the shared framework, so `dev build` and the migration script step stay green. The generated exe does not, and restore fails with NU1107. No newer Oakton exists, and the graph was not downgraded. Oakton on web-server is `PrivateAssets=all`: the host still compiles and publishes against it, and the package constraint does not flow to the bundle project. A local bundle (115 MB) loaded `PostgresDbContext` and stopped on a refused connection to 127.0.0.1:5432, which is the offline design-time path with no Postgres running.
+
+`./bin/dev workflow --phase publish` exited 0. The Release build inside it was 0 warnings and 0 errors. Compose, kubernetes, aca, and aca-neon each finished; compose, aca, and aca-neon generated the migration bundle successfully (kubernetes publishes the SQL script only). Production-safety tests were 47/47 and `helm lint` reported 0 chart failures. `./bin/dev test --no-build` passed 23 of 23 projects, including api-server-integration-tests, web-server-integration-tests, aspire-tests, yarp-integration-tests, web-spa-integration-tests (578), and web-spa-playwright-tests (33). `./bin/dev template-smoke` printed `Template smoke SUCCEEDED`; SmokeDefault built with 0 warnings. `./bin/dev regenerate-generated` exited 0 and left no diff under `goldens/`. `ganda nuget outdated` checked 133 packages and printed `All packages are up to date!`. `ganda repo audit` exited 0 with the same `kanban-landed` advisory for the nine other claims.
+
 ### Review disposition
 
 Disposition is `clean`, after 3 rounds. Each round was effort 1 or 2 with a single general
@@ -151,7 +162,6 @@ There are no wontfix findings and no escalations. Paths:
 
 ### How to validate
 
-Smoke: `./bin/dev build`. `ganda repo audit`. Read the comments in `Directory.Packages.props` beside the shared-framework pins, the EF family, `System.ServiceModel.Primitives`, and each Extensions monthly `10.11.0` pin. Read the Design region in `tests/container-apps/web/web-server-integration-tests/features/identity/fast-endpoint-auth-schemes-tests.cs`.
+Smoke: `./bin/dev workflow --phase publish`. Read the Oakton `PackageReference` in `source/container-apps/web/projects/web-server/web-server.csproj`.
 
-Expect: Build is 0 warnings and 0 errors. `ganda repo audit` exits 0. The shared-framework comment names SDK `11.0.100-rc.3.26522.148`. The EF comment says moving the EF family alone fails restore with NU1608/NU1107. Each Extensions monthly `10.11.0` pin and `System.ServiceModel.Primitives` `10.1.0` has a comment that the package has no 11.x. Those comments do not recite task-by-task re-check history. The auth-schemes Design region does not say FastEndpoints 8.3 or ASP.NET Core 10. The OpenApi pin comments still describe the 3.10.2 to 3.11.0 lift and do not mention Microsoft.OpenApi 2.0.0 or GHSA-v5pm-xwqc-g5wc.
-- CI red 2026-11-01 on PR #621 (run 41289504501): only `ci (publish)` failed. `aspire publish (compose)` failed at the `web-migrations-generate-migration-bundle` step: `EF tool resource 'ef-tool-web-migrations' exited with code 1` after `Build failed. Use --verbose to see errors.` The migration script step before it succeeded. `master` CI (5238dbf5a) passes publish, so this PR caused it. Reproduce with `./bin/dev workflow --phase publish` (what CI runs) and get the real build error (verbose EF bundle build). Likely suspects: the FastEndpoints 9 / Microsoft.AspNetCore.OpenApi 11 / Microsoft.OpenApi 3 graph under the bundle's self-contained build (RID-specific restore, analyzers, or an OpenApi build-time document generator). Fix the cause; do not skip or disable the bundle step. Gate: `./bin/dev workflow --phase publish` passes locally, plus the existing gates. Record the root cause in Results.
+Expect: The workflow exits 0. Compose, aca, and aca-neon each log `migration bundle generated successfully`. The Oakton reference has `PrivateAssets` set to `all`, and the comment names the Hosting `[6.0.0, 10.0.0)` ceiling against OpenApi 11's Hosting 11 requirement. The bundle step is still in the publish pipeline.
