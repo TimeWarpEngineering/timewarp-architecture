@@ -60,11 +60,14 @@
          Logging.Abstractions are in the net11 shared framework. Direct PackageReferences to them
          are NU1510, so those pins are gone. Options stays pinned: one co-located runfile takes it
          with a versionless #:package directive, which Central Package Management resolves from here.
-         A csproj must not PackageReference it (NU1510). -->
+         A csproj must not PackageReference it (NU1510).
+         Shared-framework Microsoft.* and System.* pins on this train are 11.0.0-rc.3.26522.148,
+         matching SDK 11.0.100-rc.3.26522.148. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0-rc.3.26522.148" />
+    <!-- Extensions monthly package. No 11.x, so the pin is 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="System.Threading.RateLimiting" Version="11.0.0-rc.3.26522.148" />
@@ -84,6 +87,7 @@
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.3.14" />
     <PackageVersion Include="protobuf-net.Grpc.Reflection" Version="1.3.14" />
+    <!-- No 11.x. The pin is 10.1.0. -->
     <PackageVersion Include="System.ServiceModel.Primitives" Version="10.1.0" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
     <!-- Yarp / Reverse Proxy (used by Yarp gateway and Aspire.AppHost) -->
@@ -100,6 +104,7 @@
     <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="$(AspireVersion)-preview.1.26523.11" />
     <!-- Preview: AppHost AddEFMigrations resource (task 147-007). Same AspireVersion prefix; own preview build suffix. -->
     <PackageVersion Include="Aspire.Hosting.EntityFrameworkCore" Version="$(AspireVersion)-preview.1.26523.11" />
+    <!-- Extensions monthly package. No 11.x, so the pin is 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.11.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Aspire AppHost -->
@@ -114,6 +119,11 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-rc.3.26522.148" />
+    <!-- Npgsql.EntityFrameworkCore.PostgreSQL 11.0.0-rc.3 pins Microsoft.EntityFrameworkCore
+         exactly at 11.0.0-rc.3.26522.148. Move that package with the EF family
+         (Microsoft.EntityFrameworkCore*, Microsoft.AspNetCore.DataProtection.EntityFrameworkCore,
+         Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore). Moving the EF
+         family alone fails restore (NU1608/NU1107). -->
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
@@ -153,6 +163,8 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.QuickGrid" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.AI" Version="0.1.0-preview.1.26466.103" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-rc.3.26522.148" />
+    <!-- Extensions monthly packages (Microsoft.Extensions.AI and Microsoft.Extensions.AI.OpenAI).
+         No 11.x, so the pins are 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
     <!-- Chat completions against api.x.ai. Pinned beside Microsoft.Extensions.AI (10.11.0, task 389).
          Do not float onto the Responses API. TypeLoadExceptions on tool calls when OpenAI 2.14
@@ -191,6 +203,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Aspire Packages">
+    <!-- Extensions monthly packages (Compliance.Redaction, Http.Resilience, ServiceDiscovery,
+         Telemetry). No 11.x, so the pins are 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
@@ -229,6 +243,7 @@
     <PackageVersion Include="AutoFixture.AutoFakeItEasy" Version="4.18.1" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="11.0.0-rc.3.26522.148" />
+    <!-- Extensions monthly package. No 11.x, so the pin is 10.11.0. -->
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.4" />
     <!-- Lifts Analyzer.Testing 1.1.4's transitive NuGet.Packaging dependency past

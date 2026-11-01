@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 161: isolates FastEndpoints 8.3 Policies() vs AuthSchemes() against ASP.NET Core 10
+// Task 161: isolates FastEndpoints Policies() vs AuthSchemes() against ASP.NET Core
 // PolicyEvaluator.AuthenticateAsync. A full web-server HostGraph cannot strip AuthenticationSchemes
 // off product contracts, so this boots a TestServer with four probe endpoints and two schemes:
 // default "cookies" (unused by the probe-header requests) and named "probe" (succeeds on X-Probe).
