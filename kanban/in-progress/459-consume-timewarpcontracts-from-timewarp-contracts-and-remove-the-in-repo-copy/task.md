@@ -147,6 +147,13 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 
 ### Review disposition
 
+**Final: clean.** 4 rounds, roster `general` throughout. Rounds 1 and 2 ran at effort 3, round 3 at effort 2, and round 4 at effort 1.
+
+- **Final counts (`review/round-4/merged.md`):** bug 0 open / 1 fixed (M1); suggestion 0; nit 0 open / 2 fixed (M2, M3); wontfix 0. Final open count is 0.
+- **Round 4 (fix-pass delta `285351c94..3cd8eef26`):** M3 is fixed. "That test drives the real path…" follows the feedback-receipt sentences again, and the AddPasskey sentences come after it. The change is comments only. The reviewer re-ran `dev build`: 0 warnings, 0 errors. No new findings.
+- **Escalations / wontfix:** none.
+- **Artifacts:** `review/review-framework.md`, `review/round-4/general.md`, `review/round-4/merged.md` (final ledger), `review/disposition.md` (`clean`).
+
 **Round 3 (fix-pass delta, commit `285351c94`): fix pass applied. Host review follows.**
 
 - **Status:** M1 (bug) and M2 (nit) were already fixed. M3 (nit) is addressed in this walk. The ledger in `review/round-3/merged.md` stays the reviewer's until the next round closes it. Effort 2, roster `general`, turn cap 120.
@@ -176,6 +183,7 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - Round 1: Done
 - Round 2: fix pass applied for M1 and M2; host review follows
 - Round 3: fix pass applied for M3; host review follows
+- Round 4: Done
 ## Notes
 
 - Waits on timewarp-contracts task 002 (cross-repo; nuget.org release, not just merge).
@@ -202,3 +210,4 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - Fix pass: Grok 4.7 (ganda task work), session 01a195b9-f20f-7d60-8813-f41a4d2a1712 (2026-11-01). M1 asserts the Mediator 15 error bar. M2 updates the SPA Send analyzer text and stub to ValueTask with no CreateStream. Product dispatch is unchanged.
 - Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 2, roster general, turn cap 120, session not reported. Scope was fix-pass commit `285351c94`. M1 and M2 are fixed. M3 (nit, Design-region antecedent) is open, so a fix pass is needed. The goal restatement matches the round-2 findings and the task, so nothing was misread. — 2026-11-01
 - Fix pass: Grok 4.7 (ganda task work), session 01a195c8-961a-7b50-a49e-e101d8829c2c (2026-11-01). M3 moves the AddPasskey Design sentences to after the feedback-receipt "That test" sentence. Assertions and product dispatch are unchanged.
+- Review oracle round 4: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 1, roster general, turn cap 80, session not reported. Scope was fix-pass delta `285351c94..3cd8eef26`. M3 is fixed, there are no new findings, and the disposition is `clean`. The goal restatement matches the round-3 finding and the task, so nothing was misread. — 2026-11-01

@@ -1,23 +1,15 @@
 # Disposition — task 459
 
-> **Reopened 2026-11-01 by round 2.** The package-roll scope add (commit `97ff4440a`) reopened the review. `review/round-2/merged.md` has 2 open findings (M1 bug, M2 nit). The text below is the round-1 disposition and is no longer final. The round that closes the loop rewrites this file.
->
-> **Round 3 (2026-11-01):** M1 and M2 are fixed. One new nit is open: M3, the Design-region antecedent in `catalog-agent-tests.cs`. See `review/round-3/merged.md`. The loop is still open.
-
 **Date:** 2026-11-01
 **Outcome:** clean
-**Rounds:** 1
+**Rounds:** 4
 **Final open count:** 0
 
 ## Summary
 
-Round 1 (effort 3, general reviewer) raised no findings. Every deleted `TimeWarp.Contracts` source
-file and each of the six deleted tests is byte-identical to timewarp-contracts commit `0b1c70e`, the
-commit recorded in the `2.0.0-beta.30` nuspec. The package keeps the `timewarp-contracts` assembly
-name, so the `SharedProblemDetails` type forward and its test still hold. The reviewer re-ran
-`dev build`, both test projects, `dev check-version`, `dev lint-skills`, `dev template-smoke`, and
-`ganda repo audit`. All are green. The only audit failure is the `kanban-landed` warning, which
-names other tasks' claims.
+Round 1 (effort 3, general) covered the extraction in commit `3cfa29bae` and raised no findings. Every deleted `TimeWarp.Contracts` source file and test is byte-identical to timewarp-contracts commit `0b1c70e`. Round 2 (effort 3) covered the package roll in commit `97ff4440a` and raised M1 (bug) and M2 (nit). M1 was the Mediator 15 AddPasskey activation contract in `catalog-agent-tests.cs`. M2 was the SPA Send analyzer text, which still described Mediator 14. Round 3 (effort 2) confirmed both fixes in commit `285351c94` and raised M3 (nit), a Design-region antecedent. Round 4 (effort 1) confirmed the M3 fix in commit `3cd8eef26`, which changes comments only. Final counts: bug 1 fixed, nit 2 fixed, no open or wontfix findings. Every raised finding is fixed, so the outcome is `clean`.
+
+Gates the reviewers re-ran: `dev build` with 0 warnings and 0 errors (in each round, including round 4), `timewarp-architecture-analyzers-tests` 259/259 and `web-spa-integration-tests` 578/578 (round 3), and `ganda repo audit` exit 0, whose only advisory was `kanban-landed` for other tasks' claims (rounds 1 and 3). Round 1 also ran `dev check-version`, `dev lint-skills`, and `dev template-smoke`.
 
 ## Exception log (if accepted-exceptions)
 
@@ -26,3 +18,9 @@ None.
 ## Escalations
 
 None.
+
+## Artifacts
+
+- `review/review-framework.md`
+- `review/round-1/` … `review/round-4/` (`general.md`, `merged.md`)
+- Last merged ledger: `review/round-4/merged.md`
