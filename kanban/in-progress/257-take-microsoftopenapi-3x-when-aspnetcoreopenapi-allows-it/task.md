@@ -84,6 +84,9 @@ Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite
   deleted still-true RC train / EF-Npgsql / 10.x Extensions facts) and M4 (nit: stale FastEndpoints
   8.3 in the auth-schemes test Design region). Fix pass requested. See `review/round-2/merged.md`.
 - Fix pass 3 (implement-fix-3, 2026-11-01): restored the RC-train facts as short comments beside the pins they explain, and dropped the FastEndpoints 8.3 and ASP.NET Core 10 version numbers from the auth-schemes Design region. `./bin/dev build` was 0 warnings and 0 errors. `ganda repo audit` exited 0 with the same `kanban-landed` advisory for nine other claims.
+- Review oracle round 3: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), effort 1,
+  roster general, max-turns 80, session not reported, 2026-11-01. Reviewed the delta since round 2
+  (925b61eb3, comments only). M3 and M4 are fixed, and there are no new findings. Disposition: clean.
 
 ## Review
 
@@ -91,7 +94,7 @@ Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite
 - Fix pass 2: M1 and M2 addressed on this branch
 - Round 2: Blocked — open M3, M4. Counts: bug 0 open / 1 fixed, suggestion 1 open / 1 fixed, nit 1 open. Paths: `review/review-framework.md`, `review/round-2/merged.md`
 - Fix pass 3: M3 and M4 addressed on this branch
-
+- Round 3: Done
 ## Notes
 
 - Task 249 Results record the 10.0.12 nuspec check.
@@ -130,6 +133,21 @@ nine other live claims have no usable worktree (070-001, 104-024, 104-025, 104-0
 198, 244, 454). Those claims are not this task.
 
 Fix pass 3 restored the RC-train facts beside the pins they explain. Shared-framework Microsoft.* and System.* pins on this train match SDK `11.0.100-rc.3.26522.148`. The EF family and `Npgsql.EntityFrameworkCore.PostgreSQL` move together. Extensions monthly packages (`Telemetry.Abstractions`, `ServiceDiscovery.Yarp`, `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`, `Compliance.Redaction`, `Http.Resilience`, `ServiceDiscovery`, `Telemetry`, `Diagnostics.Testing`) are `10.11.0` because they have no 11.x. `System.ServiceModel.Primitives` is `10.1.0` for the same reason. The auth-schemes Design region names FastEndpoints `Policies()` and `AuthSchemes()` against ASP.NET Core `PolicyEvaluator.AuthenticateAsync`, with no 8.3 or ASP.NET Core 10 version. This pass re-ran `./bin/dev build` (0 warnings, 0 errors, including `web-server-integration-tests`) and `ganda repo audit` (exit 0, same advisory). The integration suite, template smoke, regenerate-generated, and nuget outdated were not re-run: the diff is comments only, and the earlier pass already recorded those gates.
+
+### Review disposition
+
+Disposition is `clean`, after 3 rounds. Each round was effort 1 or 2 with a single general
+reviewer, reviewer-claude (claude-opus-5-5).
+
+Final counts:
+- bug: 0 open, 1 fixed (M1)
+- suggestion: 0 open, 2 fixed (M2, M3)
+- nit: 0 open, 1 fixed (M4)
+
+There are no wontfix findings and no escalations. Paths:
+- `review/review-framework.md`
+- `review/round-3/merged.md`
+- `review/disposition.md`
 
 ### How to validate
 

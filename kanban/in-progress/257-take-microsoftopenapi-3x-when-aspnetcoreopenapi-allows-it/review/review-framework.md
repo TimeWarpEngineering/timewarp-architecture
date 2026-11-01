@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 300
-- Effort: 2
+- Lines changed: 177
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -25,3 +25,13 @@
 **Effort:** 2 (by-diff budget above); roster general
 **Reviewer roster:** general
 **Session IDs:** reviewer-claude (claude-opus-5-5), headless ganda task-work review-2 oracle, session not reported
+
+## Round 3
+
+**Date:** 2026-11-01
+**Host task:** kanban/in-progress/257-take-microsoftopenapi-3x-when-aspnetcoreopenapi-allows-it/
+**Diff scope:** delta since round 2 (round-2 base 52efa0805): product commit 925b61eb3 and kanban commit de1c67301
+**Plan / brief:** round-2 `merged.md` M3 and M4, task.md `## Goal (implementer restatement)`
+**Effort:** 1 (by-diff budget above); roster general
+**Reviewer roster:** general
+**Session IDs:** reviewer-claude (claude-opus-5-5), headless ganda task-work review-3 oracle, session not reported
