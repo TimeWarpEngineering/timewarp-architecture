@@ -37,6 +37,27 @@ FastEndpoints.OpenApi 8.3.0. Take the FastEndpoints 9 prerelease, whose net11.0 
   are still served by web-server and api-server (an integration test asserting the document,
   or a recorded `curl` of `/openapi/*.json` returning 200 with the expected paths).
 
+## Goal (implementer restatement)
+
+The repo still pins FastEndpoints 8.3.0, which pulls Microsoft.AspNetCore.OpenApi 10.0.11 and
+locks Microsoft.OpenApi below 3.0. Take FastEndpoints 9.0.0-beta.6 (latest 9.x prerelease on
+nuget.org at implement time; FastEndpoints and FastEndpoints.OpenApi stay on that same version),
+pin Microsoft.AspNetCore.OpenApi to the existing ASP.NET Core RC train
+`11.0.0-rc.3.26522.148` so the FastEndpoints net11.0 floor of 11.0.0-rc.2 is lifted, and pin
+Microsoft.OpenApi to 3.11.0, the latest 3.x. Replace the long historical pin comment with the
+constraint that is true after the move.
+
+Then make the product compile and behave on those packages: OpenAPI document transformers,
+Scalar wiring, and the FastEndpoints source generator. Do not use VersionOverride and do not
+downgrade another package to force the graph. If a break can only be fixed by a FastEndpoints
+release we do not have, stop and report the exact error.
+
+Done means `dev build` is clean, `dev test` covers the integration lane, `dev template-smoke`
+and `dev regenerate-generated` pass (commit a golden only when a route change is intentional),
+`ganda repo audit` passes, and `ganda nuget outdated` shows no remaining FastEndpoints or
+Microsoft.OpenApi update. The OpenAPI document and Scalar UI still respond on web-server and
+api-server, with that evidence written under Results.
+
 ## Checklist
 
 - [ ] FastEndpoints* on 9.x prerelease
@@ -48,6 +69,7 @@ FastEndpoints.OpenApi 8.3.0. Take the FastEndpoints 9 prerelease, whose net11.0 
 ## Session
 
 - Created: 943834 (2026-09-29), follow-up from task 249
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1960d-9a54-7072-bd5d-d3e0602b0acf, max-turns 500, Done — 2026-11-01T07:56:23Z
 
 ## Notes
 
