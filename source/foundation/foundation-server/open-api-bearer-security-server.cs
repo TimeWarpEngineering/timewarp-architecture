@@ -217,7 +217,7 @@ internal static class OpenApiBearerSecurity
     }
 
     response.Description = AppendNote(described, description);
-    response.Content ??= new Dictionary<string, OpenApiMediaType>();
+    response.Content ??= new Dictionary<string, IOpenApiMediaType>();
     if (!response.Content.ContainsKey(ProblemJson))
     {
       response.Content[ProblemJson] = new OpenApiMediaType

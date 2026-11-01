@@ -7,6 +7,7 @@
 // default, so omitting the id must read as required in the document, not as an optional field.
 // The host is the OpenAPI pipeline only: FastEndpoints discovers the one generated endpoint, and
 // CommonServerModule.AddOpenApi runs the document transformers. No mediator graph.
+// FastEndpoints 9 on the .NET 11 OpenAPI stack writes the XML <example> as an examples array.
 #endregion
 
 namespace OpenApiRequestAgentHumanLink_;
@@ -87,7 +88,8 @@ public class RequestAgentHumanLink_Given_
     string description = property.GetProperty("description").GetString() ?? string.Empty;
     description.ShouldContain("human");
     description.ShouldContain("account id");
-    property.TryGetProperty("example", out JsonElement example).ShouldBeTrue();
+    property.TryGetProperty("examples", out JsonElement examples).ShouldBeTrue();
+    JsonElement example = examples.EnumerateArray().Single();
     Guid.TryParse(example.GetString(), out Guid exampleId).ShouldBeTrue();
     exampleId.ShouldNotBe(Guid.Empty);
   }

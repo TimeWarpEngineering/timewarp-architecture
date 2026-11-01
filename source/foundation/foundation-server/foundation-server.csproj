@@ -7,7 +7,9 @@
   <ItemGroup>
     <PackageReference Include="FastEndpoints" />
     <PackageReference Include="FastEndpoints.OpenApi" />
-    <!-- Lift transitive Microsoft.OpenApi 2.0.0 → the CPM 2.x pin (NU1903 / GHSA-v5pm-xwqc-g5wc). -->
+    <!-- Lift FastEndpoints.OpenApi's net11.0 floor (11.0.0-rc.2) to the RC3 train pin. -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Lift Microsoft.AspNetCore.OpenApi's Microsoft.OpenApi 3.10.2 floor to the 3.11.0 pin. -->
     <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="OneOf" />

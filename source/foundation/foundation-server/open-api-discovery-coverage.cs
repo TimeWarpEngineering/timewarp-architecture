@@ -260,7 +260,7 @@ internal static class OpenApiDiscoveryCoverage
     return new OpenApiResponse
     {
       Description = description,
-      Content = new Dictionary<string, OpenApiMediaType>
+      Content = new Dictionary<string, IOpenApiMediaType>
       {
         ["text/plain"] = new OpenApiMediaType
         {

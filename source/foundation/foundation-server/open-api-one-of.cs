@@ -174,9 +174,11 @@ internal static class OpenApiOneOf
     foreach (KeyValuePair<string, IOpenApiResponse> response in operation.Responses)
     {
       if ((IsStatusClass(response.Key, '4') || IsStatusClass(response.Key, '5'))
-        && response.Value.Content?.TryGetValue(ProblemJson, out OpenApiMediaType? mediaType) == true)
+        && response.Value.Content is IDictionary<string, IOpenApiMediaType> content
+        && content.TryGetValue(ProblemJson, out IOpenApiMediaType? mediaType)
+        && mediaType is OpenApiMediaType concrete)
       {
-        mediaType.Schema = problem;
+        concrete.Schema = problem;
       }
     }
 
@@ -185,7 +187,7 @@ internal static class OpenApiOneOf
       operation.Responses[DefaultResponse] = new OpenApiResponse
       {
         Description = "Problem details. The status is the problem's own status, 400 when the handler sets none.",
-        Content = new Dictionary<string, OpenApiMediaType>
+        Content = new Dictionary<string, IOpenApiMediaType>
         {
           [ProblemJson] = new OpenApiMediaType { Schema = problem }
         }
