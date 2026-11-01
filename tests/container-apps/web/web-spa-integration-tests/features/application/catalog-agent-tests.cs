@@ -15,6 +15,9 @@
 // stalling the suite. The feedback submit receipt runs on an in-proc FeedbackSpa (C-create) whose
 // scripted IWebServerApiService answers SubmitFeedback with a fresh id: the closed-box Aspire SPA
 // registers no web-server BFF client and its mock session has no profile store to file against.
+// AddPasskey on Settings uses that same closed box. Mediator 15 activates the handler inside the
+// pipeline, so the missing client becomes an ExceptionNotification error bar and the dispatcher
+// returns completed. That bar is the proof the call executed rather than offering navigation.
 // That test drives the real path — dispatcher, approval, ActionSet handler, AgentCallOutcome, and
 // the dispatcher's own result serialization — and asserts the JSON the agent receives.
 // page_context on /Feedback is driven through CatalogAgentSession.CreateInvokingClient with the
@@ -1061,12 +1064,24 @@ public partial class CatalogAgent_Should
     (await pending.WaitAsync(Timeout)).ShouldContain("\"approved\":false");
 
     await scope.Send(new AgentSurfaceState.SetEditModeActionSet.Action(AgentEditMode.AutomaticallyEdit));
-    // The closed-box Aspire SPA registers no web-server BFF client, so the handler cannot finish
-    // the ceremony. Reaching that activation proves this was an execute, not a navigate offer.
-    InvalidOperationException thrown = await Should.ThrowAsync<InvalidOperationException>(
-      () => dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout));
-    thrown.Message.ShouldContain("IWebServerApiService");
+    // Mediator 15 resolves the handler inside the pipeline. The closed-box Aspire SPA registers no
+    // web-server BFF client, so activation fails. StateTransactionBehavior publishes
+    // ExceptionNotification and the dispatcher returns completed. A navigate offer would not add
+    // this error bar.
+    string executedJson = await dispatcher.InvokeTool("Credentials.AddPasskey", null).WaitAsync(Timeout);
+    using (JsonDocument executed = JsonDocument.Parse(executedJson))
+    {
+      JsonElement root = executed.RootElement;
+      root.GetProperty("completed").GetBoolean().ShouldBeTrue();
+      root.TryGetProperty("navigateTo", out _).ShouldBeFalse();
+    }
+
     scope.Store.GetState<AgentSurfaceState>().HasPendingApproval.ShouldBeFalse();
+    NotificationState notifications = scope.Store.GetState<NotificationState>();
+    notifications.Messages.Count.ShouldBe(messages + 1);
+    NotificationState.NotificationMessage activation = notifications.Messages[^1];
+    activation.Intent.ShouldBe(MessageBarIntent.Error);
+    activation.Title.ShouldContain("IWebServerApiService");
   }
 
   public static Task Instructions_Stay_Under_The_Contract_Cap()

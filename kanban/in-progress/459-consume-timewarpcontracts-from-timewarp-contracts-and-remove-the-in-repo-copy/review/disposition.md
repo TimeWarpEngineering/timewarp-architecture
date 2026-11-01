@@ -1,5 +1,7 @@
 # Disposition — task 459
 
+> **Reopened 2026-11-01 by round 2.** The package-roll scope add (commit `97ff4440a`) reopened the review. `review/round-2/merged.md` has 2 open findings (M1 bug, M2 nit). The text below is the round-1 disposition and is no longer final. The round that closes the loop rewrites this file.
+
 **Date:** 2026-11-01
 **Outcome:** clean
 **Rounds:** 1
