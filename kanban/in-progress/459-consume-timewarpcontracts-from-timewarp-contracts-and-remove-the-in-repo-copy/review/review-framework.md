@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 2377
-- Effort: 3
+- Lines changed: 150
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Scope — task 459
 
@@ -49,6 +49,14 @@
 **Plan / brief:** the `## Session` CI-red note and the updated `## Goal (implementer restatement)`. Follow the `TimeWarp.State.DevTools.Hosting` `12.0.0-beta.16` default name `timewarp-devtools`, and never pin State backward.
 **Effort:** 3 (by-diff budget, 2377 lines). **Roster:** general. **Turn cap:** 200.
 **Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review oracle, headless print mode; session id not reported.
+
+## Scope — round 6
+
+**Date:** 2026-11-01
+**Diff scope:** the fix pass on round 5, delta `0151ed962..1ca6eae81`. The only product changes are two Design regions, in `aspire-app-host/program.cs` and `state-dev-tools-model-tests.cs`, and they change comments only (+4/−6).
+**Plan / brief:** round-5 `merged.md` finding M4, and the updated `## Goal (implementer restatement)`.
+**Effort:** 1 (by-diff budget, 150 lines). **Roster:** general. **Turn cap:** 80.
+**Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review-2 oracle, headless print mode; session id not reported.
 
 ## Ground rules
 
