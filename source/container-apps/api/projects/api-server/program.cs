@@ -1,5 +1,5 @@
 #region Purpose
-// Api.Server composition root: Aspire-enrolled host wiring Mediator, FastEndpoints, and Oakton.
+// Api.Server composition root: Aspire-enrolled host wiring Mediator and FastEndpoints.
 #endregion
 
 #region Design
@@ -9,7 +9,8 @@
 // Validators register from both the server and contracts assemblies — contracts own request
 // validators, and only public validators are picked up (internals are deliberately excluded).
 // Mediator pipeline behaviors run in registration order: Generic wraps FluentValidation.
-// Oakton runs the host so the binary exposes diagnostic commands alongside serving.
+// The host runs with RunAsync and returns 0 after a clean shutdown. Reachability is
+// ServiceDefaults' live health check.
 // Permissive CORS and Scalar (OpenAPI document UI) are development-only surfaces.
 // OpenAPI document registration lives in CommonServerModule.AddOpenApi (FastEndpoints.OpenApi).
 // Agent bearer scopes on that document come from AgentBearerPolicies, which names the same
@@ -39,7 +40,7 @@ public class Program : IAspNetProgram
   const string ApiTitle = "TimeWarp.Architecture Api.Server API";
   const string ApiVersion = "v1";
 
-  public static Task<int> Main(string[] argumentArray)
+  public static async Task<int> Main(string[] argumentArray)
   {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(argumentArray);
     builder.AddServiceDefaults();
@@ -54,7 +55,8 @@ public class Program : IAspNetProgram
     ConfigureMiddleware(webApplication);
     ConfigureEndpoints(webApplication);
 
-    return webApplication.RunOaktonCommands(argumentArray);
+    await webApplication.RunAsync().ConfigureAwait(false);
+    return 0;
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)

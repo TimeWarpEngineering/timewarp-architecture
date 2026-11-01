@@ -1,5 +1,5 @@
 #region Purpose
-// Bundles every PostgreSQL registration (DbContext, health check, environment check) behind one opt-in module.
+// Bundles every PostgreSQL registration (DbContext and health check) behind one opt-in module.
 #endregion
 
 #region Design
@@ -29,10 +29,10 @@
 // EfPendingMigrationsProbe (task 363), which SiteSettingsSeedHostedService asks before its first
 // EF read, and that seed runs before Kestrel starts. This module never EnsureCreated / Migrate at startup.
 // Tests call Database.Migrate() against ephemeral DBs.
-// The connection string is read once and reused for both Configure<PostgresDbOptions> (the
-// environment check consumes IOptions<PostgresDbOptions>) and AddDbContext, so the two cannot drift.
-// Health check (liveness) and environment check (startup gate) intentionally share the same
-// CanConnectAsync probe.
+// The connection string is read once and reused for both Configure<PostgresDbOptions> and
+// AddDbContext, so the bound options and the context cannot drift.
+// AddDbContextCheck<PostgresDbContext> probes CanConnectAsync when a health endpoint that includes
+// untagged checks is requested. It is not a process-start gate.
 // Resilience (task 255): UseNpgsql applies PostgresRetryPolicy (EnableRetryOnFailure, 4 retries,
 // 2s max delay) so a pool of connections killed by a Postgres restart / `dev db reset` recovers on
 // the next request instead of surfacing 57P01. Bounds and the concurrency-exception carve-out are
@@ -156,8 +156,6 @@ public sealed partial class PostgresDbModule : IModule
         null,
         PerformPostgresHealthCheck()
     );
-
-    ConfigureEnvironmentChecks(serviceCollection);
   }
 
   /// <summary>
@@ -170,16 +168,6 @@ public sealed partial class PostgresDbModule : IModule
       configuration["Postgres:RetryCount"],
       configuration["Postgres:RetryDelaySeconds"]);
     return builder => PostgresRetryPolicy.Configure(builder, count, maximumDelay);
-  }
-
-  private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)
-  {
-    serviceCollection.AddSingleton<PostgresDbEnvironmentCheck>();
-    serviceCollection.CheckEnvironment<PostgresDbEnvironmentCheck>
-    (
-        PostgresDbEnvironmentCheck.Description,
-        async (postgresDbEnvironmentCheck) => await postgresDbEnvironmentCheck.CheckAsync()
-    );
   }
 
   private static Func<PostgresDbContext, CancellationToken, Task<bool>> PerformPostgresHealthCheck() =>

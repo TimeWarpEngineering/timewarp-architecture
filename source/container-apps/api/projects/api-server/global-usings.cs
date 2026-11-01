@@ -6,7 +6,6 @@ global using FastEndpoints;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
-global using Oakton;
 global using TimeWarp.Architecture.Api.Server;
 global using TimeWarp.Foundation;
 global using TimeWarp.Foundation.Behaviors;
