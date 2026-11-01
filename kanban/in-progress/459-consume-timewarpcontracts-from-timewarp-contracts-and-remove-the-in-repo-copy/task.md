@@ -12,13 +12,14 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 
 ## Goal (implementer restatement)
 
-This repository consumes the published `TimeWarp.Contracts` package and no longer builds that project. The open pull request also takes the nuget.org pins that restore cleanly, including `TimeWarp.Mediator` `15.0.0-beta.4`, and leaves `Microsoft.OpenApi` at `2.13.0` because ASP.NET Core's OpenAPI package rejects 3.x. The extraction and that roll are already on the branch. Review round 2 found that the Mediator 15 pipeline swallows handler-activation failures, and that the SPA Send analyzer still describes the Mediator 14 API.
+This repository consumes the published `TimeWarp.Contracts` package and no longer builds that project. The open pull request also takes the nuget.org pins that restore cleanly, including `TimeWarp.Mediator` `15.0.0-beta.4`, and leaves `Microsoft.OpenApi` at `2.13.0` because ASP.NET Core's OpenAPI package rejects 3.x. The extraction, that roll, and the round-2 test fixes are already on the branch. Review round 3 accepted those fixes. This walk repairs the comment order in `catalog-agent-tests.cs`: the AddPasskey sentences had been inserted in front of the sentence that describes the feedback receipt test, so "That test" read as AddPasskey.
 
 This walk is done when:
 
+- In the `catalog-agent-tests.cs` Design region, the three AddPasskey sentences sit after "That test drives the real path…". That sentence still describes the feedback receipt test: dispatcher, approval, ActionSet handler, AgentCallOutcome, and the JSON the agent receives. The AddPasskey sentences still say the on-Settings call uses the same closed box, that Mediator 15 records the missing client as an error bar, and that the bar is the proof the call executed.
 - `CatalogAgent_Should.AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs` still proves the on-Settings call executed rather than offering navigation. Mediator 15 resolves the handler inside the pipeline, so the missing `IWebServerApiService` is caught by `StateTransactionBehavior` and recorded as one `NotificationState` error whose Title contains `IWebServerApiService`. The dispatcher returns `completed: true`, and there is no pending approval. The product is not changed to rethrow: handler-body failures already take this path, and `RethrowHandlerExceptions` stays at its default of false.
 - `SpaMediatorSendAnalyzer` Design text and its test stub describe Mediator 15. `ISender.Send` returns `ValueTask`, and `CreateStream` is gone.
-- `web-spa-integration-tests` and the architecture analyzer tests pass. `dev build` is 0 warnings and 0 errors, and `ganda repo audit` is clean. The extraction and the pins named in Results stay as they are.
+- `web-spa-integration-tests` still passes. `dev build` is 0 warnings and 0 errors, and `ganda repo audit` is clean. The extraction and the pins named in Results stay as they are.
 
 ## Requirements
 
@@ -77,6 +78,7 @@ This walk is done when:
 - [x] M1: on-Settings AddPasskey asserts the Mediator 15 error bar and a completed result
 - [x] M2: SPA Send analyzer text and stub describe Mediator 15
 - [x] `web-spa-integration-tests` 578/578 and architecture analyzer tests 259/259
+- [x] M3: AddPasskey Design sentences follow the feedback-receipt "That test" sentence
 
 ## Results
 
@@ -115,6 +117,14 @@ Gates after that fix:
 - `timewarp-architecture-analyzers-tests` (Release, from the project directory): 259 passed, 0 failed. The SPA Send class is included (12 tests).
 - `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims.
 
+Review round 3 fix (2026-11-01). M3 is a comment order in `catalog-agent-tests.cs`. The three AddPasskey sentences now follow "That test drives the real path…", so that sentence again describes the feedback receipt test. The assertions and the product are unchanged.
+
+Gates after that fix:
+
+- `dev build`: 0 warnings, 0 errors.
+- `web-spa-integration-tests` (Release, from the project directory): 578 passed, 0 failed (1m 11s).
+- `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454).
+
 ### How to validate
 
 **Smoke:**
@@ -133,9 +143,17 @@ ganda repo audit
 
 Run each `dotnet test` from that project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK. Each suite's `global.json` selects the runner.
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
+**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. In `catalog-agent-tests.cs`, the Design sentence "That test drives the real path…" follows the feedback-receipt sentences, and the AddPasskey sentences follow it. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
 
 ### Review disposition
+
+**Round 3 (fix-pass delta, commit `285351c94`): fix pass applied. Host review follows.**
+
+- **Status:** M1 (bug) and M2 (nit) were already fixed. M3 (nit) is addressed in this walk. The ledger in `review/round-3/merged.md` stays the reviewer's until the next round closes it. Effort 2, roster `general`, turn cap 120.
+- **Counts (round 3, at review):** bug 0 open / 1 fixed; suggestion 0; nit 1 open / 1 fixed; wontfix 0.
+- **M3 (nit):** the AddPasskey sentences now follow "That test drives the real path…". That sentence again describes the feedback receipt test. Assertions and product code are unchanged.
+- **Gates the reviewer re-ran on 2026-11-01:** `dev build` 0 warnings / 0 errors, `timewarp-architecture-analyzers-tests` 259/259, `web-spa-integration-tests` 578/578, `ganda repo audit` exit 0 (only the advisory `kanban-landed` warning about other tasks' claims).
+- **Artifacts:** `review/review-framework.md` (round-3 scope), `review/round-3/general.md`, `review/round-3/merged.md`. `review/disposition.md` stays reopened.
 
 **Round 2 (package roll, commit `97ff4440a`): fix pass applied. Host review follows.**
 
@@ -157,6 +175,7 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 
 - Round 1: Done
 - Round 2: fix pass applied for M1 and M2; host review follows
+- Round 3: fix pass applied for M3; host review follows
 ## Notes
 
 - Waits on timewarp-contracts task 002 (cross-repo; nuget.org release, not just merge).
@@ -181,3 +200,5 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 3, roster general, turn cap 200, session not reported. Scope was package-roll commit `97ff4440a`. The result was 2 open findings (M1 bug, M2 nit), so a fix pass is needed. The goal restatement matches the scope add, so nothing was misread. Gate gap: neither the Requirements gate list nor the restatement names `web-spa-integration-tests`, and that is where the Mediator 15 dispatch change shows up. — 2026-11-01
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fbab491b-bc6f-4738-bb02-cb05e0aa60c3, max-turns 200 — 2026-11-01T06:09:12Z
 - Fix pass: Grok 4.7 (ganda task work), session 01a195b9-f20f-7d60-8813-f41a4d2a1712 (2026-11-01). M1 asserts the Mediator 15 error bar. M2 updates the SPA Send analyzer text and stub to ValueTask with no CreateStream. Product dispatch is unchanged.
+- Review oracle round 3: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 2, roster general, turn cap 120, session not reported. Scope was fix-pass commit `285351c94`. M1 and M2 are fixed. M3 (nit, Design-region antecedent) is open, so a fix pass is needed. The goal restatement matches the round-2 findings and the task, so nothing was misread. — 2026-11-01
+- Fix pass: Grok 4.7 (ganda task work), session 01a195c8-961a-7b50-a49e-e101d8829c2c (2026-11-01). M3 moves the AddPasskey Design sentences to after the feedback-receipt "That test" sentence. Assertions and product dispatch are unchanged.

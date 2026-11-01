@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1984
-- Effort: 3
+- Lines changed: 209
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Scope — task 459
 
@@ -25,6 +25,14 @@
 **Plan / brief:** the task.md `## Session` scope add of 2026-11-01 and the updated `## Goal (implementer restatement)`.
 **Effort:** 3 (by-diff budget, 1984 lines). **Roster:** general.
 **Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review oracle, headless print mode; session id not reported.
+
+## Scope — round 3
+
+**Date:** 2026-11-01
+**Diff scope:** the fix pass on round 2. That is delta `fa07128db..285351c94`, which is commit `285351c94`: 3 files, +40/−31.
+**Plan / brief:** round-2 `merged.md` findings M1 and M2, and the updated `## Goal (implementer restatement)`.
+**Effort:** 2 (by-diff budget, 209 lines). **Roster:** general. **Turn cap:** 120.
+**Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review-2 oracle, headless print mode; session id not reported.
 
 ## Ground rules
 
