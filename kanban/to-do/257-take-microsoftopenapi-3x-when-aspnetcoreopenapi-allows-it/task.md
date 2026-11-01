@@ -8,25 +8,41 @@ FastEndpoints.OpenApi / Microsoft.AspNetCore.OpenApi pull). `ganda nuget outdate
 declares `Microsoft.OpenApi [2.12.0, 3.0.0)`, so a 3.x pin raises NU1608 (warning-as-error).
 Deferred from tasks 201 and 249.
 
-**Gate:** start only when the Microsoft.AspNetCore.OpenApi version this repo pins (via the ASP.NET
-Core train, .NET 11 expected) declares a Microsoft.OpenApi 3.x range, and FastEndpoints.OpenApi
-on the pinned train accepts it.
+**Decision 2026-11-01 (Steven):** do not wait for a stable FastEndpoints. The repo already runs
+on the .NET 11 RC train, and the 10.0.11 `Microsoft.AspNetCore.OpenApi` comes in only through
+FastEndpoints.OpenApi 8.3.0. Take the FastEndpoints 9 prerelease, whose net11.0 group depends on
+`Microsoft.AspNetCore.OpenApi` 11.x, which allows `Microsoft.OpenApi` [3.10.2, 4.0.0).
 
 ## Requirements
 
-- Confirm the gate from the nuspecs (AspNetCore.OpenApi + FastEndpoints.OpenApi); if still
-  capped below 3.0.0, record the date/versions checked and leave this task in to-do.
-- Bump the pin in `Directory.Packages.props`, update its comment, and fix any product code that
-  touches the OpenApi object model (Scalar / FastEndpoints document transformers).
-- No `VersionOverride`; do not downgrade anything else to satisfy the graph.
-- Gates: `dev build` 0/0, `dev test`, `dev template-smoke`, `ganda repo audit`; OpenAPI document
-  and Scalar UI still served by web-server and api-server.
+- Move every `FastEndpoints*` package to the latest 9.x prerelease on nuget.org (9.0.0-beta.6 or
+  newer at implement time). Keep them all on one version.
+- Pin `Microsoft.AspNetCore.OpenApi` to the repo's ASP.NET Core train (11.0.0-rc.3.26522.148, or
+  whatever the other `Microsoft.AspNetCore.*` pins are at implement time). It lifts the
+  FastEndpoints 9 net11.0 dependency (11.0.0-rc.2) to the current RC.
+- Pin `Microsoft.OpenApi` to the latest 3.x (3.11.0 or newer). Rewrite the long pin comment in
+  `Directory.Packages.props` down to what is true after this change. The task-by-task re-check
+  history is no longer needed.
+- Fix product code for the FastEndpoints 9 and Microsoft.OpenApi 3 breaking changes: document
+  transformers, Scalar wiring, the FastEndpoint source generator output
+  (`source/analyzers/timewarp-architecture-analyzers/`), and anything that uses the OpenApi object
+  model (`Microsoft.OpenApi.Models` types moved in 3.x). Read the FastEndpoints 9 release notes.
+- No `VersionOverride`. Do not downgrade anything to satisfy the graph. If FastEndpoints 9 needs a
+  feature or fix that only its maintainers can ship, stop and report with the exact error.
+- Gates: `dev build` 0 warnings and 0 errors; `dev test` including the integration lane
+  (`aspire-tests`, `web-server-integration-tests`, `api` and `yarp` tests); `dev template-smoke`;
+  `dev regenerate-generated` with no diff under `goldens/ingress` (or regenerate and commit if a
+  route changed on purpose); `ganda repo audit`; `ganda nuget outdated` reports no remaining
+  Microsoft.OpenApi or FastEndpoints update. Record that the OpenAPI document and the Scalar UI
+  are still served by web-server and api-server (an integration test asserting the document,
+  or a recorded `curl` of `/openapi/*.json` returning 200 with the expected paths).
 
 ## Checklist
 
-- [ ] Gate confirmed from nuspecs
-- [ ] Pin bumped + comment reconciled
-- [ ] OpenApi object-model call sites fixed
+- [ ] FastEndpoints* on 9.x prerelease
+- [ ] Microsoft.AspNetCore.OpenApi pinned to the RC train; Microsoft.OpenApi on 3.x; comment rewritten
+- [ ] FastEndpoints 9 / OpenApi 3 call sites and generator output fixed
+- [ ] OpenAPI document and Scalar served (evidence recorded)
 - [ ] Gates green
 
 ## Session
