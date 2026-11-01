@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <!-- Patched transitive pin for Analyzer.Testing (see Directory.Packages.props). -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="TimeWarp.Contracts" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../source/analyzers/timewarp-architecture-analyzers/timewarp-architecture-analyzers.csproj" />
@@ -21,7 +22,6 @@
          flows transitively for test code that uses TimeWarp.Architecture.Attributes. -->
     <ProjectReference Include="../../../source/analyzers/timewarp-architecture-attributes/timewarp-architecture-attributes.csproj" />
     <ProjectReference Include="../../../source/foundation/foundation-contracts-generators/foundation-contracts-generators.csproj" />
-    <ProjectReference Include="../../../source/foundation/timewarp-contracts/timewarp-contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="TimeWarp.Jaribu" />

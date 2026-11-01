@@ -5,7 +5,7 @@
     <Description>Shared contracts, request/response markers, route/auth/query source generator, and common types for the TimeWarp foundation layer.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\timewarp-contracts\timewarp-contracts.csproj" />
+    <PackageReference Include="TimeWarp.Contracts" />
   </ItemGroup>
 
   <ItemGroup>

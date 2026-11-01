@@ -20,8 +20,9 @@
 // real HEAD; init alone still warns on empty repos.
 //
 // Two independent availability waits (task 130): flatcontainer (WaitForFlatcontainerAsync) gates
-// restore-path packages, including TimeWarp.Contracts (Foundation.Contracts depends on it; the id
-// is not TimeWarp.Foundation.*), and is correct as a one-shot poll-then-proceed.
+// restore-path packages this repo publishes. TimeWarp.Contracts is a nuget.org dependency of
+// TimeWarp.Foundation.Contracts and is absent from RequiredPublishedPackageIds. The wait is a
+// one-shot poll-then-proceed.
 // FlatcontainerWaitBudget is 90 minutes. The deadline and the "budget N min" line both read that
 // span, so the printed budget cannot disagree with the deadline. Poll delay starts at 5 seconds,
 // doubles, and caps at FlatcontainerPollDelayCap (1 minute) so the longer window still notices
@@ -44,7 +45,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
   private const string TemplateShortName = "timewarp-architecture";
 
   // Run 40728399501 (v2.0.0-beta.28, 2026-10-28): nuget.org took about 15 minutes to list
-  // TimeWarp.Architecture and TimeWarp.Contracts. One span is the deadline and the budget line.
+  // TimeWarp.Architecture. One span is the deadline and the budget line.
   private static readonly TimeSpan FlatcontainerWaitBudget = TimeSpan.FromMinutes(90);
 
   // Doubling past a minute would hide a package that appeared just after a poll.
@@ -64,7 +65,6 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     "TimeWarp.Architecture.Generators",
     "TimeWarp.Architecture.Attributes",
     "TimeWarp.Foundation.Domain",
-    "TimeWarp.Contracts",
     "TimeWarp.Foundation.Contracts",
     "TimeWarp.Foundation.Application",
     "TimeWarp.Foundation.Infrastructure",

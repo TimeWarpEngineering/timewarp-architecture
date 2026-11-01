@@ -1,6 +1,6 @@
 # Neutral operations: one contract, three bindings
 
-`TimeWarp.Contracts` holds the part of a contract that does not depend on the transport. A
+The `TimeWarp.Contracts` package holds the part of a contract that does not depend on the transport. A
 request class in this skill's shape is the operation. The HTTP, CLI, and MCP hosts each bind
 the same class. Nobody writes a second schema.
 

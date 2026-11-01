@@ -166,7 +166,7 @@ when the handler cannot keep that promise. See [neutral-operations.md](reference
 
 ## Neutral operations: one contract, three bindings
 
-`TimeWarp.Contracts` adds the transport-neutral part of a contract. The same request class is an
+The `TimeWarp.Contracts` package adds the transport-neutral part of a contract. Its version pin is its own line in `Directory.Packages.props`. The same request class is an
 HTTP endpoint, a CLI command, and an MCP tool:
 
 - **Name, group, and title:** `[Operation("roles.get", Description = "…", Group = "…", Title = "…")]`
