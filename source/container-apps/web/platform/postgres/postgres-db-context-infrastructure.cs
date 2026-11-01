@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Postgres plumbing (module, health and environment checks) ships with the postgres flag; the model
+// Postgres plumbing (module and DbContext health check) ships with the postgres flag; the model
 // is product-owned. Schema is applied by AppHost AddEFMigrations (committed migrations under
 // platform/postgres/migrations/, task 147-007) — not by this host at startup.
 // Profile is the teaching IAggregateRoot — DbSet + IEntityTypeConfiguration discovered via

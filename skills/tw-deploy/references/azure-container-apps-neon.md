@@ -231,8 +231,9 @@ no Key Vault, and no firewall rule. The command redacts the string as `<direct N
 web-server's EF retry on this target only is `Postgres__RetryCount=6` and
 `Postgres__RetryDelaySeconds=8`. `RetryDelaySeconds` is the maximum delay between tries (EF backs
 off up to that cap), not a fixed wait. The default elsewhere stays 4 tries and a 2 second maximum.
-Together with `Timeout=30` that covers Neon's wake-up. The startup environment check calls
-`CanConnectAsync` once per process start, which is what wakes Neon. It is not a poll.
+Together with `Timeout=30` that covers Neon's wake-up on the first query that opens a connection.
+Nothing probes Postgres at process start. A request to `/api/health` runs the `PostgresDbContext`
+check (`CanConnectAsync`) and wakes Neon. It is not a poll.
 
 ## Smoke
 

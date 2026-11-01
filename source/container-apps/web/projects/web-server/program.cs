@@ -13,7 +13,9 @@
 // api-server). Do not bootstrap Serilog: UseSerilog replaces host providers and drops the OTLP
 // logging exporter, so structured logs never reach the Aspire dashboard. Startup crash capture is
 // a try/catch around host build/run — ILogger after Build, Console.Error before any logger exists.
-// The app runs through RunOaktonCommands to expose environment checks as CLI commands.
+// The host runs with RunAsync and returns 0 after a clean shutdown (1 when startup throws).
+// Reachability is the ASP.NET health checks: ServiceDefaults' live check, and
+// AddDbContextCheck<PostgresDbContext> when a Postgres connection is configured.
 // Web.Spa services are registered here too — prerendering runs SPA code on the server.
 // API surface is generated FastEndpoints from [ApiEndpoint] web-contracts (MVC BaseEndpoint
 // removed task 131 F-002). Pipeline order: UseMarkdownContentNegotiation (before UseRouting —
@@ -131,7 +133,8 @@ public partial class Program : IAspNetProgram
       ConfigureMiddleware(webApplication);
       ConfigureEndpoints(webApplication);
 
-      return await webApplication.RunOaktonCommands(argumentArray).ConfigureAwait(false);
+      await webApplication.RunAsync().ConfigureAwait(false);
+      return 0;
     }
     catch (Exception exception)
     {
@@ -657,18 +660,6 @@ public partial class Program : IAspNetProgram
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
   {
     serviceCollection.AddHealthChecks();
-
-    ConfigureEnvironmentChecks(serviceCollection);
-  }
-
-  private static void ConfigureEnvironmentChecks(IServiceCollection serviceCollection)
-  {
-    serviceCollection.AddSingleton<SampleEnvironmentCheck>();
-
-    serviceCollection.CheckEnvironment<SampleEnvironmentCheck>
-    (
-      SampleEnvironmentCheck.Description, sampleEnvironmentCheck => sampleEnvironmentCheck.Check()
-    );
   }
 
   [LoggerMessage(Level = LogLevel.Information, Message = "Starting web host")]

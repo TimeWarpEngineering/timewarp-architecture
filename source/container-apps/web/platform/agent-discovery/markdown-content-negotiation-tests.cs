@@ -15,11 +15,9 @@
 #endregion
 
 #region Design
-// HTTP smoke only (no direct web-server ProjectReference): HostGraphFactory C-create brings the
-// production pipeline. PreferMarkdown unit cases live as behavioral checks via Accept headers
-// here rather than type-referencing MarkdownContentNegotiation (avoids standalone NU1107 from
-// Oakton's Hosting <10 ceiling when web-server is a direct runfile project). Isolated HttpClient
-// per call — no shared cookie jar.
+// HTTP smoke only. HostGraphFactory brings the production pipeline, so Accept negotiation is
+// proved on the host rather than by calling MarkdownContentNegotiation directly. Each call uses
+// its own HttpClient (no shared cookie jar).
 #endregion
 
 //-:cnd:noEmit

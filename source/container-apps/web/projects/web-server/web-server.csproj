@@ -48,14 +48,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- PrivateAssets: Oakton 6.3.0 requires Microsoft.Extensions.Hosting [6.0.0, 10.0.0).
-         Microsoft.AspNetCore.OpenApi 11 requires Hosting >= 11.0.0-rc.3.26522.148. This host
-         restores because the Web SDK supplies Hosting from the shared framework. The EF migration
-         bundle is a generated Microsoft.NET.Sdk project that references this host and re-resolves
-         those nuspecs, which fails with NU1107. Oakton stays a host implementation detail. -->
-    <PackageReference Include="Oakton">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <!-- Task 344: the extended [LoggerMessage] generator records [PersonalData] / [SensitiveData]
          on parameters so service-defaults redaction can erase them. Analyzers do not flow from
          aspire-service-defaults' package references, so the generator needs this direct reference. -->
