@@ -12,19 +12,15 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 
 ## Goal (implementer restatement)
 
-This repository stops building `TimeWarp.Contracts` and consumes the package timewarp-contracts task 002 published: `2.0.0-beta.30` on nuget.org (release `v2.0.0-beta.30`, repository commit `0b1c70e3`).
+The extraction is already on this branch: this repository no longer builds `TimeWarp.Contracts` and consumes the package from timewarp-contracts. This walk rolls the open PR forward to the packages nuget.org has now, and keeps the audit clean, before merge.
 
 This walk is done when:
 
-- `source/foundation/timewarp-contracts/` and its `timewarp-architecture.slnx` entry are gone.
-- `Directory.Packages.props` pins `TimeWarp.Contracts` at `2.0.0-beta.30`. That pin is a consumer pin. `dev check-version` discovers packable projects under `source/`, so deleting the project drops the id from the version gate. The pin stays off the platform pin lists (`msbuild/timewarp-platform-packages.props` and `PlatformPinIncludeFragments`).
-- `foundation-contracts` and the source-generator tests reference the package. `SharedProblemDetails` still type-forwards, and `shared-problem-details-forward-tests.cs` passes.
-- The six Jaribu files task 002 moved are deleted here: `operation-attribute-group-tests.cs`, `operation-attribute-name-tests.cs`, `operation-attribute-title-tests.cs`, `operation-catalog-group-tests.cs`, `operation-catalog-tool-hint-tests.cs`, and `tool-hint-attribute-tests.cs`. Foundation tests that need `TimeWarp.Foundation.*` stay.
-- `template-smoke` and `template-publish-smoke` no longer pack or wait for `TimeWarp.Contracts` as a package this repo publishes. The release pack list drops the deleted project. Generated apps restore the package from nuget.org.
-- Skills and `AGENTS.md` name the package. `dev lint-skills` passes.
-- Analyzer metadata names stay `TimeWarp.Contracts.OperationAttribute`, `DestructiveAttribute`, and `OpenWorldAttribute`.
-- `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` are pinned at `4.0.0-beta.11`, the latest on nuget.org. `ganda repo audit --fix` is committed and `ganda repo audit` is clean.
-- `dev build` is 0 warnings and 0 errors. The two test projects, `dev template-smoke`, `dev check-version`, and `dev lint-skills` pass.
+- `Directory.Packages.props` pins every package `ganda nuget outdated` reports to the latest on nuget.org. The named moves are `TimeWarp.Contracts` `2.0.0-beta.30` to `2.0.0-beta.31`, the seven `TimeWarp.State*` packages `12.0.0-beta.15` to `12.0.0-beta.16`, `Scalar.AspNetCore` `2.18.6` to `2.18.7`, and `Microsoft.OpenApi` `2.13.0` to `3.11.0`. If ASP.NET Core's OpenAPI package pins `Microsoft.OpenApi` below 3, the walk stops and records the restore error. It does not force a conflicting pin.
+- `TimeWarp.Mediator` moves forward to 15.x. `ganda nuget outdated` skips prereleases on the stable `14.0.0` pin, so the walk reads the timewarp-mediator `v15.0.0-beta.4` notes and follows any package split or rename. Pins never move backward. A defect that belongs in timewarp-mediator stops the walk. That repository is not edited from here.
+- `ganda repo audit --fix` is committed and `ganda repo audit` is clean.
+- The extraction stays intact: the in-repo project is gone, the contracts pin stays a consumer pin, the type forward still resolves, and the smoke commands do not pack `TimeWarp.Contracts`.
+- `dev build` is 0 warnings and 0 errors. The two test projects, `dev template-smoke`, `dev check-version`, `dev lint-skills`, and `ganda repo audit` pass. Results names the final pins.
 
 ## Requirements
 
@@ -77,25 +73,36 @@ This walk is done when:
 - [x] Skills and AGENTS.md updated; `dev lint-skills` green
 - [x] `ganda repo audit --fix` committed; Nuru pin at latest; audit clean
 - [x] Gates green
+- [x] Outdated packages moved to the latest on nuget.org; `Microsoft.OpenApi` stays `2.13.0` after NU1608
+- [x] `TimeWarp.Mediator` `15.0.0-beta.4` (package id reused; analyzers ride in that package)
+- [x] Gates re-run after the roll
 
 ## Results
 
-`TimeWarp.Contracts` `2.0.0-beta.30` is the nuget.org package from TimeWarpEngineering/timewarp-contracts task 002 (GitHub release `v2.0.0-beta.30`, repository commit `0b1c70e3`). `Directory.Packages.props` pins that version. The pin is a consumer pin: the id is absent from `msbuild/timewarp-platform-packages.props` and from `PlatformPinIncludeFragments`. `dev check-version` lists packable projects under `source/` and the deleted project is off that list.
+`TimeWarp.Contracts` `2.0.0-beta.31` is the nuget.org package this repo consumes. The extraction still follows timewarp-contracts task 002 (`v2.0.0-beta.30`, commit `0b1c70e3`); the pin moved because nuget.org now has `2.0.0-beta.31`. The pin is a consumer pin: the id is absent from `msbuild/timewarp-platform-packages.props` and from `PlatformPinIncludeFragments`. `dev check-version` lists packable projects under `source/` and the deleted project is off that list.
 
 `source/foundation/timewarp-contracts/` and its solution entry are deleted. `foundation-contracts` and `timewarp-architecture-sourcegenerator-tests` take `PackageReference Include="TimeWarp.Contracts"`. The `SharedProblemDetails` type forward stays. The six Jaribu files task 002 moved are deleted: `operation-attribute-group-tests.cs`, `operation-attribute-name-tests.cs`, `operation-attribute-title-tests.cs`, `operation-catalog-group-tests.cs`, `operation-catalog-tool-hint-tests.cs`, and `tool-hint-attribute-tests.cs`.
 
 `template-smoke` packs the platform projects into the local feed and leaves `TimeWarp.Contracts` on nuget.org. `template-publish-smoke` waits on packages this repo publishes. `workflow` pack list omits the deleted project. `AGENTS.md` and `skills/tw-web-api-contracts` name the package and its own version line. Analyzer metadata names are unchanged.
 
-Audit ride-along: `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` are `4.0.0-beta.11`. `ganda repo audit --fix` added `bin/dev`, `bin/dev.dbg`, and `bin/dev.exe` to `.gitignore`.
+Audit ride-along from the extraction: `TimeWarp.Nuru` and `TimeWarp.Nuru.DevCli` are `4.0.0-beta.11`. `ganda repo audit --fix` added `bin/dev`, `bin/dev.dbg`, and `bin/dev.exe` to `.gitignore`. The package-roll audit on 2026-11-01 changed nothing further.
 
-Gates on 2026-11-01:
+Package roll (scope add 2026-11-01). `ganda nuget outdated` is clean except the OpenApi major below.
 
-- `dev build`: 0 warnings, 0 errors (28.80s).
-- `tests/foundation/foundation-contracts-tests`: 25 passed, 0 failed (Release, `--no-build`). The forward test is in that run.
+- `TimeWarp.Contracts` `2.0.0-beta.31`.
+- `TimeWarp.Mediator` `15.0.0-beta.4`. Release `v15.0.0-beta.4` reuses that id for the contracts assembly and ships the analyzers in it. `TimeWarp.Mediator.Contracts` and `TimeWarp.Mediator.Analyzers` stop at `14.0.0` and are no longer referenced. `TimeWarp.Mediator.Generators` is `15.0.0-beta.4` with `PrivateAssets=all` on the hosts. Handlers, notifications, and pipeline behaviors return `ValueTask`. Behaviors take `MessageHandlerDelegate<TRequest, TResponse>` and call `next(request, cancellationToken)`. `AddGeneratedMediator` is internal in `TimeWarp.Mediator.Generated`; the three hosts import that namespace inside their own namespace. `IStreamPipelineBehavior` is gone, so the debugger services page lists only `IPipelineBehavior`. `dev-cli` and `agent-identity-cli` stay on `TimeWarp.Nuru` `4.0.0-beta.11`, which still restores `TimeWarp.Mediator.Contracts` `14` transitively. Those compilations do not reference `TimeWarp.Mediator` `15`, so they keep `ICommandHandler`.
+- `TimeWarp.State`, `TimeWarp.State.Blazor`, `TimeWarp.State.Plus`, `TimeWarp.State.Telemetry`, `TimeWarp.State.DevTools.Export`, `TimeWarp.State.DevTools.Hosting`, and `TimeWarp.State.DevTools.Wasm` are `12.0.0-beta.16`.
+- `Scalar.AspNetCore` `2.18.7`.
+- `Microsoft.OpenApi` stays `2.13.0`. `foundation-server` restore of `3.11.0` raised NU1608 (warning as error): `Microsoft.AspNetCore.OpenApi` `10.0.11` requires `Microsoft.OpenApi` (`>= 2.7.5 && < 3.0.0`) but version `Microsoft.OpenApi` `3.11.0` was resolved. The pin was not forced. The FastEndpoints major stays task 257.
+
+Gates on 2026-11-01 after the roll:
+
+- `dev build`: 0 warnings, 0 errors (10.29s, incremental after the restore that pulled the new packages).
+- `tests/foundation/foundation-contracts-tests`: 25 passed, 0 failed (Release, from the project directory). The forward test is in that run.
 - `tests/analyzers/timewarp-architecture-sourcegenerator-tests`: 154 passed, 0 failed.
-- `dev check-version`: exit 0. Source `2.0.0-beta.30` is one prerelease ahead of architecture nuget `2.0.0-beta.29`. Packages checked: TimeWarp.402, TimeWarp.Architecture.Analyzers, TimeWarp.Architecture.Attributes, TimeWarp.Architecture.Generators, TimeWarp.Foundation.Application, TimeWarp.Foundation.Contracts, TimeWarp.Foundation.Domain, TimeWarp.Foundation.Infrastructure, TimeWarp.Foundation.Server, TimeWarp.Identity, TimeWarp.Modules.
+- `dev check-version`: exit 0. Source `2.0.0-beta.30` is one prerelease ahead of architecture nuget `2.0.0-beta.29`. Packages checked: TimeWarp.402, TimeWarp.Architecture.Analyzers, TimeWarp.Architecture.Attributes, TimeWarp.Architecture.Generators, TimeWarp.Foundation.Application, TimeWarp.Foundation.Contracts, TimeWarp.Foundation.Domain, TimeWarp.Foundation.Infrastructure, TimeWarp.Foundation.Server, TimeWarp.Identity, TimeWarp.Modules. `TimeWarp.Contracts` is absent.
 - `dev lint-skills`: 9/9, eval.yaml valid.
-- `dev template-smoke`: exit 0 in 273s. `Template smoke SUCCEEDED`. SmokeDefault build 0 warnings, 0 errors, including `web-contracts.dll`. Standalone co-located tests 5/5, 5/5, and 2/2. Jaribu aggregators 442/442, 9/9, and 14/14.
+- `dev template-smoke`: exit 0 in 264s. `Template smoke SUCCEEDED`. SmokeDefault build 0 warnings, 0 errors, including `web-contracts.dll`. Standalone co-located tests 5/5, 5/5, and 2/2. Jaribu aggregators 442/442, 9/9, and 14/14.
 - `ganda repo audit`: exit 0. `nuru` pass. `required-gitignore-entries` pass. One advisory warning, `kanban-landed`, names other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454) whose worktrees are missing. That warning is non-blocking.
 
 ### How to validate
@@ -114,7 +121,7 @@ ganda repo audit
 
 Run the two `dotnet test` commands from each project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK.
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. Both test suites pass, and the foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.30" />`, and `source/foundation/timewarp-contracts/` is absent.
+**Expect:** `dev build` reports 0 warnings and 0 errors. Both test suites pass, and the foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
 
 ### Review disposition
 
@@ -147,3 +154,5 @@ Run the two `dotnet test` commands from each project directory. Microsoft.Testin
   - TimeWarp.Mediator: `ganda nuget outdated` skips prereleases on a stable pin. nuget.org has `TimeWarp.Mediator.Generators` 15.0.0-beta.4, while `.Contracts` and `.Analyzers` stop at 14.0.0 (timewarp-mediator release v15.0.0-beta.4). Read the 15.0 release notes and migrate forward to 15.x, including any package split or rename. Never pin backward. If 15.x needs a change in timewarp-mediator, stop and report; do not change that repo.
   - Run `ganda repo audit --fix` and commit what it changes; the audit must be clean.
   - Re-run every gate in Requirements after the bumps (`dev build`, both test projects, `dev template-smoke`, `dev check-version`, `dev lint-skills`, `ganda repo audit`). Update Results with the final pins.
+- Package roll: Grok 4.7 (ganda task work), session 01a1958a-bcdb-7e33-af6e-acd9a6a2ab1e (2026-11-01). Moved the outdated pins, migrated the product hosts to TimeWarp.Mediator 15.0.0-beta.4, left Microsoft.OpenApi at 2.13.0 after NU1608, and left the Nuru CLIs on Mediator.Contracts 14.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1958a-bcdb-7e33-af6e-acd9a6a2ab1e, max-turns 500, Done — 2026-11-01T05:53:26Z
