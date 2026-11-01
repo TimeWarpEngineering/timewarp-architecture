@@ -9,7 +9,6 @@
   private IServiceCollection ServiceCollection { get; set; } = null!;
 
   private List<ServiceDescriptor> PipelineBehaviors => FilterServices(typeof(IPipelineBehavior<,>));
-  private List<ServiceDescriptor> StreamPipelineBehaviors => FilterServices(typeof(IStreamPipelineBehavior<,>));
 
   private List<ServiceDescriptor> FilterServices(Type serviceType) =>
     ServiceCollection.Where
@@ -19,6 +18,5 @@
 <TimeWarpPage Title="Middleware Services">
   <Card>
     <ServiceList Title="IPipelineBehavior" Services=PipelineBehaviors />
-    <ServiceList Title="IStreamPipelineBehavior" Services=StreamPipelineBehaviors />
   </Card>
 </TimeWarpPage>

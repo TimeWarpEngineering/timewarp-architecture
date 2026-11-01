@@ -45,7 +45,7 @@ public sealed partial class SubmitTip
       PaymentHttp = paymentHttp;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query query,
       CancellationToken cancellationToken)
     {
@@ -76,7 +76,7 @@ public sealed partial class SubmitTipPost
       PaymentHttp = paymentHttp;
     }
 
-    public async Task<OneOf<TimeWarp.Architecture.Features.Tip.SubmitTipPost.Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<TimeWarp.Architecture.Features.Tip.SubmitTipPost.Response, SharedProblemDetails>> Handle(
       TimeWarp.Architecture.Features.Tip.SubmitTipPost.Command command,
       CancellationToken cancellationToken)
     {

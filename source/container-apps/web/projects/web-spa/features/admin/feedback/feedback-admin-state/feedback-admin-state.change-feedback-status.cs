@@ -40,11 +40,11 @@ partial class FeedbackAdminState
       protected override Task<Command?> GetRequest(Action action, CancellationToken cancellationToken) =>
         Task.FromResult<Command?>(new Command { FeedbackItemId = action.FeedbackItemId, Status = action.Status });
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackAdminState.Current = response.Item;
         string title = response.FilerEmailed ? "Status changed. The filer was emailed." : "Status changed.";
-        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, title), cancellationToken);
+        await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, title), cancellationToken);
       }
     }
   }

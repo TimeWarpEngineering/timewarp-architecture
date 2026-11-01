@@ -23,7 +23,7 @@
 // PublishedIngressPort_Should_DefaultToTheCommittedParameter (task 311) checks the publish model, not
 // the files: `aspire publish` leaves every .env value blank, and the ingress-port default the deploy
 // step writes there must be the committed Parameters:ingress-port.
-// State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
+// State DevTools (task 335-001) is run-mode only: no timewarp-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
 // SigNoz (task 417) is run-mode only: the in-proc publish passes Observability:SigNoz:Url, and the
@@ -43,7 +43,7 @@ public partial class ComposePublish_Given_
   private const string PostgresService = "postgres";
   private const string WebServerService = "web-server";
   // Literals, not TimeWarp.State.DevTools.Hosting constants: that package is absent with web off.
-  private const string StateDevToolsResource = "timewarp-state-devtools";
+  private const string StateDevToolsResource = "timewarp-devtools";
   private const string StateDevToolsEndpointVariable = "TIMEWARP_STATE_DEVTOOLS_ENDPOINT";
   private const string SigNozUrlArgument = "--Observability:SigNoz:Url=https://observability.example";
 

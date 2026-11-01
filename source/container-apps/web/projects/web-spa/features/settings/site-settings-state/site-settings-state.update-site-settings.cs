@@ -51,7 +51,7 @@ partial class SiteSettingsState
         return Task.FromResult<Command?>(action.Command);
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         SiteSettingsState.EntraSignInEnabled = response.EntraSignInEnabled;
         SiteSettingsState.EntraAllowBootstrap = response.EntraAllowBootstrap;
@@ -64,7 +64,7 @@ partial class SiteSettingsState
         SiteSettingsState.AcceptedTenantsMessage = null;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.SaveFailed = false;
-        return Publisher.Publish
+        await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Authentication settings saved."),
           cancellationToken

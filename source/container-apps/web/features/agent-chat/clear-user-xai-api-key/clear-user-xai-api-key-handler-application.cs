@@ -28,7 +28,7 @@ public sealed class ClearUserXaiApiKey
     }
 
     /// <summary>Returns the status after the clear, or a problem when the mode is Off.</summary>
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command request,
       CancellationToken cancellationToken)
     {

@@ -36,7 +36,7 @@ public sealed class GetXaiApiKeyStatus
     }
 
     /// <summary>Returns the status, or 401.</summary>
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query request,
       CancellationToken cancellationToken)
     {

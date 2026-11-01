@@ -53,12 +53,12 @@ partial class SiteSettingsState
         return Task.FromResult<Command?>(action.Command);
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         SiteSettingsState.AssistantName = response.AssistantName;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.AssistantNameSaveFailed = false;
-        return Publisher.Publish
+        await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Assistant name saved."),
           cancellationToken

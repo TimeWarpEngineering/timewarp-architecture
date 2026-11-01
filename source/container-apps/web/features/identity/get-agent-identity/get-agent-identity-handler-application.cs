@@ -33,7 +33,7 @@ public sealed partial class GetAgentIdentity
       PrincipalStore = principalStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
     {
       AgentCaller? caller = CallerContext.GetCurrentCaller();
       if (caller is null)

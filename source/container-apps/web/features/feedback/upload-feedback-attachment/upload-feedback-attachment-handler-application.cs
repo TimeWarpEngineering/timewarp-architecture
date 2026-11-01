@@ -56,7 +56,7 @@ public sealed class UploadFeedbackAttachment
       Logger = logger;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command request,
       CancellationToken cancellationToken)
     {

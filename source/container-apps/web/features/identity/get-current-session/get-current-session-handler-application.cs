@@ -35,7 +35,7 @@ public sealed partial class GetCurrentSession
         ?? throw new ArgumentNullException(nameof(permissionEvaluator));
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Query query, CancellationToken cancellationToken)
     {
       PrincipalId? principalId = await BrowserSessionService.GetCurrentPrincipalIdAsync(cancellationToken);
       if (principalId is null)

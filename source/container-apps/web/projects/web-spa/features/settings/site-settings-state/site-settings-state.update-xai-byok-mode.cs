@@ -52,12 +52,12 @@ partial class SiteSettingsState
         return Task.FromResult<Command?>(action.Command);
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         SiteSettingsState.XaiByokMode = response.XaiByokMode;
         SiteSettingsState.Version = response.Version;
         SiteSettingsState.XaiByokModeSaveFailed = false;
-        return Publisher.Publish
+        await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "xAI key policy saved."),
           cancellationToken

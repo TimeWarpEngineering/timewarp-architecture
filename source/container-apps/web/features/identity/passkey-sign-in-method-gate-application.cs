@@ -38,14 +38,14 @@ public sealed class PasskeySignInMethodGateBehavior<TRequest, TResponse> : IPipe
     SignInOptions = signInOptions;
   }
 
-  public async Task<TResponse> Handle(
+  public async ValueTask<TResponse> Handle(
     TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    MessageHandlerDelegate<TRequest, TResponse> next,
     CancellationToken cancellationToken)
   {
     if (!PasskeyCommands.Contains(typeof(TRequest)) || SignInOptions.Value.Lists(IdentityContracts.SignInMethod.Passkey))
     {
-      return await next().ConfigureAwait(false);
+      return await next(request, cancellationToken).ConfigureAwait(false);
     }
 
     _ = request;

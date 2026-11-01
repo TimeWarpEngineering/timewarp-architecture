@@ -32,6 +32,7 @@
 // runs in a clean CI checkout. PackableProjects includes source/libraries (TimeWarp.Modules,
 // TimeWarp.Identity, TimeWarp.402), foundation, TimeWarp.Architecture.{Attributes,Analyzers,Generators}
 // (task 092), and the template package; single Version from source/Directory.Build.props.
+// TimeWarp.Contracts is a PackageReference at the Directory.Packages.props pin. This list does not pack it.
 #endregion
 
 namespace DevCli.Commands;
@@ -60,7 +61,6 @@ internal sealed class WorkflowCommand : ICommand<Unit>
     "source/libraries/timewarp-modules/timewarp-modules.csproj",
     "source/libraries/timewarp-identity/timewarp-identity.csproj",
     "source/libraries/timewarp-402/timewarp-402.csproj",
-    "source/foundation/timewarp-contracts/timewarp-contracts.csproj",
     "source/foundation/foundation-domain/foundation-domain.csproj",
     "source/foundation/foundation-contracts/foundation-contracts.csproj",
     "source/foundation/foundation-application/foundation-application.csproj",

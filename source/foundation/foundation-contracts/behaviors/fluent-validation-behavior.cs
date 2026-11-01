@@ -34,15 +34,15 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
   /// <summary>
   /// Runs validators and short-circuits to a problem details result on failure; otherwise continues the pipeline.
   /// </summary>
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
       TRequest request,
-      RequestHandlerDelegate<TResponse> next,
+      MessageHandlerDelegate<TRequest, TResponse> next,
       CancellationToken cancellationToken
   )
   {
     if (Validators.Length == 0)
-      return await next();
+      return await next(request, cancellationToken);
 
     ValidationResult[] validationResults = await Task.WhenAll
     (
@@ -54,7 +54,7 @@ public class FluentValidationBehavior<TRequest, TResponse> : IPipelineBehavior<T
         .ToList();
 
     if (validationFailures.Count == 0)
-      return await next();
+      return await next(request, cancellationToken);
 
     // Group validation errors by property name
     var errors = validationFailures

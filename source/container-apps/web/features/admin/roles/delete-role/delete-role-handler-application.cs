@@ -15,13 +15,13 @@ public sealed partial class DeleteRole
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       OneOf<Response, SharedProblemDetails> result = RoleStore.Roles.TryRemove(command.RoleId, out _)
         ? new Response()
         : GetRole.Handler.RoleNotFound(command.RoleId);
 
-      return Task.FromResult(result);
+      return ValueTask.FromResult(result);
     }
   }
 }

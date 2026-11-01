@@ -32,6 +32,7 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Infrastructure;
 using TimeWarp.Architecture.Services;
 using TimeWarp.Identity;
+using TimeWarp.Mediator.Generated;
 
 public class Program : IAspNetProgram
 {

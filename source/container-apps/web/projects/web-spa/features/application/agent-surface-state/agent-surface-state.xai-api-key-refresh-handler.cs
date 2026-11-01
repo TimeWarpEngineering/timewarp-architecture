@@ -23,7 +23,7 @@ partial class AgentSurfaceState
   [CrossSliceReference(typeof(UserXaiApiKeyState), "A user set or clear changes whether Ask has a key, so the shell reloads chat configuration.")]
   internal sealed class XaiApiKeyRefreshHandler(IStore store) : INotificationHandler<PostPipelineNotification>
   {
-    public async Task Handle(PostPipelineNotification postPipelineNotification, CancellationToken cancellationToken)
+    public async ValueTask Handle(PostPipelineNotification postPipelineNotification, CancellationToken cancellationToken)
     {
       bool refresh = postPipelineNotification.Request switch
       {

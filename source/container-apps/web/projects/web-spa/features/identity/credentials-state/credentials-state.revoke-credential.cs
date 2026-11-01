@@ -60,11 +60,11 @@ partial class CredentialsState
         return new Command { CredentialId = action.CredentialId, UserId = userId };
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         _ = response;
         CredentialsState.CeremonyFailed = false;
-        return Publisher.Publish
+        await Publisher.Publish
         (
           new OutcomeNotification(MessageBarIntent.Success, "Credential revoked."),
           cancellationToken

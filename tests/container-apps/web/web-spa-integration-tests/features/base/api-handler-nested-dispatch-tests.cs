@@ -225,51 +225,39 @@ internal sealed class NestedDispatchSpaTestApplication : IDisposable
 
 internal sealed class NoOpPublisher : IPublisher<ClientPipeline>
 {
-  public Task Publish(object notification, CancellationToken cancellationToken = default) =>
-    Task.CompletedTask;
+  public ValueTask Publish(object notification, CancellationToken cancellationToken = default) =>
+    ValueTask.CompletedTask;
 
-  public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
+  public ValueTask Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
     where TNotification : INotification =>
-    Task.CompletedTask;
+    ValueTask.CompletedTask;
 }
 
 internal sealed class ProbeSender(IServiceProvider ServiceProvider) : ISender<ClientPipeline>
 {
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+  public ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
     where TRequest : IRequest
   {
     if (request is NestedDispatchProbeState.UpdateActionSet.Action update)
     {
       return ServiceProvider
         .GetRequiredService<NestedDispatchProbeState.UpdateActionSet.Handler>()
-        .Handle(update, cancellationToken)
-        .AsTask();
+        .Handle(update, cancellationToken);
     }
 
     if (request is NestedDispatchProbeState.FetchActionSet.Action fetch)
     {
       return ServiceProvider
         .GetRequiredService<NestedDispatchProbeState.FetchActionSet.Handler>()
-        .Handle(fetch, cancellationToken)
-        .AsTask();
+        .Handle(fetch, cancellationToken);
     }
 
     throw new InvalidOperationException($"Unexpected request type {typeof(TRequest).FullName}.");
   }
 
-  public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
+  public ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
     throw new NotSupportedException();
 
-  public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
-    throw new NotSupportedException();
-
-  public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
-    IStreamRequest<TResponse> request,
-    CancellationToken cancellationToken = default) =>
-    throw new NotSupportedException();
-
-  public IAsyncEnumerable<object?> CreateStream(
-    object request,
-    CancellationToken cancellationToken = default) =>
+  public ValueTask<object?> Send(object request, CancellationToken cancellationToken = default) =>
     throw new NotSupportedException();
 }

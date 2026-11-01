@@ -46,16 +46,16 @@ public class TrackEventBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
     Store = store;
   }
 
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
     TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    MessageHandlerDelegate<TRequest, TResponse> next,
     CancellationToken cancellationToken
   )
   {
     Guard.Against.Null(next);
 
-    TResponse response = await next().ConfigureAwait(false);
+    TResponse response = await next(request, cancellationToken).ConfigureAwait(false);
     await TryTrackAsync(request).ConfigureAwait(false);
     return response;
   }

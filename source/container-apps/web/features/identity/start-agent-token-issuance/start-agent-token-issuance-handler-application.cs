@@ -24,10 +24,10 @@ public sealed partial class StartAgentTokenIssuance
       ChallengeStore = challengeStore;
     }
 
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       byte[] challenge = ChallengeStore.Issue(AgentKeyCeremonyType.TokenIssuance);
-      return Task.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(Base64Url.EncodeToString(challenge)));
+      return ValueTask.FromResult<OneOf<Response, SharedProblemDetails>>(new Response(Base64Url.EncodeToString(challenge)));
     }
   }
 }

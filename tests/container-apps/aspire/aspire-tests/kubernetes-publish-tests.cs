@@ -21,7 +21,7 @@
 // not apply. Browser-log forwarding (task 261) and the dashboard REPL (task 262) are gated on the
 // hosting environment, so "absent" means no workload is configured as Development/Testing and the
 // chart carries no dashboard workload at all.
-// State DevTools (task 335-001) is run-mode only: no timewarp-state-devtools resource and no
+// State DevTools (task 335-001) is run-mode only: no timewarp-devtools resource and no
 // TIMEWARP_STATE_DEVTOOLS_ENDPOINT anywhere in the output. Task 335-002: nor any inspector CORS
 // variable (TIMEWARP_STATE_DEVTOOLS_CORS_ORIGINS, TimeWarp__State__DevTools__CorsOrigins).
 // SigNoz (task 417) is run-mode only: the in-proc publish passes Observability:SigNoz:Url, and the
@@ -156,7 +156,7 @@ public partial class KubernetesPublish_Given_
     // Literals: TimeWarp.State.DevTools.Hosting is absent with web off.
     foreach (YamlMappingNode manifest in Manifests)
     {
-      Name(manifest).ShouldNotContain("timewarp-state-devtools");
+      Name(manifest).ShouldNotContain("timewarp-devtools");
     }
 
     foreach ((string owner, string key, string _) in EnvironmentEntries())

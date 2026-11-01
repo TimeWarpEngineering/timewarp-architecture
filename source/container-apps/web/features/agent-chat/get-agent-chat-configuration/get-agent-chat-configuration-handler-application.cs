@@ -53,7 +53,7 @@ public sealed class GetAgentChatConfiguration
     }
 
     /// <summary>Returns configured, the setup command, and the model id.</summary>
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle
     (
       Query request,
       CancellationToken cancellationToken

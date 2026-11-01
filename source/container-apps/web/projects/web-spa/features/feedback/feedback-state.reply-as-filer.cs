@@ -56,12 +56,12 @@ partial class FeedbackState
         return Task.FromResult<Command?>(new Command { FeedbackItemId = action.FeedbackItemId, Body = action.Body });
       }
 
-      protected override Task HandleSuccess(Response response, CancellationToken cancellationToken)
+      protected override async Task HandleSuccess(Response response, CancellationToken cancellationToken)
       {
         FeedbackState.CurrentStatus = response.Status;
         FeedbackState.CurrentActivity = response.Activity;
         FeedbackState.LastReplySucceeded = true;
-        return Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Reply sent."), cancellationToken);
+        await Publisher.Publish(new OutcomeNotification(MessageBarIntent.Success, "Reply sent."), cancellationToken);
       }
     }
   }

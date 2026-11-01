@@ -26,7 +26,7 @@ public sealed class ResolveEntraTenant
       Resolver = resolver;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query query,
       CancellationToken cancellationToken)
     {

@@ -46,7 +46,7 @@ public sealed class DownloadFeedbackAttachment
       AgentPermissionScopeSource = agentPermissionScopeSource;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query request,
       CancellationToken cancellationToken)
     {

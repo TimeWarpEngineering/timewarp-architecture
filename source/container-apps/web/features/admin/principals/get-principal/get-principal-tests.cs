@@ -220,8 +220,8 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
       await Profiles.AddAsync(profile);
     }
 
-    public Task<OneOf.OneOf<GetPrincipal.Response, SharedProblemDetails>> GetAsync(PrincipalId id) =>
-      Handler.Handle(new GetPrincipal.Query { PrincipalId = id.Value }, CancellationToken.None);
+    public async Task<OneOf.OneOf<GetPrincipal.Response, SharedProblemDetails>> GetAsync(PrincipalId id) =>
+      await Handler.Handle(new GetPrincipal.Query { PrincipalId = id.Value }, CancellationToken.None);
 
     private sealed class FixedCaller : ICurrentPrincipalAccessor
     {

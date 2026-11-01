@@ -98,11 +98,11 @@ public sealed class SpaTestScope : IDisposable
   /// Dispatch by concrete request type. Do not box as <see cref="IRequest"/> first — that makes
   /// Mediator resolve <c>IRequestHandler&lt;IRequest&gt;</c> and the action is a silent no-op.
   /// </summary>
-  public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+  public ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
     where TRequest : IRequest =>
     Sender.Send(request, cancellationToken);
 
-  public Task<TResponse> Send<TResponse>
+  public ValueTask<TResponse> Send<TResponse>
   (
     IRequest<TResponse> request,
     CancellationToken cancellationToken = default

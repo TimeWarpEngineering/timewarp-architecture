@@ -27,10 +27,10 @@ public class PrePipelineNotificationRequestPreProcessor<TRequest, TResponse> : I
     Publisher = publisher;
   }
 
-  public async Task<TResponse> Handle
+  public async ValueTask<TResponse> Handle
   (
     TRequest request,
-    RequestHandlerDelegate<TResponse> next,
+    MessageHandlerDelegate<TRequest, TResponse> next,
     CancellationToken cancellationToken
   )
   {
@@ -41,6 +41,6 @@ public class PrePipelineNotificationRequestPreProcessor<TRequest, TResponse> : I
 
     Logger.LogDebug("PrePipelineNotificationRequestPreProcessor");
     await Publisher.Publish(notification, cancellationToken);
-    return await next(cancellationToken);
+    return await next(request, cancellationToken);
   }
 }

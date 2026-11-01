@@ -29,7 +29,7 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
     "Scorching"
   ];
 
-  public Task<OneOf<Response, SharedProblemDetails>> Handle
+  public ValueTask<OneOf<Response, SharedProblemDetails>> Handle
   (
     Query query,
     CancellationToken cancellationToken
@@ -53,6 +53,6 @@ public class GetWeatherForecastsHandler : IRequestHandler<Query, OneOf<Response,
     );
     var response = new Response(weatherForecasts);
 
-    return Task.FromResult((OneOf<Response, SharedProblemDetails>)response);
+    return ValueTask.FromResult((OneOf<Response, SharedProblemDetails>)response);
   }
 }

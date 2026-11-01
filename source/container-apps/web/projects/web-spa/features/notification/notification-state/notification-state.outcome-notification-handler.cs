@@ -18,7 +18,7 @@ partial class NotificationState
     Subscriptions subscriptions
   ) : INotificationHandler<OutcomeNotification>
   {
-    public Task Handle
+    public ValueTask Handle
     (
       OutcomeNotification outcomeNotification,
       CancellationToken cancellationToken
@@ -33,7 +33,7 @@ partial class NotificationState
         DateTimeOffset.UtcNow
       );
       subscriptions.ReRenderSubscribers<NotificationState>();
-      return Task.CompletedTask;
+      return ValueTask.CompletedTask;
     }
   }
 }

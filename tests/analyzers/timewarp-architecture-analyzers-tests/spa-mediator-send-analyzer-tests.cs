@@ -27,10 +27,9 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
     build_property.UsingMicrosoftNETSdkBlazorWebAssembly = true
     """;
 
-  // Mirrors TimeWarp.Mediator 14.0.0-beta.1: ISender declares three Send overloads plus
-  // CreateStream; ISender<TScope> : ISender; IMediator adds nothing over ISender + IPublisher.
-  // CreateStream's real return type is IAsyncEnumerable<T>, simplified here — the analyzer keys
-  // on the method name only.
+  // Mirrors TimeWarp.Mediator 15.0.0-beta.4: ISender declares three Send overloads that return
+  // ValueTask and has no CreateStream. ISender<TScope> : ISender. IMediator adds nothing over
+  // ISender + IPublisher. The analyzer keys on the type and method name only.
   private const string MediatorStubs =
     """
     #region Purpose
@@ -44,19 +43,17 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
       public interface IBaseRequest { }
       public interface IRequest : IBaseRequest { }
       public interface IRequest<out TResponse> : IBaseRequest { }
-      public interface IStreamRequest<out TResponse> { }
 
       public interface IPublisher
       {
-        Task Publish(object notification, CancellationToken cancellationToken = default);
+        ValueTask Publish(object notification, CancellationToken cancellationToken = default);
       }
 
       public interface ISender
       {
-        Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default);
-        Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest;
-        Task<object> Send(object request, CancellationToken cancellationToken = default);
-        object CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default);
+        ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default);
+        ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest;
+        ValueTask<object> Send(object request, CancellationToken cancellationToken = default);
       }
 
       public interface ISender<TScope> : ISender { }
@@ -65,11 +62,10 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
 
       public class Mediator : IMediator
       {
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) => default!;
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest => default!;
-        public Task<object> Send(object request, CancellationToken cancellationToken = default) => default!;
-        public object CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default) => default!;
-        public Task Publish(object notification, CancellationToken cancellationToken = default) => default!;
+        public ValueTask<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) => default;
+        public ValueTask Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest => default;
+        public ValueTask<object> Send(object request, CancellationToken cancellationToken = default) => default;
+        public ValueTask Publish(object notification, CancellationToken cancellationToken = default) => default;
       }
     }
     """;
@@ -325,7 +321,7 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
   public static async Task Given_Unrelated_Send_Does_Not_Flag()
   {
     // Name-only matching would catch HttpClient/SignalR/hub sends; the receiver must be a
-    // mediator. CreateStream and Publish on the mediator itself are also out of scope.
+    // mediator. Publish on the mediator itself is also out of scope.
     const string source =
       """
       #region Purpose
@@ -333,8 +329,6 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
       #endregion
       using System.Threading.Tasks;
       using TimeWarp.Mediator;
-
-      public class Stream : IStreamRequest<string> { }
 
       public class Transport
       {
@@ -349,7 +343,6 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
         public async Task Go()
         {
           await Transport.Send("hello");
-          Mediator.CreateStream(new Stream());
           await Mediator.Publish(new object());
         }
       }
@@ -408,14 +401,14 @@ public class Should_Ban_Direct_Mediator_Send_In_Spa
 
         public void Go()
         {
-          Func<Ping, CancellationToken, Task> dispatch = Mediator.Send;
+          Func<Ping, CancellationToken, ValueTask> dispatch = Mediator.Send;
           dispatch(new Ping(), default);
         }
       }
       """;
 
     CSharpAnalyzerTest<SpaMediatorSendAnalyzer, RoslynTestVerifier> test = Test(source);
-    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 17, 52, 65, "IMediator"));
+    test.ExpectedDiagnostics.Add(Flag("Feature.cs", 17, 57, 70, "IMediator"));
     await test.RunAsync();
   }
 

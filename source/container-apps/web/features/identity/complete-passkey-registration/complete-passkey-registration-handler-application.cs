@@ -77,7 +77,7 @@ public sealed partial class CompletePasskeyRegistration
       Options = options;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       // Select the RP ID FIRST — before decode/consume — so a disallowed host never burns a
       // challenge (task 104-031).

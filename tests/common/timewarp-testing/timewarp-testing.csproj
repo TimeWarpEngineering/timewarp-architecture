@@ -11,8 +11,7 @@
     <PackageReference Include="FakeItEasy" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="TimeWarp.Mediator.Contracts" />
-    <PackageReference Include="TimeWarp.Mediator.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="TimeWarp.Mediator" />
     <PackageReference Include="Testcontainers.PostgreSql" />
   </ItemGroup>
   <ItemGroup>

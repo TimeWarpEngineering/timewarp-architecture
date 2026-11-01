@@ -47,7 +47,7 @@ public sealed partial class ListPrincipals
       ProfileDirectory = profileDirectory;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query query,
       CancellationToken cancellationToken)
     {

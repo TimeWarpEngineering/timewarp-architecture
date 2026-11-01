@@ -61,7 +61,7 @@ public class AskTag_Should_
     using TagSpa spa = new(Administrator, () => new ValueTask<string?>(answer.Task));
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
-    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route)).AsTask();
     AskTagState state = scope.Store.GetState<AskTagState>();
     state.IsPicking.ShouldBeTrue();
     pick.IsCompleted.ShouldBeFalse();
@@ -95,7 +95,7 @@ public class AskTag_Should_
     using (TagSpa spa = new(Administrator, () => new ValueTask<string?>(late.Task)))
     using (SpaTestScope scope = SpaTestScope.Create(spa))
     {
-      Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+      Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route)).AsTask();
       await scope.Send(new AskTagState.CancelPickActionSet.Action());
       scope.Store.GetState<AskTagState>().IsPicking.ShouldBeFalse();
       late.SetResult(RowJson(ListFeedback.ReferencePrefix));
@@ -114,7 +114,7 @@ public class AskTag_Should_
     using TagSpa spa = new(Administrator, () => new ValueTask<string?>(answer.Task), () => new ValueTask<bool>(start.Task));
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
-    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route)).AsTask();
     AskTagState state = scope.Store.GetState<AskTagState>();
     state.IsPicking.ShouldBeFalse();
     state.IsPickPending.ShouldBeTrue();
@@ -137,7 +137,7 @@ public class AskTag_Should_
     using TagSpa spa = new(Administrator, () => new ValueTask<string?>(RowJson(ListFeedback.ReferencePrefix)), () => new ValueTask<bool>(start.Task));
     using SpaTestScope scope = SpaTestScope.Create(spa);
 
-    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route));
+    Task pick = scope.Send(new AskTagState.StartPickActionSet.Action(Route)).AsTask();
     string? token = scope.Store.GetState<AskTagState>().PickToken;
     token.ShouldNotBeNull();
     await scope.Send(new AskTagState.CancelPickActionSet.Action());

@@ -29,7 +29,7 @@ public sealed class ListAgentHumanLinks
       LinkStore = linkStore;
     }
 
-    public async Task<OneOf<Response, SharedProblemDetails>> Handle(
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query query,
       CancellationToken cancellationToken)
     {

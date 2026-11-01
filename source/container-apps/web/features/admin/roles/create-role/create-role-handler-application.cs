@@ -16,12 +16,12 @@ public sealed partial class CreateRole
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    public Task<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
     {
       var roleId = Guid.NewGuid();
       RoleStore.Roles.TryAdd(roleId, (command.Name, command.Description));
 
-      return Task.FromResult((OneOf<Response, SharedProblemDetails>)new Response(roleId));
+      return ValueTask.FromResult((OneOf<Response, SharedProblemDetails>)new Response(roleId));
     }
   }
 }
