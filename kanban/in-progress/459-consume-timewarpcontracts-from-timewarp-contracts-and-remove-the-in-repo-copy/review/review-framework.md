@@ -2,7 +2,7 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 1312
+- Lines changed: 1984
 - Effort: 3
 - TCB hits: none
 - Roster axes: general
@@ -17,6 +17,14 @@
 **Effort:** 3 (by-diff budget)
 **Reviewer roster:** general
 **Session IDs:** reviewer = Claude Opus 5.5 (ganda task work review oracle, headless print mode)
+
+## Scope — round 2
+
+**Date:** 2026-11-01
+**Diff scope:** commit `97ff4440a` (package roll: TimeWarp.Contracts `2.0.0-beta.31`, TimeWarp.Mediator `15.0.0-beta.4`, TimeWarp.State* `12.0.0-beta.16`, Scalar.AspNetCore `2.18.7`, Microsoft.OpenApi held at `2.13.0`). The extraction was re-checked for regressions only.
+**Plan / brief:** the task.md `## Session` scope add of 2026-11-01 and the updated `## Goal (implementer restatement)`.
+**Effort:** 3 (by-diff budget, 1984 lines). **Roster:** general.
+**Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review oracle, headless print mode; session id not reported.
 
 ## Ground rules
 

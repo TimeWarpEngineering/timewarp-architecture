@@ -12,15 +12,13 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 
 ## Goal (implementer restatement)
 
-The extraction is already on this branch: this repository no longer builds `TimeWarp.Contracts` and consumes the package from timewarp-contracts. This walk rolls the open PR forward to the packages nuget.org has now, and keeps the audit clean, before merge.
+This repository consumes the published `TimeWarp.Contracts` package and no longer builds that project. The open pull request also takes the nuget.org pins that restore cleanly, including `TimeWarp.Mediator` `15.0.0-beta.4`, and leaves `Microsoft.OpenApi` at `2.13.0` because ASP.NET Core's OpenAPI package rejects 3.x. The extraction and that roll are already on the branch. Review round 2 found that the Mediator 15 pipeline swallows handler-activation failures, and that the SPA Send analyzer still describes the Mediator 14 API.
 
 This walk is done when:
 
-- `Directory.Packages.props` pins every package `ganda nuget outdated` reports to the latest on nuget.org. The named moves are `TimeWarp.Contracts` `2.0.0-beta.30` to `2.0.0-beta.31`, the seven `TimeWarp.State*` packages `12.0.0-beta.15` to `12.0.0-beta.16`, `Scalar.AspNetCore` `2.18.6` to `2.18.7`, and `Microsoft.OpenApi` `2.13.0` to `3.11.0`. If ASP.NET Core's OpenAPI package pins `Microsoft.OpenApi` below 3, the walk stops and records the restore error. It does not force a conflicting pin.
-- `TimeWarp.Mediator` moves forward to 15.x. `ganda nuget outdated` skips prereleases on the stable `14.0.0` pin, so the walk reads the timewarp-mediator `v15.0.0-beta.4` notes and follows any package split or rename. Pins never move backward. A defect that belongs in timewarp-mediator stops the walk. That repository is not edited from here.
-- `ganda repo audit --fix` is committed and `ganda repo audit` is clean.
-- The extraction stays intact: the in-repo project is gone, the contracts pin stays a consumer pin, the type forward still resolves, and the smoke commands do not pack `TimeWarp.Contracts`.
-- `dev build` is 0 warnings and 0 errors. The two test projects, `dev template-smoke`, `dev check-version`, `dev lint-skills`, and `ganda repo audit` pass. Results names the final pins.
+- `CatalogAgent_Should.AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs` still proves the on-Settings call executed rather than offering navigation. Mediator 15 resolves the handler inside the pipeline, so the missing `IWebServerApiService` is caught by `StateTransactionBehavior` and recorded as one `NotificationState` error whose Title contains `IWebServerApiService`. The dispatcher returns `completed: true`, and there is no pending approval. The product is not changed to rethrow: handler-body failures already take this path, and `RethrowHandlerExceptions` stays at its default of false.
+- `SpaMediatorSendAnalyzer` Design text and its test stub describe Mediator 15. `ISender.Send` returns `ValueTask`, and `CreateStream` is gone.
+- `web-spa-integration-tests` and the architecture analyzer tests pass. `dev build` is 0 warnings and 0 errors, and `ganda repo audit` is clean. The extraction and the pins named in Results stay as they are.
 
 ## Requirements
 
@@ -76,6 +74,9 @@ This walk is done when:
 - [x] Outdated packages moved to the latest on nuget.org; `Microsoft.OpenApi` stays `2.13.0` after NU1608
 - [x] `TimeWarp.Mediator` `15.0.0-beta.4` (package id reused; analyzers ride in that package)
 - [x] Gates re-run after the roll
+- [x] M1: on-Settings AddPasskey asserts the Mediator 15 error bar and a completed result
+- [x] M2: SPA Send analyzer text and stub describe Mediator 15
+- [x] `web-spa-integration-tests` 578/578 and architecture analyzer tests 259/259
 
 ## Results
 
@@ -105,6 +106,15 @@ Gates on 2026-11-01 after the roll:
 - `dev template-smoke`: exit 0 in 264s. `Template smoke SUCCEEDED`. SmokeDefault build 0 warnings, 0 errors, including `web-contracts.dll`. Standalone co-located tests 5/5, 5/5, and 2/2. Jaribu aggregators 442/442, 9/9, and 14/14.
 - `ganda repo audit`: exit 0. `nuru` pass. `required-gitignore-entries` pass. One advisory warning, `kanban-landed`, names other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454) whose worktrees are missing. That warning is non-blocking.
 
+Review round 2 fix (2026-11-01). Mediator 15 resolves the handler inside the pipeline, so the missing `IWebServerApiService` is caught by `StateTransactionBehavior`. `RethrowHandlerExceptions` stays false, the same path handler-body failures already take. The product is unchanged. `CatalogAgent_Should.AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs` now requires `completed: true`, no `navigateTo`, no pending approval, and one new `NotificationState` error whose Title contains `IWebServerApiService`. `SpaMediatorSendAnalyzer` Design text and the analyzer test stub describe Mediator 15 (`ValueTask` Send, no `CreateStream`).
+
+Gates after that fix:
+
+- `dev build`: 0 warnings, 0 errors (11.45s).
+- `web-spa-integration-tests` (Release, from the project directory): 578 passed, 0 failed.
+- `timewarp-architecture-analyzers-tests` (Release, from the project directory): 259 passed, 0 failed. The SPA Send class is included (12 tests).
+- `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims.
+
 ### How to validate
 
 **Smoke:**
@@ -113,17 +123,29 @@ Gates on 2026-11-01 after the roll:
 ./bin/dev build
 ( cd tests/foundation/foundation-contracts-tests && dotnet test -c Release )
 ( cd tests/analyzers/timewarp-architecture-sourcegenerator-tests && dotnet test -c Release )
+( cd tests/analyzers/timewarp-architecture-analyzers-tests && dotnet test -c Release )
+( cd tests/container-apps/web/web-spa-integration-tests && dotnet test -c Release )
 ./bin/dev check-version
 ./bin/dev template-smoke
 ./bin/dev lint-skills
 ganda repo audit
 ```
 
-Run the two `dotnet test` commands from each project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK.
+Run each `dotnet test` from that project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK. Each suite's `global.json` selects the runner.
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. Both test suites pass, and the foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
+**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent.
 
 ### Review disposition
+
+**Round 2 (package roll, commit `97ff4440a`): fix pass applied. Host review follows.**
+
+- **Status:** M1 and M2 are addressed in this walk. The ledger in `review/round-2/merged.md` stays the reviewer's until the next round closes it. Effort 3, roster `general`. The round-1 `clean` outcome below stays historical.
+- **M1 (bug):** `web-spa-integration-tests` is 577/578 and the failure reproduces on every run. `CatalogAgent_Should.AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs` (`catalog-agent-tests.cs:1066`) no longer sees `InvalidOperationException`. Mediator 15 resolves the handler inside the pipeline, so `StateTransactionBehavior` (`RethrowHandlerExceptions` defaults to false) turns the `IWebServerApiService` activation failure into an `ExceptionNotification`. CI's integration group runs this suite. The task's gate list did not name it, so this walk never ran it.
+- **M2 (nit):** the `SpaMediatorSendAnalyzer` Design region and its test stub still describe the Mediator 14 `ISender` (`Task`, `CreateStream`).
+- **Gates the reviewer re-ran on 2026-11-01:** `dev build` 0/0, foundation-contracts-tests 25/25, sourcegenerator-tests 154/154, web-spa-integration-tests 577/578 (M1), `dev check-version` exit 0, `dev lint-skills` pass, `ganda repo audit` exit 0 (only the `kanban-landed` warning about other tasks' claims), `ganda nuget outdated` lists only the intended `Microsoft.OpenApi` major. `dev template-smoke` was not re-run; its artifacts post-date the roll.
+- **Artifacts:** `review/review-framework.md` (round-2 scope), `review/round-2/general.md`, `review/round-2/merged.md` (live ledger). `review/disposition.md` is marked reopened.
+
+**Round 1 (extraction, commit `3cfa29bae`):**
 
 - **Outcome:** clean. 1 round, effort 3, roster `general`.
 - **Final counts:** bug 0, suggestion 0, nit 0. None open, fixed, or wontfix.
@@ -134,7 +156,7 @@ Run the two `dotnet test` commands from each project directory. Microsoft.Testin
 ## Review
 
 - Round 1: Done
-
+- Round 2: fix pass applied for M1 and M2; host review follows
 ## Notes
 
 - Waits on timewarp-contracts task 002 (cross-repo; nuget.org release, not just merge).
@@ -156,3 +178,6 @@ Run the two `dotnet test` commands from each project directory. Microsoft.Testin
   - Re-run every gate in Requirements after the bumps (`dev build`, both test projects, `dev template-smoke`, `dev check-version`, `dev lint-skills`, `ganda repo audit`). Update Results with the final pins.
 - Package roll: Grok 4.7 (ganda task work), session 01a1958a-bcdb-7e33-af6e-acd9a6a2ab1e (2026-11-01). Moved the outdated pins, migrated the product hosts to TimeWarp.Mediator 15.0.0-beta.4, left Microsoft.OpenApi at 2.13.0 after NU1608, and left the Nuru CLIs on Mediator.Contracts 14.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1958a-bcdb-7e33-af6e-acd9a6a2ab1e, max-turns 500, Done — 2026-11-01T05:53:26Z
+- Review oracle round 2: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 3, roster general, turn cap 200, session not reported. Scope was package-roll commit `97ff4440a`. The result was 2 open findings (M1 bug, M2 nit), so a fix pass is needed. The goal restatement matches the scope add, so nothing was misread. Gate gap: neither the Requirements gate list nor the restatement names `web-spa-integration-tests`, and that is where the Mediator 15 dispatch change shows up. — 2026-11-01
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session fbab491b-bc6f-4738-bb02-cb05e0aa60c3, max-turns 200 — 2026-11-01T06:09:12Z
+- Fix pass: Grok 4.7 (ganda task work), session 01a195b9-f20f-7d60-8813-f41a4d2a1712 (2026-11-01). M1 asserts the Mediator 15 error bar. M2 updates the SPA Send analyzer text and stub to ValueTask with no CreateStream. Product dispatch is unchanged.
