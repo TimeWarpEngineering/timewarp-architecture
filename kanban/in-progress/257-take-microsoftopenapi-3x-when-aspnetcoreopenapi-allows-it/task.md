@@ -57,6 +57,8 @@ the gates: `dev build` clean, `dev test` including the integration lane, `dev te
 `ganda nuget outdated` with no remaining FastEndpoints or Microsoft.OpenApi update. Results also
 record that web-server and api-server still serve the OpenAPI document and the Scalar UI.
 
+Round 2 left two comments to restore. The RC-train facts the pin-comment rewrite deleted go back as short comments beside the pins they explain, with no task-by-task history. Shared-framework Microsoft.* and System.* pins on this train are `11.0.0-rc.3.26522.148` and match SDK `11.0.100-rc.3.26522.148`. `Npgsql.EntityFrameworkCore.PostgreSQL` `11.0.0-rc.3` pins `Microsoft.EntityFrameworkCore` exactly, so the EF family and Npgsql move together; moving EF alone fails restore with NU1608/NU1107. Extensions monthly packages are `10.11.0` and `System.ServiceModel.Primitives` is `10.1.0` because neither line has an 11.x. The auth-schemes test Design region drops the FastEndpoints 8.3 and ASP.NET Core 10 version numbers. This pass is done when those comments are in place, the diff is committed and pushed, and Results record the gates run for the comment-only change.
+
 ## Checklist
 
 - [x] FastEndpoints* on 9.x prerelease
@@ -64,6 +66,8 @@ record that web-server and api-server still serve the OpenAPI document and the S
 - [x] FastEndpoints 9 / OpenApi 3 call sites and generator output fixed
 - [x] OpenAPI document and Scalar served (evidence recorded)
 - [x] Gates green
+- [x] RC-train facts restored beside the pins they explain
+- [x] Auth-schemes Design region no longer names FastEndpoints 8.3 or ASP.NET Core 10
 
 ## Session
 
@@ -74,11 +78,19 @@ record that web-server and api-server still serve the OpenAPI document and the S
   M2 suggestion: stale 2.0.0 pin comment). Fix pass requested. See `review/round-1/merged.md`.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 80 — 2026-11-01T07:59:29Z
 - Fix pass 2 (implement-fix-2, 2026-11-01): reworded both pin comments to the 3.10.2 → 3.11.0 lift, ran the gates in the foreground, and committed the product diff. Round 2 is the host's next node.
+- Review oracle round 2: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), effort 2,
+  roster general, max-turns 120, session not reported, 2026-11-01. M1 and M2 fixed (the build was
+  re-run here: 0 warnings, 0 errors). 2 new open findings: M3 (suggestion: the pin comment rewrite
+  deleted still-true RC train / EF-Npgsql / 10.x Extensions facts) and M4 (nit: stale FastEndpoints
+  8.3 in the auth-schemes test Design region). Fix pass requested. See `review/round-2/merged.md`.
+- Fix pass 3 (implement-fix-3, 2026-11-01): restored the RC-train facts as short comments beside the pins they explain, and dropped the FastEndpoints 8.3 and ASP.NET Core 10 version numbers from the auth-schemes Design region. `./bin/dev build` was 0 warnings and 0 errors. `ganda repo audit` exited 0 with the same `kanban-landed` advisory for nine other claims.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2
-- Fix pass 2: M1 and M2 addressed on this branch; round 2 has not run
+- Fix pass 2: M1 and M2 addressed on this branch
+- Round 2: Blocked — open M3, M4. Counts: bug 0 open / 1 fixed, suggestion 1 open / 1 fixed, nit 1 open. Paths: `review/review-framework.md`, `review/round-2/merged.md`
+- Fix pass 3: M3 and M4 addressed on this branch
 
 ## Notes
 
@@ -105,7 +117,7 @@ foundation-server `project.assets.json` shows AspNetCore.OpenApi depending on Mi
 3.10.2 → 3.11.0 lift. OpenApi 3 call sites use `IOpenApiMediaType`. The request-agent example
 assertion reads the `examples` array FastEndpoints 9 writes.
 
-Observed this pass: `./bin/dev build` succeeded with 0 warnings and 0 errors.
+Observed on the product pass: `./bin/dev build` succeeded with 0 warnings and 0 errors.
 `./bin/dev test` passed 23 of 23 projects: api-server-integration-tests 2/2,
 web-server-integration-tests 426 passed and 1 skipped, aspire-tests 84/84,
 yarp-integration-tests 19/19, and web-spa-playwright-tests 33/33.
@@ -117,8 +129,10 @@ yarp-integration-tests 19/19, and web-spa-playwright-tests 33/33.
 nine other live claims have no usable worktree (070-001, 104-024, 104-025, 104-026, 123, 141,
 198, 244, 454). Those claims are not this task.
 
+Fix pass 3 restored the RC-train facts beside the pins they explain. Shared-framework Microsoft.* and System.* pins on this train match SDK `11.0.100-rc.3.26522.148`. The EF family and `Npgsql.EntityFrameworkCore.PostgreSQL` move together. Extensions monthly packages (`Telemetry.Abstractions`, `ServiceDiscovery.Yarp`, `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`, `Compliance.Redaction`, `Http.Resilience`, `ServiceDiscovery`, `Telemetry`, `Diagnostics.Testing`) are `10.11.0` because they have no 11.x. `System.ServiceModel.Primitives` is `10.1.0` for the same reason. The auth-schemes Design region names FastEndpoints `Policies()` and `AuthSchemes()` against ASP.NET Core `PolicyEvaluator.AuthenticateAsync`, with no 8.3 or ASP.NET Core 10 version. This pass re-ran `./bin/dev build` (0 warnings, 0 errors, including `web-server-integration-tests`) and `ganda repo audit` (exit 0, same advisory). The integration suite, template smoke, regenerate-generated, and nuget outdated were not re-run: the diff is comments only, and the earlier pass already recorded those gates.
+
 ### How to validate
 
-Smoke: `./bin/dev build`. `./bin/dev test`. `./bin/dev template-smoke`. `./bin/dev regenerate-generated`, then `git status --short -- goldens`. `ganda repo audit`. `ganda nuget outdated`. Read the comments above the OpenApi pins in `Directory.Packages.props` and `foundation-server.csproj`.
+Smoke: `./bin/dev build`. `ganda repo audit`. Read the comments in `Directory.Packages.props` beside the shared-framework pins, the EF family, `System.ServiceModel.Primitives`, and each Extensions monthly `10.11.0` pin. Read the Design region in `tests/container-apps/web/web-server-integration-tests/features/identity/fast-endpoint-auth-schemes-tests.cs`.
 
-Expect: Build is 0 warnings and 0 errors. `./bin/dev test` reports 23 of 23 projects passed, including api-server-integration-tests 2/2 (OpenAPI document 200 with a WeatherForecasts tag, and `/scalar/v1` 200 containing `openapi/v1.json`), web-server-integration-tests 426 passed and 1 skipped (the suite's OpenAPI and Scalar tests, including `/openapi/v1.json` 200), aspire-tests 84/84, and yarp-integration-tests 19/19. `./bin/dev template-smoke` prints `Template smoke SUCCEEDED` and SmokeDefault builds with 0 warnings. `./bin/dev regenerate-generated` exits 0 and leaves no diff under `goldens/ingress`. `ganda repo audit` exits 0. `ganda nuget outdated` prints `All packages are up to date!`, including FastEndpoints 9.0.0-beta.6 and Microsoft.OpenApi 3.11.0. Neither pin comment mentions Microsoft.OpenApi 2.0.0 or GHSA-v5pm-xwqc-g5wc.
+Expect: Build is 0 warnings and 0 errors. `ganda repo audit` exits 0. The shared-framework comment names SDK `11.0.100-rc.3.26522.148`. The EF comment says moving the EF family alone fails restore with NU1608/NU1107. Each Extensions monthly `10.11.0` pin and `System.ServiceModel.Primitives` `10.1.0` has a comment that the package has no 11.x. Those comments do not recite task-by-task re-check history. The auth-schemes Design region does not say FastEndpoints 8.3 or ASP.NET Core 10. The OpenApi pin comments still describe the 3.10.2 to 3.11.0 lift and do not mention Microsoft.OpenApi 2.0.0 or GHSA-v5pm-xwqc-g5wc.
