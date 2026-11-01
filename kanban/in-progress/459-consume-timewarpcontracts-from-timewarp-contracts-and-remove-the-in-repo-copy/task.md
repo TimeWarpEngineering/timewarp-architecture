@@ -12,15 +12,15 @@ dependency is in another repo, so it is a Note here, not a `## Depends on` id.
 
 ## Goal (implementer restatement)
 
-CI on PR #620 failed `aspire-tests` after the State `12.0.0-beta.16` pin. `TimeWarp.State.DevTools.Hosting` `12.0.0-beta.16` still adds an `ExecutableResource` with an `http` endpoint, still sets `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` on the inspected app, and still makes that app wait for the inspector. The default resource name changed from `timewarp-state-devtools` to `timewarp-devtools`, and the dashboard link text changed from `TimeWarp.State DevTools` to `TimeWarp DevTools`. The AppHost calls `AddTimeWarpStateDevTools()` with no name, so it takes that default. This walk follows the package. It does not pin State backward and does not change timewarp-state. The extraction, the package pins, and the earlier review fixes stay as they are.
+Round 5 left one nit, M4. The AppHost and the DevTools model test both explain the inspector name by quoting package versions: `12.0.0-beta.16` calls the resource `timewarp-devtools`, and `12.0.0-beta.15` called it `timewarp-state-devtools`. `tw-agent-context-regions` asks Design text to stay timeless. Both files ship in every generated app, and the next State bump would make those version numbers wrong. Git already holds the rename history.
+
+This walk states the fact that is true of the package this repo consumes. The resource is `timewarp-devtools`, that name is the package default, and the dashboard link is "TimeWarp DevTools". The edit is comments only. Assertions, the `AddTimeWarpStateDevTools()` call, `skills/tw-deploy`, the discovery route `/_timewarp/state-devtools`, and the State pin stay as the CI fix left them.
 
 This walk is done when:
 
-- `StateDevToolsModel_Given_.RunMode_Should_AddDevToolsAndPointWebServerAtIt` finds the `timewarp-devtools` executable, its `http` endpoint, `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` on web-server pointing at that resource, and a wait from web-server to it.
-- The ingress smoke waits on `timewarp-devtools` and reads its `http` endpoint.
-- Compose, Kubernetes, and ACA publish assertions reject `timewarp-devtools`, so a leaked inspector still fails those suites.
-- AppHost Design text and `skills/tw-deploy` name `timewarp-devtools` and the dashboard link TimeWarp DevTools. The discovery route `/_timewarp/state-devtools` stays.
-- `aspire-tests` passes and the pass count is recorded. `dev build` is 0 warnings and 0 errors. `ganda repo audit` is clean. `TimeWarp.State*` stays at `12.0.0-beta.16`.
+- `aspire-app-host/program.cs` and `state-dev-tools-model-tests.cs` Design regions name `timewarp-devtools` as the package default and "TimeWarp DevTools" as the dashboard link, with no beta.15 or beta.16 parenthetical.
+- No assertion, skill row, or call site changes.
+- `dev build` is 0 warnings and 0 errors. `aspire-tests` still passes, and the pass count is recorded. `ganda repo audit` is clean.
 
 ## Requirements
 
@@ -81,6 +81,7 @@ This walk is done when:
 - [x] `web-spa-integration-tests` 578/578 and architecture analyzer tests 259/259
 - [x] M3: AddPasskey Design sentences follow the feedback-receipt "That test" sentence
 - [x] DevTools resource name follows TimeWarp.State.DevTools.Hosting 12.0.0-beta.16 (`timewarp-devtools`); aspire-tests pass
+- [x] M4: AppHost and model-test Design regions name `timewarp-devtools` and TimeWarp DevTools with no version history
 
 ## Results
 
@@ -136,6 +137,14 @@ Gates after that fix:
 - `dev lint-skills`: 9/9, eval.yaml valid.
 - `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454).
 
+Review round 5 fix (2026-11-01). M4 is comments only. The AppHost Design region and the DevTools model-test Design region name the resource `timewarp-devtools`, the package default, and the dashboard link "TimeWarp DevTools". The beta.15 and beta.16 parentheticals are gone. Assertions, the AppHost call, and `skills/tw-deploy` are unchanged.
+
+Gates after that fix:
+
+- `dev build`: 0 warnings, 0 errors (35.85s).
+- `aspire-tests` (Release, from the project directory): 84 passed, 0 failed (1m 30s).
+- `ganda repo audit`: exit 0. The only advisory is the same `kanban-landed` warning about other claims (070-001, 104-024, 104-025, 104-026, 123, 141, 198, 244, 454).
+
 ### How to validate
 
 **Smoke:**
@@ -155,11 +164,19 @@ ganda repo audit
 
 Run each `dotnet test` from that project directory. Microsoft.Testing.Platform rejects `dotnet test <csproj>` on the .NET 10 SDK. Each suite's `global.json` selects the runner.
 
-**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. In `catalog-agent-tests.cs`, the Design sentence "That test drives the real path…" follows the feedback-receipt sentences, and the AddPasskey sentences follow it. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent. `aspire-tests` passes, including `RunMode_Should_AddDevToolsAndPointWebServerAtIt`: the run-mode model has an `ExecutableResource` named `timewarp-devtools` with an `http` endpoint, web-server's `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` points at that resource, and web-server waits on it. Compose, Kubernetes, and ACA publish output do not name `timewarp-devtools`.
+**Expect:** `dev build` reports 0 warnings and 0 errors. The foundation suite still asserts `SharedProblemDetails` lives in assembly `timewarp-contracts`. The sourcegenerator suite passes. The architecture analyzer suite passes, including `Should_Ban_Direct_Mediator_Send_In_Spa`. `web-spa-integration-tests` passes, including `AddPasskey_Off_Settings_Offers_Navigation_And_On_Settings_Runs`: the on-Settings call returns `completed: true` with no `navigateTo`, adds one error whose Title contains `IWebServerApiService`, and leaves no pending approval. In `catalog-agent-tests.cs`, the Design sentence "That test drives the real path…" follows the feedback-receipt sentences, and the AddPasskey sentences follow it. `dev check-version` exits 0 and its package list omits `TimeWarp.Contracts`. `dev template-smoke` prints `Template smoke SUCCEEDED` and the generated `web-contracts` project builds. `dev lint-skills` and `ganda repo audit` exit 0. `Directory.Packages.props` contains `<PackageVersion Include="TimeWarp.Contracts" Version="2.0.0-beta.31" />`, `<PackageVersion Include="TimeWarp.Mediator" Version="15.0.0-beta.4" />`, the seven `TimeWarp.State*` packages at `12.0.0-beta.16`, `Scalar.AspNetCore` at `2.18.7`, and `Microsoft.OpenApi` at `2.13.0`. `source/foundation/timewarp-contracts/` is absent. `aspire-tests` passes, including `RunMode_Should_AddDevToolsAndPointWebServerAtIt`: the run-mode model has an `ExecutableResource` named `timewarp-devtools` with an `http` endpoint, web-server's `TIMEWARP_STATE_DEVTOOLS_ENDPOINT` points at that resource, and web-server waits on it. Compose, Kubernetes, and ACA publish output do not name `timewarp-devtools`. The Design regions in `aspire-app-host/program.cs` and `state-dev-tools-model-tests.cs` name `timewarp-devtools` as the package default and "TimeWarp DevTools" as the dashboard link, and they do not mention `12.0.0-beta.15` or `12.0.0-beta.16`.
 
 ### Review disposition
 
-**Final: clean.** 4 rounds, roster `general` throughout. Rounds 1 and 2 ran at effort 3, round 3 at effort 2, and round 4 at effort 1.
+**Round 5 (CI fix, commit `278424009`): fix pass applied for M4. Host review follows.**
+
+- **Status:** M4 (nit) is addressed in this walk. The ledger in `review/round-5/merged.md` stays the reviewer's until the next round closes it. Effort 3, roster `general`, turn cap 200. The `timewarp-devtools` rename matches the package. State stays at `12.0.0-beta.16`.
+- **Counts (round 5, at review):** bug 0 open / 1 fixed; suggestion 0; nit 1 open / 2 fixed; wontfix 0.
+- **M4 (nit):** the Design regions in `aspire-app-host/program.cs` and `state-dev-tools-model-tests.cs` name `timewarp-devtools` as the package default and "TimeWarp DevTools" as the dashboard link. The beta.15 and beta.16 parentheticals are gone. Assertions and product calls are unchanged.
+- **Gates the reviewer re-ran on 2026-11-01:** `dev build` 0 warnings / 0 errors, `aspire-tests` 84/84, `dev lint-skills` 9/9, `ganda repo audit` exit 0 (only the `kanban-landed` advisory for other tasks' claims). The shared AppHost user-secrets file was not modified by the test run.
+- **Artifacts:** `review/review-framework.md` (round-5 scope), `review/round-5/general.md`, `review/round-5/merged.md` (live ledger), `review/disposition.md` (reopened).
+
+**Round 4 outcome: clean.** 4 rounds, roster `general` throughout. Rounds 1 and 2 ran at effort 3, round 3 at effort 2, and round 4 at effort 1.
 
 - **Final counts (`review/round-4/merged.md`):** bug 0 open / 1 fixed (M1); suggestion 0; nit 0 open / 2 fixed (M2, M3); wontfix 0. Final open count is 0.
 - **Round 4 (fix-pass delta `285351c94..3cd8eef26`):** M3 is fixed. "That test drives the real path…" follows the feedback-receipt sentences again, and the AddPasskey sentences come after it. The change is comments only. The reviewer re-ran `dev build`: 0 warnings, 0 errors. No new findings.
@@ -196,6 +213,7 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - Round 2: fix pass applied for M1 and M2; host review follows
 - Round 3: fix pass applied for M3; host review follows
 - Round 4: Done
+- Round 5: fix pass applied for M4; host review follows
 ## Notes
 
 - Waits on timewarp-contracts task 002 (cross-repo; nuget.org release, not just merge).
@@ -226,3 +244,6 @@ Run each `dotnet test` from that project directory. Microsoft.Testing.Platform r
 - CI red 2026-11-01 on PR #620 (run 41281550727, `ci (integration)`): `aspire-tests` failed `StateDevToolsModel_Given_.RunMode_Should_AddDevToolsAndPointWebServerAtIt` at `tests/container-apps/aspire/aspire-tests/state-dev-tools-model-tests.cs:48`: `Sequence contains no matching element`. No `ExecutableResource` named the DevTools resource exists. `master` CI is green, so a bump in this PR caused it, most likely `TimeWarp.State.DevTools.Hosting` 12.0.0-beta.16 changing the AppHost resource (type or name). Find what beta.16 changed (read its release notes or inspect the package; do not change timewarp-state). Fix the AppHost wiring or the test so the dev-tools model still holds: a DevTools resource with its endpoint, web-server env pointing at that endpoint, and web-server waiting on it. Run `aspire-tests` locally (`dev test` for the integration lane, or that project directly) and record the pass count. Never pin State backward.
 - CI fix: Grok 4.7 (ganda task work), session 01a195e4-90b8-76b3-a066-4cec94384c5b (2026-11-01). DevTools.Hosting 12.0.0-beta.16 renamed the default resource to `timewarp-devtools` and the dashboard link to TimeWarp DevTools. The AppHost already calls `AddTimeWarpStateDevTools()` with no name. Tests, the AppHost Design comment, and `skills/tw-deploy` follow that name. `aspire-tests` 84/84. State stays `12.0.0-beta.16`.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a195e4-90b8-76b3-a066-4cec94384c5b, max-turns 500, Done — 2026-11-01T07:05:02Z
+- Review oracle round 5: Claude Opus 5.5 (claude-opus-5-5), body tw-implementation-review, effort 3, roster general, turn cap 200, session not reported. Scope was CI-fix commit `278424009`. The rename to `timewarp-devtools` is correct, and `aspire-tests` passed 84/84 when the reviewer re-ran it. M4 (nit) is open because the Design regions record version history, so a fix pass is needed. The goal restatement matches the CI-red Session note and the task, so nothing was misread. — 2026-11-01
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e357c657-a4d3-40e0-a9b0-5ab547748759, max-turns 200 — 2026-11-01T07:09:50Z
+- Fix pass: Grok 4.7 (ganda task work), session 01a195f1-705a-7123-b550-aa83615b574c (2026-11-01). M4 drops the beta.15 and beta.16 parentheticals from the AppHost and model-test Design regions. The resource stays `timewarp-devtools`, the package default, and the dashboard link stays TimeWarp DevTools. Assertions are unchanged. `dev build` 0/0. `aspire-tests` 84/84. `ganda repo audit` exit 0, with the same `kanban-landed` advisory for other claims.
