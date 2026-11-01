@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 177
-- Effort: 1
+- Lines changed: 689
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -35,3 +35,13 @@
 **Effort:** 1 (by-diff budget above); roster general
 **Reviewer roster:** general
 **Session IDs:** reviewer-claude (claude-opus-5-5), headless ganda task-work review-3 oracle, session not reported
+
+## Round 4
+
+**Date:** 2026-11-01
+**Host task:** kanban/in-progress/257-take-microsoftopenapi-3x-when-aspnetcoreopenapi-allows-it/
+**Diff scope:** delta since round 3 (land 8a120e309): product commit 15fef86b0 (web-server.csproj, Oakton `PrivateAssets=all`) and kanban commits 6ebb7e6ee, 3e9d65272, 8c54c230f
+**Plan / brief:** PR #621 publish red at `web-migrations-generate-migration-bundle`; task.md `## Goal (implementer restatement)` CI-fix paragraph
+**Effort:** 2 (by-diff budget above); roster general
+**Reviewer roster:** general
+**Session IDs:** reviewer-claude (claude-opus-5-5), headless ganda task-work review oracle, session not reported

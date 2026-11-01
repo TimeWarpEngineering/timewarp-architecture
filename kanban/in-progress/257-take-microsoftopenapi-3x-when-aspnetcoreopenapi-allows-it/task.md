@@ -95,6 +95,14 @@ PR #621's publish job is red. `aspire publish` fails at `web-migrations-generate
   Verbose `dotnet ef migrations bundle` showed NU1107. Oakton on web-server is now
   `PrivateAssets=all`. `./bin/dev workflow --phase publish` exited 0.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1964e-f873-7de2-9d80-ba952797338c, max-turns 500, Done — 2026-11-01T09:28:27Z
+- Review oracle round 4: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), effort 2,
+  roster general, max-turns 120, session not reported, 2026-11-01. Reviewed the delta since the round 3
+  land (15fef86b0, Oakton `PrivateAssets=all`). Reproduced the bundle-shaped restore and the linux-x64
+  `--no-self-contained` publish in a scratch project; both were clean, with no NU1107. Checked that
+  consumers that do not reference api-server (the `--api false` variant) still get `Oakton.dll` as a
+  RAR `reference` dependency, so the in-process web-server tests can still run. No new findings.
+  Disposition: clean.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session not reported, max-turns 120 — 2026-11-01T09:34:14Z
 
 ## Review
 
@@ -103,6 +111,8 @@ PR #621's publish job is red. `aspire publish` fails at `web-migrations-generate
 - Round 2: Blocked — open M3, M4. Counts: bug 0 open / 1 fixed, suggestion 1 open / 1 fixed, nit 1 open. Paths: `review/review-framework.md`, `review/round-2/merged.md`
 - Fix pass 3: M3 and M4 addressed on this branch
 - Round 3: Done
+- CI fix: publish migration bundle NU1107 (15fef86b0)
+- Round 4: Done
 ## Notes
 
 - Task 249 Results record the 10.0.12 nuspec check.
@@ -148,8 +158,9 @@ PR #621 publish failed while generating the EF migration bundle. `PublishAsMigra
 
 ### Review disposition
 
-Disposition is `clean`, after 3 rounds. Each round was effort 1 or 2 with a single general
-reviewer, reviewer-claude (claude-opus-5-5).
+Disposition is `clean`, after 4 rounds. Each round was effort 1 or 2 with a single general
+reviewer, reviewer-claude (claude-opus-5-5). Round 4 reviewed the publish-bundle fix (15fef86b0).
+It reproduced the NU1107 fix in a bundle-shaped scratch project and raised no findings.
 
 Final counts:
 - bug: 0 open, 1 fixed (M1)
@@ -158,7 +169,7 @@ Final counts:
 
 There are no wontfix findings and no escalations. Paths:
 - `review/review-framework.md`
-- `review/round-3/merged.md`
+- `review/round-4/merged.md`
 - `review/disposition.md`
 
 ### How to validate
