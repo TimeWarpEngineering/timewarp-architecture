@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 104
-- Effort: 1
+- Lines changed: 2377
+- Effort: 3
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 80 (--max-turns; cursor uncapped)
+- Turn cap: 200 (--max-turns; cursor uncapped)
 
 ## Scope — task 459
 
@@ -41,6 +41,14 @@
 **Plan / brief:** round-3 `merged.md` finding M3, and the updated `## Goal (implementer restatement)`.
 **Effort:** 1 (by-diff budget, 104 lines). **Roster:** general. **Turn cap:** 80.
 **Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review-3 oracle, headless print mode; session id not reported.
+
+## Scope — round 5
+
+**Date:** 2026-11-01
+**Diff scope:** the CI fix for PR #620 (run 41281550727, `aspire-tests`), commit `278424009`, delta `3cd8eef26..0151ed962`. Product changes: `skills/tw-deploy/SKILL.md`, the AppHost `program.cs` Design region, and five `aspire-tests` files (+23/−16).
+**Plan / brief:** the `## Session` CI-red note and the updated `## Goal (implementer restatement)`. Follow the `TimeWarp.State.DevTools.Hosting` `12.0.0-beta.16` default name `timewarp-devtools`, and never pin State backward.
+**Effort:** 3 (by-diff budget, 2377 lines). **Roster:** general. **Turn cap:** 200.
+**Session IDs:** reviewer = Claude Opus 5.5 (claude-opus-5-5), ganda task work review oracle, headless print mode; session id not reported.
 
 ## Ground rules
 

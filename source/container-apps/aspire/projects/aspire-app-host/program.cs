@@ -63,9 +63,8 @@
 // webServer references itself so server-rendered (Auto) components can resolve their own API via service discovery.
 // TimeWarp.State DevTools (task 335-001): AddTimeWarpStateDevTools (package TimeWarp.State.DevTools.Hosting)
 // adds the packaged inspector (TimeWarp.State.DevTools.App, a framework-dependent dll the package targets
-// stamp onto this assembly) as the timewarp-devtools executable resource; the dashboard links it as
-// "TimeWarp DevTools" (TimeWarp.State.DevTools.Hosting 12.0.0-beta.16; 12.0.0-beta.15 named it
-// timewarp-state-devtools and labeled the link "TimeWarp.State DevTools"). WithTimeWarpStateDevTools
+// stamp onto this assembly) as the timewarp-devtools executable resource, the package default. The
+// dashboard links it as "TimeWarp DevTools". WithTimeWarpStateDevTools
 // sets TIMEWARP_STATE_DEVTOOLS_ENDPOINT on web-server and waits for the inspector; web-server
 // (Development only) exports its State action spans there. Both calls sit in the IsRunMode block:
 // the package already keeps the inspector out of the manifest, and the
