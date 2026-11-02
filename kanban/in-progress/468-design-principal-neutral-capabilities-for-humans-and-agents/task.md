@@ -162,6 +162,18 @@ file gets `## Results` with a non-empty How to validate.
   attribute permission, the handler-level list restates the rule in handler order including the
   unlinked-draft owner-only gate, section 5 no longer ties agent download access to Q2, and task 4
   carries download pins. M8 set to fixed on `review/round-2/merged.md`. No product code changed.
+- Review round 3: grok session `01a19d15-5d2f-7881-bde9-8558064255f4` (2026-11-02). Effort 1,
+  roster general. Re-reviewed the delta since `074ea5a9c` (round-2 `base.sha`). M1 through M8
+  re-verified fixed against the handler, seeds, and hosted `[EndpointAuthorize]` attributes.
+  New open finding M9 (task 4 collapses the download handler to one disjunction and expects 404
+  on the bearer's own unlinked draft). Wrote `review/round-3/general.md` and
+  `review/round-3/merged.md`. Disposition is not written.
+- Fix pass for round 3 (2026-11-02), implementer-claude (Claude Fable 5.1), implement-fix-4 oracle.
+  Fixed M9 in `design.md` task 4: the scope says the handler keeps the section 6.1 order (an
+  unlinked draft stays owner-only before any permission is consulted; only the linked cross-owner
+  check becomes one disjunction of the credential), and the proof gate expects 200 on another
+  owner's linked attachment, 404 on another owner's unlinked draft, and 200 on the bearer's own
+  unlinked draft. M9 set to fixed on `review/round-3/merged.md`. No product code changed.
 
 ## Results
 
@@ -199,15 +211,17 @@ The implementer restatement matches the task. Service accounts are the third kin
 
 Round 1, effort 2, roster general only. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Fix pass landed 2026-11-02. M1 through M7 are `fixed` on `review/round-1/merged.md`.
 
-Round 2, same effort and roster, reviewed the delta since `9769c06c` (round-1 `base.sha`). Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`. M1 through M7 re-verified fixed. M8 found that the download rule added in the round-1 fix did not match the handler it said it preserved (`feedback.file.self` on the attribute excluded a `feedback.read`-only reviewer, and the stated disjunction dropped the unlinked-draft owner-only gate). Fix pass 3 landed 2026-11-02: download keeps no attribute policy, and sections 2.4, 5, 6.1, and task 4 state the handler's rule in handler order. M8 is `fixed` on `review/round-2/merged.md`.
+Round 2, same effort and roster, reviewed the delta since `9769c06c` (round-1 `base.sha`). Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`. M1 through M7 re-verified fixed. M8 found that the download rule added in the round-1 fix did not match the handler it said it preserved (`feedback.file.self` on the attribute excluded a `feedback.read`-only reviewer, and the stated disjunction dropped the unlinked-draft owner-only gate). Fix pass 3 landed 2026-11-02: download keeps no attribute policy, and sections 2.4, 5, and 6.1 state the handler's rule in handler order. M8 is `fixed` on `review/round-2/merged.md`.
+
+Round 3, effort 1, roster general only, reviewed the delta since `074ea5a9c` (round-2 `base.sha`, commit `00c2d430b`). Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`. M1 through M8 re-verified fixed. Sections 2.4, 5, and 6.1 match the download handler. M9 found that task 4 still said the handler collapses to one disjunction, and its proof gate expected 404 on the bearer's own unlinked draft, which the owner passes. Fix pass 4 landed 2026-11-02: task 4 keeps the section 6.1 order and its pins expect 200 on the bearer's own unlinked draft. M9 is `fixed` on `review/round-3/merged.md`.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 0 | 6 | 0 |
+| bug | 0 | 7 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 1 | 0 |
 
-Disposition is not written. The host runs review round 3. No `accepted-exceptions`. The implementer restatement matches the task; no misread under Learnings.
+Disposition is not written; the host runs review round 4 next. No finding is open, no wontfix, and no escalation. The implementer restatement matches the task; no misread under Learnings. Product tests were not run; the delta is design text, checked by reading the handler, `FeedbackProblems`, the scope and permission seeds, and the hosted `[EndpointAuthorize]` attributes.
 
 ### How to validate
 
@@ -223,6 +237,8 @@ grep -c -iE 'on_behalf_of' "$D"
 grep -n -E '^\| [567] \|' "$D"
 grep -c 'feedback.file.self` on the attribute' "$D"
 grep -n -A3 'DownloadFeedbackAttachment`, in handler order' "$D"
+grep -c 'collapses to the one disjunction' "$D"
+grep -c "200 on the bearer's own unlinked draft" "$D"
 ```
 
 Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`,
@@ -233,12 +249,15 @@ Section 1 says "Both: 14". Section 6.1 has its own `DownloadFeedbackAttachment` 
 attribute permission (the `feedback.file.self` count is 0), followed by a handler-level checks
 list whose download entry puts the unlinked-draft owner-only gate before the `feedback.read` or
 `admin.feedback.read` disjunction. Section 6.2 names a reason for every first-party row. Section 8 has
-eight tasks, each with a Depends on column and proof gates and no estimate.
+eight tasks, each with a Depends on column and proof gates and no estimate. Task 4 does not say
+the handler "collapses to the one disjunction" (count 0), and its download pins expect 200 on
+the bearer's own unlinked draft (count 1).
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
+- Round 3: Blocked — open M9
 
 ## Notes
 
