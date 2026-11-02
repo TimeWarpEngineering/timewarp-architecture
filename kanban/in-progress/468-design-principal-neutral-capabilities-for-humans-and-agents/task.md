@@ -257,6 +257,7 @@ file gets `## Results` with a non-empty How to validate.
   the revision raised (session-only mechanism, credential operations on behalf, a per-key cap for
   handed-over keys, which roles seed the chat id). The breakdown is seven tasks. No product code
   changed.
+- Implement oracle: implemented by implementer-claude-fable (claude, vendor anthropic, model claude-fable-5-1, response model claude-fable-5-1), session 7e4128ba-e3e9-4f60-91ea-4ba271e87bce, max-turns 500, Done — 2026-11-02T17:46:04Z
 
 ## Results
 
