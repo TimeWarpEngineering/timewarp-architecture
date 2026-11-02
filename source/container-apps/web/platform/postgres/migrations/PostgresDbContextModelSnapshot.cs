@@ -16,13 +16,13 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261025175631_AddSiteSettingsXaiByokMode";
+    public override string LastMigrationId => "20261102105501_AddAgentScopeGrants";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
         modelBuilder
-            .HasAnnotation("ProductVersion", "11.0.0-rc.2.26504.105")
+            .HasAnnotation("ProductVersion", "11.0.0-rc.3.26522.148")
             .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
         NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -45,6 +45,34 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasKey("Id");
 
                 b.ToTable("keys", "data_protection");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Authorization.PrincipalAgentScopeGrant", b =>
+            {
+                b.Property<Guid>("PrincipalId")
+                    .HasColumnType("uuid");
+
+                b.Property<string>("Scope")
+                    .HasMaxLength(64)
+                    .HasColumnType("character varying(64)");
+
+                b.HasKey("PrincipalId", "Scope");
+
+                b.ToTable("principal_agent_scopes", "identity");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Authorization.RoleAgentScopeGrant", b =>
+            {
+                b.Property<Guid>("RoleId")
+                    .HasColumnType("uuid");
+
+                b.Property<string>("Scope")
+                    .HasMaxLength(64)
+                    .HasColumnType("character varying(64)");
+
+                b.HasKey("RoleId", "Scope");
+
+                b.ToTable("role_agent_scopes", "identity");
             });
 
         modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>

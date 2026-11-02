@@ -273,6 +273,7 @@ public class SunnyPaths_
       await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Agent registration should succeed.");
     PrincipalId principalId = registerResult.AsT0.PrincipalId;
+    await AgentScopeApprovals.ApproveAsync(Web.WebApplicationHost.ServiceProvider, principalId, scopes);
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
       await Web.GetResponse<StartAgentTokenIssuance.Response>(

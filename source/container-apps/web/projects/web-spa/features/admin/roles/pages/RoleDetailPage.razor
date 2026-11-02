@@ -1,5 +1,6 @@
 @namespace TimeWarp.Architecture.Features.Admin.Roles
 @using TimeWarp.Architecture.Features
+@using TimeWarp.Identity
 @inherits BaseComponent
 
 @*
@@ -26,6 +27,9 @@
   private bool IsSaving =>
     IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
 
+  private bool IsSavingAgentScopes =>
+    IsAnyActive(typeof(RoleState.SetRoleAgentScopesActionSet.Action));
+
   private GetRoles.RoleDto? Role =>
     RoleState.Roles?.FirstOrDefault(role => role.RoleId == RoleId);
 
@@ -39,6 +43,17 @@
   {
     await RoleState.SetRolePermissions(RoleId);
     if (!RoleState.LastSetRolePermissionsSucceeded)
+    {
+      return;
+    }
+
+    await RoleState.FetchRoles();
+  }
+
+  private async Task OnSaveAgentScopes()
+  {
+    await RoleState.SetRoleAgentScopes(RoleId);
+    if (!RoleState.LastSetRoleAgentScopesSucceeded)
     {
       return;
     }
@@ -80,6 +95,39 @@
             Save
           </FluentButton>
         }
+      }
+    </Section>
+    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+      @if (Role is not null)
+      {
+        <div class="twe-stack">
+          <p class="ds-subtitle">
+            Scopes an agent may request when this role is assigned. Human permissions above
+            do not flow onto an agent token. <code>identity:read</code> is always allowed at issuance.
+          </p>
+          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+            @foreach (string scope in AgentScopes.All)
+            {
+              <div data-qa="@($"AgentScope-{scope}")">
+                <FluentCheckbox
+                  Label="@scope"
+                  Disabled="@(!CanManage)"
+                  Value="@RoleState.IsAgentScopeSelected(RoleId, scope)"
+                  ValueChanged="@(async (bool value) => await RoleState.SetAgentScopeSelected(RoleId, scope, value))" />
+              </div>
+            }
+          </FluentStack>
+          @if (CanManage)
+          {
+            <FluentButton
+              Appearance="ButtonAppearance.Primary"
+              data-qa="SaveRoleAgentScopes"
+              Disabled="IsSavingAgentScopes"
+              OnClick="OnSaveAgentScopes">
+              Save agent scopes
+            </FluentButton>
+          }
+        </div>
       }
     </Section>
   </div>

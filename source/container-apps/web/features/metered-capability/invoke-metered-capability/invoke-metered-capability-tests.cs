@@ -299,6 +299,7 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
         await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
       registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
       PrincipalId principalId = registerResult.AsT0.PrincipalId;
+      await AgentScopeApprovals.ApproveAsync(Web.WebApplicationHost.ServiceProvider, principalId, scopes);
 
       OneOf.OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
         await Web.GetResponse<StartAgentTokenIssuance.Response>(
@@ -326,20 +327,16 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
       string accessToken,
       string? paymentSignature = null)
     {
-      HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
-      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+      using var request = new HttpRequestMessage(HttpMethod.Get, Query.RouteTemplate);
+      request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
       if (!string.IsNullOrWhiteSpace(paymentSignature))
       {
-        client.DefaultRequestHeaders.TryAddWithoutValidation(
+        request.Headers.TryAddWithoutValidation(
           PaymentHeaders.PaymentSignature,
           paymentSignature);
       }
 
-      // Caller owns disposal of the response; client is short-lived per call.
-      HttpResponseMessage response = await client.GetAsync(Query.RouteTemplate);
-      // Detach response from client lifetime so disposing client does not dispose content early.
-      // (HttpClient dispose disposes pending handlers; response already buffered for typical sizes.)
-      return response;
+      return await Web.HttpClient.SendAsync(request);
     }
   }
 
@@ -352,7 +349,7 @@ namespace TimeWarp.Architecture.Features.MeteredCapability
 
     public IntegrationSoftwareAgentKey()
     {
-      using System.Security.Cryptography.ECDsa ecdsa =
+      using var ecdsa =
         System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
       System.Security.Cryptography.ECParameters parameters = ecdsa.ExportParameters(includePrivateParameters: true);
       D = parameters.D!;

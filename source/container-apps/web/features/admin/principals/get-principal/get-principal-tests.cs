@@ -201,7 +201,14 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
         roles,
         Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
       PermissionEvaluator evaluator = new(resolver, permissions, new NoAgentScopes());
-      Handler = new GetHandler(Principals, resolver, new FixedCaller(caller), evaluator, new ProfileDirectory(Profiles));
+      AgentScopeApproval approval = new(resolver, new InMemoryRoleAgentScopeStore(), new InMemoryPrincipalAgentScopeStore());
+      Handler = new GetHandler(
+        Principals,
+        resolver,
+        new FixedCaller(caller),
+        evaluator,
+        new ProfileDirectory(Profiles),
+        approval);
     }
 
     public InMemoryProfileStore Profiles { get; } = new();

@@ -5,7 +5,8 @@
 #region Design
 // An outside reviewer is given only this document. The scheme description names the four
 // ceremony operations in order, the lifetime from AgentTokenOptions at document build, that
-// there is no refresh token, and when to reissue. Each step also names its HTTP method and
+// there is no refresh token, when to reissue, and that a token may name only admin-approved
+// scopes (identity:read is always allowed). Each step also names its HTTP method and
 // path, taken from that contract's generated route, because the document does not set
 // operationId to the kebab id. Foundation does not know those product operation names or
 // AgentTokenOptions, so this host appends the paragraph. The scheme object is reused across
@@ -82,7 +83,8 @@ internal static class OpenApiAgentReviewerGuide
       + ". The token lasts "
       + lifetimeMinutes.ToString(CultureInfo.InvariantCulture)
       + " minutes. There is no refresh token."
-      + " Reissue with the agent key before the token expires, or after a 401 invalid_token.";
+      + " Reissue with the agent key before the token expires, or after a 401 invalid_token."
+      + " The agent may request only scopes an admin approved (identity:read is always allowed); an unapproved scope returns 403 naming those scopes, and removing an approval applies at the next issuance rather than revoking a token already issued.";
 
     return string.IsNullOrEmpty(basis) ? guide : basis.TrimEnd() + " " + guide;
   }

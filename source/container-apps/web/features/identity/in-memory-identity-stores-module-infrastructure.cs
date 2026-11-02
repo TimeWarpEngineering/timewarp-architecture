@@ -24,6 +24,9 @@
 // Role→permission grants (task 182-001): IRolePermissionStore defaults to singleton
 // InMemoryRolePermissionStore (seeded from RolePermissionSeed). PostgresDbModule swaps to scoped
 // EfRolePermissionStore when connected — same dual-mode gate as principal-role store.
+// Agent-scope approval (task 466): IRoleAgentScopeStore and IPrincipalAgentScopeStore default
+// to singletons with no seed. PostgresDbModule swaps those two to scoped EF stores when
+// connected. IAgentScopeApproval stays scoped here either way — it only reads the stores.
 // Site settings (task 219-006): ISiteSettingsStore defaults to singleton InMemorySiteSettingsStore.
 // PostgresDbModule swaps to scoped EfSiteSettingsStore when connected.
 // CredentialUsageRecorder (task 248-002) is NOT a store: a singleton coalescing gate over whichever
@@ -56,5 +59,11 @@ public class InMemoryIdentityStoresModule : IModule
 
     // Web-app role→permission default (seeded); PostgresDbModule swaps to EfRolePermissionStore when connected.
     serviceCollection.AddSingleton<IRolePermissionStore, InMemoryRolePermissionStore>();
+
+    // Agent scopes a role or a principal may approve (task 466). No seed: only identity:read
+    // is approved until an admin writes a role list or a principal grant.
+    serviceCollection.AddSingleton<IRoleAgentScopeStore, InMemoryRoleAgentScopeStore>();
+    serviceCollection.AddSingleton<IPrincipalAgentScopeStore, InMemoryPrincipalAgentScopeStore>();
+    serviceCollection.AddScoped<IAgentScopeApproval, AgentScopeApproval>();
   }
 }

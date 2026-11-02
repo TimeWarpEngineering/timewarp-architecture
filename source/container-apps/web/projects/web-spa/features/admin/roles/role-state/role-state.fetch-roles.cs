@@ -5,7 +5,7 @@
 #region Design
 // DefaultApiHandler pattern (WeatherForecasts): only Query mapping + success mutation live here.
 // Seeds DraftPermissionIds from each RoleDto.PermissionIds so the detail editor matches
-// the server (task 182-004 / 206).
+// the server (task 182-004 / 206). DraftAgentScopes is seeded the same way (task 466).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -37,6 +37,9 @@ partial class RoleState
         RoleState.DraftPermissionIds = response.Items.ToDictionary(
           static dto => dto.RoleId,
           static dto => new HashSet<string>(dto.PermissionIds ?? [], StringComparer.Ordinal));
+        RoleState.DraftAgentScopes = response.Items.ToDictionary(
+          static dto => dto.RoleId,
+          static dto => new HashSet<string>(dto.AgentScopes ?? [], StringComparer.Ordinal));
         return Task.CompletedTask;
       }
     }

@@ -13,7 +13,8 @@
 // list fetch clears the rows and sets ListLoadError so a stale list never shows under a new
 // query. Current is the open principal (OpenPrincipal); a 404 clears it and sets LoadError.
 // Role drafts are seeded from the opened principal, not the list: roles are edited on the
-// detail page, so a list re-fetch never overwrites a draft. Initialize clears everything.
+// detail page, so a list re-fetch never overwrites a draft. DraftAgentScopes (task 466) is
+// the principal's own agent-scope grants, seeded the same way. Initialize clears everything.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals;
@@ -25,10 +26,12 @@ public sealed partial class PrincipalState : State<PrincipalState>
 {
   private List<PrincipalSummaryDto>? PrincipalsList { get; set; }
   private Dictionary<Guid, HashSet<Guid>> DraftRoleIds { get; set; } = [];
+  private Dictionary<Guid, HashSet<string>> DraftAgentScopes { get; set; } = [];
 
   public IReadOnlyList<PrincipalSummaryDto>? Principals => PrincipalsList?.AsReadOnly();
 
   public bool LastSetPrincipalRolesSucceeded { get; private set; }
+  public bool LastSetPrincipalAgentScopesSucceeded { get; private set; }
   public string? Search { get; private set; }
   public PrincipalListSortColumn SortBy { get; private set; } = PrincipalListSortColumn.CreatedAt;
   public bool SortDescending { get; private set; }
@@ -40,7 +43,9 @@ public sealed partial class PrincipalState : State<PrincipalState>
   {
     PrincipalsList = null;
     DraftRoleIds = [];
+    DraftAgentScopes = [];
     LastSetPrincipalRolesSucceeded = false;
+    LastSetPrincipalAgentScopesSucceeded = false;
     Search = null;
     SortBy = PrincipalListSortColumn.CreatedAt;
     SortDescending = false;
@@ -56,4 +61,12 @@ public sealed partial class PrincipalState : State<PrincipalState>
 
   public bool IsRoleSelected(Guid principalId, Guid roleId) =>
     DraftRoleIds.TryGetValue(principalId, out HashSet<Guid>? set) && set.Contains(roleId);
+
+  public bool IsAgentScopeSelected(Guid principalId, string scope) =>
+    DraftAgentScopes.TryGetValue(principalId, out HashSet<string>? set) && set.Contains(scope);
+
+  public IReadOnlyCollection<string> GetDraftAgentScopes(Guid principalId) =>
+    DraftAgentScopes.TryGetValue(principalId, out HashSet<string>? set)
+      ? set
+      : Array.Empty<string>();
 }
