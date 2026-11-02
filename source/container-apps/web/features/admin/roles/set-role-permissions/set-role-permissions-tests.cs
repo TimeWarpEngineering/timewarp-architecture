@@ -229,6 +229,34 @@ namespace TimeWarp.Architecture.Features.Admin.Roles
       return Task.CompletedTask;
     }
 
+    public static Task SimulateEffective_RolelessAgent_Should_BeEmpty()
+    {
+      PrincipalId id = PrincipalId.New();
+      IReadOnlyList<Guid> effective = AdminLockoutGuards.SimulateEffectiveRoles(
+        id,
+        storedRoleIds: [],
+        bootstrapPrincipalIds: new HashSet<PrincipalId>(),
+        PrincipalKind.Agent);
+
+      effective.ShouldBeEmpty();
+      return Task.CompletedTask;
+    }
+
+    public static async Task EmptyEffective_Should_NotSubstituteMember()
+    {
+      InMemoryRolePermissionStore store = new();
+      await store.SetPermissionIdsForRoleAsync(
+        RoleIds.Member,
+        [PermissionIds.AdminPrincipalsManage]);
+
+      bool granted = await AdminLockoutGuards.RolesGrantPermissionAsync(
+        [],
+        PermissionIds.AdminPrincipalsManage,
+        store);
+
+      granted.ShouldBeFalse();
+    }
+
     public static Task LastAdministratorConflict_Should_Be_409()
     {
       SharedProblemDetails problem = AdminLockoutGuards.LastAdministratorConflict();

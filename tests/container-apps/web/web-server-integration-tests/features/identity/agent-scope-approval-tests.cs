@@ -4,8 +4,8 @@
 
 #region Design
 // Task 466. Own host so a Developer role's agent scopes cannot leak into another class.
-// A new agent is effective Member and Member starts with no agent scopes, so only
-// identity:read succeeds. Role coverage assigns Developer (a product role the effective
+// A new agent has no effective role, so only identity:read succeeds even when Member
+// carries other scopes. Role coverage assigns Developer (a product role the effective
 // resolver keeps) and puts the feedback scopes on that role. Principal coverage writes
 // IPrincipalAgentScopeStore directly. A mixed request is refused whole: no token, and the
 // consumed challenge cannot be replayed.
@@ -148,6 +148,39 @@ public class Refuses_
     onlyApproved.IsT0.ShouldBeTrue();
     onlyApproved.AsT0.Scopes.ShouldBe([AgentScopes.FeedbackRead]);
     onlyApproved.AsT0.AccessToken.ShouldNotBeNullOrWhiteSpace();
+  }
+
+  public static async Task MemberScopes_Should_NotApproveARolelessAgent()
+  {
+    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    IRoleAgentScopeStore roleScopes = scope.ServiceProvider.GetRequiredService<IRoleAgentScopeStore>();
+    IEffectiveRolesResolver roles = scope.ServiceProvider.GetRequiredService<IEffectiveRolesResolver>();
+    try
+    {
+      await roleScopes.SetScopesForRoleAsync(RoleIds.Member, [AgentScopes.FeedbackRead]);
+
+      IntegrationSoftwareAgentKey key = new();
+      (PrincipalId principalId, string keyId) = await RegisterAgentAsync(key);
+
+      IReadOnlyList<Guid> effective = await roles.GetEffectiveRoleIdsAsync(principalId);
+      effective.ShouldBeEmpty();
+
+      OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> allowed =
+        await RequestAsync(key, keyId, [AgentScopes.IdentityRead]);
+      allowed.IsT0.ShouldBeTrue("identity:read stays approved with no role.");
+      allowed.AsT0.Scopes.ShouldBe([AgentScopes.IdentityRead]);
+
+      OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> refused =
+        await RequestAsync(key, keyId, [AgentScopes.FeedbackRead]);
+      refused.IsT2.ShouldBeTrue();
+      refused.AsT2.Status.ShouldBe(403);
+      refused.AsT2.Title.ShouldBe("unapproved_scope");
+      refused.AsT2.Detail.ShouldBe($"Unapproved scope(s): {AgentScopes.FeedbackRead}.");
+    }
+    finally
+    {
+      await roleScopes.SetScopesForRoleAsync(RoleIds.Member, []);
+    }
   }
 
   private static async Task<(PrincipalId PrincipalId, OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> Result, CompleteAgentTokenIssuance.Command Command)> RegisterAndRequestAsync(

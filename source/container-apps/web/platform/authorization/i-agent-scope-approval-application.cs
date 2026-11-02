@@ -5,8 +5,9 @@
 #region Design
 // Task 466: identity:read is always approved. Everything else must be on an effective role's
 // agent-scope list or granted on the principal. Effective roles are the same set the admin
-// Principal page shows (empty stored roles resolve to Member). Human permission ids are not
-// consulted. A removed approval does not revoke a token already issued.
+// Principal page shows (a roleless human resolves to Member; a roleless agent resolves to no
+// role). Human permission ids are not consulted. A removed approval does not revoke a token
+// already issued.
 #endregion
 
 namespace TimeWarp.Architecture.Authorization;

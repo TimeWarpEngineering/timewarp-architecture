@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Task 147-004: PUT api/admin/principals/{PrincipalId}/roles — full replace (D10 empty allowed →
-// next effective = Member). Validator requires each RoleId ∈ RoleIds.All. Handler returns 404
+// Task 147-004: PUT api/admin/principals/{PrincipalId}/roles — full replace (D10 empty allowed).
+// The resolver then applies Member for a human and no role for an agent or a service. Validator
+// requires each RoleId ∈ RoleIds.All. Handler returns 404
 // when the principal is missing. [EndpointAuthorize] (task 182-002): admin.principals.manage
 // (PermissionIds); ListPrincipals uses admin.principals.read.
 // PrincipalId comes from the route segment (source-generated on partial Command).

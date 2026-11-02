@@ -5,12 +5,14 @@
 #region Design
 // 404 when IPrincipalStore has no principal — admin UI should only offer known rows, but race
 // with concurrent delete/quarantine is still possible. Empty RoleIds is allowed (D10): store
-// clears the assignment so effective roles become {Member}. Response echoes the stored list
+// clears the assignment. A human's effective roles become {Member}; an agent's become empty.
+// Response echoes the stored list
 // (not effective) so clients can confirm the write; ListPrincipals re-reads effective roles.
 // Route PrincipalId is PrincipalId typed id generated from {PrincipalId:guid}.
 // Last-admin (task 182-004): before write, count principals whose *effective* roles grant
 // admin.principals.manage. If exactly one such principal is the target and the proposed stored
-// roles would leave them without that permission (after Member-default + bootstrap union),
+// roles would leave them without that permission (after the kind-aware Member default and the
+// bootstrap union),
 // return 409 — prevents lockout of principal management. Uses AdminLockoutGuards +
 // IEffectiveRolesResolver + IRolePermissionStore; store stays dumb.
 #endregion
@@ -65,7 +67,7 @@ public sealed partial class SetPrincipalRoles
       IReadOnlyList<Guid> roleIds = command.RoleIds ?? [];
 
       SharedProblemDetails? lastAdmin = await CheckLastAdministratorAsync(
-          principalId,
+          principal,
           roleIds,
           cancellationToken)
         .ConfigureAwait(false);
@@ -90,7 +92,7 @@ public sealed partial class SetPrincipalRoles
     /// who currently has it (via effective roles + role permission expansion).
     /// </summary>
     private async Task<SharedProblemDetails?> CheckLastAdministratorAsync(
-      PrincipalId targetPrincipalId,
+      Principal target,
       IReadOnlyList<Guid> proposedStoredRoleIds,
       CancellationToken cancellationToken)
     {
@@ -119,7 +121,7 @@ public sealed partial class SetPrincipalRoles
         }
       }
 
-      if (currentAdmins.Count != 1 || currentAdmins[0] != targetPrincipalId)
+      if (currentAdmins.Count != 1 || currentAdmins[0] != target.Id)
       {
         return null;
       }
@@ -128,9 +130,10 @@ public sealed partial class SetPrincipalRoles
         BootstrapOptions.Value.BootstrapAdministratorPrincipalIds);
 
       IReadOnlyList<Guid> proposedEffective = AdminLockoutGuards.SimulateEffectiveRoles(
-        targetPrincipalId,
+        target.Id,
         proposedStoredRoleIds,
-        bootstrapIds);
+        bootstrapIds,
+        target.Kind);
 
       bool stillHasManage = await AdminLockoutGuards
         .RolesGrantPermissionAsync(

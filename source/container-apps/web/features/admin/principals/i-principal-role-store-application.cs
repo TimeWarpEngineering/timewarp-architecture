@@ -4,8 +4,9 @@
 
 #region Design
 // Task 147-004 D1: roles live in the web app store, not on the Principal entity / TimeWarp.Identity.
-// Empty store for a principal is meaningful (D2): effective roles become {Member} via
-// IEffectiveRolesResolver — this store never invents defaults. SetRoleIds replaces the full set
+// Empty store for a principal is meaningful (D2): IEffectiveRolesResolver applies the default.
+// Member for a human or a missing row, and no role for an agent or a service. This store never
+// invents defaults. SetRoleIds replaces the full set
 // (D10: empty list allowed). Dual-mode (147-006): InMemoryPrincipalRoleStore singleton default;
 // EfPrincipalRoleStore scoped when Postgres connection is present (PostgresDbModule).
 // First-administrator claim (product): TryClaimFirstAdministratorAsync is the atomic "empty
@@ -26,7 +27,7 @@ public interface IPrincipalRoleStore
   /// <summary>Stored role ids only — empty when nothing has been assigned yet.</summary>
   Task<IReadOnlyList<Guid>> GetRoleIdsAsync(PrincipalId principalId, CancellationToken cancellationToken = default);
 
-  /// <summary>Replace stored roles for the principal (empty clears to default effective Member).</summary>
+  /// <summary>Replace stored roles. The resolver applies Member for a roleless human and no role for a roleless agent.</summary>
   Task SetRoleIdsAsync(
     PrincipalId principalId,
     IReadOnlyList<Guid> roleIds,

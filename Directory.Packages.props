@@ -57,14 +57,12 @@
   </ItemGroup>
   <ItemGroup Label="Microsoft Extensions Packages">
     <!-- Configuration.Abstractions, DependencyInjection.Abstractions, Hosting.Abstractions, and
-         Logging.Abstractions are in the net11 shared framework. Direct PackageReferences to them
-         are NU1510, so those pins are gone. Options stays pinned: one co-located runfile takes it
-         with a versionless #:package directive, which Central Package Management resolves from here.
-         A csproj must not PackageReference it (NU1510).
+         Logging.Abstractions, and Options are in the net11 shared framework. Direct
+         PackageReferences to them are NU1510, so those pins are gone. A co-located runfile must
+         not take Options with a #:package directive either.
          Shared-framework Microsoft.* and System.* pins on this train are 11.0.0-rc.3.26522.148,
          matching SDK 11.0.100-rc.3.26522.148. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0-rc.3.26522.148" />
     <!-- Extensions monthly package. No 11.x, so the pin is 10.11.0. -->

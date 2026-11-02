@@ -126,10 +126,10 @@ Done when:
 - [x] `dev build` 0/0; affected suites pass; `dev template-smoke` (template output changes); `dev check-version` if platform packages change
 - [x] Postgres-off template excludes the four EF agent-scope files
 - [x] One `AgentScopeOrder` helper used by the five call sites
-- [ ] ~~Member role warns that its agent scopes reach every unassigned principal~~ — superseded by the Member decision below
-- [ ] Agents are not Members: an agent principal with no assigned role has no effective role (humans keep the Member default)
-- [ ] Member warning removed or reworded for the new rule; Design regions (effective roles, SetRoleAgentScopes) record it
-- [ ] Tests: a roleless agent resolves to no role and gets only identity:read even when Member carries agent scopes; a roleless human still resolves to Member
+- [x] ~~Member role warns that its agent scopes reach every unassigned principal~~ — superseded by the Member decision below
+- [x] Agents are not Members: an agent principal with no assigned role has no effective role (humans keep the Member default)
+- [x] Member warning removed or reworded for the new rule; Design regions (effective roles, SetRoleAgentScopes) record it
+- [x] Tests: a roleless agent resolves to no role and gets only identity:read even when Member carries agent scopes; a roleless human still resolves to Member
 - [x] Co-located test covers effective-set sources and catalog order
 - [x] Principal page disables Save agent scopes while that action is active
 - [x] `--web false` excludes the agent-scope approval test helper
@@ -179,6 +179,12 @@ Done when:
   page and claims show the same thing. Fix pass on the same PR.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19c73-a051-7c41-91b4-8c2478377f2b, max-turns 500, Blocked — 2026-11-02T13:46:52Z
 - Installed ganda changed during this walk: was 50271632 bytes 90a79639f114a02e38a31ca871980c1e094b9594d49e20d8a817714562bdeb9d; now 50296336 bytes 970fac827e28467d47743c6e9cdca8036036a6be2f0b3305a50018f5b8cf54af
+- Member decision implemented (2026-11-02), session 01a19c85-85bf-73e3-859f-8075b3af282f. The previous
+  walk left the resolver change uncommitted and a placeholder Blocked section. This walk finished
+  that change: a roleless human or a missing row is Member; a roleless agent or service has no
+  role; bootstrap still unions Administrator and Member for any kind. The Member page and
+  SetRoleAgentScopes say Member scopes reach roleless humans who hold an agent key, not
+  self-registered agents.
 
 ## Results
 
@@ -206,8 +212,9 @@ two EF agent-scope stores and their entity-type configurations. A `--web false` 
 `tests/common/timewarp-testing/applications/agent-scope-approval.cs`, which references those
 web types. `AgentScopeOrder.OrderKnown`
 is the only catalog-order helper. The Member role page states that scopes on Member reach
-every principal with no other role, including an agent that registers without signing in, and
-`SetRoleAgentScopes` records that rule. The Principal page disables Save agent scopes while
+roleless human principals, including a human who holds an agent key, and that a self-registered
+agent has no role until an admin assigns one. `SetRoleAgentScopes` records that rule. The
+Principal page disables Save agent scopes while
 `SetPrincipalAgentScopes` is active. The effective-set source marks are covered by
 `AgentScopeApproval_Given_.MixedSources_Should_MarkDefaultRoleAndPrincipalInCatalogOrder`.
 
@@ -234,6 +241,45 @@ once as a runfile and once under `web-jaribu-tests` (`--filter-class AgentScopeA
 `Template smoke SUCCEEDED`. SmokeNoPostgres and SmokeNoWeb both printed OK, and the
 generated SmokeNoWeb tree does not contain `agent-scope-approval.cs`.
 
+Steve decided agents are not Members. `EffectiveRolesResolver` now reads principal kind only
+when the stored role list is empty. A human, and a missing row, resolve to Member. An agent
+or a service resolves to no role. Bootstrap still adds Administrator and Member for any kind.
+A role-store or principal-store failure still throws `RoleResolutionFailedException`. The
+Member role page and `SetRoleAgentScopes` say Member scopes reach roleless humans who hold an
+agent key, and they do not reach a self-registered agent. The Principals page says the same.
+`AdminLockoutGuards.SimulateEffectiveRoles` takes the principal kind so a proposed write
+matches that resolution. `RolesGrantPermissionAsync` no longer substitutes Member for an
+empty list; callers pass the effective list. The `Microsoft.Extensions.Options` central pin
+is gone because no runfile takes it with a `#:package` directive; the shared framework
+provides the assembly.
+
+`dev template-smoke` was not re-run. This pass does not change the template file set.
+`dev check-version` was not run. No package version changed.
+
+### How to validate
+
+Smoke:
+
+```bash
+dotnet run source/container-apps/web/features/admin/principals/effective-roles-resolver-tests.cs
+cd tests/container-apps/web/web-server-integration-tests && dotnet test -c Release -- --filter-class AgentScopeApproval_
+```
+
+Expect: the resolver runfile passes 17/17, including `RolelessHuman_Should_YieldMemberOnly`,
+`RolelessAgent_Should_YieldNoRoles`, `RolelessService_Should_YieldNoRoles`, and
+`BootstrapAgent_Should_UnionAdministratorAndMember`. A missing principal id still yields
+Member. The issuance class passes 5/5. `MemberScopes_Should_NotApproveARolelessAgent` sees
+an empty effective-role list, issues `identity:read`, and returns 403 `unapproved_scope`
+naming `feedback:read` while that scope is stored on Member.
+
+`./bin/dev build` succeeded with 0 warnings and 0 errors. `web-jaribu-tests` compiled with
+0 warnings and 0 errors, which covers the feedback suites that construct the resolver.
+Co-located runs also passed:
+`set-role-permissions-tests` 15/15, `get-principal-tests` 10/10 (a roleless agent detail
+has an empty role list; a roleless human is Member), `list-principals-tests` 13/13,
+`agent-scope-approval-tests` 1/1, and `permission-evaluator-tests` 19/19. The admin pages
+were not opened in a browser.
+
 ### Review
 
 Round 1 found 1 bug, 3 suggestions, and 1 nit. This fix pass implements all five. Round 2
@@ -257,8 +303,8 @@ re-run `template-smoke --matrix`, which the implementer reported as succeeded.
 
 **Review disposition: clean.** 2 rounds. Final counts: bug 1 fixed, suggestion 3 fixed, nit 1
 fixed, 0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md`
-(final ledger), `review/disposition.md`. One product call is left for Steve: refuse agent scopes
-on Member instead of warning (M3).
+(final ledger), `review/disposition.md`. Steve then decided agents are not Members. That
+decision is implemented on this branch: the resolver, not the approval code, is what changed.
 
 ## Review
 
@@ -269,7 +315,3 @@ on Member instead of warning (M3).
 
 Related: done 331 (OpenAPI reviewer guide), done 378 (scoped feedback triage), 182-006 (agent
 grants come only from token scopes).
-
-## Blocked
-
-2026-11-02: placeholder — work still running

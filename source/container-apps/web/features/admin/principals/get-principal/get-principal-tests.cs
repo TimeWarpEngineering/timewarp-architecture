@@ -153,6 +153,7 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
       Principal agent = await world.AddAsync(PrincipalKind.Agent);
 
       (await world.GetAsync(agent.Id)).AsT0.Principal.Profile.ShouldBeNull();
+      (await world.GetAsync(agent.Id)).AsT0.Principal.RoleIds.ShouldBeEmpty();
       (await world.Profiles.FindAsync(ProfileId.From(agent.Id.Value))).ShouldBeNull("opening a principal never creates a profile");
     }
 
@@ -199,7 +200,8 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
 
       EffectiveRolesResolver resolver = new(
         roles,
-        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
+        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
+        Principals);
       PermissionEvaluator evaluator = new(resolver, permissions, new NoAgentScopes());
       AgentScopeApproval approval = new(resolver, new InMemoryRoleAgentScopeStore(), new InMemoryPrincipalAgentScopeStore());
       Handler = new GetHandler(

@@ -5,8 +5,9 @@
 #region Design
 // IsAuthenticated and PrincipalId are always set together from the same IBrowserSessionService
 // result, matching the contract Response's Design region (the pairing can never disagree).
-// RoleIds (task 147-004): when authenticated, resolved via IEffectiveRolesResolver (empty store →
-// Member; bootstrap may union Administrator). Unauthenticated → empty RoleIds list.
+// RoleIds (task 147-004, task 466): when authenticated, resolved via IEffectiveRolesResolver
+// (roleless human → Member; roleless agent → no role; bootstrap may union Administrator).
+// Unauthenticated → empty RoleIds list.
 // Permissions (task 182-003): always via IPermissionEvaluator under the identity-session scheme
 // (cookie sessions are human; agent-token never hits this handler). Unauthenticated → empty.
 #endregion

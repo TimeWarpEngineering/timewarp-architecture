@@ -4,7 +4,7 @@
 
 #region Design
 // Task 466: role scopes come from IEffectiveRolesResolver, not the raw stored list, so a
-// principal with no assignment is Member and a custom role id the resolver drops does not
+// roleless human is Member and a roleless agent has no role. A custom role id the resolver drops does not
 // approve anything. Principal grants are ordered with AgentScopeOrder. Effective scopes follow
 // AgentScopes.All. Scoped because the EF stores are scoped; the in-memory stores are singletons
 // and can still be consumed from a scope.

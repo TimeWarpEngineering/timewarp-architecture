@@ -11,8 +11,9 @@
   RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
   Administrator admin.* grants are disabled when selected; last-admin lockout is
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
-  Agent scopes on Member reach every principal with no other role, including an agent that
-  registers without signing in. That sentence is shown only on the Member role.
+  Agent scopes on Member reach roleless human principals, including a human who holds an
+  agent key. A self-registered agent has no effective role, so those scopes do not apply
+  to it. That sentence is shown only on the Member role.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
   No per-page Back button. Document title comes from TimeWarpPage Title via TwPageTitle.
   The description is a DefinitionList item when it is not blank. A blank description
@@ -110,8 +111,9 @@
           @if (RoleId == RoleIds.Member)
           {
             <p class="ds-subtitle" data-qa="MemberAgentScopeWarning">
-              Scopes on Member reach every principal with no other role, including an agent that
-              registers without signing in.
+              Scopes on Member reach roleless human principals, including a human who holds an
+              agent key. A self-registered agent has no role until an admin assigns one, so these
+              scopes do not apply to it.
             </p>
           }
           <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">

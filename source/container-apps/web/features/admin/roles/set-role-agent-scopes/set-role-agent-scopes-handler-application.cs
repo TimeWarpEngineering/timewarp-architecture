@@ -6,8 +6,8 @@
 // Task 466: 404 when RoleStore has no role, same as SetRolePermissions. No protected-core
 // guard: agent scopes cannot carry admin.* permissions. The response re-reads the store through
 // AgentScopeOrder so the client sees AgentScopes.All order.
-// A scope stored on Member approves every principal whose effective roles are only Member,
-// including an agent that registers without signing in. The role editor warns on that role.
+// A scope stored on Member approves a roleless human, including one who holds an agent key.
+// A self-registered agent has no effective role, so Member scopes do not approve it.
 // This handler still stores the list.
 #endregion
 

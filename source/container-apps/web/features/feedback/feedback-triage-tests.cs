@@ -960,7 +960,8 @@ namespace TimeWarp.Architecture.Features.Feedback
 
       EffectiveRolesResolver resolver = new(
         Roles,
-        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
+        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
+        new InMemoryPrincipalStore());
       Evaluator = new PermissionEvaluator(resolver, permissions, HeldScopes);
     }
 

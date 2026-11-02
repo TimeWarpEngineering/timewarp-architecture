@@ -5,7 +5,7 @@
 #region Design
 // Task 147-006: mirrors EfPrincipalStore dual-mode — host-owned, library stays free of roles.
 // Semantics match InMemoryPrincipalRoleStore:
-//   - Get: empty list when no rows (effective Member applied by resolver, not this store)
+//   - Get: empty list when no rows (the resolver applies the human Member default, not this store)
 //   - Set: replace-set (delete all for principal, insert Distinct role ids); empty clears
 //   - TryClaimFirstAdministrator: Serializable transaction — Any Administrator row? no → write
 //     Administrator+Member for this principal. Concurrent claims: one wins, others see the row.
