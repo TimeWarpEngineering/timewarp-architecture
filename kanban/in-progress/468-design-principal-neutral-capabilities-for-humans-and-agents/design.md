@@ -21,7 +21,7 @@ Two vocabularies, two grant paths, and kind checks spread across the stack.
 | Role scopes and principal scopes | Task 466: `identity.role_agent_scopes` and `identity.principal_agent_scopes` (migration `20261102105501_AddAgentScopeGrants`), two stores each, `SetRoleAgentScopes` and `SetPrincipalAgentScopes`, an "Agent scopes" box on the role page and two agent-scope sections on the Principal page. |
 | Default | `EffectiveRolesResolver`: a roleless human (or a missing row) is Member; a roleless agent or service has no role. `identity:read` is always approved at issuance. |
 | Evaluator | `IPermissionEvaluator` branches on authentication scheme. Human session: effective roles then role permissions, live from the store. Agent token: the token's scopes through the seed. Never both. |
-| Endpoints | `[EndpointAuthorize(Policy, AuthenticationSchemes)]`. The scheme list decides which credential kinds may call. Human-only: 34 operations. Agent-only: 4 plus the api-host sample. Both: 13. |
+| Endpoints | `[EndpointAuthorize(Policy, AuthenticationSchemes)]`. The scheme list decides which credential kinds may call. Human-only: 34 operations. Agent-only: 4 plus the api-host sample. Both: 14. |
 | Token | Opaque, in-memory store, 15 minutes default, claims `timewarp:principal_id` and one `timewarp:scope` per scope. The agent names scopes; issuance refuses unapproved ones with 403 `unapproved_scope`. |
 | Agent link | `features/agent-links`: Pending, Approved, Denied. Approve is human-only and grants nothing. No revoke. |
 | Purchases | `MeteredCapabilityGate` debits a per-principal credit ledger or runs the x402 flow per call. Settlement promotes `TrustTier.Funded`. No purchase creates a permission. Ledger is in memory. |
@@ -103,7 +103,10 @@ whatever its kind and whatever credential authenticated it. Concretely:
   `IPermissionEvaluator` Design region.
 - A short, explicit list of operations keeps a per-operation requirement that a credential cannot
   satisfy by permission alone (section 6). That is a new property on the attribute, for example
-  `Requires = CredentialRequirement.FirstParty`, not a scheme list.
+  `Requires = CredentialRequirement.FirstParty`, not a scheme list. The task asks for a
+  per-operation "present person" requirement; this design reads it as "the credential is the
+  subject's own", which an agent's own token satisfies. Q18 asks Steve to confirm that reading or
+  to narrow those rows to a browser session.
 - The non-permission policies `IdentitySessionDefaults.AuthenticatedPolicy` and
   `XaiChatDefaults.AuthenticatedPolicy` go away. Every protected operation names a permission id.
   The two agent-chat operations need one (section 10 asks which).
@@ -144,9 +147,18 @@ effective(A) = roles(A) ∪ grants(A) ∪ purchases(A) ∪ delegated(A)
 
 Removing a permission from B removes it from A at A's next token. Tokens last
 `AgentTokenOptions.TokenLifetimeMinutes` (15 by default, 1 to 60), so that is the revocation
-latency, the same as today's approval removal. The token records `on_behalf_of = B` for every
-permission that came from delegation, so audit and problem details can say whose capability was
-used.
+latency, the same as today's approval removal.
+
+Provenance is per permission id, not per token. The token shape is a list of
+`TokenPermission(PermissionId, DelegatedFrom?)`: `DelegatedFrom` is null for an id A holds
+through its own roles, grants, or purchases, and is B for an id that A holds only through the
+link. A mixed token is allowed and is the normal case (example 3.3 carries `identity.read` as
+A's own and two feedback ids delegated from B). Issuance decides each id's provenance in order:
+own sources first, delegation only for an id A does not hold itself, so an id A holds both ways
+is recorded as A's own. First-party checks (section 6), the not-self check (section 2.6), audit,
+and problem details read `DelegatedFrom` on the ids an operation uses, so they can say whose
+capability was spent without rejecting the caller's own ids or mistaking a delegated id for the
+subject's own. Nothing on the token says "this whole token acts for B".
 
 ### 2.6 Granting is a permission, with a ceiling
 
@@ -155,15 +167,19 @@ Rules, each kind-neutral:
 1. **Grant permission.** Writing `grants(P)` needs `admin.principals.manage`. Writing a role's
    bundle needs `admin.roles.manage`. Assigning roles needs `admin.principals.manage`. Unchanged
    ids; the change is that any principal holding them may call the endpoint.
-2. **Ceiling.** A grantor may grant only permission ids it holds itself at the moment of the
-   grant, whether the grant lands on a principal or on a role bundle. "No agent token ever holds
-   `admin.*`" becomes "nobody receives `admin.*` from a principal that does not hold it". The
-   Administrator protected-core guard (`ProtectedCoreConflict`) and the last-administrator guard
-   stay. Section 10 offers the alternative of per-prefix `grant.*` permissions.
+2. **Ceiling (proposed, Q3).** The invariant the task states is "granting is itself a
+   permission". How that permission is scoped is open. This design proposes a ceiling: a
+   grantor may grant only permission ids it holds itself at the moment of the grant, whether
+   the grant lands on a principal or on a role bundle, so "no agent token ever holds `admin.*`"
+   becomes "nobody receives `admin.*` from a principal that does not hold it". Q3 offers the
+   other reading, per-prefix `grant.<prefix>` permissions, under which a grantor needs
+   `grant.admin` rather than the `admin.*` ids themselves. Every later mention of "ceiling" in
+   this document means whichever of the two Steve picks. The Administrator protected-core guard
+   (`ProtectedCoreConflict`) and the last-administrator guard stay under either.
 3. **No self-escalation.** The actor of a grant, role assignment, link approval, or request
-   approval may not be the beneficiary. The check compares the acting principal and, for a
-   delegated token, the `on_behalf_of` principal against the target. An administrator still
-   cannot approve its own capability request; a second administrator does.
+   approval may not be the beneficiary. The check compares the acting principal, and the
+   `DelegatedFrom` principal of every token id the operation relies on, against the target. An
+   administrator still cannot approve its own capability request; a second administrator does.
 4. **Audit.** Every grant, revoke, role assignment, role-bundle change, purchase, link approval,
    link revocation, and delegation change writes one row to `authorization_audit` (At, Actor,
    OnBehalfOf?, Action, TargetPrincipal?, TargetRole?, PermissionId?, Source: request id,
@@ -212,7 +228,7 @@ under the same rules on that key. Browser sessions keep their own rules. Nothing
    `GetFeedbackForAdmin`, `AddFeedbackNote`, `SetFeedbackSeverity`, `ChangeFeedbackStatus`
    authorize by permission. `ReplyToFeedback` needs `admin.feedback.manage`, which the reviewer
    does not hold, so the "no reply to the filer" posture from 378 is now a grant decision, not a
-   kind rule.
+   kind rule (unless Q6 keeps reply first-party).
 4. The administrator later removes `feedback.status`. The grant row is deleted, an audit row
    records the revoke, and the reviewer's next token (or next session evaluation) no longer
    carries it.
@@ -225,8 +241,9 @@ under the same rules on that key. Browser sessions keep their own rules. Nothing
    for the human cannot approve it. An audit row records the delegation.
 2. The agent issues a token naming `feedback.read`, `feedback.note`, `identity.read`. Issuance
    computes `delegated(agent) = {feedback.read, feedback.note} ∩ effective(human)`. The human
-   holds both (through Administrator), so the token is issued with `on_behalf_of = human` on the
-   two delegated ids.
+   holds both (through Administrator), so the token is issued with `DelegatedFrom = human` on the
+   two feedback ids and `DelegatedFrom = null` on `identity.read`, which the agent holds through
+   its own default. One token, mixed provenance (section 2.5).
 3. The human loses Administrator. At the agent's next issuance the intersection is empty; a
    request naming `feedback.read` gets 403 listing it. The link still exists; it just delegates
    nothing the human no longer has.
@@ -266,10 +283,12 @@ requests" page beside Principals, with a badge count), and the requester through
 no notification system in the template; the Principal page and the list page are the inbox.
 
 Who may approve: any principal holding `admin.principals.manage` and every requested id, other
-than the requester and its `on_behalf_of` principal. This is what "only a principal allowed to
-grant `admin.*` can grant it" means in code: holding `admin.principals.manage` without holding
-`admin.roles.manage` lets you approve a request for `feedback.read` but not for
-`admin.roles.manage`.
+than the requester and any `DelegatedFrom` principal on the ids the approving credential uses
+(approve is first-party, section 6.2, so in practice the approver's own ids). Under the proposed
+ceiling (Q3), this is what "only a principal allowed to grant `admin.*` can grant it" means in
+code: holding `admin.principals.manage` without holding `admin.roles.manage` lets you approve a
+request for `feedback.read` but not for `admin.roles.manage`. Under the per-prefix alternative
+in Q3, the approver would need `grant.admin` instead of holding `admin.roles.manage` itself.
 
 How an outside agent learns about it from the OpenAPI document alone (task 331's goal):
 
@@ -291,25 +310,25 @@ How an outside agent learns about it from the OpenAPI document alone (task 331's
 
 | Piece | Change |
 |---|---|
-| `AgentScopes` (`TimeWarp.Identity`) | Removed. `AgentTokenGrant.Scopes` becomes `Permissions`. `IAgentTokenStore.Issue(principalId, credentialId, permissions, lifetime, onBehalfOf?)`. Public API break: `<Version>` and the `TimeWarp.Identity` and `TimeWarp.402` pins bump in the same commit (`dev check-version`), and a release follows the merge (memory: release when libs change; never design around a release). The package has no permission catalog and should not get one; ids stay template code. |
-| `AgentScopePermissionSeed` | Deleted. Its two-permission expansion of `identity:read` is replaced by both ids being in the default bundle. |
+| `AgentScopes` (`TimeWarp.Identity`) | Removed. `AgentTokenGrant.Scopes` (strings) becomes `AgentTokenGrant.Permissions`, an `IReadOnlyList<TokenPermission>` where `TokenPermission` is a record `(string PermissionId, PrincipalId? DelegatedFrom)` in the package (section 2.5). `IAgentTokenStore.Issue(principalId, credentialId, IReadOnlyList<TokenPermission> permissions, lifetime)`; there is no token-wide `onBehalfOf`, because one token mixes own and delegated ids. Public API break: `<Version>` and the `TimeWarp.Identity` and `TimeWarp.402` pins bump in the same commit (`dev check-version`), and a release follows the merge (memory: release when libs change; never design around a release). The package has no permission catalog and should not get one; ids stay template code. |
+| `AgentScopePermissionSeed` | Deleted after the migration has used it once: the migration copies every stored scope through the seed's expansion into grant or role-permission rows (section 7.2), including both ids of `identity:read`. Whether those two ids also sit in the default bundle is Q2; the copy does not depend on the answer, because `effective(P)` is a union and an id held twice is held once. |
 | Task 466 role scope store | `IRoleAgentScopeStore`, `RoleAgentScopeGrant`, its EF configuration, in-memory and EF stores, `SetRoleAgentScopes`, the SPA action, and the "Agent scopes" box on `RoleDetailPage.razor` are removed. The Member role-page warning text goes with them. |
 | Task 466 principal scope store | Becomes the direct-grant store: `IPrincipalPermissionStore`, `PrincipalPermissionGrant` (PrincipalId, PermissionId, GrantedBy, GrantedAt, RequestId?), EF table `identity.principal_permission_grants`. `SetPrincipalAgentScopes` becomes `SetPrincipalPermissions` (replace-set, ceiling check, not-self check, audit). The Principal page shows "Effective permissions" with a source chip per id (default, role name, grant, purchase, delegated from X) and a "Direct grants" editor. `AgentScopeApproval`, `AgentScopeOrder`, and `AgentScopeGrantKind` are replaced by an `EffectivePermissions` service that returns ids with sources, used by issuance, the Principal page, and `GetCurrentSession`. |
 | EF migration | One migration: create `principal_permission_grants`, `principal_purchased_permissions`, `capability_requests`, `authorization_audit`; add `DelegatedPermissions` (and `RevokedAt`) to `agent_links.agent_links`; copy `principal_agent_scopes` rows through the scope-to-permission map (`identity:read` to two rows) with `GrantedBy = null`, `GrantedAt = migration time`; copy `role_agent_scopes` rows into `identity.role_permissions` through the same map, skipping duplicates; drop the two agent-scope tables. Also the seed inserts for the default bundle change (section 2.3). |
 | Admin UI | Role page: one permissions editor. Principal page: effective permissions with sources, direct-grant editor, pending requests for this principal, audit tail. New Capability requests page. Agent links page: delegated list picker on approve, revoke button. All through TimeWarp.State actions (`tw-blazor`). |
-| Token contracts | `CompleteAgentTokenIssuance.Command.Scopes` becomes `Permissions` (1 to 32 ids, validated against `PermissionIds.All`; unknown is 400 `invalid_permission`). Response `Permissions` and `OnBehalfOf?`. Remarks rewritten. `StartAgentTokenIssuance` unchanged. `GetAgentIdentity` returns the token's permission ids. |
+| Token contracts | `CompleteAgentTokenIssuance.Command.Scopes` becomes `Permissions` (1 to 32 ids, validated against `PermissionIds.All`; unknown is 400 `invalid_permission`). Response `Permissions` is a list of `{ permissionId, delegatedFrom? }` so the agent can see which ids it holds for itself and which through a link; there is no token-wide `onBehalfOf` field. Remarks rewritten. `StartAgentTokenIssuance` unchanged. `GetAgentIdentity` returns the same per-id list. |
 | `JWTBearerAuth` text and reviewer guide | Section 4. `OpenApiAgentBearer.PolicyScopesFromGrants` and its "two scopes grant one permission" exception are deleted; the scope string is the permission id. `open-api-bearer-security-tests.cs` probe table is rewritten per permission. |
 | `EffectiveRolesResolver` | `DefaultWhenUnassignedAsync` no longer reads the principal store; an empty stored list resolves to the default role for every kind. `AdminLockoutGuards.SimulateEffectiveRoles` drops its `kind` parameter. The IEffectiveRolesResolver Design SSOT is rewritten. Tests `RolelessAgent_Should_YieldNoRoles` and `RolelessService_Should_YieldNoRoles` invert. |
-| `IPermissionEvaluator` | Signature becomes `(PrincipalId, CredentialContext)` where the context carries the credential type and, for a bearer, the token's permission list and `on_behalf_of`. One expansion path: `effective(P)` from the four sources, intersected with the token list when present. `IAgentCallerContext` and `IAgentPermissionScopeSource` are removed. `PrincipalRoleClaimsTransformation` runs for every scheme. The external-PDP swap note survives. |
+| `IPermissionEvaluator` | Signature becomes `(PrincipalId, CredentialContext)` where the context carries the credential type and, for a bearer, the token's `TokenPermission` list with per-id `DelegatedFrom`. One expansion path: `effective(P)` from the four sources, intersected with the token list when present. `IAgentCallerContext` and `IAgentPermissionScopeSource` are removed. `PrincipalRoleClaimsTransformation` runs for every scheme. The external-PDP swap note survives. |
 | Endpoint auth declarations | Every hosted contract loses its scheme list except the first-party set (section 6). The reference `tw-web-api-contracts/references/endpoint-auth.md` is rewritten: one policy per permission id, no scheme table, a first-party section. |
 | `endpoint-authorize-policy-agreement-analyzer` (TWA0024) | Unchanged in rule. The api host's registered set changes from `agent-scope:*` literals to `PermissionIds` through `AddPermissionPolicies`, so the agent-scope test cases in `endpoint-authorize-policy-agreement-analyzer-tests.cs` become plain permission cases. |
 | New analyzer | A convention analyzer flags `AuthenticationSchemes` on a hosted `[EndpointAuthorize]` unless `Requires = FirstParty` is also set, and flags `Requires = FirstParty` without a Design-region justification string. `AnalyzerReleases.Unshipped.md` gets the id. |
 | `endpoint-auth-posture-analyzer` (TWA0013, TWA0014, TWA0020) | Unchanged. |
-| Agent-link feature | Generalised to delegator and delegate. `AgentHumanLink` gains `DelegatedPermissions` and a Revoked status reachable from Approved. `ApproveAgentHumanLink` takes the delegated list and is first-party. `RevokeAgentHumanLink` is new. The three handlers' `PrincipalKind` checks are deleted; whether the link stays agent-to-human by name is section 10. `GetHumanUx` is unchanged. |
+| Agent-link feature | Generalised to delegator and delegate. `AgentHumanLink` gains `DelegatedPermissions` and a Revoked status reachable from Approved. `ApproveAgentHumanLink` takes the delegated list and is first-party. `RevokeAgentHumanLink` is new. The three handlers' `PrincipalKind` checks (request: caller is an Agent; approve and deny: caller is a Human) follow Q7 and are not settled here: if Steve keeps the link agent-to-human, they stay, the revoke handler gets the same check, and their Design region says they define the product shape of the link and are not a capability rule; if he generalises the link, they are deleted and the entity's `AgentPrincipalId` and `HumanPrincipalId` become `DelegatePrincipalId` and `DelegatorPrincipalId`. Either way they are the only kind checks left in the stack after the resolver change. `GetHumanUx` is unchanged. |
 | `features/metered-capability` and `timewarp-402` | The gate and ledger are unchanged. A new `PurchaseCapability` operation in a `features/capability-purchases` slice uses `PaymentGate` and `SettlementFundingService`, then writes the purchased-permission row. A purchasable catalog (`PurchasablePermissionOptions`: permission id, price, duration?) is host configuration validated at start. `InvokeMeteredCapability` keeps `demo.invoke` and keeps billing per call. |
-| Feedback | `ReplyToFeedback` becomes permission-only on `admin.feedback.manage`. `DownloadFeedbackAttachment` keeps its handler check but drops the scheme branch. `feedback.file.self` becomes available to agents through the default. |
+| Feedback | `ReplyToFeedback` becomes permission-only on `admin.feedback.manage` unless Q6 keeps it first-party. `DownloadFeedbackAttachment` gains `feedback.file.self` on the attribute and keeps one handler rule, owner or `feedback.read` or `admin.feedback.read`, with the per-scheme branch and `IAgentPermissionScopeSource` removed (section 6.1, handler-level checks). The `admin.profiles.read` gate in `FeedbackOwnerNames` and the principal reads stays and is evaluated against the credential. `feedback.file.self` becomes available to agents through the default (Q2). |
 | Agent chat | `CompleteAgentChat` and `GetAgentChatConfiguration` need a permission id instead of the authenticated policy (section 10). |
-| api host | `agent-bearer-policies-server.cs` and `AgentTokenDefaults.IdentityReadPolicy`/`DemoInvokePolicy` are replaced by `AddPermissionPolicies` over claim type `timewarp:permission`. The bearer handler stamps one permission claim per token id. |
+| api host | `agent-bearer-policies-server.cs` and `AgentTokenDefaults.IdentityReadPolicy`/`DemoInvokePolicy` are replaced by `AddPermissionPolicies` over claim type `timewarp:permission`. The bearer handler stamps one `timewarp:permission` claim per token id and, for each id with a `DelegatedFrom`, one `timewarp:delegated_from` claim whose value is `<permissionId>:<delegatorPrincipalId>`, so the first-party check and audit read claims only. |
 | `GetCurrentSession` | Projects `effective(P)` for the session, with sources, so the SPA `AuthorizeView` names keep working. |
 | Tests to invert or delete | `Role_Assigned_Agent_Should_Not_Inherit_Human_Grants`, `AgentToken_NeverGrantsAdmin_EvenWithAdminRolesInStore`, `AgentScopeSeed_Should_NotIntersectAdminPermissions`, `MemberScopes_Should_NotApproveARolelessAgent`, the 466 `AgentScopeApproval_` class, and the agent-only 401 pins. New pins: ceiling, not-self, delegation cap at issuance, subset token, purchase to grant, default-for-every-kind. |
 | Skills | `tw-web-api-contracts` (endpoint-auth reference), `tw-deploy` (durable token store note unchanged). No new documentation page (memory: documentation tree retired). |
@@ -317,9 +336,11 @@ How an outside agent learns about it from the OpenAPI document alone (task 331's
 ## 6. Endpoint table
 
 Legend: **Permission** means any authenticated credential holding the id passes. **First-party**
-means the credential must be the subject's own (a browser session or a token with no
-`on_behalf_of` for the ids used), stated per operation with the reason. **Anonymous** is
-unchanged. "Was" is today's scheme list: H human session (plus mock), A agent token, HA both.
+means the credential must be the subject's own: a browser session, or a token on which every id
+the operation relies on has `DelegatedFrom = null` (section 2.5). A token that also carries
+delegated ids for other operations still passes; only the ids this operation uses are checked.
+Stated per operation with the reason. **Anonymous** is unchanged. "Was" is today's scheme list:
+H human session (plus mock), A agent token, HA both.
 
 ### 6.1 Change from human-only or agent-only to permission-only
 
@@ -332,7 +353,7 @@ unchanged. "Was" is today's scheme list: H human session (plus mock), A agent to
 | CreateRole, UpdateRole, DeleteRole | `api/Roles[/{id}]` | `admin.roles.manage` | H |
 | SetRolePermissions | `PUT api/Roles/{id}/permissions` | `admin.roles.manage` + ceiling | H |
 | SubmitFeedback, ListMyFeedback, GetFeedback, ReplyAsFiler, UploadFeedbackAttachment, RemoveFeedbackAttachment | `api/Feedback…` | `feedback.file.self` | H |
-| ReplyToFeedback | `POST api/admin/feedback/{id}/replies` | `admin.feedback.manage` | H |
+| ReplyToFeedback | `POST api/admin/feedback/{id}/replies` | `admin.feedback.manage` (Q6: Steve may keep this first-party instead, in which case it moves to 6.2) | H |
 | UpdateProfile | `PUT api/Users/Current/Profile` | `profile.write` | H |
 | GetUserXaiApiKeyStatus / SetUserXaiApiKey / ClearUserXaiApiKey | `api/Users/Current/xai-api-key` | `profile.read` / `profile.write` | H |
 | GetSiteSettings | `GET api/settings` | `settings.read` | H |
@@ -344,8 +365,27 @@ unchanged. "Was" is today's scheme list: H human session (plus mock), A agent to
 | GetAgentIdentity | `GET api/identity/agent/me` | `identity.read` | A |
 | InvokeMeteredCapability | `GET api/demo/metered-capability` | `demo.invoke`, then the ledger | A |
 | GetCredentials, AddAgentKey, RenameCredential | `api/identity/credentials…` | `credential.manage.self` | HA (no mock) |
-| ListFeedback, GetFeedbackForAdmin, AddFeedbackNote, SetFeedbackSeverity, ChangeFeedbackStatus, DownloadFeedbackAttachment | `api/admin/feedback…`, attachments | `feedback.read` / `.note` / `.severity` / `.status` | HA |
+| ListFeedback, GetFeedbackForAdmin, AddFeedbackNote, SetFeedbackSeverity, ChangeFeedbackStatus | `api/admin/feedback…` | `feedback.read` / `.note` / `.severity` / `.status` | HA |
+| DownloadFeedbackAttachment | `GET api/Feedback/attachments/{id}` | `feedback.file.self` on the attribute (today it has schemes and no policy), then the handler rule: the attachment's owner, or `feedback.read`, or `admin.feedback.read` | HA |
 | api host GetAgentBearerIdentity | `GET api/agent/bearer/me` | `identity.read` | A |
+
+Handler-level checks that survive the scheme split. These are resource rules inside a handler,
+not endpoint policies, and they stay; what changes is that each is evaluated against the
+credential's effective set (the token's list for a bearer) with no scheme branch:
+
+- `DownloadFeedbackAttachment`: owner, or `feedback.read`, or `admin.feedback.read`. Today the
+  handler asks a different disjunction per scheme (`feedback.read` only on the agent-token
+  scheme; `admin.feedback.read` or `feedback.read` on the session schemes). After the change it
+  asks one disjunction of the credential. A reviewer agent holding `feedback.read` and an
+  administrator holding `admin.feedback.read` both pass; the filer passes as owner.
+- `admin.profiles.read` inside `ListPrincipals`, `GetPrincipal`, and the feedback admin reads
+  (`FeedbackOwnerNames`): the PII gate that nulls display names and emails, and 403s a profile
+  search or sort, when the caller lacks it. It stays exactly as it is, evaluated against the
+  credential. A bearer token that carries `admin.profiles.read` now sees names, which today's
+  "an agent token is never granted `admin.profiles.read`" comment in `feedback-admin-view-contracts`
+  rules out; that comment becomes a grant decision and is rewritten.
+- `GetFeedback`, `ReplyAsFiler`, `ListMyFeedback`, and the attachment upload and remove: filer-only
+  by resource ownership, unchanged.
 
 ### 6.2 Stay first-party, with the reason
 
@@ -385,8 +425,13 @@ reissues.
 One EF migration (section 5) copies `identity.principal_agent_scopes` into
 `identity.principal_permission_grants` and `identity.role_agent_scopes` into
 `identity.role_permissions` through the 466 scope map, then drops both tables. Rows for
-`identity:read` become `identity.read` plus `agent-link.manage.self`; both are in the default
-bundle, so they are redundant and may be skipped. In-memory stores need nothing. The `Down`
+`identity:read` become `identity.read` plus `agent-link.manage.self`. The migration always
+copies the full expansion. It skips a copied row only when the id is already present on that
+principal or role (the natural key), never because the id is expected in the default bundle:
+the bundle is Steve's answer to Q1 and Q2, a host may trim it later in the admin UI, and a
+dropped row would silently remove link capability that today's scope map grants. A grant row
+that duplicates a default is harmless (effective is a union) and the Principal page shows it as
+a grant chip beside the default chip. In-memory stores need nothing. The `Down`
 migration recreates the two tables but cannot reconstruct which permission rows came from scopes,
 so it leaves `role_permissions` as is; this is stated in the migration's Design region.
 
@@ -424,17 +469,21 @@ Scope, dependencies, and proof gates only. Same-repo batches run serially throug
 
 | # | Task | Scope | Depends on | Proof gates |
 |---|---|---|---|---|
-| 1 | Identity package: permissions on the token | Rename `AgentTokenGrant.Scopes` to `Permissions`, extend `IAgentTokenStore.Issue` with `onBehalfOf`, delete `AgentScopes`. Bump `<Version>` and the two pins. | none | `dev build` 0/0; identity tests; `dev check-version`; release cut after merge (`tw-release`) |
+| 1 | Identity package: permissions on the token | Add the `TokenPermission(PermissionId, DelegatedFrom?)` record; `AgentTokenGrant.Scopes` becomes `Permissions` as a list of it; `IAgentTokenStore.Issue` takes that list and no token-wide `onBehalfOf`; delete `AgentScopes`. Bump `<Version>` and the two pins. | none | `dev build` 0/0; identity tests; `dev check-version`; release cut after merge (`tw-release`) |
 | 2 | Default and effective permissions | Kind-free `EffectiveRolesResolver`; `IPrincipalPermissionStore` with EF and in-memory stores; `authorization_audit` store; `EffectivePermissions` service with sources; evaluator without scheme split; default bundle per Steve's answer to Q1; migration converting 466 tables; `SetPrincipalPermissions` with ceiling, not-self, audit; `SetRolePermissions` ceiling; remove role agent scopes and the two UI boxes; Principal page effective view and grant editor. | 1 | `dev build`; resolver, evaluator, set-permissions, get-principal co-located runfiles; web-server integration suite; `dev template-smoke --matrix` (postgres-off excludes) |
 | 3 | Token issuance by permission | `CompleteAgentTokenIssuance` takes `Permissions`, subset check against effective, 403 with missing ids and request hint, response fields; `GetAgentIdentity` returns permissions; bearer handler stamps `timewarp:permission` claims; OpenAPI security scopes are permission ids; reviewer guide text; delete `OpenApiAgentBearer` inversion. | 2 | Issuance integration class; `open-api-bearer-security-tests`, `open-api-agent-reviewer-guide-tests` rewritten; `dev build` |
 | 4 | Endpoints authorize by permission | Attribute gains `Requires`; generator emits all schemes by default and the first-party requirement; new analyzer id; every hosted contract updated per section 6; `endpoint-auth.md` rewritten; api host moves to permission claims and `AddPermissionPolicies`; replace the two authenticated policies with the permission from Q5; delete the agent-only and human-only pins and add permission-only pins (an agent token on `ListPrincipals` with `admin.principals.read` passes; without it, 403). | 3 | Analyzer and generator tests; `dev build`; full web and api integration suites; `dev template-smoke --matrix` |
-| 5 | Capability requests | New slice: request, mine, list, approve, deny; ceiling, not-self, audit; admin page; 403 problem detail hint from issuance and endpoints; guide text. | 2 (3 for the hint) | Slice co-located tests; integration test of the full loop by an agent token from OpenAPI text; `dev build` |
-| 6 | Delegation | Link gains delegated list and revoke; approve takes the list; first-party on approve, deny, revoke; issuance cap `D ∩ effective(delegator)`; `on_behalf_of` on the token and audit; Agent links page picker and revoke button; delete kind checks. | 3, 4 | Link co-located tests; issuance tests for cap, removal at next token, revoke; `dev build`; integration suite |
-| 7 | Purchases | `PurchasablePermissionOptions` with validator; `PurchaseCapability` through `PaymentGate` and `SettlementFundingService`; `principal_purchased_permissions` store (idempotent by receipt, optional expiry); evaluator source; OpenAPI 402 text with price; guide text. | 2 (3 for the guide) | Payment package tests with mocked facilitator (104-012 pattern); purchase then token then call integration test; `dev build` |
+| 5 | Capability requests | New slice: request, mine, list, approve, deny; approve and deny carry `Requires = FirstParty` with a Design-region reason (section 6.2); ceiling, not-self, audit; admin page; 403 problem detail hint from issuance and endpoints; guide text. | 2, 3, 4 | Slice co-located tests; integration test of the full loop by an agent token from OpenAPI text; a token whose `admin.principals.manage` has a `DelegatedFrom` gets 403 on approve and deny while a token holding it as its own passes; new-analyzer test that approve and deny declare `Requires`; `dev build` |
+| 6 | Delegation | Link gains delegated list and revoke; approve takes the list; first-party on approve, deny, revoke; issuance cap `D ∩ effective(delegator)` with own-sources-first provenance; `DelegatedFrom` set per token id and `OnBehalfOf` on the audit row; Agent links page picker and revoke button; the three handlers' `PrincipalKind` checks kept or removed per Steve's answer to Q7 (section 5, agent-link row). | 3, 4 | Link co-located tests; issuance tests for cap, removal at next token, revoke; `dev build`; integration suite |
+| 7 | Purchases | `PurchasablePermissionOptions` with validator; `PurchaseCapability` through `PaymentGate` and `SettlementFundingService`; `principal_purchased_permissions` store (idempotent by receipt, optional expiry); evaluator source; OpenAPI 402 text with price; guide text. Depends on 3 for the guide text and the purchased id on the next token, and on 4 so the new endpoint is declared permission-only from the start. | 2, 3, 4 | Payment package tests with mocked facilitator (104-012 pattern); purchase then token then call integration test; `dev build` |
 | 8 | Skills and reference | `tw-web-api-contracts` endpoint-auth reference, `tw-deploy` token note, lint. | 4 | `dev lint-skills`; `dev check-client-names` |
 
-Tasks 5, 6, and 7 are independent of each other after 3 and 4. Task 8 rides with 4 if the
-reference is small.
+Tasks 5, 6, and 7 each depend on 3 and 4 (the Depends-on cells say so) and are independent of
+each other after those two land. Task 4 ships the `Requires` attribute and the analyzer with the
+credential and link operations in section 6.2 as the first-party set at that point; tasks 5 and
+6 add their own first-party operations, and the analyzer makes a missing `Requires` on a new
+contract a build error only when the contract still names a scheme, so the task 5 proof gate
+pins the first-party behaviour directly. Task 8 rides with 4 if the reference is small.
 
 ## 9. Risks
 
@@ -496,3 +545,10 @@ One decision per item. The design does not settle these.
     or is the subset rule for bearer tokens only?
 17. **Audit retention and visibility.** Who may read `authorization_audit` (a new
     `admin.audit.read`?) and does the template prune it?
+18. **First-party versus a present person.** The task names "operations that really need a
+    present person". Section 6.2 implements that as first-party: the credential is the subject's
+    own, so an agent approving a link or a capability request on its own principal with its own
+    token passes, and only delegated ids are refused. Accept that reading, or should some rows
+    in 6.2 (link approve and deny, request approve and deny, credential revoke) require a
+    browser session, meaning a human at a keyboard? The second answer reintroduces one
+    credential-type rule, named per operation, and keeps the passkey rows as they are.

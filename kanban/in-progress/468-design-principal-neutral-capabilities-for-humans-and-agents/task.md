@@ -135,6 +135,20 @@ file gets `## Results` with a non-empty How to validate.
   No product code changed. `ganda repo audit` exited 0 with the existing `kanban-landed`
   advisory for other claims that have no worktree on this machine.
 - Implement oracle: implemented by implementer-claude-fable (claude, vendor anthropic, model claude-fable-5-1, response model claude-sonnet-5-5), session a446a9be-4e1e-4a12-b6b4-e472a7f6e423, max-turns 500, Done — 2026-11-02T15:56:18Z
+- Review oracle: grok session 01a19cfa-8b71-7823-acb1-a893538059fd (2026-11-02). Effort 2, roster general. Round 1 wrote `review/round-1/general.md` and `review/round-1/merged.md`. Open findings remain. Disposition is not written.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19cfa-8b71-7823-acb1-a893538059fd, max-turns 120 — 2026-11-02T16:05:39Z
+- Fix pass for round 1 (2026-11-02), implementer-claude (Claude Fable 5.1), implement-fix-2 oracle.
+  Verified the scheme counts against the contracts (34 H, 5 A, 14 HA) and the download handler's
+  disjunction before editing. All seven findings M1 to M7 fixed in `design.md`: per-id
+  `TokenPermission(PermissionId, DelegatedFrom?)` replaces the token-wide `on_behalf_of` (M1);
+  the 466 migration always copies the scope expansion and skips only natural-key duplicates
+  (M2); `DownloadFeedbackAttachment` has its own 6.1 row and a "handler-level checks that
+  survive" list covers its disjunction and the `admin.profiles.read` gate (M3); task 5 and 7
+  depend on 2, 3, 4, task 5 carries first-party approve and deny with a proof gate (M4); the
+  agent-link kind checks and task 6 follow Q7 (M5); "Both" is 14 and the Results count sentence
+  is corrected (M6); the ceiling is marked proposed under Q3, `ReplyToFeedback` points at Q6,
+  and Q18 asks first-party versus present person (M7). Statuses set to fixed on
+  `review/round-1/merged.md`. No product code changed.
 
 ## Results
 
@@ -144,18 +158,38 @@ endpoints, a credential subset), four worked examples (an unvouched agent buys `
 administrator grants a feedback reviewer, a human delegates two feedback ids to a linked agent, a
 human signs up and gets the default), the request-for-more-capability flow with the OpenAPI text an
 outside agent reads, the effect on every existing piece including the `TimeWarp.Identity` public
-API break and release, an endpoint table (34 human-only and 5 agent-only operations become
-permission-only; passkey ceremonies, credential adds and revokes, link approve/deny/revoke, and
-request approve/deny stay first-party, each with its reason), migration for tokens, stored grants,
-token requests, and generated apps, an eight-task implementation breakdown with dependencies and
-proof gates, risks, and seventeen open questions for Steve.
+API break and release, an endpoint table, migration for tokens, stored grants, token requests, and
+generated apps, an eight-task implementation breakdown with dependencies and proof gates, risks,
+and eighteen open questions for Steve.
 
-Two design elements are proposals the description did not name and are listed as open questions
-rather than settled: the grant ceiling (a grantor may grant only what it holds) and the first-party
-credential requirement as the mechanism for "a present person" operations. The default bundle is
-proposed and left to Steve (Q1, Q2).
+The endpoint table starts from today's scheme lists, verified against the contracts: 34 human-only,
+5 agent-only (4 in web plus the api-host sample), and 14 accepting both. Of the 34 human-only, 31
+become permission-only, link approve and deny stay first-party, and `SetRoleAgentScopes` is
+removed. All 5 agent-only become permission-only. Of the 14 both, 10 become permission-only and 4
+(passkey add and add-existing start and complete, credential revoke) stay first-party. New
+first-party operations are link revoke and capability-request approve and deny. Every first-party
+row names its reason. Handler-level resource checks (the attachment download disjunction, the
+`admin.profiles.read` PII gate, filer-only reads) survive and are listed under 6.1.
+
+Three design elements are proposals the description did not name and are listed as open questions
+rather than settled: the grant ceiling (Q3), the first-party reading of "a present person" (Q18),
+and the default bundle (Q1, Q2).
 
 No product code changed. Only `task.md` and `design.md` in this folder are in the diff.
+
+The implementer restatement matches the task. Service accounts are the third kind the resolver already special-cases, which the task's "every principal kind" and the kind exception already cover. No misread recorded.
+
+### Review
+
+Round 1, effort 2, roster general only. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+| Severity | open | fixed | wontfix |
+|----------|------|-------|---------|
+| bug | 0 | 5 | 0 |
+| suggestion | 0 | 1 | 0 |
+| nit | 0 | 1 | 0 |
+
+Fix pass landed 2026-11-02 (Session). M1 through M7 are `fixed` on `review/round-1/merged.md` with disposition notes. Disposition is not written; the host runs review round 2 against the post-fix diff.
 
 ### How to validate
 
@@ -164,14 +198,24 @@ Smoke:
 ```bash
 git diff --stat origin/master...HEAD -- . ':!kanban'
 ls kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/
-grep -c '^## ' kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md
-grep -n '^[0-9]*\. \*\*' kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md | wc -l
+D=kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md
+grep -c '^## ' "$D"
+sed -n '/^## 10\./,$p' "$D" | grep -c '^[0-9]*\. \*\*'
+grep -c -iE 'on_behalf_of' "$D"
+grep -n -E '^\| [567] \|' "$D"
 ```
 
-Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`
-and `design.md` beside the host-owned journal and progress log. The design has 10 `##` sections
-and 17 numbered open questions in section 10. Section 6.2 names a reason for every first-party
-row. Section 8 has eight tasks, each with a Depends on column and proof gates and no estimate.
+Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`,
+`design.md`, and `review/` beside the host-owned journal and progress log. The design has 10 `##`
+sections and 18 numbered open questions in section 10. No `on_behalf_of` remains (provenance is
+per id as `DelegatedFrom`). The Depends-on cells for tasks 5, 6, and 7 each include 3 and 4.
+Section 1 says "Both: 14". Section 6.1 has its own `DownloadFeedbackAttachment` row followed by a
+handler-level checks list. Section 6.2 names a reason for every first-party row. Section 8 has
+eight tasks, each with a Depends on column and proof gates and no estimate.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 
 ## Notes
 
