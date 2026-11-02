@@ -137,12 +137,18 @@ and keep an "Open questions" list only for anything new the revision raises.
 Produce `design.md` in this task folder and change no product code. The document describes one
 capability model that treats a human, an agent, and a service account the same way. There is one
 vocabulary, permission ids, and the separate agent-scope list is removed. A principal holds the
-union of four sources: roles, direct grants on the principal, purchases, and delegation from a
-linked principal that is capped by what the delegator holds at token issuance. Every
-self-signed-up principal starts from the same minimal default, whatever its kind. Endpoints name
-a permission and accept any authenticated principal holding it; a short explicit list of
-operations keeps a human-presence requirement per operation. A bearer token may carry a subset
-of its holder's permissions.
+union of three sources: roles, direct grants on the principal, and delegation from a linked
+human that is capped by what the human holds at token issuance (Steve, 2026-11-03: purchases are
+not a source; payment is a future automated grantor). Every self-signed-up principal starts from
+the same minimal default, a new Principal role, whatever its kind. Endpoints name a permission
+and accept any authenticated principal holding it; a short explicit list of approve and grant
+operations refuses a token acting on someone else's behalf, and there is no browser-session
+rule. A bearer token names who it acts as, itself or its linked human, and carries a subset of
+that subject's permissions.
+
+Revision pass (2026-11-03): rewrite `design.md` to Steve's answers on all eighteen questions,
+replace section 10 with a Decided list, and keep an open-questions list only for what the
+revision itself raises.
 
 The document must keep the invariants: no self-escalation, granting is itself an audited
 permission, delegation never exceeds the delegator at issuance, and credential rules apply by
@@ -161,7 +167,7 @@ file gets `## Results` with a non-empty How to validate.
 
 ## Checklist
 
-- [ ] `design.md` revised to the 2026-11-03 decisions (sources, Principal role, act-as on the token, delegated tokens refused for approvals)
+- [x] `design.md` revised to the 2026-11-03 decisions (sources, Principal role, act-as on the token, delegated tokens refused for approvals)
 
 - [x] `design.md` covers the model, the four acquisition paths with worked examples, and the request flow
 - [x] Effect on every existing piece listed above, including the `TimeWarp.Identity` package
@@ -234,34 +240,61 @@ file gets `## Results` with a non-empty How to validate.
 
 - Decisions: 431c3e64-803d-4442-8ca1-a6a431770511 (Steve, 2026-11-03). All open questions answered;
   revision pass on the same PR (#625).
+- Revision pass (2026-11-03), implementer-claude (Claude Fable 5.1), implement oracle. Re-read
+  `RolePermissionSeed` (Member is `SelfServicePermissions`, which includes `feedback.file.self`),
+  `PermissionIds`, the `AddAgentKey` command, and the `CompleteAgentChat` attribute before
+  rewriting. `design.md` now follows every 2026-11-03 decision: three sources (purchases removed,
+  payment is a future automated grantor, metering unchanged), a Principal role held by every
+  principal as a floor with Member backfilled for existing roleless humans, `agent-chat.invoke`
+  as a session-only id that token issuance refuses, `ReplyToFeedback` permission-only, links
+  stay agent to human with the kind checks kept, the token names `OnBehalfOf` and carries
+  `SubjectPrincipalId` (the per-id `DelegatedFrom` from the round-1 fix is gone, since one token
+  acts as one subject), ownership checks compare the subject and audit records actor and
+  subject, all-or-nothing requests, admin approver, no alias period, required `permissions`,
+  no session subset, `admin.audit.read` and `ListAuthorizationAudit`, and
+  `Requires = ActingAsSelf` on link, request, grant, and credential operations instead of
+  first-party. Section 10 is the Decided list (17 entries); section 11 holds the four questions
+  the revision raised (session-only mechanism, credential operations on behalf, a per-key cap for
+  handed-over keys, which roles seed the chat id). The breakdown is seven tasks. No product code
+  changed.
+- Implement oracle: implemented by implementer-claude-fable (claude, vendor anthropic, model claude-fable-5-1, response model claude-fable-5-1), session 7e4128ba-e3e9-4f60-91ea-4ba271e87bce, max-turns 500, Done — 2026-11-02T17:46:04Z
 
 ## Results
 
-`design.md` in this folder is the deliverable. It has ten sections: where we are (a table of every
-piece the design touches), the model (one vocabulary, four sources, one default, permission-only
-endpoints, a credential subset), four worked examples (an unvouched agent buys `demo.invoke`, an
-administrator grants a feedback reviewer, a human delegates two feedback ids to a linked agent, a
-human signs up and gets the default), the request-for-more-capability flow with the OpenAPI text an
-outside agent reads, the effect on every existing piece including the `TimeWarp.Identity` public
-API break and release, an endpoint table, migration for tokens, stored grants, token requests, and
-generated apps, an eight-task implementation breakdown with dependencies and proof gates, risks,
-and eighteen open questions for Steve.
+`design.md` in this folder is the deliverable, revised 2026-11-03 to Steve's decisions. It has
+eleven sections: where we are (a table of every piece the design touches), the model (one
+vocabulary, three sources, the Principal role as a floor for every principal, permission-only
+endpoints, a bearer token that names who it acts as and carries a subset), four worked examples
+(an administrator grants an unvouched agent `demo.invoke` through a request, an administrator
+grants a feedback reviewer, a human delegates `feedback.file.self` and `profile.read` to a linked
+agent that then files feedback as the human, a human signs up and gets the Principal bundle), the
+request-for-more-capability flow with the OpenAPI text an outside agent reads, the effect on every
+existing piece including the `TimeWarp.Identity` public API break and release, an endpoint table,
+migration for tokens, stored grants, the Member backfill, token requests, and generated apps, a
+seven-task implementation breakdown with dependencies and proof gates, risks, the Decided list
+(section 10, one entry per answered question plus Purchases), and four open questions the
+revision raised (section 11).
+
+What changed against the first draft: purchases are not a source and the purchase slice, store,
+catalog, and `TimeWarp.402` changes are gone; the default is a new Principal role held by every
+principal, with `feedback.file.self` left in Member and a migration that backfills Member for
+every roleless human; the token request names `OnBehalfOf` and the grant carries
+`SubjectPrincipalId`, replacing the per-id `DelegatedFrom` provenance because one token acts as
+one subject; ownership and `*.self` checks compare the subject and audit rows carry actor and
+subject; `Requires = ActingAsSelf` replaces first-party and applies to link approve, deny, and
+revoke, capability-request approve and deny, the three grant setters, and the credential
+operations; `agent-chat.invoke` is a session-only id that issuance refuses; `admin.audit.read`
+and `ListAuthorizationAudit` are added; requests are all-or-nothing; there is no alias period and
+`permissions` is required.
 
 The endpoint table starts from today's scheme lists, verified against the contracts: 34 human-only,
-5 agent-only (4 in web plus the api-host sample), and 14 accepting both. Of the 34 human-only, 31
-become permission-only, link approve and deny stay first-party, and `SetRoleAgentScopes` is
-removed. All 5 agent-only become permission-only. Of the 14 both, 10 become permission-only and 4
-(passkey add and add-existing start and complete, credential revoke) stay first-party. New
-first-party operations are link revoke and capability-request approve and deny. Every first-party
-row names its reason. Handler-level resource checks are listed under 6.1. The
-`admin.profiles.read` PII gate and the filer-only reads match the handlers. The attachment
-download keeps no attribute policy, and the stated rule is the handler's: unlinked drafts are
-owner-only, linked attachments open to the owner or a credential holding `feedback.read` or
-`admin.feedback.read`.
-
-Three design elements are proposals the description did not name and are listed as open questions
-rather than settled: the grant ceiling (Q3), the first-party reading of "a present person" (Q18),
-and the default bundle (Q1, Q2).
+5 agent-only (4 in web plus the api-host sample), and 14 accepting both. Every one of them becomes
+permission-only; `SetRoleAgentScopes` is removed. The acting-as-self requirement sits on top of
+the permission for the section 6.2 set, and every row there names its reason. Handler-level
+resource checks are listed under 6.1. The `admin.profiles.read` PII gate and the filer-only
+reads match the handlers. The attachment download keeps no attribute policy, and the stated rule
+is the handler's: unlinked drafts are owner-only, linked attachments open to the owner or a
+credential holding `feedback.read` or `admin.feedback.read`, where owner means the subject.
 
 No product code changed. Only `task.md` and `design.md` in this folder are in the diff.
 
@@ -294,26 +327,31 @@ git diff --stat origin/master...HEAD -- . ':!kanban'
 ls kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/
 D=kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md
 grep -c '^## ' "$D"
-sed -n '/^## 10\./,$p' "$D" | grep -c '^[0-9]*\. \*\*'
-grep -c -iE 'on_behalf_of' "$D"
-grep -n -E '^\| [567] \|' "$D"
+sed -n '/^## 10\./,/^## 11\./p' "$D" | grep -c '^- \*\*'
+sed -n '/^## 11\./,$p' "$D" | grep -c '^[0-9]*\. \*\*'
+grep -c -E 'DelegatedFrom|FirstParty|first-party|principal_purchased|PurchaseCapability' "$D"
+grep -c 'OnBehalfOf' "$D"
+grep -n '^effective(P) = ' "$D"
+grep -n 'RoleIds.Principal' "$D" | head -1
+grep -c 'ActingAsSelf' "$D"
+grep -n -E '^\| [1-7] \|' "$D" | cut -c1-60
 grep -c 'feedback.file.self` on the attribute' "$D"
 grep -n -A3 'DownloadFeedbackAttachment`, in handler order' "$D"
-grep -c 'collapses to the one disjunction' "$D"
 grep -c "200 on the bearer's own unlinked draft" "$D"
 ```
 
 Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`,
-`design.md`, and `review/` beside the host-owned journal and progress log. The design has 10 `##`
-sections and 18 numbered open questions in section 10. No `on_behalf_of` remains (provenance is
-per id as `DelegatedFrom`). The Depends-on cells for tasks 5, 6, and 7 each include 3 and 4.
-Section 1 says "Both: 14". Section 6.1 has its own `DownloadFeedbackAttachment` row that names no
-attribute permission (the `feedback.file.self` count is 0), followed by a handler-level checks
-list whose download entry puts the unlinked-draft owner-only gate before the `feedback.read` or
-`admin.feedback.read` disjunction. Section 6.2 names a reason for every first-party row. Section 8 has
-eight tasks, each with a Depends on column and proof gates and no estimate. Task 4 does not say
-the handler "collapses to the one disjunction" (count 0), and its download pins expect 200 on
-the bearer's own unlinked draft (count 1).
+`design.md`, and `review/` beside the host-owned journal and progress log. The design has 11 `##`
+sections, 17 Decided bullets in section 10 (Purchases plus Q1 to Q9 and Q12 to Q18), and 4
+numbered open questions in section 11. No `DelegatedFrom`, first-party, or purchase-slice term
+remains (count 0); `OnBehalfOf` appears (count above 0). Section 2.2's formula is the union of
+the Principal bundle, roles, and grants. `RoleIds.Principal` is named. `ActingAsSelf` appears
+more than once. Section 8 has seven task rows, each with a Depends on column and proof gates
+and no estimate. Section 6.1 has its own `DownloadFeedbackAttachment` row that names no attribute
+permission (the `feedback.file.self` count is 0), followed by a handler-level checks list whose
+download entry puts the unlinked-draft owner-only gate before the `feedback.read` or
+`admin.feedback.read` disjunction, and task 5's download pins expect 200 on the bearer's own
+unlinked draft (count 1).
 
 ## Review
 
