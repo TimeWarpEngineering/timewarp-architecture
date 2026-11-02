@@ -182,6 +182,7 @@ file gets `## Results` with a non-empty How to validate.
   the bearer's own unlinked draft. No new findings. Wrote `review/round-4/general.md`,
   `review/round-4/merged.md`, and `review/disposition.md`. Outcome clean. The implementer
   restatement matches the task. No misread.
+- Installed ganda changed during this walk: was 50296336 bytes 970fac827e28467d47743c6e9cdca8036036a6be2f0b3305a50018f5b8cf54af; now 50312784 bytes 50172fe6a7b99392943130486d96ba3649903cf8cf43e50ad96f1d4a64dbb327
 
 ## Results
 
