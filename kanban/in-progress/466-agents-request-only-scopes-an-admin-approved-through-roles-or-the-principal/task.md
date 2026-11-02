@@ -76,13 +76,21 @@ effect on an agent token (task 182-006, `agent-scope-permission-seed-application
 
 ## Goal (implementer restatement)
 
-An agent still names the scopes on its token request, but issuance accepts only scopes an
-admin has approved for that principal. The approved set is `identity:read` plus the agent
-scopes on the principal's roles plus scopes granted on the principal itself. Human role
-permissions stay off the token. A request that names anything outside that set gets 403
-problem details that list the missing scopes and no token. Unknown scope strings stay 400
-`invalid_scope`. The challenge is still consumed before that refusal. Approval changes do
-not revoke a token that is already out; they apply on the next issuance.
+An agent names the scopes on its token request. Issuance accepts a scope only when that
+scope is in the principal's approved set: `identity:read`, plus the agent scopes on the
+principal's effective roles, plus scopes granted on the principal itself. Human role
+permissions stay off the token. A request that names anything outside the approved set
+gets 403 problem details listing the missing scopes and no token. An unknown scope string
+stays 400 `invalid_scope`. The challenge is consumed before that refusal. Taking an
+approval away does not revoke a token already issued; the next issuance sees the change.
+
+Effective roles are the same set for the admin Principal page, session claims, and
+issuance. A human principal with no assigned role is Member. An agent principal (minted by
+complete-agent-key-registration, kind Agent, no human credential) with no assigned role has
+no effective role, so its approved set is `identity:read` plus principal grants. Member
+keeps its human meaning: agent scopes stored on Member reach a roleless human who holds an
+agent key, and they do not reach a self-registered agent. Bootstrap still unions
+Administrator and Member onto a configured principal of any kind.
 
 Done when:
 
@@ -100,24 +108,12 @@ Done when:
   success after a role grant, success from a principal grant alone, refusal after that grant
   is removed, and a mixed approved-plus-unapproved request that issues no token. Existing
   agent-token tests approve scopes through one shared helper and keep their assertions.
+- A roleless agent resolves to no role and receives only `identity:read` even when Member
+  carries agent scopes. A roleless human still resolves to Member. The Member page and
+  `SetRoleAgentScopes` say Member scopes reach roleless humans who hold an agent key, not
+  self-registered agents.
 - `dev build` is 0/0 and the affected suites pass. Template smoke runs if template output
   changes. `dev check-version` runs if a platform package version changes.
-
-Round 1 left five items. This pass closes them:
-
-- A generated app with `--postgres false` excludes the two EF agent-scope stores and their
-  two entity-type configurations, the same way it already excludes the role-permission pair,
-  so those files do not reference the removed `PostgresDbContext`.
-- One helper in `platform/authorization` orders known agent scopes. SetRoleAgentScopes,
-  SetPrincipalAgentScopes, AgentScopeApproval, GetRole, and GetRoles call that helper.
-- The Member role page says that agent scopes on Member reach every principal with no other
-  role, including an agent that registers without signing in. SetRoleAgentScopes records the
-  same rule and still stores the list.
-- One co-located Jaribu test builds the effective set from the in-memory stores and checks
-  default, role (with role id), principal, a scope that has several sources, and catalog order.
-- The Principal page disables Save agent scopes while that action is in flight.
-- A generated app with `--web false` excludes `agent-scope-approval.cs`. That helper
-  references the web authorization types, which are not in the app when web is off.
 
 ## Checklist
 
@@ -181,6 +177,7 @@ Round 1 left five items. This pass closes them:
   roleless humans who hold an agent key, not self-registered agents. Change the resolver
   (`IEffectiveRolesResolver` and its Design SSOT), not the approval code, so the admin Principal
   page and claims show the same thing. Fix pass on the same PR.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19c73-a051-7c41-91b4-8c2478377f2b, max-turns 500, Blocked — 2026-11-02T13:46:52Z
 
 ## Results
 
@@ -271,3 +268,7 @@ on Member instead of warning (M3).
 
 Related: done 331 (OpenAPI reviewer guide), done 378 (scoped feedback triage), 182-006 (agent
 grants come only from token scopes).
+
+## Blocked
+
+2026-11-02: placeholder — work still running
