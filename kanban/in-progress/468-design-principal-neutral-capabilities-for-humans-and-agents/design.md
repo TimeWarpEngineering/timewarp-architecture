@@ -130,7 +130,12 @@ whatever its kind and whatever credential authenticated it. Concretely:
   operation with that shape today and stays the only one.
 - Agent chat (`CompleteAgentChat`, `GetAgentChatConfiguration`) spends the site's xAI key. It
   gets a new id, `agent-chat.invoke`, outside the Principal bundle and seeded into Member and
-  Administrator so today's signed-in humans keep the chat. The id is **session-only**: it is in a
+  Administrator. Today the two chat operations use `XaiChatDefaults.AuthenticatedPolicy`, so any
+  signed-in human can chat, and the resolver adds Member only when the stored role list is
+  empty. After the migration, roleless humans (the Member backfill, section 7), Member, and
+  Administrator keep chat. A human whose only role is Developer or Operator can chat today and
+  loses it unless those roles are seeded too; section 11, Q4 asks Steve which roles to seed. The
+  id is **session-only**: it is in a
   small `PermissionIds.SessionOnly` set that token issuance refuses (403 `not_issuable`), so no
   bearer token reaches the chat however the id was granted. That is a credential rule (the
   bearer credential type cannot carry it, whoever holds the key), not a kind rule. A human's
@@ -246,11 +251,15 @@ rules. `TrustTier` stays a rate-limit and metering input. Nothing here moves to 
    `request-capability` as the operation to call.
 3. It calls `POST api/capability-requests` with a self token carrying
    `capability.request.self`, naming `demo.invoke` and a reason. An administrator sees the
-   request on the Capability requests page, holds `demo.invoke` (Administrator does not today;
-   Developer does, and a host that wants administrators to grant it seeds it there), approves
-   it, and the handler writes a grant row with `GrantedBy`, marks the request Approved, and
-   writes an audit row with Actor = the administrator, Subject = the administrator, Target =
-   the agent.
+   request on the Capability requests page. No seeded role holds `demo.invoke` today:
+   `RolePermissionSeed.DefaultGrants` gives it to no role, and no migration inserts it (the
+   466 role scope store starts empty). Section 2.6 refuses a grant the grantor does not hold,
+   so the approver in this example must already hold both `admin.principals.manage` and
+   `demo.invoke`. A host that wants administrators to grant it seeds `demo.invoke` into
+   Administrator first; without that seed the ceiling check refuses the approval. With the seed
+   in place the administrator approves, and the handler writes a grant row with `GrantedBy`,
+   marks the request Approved, and writes an audit row with Actor = the administrator,
+   Subject = the administrator, Target = the agent.
 4. Its next token may name `demo.invoke`. `InvokeMeteredCapability` authorizes by permission and
    then bills each call through the ledger or the x402 challenge as it does today. Permission
    says "may attempt"; the ledger says "paid for this call". Payment never wrote a grant.
@@ -367,7 +376,7 @@ How an outside agent learns about it from the OpenAPI document alone (task 331's
 | `AgentScopePermissionSeed` | Deleted after the migration has used it once: the migration copies every stored scope through the seed's expansion into grant or role-permission rows (section 7.2), including both ids of `identity:read`. A copied id that is also in the Principal bundle is harmless, because `effective(P)` is a union and an id held twice is held once. |
 | Task 466 role scope store | `IRoleAgentScopeStore`, `RoleAgentScopeGrant`, its EF configuration, in-memory and EF stores, `SetRoleAgentScopes`, the SPA action, and the "Agent scopes" box on `RoleDetailPage.razor` are removed. The Member role-page warning text goes with them. |
 | Task 466 principal scope store | Becomes the direct-grant store: `IPrincipalPermissionStore`, `PrincipalPermissionGrant` (PrincipalId, PermissionId, GrantedBy, GrantedAt, RequestId?), EF table `identity.principal_permission_grants`. `SetPrincipalAgentScopes` becomes `SetPrincipalPermissions` (replace-set, ceiling check, not-self check, acting-as-self, audit). The Principal page shows "Effective permissions" with a source chip per id (Principal, role name, grant) and a "Direct grants" editor. `AgentScopeApproval`, `AgentScopeOrder`, and `AgentScopeGrantKind` are replaced by an `EffectivePermissions` service that returns ids with sources, used by issuance, the Principal page, and `GetCurrentSession`. |
-| `RoleIds` and `RolePermissionSeed` | New `RoleIds.Principal` with the section 2.3 bundle. `agent-chat.invoke` joins Member and Administrator; `admin.audit.read` joins `AdminPermissions`. `PermissionIds` gains `capability.request.self`, `agent-chat.invoke`, `admin.audit.read`, and a `SessionOnly` set containing `agent-chat.invoke`. |
+| `RoleIds` and `RolePermissionSeed` | New `RoleIds.Principal` with the section 2.3 bundle. `agent-chat.invoke` joins Member and Administrator (Developer and Operator pending section 11, Q4); `admin.audit.read` joins `AdminPermissions`. `PermissionIds` gains `capability.request.self`, `agent-chat.invoke`, `admin.audit.read`, and a `SessionOnly` set containing `agent-chat.invoke`. |
 | EF migration | One migration: create `principal_permission_grants`, `capability_requests`, `authorization_audit`; add `DelegatedPermissions` (and `RevokedAt`) to `agent_links.agent_links`; copy `principal_agent_scopes` rows through the scope-to-permission map (`identity:read` to two rows) with `GrantedBy = null`, `GrantedAt = migration time`; copy `role_agent_scopes` rows into `identity.role_permissions` through the same map, skipping duplicates; insert a Member role row for every Human principal that has no role row (today's resolver default made explicit); drop the two agent-scope tables. Also the seed inserts for Principal and the two new ids. |
 | Admin UI | Role page: one permissions editor. Principal page: effective permissions with sources, direct-grant editor, pending requests for this principal, audit tail (shown when the viewer holds `admin.audit.read`). New Capability requests page and Audit page. Agent links page: delegated list picker on approve, revoke button. All through TimeWarp.State actions (`tw-blazor`). |
 | Token contracts | `CompleteAgentTokenIssuance.Command.Scopes` becomes `Permissions` (required, 1 to 32 ids, validated against `PermissionIds.All`; unknown is 400 `invalid_permission`; session-only is 403 `not_issuable`; a body that still sends `scopes` is 400 naming `permissions`, with no alias period). The command gains `OnBehalfOf` (nullable principal id; must name a human the caller has an Approved link to, else 403 `no_approved_link`). Response gains `subjectPrincipalId` and returns `permissions`. Remarks rewritten. `StartAgentTokenIssuance` unchanged. `GetAgentIdentity` returns actor, subject, and the token's list. |
@@ -417,7 +426,8 @@ unchanged. "Was" is today's scheme list: H human session (plus mock), A agent to
 | GetHumanUx | `GET api/agent-links/{id}/human-ux` | `agent-link.manage.self` (link Approved, caller is the agent) | A |
 | GetAgentIdentity | `GET api/identity/agent/me` | `identity.read` | A |
 | InvokeMeteredCapability | `GET api/demo/metered-capability` | `demo.invoke`, then the ledger | A |
-| GetCredentials, AddAgentKey, RenameCredential | `api/identity/credentials…` | `credential.manage.self`, acting-as-self (6.2) | HA (no mock) |
+| GetCredentials | `GET api/identity/credentials` | `credential.manage.self` (a read of the subject's credentials; permission-only) | HA (no mock) |
+| AddPasskey, StartAddExistingPasskey, CompleteAddExistingPasskey, AddAgentKey, RenameCredential, RevokeCredential | `api/identity/credentials…` | `credential.manage.self`, acting-as-self (6.2) | HA (no mock) |
 | ListFeedback, GetFeedbackForAdmin, AddFeedbackNote, SetFeedbackSeverity, ChangeFeedbackStatus | `api/admin/feedback…` | `feedback.read` / `.note` / `.severity` / `.status` | HA |
 | DownloadFeedbackAttachment | `GET api/Feedback/attachments/{id}` | none on the attribute: `[EndpointAuthorize]` with no `Policy`, today's shape minus the scheme list. The handler rule below is the whole rule | HA |
 | api host GetAgentBearerIdentity | `GET api/agent/bearer/me` | `identity.read` | A |
@@ -664,14 +674,18 @@ One decision per item. Only what the 2026-11-03 decisions did not already settle
    for a human on `AddPasskey`, `StartAddExistingPasskey`, `CompleteAddExistingPasskey`,
    `AddAgentKey`, `RenameCredential`, and `RevokeCredential` (section 6.2, last row), because a
    delegate that can add a key to the human becomes the human for longer than the link allows.
-   Keep that row, or let a delegated `credential.manage.self` manage the human's credentials?
+   `GetCredentials`, a read, stays permission-only (section 6.1). Keep that row, or let a
+   delegated `credential.manage.self` manage the human's credentials?
 3. **A per-key permission cap for handed-over keys.** Q7 says an agent "mints a key with a
    smaller permission set and hands it over". Today a key carries no permission set; the subset
    is chosen per token, so whoever holds the key can request any subset of the principal. Giving
    `AddAgentKey` an optional `Permissions` cap stored on the credential, intersected at issuance,
    makes the smaller set real. Add the cap in task 4, or leave the hand-over as a convention
    between the agent and its worker?
-4. **Which seeded roles hold `agent-chat.invoke`.** This revision seeds it into Member and
-   Administrator so every human who can chat today still can after the migration (the Member
-   backfill covers roleless humans). Developer and Operator are not seeded. Confirm, or seed it
-   into every non-Principal role?
+4. **Which seeded roles hold `agent-chat.invoke`.** Today `XaiChatDefaults.AuthenticatedPolicy`
+   lets any signed-in human chat. This revision seeds the id into Member and Administrator, so
+   roleless humans (the Member backfill), Member, and Administrator keep chat after the
+   migration. A human whose only role is Developer or Operator can chat today and loses it
+   under that seed. Keep the Member and Administrator seed and accept that loss, or seed the id
+   into Developer and Operator as well (every non-Principal role) so no signed-in human loses
+   chat?

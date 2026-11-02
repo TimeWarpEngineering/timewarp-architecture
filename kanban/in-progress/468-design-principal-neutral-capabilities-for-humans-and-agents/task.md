@@ -150,6 +150,11 @@ Revision pass (2026-11-03): rewrite `design.md` to Steve's answers on all eighte
 replace section 10 with a Decided list, and keep an open-questions list only for what the
 revision itself raises.
 
+Fix pass for review round 5 (2026-11-03): make the design's claims match today's seeds and
+hosted attributes. The `demo.invoke` example must not assume a role holds an id no seed grants;
+the chat seed must say which humans keep chat and which lose it; and the acting-as-self
+credential set must be the same list in section 6.1, section 6.2, and question 2.
+
 The document must keep the invariants: no self-escalation, granting is itself an audited
 permission, delegation never exceeds the delegator at issuance, and credential rules apply by
 credential type rather than principal kind.
@@ -258,6 +263,21 @@ file gets `## Results` with a non-empty How to validate.
   handed-over keys, which roles seed the chat id). The breakdown is seven tasks. No product code
   changed.
 - Implement oracle: implemented by implementer-claude-fable (claude, vendor anthropic, model claude-fable-5-1, response model claude-fable-5-1), session 7e4128ba-e3e9-4f60-91ea-4ba271e87bce, max-turns 500, Done — 2026-11-02T17:46:04Z
+- Review round 5: grok session `01a19d5f-0286-7340-befc-d3c369397937` (2026-11-03). Effort 3, roster general, turn cap 200. Re-reviewed the 2026-11-03 revision of `design.md`. M1 through M9 stay fixed. New open findings M10, M11, M12. Wrote `review/round-5/general.md` and `review/round-5/merged.md`. Disposition is not closed.
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19d5f-0286-7340-befc-d3c369397937, max-turns 200, artifacts general.md, merged.md — 2026-11-02T17:56:07Z
+- Fix pass for round 5 (2026-11-03), implementer-claude (Claude Fable 5.1), implement-fix-2 oracle.
+  Re-verified each finding before editing: `RolePermissionSeed.DefaultGrants` gives `demo.invoke`
+  to no role and `InMemoryRoleAgentScopeStore` starts empty; `XaiChatDefaults.AuthenticatedPolicy`
+  admits any signed-in session and `EffectiveRolesResolver` adds Member only on an empty role
+  list; all seven credential contracts carry `IdentitySession,AgentToken` with no mock scheme.
+  Fixed M10 (example 3.1 says no seeded role holds `demo.invoke`, the approver must already hold
+  it and `admin.principals.manage`, and a host seeds it into Administrator first or the ceiling
+  refuses), M11 (section 2.4, the section 5 seed row, and question 4 state that roleless, Member,
+  and Administrator humans keep chat while Developer-only and Operator-only humans lose it unless
+  seeded), and M12 (section 6.1 has a permission-only `GetCredentials` row and a separate
+  acting-as-self row for the six passkey, key, rename, and revoke operations; question 2 names
+  `GetCredentials` as the read that stays permission-only). Statuses set to fixed on
+  `review/round-5/merged.md`. No product code changed.
 
 ## Results
 
@@ -265,8 +285,8 @@ file gets `## Results` with a non-empty How to validate.
 eleven sections: where we are (a table of every piece the design touches), the model (one
 vocabulary, three sources, the Principal role as a floor for every principal, permission-only
 endpoints, a bearer token that names who it acts as and carries a subset), four worked examples
-(an administrator grants an unvouched agent `demo.invoke` through a request, an administrator
-grants a feedback reviewer, a human delegates `feedback.file.self` and `profile.read` to a linked
+(an administrator who already holds `demo.invoke`, which no seed grants, approves an unvouched
+agent's request for it, an administrator grants a feedback reviewer, a human delegates `feedback.file.self` and `profile.read` to a linked
 agent that then files feedback as the human, a human signs up and gets the Principal bundle), the
 request-for-more-capability flow with the OpenAPI text an outside agent reads, the effect on every
 existing piece including the `TimeWarp.Identity` public API break and release, an endpoint table,
@@ -298,7 +318,7 @@ credential holding `feedback.read` or `admin.feedback.read`, where owner means t
 
 No product code changed. Only `task.md` and `design.md` in this folder are in the diff.
 
-The implementer restatement matches the task. Service accounts are the third kind the resolver already special-cases, which the task's "every principal kind" and the kind exception already cover. No misread recorded.
+Service accounts are the third kind the resolver already special-cases, which the task's "every principal kind" and the kind exception already cover. The restatement's Done-when sentence still asks for a human-presence split and for every original product choice to stay open. That sentence mismatches the Decisions section. The design follows the Decisions section. The leftover is recorded under Learnings.
 
 ### Review
 
@@ -308,15 +328,17 @@ Round 2, same effort and roster, reviewed the delta since `9769c06c` (round-1 `b
 
 Round 3, effort 1, roster general only, reviewed the delta since `074ea5a9c` (round-2 `base.sha`, commit `00c2d430b`). Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`. M1 through M8 re-verified fixed. Sections 2.4, 5, and 6.1 match the download handler. M9 found that task 4 still said the handler collapses to one disjunction, and its proof gate expected 404 on the bearer's own unlinked draft, which the owner passes. Fix pass 4 landed 2026-11-02: task 4 keeps the section 6.1 order and its pins expect 200 on the bearer's own unlinked draft. M9 is `fixed` on `review/round-3/merged.md`.
 
-Round 4, effort 1, roster general only, reviewed the delta since `00c2d430b` (round-3 `base.sha`, commit `65450aa43`). Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`, `review/disposition.md`. M1 through M8 are unchanged in that delta. M9 re-verified fixed: task 4 matches section 6.1 and the handler. No new findings.
+Round 4, effort 1, roster general only, reviewed the delta since `00c2d430b` (round-3 `base.sha`, commit `65450aa43`). Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`. M1 through M8 are unchanged in that delta. M9 re-verified fixed: task 4 matches section 6.1 and the handler. No new findings. That round closed the pre-decision draft.
+
+Round 5, effort 3, roster general only, turn cap 200, reviewed the 2026-11-03 revision (`903a7d384`, `f755d1167`) against the task description and the Decisions section. Artifacts: `review/review-framework.md`, `review/round-5/general.md`, `review/round-5/merged.md`, `review/disposition.md`. M1 through M9 stay fixed. M10: example 3.1 approves `demo.invoke` and says Developer holds it; no seeded role does, and the ceiling refuses the approval. M11: seeding `agent-chat.invoke` on Member and Administrator does not keep chat for every signed-in human; Developer-only and Operator-only humans can chat today under `XaiChatDefaults.AuthenticatedPolicy`. M12: section 6.1's acting-as-self credential row includes `GetCredentials` and omits four hosted passkey and revoke operations that section 6.2 and question 2 list. Fix pass landed 2026-11-03: example 3.1 no longer assumes a role holds `demo.invoke`, section 2.4 and question 4 state the chat split by role, and section 6.1 lists the six acting-as-self credential operations with `GetCredentials` permission-only. M10, M11, and M12 are `fixed` on `review/round-5/merged.md`.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 0 | 7 | 0 |
+| bug | 0 | 10 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 1 | 0 |
 
-Disposition is `clean` (`review/disposition.md`): four rounds, zero open, every finding `fixed`, no wontfix, no escalation. The implementer restatement matches the task; no misread under Learnings. Product tests were not run; the round-4 delta is design text, checked by reading the handler, `FeedbackProblems`, and section 6.1.
+Disposition is not closed (`review/disposition.md`); the next review round closes it. Round 4's clean outcome covered the pre-decision draft. Round 5 raised three bugs (M10, M11, M12), each fixed in the round-5 fix pass, no wontfix, and no escalation. A misread of the restatement's Done-when sentence against the Decisions section is under Learnings. Product tests were not run. Round 5 checked the rewritten design by reading the download handler, `FeedbackProblems`, `RolePermissionSeed`, `InMemoryRoleAgentScopeStore`, `XaiChatDefaults.AuthenticatedPolicy`, `EffectiveRolesResolver`, and the hosted `[EndpointAuthorize]` attributes (34 human-only, 14 both, 5 agent-only).
 
 ### How to validate
 
@@ -338,6 +360,11 @@ grep -n -E '^\| [1-7] \|' "$D" | cut -c1-60
 grep -c 'feedback.file.self` on the attribute' "$D"
 grep -n -A3 'DownloadFeedbackAttachment`, in handler order' "$D"
 grep -c "200 on the bearer's own unlinked draft" "$D"
+grep -c 'Developer does' "$D"
+grep -c 'No seeded role holds `demo.invoke`' "$D"
+grep -c 'only role is Developer or Operator' "$D"
+grep -n '^| GetCredentials |' "$D" | cut -c1-40
+grep -c '^| AddPasskey, StartAddExistingPasskey, CompleteAddExistingPasskey, AddAgentKey, RenameCredential, RevokeCredential |' "$D"
 ```
 
 Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`,
@@ -351,7 +378,11 @@ and no estimate. Section 6.1 has its own `DownloadFeedbackAttachment` row that n
 permission (the `feedback.file.self` count is 0), followed by a handler-level checks list whose
 download entry puts the unlinked-draft owner-only gate before the `feedback.read` or
 `admin.feedback.read` disjunction, and task 5's download pins expect 200 on the bearer's own
-unlinked draft (count 1).
+unlinked draft (count 1). The round-5 fixes hold: `Developer does` is gone (count 0), example 3.1
+says no seeded role holds `demo.invoke` (count 1), the Developer-or-Operator chat split appears
+in section 2.4 and question 4 (count 2), `GetCredentials` has its own permission-only row in
+section 6.1, and the six-operation acting-as-self credential row appears twice, once in 6.1 and
+once in 6.2 (count 2).
 
 ## Review
 
@@ -359,6 +390,11 @@ unlinked draft (count 1).
 - Round 2: Blocked — open M8
 - Round 3: Blocked — open M9
 - Round 4: Done
+- Round 5: Blocked — open M10, M11, M12
+## Learnings
+
+The implementer restatement's Done-when sentence still asks for an endpoint table that splits permission-only from human-presence, and for an open-questions list that leaves every product choice in the original description open. The Decisions section (Steve, 2026-11-03) already closed both: Q18 is no browser-session rule, and section 10 is a Decided list with new questions only. The revision-pass paragraph in the same restatement matches those decisions, and `design.md` follows them. The Done-when sentence is the misread. The checklist lines "four acquisition paths" and "no product choices settled by the author" are the same leftover: the decisions reduced the sources to three and recorded Steve's answers.
+
 ## Notes
 
 Related: done 466 (admin-approved agent scopes; its scope list and kind-based Member exception
