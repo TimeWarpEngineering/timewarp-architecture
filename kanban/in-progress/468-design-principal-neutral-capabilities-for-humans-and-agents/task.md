@@ -278,6 +278,11 @@ file gets `## Results` with a non-empty How to validate.
   acting-as-self row for the six passkey, key, rename, and revoke operations; question 2 names
   `GetCredentials` as the read that stays permission-only). Statuses set to fixed on
   `review/round-5/merged.md`. No product code changed.
+- Review round 6: grok session `01a19d6b-6cfc-7be2-8716-08b244822135` (2026-11-03). Effort 2,
+  roster general, turn cap 120. Re-reviewed the delta since round-5 `base.sha` `d83763a55`
+  (fix commit `4caeff5a6`). M1 through M12 stay fixed. No new findings. Wrote
+  `review/round-6/general.md`, `review/round-6/merged.md`, and `review/disposition.md`.
+  Outcome clean.
 
 ## Results
 
@@ -330,7 +335,9 @@ Round 3, effort 1, roster general only, reviewed the delta since `074ea5a9c` (ro
 
 Round 4, effort 1, roster general only, reviewed the delta since `00c2d430b` (round-3 `base.sha`, commit `65450aa43`). Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`. M1 through M8 are unchanged in that delta. M9 re-verified fixed: task 4 matches section 6.1 and the handler. No new findings. That round closed the pre-decision draft.
 
-Round 5, effort 3, roster general only, turn cap 200, reviewed the 2026-11-03 revision (`903a7d384`, `f755d1167`) against the task description and the Decisions section. Artifacts: `review/review-framework.md`, `review/round-5/general.md`, `review/round-5/merged.md`, `review/disposition.md`. M1 through M9 stay fixed. M10: example 3.1 approves `demo.invoke` and says Developer holds it; no seeded role does, and the ceiling refuses the approval. M11: seeding `agent-chat.invoke` on Member and Administrator does not keep chat for every signed-in human; Developer-only and Operator-only humans can chat today under `XaiChatDefaults.AuthenticatedPolicy`. M12: section 6.1's acting-as-self credential row includes `GetCredentials` and omits four hosted passkey and revoke operations that section 6.2 and question 2 list. Fix pass landed 2026-11-03: example 3.1 no longer assumes a role holds `demo.invoke`, section 2.4 and question 4 state the chat split by role, and section 6.1 lists the six acting-as-self credential operations with `GetCredentials` permission-only. M10, M11, and M12 are `fixed` on `review/round-5/merged.md`.
+Round 5, effort 3, roster general only, turn cap 200, reviewed the 2026-11-03 revision (`903a7d384`, `f755d1167`) against the task description and the Decisions section. Artifacts: `review/review-framework.md`, `review/round-5/general.md`, `review/round-5/merged.md`. M1 through M9 stay fixed. M10: example 3.1 approves `demo.invoke` and says Developer holds it; no seeded role does, and the ceiling refuses the approval. M11: seeding `agent-chat.invoke` on Member and Administrator does not keep chat for every signed-in human; Developer-only and Operator-only humans can chat today under `XaiChatDefaults.AuthenticatedPolicy`. M12: section 6.1's acting-as-self credential row includes `GetCredentials` and omits four hosted passkey and revoke operations that section 6.2 and question 2 list. Fix pass landed 2026-11-03: example 3.1 no longer assumes a role holds `demo.invoke`, section 2.4 and question 4 state the chat split by role, and section 6.1 lists the six acting-as-self credential operations with `GetCredentials` permission-only. M10, M11, and M12 are `fixed` on `review/round-5/merged.md`.
+
+Round 6, effort 2, roster general only, turn cap 120, reviewed the delta since `d83763a55` (fix commit `4caeff5a6`). Artifacts: `review/review-framework.md`, `review/round-6/general.md`, `review/round-6/merged.md`, `review/disposition.md`. M1 through M9 are unchanged in that delta. M10, M11, and M12 re-verified fixed against `RolePermissionSeed.DefaultGrants`, `InMemoryRoleAgentScopeStore`, `XaiChatDefaults.AuthenticatedPolicy`, `EffectiveRolesResolver`, and the seven hosted credential `[EndpointAuthorize]` attributes. No new findings.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
@@ -338,7 +345,7 @@ Round 5, effort 3, roster general only, turn cap 200, reviewed the 2026-11-03 re
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 1 | 0 |
 
-Disposition is not closed (`review/disposition.md`); the next review round closes it. Round 4's clean outcome covered the pre-decision draft. Round 5 raised three bugs (M10, M11, M12), each fixed in the round-5 fix pass, no wontfix, and no escalation. A misread of the restatement's Done-when sentence against the Decisions section is under Learnings. Product tests were not run. Round 5 checked the rewritten design by reading the download handler, `FeedbackProblems`, `RolePermissionSeed`, `InMemoryRoleAgentScopeStore`, `XaiChatDefaults.AuthenticatedPolicy`, `EffectiveRolesResolver`, and the hosted `[EndpointAuthorize]` attributes (34 human-only, 14 both, 5 agent-only).
+Disposition is clean (`review/disposition.md`): 0 open, no wontfix, no escalation. Round 4's clean outcome covered the pre-decision draft. Round 5 raised three bugs (M10, M11, M12), the fix pass addressed them, and round 6 confirmed the fix. A misread of the restatement's Done-when sentence against the Decisions section is under Learnings. Product tests were not run. Round 6 checked the fix by reading the role seed, the empty role-scope store, the chat policy and the two chat attributes, the role resolver, and the credential contracts.
 
 ### How to validate
 
@@ -391,6 +398,7 @@ once in 6.2 (count 2).
 - Round 3: Blocked — open M9
 - Round 4: Done
 - Round 5: Blocked — open M10, M11, M12
+- Round 6: Done
 ## Learnings
 
 The implementer restatement's Done-when sentence still asks for an endpoint table that splits permission-only from human-presence, and for an open-questions list that leaves every product choice in the original description open. The Decisions section (Steve, 2026-11-03) already closed both: Q18 is no browser-session rule, and section 10 is a Decided list with new questions only. The revision-pass paragraph in the same restatement matches those decisions, and `design.md` follows them. The Done-when sentence is the misread. The checklist lines "four acquisition paths" and "no product choices settled by the author" are the same leftover: the decisions reduced the sources to three and recorded Steve's answers.

@@ -1,20 +1,20 @@
 # Review framework — task 468
 
-**Date:** 2026-11-02 (round 5: 2026-11-03)
+**Date:** 2026-11-02 (round 6: 2026-11-03)
 **Host task:** kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/
-**Diff scope:** Round 5 reviews the 2026-11-03 revision of `design.md` (decisions commit `903a7d384`, rewrite `f755d1167`) against the task description and the Decisions section. No product code. Rounds 1–4 reviewed the pre-decision draft; those scopes stay in the round sections below.
+**Diff scope:** Round 6 reviews the fix since round-5 `base.sha` `d83763a5547c4acef3dc6d2ef32b6b88ffe82a73` (fix commit `4caeff5a6`). No product code. Earlier scopes stay in the round sections below.
 **Plan / brief:** `task.md` description, Decisions (Steve, 2026-11-03), and `## Goal (implementer restatement)`. Deliverable is `design.md` in this folder. No product code.
-**Effort:** rounds 1–2 were 2 (general). Rounds 3 and 4 were 1 (general). Round 5 is 3 (general), by-diff 1515 lines.
+**Effort:** rounds 1–2 were 2 (general). Rounds 3 and 4 were 1 (general). Round 5 was 3 (general), by-diff 1515 lines. Round 6 is 2 (general), by-diff 203 lines.
 **Reviewer roster:** general
-**Session IDs:** review round 1 grok `01a19cfa-8b71-7823-acb1-a893538059fd` (2026-11-02). Review round 2 grok `01a19d09-e1b0-7c00-a784-e17012772ce4` (2026-11-02). Review round 3 grok `01a19d15-5d2f-7881-bde9-8558064255f4` (2026-11-02). Review round 4 grok `01a19d1c-8f78-72d1-874c-5f02007032e7` (2026-11-02). Review round 5 grok `01a19d5f-0286-7340-befc-d3c369397937` (2026-11-03). Implementer session is on `task.md`.
+**Session IDs:** review round 1 grok `01a19cfa-8b71-7823-acb1-a893538059fd` (2026-11-02). Review round 2 grok `01a19d09-e1b0-7c00-a784-e17012772ce4` (2026-11-02). Review round 3 grok `01a19d15-5d2f-7881-bde9-8558064255f4` (2026-11-02). Review round 4 grok `01a19d1c-8f78-72d1-874c-5f02007032e7` (2026-11-02). Review round 5 grok `01a19d5f-0286-7340-befc-d3c369397937` (2026-11-03). Review round 6 grok `01a19d6b-6cfc-7be2-8716-08b244822135` (2026-11-03). Implementer session is on `task.md`.
 
 ## Budget (by-diff)
 
-- Lines changed: 1515
-- Effort: 3
+- Lines changed: 203
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -24,7 +24,7 @@
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
 
-The roster is general only. Round 1 wrote `review/round-1/general.md` directly. Round 2 wrote `review/round-2/general.md` directly. Round 3 wrote `review/round-3/general.md` directly. Round 4 wrote `review/round-4/general.md` directly. Round 5 wrote `review/round-5/general.md` directly. No specialist was spawned.
+The roster is general only. Round 1 wrote `review/round-1/general.md` directly. Round 2 wrote `review/round-2/general.md` directly. Round 3 wrote `review/round-3/general.md` directly. Round 4 wrote `review/round-4/general.md` directly. Round 5 wrote `review/round-5/general.md` directly. Round 6 wrote `review/round-6/general.md` directly. No specialist was spawned.
 
 ## Round 2 scope
 
@@ -40,4 +40,8 @@ Delta since round-3 `base.sha` `00c2d430bd67b3da64e354f9c9c66b2d9fdafb59` (fix c
 
 ## Round 5 scope
 
-The 2026-11-03 revision of `design.md` after round 4 (decisions `903a7d384`, rewrite `f755d1167`), checked against the task description and the Decisions section. Prior M1–M9 re-verified against the rewritten text and the cited code. New findings use the next M id. Round 1 through round 4 files stay as they were. Budget block above is this round (1515 lines, effort 3, roster general, turn cap 200).
+The 2026-11-03 revision of `design.md` after round 4 (decisions `903a7d384`, rewrite `f755d1167`), checked against the task description and the Decisions section. Prior M1–M9 re-verified against the rewritten text and the cited code. New findings use the next M id. Round 1 through round 4 files stay as they were. That round's budget was 1515 lines, effort 3, roster general, turn cap 200.
+
+## Round 6 scope
+
+Delta since round-5 `base.sha` `d83763a5547c4acef3dc6d2ef32b6b88ffe82a73` (fix commit `4caeff5a6`): the `design.md` hunks for example 3.1, the chat seed split, and the credential acting-as-self rows, plus the task Results sentences. Prior M1–M12 re-verified. New findings would use the next M id. Round 1 through round 5 files stay as they were. Budget block above is this round (203 lines, effort 2, roster general, turn cap 120).
