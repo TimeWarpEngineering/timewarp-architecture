@@ -157,6 +157,11 @@ Fix pass (review round 1):
   suggestion (paths in the guide). Fix pass requested.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 134a0577-7632-4bcf-a5b5-ee02544ec7ff, max-turns 120 — 2026-11-02T06:42:58Z
 - 2026-11-02 fix pass (implement-fix-2): `./bin/dev check-version` exit 0. Source `2.0.0-beta.30` is one prerelease ahead of NuGet `2.0.0-beta.29`, so beta.30 is unpublished and no pin bump. The scheme guide now names method and path from each contract route. `OpenApiAgentReviewerGuide_` 3/3. `./bin/dev build` 0/0. `ganda repo audit` exit 0; the same advisory `kanban-landed` names other claims with no worktree, left alone.
+- Review oracle round 2 (2026-11-02): reviewer general (claude-opus-5-5, headless ganda task
+  work), effort 2 by diff (278 lines), turn cap 120. Reviewed the fix delta. Re-ran
+  `./bin/dev check-version` (exit 0), `./bin/dev build` (0/0), and `OpenApiAgentReviewerGuide_`
+  3/3. M1 and M2 fixed. Disposition clean. The goal restatement and its fix-pass addendum match the
+  task and the round-1 findings, so no misread.
 
 ## Results
 
@@ -203,13 +208,18 @@ no refresh token, and reissue after `invalid_token`.
 
 Round 1, reviewer general, effort 2. Counts were bug 1 open, suggestion 1 open. Fix pass:
 M1 recorded, no bump, because beta.30 is unpublished. M2 implemented: method and path beside
-each id, asserted under `paths`. Round 2 is the host's next review. Paths:
-`review/review-framework.md`, `review/round-1/merged.md`.
+each id, asserted under `paths`.
+
+Round 2, reviewer general, effort 2, scope was the fix delta 24a113195..37f0bb8e5. It re-ran
+`./bin/dev check-version` (exit 0, beta.30 unpublished), `./bin/dev build` (0/0), and
+`OpenApiAgentReviewerGuide_` (3/3). No new findings. Final counts: bug 1 fixed, suggestion 1
+fixed, nit 0. 0 open. **Disposition: clean.** No wontfix and no escalation. Paths:
+`review/review-framework.md`, `review/round-2/merged.md`, `review/disposition.md`.
 
 ## Review
 
-- Round 1: open M1, M2. Fix pass addressed both. Round 2 has not run.
-
+- Round 1: open M1, M2. Fix pass addressed both.
+- Round 2: Done
 ## Notes
 
 Related: done task 273 (feedback filings with id/permalink and optional email copy), done task
