@@ -86,15 +86,42 @@ Write `design.md` in this task folder (not under `documentation/`):
 - **Open questions** for Steve, one decision per item in plain words. Do not settle a product
   choice the description above leaves open; list it.
 
+## Goal (implementer restatement)
+
+Produce `design.md` in this task folder and change no product code. The document describes one
+capability model that treats a human, an agent, and a service account the same way. There is one
+vocabulary, permission ids, and the separate agent-scope list is removed. A principal holds the
+union of four sources: roles, direct grants on the principal, purchases, and delegation from a
+linked principal that is capped by what the delegator holds at token issuance. Every
+self-signed-up principal starts from the same minimal default, whatever its kind. Endpoints name
+a permission and accept any authenticated principal holding it; a short explicit list of
+operations keeps a human-presence requirement per operation. A bearer token may carry a subset
+of its holder's permissions.
+
+The document must keep the invariants: no self-escalation, granting is itself an audited
+permission, delegation never exceeds the delegator at issuance, and credential rules apply by
+credential type rather than principal kind.
+
+Done when `design.md` contains: the model with one worked example per acquisition path; the
+request-for-more-capability flow including what an outside agent learns from OpenAPI alone; the
+effect on each existing piece named in the description (including `AgentScopes` in the
+`TimeWarp.Identity` package, task 466's stores and migration and UI, token contracts, OpenAPI
+text, `EffectiveRolesResolver`, endpoint auth declarations and the agreement analyzer, agent
+links); an endpoint table splitting permission-only from human-presence with a reason for each
+of the latter; migration for existing tokens, stored scope grants, and generated apps; an
+implementation task breakdown with dependencies and proof gates and no estimates; and an Open
+questions list that leaves every product choice the description leaves open to Steve. The task
+file gets `## Results` with a non-empty How to validate.
+
 ## Checklist
 
-- [ ] `design.md` covers the model, the four acquisition paths with worked examples, and the request flow
-- [ ] Effect on every existing piece listed above, including the `TimeWarp.Identity` package
-- [ ] Endpoint table: permission-only vs human-presence, with reasons
-- [ ] Migration for existing tokens, stored grants, and generated apps
-- [ ] Proposed implementation task breakdown with dependencies
-- [ ] Open questions listed for Steve; no product choices settled by the author
-- [ ] No product code changed
+- [x] `design.md` covers the model, the four acquisition paths with worked examples, and the request flow
+- [x] Effect on every existing piece listed above, including the `TimeWarp.Identity` package
+- [x] Endpoint table: permission-only vs human-presence, with reasons
+- [x] Migration for existing tokens, stored grants, and generated apps
+- [x] Proposed implementation task breakdown with dependencies
+- [x] Open questions listed for Steve; no product choices settled by the author
+- [x] No product code changed
 
 ## Session
 
@@ -102,6 +129,49 @@ Write `design.md` in this task folder (not under `documentation/`):
   why an agent can't hold any permission a human can. Discussion concluded the human/agent
   split should go: capabilities come from roles, grants, purchases, and delegation for every
   principal kind. Task 467 (seed a Feedback Reviewer role with agent scopes) was archived as moot.
+- Design pass (2026-11-02), implementer-claude (Claude Fable 5.1). Surveyed the current model
+  (PermissionIds, AgentScopes, the 466 stores, the evaluator, every hosted contract, agent links,
+  metered capability, timewarp-402, tasks 104/182-006/205/331/378/466/467) and wrote `design.md`.
+  No product code changed. `ganda repo audit` exited 0 with the existing `kanban-landed`
+  advisory for other claims that have no worktree on this machine.
+- Implement oracle: implemented by implementer-claude-fable (claude, vendor anthropic, model claude-fable-5-1, response model claude-sonnet-5-5), session a446a9be-4e1e-4a12-b6b4-e472a7f6e423, max-turns 500, Done — 2026-11-02T15:56:18Z
+
+## Results
+
+`design.md` in this folder is the deliverable. It has ten sections: where we are (a table of every
+piece the design touches), the model (one vocabulary, four sources, one default, permission-only
+endpoints, a credential subset), four worked examples (an unvouched agent buys `demo.invoke`, an
+administrator grants a feedback reviewer, a human delegates two feedback ids to a linked agent, a
+human signs up and gets the default), the request-for-more-capability flow with the OpenAPI text an
+outside agent reads, the effect on every existing piece including the `TimeWarp.Identity` public
+API break and release, an endpoint table (34 human-only and 5 agent-only operations become
+permission-only; passkey ceremonies, credential adds and revokes, link approve/deny/revoke, and
+request approve/deny stay first-party, each with its reason), migration for tokens, stored grants,
+token requests, and generated apps, an eight-task implementation breakdown with dependencies and
+proof gates, risks, and seventeen open questions for Steve.
+
+Two design elements are proposals the description did not name and are listed as open questions
+rather than settled: the grant ceiling (a grantor may grant only what it holds) and the first-party
+credential requirement as the mechanism for "a present person" operations. The default bundle is
+proposed and left to Steve (Q1, Q2).
+
+No product code changed. Only `task.md` and `design.md` in this folder are in the diff.
+
+### How to validate
+
+Smoke:
+
+```bash
+git diff --stat origin/master...HEAD -- . ':!kanban'
+ls kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/
+grep -c '^## ' kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md
+grep -n '^[0-9]*\. \*\*' kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md | wc -l
+```
+
+Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`
+and `design.md` beside the host-owned journal and progress log. The design has 10 `##` sections
+and 17 numbered open questions in section 10. Section 6.2 names a reason for every first-party
+row. Section 8 has eight tasks, each with a Depends on column and proof gates and no estimate.
 
 ## Notes
 
