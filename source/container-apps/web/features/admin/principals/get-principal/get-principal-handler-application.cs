@@ -7,7 +7,9 @@
 // (platform port, TWA0009) only when the caller holds admin.profiles.read, checked through
 // IPermissionEvaluator under the identity-session scheme (both endpoint schemes are human
 // session schemes that expand roles identically). Without the permission, or without a profile
-// row, Profile is null. This handler never creates a profile.
+// row, Profile is null. This handler never creates a profile. Agent-scope grants and the
+// effective approved set come from IAgentScopeApproval (task 466). Source kinds are the
+// contract strings, mapped here so Authorization does not depend on this slice's DTOs.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals.Application;
@@ -25,19 +27,22 @@ public sealed partial class GetPrincipal
     private readonly ICurrentPrincipalAccessor CurrentPrincipalAccessor;
     private readonly IPermissionEvaluator PermissionEvaluator;
     private readonly IProfileDirectory ProfileDirectory;
+    private readonly IAgentScopeApproval AgentScopeApproval;
 
     public Handler(
       IPrincipalStore principalStore,
       IEffectiveRolesResolver effectiveRolesResolver,
       ICurrentPrincipalAccessor currentPrincipalAccessor,
       IPermissionEvaluator permissionEvaluator,
-      IProfileDirectory profileDirectory)
+      IProfileDirectory profileDirectory,
+      IAgentScopeApproval agentScopeApproval)
     {
       PrincipalStore = principalStore;
       EffectiveRolesResolver = effectiveRolesResolver;
       CurrentPrincipalAccessor = currentPrincipalAccessor;
       PermissionEvaluator = permissionEvaluator;
       ProfileDirectory = profileDirectory;
+      AgentScopeApproval = agentScopeApproval;
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
@@ -75,6 +80,10 @@ public sealed partial class GetPrincipal
         }
       }
 
+      AgentScopeApprovalSnapshot snapshot = await AgentScopeApproval
+        .GetSnapshotAsync(principalId, cancellationToken)
+        .ConfigureAwait(false);
+
       return new Response(new PrincipalDetailDto(
         principal.Id,
         principal.Kind,
@@ -82,8 +91,23 @@ public sealed partial class GetPrincipal
         principal.IsActive,
         principal.IsQuarantined,
         [.. roles],
-        profile));
+        profile,
+        [.. snapshot.PrincipalGrants],
+        snapshot.Effective.Select(ToDto).ToList()));
     }
+
+    private static ApprovedAgentScopeDto ToDto(ApprovedAgentScope scope) =>
+      new(
+        scope.Scope,
+        scope.Sources.Select(source => new ApprovedAgentScopeSourceDto(KindName(source.Kind), source.RoleId)).ToList());
+
+    private static string KindName(AgentScopeGrantKind kind) => kind switch
+    {
+      AgentScopeGrantKind.Default => AgentScopeSourceKinds.Default,
+      AgentScopeGrantKind.Role => AgentScopeSourceKinds.Role,
+      AgentScopeGrantKind.Principal => AgentScopeSourceKinds.Principal,
+      _ => throw new InvalidOperationException($"Unknown agent scope source '{kind}'.")
+    };
 
     private async Task<bool> CanReadProfilesAsync(CancellationToken cancellationToken)
     {

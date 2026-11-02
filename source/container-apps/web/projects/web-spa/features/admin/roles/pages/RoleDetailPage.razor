@@ -1,5 +1,6 @@
 @namespace TimeWarp.Architecture.Features.Admin.Roles
 @using TimeWarp.Architecture.Features
+@using TimeWarp.Identity
 @inherits BaseComponent
 
 @*
@@ -10,6 +11,9 @@
   RoleState.SetPermissionSelected / SetRolePermissions — no new store. Protected-core
   Administrator admin.* grants are disabled when selected; last-admin lockout is
   SetPrincipalRoles (server), not this editor. Groups come from PermissionIds.GroupsByPrefix.
+  Agent scopes on Member reach roleless human principals, including a human who holds an
+  agent key. A self-registered agent has no effective role, so those scopes do not apply
+  to it. That sentence is shown only on the Member role.
   The shell location breadcrumb is Home / Roles / this role's name (Title, once loaded).
   No per-page Back button. Document title comes from TimeWarpPage Title via TwPageTitle.
   The description is a DefinitionList item when it is not blank. A blank description
@@ -26,6 +30,9 @@
   private bool IsSaving =>
     IsAnyActive(typeof(RoleState.SetRolePermissionsActionSet.Action));
 
+  private bool IsSavingAgentScopes =>
+    IsAnyActive(typeof(RoleState.SetRoleAgentScopesActionSet.Action));
+
   private GetRoles.RoleDto? Role =>
     RoleState.Roles?.FirstOrDefault(role => role.RoleId == RoleId);
 
@@ -39,6 +46,17 @@
   {
     await RoleState.SetRolePermissions(RoleId);
     if (!RoleState.LastSetRolePermissionsSucceeded)
+    {
+      return;
+    }
+
+    await RoleState.FetchRoles();
+  }
+
+  private async Task OnSaveAgentScopes()
+  {
+    await RoleState.SetRoleAgentScopes(RoleId);
+    if (!RoleState.LastSetRoleAgentScopesSucceeded)
     {
       return;
     }
@@ -80,6 +98,47 @@
             Save
           </FluentButton>
         }
+      }
+    </Section>
+    <Section Title="Agent scopes" LoadingActionType="typeof(RoleState.FetchRolesActionSet.Action)">
+      @if (Role is not null)
+      {
+        <div class="twe-stack">
+          <p class="ds-subtitle">
+            Scopes an agent may request when this role is assigned. Human permissions above
+            do not flow onto an agent token. <code>identity:read</code> is always allowed at issuance.
+          </p>
+          @if (RoleId == RoleIds.Member)
+          {
+            <p class="ds-subtitle" data-qa="MemberAgentScopeWarning">
+              Scopes on Member reach roleless human principals, including a human who holds an
+              agent key. A self-registered agent has no role until an admin assigns one, so these
+              scopes do not apply to it.
+            </p>
+          }
+          <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+            @foreach (string scope in AgentScopes.All)
+            {
+              <div data-qa="@($"AgentScope-{scope}")">
+                <FluentCheckbox
+                  Label="@scope"
+                  Disabled="@(!CanManage)"
+                  Value="@RoleState.IsAgentScopeSelected(RoleId, scope)"
+                  ValueChanged="@(async (bool value) => await RoleState.SetAgentScopeSelected(RoleId, scope, value))" />
+              </div>
+            }
+          </FluentStack>
+          @if (CanManage)
+          {
+            <FluentButton
+              Appearance="ButtonAppearance.Primary"
+              data-qa="SaveRoleAgentScopes"
+              Disabled="IsSavingAgentScopes"
+              OnClick="OnSaveAgentScopes">
+              Save agent scopes
+            </FluentButton>
+          }
+        </div>
       }
     </Section>
   </div>

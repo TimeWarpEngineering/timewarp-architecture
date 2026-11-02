@@ -292,7 +292,8 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
 
       EffectiveRolesResolver resolver = new(
         roles,
-        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }));
+        Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
+        Principals);
       PermissionEvaluator evaluator = new(resolver, permissions, new NoAgentScopes());
       Handler = new ListHandler(Principals, resolver, CallerAccessor, evaluator, new ProfileDirectory(Profiles));
     }

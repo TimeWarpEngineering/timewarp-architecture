@@ -10,6 +10,7 @@
 // rows are display-only, and Response derives from ListResponse to carry TotalCount for
 // paging. PermissionIds on RoleDto (task 182-004 / 206) feed list summary chips and
 // RoleDetailPage drafts — fine for the small product role catalog (RoleIds.All + demo creates).
+// AgentScopes on RoleDto (task 466) is the separate agent-scope list the same page edits.
 // GetMockResponseFactory serves the SPA's MockWebApiService offline.
 // [EndpointAuthorize] (task 182-002): admin.roles.read via PermissionIds — read half of the
 // roles split (manage is Create/Update/Delete/SetRolePermissions). Server
@@ -88,18 +89,23 @@ public static partial class GetRoles
     /// <summary>Stored permission ids for this role (empty when none granted).</summary>
     public List<string> PermissionIds { get; }
 
+    /// <summary>Stored agent scopes for this role (empty when the role approves none).</summary>
+    public List<string> AgentScopes { get; }
+
     public RoleDto
     (
       Guid roleId,
       string name,
       string description,
-      List<string>? permissionIds = null
+      List<string>? permissionIds = null,
+      List<string>? agentScopes = null
     )
     {
       RoleId = Guard.Against.NullOrEmpty(roleId);
       Name = Guard.Against.NullOrEmpty(name);
       Description = Guard.Against.NullOrEmpty(description);
       PermissionIds = permissionIds ?? [];
+      AgentScopes = agentScopes ?? [];
     }
   }
 

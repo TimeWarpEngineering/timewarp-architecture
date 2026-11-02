@@ -12,7 +12,11 @@
 // (IPrincipalStore.FindCredentialByHandleAsync(CredentialType.AgentKey, ...)).
 // Scopes are the CALLER'S request for what the issued token should be able to do — validated against
 // AgentScopes.IsKnown by the handler (unknown scope -> 400 invalid_scope, listing the offending
-// entries) — this contract's own Validator only enforces coarse shape (non-empty list, a small count
+// entries). After the credential lookup and a valid proof, the handler accepts only scopes an
+// admin approved (identity:read is always approved). Anything else is 403 unapproved_scope and
+// no token is issued. Removing an approval does not revoke a token already issued; tokens last
+// 15 minutes by default and the change applies at the next issuance. This contract's own
+// Validator only enforces coarse shape (non-empty list, a small count
 // ceiling, and a length ceiling per entry), not membership in the known-scope set: format validation
 // belongs here, semantic/domain validation (is this a real scope) belongs in the handler/library
 // (matches the passkey contracts' documented split for base64url well-formedness vs the handler's
@@ -52,7 +56,7 @@ namespace TimeWarp.Architecture.Features.Identity;
 public static partial class CompleteAgentTokenIssuance
 {
   /// <summary>Completes agent token issuance by returning the signed challenge.</summary>
-  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes from start-agent-token-issuance, using ECDSA P-256 and SHA-256. It sends back base64url KeyId, Challenge, and Signature (RFC 3279 DER) and the requested Scopes. The response returns AccessToken, TokenType Bearer, ExpiresInSeconds, Scopes, and PrincipalId. There is no refresh token.</remarks>
+  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes from start-agent-token-issuance, using ECDSA P-256 and SHA-256. It sends back base64url KeyId, Challenge, and Signature (RFC 3279 DER) and the requested Scopes. The response returns AccessToken, TokenType Bearer, ExpiresInSeconds, Scopes, and PrincipalId. There is no refresh token. The agent may request only scopes an admin approved through the principal's roles or grants on the principal. identity:read is always allowed. An unapproved scope returns 403 naming those scopes and issues no token. Removing an approval does not revoke a token already issued (tokens last 15 minutes by default); the change applies at the next issuance.</remarks>
   [ApiRoute("api/identity/agent/token", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {

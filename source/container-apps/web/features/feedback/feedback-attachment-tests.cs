@@ -165,7 +165,8 @@ namespace TimeWarp.Architecture.Features.Feedback
       PermissionEvaluator evaluator = new(
         new EffectiveRolesResolver(
           roles,
-          Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] })),
+          Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
+          new InMemoryPrincipalStore()),
         new InMemoryRolePermissionStore(),
         scopes);
 

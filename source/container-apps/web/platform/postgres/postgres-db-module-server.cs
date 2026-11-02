@@ -17,7 +17,9 @@
 // Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006),
-// IRolePermissionStore → EfRolePermissionStore (task 182-001), IProfileStore → EfProfileStore
+// IRolePermissionStore → EfRolePermissionStore (task 182-001),
+// IRoleAgentScopeStore → EfRoleAgentScopeStore and IPrincipalAgentScopeStore →
+// EfPrincipalAgentScopeStore (task 466), IProfileStore → EfProfileStore
 // (task 148 D4), and IFeedbackStore → EfFeedbackStore. IFeedbackAttachmentBlobStore → EfFeedbackAttachmentBlobStore
 // only when FeedbackAttachments:ConnectionString is empty (Azure wins; task 352). Challenge/token
 // stores stay in-memory either way.
@@ -117,6 +119,13 @@ public sealed partial class PostgresDbModule : IModule
     // Task 182-001: durable role→permission grants (same connection gate).
     serviceCollection.RemoveAll<IRolePermissionStore>();
     serviceCollection.AddScoped<IRolePermissionStore, EfRolePermissionStore>();
+
+    // Task 466: durable role and principal agent-scope grants. IAgentScopeApproval stays the
+    // scoped service registered by InMemoryIdentityStoresModule.
+    serviceCollection.RemoveAll<IRoleAgentScopeStore>();
+    serviceCollection.AddScoped<IRoleAgentScopeStore, EfRoleAgentScopeStore>();
+    serviceCollection.RemoveAll<IPrincipalAgentScopeStore>();
+    serviceCollection.AddScoped<IPrincipalAgentScopeStore, EfPrincipalAgentScopeStore>();
 
     // Task 148 D4: durable Profile (same connection gate).
     serviceCollection.RemoveAll<IProfileStore>();

@@ -84,6 +84,9 @@ public class Document_Given_
     description.ShouldContain($"{lifetimeMinutes} minutes");
     description.ShouldContain("no refresh token");
     description.ShouldContain("Reissue with the agent key before the token expires, or after a 401 invalid_token.");
+    description.ShouldContain("identity:read is always allowed");
+    description.ShouldContain("an unapproved scope returns 403 naming those scopes");
+    description.ShouldContain("removing an approval applies at the next issuance");
   }
 
   public static async Task Issuance_Should_SayWhatTheClientSignsAndReturns()
@@ -114,6 +117,10 @@ public class Document_Given_
     completeIssuance.ShouldContain("Signature");
     completeIssuance.ShouldContain("AccessToken");
     completeIssuance.ShouldContain("no refresh token");
+    completeIssuance.ShouldContain("identity:read is always allowed");
+    completeIssuance.ShouldContain("An unapproved scope returns 403 naming those scopes");
+    completeIssuance.ShouldContain("15 minutes by default");
+    completeIssuance.ShouldContain("the change applies at the next issuance");
   }
 
   public static async Task ListFeedback_Should_NameNewAndTheProcessedMarker()

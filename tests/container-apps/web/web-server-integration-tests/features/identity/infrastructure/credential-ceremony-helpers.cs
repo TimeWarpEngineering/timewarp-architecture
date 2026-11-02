@@ -162,6 +162,11 @@ internal static class CredentialCeremonyHelpers
       await app.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Agent key registration setup should succeed.");
 
+    await AgentScopeApprovals.ApproveAsync(
+      app.WebApplicationHost.ServiceProvider,
+      registerResult.AsT0.PrincipalId,
+      scopes);
+
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
       await app.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);

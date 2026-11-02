@@ -8,7 +8,10 @@
 // gated inside on admin.profiles.read and is null without it, and also null when the principal
 // has no profile row (agents; a human who never opened Settings). Opening a principal never
 // creates a profile. A missing principal is 404. PrincipalId is the route segment, generated on
-// the partial Query like GetFeedbackForAdmin's id. GetMockResponseFactory serves the SPA offline.
+// the partial Query like GetFeedbackForAdmin's id. AgentScopeGrants are the principal's own
+// grants. ApprovedAgentScopes is the effective set (identity:read, role scopes, and those
+// grants), each source marked default, role, or principal (task 466). GetMockResponseFactory
+// serves the SPA offline.
 // AuthenticationSchemes (task 158): identity-session + mock-identity-session.
 #endregion
 
@@ -59,6 +62,12 @@ public static partial class GetPrincipal
     public List<Guid> RoleIds { get; }
     public PrincipalProfileDto? Profile { get; }
 
+    /// <summary>Agent scopes granted on this principal, apart from its roles.</summary>
+    public List<string> AgentScopeGrants { get; }
+
+    /// <summary>Scopes the principal may request at issuance, with each source.</summary>
+    public List<ApprovedAgentScopeDto> ApprovedAgentScopes { get; }
+
     public PrincipalDetailDto(
       PrincipalId principalId,
       PrincipalKind kind,
@@ -66,7 +75,9 @@ public static partial class GetPrincipal
       bool isActive,
       bool isQuarantined,
       List<Guid> roleIds,
-      PrincipalProfileDto? profile = null)
+      PrincipalProfileDto? profile = null,
+      List<string>? agentScopeGrants = null,
+      List<ApprovedAgentScopeDto>? approvedAgentScopes = null)
     {
       PrincipalId = principalId;
       Kind = kind;
@@ -75,6 +86,40 @@ public static partial class GetPrincipal
       IsQuarantined = isQuarantined;
       RoleIds = roleIds ?? [];
       Profile = profile;
+      AgentScopeGrants = agentScopeGrants ?? [];
+      ApprovedAgentScopes = approvedAgentScopes ?? [];
+    }
+  }
+
+  /// <summary>Wire values for <see cref="ApprovedAgentScopeSourceDto.Kind"/>.</summary>
+  public static class AgentScopeSourceKinds
+  {
+    public const string Default = "default";
+    public const string Role = "role";
+    public const string Principal = "principal";
+  }
+
+  public sealed class ApprovedAgentScopeSourceDto
+  {
+    public string Kind { get; }
+    public Guid? RoleId { get; }
+
+    public ApprovedAgentScopeSourceDto(string kind, Guid? roleId = null)
+    {
+      Kind = kind;
+      RoleId = roleId;
+    }
+  }
+
+  public sealed class ApprovedAgentScopeDto
+  {
+    public string Scope { get; }
+    public List<ApprovedAgentScopeSourceDto> Sources { get; }
+
+    public ApprovedAgentScopeDto(string scope, List<ApprovedAgentScopeSourceDto> sources)
+    {
+      Scope = scope;
+      Sources = sources ?? [];
     }
   }
 
@@ -118,5 +163,12 @@ public static partial class GetPrincipal
       isActive: true,
       isQuarantined: false,
       roleIds: [RoleIds.Member],
-      profile: new PrincipalProfileDto("Ada Lovelace", "ada@example.com", "en-US", "US", "system", notifications: true)));
+      profile: new PrincipalProfileDto("Ada Lovelace", "ada@example.com", "en-US", "US", "system", notifications: true),
+      agentScopeGrants: [],
+      approvedAgentScopes:
+      [
+        new ApprovedAgentScopeDto(
+          AgentScopes.IdentityRead,
+          [new ApprovedAgentScopeSourceDto(AgentScopeSourceKinds.Default)])
+      ]));
 }

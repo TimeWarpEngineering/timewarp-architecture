@@ -4,7 +4,7 @@
 
 #region Design
 // HandleSuccess does not fetch. The Set response echoes *stored* roles only — patching
-// drafts from it desyncs virtual grants (empty store → Member; bootstrap unions
+// drafts from it desyncs virtual grants (roleless human → Member; roleless agent → no role; bootstrap unions
 // Admin+Member; review M1). LastSetPrincipalRolesSucceeded is set false in GetRequest and
 // true in HandleSuccess so PrincipalsPage sequences FetchPrincipals only after a successful
 // write (failed 409 must not re-seed drafts). NotifySessionChanged is not an

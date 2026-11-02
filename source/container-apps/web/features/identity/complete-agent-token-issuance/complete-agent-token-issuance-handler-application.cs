@@ -27,6 +27,11 @@
 // Quarantine is checked ONLY AFTER AgentKeyProof.Verify succeeds (403) — checking quarantine post-
 // Verify makes "the caller has already cryptographically proven possession" true before the
 // distinguishable 403 is reachable (mirrors CompletePasskeyAuthentication).
+// Approved scopes (task 466) are checked after that same proof and the active-principal check,
+// and before the last-used stamp and Issue. The approved set is identity:read plus the
+// principal's effective-role agent scopes plus grants on the principal. A request that names
+// anything else returns 403 unapproved_scope listing only the missing scopes and issues no
+// token. The challenge is already consumed. Unknown scope strings stay the earlier 400.
 // At bearer VALIDATION time (not issuance), quarantine is a SILENT Fail -> 401 — see
 // AgentTokenAuthenticationHandler's Design region. The two are deliberately different.
 // Last-used (task 248-002): after Verify AND the quarantine check pass, the handler stamps the
@@ -50,6 +55,7 @@ public sealed partial class CompleteAgentTokenIssuance
     private readonly IAgentTokenStore TokenStore;
     private readonly IOptions<AgentTokenOptions> Options;
     private readonly CredentialUsageRecorder UsageRecorder;
+    private readonly IAgentScopeApproval ScopeApproval;
 
     public Handler
     (
@@ -57,7 +63,8 @@ public sealed partial class CompleteAgentTokenIssuance
       IAgentKeyChallengeStore challengeStore,
       IAgentTokenStore tokenStore,
       IOptions<AgentTokenOptions> options,
-      CredentialUsageRecorder usageRecorder
+      CredentialUsageRecorder usageRecorder,
+      IAgentScopeApproval scopeApproval
     )
     {
       PrincipalStore = principalStore;
@@ -65,6 +72,7 @@ public sealed partial class CompleteAgentTokenIssuance
       TokenStore = tokenStore;
       Options = options;
       UsageRecorder = usageRecorder;
+      ScopeApproval = scopeApproval;
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
@@ -126,6 +134,13 @@ public sealed partial class CompleteAgentTokenIssuance
       if (!principal.IsActive)
       {
         return IdentityProblems.Quarantined();
+      }
+
+      AgentScopeApprovalSnapshot approval = await ScopeApproval.GetSnapshotAsync(principal.Id, cancellationToken);
+      var unapproved = scopes.Where(scope => !approval.IsApproved(scope)).ToList();
+      if (unapproved.Count > 0)
+      {
+        return IdentityProblems.UnapprovedScope(unapproved);
       }
 
       // Per-ceremony last-used stamp; a lost race against a concurrent revoke is dropped (Design region).

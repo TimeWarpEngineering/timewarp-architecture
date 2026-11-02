@@ -70,7 +70,8 @@
   <div class="twe-stack">
     <p class="ds-subtitle">
       Inspect principals and open one to see its profile and assign product roles. Empty assignment
-      resolves to Member. Bootstrap config
+      resolves to Member for a human. A self-registered agent has no role until one is assigned.
+      Bootstrap config
       (<code>Authentication:BootstrapAdministratorPrincipalIds</code>) can grant Administrator without
       a store write (host restart after change). Removing the last principal who can manage principals
       is rejected (409 last-admin) so Admin cannot lock itself out.

@@ -103,6 +103,13 @@ public static class IdentityProblems
     Detail = $"Unknown scope(s): {string.Join(", ", unknownScopes)}."
   };
 
+  public static SharedProblemDetails UnapprovedScope(IReadOnlyCollection<string> unapprovedScopes) => new()
+  {
+    Title = "unapproved_scope",
+    Status = 403,
+    Detail = $"Unapproved scope(s): {string.Join(", ", unapprovedScopes)}."
+  };
+
   public static SharedProblemDetails IssuanceFailed() => new()
   {
     Title = "Token issuance failed",

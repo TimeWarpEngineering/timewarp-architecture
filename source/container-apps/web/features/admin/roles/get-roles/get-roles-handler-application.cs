@@ -5,7 +5,8 @@
 #region Design
 // Reads the shared in-memory stub (role-store.cs); ordering by name keeps the list stable for
 // UI and tests. PermissionIds per row come from IRolePermissionStore (task 182-004 / 206 list
-// summary + RoleDetailPage drafts). TotalCount equals the full store size — the demo does not implement
+// summary + RoleDetailPage drafts). AgentScopes per row come from IRoleAgentScopeStore
+// (task 466). TotalCount equals the full store size — the demo does not implement
 // the contract's OpenData paging parameters; a real repository-backed handler would.
 // Search (task 345) keeps roles whose name contains the trimmed term, ignoring case.
 #endregion
@@ -19,11 +20,14 @@ public sealed partial class GetRoles
   public class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly IRolePermissionStore RolePermissionStore;
+    private readonly IRoleAgentScopeStore RoleAgentScopeStore;
 
-    public Handler(IRolePermissionStore rolePermissionStore)
+    public Handler(IRolePermissionStore rolePermissionStore, IRoleAgentScopeStore roleAgentScopeStore)
     {
       RolePermissionStore = rolePermissionStore
         ?? throw new ArgumentNullException(nameof(rolePermissionStore));
+      RoleAgentScopeStore = roleAgentScopeStore
+        ?? throw new ArgumentNullException(nameof(roleAgentScopeStore));
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
@@ -42,8 +46,16 @@ public sealed partial class GetRoles
         IReadOnlyList<string> permissionIds = await RolePermissionStore
           .GetPermissionIdsForRoleAsync(roleId, cancellationToken)
           .ConfigureAwait(false);
+        IReadOnlyList<string> agentScopes = await RoleAgentScopeStore
+          .GetScopesForRoleAsync(roleId, cancellationToken)
+          .ConfigureAwait(false);
 
-        items.Add(new RoleDto(roleId, role.Name, role.Description, [.. permissionIds]));
+        items.Add(new RoleDto(
+          roleId,
+          role.Name,
+          role.Description,
+          [.. permissionIds],
+          AgentScopeOrder.OrderKnown(agentScopes)));
       }
 
       return new Response(items.Count, [.. items]);

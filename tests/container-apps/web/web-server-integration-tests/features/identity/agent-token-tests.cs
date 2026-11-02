@@ -71,6 +71,10 @@ public class Returns_
     // authenticated calls right after issuance must not advance the row's Version at all.
     var key = new IntegrationSoftwareAgentKey();
     (string keyId, PrincipalId principalId) = await RegisterAgentKeyWithPrincipal(key);
+    await AgentScopeApprovals.ApproveAsync(
+      Web.WebApplicationHost.ServiceProvider,
+      principalId,
+      [AgentScopes.CredentialManage]);
     IPrincipalStore store = Web.WebApplicationHost.ServiceProvider.GetRequiredService<IPrincipalStore>();
     Credential registered = (await store.ListCredentialsAsync(principalId)).Single();
     registered.LastUsedAt.ShouldBeNull();

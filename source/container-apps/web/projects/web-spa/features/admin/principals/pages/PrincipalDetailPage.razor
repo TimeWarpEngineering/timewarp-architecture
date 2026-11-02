@@ -1,5 +1,6 @@
 @namespace TimeWarp.Architecture.Features.Admin.Principals
 @using TimeWarp.Architecture.Features
+@using TimeWarp.Identity
 @inherits BaseComponent
 
 @code {
@@ -38,7 +39,33 @@
     await PrincipalState.OpenPrincipal(principalId);
   }
 
+  private bool IsSavingAgentScopes =>
+    IsAnyActive(typeof(PrincipalState.SetPrincipalAgentScopesActionSet.Action));
+
+  private async Task OnAgentScopeSelected(Guid principalId, string scope, bool selected) =>
+    await PrincipalState.SetAgentScopeSelected(principalId, scope, selected);
+
+  private async Task OnSaveAgentScopes(Guid principalId)
+  {
+    await PrincipalState.SetPrincipalAgentScopes(principalId);
+    if (!PrincipalState.LastSetPrincipalAgentScopesSucceeded)
+    {
+      return;
+    }
+
+    await PrincipalState.OpenPrincipal(principalId);
+  }
+
   private static string OrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
+
+  private static string SourceLabel(GetPrincipal.ApprovedAgentScopeSourceDto source) =>
+    source.Kind switch
+    {
+      GetPrincipal.AgentScopeSourceKinds.Default => "default",
+      GetPrincipal.AgentScopeSourceKinds.Principal => "principal",
+      GetPrincipal.AgentScopeSourceKinds.Role => RoleIds.GetRoleNameByGuid(source.RoleId ?? Guid.Empty),
+      _ => source.Kind
+    };
 }
 
 <TimeWarpPage Title="Principal">
@@ -103,6 +130,47 @@
               data-qa="SavePrincipalRoles"
               OnClick="@(async () => await OnSave(current.PrincipalId.Value))">
               Save
+            </FluentButton>
+          </Section>
+        </Authorized>
+      </AuthorizeView>
+
+      <Section Title="Approved agent scopes" LoadingActionType="typeof(PrincipalState.OpenPrincipalActionSet.Action)">
+        <ul data-qa="ApprovedAgentScopes">
+          @foreach (GetPrincipal.ApprovedAgentScopeDto item in current.ApprovedAgentScopes)
+          {
+            <li data-qa="@($"ApprovedAgentScope-{item.Scope}")">
+              <code>@item.Scope</code>
+              — @string.Join(", ", item.Sources.Select(SourceLabel))
+            </li>
+          }
+        </ul>
+      </Section>
+
+      <AuthorizeView Policy="@PermissionIds.AdminPrincipalsManage">
+        <Authorized>
+          <Section Title="Principal agent scopes">
+            <p class="ds-subtitle">
+              Grants on this principal, on top of its roles. <code>identity:read</code> stays
+              allowed even when it is not checked here. A change applies at the next token issuance.
+            </p>
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Wrap="true">
+              @foreach (string scope in AgentScopes.All)
+              {
+                <div data-qa="@($"PrincipalAgentScope-{scope}")">
+                  <FluentCheckbox
+                    Label="@scope"
+                    Value="@PrincipalState.IsAgentScopeSelected(current.PrincipalId.Value, scope)"
+                    ValueChanged="@(async (bool value) => await OnAgentScopeSelected(current.PrincipalId.Value, scope, value))" />
+                </div>
+              }
+            </FluentStack>
+            <FluentButton
+              Appearance="ButtonAppearance.Primary"
+              data-qa="SavePrincipalAgentScopes"
+              Disabled="IsSavingAgentScopes"
+              OnClick="@(async () => await OnSaveAgentScopes(current.PrincipalId.Value))">
+              Save agent scopes
             </FluentButton>
           </Section>
         </Authorized>

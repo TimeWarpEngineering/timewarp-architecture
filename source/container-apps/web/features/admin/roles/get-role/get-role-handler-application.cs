@@ -6,7 +6,8 @@
 // Missing id returns a 404-shaped SharedProblemDetails through the OneOf failure channel — the
 // expected-failure path stays a value, not an exception, so the endpoint maps it to a status
 // code and the SPA renders it without try/catch. PermissionIds come from IRolePermissionStore
-// (task 182-004 membership editor); empty when the role has no grants.
+// (task 182-004 membership editor); empty when the role has no grants. AgentScopes come from
+// IRoleAgentScopeStore (task 466), ordered like AgentScopes.All.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
@@ -18,11 +19,14 @@ public sealed partial class GetRole
   public class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
     private readonly IRolePermissionStore RolePermissionStore;
+    private readonly IRoleAgentScopeStore RoleAgentScopeStore;
 
-    public Handler(IRolePermissionStore rolePermissionStore)
+    public Handler(IRolePermissionStore rolePermissionStore, IRoleAgentScopeStore roleAgentScopeStore)
     {
       RolePermissionStore = rolePermissionStore
         ?? throw new ArgumentNullException(nameof(rolePermissionStore));
+      RoleAgentScopeStore = roleAgentScopeStore
+        ?? throw new ArgumentNullException(nameof(roleAgentScopeStore));
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
@@ -37,8 +41,16 @@ public sealed partial class GetRole
       IReadOnlyList<string> permissionIds = await RolePermissionStore
         .GetPermissionIdsForRoleAsync(query.RoleId, cancellationToken)
         .ConfigureAwait(false);
+      IReadOnlyList<string> agentScopes = await RoleAgentScopeStore
+        .GetScopesForRoleAsync(query.RoleId, cancellationToken)
+        .ConfigureAwait(false);
 
-      return new Response(query.RoleId, role.Name, role.Description, [.. permissionIds]);
+      return new Response(
+        query.RoleId,
+        role.Name,
+        role.Description,
+        [.. permissionIds],
+        AgentScopeOrder.OrderKnown(agentScopes));
     }
 
     internal static SharedProblemDetails RoleNotFound(Guid roleId) => new()

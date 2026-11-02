@@ -10,8 +10,10 @@
 // Last-admin: demoting the sole principal who can grant admin.principals.manage → 409.
 // RolesGrantPermissionAsync expands role → permission via IRolePermissionStore only (no scheme
 // gate) so admin UI writes evaluate the same membership the evaluator would for human sessions.
-// SimulateEffectiveRoles mirrors EffectiveRolesResolver (empty store → Member; bootstrap union)
-// so proposed SetPrincipalRoles outcomes match post-write resolution without mutating the store.
+// SimulateEffectiveRoles mirrors EffectiveRolesResolver (roleless human → Member; roleless agent
+// or service → no role; bootstrap still unions Administrator and Member). Callers pass that
+// effective list to RolesGrantPermissionAsync, which does not apply the default a second time.
+// A proposed SetPrincipalRoles outcome then matches post-write resolution without mutating the store.
 // Platform cluster so Admin.Roles and Admin.Principals share it without TWA0009.
 #endregion
 
@@ -73,8 +75,8 @@ public static class AdminLockoutGuards
 
   /// <summary>
   /// True when any of <paramref name="roleIds"/> grants <paramref name="permissionId"/>
-  /// via <paramref name="rolePermissionStore"/>. Empty role list is treated as
-  /// <see cref="RoleIds.Member"/> (effective default).
+  /// via <paramref name="rolePermissionStore"/>. The list is already effective.
+  /// An empty list grants nothing.
   /// </summary>
   public static async Task<bool> RolesGrantPermissionAsync(
     IReadOnlyList<Guid> roleIds,
@@ -85,11 +87,7 @@ public static class AdminLockoutGuards
     ArgumentException.ThrowIfNullOrWhiteSpace(permissionId);
     ArgumentNullException.ThrowIfNull(rolePermissionStore);
 
-    IReadOnlyList<Guid> effectiveRoles = roleIds.Count == 0
-      ? [RoleIds.Member]
-      : roleIds;
-
-    foreach (Guid roleId in effectiveRoles)
+    foreach (Guid roleId in roleIds)
     {
       IReadOnlyList<string> granted = await rolePermissionStore
         .GetPermissionIdsForRoleAsync(roleId, cancellationToken)
@@ -106,19 +104,29 @@ public static class AdminLockoutGuards
 
   /// <summary>
   /// Mirrors <see cref="EffectiveRolesResolver"/> for a proposed stored-role write without
-  /// mutating the store: empty → Member; bootstrap principals also get Administrator+Member.
+  /// mutating the store. A roleless human becomes Member. A roleless agent or service stays empty.
+  /// Bootstrap principals also get Administrator and Member.
   /// </summary>
   public static IReadOnlyList<Guid> SimulateEffectiveRoles(
     PrincipalId principalId,
     IReadOnlyList<Guid> storedRoleIds,
-    IReadOnlySet<PrincipalId> bootstrapPrincipalIds)
+    IReadOnlySet<PrincipalId> bootstrapPrincipalIds,
+    PrincipalKind kind = PrincipalKind.Human)
   {
     ArgumentNullException.ThrowIfNull(storedRoleIds);
     ArgumentNullException.ThrowIfNull(bootstrapPrincipalIds);
 
-    HashSet<Guid> effective = storedRoleIds.Count == 0
-      ? [RoleIds.Member]
-      : [.. storedRoleIds];
+    HashSet<Guid> effective;
+    if (storedRoleIds.Count == 0)
+    {
+      effective = kind == PrincipalKind.Human
+        ? [RoleIds.Member]
+        : [];
+    }
+    else
+    {
+      effective = [.. storedRoleIds];
+    }
 
     if (bootstrapPrincipalIds.Contains(principalId))
     {

@@ -1,5 +1,5 @@
 #region Purpose
-// Implements the principal effective-roles algorithm against the role store + bootstrap options.
+// Implements the principal effective-roles algorithm against the role store, principal kind, and bootstrap options.
 #endregion
 
 #region Design
@@ -8,8 +8,10 @@
 // so a typo does not crash the host — ValidateOnStart is intentionally not used so empty
 // Development config stays valid. Ordering follows RoleIds.All so UI and claims stay stable.
 // Task 160: IPrincipalRoleStore.GetRoleIdsAsync failures wrap as RoleResolutionFailedException
-// (never empty-roles). Cancellation is not wrapped. RoleResolutionFailedException is rethrown
-// as-is so a store that already throws the typed failure is not double-wrapped.
+// (never empty-roles). IPrincipalStore.GetPrincipalAsync failures wrap the same way, and only
+// when the stored role list is empty, because kind decides the Member default. Cancellation is
+// not wrapped. RoleResolutionFailedException is rethrown as-is so a store that already throws
+// the typed failure is not double-wrapped.
 #endregion
 
 namespace TimeWarp.Architecture.Features;
@@ -17,19 +19,22 @@ namespace TimeWarp.Architecture.Features;
 using Microsoft.Extensions.Options;
 using TimeWarp.Identity;
 
-/// <summary>SSOT effective-role resolution for passkey principals.</summary>
+/// <summary>SSOT effective-role resolution for principals.</summary>
 public sealed class EffectiveRolesResolver : IEffectiveRolesResolver
 {
   private readonly IPrincipalRoleStore RoleStore;
+  private readonly IPrincipalStore PrincipalStore;
   private readonly IOptions<BootstrapAdministratorOptions> BootstrapOptions;
   private readonly Lazy<HashSet<PrincipalId>> BootstrapPrincipalIds;
 
   public EffectiveRolesResolver(
     IPrincipalRoleStore roleStore,
-    IOptions<BootstrapAdministratorOptions> bootstrapOptions)
+    IOptions<BootstrapAdministratorOptions> bootstrapOptions,
+    IPrincipalStore principalStore)
   {
     RoleStore = roleStore;
     BootstrapOptions = bootstrapOptions;
+    PrincipalStore = principalStore;
     BootstrapPrincipalIds = new Lazy<HashSet<PrincipalId>>(ParseBootstrapIds);
   }
 
@@ -53,7 +58,7 @@ public sealed class EffectiveRolesResolver : IEffectiveRolesResolver
     }
 
     HashSet<Guid> effective = stored.Count == 0
-      ? [RoleIds.Member]
+      ? await DefaultWhenUnassignedAsync(principalId, cancellationToken).ConfigureAwait(false)
       : [.. stored];
 
     if (BootstrapPrincipalIds.Value.Contains(principalId))
@@ -77,5 +82,35 @@ public sealed class EffectiveRolesResolver : IEffectiveRolesResolver
     }
 
     return set;
+  }
+
+  /// <summary>
+  /// Member for a human or a missing row. An agent or a service principal has no default role.
+  /// </summary>
+  private async Task<HashSet<Guid>> DefaultWhenUnassignedAsync(
+    PrincipalId principalId,
+    CancellationToken cancellationToken)
+  {
+    Principal? principal;
+    try
+    {
+      principal = await PrincipalStore
+        .GetPrincipalAsync(principalId, cancellationToken)
+        .ConfigureAwait(false);
+    }
+    catch (Exception exception) when (exception is not OperationCanceledException
+      and not RoleResolutionFailedException)
+    {
+      throw new RoleResolutionFailedException(
+        "Failed to resolve effective roles from the principal store.",
+        exception);
+    }
+
+    if (principal is null || principal.Kind == PrincipalKind.Human)
+    {
+      return [RoleIds.Member];
+    }
+
+    return [];
   }
 }

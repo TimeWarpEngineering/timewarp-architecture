@@ -22,7 +22,9 @@
 // EfPrincipalStore, not AggregateDbContext's Version hook.
 // PrincipalRoleAssignment (identity.principal_roles) is the durable IPrincipalRoleStore backend
 // (task 147-006). RolePermissionGrant (identity.role_permissions) is the durable
-// IRolePermissionStore backend (task 182-001). SiteSettings (identity.site_settings) is the
+// IRolePermissionStore backend (task 182-001). RoleAgentScopeGrant
+// (identity.role_agent_scopes) and PrincipalAgentScopeGrant (identity.principal_agent_scopes)
+// are the durable agent-scope approval backends (task 466). SiteSettings (identity.site_settings) is the
 // durable ISiteSettingsStore backend (task 219-006) — singleton row, store-CAS, not IAggregateRoot.
 // DataProtectionKey (schema "data_protection", table "keys") is the ASP.NET key ring. It is not an
 // aggregate. PostgresDbModule persists keys here only when a connection string is configured.
@@ -80,6 +82,8 @@ public sealed partial class PostgresDbContext : AggregateDbContext, IDataProtect
   public DbSet<Credential> Credentials => Set<Credential>();
   public DbSet<PrincipalRoleAssignment> PrincipalRoleAssignments => Set<PrincipalRoleAssignment>();
   public DbSet<RolePermissionGrant> RolePermissionGrants => Set<RolePermissionGrant>();
+  public DbSet<RoleAgentScopeGrant> RoleAgentScopeGrants => Set<RoleAgentScopeGrant>();
+  public DbSet<PrincipalAgentScopeGrant> PrincipalAgentScopeGrants => Set<PrincipalAgentScopeGrant>();
   public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
   public DbSet<ProtectedSecret> ProtectedSecrets => Set<ProtectedSecret>();
 

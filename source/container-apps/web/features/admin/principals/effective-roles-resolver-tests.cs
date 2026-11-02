@@ -2,7 +2,6 @@
 #:project $(SourceDirectory)container-apps/web/projects/web-application/web-application.csproj
 #:package TimeWarp.Jaribu
 #:package Shouldly
-#:package Microsoft.Extensions.Options
 #:property PublishAot=false
 #:property NoWarn=$(NoWarn);CA1707;CA1849;IDE0161;IDE0021;IDE0058;IDE0211;IDE0007;IDE0008
 
@@ -110,6 +109,97 @@ namespace TimeWarp.Architecture.Features
       roles.ShouldBe(RoleIds.All);
     }
 
+    public static async Task RolelessHuman_Should_YieldMemberOnly()
+    {
+      InMemoryPrincipalStore principals = new();
+      Principal human = Principal.Create(PrincipalKind.Human);
+      await principals.AddPrincipalAsync(human);
+      EffectiveRolesResolver resolver = CreateResolver(new InMemoryPrincipalRoleStore(), [], principals);
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(human.Id);
+
+      roles.ShouldBe([RoleIds.Member]);
+    }
+
+    public static async Task RolelessAgent_Should_YieldNoRoles()
+    {
+      InMemoryPrincipalStore principals = new();
+      Principal agent = Principal.Create(PrincipalKind.Agent);
+      await principals.AddPrincipalAsync(agent);
+      EffectiveRolesResolver resolver = CreateResolver(new InMemoryPrincipalRoleStore(), [], principals);
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(agent.Id);
+
+      roles.ShouldBeEmpty();
+    }
+
+    public static async Task RolelessService_Should_YieldNoRoles()
+    {
+      InMemoryPrincipalStore principals = new();
+      Principal service = Principal.Create(PrincipalKind.Service);
+      await principals.AddPrincipalAsync(service);
+      EffectiveRolesResolver resolver = CreateResolver(new InMemoryPrincipalRoleStore(), [], principals);
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(service.Id);
+
+      roles.ShouldBeEmpty();
+    }
+
+    public static async Task AgentWithStoredRole_Should_KeepThatRoleOnly()
+    {
+      InMemoryPrincipalStore principals = new();
+      Principal agent = Principal.Create(PrincipalKind.Agent);
+      await principals.AddPrincipalAsync(agent);
+      InMemoryPrincipalRoleStore store = new();
+      await store.SetRoleIdsAsync(agent.Id, [RoleIds.Developer]);
+      EffectiveRolesResolver resolver = CreateResolver(store, [], principals);
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(agent.Id);
+
+      roles.ShouldBe([RoleIds.Developer]);
+    }
+
+    public static async Task BootstrapAgent_Should_UnionAdministratorAndMember()
+    {
+      InMemoryPrincipalStore principals = new();
+      Principal agent = Principal.Create(PrincipalKind.Agent);
+      await principals.AddPrincipalAsync(agent);
+      EffectiveRolesResolver resolver = CreateResolver(
+        new InMemoryPrincipalRoleStore(),
+        [agent.Id.Value.ToString()],
+        principals);
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(agent.Id);
+
+      roles.ShouldBe([RoleIds.Member, RoleIds.Administrator]);
+    }
+
+    public static async Task PrincipalStoreFailure_WhenUnassigned_Should_ThrowRoleResolutionFailedException()
+    {
+      EffectiveRolesResolver resolver = CreateResolver(
+        new InMemoryPrincipalRoleStore(),
+        [],
+        new ThrowingGetPrincipalStore());
+
+      RoleResolutionFailedException exception = await Should.ThrowAsync<RoleResolutionFailedException>(
+        () => resolver.GetEffectiveRoleIdsAsync(PrincipalId.New()));
+
+      exception.InnerException.ShouldBeOfType<InvalidOperationException>();
+      exception.InnerException!.Message.ShouldBe(ThrowingGetPrincipalStore.FailureMessage);
+    }
+
+    public static async Task AssignedRoles_Should_IgnorePrincipalStoreFailure()
+    {
+      InMemoryPrincipalRoleStore store = new();
+      PrincipalId id = PrincipalId.New();
+      await store.SetRoleIdsAsync(id, [RoleIds.Developer]);
+      EffectiveRolesResolver resolver = CreateResolver(store, [], new ThrowingGetPrincipalStore());
+
+      IReadOnlyList<Guid> roles = await resolver.GetEffectiveRoleIdsAsync(id);
+
+      roles.ShouldBe([RoleIds.Developer]);
+    }
+
     public static async Task StoreReadFailure_Should_ThrowRoleResolutionFailedException()
     {
       EffectiveRolesResolver resolver = CreateResolver(
@@ -138,14 +228,15 @@ namespace TimeWarp.Architecture.Features
 
     private static EffectiveRolesResolver CreateResolver(
       IPrincipalRoleStore store,
-      string[] bootstrap)
+      string[] bootstrap,
+      IPrincipalStore? principals = null)
     {
       IOptions<BootstrapAdministratorOptions> options = Options.Create(
         new BootstrapAdministratorOptions
         {
           BootstrapAdministratorPrincipalIds = bootstrap
         });
-      return new EffectiveRolesResolver(store, options);
+      return new EffectiveRolesResolver(store, options, principals ?? new InMemoryPrincipalStore());
     }
 
     private sealed class ThrowingGetPrincipalRoleStore : IPrincipalRoleStore
@@ -190,6 +281,54 @@ namespace TimeWarp.Architecture.Features
         CancellationToken cancellationToken = default) =>
         Task.FromResult(false);
     }
+
+    private sealed class ThrowingGetPrincipalStore : IPrincipalStore
+    {
+      public const string FailureMessage = "simulated principal-store failure";
+
+      public Task<Principal?> GetPrincipalAsync(
+        PrincipalId id,
+        CancellationToken cancellationToken = default) =>
+        throw new InvalidOperationException(FailureMessage);
+
+      public Task AddPrincipalAsync(Principal principal, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task UpdatePrincipalAsync(Principal principal, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task<IReadOnlyList<Principal>> ListPrincipalsAsync(CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task AddCredentialAsync(Credential credential, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task<Credential?> GetCredentialAsync(
+        CredentialId credentialId,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task<Credential?> FindCredentialByHandleAsync(
+        CredentialType type,
+        byte[] handle,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task<IReadOnlyList<Credential>> ListCredentialsAsync(
+        PrincipalId principalId,
+        bool includeRevoked = false,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task UpdateCredentialAsync(Credential credential, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+      public Task MergePrincipalAsync(
+        PrincipalId sourceId,
+        PrincipalId targetId,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+    }
   }
 
   [TestTag("Application")]
@@ -222,7 +361,8 @@ namespace TimeWarp.Architecture.Features
       (await store.GetRoleIdsAsync(second)).ShouldBeEmpty();
       EffectiveRolesResolver resolver = new(
         store,
-        Options.Create(new BootstrapAdministratorOptions()));
+        Options.Create(new BootstrapAdministratorOptions()),
+        new InMemoryPrincipalStore());
       IReadOnlyList<Guid> secondEffective = await resolver.GetEffectiveRoleIdsAsync(second);
       secondEffective.ShouldBe([RoleIds.Member]);
     }

@@ -68,6 +68,7 @@
           "exclude": [
             "source/container-apps/web/**",
             "tests/common/timewarp-testing/applications/web-test-server-application.cs",
+            "tests/common/timewarp-testing/applications/agent-scope-approval.cs",
             "tests/common/timewarp-testing-tests/**",
             "tests/container-apps/web/**",
             "tests/container-apps/yarp/**",
@@ -97,6 +98,10 @@
             "source/container-apps/web/features/profile/profile-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/platform/authorization/ef-role-permission-store-infrastructure.cs",
             "source/container-apps/web/platform/authorization/role-permission-grant-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/platform/authorization/ef-role-agent-scope-store-infrastructure.cs",
+            "source/container-apps/web/platform/authorization/role-agent-scope-grant-entity-type-configuration-infrastructure.cs",
+            "source/container-apps/web/platform/authorization/ef-principal-agent-scope-store-infrastructure.cs",
+            "source/container-apps/web/platform/authorization/principal-agent-scope-grant-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/features/agent-links/ef-agent-human-link-store-infrastructure.cs",
             "source/container-apps/web/features/agent-links/agent-human-link-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/features/settings/ef-site-settings-store-infrastructure.cs",

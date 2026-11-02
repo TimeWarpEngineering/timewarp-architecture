@@ -537,7 +537,7 @@ namespace TimeWarp.Architecture.Authorization
         {
           BootstrapAdministratorPrincipalIds = bootstrap
         });
-      EffectiveRolesResolver resolver = new(principalRoles, options);
+      EffectiveRolesResolver resolver = new(principalRoles, options, new InMemoryPrincipalStore());
       return new PermissionEvaluator(
         resolver,
         rolePermissions,

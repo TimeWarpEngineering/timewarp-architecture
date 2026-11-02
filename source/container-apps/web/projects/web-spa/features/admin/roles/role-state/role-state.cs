@@ -11,6 +11,7 @@
 // SetRolePermissions; seeded from GetRoles.RoleDto.PermissionIds on fetch (same pattern as
 // PrincipalState drafts). The list page is summary-only and does not mutate drafts.
 // LastSetRolePermissionsSucceeded is the page-side Fetch gate (failed 409 must not re-seed).
+// DraftAgentScopes (task 466) is the separate agent-scope list on the same page.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles;
@@ -22,6 +23,7 @@ public sealed partial class RoleState : State<RoleState>
 {
   private List<RoleDto>? RolesList { get; set; }
   private Dictionary<Guid, HashSet<string>> DraftPermissionIds { get; set; } = [];
+  private Dictionary<Guid, HashSet<string>> DraftAgentScopes { get; set; } = [];
 
   public IReadOnlyList<RoleDto>? Roles => RolesList?.AsReadOnly();
 
@@ -29,13 +31,16 @@ public sealed partial class RoleState : State<RoleState>
   public Guid? LastCreatedRoleId { get; private set; }
 
   public bool LastSetRolePermissionsSucceeded { get; private set; }
+  public bool LastSetRoleAgentScopesSucceeded { get; private set; }
 
   public override void Initialize()
   {
     RolesList = null;
     LastCreatedRoleId = null;
     DraftPermissionIds = [];
+    DraftAgentScopes = [];
     LastSetRolePermissionsSucceeded = false;
+    LastSetRoleAgentScopesSucceeded = false;
   }
 
   public IReadOnlyCollection<string> GetDraftPermissionIds(Guid roleId) =>
@@ -46,4 +51,13 @@ public sealed partial class RoleState : State<RoleState>
   public bool IsPermissionSelected(Guid roleId, string permissionId) =>
     DraftPermissionIds.TryGetValue(roleId, out HashSet<string>? set)
     && set.Contains(permissionId);
+
+  public IReadOnlyCollection<string> GetDraftAgentScopes(Guid roleId) =>
+    DraftAgentScopes.TryGetValue(roleId, out HashSet<string>? set)
+      ? set
+      : Array.Empty<string>();
+
+  public bool IsAgentScopeSelected(Guid roleId, string scope) =>
+    DraftAgentScopes.TryGetValue(roleId, out HashSet<string>? set)
+    && set.Contains(scope);
 }

@@ -157,6 +157,11 @@ public class Returns_
       await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
 
+    await AgentScopeApprovals.ApproveAsync(
+      Web.WebApplicationHost.ServiceProvider,
+      registerResult.AsT0.PrincipalId,
+      scopes);
+
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
       await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);
