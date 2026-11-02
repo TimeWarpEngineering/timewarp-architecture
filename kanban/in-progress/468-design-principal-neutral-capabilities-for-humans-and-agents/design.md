@@ -2,7 +2,7 @@
 
 Task 468. Design only. No product code changes on this task. Steve reviews this document before
 any implementation task is filed. Section 10 records his decisions of 2026-11-03 on the first
-draft's open questions; section 11 lists only what this revision raises.
+draft's open questions; section 10 also records Q19–Q22, which this revision raised, and section 11 is empty.
 
 Decision this design serves (Steve, 2026-11-02): what a principal may do does not depend on
 whether it is a human, an agent, or a service account. A principal that nobody vouches for signs
@@ -467,7 +467,7 @@ or "filer" means the credential's **subject**:
 These operations carry `Requires = CredentialRequirement.ActingAsSelf` and refuse a token
 issued on behalf of a linked human. Each is still permission-gated; the requirement is in
 addition to the permission. Steve named the first three groups (section 10, Q18); the
-credential group is this revision's addition and section 11, Q2 asks him to confirm it.
+credential group was added by this revision and confirmed by Steve (section 10, Q20).
 
 | Operation | Route | Permission | Reason the credential must act as its own holder |
 |---|---|---|---|
