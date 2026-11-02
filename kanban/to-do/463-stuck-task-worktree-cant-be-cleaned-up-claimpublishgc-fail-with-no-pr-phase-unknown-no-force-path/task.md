@@ -6,7 +6,6 @@ Bug in Ganda (filed here in timewarp-architecture at Steven's request). An inter
 leaves a task stuck: claim, publish, and `worktree gc` all refuse with "no PR" / "phase unknown".
 `release --dead` drops the claim but leaves the worktree and local branch. No supported path collects them.
 
-Assignee: Jenzi
 
 ## Reproduction (observed)
 
