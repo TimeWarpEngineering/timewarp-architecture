@@ -17,6 +17,9 @@
 // response description is kept and the bearer note is appended. The header is not required.
 // Cookie-only and anonymous operations are left alone so a public ceremony is not
 // documented as requiring a bearer.
+// How to obtain a token, and the configured lifetime, are not written here. The web host
+// appends that paragraph when the document is built (OpenApiAgentReviewerGuide), because
+// this file does not know the ceremony operation names or AgentTokenOptions.
 #endregion
 
 namespace TimeWarp.Foundation;

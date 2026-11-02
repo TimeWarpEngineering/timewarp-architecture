@@ -60,10 +60,7 @@ public class GetWeatherForecastsEndpoint : BaseFastEndpoint<Query, Response>
         s.Summary = "Get Weather Forecasts";
       }
     );
-    Description
-    (
-      d => d.Produces<Response>(200).ProducesProblem(400)
-    );
+    Description(d => d.WithTags("WeatherForecast"));
   }
 }
 ```

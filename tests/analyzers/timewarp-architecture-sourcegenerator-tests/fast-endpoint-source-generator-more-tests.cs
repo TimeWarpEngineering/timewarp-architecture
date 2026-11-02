@@ -206,7 +206,33 @@ public class FastEndpointSourceGenerator_OpenApi_Tests
     generatedCode.ShouldContain("Loads the current profile.");
     generatedCode.ShouldContain(
       "Anonymous callers receive the demo profile. Intentionally anonymous. Dual-mode demo read.");
-    generatedCode.ShouldContain("ProducesProblem(400, \"Bad Request\")");
+    generatedCode.ShouldContain("WithTags(");
+    generatedCode.ShouldNotContain("ProducesProblem(400");
+
+    return Task.CompletedTask;
+  }
+
+  public static Task Should_Read_Remarks_From_Additional_Documentation_When_The_Reference_Has_None()
+  {
+    (MetadataReference reference, string documentationXml) = GeneratorTestHarness.CompileContractAssembly(
+      DocumentedContract,
+      "Test.Contracts",
+      stampMarker: true,
+      attachDocumentation: false);
+
+    GeneratorDriverRunResult runResult = GeneratorTestHarness.Run(
+      [reference],
+      enabled: true,
+      contractAssemblies: "Test.Contracts",
+      additionalTexts: [new InMemoryAdditionalText("Test.Contracts.xml", documentationXml)]);
+
+    string generatedCode = runResult.Results
+      .SelectMany(static result => result.GeneratedSources)
+      .Single(static source => source.HintName.Contains("GetWeatherForecasts", StringComparison.Ordinal))
+      .SourceText.ToString();
+
+    generatedCode.ShouldContain("Gets weather forecasts for specified days");
+    generatedCode.ShouldContain("Retrieves detailed weather forecasts including temperature and conditions");
 
     return Task.CompletedTask;
   }

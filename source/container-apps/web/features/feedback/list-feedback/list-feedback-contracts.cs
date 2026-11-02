@@ -23,6 +23,8 @@
 // Severity (task 378) is optional. Omitted returns every severity. Unset is a real filter
 // (the unreviewed queue), so the property is nullable: a non-nullable enum would collapse
 // the two. Items include Severity. The filer's list does not.
+// Query remarks are the OpenAPI description a reviewer reads: list Status = New, and
+// moving status off New is the processed marker so the next pull skips that item.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Feedback;
@@ -48,6 +50,8 @@ public static partial class ListFeedback
   /// <summary>Largest Page whose row offset, (Page - 1) * MaxPageSize, still fits in an int.</summary>
   public const int MaxPage = (int.MaxValue / MaxPageSize) + 1;
 
+  /// <summary>Lists feedback items for an administrator or an agent with feedback:read.</summary>
+  /// <remarks>A reviewer lists Status = New. Moving an item's status off New is the processed marker: the next list with Status = New does not return that item.</remarks>
   [ApiRoute("api/admin/feedback", HttpVerb.Get)]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {

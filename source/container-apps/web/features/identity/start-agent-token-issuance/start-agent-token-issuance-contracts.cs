@@ -13,6 +13,7 @@
 // No GetMockResponseFactory — see StartAgentKeyRegistration's Design region.
 // [EndpointAllowAnonymous] (task 110): mints a one-time token-issuance challenge — the agent has
 // not yet proven possession of a key, so there is nothing to authorize against.
+// Command remarks are the OpenAPI description of what the client signs and sends back.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -21,6 +22,8 @@ namespace TimeWarp.Architecture.Features.Identity;
 [EndpointAllowAnonymous("Mints a one-time token-issuance challenge; the agent has not yet proven possession of a key, so there is nothing to authorize against.")]
 public static partial class StartAgentTokenIssuance
 {
+  /// <summary>Starts agent token issuance and returns a challenge to sign.</summary>
+  /// <remarks>Returns a base64url challenge. The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes with ECDSA P-256 and SHA-256, and sends back the base64url KeyId, Challenge, and RFC 3279 DER Signature on complete-agent-token-issuance.</remarks>
   [ApiRoute("api/identity/agent/token/options", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>;
 

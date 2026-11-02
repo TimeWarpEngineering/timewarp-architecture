@@ -25,6 +25,7 @@
 // [EndpointAllowAnonymous] (task 110): this IS the request that mints the agent's Principal on
 // success — no sponsor, no prior session to authorize against (task 104-004 requirement: no human
 // sponsor required at registration).
+// Command remarks are the OpenAPI description of what the client signs and sends back.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -33,6 +34,8 @@ namespace TimeWarp.Architecture.Features.Identity;
 [EndpointAllowAnonymous("This is the request that mints the agent's Principal on success — no human sponsor or prior session required by design.")]
 public static partial class CompleteAgentKeyRegistration
 {
+  /// <summary>Completes agent key registration by returning the signed challenge.</summary>
+  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Register.v1: followed by the raw challenge bytes from start-agent-key-registration, using ECDSA P-256 and SHA-256. It sends back base64url PublicKey (SPKI), Challenge, and Signature (RFC 3279 DER). The response returns PrincipalId and KeyId.</remarks>
   [ApiRoute("api/identity/agent/register", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {

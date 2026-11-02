@@ -7,6 +7,9 @@
 // reference the analyzers package without silently emitting endpoints.
 // Scans referenced-assembly symbols rather than the current compilation's syntax: contracts live
 // in a separate project from the server that hosts the generated endpoints.
+// csc does not attach XML documentation to those references, so GetDocumentationCommentXml is
+// empty on a command-line build. The host passes each allow-listed contract assembly's .xml as
+// an AdditionalFile, and that file supplies summary and remarks when the symbol comment is empty.
 // Host discovery walks only refs stamped [assembly: ApiEndpointsEmbedded] — MSBuild passes the
 // transitive closure, so without the marker every framework namespace tree would be walked.
 // Product contracts apply the public attributes-package marker; this generator also stamps an
@@ -122,16 +125,17 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     IncrementalValuesProvider<EndpointEmitModel> candidates =
       context.CompilationProvider
         .Combine(generationOptions)
+        .Combine(ContractDocumentationProvider(context))
         .SelectMany(
           static (tuple, _) =>
           {
-            (Compilation compilation, GenerationOptions genOptions) = tuple;
+            ((Compilation compilation, GenerationOptions genOptions), ContractDocumentation documentation) = tuple;
             if (!genOptions.Enabled || genOptions.ContractAssemblies.IsDefaultOrEmpty)
             {
               return ImmutableArray<EndpointEmitModel>.Empty;
             }
 
-            return DiscoverCandidates(compilation, genOptions.ContractAssemblies);
+            return DiscoverCandidates(compilation, genOptions.ContractAssemblies, documentation);
           });
 
     IncrementalValueProvider<ImmutableArray<EndpointEmitModel>> batch = candidates.Collect();
@@ -192,7 +196,8 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
 
   private static ImmutableArray<EndpointEmitModel> DiscoverCandidates(
     Compilation compilation,
-    ImmutableArray<string> contractAssemblies)
+    ImmutableArray<string> contractAssemblies,
+    ContractDocumentation documentation)
   {
     INamedTypeSymbol? apiEndpointAttributeSymbol =
       compilation.GetTypeByMetadataName(HostedRouteDiscovery.ApiEndpointAttributeFullName);
@@ -233,7 +238,7 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
             continue;
           }
 
-          builder.Add(EndpointEmitModel.FromSymbol(type));
+          builder.Add(EndpointEmitModel.FromSymbol(type, documentation));
         }
       }
     }
@@ -336,6 +341,16 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
     }
   }
 
+  private static IncrementalValueProvider<ContractDocumentation> ContractDocumentationProvider(
+    IncrementalGeneratorInitializationContext context)
+  {
+    return context.AdditionalTextsProvider
+      .Where(static text => text.Path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+      .Select(static (text, cancellationToken) => text.GetText(cancellationToken)?.ToString())
+      .Collect()
+      .Select(static (texts, _) => ContractDocumentation.FromXml(texts));
+  }
+
   private static string GenerateEndpointClass(EndpointEmitModel metadata)
   {
     // FE Tags() = endpoint-filter metadata only. OpenAPI/Scalar need Description.WithTags.
@@ -354,12 +369,9 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       ? $"RequestBinder(new EmptyRequestBinder<{metadata.ClassName}.{metadata.RequestTypeName}>());"
       : "";
 
-    // Fold OpenAPI WithTags into Description when Produces is also emitted; otherwise emit tags alone.
-    string withTagsChain = metadata.Tags.Length > 0
-      ? $".WithTags({tagArgs})"
-      : "";
-
-    string summary = BuildOpenApiConfiguration(metadata, withTagsChain, tagArgs);
+    // WithTags stays on its own Description call. A Produces(200, "Success") chain binds
+    // "Success" as a media type and replaces FastEndpoints' OneOf 200 metadata.
+    string summary = BuildOpenApiConfiguration(metadata, tagArgs);
 
     string requestType = metadata.RequestTypeName;
 
@@ -393,11 +405,11 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
   }
 
   /// <summary>
-  /// Emits Summary/Description for OpenAPI. XML summary still drives the 200/400 Produces chain.
-  /// An anonymous reason is appended to the description even when the request has no XML docs,
-  /// and that path does not invent a 400 response.
+  /// Emits Summary/Description for OpenAPI. Response metadata stays on FastEndpoints' defaults
+  /// so a documented request does not replace the OneOf 200 schema. An anonymous reason is
+  /// appended to the description even when the request has no XML docs.
   /// </summary>
-  private static string BuildOpenApiConfiguration(EndpointEmitModel metadata, string withTagsChain, string tagArgs)
+  private static string BuildOpenApiConfiguration(EndpointEmitModel metadata, string tagArgs)
   {
     string openApiDescription = metadata.Description;
     if (!string.IsNullOrEmpty(metadata.AnonymousReason))
@@ -431,13 +443,6 @@ public class FastEndpointSourceGenerator : IIncrementalGenerator
       lines.Add("            });");
       lines.Add(string.Empty);
       summaryBlock = string.Join('\n', lines);
-    }
-
-    if (hasSummary)
-    {
-      summaryBlock +=
-        $"            Description(d => d{withTagsChain}.Produces<{metadata.ClassName}.Response>(200, \"Success\").ProducesProblem(400, \"Bad Request\")\n            );";
-      return summaryBlock;
     }
 
     if (metadata.Tags.Length > 0)

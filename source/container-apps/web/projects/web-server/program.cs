@@ -30,6 +30,8 @@
 // antiforgery for JSON APIs.
 // IncludeAbstractValidators=false — FluentValidationBehavior remains the validation path.
 // OpenAPI document: CommonServerModule.AddOpenApi (FastEndpoints.OpenApi, always-on Scalar on web).
+// OpenApiAgentReviewerGuide appends the token steps and the AgentTokenOptions lifetime onto
+// JWTBearerAuth when that document is built.
 // documentPublicWebRoutes: this host serves /api/health, the /api tip alias, and the SPA
 // discovery documents. The OpenAPI note is how an agent learns a missing path is an exclusion.
 // AllowEmptyRequestDtos=true so FE.OpenApi accepts propertyless request DTOs (identity/profile
@@ -395,7 +397,11 @@ public partial class Program : IAspNetProgram
       ApiTitle,
       OpenApiAgentBearerRegistration.Create(),
       documentPublicWebRoutes: true,
-      configureOpenApi: OpenApiPaymentResponses.Register
+      configureOpenApi: options =>
+      {
+        OpenApiPaymentResponses.Register(options);
+        OpenApiAgentReviewerGuide.Register(options);
+      }
     );
   }
 
