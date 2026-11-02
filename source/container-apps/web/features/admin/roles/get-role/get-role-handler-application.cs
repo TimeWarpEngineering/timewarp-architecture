@@ -50,7 +50,7 @@ public sealed partial class GetRole
         role.Name,
         role.Description,
         [.. permissionIds],
-        SetRoleAgentScopes.Handler.OrderKnown(agentScopes));
+        AgentScopeOrder.OrderKnown(agentScopes));
     }
 
     internal static SharedProblemDetails RoleNotFound(Guid roleId) => new()

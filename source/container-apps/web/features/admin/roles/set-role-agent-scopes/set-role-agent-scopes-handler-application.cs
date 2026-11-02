@@ -4,14 +4,16 @@
 
 #region Design
 // Task 466: 404 when RoleStore has no role, same as SetRolePermissions. No protected-core
-// guard: agent scopes cannot carry admin.* permissions. The response re-reads the store in
-// AgentScopes.All order so the client sees the canonical list.
+// guard: agent scopes cannot carry admin.* permissions. The response re-reads the store through
+// AgentScopeOrder so the client sees AgentScopes.All order.
+// A scope stored on Member approves every principal whose effective roles are only Member,
+// including an agent that registers without signing in. The role editor warns on that role.
+// This handler still stores the list.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
 using TimeWarp.Architecture.Authorization;
-using TimeWarp.Identity;
 using static TimeWarp.Architecture.Features.Admin.Roles.SetRoleAgentScopes;
 
 public sealed partial class SetRoleAgentScopes
@@ -35,7 +37,7 @@ public sealed partial class SetRoleAgentScopes
         return GetRole.Handler.RoleNotFound(command.RoleId);
       }
 
-      List<string> ordered = OrderKnown(command.Scopes ?? []);
+      List<string> ordered = AgentScopeOrder.OrderKnown(command.Scopes ?? []);
       await RoleAgentScopeStore
         .SetScopesForRoleAsync(command.RoleId, ordered, cancellationToken)
         .ConfigureAwait(false);
@@ -44,21 +46,7 @@ public sealed partial class SetRoleAgentScopes
         .GetScopesForRoleAsync(command.RoleId, cancellationToken)
         .ConfigureAwait(false);
 
-      return new Response(OrderKnown(stored));
-    }
-
-    internal static List<string> OrderKnown(IReadOnlyList<string> scopes)
-    {
-      List<string> ordered = [];
-      foreach (string scope in AgentScopes.All)
-      {
-        if (scopes.Contains(scope, StringComparer.Ordinal))
-        {
-          ordered.Add(scope);
-        }
-      }
-
-      return ordered;
+      return new Response(AgentScopeOrder.OrderKnown(stored));
     }
   }
 }

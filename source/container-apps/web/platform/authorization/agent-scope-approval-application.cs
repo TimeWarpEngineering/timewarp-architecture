@@ -5,8 +5,9 @@
 #region Design
 // Task 466: role scopes come from IEffectiveRolesResolver, not the raw stored list, so a
 // principal with no assignment is Member and a custom role id the resolver drops does not
-// approve anything. Catalog order follows AgentScopes.All. Scoped because the EF stores are
-// scoped; the in-memory stores are singletons and can still be consumed from a scope.
+// approve anything. Principal grants are ordered with AgentScopeOrder. Effective scopes follow
+// AgentScopes.All. Scoped because the EF stores are scoped; the in-memory stores are singletons
+// and can still be consumed from a scope.
 #endregion
 
 namespace TimeWarp.Architecture.Authorization;
@@ -45,7 +46,7 @@ public sealed class AgentScopeApproval : IAgentScopeApproval
       .GetScopesAsync(principalId, cancellationToken)
       .ConfigureAwait(false);
 
-    List<string> principalGrants = OrderKnown(storedGrants);
+    List<string> principalGrants = AgentScopeOrder.OrderKnown(storedGrants);
     List<ApprovedAgentScope> effective = [];
     foreach (string scope in AgentScopes.All)
     {
@@ -76,19 +77,5 @@ public sealed class AgentScopeApproval : IAgentScopeApproval
     }
 
     return new AgentScopeApprovalSnapshot(principalGrants, effective);
-  }
-
-  private static List<string> OrderKnown(IReadOnlyList<string> scopes)
-  {
-    List<string> ordered = [];
-    foreach (string scope in AgentScopes.All)
-    {
-      if (scopes.Contains(scope, StringComparer.Ordinal))
-      {
-        ordered.Add(scope);
-      }
-    }
-
-    return ordered;
   }
 }

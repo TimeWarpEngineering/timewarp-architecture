@@ -3,9 +3,9 @@
 #endregion
 
 #region Design
-// Task 466: 404 when the principal is missing. The response echoes the stored grants in
-// AgentScopes.All order. Effective scopes (roles plus these grants plus identity:read) are
-// read back through GetPrincipal, not this response.
+// Task 466: 404 when the principal is missing. The response echoes the stored grants through
+// AgentScopeOrder (AgentScopes.All order). Effective scopes (roles plus these grants plus
+// identity:read) are read back through GetPrincipal, not this response.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Principals.Application;
@@ -41,7 +41,7 @@ public sealed partial class SetPrincipalAgentScopes
         return PrincipalProblems.NotFound(principalId);
       }
 
-      List<string> ordered = OrderKnown(command.Scopes ?? []);
+      List<string> ordered = AgentScopeOrder.OrderKnown(command.Scopes ?? []);
       await PrincipalAgentScopeStore
         .SetScopesAsync(principalId, ordered, cancellationToken)
         .ConfigureAwait(false);
@@ -50,21 +50,7 @@ public sealed partial class SetPrincipalAgentScopes
         .GetScopesAsync(principalId, cancellationToken)
         .ConfigureAwait(false);
 
-      return new Response(OrderKnown(stored));
-    }
-
-    private static List<string> OrderKnown(IReadOnlyList<string> scopes)
-    {
-      List<string> ordered = [];
-      foreach (string scope in AgentScopes.All)
-      {
-        if (scopes.Contains(scope, StringComparer.Ordinal))
-        {
-          ordered.Add(scope);
-        }
-      }
-
-      return ordered;
+      return new Response(AgentScopeOrder.OrderKnown(stored));
     }
   }
 }

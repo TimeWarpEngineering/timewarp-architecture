@@ -55,7 +55,7 @@ public sealed partial class GetRoles
           role.Name,
           role.Description,
           [.. permissionIds],
-          SetRoleAgentScopes.Handler.OrderKnown(agentScopes)));
+          AgentScopeOrder.OrderKnown(agentScopes)));
       }
 
       return new Response(items.Count, [.. items]);

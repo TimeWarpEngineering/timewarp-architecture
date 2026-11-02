@@ -39,6 +39,9 @@
     await PrincipalState.OpenPrincipal(principalId);
   }
 
+  private bool IsSavingAgentScopes =>
+    IsAnyActive(typeof(PrincipalState.SetPrincipalAgentScopesActionSet.Action));
+
   private async Task OnAgentScopeSelected(Guid principalId, string scope, bool selected) =>
     await PrincipalState.SetAgentScopeSelected(principalId, scope, selected);
 
@@ -165,6 +168,7 @@
             <FluentButton
               Appearance="ButtonAppearance.Primary"
               data-qa="SavePrincipalAgentScopes"
+              Disabled="IsSavingAgentScopes"
               OnClick="@(async () => await OnSaveAgentScopes(current.PrincipalId.Value))">
               Save agent scopes
             </FluentButton>

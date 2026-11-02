@@ -103,6 +103,22 @@ Done when:
 - `dev build` is 0/0 and the affected suites pass. Template smoke runs if template output
   changes. `dev check-version` runs if a platform package version changes.
 
+Round 1 left five items. This pass closes them:
+
+- A generated app with `--postgres false` excludes the two EF agent-scope stores and their
+  two entity-type configurations, the same way it already excludes the role-permission pair,
+  so those files do not reference the removed `PostgresDbContext`.
+- One helper in `platform/authorization` orders known agent scopes. SetRoleAgentScopes,
+  SetPrincipalAgentScopes, AgentScopeApproval, GetRole, and GetRoles call that helper.
+- The Member role page says that agent scopes on Member reach every principal with no other
+  role, including an agent that registers without signing in. SetRoleAgentScopes records the
+  same rule and still stores the list.
+- One co-located Jaribu test builds the effective set from the in-memory stores and checks
+  default, role (with role id), principal, a scope that has several sources, and catalog order.
+- The Principal page disables Save agent scopes while that action is in flight.
+- A generated app with `--web false` excludes `agent-scope-approval.cs`. That helper
+  references the web authorization types, which are not in the app when web is off.
+
 ## Checklist
 
 - [x] Role agent-scope list: stores (in-memory + EF + migration), contract, role editor UI
@@ -112,6 +128,12 @@ Done when:
 - [x] Integration tests for default, role, principal grant, removal and mixed requests
 - [x] Existing agent-token tests approve scopes through a shared helper
 - [x] `dev build` 0/0; affected suites pass; `dev template-smoke` (template output changes); `dev check-version` if platform packages change
+- [x] Postgres-off template excludes the four EF agent-scope files
+- [x] One `AgentScopeOrder` helper used by the five call sites
+- [x] Member role warns that its agent scopes reach every unassigned principal
+- [x] Co-located test covers effective-set sources and catalog order
+- [x] Principal page disables Save agent scopes while that action is active
+- [x] `--web false` excludes the agent-scope approval test helper
 
 ## Session
 
@@ -126,6 +148,22 @@ Done when:
   TimeWarp.Identity's public API did not change. `ganda repo audit` exited 0 with the existing
   `kanban-landed` advisory for other claims that have no worktree on this machine.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19bcd-9ede-71f0-8e07-26d06104fc68, max-turns 500, Done — 2026-11-02T11:14:41Z
+- Review oracle round 1: general reviewer (Claude Opus 5.5, effort 3, turn cap 200), 2026-11-02.
+  Found 5 open (1 bug, 3 suggestions, 1 nit). The fix pass is requested on this id.
+  Artifacts are in `review/review-framework.md` and `review/round-1/`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b87b06b2-42f3-493d-8fc4-3ae22addf67d, max-turns 200 — 2026-11-02T11:19:41Z
+- Fix pass (review round 1, 2026-11-02): excluded the four EF agent-scope files when postgres
+  is off, moved scope ordering to `AgentScopeOrder`, warned on the Member role, added the
+  source-marking test, and disabled the principal save button while saving. The first
+  `template-smoke --matrix` compiled SmokeNoPostgres and then failed SmokeNoWeb:
+  `agent-scope-approval.cs` referenced web authorization types. That helper is now on the
+  `(!web)` exclude list, beside `web-test-server-application.cs`. The matrix re-run
+  printed `Template smoke SUCCEEDED` (SmokeDefault, SmokeNoPostgres, SmokeNoApi,
+  SmokeNoWeb, SmokeNoGrpc, and SmokeNoYarp each OK). `ganda repo audit` exited 0
+  with the existing `kanban-landed` advisory for other claims that have no worktree
+  on this machine. `dev check-version` was not run: no package version changed.
+  The admin pages were not opened in a browser. Fix-pass session
+  01a19bfc-8d84-7b73-9711-6cf480787a59.
 
 ## Results
 
@@ -148,25 +186,58 @@ issuance.
 The admin pages were not opened in a browser. The SPA project compiled, and `PrincipalState_`
 covered opening a principal against a scripted API.
 
+Round 1's five findings are addressed on this branch. A `--postgres false` app excludes the
+two EF agent-scope stores and their entity-type configurations. A `--web false` app excludes
+`tests/common/timewarp-testing/applications/agent-scope-approval.cs`, which references those
+web types. `AgentScopeOrder.OrderKnown`
+is the only catalog-order helper. The Member role page states that scopes on Member reach
+every principal with no other role, including an agent that registers without signing in, and
+`SetRoleAgentScopes` records that rule. The Principal page disables Save agent scopes while
+`SetPrincipalAgentScopes` is active. The effective-set source marks are covered by
+`AgentScopeApproval_Given_.MixedSources_Should_MarkDefaultRoleAndPrincipalInCatalogOrder`.
+
 ### How to validate
 
 Smoke:
 
 ```bash
-cd tests/container-apps/web/web-server-integration-tests
-dotnet test -c Release -- --filter-class AgentScopeApproval_
+dotnet run source/container-apps/web/platform/authorization/agent-scope-approval-tests.cs
+./bin/dev template-smoke --matrix
 ```
 
-Expect: 4 passed, 0 failed. A new agent receives `identity:read`. Requesting `feedback:read`
-returns 403 whose detail is `Unapproved scope(s): feedback:read.` and issues no token.
-Assigning the Developer role after that role's agent scopes include the feedback scopes makes
-the same request succeed. A principal grant alone allows the scope, and clearing that grant
-refuses it again. Requesting one approved scope and `demo:invoke` returns 403 naming only
-`demo:invoke` and issues no token.
+Expect: the co-located test passes 1/1. `identity:read` is marked default, plus the Developer
+role and the principal. `demo:invoke` is the Developer role only. `credential:manage` is the
+principal only. `feedback:read` is Member, then Developer, then the principal. Those four
+scopes are in `AgentScopes.All` order, and an unknown stored string is absent. Template smoke
+prints `Template smoke SUCCEEDED` for the matrix, including `SmokeNoPostgres` and `SmokeNoWeb`.
+The first matrix failed SmokeNoWeb with CS0234 on `agent-scope-approval.cs` before that file
+was excluded for `--web false`.
 
-`./bin/dev build` succeeded with 0 warnings and 0 errors. `./bin/dev template-smoke` printed
-`Template smoke SUCCEEDED`. `ganda repo audit` exited 0 (34 passed, 1 advisory `kanban-landed`,
-2 skipped).
+`./bin/dev build` succeeded with 0 warnings and 0 errors. The same co-located test passed
+once as a runfile and once under `web-jaribu-tests` (`--filter-class AgentScopeApproval_Given_`,
+1 passed). After the `(!web)` exclude, `./bin/dev template-smoke --matrix` printed
+`Template smoke SUCCEEDED`. SmokeNoPostgres and SmokeNoWeb both printed OK, and the
+generated SmokeNoWeb tree does not contain `agent-scope-approval.cs`.
+
+### Review
+
+Round 1 found 1 bug, 3 suggestions, and 1 nit. This fix pass implements all five. Round 2
+has not run, so the ledger in `review/round-1/merged.md` is still the open round-1 list.
+
+- **M1 (bug):** the `(!postgres)` exclude list now names the two EF agent-scope stores and
+  their two entity-type configurations.
+- **M2:** `AgentScopeOrder.OrderKnown` replaces the three copies. GetRole and GetRoles call it.
+- **M3:** the Member role page shows the warning, and SetRoleAgentScopes records the rule.
+- **M4:** the co-located in-memory test asserts sources and order.
+- **M5:** Save agent scopes binds `Disabled` to the action's active state.
+
+The reviewer re-ran the issuance suite (4/4) and the full web-server integration suite
+(434 passed, 1 skipped, 0 failed) before this pass. Those suites were not re-run here.
+Ledger: `review/round-1/merged.md`. Round 2 follows this node.
+
+## Review
+
+- Round 1 findings M1–M5 are implemented on this branch. Round 2 has not run.
 
 ## Notes
 
