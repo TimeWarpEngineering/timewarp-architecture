@@ -13,7 +13,6 @@ Using the Roles slice, decide which SPA pieces can be source-generated from the 
 - form bindings and validation
 - CRUD scaffolding
 
-Assignee: Jenzi
 
 Kitchen draft: `contracts-frontend-example.md` (real code quoted verbatim with paths; proposed code marked).
 
