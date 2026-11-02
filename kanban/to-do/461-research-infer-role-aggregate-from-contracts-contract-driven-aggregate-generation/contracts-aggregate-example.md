@@ -351,8 +351,14 @@ public interface IRoleStore
 }
 ```
 
-The name clashes with today's `internal static class RoleStore`. The generated port would replace it,
-or be named `IRoleRepository` as RoleStore's Design note suggests. That's Steven's call.
+Decision (Steven, 2026-11-02): keep the house Store naming, `IRoleStore`. The existing
+`internal static class RoleStore` is retired and replaced by this generated store, provided it has
+no lingering callers outside generated code.
+
+Every hand-written piece gets a generated partial hook or a stub that fails until filled in
+(`NotImplementedException` or an analyzer error): the EF and in-memory store implementations, the
+handlers that call the aggregate, the migration plus RoleIds seed, the retirement of
+IRolePermissionStore/RolePermissionGrant, and `OnSettingPermissions`.
 
 **`role-entity-type-configuration-infrastructure.g.cs`** (Profile pattern + grant mapping)
 

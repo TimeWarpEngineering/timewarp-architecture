@@ -32,11 +32,22 @@ proposed code marked).
   - `RoleEntityTypeConfiguration`, with an `identity.roles` table plus an owned
     `identity.role_permissions`.
 
-## Open decision
+## Decision (Steven, 2026-11-02)
 
-- `IRoleStore` (house `I<Name>Store` port naming) replacing today's `internal static class RoleStore`,
-  vs `IRoleRepository` (as RoleStore's own Design note suggests: "Replace with a repository when
-  roles become durable").
+- The generated port keeps the house Store naming: `IRoleStore`, not `IRoleRepository`.
+- The existing `internal static class RoleStore` is retired and replaced by the generated store, provided
+  it has no lingering callers outside generated code.
+
+## Requirement: no implicit hand-written pieces
+
+Every hand-written piece gets a generated partial hook or a stub that fails until it is filled in
+(throws `NotImplementedException`, or an analyzer error), so nothing is left implicit:
+
+- Store implementations (EF and in-memory) of `IRoleStore`.
+- Handlers that call the aggregate (create/update/delete/set-permissions).
+- Migration plus seed data for the existing compile-time `RoleIds`.
+- Retiring `IRolePermissionStore`/`RolePermissionGrant` (and its EF configuration).
+- Already marked: `partial void OnSettingPermissions` (Administrator protected-core).
 
 ## Hand-written exceptions (not inferable)
 
@@ -54,7 +65,9 @@ proposed code marked).
 ## Checklist
 
 - [ ] Review the kitchen draft with Steven
-- [ ] Decide `IRoleStore` vs `IRoleRepository`
+- [x] Decide `IRoleStore` vs `IRoleRepository` (IRoleStore, Steven 2026-11-02)
+- [ ] Confirm `RoleStore` has no lingering callers outside generated code, then retire it
+- [ ] Every hand-written piece has a generated partial hook or failing stub (stores EF + in-memory, handlers, migration + RoleIds seed, IRolePermissionStore/RolePermissionGrant retirement, OnSettingPermissions)
 - [ ] Decide attribute shape for the contract-level aggregate declaration
 - [ ] Decide migration and seed approach for compile-time RoleIds
 - [ ] Split implementation tasks (generator, Roles migration, OpenAPI summary fix)
