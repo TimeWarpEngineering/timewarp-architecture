@@ -174,6 +174,14 @@ file gets `## Results` with a non-empty How to validate.
   check becomes one disjunction of the credential), and the proof gate expects 200 on another
   owner's linked attachment, 404 on another owner's unlinked draft, and 200 on the bearer's own
   unlinked draft. M9 set to fixed on `review/round-3/merged.md`. No product code changed.
+- Review round 4: grok session `01a19d1c-8f78-72d1-874c-5f02007032e7` (2026-11-02). Effort 1,
+  roster general. Re-reviewed the delta since `00c2d430b` (round-3 `base.sha`, fix commit
+  `65450aa43`). M1 through M8 are unchanged in that delta. M9 re-verified fixed against section
+  6.1 and the download handler: task 4 keeps the section 6.1 order, and the proof gate expects
+  200 on another owner's linked attachment, 404 on another owner's unlinked draft, and 200 on
+  the bearer's own unlinked draft. No new findings. Wrote `review/round-4/general.md`,
+  `review/round-4/merged.md`, and `review/disposition.md`. Outcome clean. The implementer
+  restatement matches the task. No misread.
 
 ## Results
 
@@ -215,13 +223,15 @@ Round 2, same effort and roster, reviewed the delta since `9769c06c` (round-1 `b
 
 Round 3, effort 1, roster general only, reviewed the delta since `074ea5a9c` (round-2 `base.sha`, commit `00c2d430b`). Artifacts: `review/round-3/general.md`, `review/round-3/merged.md`. M1 through M8 re-verified fixed. Sections 2.4, 5, and 6.1 match the download handler. M9 found that task 4 still said the handler collapses to one disjunction, and its proof gate expected 404 on the bearer's own unlinked draft, which the owner passes. Fix pass 4 landed 2026-11-02: task 4 keeps the section 6.1 order and its pins expect 200 on the bearer's own unlinked draft. M9 is `fixed` on `review/round-3/merged.md`.
 
+Round 4, effort 1, roster general only, reviewed the delta since `00c2d430b` (round-3 `base.sha`, commit `65450aa43`). Artifacts: `review/round-4/general.md`, `review/round-4/merged.md`, `review/disposition.md`. M1 through M8 are unchanged in that delta. M9 re-verified fixed: task 4 matches section 6.1 and the handler. No new findings.
+
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
 | bug | 0 | 7 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 1 | 0 |
 
-Disposition is not written; the host runs review round 4 next. No finding is open, no wontfix, and no escalation. The implementer restatement matches the task; no misread under Learnings. Product tests were not run; the delta is design text, checked by reading the handler, `FeedbackProblems`, the scope and permission seeds, and the hosted `[EndpointAuthorize]` attributes.
+Disposition is `clean` (`review/disposition.md`): four rounds, zero open, every finding `fixed`, no wontfix, no escalation. The implementer restatement matches the task; no misread under Learnings. Product tests were not run; the round-4 delta is design text, checked by reading the handler, `FeedbackProblems`, and section 6.1.
 
 ### How to validate
 
@@ -258,7 +268,7 @@ the bearer's own unlinked draft (count 1).
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
 - Round 2: Blocked — open M8
 - Round 3: Blocked — open M9
-
+- Round 4: Done
 ## Notes
 
 Related: done 466 (admin-approved agent scopes; its scope list and kind-based Member exception
