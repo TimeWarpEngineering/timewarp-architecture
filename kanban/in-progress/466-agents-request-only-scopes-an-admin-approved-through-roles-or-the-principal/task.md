@@ -178,6 +178,7 @@ Done when:
   (`IEffectiveRolesResolver` and its Design SSOT), not the approval code, so the admin Principal
   page and claims show the same thing. Fix pass on the same PR.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19c73-a051-7c41-91b4-8c2478377f2b, max-turns 500, Blocked — 2026-11-02T13:46:52Z
+- Installed ganda changed during this walk: was 50271632 bytes 90a79639f114a02e38a31ca871980c1e094b9594d49e20d8a817714562bdeb9d; now 50296336 bytes 970fac827e28467d47743c6e9cdca8036036a6be2f0b3305a50018f5b8cf54af
 
 ## Results
 
