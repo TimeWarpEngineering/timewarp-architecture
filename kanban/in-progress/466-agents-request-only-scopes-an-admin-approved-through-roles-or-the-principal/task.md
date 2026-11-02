@@ -186,6 +186,11 @@ Done when:
   SetRoleAgentScopes say Member scopes reach roleless humans who hold an agent key, not
   self-registered agents.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19c85-85bf-73e3-859f-8075b3af282f, max-turns 500, Done — 2026-11-02T14:00:22Z
+- Review oracle round 3: general reviewer (Claude Opus 5.5, effort 3, turn cap 200),
+  2026-11-02. Scope was the Member-decision delta `5a60e94c5..d39a9aa98` (d0a9d35d9). There
+  were 0 new and 0 open findings, and M1–M5 stay fixed. Disposition: clean, 3 rounds.
+  Artifacts are in `review/round-3/` and `review/disposition.md`.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 1158fcea-8348-4054-bd01-2d5ab042a84b, max-turns 200 — 2026-11-02T14:05:51Z
 
 ## Results
 
@@ -283,8 +288,7 @@ were not opened in a browser.
 
 ### Review
 
-Round 1 found 1 bug, 3 suggestions, and 1 nit. This fix pass implements all five. Round 2
-has not run, so the ledger in `review/round-1/merged.md` is still the open round-1 list.
+Round 1 found 1 bug, 3 suggestions, and 1 nit, and the 5a60e94c5 fix pass fixed all five.
 
 - **M1 (bug):** the `(!postgres)` exclude list now names the two EF agent-scope stores and
   their two entity-type configurations.
@@ -302,16 +306,27 @@ five are fixed, and the delta has no new findings. The reviewer re-ran the co-lo
 `web-server-integration-tests --filter-class AgentScopeApproval_` (4/4). This reviewer did not
 re-run `template-smoke --matrix`, which the implementer reported as succeeded.
 
-**Review disposition: clean.** 2 rounds. Final counts: bug 1 fixed, suggestion 3 fixed, nit 1
-fixed, 0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md`
-(final ledger), `review/disposition.md`. Steve then decided agents are not Members. That
-decision is implemented on this branch: the resolver, not the approval code, is what changed.
+Steve then decided agents are not Members, and d0a9d35d9 implements that in the resolver.
+Round 3 (effort 3, general) reviewed that delta (`5a60e94c5..d39a9aa98`) and found nothing
+new. The reviewer re-ran `./bin/dev build` (0 warnings, 0 errors), the resolver runfile
+(17/17), `set-role-permissions-tests` (15/15), `get-principal-tests` (10/10),
+`list-principals-tests` (13/13), `--filter-class AgentScopeApproval_` (5/5), and the full
+web-server integration suite (436 total: 435 passed, 1 skipped, 0 failed). `template-smoke`
+was not re-run, because the delta changes no file set or template symbol. Two observations that
+are not findings are in `review/round-3/general.md`: a roleless resolution reads the principal
+store once more, and `SimulateEffectiveRoles` defaults `kind` to Human.
+
+**Review disposition: clean.** 3 rounds, roster general (efforts 3, 2, 3). Final counts:
+bug 1 fixed, suggestion 3 fixed, nit 1 fixed, 0 open, 0 wontfix. Round 2's M3 escalation was
+resolved by Steve's Member decision. Paths: `review/review-framework.md`,
+`review/round-3/merged.md` (final ledger), `review/disposition.md`.
 
 ## Review
 
-- Round 1 found M1–M5. Round 2 verified all five fixed, with no new findings. Disposition:
-  clean (`review/disposition.md`).
-- Round 2: Done
+- Round 1 found M1–M5. Round 2 verified all five fixed, with no new findings.
+- Round 3 reviewed the "agents are not Members" delta, with 0 new and 0 open findings.
+  Disposition: clean (`review/disposition.md`).
+- Round 3: Done
 ## Notes
 
 Related: done 331 (OpenAPI reviewer guide), done 378 (scoped feedback triage), 182-006 (agent

@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 537
-- Effort: 2
+- Lines changed: 3813
+- Effort: 3
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 200 (--max-turns; cursor uncapped)
 
 ## Framework — task 466
 
@@ -25,3 +25,9 @@
 - Do not invent issues to fill space; zero issues is a valid outcome
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
+
+## Round 3 scope
+
+- Diff: `5a60e94c5..d39a9aa98`, the product commit d0a9d35d9 ("agents are not Members"). The
+  branch was also checked against the Goal restatement and the Description.
+- Reviewer: general (Claude Opus 5.5, review oracle, effort 3, turn cap 200), 2026-11-02.
