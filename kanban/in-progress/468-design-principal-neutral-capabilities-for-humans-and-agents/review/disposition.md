@@ -1,13 +1,13 @@
 # Disposition — task 468
 
 **Date:** 2026-11-03
-**Outcome:** not closed
-**Rounds:** 5
-**Final open count:** 3 (M10, M11, M12)
+**Outcome:** clean
+**Rounds:** 6
+**Final open count:** 0
 
 ## Summary
 
-Round 4 closed the pre-decision draft: nine findings, each fixed, outcome clean for that draft. Round 5 reviewed the 2026-11-03 revision of `design.md`. M1 through M9 stay fixed. Three new bugs are open (M10 the `demo.invoke` example, M11 who keeps agent chat, M12 the credential acting-as-self list). Exit disposition waits until those are fixed or marked wontfix.
+Six rounds, one general reviewer. Twelve findings were raised (ten bugs, one suggestion, one nit). Each is fixed. Round 6 re-checked the round-5 fix against the seeds, the chat policy, the role resolver, and the seven hosted credential attributes. M10, M11, and M12 stay fixed, M1 through M9 are unchanged in that delta, and the round raised no new finding. No wontfix and no escalation.
 
 ## Exception log (if accepted-exceptions)
 
