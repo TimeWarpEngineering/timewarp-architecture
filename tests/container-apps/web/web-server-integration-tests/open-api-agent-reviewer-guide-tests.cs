@@ -8,7 +8,8 @@
 // list-feedback description. This host's appsettings sets a lifetime other than the C#
 // default, and the assertion reads that configured value. Ceremony descriptions come from
 // the contract remarks. The signing prefixes are read from AgentKeyProof so a copied
-// string that drifts fails here.
+// string that drifts fails here. Each scheme step's method and path are read from the
+// contract route, and that path must exist under paths in the same document.
 #endregion
 
 namespace OpenApiAgentReviewerGuide_;
@@ -17,6 +18,8 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using TimeWarp.Architecture.Features.Identity;
+using TimeWarp.Foundation.Features;
 using TimeWarp.Identity;
 
 [TestTag("OpenApi")]
@@ -56,18 +59,22 @@ public class Document_Given_
       .GetProperty("description")
       .GetString()!;
 
+    JsonElement paths = document.RootElement.GetProperty("paths");
     int at = -1;
-    foreach (string step in new[]
+    foreach ((string operationId, string method, string path) in new (string, string, string)[]
     {
-      "start-agent-key-registration",
-      "complete-agent-key-registration",
-      "start-agent-token-issuance",
-      "complete-agent-token-issuance",
+      CeremonyStep<StartAgentKeyRegistration.Command>("start-agent-key-registration"),
+      CeremonyStep<CompleteAgentKeyRegistration.Command>("complete-agent-key-registration"),
+      CeremonyStep<StartAgentTokenIssuance.Command>("start-agent-token-issuance"),
+      CeremonyStep<CompleteAgentTokenIssuance.Command>("complete-agent-token-issuance"),
     })
     {
-      int next = description.IndexOf(step, StringComparison.Ordinal);
+      string token = operationId + " (" + method + " " + path + ")";
+      int next = description.IndexOf(token, StringComparison.Ordinal);
       next.ShouldBeGreaterThan(at);
       at = next;
+      paths.TryGetProperty(path, out JsonElement operation).ShouldBeTrue(path);
+      operation.TryGetProperty(method.ToLowerInvariant(), out _).ShouldBeTrue(method + " " + path);
     }
 
     int lifetimeMinutes = Web.WebApplicationHost.ServiceProvider
@@ -116,6 +123,16 @@ public class Document_Given_
     description.ShouldContain("Status = New");
     description.ShouldContain("processed marker");
     description.ShouldContain("off New");
+  }
+
+  private static (string OperationId, string Method, string Path) CeremonyStep<TRequest>(string operationId)
+    where TRequest : IApiRequest, new()
+  {
+    TRequest request = new();
+    string method = request.GetHttpVerb().ToString().ToUpperInvariant();
+    string route = request.GetRoute();
+    string path = route.StartsWith('/', StringComparison.Ordinal) ? route : "/" + route;
+    return (operationId, method, path);
   }
 
   private static string Description(JsonElement paths, string path, string method) =>

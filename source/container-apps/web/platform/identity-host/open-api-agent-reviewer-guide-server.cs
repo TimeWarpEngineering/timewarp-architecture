@@ -5,11 +5,13 @@
 #region Design
 // An outside reviewer is given only this document. The scheme description names the four
 // ceremony operations in order, the lifetime from AgentTokenOptions at document build, that
-// there is no refresh token, and when to reissue. Foundation does not know those product
-// operation names or AgentTokenOptions, so this host appends the paragraph. The scheme object
-// is reused across document builds, so a second build replaces the paragraph instead of
-// appending it again. What the client signs lives on the ceremony contracts, and the
-// processed marker lives on list-feedback, so those are not written here.
+// there is no refresh token, and when to reissue. Each step also names its HTTP method and
+// path, taken from that contract's generated route, because the document does not set
+// operationId to the kebab id. Foundation does not know those product operation names or
+// AgentTokenOptions, so this host appends the paragraph. The scheme object is reused across
+// document builds, so a second build replaces the paragraph instead of appending it again.
+// What the client signs lives on the ceremony contracts, and the processed marker lives on
+// list-feedback, so those are not written here.
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
@@ -19,6 +21,8 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 using TimeWarp.Architecture.Features.Identity.Application;
+using TimeWarp.Foundation.Features;
+using Contracts = TimeWarp.Architecture.Features.Identity;
 
 /// <summary>Appends the agent-token reviewer guide to the OpenAPI bearer scheme.</summary>
 internal static class OpenApiAgentReviewerGuide
@@ -71,13 +75,24 @@ internal static class OpenApiAgentReviewerGuide
 
     string guide =
       GuideMarker
-      + " start-agent-key-registration, then complete-agent-key-registration,"
-      + " then start-agent-token-issuance, then complete-agent-token-issuance."
-      + " The token lasts "
+      + " " + Step<Contracts.StartAgentKeyRegistration.Command>("start-agent-key-registration")
+      + ", then " + Step<Contracts.CompleteAgentKeyRegistration.Command>("complete-agent-key-registration")
+      + ", then " + Step<Contracts.StartAgentTokenIssuance.Command>("start-agent-token-issuance")
+      + ", then " + Step<Contracts.CompleteAgentTokenIssuance.Command>("complete-agent-token-issuance")
+      + ". The token lasts "
       + lifetimeMinutes.ToString(CultureInfo.InvariantCulture)
       + " minutes. There is no refresh token."
       + " Reissue with the agent key before the token expires, or after a 401 invalid_token.";
 
     return string.IsNullOrEmpty(basis) ? guide : basis.TrimEnd() + " " + guide;
+  }
+
+  private static string Step<TRequest>(string operationId) where TRequest : IApiRequest, new()
+  {
+    TRequest request = new();
+    string method = request.GetHttpVerb().ToString().ToUpperInvariant();
+    string route = request.GetRoute();
+    string path = route.StartsWith('/', StringComparison.Ordinal) ? route : "/" + route;
+    return operationId + " (" + method + " " + path + ")";
   }
 }

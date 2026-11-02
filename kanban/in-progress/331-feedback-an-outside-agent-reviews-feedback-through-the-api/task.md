@@ -108,6 +108,17 @@ Acceptance:
   Data Protection every-replica note. No board integration, webhooks, email action, or server
   MCP endpoint.
 
+Fix pass (review round 1):
+
+- Each ceremony step in the `JWTBearerAuth` guide names its HTTP method and path beside the
+  kebab id. The method and path come from that operation's contract (`RouteTemplate` and
+  `GetHttpVerb`), so the guide cannot name a route the endpoint does not serve. The document
+  test checks that each of those paths exists under `paths` with that method.
+- `dev check-version` is recorded. If `2.0.0-beta.30` is already published, `<Version>` and the
+  platform pins (including the generators package and the templates tree) move to the next beta
+  in one commit, so a generated app restores the generator that reads contract remarks. If
+  beta.30 is not published, the next release carries this generator and no bump is made.
+
 ## Checklist
 
 - [x] `JWTBearerAuth` scheme description names the key-registration and token-issuance steps in order
@@ -119,6 +130,9 @@ Acceptance:
 - [x] Gaps found fixed in this repo (or reported, if they belong elsewhere)
 - [x] In-memory token store limit: one line in `tw-deploy`
 - [x] `dev build` 0/0; web-server-integration-tests pass; `dev lint-skills` (skills/ changes)
+- [x] Scheme guide names method and path beside each ceremony id, taken from the contract route
+- [x] Document test asserts each of those paths exists under `paths`
+- [x] `dev check-version` recorded; bump only if beta.30 is already published
 
 ## Session
 
@@ -136,6 +150,13 @@ Acceptance:
   `ganda repo audit` exit 0; advisory `kanban-landed` names other claims with no worktree, left
   alone.
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19ad7-b8ba-71c0-8b83-085de08d835c, max-turns 500, Done — 2026-11-02T06:36:09Z
+- Review oracle round 1 (2026-11-02): reviewer general (claude-opus-5-5, headless ganda task
+  work), effort 2 by diff, turn cap 120. Re-ran `./bin/dev build` (0/0),
+  `OpenApiAgentReviewerGuide_` 3/3, `AdminFeedbackAuthorization_` 10/10, and source generator
+  tests 155/155. `dev check-version` timed out offline. Open: M1 bug (version bump), M2
+  suggestion (paths in the guide). Fix pass requested.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 134a0577-7632-4bcf-a5b5-ee02544ec7ff, max-turns 120 — 2026-11-02T06:42:58Z
+- 2026-11-02 fix pass (implement-fix-2): `./bin/dev check-version` exit 0. Source `2.0.0-beta.30` is one prerelease ahead of NuGet `2.0.0-beta.29`, so beta.30 is unpublished and no pin bump. The scheme guide now names method and path from each contract route. `OpenApiAgentReviewerGuide_` 3/3. `./bin/dev build` 0/0. `ganda repo audit` exit 0; the same advisory `kanban-landed` names other claims with no worktree, left alone.
 
 ## Results
 
@@ -148,25 +169,46 @@ lists New, reads the item, sets severity, adds a note, changes status, and the n
 omits the item. `IAgentTokenStore` stays in memory; `tw-deploy` records that a restart or a
 second instance invalidates live tokens and the reviewer reissues.
 
-Generated apps that set `UseAnalyzerPackages` keep the published generators package. They pick
-up contract remarks when that package includes this generator. This repo's build uses the
-project generator.
+Generated apps that set `UseAnalyzerPackages` restore `TimeWarp.Architecture.Generators` at the
+platform pin. `./bin/dev check-version` (2026-11-02) reports source `2.0.0-beta.30` is one
+prerelease ahead of NuGet `2.0.0-beta.29` and safe to release. Packages checked: TimeWarp.402,
+TimeWarp.Architecture.Analyzers, TimeWarp.Architecture.Attributes, TimeWarp.Architecture.Generators,
+TimeWarp.Foundation.Application, TimeWarp.Foundation.Contracts, TimeWarp.Foundation.Domain,
+TimeWarp.Foundation.Infrastructure, TimeWarp.Foundation.Server, TimeWarp.Identity, TimeWarp.Modules.
+beta.30 is not published, so `<Version>` and the platform pins stay. The next release carries the
+generator that reads contract remarks. This repo's build uses the project generator.
+
+Each ceremony step in `JWTBearerAuth` names its HTTP method and path beside the kebab id, for
+example `start-agent-key-registration (POST /api/identity/agent/register/options)`. The method is
+`GetHttpVerb` and the path is `GetRoute` on that operation's contract, so the guide follows
+`[ApiRoute]`. The document test requires each of those paths to exist under `paths` with that
+method.
 
 ### How to validate
 
-Smoke: `./bin/dev build`, then from `tests/container-apps/web/web-server-integration-tests` run
-`dotnet test -c Release -- --filter-class OpenApiAgentReviewerGuide_` and
-`dotnet test -c Release --no-build -- --filter-class AdminFeedbackAuthorization_`. Fetch
-`/openapi/v1.json` from the web host and read `JWTBearerAuth`, the four ceremony operations, and
-`GET /api/admin/feedback`.
+Smoke: `./bin/dev check-version`. From `tests/container-apps/web/web-server-integration-tests` run
+`dotnet test -c Release -- --filter-class OpenApiAgentReviewerGuide_`. Read `JWTBearerAuth` in
+`/openapi/v1.json`.
 
-Expect: build 0 warnings and 0 errors. `OpenApiAgentReviewerGuide_` 3 passed. The scheme
-description names the four operations in order, the configured lifetime in minutes, no refresh
-token, and reissue after `invalid_token`. Ceremony descriptions name the signing prefix, ECDSA
-P-256, and the fields sent back. `list-feedback` names `Status = New`, `processed marker`, and
-`off New`. `AdminFeedbackAuthorization_` passed, including the four-scope loop that removes the
-filed item from the next New list. Full web-server-integration-tests: 430 passed, 1 skipped.
-`./bin/dev lint-skills` passed.
+Expect: `./bin/dev build` 0 warnings and 0 errors. check-version exit 0, source `2.0.0-beta.30`,
+latest NuGet `2.0.0-beta.29`, safe to release, no version bump. `OpenApiAgentReviewerGuide_` 3 passed. The scheme description contains,
+in order, `start-agent-key-registration (POST /api/identity/agent/register/options)`,
+`complete-agent-key-registration (POST /api/identity/agent/register)`,
+`start-agent-token-issuance (POST /api/identity/agent/token/options)`, and
+`complete-agent-token-issuance (POST /api/identity/agent/token)`. Each of those paths is a key
+under `paths` and has a `post` operation. The description still names the configured lifetime,
+no refresh token, and reissue after `invalid_token`.
+
+### Review
+
+Round 1, reviewer general, effort 2. Counts were bug 1 open, suggestion 1 open. Fix pass:
+M1 recorded, no bump, because beta.30 is unpublished. M2 implemented: method and path beside
+each id, asserted under `paths`. Round 2 is the host's next review. Paths:
+`review/review-framework.md`, `review/round-1/merged.md`.
+
+## Review
+
+- Round 1: open M1, M2. Fix pass addressed both. Round 2 has not run.
 
 ## Notes
 
