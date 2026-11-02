@@ -164,6 +164,10 @@ Round 1 left five items. This pass closes them:
   on this machine. `dev check-version` was not run: no package version changed.
   The admin pages were not opened in a browser. Fix-pass session
   01a19bfc-8d84-7b73-9711-6cf480787a59.
+- Review oracle round 2: general reviewer (Claude Opus 5.5, effort 2, turn cap 120),
+  2026-11-02. Scope was the fix delta 778e45b44..5a60e94c5. M1–M5 are fixed, with 0 new and
+  0 open findings. Disposition: clean. Artifacts are in `review/round-2/` and
+  `review/disposition.md`.
 
 ## Results
 
@@ -232,13 +236,24 @@ has not run, so the ledger in `review/round-1/merged.md` is still the open round
 - **M5:** Save agent scopes binds `Disabled` to the action's active state.
 
 The reviewer re-ran the issuance suite (4/4) and the full web-server integration suite
-(434 passed, 1 skipped, 0 failed) before this pass. Those suites were not re-run here.
-Ledger: `review/round-1/merged.md`. Round 2 follows this node.
+(434 passed, 1 skipped, 0 failed) before this pass.
+
+Round 2 (effort 2, general) re-checked M1–M5 against the fix delta `778e45b44..5a60e94c5`. All
+five are fixed, and the delta has no new findings. The reviewer re-ran the co-located
+`AgentScopeApproval_Given_` test (1/1), `./bin/dev build` (0 warnings, 0 errors), and
+`web-server-integration-tests --filter-class AgentScopeApproval_` (4/4). This reviewer did not
+re-run `template-smoke --matrix`, which the implementer reported as succeeded.
+
+**Review disposition: clean.** 2 rounds. Final counts: bug 1 fixed, suggestion 3 fixed, nit 1
+fixed, 0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md`
+(final ledger), `review/disposition.md`. One product call is left for Steve: refuse agent scopes
+on Member instead of warning (M3).
 
 ## Review
 
-- Round 1 findings M1–M5 are implemented on this branch. Round 2 has not run.
-
+- Round 1 found M1–M5. Round 2 verified all five fixed, with no new findings. Disposition:
+  clean (`review/disposition.md`).
+- Round 2: Done
 ## Notes
 
 Related: done 331 (OpenAPI reviewer guide), done 378 (scoped feedback triage), 182-006 (agent
