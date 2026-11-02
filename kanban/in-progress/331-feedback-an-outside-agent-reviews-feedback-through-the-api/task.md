@@ -135,6 +135,7 @@ Acceptance:
   a media type, and the chain replaces FastEndpoints' OneOf 200 metadata. No agent-scheme gap.
   `ganda repo audit` exit 0; advisory `kanban-landed` names other claims with no worktree, left
   alone.
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a19ad7-b8ba-71c0-8b83-085de08d835c, max-turns 500, Done — 2026-11-02T06:36:09Z
 
 ## Results
 
