@@ -121,9 +121,10 @@ Done when:
 - Implementation: 01a19bcd-9ede-71f0-8e07-26d06104fc68 (2026-11-02). Issuance checks the approved
   set after proof-of-possession. `dev db add-migration` also dropped a second model snapshot under
   `projects/web-infrastructure/TimeWarp/`; that copy was removed so only
-  `platform/postgres/migrations` holds `PostgresDbContextModelSnapshot`. `dev check-version` was
-  not run: TimeWarp.Identity's public API did not change. `ganda repo audit` exited 0 with the
-  existing `kanban-landed` advisory for other claims that have no worktree on this machine.
+  `platform/postgres/migrations` holds `PostgresDbContextModelSnapshot`. The two new contract
+  runfiles are executable so `runfile-executable` passes. `dev check-version` was not run:
+  TimeWarp.Identity's public API did not change. `ganda repo audit` exited 0 with the existing
+  `kanban-landed` advisory for other claims that have no worktree on this machine.
 
 ## Results
 
