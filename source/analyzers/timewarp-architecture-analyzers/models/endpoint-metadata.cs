@@ -9,6 +9,8 @@
 // OpenAPI summary/description come from the Query/Command XML docs — the contract is the single
 // authoring point for API documentation. An [EndpointAllowAnonymous] reason is appended to that
 // description ("Intentionally anonymous. …") so a public GET is not mistaken for a dropped 401.
+// When the symbol carries no documentation comment, ContractDocumentation (the compiler XML file
+// supplied as an AdditionalFile) fills the same summary and remarks.
 // Tags default to the leaf namespace under Features (…Features.Admin.Roles → "Roles"), keeping
 // OpenAPI grouping aligned with the vertical-slice Id without per-endpoint annotation.
 // [OpenApiTags] is additive; Distinct() de-dupes.
@@ -147,7 +149,7 @@ internal sealed record EndpointEmitModel(
   /// Builds an emit model from an [ApiEndpoint] outer type. ClientOnly contracts should be
   /// filtered by the caller via <see cref="HostedRouteDiscovery"/> before calling this.
   /// </summary>
-  public static EndpointEmitModel FromSymbol(INamedTypeSymbol symbol)
+  public static EndpointEmitModel FromSymbol(INamedTypeSymbol symbol, ContractDocumentation? documentation = null)
   {
     string className = symbol.Name;
     string ns = symbol.ContainingNamespace.ToDisplayString();
@@ -239,10 +241,21 @@ internal sealed record EndpointEmitModel(
     string summary = string.Empty;
     string description = string.Empty;
     string? xmlDoc = requestClass.GetDocumentationCommentXml();
-    if (xmlDoc is not null)
+    if (!string.IsNullOrEmpty(xmlDoc))
     {
       summary = ExtractXmlContent(xmlDoc, "summary");
       description = ExtractXmlContent(xmlDoc, "remarks");
+    }
+
+    if (summary.Length == 0 && description.Length == 0 && documentation is not null)
+    {
+      string? documentationId = DocumentationCommentId.CreateDeclarationId(requestClass);
+      if (documentationId is not null
+        && documentation.TryGetMember(documentationId, out ContractMemberDocumentation member))
+      {
+        summary = member.Summary;
+        description = member.Remarks;
+      }
     }
 
     string? authorizationPolicy = null;

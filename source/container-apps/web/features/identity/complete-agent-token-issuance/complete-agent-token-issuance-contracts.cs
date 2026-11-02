@@ -42,6 +42,7 @@
 // [EndpointAllowAnonymous] (task 110): this IS the proof-of-possession request that mints the
 // bearer token — nothing to authorize against yet (the token this request produces is what later
 // authorizes GetAgentIdentity and other agent-token-protected endpoints).
+// Command remarks are the OpenAPI description of what the client signs and sends back.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Identity;
@@ -50,6 +51,8 @@ namespace TimeWarp.Architecture.Features.Identity;
 [EndpointAllowAnonymous("This is the proof-of-possession request that mints the bearer token — nothing to authorize against yet.")]
 public static partial class CompleteAgentTokenIssuance
 {
+  /// <summary>Completes agent token issuance by returning the signed challenge.</summary>
+  /// <remarks>The client signs the UTF-8 prefix TimeWarp.Identity.AgentKey.Token.v1: followed by the raw challenge bytes from start-agent-token-issuance, using ECDSA P-256 and SHA-256. It sends back base64url KeyId, Challenge, and Signature (RFC 3279 DER) and the requested Scopes. The response returns AccessToken, TokenType Bearer, ExpiresInSeconds, Scopes, and PrincipalId. There is no refresh token.</remarks>
   [ApiRoute("api/identity/agent/token", HttpVerb.Post)]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {

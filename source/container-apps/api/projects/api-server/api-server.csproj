@@ -3,6 +3,7 @@
   <!-- Task 145-002 R2-1: lets test infra resolve ContentRootPath from THIS project's own
        directory instead of a transitive consumer's flattened output. See the props file. -->
   <Import Project="$(RepositoryRoot)msbuild/project-directory-metadata.props" />
+  <Import Project="$(RepositoryRoot)msbuild/api-endpoint-contract-documentation.targets" />
 
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

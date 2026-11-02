@@ -1,6 +1,7 @@
 namespace TimeWarp.Architecture.SourceGenerator.Tests;
 
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.IO;
 using System.Linq;
@@ -99,6 +100,18 @@ internal static class GeneratorTestHarness
   /// <c>[assembly: ApiEndpointsEmbedded]</c> (unmarked-ref tests).
   /// </summary>
   public static MetadataReference CompileContractAssembly(string contractSource, string assemblyName, bool stampMarker)
+    => CompileContractAssembly(contractSource, assemblyName, stampMarker, attachDocumentation: true).Reference;
+
+  /// <summary>
+  /// Compiles a contract assembly and returns its documentation XML separately.
+  /// Pass <paramref name="attachDocumentation"/> false to imitate csc, which does not attach a
+  /// documentation provider to metadata references.
+  /// </summary>
+  public static (MetadataReference Reference, string DocumentationXml) CompileContractAssembly(
+    string contractSource,
+    string assemblyName,
+    bool stampMarker,
+    bool attachDocumentation)
   {
     CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Parse);
 
@@ -133,11 +146,13 @@ internal static class GeneratorTestHarness
       throw new InvalidOperationException($"Contract assembly failed to compile:{Environment.NewLine}{errors}");
     }
 
+    byte[] xmlBytes = xmlStream.ToArray();
+    string documentationXml = System.Text.Encoding.UTF8.GetString(xmlBytes);
     peStream.Position = 0;
-    xmlStream.Position = 0;
-    return MetadataReference.CreateFromStream(
-      peStream,
-      documentation: XmlDocumentationProvider.CreateFromBytes(xmlStream.ToArray()));
+    MetadataReference reference = attachDocumentation
+      ? MetadataReference.CreateFromStream(peStream, documentation: XmlDocumentationProvider.CreateFromBytes(xmlBytes))
+      : MetadataReference.CreateFromStream(peStream);
+    return (reference, documentationXml);
   }
 
   /// <summary>
@@ -155,7 +170,8 @@ internal static class GeneratorTestHarness
   public static GeneratorDriverRunResult Run(
     IEnumerable<MetadataReference> contractReferences,
     bool enabled,
-    string? contractAssemblies)
+    string? contractAssemblies,
+    IEnumerable<AdditionalText>? additionalTexts = null)
   {
     List<MetadataReference> references =
     [
@@ -183,6 +199,7 @@ internal static class GeneratorTestHarness
 
     GeneratorDriver driver = CSharpGeneratorDriver.Create(
       generators: ImmutableArray.Create(new FastEndpointSourceGenerator().AsSourceGenerator()),
+      additionalTexts: additionalTexts,
       optionsProvider: new TestAnalyzerConfigOptionsProvider(options));
 
     return driver.RunGenerators(compilation).GetRunResult();
@@ -221,4 +238,18 @@ internal static class GeneratorTestHarness
 
     return driver.RunGenerators(compilation).GetRunResult();
   }
+}
+internal sealed class InMemoryAdditionalText : AdditionalText
+{
+  private readonly SourceText Text;
+
+  public InMemoryAdditionalText(string path, string content)
+  {
+    Path = path;
+    Text = SourceText.From(content);
+  }
+
+  public override string Path { get; }
+
+  public override SourceText GetText(CancellationToken cancellationToken = default) => Text;
 }

@@ -1,0 +1,19 @@
+<Project>
+  <!-- csc does not attach XML documentation to metadata references, so the FastEndpoint
+       generator cannot read contract summary/remarks unless this file is an AdditionalFile.
+       The xml sits beside the referenced contract dll and exists once that project has built,
+       which is before CoreCompile. A cross-item metadata comparison does not batch here, so
+       the allow-list is matched as a pipe-delimited property. -->
+  <Target Name="AddApiEndpointContractDocumentation"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EnableApiEndpointGeneration)' == 'true' and '$(ApiEndpointContractAssemblies)' != ''">
+    <PropertyGroup>
+      <_AllowedContractAssemblyNames>|$([System.String]::Copy('$(ApiEndpointContractAssemblies)').Replace(';','|'))|</_AllowedContractAssemblyNames>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ContractDocumentation Include="@(ReferencePath)"
+        Condition="$([System.String]::Copy('$(_AllowedContractAssemblyNames)').Contains('|%(Filename)|')) and Exists('%(RootDir)%(Directory)%(Filename).xml')" />
+      <AdditionalFiles Include="@(_ContractDocumentation->'%(RootDir)%(Directory)%(Filename).xml')" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -21,6 +21,8 @@
 // principal who also holds Administrator is still evaluated as the agent token: a
 // feedback:note token cannot download, and a feedback:read token does not receive the
 // owner display name.
+// One token that holds all four feedback scopes lists Status = New, reads the item, sets
+// severity, adds a note, and moves status off New. The next Status = New list omits it.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -343,6 +345,44 @@ public class Returns_
 
     using HttpClient every = Bearer(everyToken);
     (await PostReplyAsync(every, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+  }
+
+  public static async Task Ok_Given_Four_Scope_Token_Processes_A_New_Item()
+  {
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
+    await SetRolesAsync(filerId, RoleIds.Member);
+    Guid itemId;
+    using (HttpClient filer = Client(filerCookie))
+    {
+      itemId = await FileFeedbackAsync(filer, "Reviewer loop target");
+    }
+
+    string token = await IssueTokenAsync(
+      AgentScopes.FeedbackRead,
+      AgentScopes.FeedbackNote,
+      AgentScopes.FeedbackSeverity,
+      AgentScopes.FeedbackStatus);
+
+    using HttpClient reviewer = Bearer(token);
+    ListFeedback.Query listNew = new()
+    {
+      Status = FeedbackStatus.New,
+      PageSize = ListFeedback.MaxPageSize,
+    };
+    string listRoute = listNew.GetRouteWithQueryString();
+    ListFeedback.Response before = await ReadAsync<ListFeedback.Response>(await reviewer.GetAsync(listRoute));
+    before.Items.ShouldContain(item => item.FeedbackItemId == itemId);
+
+    GetFeedbackForAdmin.Response detail = await ReadAsync<GetFeedbackForAdmin.Response>(
+      await reviewer.GetAsync($"api/admin/feedback/{itemId}"));
+    detail.Item.FeedbackItemId.ShouldBe(itemId);
+
+    (await PutSeverityAsync(reviewer, itemId, FeedbackSeverity.High)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await PostNoteAsync(reviewer, itemId, "Reviewed by the agent")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    (await PutStatusAsync(reviewer, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+    ListFeedback.Response after = await ReadAsync<ListFeedback.Response>(await reviewer.GetAsync(listRoute));
+    after.Items.ShouldNotContain(item => item.FeedbackItemId == itemId);
   }
 
   public static async Task Role_Assigned_Agent_Should_Not_Inherit_Human_Grants()

@@ -372,6 +372,8 @@ after for its report.
 
 ASP.NET Core Data Protection encrypts auth cookies and other protected payloads. Every replica of one app must share one key ring, and the ring must outlive a container.
 
+Agent access tokens (`IAgentTokenStore`) are in memory on every host, even when postgres is on: a restart or a second instance invalidates live tokens, and the reviewer reissues with its key.
+
 | postgres | Where the ring lives |
 |----------|----------------------|
 | on, and a connection string is set | Postgres table `data_protection.keys`, via `PersistKeysToDbContext` on `PostgresDbContext`. The application name is the template source name (`TimeWarp.Architecture` here; `dotnet new` rewrites it to the generated app's name), so every replica of that app shares keys and two apps do not. `dev deploy migrate` creates the table with the other migrations. |
