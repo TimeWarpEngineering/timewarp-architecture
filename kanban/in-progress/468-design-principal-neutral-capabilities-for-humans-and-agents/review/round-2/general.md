@@ -1,0 +1,15 @@
+# Round 2 — general
+**Date:** 2026-11-02
+**Scope reviewed:** Delta since round-1 `base.sha` `9769c06c195759fd9ec8ae8ada0f455fdb322bff` (commit `074ea5a9c`). `design.md` and the task Results sentence. Prior M1–M7 re-checked against that delta and the cited handlers, seed, and hosted `[EndpointAuthorize]` scheme lists. No product code in the diff.
+
+## Summary
+
+The fix pass addresses M1–M7 in the design text, and those seven claims match the code they cite. Scheme lists on hosted contracts are 34 human-only, 14 both, and 5 agent-only (4 web plus the api-host sample). `AgentScopePermissionSeed` expands `identity:read` to `identity.read` and `agent-link.manage.self`, and section 7.2 copies that expansion without skipping the default bundle. Per-id `TokenPermission` replaces the token-wide `onBehalfOf`. Q3, Q7, and Q18 stay open. The new download rule does not match the handler it says it preserves: the attribute permission and the unlinked-draft gate disagree with the stated disjunction. The implementer restatement matches the task; no misread.
+
+## Issues
+
+### Issue 1 — Severity: bug
+- File: kanban/in-progress/468-design-principal-neutral-capabilities-for-humans-and-agents/design.md:369
+- Description: The M3 fix states one surviving rule for `DownloadFeedbackAttachment` and then describes a wider one. Section 6.1 (row at line 369, bullet at lines 376–380) and the section 5 Feedback row (line 329) say the handler rule is the owner, or `feedback.read`, or `admin.feedback.read`, and that a reviewer holding `feedback.read` and an administrator holding `admin.feedback.read` both pass. The same sentences put `feedback.file.self` on the `[EndpointAuthorize]` attribute. That policy runs before the handler, so a caller must hold `feedback.file.self` as well as one arm of the disjunction. A principal holding only `feedback.read` or only `admin.feedback.read` never reaches the handler. That is today's feedback-reviewer agent: `AgentScopePermissionSeed` expands `feedback:read` to `feedback.read` alone, and `PermissionIds` documents `feedback.file.self` as not an agent-token scope. The design puts `feedback.file.self` in the default only as Q2, so the "reviewer passes" outcome depends on an open question. `RolePermissionSeed` gives Administrator both self-service (including `feedback.file.self`) and `admin.feedback.read`, which hides the extra requirement for seeded humans. Separately, `download-feedback-attachment-handler-application.cs` returns 404 for a non-owner when `FeedbackItemId` is null, before the cross-owner disjunction (lines 69–76). The handler Design region says an unlinked draft stays owner-only. The new "one disjunction" drops that gate, so the sentence that an administrator holding `admin.feedback.read` passes is false for an unfiled draft.
+- Suggestion: State one access rule that matches the handler. Keep the attribute from excluding callers the handler allows: either leave download without a single policy and say why it stays handler-only, or name the attribute permission as necessary and stop saying `feedback.read` alone passes. Keep the unlinked-draft owner-only gate in the surviving rule.
+- Status: open

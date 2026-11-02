@@ -6,11 +6,11 @@
 **Plan / brief:** `task.md` description and `## Goal (implementer restatement)`. Deliverable is `design.md` in this folder. No product code.
 **Effort:** 2
 **Reviewer roster:** general
-**Session IDs:** review oracle grok `01a19cfa-8b71-7823-acb1-a893538059fd` (2026-11-02). Implementer session is on `task.md`.
+**Session IDs:** review round 1 grok `01a19cfa-8b71-7823-acb1-a893538059fd` (2026-11-02). Review round 2 grok `01a19d09-e1b0-7c00-a784-e17012772ce4` (2026-11-02). Implementer session is on `task.md`.
 
 ## Budget (by-diff)
 
-- Lines changed: 582
+- Lines changed: 356
 - Effort: 2
 - TCB hits: none
 - Roster axes: general
@@ -24,4 +24,8 @@
 - Address the diff and surrounding call sites; re-verify falsifiable claims against the repo
 - Prior rounds are immutable; new work goes in `round-(N+1)/`
 
-The roster is general only. This oracle wrote `review/round-1/general.md` directly. No specialist was spawned.
+The roster is general only. Round 1 wrote `review/round-1/general.md` directly. Round 2 wrote `review/round-2/general.md` directly. No specialist was spawned.
+
+## Round 2 scope
+
+Delta since round-1 `base.sha` `9769c06c195759fd9ec8ae8ada0f455fdb322bff` (fix commit `074ea5a9c`): `design.md` plus the task Results sentence. Prior M1–M7 re-verified. New findings use the next M id. Round 1 files stay as they were.

@@ -108,8 +108,12 @@ whatever its kind and whatever credential authenticated it. Concretely:
   subject's own", which an agent's own token satisfies. Q18 asks Steve to confirm that reading or
   to narrow those rows to a browser session.
 - The non-permission policies `IdentitySessionDefaults.AuthenticatedPolicy` and
-  `XaiChatDefaults.AuthenticatedPolicy` go away. Every protected operation names a permission id.
-  The two agent-chat operations need one (section 10 asks which).
+  `XaiChatDefaults.AuthenticatedPolicy` go away. Every protected operation names a permission id,
+  with one exception: `DownloadFeedbackAttachment` keeps an `[EndpointAuthorize]` with no
+  `Policy` (any host credential, authenticated), because its rule is a resource disjunction that
+  no single id expresses and the handler is the whole rule (section 6.1). It is the only hosted
+  operation with that shape today and stays the only one. The two agent-chat operations need a
+  permission id (section 10 asks which).
 - The api host's `agent-scope:*` claim policies become permission-claim policies over the same
   ids (`RequireClaim("timewarp:permission", PermissionIds.IdentityRead)`), so the sample endpoint
   reads like a web endpoint.
@@ -326,7 +330,7 @@ How an outside agent learns about it from the OpenAPI document alone (task 331's
 | `endpoint-auth-posture-analyzer` (TWA0013, TWA0014, TWA0020) | Unchanged. |
 | Agent-link feature | Generalised to delegator and delegate. `AgentHumanLink` gains `DelegatedPermissions` and a Revoked status reachable from Approved. `ApproveAgentHumanLink` takes the delegated list and is first-party. `RevokeAgentHumanLink` is new. The three handlers' `PrincipalKind` checks (request: caller is an Agent; approve and deny: caller is a Human) follow Q7 and are not settled here: if Steve keeps the link agent-to-human, they stay, the revoke handler gets the same check, and their Design region says they define the product shape of the link and are not a capability rule; if he generalises the link, they are deleted and the entity's `AgentPrincipalId` and `HumanPrincipalId` become `DelegatePrincipalId` and `DelegatorPrincipalId`. Either way they are the only kind checks left in the stack after the resolver change. `GetHumanUx` is unchanged. |
 | `features/metered-capability` and `timewarp-402` | The gate and ledger are unchanged. A new `PurchaseCapability` operation in a `features/capability-purchases` slice uses `PaymentGate` and `SettlementFundingService`, then writes the purchased-permission row. A purchasable catalog (`PurchasablePermissionOptions`: permission id, price, duration?) is host configuration validated at start. `InvokeMeteredCapability` keeps `demo.invoke` and keeps billing per call. |
-| Feedback | `ReplyToFeedback` becomes permission-only on `admin.feedback.manage` unless Q6 keeps it first-party. `DownloadFeedbackAttachment` gains `feedback.file.self` on the attribute and keeps one handler rule, owner or `feedback.read` or `admin.feedback.read`, with the per-scheme branch and `IAgentPermissionScopeSource` removed (section 6.1, handler-level checks). The `admin.profiles.read` gate in `FeedbackOwnerNames` and the principal reads stays and is evaluated against the credential. `feedback.file.self` becomes available to agents through the default (Q2). |
+| Feedback | `ReplyToFeedback` becomes permission-only on `admin.feedback.manage` unless Q6 keeps it first-party. `DownloadFeedbackAttachment` keeps `[EndpointAuthorize]` with no `Policy` and loses its scheme list; the handler stays the whole rule (section 6.1, handler-level checks): an unlinked draft is owner-only, and a linked attachment opens for the owner or for a credential whose effective set holds `feedback.read` or `admin.feedback.read`. The per-scheme branch, `IAgentPermissionScopeSource`, and the scheme sentences in the handler's Design region go; the region states the rule above. A principal holding only `feedback.read` (today's feedback-reviewer agent after the section 7.2 copy) still passes. The `admin.profiles.read` gate in `FeedbackOwnerNames` and the principal reads stays and is evaluated against the credential. |
 | Agent chat | `CompleteAgentChat` and `GetAgentChatConfiguration` need a permission id instead of the authenticated policy (section 10). |
 | api host | `agent-bearer-policies-server.cs` and `AgentTokenDefaults.IdentityReadPolicy`/`DemoInvokePolicy` are replaced by `AddPermissionPolicies` over claim type `timewarp:permission`. The bearer handler stamps one `timewarp:permission` claim per token id and, for each id with a `DelegatedFrom`, one `timewarp:delegated_from` claim whose value is `<permissionId>:<delegatorPrincipalId>`, so the first-party check and audit read claims only. |
 | `GetCurrentSession` | Projects `effective(P)` for the session, with sources, so the SPA `AuthorizeView` names keep working. |
@@ -366,18 +370,30 @@ H human session (plus mock), A agent token, HA both.
 | InvokeMeteredCapability | `GET api/demo/metered-capability` | `demo.invoke`, then the ledger | A |
 | GetCredentials, AddAgentKey, RenameCredential | `api/identity/credentials…` | `credential.manage.self` | HA (no mock) |
 | ListFeedback, GetFeedbackForAdmin, AddFeedbackNote, SetFeedbackSeverity, ChangeFeedbackStatus | `api/admin/feedback…` | `feedback.read` / `.note` / `.severity` / `.status` | HA |
-| DownloadFeedbackAttachment | `GET api/Feedback/attachments/{id}` | `feedback.file.self` on the attribute (today it has schemes and no policy), then the handler rule: the attachment's owner, or `feedback.read`, or `admin.feedback.read` | HA |
+| DownloadFeedbackAttachment | `GET api/Feedback/attachments/{id}` | none on the attribute: `[EndpointAuthorize]` with no `Policy`, today's shape minus the scheme list. The handler rule below is the whole rule | HA |
 | api host GetAgentBearerIdentity | `GET api/agent/bearer/me` | `identity.read` | A |
 
 Handler-level checks that survive the scheme split. These are resource rules inside a handler,
 not endpoint policies, and they stay; what changes is that each is evaluated against the
 credential's effective set (the token's list for a bearer) with no scheme branch:
 
-- `DownloadFeedbackAttachment`: owner, or `feedback.read`, or `admin.feedback.read`. Today the
-  handler asks a different disjunction per scheme (`feedback.read` only on the agent-token
+- `DownloadFeedbackAttachment`, in handler order, with no attribute policy in front of it:
+  1. No principal: 401. No attachment row: 404.
+  2. The attachment has no `FeedbackItemId` (an unlinked draft): the owner passes; every other
+     caller is 404 before any permission is consulted. This gate is unchanged.
+  3. The attachment is linked to an item: the owner passes; otherwise the credential's effective
+     set (the token's list for a bearer) must hold `feedback.read` or `admin.feedback.read`, or
+     the caller is 404.
+  4. A row whose bytes are gone is 404 "attachment no longer available", unchanged.
+
+  Today step 3 asks a different disjunction per scheme (`feedback.read` only on the agent-token
   scheme; `admin.feedback.read` or `feedback.read` on the session schemes). After the change it
-  asks one disjunction of the credential. A reviewer agent holding `feedback.read` and an
-  administrator holding `admin.feedback.read` both pass; the filer passes as owner.
+  asks one disjunction of the credential. The attribute requires nothing beyond authentication
+  because no single id covers the owner arm and both reviewer arms, so any attribute permission
+  would exclude a caller the handler allows: a reviewer whose only feedback id is `feedback.read`
+  (today's `feedback:read` agent after section 7.2) or an administrator holding
+  `admin.feedback.read` without `feedback.file.self`. Both pass step 3; the filer passes as
+  owner.
 - `admin.profiles.read` inside `ListPrincipals`, `GetPrincipal`, and the feedback admin reads
   (`FeedbackOwnerNames`): the PII gate that nulls display names and emails, and 403s a profile
   search or sort, when the caller lacks it. It stays exactly as it is, evaluated against the
@@ -472,7 +488,7 @@ Scope, dependencies, and proof gates only. Same-repo batches run serially throug
 | 1 | Identity package: permissions on the token | Add the `TokenPermission(PermissionId, DelegatedFrom?)` record; `AgentTokenGrant.Scopes` becomes `Permissions` as a list of it; `IAgentTokenStore.Issue` takes that list and no token-wide `onBehalfOf`; delete `AgentScopes`. Bump `<Version>` and the two pins. | none | `dev build` 0/0; identity tests; `dev check-version`; release cut after merge (`tw-release`) |
 | 2 | Default and effective permissions | Kind-free `EffectiveRolesResolver`; `IPrincipalPermissionStore` with EF and in-memory stores; `authorization_audit` store; `EffectivePermissions` service with sources; evaluator without scheme split; default bundle per Steve's answer to Q1; migration converting 466 tables; `SetPrincipalPermissions` with ceiling, not-self, audit; `SetRolePermissions` ceiling; remove role agent scopes and the two UI boxes; Principal page effective view and grant editor. | 1 | `dev build`; resolver, evaluator, set-permissions, get-principal co-located runfiles; web-server integration suite; `dev template-smoke --matrix` (postgres-off excludes) |
 | 3 | Token issuance by permission | `CompleteAgentTokenIssuance` takes `Permissions`, subset check against effective, 403 with missing ids and request hint, response fields; `GetAgentIdentity` returns permissions; bearer handler stamps `timewarp:permission` claims; OpenAPI security scopes are permission ids; reviewer guide text; delete `OpenApiAgentBearer` inversion. | 2 | Issuance integration class; `open-api-bearer-security-tests`, `open-api-agent-reviewer-guide-tests` rewritten; `dev build` |
-| 4 | Endpoints authorize by permission | Attribute gains `Requires`; generator emits all schemes by default and the first-party requirement; new analyzer id; every hosted contract updated per section 6; `endpoint-auth.md` rewritten; api host moves to permission claims and `AddPermissionPolicies`; replace the two authenticated policies with the permission from Q5; delete the agent-only and human-only pins and add permission-only pins (an agent token on `ListPrincipals` with `admin.principals.read` passes; without it, 403). | 3 | Analyzer and generator tests; `dev build`; full web and api integration suites; `dev template-smoke --matrix` |
+| 4 | Endpoints authorize by permission | Attribute gains `Requires`; generator emits all schemes by default and the first-party requirement; new analyzer id; every hosted contract updated per section 6; `DownloadFeedbackAttachment` keeps no policy and its handler collapses to the one disjunction in section 6.1; `endpoint-auth.md` rewritten; api host moves to permission claims and `AddPermissionPolicies`; replace the two authenticated policies with the permission from Q5; delete the agent-only and human-only pins and add permission-only pins (an agent token on `ListPrincipals` with `admin.principals.read` passes; without it, 403). | 3 | Analyzer and generator tests; `dev build`; full web and api integration suites; download pins (a bearer holding only `feedback.read` gets 200 on another owner's linked attachment and 404 on their unlinked draft; a session holding `admin.feedback.read` without `feedback.file.self` gets 200 on the linked one); `dev template-smoke --matrix` |
 | 5 | Capability requests | New slice: request, mine, list, approve, deny; approve and deny carry `Requires = FirstParty` with a Design-region reason (section 6.2); ceiling, not-self, audit; admin page; 403 problem detail hint from issuance and endpoints; guide text. | 2, 3, 4 | Slice co-located tests; integration test of the full loop by an agent token from OpenAPI text; a token whose `admin.principals.manage` has a `DelegatedFrom` gets 403 on approve and deny while a token holding it as its own passes; new-analyzer test that approve and deny declare `Requires`; `dev build` |
 | 6 | Delegation | Link gains delegated list and revoke; approve takes the list; first-party on approve, deny, revoke; issuance cap `D ∩ effective(delegator)` with own-sources-first provenance; `DelegatedFrom` set per token id and `OnBehalfOf` on the audit row; Agent links page picker and revoke button; the three handlers' `PrincipalKind` checks kept or removed per Steve's answer to Q7 (section 5, agent-link row). | 3, 4 | Link co-located tests; issuance tests for cap, removal at next token, revoke; `dev build`; integration suite |
 | 7 | Purchases | `PurchasablePermissionOptions` with validator; `PurchaseCapability` through `PaymentGate` and `SettlementFundingService`; `principal_purchased_permissions` store (idempotent by receipt, optional expiry); evaluator source; OpenAPI 402 text with price; guide text. Depends on 3 for the guide text and the purchased id on the next token, and on 4 so the new endpoint is declared permission-only from the start. | 2, 3, 4 | Payment package tests with mocked facilitator (104-012 pattern); purchase then token then call integration test; `dev build` |

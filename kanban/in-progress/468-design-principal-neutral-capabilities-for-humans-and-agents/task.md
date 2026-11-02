@@ -149,6 +149,19 @@ file gets `## Results` with a non-empty How to validate.
   is corrected (M6); the ceiling is marked proposed under Q3, `ReplyToFeedback` points at Q6,
   and Q18 asks first-party versus present person (M7). Statuses set to fixed on
   `review/round-1/merged.md`. No product code changed.
+- Review round 2: grok session `01a19d09-e1b0-7c00-a784-e17012772ce4` (2026-11-02). Effort 2,
+  roster general. Re-reviewed the delta since `9769c06c`. M1 through M7 re-verified fixed.
+  New open finding M8 (download rule). Wrote `review/round-2/general.md` and
+  `review/round-2/merged.md`. Disposition is not written.
+- Fix pass for round 2 (2026-11-02), implementer-claude (Claude Fable 5.1), implement-fix-3 oracle.
+  Re-read the download handler and both seeds before editing: `feedback:read` expands to
+  `feedback.read` alone and `feedback.file.self` is not an agent scope, so any attribute
+  permission would exclude a caller the handler allows. Fixed M8 in `design.md`: download keeps
+  `[EndpointAuthorize]` with no `Policy` (its shape today, minus schemes), section 2.4 names it as
+  the one exception to "every protected operation names a permission id", the 6.1 row names no
+  attribute permission, the handler-level list restates the rule in handler order including the
+  unlinked-draft owner-only gate, section 5 no longer ties agent download access to Q2, and task 4
+  carries download pins. M8 set to fixed on `review/round-2/merged.md`. No product code changed.
 
 ## Results
 
@@ -168,8 +181,11 @@ become permission-only, link approve and deny stay first-party, and `SetRoleAgen
 removed. All 5 agent-only become permission-only. Of the 14 both, 10 become permission-only and 4
 (passkey add and add-existing start and complete, credential revoke) stay first-party. New
 first-party operations are link revoke and capability-request approve and deny. Every first-party
-row names its reason. Handler-level resource checks (the attachment download disjunction, the
-`admin.profiles.read` PII gate, filer-only reads) survive and are listed under 6.1.
+row names its reason. Handler-level resource checks are listed under 6.1. The
+`admin.profiles.read` PII gate and the filer-only reads match the handlers. The attachment
+download keeps no attribute policy, and the stated rule is the handler's: unlinked drafts are
+owner-only, linked attachments open to the owner or a credential holding `feedback.read` or
+`admin.feedback.read`.
 
 Three design elements are proposals the description did not name and are listed as open questions
 rather than settled: the grant ceiling (Q3), the first-party reading of "a present person" (Q18),
@@ -181,15 +197,17 @@ The implementer restatement matches the task. Service accounts are the third kin
 
 ### Review
 
-Round 1, effort 2, roster general only. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+Round 1, effort 2, roster general only. Artifacts: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`. Fix pass landed 2026-11-02. M1 through M7 are `fixed` on `review/round-1/merged.md`.
+
+Round 2, same effort and roster, reviewed the delta since `9769c06c` (round-1 `base.sha`). Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`. M1 through M7 re-verified fixed. M8 found that the download rule added in the round-1 fix did not match the handler it said it preserved (`feedback.file.self` on the attribute excluded a `feedback.read`-only reviewer, and the stated disjunction dropped the unlinked-draft owner-only gate). Fix pass 3 landed 2026-11-02: download keeps no attribute policy, and sections 2.4, 5, 6.1, and task 4 state the handler's rule in handler order. M8 is `fixed` on `review/round-2/merged.md`.
 
 | Severity | open | fixed | wontfix |
 |----------|------|-------|---------|
-| bug | 0 | 5 | 0 |
+| bug | 0 | 6 | 0 |
 | suggestion | 0 | 1 | 0 |
 | nit | 0 | 1 | 0 |
 
-Fix pass landed 2026-11-02 (Session). M1 through M7 are `fixed` on `review/round-1/merged.md` with disposition notes. Disposition is not written; the host runs review round 2 against the post-fix diff.
+Disposition is not written. The host runs review round 3. No `accepted-exceptions`. The implementer restatement matches the task; no misread under Learnings.
 
 ### How to validate
 
@@ -203,19 +221,24 @@ grep -c '^## ' "$D"
 sed -n '/^## 10\./,$p' "$D" | grep -c '^[0-9]*\. \*\*'
 grep -c -iE 'on_behalf_of' "$D"
 grep -n -E '^\| [567] \|' "$D"
+grep -c 'feedback.file.self` on the attribute' "$D"
+grep -n -A3 'DownloadFeedbackAttachment`, in handler order' "$D"
 ```
 
 Expect: the first command prints nothing (no change outside `kanban/`). The folder holds `task.md`,
 `design.md`, and `review/` beside the host-owned journal and progress log. The design has 10 `##`
 sections and 18 numbered open questions in section 10. No `on_behalf_of` remains (provenance is
 per id as `DelegatedFrom`). The Depends-on cells for tasks 5, 6, and 7 each include 3 and 4.
-Section 1 says "Both: 14". Section 6.1 has its own `DownloadFeedbackAttachment` row followed by a
-handler-level checks list. Section 6.2 names a reason for every first-party row. Section 8 has
+Section 1 says "Both: 14". Section 6.1 has its own `DownloadFeedbackAttachment` row that names no
+attribute permission (the `feedback.file.self` count is 0), followed by a handler-level checks
+list whose download entry puts the unlinked-draft owner-only gate before the `feedback.read` or
+`admin.feedback.read` disjunction. Section 6.2 names a reason for every first-party row. Section 8 has
 eight tasks, each with a Depends on column and proof gates and no estimate.
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7
+- Round 2: Blocked — open M8
 
 ## Notes
 
