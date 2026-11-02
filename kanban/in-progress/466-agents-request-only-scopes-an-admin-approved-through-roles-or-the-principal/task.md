@@ -130,7 +130,10 @@ Round 1 left five items. This pass closes them:
 - [x] `dev build` 0/0; affected suites pass; `dev template-smoke` (template output changes); `dev check-version` if platform packages change
 - [x] Postgres-off template excludes the four EF agent-scope files
 - [x] One `AgentScopeOrder` helper used by the five call sites
-- [x] Member role warns that its agent scopes reach every unassigned principal
+- [ ] ~~Member role warns that its agent scopes reach every unassigned principal~~ — superseded by the Member decision below
+- [ ] Agents are not Members: an agent principal with no assigned role has no effective role (humans keep the Member default)
+- [ ] Member warning removed or reworded for the new rule; Design regions (effective roles, SetRoleAgentScopes) record it
+- [ ] Tests: a roleless agent resolves to no role and gets only identity:read even when Member carries agent scopes; a roleless human still resolves to Member
 - [x] Co-located test covers effective-set sources and catalog order
 - [x] Principal page disables Save agent scopes while that action is active
 - [x] `--web false` excludes the agent-scope approval test helper
@@ -168,6 +171,16 @@ Round 1 left five items. This pass closes them:
   2026-11-02. Scope was the fix delta 778e45b44..5a60e94c5. M1–M5 are fixed, with 0 new and
   0 open findings. Disposition: clean. Artifacts are in `review/round-2/` and
   `review/disposition.md`.
+- Member decision: 431c3e64-803d-4442-8ca1-a6a431770511 (Steve, 2026-11-02), after PR #624 was
+  green (CI, full web integration 434/0/1, template-smoke --matrix). Round 1's M3 left it as
+  Steve's call. **Agents are not Members.** The effective-roles default (unassigned → Member)
+  applies to human principals only. An agent principal (one minted by
+  complete-agent-key-registration, with no human credential) that has no assigned role has no
+  effective role, so its approved set is identity:read plus principal grants. Member keeps its
+  human meaning. Remove the Member role-page warning or reword it to say Member agent scopes reach
+  roleless humans who hold an agent key, not self-registered agents. Change the resolver
+  (`IEffectiveRolesResolver` and its Design SSOT), not the approval code, so the admin Principal
+  page and claims show the same thing. Fix pass on the same PR.
 
 ## Results
 
