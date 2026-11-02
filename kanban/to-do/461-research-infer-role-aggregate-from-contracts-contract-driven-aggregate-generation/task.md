@@ -7,7 +7,6 @@ agreement between front end and back end. Goal: decide whether, and how, an aggr
 children, a store port, and a default EF mapping can be source-generated from the existing Roles
 contracts, following the `tw-aggregate-pattern` golden pattern (Profile exemplar).
 
-Assignee: Jenzi
 
 Kitchen draft: `contracts-aggregate-example.md` (worked example with real code quoted verbatim and
 proposed code marked).
