@@ -86,6 +86,52 @@ Write `design.md` in this task folder (not under `documentation/`):
 - **Open questions** for Steve, one decision per item in plain words. Do not settle a product
   choice the description above leaves open; list it.
 
+## Decisions on the open questions (Steve, 2026-11-03)
+
+Revise `design.md` to these. Replace section 10 with a "Decided" list that records each answer,
+and keep an "Open questions" list only for anything new the revision raises.
+
+- **Purchases are not a source.** A grant is a grant; the access check never asks how it was
+  obtained. Payment, when it comes, is an automated grantor in a billing component that creates
+  and removes ordinary grants. x402 is pay-per-call (credits) and does not create grants. Tiers
+  are rate limits. Sources are now **roles, direct grants, and delegation**. Remove the purchase
+  worked example (3.1) or recast it as "an admin grants an unvouched agent a capability". Drop
+  the trust-tier and purchasable-set material (old Q10, Q11) as out of scope.
+- **Q1:** a new default role named **Principal** holds the default bundle. Member stays an
+  ordinary granted role.
+- **Q2:** the default bundle is the section 2.3 proposal **without `feedback.file.self`** (sign-up
+  spam). `credential.manage.self` and the rest stay.
+- **Q3:** a grantor may grant only what it holds. No `grant.<prefix>` permissions.
+- **Q4:** revocation takes effect at the next token. Tokens carry their list; no per-request
+  re-check. Start there; per-request evaluation is a later option.
+- **Q5:** agent chat (`CompleteAgentChat`, `GetAgentChatConfiguration`) spends the site's xAI key.
+  It gets its own permission, outside the Principal bundle, and is not reachable with a bearer
+  token from the API. Bring-your-own-key use is unaffected.
+- **Q6:** reply to the filer is `admin.feedback.manage` for any principal that holds it. An agent
+  holding it may reply.
+- **Q7:** links stay agent → human only. An agent that wants a sub-agent mints a key with a
+  smaller permission set and hands it over; the app does not model that.
+- **Q8:** a linked agent **acts as the human** on the human's own resources. That is the point of
+  the link, not a separate design. Each token request names who it acts as: **as itself** (its own
+  grants) or **on behalf of its linked human** (the human's delegated subset, capped live by what
+  the human holds). Every audited action records both the **actor** (the agent) and the
+  **subject** (the human).
+- **Q9:** no transitive delegation.
+- **Q12:** requests are all-or-nothing. Asking for anything the requester may not ask for refuses
+  the whole request.
+- **Q13:** the approver is an admin (`admin.principals.manage` plus the ceiling). No separate
+  approver role for now.
+- **Q14:** no alias period. The token request switches from `scopes` to `permissions` at once;
+  the old field returns a 400 naming the new one.
+- **Q15:** the token request's `permissions` list is required.
+- **Q16:** no subset for browser sessions. Subsets are for bearer tokens only.
+- **Q17:** add `admin.audit.read`. Keep the audit log forever; no pruning in the template.
+- **Q18:** no browser-session rule. Ask-AI approvals need nothing special (agents don't hold those
+  permissions), and confirm-before-delete is screen UX, not API. Approve and grant operations
+  (link approve/deny, capability request approve/deny, permission grants) **refuse a token acting
+  on someone's behalf**, so a linked agent cannot approve its own escalation. A principal acting
+  as itself, human or agent, may approve within its ceiling.
+
 ## Goal (implementer restatement)
 
 Produce `design.md` in this task folder and change no product code. The document describes one
@@ -114,6 +160,8 @@ questions list that leaves every product choice the description leaves open to S
 file gets `## Results` with a non-empty How to validate.
 
 ## Checklist
+
+- [ ] `design.md` revised to the 2026-11-03 decisions (sources, Principal role, act-as on the token, delegated tokens refused for approvals)
 
 - [x] `design.md` covers the model, the four acquisition paths with worked examples, and the request flow
 - [x] Effect on every existing piece listed above, including the `TimeWarp.Identity` package
@@ -183,6 +231,9 @@ file gets `## Results` with a non-empty How to validate.
   `review/round-4/merged.md`, and `review/disposition.md`. Outcome clean. The implementer
   restatement matches the task. No misread.
 - Installed ganda changed during this walk: was 50296336 bytes 970fac827e28467d47743c6e9cdca8036036a6be2f0b3305a50018f5b8cf54af; now 50312784 bytes 50172fe6a7b99392943130486d96ba3649903cf8cf43e50ad96f1d4a64dbb327
+
+- Decisions: 431c3e64-803d-4442-8ca1-a6a431770511 (Steve, 2026-11-03). All open questions answered;
+  revision pass on the same PR (#625).
 
 ## Results
 
