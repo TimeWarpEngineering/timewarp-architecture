@@ -130,8 +130,9 @@ these classes boots a host.
 - Standalone `dotnet run` of each new runfile passed, and the counts add up to the originals.
 - `dev lint-skills` passed.
 - `dev template-smoke` (default variant) passed. The generated web aggregator ran 458 of 458.
-- `ganda repo audit`: clean once this kitchen was published. Before that, `kanban-landed` was the
-  only failure.
+- `ganda repo audit`: exit 0. The only remaining item is the `kanban-landed` advisory for nine
+  other tasks' claims that have no worktree. `ganda repo audit --fix` set the executable bit on
+  the new split runfiles, and that is committed. Support files stay non-executable.
 
 ### How to validate
 
@@ -156,3 +157,4 @@ Expect:
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+- Implement oracle: implementer-claude (Opus 5.5) 2026-11-04. A Sonnet helper did the runfile splits, and I re-ran the gates myself.
