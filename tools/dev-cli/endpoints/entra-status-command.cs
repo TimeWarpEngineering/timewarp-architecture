@@ -71,7 +71,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         return false;
       }
 
-      Secrets = EntraSetup.ParseUserSecretsList(output.Stdout);
+      Secrets = EntraUserSecrets.ParseUserSecretsList(output.Stdout);
       return true;
     }
 
@@ -80,7 +80,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       List<string> methodKeys = [];
       foreach (string key in Secrets.Keys)
       {
-        if (EntraSetup.TryParseSignInMethodIndex(key, out _))
+        if (EntraUserSecrets.TryParseSignInMethodIndex(key, out _))
         {
           methodKeys.Add(key);
         }
@@ -269,7 +269,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
         return;
       }
 
-      if (!EntraSetup.TryReadAppShow(output.Stdout, out string shownAppId, out string displayName, out IReadOnlyList<string> redirectUris))
+      if (!EntraAzJson.TryReadAppShow(output.Stdout, out string shownAppId, out string displayName, out IReadOnlyList<string> redirectUris))
       {
         Terminal.WriteLine($"App registration: {appId} (could not parse az output)");
         WarnIfStoredClientIdDiffers(storedClientId, foundByName);
@@ -295,19 +295,19 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
 
     private void WarnIfStoredClientIdDiffers(string? storedClientId, string? foundByName)
     {
-      if (!EntraSetup.StoredClientIdDiffersFromFoundApp(storedClientId, foundByName))
+      if (!EntraClientSecrets.StoredClientIdDiffersFromFoundApp(storedClientId, foundByName))
       {
         return;
       }
 
       Terminal.WriteLine("");
-      Terminal.WriteLine(EntraSetup.FormatClientIdMismatchWarning(storedClientId!, foundByName!).Yellow());
+      Terminal.WriteLine(EntraClientSecrets.FormatClientIdMismatchWarning(storedClientId!, foundByName!).Yellow());
     }
 
     private async Task<string?> FindAppIdByDisplayNameAsync(bool announceFailures)
     {
       Secrets.TryGetValue(EntraSetup.TenantDomainKey, out string? domain);
-      IReadOnlyList<string> lookupNames = EntraTenants.AppLookupNames(explicitName: null, domain);
+      IReadOnlyList<string> lookupNames = EntraAppLookup.AppLookupNames(explicitName: null, domain);
       string[] arguments =
       [
         "ad",
@@ -332,7 +332,7 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       }
 
       string preferredName = lookupNames[0];
-      if (!EntraSetup.TryFindExactAppIds(output.Stdout, preferredName, out IReadOnlyList<string> preferredIds))
+      if (!EntraAzJson.TryFindExactAppIds(output.Stdout, preferredName, out IReadOnlyList<string> preferredIds))
       {
         return null;
       }
@@ -340,13 +340,13 @@ internal sealed class EntraStatusCommand : EntraGroup, ICommand<Unit>
       IReadOnlyList<string> legacyIds = [];
       if (lookupNames.Count > 1)
       {
-        if (!EntraSetup.TryFindExactAppIds(output.Stdout, lookupNames[1], out legacyIds))
+        if (!EntraAzJson.TryFindExactAppIds(output.Stdout, lookupNames[1], out legacyIds))
         {
           return null;
         }
       }
 
-      EntraTenants.ResolveExistingApp(preferredIds, legacyIds, out string? appId, out bool ambiguous);
+      EntraAppLookup.ResolveExistingApp(preferredIds, legacyIds, out string? appId, out bool ambiguous);
       if (ambiguous)
       {
         if (announceFailures)

@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// The process half of DeployOperate.ChooseBrowserOpen. Both verbs call OpenAsync so the
+// The process half of DeployBrowserChoice.ChooseBrowserOpen. Both verbs call OpenAsync so the
 // opener is not copied: WSL tries wslview, then explorer.exe, then xdg-open; the first
 // success wins. explorer.exe exits 1 after it opens a URL, which still counts.
 // --no-browser, a non-interactive terminal, or no launcher on PATH prints the URL and
@@ -30,11 +30,11 @@ internal static class DeployBrowser
       string? kernel = File.Exists("/proc/version")
         ? await File.ReadAllTextAsync("/proc/version", cancellationToken)
         : null;
-      bool wsl = DeployOperate.IsWsl(Environment.GetEnvironmentVariable("WSL_DISTRO_NAME"), kernel);
-      candidates = DeployOperate.BrowserLaunchers(OperatingSystem.IsWindows(), OperatingSystem.IsMacOS(), wsl);
+      bool wsl = DeployBrowserChoice.IsWsl(Environment.GetEnvironmentVariable("WSL_DISTRO_NAME"), kernel);
+      candidates = DeployBrowserChoice.BrowserLaunchers(OperatingSystem.IsWindows(), OperatingSystem.IsMacOS(), wsl);
     }
 
-    BrowserOpenChoice choice = DeployOperate.ChooseBrowserOpen(
+    BrowserOpenChoice choice = DeployBrowserChoice.ChooseBrowserOpen(
       noBrowser,
       hasTerminal,
       candidates,
@@ -54,7 +54,7 @@ internal static class DeployBrowser
         .WithNoValidation()
         .CaptureAsync(cancellationToken);
 
-      if (DeployOperate.BrowserLaunchSucceeded(launcher.Executable, opened.Success, opened.TimedOut))
+      if (DeployBrowserChoice.BrowserLaunchSucceeded(launcher.Executable, opened.Success, opened.TimedOut))
       {
         return;
       }
@@ -62,7 +62,7 @@ internal static class DeployBrowser
 
     if (choice.Launchers.Count > 0)
     {
-      terminal.WriteLine(DeployOperate.NoBrowserMessage(url).Yellow());
+      terminal.WriteLine(DeployBrowserChoice.NoBrowserMessage(url).Yellow());
     }
   }
 }

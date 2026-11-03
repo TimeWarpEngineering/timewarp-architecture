@@ -34,13 +34,13 @@
 //   5. compose / kubernetes read __EFMigrationsHistory, pipe the script into psql inside the postgres
 //      container (PGPASSWORD from the container's environment; quiet unless --verbose) — stdin is the
 //      script, so plain passthrough, not a TTY — and read the history again. aca runs
-//      DeployOperate.RunAcaBundleAsync: create the operator-migrate firewall rule, run the bundle with
+//      DeployAca.RunAcaBundleAsync: create the operator-migrate firewall rule, run the bundle with
 //      --connection (output streamed and captured for the summary), and delete the rule in finally; a failed
 //      delete is reported from the finally with the command to run by hand, so it is printed even when
 //      Ctrl+C propagates.
 //      aca-neon runs only the bundle. The printed command replaces the connection string with the Neon
 //      placeholder, not the Key Vault one.
-//   6. The report (DeployOperate.BuildMigrationReport / BuildBundleReport: applied ids, "Up to date", or
+//   6. The report (DeployMigrationHistory.BuildMigrationReport / BuildBundleReport: applied ids, "Up to date", or
 //      where it failed), then one summary line: what ran against which target; the exit code is the tool's.
 // The script and the bundle are idempotent (only pending migrations apply), so re-running is safe.
 #endregion
@@ -132,26 +132,26 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       string against;
       if (preflight.Target == AspireDeploy.Kubernetes)
       {
-        string kubernetesNamespace = preflight.Parameters.First(parameter => parameter.Name == AspireDeploy.KubernetesNamespaceParameter).Value;
+        string kubernetesNamespace = preflight.Parameters.First(parameter => parameter.Name == AspireDeployParameters.KubernetesNamespaceParameter).Value;
         executable = "kubectl";
-        arguments = DeployOperate.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployOperate.PsqlScriptCommand(command.Verbose));
-        historyArguments = DeployOperate.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployOperate.PsqlHistoryCommand);
+        arguments = DeployKubernetes.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployMigrationHistory.PsqlScriptCommand(command.Verbose));
+        historyArguments = DeployKubernetes.BuildKubectlMigrateArguments(preflight.KubectlContext!, kubernetesNamespace, DeployMigrationHistory.PsqlHistoryCommand);
         against = $"context {preflight.KubectlContext}, namespace {kubernetesNamespace}";
       }
       else
       {
         string runtime = AspireDeploy.ContainerRuntime(Environment.GetEnvironmentVariable(AspireDeploy.ContainerRuntimeVariable));
-        string[] listArguments = DeployOperate.BuildComposeListArguments();
+        string[] listArguments = DeployCompose.BuildComposeListArguments();
         CommandOutput? list = await AspireDeployPreflight.ProbeAsync(runtime, listArguments, ct);
         if (list is not { Success: true })
         {
-          Fail($"`{runtime} compose ls` failed ({(list is null ? $"{runtime} is not on PATH" : AspireDeploy.FirstLine(list.Stderr, $"exit {list.ExitCode}"))}). "
+          Fail($"`{runtime} compose ls` failed ({(list is null ? $"{runtime} is not on PATH" : AspireDeployCluster.FirstLine(list.Stderr, $"exit {list.ExitCode}"))}). "
             + $"{AspireDeploy.ContainerRuntimeVariable} selects the runtime; pass the project with --project-name if your runtime has no `compose ls`.");
           return Unit.Value;
         }
 
-        ComposeProjectChoice choice = DeployOperate.ChooseComposeProject(
-          DeployOperate.ParseComposeProjects(list.Stdout), command.ProjectName, preflight.RepoRoot, runtime);
+        ComposeProjectChoice choice = DeployCompose.ChooseComposeProject(
+          DeployCompose.ParseComposeProjects(list.Stdout), command.ProjectName, preflight.RepoRoot, runtime);
         if (choice.Project is null)
         {
           Fail(choice.Refusal!);
@@ -159,8 +159,8 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         }
 
         executable = runtime;
-        arguments = DeployOperate.BuildComposeMigrateArguments(choice.Project, DeployOperate.PsqlScriptCommand(command.Verbose));
-        historyArguments = DeployOperate.BuildComposeMigrateArguments(choice.Project, DeployOperate.PsqlHistoryCommand);
+        arguments = DeployCompose.BuildComposeMigrateArguments(choice.Project, DeployMigrationHistory.PsqlScriptCommand(command.Verbose));
+        historyArguments = DeployCompose.BuildComposeMigrateArguments(choice.Project, DeployMigrationHistory.PsqlHistoryCommand);
         against = $"Compose project {choice.Project.Name}";
       }
 
@@ -179,7 +179,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
         .PassthroughAsync(ct);
       string[]? after = await ReadMigrationHistoryAsync(executable, historyArguments, preflight.RepoRoot, ct);
 
-      Report(DeployOperate.BuildMigrationReport(before, after, result.ExitCode), result.ExitCode);
+      Report(DeployMigrationHistory.BuildMigrationReport(before, after, result.ExitCode), result.ExitCode);
       Summarize(preflight.Target, $"{Path.GetFileName(artifact)} with psql", against, result.ExitCode);
       return Unit.Value;
     }
@@ -187,87 +187,87 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
     private async Task MigrateContainerAppsAsync(DeployMigrateCommand command, DeployPreflight preflight, string bundle, CancellationToken ct)
     {
       string subscription = preflight.AzureSubscriptionId!;
-      string? environmentGroup = Environment.GetEnvironmentVariable(AspireDeploy.AzureResourceGroupVariable);
-      ResourceGroupChoice resourceGroup = DeployOperate.ChooseResourceGroup(
+      string? environmentGroup = Environment.GetEnvironmentVariable(AspireDeployAzure.AzureResourceGroupVariable);
+      ResourceGroupChoice resourceGroup = DeployAca.ChooseResourceGroup(
         command.ResourceGroup,
         environmentGroup,
         string.IsNullOrWhiteSpace(command.ResourceGroup) && string.IsNullOrWhiteSpace(environmentGroup)
-          ? await AspireDeployPreflight.ReadUserSecretAsync(preflight.AppHostProject, DeployOperate.AzureResourceGroupConfigurationKey, ct)
+          ? await AspireDeployPreflight.ReadUserSecretAsync(preflight.AppHostProject, DeployAca.AzureResourceGroupConfigurationKey, ct)
           : null);
       if (resourceGroup.Name is null)
       {
-        Fail(DeployOperate.NoResourceGroupMessage(Verb, preflight.AppHostProject));
+        Fail(DeployAca.NoResourceGroupMessage(Verb, preflight.AppHostProject));
         return;
       }
 
       string group = resourceGroup.Name;
-      CommandOutput? servers = await AspireDeployPreflight.ProbeAsync("az", DeployOperate.BuildFlexibleServerListArguments(group, subscription), ct);
+      CommandOutput? servers = await AspireDeployPreflight.ProbeAsync("az", DeployAca.BuildFlexibleServerListArguments(group, subscription), ct);
       string[] serverNames = servers?.Success == true
         ? servers.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         : [];
       if (servers is not { Success: true })
       {
-        Fail($"`az postgres flexible-server list --resource-group {group}` failed ({AspireDeploy.FirstLine(servers?.Stderr ?? "", "az is not on PATH or timed out")}).");
+        Fail($"`az postgres flexible-server list --resource-group {group}` failed ({AspireDeployCluster.FirstLine(servers?.Stderr ?? "", "az is not on PATH or timed out")}).");
         return;
       }
 
       if (serverNames.Length != 1)
       {
-        Fail(DeployOperate.NoFlexibleServerMessage(group, serverNames.Length));
+        Fail(DeployAca.NoFlexibleServerMessage(group, serverNames.Length));
         return;
       }
 
       string server = serverNames[0];
-      CommandOutput? vaults = await AspireDeployPreflight.ProbeAsync("az", DeployOperate.BuildKeyVaultListArguments(group, subscription), ct);
-      string? vault = DeployOperate.ParseSingleValue(vaults?.Success == true, vaults?.Stdout ?? "");
-      CommandOutput? secret = vault is null ? null : await AspireDeployPreflight.ProbeAsync("az", DeployOperate.BuildConnectionStringArguments(vault, subscription), ct);
-      string? connectionString = DeployOperate.ParseSingleValue(secret?.Success == true, secret?.Stdout ?? "");
+      CommandOutput? vaults = await AspireDeployPreflight.ProbeAsync("az", DeployAca.BuildKeyVaultListArguments(group, subscription), ct);
+      string? vault = DeployAca.ParseSingleValue(vaults?.Success == true, vaults?.Stdout ?? "");
+      CommandOutput? secret = vault is null ? null : await AspireDeployPreflight.ProbeAsync("az", DeployAca.BuildConnectionStringArguments(vault, subscription), ct);
+      string? connectionString = DeployAca.ParseSingleValue(secret?.Success == true, secret?.Stdout ?? "");
       if (connectionString is null)
       {
-        Fail(DeployOperate.ConnectionStringUnreadableMessage(group, vault));
+        Fail(DeployAca.ConnectionStringUnreadableMessage(group, vault));
         return;
       }
 
-      string? clientIp = DeployOperate.ChooseClientIp(command.ClientIp, string.IsNullOrWhiteSpace(command.ClientIp) ? await ProbeClientIpAsync(ct) : null);
+      string? clientIp = DeployAca.ChooseClientIp(command.ClientIp, string.IsNullOrWhiteSpace(command.ClientIp) ? await ProbeClientIpAsync(ct) : null);
       if (clientIp is null)
       {
-        Fail(DeployOperate.NoClientIpMessage(command.ClientIp));
+        Fail(DeployAca.NoClientIpMessage(command.ClientIp));
         return;
       }
 
-      ProcessStep create = new("az", DeployOperate.BuildFirewallRuleCreateArguments(group, server, subscription, clientIp));
-      ProcessStep run = new(bundle, DeployOperate.BuildBundleArguments(connectionString, command.Verbose), Capture: true);
-      ProcessStep delete = new("az", DeployOperate.BuildFirewallRuleDeleteArguments(group, server, subscription));
+      ProcessStep create = new("az", DeployAca.BuildFirewallRuleCreateArguments(group, server, subscription, clientIp));
+      ProcessStep run = new(bundle, DeployAca.BuildBundleArguments(connectionString, command.Verbose), Capture: true);
+      ProcessStep delete = new("az", DeployAca.BuildFirewallRuleDeleteArguments(group, server, subscription));
 
       Terminal.WriteLine($"{Verb} → aca");
       Terminal.WriteLine($"  {preflight.Detail}");
       Terminal.WriteLine($"  {resourceGroup.Detail}");
       Terminal.WriteLine($"  Server:  {server} (connection string from Key Vault {vault}, not shown)");
       Terminal.WriteLine($"  Bundle:  {bundle}");
-      Terminal.WriteLine($"  Firewall rule {DeployOperate.FirewallRuleName} for {clientIp} is created for the run and always deleted afterwards.");
+      Terminal.WriteLine($"  Firewall rule {DeployAca.FirewallRuleName} for {clientIp} is created for the run and always deleted afterwards.");
       if (!Confirmed(command.Yes)) return;
 
-      AcaMigrationResult result = await DeployOperate.RunAcaBundleAsync(
+      AcaMigrationResult result = await DeployAca.RunAcaBundleAsync(
         create, run, delete, (step, token) => RunStepAsync(step, token),
-        reason => Terminal.WriteErrorLine(DeployOperate.FirewallCleanupFailedMessage(group, server, subscription, reason).Red()),
+        reason => Terminal.WriteErrorLine(DeployAca.FirewallCleanupFailedMessage(group, server, subscription, reason).Red()),
         ct);
 
-      Report(DeployOperate.BuildBundleReport(BundleOutput, result.ExitCode), result.ExitCode);
+      Report(DeployMigrationHistory.BuildBundleReport(BundleOutput, result.ExitCode), result.ExitCode);
       Summarize(AspireDeploy.ContainerApps, "the web-migrations bundle", $"server {server} in {group}", result.ExitCode);
     }
 
     private async Task MigrateNeonAsync(DeployMigrateCommand command, DeployPreflight preflight, string bundle, CancellationToken ct)
     {
       ResolvedDeployParameter? direct = preflight.Secrets?.FirstOrDefault(secret =>
-        string.Equals(secret.Name, AspireDeploy.NeonDirectConnectionStringParameter, StringComparison.Ordinal));
+        string.Equals(secret.Name, AspireDeploySecrets.NeonDirectConnectionStringParameter, StringComparison.Ordinal));
       if (direct is null)
       {
-        Fail($"Missing the direct Neon connection string ({AspireDeploy.NeonDirectConnectionStringParameter}). "
+        Fail($"Missing the direct Neon connection string ({AspireDeploySecrets.NeonDirectConnectionStringParameter}). "
           + "Set it in the AppHost user secrets or a Parameters__ environment variable, then re-run.");
         return;
       }
 
-      ProcessStep run = new(bundle, DeployOperate.BuildBundleArguments(direct.Value, command.Verbose), Capture: true);
+      ProcessStep run = new(bundle, DeployAca.BuildBundleArguments(direct.Value, command.Verbose), Capture: true);
 
       Terminal.WriteLine($"{Verb} → {AspireDeploy.ContainerAppsNeon.Name}");
       Terminal.WriteLine($"  {preflight.Detail}");
@@ -275,14 +275,14 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       Terminal.WriteLine($"  Bundle:  {bundle}");
       if (!Confirmed(command.Yes)) return;
 
-      int exitCode = await RunStepAsync(run, ct, DeployOperate.NeonDirectConnectionPlaceholder);
-      Report(DeployOperate.BuildBundleReport(BundleOutput, exitCode), exitCode);
+      int exitCode = await RunStepAsync(run, ct, DeployAca.NeonDirectConnectionPlaceholder);
+      Report(DeployMigrationHistory.BuildBundleReport(BundleOutput, exitCode), exitCode);
       Summarize(AspireDeploy.ContainerAppsNeon, "the web-migrations bundle", "the direct Neon connection", exitCode);
     }
 
-    private async Task<int> RunStepAsync(ProcessStep step, CancellationToken ct, string connectionPlaceholder = DeployOperate.KeyVaultConnectionPlaceholder)
+    private async Task<int> RunStepAsync(ProcessStep step, CancellationToken ct, string connectionPlaceholder = DeployAca.KeyVaultConnectionPlaceholder)
     {
-      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployOperate.RedactConnection(step.Arguments, connectionPlaceholder).Select(DeployOperate.PwshQuote))}");
+      Terminal.WriteLine($"\n{step.Executable} {string.Join(' ', DeployAca.RedactConnection(step.Arguments, connectionPlaceholder).Select(DeployOperate.PwshQuote))}");
       ShellBuilder builder = Shell.Builder(step.Executable)
         .WithArguments([.. step.Arguments])
         .WithNoValidation();
@@ -302,10 +302,10 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       CommandOutput output = await Shell.Builder(executable)
         .WithArguments(arguments)
         .WithWorkingDirectory(repoRoot)
-        .WithTimeout(AspireDeploy.ProbeTimeout)
+        .WithTimeout(AspireDeployCluster.ProbeTimeout)
         .WithNoValidation()
         .CaptureAsync(ct);
-      return DeployOperate.ParseMigrationHistory(output.ExitCode, output.Stdout, output.Stderr);
+      return DeployMigrationHistory.ParseMigrationHistory(output.ExitCode, output.Stdout, output.Stderr);
     }
 
     /// <summary>
@@ -314,25 +314,25 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
     /// </summary>
     private async Task<bool> CheckStaleAsync(DeployMigrateCommand command, DeployPreflight preflight, string script, CancellationToken ct)
     {
-      string[] folders = DeployOperate.FindSourceMigrationFolders(preflight.AppHostProject, preflight.RepoRoot);
+      string[] folders = DeployStaleScript.FindSourceMigrationFolders(preflight.AppHostProject, preflight.RepoRoot);
       if (folders.Length == 0) return true;
 
       if (!File.Exists(script))
       {
-        Terminal.WriteLine(DeployOperate.BundleStaleCheckUnavailable);
+        Terminal.WriteLine(DeployStaleScript.BundleStaleCheckUnavailable);
         return true;
       }
 
-      string[] missing = DeployOperate.MigrationsMissingFromScript(
-        DeployOperate.ParseSourceMigrationIds(folders.SelectMany(Directory.EnumerateFiles)),
-        DeployOperate.ParseScriptMigrationIds(await File.ReadAllTextAsync(script, ct)));
+      string[] missing = DeployStaleScript.MigrationsMissingFromScript(
+        DeployStaleScript.ParseSourceMigrationIds(folders.SelectMany(Directory.EnumerateFiles)),
+        DeployStaleScript.ParseScriptMigrationIds(await File.ReadAllTextAsync(script, ct)));
       if (missing.Length == 0) return true;
 
       Stale = true;
-      Terminal.WriteErrorLine(DeployOperate.StaleScriptWarning(preflight.Target, missing).Yellow());
-      if (DeployOperate.RefuseStaleUnattended(Stale, command.Yes, command.AllowStale))
+      Terminal.WriteErrorLine(DeployStaleScript.StaleScriptWarning(preflight.Target, missing).Yellow());
+      if (DeployStaleScript.RefuseStaleUnattended(Stale, command.Yes, command.AllowStale))
       {
-        Fail(DeployOperate.StaleUnattendedRefusal(preflight.Target));
+        Fail(DeployStaleScript.StaleUnattendedRefusal(preflight.Target));
         return false;
       }
 
@@ -341,7 +341,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
 
     private void Report(string[] lines, int exitCode)
     {
-      if (Stale && exitCode == 0) lines = DeployOperate.QualifyRelativeToPublishedScript(lines);
+      if (Stale && exitCode == 0) lines = DeployStaleScript.QualifyRelativeToPublishedScript(lines);
       Terminal.WriteLine("");
       foreach (string line in lines)
       {
@@ -355,7 +355,7 @@ internal sealed class DeployMigrateCommand : DeployGroup, ICommand<Unit>
       using System.Net.Http.HttpClient client = new() { Timeout = TimeSpan.FromSeconds(10) };
       try
       {
-        return await client.GetStringAsync(DeployOperate.ClientIpProbe, ct);
+        return await client.GetStringAsync(DeployAca.ClientIpProbe, ct);
       }
       catch (Exception exception) when (exception is System.Net.Http.HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
       {

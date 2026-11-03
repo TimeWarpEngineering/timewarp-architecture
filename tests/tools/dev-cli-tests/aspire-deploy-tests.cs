@@ -83,9 +83,9 @@ public class Arguments_Given_
 
   public static Task Probes_Should_OnlyRead()
   {
-    AspireDeploy.BuildHelmVersionArguments().ShouldBe(["version", "--short"]);
-    AspireDeploy.BuildKubectlContextArguments().ShouldBe(["config", "current-context"]);
-    AspireDeploy.BuildAzureAccountArguments().ShouldBe(["account", "show", "--query", "[id, name]", "--output", "tsv"]);
+    AspireDeployCluster.BuildHelmVersionArguments().ShouldBe(["version", "--short"]);
+    AspireDeployCluster.BuildKubectlContextArguments().ShouldBe(["config", "current-context"]);
+    AspireDeployAzure.BuildAzureAccountArguments().ShouldBe(["account", "show", "--query", "[id, name]", "--output", "tsv"]);
     return Task.CompletedTask;
   }
 
@@ -113,9 +113,9 @@ public class Arguments_Given_
 
   public static Task ClusterProbes_Should_OnlyRead()
   {
-    AspireDeploy.BuildKubectlReachabilityArguments("kind-simple")
+    AspireDeployCluster.BuildKubectlReachabilityArguments("kind-simple")
       .ShouldBe(["--context", "kind-simple", "get", "--raw", "/version", "--request-timeout=5s"]);
-    AspireDeploy.BuildKindClustersArguments().ShouldBe(["get", "clusters"]);
+    AspireDeployCluster.BuildKindClustersArguments().ShouldBe(["get", "clusters"]);
     return Task.CompletedTask;
   }
 
@@ -132,8 +132,8 @@ public class Arguments_Given_
     const string directValue = "Host=ep.neon.tech;Password=s3cret-direct";
     ResolvedDeployParameter[] secrets =
     [
-      new(AspireDeploy.NeonPooledConnectionStringParameter, pooledValue, AspireDeploy.UserSecretSource),
-      new(AspireDeploy.NeonDirectConnectionStringParameter, directValue, AspireDeploy.UserSecretSource),
+      new(AspireDeploySecrets.NeonPooledConnectionStringParameter, pooledValue, AspireDeployParameters.UserSecretSource),
+      new(AspireDeploySecrets.NeonDirectConnectionStringParameter, directValue, AspireDeployParameters.UserSecretSource),
     ];
 
     string[] arguments = AspireDeploy.BuildDeployArguments(
@@ -146,7 +146,7 @@ public class Arguments_Given_
     text.ShouldNotContain("neon-direct");
 
     Dictionary<string, string> environment = [];
-    AspireDeploy.AddSecretParameterEnvironment(environment, secrets, _ => null);
+    AspireDeployEnvironment.AddSecretParameterEnvironment(environment, secrets, _ => null);
     environment.Select(pair => pair.Key).ShouldBe(
     [
       "Parameters__neon-pooled-connection-string",
@@ -155,7 +155,7 @@ public class Arguments_Given_
     environment["Parameters__neon-pooled-connection-string"].ShouldBe(pooledValue);
     environment["Parameters__neon-direct-connection-string"].ShouldBe(directValue);
 
-    string plan = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+    string plan = string.Join('\n', AspireDeployText.BuildDeployPlanLines(
       "/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, "subscription: example", [], secrets));
     plan.ShouldNotContain(pooledValue);
     plan.ShouldNotContain(directValue);
@@ -165,11 +165,11 @@ public class Arguments_Given_
     Should.Throw<InvalidOperationException>(() =>
       AspireDeploy.BuildDeployArguments("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, false, secrets, secrets));
 
-    AspireDeploy.RequiredParameters(AspireDeploy.ContainerAppsNeon).ShouldBeEmpty();
-    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon).ShouldBe(
-      [AspireDeploy.NeonPooledConnectionStringParameter, AspireDeploy.NeonDirectConnectionStringParameter]);
-    AspireDeploy.SecretParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
-    AspireDeploy.SecretParameters(AspireDeploy.Compose).ShouldBeEmpty();
+    AspireDeployParameters.RequiredParameters(AspireDeploy.ContainerAppsNeon).ShouldBeEmpty();
+    AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon).ShouldBe(
+      [AspireDeploySecrets.NeonPooledConnectionStringParameter, AspireDeploySecrets.NeonDirectConnectionStringParameter]);
+    AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
+    AspireDeploySecrets.SecretParameters(AspireDeploy.Compose).ShouldBeEmpty();
     AspireDeploy.IsAzureContainerApps(AspireDeploy.ContainerApps).ShouldBeTrue();
     AspireDeploy.IsAzureContainerApps(AspireDeploy.ContainerAppsNeon).ShouldBeTrue();
     AspireDeploy.IsAzureContainerApps(AspireDeploy.Compose).ShouldBeFalse();
@@ -182,19 +182,19 @@ public class Arguments_Given_
 
   public static Task AcaNeonMigrate_Should_CheckOnlyTheDirectSecretAndSkipAzure()
   {
-    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate)
-      .ShouldBe([AspireDeploy.NeonDirectConnectionStringParameter]);
-    AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Deploy)
-      .ShouldBe([AspireDeploy.NeonPooledConnectionStringParameter, AspireDeploy.NeonDirectConnectionStringParameter]);
+    AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate)
+      .ShouldBe([AspireDeploySecrets.NeonDirectConnectionStringParameter]);
+    AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Deploy)
+      .ShouldBe([AspireDeploySecrets.NeonPooledConnectionStringParameter, AspireDeploySecrets.NeonDirectConnectionStringParameter]);
     AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate).ShouldBeFalse();
     AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Deploy).ShouldBeTrue();
     AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerAppsNeon, PreflightScope.Open).ShouldBeTrue();
     AspireDeploy.ProbesAzureAccount(AspireDeploy.ContainerApps, PreflightScope.Migrate).ShouldBeTrue();
     AspireDeploy.ProbesAzureAccount(AspireDeploy.Compose, PreflightScope.Migrate).ShouldBeFalse();
 
-    SecretResolution missing = AspireDeploy.ResolveSecrets(
-      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate), _ => null, true, "");
-    string missingText = string.Join('\n', AspireDeploy.CollectSecretProblems("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, missing, null));
+    SecretResolution missing = AspireDeploySecrets.ResolveSecrets(
+      AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon, PreflightScope.Migrate), _ => null, true, "");
+    string missingText = string.Join('\n', AspireDeploySecrets.CollectSecretProblems("/repo/app-host.csproj", AspireDeploy.ContainerAppsNeon, missing, null));
     missingText.ShouldContain("neon-direct-connection-string");
     missingText.ShouldNotContain("neon-pooled-connection-string");
     return Task.CompletedTask;
@@ -208,14 +208,14 @@ public class Preflight_Given_
 
   public static Task Helm42OrLater_Should_Pass()
   {
-    AspireDeploy.ValidateHelm(true, "v4.2.0+g1a2b3c4\n").ShouldBeNull();
-    AspireDeploy.ValidateHelm(true, "v4.3.0+gbec5b06").ShouldBeNull();
+    AspireDeployCluster.ValidateHelm(true, "v4.2.0+g1a2b3c4\n").ShouldBeNull();
+    AspireDeployCluster.ValidateHelm(true, "v4.3.0+gbec5b06").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task OlderHelm_Should_BeRefusedWithTheInstalledVersion()
   {
-    string? error = AspireDeploy.ValidateHelm(true, "v3.16.2+g13654a5");
+    string? error = AspireDeployCluster.ValidateHelm(true, "v3.16.2+g13654a5");
     error.ShouldNotBeNull();
     error.ShouldContain("4.2");
     error.ShouldContain("installed: 3.16.2");
@@ -224,28 +224,28 @@ public class Preflight_Given_
 
   public static Task MissingOrGarbledHelm_Should_BeRefused()
   {
-    AspireDeploy.ValidateHelm(false, "").ShouldNotBeNull().ShouldContain("not found on PATH");
-    AspireDeploy.ValidateHelm(true, "helm: unknown").ShouldNotBeNull().ShouldContain("Could not determine");
+    AspireDeployCluster.ValidateHelm(false, "").ShouldNotBeNull().ShouldContain("not found on PATH");
+    AspireDeployCluster.ValidateHelm(true, "helm: unknown").ShouldNotBeNull().ShouldContain("Could not determine");
     return Task.CompletedTask;
   }
 
   public static Task KubectlContext_Should_BeReturnedTrimmed()
   {
-    AspireDeploy.ParseKubectlContext(true, "kind-simple\n").ShouldBe("kind-simple");
+    AspireDeployCluster.ParseKubectlContext(true, "kind-simple\n").ShouldBe("kind-simple");
     return Task.CompletedTask;
   }
 
   public static Task NoKubectlContext_Should_BeRefused()
   {
-    AspireDeploy.ParseKubectlContext(false, "").ShouldBeNull();
-    AspireDeploy.ParseKubectlContext(true, "   ").ShouldBeNull();
-    AspireDeploy.NoKubectlContextMessage.ShouldContain("kubectl config use-context");
+    AspireDeployCluster.ParseKubectlContext(false, "").ShouldBeNull();
+    AspireDeployCluster.ParseKubectlContext(true, "   ").ShouldBeNull();
+    AspireDeployCluster.NoKubectlContextMessage.ShouldContain("kubectl config use-context");
     return Task.CompletedTask;
   }
 
   public static Task AzureAccount_Should_ParseIdAndName()
   {
-    AzureAccount account = AspireDeploy.ParseAzureAccount(true, "00000000-1111-2222-3333-444444444444\nContoso Dev\n").ShouldNotBeNull();
+    AzureAccount account = AspireDeployAzure.ParseAzureAccount(true, "00000000-1111-2222-3333-444444444444\nContoso Dev\n").ShouldNotBeNull();
     account.Id.ShouldBe("00000000-1111-2222-3333-444444444444");
     account.Name.ShouldBe("Contoso Dev");
     return Task.CompletedTask;
@@ -253,9 +253,9 @@ public class Preflight_Given_
 
   public static Task NoAzureLogin_Should_BeRefused()
   {
-    AspireDeploy.ParseAzureAccount(false, "").ShouldBeNull();
-    AspireDeploy.ParseAzureAccount(true, "Please run 'az login' to setup account.").ShouldBeNull();
-    AspireDeploy.NoAzureLoginMessage.ShouldContain("az login");
+    AspireDeployAzure.ParseAzureAccount(false, "").ShouldBeNull();
+    AspireDeployAzure.ParseAzureAccount(true, "Please run 'az login' to setup account.").ShouldBeNull();
+    AspireDeployAzure.NoAzureLoginMessage.ShouldContain("az login");
     return Task.CompletedTask;
   }
 
@@ -263,7 +263,7 @@ public class Preflight_Given_
 
   public static Task NoConfiguredSubscription_Should_FallBackToTheAzCliAndPassItToAspire()
   {
-    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, " ", CliAccount);
+    AzureSubscriptionChoice choice = AspireDeployAzure.ChooseAzureSubscription(null, " ", CliAccount);
     choice.SubscriptionId.ShouldBe(CliAccount.Id);
     choice.PassToAspire.ShouldBeTrue();
     choice.Detail.ShouldContain("az account show");
@@ -273,7 +273,7 @@ public class Preflight_Given_
 
   public static Task EnvironmentSubscription_Should_WinAndNotBeOverridden()
   {
-    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(
+    AzureSubscriptionChoice choice = AspireDeployAzure.ChooseAzureSubscription(
       " 99999999-1111-2222-3333-444444444444 ", "88888888-1111-2222-3333-444444444444", CliAccount);
     choice.SubscriptionId.ShouldBe("99999999-1111-2222-3333-444444444444");
     choice.PassToAspire.ShouldBeFalse();
@@ -285,7 +285,7 @@ public class Preflight_Given_
   {
     // aspire deploy runs as Production and does not load user secrets, so the pinned subscription is
     // copied to Azure__SubscriptionId. The az CLI value is not the one passed.
-    AzureSubscriptionChoice choice = AspireDeploy.ChooseAzureSubscription(null, "88888888-1111-2222-3333-444444444444", CliAccount);
+    AzureSubscriptionChoice choice = AspireDeployAzure.ChooseAzureSubscription(null, "88888888-1111-2222-3333-444444444444", CliAccount);
     choice.SubscriptionId.ShouldBe("88888888-1111-2222-3333-444444444444");
     choice.PassToAspire.ShouldBeTrue();
     choice.Detail.ShouldContain("user secret Azure:SubscriptionId");
@@ -298,19 +298,19 @@ public class Preflight_Given_
   {
     Dictionary<string, string> environment = new()
     {
-      [AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonPooledConnectionStringParameter)] = "already",
+      [AspireDeployParameters.ParameterEnvironmentVariable(AspireDeploySecrets.NeonPooledConnectionStringParameter)] = "already",
     };
     Dictionary<string, string> aspireEnvironment = [];
-    AspireDeploy.AddSecretParameterEnvironment(
+    AspireDeployEnvironment.AddSecretParameterEnvironment(
       aspireEnvironment,
       [
-        new ResolvedDeployParameter(AspireDeploy.NeonPooledConnectionStringParameter, "from-env", "env"),
-        new ResolvedDeployParameter(AspireDeploy.NeonDirectConnectionStringParameter, "from-secret", "secret"),
+        new ResolvedDeployParameter(AspireDeploySecrets.NeonPooledConnectionStringParameter, "from-env", "env"),
+        new ResolvedDeployParameter(AspireDeploySecrets.NeonDirectConnectionStringParameter, "from-secret", "secret"),
       ],
-      AspireDeploy.CaseInsensitiveEnvironment(environment));
+      AspireDeployParameters.CaseInsensitiveEnvironment(environment));
 
-    aspireEnvironment.ContainsKey(AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonPooledConnectionStringParameter)).ShouldBeFalse();
-    aspireEnvironment[AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.NeonDirectConnectionStringParameter)].ShouldBe("from-secret");
+    aspireEnvironment.ContainsKey(AspireDeployParameters.ParameterEnvironmentVariable(AspireDeploySecrets.NeonPooledConnectionStringParameter)).ShouldBeFalse();
+    aspireEnvironment[AspireDeployParameters.ParameterEnvironmentVariable(AspireDeploySecrets.NeonDirectConnectionStringParameter)].ShouldBe("from-secret");
     return Task.CompletedTask;
   }
 
@@ -319,24 +319,24 @@ public class Preflight_Given_
     Dictionary<string, string> aspireEnvironment = [];
     const string output =
       "Azure:Location = eastus\nAzure:ResourceGroup = rg-example\nParameters:entra-client-secret = from-secret\n";
-    AspireDeploy.AddAzureUserSecretEnvironment(
+    AspireDeployEnvironment.AddAzureUserSecretEnvironment(
       aspireEnvironment,
-      AspireDeploy.CaseInsensitiveEnvironment(new Dictionary<string, string>
+      AspireDeployParameters.CaseInsensitiveEnvironment(new Dictionary<string, string>
       {
-        [AspireDeploy.AzureLocationVariable] = "westus",
+        [AspireDeployAzure.AzureLocationVariable] = "westus",
       }),
       true,
       output);
 
-    aspireEnvironment.ContainsKey(AspireDeploy.AzureLocationVariable).ShouldBeFalse();
-    aspireEnvironment[AspireDeploy.AzureResourceGroupVariable].ShouldBe("rg-example");
-    aspireEnvironment[AspireDeploy.ParameterEnvironmentVariable(AspireDeploy.EntraClientSecretParameter)].ShouldBe("from-secret");
+    aspireEnvironment.ContainsKey(AspireDeployAzure.AzureLocationVariable).ShouldBeFalse();
+    aspireEnvironment[AspireDeployAzure.AzureResourceGroupVariable].ShouldBe("rg-example");
+    aspireEnvironment[AspireDeployParameters.ParameterEnvironmentVariable(AspireDeployParameters.EntraClientSecretParameter)].ShouldBe("from-secret");
     return Task.CompletedTask;
   }
 
   public static Task UserSecretsList_Should_WrapTheDotnetTool()
   {
-    AspireDeploy.BuildUserSecretsListArguments("/repo/app-host.csproj")
+    AspireDeployParameters.BuildUserSecretsListArguments("/repo/app-host.csproj")
       .ShouldBe(["user-secrets", "list", "--project", "/repo/app-host.csproj"]);
     return Task.CompletedTask;
   }
@@ -344,17 +344,17 @@ public class Preflight_Given_
   public static Task UserSecretsOutput_Should_YieldTheKeyCaseInsensitively()
   {
     const string output = "Parameters:postgres-password = p=a ss\nazure:subscriptionid = 88888888-1111-2222-3333-444444444444\nIngress:PublicUrl = https://x\n";
-    AspireDeploy.ParseUserSecret(true, output, "Azure:SubscriptionId").ShouldBe("88888888-1111-2222-3333-444444444444");
-    AspireDeploy.ParseUserSecret(true, output, "Parameters:postgres-password").ShouldBe("p=a ss");
+    AspireDeployParameters.ParseUserSecret(true, output, "Azure:SubscriptionId").ShouldBe("88888888-1111-2222-3333-444444444444");
+    AspireDeployParameters.ParseUserSecret(true, output, "Parameters:postgres-password").ShouldBe("p=a ss");
     return Task.CompletedTask;
   }
 
   public static Task MissingOrFailedUserSecrets_Should_YieldNull()
   {
-    AspireDeploy.ParseUserSecret(true, "No secrets configured for this application.\n", "Azure:SubscriptionId").ShouldBeNull();
-    AspireDeploy.ParseUserSecret(false, "Azure:SubscriptionId = 88888888-1111-2222-3333-444444444444", "Azure:SubscriptionId").ShouldBeNull();
-    AspireDeploy.ParseUserSecret(true, "Azure:SubscriptionId = ", "Azure:SubscriptionId").ShouldBeNull();
-    AspireDeploy.ParseUserSecret(true, "Azure:SubscriptionIdOld = 1", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeployParameters.ParseUserSecret(true, "No secrets configured for this application.\n", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeployParameters.ParseUserSecret(false, "Azure:SubscriptionId = 88888888-1111-2222-3333-444444444444", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeployParameters.ParseUserSecret(true, "Azure:SubscriptionId = ", "Azure:SubscriptionId").ShouldBeNull();
+    AspireDeployParameters.ParseUserSecret(true, "Azure:SubscriptionIdOld = 1", "Azure:SubscriptionId").ShouldBeNull();
     return Task.CompletedTask;
   }
 
@@ -377,10 +377,10 @@ public partial class DeployParameters_Given_
 
   public static Task Kubernetes_Should_RequireTheValuelessAppHostParameters()
   {
-    AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes)
+    AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes)
       .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
-    AspireDeploy.RequiredParameters(AspireDeploy.Compose).ShouldBeEmpty();
-    AspireDeploy.RequiredParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
+    AspireDeployParameters.RequiredParameters(AspireDeploy.Compose).ShouldBeEmpty();
+    AspireDeployParameters.RequiredParameters(AspireDeploy.ContainerApps).ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
@@ -389,7 +389,7 @@ public partial class DeployParameters_Given_
     const string output =
       "Parameters:postgres-password = secret\nParameters:k8s-namespace = timewarp-architecture\nParameters:helm-release-name = twa\n"
       + "parameters:registry-endpoint = localhost:5001\nParameters:registry-repository = timewarp-architecture\n";
-    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, output);
+    DeployParameterResolution resolution = AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, output);
 
     resolution.Missing.ShouldBeEmpty();
     resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
@@ -400,7 +400,7 @@ public partial class DeployParameters_Given_
 
   public static Task EnvironmentVariable_Should_BeatTheUserSecret()
   {
-    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(
+    DeployParameterResolution resolution = AspireDeployParameters.ResolveParameters(
       AspireDeploy.Kubernetes,
       name => name == "Parameters__k8s-namespace" ? " from-env " : null,
       true,
@@ -415,16 +415,16 @@ public partial class DeployParameters_Given_
 
   public static Task NothingSet_Should_ListEveryMissingParameter()
   {
-    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "").Missing
+    AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "").Missing
       .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
-    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, _ => "  ", true, "Parameters:k8s-namespace = \n").Missing.Count.ShouldBe(4);
-    AspireDeploy.ResolveParameters(AspireDeploy.Compose, NoEnvironment, false, "").Resolved.ShouldBeEmpty();
+    AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, _ => "  ", true, "Parameters:k8s-namespace = \n").Missing.Count.ShouldBe(4);
+    AspireDeployParameters.ResolveParameters(AspireDeploy.Compose, NoEnvironment, false, "").Resolved.ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
   public static Task MissingParameterRefusal_Should_GiveThePwshCommandForEach()
   {
-    string text = string.Join('\n', AspireDeploy.BuildMissingParameterLines(AppHost, AspireDeploy.Kubernetes, ["k8s-namespace", "registry-endpoint"]));
+    string text = string.Join('\n', AspireDeployParameters.BuildMissingParameterLines(AppHost, AspireDeploy.Kubernetes, ["k8s-namespace", "registry-endpoint"]));
 
     text.ShouldContain("Missing deploy parameters for kubernetes: k8s-namespace, registry-endpoint.");
     text.ShouldContain("Parameters section of the AppHost appsettings.json");
@@ -438,29 +438,29 @@ public partial class DeployParameters_Given_
 
   public static Task EnvironmentLookup_Should_IgnoreCaseLikeConfiguration()
   {
-    Func<string, string?> environment = AspireDeploy.CaseInsensitiveEnvironment(
+    Func<string, string?> environment = AspireDeployParameters.CaseInsensitiveEnvironment(
       new Dictionary<string, string> { ["PARAMETERS__K8S-NAMESPACE"] = "upper", ["Parameters__helm-release-name"] = "exact", ["parameters__helm-release-name"] = "lower" });
 
     environment("Parameters__k8s-namespace").ShouldBe("upper");
     environment("Parameters__helm-release-name").ShouldBe("exact");
     environment("Parameters__registry-endpoint").ShouldBeNull();
-    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, environment, false, "").Missing.ShouldBe(["registry-endpoint", "registry-repository"]);
+    AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, environment, false, "").Missing.ShouldBe(["registry-endpoint", "registry-repository"]);
     return Task.CompletedTask;
   }
 
   public static Task UnreadableUserSecrets_Should_BeReportedBeforeTheMissingList()
   {
-    DeployParameterResolution nothing = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "");
-    string[] problems = AspireDeploy.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, nothing, "MSB4025: The project file could not be loaded.");
+    DeployParameterResolution nothing = AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "");
+    string[] problems = AspireDeployParameters.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, nothing, "MSB4025: The project file could not be loaded.");
 
     problems.Length.ShouldBe(2);
     problems[0].ShouldContain("Could not read the AppHost user secrets");
     problems[0].ShouldContain("MSB4025: The project file could not be loaded.");
     problems[1].ShouldContain("Missing deploy parameters for kubernetes");
-    AspireDeploy.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, nothing, null).Single().ShouldContain("Missing deploy parameters");
-    AspireDeploy.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, new([], []), "failed").ShouldBeEmpty();
-    AspireDeploy.FirstLine("\n  first \nsecond", "fallback").ShouldBe("first");
-    AspireDeploy.FirstLine(" \n", "fallback").ShouldBe("fallback");
+    AspireDeployParameters.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, nothing, null).Single().ShouldContain("Missing deploy parameters");
+    AspireDeployParameters.CollectParameterProblems(AppHost, AspireDeploy.Kubernetes, new([], []), "failed").ShouldBeEmpty();
+    AspireDeployCluster.FirstLine("\n  first \nsecond", "fallback").ShouldBe("first");
+    AspireDeployCluster.FirstLine(" \n", "fallback").ShouldBe("fallback");
     return Task.CompletedTask;
   }
 
@@ -485,9 +485,9 @@ public partial class DeployParameters_Given_
     // A value-less parameter in the kubernetes branch is required and forwarded on argv. The aca-neon
     // connection strings are value-less secrets outside that branch. dev deploy copies them into the
     // aspire process environment and does not put them on argv.
-    Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
+    Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
     Valueless(program).ShouldBe(
-      [.. AspireDeploy.RequiredParameters(AspireDeploy.Kubernetes), .. AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon)],
+      [.. AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes), .. AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon)],
       ignoreOrder: true);
     return Task.CompletedTask;
   }
@@ -524,13 +524,13 @@ public partial class DeployParameters_Given_
     AppSettingsFile appSettings = AppSettings(
       "appsettings.json",
       "\"k8s-namespace\": \"my-app\", \"helm-release-name\": \"my-app\", \"registry-endpoint\": \"localhost:5001\", \"registry-repository\": \"my-app\"");
-    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]);
+    DeployParameterResolution resolution = AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]);
 
     resolution.Missing.ShouldBeEmpty();
     resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
       ["k8s-namespace=my-app", "helm-release-name=my-app", "registry-endpoint=localhost:5001", "registry-repository=my-app"]);
     resolution.Resolved.ShouldAllBe(parameter => parameter.Source == "AppHost appsettings.json");
-    string.Join('\n', AspireDeploy.BuildParameterLines(resolution.Resolved))
+    string.Join('\n', AspireDeployParameters.BuildParameterLines(resolution.Resolved))
       .ShouldContain("Parameter:   k8s-namespace=my-app (from the AppHost appsettings.json)");
     return Task.CompletedTask;
   }
@@ -539,14 +539,14 @@ public partial class DeployParameters_Given_
   {
     const string committed = "Host=committed;Password=s3cret-value";
     AppSettingsFile appSettings = AppSettings("appsettings.json", $"\"neon-pooled-connection-string\": \"{committed}\"");
-    SecretResolution resolution = AspireDeploy.ResolveSecrets(
-      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon),
+    SecretResolution resolution = AspireDeploySecrets.ResolveSecrets(
+      AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon),
       name => name == "Parameters__neon-pooled-connection-string" ? "from-env" : null,
       true,
       "Parameters:neon-direct-connection-string = from-secret\n",
       [appSettings]);
 
-    resolution.CommittedToAppSettings.ShouldBe([AspireDeploy.NeonPooledConnectionStringParameter]);
+    resolution.CommittedToAppSettings.ShouldBe([AspireDeploySecrets.NeonPooledConnectionStringParameter]);
     resolution.Missing.ShouldBeEmpty();
     resolution.Resolved.Select(parameter => $"{parameter.Name}={parameter.Value}").ShouldBe(
     [
@@ -555,22 +555,22 @@ public partial class DeployParameters_Given_
     ]);
     resolution.Resolved.ShouldNotContain(parameter => parameter.Value == committed);
 
-    string problems = string.Join('\n', AspireDeploy.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, resolution, null));
+    string problems = string.Join('\n', AspireDeploySecrets.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, resolution, null));
     problems.ShouldContain("never be committed");
     problems.ShouldNotContain("s3cret-value");
     problems.ShouldNotContain("from-env");
     problems.ShouldNotContain("from-secret");
 
-    SecretResolution missing = AspireDeploy.ResolveSecrets(
-      AspireDeploy.SecretParameters(AspireDeploy.ContainerAppsNeon), NoEnvironment, true, "");
-    string missingText = string.Join('\n', AspireDeploy.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, missing, null));
+    SecretResolution missing = AspireDeploySecrets.ResolveSecrets(
+      AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon), NoEnvironment, true, "");
+    string missingText = string.Join('\n', AspireDeploySecrets.CollectSecretProblems(AppHost, AspireDeploy.ContainerAppsNeon, missing, null));
     missingText.ShouldContain("Missing Neon connection strings for aca-neon");
     missingText.ShouldContain("dotnet user-secrets set 'Parameters:neon-pooled-connection-string'");
     missingText.ShouldContain("dotnet user-secrets set 'Parameters:neon-direct-connection-string'");
     missingText.ShouldContain("Do not commit them in appsettings.json.");
     missingText.ShouldNotContain("s3cret-value");
 
-    string plan = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+    string plan = string.Join('\n', AspireDeployText.BuildDeployPlanLines(
       AppHost, AspireDeploy.ContainerAppsNeon, "subscription: example", [], resolution.Resolved));
     plan.ShouldContain("Publish:Target=aca-neon");
     plan.ShouldNotContain("from-env");
@@ -579,7 +579,7 @@ public partial class DeployParameters_Given_
     plan.ShouldNotContain("neon-direct");
 
     Dictionary<string, string> environment = [];
-    AspireDeploy.AddSecretParameterEnvironment(environment, resolution.Resolved, _ => null);
+    AspireDeployEnvironment.AddSecretParameterEnvironment(environment, resolution.Resolved, _ => null);
     environment.Select(pair => pair.Key).ShouldBe(
     [
       "Parameters__neon-pooled-connection-string",
@@ -596,7 +596,7 @@ public partial class DeployParameters_Given_
     AppSettingsFile appSettings = AppSettings(
       "appsettings.json",
       "\"k8s-namespace\": \"from-appsettings\", \"helm-release-name\": \"from-appsettings\", \"registry-endpoint\": \"from-appsettings\", \"registry-repository\": \"from-appsettings\"");
-    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(
+    DeployParameterResolution resolution = AspireDeployParameters.ResolveParameters(
       AspireDeploy.Kubernetes,
       name => name == "Parameters__k8s-namespace" ? "from-env" : null,
       true,
@@ -611,25 +611,25 @@ public partial class DeployParameters_Given_
       "registry-endpoint=from-production (AppHost appsettings.Production.json)",
       "registry-repository=from-appsettings (AppHost appsettings.json)",
     ]);
-    AspireDeploy.AppSettingsFileNames().ShouldBe(["appsettings.Production.json", "appsettings.json"]);
+    AspireDeployParameters.AppSettingsFileNames().ShouldBe(["appsettings.Production.json", "appsettings.json"]);
     return Task.CompletedTask;
   }
 
   public static Task AppSettingsParameter_Should_ReadLikeJsonConfiguration()
   {
-    AspireDeploy.ParseAppSettingsParameter("{ \"parameters\": { \"K8S-NAMESPACE\": \" my-app \" } }", "k8s-namespace").ShouldBe("my-app");
-    AspireDeploy.ParseAppSettingsParameter("{ // comment\n \"Parameters\": { \"k8s-namespace\": \"a\", \"k8s-namespace\": \"b\", } }", "k8s-namespace").ShouldBe("b");
-    AspireDeploy.ParseAppSettingsParameter("{ \"Parameters\": { \"k8s-namespace\": \" \" } }", "k8s-namespace").ShouldBeNull();
-    AspireDeploy.ParseAppSettingsParameter("{ \"Parameters\": { \"other\": \"x\" } }", "k8s-namespace").ShouldBeNull();
-    AspireDeploy.ParseAppSettingsParameter("{ \"Logging\": {} }", "k8s-namespace").ShouldBeNull();
-    AspireDeploy.ParseAppSettingsParameter("{ not json", "k8s-namespace").ShouldBeNull();
+    AspireDeployParameters.ParseAppSettingsParameter("{ \"parameters\": { \"K8S-NAMESPACE\": \" my-app \" } }", "k8s-namespace").ShouldBe("my-app");
+    AspireDeployParameters.ParseAppSettingsParameter("{ // comment\n \"Parameters\": { \"k8s-namespace\": \"a\", \"k8s-namespace\": \"b\", } }", "k8s-namespace").ShouldBe("b");
+    AspireDeployParameters.ParseAppSettingsParameter("{ \"Parameters\": { \"k8s-namespace\": \" \" } }", "k8s-namespace").ShouldBeNull();
+    AspireDeployParameters.ParseAppSettingsParameter("{ \"Parameters\": { \"other\": \"x\" } }", "k8s-namespace").ShouldBeNull();
+    AspireDeployParameters.ParseAppSettingsParameter("{ \"Logging\": {} }", "k8s-namespace").ShouldBeNull();
+    AspireDeployParameters.ParseAppSettingsParameter("{ not json", "k8s-namespace").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task BlankAppSettingsValue_Should_StillBeReportedMissing()
   {
     AppSettingsFile appSettings = AppSettings("appsettings.json", "\"registry-endpoint\": \"\"");
-    AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]).Missing
+    AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, true, "", [appSettings]).Missing
       .ShouldBe(["k8s-namespace", "helm-release-name", "registry-endpoint", "registry-repository"]);
     return Task.CompletedTask;
   }
@@ -640,7 +640,7 @@ public partial class DeployParameters_Given_
     // checkout's `dev deploy kubernetes` reports nothing missing (registry-endpoint defaults to the kind recipe's registry).
     string appHostDirectory = AppHostDirectory();
     AppSettingsFile appSettings = new("appsettings.json", File.ReadAllText(Path.Combine(appHostDirectory, "appsettings.json")));
-    DeployParameterResolution resolution = AspireDeploy.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "", [appSettings]);
+    DeployParameterResolution resolution = AspireDeployParameters.ResolveParameters(AspireDeploy.Kubernetes, NoEnvironment, false, "", [appSettings]);
 
     resolution.Missing.ShouldBeEmpty();
     resolution.Resolved.Single(parameter => parameter.Name == "registry-endpoint").Value.ShouldBe("localhost:5001");
@@ -651,7 +651,7 @@ public partial class DeployParameters_Given_
 
   public static Task PreflightReport_Should_CollectEveryProblemOnce()
   {
-    string[] report = AspireDeploy.BuildPreflightReport("dev deploy", ["first", "second"]);
+    string[] report = AspireDeployText.BuildPreflightReport("dev deploy", ["first", "second"]);
     report.ShouldBe(["dev deploy preflight failed (2 problems); nothing was run:", "- first", "- second"]);
     return Task.CompletedTask;
   }
@@ -664,13 +664,13 @@ public class ClusterChecks_Given_
 
   public static Task ReachableContext_Should_Pass()
   {
-    AspireDeploy.ValidateKubectlReachable(true, "kind-simple", "").ShouldBeNull();
+    AspireDeployCluster.ValidateKubectlReachable(true, "kind-simple", "").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task UnreachableContext_Should_BeRefusedWithTheReason()
   {
-    string error = AspireDeploy.ValidateKubectlReachable(
+    string error = AspireDeployCluster.ValidateKubectlReachable(
       false, "kind-simple", "The connection to the server 127.0.0.1:40703 was refused - did you specify the right host or port?\n").ShouldNotBeNull();
     error.ShouldContain("kind-simple does not answer");
     error.ShouldContain("127.0.0.1:40703 was refused");
@@ -680,41 +680,41 @@ public class ClusterChecks_Given_
 
   public static Task KindContext_Should_NameItsCluster()
   {
-    AspireDeploy.KindClusterName("kind-simple").ShouldBe("simple");
-    AspireDeploy.KindClusterName("kind-").ShouldBeNull();
-    AspireDeploy.KindClusterName("aks-prod").ShouldBeNull();
+    AspireDeployCluster.KindClusterName("kind-simple").ShouldBe("simple");
+    AspireDeployCluster.KindClusterName("kind-").ShouldBeNull();
+    AspireDeployCluster.KindClusterName("aks-prod").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task ExistingKindCluster_Should_Pass()
   {
-    AspireDeploy.ValidateKindCluster(true, "app\nsimple\n", "simple").ShouldBeNull();
+    AspireDeployCluster.ValidateKindCluster(true, "app\nsimple\n", "simple").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task MissingKindCluster_Should_BeRefused()
   {
     // `kind get clusters` prints "No kind clusters found." to stderr and nothing to stdout.
-    string error = AspireDeploy.ValidateKindCluster(true, "", "simple").ShouldNotBeNull();
+    string error = AspireDeployCluster.ValidateKindCluster(true, "", "simple").ShouldNotBeNull();
     error.ShouldContain("kind cluster 'simple'");
     error.ShouldContain("kubectl config delete-context kind-simple");
-    AspireDeploy.ValidateKindCluster(true, "simple-old\n", "simple").ShouldNotBeNull();
-    AspireDeploy.ValidateKindCluster(false, "", "simple").ShouldNotBeNull().ShouldContain("kind is not on PATH");
+    AspireDeployCluster.ValidateKindCluster(true, "simple-old\n", "simple").ShouldNotBeNull();
+    AspireDeployCluster.ValidateKindCluster(false, "", "simple").ShouldNotBeNull().ShouldContain("kind is not on PATH");
     return Task.CompletedTask;
   }
 
   public static Task RegistryEndpoint_Should_ProbeTheV2Api()
   {
-    AspireDeploy.BuildRegistryProbeUri("localhost:5001").ShouldBe(new Uri("http://localhost:5001/v2/"));
-    AspireDeploy.BuildRegistryProbeUri("https://registry.example.com/").ShouldBe(new Uri("https://registry.example.com/v2/"));
-    AspireDeploy.BuildRegistryProbeUri("::nonsense").ShouldBeNull();
+    AspireDeployCluster.BuildRegistryProbeUri("localhost:5001").ShouldBe(new Uri("http://localhost:5001/v2/"));
+    AspireDeployCluster.BuildRegistryProbeUri("https://registry.example.com/").ShouldBe(new Uri("https://registry.example.com/v2/"));
+    AspireDeployCluster.BuildRegistryProbeUri("::nonsense").ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task RegistryNotRunning_Should_BeRefusedWithThePasteReadyCommand()
   {
-    AspireDeploy.ValidateRegistry(true, "localhost:5001", AppHost).ShouldBeNull();
-    string error = AspireDeploy.ValidateRegistry(false, "localhost:5001", AppHost).ShouldNotBeNull();
+    AspireDeployCluster.ValidateRegistry(true, "localhost:5001", AppHost).ShouldBeNull();
+    string error = AspireDeployCluster.ValidateRegistry(false, "localhost:5001", AppHost).ShouldNotBeNull();
     error.ShouldContain("registry at localhost:5001");
     error.ShouldContain("kind-registry");
     error.ShouldContain("dotnet user-secrets set 'Parameters:registry-endpoint' '<host:port>' --project '/repo/app-host.csproj'");
@@ -724,7 +724,7 @@ public class ClusterChecks_Given_
 
   public static Task RegistryFailure_Should_NameTheReason()
   {
-    AspireDeploy.ValidateRegistry(false, "https://registry.local", AppHost, "The SSL connection could not be established.")
+    AspireDeployCluster.ValidateRegistry(false, "https://registry.local", AppHost, "The SSL connection could not be established.")
       .ShouldNotBeNull().ShouldContain("does not answer (The SSL connection could not be established.)");
     return Task.CompletedTask;
   }
@@ -736,16 +736,16 @@ public class ClusterChecks_Given_
 
   public static Task Registry_Should_OnlyBeProbedWhenDeployingToKind()
   {
-    AspireDeploy.RegistryToProbe("kind-simple", RegistrySet, deploying: true).ShouldBe("localhost:5001");
-    AspireDeploy.RegistryToProbe("kind-simple", RegistrySet, deploying: false).ShouldBeNull();
-    AspireDeploy.RegistryToProbe("aks-prod", RegistrySet, deploying: true).ShouldBeNull();
-    AspireDeploy.RegistryToProbe("kind-simple", new([], ["registry-endpoint"]), deploying: true).ShouldBeNull();
+    AspireDeployCluster.RegistryToProbe("kind-simple", RegistrySet, deploying: true).ShouldBe("localhost:5001");
+    AspireDeployCluster.RegistryToProbe("kind-simple", RegistrySet, deploying: false).ShouldBeNull();
+    AspireDeployCluster.RegistryToProbe("aks-prod", RegistrySet, deploying: true).ShouldBeNull();
+    AspireDeployCluster.RegistryToProbe("kind-simple", new([], ["registry-endpoint"]), deploying: true).ShouldBeNull();
     return Task.CompletedTask;
   }
 
   public static Task HealthyKindCluster_Should_HaveNoProblems()
   {
-    AspireDeploy.CollectClusterProblems(
+    AspireDeployCluster.CollectClusterProblems(
         new ClusterProbeResults("kind-simple", true, "", KindProbeSucceeded: true, KindOutput: "simple\n",
           RegistryEndpoint: "localhost:5001", RegistryAnswered: true), AppHost)
       .ShouldBeEmpty();
@@ -754,7 +754,7 @@ public class ClusterChecks_Given_
 
   public static Task MissingKindCluster_Should_SuppressTheReachabilityError()
   {
-    string[] problems = AspireDeploy.CollectClusterProblems(
+    string[] problems = AspireDeployCluster.CollectClusterProblems(
       new ClusterProbeResults("kind-simple", false, "connection refused", KindProbeSucceeded: true, KindOutput: ""), AppHost);
 
     problems.Single().ShouldContain("kind cluster 'simple'");
@@ -764,7 +764,7 @@ public class ClusterChecks_Given_
 
   public static Task UnreachableNonKindContext_Should_ReportReachabilityOnly()
   {
-    string[] problems = AspireDeploy.CollectClusterProblems(
+    string[] problems = AspireDeployCluster.CollectClusterProblems(
       new ClusterProbeResults("aks-prod", false, "timed out after 20s", RegistryEndpoint: "localhost:5001"), AppHost);
 
     problems.Single().ShouldContain("aks-prod does not answer");
@@ -774,7 +774,7 @@ public class ClusterChecks_Given_
 
   public static Task UnreachableKindClusterThatExists_Should_ReportReachabilityAndRegistry()
   {
-    string[] problems = AspireDeploy.CollectClusterProblems(
+    string[] problems = AspireDeployCluster.CollectClusterProblems(
       new ClusterProbeResults("kind-simple", false, "refused", KindProbeSucceeded: true, KindOutput: "simple\n",
         RegistryEndpoint: "localhost:5001", RegistryAnswered: false), AppHost);
 
@@ -786,25 +786,25 @@ public class ClusterChecks_Given_
 
   public static Task UnprobedRegistry_Should_NotBeReported()
   {
-    AspireDeploy.CollectClusterProblems(new ClusterProbeResults("kind-simple", true, "", KindProbeSucceeded: true, KindOutput: "simple\n"), AppHost)
+    AspireDeployCluster.CollectClusterProblems(new ClusterProbeResults("kind-simple", true, "", KindProbeSucceeded: true, KindOutput: "simple\n"), AppHost)
       .ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
   public static Task TimedOutKindProbe_Should_SayItTimedOut()
   {
-    AspireDeploy.CollectClusterProblems(new ClusterProbeResults("kind-simple", false, "x", KindTimedOut: true), AppHost)
+    AspireDeployCluster.CollectClusterProblems(new ClusterProbeResults("kind-simple", false, "x", KindTimedOut: true), AppHost)
       .Single().ShouldContain("`kind get clusters` timed out after 20s");
     return Task.CompletedTask;
   }
 
   public static Task KubernetesProblems_Should_CollectIntoOneReport()
   {
-    AspireDeploy.CollectKubernetesProblems(["parameters"], "helm", null, "kind-simple", ["cluster", "registry"])
+    AspireDeployCluster.CollectKubernetesProblems(["parameters"], "helm", null, "kind-simple", ["cluster", "registry"])
       .ShouldBe(["parameters", "helm", "cluster", "registry"]);
-    AspireDeploy.CollectKubernetesProblems([], null, null, null, []).ShouldBe([AspireDeploy.NoKubectlContextMessage]);
-    AspireDeploy.CollectKubernetesProblems([], null, "context timed out", null, []).ShouldBe(["context timed out"]);
-    AspireDeploy.CollectKubernetesProblems([], null, null, "aks-prod", []).ShouldBeEmpty();
+    AspireDeployCluster.CollectKubernetesProblems([], null, null, null, []).ShouldBe([AspireDeployCluster.NoKubectlContextMessage]);
+    AspireDeployCluster.CollectKubernetesProblems([], null, "context timed out", null, []).ShouldBe(["context timed out"]);
+    AspireDeployCluster.CollectKubernetesProblems([], null, null, "aks-prod", []).ShouldBeEmpty();
     return Task.CompletedTask;
   }
 }
@@ -816,7 +816,7 @@ public class OperatorText_Given_
 
   public static Task ComposeCleanup_Should_PrintTheManualDownWithTheConfiguredRuntime()
   {
-    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.Compose, "podman"));
+    string text = string.Join('\n', AspireDeployText.BuildManualCleanupLines(AspireDeploy.Compose, "podman"));
 
     text.ShouldContain("only knows deployments recorded on the machine");
     text.ShouldContain("podman compose ls");
@@ -827,7 +827,7 @@ public class OperatorText_Given_
 
   public static Task KubernetesCleanup_Should_PrintHelmUninstallAndTheClaim()
   {
-    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.Kubernetes, "docker"));
+    string text = string.Join('\n', AspireDeployText.BuildManualCleanupLines(AspireDeploy.Kubernetes, "docker"));
 
     text.ShouldContain("helm uninstall <release> --namespace <namespace>");
     text.ShouldContain("helm-release-name");
@@ -838,7 +838,7 @@ public class OperatorText_Given_
 
   public static Task AcaCleanup_Should_PrintGroupDeleteAndTheKeyVaultPurge()
   {
-    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.ContainerApps, "docker"));
+    string text = string.Join('\n', AspireDeployText.BuildManualCleanupLines(AspireDeploy.ContainerApps, "docker"));
 
     text.ShouldContain("only knows deployments recorded on the machine");
     text.ShouldContain("az group delete --name <resource-group>");
@@ -852,37 +852,37 @@ public class OperatorText_Given_
 
   public static Task AcaNeonCleanup_Should_DeleteTheGroupAndLeaveNeon()
   {
-    string text = string.Join('\n', AspireDeploy.BuildManualCleanupLines(AspireDeploy.ContainerAppsNeon, "docker"));
+    string text = string.Join('\n', AspireDeployText.BuildManualCleanupLines(AspireDeploy.ContainerAppsNeon, "docker"));
 
     text.ShouldContain("az group delete --name <resource-group>");
     text.ShouldContain("The Neon project is not part of the resource group and is not deleted.");
     text.ShouldNotContain("keyvault");
     text.ShouldNotContain("postgres-kv");
-    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
+    string.Join('\n', AspireDeployText.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
       .ShouldContain("The Neon project is not deleted");
-    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
+    string.Join('\n', AspireDeployText.BuildPostDestroyLines(AspireDeploy.ContainerAppsNeon))
       .ShouldNotContain("keyvault");
     return Task.CompletedTask;
   }
 
   public static Task AcaDestroy_Should_PointAtTheSoftDeletedKeyVault()
   {
-    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.ContainerApps))
+    string.Join('\n', AspireDeployText.BuildPostDestroyLines(AspireDeploy.ContainerApps))
       .ShouldContain("az keyvault purge --name <vault>");
     return Task.CompletedTask;
   }
 
   public static Task KubernetesDestroy_Should_PointAtTheClaim()
   {
-    string.Join('\n', AspireDeploy.BuildPostDestroyLines(AspireDeploy.Kubernetes))
+    string.Join('\n', AspireDeployText.BuildPostDestroyLines(AspireDeploy.Kubernetes))
       .ShouldContain("kubectl delete pvc postgres-data --namespace <namespace>");
-    AspireDeploy.BuildPostDestroyLines(AspireDeploy.Compose).ShouldBeEmpty();
+    AspireDeployText.BuildPostDestroyLines(AspireDeploy.Compose).ShouldBeEmpty();
     return Task.CompletedTask;
   }
 
   public static Task DeployPlan_Should_NameTheAppHostTargetAndPreflight()
   {
-    string text = string.Join('\n', AspireDeploy.BuildDeployPlanLines(
+    string text = string.Join('\n', AspireDeployText.BuildDeployPlanLines(
       "/repo/app-host.csproj", AspireDeploy.Kubernetes, "kubectl context: kind-local",
       [new ResolvedDeployParameter("k8s-namespace", "timewarp-architecture", "AppHost user secret")]));
 
@@ -891,9 +891,9 @@ public class OperatorText_Given_
     text.ShouldContain("Publish:Target=kubernetes");
     text.ShouldContain("kubectl context: kind-local");
     text.ShouldContain("k8s-namespace=timewarp-architecture (from the AppHost user secret)");
-    AspireDeploy.DeployConfirmationRefusal.ShouldContain("--yes");
-    AspireDeploy.DeployDeclined.ShouldContain("Nothing was run");
-    AspireDeploy.DestroyConfirmationRefusal.ShouldContain("--yes");
+    AspireDeployText.DeployConfirmationRefusal.ShouldContain("--yes");
+    AspireDeployText.DeployDeclined.ShouldContain("Nothing was run");
+    AspireDeployText.DestroyConfirmationRefusal.ShouldContain("--yes");
     return Task.CompletedTask;
   }
 }

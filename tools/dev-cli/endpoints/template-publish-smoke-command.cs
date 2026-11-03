@@ -236,7 +236,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         </Project>
         """;
 
-      if (!TemplateSmokeHarness.TryEvaluatePlatformPins(good, expected, out List<string> goodFailures, out int goodCount)
+      if (!PlatformPinRules.TryEvaluatePlatformPins(good, expected, out List<string> goodFailures, out int goodCount)
           || goodCount == 0
           || goodFailures.Count > 0)
       {
@@ -245,7 +245,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         return false;
       }
 
-      if (TemplateSmokeHarness.TryEvaluatePlatformPins(stale, expected, out _, out _))
+      if (PlatformPinRules.TryEvaluatePlatformPins(stale, expected, out _, out _))
       {
         Terminal.WriteErrorLine("Pin-assert self-check failed: stale pins should fail.".Red());
         Environment.ExitCode = 1;
@@ -253,7 +253,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       }
 
       // Zero platform pins: Evaluate returns false when pinCount == 0.
-      if (TemplateSmokeHarness.TryEvaluatePlatformPins(noPlatformPins, expected, out _, out int emptyCount) || emptyCount != 0)
+      if (PlatformPinRules.TryEvaluatePlatformPins(noPlatformPins, expected, out _, out int emptyCount) || emptyCount != 0)
       {
         Terminal.WriteErrorLine("Pin-assert self-check failed: zero platform pins should hard-fail.".Red());
         Environment.ExitCode = 1;
