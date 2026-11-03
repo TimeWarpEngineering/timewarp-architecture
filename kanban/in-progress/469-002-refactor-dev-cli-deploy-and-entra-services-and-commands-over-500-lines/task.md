@@ -151,3 +151,13 @@ Paths:
 ## Review
 
 - Round 1: Done
+
+## Session
+
+- Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+- Fix pass requested (2026-11-04): PR #626 splits `TemplateSmokeHarness` into five `partial`
+  files (`template-smoke-harness*.cs`, ~1050 lines as one class). The spec says `partial` is
+  not an accepted way to get under the limit. Keep the `[GeneratedRegex]` static partials.
+  Decompose the harness into separate types by responsibility (generation, generated-content
+  checks, platform pins, test runs) that the harness composes, each 500 lines or fewer, then
+  update tests and re-run the gates.
