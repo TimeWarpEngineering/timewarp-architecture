@@ -41,3 +41,8 @@ output rendering, and cloud API calls tend to sit together).
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+- Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1a2d9-00bc-74e0-bf45-a6d476140429, max-turns 500, Blocked — 2026-11-03T19:18:22Z
+
+## Blocked
+
+2026-11-03: placeholder — work not finished
