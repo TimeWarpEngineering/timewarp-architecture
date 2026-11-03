@@ -6,38 +6,24 @@
 // Chat completions only (GetChatClient.AsIChatClient). The Responses API on adapter 10.10.0
 // TypeLoadExceptions when a tool call meets OpenAI 2.14. The real client is created on first
 // use so startup never dials xAI and a PostConfigure in tests wins over the key.
-// UseFakeUpstream is honored only in Development or Testing, and then it wins over a real key.
+// UseFakeUpstream is honored only in Development or Testing, and then it wins over a real key
+// (XaiFakeChatClient scripts the reply).
 // BeginKeyResolution opens a slot on the caller's async flow. IsConfiguredAsync fills that slot
 // with the key and the mode, and GetClientAsync consumes the key, so a completion that already
 // checked configuration reads the database once. The slot has to be opened by the caller: a value
 // stored inside IsConfiguredAsync does not flow back. The mode is a field on that slot, so
 // MissingKeyDetail and ResolvedMode read the same resolution. A call that did not open a slot
 // resolves on its own, and CompleteAsync uses the mode returned with the client.
-// Chat clients are cached per key, up to MaxCachedClients. A key that falls out of that bound is
-// disposed when no completion is still inside GetResponseAsync. Disposing it earlier would drop
-// that call. Dispose of this upstream disposes every cached client.
+// Real clients are rented from XaiChatClientCache and released in CompleteAsync's finally, so a
+// client evicted mid-call is disposed only after that call returns. Dispose of this upstream
+// disposes the cache and the fake.
 // ResolveApiKeyAsync asks IXaiApiKeyResolver when it is registered and otherwise the site key.
-// Tools are AIFunctionDeclaration instances. Invoke on a declaration throws, so this process
-// cannot run a catalog action on the model's behalf. Failures are logged and replaced with
+// Relay-to-chat mapping is XaiChatMapping. Failures are logged and replaced with
 // AgentChatProblems.UpstreamFailed so the client never sees exception text.
-// The fake scripts from the messages after the last user message. By default it calls
-// page_context, then answers "page_context: {result}".
-// "take me" or "go there" with a markdown link in an earlier assistant turn calls navigate
-// with that url, when navigate is offered. "where" calls site_map, when site_map is offered.
-// A site_map result is matched against the user's words (5+ letters) and answered with a
-// markdown link to the first matching destination. Any other tool result is echoed as
-// "{tool}: {result}".
-// Images (task 303-001): when the last user message carries an image and no tool has answered
-// since, the fake replies "image: {mediaType} {width}x{height} {bytes} bytes" (PNG size from the
-// IHDR chunk), so a test can see the picture arrived. "screenshot" calls the capture tool when it
-// is offered. Relay images map to DataContent, which the OpenAI adapter sends as image content.
-// "markdown sample" (task 380) replies with MarkdownSample: bold, a list, an in-app link, an
-// external link and raw HTML, so a test can see how Ask renders a formatted reply.
 #endregion
 
 namespace TimeWarp.Architecture.Features.AgentChats;
 
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,17 +47,13 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   private readonly IOptionsMonitor<XaiChatOptions> Options;
   private readonly IHostEnvironment Environment;
   private readonly IServiceScopeFactory Scopes;
-  private readonly IXaiChatClientFactory Clients;
   private readonly ILogger<XaiChatUpstream> Logger;
   /// <summary>Live chat clients kept per key. Older keys are evicted past this count.</summary>
-  internal const int MaxCachedClients = 8;
+  internal const int MaxCachedClients = XaiChatClientCache.MaxCachedClients;
 
   private static readonly AsyncLocal<KeySlot?> OpenTurn = new();
-  private readonly Lock Gate = new();
-  private readonly FakeChatClient Fake = new();
-  private readonly Dictionary<string, CachedChatClient> LiveClients = new(StringComparer.Ordinal);
-  private readonly List<CachedChatClient> IdleEvicted = [];
-  private long ClientClock;
+  private readonly XaiFakeChatClient Fake = new();
+  private readonly XaiChatClientCache Cache;
 
   public XaiChatUpstream
   (
@@ -85,7 +67,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     Options = options;
     Environment = environment;
     Scopes = scopes;
-    Clients = clients;
+    Cache = new XaiChatClientCache(clients);
     Logger = logger;
   }
 
@@ -209,30 +191,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
   /// <summary>Disposes every cached client. An in-flight completion may already have finished.</summary>
   public void Dispose()
   {
-    IChatClient[] clients;
-    lock (Gate)
-    {
-      List<IChatClient> pending = [];
-      foreach (CachedChatClient entry in LiveClients.Values)
-      {
-        pending.Add(entry.Client);
-      }
-
-      foreach (CachedChatClient entry in IdleEvicted)
-      {
-        pending.Add(entry.Client);
-      }
-
-      clients = [.. pending];
-      LiveClients.Clear();
-      IdleEvicted.Clear();
-    }
-
-    foreach (IChatClient client in clients)
-    {
-      client.Dispose();
-    }
-
+    Cache.Dispose();
     Fake.Dispose();
   }
 
@@ -294,64 +253,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       ? XaiChatDefaults.DefaultModel
       : options.Model;
 
-    lock (Gate)
-    {
-      return (RentLocked(apiKey, endpoint, model), mode);
-    }
-  }
-
-  /// <summary>Caller holds <see cref="Gate"/>.</summary>
-  private IChatClient RentLocked(string apiKey, string endpoint, string model)
-  {
-    ClientClock++;
-    if (LiveClients.TryGetValue(apiKey, out CachedChatClient? existing))
-    {
-      existing.Uses++;
-      existing.LastUsed = ClientClock;
-      return existing.Client;
-    }
-
-    while (LiveClients.Count >= MaxCachedClients)
-    {
-      CachedChatClient oldest = OldestLive();
-      LiveClients.Remove(oldest.Key);
-      oldest.Evicted = true;
-      if (oldest.Uses == 0)
-      {
-        oldest.Client.Dispose();
-      }
-      else
-      {
-        IdleEvicted.Add(oldest);
-      }
-    }
-
-    IChatClient created = Clients.Create(apiKey, endpoint, model);
-    LiveClients.Add(
-      apiKey,
-      new CachedChatClient
-      {
-        Key = apiKey,
-        Client = created,
-        Uses = 1,
-        LastUsed = ClientClock
-      });
-    return created;
-  }
-
-  /// <summary>Caller holds <see cref="Gate"/> and <see cref="LiveClients"/> is not empty.</summary>
-  private CachedChatClient OldestLive()
-  {
-    CachedChatClient? oldest = null;
-    foreach (CachedChatClient candidate in LiveClients.Values)
-    {
-      if (oldest is null || candidate.LastUsed < oldest.LastUsed)
-      {
-        oldest = candidate;
-      }
-    }
-
-    return oldest ?? throw new InvalidOperationException("The chat client cache was empty.");
+    return (Cache.Rent(apiKey, endpoint, model), mode);
   }
 
   private void Release(IChatClient client)
@@ -361,47 +263,7 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
       return;
     }
 
-    lock (Gate)
-    {
-      CachedChatClient? entry = FindCached(client);
-      if (entry is null)
-      {
-        return;
-      }
-
-      if (entry.Uses > 0)
-      {
-        entry.Uses--;
-      }
-
-      if (entry.Evicted && entry.Uses == 0)
-      {
-        IdleEvicted.Remove(entry);
-        entry.Client.Dispose();
-      }
-    }
-  }
-
-  /// <summary>Caller holds <see cref="Gate"/>.</summary>
-  private CachedChatClient? FindCached(IChatClient client)
-  {
-    foreach (CachedChatClient entry in LiveClients.Values)
-    {
-      if (ReferenceEquals(entry.Client, client))
-      {
-        return entry;
-      }
-    }
-
-    foreach (CachedChatClient entry in IdleEvicted)
-    {
-      if (ReferenceEquals(entry.Client, client))
-      {
-        return entry;
-      }
-    }
-
-    return null;
+    Cache.Release(client);
   }
 
   /// <summary>Key and mode from one resolution. The mode travels with the return value.</summary>
@@ -415,359 +277,5 @@ internal sealed class XaiChatUpstream : IAgentChatUpstream, IDisposable
     public string? Key { get; set; }
 
     public XaiByokMode Mode { get; set; }
-  }
-
-  /// <summary>One cached client and how many completions are still using it.</summary>
-  private sealed class CachedChatClient
-  {
-    public required string Key { get; init; }
-
-    public required IChatClient Client { get; init; }
-
-    public int Uses { get; set; }
-
-    public bool Evicted { get; set; }
-
-    public long LastUsed { get; set; }
-  }
-
-  private sealed class FakeChatClient : IChatClient
-  {
-    public Task<ChatResponse> GetResponseAsync
-    (
-      IEnumerable<ChatMessage> messages,
-      ChatOptions? options = null,
-      CancellationToken cancellationToken = default
-    )
-    {
-      var all = messages.ToList();
-      int lastUser = all.FindLastIndex(message => message.Role == ChatRole.User);
-      string userText = lastUser < 0 ? string.Empty : all[lastUser].Text ?? string.Empty;
-      FunctionResultContent? result = all
-        .Skip(lastUser + 1)
-        .SelectMany(message => message.Contents)
-        .OfType<FunctionResultContent>()
-        .LastOrDefault();
-      DataContent? picture = lastUser < 0
-        ? null
-        : all[lastUser].Contents.OfType<DataContent>().FirstOrDefault(content => content.HasTopLevelMediaType("image"));
-      if (picture is not null && result is null)
-      {
-        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, DescribeImage(picture))));
-      }
-
-      if (result is not null)
-      {
-        string rendered = result.Result as string ?? JsonSerializer.Serialize(result.Result);
-        string name = all
-          .SelectMany(message => message.Contents)
-          .OfType<FunctionCallContent>()
-          .FirstOrDefault(call => call.CallId == result.CallId)?.Name ?? "page_context";
-        string text = name == "site_map"
-          ? AnswerSiteMap(userText, rendered)
-          : $"{name}: {rendered}";
-        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, text)));
-      }
-
-      if (userText.Contains("markdown sample", StringComparison.OrdinalIgnoreCase))
-      {
-        return Task.FromResult(new ChatResponse(new ChatMessage(ChatRole.Assistant, MarkdownSample)));
-      }
-
-      bool Offers(string toolName) =>
-        options?.Tools?.Any(tool => tool.Name == toolName) == true;
-
-      if (userText.Contains("take me", StringComparison.OrdinalIgnoreCase) ||
-          userText.Contains("go there", StringComparison.OrdinalIgnoreCase))
-      {
-        string? url = all
-          .Take(Math.Max(lastUser, 0))
-          .Where(message => message.Role == ChatRole.Assistant)
-          .Select(message => LastLinkTarget(message.Text ?? string.Empty))
-          .LastOrDefault(target => target is not null);
-        if (url is not null && Offers("navigate"))
-        {
-          return Task.FromResult(ToolTurn("call-navigate", "navigate", new Dictionary<string, object?> { ["url"] = url }));
-        }
-      }
-      else if (userText.Contains("screenshot", StringComparison.OrdinalIgnoreCase) && Offers(CaptureToolName))
-      {
-        return Task.FromResult(ToolTurn("call-capture", CaptureToolName, new Dictionary<string, object?>()));
-      }
-      else if (userText.Contains("where", StringComparison.OrdinalIgnoreCase) && Offers("site_map"))
-      {
-        return Task.FromResult(ToolTurn("call-site-map", "site_map", new Dictionary<string, object?>()));
-      }
-
-      return Task.FromResult(ToolTurn("call-1", "page_context", new Dictionary<string, object?>()));
-    }
-
-    public const string CaptureToolName = "Screenshot.CaptureScreenshot";
-
-    public const string MarkdownSample =
-      "Here is **bold** text.\n\n- first item\n- second item\n\n" +
-      "Open [Sign in](/Login) or [Example](https://example.com).\n\n" +
-      "<b data-qa=\"AskRawHtml\">raw</b>";
-
-    public static string DescribeImage(DataContent picture)
-    {
-      ReadOnlySpan<byte> data = picture.Data.Span;
-      string size = data.Length >= 24 && data[12..16].SequenceEqual("IHDR"u8)
-        ? $"{System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(data[16..20])}x{System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(data[20..24])}"
-        : "unknown-size";
-      return $"image: {picture.MediaType} {size} {data.Length} bytes";
-    }
-
-    private static ChatResponse ToolTurn(string callId, string name, Dictionary<string, object?> arguments) =>
-      new(new ChatMessage(ChatRole.Assistant, [new FunctionCallContent(callId, name, arguments)]));
-
-    private static string AnswerSiteMap(string userText, string rendered)
-    {
-      List<string> keywords = [];
-      foreach (string word in Words(userText))
-      {
-        if (word.Length < 5)
-        {
-          continue;
-        }
-
-        keywords.Add(word);
-        if (word.EndsWith('s', StringComparison.Ordinal))
-        {
-          keywords.Add(word[..^1]);
-        }
-      }
-
-      try
-      {
-        using var document = JsonDocument.Parse(rendered);
-        if (document.RootElement.TryGetProperty("destinations", out JsonElement destinations) &&
-            destinations.ValueKind == JsonValueKind.Array)
-        {
-          foreach (JsonElement destination in destinations.EnumerateArray())
-          {
-            string title = ReadString(destination, "title");
-            string url = ReadString(destination, "url");
-            string haystack = $"{title} {ReadString(destination, "description")}";
-            if (url.Length > 0 &&
-                keywords.Any(keyword => haystack.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
-            {
-              return $"You can do that on the [{title}]({url}) page. Say \"take me there\" and I will open it.";
-            }
-          }
-        }
-      }
-      catch (JsonException)
-      {
-        // Not JSON: fall through to the echo.
-      }
-
-      return $"site_map: {rendered}";
-    }
-
-    // The url of the last markdown link to an app path ("](/...)") in text, or null.
-    private static string? LastLinkTarget(string text)
-    {
-      int start = text.LastIndexOf("](/", StringComparison.Ordinal);
-      if (start < 0)
-      {
-        return null;
-      }
-
-      start += 2;
-      int end = start;
-      while (end < text.Length && text[end] != ')' && !char.IsWhiteSpace(text[end]))
-      {
-        end++;
-      }
-
-      return end < text.Length && text[end] == ')' ? text[start..end] : null;
-    }
-
-    // Lower-case runs of ASCII letters.
-    private static IEnumerable<string> Words(string text)
-    {
-      var word = new System.Text.StringBuilder();
-      foreach (char character in text.ToLowerInvariant())
-      {
-        if (character is >= 'a' and <= 'z')
-        {
-          word.Append(character);
-          continue;
-        }
-
-        if (word.Length > 0)
-        {
-          yield return word.ToString();
-          word.Clear();
-        }
-      }
-
-      if (word.Length > 0)
-      {
-        yield return word.ToString();
-      }
-    }
-
-    private static string ReadString(JsonElement element, string property) =>
-      element.ValueKind == JsonValueKind.Object &&
-      element.TryGetProperty(property, out JsonElement value) &&
-      value.ValueKind == JsonValueKind.String
-        ? value.GetString() ?? string.Empty
-        : string.Empty;
-
-    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync
-    (
-      IEnumerable<ChatMessage> messages,
-      ChatOptions? options = null,
-      [EnumeratorCancellation] CancellationToken cancellationToken = default
-    )
-    {
-      ChatResponse response = await GetResponseAsync(messages, options, cancellationToken)
-        .ConfigureAwait(false);
-      foreach (ChatResponseUpdate update in response.ToChatResponseUpdates())
-      {
-        yield return update;
-      }
-    }
-
-    public object? GetService(Type serviceType, object? serviceKey = null) =>
-      serviceType.IsInstanceOfType(this) ? this : null;
-
-    public void Dispose()
-    {
-    }
-  }
-}
-
-/// <summary>Maps relay DTOs onto Microsoft.Extensions.AI types. Tools stay declaration-only.</summary>
-internal static class XaiChatMapping
-{
-  public static List<ChatMessage> ToMessages(Command command)
-  {
-    List<ChatMessage> messages = [];
-    foreach (Turn turn in command.Messages)
-    {
-      ChatRole role = turn.Role.ToLowerInvariant() switch
-      {
-        "system" => ChatRole.System,
-        "user" => ChatRole.User,
-        "assistant" => ChatRole.Assistant,
-        "tool" => ChatRole.Tool,
-        _ => throw new InvalidOperationException("Role was not validated.")
-      };
-
-      List<AIContent> contents = [];
-      if (!string.IsNullOrEmpty(turn.Text))
-      {
-        contents.Add(new TextContent(turn.Text));
-      }
-
-      foreach (ToolCall call in turn.ToolCalls)
-      {
-        contents.Add(new FunctionCallContent(call.CallId, call.Name, ParseArguments(call.ArgumentsJson)));
-      }
-
-      if (!string.IsNullOrWhiteSpace(turn.ToolCallId))
-      {
-        contents.Add(new FunctionResultContent(turn.ToolCallId, turn.ToolResult ?? ""));
-      }
-
-      foreach (TurnImage image in turn.Images)
-      {
-        contents.Add(new DataContent(Convert.FromBase64String(image.Data), image.MediaType));
-      }
-
-      if (contents.Count == 0)
-      {
-        contents.Add(new TextContent(string.Empty));
-      }
-
-      messages.Add(new ChatMessage(role, contents));
-    }
-
-    return messages;
-  }
-
-  public static ChatOptions ToChatOptions(Command command)
-  {
-    ChatOptions options = new();
-    if (!string.IsNullOrWhiteSpace(command.Instructions))
-    {
-      options.Instructions = command.Instructions;
-    }
-
-    if (command.Tools.Count > 0)
-    {
-      options.Tools = ToTools(command.Tools);
-    }
-
-    return options;
-  }
-
-  public static List<AITool> ToTools(IReadOnlyList<ToolDefinition> tools)
-  {
-    List<AITool> mapped = [];
-    foreach (ToolDefinition tool in tools)
-    {
-      using var document = JsonDocument.Parse(tool.ParametersJson);
-      mapped.Add
-      (
-        AIFunctionFactory.CreateDeclaration
-        (
-          tool.Name,
-          tool.Description ?? "",
-          document.RootElement.Clone()
-        )
-      );
-    }
-
-    return mapped;
-  }
-
-  public static Response ToResponse(ChatResponse chatResponse)
-  {
-    Response response = new();
-    foreach (ChatMessage message in chatResponse.Messages)
-    {
-      foreach (AIContent content in message.Contents)
-      {
-        if (content is TextContent text && !string.IsNullOrEmpty(text.Text))
-        {
-          response.Text = string.IsNullOrEmpty(response.Text) ? text.Text : response.Text + text.Text;
-        }
-        else if (content is FunctionCallContent call)
-        {
-          response.ToolCalls.Add
-          (
-            new ToolCall
-            {
-              Name = call.Name,
-              CallId = call.CallId,
-              ArgumentsJson = call.Arguments is null
-                ? "{}"
-                : JsonSerializer.Serialize(call.Arguments)
-            }
-          );
-        }
-      }
-    }
-
-    if (string.IsNullOrEmpty(response.Text))
-    {
-      response.Text = string.IsNullOrEmpty(chatResponse.Text) ? null : chatResponse.Text;
-    }
-
-    return response;
-  }
-
-  private static Dictionary<string, object?>? ParseArguments(string? json)
-  {
-    if (string.IsNullOrWhiteSpace(json))
-    {
-      return null;
-    }
-
-    return JsonSerializer.Deserialize<Dictionary<string, object?>>(json);
   }
 }

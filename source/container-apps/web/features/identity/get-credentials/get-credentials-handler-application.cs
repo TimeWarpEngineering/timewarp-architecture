@@ -26,7 +26,7 @@
 // GetCurrentSession.Handler's Design region reasoning).
 // Availability flags (task 282): CanRevoke / CanRename per row and CanLinkMicrosoft365 for the page
 // come from CredentialRules over the caller's ACTIVE credentials — the count RevokeCredential.Handler
-// checks and the types EntraTicketProcessor checks — plus EntraSignInOffer (the same answer
+// checks and the types EntraAccountLinker checks — plus EntraSignInOffer (the same answer
 // GetSignInMethods gives the login page). With IncludeRevoked=true the revoked rows are listed
 // but never counted, and get both flags false.
 // Search (task 345) narrows the returned rows to those whose DisplayName, label, nickname, account
