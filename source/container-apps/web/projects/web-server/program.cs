@@ -41,40 +41,13 @@
 // the real environment via ResolveRealEnvironmentName instead of IConfiguration — see that
 // overload's own Design region for why (a Production-booted host must not activate mock auth from
 // config content alone).
-// Task 154: identity-session cookie OnRedirectToLogin is dual-mode — HTML/page deep links 302 to
-// /Login?returnUrl=…; /api challenges stay 401. Classification SSOT:
-// IdentitySessionCookieChallenge (platform/identity-host). Forbid always 403 (never Login).
-// Task 183: after Web.Spa.Program.ConfigureServices, re-register AuthenticationStateProvider as
-// HostedIdentitySessionAuthenticationStateProvider so prerender uses HttpContext.User (cookie)
-// instead of an anonymous session self-call — see that type's Design region.
-// Task 312: server-side named HttpClients (web-server self-call, api-server, grpc-server) use
-// https+http://{ServiceNames.*} through Aspire service discovery, which AddServiceDefaults
-// registers for every client. https+http prefers https (run mode, dev cert) and falls back to http
-// (Compose, Kubernetes and ACA expose http only). Never hand-read services__* env vars: the old
-// https-only read gave a null BaseAddress on every published target. An unresolvable name fails
-// the first call with the service name in the error. The browser never receives service URIs:
-// WASM clients target the ingress origin, so there is no /service-discovery endpoint.
-// Task 205-003: the web-server self-call attaches IdentitySessionCookieForwardingHandler so
-// InteractiveServer/Auto API calls (Profile PUT) present the inbound identity-session cookie
-// instead of challenging 401. Tasks 213 / 312: that handler also forwards the circuit's public
-// origin on X-Forwarded-Host (port kept) and X-Forwarded-Proto (never HTTP Host — TLS on the https
-// hop validates the discovered host), so passkey RP-ID selection and absolute mail links see the
-// browser's origin on both the run-mode https://localhost hop and the published http://web-server
-// hop. On published targets that hop is cleartext inside the deployment network, the same as
-// ingress → web-server.
-// Missing discovery config: with no Services:web-server:* entry, service discovery's pass-through
-// resolver does not fail — it resolves https://web-server through DNS (search domains included),
-// and the forwarding handler still sends the Cookie and mock-principal headers. https is tried
-// first, so TLS certificate name validation for "web-server" is what keeps those credentials off a
-// foreign endpoint (an internal CA issuing that name would defeat it). Configuring
-// Services:web-server:http:0 with an external URL sends them in cleartext; that takes control of
-// configuration. Aspire always injects the entry, so this only bites a host started outside Aspire.
-// Task 230: identity-session OnValidatePrincipal rejects bad PrincipalId claims and inactive/
-// merged principals, then SignOutAsync(IdentitySessionDefaults.Scheme) so the stale cookie is
-// cleared once instead of re-validated on every request.
-// Task 335-001: AddStateDevToolsExport adds the TimeWarp.State ActivitySource and the DevTools
-// exporter to tracing in Development when the AppHost published TIMEWARP_STATE_DEVTOOLS_ENDPOINT.
-// It covers server-side stores (prerender, InteractiveServer).
+// Registration concerns live in their own types, each with its own Design region:
+// WebServerHttpClients (service-discovery named clients, task 312), WebServerAuthentication
+// (schemes, policies, permission evaluation, the hosted prerender session state),
+// WebServerSettings (validated options), WebServerPaymentServices (TimeWarp.402 demos),
+// WebServerStateDevTools (server-side span export) and BrandStylesheetEndpoint. ConfigureServices
+// keeps the registration order: the hosted session state goes after Web.Spa.Program.ConfigureServices
+// because the last AuthenticationStateProvider registration wins.
 // Task 335-002: browser (WASM) stores export from Web.Spa.Program.Main. The browser never sees the
 // variable, so ConfigureEndpoints maps MapTimeWarpStateDevToolsClientConfig: GET
 // /_timewarp/state-devtools returns the inspector origin, 204 when the variable is unset. The package
@@ -83,13 +56,8 @@
 
 namespace TimeWarp.Architecture.Web.Server;
 
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
-using System.Security.Claims;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
-using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity;
@@ -99,10 +67,7 @@ using TimeWarp.Architecture.Features.Profiles.Infrastructure;
 using TimeWarp.Architecture.Mail;
 using TimeWarp.Architecture.Features.Tip;
 using TimeWarp.Foundation.Common.Infrastructure;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using TimeWarp.State.DevTools.Export;
-using TimeWarp.State.Telemetry;
 
 public partial class Program : IAspNetProgram
 {
@@ -156,40 +121,7 @@ public partial class Program : IAspNetProgram
   private static void ConfigureHostApplicationBuilder(IHostApplicationBuilder builder)
   {
     builder.AddServiceDefaults();
-    AddStateDevToolsExport(builder);
-  }
-
-  /// <summary>
-  /// Task 335-001: ships server-side TimeWarp.State action spans (prerender and InteractiveServer
-  /// circuits) to the State DevTools inspector. Development only, and only when the AppHost set
-  /// TIMEWARP_STATE_DEVTOOLS_ENDPOINT (WithTimeWarpStateDevTools, run mode). Production and every
-  /// published target register nothing. Snapshots use a reflection resolver: this is a
-  /// non-trimmed server process and a failed snapshot never fails the action.
-  /// </summary>
-  private static void AddStateDevToolsExport(IHostApplicationBuilder builder)
-  {
-    if (!builder.Environment.IsDevelopment()
-      || string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(TimeWarpStateDevToolsExport.EndpointEnvironmentVariable)))
-    {
-      return;
-    }
-
-    builder.Services.AddTimeWarpStateTelemetry
-    (
-      options =>
-      {
-        options.IncludeSnapshots = true;
-        options.JsonSerializerOptions =
-          new JsonSerializerOptions(JsonSerializerDefaults.Web) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
-      }
-    );
-    builder.Services.AddOpenTelemetry()
-      .WithTracing
-      (
-        tracing => tracing
-          .AddSource(TimeWarpStateTelemetry.ActivitySourceName)
-          .AddTimeWarpStateDevToolsExporter()
-      );
+    WebServerStateDevTools.AddExport(builder);
   }
 
   public static void ConfigureConfiguration(ConfigurationManager configurationManager)
@@ -218,60 +150,17 @@ public partial class Program : IAspNetProgram
   /// </summary>
   public static void ConfigureServices(IServiceCollection serviceCollection, IConfiguration configuration, string? environmentName)
   {
-    serviceCollection.AddHttpClient();
-    EntraTenantResolver.Register(serviceCollection);
-    serviceCollection.AddTransient<IdentitySessionCookieForwardingHandler>();
-    // Task 312: Aspire service discovery (AddServiceDefaults) resolves these; https+http prefers
-    // https (run mode) and falls back to http (Compose, Kubernetes, ACA publish http only).
-    serviceCollection.AddHttpClient(ServiceNames.WebServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.WebServiceName))
-      .AddHttpMessageHandler<IdentitySessionCookieForwardingHandler>();
-    serviceCollection.AddHttpClient(ServiceNames.ApiServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.ApiServiceName));
-#if grpc
-    // Server-side half of the SPA's gRPC client (prerender + InteractiveServer). The browser half
-    // targets the ingress origin plus IngressPaths.GrpcPathPrefix — see Web.Spa.Program.
-    serviceCollection.AddHttpClient(ServiceNames.GrpcServiceName, client => client.BaseAddress = ServiceDiscoveryAddress(ServiceNames.GrpcServiceName));
-#endif
+    WebServerHttpClients.ConfigureServices(serviceCollection);
 
     serviceCollection
       .AddRazorComponents()
       .AddInteractiveServerComponents()
       .AddInteractiveWebAssemblyComponents();
 
-    serviceCollection.AddCascadingAuthenticationState();
-    serviceCollection.AddAuthorizationBuilder()
-      // Task 110: any signed-in identity-session cookie — see IdentitySessionDefaults.AuthenticatedPolicy's
-      // Design region for why this is deliberately not an admin/role-based policy.
-      // Round-1 review M4 (nit): this explicit AddAuthenticationSchemes(IdentitySessionDefaults.Scheme)
-      // restriction is WHY roles endpoints get a clean 401 for an unauthenticated request. A bare
-      // fail-closed [ApiEndpoint] with no marker at all (only reachable if TWA0013 is suppressed) has
-      // no policy to restrict the scheme — it falls through to ASP.NET Core's DEFAULT authentication
-      // scheme (always identity-session; RFC 219 D10 retired the 104-021 Entra-as-default branch).
-      // identity-session cookie events return 401/403. The clean-401 property specifically belongs
-      // to an explicit scheme-restricted policy like this one, not to the bare fail-closed default.
-      .AddPolicy
-      (
-        IdentitySessionDefaults.AuthenticatedPolicy,
-        policy => policy
-          // mock-identity-session (task 145-009): fail-closed header auth for closed-box BFF;
-          // handler returns NoResult when mock is off, so Production/normal Dev are unchanged.
-          .AddAuthenticationSchemes(IdentitySessionDefaults.Scheme, MockIdentityPrincipalHandler.SchemeName)
-          .RequireAuthenticatedUser()
-      );
-    // Task 182-002/003/006: permission-centric policies (policy name == PermissionIds). Admin,
-    // credential, agent identity, and metered-demo contracts use PermissionIds; schemes stay on
-    // [EndpointAuthorize(AuthenticationSchemes)]. Agent scope→permission expansion is in
-    // PermissionEvaluator (IAgentPermissionScopeSource → IAgentCallerContext). SPA uses
-    // AddPermissionClaimPolicies separately.
-    // IDE0200 wants a method group. TWA0024 only sees the call
-    // PermissionPolicyRegistration.AddPermissionPolicies(options), so the lambda stays.
-#pragma warning disable IDE0200
-    serviceCollection.AddAuthorization(options =>
-      PermissionPolicyRegistration.AddPermissionPolicies(options));
-#pragma warning restore IDE0200
-    ConfigureAuthentication(serviceCollection, configuration);
+    WebServerAuthentication.ConfigureServices(serviceCollection, configuration);
 
     CommonServerModule.ConfigureServices(serviceCollection, configuration);
-    ConfigureSettings(serviceCollection, configuration);
+    WebServerSettings.ConfigureServices(serviceCollection, configuration);
     InMemoryIdentityStoresModule.ConfigureServices(serviceCollection, configuration);
     // Scoped: ISiteSettingsStore is the scoped SeedOnReadSiteSettingsStore decorator (task 254).
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
@@ -302,41 +191,10 @@ public partial class Program : IAspNetProgram
     serviceCollection.AddScoped<IRequestUserAgentAccessor, HttpRequestUserAgentAccessor>();
     serviceCollection.AddScoped<IPaymentHttpContext, HttpPaymentHttpContext>();
 
-    // Task 147-004 / 147-006: effective roles + request claims (PrincipalRoleClaimsTransformation
-    // still projects roles for diagnostics). Resolver is scoped so it can resolve
-    // EfPrincipalRoleStore under postgres without a captive dependency.
-    // Task 182-002: PermissionRequirementHandler is the server enforcement path — always via
-    // IPermissionEvaluator (scheme-aware expansion of roles→permissions). SPA projects
-    // GetCurrentSession.Permissions as claims (182-003).
-    serviceCollection.Configure<BootstrapAdministratorOptions>(
-      configuration.GetSection("Authentication"));
-    serviceCollection.AddScoped<IEffectiveRolesResolver, EffectiveRolesResolver>();
-    serviceCollection.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
-    serviceCollection.AddScoped<IAuthorizationHandler, PermissionRequirementHandler>();
-    serviceCollection.AddScoped<IClaimsTransformation, PrincipalRoleClaimsTransformation>();
+    WebServerAuthentication.ConfigurePermissionEvaluation(serviceCollection, configuration);
 
-    // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded):
-    // in-memory ledger + facilitator + gates. Free/discovery routes never resolve PaymentGate /
-    // MeteredCapabilityGate / SettlementFundingService — only tip and metered handlers invoke them.
-    // Facilitator base prefers tip options, then metered, then public testnet facilitator.
-    // SettlementFundingService + MeteredCapabilityGate are scoped so they can resolve IPrincipalStore
-    // when postgres swaps the store to scoped EfPrincipalStore (captive-dependency safe).
-    serviceCollection.AddSingleton<ICreditLedger, InMemoryCreditLedger>();
-    serviceCollection.AddSingleton<IFacilitatorClient>(static serviceProvider =>
-    {
-      TipOptions tip = serviceProvider.GetRequiredService<IOptions<TipOptions>>().Value;
-      MeteredCapabilityOptions metered = serviceProvider
-        .GetRequiredService<IOptions<MeteredCapabilityOptions>>()
-        .Value;
-      string facilitatorBase =
-        !string.IsNullOrWhiteSpace(tip.FacilitatorBase) ? tip.FacilitatorBase
-        : !string.IsNullOrWhiteSpace(metered.FacilitatorBase) ? metered.FacilitatorBase
-        : FacilitatorUrls.X402Org;
-      return new HttpFacilitatorClient(facilitatorBase);
-    });
-    serviceCollection.AddSingleton<PaymentGate>();
-    serviceCollection.AddScoped<SettlementFundingService>();
-    serviceCollection.AddScoped<MeteredCapabilityGate>();
+    // TimeWarp.402 demos (104-009 tip, 104-011 metered, 104-013 settle→Funded).
+    WebServerPaymentServices.ConfigureServices(serviceCollection);
 
     // Task 104-015: app-level rate limits on principal register + payment challenge (not edge).
     AbuseRateLimitingModule.ConfigureServices(serviceCollection, configuration);
@@ -377,14 +235,8 @@ public partial class Program : IAspNetProgram
     // above, and prerender resolves the same container. A missing key does not fail startup.
     XaiChatRegistration.ConfigureServices(serviceCollection, configuration);
 
-    // Task 183: last registration wins — prefer cookie principal during hosted prerender.
-    // Only when SPA registered IdentitySessionAuthenticationStateProvider (not mock / Entra).
-    if (serviceCollection.Any(static d =>
-          d.ServiceType == typeof(AuthenticationStateProvider)
-          && d.ImplementationType == typeof(IdentitySessionAuthenticationStateProvider)))
-    {
-      serviceCollection.AddScoped<AuthenticationStateProvider, HostedIdentitySessionAuthenticationStateProvider>();
-    }
+    // Task 183: after Web.Spa.Program.ConfigureServices — last registration wins.
+    WebServerAuthentication.PreferHostedIdentitySessionState(serviceCollection);
 
     // Unique wrapper: AddGeneratedMediator is internal to the emitting assembly, and web-server
     // references Web.Spa, so this host calls the public wrapper instead of the generated method.
@@ -421,95 +273,6 @@ public partial class Program : IAspNetProgram
   private static string? ResolveRealEnvironmentName(IServiceCollection serviceCollection) =>
     (serviceCollection.LastOrDefault(static descriptor => descriptor.ServiceType == typeof(IHostEnvironment))
       ?.ImplementationInstance as IHostEnvironment)?.EnvironmentName;
-
-  /// <summary>
-  /// The Aspire service-discovery address for a sibling (or this) service:
-  /// <c>https+http://{serviceName}/</c> — https when the target exposes it, else http.
-  /// </summary>
-  private static Uri ServiceDiscoveryAddress(string serviceName) => new($"https+http://{serviceName}/");
-
-  private static void ConfigureAuthentication(IServiceCollection serviceCollection, IConfiguration configuration)
-  {
-    // RFC 219 D10: identity-session is always DefaultScheme. Entra is a named OIDC scheme when
-    // SignInOptions lists Microsoft365 — never AddMicrosoftIdentityWebAppAuthentication (that
-    // helper steals DefaultScheme). The list is read from configuration here so scheme
-    // registration does not wait on options validation.
-    bool microsoft365Listed = SignInOptions.ConfigurationLists(configuration, SignInMethod.Microsoft365);
-
-    serviceCollection.AddSingleton<IValidateOptions<EntraAuthenticationOptions>, EntraAuthenticationOptionsStartupValidator>();
-    serviceCollection.AddOptions<EntraAuthenticationOptions>()
-      .Bind(configuration.GetSection(EntraAuthenticationOptions.SectionKey))
-      .ValidateOnStart();
-
-    AuthenticationBuilder authenticationBuilder = serviceCollection.AddAuthentication(IdentitySessionDefaults.Scheme);
-
-    authenticationBuilder
-      .AddCookie(IdentitySessionDefaults.Scheme, options =>
-      {
-        options.Cookie.Name = IdentitySessionDefaults.CookieName;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromHours(24);
-        // Dual-mode challenge (task 154): non-API HTML/page deep links 302 to /Login?returnUrl=…
-        // so the SPA and task-153 client flow can run; /api/… stays 401 (contract seam). Forbid
-        // is always 403 — authenticated-but-insufficient policy must not bounce to Login.
-        // Classification SSOT: IdentitySessionCookieChallenge.
-        options.Events.OnRedirectToLogin = context =>
-        {
-          if (IdentitySessionCookieChallenge.ShouldRedirectToLogin(context.Request))
-          {
-            context.Response.Redirect(
-              IdentitySessionCookieChallenge.BuildLoginRedirectTarget(context.Request));
-          }
-          else
-          {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-          }
-
-          return Task.CompletedTask;
-        };
-        options.Events.OnRedirectToAccessDenied = context =>
-        {
-          context.Response.StatusCode = StatusCodes.Status403Forbidden;
-          return Task.CompletedTask;
-        };
-        options.Events.OnValidatePrincipal = async context =>
-        {
-          IPrincipalStore principalStore = context.HttpContext.RequestServices.GetRequiredService<IPrincipalStore>();
-          string? claimValue = context.Principal?.FindFirstValue(IdentitySessionDefaults.PrincipalIdClaimType);
-          if (!Guid.TryParse(claimValue, out Guid guid) || guid == Guid.Empty)
-          {
-            context.RejectPrincipal();
-            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
-            return;
-          }
-
-          Principal? principal = await principalStore.GetPrincipalAsync(
-            PrincipalId.From(guid),
-            context.HttpContext.RequestAborted);
-          if (principal?.IsActive != true)
-          {
-            context.RejectPrincipal();
-            await context.HttpContext.SignOutAsync(IdentitySessionDefaults.Scheme);
-          }
-        };
-      })
-      // Agent bearer-token scheme (task 104-004): named scheme alongside identity-session.
-      // AgentTokenAuthenticationHandler owns authenticate/challenge/forbid for this scheme;
-      // token lifetime lives in AgentTokenOptions (ConfigureSettings).
-      .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { })
-      // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
-      // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.
-      .AddScheme<AuthenticationSchemeOptions, MockIdentityPrincipalHandler>(MockIdentityPrincipalHandler.SchemeName, _ => { });
-
-    serviceCollection.AddScoped<EntraTicketProcessor>();
-    if (microsoft365Listed)
-    {
-      EntraAuthenticationRegistration.AddNamedEntraScheme(authenticationBuilder, configuration);
-    }
-  }
 
   public static void ConfigureMiddleware(WebApplication webApplication)
   {
@@ -576,30 +339,7 @@ public partial class Program : IAspNetProgram
 
   public static void ConfigureEndpoints(WebApplication webApplication)
   {
-    // White-label shell tokens. Linked from App.razor after tokens.css. Anonymous: the mark
-    // paints before anyone signs in. Not a static asset, so a configuration edit is the next GET.
-    // Cache-Control: no-cache plus a strong ETag. If-None-Match uses weak comparison, so the
-    // strong tag and the same tag with a leading W/ are both 304.
-    webApplication.MapGet
-    (
-      BrandStylesheet.Path,
-      (HttpContext httpContext, IOptions<BrandOptions> brandOptions) =>
-      {
-        BrandStylesheet.Response response = BrandStylesheet.Respond
-        (
-          brandOptions.Value,
-          httpContext.Request.Headers.IfNoneMatch.ToString()
-        );
-        httpContext.Response.Headers["Cache-Control"] = BrandStylesheet.Response.CacheControl;
-        httpContext.Response.Headers["ETag"] = response.EntityTag;
-        if (response.Body is null)
-        {
-          return Results.StatusCode(response.StatusCode);
-        }
-
-        return Results.Text(response.Body, "text/css; charset=utf-8", statusCode: response.StatusCode);
-      }
-    ).AllowAnonymous();
+    BrandStylesheetEndpoint.Map(webApplication);
 
     webApplication.MapStaticAssets();
     WebMcpDiscoveryEndpoint.Map(webApplication);
@@ -624,45 +364,6 @@ public partial class Program : IAspNetProgram
     webApplication.MapTimeWarpStateDevToolsClientConfig();
   }
 
-  private static void ConfigureSettings(IServiceCollection serviceCollection, IConfiguration configuration)
-  {
-    serviceCollection
-      .AddFluentValidatedOptions<SignInOptions, SignInOptionsValidator>(configuration)
-      .PostConfigure<IConfiguration>((options, configuration) => options.ApplyConfiguredMethods(configuration))
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<SampleOptions, SampleOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<SiteMetadata, SiteMetadataValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<AgentTokenOptions, AgentTokenOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<MeteredCapabilityOptions, MeteredCapabilityOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<TipOptions, TipOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    serviceCollection
-      .AddFluentValidatedOptions<AbuseRateLimitOptions, AbuseRateLimitOptionsValidator>(configuration)
-      .ValidateOnStart();
-
-    // TIP_* env overlay (timewarp-software parity) after section bind; strict TIP_ENABLED=="true".
-    serviceCollection.PostConfigure<TipOptions>(static options => TipEnvironment.ApplyFromEnvironment(options));
-  }
-
   private static void ConfigureInfrastructure(IServiceCollection serviceCollection)
   {
     serviceCollection.AddHealthChecks();
@@ -677,3 +378,4 @@ public partial class Program : IAspNetProgram
   [LoggerMessage(Level = LogLevel.Critical, Message = "Host terminated unexpectedly")]
   private static partial void LogHostTerminatedUnexpectedly(ILogger logger, Exception exception);
 }
+

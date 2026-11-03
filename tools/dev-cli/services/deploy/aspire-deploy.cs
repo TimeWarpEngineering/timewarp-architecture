@@ -13,7 +13,7 @@
 // AspireDeployCluster, AspireDeployAzure, AspireDeployEnvironment and AspireDeployText.
 //
 // Deploying is an operator action, never CI (task 070-006): no workflow step or `dev workflow` mode
-// calls these verbs. The target is the AppHost's Publish:Target switch (program.cs), passed through
+// calls these verbs. The target is the AppHost's Publish:Target switch (publish-target.cs), passed through
 // as `-- --Publish:Target=<name>` exactly like `dev publish`; the default is the AppHost's default
 // (compose).
 //

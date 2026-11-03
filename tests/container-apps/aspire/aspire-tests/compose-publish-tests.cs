@@ -296,7 +296,7 @@ public partial class ComposePublish_Given_
 
   public static async Task PublishedIngressPort_Should_DefaultToTheCommittedParameter()
   {
-    // Task 311: ingress-port has no literal in program.cs. Its publish default (what `aspire deploy` /
+    // Task 311: ingress-port has no literal in the AppHost. Its publish default (what `aspire deploy` /
     // prepare-compose write into the .env) is the committed Parameters:ingress-port.
     await using IDistributedApplicationTestingBuilder appHost =
       await DistributedApplicationTestingBuilder.CreateAsync<Projects.aspire_app_host>(
