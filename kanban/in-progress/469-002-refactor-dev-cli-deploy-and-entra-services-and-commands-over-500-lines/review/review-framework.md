@@ -6,7 +6,7 @@
 **Plan / brief:** Split the eight over-limit dev-cli deploy, entra, and template-smoke files into one top-level type per file, each at most 500 lines, without changing what any `dev` verb does.
 **Effort:** 3 (general only)
 **Reviewer roster:** general
-**Session IDs:** grok review `01a1a2ea-60e5-7ee3-b154-2ef4e8c7dd68`
+**Session IDs:** grok review `01a1a2ea-60e5-7ee3-b154-2ef4e8c7dd68`; round 2 opencode review `ses_e5cf91ca7ffePj56bfa6QgrEHU`
 
 ## Budget (by-diff)
 
@@ -27,3 +27,7 @@
 ## Goal check
 
 The implementer restatement matches the original task: the same eight files, one top-level type per file, 500-line cap, thin endpoints, unchanged verb behavior, and Amuru wrappers around real tools. The restatement adds explicit `dev build` and `ganda repo audit` gates. Those tighten the original "tests still pass" and "AOT self-install still builds" requirements. They do not drop or retarget the work. No misread.
+
+## Round 2
+
+Re-review after fix pass `28a8e0a52` (compose `TemplateSmokeHarness` from separate types; no partial split to get under 500). Same diff scope, same roster. Prior round files stay frozen. Artifacts: `review/round-2/general.md`, `review/round-2/merged.md`.
