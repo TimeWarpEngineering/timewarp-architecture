@@ -146,15 +146,17 @@ Expect:
 
 ### Review
 
-Round 1, roster general, effort 3. Disposition: **clean**. Final counts: 0 open, 0 fixed, 0 wontfix across bug, suggestion, and nit. No wontfix and no escalation.
+Rounds 1 and 2, roster general, effort 3. Disposition: **clean**. Final counts (round 2): 0 open, 0 fixed, 0 wontfix across bug, suggestion, and nit. No wontfix and no escalation.
 
-The review compared the branch to merge-base `f95c82ea0`. The implementer restatement matches the original task (same eight files, one type per file, 500-line cap, unchanged verbs). No misread.
+The review compared the branch to merge-base `f95c82ea0`. Round 2 re-checked the fix pass that replaced the `TemplateSmokeHarness` partial files with composed types. The implementer restatement matches the original task (same eight files, one type per file, 500-line cap, unchanged verbs). No misread.
 
 Paths:
 
 - `review/review-framework.md`
 - `review/round-1/general.md`
 - `review/round-1/merged.md`
+- `review/round-2/general.md`
+- `review/round-2/merged.md`
 - `review/disposition.md`
 
 ## Session
@@ -180,11 +182,16 @@ Paths:
   update tests and re-run the gates.
 - Implement oracle (walk restart): implementer-claude (Opus 5.5) 2026-11-04. Product work already on the branch; re-ran `dotnet build tools/dev-cli/dev.cs` (0 warnings), dev-cli-tests (342 of 342) and `ganda repo audit` (passes, one `kanban-landed` advisory on other ids). No code change. Merged the duplicate `## Session` sections.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 60ec115d-79f4-4b9d-85be-bcc1a043ec78, max-turns 500, Done — 2026-11-03T20:07:33Z
+- Review oracle: review by reviewer-opencode (opencode, vendor xai, model opencode-go/grok-4.7), session ses_e5cf91ca7ffePj56bfa6QgrEHU, effort 3, max-turns uncapped (no --max-turns flag; bound 200), artifacts review/round-2/general.md, review/round-2/merged.md, disposition clean — 2026-11-04
+- Review oracle: review by reviewer-opencode (opencode, vendor xai, model opencode-go/grok-4.7, response model grok-4.7), session not reported, max-turns uncapped (no --max-turns flag; bound 200), artifacts general.md, merged.md — 2026-11-03T20:14:53Z
 
 ## Blocked
 
 2026-11-03: review verdict refused: Done with no roster findings. Round folder: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/review/round-2. Oracle log: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/oracle-review-20261103t200243681z.log.
 
+2026-11-04: that refusal is historical. Round 2 wrote `review/round-2/general.md` and `review/round-2/merged.md`. Disposition is clean. No open findings.
+
 ## Review
 
 - Round 1: Done
+- Round 2: Done
