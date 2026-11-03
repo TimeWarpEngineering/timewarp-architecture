@@ -4,8 +4,8 @@
 #endregion
 
 #region Design
-// Mirrors principals-authorization-tests: real HTTP, isolated clients, passkey cookie mint,
-// roles via IPrincipalRoleStore. Anonymous is 401. A Member-only session is 403 on the admin
+// Mirrors the principals-authorization-*-tests files: real HTTP, isolated clients, passkey cookie
+// mint, roles via IPrincipalRoleStore. Anonymous is 401. A Member-only session is 403 on the admin
 // list and on a status change. An Administrator lists, changes status, and the filer then sees
 // the new status and the reply on their own item (the filer view never shows an internal
 // note). Read-without-manage shrinks the Administrator bundle to admin.feedback.read: list 200,
@@ -15,15 +15,8 @@
 // permission. The original bundle is restored in finally.
 // Task 336: an Administrator sees the filer's display name on the list row and the detail; an
 // Operator granted admin.access + admin.feedback.read without admin.profiles.read (the
-// reachable no-PII shape, as in principals-authorization-tests) sees ids only.
-// Task 378: a real agent bearer token is the only grant. feedback:read lists and is refused
-// the writes. Each write scope is refused the other writes and the list. Reply stays on the
-// human schemes, so an agent token is 401 even when it holds every feedback scope. A
-// principal who also holds Administrator is still evaluated as the agent token: a
-// feedback:note token cannot download, and a feedback:read token does not receive the
-// owner display name.
-// One token that holds all four feedback scopes lists Status = New, reads the item, sets
-// severity, adds a note, and moves status off New. The next Status = New list omits it.
+// reachable no-PII shape, as in principals-authorization-get-principal-tests) sees ids only.
+// Agent bearer tokens are in admin-feedback-authorization-agent-tests.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -38,9 +31,19 @@ using static AdminFeedbackAuthorization_.AdminFeedbackAuthorizationFixture;
 
 public class Human_Returns_
 {
-  public static Task SetupOnce() => AdminFeedbackAuthorizationFixture.AcquireAsync();
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public static Task CleanUpOnce() => AdminFeedbackAuthorizationFixture.ReleaseAsync();
+  public static async Task SetupOnce() => Graph = await AdminFeedbackAuthorizationFixture.CreateHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Human_Returns_>();
@@ -54,9 +57,9 @@ public class Human_Returns_
 
   public static async Task Forbidden_Given_Member_Only_Session()
   {
-    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(principalId, RoleIds.Member);
-    using HttpClient client = Client(cookie);
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, principalId, RoleIds.Member);
+    using HttpClient client = Client(Web, cookie);
 
     Guid itemId = await FileFeedbackAsync(client, "Member filing");
 
@@ -69,14 +72,14 @@ public class Human_Returns_
 
   public static async Task Ok_Given_Administrator_And_Filer_Sees_The_Outcome()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
-    using HttpClient filer = Client(filerCookie);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
+    using HttpClient filer = Client(Web, filerCookie);
     Guid itemId = await FileFeedbackAsync(filer, "Please triage me");
 
-    (string adminCookie, PrincipalId adminId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(adminId, RoleIds.Member, RoleIds.Administrator);
-    using HttpClient admin = Client(adminCookie);
+    (string adminCookie, PrincipalId adminId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, adminId, RoleIds.Member, RoleIds.Administrator);
+    using HttpClient admin = Client(Web, adminCookie);
 
     HttpResponseMessage list = await admin.GetAsync(new ListFeedback.Query().GetRouteWithQueryString());
     list.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -108,16 +111,16 @@ public class Human_Returns_
 
   public static async Task Forbidden_Manage_Given_Administrator_With_Feedback_Read_Only()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
     Guid itemId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       itemId = await FileFeedbackAsync(filer, "Read-only admin");
     }
 
-    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(principalId, RoleIds.Member, RoleIds.Administrator);
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, principalId, RoleIds.Member, RoleIds.Administrator);
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
@@ -128,7 +131,7 @@ public class Human_Returns_
         RoleIds.Administrator,
         [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead, PermissionIds.FeedbackFileSelf]);
 
-      using HttpClient client = Client(cookie);
+      using HttpClient client = Client(Web, cookie);
       (await client.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await client.GetAsync($"api/admin/feedback/{itemId}")).StatusCode.ShouldBe(HttpStatusCode.OK);
       (await PutStatusAsync(client, itemId, FeedbackStatus.Declined)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -144,26 +147,26 @@ public class Human_Returns_
 
   public static async Task Ok_Download_Given_Administrator_With_Feedback_Read_And_No_File_Self()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
     Guid attachmentId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       attachmentId = await UploadAttachmentAsync(filer, "notes.txt", "attached by the filer"u8.ToArray());
       await FileFeedbackAsync(filer, "With an attachment", attachmentId);
       (await filer.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    (string strangerCookie, PrincipalId strangerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(strangerId, RoleIds.Member);
-    using (HttpClient stranger = Client(strangerCookie))
+    (string strangerCookie, PrincipalId strangerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, strangerId, RoleIds.Member);
+    using (HttpClient stranger = Client(Web, strangerCookie))
     {
       (await stranger.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode
         .ShouldBe(HttpStatusCode.NotFound);
     }
 
-    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(principalId, RoleIds.Administrator);
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, principalId, RoleIds.Administrator);
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
@@ -174,7 +177,7 @@ public class Human_Returns_
         RoleIds.Administrator,
         [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
 
-      using HttpClient client = Client(cookie);
+      using HttpClient client = Client(Web, cookie);
       HttpResponseMessage download = await client.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId));
       download.StatusCode.ShouldBe(HttpStatusCode.OK);
       (await download.Content.ReadAsStringAsync()).ShouldBe("attached by the filer");
@@ -187,18 +190,18 @@ public class Human_Returns_
 
   public static async Task Ok_Owner_Display_Name_Given_Administrator()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
-    string displayName = await EnsureProfileAsync(filerId);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(Web, filerId);
     Guid itemId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       itemId = await FileFeedbackAsync(filer, "Named owner");
     }
 
-    (string adminCookie, PrincipalId adminId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(adminId, RoleIds.Member, RoleIds.Administrator);
-    using HttpClient admin = Client(adminCookie);
+    (string adminCookie, PrincipalId adminId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, adminId, RoleIds.Member, RoleIds.Administrator);
+    using HttpClient admin = Client(Web, adminCookie);
 
     ListFeedback.Response list = await ReadAsync<ListFeedback.Response>(
       await admin.GetAsync(new ListFeedback.Query { PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString()));
@@ -211,17 +214,17 @@ public class Human_Returns_
 
   public static async Task Ok_Feedback_Reader_Without_Profiles_Read_Sees_No_Owner_Name()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
-    string displayName = await EnsureProfileAsync(filerId);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(Web, filerId);
     Guid itemId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       itemId = await FileFeedbackAsync(filer, "Unnamed owner");
     }
 
-    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(principalId, RoleIds.Member, RoleIds.Operator);
+    (string cookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, principalId, RoleIds.Member, RoleIds.Operator);
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
@@ -232,7 +235,7 @@ public class Human_Returns_
         RoleIds.Operator,
         [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead]);
 
-      using HttpClient client = Client(cookie);
+      using HttpClient client = Client(Web, cookie);
       HttpResponseMessage listResponse = await client.GetAsync(
         new ListFeedback.Query { PageSize = ListFeedback.MaxPageSize }.GetRouteWithQueryString());
       listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);

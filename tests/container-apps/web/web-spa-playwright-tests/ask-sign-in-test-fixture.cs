@@ -24,10 +24,13 @@ internal static class AskSignInTestFixture
     private readonly ConcurrentQueue<int> Configuration = new();
     private readonly ConcurrentQueue<string> CompletionBodies = new();
 
-    private Session(IBrowserContext context, IPage page)
+    private readonly Func<string, string> ScreenshotPath;
+
+    private Session(IBrowserContext context, IPage page, Func<string, string> screenshotPath)
     {
       Context = context;
       Page = page;
+      ScreenshotPath = screenshotPath;
     }
 
     public IPage Page { get; }
@@ -39,7 +42,8 @@ internal static class AskSignInTestFixture
 
     public string Statuses => string.Join(", ", Configuration);
 
-    public static async Task<Session> StartAsync()
+    /// <summary>Opens a browser context whose screenshots go to <typeparamref name="TTest"/>'s folder.</summary>
+    public static async Task<Session> StartAsync<TTest>()
     {
       IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
       IBrowserContext context = await browser.NewContextAsync(new BrowserNewContextOptions
@@ -49,7 +53,7 @@ internal static class AskSignInTestFixture
         Locale = "en-US",
       });
       IPage page = await context.NewPageAsync();
-      Session session = new(context, page);
+      Session session = new(context, page, PlaywrightScreenshot.PathFor<TTest>);
       page.Console += (_, message) => session.Console.Enqueue($"{message.Type}: {message.Text}");
       page.PageError += (_, error) => session.Console.Enqueue(error);
       page.Request += (_, request) =>
@@ -294,7 +298,7 @@ internal static class AskSignInTestFixture
   }
 
   /// <summary>Tag → Esc cancels; Tag → hover → click the filing row adds its chip. Returns the row's token.</summary>
-  internal static async Task<string> AssertTagPicksTheFeedbackRowAsync(IPage page)
+  internal static async Task<string> AssertTagPicksTheFeedbackRowAsync<TTest>(IPage page)
   {
     ILocator tag = page.Locator("[data-qa=AskTag]");
     ILocator picking = page.Locator("[data-qa=AskTagPicking]");
@@ -372,7 +376,7 @@ internal static class AskSignInTestFixture
     await row.HoverAsync();
     await page.Locator(".twe-ask-tag-badge").GetByText(AskTagMark.FeedbackRowKind + ": " + TaggedFeedbackTitle)
       .WaitForAsync(new LocatorWaitForOptions { Timeout = 10_000 });
-    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("ask-tag-hover-row.png") });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath<TTest>("ask-tag-hover-row.png") });
     await row.ClickAsync();
     await picking.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
     page.Url.ShouldEndWith("/Feedback");
@@ -385,12 +389,12 @@ internal static class AskSignInTestFixture
     reference.ShouldStartWith("@" + ListMyFeedback.ReferencePrefix + ":");
     await page.Locator("[data-qa=AgentAsk]").ScreenshotAsync(new LocatorScreenshotOptions
     {
-      Path = ScreenshotPath("ask-tag-chip.png"),
+      Path = ScreenshotPath<TTest>("ask-tag-chip.png"),
     });
     return reference;
   }
 
-  internal static async Task<string> AssertAtReferencePickerAsync(IPage page)
+  internal static async Task<string> AssertAtReferencePickerAsync<TTest>(IPage page)
   {
     ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
     await textarea.ClickAsync();
@@ -401,7 +405,7 @@ internal static class AskSignInTestFixture
     await types.First.WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
     (await page.EvaluateAsync<string?>("() => document.activeElement?.getAttribute('data-qa')"))
       .ShouldBe("AskReferenceInput");
-    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-types.png") });
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath<TTest>("ask-reference-types.png") });
 
     // Enter chooses the highlighted (first) type; Backspace on the empty term goes back.
     string? prefix = await types.First.GetAttributeAsync("data-prefix");
@@ -417,7 +421,7 @@ internal static class AskSignInTestFixture
     string? token = await item.GetAttributeAsync("data-token");
     token.ShouldNotBeNull();
     token.ShouldStartWith("@" + prefix + ":");
-    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath("ask-reference-items.png") });
+    await picker.ScreenshotAsync(new LocatorScreenshotOptions { Path = ScreenshotPath<TTest>("ask-reference-items.png") });
     await page.Keyboard.PressAsync("Enter");
     await picker.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
 
@@ -445,6 +449,6 @@ internal static class AskSignInTestFixture
     }
   }
 
-  internal static string ScreenshotPath(string fileName) =>
-    PlaywrightScreenshot.PathFor<AskSignInReprobe_Given_Wasm>(fileName);
+  internal static string ScreenshotPath<TTest>(string fileName) =>
+    PlaywrightScreenshot.PathFor<TTest>(fileName);
 }

@@ -1,14 +1,12 @@
 #region Purpose
-// Browser proof for task 381: focus handling when Ask opens from the Ctrl-K row or the search field,
-// and when the search-field palette closes after Ask.
+// Browser proof for task 381: when Ask opens from the palette that the app-bar search field opened,
+// closing Ask returns focus to the search field and does not reopen the palette.
 #endregion
 
 #region Design
-// Task 381: Ask opened from the Ctrl-K row leaves the caret in the composer (the palette's own focus
-// return does not land on top of it), so the question is typed with the keyboard and no click. While
-// the navigate approval card waits, the composer does not take focus; the check waits a second
-// first so a late focus move would be seen. Ask opened from the palette that the search field
-// opened returns focus to the search field on close without reopening the palette.
+// Task 381: the palette is opened from the search field (its trigger), not Ctrl-K, and Ask is
+// chosen from it. Closing Ask must hand focus back to the search field without the palette
+// reopening. The Ctrl-K focus checks are in AskSignInRenameNavigate_Given_Wasm.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -29,7 +27,7 @@ public class AskSignInSearchFocus_Given_Wasm
         options.ApiKey = "playwright-placeholder-key";
       }));
 
-    await using Session session = await Session.StartAsync();
+    await using Session session = await Session.StartAsync<AskSignInSearchFocus_Given_Wasm>();
     IPage page = session.Page;
     await session.GoHomeAsync();
     await session.WaitForConfigurationProbeAsync(0);

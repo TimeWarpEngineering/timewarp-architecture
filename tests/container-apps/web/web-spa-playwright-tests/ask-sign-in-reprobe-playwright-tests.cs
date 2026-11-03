@@ -53,6 +53,9 @@ public class AskSignInReprobe_Given_Wasm
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<AskSignInReprobe_Given_Wasm>();
 
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<AskSignInReprobe_Given_Wasm>(fileName);
+
   public static async Task SignIn_Should_ReprobeAsk_And_NeverShowA401AsNotConfigured()
   {
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
@@ -62,7 +65,7 @@ public class AskSignInReprobe_Given_Wasm
         options.ApiKey = "playwright-placeholder-key";
       }));
 
-    await using Session session = await Session.StartAsync();
+    await using Session session = await Session.StartAsync<AskSignInReprobe_Given_Wasm>();
     List<string> failures = [];
 
     // Signed out. The server must answer 401 and Ask must say so, not "AI not configured".
@@ -115,7 +118,7 @@ public class AskSignInReprobe_Given_Wasm
     {
       // Task 345: @ -> types -> search -> choose, then send; page_context resolves the token.
       ILocator input = session.Page.Locator(".sc-ai-input__textarea");
-      string token = await AssertAtReferencePickerAsync(session.Page);
+      string token = await AssertAtReferencePickerAsync<AskSignInReprobe_Given_Wasm>(session.Page);
       await input.PressSequentiallyAsync(" What is on this page?");
       await session.Page.Locator(".sc-ai-input__send").ClickAsync();
       await session.Page.Locator(".sc-ai-message--user").GetByText(token).WaitForAsync(new LocatorWaitForOptions
@@ -186,7 +189,7 @@ public class AskSignInReprobe_Given_Wasm
       }
       else
       {
-        string tagReference = await AssertTagPicksTheFeedbackRowAsync(session.Page);
+        string tagReference = await AssertTagPicksTheFeedbackRowAsync<AskSignInReprobe_Given_Wasm>(session.Page);
         ILocator feedbackInput = session.Page.Locator(".sc-ai-input__textarea");
         await feedbackInput.FillAsync("Explain this page");
         int completionsBefore = session.Completions.Count;
@@ -276,7 +279,7 @@ public class AskSignInReprobe_Given_Wasm
         options.ApiKey = null;
       }));
 
-    await using Session session = await Session.StartAsync();
+    await using Session session = await Session.StartAsync<AskSignInReprobe_Given_Wasm>();
     await session.GoHomeAsync();
     await session.WaitForConfigurationProbeAsync(0);
     int signedOutProbes = session.ConfigurationStatuses.Count;

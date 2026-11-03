@@ -119,7 +119,7 @@ internal static class AskSurfaceLayoutAsserts
   internal static async Task AssertAtPickerWithNoTypesAsync(IPage page)
   {
     // The SPA is signed out here (the mock principal header authenticates API calls only), so
-    // the picker opens with no types. AskSignIn_Given_Wasm proves the signed-in flow.
+    // the picker opens with no types. AskSignInReprobe_Given_Wasm proves the signed-in flow.
     ILocator textarea = page.Locator("textarea.sc-ai-input__textarea");
     await textarea.ClickAsync();
     await textarea.PressSequentiallyAsync("@");

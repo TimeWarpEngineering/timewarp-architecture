@@ -8,10 +8,10 @@ namespace EndpointAuthorizePolicyAgreementAnalyzer_;
 using TimeWarp.Architecture.Analyzers;
 using static EndpointAuthorizePolicyAgreementAnalyzer_.EndpointAuthorizePolicyAgreementTestFixture;
 
-public class Should_Enforce_Policy_Agreement_Without_Policy_Registration
+public class Should_Enforce_Policy_Agreement_Edge_Cases
 {
   [System.Runtime.CompilerServices.ModuleInitializer]
-  internal static void Register() => RegisterTests<Should_Enforce_Policy_Agreement_Without_Policy_Registration>();
+  internal static void Register() => RegisterTests<Should_Enforce_Policy_Agreement_Edge_Cases>();
 
   public static async Task Given_Cors_AddPolicy_Does_Not_Count()
   {

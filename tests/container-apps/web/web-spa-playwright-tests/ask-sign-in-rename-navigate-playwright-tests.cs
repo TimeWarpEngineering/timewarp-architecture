@@ -15,6 +15,10 @@
 // shows navigate and /Settings and the page stays on Home until Approve, then the app lands on
 // /Settings without a reload (ask-home-where-passkey*.png, ask-navigate-approval.png,
 // ask-navigate-landed-settings.png).
+// Task 381: Ask opened from the Ctrl-K row leaves the caret in the composer (the palette's own focus
+// return does not land on top of it), so the question is typed with the keyboard and no click. While
+// the navigate approval card waits, the composer does not take focus; the check waits a second
+// first so a late focus move would be seen.
 #endregion
 
 namespace AskSignInPlaywright_;
@@ -27,6 +31,9 @@ public class AskSignInRenameNavigate_Given_Wasm
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<AskSignInRenameNavigate_Given_Wasm>();
 
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<AskSignInRenameNavigate_Given_Wasm>(fileName);
+
   public static async Task AdminRename_Should_Relabel_Every_Ask_Entry_Point()
   {
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync(services =>
@@ -36,7 +43,7 @@ public class AskSignInRenameNavigate_Given_Wasm
         options.ApiKey = "playwright-placeholder-key";
       }));
 
-    await using Session session = await Session.StartAsync();
+    await using Session session = await Session.StartAsync<AskSignInRenameNavigate_Given_Wasm>();
     IPage page = session.Page;
     await session.GoHomeAsync();
     ILocator askButton = page.Locator("[data-qa=AskAiButton]");
@@ -109,7 +116,7 @@ public class AskSignInRenameNavigate_Given_Wasm
         options.ApiKey = "playwright-placeholder-key";
       }));
 
-    await using Session session = await Session.StartAsync();
+    await using Session session = await Session.StartAsync<AskSignInRenameNavigate_Given_Wasm>();
     IPage page = session.Page;
     await session.GoHomeAsync();
     await session.WaitForConfigurationProbeAsync(0);

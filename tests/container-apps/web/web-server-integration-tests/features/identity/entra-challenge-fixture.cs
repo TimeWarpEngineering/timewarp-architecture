@@ -3,6 +3,15 @@
 // TestServer with FakeEntraHandler so each class owns its host and the arrange code lives once.
 #endregion
 
+#region Design
+// Isolated TestServer (not the full web-server HostGraph) with FakeEntraHandler standing in for
+// OpenIdConnect. Challenge immediately completes the ticket via EntraTicketHttp using tid/oid/iss
+// from test headers. CredentialUsageRecorder is registered as the singleton the real host's
+// InMemoryIdentityStoresModule provides, so a test can assert the last-used stamp end-to-end
+// (task 252). The settings row is Restricted and lists TrustedTenantId; options.TenantId is only
+// the OIDC authority. Each test class calls StartAsync in its SetupOnce and owns that host.
+#endregion
+
 namespace EntraChallenge_;
 
 using FastEndpoints;
@@ -146,7 +155,7 @@ internal static class EntraChallengeFixture
 
   public static async Task<HttpResponseMessage> SendChallengeAsync
   (
-    HttpClient? Client,
+    HttpClient? httpClient,
     string mode,
     Guid tenantId,
     Guid objectId,
@@ -155,7 +164,7 @@ internal static class EntraChallengeFixture
     string? name = null
   )
   {
-    Client.ShouldNotBeNull();
+    httpClient.ShouldNotBeNull();
     using HttpRequestMessage request = new(
       HttpMethod.Get,
       $"/api/identity/entra/challenge?mode={mode}&returnUrl=%2F");
@@ -176,13 +185,13 @@ internal static class EntraChallengeFixture
       request.Headers.TryAddWithoutValidation(FakeEntraHeaders.Name, name);
     }
 
-    return await Client.SendAsync(request);
+    return await httpClient.SendAsync(request);
   }
 
-  public static async Task<string> SignInAsync(HttpClient? Client, PrincipalId principalId)
+  public static async Task<string> SignInAsync(HttpClient? httpClient, PrincipalId principalId)
   {
-    Client.ShouldNotBeNull();
-    HttpResponseMessage response = await Client.PostAsync($"/test/signin/{principalId.Value:D}", content: null);
+    httpClient.ShouldNotBeNull();
+    HttpResponseMessage response = await httpClient.PostAsync($"/test/signin/{principalId.Value:D}", content: null);
     response.EnsureSuccessStatusCode();
     response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? setCookieValues).ShouldBeTrue();
     string setCookie = setCookieValues.First(value => value.Contains(IdentitySessionDefaults.CookieName, StringComparison.Ordinal));

@@ -34,6 +34,9 @@ public class FeedbackAttachment_Given_Wasm
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<FeedbackAttachment_Given_Wasm>();
 
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<FeedbackAttachment_Given_Wasm>(fileName);
+
   public static async Task PasteAndUpload_Should_ShowAttachmentsOnTheItem()
   {
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
@@ -180,14 +183,14 @@ public class FeedbackAttachment_Given_Wasm
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Reply box sizing");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Measure the reply and note boxes.");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
-    ILocator receipt = await SubmitFeedbackAsync(page);
+    ILocator receipt = await SubmitFeedbackAsync<FeedbackAttachment_Given_Wasm>(page);
     string receiptText = await receipt.InnerTextAsync();
     string feedbackItemId = receiptText.Replace("Filed as", string.Empty, StringComparison.Ordinal).Trim();
     Guid.TryParse(feedbackItemId, out _).ShouldBeTrue(receiptText);
 
     await page.Locator("[data-qa=FeedbackPermalink]").ClickAsync();
     await page.Locator("[data-qa=FeedbackReply]").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
-    await AssertBoxesFillTheirFieldAsync(page, "filer", ["FeedbackReply"]);
+    await AssertBoxesFillTheirFieldAsync<FeedbackAttachment_Given_Wasm>(page, "filer", ["FeedbackReply"]);
 
     await page.SetViewportSizeAsync(1280, 900);
     string adminUrl = InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback/" + feedbackItemId;
@@ -206,6 +209,6 @@ public class FeedbackAttachment_Given_Wasm
       throw new TimeoutException($"Admin feedback item did not render at {page.Url}. Console:\n{log}", exception);
     }
 
-    await AssertBoxesFillTheirFieldAsync(page, "admin", ["AdminFeedbackReply", "AdminFeedbackNote"]);
+    await AssertBoxesFillTheirFieldAsync<FeedbackAttachment_Given_Wasm>(page, "admin", ["AdminFeedbackReply", "AdminFeedbackNote"]);
   }
 }

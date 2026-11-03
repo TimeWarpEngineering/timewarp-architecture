@@ -1,6 +1,12 @@
 #region Purpose
-// Shared host lease, session / token minting and request helpers for the admin feedback authorization
+// Shared host factory, session / token minting and request helpers for the admin feedback authorization
 // test classes (task 314).
+#endregion
+
+#region Design
+// C-create: each test class owns its HostGraph (CreateHostAsync in SetupOnce, DisposeAsync in
+// CleanUpOnce) and passes its WebTestServerApplication to the helpers that touch the host. The
+// fixture keeps no host state, so no host is shared across classes.
 #endregion
 
 namespace AdminFeedbackAuthorization_;
@@ -23,39 +29,36 @@ using TimeWarp.Identity;
 
 internal static class AdminFeedbackAuthorizationFixture
 {
-  private static readonly HostGraphLease Lease = new();
-
-  public static WebTestServerApplication Web => Lease.Current.Web!;
-
-  public static Task AcquireAsync() =>
-    Lease.AcquireAsync(static () =>
+  /// <summary>
+  /// Builds the host graph a test class owns for its lifetime (C-create): the class stores it in its
+  /// SetupOnce and disposes it in its CleanUpOnce.
+  /// </summary>
+  public static Task<HostGraph> CreateHostAsync() =>
 #if(api)
-      HostGraphFactory.CreateWebWithApiAsync());
+    HostGraphFactory.CreateWebWithApiAsync();
 #else
-      HostGraphFactory.CreateWebAsync());
+    HostGraphFactory.CreateWebAsync();
 #endif
 
-  public static Task ReleaseAsync() => Lease.ReleaseAsync();
-
-  public static async Task<string> IssueTokenAsync(params string[] scopes)
+  public static async Task<string> IssueTokenAsync(WebTestServerApplication web, params string[] scopes)
   {
-    (PrincipalId _, string token) = await IssueTokenForPrincipalAsync(scopes);
+    (PrincipalId _, string token) = await IssueTokenForPrincipalAsync(web, scopes);
     return token;
   }
 
-  public static async Task<(PrincipalId PrincipalId, string AccessToken)> IssueTokenForPrincipalAsync(params string[] scopes)
+  public static async Task<(PrincipalId PrincipalId, string AccessToken)> IssueTokenForPrincipalAsync(WebTestServerApplication web, params string[] scopes)
   {
     (PrincipalId principalId, string _, string accessToken) =
       await CredentialCeremonyHelpers.RegisterAgentKeyAndIssueTokenAsync(
-        Web,
+        web,
         new IntegrationSoftwareAgentKey(),
         [.. scopes]);
     return (principalId, accessToken);
   }
 
-  public static HttpClient Bearer(string accessToken)
+  public static HttpClient Bearer(WebTestServerApplication web, string accessToken)
   {
-    HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    HttpClient client = new() { BaseAddress = web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
     return client;
   }
@@ -66,9 +69,9 @@ internal static class AdminFeedbackAuthorizationFixture
   public static Task<HttpResponseMessage> PostReplyAsync(HttpClient client, Guid itemId) =>
     PostAsync(client, $"api/admin/feedback/{itemId}/replies", new { body = "Hello filer" });
 
-  public static async Task<string> EnsureProfileAsync(PrincipalId principalId)
+  public static async Task<string> EnsureProfileAsync(WebTestServerApplication web, PrincipalId principalId)
   {
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IProfileStore profiles = scope.ServiceProvider.GetRequiredService<IProfileStore>();
     ProfileId profileId = ProfileId.From(principalId.Value);
     if (await profiles.FindAsync(profileId) is { } existing)
@@ -90,9 +93,9 @@ internal static class AdminFeedbackAuthorizationFixture
       ?? throw new InvalidOperationException($"{typeof(T).Name} deserialized to null.");
   }
 
-  public static HttpClient Client(string cookie)
+  public static HttpClient Client(WebTestServerApplication web, string cookie)
   {
-    HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    HttpClient client = new() { BaseAddress = web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", cookie);
     return client;
   }
@@ -142,22 +145,22 @@ internal static class AdminFeedbackAuthorizationFixture
       route,
       new StringContent(JsonSerializer.Serialize(body, ContractSerializationDefaults.Options), Encoding.UTF8, "application/json"));
 
-  public static async Task SetRolesAsync(PrincipalId principalId, params Guid[] roleIds)
+  public static async Task SetRolesAsync(WebTestServerApplication web, PrincipalId principalId, params Guid[] roleIds)
   {
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, roleIds);
   }
 
-  public static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie()
+  public static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie(WebTestServerApplication web)
   {
     var authenticator = new IntegrationSoftwareAuthenticator();
-    var testApiService = new TestApiService(Web.HttpClient, ContractSerializationDefaults.Options);
+    var testApiService = new TestApiService(web.HttpClient, ContractSerializationDefaults.Options);
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -178,7 +181,7 @@ internal static class AdminFeedbackAuthorizationFixture
 
     string cookieHeader = sessionCookie.Split(';')[0];
 
-    using HttpClient sessionClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    using HttpClient sessionClient = new() { BaseAddress = web.HttpClient.BaseAddress };
     sessionClient.DefaultRequestHeaders.Add("Cookie", cookieHeader);
     HttpResponseMessage sessionResponse = await sessionClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
     sessionResponse.StatusCode.ShouldBe(HttpStatusCode.OK);

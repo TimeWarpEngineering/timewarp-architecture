@@ -8,10 +8,10 @@
 // feedback.file.self. That gate reads the SPA authentication state, which comes from the
 // identity-session cookie. X-TimeWarp-Mock-Principal-Id authenticates server API calls only,
 // so a direct visit while signed out renders RedirectToLogin (no app bar). The test creates
-// an account with a virtual passkey, the same ceremony as AskSignIn_Given_Wasm, then opens
+// an account with a virtual passkey, the same ceremony as AskSignInReprobe_Given_Wasm, then opens
 // /Feedback. A new account's role includes feedback.file.self. Shots go to test output
 // (PlaywrightScreenshot). Each test boots its own host (the admin proofs need a fresh one) and
-// opens its own context on the suite's shared browser (PlaywrightBrowserSession). Layout
+// opens its own context on the suite's shared browser (PlaywrightBrowserSession).
 // The admin list sort proof (task 327) files two items, opens /Admin/Feedback, clicks the
 // Title header's sort button, and checks the rows re-order (server-side sort) and aria-sort
 // toggles ascending then descending. The owner proof (task 336) files one item as that
@@ -36,6 +36,9 @@ public class FeedbackAttachmentAdmin_Given_Wasm
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<FeedbackAttachmentAdmin_Given_Wasm>();
 
+  private static string ScreenshotPath(string fileName) =>
+    PlaywrightScreenshot.PathFor<FeedbackAttachmentAdmin_Given_Wasm>(fileName);
+
   public static async Task AdminListHeaderClick_Should_ReorderRows_And_ToggleDirection()
   {
     await using HostGraph graph = await HostGraphFactory.CreateWebAsync();
@@ -59,7 +62,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
       await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(title);
       await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Sort me.");
       await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
-      await SubmitFeedbackAsync(page);
+      await SubmitFeedbackAsync<FeedbackAttachmentAdmin_Given_Wasm>(page);
     }
 
     await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
@@ -113,8 +116,8 @@ public class FeedbackAttachmentAdmin_Given_Wasm
     page.PageError += (_, error) => console.Enqueue(error);
 
     await SignInWithNewPasskeyAsync(page, context);
-    await FileFeedbackAsync(page, console, "Filter bug", kindLabel: null);
-    await FileFeedbackAsync(page, console, "Filter feature", kindLabel: "Feature request");
+    await FileFeedbackAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, console, "Filter bug", kindLabel: null);
+    await FileFeedbackAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, console, "Filter feature", kindLabel: "Feature request");
 
     await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
     {
@@ -166,7 +169,7 @@ public class FeedbackAttachmentAdmin_Given_Wasm
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("Owner name");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Who filed me?");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
-    await SubmitFeedbackAsync(page);
+    await SubmitFeedbackAsync<FeedbackAttachmentAdmin_Given_Wasm>(page);
 
     await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + "/Admin/Feedback", new PageGotoOptions
     {
@@ -226,25 +229,25 @@ public class FeedbackAttachmentAdmin_Given_Wasm
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync("A long feedback title that must stay visible beside the Ask panel");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Narrow grid.");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
-    await SubmitFeedbackAsync(page);
+    await SubmitFeedbackAsync<FeedbackAttachmentAdmin_Given_Wasm>(page);
 
     // The reported case: 1280 wide with the Ask panel docked beside the content.
-    await OpenAdminGridAsync(page, console, "/Admin/Feedback", "AdminFeedbackRow");
+    await OpenAdminGridAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, console, "/Admin/Feedback", "AdminFeedbackRow");
     await OpenAskPanelAsync(page);
-    await AssertGridLayoutAsync(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-ask-open-1280");
+    await AssertGridLayoutAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-ask-open-1280");
     await page.Locator("[data-qa=AdminFeedbackRow]").First.ClickAsync();
     await page.WaitForURLAsync("**/Admin/Feedback/*", new PageWaitForURLOptions { Timeout = 30_000 });
 
     // Narrow viewports: the grid keeps its minimum and scrolls inside its card.
     await page.SetViewportSizeAsync(640, 900);
-    await OpenAdminGridAsync(page, console, "/Admin/Feedback", "AdminFeedbackRow");
-    await AssertGridLayoutAsync(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-640");
+    await OpenAdminGridAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, console, "/Admin/Feedback", "AdminFeedbackRow");
+    await AssertGridLayoutAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, "AdminFeedbackTable", "AdminFeedbackRow", "feedback-640");
     await AssertGridScrollsAsync(page, "AdminFeedbackTable");
     await page.Locator("[data-qa=AdminFeedbackRow]").First.ClickAsync();
     await page.WaitForURLAsync("**/Admin/Feedback/*", new PageWaitForURLOptions { Timeout = 30_000 });
 
-    await OpenAdminGridAsync(page, console, "/Admin/Principals", "AdminPrincipalRow");
-    await AssertGridLayoutAsync(page, "PrincipalsTable", "AdminPrincipalRow", "principals-640");
+    await OpenAdminGridAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, console, "/Admin/Principals", "AdminPrincipalRow");
+    await AssertGridLayoutAsync<FeedbackAttachmentAdmin_Given_Wasm>(page, "PrincipalsTable", "AdminPrincipalRow", "principals-640");
     await AssertGridScrollsAsync(page, "PrincipalsTable");
     await page.Locator("[data-qa=AdminPrincipalRow]").First.ClickAsync();
     await page.WaitForURLAsync("**/Admin/Principals/*", new PageWaitForURLOptions { Timeout = 30_000 });

@@ -3,15 +3,8 @@
 #endregion
 
 #region Design
-// Isolated TestServer (not the full web-server HostGraph) with FakeEntraHandler standing in for
-// OpenIdConnect. Challenge immediately completes the ticket via EntraTicketHttp using tid/oid/iss
-// from test headers. Unknown-handle bootstrap parks claims and 302s to /Login/Microsoft365/Choose
-// (no principal). Create is exercised via the real CompleteEntraBootstrapCreate handler mapped on
-// this host. Link of a foreign active handle merges; already-on-this-account is 409.
-// CredentialUsageRecorder is registered as the singleton the real host's InMemoryIdentityStoresModule
-// provides; sync-hit and link assert the last-used stamp end-to-end (task 252).
-// The settings row is Restricted and lists TrustedTenantId. options.TenantId is only the OIDC
-// authority. One case switches the row to Any and expects UntrustedTenantId to reach choose.
+// Host and request helpers are in EntraChallengeFixture. Each case is refused before a ticket
+// completes: sign-in disabled is 403, an unknown mode and bad token claims are 400.
 #endregion
 
 namespace EntraChallenge_;
@@ -28,7 +21,6 @@ public class Challenge_Rejection_Given_
 {
   private static WebApplication? App;
   private static HttpClient? Client;
-  private static IPrincipalStore? Store;
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Challenge_Rejection_Given_>();
@@ -37,14 +29,12 @@ public class Challenge_Rejection_Given_
   {
     App = await EntraChallengeFixture.StartAsync();
     Client = App.GetTestClient();
-    Store = App.Services.GetRequiredService<IPrincipalStore>();
   }
 
   public static async Task CleanUpOnce()
   {
     Client?.Dispose();
     Client = null;
-    Store = null;
     if (App is not null)
     {
       await App.DisposeAsync();

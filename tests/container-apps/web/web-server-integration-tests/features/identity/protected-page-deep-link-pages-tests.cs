@@ -16,17 +16,8 @@
 // regression tripwire — pre-183 they killed the process (exit 134) instead of returning 200.
 // They also assert the body is the real page, not RedirectToLogin's static sign-in fallback,
 // so a silently-anonymous prerender state fails the test rather than passing on status alone.
-// Task 229: Settings prerender fetches credentials so Link is hidden when an EntraAccount is
-// linked, Unlink is disabled (with hint) when it is the last active credential, and Unlink is
-// enabled when a passkey remains.
-// Task 246: the passkey row action is Revoke and it is disabled (with the RevokePasskeyHint text)
-// when the row is the last active credential of ANY kind — an agent key on the same principal
-// re-enables it even though the page lists only passkeys (same count as RevokeCredential.Handler).
-// Pinned on Settings (Member) and on the Developer-gated /Passkeys demo page.
-// Task 282: Link, Unlink and Revoke follow the server's GetCredentials availability flags (no client
-// predicate), so these prerender facts prove the real handler's flags reach the rendered buttons end to end.
-// Task 253: Settings prerender shows "Signed in · TimeWarp account · <fingerprint>" — the hosted
-// auth-state provider derives the fingerprint claim from the cookie principal (no HTTP loopback).
+// Settings and Passkeys prerender facts (tasks 229, 246, 282, 253) are in
+// protected-page-deep-link-settings-tests.
 
 namespace ProtectedPageDeepLink_;
 
@@ -40,16 +31,26 @@ using static ProtectedPageDeepLink_.ProtectedPageDeepLinkFixture;
 
 public class Pages_Returns_
 {
-  public static Task SetupOnce() => ProtectedPageDeepLinkFixture.AcquireAsync();
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public static Task CleanUpOnce() => ProtectedPageDeepLinkFixture.ReleaseAsync();
+  public static async Task SetupOnce() => Graph = await ProtectedPageDeepLinkFixture.CreateHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Pages_Returns_>();
 
   public static async Task Redirect_To_Login_Given_Signed_Out_Settings_With_Html_Accept()
   {
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
     using HttpRequestMessage request = new(HttpMethod.Get, "/Settings");
     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
 
@@ -60,7 +61,7 @@ public class Pages_Returns_
 
   public static async Task Redirect_To_Login_Given_Signed_Out_Settings_Without_Accept()
   {
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
 
     HttpResponseMessage response = await client.GetAsync("/Settings");
 
@@ -69,7 +70,7 @@ public class Pages_Returns_
 
   public static async Task Unauthorized_Given_Anonymous_Api_Roles()
   {
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
 
     HttpResponseMessage response = await client.GetAsync("api/Roles");
 
@@ -84,7 +85,7 @@ public class Pages_Returns_
     (_, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
 
     HttpResponseMessage response = await client.GetAsync(GetCurrentSession.Query.RouteTemplate);
@@ -101,7 +102,7 @@ public class Pages_Returns_
     (_, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
 
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     using HttpRequestMessage request = new(HttpMethod.Get, "/Admin/Roles");
     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
@@ -119,9 +120,9 @@ public class Pages_Returns_
     // hosted prerender saw an anonymous principal and RedirectToLogin navigated during static SSR.
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
 
-    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Settings", sessionCookie);
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
@@ -143,9 +144,9 @@ public class Pages_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
 
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(Web);
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     using HttpRequestMessage request = new(HttpMethod.Get, "/Admin/Authentication");
     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
@@ -161,9 +162,9 @@ public class Pages_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member, RoleIds.Administrator]);
 
-    HttpResponseMessage response = await GetPageHtml("/Admin/Authentication", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Admin/Authentication", sessionCookie);
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
@@ -181,9 +182,9 @@ public class Pages_Returns_
     // The original task 183 crash page: signed-in admin GET /Admin/Roles killed web-server.
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member, RoleIds.Administrator]);
 
-    HttpResponseMessage response = await GetPageHtml("/Admin/Roles", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Admin/Roles", sessionCookie);
 
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();

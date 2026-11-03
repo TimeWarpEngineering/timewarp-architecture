@@ -4,18 +4,8 @@
 #endregion
 
 #region Design
-// Mirrors principals-authorization-tests: real HTTP, isolated clients, passkey cookie mint,
-// roles via IPrincipalRoleStore. Anonymous is 401. A Member-only session is 403 on the admin
-// list and on a status change. An Administrator lists, changes status, and the filer then sees
-// the new status and the reply on their own item (the filer view never shows an internal
-// note). Read-without-manage shrinks the Administrator bundle to admin.feedback.read: list 200,
-// status change 403. Attachment download shrinks the
-// bundle to admin.access + admin.feedback.read with no feedback.file.self: the admin reads the
-// filer's attachment (200) while another Member gets 404, so the route never gates on the filer
-// permission. The original bundle is restored in finally.
-// Task 336: an Administrator sees the filer's display name on the list row and the detail; an
-// Operator granted admin.access + admin.feedback.read without admin.profiles.read (the
-// reachable no-PII shape, as in principals-authorization-tests) sees ids only.
+// Real HTTP, isolated clients, roles via IPrincipalRoleStore, as in the
+// principals-authorization-*-tests files. Human sessions are in admin-feedback-authorization-human-tests.
 // Task 378: a real agent bearer token is the only grant. feedback:read lists and is refused
 // the writes. Each write scope is refused the other writes and the list. Reply stays on the
 // human schemes, so an agent token is 401 even when it holds every feedback scope. A
@@ -37,34 +27,44 @@ using static AdminFeedbackAuthorization_.AdminFeedbackAuthorizationFixture;
 
 public class Agent_Returns_
 {
-  public static Task SetupOnce() => AdminFeedbackAuthorizationFixture.AcquireAsync();
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public static Task CleanUpOnce() => AdminFeedbackAuthorizationFixture.ReleaseAsync();
+  public static async Task SetupOnce() => Graph = await AdminFeedbackAuthorizationFixture.CreateHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Agent_Returns_>();
 
   public static async Task Scoped_Given_Agent_Bearer_Tokens()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
     Guid itemId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       itemId = await FileFeedbackAsync(filer, "Agent triage target");
     }
 
-    string readToken = await IssueTokenAsync(AgentScopes.FeedbackRead);
-    string noteToken = await IssueTokenAsync(AgentScopes.FeedbackNote);
-    string severityToken = await IssueTokenAsync(AgentScopes.FeedbackSeverity);
-    string statusToken = await IssueTokenAsync(AgentScopes.FeedbackStatus);
-    string everyToken = await IssueTokenAsync(
+    string readToken = await IssueTokenAsync(Web, AgentScopes.FeedbackRead);
+    string noteToken = await IssueTokenAsync(Web, AgentScopes.FeedbackNote);
+    string severityToken = await IssueTokenAsync(Web, AgentScopes.FeedbackSeverity);
+    string statusToken = await IssueTokenAsync(Web, AgentScopes.FeedbackStatus);
+    string everyToken = await IssueTokenAsync(Web,
       AgentScopes.FeedbackRead,
       AgentScopes.FeedbackNote,
       AgentScopes.FeedbackSeverity,
       AgentScopes.FeedbackStatus);
 
-    using (HttpClient reader = Bearer(readToken))
+    using (HttpClient reader = Bearer(Web, readToken))
     {
       HttpResponseMessage list = await reader.GetAsync(new ListFeedback.Query().GetRouteWithQueryString());
       list.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -75,7 +75,7 @@ public class Agent_Returns_
       (await PostReplyAsync(reader, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
-    using (HttpClient note = Bearer(noteToken))
+    using (HttpClient note = Bearer(Web, noteToken))
     {
       (await note.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
         .ShouldBe(HttpStatusCode.Forbidden);
@@ -85,7 +85,7 @@ public class Agent_Returns_
       (await PostNoteAsync(note, itemId, "internal")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    using (HttpClient severity = Bearer(severityToken))
+    using (HttpClient severity = Bearer(Web, severityToken))
     {
       (await severity.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
         .ShouldBe(HttpStatusCode.Forbidden);
@@ -95,7 +95,7 @@ public class Agent_Returns_
       (await PutSeverityAsync(severity, itemId, FeedbackSeverity.Low)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    using (HttpClient status = Bearer(statusToken))
+    using (HttpClient status = Bearer(Web, statusToken))
     {
       (await status.GetAsync(new ListFeedback.Query().GetRouteWithQueryString())).StatusCode
         .ShouldBe(HttpStatusCode.Forbidden);
@@ -105,27 +105,27 @@ public class Agent_Returns_
       (await PutStatusAsync(status, itemId, FeedbackStatus.UnderReview)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    using HttpClient every = Bearer(everyToken);
+    using HttpClient every = Bearer(Web, everyToken);
     (await PostReplyAsync(every, itemId)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
   }
 
   public static async Task Ok_Given_Four_Scope_Token_Processes_A_New_Item()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
     Guid itemId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       itemId = await FileFeedbackAsync(filer, "Reviewer loop target");
     }
 
-    string token = await IssueTokenAsync(
+    string token = await IssueTokenAsync(Web,
       AgentScopes.FeedbackRead,
       AgentScopes.FeedbackNote,
       AgentScopes.FeedbackSeverity,
       AgentScopes.FeedbackStatus);
 
-    using HttpClient reviewer = Bearer(token);
+    using HttpClient reviewer = Bearer(Web, token);
     ListFeedback.Query listNew = new()
     {
       Status = FeedbackStatus.New,
@@ -149,28 +149,28 @@ public class Agent_Returns_
 
   public static async Task Role_Assigned_Agent_Should_Not_Inherit_Human_Grants()
   {
-    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie();
-    await SetRolesAsync(filerId, RoleIds.Member);
-    string displayName = await EnsureProfileAsync(filerId);
+    (string filerCookie, PrincipalId filerId) = await MintIdentitySessionCookie(Web);
+    await SetRolesAsync(Web, filerId, RoleIds.Member);
+    string displayName = await EnsureProfileAsync(Web, filerId);
     Guid itemId;
     Guid attachmentId;
-    using (HttpClient filer = Client(filerCookie))
+    using (HttpClient filer = Client(Web, filerCookie))
     {
       attachmentId = await UploadAttachmentAsync(filer, "notes.txt", "attached by the filer"u8.ToArray());
       itemId = await FileFeedbackAsync(filer, "Role assigned agent", attachmentId);
     }
 
-    (PrincipalId notePrincipal, string noteToken) = await IssueTokenForPrincipalAsync(AgentScopes.FeedbackNote);
-    await SetRolesAsync(notePrincipal, RoleIds.Administrator);
-    using (HttpClient note = Bearer(noteToken))
+    (PrincipalId notePrincipal, string noteToken) = await IssueTokenForPrincipalAsync(Web, AgentScopes.FeedbackNote);
+    await SetRolesAsync(Web, notePrincipal, RoleIds.Administrator);
+    using (HttpClient note = Bearer(Web, noteToken))
     {
       (await note.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId))).StatusCode
         .ShouldBe(HttpStatusCode.NotFound);
     }
 
-    (PrincipalId readPrincipal, string readToken) = await IssueTokenForPrincipalAsync(AgentScopes.FeedbackRead);
-    await SetRolesAsync(readPrincipal, RoleIds.Administrator);
-    using HttpClient reader = Bearer(readToken);
+    (PrincipalId readPrincipal, string readToken) = await IssueTokenForPrincipalAsync(Web, AgentScopes.FeedbackRead);
+    await SetRolesAsync(Web, readPrincipal, RoleIds.Administrator);
+    using HttpClient reader = Bearer(Web, readToken);
     HttpResponseMessage download = await reader.GetAsync(DownloadFeedbackAttachment.DownloadPath(attachmentId));
     download.StatusCode.ShouldBe(HttpStatusCode.OK);
     (await download.Content.ReadAsStringAsync()).ShouldBe("attached by the filer");

@@ -1,6 +1,12 @@
 #region Purpose
-// Shared host lease, HTML fetch, role / credential seeding and assertion helpers for the protected-page
+// Shared host factory, HTML fetch, role / credential seeding and assertion helpers for the protected-page
 // deep-link test classes (task 154).
+#endregion
+
+#region Design
+// C-create: each test class owns its HostGraph (CreateHostAsync in SetupOnce, DisposeAsync in
+// CleanUpOnce) and passes its WebTestServerApplication to the helpers that touch the host. The
+// fixture keeps no host state, so no host is shared across classes.
 #endregion
 
 namespace ProtectedPageDeepLink_;
@@ -13,24 +19,20 @@ using TimeWarp.Architecture.Configuration;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using SignInOptions = TimeWarp.Architecture.Features.Identity.Application.SignInOptions;
-using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
 
 internal static class ProtectedPageDeepLinkFixture
 {
-  private static readonly HostGraphLease Lease = new();
-
-  public static WebTestServerApplication Web => Lease.Current.Web!;
-
-  public static Task AcquireAsync() =>
-    Lease.AcquireAsync(static () =>
+  /// <summary>
+  /// Builds the host graph a test class owns for its lifetime (C-create): the class stores it in its
+  /// SetupOnce and disposes it in its CleanUpOnce.
+  /// </summary>
+  public static Task<HostGraph> CreateHostAsync() =>
 #if(api)
-      HostGraphFactory.CreateWebWithApiAsync());
+    HostGraphFactory.CreateWebWithApiAsync();
 #else
-      HostGraphFactory.CreateWebAsync());
+    HostGraphFactory.CreateWebAsync();
 #endif
-
-  public static Task ReleaseAsync() => Lease.ReleaseAsync();
 
   public const string LastCredentialHint = "Add another passkey or agent key before revoking this one.";
 
@@ -80,28 +82,28 @@ internal static class ProtectedPageDeepLinkFixture
     return Math.Min(fluentButton, button);
   }
 
-  public static async Task<HttpResponseMessage> GetPageHtml(string path, string sessionCookie)
+  public static async Task<HttpResponseMessage> GetPageHtml(WebTestServerApplication web, string path, string sessionCookie)
   {
-    using HttpClient client = CreateNoRedirectClient();
+    using HttpClient client = CreateNoRedirectClient(web);
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
     using HttpRequestMessage request = new(HttpMethod.Get, path);
     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
     return await client.SendAsync(request);
   }
 
-  public static async Task SetRolesAsync(PrincipalId principalId, Guid[] roleIds)
+  public static async Task SetRolesAsync(WebTestServerApplication web, PrincipalId principalId, Guid[] roleIds)
   {
     // Scope required: under postgres IPrincipalRoleStore is scoped (EfPrincipalRoleStore).
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, roleIds);
   }
 
   // Task 250 shape: Label is the provider, the linked account is AccountHint (the row's context line).
 
-  public static async Task AddEntraAccountAsync(PrincipalId principalId, string accountHint)
+  public static async Task AddEntraAccountAsync(WebTestServerApplication web, PrincipalId principalId, string accountHint)
   {
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
     Guid tenantId = Guid.NewGuid();
     await principalStore.AddCredentialAsync(
@@ -114,11 +116,11 @@ internal static class ProtectedPageDeepLinkFixture
         accountHint: accountHint));
   }
 
-  public static async Task AddAgentKeyAsync(PrincipalId principalId, string label)
+  public static async Task AddAgentKeyAsync(WebTestServerApplication web, PrincipalId principalId, string label)
   {
     // Store-level insert (same shape as AddEntraAccountAsync): the count under test is "active
     // credentials of any kind", so the material only needs to be a distinct AgentKey row.
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
     byte[] keyId = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
     byte[] publicMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
@@ -126,9 +128,9 @@ internal static class ProtectedPageDeepLinkFixture
       Credential.Create(principalId, CredentialType.AgentKey, keyId, publicMaterial, label));
   }
 
-  public static async Task RevokePasskeysAsync(PrincipalId principalId)
+  public static async Task RevokePasskeysAsync(WebTestServerApplication web, PrincipalId principalId)
   {
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalStore principalStore = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();
     IReadOnlyList<Credential> credentials = await principalStore.ListCredentialsAsync(principalId);
     foreach (Credential credential in credentials.Where(c => c.Type == CredentialType.Passkey && !c.IsRevoked))
@@ -138,9 +140,9 @@ internal static class ProtectedPageDeepLinkFixture
     }
   }
 
-  public static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync()
+  public static async Task<IAsyncDisposable> EnableMicrosoft365OfferedAsync(WebTestServerApplication web)
   {
-    AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     SignInOptions signIn =
       scope.ServiceProvider.GetRequiredService<IOptions<SignInOptions>>().Value;
     ISiteSettingsStore store = scope.ServiceProvider.GetRequiredService<ISiteSettingsStore>();
@@ -195,14 +197,14 @@ internal static class ProtectedPageDeepLinkFixture
     }
   }
 
-  public static HttpClient CreateNoRedirectClient()
+  public static HttpClient CreateNoRedirectClient(WebTestServerApplication web)
   {
     HttpClientHandler handler = new()
     {
       AllowAutoRedirect = false,
       CheckCertificateRevocationList = true,
     };
-    return new HttpClient(handler) { BaseAddress = Web.HttpClient.BaseAddress };
+    return new HttpClient(handler) { BaseAddress = web.HttpClient.BaseAddress };
   }
 
   public static void AssertRedirectToLogin(HttpResponseMessage response, string expectedReturnUrl)

@@ -7,7 +7,7 @@ namespace FeedbackAttachmentPlaywright_;
 
 internal static class FeedbackAttachmentTestFixture
 {
-  internal static async Task OpenAdminGridAsync(IPage page, ConcurrentQueue<string> console, string path, string rowQa)
+  internal static async Task OpenAdminGridAsync<TTest>(IPage page, ConcurrentQueue<string> console, string path, string rowQa)
   {
     await page.GotoAsync(InProcTestPorts.WebHostUrl.TrimEnd('/') + path, new PageGotoOptions
     {
@@ -20,7 +20,7 @@ internal static class FeedbackAttachmentTestFixture
     }
     catch (TimeoutException exception)
     {
-      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath($"admin-grid-{rowQa}-failed.png"), FullPage = true });
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath<TTest>($"admin-grid-{rowQa}-failed.png"), FullPage = true });
       string text = await page.Locator("body").InnerTextAsync();
       string log = string.Join('\n', console);
       throw new TimeoutException($"{path} showed no {rowQa}. Page:\n{text}\nConsole:\n{log}", exception);
@@ -50,9 +50,9 @@ internal static class FeedbackAttachmentTestFixture
 
   // Header cells have width, never overlap, and clip anything wider than the cell. The primary
   // column's cells keep a usable width (task 354: Title collapsed to zero and read "Kitld").
-  internal static async Task AssertGridLayoutAsync(IPage page, string gridQa, string rowQa, string shot)
+  internal static async Task AssertGridLayoutAsync<TTest>(IPage page, string gridQa, string rowQa, string shot)
   {
-    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath($"admin-grid-{shot}.png"), FullPage = true });
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath<TTest>($"admin-grid-{shot}.png"), FullPage = true });
     string[] problems = await page.EvaluateAsync<string[]>(
       """
       ([gridQa, rowQa]) => {
@@ -122,7 +122,7 @@ internal static class FeedbackAttachmentTestFixture
   // composer-context action, so a click straight after typing can land on a disabled button and
   // do nothing. Wait until the button has stayed enabled for 500ms, then click exactly once: a
   // re-click could file a duplicate item and would hide a submit that really did nothing.
-  internal static async Task<ILocator> SubmitFeedbackAsync(IPage page)
+  internal static async Task<ILocator> SubmitFeedbackAsync<TTest>(IPage page)
   {
     await page.WaitForFunctionAsync(
       """
@@ -145,14 +145,14 @@ internal static class FeedbackAttachmentTestFixture
     }
     catch (TimeoutException exception)
     {
-      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath("feedback-reply-submit-failed.png"), FullPage = true });
+      await page.ScreenshotAsync(new PageScreenshotOptions { Path = ScreenshotPath<TTest>("feedback-reply-submit-failed.png"), FullPage = true });
       throw new TimeoutException("Feedback submit showed no receipt after one click on an enabled button.", exception);
     }
 
     return receipt;
   }
 
-  internal static async Task AssertBoxesFillTheirFieldAsync(IPage page, string surface, string[] qas)
+  internal static async Task AssertBoxesFillTheirFieldAsync<TTest>(IPage page, string surface, string[] qas)
   {
     foreach (string qa in qas)
     {
@@ -161,7 +161,7 @@ internal static class FeedbackAttachmentTestFixture
 
     await page.ScreenshotAsync(new PageScreenshotOptions
     {
-      Path = ScreenshotPath($"feedback-{surface}-textareas-1280.png"),
+      Path = ScreenshotPath<TTest>($"feedback-{surface}-textareas-1280.png"),
       FullPage = true,
     });
 
@@ -179,7 +179,7 @@ internal static class FeedbackAttachmentTestFixture
 
     await page.ScreenshotAsync(new PageScreenshotOptions
     {
-      Path = ScreenshotPath($"feedback-{surface}-textareas-600.png"),
+      Path = ScreenshotPath<TTest>($"feedback-{surface}-textareas-600.png"),
       FullPage = true,
     });
   }
@@ -235,7 +235,7 @@ internal static class FeedbackAttachmentTestFixture
     grown.ShouldBeLessThan(dragDistance + 20d, dragReport);
   }
 
-  internal static async Task FileFeedbackAsync(IPage page, ConcurrentQueue<string> console, string title, string? kindLabel)
+  internal static async Task FileFeedbackAsync<TTest>(IPage page, ConcurrentQueue<string> console, string title, string? kindLabel)
   {
     await OpenFeedbackAsync(page, console);
     if (kindLabel is not null)
@@ -246,7 +246,7 @@ internal static class FeedbackAttachmentTestFixture
     await page.Locator("[data-qa=FeedbackTitle]").Locator("input").FillAsync(title);
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").FillAsync("Filter me.");
     await page.Locator("[data-qa=FeedbackBody]").Locator("textarea").PressAsync("Tab");
-    await SubmitFeedbackAsync(page);
+    await SubmitFeedbackAsync<TTest>(page);
   }
 
   internal static async Task ChooseOptionAsync(IPage page, string dataQa, string optionText)
@@ -349,6 +349,6 @@ internal static class FeedbackAttachmentTestFixture
     await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
   }
 
-  internal static string ScreenshotPath(string fileName) =>
-    PlaywrightScreenshot.PathFor<FeedbackAttachment_Given_Wasm>(fileName);
+  internal static string ScreenshotPath<TTest>(string fileName) =>
+    PlaywrightScreenshot.PathFor<TTest>(fileName);
 }

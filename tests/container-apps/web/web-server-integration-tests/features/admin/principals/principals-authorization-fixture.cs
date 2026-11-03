@@ -1,6 +1,12 @@
 #region Purpose
-// Shared host lease, session / token minting and role seeding helpers for the principals authorization
+// Shared host factory, session / token minting and role seeding helpers for the principals authorization
 // test classes (task 182-002).
+#endregion
+
+#region Design
+// C-create: each test class owns its HostGraph (CreateHostAsync in SetupOnce, DisposeAsync in
+// CleanUpOnce) and passes its WebTestServerApplication to the helpers that touch the host. The
+// fixture keeps no host state, so no host is shared across classes.
 #endregion
 
 namespace PrincipalsAuthorization_;
@@ -19,19 +25,16 @@ using TimeWarp.Identity;
 
 internal static class PrincipalsAuthorizationFixture
 {
-  private static readonly HostGraphLease Lease = new();
-
-  public static WebTestServerApplication Web => Lease.Current.Web!;
-
-  public static Task AcquireAsync() =>
-    Lease.AcquireAsync(static () =>
+  /// <summary>
+  /// Builds the host graph a test class owns for its lifetime (C-create): the class stores it in its
+  /// SetupOnce and disposes it in its CleanUpOnce.
+  /// </summary>
+  public static Task<HostGraph> CreateHostAsync() =>
 #if(api)
-      HostGraphFactory.CreateWebWithApiAsync());
+    HostGraphFactory.CreateWebWithApiAsync();
 #else
-      HostGraphFactory.CreateWebAsync());
+    HostGraphFactory.CreateWebAsync();
 #endif
-
-  public static Task ReleaseAsync() => Lease.ReleaseAsync();
 
   public static async Task<string> EnsureProfileAsync(AsyncServiceScope scope, PrincipalId principalId)
   {
@@ -56,12 +59,12 @@ internal static class PrincipalsAuthorizationFixture
       ?? throw new InvalidOperationException($"{typeof(T).Name} deserialized to null.");
   }
 
-  public static async Task<string> RegisterAndIssueAgentBearerToken()
+  public static async Task<string> RegisterAndIssueAgentBearerToken(WebTestServerApplication web)
   {
     var key = new IntegrationSoftwareAgentKey();
 
     OneOf<StartAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerStart =
-      await Web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
+      await web.GetResponse<StartAgentKeyRegistration.Response>(new StartAgentKeyRegistration.Command(), CancellationToken.None);
     byte[] registerChallenge = Base64Url.DecodeFromChars(registerStart.AsT0.Challenge);
     byte[] registerSignature = key.Sign(AgentKeyCeremonyType.Registration, registerChallenge);
 
@@ -73,11 +76,11 @@ internal static class PrincipalsAuthorizationFixture
     };
 
     OneOf<CompleteAgentKeyRegistration.Response, FileResponse, SharedProblemDetails> registerResult =
-      await Web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
+      await web.GetResponse<CompleteAgentKeyRegistration.Response>(registerCommand, CancellationToken.None);
     registerResult.IsT0.ShouldBeTrue("Registration setup should succeed.");
 
     OneOf<StartAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenStart =
-      await Web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
+      await web.GetResponse<StartAgentTokenIssuance.Response>(new StartAgentTokenIssuance.Command(), CancellationToken.None);
     byte[] tokenChallenge = Base64Url.DecodeFromChars(tokenStart.AsT0.Challenge);
     byte[] tokenSignature = key.Sign(AgentKeyCeremonyType.TokenIssuance, tokenChallenge);
 
@@ -90,15 +93,15 @@ internal static class PrincipalsAuthorizationFixture
     };
 
     OneOf<CompleteAgentTokenIssuance.Response, FileResponse, SharedProblemDetails> tokenResult =
-      await Web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
+      await web.GetResponse<CompleteAgentTokenIssuance.Response>(tokenCommand, CancellationToken.None);
     tokenResult.IsT0.ShouldBeTrue("Token issuance setup should succeed.");
 
     return tokenResult.AsT0.AccessToken;
   }
 
-  public static async Task ForceMemberOnlyAsync(PrincipalId principalId)
+  public static async Task ForceMemberOnlyAsync(WebTestServerApplication web, PrincipalId principalId)
   {
-    await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
+    await using AsyncServiceScope scope = web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member]);
   }
@@ -128,15 +131,15 @@ internal static class PrincipalsAuthorizationFixture
     }
   }
 
-  public static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie()
+  public static async Task<(string Cookie, PrincipalId PrincipalId)> MintIdentitySessionCookie(WebTestServerApplication web)
   {
     var authenticator = new IntegrationSoftwareAuthenticator();
-    var testApiService = new TestApiService(Web.HttpClient, ContractSerializationDefaults.Options);
+    var testApiService = new TestApiService(web.HttpClient, ContractSerializationDefaults.Options);
 
     OneOf<StartPasskeyRegistration.Response, FileResponse, SharedProblemDetails> start =
-      await Web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
+      await web.GetResponse<StartPasskeyRegistration.Response>(new StartPasskeyRegistration.Command(), CancellationToken.None);
     byte[] challenge = ReadChallenge(start.AsT0.OptionsJson);
-    string origin = Web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
+    string origin = web.HttpClient.BaseAddress!.GetLeftPart(UriPartial.Authority);
 
     byte[] authenticatorData = authenticator.BuildAuthenticatorData("localhost", includeAttestedCredentialData: true);
     byte[] attestationObject = IntegrationSoftwareAuthenticator.BuildAttestationObject(authenticatorData);
@@ -157,7 +160,7 @@ internal static class PrincipalsAuthorizationFixture
 
     string cookieHeader = sessionCookie.Split(';')[0];
 
-    using HttpClient sessionClient = new() { BaseAddress = Web.HttpClient.BaseAddress };
+    using HttpClient sessionClient = new() { BaseAddress = web.HttpClient.BaseAddress };
     sessionClient.DefaultRequestHeaders.Add("Cookie", cookieHeader);
     HttpResponseMessage sessionResponse = await sessionClient.GetAsync(GetCurrentSession.Query.RouteTemplate);
     sessionResponse.StatusCode.ShouldBe(HttpStatusCode.OK);

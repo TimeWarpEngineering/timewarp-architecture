@@ -5,12 +5,12 @@
 
 #region Design
 // Mirrors roles-authorization-tests: real HTTP, isolated clients, passkey cookie mint, grant via
-// IPrincipalRoleStore, then assert 403 → 200. Read-without-manage: shrink Administrator permission
-// set to principals.read only → List 200, Set 403. Agent bearer remains 401 (cookie-scheme policy).
-// Task 328: GetPrincipal shares admin.principals.read (401 anonymous, 403 Member, 200 Administrator
-// with the profile). PII gating uses the reachable shape: a non-Administrator role (Operator)
-// granted admin.access + admin.principals.read without admin.profiles.read gets 200 from List and
-// Get, but no display name or email. Administrator cannot drop admin.profiles.read (protected core).
+// IPrincipalRoleStore. Task 328: GetPrincipal shares admin.principals.read (401 anonymous, 403
+// Member, 200 Administrator with the profile). PII gating uses the reachable shape: a
+// non-Administrator role (Operator) granted admin.access + admin.principals.read without
+// admin.profiles.read gets 200 from List and Get, but no display name or email. Administrator
+// cannot drop admin.profiles.read (protected core). List and SetRoles are in
+// principals-authorization-list-set-roles-tests.
 #endregion
 
 namespace PrincipalsAuthorization_;
@@ -25,9 +25,19 @@ using static PrincipalsAuthorization_.PrincipalsAuthorizationFixture;
 
 public class Get_Principal_Returns_
 {
-  public static Task SetupOnce() => PrincipalsAuthorizationFixture.AcquireAsync();
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public static Task CleanUpOnce() => PrincipalsAuthorizationFixture.ReleaseAsync();
+  public static async Task SetupOnce() => Graph = await PrincipalsAuthorizationFixture.CreateHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Get_Principal_Returns_>();
@@ -41,8 +51,8 @@ public class Get_Principal_Returns_
 
   public static async Task Forbidden_GetPrincipal_Given_Passkey_Member_Only_Session()
   {
-    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
-    await ForceMemberOnlyAsync(principalId);
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
+    await ForceMemberOnlyAsync(Web, principalId);
 
     using HttpClient client = new() { BaseAddress = Web.HttpClient.BaseAddress };
     client.DefaultRequestHeaders.Add("Cookie", sessionCookie);
@@ -54,7 +64,7 @@ public class Get_Principal_Returns_
 
   public static async Task Ok_GetPrincipal_Given_Administrator_Includes_Profile()
   {
-    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
@@ -81,7 +91,7 @@ public class Get_Principal_Returns_
 
   public static async Task Ok_Principals_Reader_Without_Profiles_Read_Sees_No_Profile_Fields()
   {
-    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie();
+    (string sessionCookie, PrincipalId principalId) = await MintIdentitySessionCookie(Web);
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();

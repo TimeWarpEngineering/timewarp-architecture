@@ -3,15 +3,8 @@
 #endregion
 
 #region Design
-// Isolated TestServer (not the full web-server HostGraph) with FakeEntraHandler standing in for
-// OpenIdConnect. Challenge immediately completes the ticket via EntraTicketHttp using tid/oid/iss
-// from test headers. Unknown-handle bootstrap parks claims and 302s to /Login/Microsoft365/Choose
-// (no principal). Create is exercised via the real CompleteEntraBootstrapCreate handler mapped on
-// this host. Link of a foreign active handle merges; already-on-this-account is 409.
-// CredentialUsageRecorder is registered as the singleton the real host's InMemoryIdentityStoresModule
-// provides; sync-hit and link assert the last-used stamp end-to-end (task 252).
-// The settings row is Restricted and lists TrustedTenantId. options.TenantId is only the OIDC
-// authority. One case switches the row to Any and expects UntrustedTenantId to reach choose.
+// Host and request helpers are in EntraChallengeFixture. Link of a foreign active handle merges;
+// already-on-this-account is 409. Link asserts the last-used stamp end-to-end (task 252).
 #endregion
 
 namespace EntraChallenge_;

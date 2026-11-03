@@ -3,19 +3,9 @@
 // availability and hints follow the server flags (tasks 229, 246, 282, 253).
 #endregion
 
-// Real HTTP through the ASP.NET pipeline (not WebTestServerApplication.Send / mediator) — only that
-// path exercises identity-session cookie OnRedirectToLogin / OnRedirectToAccessDenied. Isolated
-// HttpClient per test with AllowAutoRedirect=false so Location and status are observable. Passkey
-// mint via CredentialCeremonyHelpers for signed-in cases (Member default; Admin/Roles needs
-// Administrator so Member proves forbid ≠ Login). Cases mirror the dual-mode matrix in
-// IdentitySessionCookieChallenge Design: HTML Accept + Accept-less fallback redirect; api/Roles
-// anonymous 401; Member session cookie authenticated; Member /Admin/Roles 403.
-// Task 183 resolved the old residual (authenticated HTML SSR stack overflow): hosted prerender
-// now prefers HttpContext.User (HostedIdentitySessionAuthenticationStateProvider) and
-// RedirectToLogin no longer navigates during static SSR. The Ok_Page_* cases below are the
-// regression tripwire — pre-183 they killed the process (exit 134) instead of returning 200.
-// They also assert the body is the real page, not RedirectToLogin's static sign-in fallback,
-// so a silently-anonymous prerender state fails the test rather than passing on status alone.
+// Real HTTP through the ASP.NET pipeline: an isolated no-redirect HttpClient per test fetches the
+// prerendered page with a passkey session cookie (minted via CredentialCeremonyHelpers), and the
+// assertions read the rendered button tags.
 // Task 229: Settings prerender fetches credentials so Link is hidden when an EntraAccount is
 // linked, Unlink is disabled (with hint) when it is the last active credential, and Unlink is
 // enabled when a passkey remains.
@@ -27,6 +17,8 @@
 // predicate), so these prerender facts prove the real handler's flags reach the rendered buttons end to end.
 // Task 253: Settings prerender shows "Signed in · TimeWarp account · <fingerprint>" — the hosted
 // auth-state provider derives the fingerprint claim from the cookie principal (no HTTP loopback).
+// The redirect, forbid and Ok_Page_* tripwire cases (tasks 154, 183) are in
+// protected-page-deep-link-pages-tests.
 
 namespace ProtectedPageDeepLink_;
 
@@ -42,9 +34,19 @@ using static ProtectedPageDeepLink_.ProtectedPageDeepLinkFixture;
 
 public class Settings_Returns_
 {
-  public static Task SetupOnce() => ProtectedPageDeepLinkFixture.AcquireAsync();
+  private static HostGraph? Graph;
+  private static WebTestServerApplication Web => Graph!.Web!;
 
-  public static Task CleanUpOnce() => ProtectedPageDeepLinkFixture.ReleaseAsync();
+  public static async Task SetupOnce() => Graph = await ProtectedPageDeepLinkFixture.CreateHostAsync();
+
+  public static async Task CleanUpOnce()
+  {
+    if (Graph is not null)
+    {
+      await Graph.DisposeAsync();
+      Graph = null;
+    }
+  }
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<Settings_Returns_>();
@@ -53,9 +55,9 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member, RoleIds.Administrator]);
 
-    HttpResponseMessage hidden = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage hidden = await GetPageHtml(Web, "/Settings", sessionCookie);
     string hiddenHtml = await hidden.Content.ReadAsStringAsync();
     hiddenHtml.ShouldNotContain("data-qa=\"Microsoft365Settings\"");
     hiddenHtml.ShouldNotContain("data-qa=\"LinkMicrosoft365\"");
@@ -75,7 +77,7 @@ public class Settings_Returns_
     await store.UpdateAsync(settings);
     try
     {
-      HttpResponseMessage shown = await GetPageHtml("/Settings", sessionCookie);
+      HttpResponseMessage shown = await GetPageHtml(Web, "/Settings", sessionCookie);
       string shownHtml = await shown.Content.ReadAsStringAsync();
       shownHtml.ShouldContain("data-qa=\"Microsoft365Settings\"");
       shownHtml.ShouldContain("data-qa=\"LinkMicrosoft365\"");
@@ -94,12 +96,12 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
     const string accountHint = "Steven.Cramer@TimeWarp.Enterprises";
-    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
-    await AddEntraAccountAsync(principalId, accountHint);
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync(Web);
+    await AddEntraAccountAsync(Web, principalId, accountHint);
 
-    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"Microsoft365Settings\"");
@@ -116,13 +118,13 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
     const string accountHint = "Steven.Cramer@TimeWarp.Enterprises";
-    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync();
-    await AddEntraAccountAsync(principalId, accountHint);
-    await RevokePasskeysAsync(principalId);
+    await using IAsyncDisposable offered = await EnableMicrosoft365OfferedAsync(Web);
+    await AddEntraAccountAsync(Web, principalId, accountHint);
+    await RevokePasskeysAsync(Web, principalId);
 
-    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"Microsoft365Settings\"");
@@ -138,9 +140,9 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
 
-    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"RevokePasskey\"");
@@ -154,10 +156,10 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Member]);
-    await AddAgentKeyAsync(principalId, "ganda");
+    await SetRolesAsync(Web, principalId, [RoleIds.Member]);
+    await AddAgentKeyAsync(Web, principalId, "ganda");
 
-    HttpResponseMessage response = await GetPageHtml("/Settings", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Settings", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"RevokePasskey\"");
@@ -170,9 +172,9 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Developer]);
+    await SetRolesAsync(Web, principalId, [RoleIds.Developer]);
 
-    HttpResponseMessage response = await GetPageHtml("/Passkeys", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Passkeys", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     html.ShouldContain("data-qa=\"RevokePasskey\"");
@@ -185,10 +187,10 @@ public class Settings_Returns_
   {
     (PrincipalId principalId, string sessionCookie) =
       await CredentialCeremonyHelpers.RegisterPasskeyAndMintSessionAsync(Web);
-    await SetRolesAsync(principalId, [RoleIds.Developer]);
-    await AddAgentKeyAsync(principalId, "ganda");
+    await SetRolesAsync(Web, principalId, [RoleIds.Developer]);
+    await AddAgentKeyAsync(Web, principalId, "ganda");
 
-    HttpResponseMessage response = await GetPageHtml("/Passkeys", sessionCookie);
+    HttpResponseMessage response = await GetPageHtml(Web, "/Passkeys", sessionCookie);
     response.StatusCode.ShouldBe(HttpStatusCode.OK);
     string html = await response.Content.ReadAsStringAsync();
     FindTagContaining(html, "data-qa=\"RevokePasskey\"").ShouldNotContain("disabled");
