@@ -53,10 +53,105 @@ Acceptance criteria:
 
 ## Checklist
 
-- [ ] Decompose xai-chat-upstream-server by responsibility
-- [ ] Decompose entra-ticket-processor-application
-- [ ] Split the four co-located runfiles by scenario
-- [ ] dev build and tests green
+- [x] Decompose xai-chat-upstream-server by responsibility
+- [x] Decompose entra-ticket-processor-application
+- [x] Split the four co-located runfiles by scenario
+- [x] dev build and tests green
+
+## Results
+
+All six files are under 500 lines, and the two EF migration files stay exempt. No class uses
+`partial` to get under the limit, and each new file has one top-level type, Purpose and Design
+regions, and a kebab name.
+
+**Product classes** (`source/container-apps/web/features/`)
+
+- `agent-chat/xai-chat-upstream-server.cs` went from 773 to 282 lines. `XaiChatUpstream` keeps
+  key resolution, the per-turn key slot, and the completion flow. Three types moved out:
+  - `XaiChatClientCache` (`xai-chat-client-cache-server.cs`, 181 lines) holds the bounded
+    per-key client cache, use counting, and deferred disposal.
+    `XaiChatUpstream.MaxCachedClients` now forwards to the cache's constant, so the tests did
+    not change.
+  - `XaiFakeChatClient` (`xai-fake-chat-client-server.cs`, 236 lines) is the scripted fake. It
+    was a nested class before.
+  - `XaiChatMapping` (`xai-chat-mapping-server.cs`, 148 lines) is the relay-to-M.E.AI mapping.
+    It was the second top-level type in the old file.
+- `identity/entra-ticket-processor-application.cs` went from 507 to 282 lines.
+  `EntraTicketProcessor` keeps its public surface, its constructor, and its DI registration. It
+  does the issuer check, the mode dispatch, sync-hit and bootstrap, and the bootstrap mint. Two
+  internal types moved out, and the processor builds both from its injected stores:
+  - `EntraAccountLinker` (`entra-account-linker-application.cs`, 234 lines) handles link,
+    link-merge, the already-have attach, and the rule of one Microsoft 365 account per principal.
+  - `EntraSignInStamp` (`entra-sign-in-stamp-application.cs`, 67 lines) does the last-used stamp
+    and the account hint refresh.
+
+  The old Design region is now split across the three files, each with the notes for its own
+  part.
+
+**Co-located runfiles**
+
+Each runfile was split by scenario. Helpers that several runfiles share are written once, in a
+support file that each runfile pulls in with `#:include`. The support file name ends in
+`-tests.cs`, so the aggregator compiles it once. This is a new convention, so I documented it in
+`skills/tw-feature-placement/references/co-located-jaribu-runfiles.md`.
+
+- Feedback triage. Each runfile's test count is the same standalone as before (42 tests):
+  - `feedback-triage-tests.cs` (335 lines) has item triage and the authorization surface.
+  - `feedback-admin-tests.cs` (440) has the admin list, sort, paging, detail, status, replies,
+    and notes.
+  - `feedback-owner-name-tests.cs` (224) has the owner names.
+  - The support file is `feedback-triage-world-tests.cs` (265).
+- Feedback attachment (22 tests):
+  - `feedback-attachment-tests.cs` (296) has limits, read, upload, download, headers, and remove.
+  - `feedback-attachment-submit-tests.cs` (184) has link, submit, and the race.
+  - The support file is `feedback-attachment-world-tests.cs` (349). Its helpers are renamed
+    `Attachment*` so they do not collide in the aggregator.
+- Permission evaluator (19 tests):
+  - `permission-evaluator-tests.cs` (387) has the evaluator and `InMemoryRolePermissionStore`.
+  - `permission-evaluator-agent-tests.cs` (183) has the agent-token tests.
+  - The support file is `permission-evaluator-fakes-tests.cs` (63).
+- User xAI key (12 tests):
+  - `user-xai-api-key-tests.cs` (287).
+  - The support file is `user-xai-api-key-harness-tests.cs` (240). Its helpers are renamed
+    `XaiKeyTest*`.
+  - Boy scout: the old file failed to build standalone with CA1859, and the aggregator never
+    caught it. Two harness helpers now return `Task<ProtectedSecretWrite>`.
+
+Test logic, assertions, and test names did not change. Every split class keeps C-create: none of
+these classes boots a host.
+
+**Gates run**
+
+- `dev build`: 0 warnings, 0 errors, and the client-name scan passed.
+- `dotnet test` in `tests/container-apps/web/web-server-integration-tests`: 435 passed, 1
+  skipped, 0 failed.
+- `dotnet test` in `tests/container-apps/web/web-jaribu-tests`: 458 of 458 passed, the same as
+  the baseline before the split.
+- Standalone `dotnet run` of each new runfile passed, and the counts add up to the originals.
+- `dev lint-skills` passed.
+- `dev template-smoke` (default variant) passed. The generated web aggregator ran 458 of 458.
+- `ganda repo audit`: clean once this kitchen was published. Before that, `kanban-landed` was the
+  only failure.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+(cd tests/container-apps/web/web-jaribu-tests && dotnet test)
+(cd tests/container-apps/web/web-server-integration-tests && dotnet test)
+dotnet run source/container-apps/web/features/feedback/feedback-admin-tests.cs
+git ls-files 'source/container-apps/web/*.cs' | grep -v /migrations/ | xargs wc -l | awk '$1 > 500 && $2 != "total"'
+```
+
+Expect:
+
+- The build has 0 warnings.
+- The web-jaribu-tests aggregator reports 458 total, 458 succeeded.
+- The web-server integration tests report 0 failed.
+- The standalone feedback-admin runfile reports 19 of 19 passed.
+- The last command prints nothing, because no non-migration web `.cs` file is over 500 lines.
 
 ## Session
 
