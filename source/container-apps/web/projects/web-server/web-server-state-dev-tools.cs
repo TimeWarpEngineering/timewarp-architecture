@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Task 335-001: AddStateDevToolsExport adds the TimeWarp.State ActivitySource and the DevTools
+// Task 335-001: AddExport adds the TimeWarp.State ActivitySource and the DevTools
 // exporter to tracing in Development when the AppHost published TIMEWARP_STATE_DEVTOOLS_ENDPOINT.
 // It covers server-side stores (prerender, InteractiveServer).
 #endregion

@@ -28,6 +28,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
+
 /// <summary>Registers the default and the named service-discovery HttpClients.</summary>
 internal static class WebServerHttpClients
 {

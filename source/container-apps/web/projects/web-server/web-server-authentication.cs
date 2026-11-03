@@ -174,7 +174,7 @@ internal static class WebServerAuthentication
       })
       // Agent bearer-token scheme (task 104-004): named scheme alongside identity-session.
       // AgentTokenAuthenticationHandler owns authenticate/challenge/forbid for this scheme;
-      // token lifetime lives in AgentTokenOptions (ConfigureSettings).
+      // token lifetime lives in AgentTokenOptions (WebServerSettings).
       .AddScheme<AuthenticationSchemeOptions, AgentTokenAuthenticationHandler>(AgentTokenDefaults.Scheme, _ => { })
       // Closed-box mock principal (task 145-009): always registered; handler is fail-closed
       // (Development/Testing + Authentication:UseMock + header). Listed on AuthenticatedPolicy.

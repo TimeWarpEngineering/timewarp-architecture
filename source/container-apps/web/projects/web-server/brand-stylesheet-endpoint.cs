@@ -10,6 +10,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
+
 /// <summary>GET the brand stylesheet built from <see cref="BrandOptions"/>.</summary>
 internal static class BrandStylesheetEndpoint
 {

@@ -9,6 +9,7 @@
 #endregion
 
 namespace TimeWarp.Architecture.Web.Server;
+
 /// <summary>Registers the x402 tip and metered-capability demo services.</summary>
 internal static class WebServerPaymentServices
 {

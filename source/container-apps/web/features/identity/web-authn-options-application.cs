@@ -6,8 +6,8 @@
 #region Design
 // Compiles into web-application (namespace TimeWarp.Architecture.Features.Identity.Application,
 // filename suffix -application.cs), not web-server, despite being bound from configuration at the
-// host (web-server's Program.ConfigureSettings calls AddFluentValidatedOptions<WebAuthnOptions,
-// WebAuthnOptionsValidator> there) — the identity handlers that consume IOptions<WebAuthnOptions>
+// host (web-server's WebServerSettings.ConfigureServices calls
+// AddFluentValidatedOptions<WebAuthnOptions, WebAuthnOptionsValidator> there) — the identity handlers that consume IOptions<WebAuthnOptions>
 // compile into web-application, which does NOT reference web-server (web-server -> web-infrastructure
 // -> web-application is the one-way dependency chain), so the type has to live where both the
 // binder (web-server, which references web-application transitively) and the consumers

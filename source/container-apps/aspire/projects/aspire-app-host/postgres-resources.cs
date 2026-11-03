@@ -104,8 +104,9 @@ internal static class PostgresResources
       // Task 317: Neon is not provisioned by this model. The pooled string is the app's connection.
       // The direct string is a second resource so migrations can reference it under the postgres-db
       // name without pointing web-server at the pooler. The pooled WithReference is applied after
-      // AddEFMigrations (see the Design region). No WaitFor: a connection string has no health
-      // endpoint, and publish mode does not run wait edges.
+      // AddEFMigrations (see PublishTarget's Design region, publish-target.cs, aca-neon paragraph).
+      // No WaitFor: a connection string has no health endpoint, and publish mode does not run wait
+      // edges.
       // This is the only declaration of the two Neon parameters: web on, postgres on, Publish:Target=aca-neon.
       // Neither has a default. Publish still emits the pooled name as @secure(). Aspire also tries to copy
       // every parameter value into deployment state and logs MissingParameterValueException when the
@@ -126,9 +127,10 @@ internal static class PostgresResources
       // generated postgres-username / postgres-password parameters (the password @secure()). The
       // connection string lands in a Key Vault Aspire provisions beside the server, and web-server
       // reads it through a Key Vault-backed container-app secret; WithReference ALSO gives web-server
-      // the password as container-app secrets postgres-db-password / postgres-db-uri (see the Design
-      // region). Firewall: AllowAllAzureIps (any Azure IP, any tenant). Publish-only, like every target
-      // switch: run mode never reaches this branch and keeps the container (AddPostgresContainer).
+      // the password as container-app secrets postgres-db-password / postgres-db-uri (see
+      // PublishTarget's Design region, publish-target.cs, aca Postgres bullet).
+      // Firewall: AllowAllAzureIps (any Azure IP, any tenant). Publish-only, like every target switch:
+      // run mode never reaches this branch and keeps the container (AddPostgresContainer).
       return
       (
         builder.AddAzurePostgresFlexibleServer(PostgresResourceName)
