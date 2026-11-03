@@ -2,21 +2,21 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 3018
-- Effort: 3
+- Lines changed: 276
+- Effort: 2
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 200 (--max-turns; cursor uncapped)
+- Turn cap: 120 (--max-turns; cursor uncapped)
 
-# Review framework — task 469-003
+## Rounds
 
-**Date:** 2026-11-04
-**Host task:** kanban/in-progress/469-003-refactor-aspire-apphost-and-web-server-programcs-over-500-lines/
-**Diff scope:** branch `task/469-003-refactor-aspire-apphost-and-web-server-programcs-o` (HEAD 8edf0ea9a) vs merge-base b16e2ce15 on master; product change is commit 15e93cb37.
-**Plan / brief:** split the AppHost `program.cs` (942 lines) and the Web.Server `program.cs` (679 lines) into concern types, keeping behaviour, flag guards, and order (task.md Goal).
-**Effort:** 3 (by-diff budget); roster axis general only.
-**Reviewer roster:** general, run as two read-only general reviewers (general-apphost: AppHost equivalence and flag guards; general-web-server: Web.Server equivalence and order). The review oracle merged their findings and re-checked them.
-**Session IDs:** review oracle (claude-opus-5-5, headless ganda task work); subagents a9681a5e9a4970e87 (apphost), ac84f0f4e80731943 (web-server).
+- **Round 1** (2026-11-04). Diff: branch HEAD 8edf0ea9a vs merge-base b16e2ce15; the product
+  change is 15e93cb37. Effort 3, roster general (two read-only passes, AppHost and Web.Server).
+  Artifacts are in round-1/.
+- **Round 2** (2026-11-04). Diff: the fix delta `8edf0ea9a..406fad697`, comments and whitespace in
+  14 product files. Effort 2 (by-diff, 276 lines), roster general, a single pass by the review
+  oracle (claude-opus-5-5, headless ganda task work). Artifacts: round-2/general.md and
+  round-2/merged.md.
 
 ## Ground rules
 

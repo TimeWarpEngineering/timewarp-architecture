@@ -55,6 +55,8 @@ Acceptance:
   (two read-only general passes: apphost a9681a5e9a4970e87, web-server ac84f0f4e80731943). Outcome: fix pass needed
   for open M1–M5.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4fd94995-2da9-401b-b729-1f6df0bc1893, max-turns 200, artifacts general.md, merged.md — 2026-11-03T21:44:38Z
+- Review oracle round 2 (2026-11-04): claude-opus-5-5, headless ganda task work, effort 2 (by-diff, 276 lines),
+  roster general (one pass, no subagents), turn cap 120. Disposition: accepted-exceptions, 0 open.
 
 ## Results
 
@@ -186,6 +188,19 @@ Optional, operator-run in the master checkout: `dev run` starts with every resou
 - No behaviour change was found. Order and flag guards were checked statement by statement against the old files. The dead-code claims were confirmed.
 - Gates the reviewer re-ran: `dev build` 0/0, and `dev test --group fast` 14/14 (dev-cli-tests 342/342). Not re-run: template-smoke --matrix and the integration group.
 - Paths: review/review-framework.md, review/round-1/general.md, review/round-1/merged.md.
+- Round 2 (2026-11-04). Effort 2, roster general (one pass). It reviewed the fix delta
+  `8edf0ea9a..406fad697`, which is comments and whitespace only. M1, M2, M3 and M5 are confirmed
+  fixed: a grep for the old `Program.ConfigureSettings` / `Program.ConfigureAuthentication` names
+  is empty, and the remaining "see the Design region" pointers resolve in their own files. The M4
+  wontfix rationale is accepted. No new findings. Gate re-run: `./bin/dev build` 0 warnings,
+  0 errors.
+- Final counts: bug 0; suggestion 3 fixed; nit 1 fixed, 1 wontfix; 0 open.
+- **Disposition: accepted-exceptions.** The one exception is M4 (nit): the flag combination with
+  api, grpc and web all off is unsupported and ungated, and its yarp-on form already failed on
+  master.
+- Still open before done: the Requirements item "`dev run` still starts" needs an operator run in
+  the master checkout (see Learnings).
+- Paths: review/round-2/general.md, review/round-2/merged.md, review/disposition.md.
 
 ## Learnings
 
@@ -195,3 +210,5 @@ Optional, operator-run in the master checkout: `dev run` starts with every resou
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5
 - Fix pass (2026-11-04): M1, M2, M3, M5 fixed; M4 wontfix. Round 2 is next.
+- Round 2 (2026-11-04): Done. 0 open. Disposition is accepted-exceptions (M4 wontfix).
+- Round 2: Done
