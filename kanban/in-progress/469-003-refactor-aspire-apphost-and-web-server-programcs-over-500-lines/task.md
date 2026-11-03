@@ -51,6 +51,10 @@ Acceptance:
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e5f800bf-e891-4da5-9b2e-e312f0a76082, max-turns 500, Done — 2026-11-03T21:37:22Z
+- Review oracle round 1 (2026-11-04): claude-opus-5-5, headless ganda task work, effort 3 (by-diff), roster general
+  (two read-only general passes: apphost a9681a5e9a4970e87, web-server ac84f0f4e80731943). Outcome: fix pass needed
+  for open M1–M5.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4fd94995-2da9-401b-b729-1f6df0bc1893, max-turns 200, artifacts general.md, merged.md — 2026-11-03T21:44:38Z
 
 ## Results
 
@@ -128,6 +132,29 @@ Registration order in ConfigureServices is unchanged.
   suites boot the same AppHost model instead. The secrets.json hash was the same before and after
   the test runs.
 
+### Fix pass (review round 1 → round 2, 2026-11-04)
+
+- M1: eight Purpose/Design regions outside web-server `program.cs` now point at
+  `WebServerSettings.ConfigureServices` or `WebServerAuthentication` instead of the removed
+  `Program.ConfigureSettings` / `Program.ConfigureAuthentication`. sign-in-options-validator-application.cs
+  ("web-server ConfigureSettings") was fixed too. A grep for the old names across source, tests and
+  skills is empty.
+- M2: web-server-state-dev-tools.cs says `AddExport`. web-server-authentication.cs says
+  `AgentTokenOptions (WebServerSettings)`.
+- M3: the two postgres-resources.cs "(see the Design region)" pointers now name PublishTarget's
+  Design region in publish-target.cs (the aca-neon paragraph and the aca Postgres bullet).
+- M4 (wontfix): the RCS1163 finding is real when api, grpc and web are all off. Building the
+  AppHost with `-p:DefineConstants=postgres` and with `yarp;postgres` shows it. The yarp-on form of
+  that combination already failed on master (IDE0005 on `Aspire.Hosting.Yarp.Transforms`), and no
+  smoke variant gates it. Supporting a no-service app is a flag-set decision that needs its own
+  matrix variant. Details are in review/round-1/merged.md M4.
+- M5: blank line after `namespace …;` in web-server-http-clients.cs, web-server-payment-services.cs,
+  and brand-stylesheet-endpoint.cs.
+- Gates: `./bin/dev build` 0 warnings / 0 errors. `./bin/dev test --group fast` 14/14 projects.
+  `ganda repo audit` exit 0: 35 passed; the one warning is kanban-landed for other tasks' claims
+  (board state outside this task). Only comments and whitespace changed, so
+  template-smoke and the integration group were not re-run.
+
 ### How to validate
 
 Smoke:
@@ -146,3 +173,25 @@ ingress-resource.cs. In SmokeNoWeb it has neither web-server-resource.cs nor pos
 In SmokeNoPostgres it has no postgres-resources.cs.
 Optional, operator-run in the master checkout: `dev run` starts with every resource healthy.
 
+
+### Review
+
+- Round 1 (2026-11-04). Effort 3, roster general: two read-only passes (AppHost and Web.Server).
+- Counts (round 1): 0 bug; suggestion 3 open; nit 2 open; 0 fixed; 0 wontfix.
+- Disposition (fix pass, 2026-11-04): M1, M2, M3 and M5 are fixed. M4 is wontfix, with the reason in merged.md. Counts after the fix pass: suggestion 3 fixed; nit 1 fixed, 1 wontfix; 0 open.
+- Round 1 findings were:
+  - M1–M3 are stale pointers in comments: `Program.ConfigureSettings` / `Program.ConfigureAuthentication` in 8 files outside web-server program.cs, old member names in two moved files, and postgres-resources.cs "see the Design region" pointing at reasoning that now lives in publish-target.cs.
+  - M4: possible RCS1163 when api, grpc and web are all off (unverified).
+  - M5: missing blank lines after the namespace in 3 files.
+- No behaviour change was found. Order and flag guards were checked statement by statement against the old files. The dead-code claims were confirmed.
+- Gates the reviewer re-ran: `dev build` 0/0, and `dev test --group fast` 14/14 (dev-cli-tests 342/342). Not re-run: template-smoke --matrix and the integration group.
+- Paths: review/review-framework.md, review/round-1/general.md, review/round-1/merged.md.
+
+## Learnings
+
+- Misread (review round 1): the task's Requirements say "`dev run` still starts". The Goal (implementer restatement) left that requirement out. It listed dev build, template-smoke --matrix, Aspire tests, web-server integration tests and dev-cli tests only. Results record that dev run was deliberately not performed, because task-worktree AppHosts share the master UserSecretsId. So the requirement is still open and needs an operator run in the master checkout before done. It was not dropped by the restatement.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5
+- Fix pass (2026-11-04): M1, M2, M3, M5 fixed; M4 wontfix. Round 2 is next.
