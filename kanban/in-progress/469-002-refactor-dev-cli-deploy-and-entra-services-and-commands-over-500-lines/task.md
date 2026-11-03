@@ -122,13 +122,32 @@ Expect:
 - No dev-cli `.cs` file is over 500 lines.
 - `dev template-smoke` passes the default variant.
 
+### Review
+
+Round 1, roster general, effort 3. Disposition: **clean**. Final counts: 0 open, 0 fixed, 0 wontfix across bug, suggestion, and nit. No wontfix and no escalation.
+
+The review compared the branch to merge-base `f95c82ea0`. The implementer restatement matches the original task (same eight files, one type per file, 500-line cap, unchanged verbs). No misread.
+
+Paths:
+
+- `review/review-framework.md`
+- `review/round-1/general.md`
+- `review/round-1/merged.md`
+- `review/disposition.md`
+
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implement oracle: implemented by implementer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1a2d9-00bc-74e0-bf45-a6d476140429, max-turns 500, Blocked — 2026-11-03T19:18:22Z
 - Implement oracle: implementer-claude (Opus 5.5) 2026-11-04. Three helpers split the deploy, entra and template-smoke families in parallel; the implementer fixed one cross-class reference, then ran the gates above.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session e5520f23-b338-4da6-bb58-51798600dd6b, max-turns 500, Done — 2026-11-03T19:36:07Z
+- Review oracle: general reviewer (grok, vendor xai, model grok-4.7), session 01a1a2ea-60e5-7ee3-b154-2ef4e8c7dd68, effort 3, max-turns 200, clean — 2026-11-04
+- Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1a2ea-60e5-7ee3-b154-2ef4e8c7dd68, max-turns 200, artifacts general.md, merged.md — 2026-11-03T19:49:15Z
 
 ## Blocked
 
 2026-11-03: placeholder — work not finished
+
+## Review
+
+- Round 1: Done
