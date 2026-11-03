@@ -96,14 +96,16 @@ support file that each runfile pulls in with `#:include`. The support file name 
 `skills/tw-feature-placement/references/co-located-jaribu-runfiles.md`.
 
 - Feedback triage. Each runfile's test count is the same standalone as before (42 tests):
-  - `feedback-triage-tests.cs` (335 lines) has item triage and the authorization surface.
+  - `feedback-triage-tests.cs` (331 lines) has item triage and the authorization surface.
   - `feedback-admin-tests.cs` (440) has the admin list, sort, paging, detail, status, replies,
     and notes.
   - `feedback-owner-name-tests.cs` (224) has the owner names.
-  - The support file is `feedback-triage-world-tests.cs` (265).
+  - The support file is `feedback-triage-world-tests.cs` (268). It holds the one `Filed` helper
+    that builds a filed item, and both the triage tests and `TriageWorld.AddAsync` call it.
 - Feedback attachment (22 tests):
-  - `feedback-attachment-tests.cs` (296) has limits, read, upload, download, headers, and remove.
-  - `feedback-attachment-submit-tests.cs` (184) has link, submit, and the race.
+  - `feedback-attachment-tests.cs` (319) has limits, read, upload, the pending cap and its
+    expiry (including an expiry whose blob delete throws), download, headers, and remove.
+  - `feedback-attachment-submit-tests.cs` (161) has link, submit, and the race.
   - The support file is `feedback-attachment-world-tests.cs` (349). Its helpers are renamed
     `Attachment*` so they do not collide in the aggregator.
 - Permission evaluator (19 tests):
@@ -112,8 +114,8 @@ support file that each runfile pulls in with `#:include`. The support file name 
   - The support file is `permission-evaluator-fakes-tests.cs` (63).
 - User xAI key (12 tests):
   - `user-xai-api-key-tests.cs` (287).
-  - The support file is `user-xai-api-key-harness-tests.cs` (240). Its helpers are renamed
-    `XaiKeyTest*`.
+  - The support file is `user-xai-api-key-harness-tests.cs` (241). Its helpers are renamed
+    `XaiKeyTest*`. It owns the `UserA` id, and the test file reads it from there.
   - Boy scout: the old file failed to build standalone with CA1859, and the aggregator never
     caught it. Two harness helpers now return `Task<ProtectedSecretWrite>`.
 
@@ -154,8 +156,55 @@ Expect:
 - The standalone feedback-admin runfile reports 19 of 19 passed.
 - The last command prints nothing, because no non-migration web `.cs` file is over 500 lines.
 
+### Review
+
+Round 1 ran at effort 3 with a general reviewer, plus a read-only helper that checked the runfile
+split for equivalence. It found 0 bugs, 1 suggestion, and 3 nits (M1 to M4). The fix pass below
+fixed all four, and round 2 checks them. No behavior defects were found.
+
+The reviewer re-ran the gates in the claim worktree: `dev build` had 0 warnings, web-jaribu-tests
+passed 458 of 458, and the web-server integration tests had 435 passed and 1 skipped. The
+findings are about written context that no longer matches the code, plus two small duplications:
+
+- M1: a stale Purpose region on the attachment runfile.
+- M2: a copy of the triage `Filed` helper.
+- M3: a duplicated GUID in the xAI key harness.
+- M4: Entra Design notes that still name `EntraTicketProcessor` for rules that moved to
+  `EntraAccountLinker` and `EntraSignInStamp`.
+
+Paths: `review/review-framework.md` and `review/round-1/merged.md` (`review/round-1/general.md`
+holds the detail).
+
+Fix pass for round 1 (all four findings fixed, listed in `merged.md`):
+
+- M1: `Upload_Should_SucceedWhenAnExpiredBlobCannotBeDeleted` moved back to
+  `feedback-attachment-tests.cs`, next to the expiry test, so both Purpose regions are true again.
+- M2: `Filed` is now one static helper on `TriageWorld`. `TriageWorld.AddAsync` and the triage
+  tests both call it, so the item text is written once.
+- M3: the harness owns `XaiKeyTestHarness.UserA`, which also sets the site key. The test file's
+  `UserA` reads that field, so the GUID is written once.
+- M4: the Design notes in `credential-rules-application.cs`, `get-credentials-contracts.cs`,
+  `get-credentials-handler-application.cs`, and `credential-usage-recorder.cs` now name
+  `EntraAccountLinker` for the Microsoft 365 rule and `EntraSignInStamp` for the stamp.
+
+Gates after the fix pass: `dev build` had 0 warnings and 0 errors, web-jaribu-tests passed 458
+of 458, and standalone runs gave attachment 14 + 8 = 22 and triage 14 + 19 + 9 = 42, the same
+totals as before. `ganda repo audit` exited 0 (only the `kanban-landed` advisory for other tasks).
+The web-server integration tests were not run again, because the only changes outside the
+runfiles are comments.
+
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implement oracle: implementer-claude (Opus 5.5) 2026-11-04. A Sonnet helper did the runfile splits, and I re-ran the gates myself.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0dc876c1-82bc-4009-a193-f264bfa6c516, max-turns 500, Done — 2026-11-03T22:36:15Z
+- Review oracle round 1: reviewer-claude (claude-opus-5-5), headless `ganda task work`, effort 3,
+  roster general, plus helper agent a119196f51de86fd2 for runfile equivalence. Turn cap 200.
+  Result: fix pass requested for M1 to M4 — 2026-11-04
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session aa3f52e1-8412-4cc0-99cc-c643d5d105a3, max-turns 200, artifacts general.md, merged.md — 2026-11-03T22:45:16Z
+- Fix pass (implement-fix-2 oracle): implementer-claude (claude-opus-5-5), headless
+  `ganda task work`. Fixed M1 to M4 and re-ran the gates — 2026-11-04
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4

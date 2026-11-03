@@ -41,7 +41,6 @@ namespace TimeWarp.Architecture.Features.Feedback
   using ContractSeverity = TimeWarp.Architecture.Features.Feedback.FeedbackSeverity;
   using ContractStatus = TimeWarp.Architecture.Features.Feedback.FeedbackStatus;
   using DomainActivityKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackActivityKind;
-  using DomainKind = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackKind;
   using DomainSeverity = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackSeverity;
   using DomainStatus = TimeWarp.Architecture.Features.Feedback.Domain.FeedbackStatus;
   using FilerReplyContract = TimeWarp.Architecture.Features.Feedback.ReplyAsFiler;
@@ -58,7 +57,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task File_Should_StartNewWithAnEmptyThread()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       item.Status.ShouldBe(DomainStatus.New);
       item.Severity.ShouldBe(DomainSeverity.Unset);
       item.Activity.ShouldBeEmpty();
@@ -67,7 +66,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task ChangeStatus_Should_RecordFromToWhoAndWhen()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       var admin = Guid.NewGuid();
       FeedbackActivity entry = item.ChangeStatus(DomainStatus.UnderReview, admin, At);
       item.Status.ShouldBe(DomainStatus.UnderReview);
@@ -86,7 +85,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task SetSeverity_Should_RecordFromToWhoAndWhenWithoutMovingStatus()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       var reviewer = Guid.NewGuid();
       FeedbackActivity entry = item.SetSeverity(DomainSeverity.High, reviewer, At);
       item.Status.ShouldBe(DomainStatus.New);
@@ -114,7 +113,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task SetSeverity_Should_RefuseUnsetAndTheCurrentValue()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       var reviewer = Guid.NewGuid();
       Should.Throw<InvalidOperationException>(() => item.SetSeverity(DomainSeverity.Unset, reviewer, At));
       item.SetSeverity(DomainSeverity.Low, reviewer, At);
@@ -132,7 +131,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task ChangeStatus_Should_RefuseNewAndTheCurrentStatus()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       var admin = Guid.NewGuid();
       Should.Throw<InvalidOperationException>(() => item.ChangeStatus(DomainStatus.New, admin, At));
       item.ChangeStatus(DomainStatus.Planned, admin, At);
@@ -149,7 +148,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task ClosedItem_Should_ReopenToUnderReview()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       var admin = Guid.NewGuid();
       item.ChangeStatus(DomainStatus.Declined, admin, At);
       item.ChangeStatus(DomainStatus.UnderReview, admin, At.AddMinutes(1));
@@ -161,7 +160,7 @@ namespace TimeWarp.Architecture.Features.Feedback
     public static Task Replies_Should_TrimAndOnlyTheOwnerMayFileAFilerReply()
     {
       var owner = Guid.NewGuid();
-      FeedbackItem item = Filed(owner);
+      FeedbackItem item = TriageWorld.Filed(owner, At);
       FeedbackActivity admin = item.AddAdminReply(Guid.NewGuid(), "  Thanks  ", At);
       FeedbackActivity filer = item.AddFilerReply(owner, "More detail", At.AddMinutes(1));
       admin.Body.ShouldBe("Thanks");
@@ -177,7 +176,7 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public static Task InternalNote_Should_BeHiddenFromTheFiler()
     {
-      FeedbackItem item = Filed(Guid.NewGuid());
+      FeedbackItem item = TriageWorld.Filed(Guid.NewGuid(), At);
       FeedbackActivity note = item.AddInternalNote(Guid.NewGuid(), "Duplicate of an older bug", At);
       note.Kind.ShouldBe(DomainActivityKind.InternalNote);
       note.IsVisibleToFiler.ShouldBeFalse();
@@ -211,9 +210,6 @@ namespace TimeWarp.Architecture.Features.Feedback
       FilerReplyContract.MaxBodyLength.ShouldBe(FeedbackItem.MaxMessageLength);
       return Task.CompletedTask;
     }
-
-    internal static FeedbackItem Filed(Guid owner, DomainKind kind = DomainKind.BugReport, DateTimeOffset? filedAt = null) =>
-      FeedbackItem.File(owner, kind, "Export failed", "Nothing came back.", filedAt ?? At);
   }
 
   [TestTag("Authorization")]

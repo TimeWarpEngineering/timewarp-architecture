@@ -47,7 +47,8 @@ namespace TimeWarp.Architecture.Features.AgentChats
 
     private InMemorySiteSettingsStore Settings { get; }
 
-    private static readonly Guid SiteSetter = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    /// <summary>The test user. It also sets the site key.</summary>
+    public static readonly Guid UserA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
     public static async Task<XaiKeyTestHarness> OpenAsync(Guid? principalId, string? hostKey, XaiByokMode mode)
     {
@@ -82,7 +83,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
         SiteXaiApiKeyNames.Name,
         SiteXaiApiKeyNames.Purpose,
         apiKey,
-        SiteSetter,
+        UserA,
         DateTimeOffset.UnixEpoch,
         CancellationToken.None);
 

@@ -269,6 +269,29 @@ namespace TimeWarp.Architecture.Features.Feedback
       (await world.Attachments.CountUnlinkedByOwnerAsync(world.Owner.Value)).ShouldBe(1);
     }
 
+    public static async Task Upload_Should_SucceedWhenAnExpiredBlobCannotBeDeleted()
+    {
+      AttachmentWorld world = new();
+      DateTimeOffset expiredAt = DateTimeOffset.UtcNow - FeedbackAttachmentRules.PendingLifetime - TimeSpan.FromMinutes(1);
+      List<FeedbackAttachment> stale = [];
+      for (int index = 0; index < 2; index++)
+      {
+        var attachment = FeedbackAttachment.Create(world.Owner.Value, $"lost-{index}.txt", FeedbackAttachmentRules.Text, 5, expiredAt);
+        await world.Attachments.AddAsync(attachment);
+        await world.Blobs.PutAsync(attachment.StorageKey, "hello"u8.ToArray(), FeedbackAttachmentRules.Text);
+        stale.Add(attachment);
+      }
+
+      world.UploadBlobs = new UndeletableBlobStore(world.Blobs);
+      Guid freshId = await world.UploadAsync(world.Owner, "fresh.txt", FeedbackAttachmentRules.Text, "hello"u8.ToArray());
+
+      (await world.Attachments.FindAsync(FeedbackAttachmentId.From(freshId))).ShouldNotBeNull();
+      foreach (FeedbackAttachment attachment in stale)
+      {
+        (await world.Attachments.FindAsync(attachment.Id)).ShouldBeNull();
+      }
+    }
+
     public static async Task Remove_Should_Return404ForAnotherPrincipalsPendingAttachment()
     {
       AttachmentWorld world = new();

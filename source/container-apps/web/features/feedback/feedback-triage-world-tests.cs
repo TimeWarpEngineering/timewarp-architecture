@@ -87,10 +87,13 @@ namespace TimeWarp.Architecture.Features.Feedback
 
     public async Task<FeedbackItem> AddAsync(Guid owner, int day, DomainKind kind = DomainKind.BugReport)
     {
-      FeedbackItem item = FeedbackItem.File(owner, kind, "Export failed", "Nothing came back.", Day(day));
+      FeedbackItem item = Filed(owner, Day(day), kind);
       await Feedback.AddAsync(item);
       return item;
     }
+
+    public static FeedbackItem Filed(Guid owner, DateTimeOffset filedAt, DomainKind kind = DomainKind.BugReport) =>
+      FeedbackItem.File(owner, kind, "Export failed", "Nothing came back.", filedAt);
 
     public async Task<FeedbackItem> AddTitledAsync(
       string title,

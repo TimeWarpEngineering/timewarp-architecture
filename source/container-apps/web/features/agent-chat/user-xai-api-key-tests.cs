@@ -35,7 +35,7 @@ namespace TimeWarp.Architecture.Features.AgentChats
     private const string OtherSecret = "xai-user-key-399-bbbb";
     private const string SiteSecret = "xai-site-key-399-ssss";
     private const string HostSecret = "xai-host-key-399-hhhh";
-    private static readonly Guid UserA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static readonly Guid UserA = XaiKeyTestHarness.UserA;
     private static readonly Guid UserB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
     [System.Runtime.CompilerServices.ModuleInitializer]
