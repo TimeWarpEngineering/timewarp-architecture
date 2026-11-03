@@ -57,6 +57,10 @@ Acceptance:
 - 2026-11-04 implementer (claude-opus-5-5, ganda task work): split all four generators; verified
   byte-identical output against a pre-refactor snapshot of `artifacts/generated`.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ee4fc404-c6ee-4073-9f5a-043795227d69, max-turns 500, Done — 2026-11-03T20:41:21Z
+- Review oracle: a reviewer-opencode attempt exited 1 before writing a round. reviewer-claude
+  (claude-opus-5-5, headless) then ran round 1 at effort 3, general roster, with two read-only sonnet
+  helper passes (a2c620598e626ca44, ac3ebd1ecae20eb58). Disposition clean — 2026-11-04
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a5bce985-c5b6-4dab-962e-a10f4dc3398e, max-turns 200, artifacts general.md, merged.md — 2026-11-03T20:54:58Z
 
 ## Results
 
@@ -109,3 +113,20 @@ wc -l source/analyzers/timewarp-architecture-analyzers/generators/*.cs source/fo
 
 Expect: the build has 0 warnings. The `cmp` loop prints no `DIFF` line (279 files compared). Both test runs report `failed: 0`. The golden diff exits 0. No file
 in either generators folder is over 500 lines.
+
+### Review
+
+- Rounds: 1, effort 3, roster general (two read-only helper passes split by generator).
+- Final counts: 0 bug, 0 suggestion, 0 nit. 0 open, 0 fixed, 0 wontfix.
+- Disposition: **clean**. The implementation matches the task and the Goal restatement, with no misread.
+- Independent reruns: `git archive` builds of merge-base and HEAD give identical
+  `artifacts/generated` output for every file these generators emit. The only differences are
+  the generators' own `RegexGenerator.g.cs` class name and Razor `#line` absolute paths.
+  Sourcegenerator tests 155/155 and analyzer tests 259/259 pass on HEAD. The worktree build has
+  0 warnings. `ganda repo audit` passes; its one advisory is `kanban-landed` board state.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
