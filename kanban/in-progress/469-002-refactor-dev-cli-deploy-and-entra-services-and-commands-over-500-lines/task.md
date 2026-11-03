@@ -170,18 +170,6 @@ Paths:
 - Review oracle: review by reviewer-grok (grok, vendor xai, model grok-4.7, response model grok-4.7-build), session 01a1a301-9b53-7202-a6ef-9ef8866d3900, max-turns 200, artifacts none, warning: 1 turn below the floor of 8 — 2026-11-03T20:02:43Z
 - Review oracle: review by reviewer-opencode (opencode, vendor xai, model opencode-go/grok-4.7, response model grok-4.7-build), session 01a1a301-9b53-7202-a6ef-9ef8866d3900, max-turns uncapped (no --max-turns flag; bound 200), artifacts none, warning: 1 turn below the floor of 8 — 2026-11-03T20:04:20Z
 - Review oracle: review by reviewer-opencode (opencode, vendor xai, model opencode-go/grok-4.7, response model grok-4.7-build), session 01a1a301-9b53-7202-a6ef-9ef8866d3900, max-turns uncapped (no --max-turns flag; bound 200), artifacts none, warning: 1 turn below the floor of 8 — 2026-11-03T20:04:20Z
-
-## Blocked
-
-2026-11-03: review verdict refused: Done with no roster findings. Round folder: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/review/round-2. Oracle log: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/oracle-review-20261103t200243681z.log.
-
-## Review
-
-- Round 1: Done
-
-## Session
-
-- Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implement oracle fix pass: implementer-claude (Opus 5.5) 2026-11-04. Replaced the five
   `TemplateSmokeHarness` partial files with six composed types and re-ran the gates above.
 - Fix pass requested (2026-11-04): PR #626 splits `TemplateSmokeHarness` into five `partial`
@@ -190,3 +178,13 @@ Paths:
   Decompose the harness into separate types by responsibility (generation, generated-content
   checks, platform pins, test runs) that the harness composes, each 500 lines or fewer, then
   update tests and re-run the gates.
+- Implement oracle (walk restart): implementer-claude (Opus 5.5) 2026-11-04. Product work already on the branch; re-ran `dotnet build tools/dev-cli/dev.cs` (0 warnings), dev-cli-tests (342 of 342) and `ganda repo audit` (passes, one `kanban-landed` advisory on other ids). No code change. Merged the duplicate `## Session` sections.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 60ec115d-79f4-4b9d-85be-bcc1a043ec78, max-turns 500, Done — 2026-11-03T20:07:33Z
+
+## Blocked
+
+2026-11-03: review verdict refused: Done with no roster findings. Round folder: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/review/round-2. Oracle log: /home/steve/worktrees/github.com/TimeWarpEngineering/timewarp-architecture/task-469-002-refactor-dev-cli-deploy-and-entra-services-and-com/kanban/in-progress/469-002-refactor-dev-cli-deploy-and-entra-services-and-commands-over-500-lines/oracle-review-20261103t200243681z.log.
+
+## Review
+
+- Round 1: Done
