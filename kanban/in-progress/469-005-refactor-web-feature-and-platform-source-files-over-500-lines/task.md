@@ -158,3 +158,4 @@ Expect:
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implement oracle: implementer-claude (Opus 5.5) 2026-11-04. A Sonnet helper did the runfile splits, and I re-ran the gates myself.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0dc876c1-82bc-4009-a193-f264bfa6c516, max-turns 500, Done — 2026-11-03T22:36:15Z
