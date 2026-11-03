@@ -467,15 +467,17 @@ public partial class DeployParameters_Given_
   public static Task KubernetesRequiredParameters_Should_MatchTheAppHostsValuelessParameters()
   {
     string appHostDirectory = AppHostDirectory();
-    string program = File.ReadAllText(Path.Combine(appHostDirectory, "program.cs"));
+    // The AppHost model spans its concern files (program.cs, publish-target.cs, postgres-resources.cs, ...).
+    string program = AppHostSource(appHostDirectory);
+    string publishTarget = File.ReadAllText(Path.Combine(appHostDirectory, "publish-target.cs"));
     Dictionary<string, string> constants = ConstantPattern()
       .Matches(File.ReadAllText(Path.Combine(appHostDirectory, "constants.cs")))
       .ToDictionary(match => match.Groups[1].Value, match => match.Groups[2].Value);
     string[] Valueless(string text) =>
       [.. ValuelessParameterPattern().Matches(text).Select(match => constants[match.Groups[1].Value])];
 
-    int branchStart = program.IndexOf("if (string.Equals(publishTarget, KubernetesPublishTarget", StringComparison.Ordinal);
-    int branchEnd = program.IndexOf("else if (string.Equals(publishTarget, ContainerAppsPublishTarget", StringComparison.Ordinal);
+    int branchStart = publishTarget.IndexOf("if (string.Equals(publishTarget, KubernetesPublishTarget", StringComparison.Ordinal);
+    int branchEnd = publishTarget.IndexOf("else if (string.Equals(publishTarget, ContainerAppsPublishTarget", StringComparison.Ordinal);
     branchStart.ShouldBeGreaterThan(0);
     branchEnd.ShouldBeGreaterThan(branchStart);
 
@@ -485,7 +487,7 @@ public partial class DeployParameters_Given_
     // A value-less parameter in the kubernetes branch is required and forwarded on argv. The aca-neon
     // connection strings are value-less secrets outside that branch. dev deploy copies them into the
     // aspire process environment and does not put them on argv.
-    Valueless(program[branchStart..branchEnd]).ShouldBe(AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
+    Valueless(publishTarget[branchStart..branchEnd]).ShouldBe(AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes), ignoreOrder: true);
     Valueless(program).ShouldBe(
       [.. AspireDeployParameters.RequiredParameters(AspireDeploy.Kubernetes), .. AspireDeploySecrets.SecretParameters(AspireDeploy.ContainerAppsNeon)],
       ignoreOrder: true);
@@ -501,6 +503,12 @@ public partial class DeployParameters_Given_
 
   [System.Text.RegularExpressions.GeneratedRegex(@"AddParameter\(\s*(?!\w+\s*[,)])")]
   private static partial System.Text.RegularExpressions.Regex NonIdentifierParameterPattern();
+
+  private static string AppHostSource(string appHostDirectory) =>
+    string.Concat(
+      Directory.EnumerateFiles(appHostDirectory, "*.cs", SearchOption.TopDirectoryOnly)
+        .Order(StringComparer.Ordinal)
+        .Select(File.ReadAllText));
 
   private static string AppHostDirectory()
   {

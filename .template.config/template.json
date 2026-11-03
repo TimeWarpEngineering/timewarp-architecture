@@ -67,6 +67,8 @@
           "condition": "(!web)",
           "exclude": [
             "source/container-apps/web/**",
+            "source/container-apps/aspire/projects/aspire-app-host/web-server-resource.cs",
+            "source/container-apps/aspire/projects/aspire-app-host/postgres-resources.cs",
             "tests/common/timewarp-testing/applications/web-test-server-application.cs",
             "tests/common/timewarp-testing/applications/agent-scope-approval.cs",
             "tests/common/timewarp-testing-tests/**",
@@ -80,6 +82,7 @@
           "condition": "(!yarp)",
           "exclude": [
             "source/container-apps/yarp/**",
+            "source/container-apps/aspire/projects/aspire-app-host/ingress-resource.cs",
             "tests/common/timewarp-testing/applications/yarp-test-server-application.cs",
             "tests/container-apps/web/web-spa-integration-tests/pipeline/clone-state-behavior-tests.cs",
             "tests/container-apps/yarp/**"
@@ -89,6 +92,7 @@
           "condition": "(!postgres)",
           "exclude": [
             "source/container-apps/web/platform/postgres/**",
+            "source/container-apps/aspire/projects/aspire-app-host/postgres-resources.cs",
             "source/container-apps/web/features/identity/ef-principal-store-infrastructure.cs",
             "source/container-apps/web/features/identity/principal-entity-type-configuration-infrastructure.cs",
             "source/container-apps/web/features/identity/credential-entity-type-configuration-infrastructure.cs",

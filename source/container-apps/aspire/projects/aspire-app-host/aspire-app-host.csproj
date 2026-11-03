@@ -20,7 +20,7 @@
   <!--#if (web) -->
   <PropertyGroup>
     <!-- Task 107: IngressRoutePrefixGenerator emits WebServerApiRoutePrefixes (the /api carve-outs
-         owned by Web.Server) from the web-contracts ApiRoute templates, so program.cs cannot drift
+         owned by Web.Server) from the web-contracts ApiRoute templates, so ingress-resource.cs cannot drift
          from the contracts. Only web-contracts routes participate. -->
     <EnableIngressRouteGeneration>true</EnableIngressRouteGeneration>
     <IngressWebContractAssemblies>web-contracts</IngressWebContractAssemblies>

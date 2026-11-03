@@ -9,8 +9,8 @@
 // 254 the store read seeds on empty too (SeedOnReadSiteSettingsStore), so this boot pass is no
 // longer what makes Settings work — it keeps the first request fast, applies Development
 // ReseedSiteSettings once per boot, and emits the drift warnings at startup.
-// The AppHost has NO wait edge between web-server and web-migrations (AppHost program.cs Design
-// region: WaitFor deadlocks dashboard restarts; WaitForCompletion breaks DCP endpoint wiring,
+// The AppHost has NO wait edge between web-server and web-migrations (AppHost postgres-resources.cs
+// Design region: WaitFor deadlocks dashboard restarts; WaitForCompletion breaks DCP endpoint wiring,
 // re-confirmed on Aspire 13.6 in task 270), so this seed can run before web-migrations finishes —
 // on an empty database (42P01) or after a new migration changed a table it reads (42703, the
 // 2026-10-14 AssistantName incident). Task 363: each attempt asks IPendingMigrationsProbe and

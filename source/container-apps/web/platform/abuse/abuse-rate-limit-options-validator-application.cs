@@ -4,7 +4,7 @@
 
 #region Design
 // Wired through AddFluentValidatedOptions(...).ValidateOnStart() in web-server's
-// Program.ConfigureSettings — misconfiguration crashes at boot rather than silent no-op or
+// WebServerSettings.ConfigureServices — misconfiguration crashes at boot rather than silent no-op or
 // ArgumentOutOfRangeException inside the rate-limiter factory on first request.
 // Public so web-server can pass the type as AddFluentValidatedOptions's generic argument
 // (same accessibility rationale as WebAuthnOptionsValidator).

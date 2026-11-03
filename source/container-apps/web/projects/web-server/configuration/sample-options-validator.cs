@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in Program.ConfigureSettings,
+// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in WebServerSettings.ConfigureServices,
 // so misconfiguration crashes the host at boot instead of failing on first use.
 // Internal visibility is load-bearing: it keeps the validator out of the scoped
 // AddValidatorsFromAssemblyContaining auto-registration used for request validators.

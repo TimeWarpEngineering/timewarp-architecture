@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in web-server ConfigureSettings.
+// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in web-server WebServerSettings.ConfigureServices.
 // Empty and duplicate lists fail here. Each bound value must be a defined SignInMethod. Raw
 // configuration names that do not parse fail here too, so an unknown name cannot sit in the
 // section while the binder leaves the initializer in place. IConfiguration is injected by

@@ -3,7 +3,7 @@
 #endregion
 
 #region Design
-// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in Program.ConfigureSettings,
+// Wired through AddFluentValidatedOptions(...).ValidateOnStart() in WebServerSettings.ConfigureServices,
 // so a bad BaseUrl or image path crashes the host at boot instead of emitting a crawler-hostile card.
 // Internal visibility keeps the validator out of AddValidatorsFromAssemblyContaining (request validators).
 #endregion

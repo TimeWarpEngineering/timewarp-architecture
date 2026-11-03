@@ -859,10 +859,10 @@ public partial class AppHostAgreement_Given_
     committed.ShouldNotBeNull();
     DeployKubernetes.ParsePort(committed, "Parameters:ingress-port").Error.ShouldBeNull();
 
-    // program.cs declares the parameter from configuration (the value appsettings.json commits), never a literal port.
-    string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
+    // The AppHost declares the parameter from configuration (the value appsettings.json commits), never a literal port.
+    string program = AppHostSource(appHost);
     program.ShouldContain("builder.Configuration[$\"Parameters:{IngressPortParameterName}\"]");
-    IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("program.cs passes a literal to AddParameter(IngressPortParameterName, …)");
+    IngressPortLiteralPattern().IsMatch(program).ShouldBeFalse("the AppHost passes a literal to AddParameter(IngressPortParameterName, …)");
     program.ShouldContain("WebAuthnOptions__AllowedRpIds__");
     program.ShouldContain("GetOutput(");
     program.ShouldContain("AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN");
@@ -877,8 +877,8 @@ public partial class AppHostAgreement_Given_
     string repoRoot = Path.GetFullPath(Path.Combine(appHost, "..", "..", "..", "..", ".."));
     string[] folders = DeployStaleScript.FindSourceMigrationFolders(Path.Combine(appHost, "aspire-app-host.csproj"), repoRoot);
 
-    // program.cs: WithMigrationsProject(web-infrastructure) + WithMigrationOutputDirectory("../../platform/postgres/migrations").
-    string program = File.ReadAllText(Path.Combine(appHost, "program.cs"));
+    // postgres-resources.cs: WithMigrationsProject(web-infrastructure) + WithMigrationOutputDirectory("../../platform/postgres/migrations").
+    string program = AppHostSource(appHost);
     program.ShouldContain(".WithMigrationOutputDirectory(\"../../platform/postgres/migrations\")");
     folders.ShouldBe([Path.GetFullPath(Path.Combine(appHost, "..", "..", "..", "web", DeployStaleScript.SourceMigrationsSubpath))]);
     DeployStaleScript.ParseSourceMigrationIds(Directory.EnumerateFiles(folders[0])).ShouldNotBeEmpty();
@@ -890,6 +890,13 @@ public partial class AppHostAgreement_Given_
 
   [System.Text.RegularExpressions.GeneratedRegex(@"const\s+string\s+(\w+)\s*=\s*""([^""]*)""")]
   private static partial System.Text.RegularExpressions.Regex ConstantPattern();
+
+  // The AppHost model spans its concern files (program.cs, ingress-resource.cs, postgres-resources.cs, ...).
+  private static string AppHostSource(string appHostDirectory) =>
+    string.Concat(
+      Directory.EnumerateFiles(appHostDirectory, "*.cs", SearchOption.TopDirectoryOnly)
+        .Order(StringComparer.Ordinal)
+        .Select(File.ReadAllText));
 
   private static string AppHostDirectory()
   {
