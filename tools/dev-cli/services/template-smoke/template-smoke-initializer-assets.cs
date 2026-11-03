@@ -12,8 +12,18 @@
 
 namespace DevCli.Services;
 
-internal sealed partial class TemplateSmokeHarness
+/// <summary>
+/// Host-free check that a generated SPA initializer's static <c>_content</c> imports exist in the NuGet cache.
+/// </summary>
+internal sealed partial class TemplateSmokeInitializerAssets
 {
+  private readonly ITerminal Terminal;
+
+  public TemplateSmokeInitializerAssets(ITerminal terminal)
+  {
+    Terminal = terminal;
+  }
+
   [GeneratedRegex(@"^import\s+.+?\s+from\s+""([^""]+)""", RegexOptions.Multiline | RegexOptions.CultureInvariant)]
   private static partial Regex ImportFromSpecifier();
 

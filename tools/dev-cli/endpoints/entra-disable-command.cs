@@ -42,8 +42,8 @@ internal sealed class EntraDisableCommand : EntraGroup, ICommand<Unit>
         return Unit.Value;
       }
 
-      Dictionary<string, string> secrets = EntraSetup.ParseUserSecretsList(listed.Stdout);
-      IReadOnlyList<string> methodKeys = EntraSetup.Microsoft365MethodKeysToRemove(secrets);
+      Dictionary<string, string> secrets = EntraUserSecrets.ParseUserSecretsList(listed.Stdout);
+      IReadOnlyList<string> methodKeys = EntraUserSecrets.Microsoft365MethodKeysToRemove(secrets);
       foreach (string methodKey in methodKeys)
       {
         CommandOutput removed = await Cli

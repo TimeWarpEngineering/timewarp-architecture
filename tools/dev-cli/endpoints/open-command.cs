@@ -20,15 +20,15 @@
 //     ingress-port parameter resolved like dev deploy's parameters. No forwarding: the ingress
 //     publishes the host port itself.
 // Neither target has a hard-coded port: with no --port and no ingress-port anywhere the verb refuses
-// (DeployOperate.NoIngressPortMessage) instead of guessing a shared default such as 8080.
+// (DeployKubernetes.NoIngressPortMessage) instead of guessing a shared default such as 8080.
 //   - aca: https://<fqdn> of the ingress container app from `az containerapp show … --query
 //     properties.configuration.ingress.fqdn`, in the preflight's subscription and the resource group
 //     from --resource-group, Azure__ResourceGroup or the AppHost user secret Azure:ResourceGroup.
 //   - aca-neon uses that same ingress FQDN. It does not open the Neon console.
 // Browser: DeployBrowser.OpenAsync, shared with `dev deploy`. Candidates come from
-// DeployOperate.BrowserLaunchers (WSL: wslview, then explorer.exe, then xdg-open). --no-browser,
+// DeployBrowserChoice.BrowserLaunchers (WSL: wslview, then explorer.exe, then xdg-open). --no-browser,
 // a non-interactive terminal, or no launcher on PATH prints the URL and is not a failure.
-// Pure decisions live in services/deploy-operate.cs (dev-cli-tests).
+// Pure decisions live in services/deploy/ (DeployOperate and its siblings; dev-cli-tests).
 #endregion
 
 namespace DevCli.Commands;
@@ -101,7 +101,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       ResolvedDeployParameter? parameter = string.IsNullOrWhiteSpace(command.Port)
         ? await AspireDeployPreflight.ResolveParameterAsync(preflight.AppHostProject, DeployOperate.IngressPortParameter, ct)
         : null;
-      (int? port, string portDetail) = DeployOperate.ChooseForwardPort(command.Port, parameter, preflight.AppHostProject);
+      (int? port, string portDetail) = DeployKubernetes.ChooseForwardPort(command.Port, parameter, preflight.AppHostProject);
       if (port is null)
       {
         Fail(portDetail);
@@ -111,25 +111,25 @@ internal sealed class OpenCommand : ICommand<Unit>
       Terminal.WriteLine($"Ingress port: {port} ({portDetail})");
 
       string context = preflight.KubectlContext!;
-      string controllerNamespace = string.IsNullOrWhiteSpace(command.ControllerNamespace) ? DeployOperate.IngressControllerNamespace : command.ControllerNamespace.Trim();
-      string controllerService = string.IsNullOrWhiteSpace(command.ControllerService) ? DeployOperate.IngressControllerService : command.ControllerService.Trim();
+      string controllerNamespace = string.IsNullOrWhiteSpace(command.ControllerNamespace) ? DeployKubernetes.IngressControllerNamespace : command.ControllerNamespace.Trim();
+      string controllerService = string.IsNullOrWhiteSpace(command.ControllerService) ? DeployKubernetes.IngressControllerService : command.ControllerService.Trim();
 
       CommandOutput? service = await AspireDeployPreflight.ProbeAsync(
-        "kubectl", DeployOperate.BuildControllerServiceArguments(context, controllerNamespace, controllerService), ct);
+        "kubectl", DeployKubernetes.BuildControllerServiceArguments(context, controllerNamespace, controllerService), ct);
       if (service is not { Success: true })
       {
         string reason = service switch
         {
           null => "kubectl is not on PATH",
-          { TimedOut: true } => $"timed out after {AspireDeploy.ProbeTimeout.TotalSeconds:0}s",
-          _ => AspireDeploy.FirstLine(service.Stderr, $"exit {service.ExitCode}"),
+          { TimedOut: true } => $"timed out after {AspireDeployCluster.ProbeTimeout.TotalSeconds:0}s",
+          _ => AspireDeployCluster.FirstLine(service.Stderr, $"exit {service.ExitCode}"),
         };
-        Fail(DeployOperate.ControllerServiceMissingMessage(context, controllerNamespace, controllerService, reason));
+        Fail(DeployKubernetes.ControllerServiceMissingMessage(context, controllerNamespace, controllerService, reason));
         return;
       }
 
-      OpenPlan plan = DeployOperate.DecideKubernetesOpen(
-        DeployOperate.ParseLoadBalancerAddress(service.Stdout), controllerNamespace, controllerService, port.Value);
+      OpenPlan plan = DeployKubernetes.DecideKubernetesOpen(
+        DeployKubernetes.ParseLoadBalancerAddress(service.Stdout), controllerNamespace, controllerService, port.Value);
       Terminal.WriteLine(plan.Detail);
       if (!plan.PortForward)
       {
@@ -139,11 +139,11 @@ internal sealed class OpenCommand : ICommand<Unit>
 
       if (!IsPortFree(port.Value))
       {
-        Fail(DeployOperate.PortInUseMessage(port.Value));
+        Fail(DeployKubernetes.PortInUseMessage(port.Value));
         return;
       }
 
-      string[] forwardArguments = DeployOperate.BuildPortForwardArguments(context, controllerNamespace, controllerService, port.Value);
+      string[] forwardArguments = DeployKubernetes.BuildPortForwardArguments(context, controllerNamespace, controllerService, port.Value);
       Terminal.WriteLine($"kubectl {string.Join(' ', forwardArguments)}");
       Task<CommandOutput> forward = Shell.Builder("kubectl")
         .WithArguments(forwardArguments)
@@ -156,7 +156,7 @@ internal sealed class OpenCommand : ICommand<Unit>
       }
       else if (!forward.IsCompleted && !ct.IsCancellationRequested)
       {
-        Terminal.WriteLine(DeployOperate.ForwardNotReadyMessage(plan.Url, ListenerTimeoutSeconds).Yellow());
+        Terminal.WriteLine(DeployKubernetes.ForwardNotReadyMessage(plan.Url, ListenerTimeoutSeconds).Yellow());
       }
 
       CommandOutput result;
@@ -178,25 +178,25 @@ internal sealed class OpenCommand : ICommand<Unit>
 
     private async Task OpenComposeAsync(OpenCommand command, DeployPreflight preflight, CancellationToken ct)
     {
-      if (!string.IsNullOrWhiteSpace(command.Port) && DeployOperate.ParsePort(command.Port, "--port").Error is { } portError)
+      if (!string.IsNullOrWhiteSpace(command.Port) && DeployKubernetes.ParsePort(command.Port, "--port").Error is { } portError)
       {
         Fail(portError);
         return;
       }
 
       string envFile = Path.Combine(preflight.RepoRoot, DeployOperate.PublishedOutputDirectory(preflight.Target), ".env");
-      string? envValue = File.Exists(envFile) ? DeployOperate.ParseEnvValue(await File.ReadAllTextAsync(envFile, ct), DeployOperate.IngressPortVariable) : null;
+      string? envValue = File.Exists(envFile) ? DeployCompose.ParseEnvValue(await File.ReadAllTextAsync(envFile, ct), DeployOperate.IngressPortVariable) : null;
       ResolvedDeployParameter? parameter = envValue is null && string.IsNullOrWhiteSpace(command.Port)
         ? await AspireDeployPreflight.ResolveParameterAsync(preflight.AppHostProject, DeployOperate.IngressPortParameter, ct)
         : null;
-      (string? port, string? source) = DeployOperate.ChooseComposePort(command.Port, envValue, parameter);
+      (string? port, string? source) = DeployCompose.ChooseComposePort(command.Port, envValue, parameter);
       if (port is null)
       {
-        Fail(DeployOperate.NoIngressPortMessage(preflight.AppHostProject));
+        Fail(DeployKubernetes.NoIngressPortMessage(preflight.AppHostProject));
         return;
       }
 
-      if (DeployOperate.ParsePort(port, source!).Error is { } sourceError)
+      if (DeployKubernetes.ParsePort(port, source!).Error is { } sourceError)
       {
         Fail(sourceError);
         return;
@@ -208,25 +208,25 @@ internal sealed class OpenCommand : ICommand<Unit>
 
     private async Task OpenContainerAppsAsync(OpenCommand command, DeployPreflight preflight, CancellationToken ct)
     {
-      ResourceGroupChoice resourceGroup = DeployOperate.ChooseResourceGroup(
+      ResourceGroupChoice resourceGroup = DeployAca.ChooseResourceGroup(
         command.ResourceGroup,
-        Environment.GetEnvironmentVariable(AspireDeploy.AzureResourceGroupVariable),
-        string.IsNullOrWhiteSpace(command.ResourceGroup) && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AspireDeploy.AzureResourceGroupVariable))
-          ? await AspireDeployPreflight.ReadUserSecretAsync(preflight.AppHostProject, DeployOperate.AzureResourceGroupConfigurationKey, ct)
+        Environment.GetEnvironmentVariable(AspireDeployAzure.AzureResourceGroupVariable),
+        string.IsNullOrWhiteSpace(command.ResourceGroup) && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(AspireDeployAzure.AzureResourceGroupVariable))
+          ? await AspireDeployPreflight.ReadUserSecretAsync(preflight.AppHostProject, DeployAca.AzureResourceGroupConfigurationKey, ct)
           : null);
       if (resourceGroup.Name is null)
       {
-        Fail(DeployOperate.NoResourceGroupMessage("dev open", preflight.AppHostProject));
+        Fail(DeployAca.NoResourceGroupMessage("dev open", preflight.AppHostProject));
         return;
       }
 
       Terminal.WriteLine(resourceGroup.Detail);
-      string[] arguments = DeployOperate.BuildIngressFqdnArguments(resourceGroup.Name, preflight.AzureSubscriptionId!);
+      string[] arguments = DeployAca.BuildIngressFqdnArguments(resourceGroup.Name, preflight.AzureSubscriptionId!);
       CommandOutput? show = await AspireDeployPreflight.ProbeAsync("az", arguments, ct);
-      string? fqdn = DeployOperate.ParseSingleValue(show?.Success == true, show?.Stdout ?? "");
+      string? fqdn = DeployAca.ParseSingleValue(show?.Success == true, show?.Stdout ?? "");
       if (fqdn is null)
       {
-        string reason = show?.TimedOut == true ? AspireDeploy.ProbeTimedOutMessage("az", arguments) : AspireDeploy.FirstLine(show?.Stderr ?? "", "no FQDN returned");
+        string reason = show?.TimedOut == true ? AspireDeployCluster.ProbeTimedOutMessage("az", arguments) : AspireDeployCluster.FirstLine(show?.Stderr ?? "", "no FQDN returned");
         Fail($"Could not read the {DeployOperate.IngressResourceName} container app's FQDN (`az {string.Join(' ', arguments)}`: {reason}). Is the app deployed to {resourceGroup.Name}?");
         return;
       }

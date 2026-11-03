@@ -480,7 +480,7 @@ and the ACR Basic cost exception) is [azure-container-apps-neon.md](references/a
 - `tools/dev-cli/endpoints/deploy-command.cs` / `deprovision-command.cs` — `dev deploy` /
   `dev deprovision`; their Design regions record the preflight and the `aspire destroy` hand-off.
 - `tools/dev-cli/endpoints/deploy-migrate-command.cs` / `open-command.cs` — `dev deploy migrate` /
-  `dev open`; `services/deploy-browser.cs` is the opener both verbs use; `services/deploy-operate.cs` records that a missing migrations artifact is published
+  `dev open`; `services/deploy-browser.cs` is the opener both verbs use; `services/deploy/deploy-operate.cs` records that a missing migrations artifact is published
   (files only) and then applied, how the Compose project is found, and the firewall-rule cleanup.
 - aspire-tests `compose-publish-tests` / `kubernetes-publish-tests` / `aca-publish-tests` — the
   production-safety suites. `aca-neon-publish-tests` guards the Neon target.
