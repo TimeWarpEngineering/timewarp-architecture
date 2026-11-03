@@ -55,6 +55,11 @@ Single large class:
 - Jaribu and Shouldly only. Shared fixtures follow tw-jaribu and the host-lane conventions.
 - A file split by scenario gets a name that says which scenario it holds.
 
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9
+- Round 1 fix pass: M1–M9 fixed (dispositions in `review/round-1/merged.md`); round 2 pending
+
 ## Notes
 
 This child is the largest by file count and may be worked in several PRs, one test project
@@ -66,7 +71,9 @@ Every test `.cs` file listed below ends at 500 lines or fewer, with no test or a
 Multi-type files become one top-level type per file. Large single-class files are split by
 scenario into files whose names say which scenario they hold. Shared arrange code moves into one
 fixture per suite instead of being copied. Namespaces, test names, host lifetimes (C-create /
-C-share), `#if flag` regions and Purpose regions are kept. Acceptance: no tracked test `.cs` over
+C-share), `#if flag` regions and Purpose regions are kept. Shared fixtures follow tw-jaribu and the
+host-lane rules: a split class still owns its own C-create host (SetupOnce / CleanUpOnce), helpers
+take the host as a parameter, and no host is shared across classes through statics. Acceptance: no tracked test `.cs` over
 500 lines; per-project test-method and Shouldly counts at or above baseline; `dev build` 0/0;
 fast, integration and playwright groups green; `ganda repo audit` passes.
 
@@ -86,6 +93,10 @@ fast, integration and playwright groups green; `ganda repo audit` passes.
 
 - Implement (2026-11-04): all 35 listed files split in one PR (seven helper agents, one per test project, then a verify pass).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session 7834b05d-fdfa-41ef-ae9b-b70f76a89a95, max-turns 500, Done — 2026-11-03T23:29:45Z
+- Review oracle round 1 (2026-11-04): reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), session 7ac650f1-9923-409a-ad64-528e17cfcca2. Effort 3, roster general (three read-only area helpers), turn cap 200. 9 findings open; fix pass requested.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 7ac650f1-9923-409a-ad64-528e17cfcca2, max-turns 200, artifacts general.md, merged.md — 2026-11-03T23:43:50Z
+- Fix pass round 1 (2026-11-04): implementer-claude fixed M1–M9, re-ran build, fast, integration and
+  playwright, and ran audit (all green). Committed on the task branch.
 
 ## Results
 
@@ -120,20 +131,22 @@ How each group was split:
 - **web-spa-playwright-tests:** ask-sign-in became three scenario classes (reprobe,
   rename-navigate, search-focus) plus `AskSignInTestFixture`. Feedback-attachment became the form
   class and an admin class plus a fixture. ask-surface and drawer each hold one test, so their
-  assert helpers moved into `*-asserts.cs` classes. Sign-in screenshots now go to
-  `playwright-screenshots/AskSignInReprobe_Given_Wasm/`.
+  assert helpers moved into `*-asserts.cs` classes. Each split class writes screenshots to
+  its own `playwright-screenshots/<class>/` folder (round-1 fix pass, M2).
 - **web-server-integration-tests:** split into scenario classes plus fixtures. Admin-feedback,
   protected-page-deep-link and principals-authorization share one host through the new
   `HostGraphLease` (`features/identity/infrastructure/host-graph-lease.cs`). The first class to
-  acquire it builds the host and the last to release it disposes the host.
+  acquire it builds the host and the last to release it disposes the host. *(Replaced in the round-1
+  fix pass, see below: each class owns its own C-create host.)*
 - **analyzer and sourcegenerator tests:** scenario classes plus an `internal static` fixture each.
   The sourcegenerator files gained Purpose regions (boy-scout: the originals had none).
 - **aspire-tests:** `AcaPublish_Given_` and `KubernetesPublish_Given_` stay single classes split
   into partial files (`*-secrets-tests.cs`, `aca-publish-bicep-parsing.cs`,
   `kubernetes-publish-chart-parsing.cs`). That keeps one publish per run and the class names that
   `dev publish aca|kubernetes` filter on. `CombinedFilter_Should_SelectExactlyThePublishSafetySuites`
-  scans source for `class X`, so it now applies `.Distinct()`: a partial class declared in several
-  files is still one class. The exact-set assertion is unchanged.
+  scans source for `class X`, so it now collapses a repeated name only when every declaration is
+  `partial`: a partial class declared in several files is still one class, and a second non-partial
+  class with the same name still fails the exact-set assertion (round-1 fix pass, M3).
 - Comments that named the old file names in `source/` and sibling tests were updated.
 
 Gates (all foreground, this worktree):
@@ -146,6 +159,35 @@ Gates (all foreground, this worktree):
   tasks (070-001, 104-024..026, 123, 141, 198, 244, 454) have no worktree. Those are not this
   task's claims, so they are not fixed here.
 
+Round-1 fix pass (2026-11-04), M1–M9:
+
+- **M1:** `HostGraphLease` is deleted. admin-feedback-authorization, principals-authorization and
+  protected-page-deep-link each split into two classes, and each class owns a `static HostGraph?`.
+  SetupOnce stores `<Fixture>.CreateHostAsync()`, and CleanUpOnce disposes it and sets it to null
+  (C-create). Fixture helpers that touch the host take `WebTestServerApplication web`.
+- **M2:** the Playwright fixtures expose `ScreenshotPath<TTest>`, and the helpers that take
+  screenshots are generic on `TTest`. `Session.StartAsync<TTest>()` keeps the owning class's path.
+  Each class has its own private `ScreenshotPath`.
+- **M3:** see the aspire-tests bullet above.
+- **M4–M6:** Purpose and Design regions are trimmed to each half's own tests. The shared Entra
+  challenge design moved to `EntraChallengeFixture`. Stale class names in comments now name the
+  current classes, and the truncated "Layout" fragment is gone.
+- **M7:** the parameter is renamed to `httpClient`.
+- **M8:** the unused `Store` field in `Challenge_Rejection_Given_` is removed.
+- **M9:** the class is renamed to `Should_Enforce_Policy_Agreement_Edge_Cases`.
+- Shouldly calls are unchanged. The only Shouldly lines in the diff are the two
+  `Client`→`httpClient` renames.
+- Fix-pass gates, run in the foreground in this worktree:
+  - `./bin/dev build`: succeeded (also caught an unused `using`, IDE0005, which is fixed).
+  - fast: 14 of 14 projects passed.
+  - integration: 8 of 8 projects passed (web-server-integration-tests 435 passed, plus 1
+    pre-existing `[Skip]`).
+  - playwright: 33 of 33 passed. The run wrote the new
+    `AskSignInRenameNavigate_Given_Wasm/` and `FeedbackAttachmentAdmin_Given_Wasm/` folders.
+  - `ganda repo audit`: passes. It shows the same advisory kanban-landed warning about other
+    tasks' claims.
+  - The line-count loop prints nothing.
+
 ### How to validate
 
 Smoke:
@@ -155,5 +197,29 @@ for f in $(git ls-files 'tests/**/*.cs'); do n=$(wc -l < $f); [ $n -gt 500 ] && 
 ./bin/dev build && ./bin/dev test --no-build
 ```
 
-Expect: the loop prints nothing. The build succeeds with 0 warnings, and every fast, integration
+Expect: the loop prints nothing, and `git grep HostGraphLease -- tests` finds nothing. The build succeeds with 0 warnings, and every fast, integration
 and playwright project passes, with dev-cli-tests at 342 and web-spa-playwright-tests at 33 tests.
+
+### Review
+
+- Round 1 (2026-11-04), effort 3, roster general. 1 bug, 3 suggestions, 5 nits, all open. No
+  disposition yet. A fix pass is requested for M1–M9.
+- The reviewer re-ran the gates in this worktree:
+  - `dev build`: 0 warnings, 0 errors.
+  - fast: 14 of 14 projects passed.
+  - integration: 8 of 8 projects passed.
+  - playwright: 33 of 33 passed.
+- A body-by-body method comparison against master found no test lost or edited. Shouldly calls are
+  2993 before and 2993 after.
+- M1 (bug): the new `HostGraphLease` shares a host across classes through a process-static field,
+  which the host-lane rule forbids. The split classes should go back to per-class C-create hosts.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
+## Learnings
+
+- Misread in the Goal restatement, found in review round 1 (2026-11-04). The task's requirement
+  "Shared fixtures follow tw-jaribu and the host-lane conventions" did not make it into the
+  restatement, which says only "host lifetimes (C-create / C-share) are kept". Without that rule,
+  the implementation added a process-static, ref-counted `HostGraphLease` that the host-lane rule
+  forbids (M1). A split that only needs shared arrange helpers keeps per-class C-create hosts and
+  passes the host to the helpers. why: review oracle round 1, task 469-006, 2026-11-04
