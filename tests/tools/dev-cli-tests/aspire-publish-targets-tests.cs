@@ -44,6 +44,8 @@ public partial class SafetySuiteTestArguments_Given_
       .. Directory.EnumerateFiles(suiteDirectory, "*.cs", SearchOption.AllDirectories)
         .SelectMany(file => ClassDeclaration().Matches(File.ReadAllText(file)).Select(match => match.Groups["name"].Value))
         .Where(name => name.Contains(AspirePublishTargets.SafetySuiteClassSuffix, StringComparison.OrdinalIgnoreCase))
+        // A suite split across partial files declares its class once per file; it is still one class.
+        .Distinct(StringComparer.Ordinal)
         .Order(StringComparer.Ordinal),
     ];
 

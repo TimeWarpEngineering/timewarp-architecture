@@ -13,7 +13,7 @@
 // credential; AddPasskey adds more) so tests never share credential counts. The in-proc host starts with
 // Entra off; the Microsoft 365 "offered" cases turn it on in-proc for the one test
 // (SignInOptions lists Microsoft365 + SiteSettings.ReplacePolicy) and restore it afterwards — the
-// toggle-and-restore pattern of protected-page-deep-link-tests.cs.
+// toggle-and-restore pattern of the protected-page-deep-link tests.
 // The stale-Revoke case is the "flags are guidance, the endpoint is the rule" pin: a client holding a
 // snapshot where both rows said CanRevoke revokes one, then the other, and the server answers 409.
 #endregion
@@ -206,7 +206,7 @@ public class GetCredentialsAvailability_Returns_
     return (principalId, client);
   }
 
-  // Store-level insert, same shape as protected-page-deep-link-tests.cs: linking needs a real Entra
+  // Store-level insert, same shape as the protected-page-deep-link tests: linking needs a real Entra
   // round trip, but the link rule only needs an active EntraAccount row.
   private static async Task AddEntraAccountAsync(PrincipalId principalId)
   {

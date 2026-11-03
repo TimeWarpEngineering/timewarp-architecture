@@ -60,16 +60,99 @@ Single large class:
 This child is the largest by file count and may be worked in several PRs, one test project
 at a time, under this same task id.
 
+## Goal (implementer restatement)
+
+Every test `.cs` file listed below ends at 500 lines or fewer, with no test or assertion lost.
+Multi-type files become one top-level type per file. Large single-class files are split by
+scenario into files whose names say which scenario they hold. Shared arrange code moves into one
+fixture per suite instead of being copied. Namespaces, test names, host lifetimes (C-create /
+C-share), `#if flag` regions and Purpose regions are kept. Acceptance: no tracked test `.cs` over
+500 lines; per-project test-method and Shouldly counts at or above baseline; `dev build` 0/0;
+fast, integration and playwright groups green; `ganda repo audit` passes.
+
 ## Checklist
 
-- [ ] Multi-type files split one class per file
-- [ ] web-spa-integration-tests split by scenario
-- [ ] web-spa-playwright-tests split by scenario
-- [ ] web-server-integration-tests split by scenario
-- [ ] analyzer and sourcegenerator tests split by scenario
-- [ ] dev-cli, aspire, and timewarp-testing tests split
-- [ ] All test suites green
+- [x] Multi-type files split one class per file
+- [x] web-spa-integration-tests split by scenario
+- [x] web-spa-playwright-tests split by scenario
+- [x] web-server-integration-tests split by scenario
+- [x] analyzer and sourcegenerator tests split by scenario
+- [x] dev-cli, aspire, and timewarp-testing tests split
+- [x] All test suites green
 
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+
+- Implement (2026-11-04): all 35 listed files split in one PR (seven helper agents, one per test project, then a verify pass).
+
+## Results
+
+All 35 files are split. No tracked test `.cs` is over 500 lines; the largest new file is
+450 lines. The only `.cs` files still over 500 are EF migration snapshots and a `kanban/done`
+research script, which are not tests and are outside this task.
+
+Counts from a static scan (test methods / Shouldly asserts, baseline then after):
+
+| Project | Baseline | After |
+|---|---|---|
+| web-spa-integration-tests | 621 / 3044 | 621 / 3044 |
+| web-spa-playwright-tests | 49 / 395 | 49 / 395 |
+| web-server-integration-tests | 582 / 1674 | 610 / 1674 (the +28 are fixture helper methods, not tests) |
+| analyzers-tests | 350 / 36 | 350 / 36 |
+| sourcegenerator-tests | 156 / 594 | 156 / 594 |
+| dev-cli-tests | 343 / 993 | 343 / 993 |
+| aspire-tests | 93 / 269 | 93 / 269 |
+| timewarp-testing | 45 / 151 | 45 / 151 |
+| web-contracts-tests | 49 / 165 | 49 / 164 (the "missing" one was the text `Should.Never` inside a Design comment) |
+
+How each group was split:
+
+- **Multi-type files:** one type per file. The 19 identity contract classes are now
+  `features/identity/<type>-should.cs`. The 13 abstract principal-store contract classes moved to
+  `tests/common/timewarp-testing/principal-store-contract-tests/`, plus `i-principal-store-factory.cs`.
+  dev-cli is now `aspire-deploy-<type>-given-tests.cs` and `deploy-operate-<type>-given-tests.cs`.
+  Entra challenge became three scenario classes, a fixture, and the two fakes.
+- **web-spa-integration-tests:** split into `partial` files by scenario plus a `*-test-fixture.cs`.
+  These classes share static host fields and nested doubles, and `CatalogAgent_Should` was already
+  partial, so class names, registrations and lifetimes are unchanged.
+- **web-spa-playwright-tests:** ask-sign-in became three scenario classes (reprobe,
+  rename-navigate, search-focus) plus `AskSignInTestFixture`. Feedback-attachment became the form
+  class and an admin class plus a fixture. ask-surface and drawer each hold one test, so their
+  assert helpers moved into `*-asserts.cs` classes. Sign-in screenshots now go to
+  `playwright-screenshots/AskSignInReprobe_Given_Wasm/`.
+- **web-server-integration-tests:** split into scenario classes plus fixtures. Admin-feedback,
+  protected-page-deep-link and principals-authorization share one host through the new
+  `HostGraphLease` (`features/identity/infrastructure/host-graph-lease.cs`). The first class to
+  acquire it builds the host and the last to release it disposes the host.
+- **analyzer and sourcegenerator tests:** scenario classes plus an `internal static` fixture each.
+  The sourcegenerator files gained Purpose regions (boy-scout: the originals had none).
+- **aspire-tests:** `AcaPublish_Given_` and `KubernetesPublish_Given_` stay single classes split
+  into partial files (`*-secrets-tests.cs`, `aca-publish-bicep-parsing.cs`,
+  `kubernetes-publish-chart-parsing.cs`). That keeps one publish per run and the class names that
+  `dev publish aca|kubernetes` filter on. `CombinedFilter_Should_SelectExactlyThePublishSafetySuites`
+  scans source for `class X`, so it now applies `.Distinct()`: a partial class declared in several
+  files is still one class. The exact-set assertion is unchanged.
+- Comments that named the old file names in `source/` and sibling tests were updated.
+
+Gates (all foreground, this worktree):
+
+- `./bin/dev build`: succeeded (Release, warnings are errors).
+- `./bin/dev test -g fast --no-build`: 14 of 14 projects passed (dev-cli-tests 342/342).
+- `./bin/dev test -g integration --no-build`: 8 of 8 projects passed.
+- `./bin/dev test -g playwright --no-build`: 1 of 1 project passed (33/33).
+- `ganda repo audit`: passes. One advisory kanban-landed warning remains: live claims on other
+  tasks (070-001, 104-024..026, 123, 141, 198, 244, 454) have no worktree. Those are not this
+  task's claims, so they are not fixed here.
+
+### How to validate
+
+Smoke:
+
+```bash
+for f in $(git ls-files 'tests/**/*.cs'); do n=$(wc -l < $f); [ $n -gt 500 ] && echo "$n $f"; done
+./bin/dev build && ./bin/dev test --no-build
+```
+
+Expect: the loop prints nothing. The build succeeds with 0 warnings, and every fast, integration
+and playwright project passes, with dev-cli-tests at 342 and web-spa-playwright-tests at 33 tests.
