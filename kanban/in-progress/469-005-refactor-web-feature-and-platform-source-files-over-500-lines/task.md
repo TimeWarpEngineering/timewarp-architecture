@@ -193,6 +193,15 @@ totals as before. `ganda repo audit` exited 0 (only the `kanban-landed` advisory
 The web-server integration tests were not run again, because the only changes outside the
 runfiles are comments.
 
+Round 2 (effort 2, general reviewer) reviewed the fix delta `a91c4721f..b5027d0be` and confirmed
+that M1 to M4 are fixed. It found nothing new. The reviewer re-ran the changed runfiles
+standalone (attachment 14 and 8, triage 14, xAI key 12, all passed), the web-jaribu-tests
+aggregator (458 of 458 passed), and the over-500 line check (no file over).
+
+**Review disposition: clean.** 2 rounds. Final counts: bug 0, suggestion 1 fixed, nit 3 fixed,
+0 open, 0 wontfix. Paths: `review/review-framework.md`, `review/round-2/merged.md` (the last
+ledger), `review/round-2/general.md`, and `review/disposition.md`.
+
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
@@ -204,7 +213,10 @@ runfiles are comments.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session aa3f52e1-8412-4cc0-99cc-c643d5d105a3, max-turns 200, artifacts general.md, merged.md — 2026-11-03T22:45:16Z
 - Fix pass (implement-fix-2 oracle): implementer-claude (claude-opus-5-5), headless
   `ganda task work`. Fixed M1 to M4 and re-ran the gates — 2026-11-04
+- Review oracle round 2: reviewer-claude (claude-opus-5-5), headless `ganda task work`, effort 2,
+  roster general, turn cap 120. Result: disposition clean, 0 open — 2026-11-04
 
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4
+- Round 2: Done
