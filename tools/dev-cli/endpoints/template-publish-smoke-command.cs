@@ -9,7 +9,7 @@
 // restore+build against nuget.org ONLY (app-local NuGet.config with <clear/>).
 //
 // Shared rewrite asserts, props SSOT suffix derivation, pin matching, monorepo namespace pre-scan,
-// and generate/restore/build skeleton live in TemplateSmokeHarness (task 131-003 / F-007). This
+// and generate/restore/build skeleton live in the types TemplateSmokeHarness composes (task 131-003 / F-007). This
 // command owns publish-only orchestration: flatcontainer wait, registration-index install retry,
 // pin self-check, nuget.org-only config, git init for Build.Tasks metadata.
 //
@@ -133,7 +133,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
       Terminal.WriteLine($"Work root: {SmokeRoot}\n");
 
       // Same monorepo pre-scan as template-smoke — before network wait so local failures fail fast.
-      if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return Unit.Value;
+      if (!Harness.Pins.AssertNoUnsafePlatformNamespaceLiterals()) return Unit.Value;
 
       PrepareArtifactDirs();
 
@@ -411,7 +411,7 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
     }
 
     private Task<bool> SmokeOneAsync(string name, string[] extraArgs) =>
-      Harness.SmokeOneAsync(
+      Harness.Generation.SmokeOneAsync(
         name,
         WorkDir,
         extraArgs,
@@ -419,10 +419,10 @@ internal sealed class TemplatePublishSmokeCommand : ICommand<Unit>
         Ct,
         afterGenerateAsync: async outputDir =>
         {
-          if (!Harness.AssertPlatformPinsEqualVersion(outputDir, Version))
+          if (!Harness.Pins.AssertPlatformPinsEqualVersion(outputDir, Version))
             return false;
 
-          if (!Harness.AssertSkillsShipped(outputDir))
+          if (!Harness.Content.AssertSkillsShipped(outputDir))
             return false;
 
           WriteNugetOrgOnlyConfig(outputDir);

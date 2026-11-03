@@ -1,5 +1,5 @@
 #region Purpose
-// TemplateSmokeHarness partial: asserts on shipped content of a generated app (skills, kanban, deploy parameters, ingress port).
+// Template smoke: asserts on shipped content of a generated app (skills, kanban, deploy parameters, ingress port).
 #endregion
 #region Design
 // AssertSkillsShipped: generated apps must contain the nine skills/*/SKILL.md files and must not
@@ -7,7 +7,7 @@
 // Task 318: AssertKanbanSkeletonShipped - generated apps get the empty board skeleton (five column
 // .gitkeep files, overview.md, task-template.md) and nothing else under kanban/.
 // Task 288: AssertDeployParametersUseAppKebabName is the loud failure for an invalid kebab name.
-// GenerateAsync (generation partial) is the generate-only half used for names that only need that
+// TemplateSmokeGeneration.GenerateAsync is the generate-only half used for names that only need that
 // cheap assert (template-smoke's Contoso.Shop).
 // Task 311: ReadGeneratedIngressPort - the ingressPort port-generator symbol rewrites the committed
 // Parameters:ingress-port. The range and the monorepo value it replaces are read from
@@ -21,8 +21,20 @@ namespace DevCli.Services;
 using System.Text.Json;
 using static DevCli.Services.TemplateSmokeAppHostParameters;
 
-internal sealed partial class TemplateSmokeHarness
+/// <summary>
+/// Asserts on the shipped content of a generated app: skills, kanban skeleton, deploy parameters, ingress port.
+/// </summary>
+internal sealed class TemplateSmokeGeneratedContent
 {
+  private readonly ITerminal Terminal;
+  private readonly string RepoRoot;
+
+  public TemplateSmokeGeneratedContent(ITerminal terminal, string repoRoot)
+  {
+    Terminal = terminal;
+    RepoRoot = repoRoot;
+  }
+
   /// <summary>
   /// Generated apps must receive repo skills (packaged from skills/**) and must not receive
   /// any analysis/ directory under skills/ (excluded from the template pack).

@@ -22,15 +22,15 @@ internal sealed class TemplateSmokePackaging
   private readonly string RepoRoot;
   private readonly string PackagesDir;
   private readonly string WorkDir;
-  private readonly TemplateSmokeHarness Harness;
+  private readonly TemplateSmokeArchitectureSuffixes Suffixes;
 
-  public TemplateSmokePackaging(ITerminal terminal, string repoRoot, string packagesDir, string workDir, TemplateSmokeHarness harness)
+  public TemplateSmokePackaging(ITerminal terminal, string repoRoot, string packagesDir, string workDir, TemplateSmokeArchitectureSuffixes suffixes)
   {
     Terminal = terminal;
     RepoRoot = repoRoot;
     PackagesDir = packagesDir;
     WorkDir = workDir;
-    Harness = harness;
+    Suffixes = suffixes;
   }
 
   public async Task<bool> PackPlatformPackagesAsync(CancellationToken ct)
@@ -118,13 +118,13 @@ internal sealed class TemplateSmokePackaging
   public async Task<bool> InstallTemplateAsync(CancellationToken ct)
   {
     // Nupkg exclude fragments (e.g. .Analyzers.) derived from props SSOT — not hand lists.
-    if (!Harness.TryEnsureArchitectureSuffixes(out _))
+    if (!Suffixes.TryEnsure(out _))
       return false;
 
     string? nupkg = Directory
       .GetFiles(PackagesDir, $"{TemplatePackageId}.*.nupkg")
       .Where(p => !p.EndsWith(".snupkg", StringComparison.OrdinalIgnoreCase)
-               && !Harness.IsExcludedPlatformNupkgFileName(Path.GetFileName(p)))
+               && !Suffixes.IsExcludedPlatformNupkgFileName(Path.GetFileName(p)))
       .OrderByDescending(p => p, StringComparer.Ordinal)
       .FirstOrDefault();
 

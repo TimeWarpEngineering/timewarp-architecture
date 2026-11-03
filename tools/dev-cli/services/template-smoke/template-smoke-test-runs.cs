@@ -1,5 +1,5 @@
 #region Purpose
-// TemplateSmokeHarness partial: co-located test, Jaribu aggregator and generated test-suite assertions.
+// Template smoke: co-located test, Jaribu aggregator and generated test-suite assertions.
 #endregion
 #region Design
 // Task 135: AssertCoLocatedTestFilesSurviveGeneration (tier 1, cheap) + AssertCoLocatedTestFilesRunAsync
@@ -24,8 +24,20 @@ namespace DevCli.Services;
 
 using static DevCli.Services.TemplateSmokeTestTables;
 
-internal sealed partial class TemplateSmokeHarness
+/// <summary>
+/// Runs and gates the generated app's co-located tests, Jaribu aggregators and test suites.
+/// </summary>
+internal sealed class TemplateSmokeTestRuns
 {
+  private readonly ITerminal Terminal;
+  private readonly string RepoRoot;
+
+  public TemplateSmokeTestRuns(ITerminal terminal, string repoRoot)
+  {
+    Terminal = terminal;
+    RepoRoot = repoRoot;
+  }
+
   /// <summary>
   /// Tier 1 (cheap): asserts every co-located test file that shipped into the generated app
   /// still contains the JARIBU_MULTI guard lines verbatim. Run right after generation, before

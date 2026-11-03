@@ -4,7 +4,7 @@
 #region Design
 // Post-generate: no vendored platform trees; removed *Packages symbols gone; belt-and-suspenders scan
 // for rewritten {appName}.(Analyzers|Generators|Attributes|TypedIds) including .cs. Suffixes come from
-// the harness props SSOT derivation.
+// TemplateSmokeArchitectureSuffixes (props SSOT derivation).
 // Task 145-009 / 373: Production cannot activate mock auth via config alone, and the fail-closed
 // registration helper must still exist in the generated SPA tree. The web family's mock-auth surfaces
 // exist only with web on, so the runner skips the mock-auth assert for a web-off entry.
@@ -20,12 +20,12 @@ using static DevCli.Services.TemplateSmokeMatrix;
 internal sealed partial class TemplateSmokeGeneratedAppChecks
 {
   private readonly ITerminal Terminal;
-  private readonly TemplateSmokeHarness Harness;
+  private readonly TemplateSmokePlatformPins Pins;
 
-  public TemplateSmokeGeneratedAppChecks(ITerminal terminal, TemplateSmokeHarness harness)
+  public TemplateSmokeGeneratedAppChecks(ITerminal terminal, TemplateSmokePlatformPins pins)
   {
     Terminal = terminal;
-    Harness = harness;
+    Pins = pins;
   }
 
   [GeneratedRegex(@"""UseMock""\s*:\s*true", RegexOptions.IgnoreCase)]
@@ -50,7 +50,7 @@ internal sealed partial class TemplateSmokeGeneratedAppChecks
   /// <summary>
   /// Post-generate: no vendored platform trees; removed *Packages symbols gone; belt-and-suspenders
   /// scan for rewritten {appName}.(Analyzers|Generators|Attributes|TypedIds) including .cs.
-  /// Suffixes come from harness props SSOT derivation.
+  /// Suffixes come from TemplateSmokeArchitectureSuffixes (props SSOT derivation).
   /// </summary>
   public bool AssertGeneratedAppPackageMode(string appName, string outputDir)
   {
@@ -74,7 +74,7 @@ internal sealed partial class TemplateSmokeGeneratedAppChecks
       }
     }
 
-    failures.AddRange(Harness.CollectRewrittenPlatformTokenHits(appName, outputDir));
+    failures.AddRange(Pins.CollectRewrittenPlatformTokenHits(appName, outputDir));
 
     if (failures.Count > 0)
     {

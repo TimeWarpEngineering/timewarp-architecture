@@ -4,7 +4,7 @@
 #region Design
 // Thin Nuru route: options plus a Handler that delegates to TemplateSmokeRunner (services/template-smoke/).
 // The variant matrix lives in TemplateSmokeMatrix, pack/install in TemplateSmokePackaging, and shared
-// asserts in TemplateSmokeHarness; each carries the rationale for the behavior it owns.
+// asserts in the types TemplateSmokeHarness composes; each carries the rationale for the behavior it owns.
 #endregion
 
 namespace DevCli.Commands;

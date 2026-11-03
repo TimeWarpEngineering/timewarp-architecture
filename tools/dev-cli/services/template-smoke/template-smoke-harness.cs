@@ -1,77 +1,42 @@
 #region Purpose
-// Shared template smoke/publish-smoke harness core: repo state and platform suffix derivation.
+// Shared template smoke/publish-smoke harness: composes the smoke helpers over one repo root.
 #endregion
 #region Design
 // Task 131-003 / F-007: collapse duplication between template-smoke and template-publish-smoke.
-// The harness is partial by responsibility: -platform-pins (rewrite and namespace-literal asserts),
-// -generated-content (skills, kanban, deploy parameters, ingress port), -test-runs (co-located tests,
-// Jaribu aggregators, generated suites), -generation (generate + SmokeOneAsync + environment), and
-// template-smoke-initializer-assets (host-free import-graph check). Suffixes are derived once from
-// the props SSOT and cached; a derivation failure sets ExitCode and fails closed.
+// Task 469-002: each responsibility is its own type, built once here so they share the suffix cache:
+// TemplateSmokeArchitectureSuffixes (props SSOT derivation), TemplateSmokePlatformPins (rewrite and
+// namespace-literal asserts), TemplateSmokeGeneratedContent (skills, kanban, deploy parameters,
+// ingress port), TemplateSmokeTestRuns (co-located tests, Jaribu aggregators, generated suites),
+// TemplateSmokeGeneration (generate + SmokeOneAsync + environment), and
+// TemplateSmokeInitializerAssets (host-free import-graph check).
 #endregion
 
 namespace DevCli.Services;
 
 /// <summary>
-/// Shared assert helpers + generate/restore/build skeleton for template smoke gates.
+/// Composition root for the template smoke gates' shared helpers.
 /// </summary>
-internal sealed partial class TemplateSmokeHarness
+internal sealed class TemplateSmokeHarness
 {
-  private readonly ITerminal Terminal;
-  private readonly string RepoRoot;
-  private IReadOnlyList<string>? ArchitectureSuffixes;
-
   public TemplateSmokeHarness(ITerminal terminal, string repoRoot)
   {
-    Terminal = terminal;
-    RepoRoot = repoRoot;
+    Suffixes = new TemplateSmokeArchitectureSuffixes(terminal, repoRoot);
+    Pins = new TemplateSmokePlatformPins(terminal, repoRoot, Suffixes);
+    Content = new TemplateSmokeGeneratedContent(terminal, repoRoot);
+    TestRuns = new TemplateSmokeTestRuns(terminal, repoRoot);
+    Generation = new TemplateSmokeGeneration(terminal, repoRoot, Pins);
+    InitializerAssets = new TemplateSmokeInitializerAssets(terminal);
   }
 
-  /// <summary>
-  /// Ensures suffixes are derived and cached. Fail-closed (ExitCode + error line) on props drift.
-  /// </summary>
-  public bool TryEnsureArchitectureSuffixes(out IReadOnlyList<string> suffixes)
-  {
-    if (ArchitectureSuffixes is not null)
-    {
-      suffixes = ArchitectureSuffixes;
-      return true;
-    }
+  public TemplateSmokeArchitectureSuffixes Suffixes { get; }
 
-    if (!PlatformPackagePropsSsot.TryDeriveArchitectureSuffixes(RepoRoot, out suffixes, out string? error))
-    {
-      Terminal.WriteErrorLine((error ?? "Failed to derive architecture suffixes from props SSOT.").Red());
-      Environment.ExitCode = 1;
-      suffixes = [];
-      return false;
-    }
+  public TemplateSmokePlatformPins Pins { get; }
 
-    ArchitectureSuffixes = suffixes;
-    return true;
-  }
+  public TemplateSmokeGeneratedContent Content { get; }
 
-  public IReadOnlyList<string> GetForbiddenRewrittenFragments()
-  {
-    if (!TryEnsureArchitectureSuffixes(out IReadOnlyList<string> suffixes))
-      return [];
-    return PlatformPackagePropsSsot.ToForbiddenRewrittenFragments(suffixes);
-  }
+  public TemplateSmokeTestRuns TestRuns { get; }
 
-  public IReadOnlyList<string> GetNupkgExcludeFragments()
-  {
-    if (!TryEnsureArchitectureSuffixes(out IReadOnlyList<string> suffixes))
-      return [];
-    return PlatformPackagePropsSsot.ToNupkgExcludeFragments(suffixes);
-  }
+  public TemplateSmokeGeneration Generation { get; }
 
-  /// <summary>
-  /// True when the nupkg file name is a platform sibling of the template package
-  /// (e.g. TimeWarp.Architecture.Analyzers.*.nupkg).
-  /// </summary>
-  public bool IsExcludedPlatformNupkgFileName(string fileName)
-  {
-    IReadOnlyList<string> fragments = GetNupkgExcludeFragments();
-    return fragments.Any(fragment =>
-      fileName.Contains(fragment, StringComparison.Ordinal));
-  }
+  public TemplateSmokeInitializerAssets InitializerAssets { get; }
 }

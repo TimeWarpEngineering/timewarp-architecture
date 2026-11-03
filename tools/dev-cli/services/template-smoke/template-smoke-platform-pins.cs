@@ -1,5 +1,5 @@
 #region Purpose
-// TemplateSmokeHarness partial: platform CPM pin rewrite/equality and sourceName rewrite asserts.
+// Template smoke: platform CPM pin rewrite/equality and sourceName rewrite asserts.
 #endregion
 #region Design
 // Task 115 / 131-003: template sourceName is TimeWarp.Architecture, so package-id literals
@@ -12,8 +12,22 @@ namespace DevCli.Services;
 
 using static DevCli.Services.SourceNameLiteralScanSets;
 
-internal sealed partial class TemplateSmokeHarness
+/// <summary>
+/// Platform CPM pin rewrite and equality, plus sourceName rewrite scans of monorepo and generated content.
+/// </summary>
+internal sealed class TemplateSmokePlatformPins
 {
+  private readonly ITerminal Terminal;
+  private readonly string RepoRoot;
+  private readonly TemplateSmokeArchitectureSuffixes Suffixes;
+
+  public TemplateSmokePlatformPins(ITerminal terminal, string repoRoot, TemplateSmokeArchitectureSuffixes suffixes)
+  {
+    Terminal = terminal;
+    RepoRoot = repoRoot;
+    Suffixes = suffixes;
+  }
+
   /// <summary>
   /// Rewrites platform PackageVersion pins in generated Directory.Packages.props to
   /// <paramref name="targetVersion"/>. Hard-fails if zero platform pins matched.
@@ -85,7 +99,7 @@ internal sealed partial class TemplateSmokeHarness
   {
     Terminal.WriteLine("Scanning monorepo template-shipped content for unsafe platform namespace literals...");
 
-    if (!TryEnsureArchitectureSuffixes(out IReadOnlyList<string> suffixes))
+    if (!Suffixes.TryEnsure(out IReadOnlyList<string> suffixes))
       return false;
 
     Terminal.WriteLine(
@@ -163,7 +177,7 @@ internal sealed partial class TemplateSmokeHarness
   /// </summary>
   public bool AssertPackageIdsNotRewritten(string appName, string outputDir)
   {
-    IReadOnlyList<string> fragments = GetForbiddenRewrittenFragments();
+    IReadOnlyList<string> fragments = Suffixes.GetForbiddenRewrittenFragments();
     if (fragments.Count == 0)
       return false;
 
@@ -222,7 +236,7 @@ internal sealed partial class TemplateSmokeHarness
   /// </summary>
   public List<string> CollectRewrittenPlatformTokenHits(string appName, string root)
   {
-    IReadOnlyList<string> fragments = GetForbiddenRewrittenFragments();
+    IReadOnlyList<string> fragments = Suffixes.GetForbiddenRewrittenFragments();
     if (fragments.Count == 0)
       return ["(suffix derivation failed)"];
 

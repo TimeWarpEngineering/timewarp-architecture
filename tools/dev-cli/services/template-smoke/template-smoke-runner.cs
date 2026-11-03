@@ -5,7 +5,7 @@
 // Smoke-only orchestration: platform namespace-literal scan, pack platform packages + template at
 // 2.0.0-smoke, local feed NuGet.config, CPM pin rewrite, and package-mode checks (no vendored trees /
 // removed symbols). Shared rewrite asserts and the generate/restore/build skeleton live in
-// TemplateSmokeHarness (task 131-003 / F-007).
+// the types TemplateSmokeHarness composes (task 131-003 / F-007).
 // Task 135: SmokeOneAsync runs co-located-Jaribu tiers per matrix entry - tier 1
 // (AssertCoLocatedTestFilesSurviveGeneration, inside afterGenerateAsync, before restore/build) and
 // tier 2 (AssertCoLocatedTestFilesRunAsync, after the solution build succeeds). Both are necessary:
@@ -71,12 +71,12 @@ internal sealed class TemplateSmokeRunner
     PackagesDir = Path.Combine(SmokeRoot, "packages");
     WorkDir = Path.Combine(SmokeRoot, "work");
     Harness = new TemplateSmokeHarness(Terminal, RepoRoot);
-    Packaging = new TemplateSmokePackaging(Terminal, RepoRoot, PackagesDir, WorkDir, Harness);
-    Checks = new TemplateSmokeGeneratedAppChecks(Terminal, Harness);
+    Packaging = new TemplateSmokePackaging(Terminal, RepoRoot, PackagesDir, WorkDir, Harness.Suffixes);
+    Checks = new TemplateSmokeGeneratedAppChecks(Terminal, Harness.Pins);
 
     Terminal.WriteLine($"\nTemplate smoke — work root: {SmokeRoot}\n".Cyan());
 
-    if (!Harness.AssertNoUnsafePlatformNamespaceLiterals()) return;
+    if (!Harness.Pins.AssertNoUnsafePlatformNamespaceLiterals()) return;
     if (!Packaging.AssertRemovedPackageSymbolsGoneFromTemplateConfig()) return;
     if (!await Packaging.PackPlatformPackagesAsync(Ct)) return;
     if (!await Packaging.PackTemplateAsync(Ct)) return;
@@ -129,9 +129,9 @@ internal sealed class TemplateSmokeRunner
 
   private async Task<bool> AssertDottedNameKebabsAsync()
   {
-    string? outputDir = await Harness.GenerateAsync(DottedSmokeName, WorkDir, [], TemplateShortName, Ct);
+    string? outputDir = await Harness.Generation.GenerateAsync(DottedSmokeName, WorkDir, [], TemplateShortName, Ct);
     if (outputDir is not null
-      && Harness.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName)
+      && Harness.Content.AssertDeployParametersUseAppKebabName(outputDir, DottedSmokeKebabName)
       && RecordIngressPort(outputDir))
     {
       return true;
@@ -144,7 +144,7 @@ internal sealed class TemplateSmokeRunner
 
   private bool RecordIngressPort(string outputDir)
   {
-    if (Harness.ReadGeneratedIngressPort(outputDir) is not { } port)
+    if (Harness.Content.ReadGeneratedIngressPort(outputDir) is not { } port)
       return false;
 
     IngressPorts.Add(port);
@@ -178,7 +178,7 @@ internal sealed class TemplateSmokeRunner
   {
     string? outputDirForTier2 = null;
 
-    bool buildOk = await Harness.SmokeOneAsync(
+    bool buildOk = await Harness.Generation.SmokeOneAsync(
       name,
       WorkDir,
       extraArgs,
@@ -191,14 +191,14 @@ internal sealed class TemplateSmokeRunner
         if (!Checks.AssertGeneratedAppPackageMode(name, outputDir))
           return Task.FromResult(false);
 
-        if (!Harness.AssertSkillsShipped(outputDir))
+        if (!Harness.Content.AssertSkillsShipped(outputDir))
           return Task.FromResult(false);
 
-        if (!Harness.AssertKanbanSkeletonShipped(outputDir))
+        if (!Harness.Content.AssertKanbanSkeletonShipped(outputDir))
           return Task.FromResult(false);
 
         // Task 288: matrix names carry no separators, so the kebab name is the lower-cased name.
-        if (!Harness.AssertDeployParametersUseAppKebabName(outputDir, name.ToLowerInvariant()))
+        if (!Harness.Content.AssertDeployParametersUseAppKebabName(outputDir, name.ToLowerInvariant()))
           return Task.FromResult(false);
 
         // Task 311: the ingressPort port generator gave this app its own ingress-port.
@@ -212,10 +212,10 @@ internal sealed class TemplateSmokeRunner
 
         // Tier 1 (cheap): the JARIBU_MULTI guard must survive dotnet-new generation verbatim —
         // check right after generate, before spending time on restore/build (task 135).
-        if (!Harness.AssertCoLocatedTestFilesSurviveGeneration(outputDir, excludedFamilies))
+        if (!Harness.TestRuns.AssertCoLocatedTestFilesSurviveGeneration(outputDir, excludedFamilies))
           return Task.FromResult(false);
 
-        if (!Harness.RewriteCpmPins(outputDir, SmokePackageVersion))
+        if (!Harness.Pins.RewriteCpmPins(outputDir, SmokePackageVersion))
           return Task.FromResult(false);
 
         Packaging.WriteLocalNuGetConfig(outputDir);
@@ -231,7 +231,7 @@ internal sealed class TemplateSmokeRunner
 
     // Task 240: generated SPA initializer `_content` specifiers must exist in the NuGet cache
     // (State.Plus kebab-case rename). Host-free; the HTTP graph smoke lives in web-server tests.
-    if (!Harness.AssertInitializerImportGraphResolves(outputDirForTier2))
+    if (!Harness.InitializerAssets.AssertInitializerImportGraphResolves(outputDirForTier2))
       return false;
 
     // Tier 2 (authoritative): `dotnet run` each generated co-located test standalone and
@@ -239,17 +239,17 @@ internal sealed class TemplateSmokeRunner
     // build succeeds — the co-located files compile into no layer project, so the solution
     // build itself is structurally blind to them; this is the only step that runs them standalone.
 
-    if (!await Harness.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, excludedFamilies, Ct))
+    if (!await Harness.TestRuns.AssertCoLocatedTestFilesRunAsync(outputDirForTier2, excludedFamilies, Ct))
       return false;
 
     // Tier 3 (task 136): family JARIBU_MULTI aggregators — multi-mode compile + MTP bare
     // `dotnet test` from each project dir. Not in .slnx. TIMEWARP_TEST_PORT_BASE isolates
     // generated-app hosts from monorepo `dev test` (task 245). Flag-off entries assert
     // excluded families' aggregators are absent (review R2-1).
-    if (!await Harness.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct))
+    if (!await Harness.TestRuns.AssertJaribuFamilyAggregatorsAsync(outputDirForTier2, excludedFamilies, Ct))
       return false;
 
     // Task 375: opt-in generated-app test projects (nightly CI).
-    return !AppTests || await Harness.AssertGeneratedAppTestSuitesAsync(outputDirForTier2, Ct);
+    return !AppTests || await Harness.TestRuns.AssertGeneratedAppTestSuitesAsync(outputDirForTier2, Ct);
   }
 }

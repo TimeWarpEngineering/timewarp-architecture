@@ -1,5 +1,5 @@
 #region Purpose
-// TemplateSmokeHarness partial: dotnet new generation, SmokeOneAsync orchestration and process environment.
+// Template smoke: dotnet new generation, SmokeOneAsync orchestration and process environment.
 #endregion
 #region Design
 // SmokeOneAsync is the shared generate -> package-id assert -> callback -> restore -> build path;
@@ -10,8 +10,22 @@
 
 namespace DevCli.Services;
 
-internal sealed partial class TemplateSmokeHarness
+/// <summary>
+/// Generates a smoke app with dotnet new, then restores and builds it.
+/// </summary>
+internal sealed class TemplateSmokeGeneration
 {
+  private readonly ITerminal Terminal;
+  private readonly string RepoRoot;
+  private readonly TemplateSmokePlatformPins Pins;
+
+  public TemplateSmokeGeneration(ITerminal terminal, string repoRoot, TemplateSmokePlatformPins pins)
+  {
+    Terminal = terminal;
+    RepoRoot = repoRoot;
+    Pins = pins;
+  }
+
   /// <summary>
   /// Generate only (no restore/build): `dotnet new` into <paramref name="workDir"/>/<paramref name="name"/>. Returns the output
   /// directory, or null after printing the failure.
@@ -79,7 +93,7 @@ internal sealed partial class TemplateSmokeHarness
     if (outputDir is null)
       return false;
 
-    if (!AssertPackageIdsNotRewritten(name, outputDir))
+    if (!Pins.AssertPackageIdsNotRewritten(name, outputDir))
       return false;
 
     if (afterGenerateAsync is not null && !await afterGenerateAsync(outputDir))
