@@ -30,6 +30,27 @@ Exempt by the check, not refactored: PostgresDbContextModelSnapshot.cs and
 - Split runfiles keep the C-create / C-share lane conventions from
   skills/tw-feature-placement/references/co-located-jaribu-runfiles.md.
 
+## Goal (implementer restatement)
+
+Bring the six over-limit non-test and co-located-runfile files under source/container-apps/web to
+500 lines or fewer without changing behavior.
+
+Acceptance criteria:
+
+- `XaiChatUpstream` is decomposed by responsibility: the per-key chat client cache, the
+  deterministic fake client, and the relay-to-Microsoft.Extensions.AI mapping each become their
+  own named type in their own kebab file, with Purpose and Design regions. One top-level type per
+  file. No `partial` to get under the limit.
+- `EntraTicketProcessor` keeps its public surface (ProcessAsync, CompleteBootstrapCreateAsync,
+  AttachEntraToPrincipalAsync, ModeLink/ModeBootstrap, DI registration unchanged) and hands the
+  link/attach path and the sign-in stamp to extracted types, each with its own Design notes.
+- The four co-located Jaribu runfiles are split by scenario into several runfiles, each 500 lines
+  or fewer, each still runnable alone with `dotnet run <file>.cs` and still compiled by the
+  `web-jaribu-tests` JARIBU_MULTI aggregator with no duplicate type names. Shared test helpers
+  are written once (no copy per file). C-create / C-share lane rules are kept.
+- `dev build` is 0 warnings, the web-server integration tests and the web-jaribu-tests
+  aggregator pass, and `ganda repo audit` is clean.
+
 ## Checklist
 
 - [ ] Decompose xai-chat-upstream-server by responsibility
