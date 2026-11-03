@@ -100,8 +100,8 @@ Gates run in this worktree:
 - `dev build`: passed.
 - `dev lint-skills`: passed, 9 skills.
 - `ganda repo audit`: passes. Its one advisory is `kanban-landed` live claims on other task ids.
-- `dev template-smoke`: started, but it had not finished when this walk had to answer. PR CI runs the
-  default smoke, so it is still pending.
+- `dev template-smoke` (default variant): passed with exit 0. Its checks passed: platform pins, unsafe
+  namespace literals, package ID rewrite and package mode, and the co-located standalone tests.
 
 ### How to validate
 
