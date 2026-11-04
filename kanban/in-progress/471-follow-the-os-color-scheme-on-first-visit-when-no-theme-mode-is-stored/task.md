@@ -69,6 +69,11 @@ Acceptance:
 - 2026-11-04 implementer (ganda task work): seed script decides the initial mode; tests and gates
   in ## Results.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 0c486098-fef5-428b-8802-4163a806cce7, max-turns 500, Done — 2026-11-04T14:47:52Z
+- Review oracle round 1: claude-opus-5-5 (tw-implementation-review, effort 2, general reviewer),
+  2026-11-04. Result: fix pass needed for M1.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 452439f1-3eb0-43a1-bc28-b5b3b030581c, max-turns 120, artifacts general.md, merged.md — 2026-11-04T14:52:32Z
+- 2026-11-04 implementer fix pass (round 2 brief = round-1 merged.md): M1 fixed in the two
+  skills; `dev lint-skills` and `ganda repo audit` run.
 
 ## Results
 
@@ -106,6 +111,19 @@ Acceptance:
 - Not in scope, seen in the first-paint shot: before Fluent starts, the outcome-bar dismiss icons
   are dark on dark. They are the same with a stored dark mode today (task 465 behavior).
 
+### Review
+
+- Round 1 (effort 2, general reviewer only): 0 bug, 1 suggestion open, 0 nit. M1 is
+  `skills/tw-blazor-css-strategy/SKILL.md` rules 8 and 9, which still describe `data-theme="light"`
+  and a Fluent-only dark attribute. A fix pass is needed. No disposition yet.
+- Reviewer re-ran `DarkTheme_Given_Shell` 4/4 and `BrandOptions_Should_` 7/7 (both pass).
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Fix pass for round 2 (2026-11-04): M1 fixed. `skills/tw-blazor-css-strategy/SKILL.md` rules 8
+  and 9 describe the new first-paint contract (`data-theme="system"` on the server render,
+  `BrandThemeScript` first in `<body>` sets the stored mode, else the OS preference, and never
+  stores a mode). `skills/tw-blazor-layout/SKILL.md` step 1 names the script. `dev lint-skills`
+  9/9 pass. Skills-only change, so no build or Playwright rerun.
+
 ### How to validate
 
 Smoke:
@@ -122,6 +140,11 @@ Expect: 4 tests pass. `bin/Release/net11.0/playwright-screenshots/DarkTheme_Give
 Manual: set the OS (or browser DevTools "Emulate CSS prefers-color-scheme") to dark, clear site data,
 and open the app: the first paint is dark with no light flash. Click the half-moon button: light,
 and a reload stays light on the dark OS. Clear site data again: it follows the OS once more.
+
+## Review
+
+- Round 1: Blocked — open M1
+- Round 2 fix pass: M1 fixed (skills rules 8 and 9); awaiting review round 2
 
 ## Notes
 
