@@ -170,7 +170,7 @@ Acceptance:
 - `ganda repo audit`: passes. Two advisory warnings remain: other tasks' claims with no worktree,
   and EF-generated designer/snapshot files over the 500-line cap (generated, and TWA0038 exempts them).
 - `dev lint-skills`: 9/9 passed.
-- `dev template-smoke --matrix`: SMOKE_RESULT_PLACEHOLDER
+- `dev template-smoke --matrix`: succeeded. All 7 variants generated and built (Contoso.Shop, SmokeDefault, SmokeNoPostgres, SmokeNoApi, SmokeNoWeb, SmokeNoGrpc, SmokeNoYarp), and the generated Jaribu suites passed.
 - **Version:** `dev check-version` reports source `2.0.0-beta.32` against latest NuGet
   `2.0.0-beta.31`. beta.32 is unreleased, so this change ships in it. The `<Version>` and platform
   pins are already beta.32. A second bump would skip a version, so I did not make one.
