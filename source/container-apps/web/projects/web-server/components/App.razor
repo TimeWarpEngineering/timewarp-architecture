@@ -62,8 +62,15 @@
 </head>
 @* Task 290: Fluent's beforeStart initializer builds the brand theme from these attributes, so
    Fluent components use the seed from the first script tick, not the default blue. The seed is
-   BrandOptions.SeedColor. data-theme="light" keeps light mode until a stored mode says otherwise. *@
-<body data-theme-color="@Brand.NormalizedSeedColor" data-theme="light">
+   BrandOptions.SeedColor. Task 471: data-theme="system" is Fluent's follow-the-OS value and is
+   what a page without script keeps (light tokens). BrandThemeScript replaces it with the stored
+   mode, else the OS preference, before any body content paints (its Design region). *@
+<body data-theme-color="@Brand.NormalizedSeedColor" data-theme="system">
+@* First child of body: sets the initial light or dark mode before the shell paints, and writes the
+   seed and ExactRamp before blazor.web.js so Fluent's initializer sees them. Never stores a mode. *@
+<script>
+@((MarkupString)BrandThemeScript.Render(Brand))
+</script>
 @* Page-load navigate: parser-blocking classic script before Routes and blazor.web.js. *@
 <WebMcpPageLoad />
 <Routes @rendermode=RenderMode />
@@ -89,10 +96,6 @@
     }
     return path + location.search + location.hash;
   };
-</script>
-@* Before blazor.web.js so Fluent's initializer sees the seed and ExactRamp. Mode is left alone. *@
-<script>
-@((MarkupString)BrandThemeScript.Render(Brand))
 </script>
 <script src="_framework/blazor.web.js"></script>
 </body>

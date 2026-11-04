@@ -7,8 +7,9 @@
 // the effective mode (the stored mode, else the OS preference), stores the new mode under
 // fluentui-blazor:theme-settings, and sets or removes body[data-theme="dark"]. tokens.css keys
 // the dark --twe-* values on that attribute, so the shell and Fluent change together. On reload
-// BrandThemeScript merges the seed onto the stored settings and keeps the mode, so the choice
-// survives. This store keeps no copy of the mode. The handler does not dispatch another action.
+// BrandThemeScript merges the seed onto the stored settings, keeps the mode, and sets the body
+// attribute from it before first paint, so the choice survives and wins over the OS preference.
+// This store keeps no copy of the mode. The handler does not dispatch another action.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Applications;

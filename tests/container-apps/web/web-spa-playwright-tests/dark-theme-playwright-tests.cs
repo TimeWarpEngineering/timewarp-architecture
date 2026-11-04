@@ -1,14 +1,16 @@
 #region Purpose
 // Browser proof for task 465: in dark mode every shell surface and page is dark, and the top-bar
 // theme button switches Fluent's mode, remembers it, and switches back to the unchanged light shell.
+// Task 471: a first visit on a dark OS paints dark before Blazor starts, and a stored light mode
+// on a dark OS stays light.
 #endregion
 
 #region Design
 // One in-process host with prerender on and InteractiveWebAssembly and the fake chat upstream,
 // the same graph the shell-nav and Ask suites use.
 // Fluent marks dark mode with body[data-theme="dark"], and tokens.css keys its dark overrides on
-// that attribute. On first load Fluent takes the stored mode, or App.razor's data-theme="light"
-// when none is stored. The walk test stores mode dark (what the theme button leaves) in an init
+// that attribute. On first load BrandThemeScript sets it from the stored mode, else the OS
+// preference, and Fluent keeps that answer. The walk test stores mode dark (what the theme button leaves) in an init
 // script, signs in with a new passkey, and adds the Developer role so the demo and developer
 // pages render. Then it opens every PageRegistry entry and shoots each page to test output
 // (PlaywrightScreenshot). The Ask panel is opened from the top bar and shot too. The checks are
@@ -22,6 +24,12 @@
 // light context and checks those. The button dispatches ApplicationState.ToggleTheme. A reload
 // keeps dark, because Fluent stores the mode, and a second click returns to the same light
 // values. With light stored, an OS switch to dark leaves the page light.
+// First paint (task 471) is the page with blazor.web.js aborted, so neither Fluent nor Blazor runs
+// and only BrandThemeScript can have set the attribute. A fresh context has empty storage. The OS
+// test emulates colorScheme dark, checks the attribute and the dark app bar (--twe-paper, #303030)
+// on that page, then loads normally and checks every dark surface once interactive. Storage must
+// still hold no mode, and an OS switch to light turns the page light (Fluent's system listener).
+// The stored-light test runs the same two loads on a dark OS and expects the light shell both times.
 // Focus rings and focused-field borders read --twe-focus-ring. Each page check resolves that
 // token and --twe-paper on a probe element and requires the 3:1 non-text contrast of WCAG 1.4.11.
 #endregion
@@ -94,6 +102,14 @@ public class DarkTheme_Given_Shell
   // The stored choice the theme button leaves behind. BrandThemeScript merges onto it and keeps mode.
   private const string StoreDarkScript =
     "localStorage.setItem('fluentui-blazor:theme-settings', JSON.stringify({ mode: 'dark' }));";
+
+  private const string DarkPaper = "rgb(48, 48, 48)";
+
+  private const string StoreLightScript =
+    "localStorage.setItem('fluentui-blazor:theme-settings', JSON.stringify({ mode: 'light' }));";
+
+  private const string StoredModeScript =
+    "() => { const raw = localStorage.getItem('fluentui-blazor:theme-settings'); return raw ? (JSON.parse(raw).mode ?? null) : null; }";
 
   [System.Runtime.CompilerServices.ModuleInitializer]
   internal static void Register() => RegisterTests<DarkTheme_Given_Shell>();
@@ -170,6 +186,70 @@ public class DarkTheme_Given_Shell
     await AssertLightAsync(page);
     _ = graph;
   }
+
+  public static async Task FirstVisit_On_DarkOs_Should_Paint_Dark_Without_Storing_A_Mode()
+  {
+    await using HostGraph graph = await CreateHostAsync();
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+    await using IBrowserContext context = await NewContextAsync(browser, ColorScheme.Dark);
+
+    IPage firstPaint = await FirstPaintPageAsync(context);
+    await firstPaint.ScreenshotAsync(new PageScreenshotOptions { Path = PlaywrightScreenshot.PathFor<DarkTheme_Given_Shell>("os-dark-first-paint.png") });
+    (await firstPaint.EvaluateAsync<string?>("() => document.body.getAttribute('data-theme')")).ShouldBe("dark");
+    (await AppBarBackgroundAsync(firstPaint)).ShouldBe(DarkPaper);
+    (await firstPaint.EvaluateAsync<string?>(StoredModeScript)).ShouldBeNull();
+    await firstPaint.CloseAsync();
+
+    IPage page = await context.NewPageAsync();
+    await GotoAsync(page, "/");
+    await WaitInteractiveAsync(page);
+    await WaitThemeAsync(page, dark: true);
+    await page.ScreenshotAsync(new PageScreenshotOptions { Path = PlaywrightScreenshot.PathFor<DarkTheme_Given_Shell>("os-dark-interactive.png") });
+    (await SettledDarkFailuresAsync(page, "/ on a dark OS")).ShouldBeEmpty();
+    (await page.EvaluateAsync<string?>(StoredModeScript)).ShouldBeNull();
+
+    // Nothing stored, so Fluent follows an OS change during the session.
+    await page.EmulateMediaAsync(new PageEmulateMediaOptions { ColorScheme = ColorScheme.Light });
+    await WaitThemeAsync(page, dark: false);
+    await AssertLightAsync(page);
+    _ = graph;
+  }
+
+  public static async Task StoredLight_On_DarkOs_Should_Stay_Light()
+  {
+    await using HostGraph graph = await CreateHostAsync();
+    IBrowser browser = (await PlaywrightBrowserSession.GetAsync()).Inner;
+    await using IBrowserContext context = await NewContextAsync(browser, ColorScheme.Dark);
+    await context.AddInitScriptAsync(StoreLightScript);
+
+    IPage firstPaint = await FirstPaintPageAsync(context);
+    await firstPaint.ScreenshotAsync(new PageScreenshotOptions { Path = PlaywrightScreenshot.PathFor<DarkTheme_Given_Shell>("stored-light-first-paint.png") });
+    (await firstPaint.EvaluateAsync<string?>("() => document.body.getAttribute('data-theme')")).ShouldBe("light");
+    (await AppBarBackgroundAsync(firstPaint)).ShouldBe(LightPaper);
+    await firstPaint.CloseAsync();
+
+    IPage page = await context.NewPageAsync();
+    await GotoAsync(page, "/");
+    await WaitInteractiveAsync(page);
+    await page.WaitForTimeoutAsync(500);
+    (await page.EvaluateAsync<string?>("() => document.body.getAttribute('data-theme')")).ShouldNotBe("dark");
+    await AssertLightAsync(page);
+    (await page.EvaluateAsync<string?>(StoredModeScript)).ShouldBe("light");
+    _ = graph;
+  }
+
+  // A page whose blazor.web.js is aborted: the prerendered shell plus the classic scripts only.
+  private static async Task<IPage> FirstPaintPageAsync(IBrowserContext context)
+  {
+    IPage page = await context.NewPageAsync();
+    await page.RouteAsync("**/_framework/blazor.web*.js", route => route.AbortAsync());
+    await GotoAsync(page, "/");
+    await page.Locator(".twe-appbar").WaitForAsync(new LocatorWaitForOptions { Timeout = 30_000 });
+    return page;
+  }
+
+  private static Task<string> AppBarBackgroundAsync(IPage page) =>
+    page.EvaluateAsync<string>("() => getComputedStyle(document.querySelector('.twe-appbar')).backgroundColor");
 
   private static Task<HostGraph> CreateHostAsync() =>
     HostGraphFactory.CreateWebAsync(services =>
