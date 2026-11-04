@@ -405,3 +405,9 @@ dotnet_diagnostic.TWA0016.severity = none
 [ganda.audit]
 # documentation/ retired (210-005); regions + skills are the record (see AGENTS.md §Documentation).
 directory-structure.exclude = documentation
+# source-file-line-cap: the only files over 500 lines are generated EF migrations
+# (platform/postgres/migrations) and a done task's research script under kanban/. This ganda
+# build has no exclude key for the check, so it runs as Warning; TWA0038 (file-length-analyzer)
+# enforces the cap in every build with those paths exempt. Restore Error when ganda gains an
+# exclude key. Task 469-001.
+source-file-line-cap.severity = warning

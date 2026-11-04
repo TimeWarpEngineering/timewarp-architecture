@@ -37,3 +37,4 @@ TWA0034 | Design | Warning | ReferenceableResourceAnalyzer: two [ReferenceableRe
 TWA0035 | Design | Info | OperationAttributeAnalyzer: hosted contract request has no [Operation] (TimeWarp.Contracts)
 TWA0036 | Design | Warning | IsoDateRenderingAnalyzer: date or time rendered as text in a non-ISO 8601 shape
 TWA0037 | Design | Warning | DirectFluentMessageBarAnalyzer: raw FluentMessageBar outside the shared components/MessageBar.razor and the shell MessageBars host
+TWA0038 | Maintainability | Warning | FileLengthAnalyzer: source file is longer than the line limit (500 by default; dotnet_diagnostic.TWA0038.max_lines overrides)
