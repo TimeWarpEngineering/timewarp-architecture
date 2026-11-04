@@ -53,6 +53,7 @@ Acceptance:
   `EndpointEmitModel.FromSymbol` calls it. Order recorded in the emitter and resolver Design
   regions. Audit: pass, 2 advisory warnings already present (other worktrees' claims; line cap on
   migrations and a done-task runfile). Nothing to fix on this id.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 80a5c505-0040-4c26-80cb-91f01ac4c6f0, max-turns 500, Done — 2026-11-04T18:57:37Z
 
 ## Results
 
