@@ -38,3 +38,12 @@ apps, since this repo is the template. Record the decision in the check's Design
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+
+## Notes
+
+- The check is per file. It cannot see class size, so it accepts the Jaribu `partial` exception
+  recorded in the parent (469) Requirements without any special casing.
+- As of 2026-11-04, after 469-002 through 469-006 merged, the only tracked `.cs` files over 500
+  lines are the two EF migration files under `platform/postgres/migrations/` and
+  `kanban/done/238-.../research/run-rank-experiment.cs`. The exemption list must cover those, so
+  the check can land enabled.
