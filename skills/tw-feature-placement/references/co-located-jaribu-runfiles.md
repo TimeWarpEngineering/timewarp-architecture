@@ -113,10 +113,11 @@ namespace Your.Slice.Namespace
   unconditional (task 134 finding M1), breaking the family `JARIBU_MULTI` aggregator build.
   `dev template-smoke` tier 1 regression-tests this for the two exemplars; tier 3 runs the
   generated aggregators via MTP.
-- A runfile stays at 500 lines or fewer. Split a long one by scenario into several runfiles. Put
-  helpers that more than one of them needs in a support file in the same folder, and have each
-  runfile pull it in with `#:include <support-file>.cs` after its other `#:` lines. The support
-  file name ends in `-tests.cs`, so the family aggregator compiles it once. It has a Purpose
+- A runfile stays at 500 lines or fewer (TWA0038 fails the build above that). Split a long one
+  by scenario into several runfiles. Put helpers that more than one of them needs in a support
+  file in the same folder, and have each runfile pull it in with `#:include <support-file>.cs`
+  after its other `#:` lines. The support file name ends in `-tests.cs`, so the family
+  aggregator compiles it once. It has a Purpose
   region and the namespace block with helper types only: no shebang, no `#:` lines, no
   `JARIBU_MULTI` block, and no test classes. Every runfile and support file in a family compiles
   into one aggregator assembly, so each type name must be unique across the family. Example:
