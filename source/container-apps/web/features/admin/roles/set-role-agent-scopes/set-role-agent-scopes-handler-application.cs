@@ -3,8 +3,9 @@
 #endregion
 
 #region Design
-// Task 466: 404 when RoleStore has no role, same as SetRolePermissions. No protected-core
-// guard: agent scopes cannot carry admin.* permissions. The response re-reads the store through
+// Task 466: 404 when the role does not exist, same as SetRolePermissions. No protected-core
+// guard: agent scopes cannot carry admin.* permissions. Task 473: the write is
+// Role.SetAgentScopes (full replace) saved through IRoleStore; the response goes through
 // AgentScopeOrder so the client sees AgentScopes.All order.
 // A scope stored on Member approves a roleless human, including one who holds an agent key.
 // A self-registered agent has no effective role, so Member scopes do not approve it.
@@ -14,39 +15,34 @@
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
 using TimeWarp.Architecture.Authorization;
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.SetRoleAgentScopes;
 
 public sealed partial class SetRoleAgentScopes
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly IRoleAgentScopeStore RoleAgentScopeStore;
+    private readonly IRoleStore RoleStore;
 
-    public Handler(IRoleAgentScopeStore roleAgentScopeStore)
+    public Handler(IRoleStore roleStore)
     {
-      RoleAgentScopeStore = roleAgentScopeStore
-        ?? throw new ArgumentNullException(nameof(roleAgentScopeStore));
+      RoleStore = roleStore ?? throw new ArgumentNullException(nameof(roleStore));
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {
-      if (!RoleStore.Roles.ContainsKey(command.RoleId))
+      Role? role = await RoleStore.FindAsync(RoleId.From(command.RoleId), cancellationToken).ConfigureAwait(false);
+      if (role is null)
       {
         return GetRole.Handler.RoleNotFound(command.RoleId);
       }
 
-      List<string> ordered = AgentScopeOrder.OrderKnown(command.Scopes ?? []);
-      await RoleAgentScopeStore
-        .SetScopesForRoleAsync(command.RoleId, ordered, cancellationToken)
-        .ConfigureAwait(false);
+      role.SetAgentScopes(AgentScopeOrder.OrderKnown(command.Scopes ?? []));
+      await RoleStore.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
 
-      IReadOnlyList<string> stored = await RoleAgentScopeStore
-        .GetScopesForRoleAsync(command.RoleId, cancellationToken)
-        .ConfigureAwait(false);
-
-      return new Response(AgentScopeOrder.OrderKnown(stored));
+      return new Response(AgentScopeOrder.OrderKnown([.. role.AgentScopes.Select(scope => scope.Scope)]));
     }
   }
 }

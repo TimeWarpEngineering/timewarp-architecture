@@ -1,29 +1,24 @@
 #region Purpose
-// Port for durable role → permission membership (roles as mutable permission bundles).
+// Read port for a role's permission ids (roles as permission bundles), used by authorization.
 #endregion
 
 #region Design
-// Task 182-001: dual-mode mirror of IPrincipalRoleStore — InMemoryRolePermissionStore singleton
-// default (seeded from RolePermissionSeed); EfRolePermissionStore scoped when Postgres is connected
-// (PostgresDbModule). Get returns empty when a role has no rows (not an error). Set replaces the
-// full permission set for a role (empty clears). Platform cluster so evaluator, Identity,
-// and Admin can resolve grants without TWA0009. Protected-core / last-admin guards
-// live in SetRolePermissions / SetPrincipalRoles handlers (182-004) — this port stays a dumb store.
+// Task 182-001 introduced the port; task 473 made it read-only. The Role aggregate (Admin.Roles)
+// owns the permission set and is written through IRoleStore; this port is how the permission
+// evaluator, lockout guards, agent-scope permission seed, and the principals slice read it
+// without depending on the Roles slice (TWA0009). The Roles slice implements it:
+// InMemoryRolePermissionStore over InMemoryRoleStore (skip-mode), EfRolePermissionStore over the
+// aggregate's identity.role_permissions owned rows when Postgres is connected (PostgresDbModule).
+// Get returns empty when a role has no grants or does not exist (not an error).
 #endregion
 
 namespace TimeWarp.Architecture.Authorization;
 
-/// <summary>Durable assignment of permission ids to a product role (web-app concern).</summary>
+/// <summary>Reads the permission ids granted to a role (web-app concern).</summary>
 public interface IRolePermissionStore
 {
   /// <summary>Stored permission ids for the role — empty when nothing has been granted.</summary>
   Task<IReadOnlyList<string>> GetPermissionIdsForRoleAsync(
     Guid roleId,
-    CancellationToken cancellationToken = default);
-
-  /// <summary>Replace stored permissions for the role (empty clears all grants for that role).</summary>
-  Task SetPermissionIdsForRoleAsync(
-    Guid roleId,
-    IReadOnlyList<string> permissionIds,
     CancellationToken cancellationToken = default);
 }

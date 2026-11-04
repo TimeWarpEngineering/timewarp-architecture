@@ -3,60 +3,51 @@
 #endregion
 
 #region Design
-// Reads the shared in-memory stub (role-store.cs); ordering by name keeps the list stable for
-// UI and tests. PermissionIds per row come from IRolePermissionStore (task 182-004 / 206 list
-// summary + RoleDetailPage drafts). AgentScopes per row come from IRoleAgentScopeStore
-// (task 466). TotalCount equals the full store size — the demo does not implement
-// the contract's OpenData paging parameters; a real repository-backed handler would.
-// Search (task 345) keeps roles whose name contains the trimmed term, ignoring case.
+// Task 473: one IRoleStore.ListAsync read loads every Role with both child sets (the list is
+// small: four product roles plus admin-created ones), so there is no per-row grant query.
+// Ordering by name keeps the list stable for UI and tests. Search (task 345) keeps roles whose
+// name contains the trimmed term, ignoring case. TotalCount equals the number of matching rows —
+// the handler does not implement the contract's OpenData paging parameters. The entity-to-DTO
+// mapping is hand-written here on purpose (task 476 evaluates generating it); AgentScopes are
+// ordered like AgentScopes.All (task 466).
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
+using TimeWarp.Architecture.Authorization;
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.GetRoles;
 
 public sealed partial class GetRoles
 {
   public class Handler : IRequestHandler<Query, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly IRolePermissionStore RolePermissionStore;
-    private readonly IRoleAgentScopeStore RoleAgentScopeStore;
+    private readonly IRoleStore RoleStore;
 
-    public Handler(IRolePermissionStore rolePermissionStore, IRoleAgentScopeStore roleAgentScopeStore)
+    public Handler(IRoleStore roleStore)
     {
-      RolePermissionStore = rolePermissionStore
-        ?? throw new ArgumentNullException(nameof(rolePermissionStore));
-      RoleAgentScopeStore = roleAgentScopeStore
-        ?? throw new ArgumentNullException(nameof(roleAgentScopeStore));
+      RoleStore = roleStore ?? throw new ArgumentNullException(nameof(roleStore));
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Query query,
       CancellationToken cancellationToken)
     {
-      List<RoleDto> items = [];
       string? search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
-      foreach ((Guid roleId, (string Name, string Description) role) in RoleStore.Roles.OrderBy(pair => pair.Value.Name))
-      {
-        if (search is not null && !role.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
-        {
-          continue;
-        }
+      IReadOnlyList<Role> roles = await RoleStore.ListAsync(cancellationToken).ConfigureAwait(false);
 
-        IReadOnlyList<string> permissionIds = await RolePermissionStore
-          .GetPermissionIdsForRoleAsync(roleId, cancellationToken)
-          .ConfigureAwait(false);
-        IReadOnlyList<string> agentScopes = await RoleAgentScopeStore
-          .GetScopesForRoleAsync(roleId, cancellationToken)
-          .ConfigureAwait(false);
-
-        items.Add(new RoleDto(
-          roleId,
-          role.Name,
-          role.Description,
-          [.. permissionIds],
-          AgentScopeOrder.OrderKnown(agentScopes)));
-      }
+      List<RoleDto> items =
+      [
+        .. roles
+          .Where(role => search is null || role.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+          .OrderBy(role => role.Name)
+          .Select(role => new RoleDto(
+            role.Id.Value,
+            role.Name,
+            role.Description,
+            [.. role.Permissions.Select(permission => permission.PermissionId)],
+            AgentScopeOrder.OrderKnown([.. role.AgentScopes.Select(scope => scope.Scope)])))
+      ];
 
       return new Response(items.Count, [.. items]);
     }

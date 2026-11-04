@@ -17,9 +17,9 @@
 // Skip-mode also keeps InMemoryIdentityStoresModule's singleton InMemoryPrincipalStore — only when a
 // connection is present do we Replace the IPrincipalStore registration with scoped EfPrincipalStore
 // (task 104-032). Same dual-mode for IPrincipalRoleStore → EfPrincipalRoleStore (task 147-006),
-// IRolePermissionStore → EfRolePermissionStore (task 182-001),
-// IRoleAgentScopeStore → EfRoleAgentScopeStore and IPrincipalAgentScopeStore →
-// EfPrincipalAgentScopeStore (task 466), IProfileStore → EfProfileStore
+// IRoleStore → EfRoleStore with the role grant read ports IRolePermissionStore →
+// EfRolePermissionStore and IRoleAgentScopeStore → EfRoleAgentScopeStore (task 473),
+// IPrincipalAgentScopeStore → EfPrincipalAgentScopeStore (task 466), IProfileStore → EfProfileStore
 // (task 148 D4), and IFeedbackStore → EfFeedbackStore. IFeedbackAttachmentBlobStore → EfFeedbackAttachmentBlobStore
 // only when FeedbackAttachments:ConnectionString is empty (Azure wins; task 352). Challenge/token
 // stores stay in-memory either way.
@@ -68,6 +68,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals.Infrastructure;
+using TimeWarp.Architecture.Features.Admin.Roles.Application;
+using TimeWarp.Architecture.Features.Admin.Roles.Infrastructure;
 using TimeWarp.Architecture.Features.AgentLinks.Application;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity.Infrastructure;
@@ -116,14 +118,18 @@ public sealed partial class PostgresDbModule : IModule
     serviceCollection.RemoveAll<IPrincipalRoleStore>();
     serviceCollection.AddScoped<IPrincipalRoleStore, EfPrincipalRoleStore>();
 
-    // Task 182-001: durable role→permission grants (same connection gate).
+    // Task 473: the Role aggregate and the two role grant read ports over its owned rows. All
+    // three replace the InMemoryRoleStoresModule singletons together (the in-memory readers
+    // depend on the in-memory store).
+    serviceCollection.RemoveAll<IRoleStore>();
+    serviceCollection.AddScoped<IRoleStore, EfRoleStore>();
     serviceCollection.RemoveAll<IRolePermissionStore>();
     serviceCollection.AddScoped<IRolePermissionStore, EfRolePermissionStore>();
-
-    // Task 466: durable role and principal agent-scope grants. IAgentScopeApproval stays the
-    // scoped service registered by InMemoryIdentityStoresModule.
     serviceCollection.RemoveAll<IRoleAgentScopeStore>();
     serviceCollection.AddScoped<IRoleAgentScopeStore, EfRoleAgentScopeStore>();
+
+    // Task 466: durable principal agent-scope grants. IAgentScopeApproval stays the scoped
+    // service registered by InMemoryIdentityStoresModule.
     serviceCollection.RemoveAll<IPrincipalAgentScopeStore>();
     serviceCollection.AddScoped<IPrincipalAgentScopeStore, EfPrincipalAgentScopeStore>();
 
