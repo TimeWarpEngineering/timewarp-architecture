@@ -15,7 +15,10 @@ The length is mostly single large classes, not stacked types.
 
 - Every tracked `.cs` file is 500 lines or fewer, except generated files that the check exempts.
 - Refactoring extracts responsibilities into named types with clear purposes. `partial` is not
-  an accepted way to get under the limit.
+  an accepted way to get under the limit in `source/` or `tools/`. Exception (Steve, 2026-11-04,
+  469-006 / PR #630): a Jaribu test class may span `partial` files when splitting it into separate
+  classes would add a host boot or an Aspire publish, because a Jaribu class owns its host lane.
+  `[GeneratedRegex]` static partials are always fine; the compiler requires them.
 - `dev build` stays at 0 warnings. Existing tests keep passing. Behavior does not change.
 - Each extracted type gets Purpose and Design regions (TWA0004) and kebab file names (TW0001).
 - The audit check lands last and is enabled only once the children are merged.
@@ -44,3 +47,5 @@ rather than a refactor.
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
+- 469-002 merged as PR #626, 469-004 as #627, 469-003 as #628, 469-005 as #629, 469-006 as #630
+  (2026-11-04). Remaining: 469-001.
