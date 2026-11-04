@@ -29,9 +29,18 @@ content files are exempted. Steve decides the rule set; the task then wires it.
 
 ## Checklist
 
-- [ ] Steve picks the rule set for tools/
+- [x] Steve picks the rule set for tools/ (2026-11-04, see Notes)
 - [ ] Wire analyzers with the agreed exemptions
 - [ ] Gates green
+
+## Notes
+
+Decision (Steve, 2026-11-04): load the full convention analyzer set under `tools/`. TWA0008 is off
+for `tools/dev-cli/services/template-smoke/` via an `.editorconfig` section (it handles template
+tokens as strings). NuGet package content files (`~/.nuget/packages`, e.g. TimeWarp.Nuru.DevCli)
+are exempt by path in the analyzer or props, no per-file pragma. TWA0038 is enforced. If another
+rule fires on code that needs a design change to fix, stop and report; do not add exemptions
+beyond these.
 
 ## Session
 
