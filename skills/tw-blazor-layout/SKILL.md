@@ -31,8 +31,9 @@ descendants by **cascading it**, and you keep the routed layout empty so it does
 
 1. **Empty layout.** Your `LayoutComponentBase` renders just `@Body` (plus any genuinely
    layout-root, run-once concerns). The brand theme is not one of them: it is set on the first
-   server render (`App.razor`'s `<body data-theme-color … data-theme>`), never applied from
-   `OnAfterRenderAsync` — see `tw-blazor-css-strategy` rule 8. Guard anything else that uses JS
+   server render (`App.razor`'s `<body data-theme-color … data-theme>` and the `BrandThemeScript`
+   that is the first child of `<body>`), never applied from `OnAfterRenderAsync` — see
+   `tw-blazor-css-strategy` rule 8. Guard anything else that uses JS
    interop so it only runs when interactive (not during server prerender). No header/nav/footer here.
 2. **Shell component.** A normal component that **inherits your state/base component** (not
    `LayoutComponentBase`). It:

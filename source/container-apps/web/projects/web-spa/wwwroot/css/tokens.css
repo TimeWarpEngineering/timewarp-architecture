@@ -161,9 +161,10 @@ html {
   }
 }
 
-/* Dark mode (task 465). Fluent sets body[data-theme="dark"] when its mode is dark: a stored
-   choice from the shell's theme button (ApplicationState.ToggleTheme), or the OS preference
-   when no mode is stored and the OS changes during the session. Fluent paints its own
+/* Dark mode (task 465). body[data-theme="dark"] marks dark mode: a stored choice from the
+   shell's theme button (ApplicationState.ToggleTheme), else the OS preference. BrandThemeScript
+   sets it before first paint (task 471); Fluent keeps it and follows an OS change during the
+   session when no mode is stored. Fluent paints its own
    components from its dark ramp. These overrides make every --twe-* surface follow.
    Neutrals are Fluent 2's dark neutrals, so app paper sits with Fluent's surfaces:
    page #292929 (colorNeutralBackground1, the body fill Fluent's default sheet applies),
