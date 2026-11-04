@@ -59,6 +59,7 @@ namespace TimeWarp.Architecture.Web.Server;
 using TimeWarp.Architecture.Abuse;
 using TimeWarp.Architecture.AgentDiscovery;
 using TimeWarp.Architecture.Features.Admin.Principals;
+using TimeWarp.Architecture.Features.Admin.Roles.Infrastructure;
 using TimeWarp.Architecture.Features.AgentLinks.Infrastructure;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Features.Identity.Application;
@@ -165,6 +166,7 @@ public partial class Program : IAspNetProgram
     // Scoped: ISiteSettingsStore is the scoped SeedOnReadSiteSettingsStore decorator (task 254).
     serviceCollection.AddScoped<IEntraSignInPolicy, SiteSettingsEntraSignInPolicy>();
     InMemoryProfileStoresModule.ConfigureServices(serviceCollection, configuration);
+    InMemoryRoleStoresModule.ConfigureServices(serviceCollection, configuration);
     InMemoryFeedbackStoresModule.ConfigureServices(serviceCollection, configuration);
     FeedbackAttachmentBlobModule.ConfigureServices(serviceCollection, configuration);
     MailModule.ConfigureServices(serviceCollection, configuration);

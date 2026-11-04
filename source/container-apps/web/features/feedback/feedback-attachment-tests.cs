@@ -25,6 +25,7 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 
 namespace TimeWarp.Architecture.Features.Feedback
 {
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
   using Microsoft.Extensions.Options;
   using OneOf;
   using Shouldly;
@@ -155,7 +156,7 @@ namespace TimeWarp.Architecture.Features.Feedback
           roles,
           Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
           new InMemoryPrincipalStore()),
-        new InMemoryRolePermissionStore(),
+        new InMemoryRolePermissionStore(new InMemoryRoleStore()),
         scopes);
 
       // The Administrator role includes admin.feedback.read. That grant is real for a human

@@ -23,6 +23,7 @@ namespace TimeWarp.Architecture.Authorization
 {
 
   using TimeWarp.Architecture.Features;
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
 
   using System.Threading.Tasks;
   using Shouldly;
@@ -41,7 +42,7 @@ namespace TimeWarp.Architecture.Authorization
     {
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles: new InMemoryPrincipalRoleStore(),
-        rolePermissions: new InMemoryRolePermissionStore(),
+        rolePermissions: RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
       PrincipalId id = PrincipalId.New();
 
@@ -72,7 +73,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -100,7 +101,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -136,8 +137,9 @@ namespace TimeWarp.Architecture.Authorization
 
       // Store can grant read without manage (rebundle without a new product role Guid).
       // EffectiveRolesResolver only emits RoleIds.All entries, so rebundle Administrator grants.
-      InMemoryRolePermissionStore rolePermissions = new();
-      await rolePermissions.SetPermissionIdsForRoleAsync(
+      InMemoryRoleStore roles = new();
+      InMemoryRolePermissionStore rolePermissions = new(roles);
+      await roles.SetPermissionsAsync(
         RoleIds.Administrator,
         [
           PermissionIds.AdminAccess,
@@ -175,7 +177,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       (await evaluator.GetPermissionsAsync(id, authenticationScheme: null)).ShouldBeEmpty();
@@ -187,7 +189,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       PermissionEvaluator evaluator = CreateEvaluator(
         new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [id.Value.ToString()]);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -208,7 +210,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       IReadOnlyList<string> permissions = await evaluator.GetPermissionsAsync(
@@ -258,7 +260,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       await principalRoles.SetRoleIdsAsync(id, [RoleIds.Administrator]);
 
-      CountingRolePermissionStore countingStore = new(new InMemoryRolePermissionStore());
+      CountingRolePermissionStore countingStore = new(RoleGrantFixture.SeededPermissions());
       PermissionEvaluator evaluator = CreateEvaluator(principalRoles, countingStore, bootstrap: []);
 
       Task<bool>[] checks =
@@ -288,7 +290,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: []);
 
       (await evaluator.HasPermissionAsync(
@@ -334,12 +336,6 @@ namespace TimeWarp.Architecture.Authorization
           Interlocked.Decrement(ref InFlight);
         }
       }
-
-      public Task SetPermissionIdsForRoleAsync(
-        Guid roleId,
-        IReadOnlyList<string> permissionIds,
-        CancellationToken cancellationToken = default) =>
-        Inner.SetPermissionIdsForRoleAsync(roleId, permissionIds, cancellationToken);
     }
 
     private static class InterlockedExtensions
@@ -361,9 +357,9 @@ namespace TimeWarp.Architecture.Authorization
     [System.Runtime.CompilerServices.ModuleInitializer]
     internal static void Register() => RegisterTests<InMemoryRolePermissionStore_Given_>();
 
-    public static async Task Constructor_Should_SeedDefaultGrants()
+    public static async Task NewRoleStore_Should_ReadDefaultGrants()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRolePermissionStore store = RoleGrantFixture.SeededPermissions();
 
       foreach ((Guid roleId, IReadOnlyList<string> expected) in RolePermissionSeed.DefaultGrants)
       {
@@ -372,16 +368,18 @@ namespace TimeWarp.Architecture.Authorization
       }
     }
 
-    public static async Task Set_Should_ReplaceAndClear()
+    public static async Task RoleWrite_Should_ReplaceAndClearWhatTheReadPortSees()
     {
-      InMemoryRolePermissionStore store = new();
+      InMemoryRoleStore roles = new();
+      InMemoryRolePermissionStore store = new(roles);
       Guid roleId = RoleIds.Operator;
 
-      await store.SetPermissionIdsForRoleAsync(roleId, [PermissionIds.AdminAccess]);
+      await roles.SetPermissionsAsync(roleId, [PermissionIds.AdminAccess]);
       (await store.GetPermissionIdsForRoleAsync(roleId)).ShouldBe([PermissionIds.AdminAccess]);
 
-      await store.SetPermissionIdsForRoleAsync(roleId, []);
+      await roles.SetPermissionsAsync(roleId, []);
       (await store.GetPermissionIdsForRoleAsync(roleId)).ShouldBeEmpty();
+      (await store.GetPermissionIdsForRoleAsync(Guid.NewGuid())).ShouldBeEmpty();
     }
   }
 }

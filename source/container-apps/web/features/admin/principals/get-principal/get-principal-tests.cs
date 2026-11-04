@@ -26,6 +26,8 @@ return await TimeWarp.Jaribu.TestRunner.RunAllTests();
 namespace TimeWarp.Architecture.Features.Admin.Principals
 {
 
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using System.Reflection;
   using System.Text.Json;
   using System.Threading.Tasks;
@@ -189,13 +191,14 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
       var caller = PrincipalId.New();
       InMemoryPrincipalRoleStore roles = new();
       roles.SetRoleIdsAsync(caller, [RoleIds.Administrator]).GetAwaiter().GetResult();
-      InMemoryRolePermissionStore permissions = new();
+      InMemoryRoleStore roleAggregates = new();
+      InMemoryRolePermissionStore permissions = new(roleAggregates);
       if (!grantProfilesRead)
       {
-        permissions.SetPermissionIdsForRoleAsync(
-          RoleIds.Administrator,
-          [.. RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead)])
-          .GetAwaiter().GetResult();
+        Role administrator = roleAggregates.FindAsync(RoleId.From(RoleIds.Administrator)).GetAwaiter().GetResult()!;
+        administrator.SetPermissions(
+          RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead));
+        roleAggregates.UpdateAsync(administrator).GetAwaiter().GetResult();
       }
 
       EffectiveRolesResolver resolver = new(
@@ -203,7 +206,7 @@ namespace TimeWarp.Architecture.Features.Admin.Principals
         Options.Create(new BootstrapAdministratorOptions { BootstrapAdministratorPrincipalIds = [] }),
         Principals);
       PermissionEvaluator evaluator = new(resolver, permissions, new NoAgentScopes());
-      AgentScopeApproval approval = new(resolver, new InMemoryRoleAgentScopeStore(), new InMemoryPrincipalAgentScopeStore());
+      AgentScopeApproval approval = new(resolver, new InMemoryRoleAgentScopeStore(roleAggregates), new InMemoryPrincipalAgentScopeStore());
       Handler = new GetHandler(
         Principals,
         resolver,

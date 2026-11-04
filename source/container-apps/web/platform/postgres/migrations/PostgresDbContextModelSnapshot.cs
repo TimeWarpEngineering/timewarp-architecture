@@ -16,7 +16,7 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261102105501_AddAgentScopeGrants";
+    public override string LastMigrationId => "20261104193441_AddRoles";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -61,32 +61,26 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.ToTable("principal_agent_scopes", "identity");
             });
 
-        modelBuilder.Entity("TimeWarp.Architecture.Authorization.RoleAgentScopeGrant", b =>
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Admin.Roles.Domain.Role", b =>
             {
-                b.Property<Guid>("RoleId")
+                b.Property<Guid>("Id")
                     .HasColumnType("uuid");
 
-                b.Property<string>("Scope")
-                    .HasMaxLength(64)
-                    .HasColumnType("character varying(64)");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasColumnType("text");
 
-                b.HasKey("RoleId", "Scope");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("text");
 
-                b.ToTable("role_agent_scopes", "identity");
-            });
+                b.Property<long>("Version")
+                    .IsConcurrencyToken()
+                    .HasColumnType("bigint");
 
-        modelBuilder.Entity("TimeWarp.Architecture.Authorization.RolePermissionGrant", b =>
-            {
-                b.Property<Guid>("RoleId")
-                    .HasColumnType("uuid");
+                b.HasKey("Id");
 
-                b.Property<string>("PermissionId")
-                    .HasMaxLength(128)
-                    .HasColumnType("character varying(128)");
-
-                b.HasKey("RoleId", "PermissionId");
-
-                b.ToTable("role_permissions", "identity");
+                b.ToTable("roles", "identity");
             });
 
         modelBuilder.Entity("TimeWarp.Architecture.Features.AgentLinks.Domain.AgentHumanLink", b =>
@@ -457,6 +451,47 @@ partial class PostgresDbContextModelSnapshot : ModelSnapshot
                 b.HasKey("Id");
 
                 b.ToTable("site_settings", "identity");
+            });
+
+        modelBuilder.Entity("TimeWarp.Architecture.Features.Admin.Roles.Domain.Role", b =>
+            {
+                b.OwnsMany("TimeWarp.Architecture.Features.Admin.Roles.Domain.AgentScopeGrant", "AgentScopes", b1 =>
+                    {
+                        b1.Property<Guid>("RoleId")
+                            .HasColumnType("uuid");
+
+                        b1.Property<string>("Scope")
+                            .HasMaxLength(64)
+                            .HasColumnType("character varying(64)");
+
+                        b1.HasKey("RoleId", "Scope");
+
+                        b1.ToTable("role_agent_scopes", "identity");
+
+                        b1.WithOwner()
+                            .HasForeignKey("RoleId");
+                    });
+
+                b.OwnsMany("TimeWarp.Architecture.Features.Admin.Roles.Domain.PermissionGrant", "Permissions", b1 =>
+                    {
+                        b1.Property<Guid>("RoleId")
+                            .HasColumnType("uuid");
+
+                        b1.Property<string>("PermissionId")
+                            .HasMaxLength(128)
+                            .HasColumnType("character varying(128)");
+
+                        b1.HasKey("RoleId", "PermissionId");
+
+                        b1.ToTable("role_permissions", "identity");
+
+                        b1.WithOwner()
+                            .HasForeignKey("RoleId");
+                    });
+
+                b.Navigation("AgentScopes");
+
+                b.Navigation("Permissions");
             });
 
         modelBuilder.Entity("TimeWarp.Architecture.Features.Feedback.Domain.FeedbackAttachment", b =>

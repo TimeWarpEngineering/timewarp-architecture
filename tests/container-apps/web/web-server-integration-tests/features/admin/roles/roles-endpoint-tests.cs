@@ -191,4 +191,23 @@ public class UpdateThenDelete_Roundtrip
     afterDelete.AsT1.Status.ShouldBe(404);
   }
 
+  public static async Task Conflict_Given_Product_Role()
+  {
+    // Task 473: product roles (RoleIds.All) are not deletable; the endpoint answers 409, not 500.
+    Guid userId = Guid.NewGuid();
+
+    foreach (Guid roleId in RoleIds.All)
+    {
+      OneOf<DeleteRole.Response, SharedProblemDetails> deleted =
+        await Web.Send(new DeleteRole.Command { RoleId = roleId, UserId = userId });
+      deleted.IsT1.ShouldBeTrue($"DeleteRole returned a Response for product role '{roleId}'.");
+      deleted.AsT1.Status.ShouldBe(409);
+
+      // Still there.
+      OneOf<GetRole.Response, SharedProblemDetails> fetched =
+        await Web.Send(new GetRole.Query { RoleId = roleId, UserId = userId });
+      fetched.IsT0.ShouldBeTrue($"Product role '{roleId}' no longer resolves after a refused delete.");
+    }
+  }
+
 }

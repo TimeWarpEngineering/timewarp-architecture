@@ -28,6 +28,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Feedback;
 using TimeWarp.Identity;
 using static AdminFeedbackAuthorization_.AdminFeedbackAuthorizationFixture;
+using IRoleStore = TimeWarp.Architecture.Features.Admin.Roles.Application.IRoleStore;
 
 public class Human_Returns_
 {
@@ -124,10 +125,11 @@ public class Human_Returns_
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IReadOnlyList<string> original = await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
     try
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(
+      await roleAggregates.SetPermissionIdsForRoleAsync(
         RoleIds.Administrator,
         [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead, PermissionIds.FeedbackFileSelf]);
 
@@ -141,7 +143,7 @@ public class Human_Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
     }
   }
 
@@ -170,10 +172,11 @@ public class Human_Returns_
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IReadOnlyList<string> original = await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
     try
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(
+      await roleAggregates.SetPermissionIdsForRoleAsync(
         RoleIds.Administrator,
         [PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead]);
 
@@ -184,7 +187,7 @@ public class Human_Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
     }
   }
 
@@ -228,10 +231,11 @@ public class Human_Returns_
 
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IReadOnlyList<string> original = await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Operator);
     try
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(
+      await roleAggregates.SetPermissionIdsForRoleAsync(
         RoleIds.Operator,
         [.. original, PermissionIds.AdminAccess, PermissionIds.AdminFeedbackRead, PermissionIds.FeedbackRead]);
 
@@ -257,7 +261,7 @@ public class Human_Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Operator, original);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Operator, original);
     }
   }
 }

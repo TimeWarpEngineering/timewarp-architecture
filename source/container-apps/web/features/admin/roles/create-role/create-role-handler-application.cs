@@ -3,25 +3,34 @@
 #endregion
 
 #region Design
-// Storage is the shared in-memory stub (see role-store.cs) so the roles CRUD handlers compose.
-// Input validation does NOT belong here — FluentValidationBehavior already ran the contract's
-// Validator (shared RoleDetailsValidator + AuthApiRequestValidator) before this executes.
+// Task 473: Role.Create mints the RoleId and checks the details; IRoleStore.AddAsync saves. The
+// new role starts with no permissions and no agent scopes. Input validation does NOT belong here —
+// FluentValidationBehavior already ran the contract's Validator (shared RoleDetailsValidator +
+// AuthApiRequestValidator) before this executes. The response mapping (role id) is hand-written.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.CreateRole;
 
 public sealed partial class CreateRole
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    public ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
-    {
-      var roleId = Guid.NewGuid();
-      RoleStore.Roles.TryAdd(roleId, (command.Name, command.Description));
+    private readonly IRoleStore RoleStore;
 
-      return ValueTask.FromResult((OneOf<Response, SharedProblemDetails>)new Response(roleId));
+    public Handler(IRoleStore roleStore)
+    {
+      RoleStore = roleStore ?? throw new ArgumentNullException(nameof(roleStore));
+    }
+
+    public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(Command command, CancellationToken cancellationToken)
+    {
+      var role = Role.Create(command.Name, command.Description);
+      await RoleStore.AddAsync(role, cancellationToken).ConfigureAwait(false);
+
+      return new Response(role.Id.Value);
     }
   }
 }

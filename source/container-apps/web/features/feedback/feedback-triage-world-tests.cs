@@ -5,6 +5,8 @@
 namespace TimeWarp.Architecture.Features.Feedback
 {
 
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using Microsoft.Extensions.Logging.Abstractions;
   using Microsoft.Extensions.Options;
   using TimeWarp.Architecture.Abstractions;
@@ -59,13 +61,14 @@ namespace TimeWarp.Architecture.Features.Feedback
       Directory = new TriageCountingDirectory(new ProfileDirectory(Profiles));
       Sender = sender ?? Mail;
       Roles.SetRoleIdsAsync(Admin, [RoleIds.Administrator]).GetAwaiter().GetResult();
-      InMemoryRolePermissionStore permissions = new();
+      InMemoryRoleStore roleAggregates = new();
+      InMemoryRolePermissionStore permissions = new(roleAggregates);
       if (!grantProfilesRead)
       {
-        permissions.SetPermissionIdsForRoleAsync(
-          RoleIds.Administrator,
-          [.. RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead)])
-          .GetAwaiter().GetResult();
+        Role administrator = roleAggregates.FindAsync(RoleId.From(RoleIds.Administrator)).GetAwaiter().GetResult()!;
+        administrator.SetPermissions(
+          RolePermissionSeed.DefaultGrants[RoleIds.Administrator].Where(static id => id != PermissionIds.AdminProfilesRead));
+        roleAggregates.UpdateAsync(administrator).GetAwaiter().GetResult();
       }
 
       EffectiveRolesResolver resolver = new(

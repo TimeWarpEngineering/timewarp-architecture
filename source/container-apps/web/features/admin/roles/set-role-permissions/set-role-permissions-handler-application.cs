@@ -1,35 +1,37 @@
 #region Purpose
-// Server-side handler for SetRolePermissions: protected-core then replace role grants.
+// Server-side handler for SetRolePermissions: protected-core then replace the role's permissions.
 #endregion
 
 #region Design
-// Task 182-004: 404 when RoleStore has no role (same as GetRole/Update). Protected-core runs
-// BEFORE the store write so Administrator cannot lose RolePermissionSeed.AdminPermissions even
-// if the dumb IRolePermissionStore would accept the set. Response re-reads the store so clients
-// see the canonical stored list (distinct/order from store implementation).
+// Task 182-004: 404 when the role does not exist (same as GetRole/Update). Protected core runs
+// BEFORE the write so Administrator cannot lose RolePermissionSeed.AdminPermissions; it stays an
+// application rule (AdminLockoutGuards, 409), not a domain hook (task 461 resolution). Task 473:
+// the write is Role.SetPermissions (full replace, duplicates collapse) saved through IRoleStore;
+// the response echoes the role's canonical list after the save.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
+using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.SetRolePermissions;
 
 public sealed partial class SetRolePermissions
 {
   public class Handler : IRequestHandler<Command, OneOf<Response, SharedProblemDetails>>
   {
-    private readonly IRolePermissionStore RolePermissionStore;
+    private readonly IRoleStore RoleStore;
 
-    public Handler(IRolePermissionStore rolePermissionStore)
+    public Handler(IRoleStore roleStore)
     {
-      RolePermissionStore = rolePermissionStore
-        ?? throw new ArgumentNullException(nameof(rolePermissionStore));
+      RoleStore = roleStore ?? throw new ArgumentNullException(nameof(roleStore));
     }
 
     public async ValueTask<OneOf<Response, SharedProblemDetails>> Handle(
       Command command,
       CancellationToken cancellationToken)
     {
-      if (!RoleStore.Roles.ContainsKey(command.RoleId))
+      Role? role = await RoleStore.FindAsync(RoleId.From(command.RoleId), cancellationToken).ConfigureAwait(false);
+      if (role is null)
       {
         return GetRole.Handler.RoleNotFound(command.RoleId);
       }
@@ -43,15 +45,10 @@ public sealed partial class SetRolePermissions
         return protectedCore;
       }
 
-      await RolePermissionStore
-        .SetPermissionIdsForRoleAsync(command.RoleId, requested, cancellationToken)
-        .ConfigureAwait(false);
+      role.SetPermissions(requested);
+      await RoleStore.UpdateAsync(role, cancellationToken).ConfigureAwait(false);
 
-      IReadOnlyList<string> stored = await RolePermissionStore
-        .GetPermissionIdsForRoleAsync(command.RoleId, cancellationToken)
-        .ConfigureAwait(false);
-
-      return new Response([.. stored]);
+      return new Response([.. role.Permissions.Select(permission => permission.PermissionId)]);
     }
   }
 }
