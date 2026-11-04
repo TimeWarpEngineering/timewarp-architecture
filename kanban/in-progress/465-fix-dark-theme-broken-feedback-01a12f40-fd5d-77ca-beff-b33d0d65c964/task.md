@@ -107,8 +107,10 @@ touched on the live server. It stays Planned until the admin moves it after the 
 - Playwright suite (`web-spa-playwright-tests`): 35/35 passed, including the 2 new tests.
 - `dev test --group fast`: 14/14 projects passed. `web-spa-integration-tests`: 578/578 passed.
 - `dev lint-skills`: 9/9 skills passed.
-- `ganda repo audit`: the only error was `kanban-landed` (unpublished kitchen), cleared by
-  `ganda kanban publish 465`. `source-file-line-cap` warnings are existing, in files outside this diff.
+- `ganda repo audit`: the only error was `kanban-landed` (kitchen edits not yet on master).
+  `ganda kanban reconcile` cleared it by landing this kitchen; publish refuses a branch with
+  product code. The `source-file-line-cap` warnings were already there, in files this diff
+  does not touch.
 - `dev template-smoke`: not run. No `#if` region or template symbol changed.
 
 ### Follow-ups (not in this task)
