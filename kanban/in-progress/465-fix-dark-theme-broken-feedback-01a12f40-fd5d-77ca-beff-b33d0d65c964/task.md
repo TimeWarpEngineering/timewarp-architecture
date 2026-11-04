@@ -43,13 +43,100 @@ Acceptance:
 
 ## Checklist
 
-- [ ] Reproduce dark-theme break with attached screenshot
-- [ ] Fix and verify in dark theme
-- [ ] Confirm feedback item 01a12f40-fd5d-77ca-beff-b33d0d65c964 stays Planned / move to Completed when shipped
+- [x] Reproduce dark-theme break (the filer's PNG was not reachable; reproduced locally, `kitchen/before/`)
+- [x] Fix and verify in dark theme (`kitchen/after/`, `DarkTheme_Given_Shell`)
+- [ ] Confirm feedback item 01a12f40-fd5d-77ca-beff-b33d0d65c964 stays Planned / move to Completed when shipped (admin step after release)
 
 ## Session
 
 - Created: ses_e644b7498ffeR8qWbSTjbeTMvu (2026-11-02)
+- 2026-11-04 implementer (ganda task work, Claude Opus 5.5): reproduced, fixed, gates run. See Results.
+
+## Results
+
+Feedback item `01a12f40-fd5d-77ca-beff-b33d0d65c964` (BugReport "Dark theme broken") was not
+touched on the live server. It stays Planned until the admin moves it after the release ships.
+
+### Root cause
+
+- Fluent marks dark mode with `body[data-theme="dark"]` and paints its own components from its
+  dark ramp. The `--twe-*` tokens had only light values, so app paper (cards, app bar, nav column,
+  filter bar, footer), page titles (dark ink on dark), and status badges (hard-coded light hex)
+  stayed light over Fluent's dark surfaces. Repro: `kitchen/before/dark-home.png`. The full list
+  of light surfaces the detector found is in `kitchen/before-light-surfaces.txt`.
+- The app-bar theme button called `ThemeState.Update(Dark)` (TimeWarp.State.Plus). Nothing read
+  that state, so the button did nothing. Users reached dark through a stored Fluent mode or an
+  OS switch to dark during the session. With no stored mode, Fluent's system-change listener
+  follows the OS.
+
+### Fix
+
+- `wwwroot/css/tokens.css`: a `body[data-theme="dark"]` block overrides neutrals (Fluent 2 dark
+  neutrals: page #292929, paper #303030, subtle #1f1f1f), semantic colors (lighter steps that clear
+  4.5:1 on dark paper and on a 12% tint), shadows, and `color-scheme`. FluentNav's own
+  `--nav-bg-color` hooks keep nav items on the column fill. New role tokens have light values equal
+  to what components used before: `--twe-link`, `--twe-link-hover`, `--twe-primary-text`,
+  `--twe-accent-text`, `--twe-on-accent-tint`, `--twe-on-info`, `--twe-positive-tint`,
+  `--twe-warning-tint`, `--twe-info-tint`, `--twe-inverse`, and `--twe-on-inverse`. The dark block
+  overrides no brand key, so `/brand.css` stays the one brand source.
+- Components read the role tokens instead of light hex or deep brand steps: StatusBadge, Tabs,
+  DevNote, RoleCard, 403/404 pages, shell breadcrumb, `a` links, LinkDisplay, and the ask-tag hint.
+- `ApplicationState.ToggleTheme` (new action) calls `IThemeService.SwitchThemeAsync`. The app-bar
+  button dispatches it (`data-qa=ThemeToggle`, with an aria-label). The unused ThemeState accessors
+  were removed from BaseComponent.
+- The design-system Color Tokens swatches now label the custom property (`--twe-ink`). Their hex
+  copy disagreed with the dark values.
+- `skills/tw-blazor-css-strategy`: rule 9 (dark mode) and a quick-reference row.
+- Test: `DarkTheme_Given_Shell` (Playwright). (1) With dark mode stored, it signs in (passkey plus
+  the Developer role), walks all 19 PageRegistry pages and the Ask panel, and fails on any visible
+  near-white light-DOM box or on a light body. (2) The theme button toggles to dark, dark
+  survives a reload, a second click restores the light token surfaces, and an OS switch to dark
+  does not override a stored light choice.
+  `DesignSystemCatalog_Given_Wasm.GrantDeveloperAsync` became internal so the walk can reuse it.
+
+### Evidence (kitchen/)
+
+- `before/`: dark mode on the unfixed code, all 19 pages plus `dark-ask.png`.
+- `after/`: the same walk on the fix, plus `light-home.png`.
+- `light-compare/`: a light-mode walk on both commits, pixel-diffed. Only per-run data changed
+  (random avatar, ids, timestamps) plus the intended swatch label. See `pixel-diff.md`.
+
+### Gates
+
+- `dev build`: 0 warnings, 0 errors.
+- Playwright suite (`web-spa-playwright-tests`): 35/35 passed, including the 2 new tests.
+- `dev test --group fast`: 14/14 projects passed. `web-spa-integration-tests`: 578/578 passed.
+- `dev lint-skills`: 9/9 skills passed.
+- `ganda repo audit`: the only error was `kanban-landed` (unpublished kitchen), cleared by
+  `ganda kanban publish 465`. `source-file-line-cap` warnings are existing, in files outside this diff.
+- `dev template-smoke`: not run. No `#if` region or template symbol changed.
+
+### Follow-ups (not in this task)
+
+- The default logo's wordmark is a purple-to-blue gradient that is weak on the dark app bar.
+  A dark-mode logo needs a new BrandOptions field, for example `LogoSrcDark`.
+- Some links render in Fluent's own dark brand ramp (FluentAnchor and the default link color),
+  which is a muted purple on dark paper. That ramp is Fluent's; changing it means retuning the
+  seed for dark mode.
+- On a first visit with no stored mode, Fluent starts light even when the OS is dark, because
+  App.razor renders `data-theme="light"`, and turns dark only if the OS changes during the session.
+  Following the OS on first load is a product decision.
+
+### How to validate
+
+Smoke:
+
+```bash
+cd tests/container-apps/web/web-spa-playwright-tests
+dotnet test -c Release -- --filter-class DarkTheme_Given_Shell
+```
+
+Expect: 2 tests pass. `bin/Release/net11.0/playwright-screenshots/DarkTheme_Given_Shell/` holds
+`dark-*.png` for every page and Ask (dark cards, nav, app bar, and footer, with light text) and
+`light-home.png`, which matches the light shell.
+
+Manual: `dev run`, sign in, and click the half-moon button in the app bar. The whole app turns dark
+(cards, nav, app bar, badges, Ask panel). Reload: it stays dark. Click again: light, unchanged.
 
 ## Notes
 
