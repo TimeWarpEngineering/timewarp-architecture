@@ -54,6 +54,10 @@ Acceptance:
   regions. Audit: pass, 2 advisory warnings already present (other worktrees' claims; line cap on
   migrations and a done-task runfile). Nothing to fix on this id.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 80a5c505-0040-4c26-80cb-91f01ac4c6f0, max-turns 500, Done — 2026-11-04T18:57:37Z
+- Review oracle (2026-11-05): tw-implementation-review, effort 2, roster general, 1 round. The
+  reviewer was claude (vendor anthropic, model claude-opus-5-5) in headless print mode with a
+  turn cap of 120. Disposition: clean.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 01a75b3f-3c77-4c70-b402-6a8b928ab10b, max-turns 120, artifacts general.md, merged.md — 2026-11-04T19:00:30Z
 
 ## Results
 
@@ -97,6 +101,22 @@ grep -n "s.Summary" artifacts/generated/web-server/timewarp-architecture-analyze
 Expect: the test run reports `failed: 0`, including the `FastEndpointSourceGenerator_Summary_Tests`
 cases. The build prints `Build completed successfully!`. The grep prints
 `s.Summary = "Replace a role's permission ids.";`.
+
+### Review disposition
+
+- Disposition: **clean**. 1 round, effort 2, roster general.
+- Final counts: bug 0, suggestion 0, nit 0 (open, fixed, and wontfix are all 0).
+- The reviewer ran the generator tests again: 163/163 passed. `SetRolePermissionsEndpoint.g.cs`
+  emits the `[Operation]` description. A scan of the generated endpoints with no summary found
+  none that has a source. The goal restatement matches the task, so there is no misread.
+- The reviewer did not re-run `dev build`, `dev template-smoke`, or `ganda repo audit`. They are
+  green only on the implementer's report.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
