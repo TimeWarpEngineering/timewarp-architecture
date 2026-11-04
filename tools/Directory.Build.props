@@ -21,27 +21,19 @@
          outside the repo, and a global config section needs an absolute path, which only the build
          knows. generated_code = true was tried and rejected: it also turns off the nullable context
          for those files, so the compiler reports CS8669 on every annotation.
-       tools/dev-cli ships in generated apps and source/analyzers does not, so the wiring has both
-       forms, as source/ and tests/ do: ProjectReference in the monorepo, the platform Analyzers
-       package when UseAnalyzerPackages is true (computed in the root props).
+         Reach: the bulk key silences every rule whose severity is not set by id. It covers the TWA*
+         rules and the IDE style rules. An id-level severity wins over the bulk key, so the CA rules
+         that AnalysisLevel latest-all sets by id still run on those files (CA1812 does; the root
+         NoWarn covers it). No config sets a TWA id severity for those paths, so TWA0038 stays off for
+         package content. A config that sets one by id would bypass this exemption.
+       The analyzer wiring itself is in the root Directory.Build.props, shared with source/ and
+       tests/; this file opts in. tools/dev-cli ships in generated apps and source/analyzers does not,
+       so the wiring's package form is the one a generated app uses.
        #endregion -->
 
-  <ItemGroup Label="Convention Analyzers" Condition="'$(UseAnalyzerPackages)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)../source/analyzers/timewarp-architecture-convention-analyzers/timewarp-architecture-convention-analyzers.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
-    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
-  </ItemGroup>
-  <ItemGroup Label="Convention Analyzers" Condition="'$(UseAnalyzerPackages)' == 'true'">
-    <PackageReference Include="$(TwArchitectureAnalyzersPackageId)" PrivateAssets="all" />
-    <CompilerVisibleProperty Include="TimeWarpSliceRoot" />
-    <CompilerVisibleProperty Include="UsingMicrosoftNETSdkBlazorWebAssembly" />
-  </ItemGroup>
-
-  <!-- template.json feeds TWA0010 (see source/Directory.Build.props). -->
-  <ItemGroup Condition="Exists('$(RepositoryRoot).template.config/template.json')">
-    <AdditionalFiles Include="$(RepositoryRoot).template.config/template.json" />
-  </ItemGroup>
+  <PropertyGroup Label="Convention Analyzers">
+    <EnableConventionAnalyzers>true</EnableConventionAnalyzers>
+  </PropertyGroup>
 
   <Target Name="ExemptPackageContentFromAnalyzers"
           BeforeTargets="CoreCompile"
