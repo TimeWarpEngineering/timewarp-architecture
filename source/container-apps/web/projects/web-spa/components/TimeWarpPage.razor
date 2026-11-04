@@ -2,7 +2,6 @@
 @inherits BaseComponent
 @using TimeWarp.Architecture.Features.Applications
 @using TimeWarp.Architecture.Features.Profiles
-@using TimeWarp.Features.Theme
 @using TimeWarp.Identity
 @*
   Purpose: Single app-shell page component. Pages wrap content in
@@ -35,6 +34,8 @@
   ModalContainer beside AssemblyInfoModal and owns its JS registration; only this shell hosts it.
   The app-bar logo is BrandOptions (source, alt, width, height). This shell authors the img so
   the isolated .twe-brand__logo rule can match it. Height is --twe-logo-height from /brand.css.
+  Task 465: the app-bar theme button dispatches ApplicationState.ToggleTheme, which switches
+  Fluent's stored mode. tokens.css keys the dark --twe-* values on Fluent's body[data-theme].
   Task 290: all shell CSS is in TimeWarpPage.razor.css (CSS isolation), which the browser loads in
   <head> before first paint. A <style>@(...)</style> block here was HTML-encoded by prerender and
   dropped until interactive, so the shell flashed unstyled. Components author no <style> elements
@@ -111,6 +112,8 @@
   private async Task ShowAssemblyInfoModalAsync() => await ApplicationState.SetActiveModal(AssemblyInfoModal.ModalId);
   private Task OpenAskPanelAsync() => AgentSurfaceState.OpenAskPanel();
   private Task ToggleNavAsync() => ApplicationState.ToggleMenu();
+
+  private Task ToggleThemeAsync() => ApplicationState.ToggleTheme();
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
@@ -229,7 +232,11 @@
           }
           <div class="twe-appbar__actions">
             <FluentButton Appearance="ButtonAppearance.Subtle" data-qa="AskAiButton" OnClick="OpenAskPanelAsync">@AgentSurfaceState.AskLabel</FluentButton>
-            <FluentButton Appearance="ButtonAppearance.Subtle" OnClick=@(async () => await ThemeState.Update(ThemeState.Theme.Dark))>
+            <FluentButton Appearance="ButtonAppearance.Subtle"
+                          data-qa="ThemeToggle"
+                          Title="Switch light or dark theme"
+                          aria-label="Switch light or dark theme"
+                          OnClick="ToggleThemeAsync">
               <FluentIcon Value=@(new Icons.Regular.Size24.DarkTheme()) Color="Color.Default" />
             </FluentButton>
             <Profile />

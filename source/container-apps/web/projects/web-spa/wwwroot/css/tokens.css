@@ -1,7 +1,10 @@
 /* TimeWarp.Architecture design tokens — the single source of truth for color and type.
    Plain CSS custom properties (no Tailwind). Brand = the three colors of the TimeWarp
    Enterprises SOLID logo (images/timewarp/timewarp-enterprises.svg): purple + blue are the
-   dominant brand colors, green is a highlight. Consume via var(--twe-*); never hard-code. */
+   dominant brand colors, green is a highlight. Consume via var(--twe-*); never hard-code.
+   :root holds the light values. The body[data-theme="dark"] block at the end overrides the
+   neutral, semantic, and role tokens for Fluent's dark mode. Brand keys are never overridden
+   there, so /brand.css stays the one brand source in both modes. */
 :root {
   /* Brand (TimeWarp Enterprises logo) */
   --twe-purple: #55409c;
@@ -49,6 +52,24 @@
      These two clear 4.5:1 on paper and on a 12% mix of the semantic color into paper. */
   --twe-on-positive: #14784a;
   --twe-on-warning: #92400e;
+  --twe-on-info: var(--twe-blue-deep);
+
+  /* Status tints: badge fills under the on-* text above. */
+  --twe-positive-tint: #e5f7ec;
+  --twe-warning-tint: #fef3c7;
+  --twe-info-tint: #e6f4fa;
+
+  /* Role colors for text on paper. Each names the brand key it reads, so /brand.css still
+     drives it. The dark block swaps each to a light brand step that reads on dark paper. */
+  --twe-link: var(--twe-blue);
+  --twe-link-hover: var(--twe-secondary-active);
+  --twe-primary-text: var(--twe-primary);
+  --twe-accent-text: var(--twe-purple);
+  --twe-on-accent-tint: var(--twe-purple-deep);
+
+  /* Inverse surface: a hint chip that contrasts with the page in either mode. */
+  --twe-inverse: #1a1d28;
+  --twe-on-inverse: #ffffff;
 
   /* Radius + elevation */
   --twe-radius: 12px;
@@ -134,4 +155,59 @@ html {
   html[data-twe-nav="rail"] {
     --twe-nav-rail: 1;
   }
+}
+
+/* Dark mode (task 465). Fluent sets body[data-theme="dark"] when its mode is dark: a stored
+   choice from the shell's theme button (ApplicationState.ToggleTheme), or the OS preference
+   when no mode is stored and the OS changes during the session. Fluent paints its own
+   components from its dark ramp. These overrides make every --twe-* surface follow.
+   Neutrals are Fluent 2's dark neutrals, so app paper sits with Fluent's surfaces:
+   page #292929 (colorNeutralBackground1, the body fill Fluent's default sheet applies),
+   cards one step up, the nav column and subtle fills one step down.
+   Semantic colors are the lighter steps that clear 4.5:1 on dark paper and on a 12% tint.
+   --twe-scrim is computed on :root from the light ink, so the backdrop stays dark. */
+body[data-theme="dark"] {
+  color-scheme: dark;
+
+  --twe-ink: #ffffff;
+  --twe-ink-2: #d6d6d6;
+  --twe-muted: #adadad;
+  --twe-rule: rgba(255, 255, 255, 0.12);
+  --twe-background: #292929;
+  --twe-paper: #303030;
+  --twe-paper-2: #1f1f1f;
+
+  --twe-danger: #ef9a9a;
+  --twe-warning: #f5a524;
+  --twe-positive: #54b054;
+  --twe-on-positive: #9fd89f;
+  --twe-on-warning: #f9d36b;
+  --twe-on-info: var(--twe-blue-bright);
+
+  --twe-positive-tint: color-mix(in srgb, var(--twe-positive) 18%, var(--twe-paper));
+  --twe-warning-tint: color-mix(in srgb, var(--twe-warning) 18%, var(--twe-paper));
+  --twe-info-tint: color-mix(in srgb, var(--twe-blue) 24%, var(--twe-paper));
+
+  --twe-link: var(--twe-blue-bright);
+  --twe-link-hover: var(--twe-blue-bright);
+  --twe-primary-text: var(--twe-purple-soft);
+  --twe-accent-text: var(--twe-purple-soft);
+  --twe-on-accent-tint: var(--twe-purple-soft);
+
+  --twe-inverse: #f5f5f5;
+  --twe-on-inverse: #1a1d28;
+
+  --twe-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --twe-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  /* FluentNav fills its items with colorNeutralBackground4, near black in dark mode. These are
+     FluentNav's own custom-property hooks; they keep items on the nav column fill. Light mode
+     keeps Fluent's default. */
+  --nav-bg-color: var(--twe-paper-2);
+  --nav-bg-color-hover: color-mix(in srgb, var(--twe-ink) 8%, var(--twe-paper-2));
+}
+
+/* The root scrollbar and canvas belong to <html>, outside the body rule. */
+:root:has(> body[data-theme="dark"]) {
+  color-scheme: dark;
 }

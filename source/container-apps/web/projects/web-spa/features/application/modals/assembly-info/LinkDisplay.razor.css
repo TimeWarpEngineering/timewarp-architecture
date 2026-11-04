@@ -3,6 +3,6 @@
 }
 
 .twe-ext-link a {
-  color: var(--twe-blue);
+  color: var(--twe-link);
   word-break: break-word;
 }

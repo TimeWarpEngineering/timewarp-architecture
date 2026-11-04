@@ -27,7 +27,7 @@
 
 .twe-tabs__tab.is-active,
 .twe-tabs__tab.is-active:hover {
-  color: var(--twe-primary);
+  color: var(--twe-primary-text);
   border-bottom-color: var(--twe-primary);
 }
 

@@ -23,6 +23,24 @@ Kind: BugReport. Filer body: "Ah, my eyes!" plus one PNG screenshot attachment
 - Do not change the feedback item's status on the live server; that is the admin's step after the
   release ships. Note the item id in Results.
 
+## Goal (implementer restatement)
+
+When the app is in dark mode, every app surface must be dark and legible. Dark mode comes from
+the OS preference (Fluent's default mode is "system") or from the shell's theme button. Today
+Fluent paints its own components dark while the `--twe-*` tokens stay light.
+The fix is at the token layer (`tokens.css` dark overrides keyed on Fluent's
+`body[data-theme="dark"]`, no per-page patch, no `<style>`, no Tailwind, no TS patch of Fluent),
+and the shell's theme button must actually switch Fluent's mode through a State action.
+
+Acceptance:
+- Before screenshots (dark, unfixed) and after screenshots (dark, fixed) of every navigable
+  top-level page and the Ask AI modal are in `kitchen/` on this task.
+- Light theme renders the same as before (same token values when `data-theme` is not dark).
+- Hard-coded light colors that bypass tokens (StatusBadge tints, inverse hint surface) are tokenized.
+- A Playwright test proves dark mode darkens the shell surfaces and the theme button toggles.
+- `dev build` 0 warnings, Playwright suite passes, `ganda repo audit` clean.
+- Feedback item `01a12f40-fd5d-77ca-beff-b33d0d65c964` is not touched on the live server; it is noted in Results.
+
 ## Checklist
 
 - [ ] Reproduce dark-theme break with attached screenshot
