@@ -102,6 +102,15 @@ Acceptance:
   handlers, mapping, migration, and tests; ran the gates listed under Results. Boy-scout:
   `ganda repo audit --fix` landed this kitchen and set the executable bit on the new runfile.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b43ec5fa-1193-46eb-9ae7-20ead1881e21, max-turns 500, Done — 2026-11-04T20:10:47Z
+- 2026-11-05 review oracle (Claude Opus 5.5, ganda task work, tw-implementation-review, effort 3,
+  roster general): round 1 found 1 open suggestion (M1). A fix pass was requested; there is no
+  disposition yet.
+- 2026-11-05 implement-fix-2 (Claude Opus 5.5, ganda task work): fixed M1. Added
+  `UpdateThenDelete_Roundtrip.Conflict_Given_Product_Role` in `roles-endpoint-tests.cs`, which
+  covers all four product roles. Integration suite: 436 passed, 1 skipped (the skip existed before
+  this change). Mutation check: with the handler's `IsProductRole` branch disabled, the new test fails
+  (the store throws, so the endpoint answers 500, not 409). The handler was restored unchanged.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 95a529cd-e494-4ef5-8ba5-af5362ab4c30, max-turns 200, artifacts general.md, merged.md — 2026-11-04T20:14:22Z
 
 ## Results
 
@@ -158,6 +167,9 @@ Acceptance:
   stray grants, migrate to latest).
 - `features/admin/roles/in-memory-role-store-tests.cs`: seed, snapshot reads, write errors,
   delete guard, read ports.
+- `web-server-integration-tests/features/admin/roles/roles-endpoint-tests.cs`
+  `Conflict_Given_Product_Role`: `DeleteRole` for each `RoleIds.All` id answers 409, and
+  `GetRole` still resolves the role afterward (review M1).
 - Existing tests that wrote grants through the retired `Set...` methods now write through the
   aggregate (runfiles use the real `InMemoryRoleStore`; integration tests use a
   `RoleGrantTestExtensions` helper over `IRoleStore`).
@@ -176,6 +188,16 @@ Acceptance:
   `2.0.0-beta.31`. beta.32 is unreleased, so this change ships in it. The `<Version>` and platform
   pins are already beta.32. A second bump would skip a version, so I did not make one.
 
+### Review
+
+- Rounds: 1 (in progress). Effort 3, roster: general.
+- Round 1 counts: bug 0, suggestion 1 (M1, fixed in the fix pass), nit 0.
+- M1: no test covers `DeleteRole` answering 409 for a product role. The domain guard and the store
+  refusals are tested. Fix: add an endpoint test in `roles-endpoint-tests.cs`.
+- M1 fixed: `Conflict_Given_Product_Role` added. A mutation check showed it catches a removed guard.
+- Disposition: pending round 2.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+
 ### How to validate
 
 Smoke:
@@ -184,16 +206,22 @@ Smoke:
 ./bin/dev build
 ./bin/dev test --group fast
 ./bin/dev test --group integration
+(cd tests/container-apps/web/web-server-integration-tests && dotnet run)
 (cd tests/container-apps/web/web-infrastructure-tests && dotnet test)
 dotnet run source/container-apps/web/features/admin/roles/in-memory-role-store-tests.cs
 ```
 
 Expect: build 0 warnings. Every group passes. web-infrastructure-tests runs `Role_Catalog_Agreement_`,
 `Role_Migration_Seed_`, `Role_Model_Mapping_`, and `RoleStore_.Ef` with no `[SKIP]` when Docker is
-up. Manual check: `dev run`, sign in as an admin, open Admin → Roles. The four product roles are
+up. web-server-integration-tests passes (436 passed, 1 skipped), including
+`UpdateThenDelete_Roundtrip.Conflict_Given_Product_Role` (409 for each product role delete). Manual check: `dev run`, sign in as an admin, open Admin → Roles. The four product roles are
 listed. Create a role, edit its permissions and agent scopes, reload (the changes persist in
 Postgres), and delete it. Deleting Member, Operator, Administrator, or Developer answers
 409 "Product role cannot be deleted".
+
+## Review
+
+- Round 1: Blocked — open M1
 
 ## Notes
 
