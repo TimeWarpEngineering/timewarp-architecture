@@ -56,6 +56,34 @@ role delete guard), store tests in-memory and EF, Playwright admin roles flows u
 `ganda repo audit`, `dev template-smoke --matrix` (postgres off must still build). Bump
 `<Version>` and the platform pins (this touches `web-domain` content that ships in the template).
 
+## Goal (implementer restatement)
+
+Make Role a real hand-written aggregate that owns its permission ids and agent scopes, replacing
+the in-memory `RoleStore` dictionary and the write side of the two grant stores.
+
+Acceptance:
+- `web-domain` has `RoleId` ([TypedId]) and `Role : Entity<RoleId>, IAggregateRoot` in the Profile
+  shape: private ctor, two fail-closed `Create` overloads, `UpdateDetails`, full-replace
+  `SetPermissions` / `SetAgentScopes`, value-record children (128 / 64 max length), private nested
+  `Invariants` (NotEmpty on Name/Description, each child in its catalog).
+- The domain carries its own copies of `PermissionIds.All`, `AgentScopes.All`, and `RoleIds.All`;
+  a test under `tests/` fails when a copy drifts from its source.
+- Product roles cannot be deleted (domain rule, recorded in Design); `delete-role` returns 409 for them.
+- Protected core stays in `AdminLockoutGuards` (application, 409).
+- `IRoleStore` (Find, FindMany, List, Add, Update, Remove; save inside each) with an in-memory
+  snapshot store (seeded with the four product roles and `RolePermissionSeed` grants) and an EF store.
+- The seven roles handlers use `IRoleStore`; entity-to-response mapping is hand-written per handler.
+- `IRolePermissionStore` / `IRoleAgentScopeStore` keep only reads, implemented in the Roles slice
+  over the aggregate (in-memory over `InMemoryRoleStore`, EF over the owned tables). `Set...`,
+  `RolePermissionGrant`, `RoleAgentScopeGrant`, and their configurations are gone.
+- EF mapping: `identity.roles`, `OwnsMany` onto the existing `identity.role_permissions` and
+  `identity.role_agent_scopes` tables (same keys, columns, lengths), field access to backing lists.
+- One migration: create `identity.roles`, `InsertData` the four product roles, insert parents for
+  stray role ids already in the grant tables (and principal_roles), then add the FKs; the
+  `principal_roles` FK decision is recorded. A test checks the seeded ids equal `RoleIds.All`.
+- Gates: `dev build` 0 warnings, Jaribu tests (aggregate, stores in-memory + EF), existing admin
+  roles flows unchanged, `ganda repo audit`, `dev template-smoke --matrix`, version + pins bumped.
+
 ## Checklist
 
 - [ ] Role aggregate, typed id, Invariants, catalog agreement test
