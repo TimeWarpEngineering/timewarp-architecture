@@ -14,7 +14,7 @@
 // Jaribu runfile for task 314: the FeedbackItem status and thread mutations and their
 // invariants, plus the authorization surface: each contract's [EndpointAuthorize] policy and the
 // Administrator-only seed. HTTP 401/403 and no-PII proofs live in
-// web-server-integration-tests (admin-feedback-authorization-tests).
+// web-server-integration-tests (admin-feedback-authorization-*-tests).
 #endregion
 
 //-:cnd:noEmit

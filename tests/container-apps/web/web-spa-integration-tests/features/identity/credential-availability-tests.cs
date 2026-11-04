@@ -11,7 +11,7 @@
 // server's real CredentialRules and applies the real effects (revoke/rename), so "the follow-up fetch
 // changes the flags" is observed end to end on the client; the flags against the real handler are
 // pinned in web-server-integration-tests (credential-availability-tests), and the rendered buttons in
-// the prerender facts (protected-page-deep-link-tests) and CredentialList's render tests.
+// the prerender facts (protected-page-deep-link-*-tests) and CredentialList's render tests.
 // CanRevokeOverride makes the server's answer contradict the credential count, so "follows the
 // server" is distinguishable from "counts on the client". The page buttons dispatch the same action
 // then FetchCredentials this file sends (there is no bUnit for the click itself).

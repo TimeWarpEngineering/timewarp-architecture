@@ -14,7 +14,7 @@
 // behavior over in-memory stores with the real PermissionEvaluator: the profile appears only
 // for a caller holding admin.profiles.read, is null for a principal with no profile row (and
 // no row is created), and a missing principal is 404. HTTP 401/403 proofs live in
-// web-server-integration-tests (principals-authorization-tests).
+// web-server-integration-tests (principals-authorization-*-tests).
 #endregion
 
 //-:cnd:noEmit

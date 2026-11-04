@@ -15,7 +15,7 @@
 // PermissionEvaluator: PII gating (null display name and email without admin.profiles.read, 403
 // for search or profile sorts), search by name or email, each sort column both ways, and the
 // endpoint policy plus the Administrator-only seed. HTTP 401/403 proofs live in
-// web-server-integration-tests (principals-authorization-tests).
+// web-server-integration-tests (principals-authorization-*-tests).
 #endregion
 
 //-:cnd:noEmit
