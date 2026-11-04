@@ -3,6 +3,7 @@
 // and authenticated forbid stays 403, plus the authenticated admin pages (task 154, 183).
 #endregion
 
+#region Design
 // Real HTTP through the ASP.NET pipeline (not WebTestServerApplication.Send / mediator) — only that
 // path exercises identity-session cookie OnRedirectToLogin / OnRedirectToAccessDenied. Isolated
 // HttpClient per test with AllowAutoRedirect=false so Location and status are observable. Passkey
@@ -18,6 +19,7 @@
 // so a silently-anonymous prerender state fails the test rather than passing on status alone.
 // Settings and Passkeys prerender facts (tasks 229, 246, 282, 253) are in
 // protected-page-deep-link-settings-tests.
+#endregion
 
 namespace ProtectedPageDeepLink_;
 

@@ -3,6 +3,7 @@
 // availability and hints follow the server flags (tasks 229, 246, 282, 253).
 #endregion
 
+#region Design
 // Real HTTP through the ASP.NET pipeline: an isolated no-redirect HttpClient per test fetches the
 // prerendered page with a passkey session cookie (minted via CredentialCeremonyHelpers), and the
 // assertions read the rendered button tags.
@@ -19,6 +20,7 @@
 // auth-state provider derives the fingerprint claim from the cookie principal (no HTTP loopback).
 // The redirect, forbid and Ok_Page_* tripwire cases (tasks 154, 183) are in
 // protected-page-deep-link-pages-tests.
+#endregion
 
 namespace ProtectedPageDeepLink_;
 

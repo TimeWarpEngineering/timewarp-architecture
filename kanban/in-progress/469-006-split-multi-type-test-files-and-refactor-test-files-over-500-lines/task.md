@@ -58,7 +58,9 @@ Single large class:
 ## Review
 
 - Round 1: Blocked — open M1, M2, M3, M4, M5, M6, M7, M8, M9
-- Round 1 fix pass: M1–M9 fixed (dispositions in `review/round-1/merged.md`); round 2 pending
+- Round 1 fix pass: M1–M9 fixed (dispositions in `review/round-1/merged.md`)
+- Round 2: Blocked — open M10 (`review/round-2/merged.md`)
+- Round 2 fix pass: M10 fixed (disposition in `review/round-2/merged.md`)
 
 ## Notes
 
@@ -97,6 +99,14 @@ fast, integration and playwright groups green; `ganda repo audit` passes.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 7ac650f1-9923-409a-ad64-528e17cfcca2, max-turns 200, artifacts general.md, merged.md — 2026-11-03T23:43:50Z
 - Fix pass round 1 (2026-11-04): implementer-claude fixed M1–M9, re-ran build, fast, integration and
   playwright, and ran audit (all green). Committed on the task branch.
+
+- Review oracle round 2 (2026-11-04): reviewer-claude (claude, vendor anthropic, model
+  claude-opus-5-5). Effort 3, roster general, turn cap 200. M1–M9 are verified fixed. 1 new nit (M10)
+  is open, and a fix pass is requested.
+- Fix pass round 2 (2026-11-04): implementer-claude wrapped the Design prose of both
+  protected-page-deep-link halves in `#region Design` (M10). Re-ran build (0 warnings), fast 14/14 and integration 8/8. `ganda repo audit` exits 0 with
+  one warning: kanban-landed flags nine other tasks' claims (070-001, 104-024..026, 123, 141, 198,
+  244, 454) with no worktree on this machine. Those are other ids' claims, so they are not fixable here.
 
 ## Results
 
@@ -214,6 +224,20 @@ and playwright project passes, with dev-cli-tests at 342 and web-spa-playwright-
 - M1 (bug): the new `HostGraphLease` shares a host across classes through a process-static field,
   which the host-lane rule forbids. The split classes should go back to per-class C-create hosts.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Round 2 (2026-11-04), effort 3, roster general. The scope was the fix delta `7d1df50ac..10ec4bcb6`.
+  - Final counts: bug 1 fixed; suggestion 3 fixed; nit 5 fixed and 1 open (M10).
+  - There is no disposition yet. A fix pass is requested for M10: wrap the loose Design prose in
+    `#region Design` in `protected-page-deep-link-pages-tests.cs` and
+    `protected-page-deep-link-settings-tests.cs`.
+  - The reviewer re-ran the gates:
+    - `dev build`: 0 warnings, 0 errors.
+    - fast: 14 of 14 projects passed.
+    - integration: 8 of 8 projects passed.
+    - The line-count loop printed nothing.
+    - `HostGraphLease` grep: nothing found.
+  - Playwright was not re-run in round 2.
+  - Paths: `review/round-2/general.md`, `review/round-2/merged.md`.
+  - Fix pass: M10 fixed. Both protected-page-deep-link halves now have a `#region Design`.
 
 ## Learnings
 
