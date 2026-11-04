@@ -3,6 +3,15 @@
 // BaseFastEndpoint class per valid contract (route, auth, binder, tags, OpenAPI summary).
 #endregion
 
+#region Design
+// Endpoint summary order (task 472). The first non-empty source wins: XML <summary> on the
+// nested Query/Command, then [Operation(Description = ...)] on that request, then XML <summary>
+// on the outer [ApiEndpoint] static class. With none of them the summary is empty and no
+// s.Summary line is emitted. EndpointDocumentationResolver implements the order (remarks too).
+// The same text goes into the generated class's /// comment (XML-escaped) and into the
+// Summary(...) string literal (C#-escaped). The resolver joins wrapped lines into one line.
+#endregion
+
 namespace TimeWarp.Architecture.Analyzers;
 
 using System.Collections.Generic;
@@ -63,10 +72,10 @@ internal static class FastEndpointEmitter
              namespace {{metadata.Namespace}};
 
              /// <summary>
-             /// {{metadata.Summary}}
+             /// {{EscapeForXmlComment(metadata.Summary)}}
              /// </summary>
              /// <remarks>
-             /// {{metadata.Description}}
+             /// {{EscapeForXmlComment(metadata.Description)}}
              /// </remarks>
              public class {{metadata.ClassName}}Endpoint : BaseFastEndpoint<{{metadata.ClassName}}.{{requestType}}, {{metadata.ClassName}}.Response>
              {
@@ -182,4 +191,10 @@ internal static class FastEndpointEmitter
 
   private static string EscapeForStringLiteral(string value)
     => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+
+  private static string EscapeForXmlComment(string value)
+    => value
+      .Replace("&", "&amp;", StringComparison.Ordinal)
+      .Replace("<", "&lt;", StringComparison.Ordinal)
+      .Replace(">", "&gt;", StringComparison.Ordinal);
 }

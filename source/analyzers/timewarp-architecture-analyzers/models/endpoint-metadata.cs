@@ -6,11 +6,11 @@
 #region Design
 // One flat DTO decouples template emission from Roslyn symbol traversal, so the generated-code
 // template can change without touching symbol-walking logic.
-// OpenAPI summary/description come from the Query/Command XML docs — the contract is the single
-// authoring point for API documentation. An [EndpointAllowAnonymous] reason is appended to that
-// description ("Intentionally anonymous. …") so a public GET is not mistaken for a dropped 401.
-// When the symbol carries no documentation comment, ContractDocumentation (the compiler XML file
-// supplied as an AdditionalFile) fills the same summary and remarks.
+// OpenAPI summary/description come from the contract — the single authoring point for API
+// documentation. EndpointDocumentationResolver owns the order: request XML summary, then
+// [Operation] Description, then outer-class XML summary (its Design region). An
+// [EndpointAllowAnonymous] reason is appended to the description ("Intentionally anonymous. …")
+// so a public GET is not mistaken for a dropped 401.
 // Tags default to the leaf namespace under Features (…Features.Admin.Roles → "Roles"), keeping
 // OpenAPI grouping aligned with the vertical-slice Id without per-endpoint annotation.
 // [OpenApiTags] is additive; Distinct() de-dupes.
@@ -238,26 +238,6 @@ internal sealed record EndpointEmitModel(
         property.DeclaredAccessibility == Accessibility.Public &&
         !property.IsStatic);
 
-    string summary = string.Empty;
-    string description = string.Empty;
-    string? xmlDoc = requestClass.GetDocumentationCommentXml();
-    if (!string.IsNullOrEmpty(xmlDoc))
-    {
-      summary = ExtractXmlContent(xmlDoc, "summary");
-      description = ExtractXmlContent(xmlDoc, "remarks");
-    }
-
-    if (summary.Length == 0 && description.Length == 0 && documentation is not null)
-    {
-      string? documentationId = DocumentationCommentId.CreateDeclarationId(requestClass);
-      if (documentationId is not null
-        && documentation.TryGetMember(documentationId, out ContractMemberDocumentation member))
-      {
-        summary = member.Summary;
-        description = member.Remarks;
-      }
-    }
-
     string? authorizationPolicy = null;
     string? authenticationSchemes = null;
     string? roles = null;
@@ -291,6 +271,8 @@ internal sealed record EndpointEmitModel(
       bool? operationDestructive,
       bool? operationOpenWorld
     ) = ReadOperation(requestClass);
+    (string summary, string description) =
+      EndpointDocumentationResolver.Resolve(symbol, requestClass, operationDescription, documentation);
 
     return new EndpointEmitModel(
       Namespace: ns,
@@ -436,19 +418,5 @@ internal sealed record EndpointEmitModel(
     }
 
     return null;
-  }
-
-  private static string ExtractXmlContent(string xmlDoc, string elementName)
-  {
-    string startTag = $"<{elementName}>";
-    string endTag = $"</{elementName}>";
-    int startIndex = xmlDoc.IndexOf(startTag, StringComparison.Ordinal);
-    if (startIndex == -1) return string.Empty;
-
-    startIndex += startTag.Length;
-    int endIndex = xmlDoc.IndexOf(endTag, startIndex, StringComparison.Ordinal);
-    if (endIndex == -1) return string.Empty;
-
-    return xmlDoc.Substring(startIndex, endIndex - startIndex).Trim();
   }
 }

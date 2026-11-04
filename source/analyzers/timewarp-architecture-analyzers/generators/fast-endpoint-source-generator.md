@@ -17,6 +17,8 @@ The FastEndpointSourceGenerator is a Roslyn-based source generator that automati
 
 3. **OpenAPI Documentation**
    - Extracts documentation from XML comments
+   - Summary order: request (Query/Command) XML `<summary>`, then `[Operation(Description = ...)]`,
+     then the outer `[ApiEndpoint]` class XML `<summary>`
    - Uses feature folder structure for tags
    - Supports explicit OpenAPI configuration via attributes
    - Preserves XML documentation in generated endpoints
