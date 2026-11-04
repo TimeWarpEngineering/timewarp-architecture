@@ -2,11 +2,11 @@
 
 ## Budget (by-diff)
 
-- Lines changed: 329
-- Effort: 2
+- Lines changed: 175
+- Effort: 1
 - TCB hits: none
 - Roster axes: general
-- Turn cap: 120 (--max-turns; cursor uncapped)
+- Turn cap: 80 (--max-turns; cursor uncapped)
 
 ## Ground rules
 
@@ -25,3 +25,13 @@
 **Effort:** 2 (by-diff budget); roster axes: general
 **Reviewer roster:** general
 **Session IDs:** review-2 oracle (claude, claude-opus-5-5), ganda task work review node 2026-11-04
+
+## Round 3 — task 470
+
+**Date:** 2026-11-04
+**Host task:** kanban/in-progress/470-decide-and-wire-which-convention-analyzers-apply-under-tools-twa0038-line-cap-not-enforced-there/
+**Diff scope:** fix delta since round 2: `82383c9f0..e64099c4b` (round-2 base.sha 82383c9f0). Product files: `.editorconfig`, `tools/Directory.Build.props`, `tools/dev-cli/services/template-smoke/source-name-literal-scan-sets.cs`.
+**Plan / brief:** round-2 `merged.md` M1 disposition; task.md `## Goal (implementer restatement)`.
+**Effort:** 1 (by-diff budget, 175 lines); roster axes: general
+**Reviewer roster:** general
+**Session IDs:** review-3 oracle (claude, claude-opus-5-5), ganda task work review node 2026-11-04
