@@ -193,7 +193,7 @@ public class DesignSystemCatalog_Given_Wasm
     }
   }
 
-  private static async Task GrantDeveloperAsync(HostGraph graph)
+  internal static async Task GrantDeveloperAsync(HostGraph graph)
   {
     await using AsyncServiceScope scope = graph.Web!.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalStore principals = scope.ServiceProvider.GetRequiredService<IPrincipalStore>();

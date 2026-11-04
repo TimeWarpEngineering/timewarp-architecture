@@ -10,4 +10,4 @@
 .ds-swatch__chip[data-token="twe-paper"] { background: var(--twe-paper); }
 .ds-swatch__chip[data-token="twe-danger"] { background: var(--twe-danger); }
 .ds-swatch__name { font-size: var(--twe-text-body); font-weight: 600; margin-top: 8px; color: var(--twe-ink); }
-.ds-swatch__hex { font-size: var(--twe-text-helper); color: var(--twe-muted); }
+.ds-swatch__token { font-family: var(--twe-font-mono); font-size: var(--twe-text-helper); color: var(--twe-muted); }

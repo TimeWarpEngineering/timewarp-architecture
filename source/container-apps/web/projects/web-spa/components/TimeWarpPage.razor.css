@@ -202,11 +202,11 @@
   color: var(--twe-muted);
 }
 .twe-breadcrumb__link {
-  color: var(--twe-blue);
+  color: var(--twe-link);
   text-decoration: none;
 }
 .twe-breadcrumb__link:hover {
-  color: var(--twe-blue-deep);
+  color: var(--twe-link-hover);
   text-decoration: underline;
 }
 .twe-breadcrumb__link:focus-visible {

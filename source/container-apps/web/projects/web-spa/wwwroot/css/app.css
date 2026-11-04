@@ -28,8 +28,8 @@ body:has(dialog.twe-drawer:modal) {
 
 h1, h2, h3, h4, h5, h6, p, figure { margin: 0; }
 
-a { color: var(--twe-blue); text-decoration: none; }
-a:hover { color: var(--twe-secondary-active); text-decoration: underline; }
+a { color: var(--twe-link); text-decoration: none; }
+a:hover { color: var(--twe-link-hover); text-decoration: underline; }
 
 img, svg { display: block; max-width: 100%; }
 
@@ -110,7 +110,7 @@ fluent-button.twe-button-danger {
   z-index: 10000;
   display: none;
   pointer-events: none;
-  outline: 2px solid var(--twe-primary);
+  outline: 2px solid var(--twe-focus-ring);
   outline-offset: 2px;
   border-radius: var(--twe-radius-sm);
   background: color-mix(in srgb, var(--twe-primary) 8%, transparent);
@@ -141,7 +141,7 @@ fluent-button.twe-button-danger {
   max-width: min(40rem, 90vw);
   padding: var(--twe-space-2) var(--twe-space-3);
   border-radius: var(--twe-radius-sm);
-  background: var(--twe-ink);
-  color: var(--twe-on-primary);
+  background: var(--twe-inverse);
+  color: var(--twe-on-inverse);
   pointer-events: none;
 }

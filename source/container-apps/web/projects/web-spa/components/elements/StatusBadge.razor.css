@@ -11,13 +11,13 @@
 }
 .twe-badge__dot { width: 6px; height: 6px; border-radius: 50%; }
 
-.twe-badge--active   { background: #e5f7ec; color: #14784a; }
+.twe-badge--active   { background: var(--twe-positive-tint); color: var(--twe-on-positive); }
 .twe-badge--active .twe-badge__dot   { background: var(--twe-green); }
 .twe-badge--inactive { background: var(--twe-paper-2); color: var(--twe-muted); }
 .twe-badge--inactive .twe-badge__dot { background: var(--twe-muted); }
-.twe-badge--warning  { background: #fef3c7; color: #92400e; }
+.twe-badge--warning  { background: var(--twe-warning-tint); color: var(--twe-on-warning); }
 .twe-badge--warning .twe-badge__dot  { background: var(--twe-warning); }
-.twe-badge--info     { background: #e6f4fa; color: var(--twe-blue-deep); }
+.twe-badge--info     { background: var(--twe-info-tint); color: var(--twe-on-info); }
 .twe-badge--info .twe-badge__dot     { background: var(--twe-blue); }
 /* 12% danger into paper is 4.60:1 with --twe-danger. A mix into paper-2 drops under 4.5:1. */
 .twe-badge--error    { background: color-mix(in srgb, var(--twe-danger) 12%, var(--twe-paper)); color: var(--twe-danger); }

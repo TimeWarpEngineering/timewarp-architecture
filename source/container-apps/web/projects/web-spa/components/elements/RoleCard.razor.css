@@ -27,7 +27,7 @@
 }
 
 .twe-role-card:focus-visible {
-  outline: 2px solid var(--twe-purple-deep);
+  outline: 2px solid var(--twe-on-accent-tint);
   outline-offset: 2px;
 }
 
@@ -57,7 +57,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--twe-purple-deep);
+  color: var(--twe-on-accent-tint);
 }
 
 .twe-role-card__desc {

@@ -72,6 +72,17 @@ release to remove it.
    anything is interactive. Do not apply the theme from `OnAfterRenderAsync` (a fresh browser
    paints Fluent's default blue first). Chrome colors that must be right before any script runs
    (the shell's header/footer frame) use `--twe-*` tokens, not Fluent's runtime tokens.
+9. **Dark mode.** Fluent sets `body[data-theme="dark"]` when its mode is dark, and `tokens.css`
+   overrides the neutral, semantic, and role tokens under that selector. A component never
+   hard-codes a light color (a hex, `white`, a light tint). A status fill is a tint token
+   (`--twe-positive-tint`), and a brand color used as text is a role token (`--twe-link`,
+   `--twe-primary-text`, `--twe-accent-text`, `--twe-on-accent-tint`, `--twe-on-info`), so dark
+   mode gets its own value. A focus ring, a focused-field border, or a selection indicator is
+   non-text UI that needs 3:1 on paper: it reads `--twe-focus-ring` (or `--twe-primary-text` for
+   an active-tab underline), never `--twe-primary`, which is too dark on dark paper. Mixing into
+   `--twe-paper` (`color-mix(... var(--twe-paper))`) follows the mode by itself. The dark block
+   never overrides a brand key, so `/brand.css` stays the one brand source. The theme button dispatches `ApplicationState.ToggleTheme` (Fluent's
+   `IThemeService` stores the mode); no store keeps a second copy of the mode.
 
 ## Canonical in-repo example (the app shell)
 
@@ -116,6 +127,7 @@ Other examples: `FormField.razor.css` (`.twe-form-field__control ::deep > fluent
 | A FluentUI / child-component root (FluentStack, FluentNav, FluentLayout, fluent-field) | Native anchor + `.anchor ::deep .child` in `*.razor.css` |
 | Change a FluentUI primitive's internals (button bg, text color) | `::part()` + CSS variables |
 | Brand color / size / radius / chrome height | `var(--twe-*)` from `tokens.css` |
+| Text or fill that must change in dark mode | A role or tint token; a new one gets a value in the dark block |
 | Per-instance variation | Class or `data-*` attribute + rule in `*.razor.css` |
 | Layout shift while Fluent web components are undefined | Anchored `:not(:defined)` rule reserving the box |
 | Anything | **Never** a `<style>` element in a component; **never** inline `style=`; **never** a `global.css` dumping ground |

@@ -3,7 +3,7 @@
 .twe-status-page__code {
   margin: 0 0 4px;
   font-weight: 600;
-  color: var(--twe-purple);
+  color: var(--twe-accent-text);
 }
 
 .twe-status-page__title { margin: 0 0 8px; }
