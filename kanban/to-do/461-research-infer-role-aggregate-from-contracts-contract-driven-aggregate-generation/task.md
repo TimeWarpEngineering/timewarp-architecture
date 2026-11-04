@@ -63,18 +63,54 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 
 ## Checklist
 
-- [ ] Review the kitchen draft with Steven
+- [x] RFC authored: `rfc/rfc.md` (2026-11-04, six decisions; draft was stale on the second child set and on generator visibility)
+- [x] Ballots collected (three reviewers, one adversarial; two rounds)
+- [x] Tally and Steve resolves dissent (2026-11-05: analyzer, not generator; see rfc/rfc.md Final resolution)
+- [x] Fold-in: task split filed (472–476). Skill text lands with the analyzer in 474, where the rule exists.
+
+- [x] Review the kitchen draft with Steven (RFC ballot, two rounds, 2026-11-04/05)
 - [x] Decide `IRoleStore` vs `IRoleRepository` (IRoleStore, Steven 2026-11-02)
-- [ ] Confirm `RoleStore` has no lingering callers outside generated code, then retire it
-- [ ] Every hand-written piece has a generated partial hook or failing stub (stores EF + in-memory, handlers, migration + RoleIds seed, IRolePermissionStore/RolePermissionGrant retirement, OnSettingPermissions)
-- [ ] Decide attribute shape for the contract-level aggregate declaration
-- [ ] Decide migration and seed approach for compile-time RoleIds
-- [ ] Split implementation tasks (generator, Roles migration, OpenAPI summary fix)
+- [x] `RoleStore` callers confirmed: seven roles handlers; retirement is part of the Roles-by-hand task
+- [x] Hand-written pieces: superseded. Nothing is generated; the whole aggregate is hand-written (473) and the analyzer (474) is the build check
+- [x] Attribute shape: none. No declaration; the analyzer links by operation group and member name
+- [x] Migration and seed: InsertData in the FK migration from RoleIds (Decision 6, 3–0)
+- [x] Split: 472 OpenAPI summary fix, 473 Roles aggregate by hand, 474 contract-agreement analyzer, 475 FeedbackItem under the analyzer, 476 spike on generating application glue. Order aggregate stays with backlog 118.
 
 ## Session
+
+- RFC ballot: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-04), protocol `tw-rfc-ballot`
 
 - Created: 2933507 (2026-11-02)
 
 ## Notes
 
 Draft produced read-only from origin/HEAD `c12d08361` on 2026-11-01.
+
+RFC (2026-11-04): `rfc/rfc.md`. Steve chose the rfc-ballot protocol over back-and-forth because the
+declaration shape ships in the template. Finding while authoring: `web-domain` does not reference
+`web-contracts`, so the draft's generator cannot see contract syntax; that is Decision 1. The slice
+now has two child sets (permissions and agent scopes, task 466).
+
+Resolution (Steve, 2026-11-05): no entity generator. Domain hand-written, domain-first. An
+agreement analyzer in web-application checks the aggregate satisfies the contracts. Glue generation
+(projection + mutation call) is evaluated after the analyzer covers Roles and FeedbackItem.
+Documents: rfc/rfc.md, rfc/decision-2-code-comparison.md, rfc/option-2c-full-code.md,
+rfc/option-2c-minimal.md (the last three are the rejected generator shapes, kept as record).
+
+## Results
+
+- Outcome: **no entity generator.** Domain stays domain-first and hand-written; contracts stay
+  UI-first; an agreement analyzer in web-application (the only project that sees both) proves the
+  aggregate satisfies its operation group. Glue generation (projection, mutation call) is a later
+  spike. Steve, 2026-11-05.
+- Ballot record: `rfc/rfc.md` (six decisions, three reviewers across two vendors, two rounds,
+  every falsifiable claim re-verified against the worktree). Rejected generator shapes kept as code
+  in `rfc/decision-2-code-comparison.md`, `rfc/option-2c-full-code.md`, `rfc/option-2c-minimal.md`.
+- Decisions that survive into 473: hand-written Invariants (4B, 3–0); owned collections on the
+  existing grant tables with the authorization read ports kept (5A, 3–0); InsertData seed in the FK
+  migration plus a product-role delete guard (6A, 3–0).
+- Findings that changed the draft: web-domain cannot see contracts (and must not); the slice has
+  two child sets since task 466; protected core cannot be a domain hook; `partial void` does not
+  fail the build; both grant ports have platform readers; delete-role has no product-role guard.
+- Follow-on tasks: 472, 473, 474, 475, 476 (all in to-do, published). Third analyzer shape,
+  Order, belongs to backlog 118.
