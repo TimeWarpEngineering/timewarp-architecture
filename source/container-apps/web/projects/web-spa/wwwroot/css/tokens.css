@@ -67,6 +67,10 @@
   --twe-accent-text: var(--twe-purple);
   --twe-on-accent-tint: var(--twe-purple-deep);
 
+  /* Focus ring and focused-field border: a non-text indicator, so it needs 3:1 on paper
+     (WCAG 1.4.11). Light reads the primary purple; the dark block swaps a light brand step. */
+  --twe-focus-ring: var(--twe-primary);
+
   /* Inverse surface: a hint chip that contrasts with the page in either mode. */
   --twe-inverse: #1a1d28;
   --twe-on-inverse: #ffffff;
@@ -193,6 +197,7 @@ body[data-theme="dark"] {
   --twe-primary-text: var(--twe-purple-soft);
   --twe-accent-text: var(--twe-purple-soft);
   --twe-on-accent-tint: var(--twe-purple-soft);
+  --twe-focus-ring: var(--twe-purple-soft);
 
   --twe-inverse: #f5f5f5;
   --twe-on-inverse: #1a1d28;

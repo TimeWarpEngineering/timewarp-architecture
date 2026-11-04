@@ -110,7 +110,7 @@ fluent-button.twe-button-danger {
   z-index: 10000;
   display: none;
   pointer-events: none;
-  outline: 2px solid var(--twe-primary);
+  outline: 2px solid var(--twe-focus-ring);
   outline-offset: 2px;
   border-radius: var(--twe-radius-sm);
   background: color-mix(in srgb, var(--twe-primary) 8%, transparent);

@@ -77,9 +77,11 @@ release to remove it.
    hard-codes a light color (a hex, `white`, a light tint). A status fill is a tint token
    (`--twe-positive-tint`), and a brand color used as text is a role token (`--twe-link`,
    `--twe-primary-text`, `--twe-accent-text`, `--twe-on-accent-tint`, `--twe-on-info`), so dark
-   mode gets its own value. Mixing into `--twe-paper` (`color-mix(... var(--twe-paper))`) follows
-   the mode by itself. The dark block never overrides a brand key, so `/brand.css` stays the one
-   brand source. The theme button dispatches `ApplicationState.ToggleTheme` (Fluent's
+   mode gets its own value. A focus ring, a focused-field border, or a selection indicator is
+   non-text UI that needs 3:1 on paper: it reads `--twe-focus-ring` (or `--twe-primary-text` for
+   an active-tab underline), never `--twe-primary`, which is too dark on dark paper. Mixing into
+   `--twe-paper` (`color-mix(... var(--twe-paper))`) follows the mode by itself. The dark block
+   never overrides a brand key, so `/brand.css` stays the one brand source. The theme button dispatches `ApplicationState.ToggleTheme` (Fluent's
    `IThemeService` stores the mode); no store keeps a second copy of the mode.
 
 ## Canonical in-repo example (the app shell)

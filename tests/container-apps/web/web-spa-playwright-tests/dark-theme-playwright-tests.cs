@@ -22,6 +22,8 @@
 // light context and checks those. The button dispatches ApplicationState.ToggleTheme. A reload
 // keeps dark, because Fluent stores the mode, and a second click returns to the same light
 // values. With light stored, an OS switch to dark leaves the page light.
+// Focus rings and focused-field borders read --twe-focus-ring. Each page check resolves that
+// token and --twe-paper on a probe element and requires the 3:1 non-text contrast of WCAG 1.4.11.
 #endregion
 
 namespace DarkThemePlaywright_;
@@ -67,6 +69,25 @@ public class DarkTheme_Given_Shell
         }
       }
       return out;
+    }
+    """;
+
+  // Contrast ratio of --twe-focus-ring over --twe-paper, both resolved on a probe under body.
+  private const string FocusRingContrastScript =
+    """
+    () => {
+      const probe = document.createElement('div');
+      document.body.appendChild(probe);
+      const resolve = token => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
+      const channel = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      const luminance = text => {
+        const p = text.match(/[\d.]+/g).map(Number);
+        return 0.2126 * channel(p[0] / 255) + 0.7152 * channel(p[1] / 255) + 0.0722 * channel(p[2] / 255);
+      };
+      const ring = luminance(resolve('--twe-focus-ring'));
+      const paper = luminance(resolve('--twe-paper'));
+      probe.remove();
+      return (Math.max(ring, paper) + 0.05) / (Math.min(ring, paper) + 0.05);
     }
     """;
 
@@ -253,6 +274,12 @@ public class DarkTheme_Given_Shell
       failures.Add($"{label}: body text luminance {ink:0.000}");
     }
 
+    double focusRing = await page.EvaluateAsync<double>(FocusRingContrastScript);
+    if (!(focusRing >= 3))
+    {
+      failures.Add($"{label}: --twe-focus-ring contrast on paper {focusRing:0.00}:1");
+    }
+
     string[] bright = await page.EvaluateAsync<string[]>(BrightSurfacesScript);
     failures.AddRange(bright.Select(offender => $"{label}: {offender}"));
     return failures;
@@ -280,6 +307,7 @@ public class DarkTheme_Given_Shell
       .ShouldBe(LightPaper2);
     (await page.EvaluateAsync<string>("() => getComputedStyle(document.body).getPropertyValue('--twe-ink').trim()"))
       .ShouldBe(LightInk);
+    (await page.EvaluateAsync<double>(FocusRingContrastScript)).ShouldBeGreaterThanOrEqualTo(3);
   }
 
   private static string LuminanceOf(string expression) =>

@@ -55,7 +55,7 @@
 
 .twe-filter-select ::deep fluent-dropdown:focus-within::part(control),
 .twe-filter-select ::deep fluent-select:focus-within::part(control) {
-  border-color: var(--twe-primary);
+  border-color: var(--twe-focus-ring);
   background: var(--twe-paper);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--twe-primary) 24%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--twe-focus-ring) 24%, transparent);
 }
