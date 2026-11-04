@@ -68,12 +68,19 @@ release to remove it.
    upgraded box with a `:not(:defined)` rule anchored the same way (the shell's search field
    does this). The rule stops matching once the element is defined.
 8. **Theme on first paint.** `App.razor` renders `<body data-theme-color="#55409c"
-   data-theme="light">`; Fluent's `beforeStart` initializer builds the brand ramp from it before
-   anything is interactive. Do not apply the theme from `OnAfterRenderAsync` (a fresh browser
-   paints Fluent's default blue first). Chrome colors that must be right before any script runs
-   (the shell's header/footer frame) use `--twe-*` tokens, not Fluent's runtime tokens.
-9. **Dark mode.** Fluent sets `body[data-theme="dark"]` when its mode is dark, and `tokens.css`
-   overrides the neutral, semantic, and role tokens under that selector. A component never
+   data-theme="system">`, and its first child is the `BrandThemeScript` classic script. That script
+   sets `body[data-theme]` before any body content is parsed: the stored Fluent mode
+   (`fluentui-blazor:theme-settings`) when it is `light` or `dark`, else `dark` when
+   `prefers-color-scheme: dark` matches, else `light`. It never stores a mode, so with nothing
+   stored Fluent keeps following the OS. Keep the script first in `<body>`; anything rendered
+   above it can paint in the wrong mode. Fluent's `beforeStart` initializer then builds the brand
+   ramp from `data-theme-color` and reads the same mode. Do not apply the theme or the mode from
+   `OnAfterRenderAsync` (a fresh browser paints Fluent's default blue, and a dark OS paints light,
+   first). Chrome colors that must be right before any script runs (the shell's header/footer
+   frame) use `--twe-*` tokens, not Fluent's runtime tokens.
+9. **Dark mode.** `body[data-theme="dark"]` marks dark mode. `BrandThemeScript` sets it on first
+   paint (rule 8), Fluent sets or removes it when its mode changes, and `tokens.css` overrides
+   the neutral, semantic, and role tokens under that selector. A component never
    hard-codes a light color (a hex, `white`, a light tint). A status fill is a tint token
    (`--twe-positive-tint`), and a brand color used as text is a role token (`--twe-link`,
    `--twe-primary-text`, `--twe-accent-text`, `--twe-on-accent-tint`, `--twe-on-info`), so dark
