@@ -90,14 +90,18 @@ internal sealed class ContractDocumentation
     }
   }
 
-  private static string Normalize(string? value)
+  internal static string Normalize(string? value)
   {
     if (string.IsNullOrWhiteSpace(value))
     {
       return string.Empty;
     }
 
-    string[] lines = value.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-    return string.Join(' ', lines.Select(static line => line.Trim()));
+    // Trim before dropping empties: the line before a closing tag is indentation only.
+    IEnumerable<string> lines = value
+      .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+      .Select(static line => line.Trim())
+      .Where(static line => line.Length > 0);
+    return string.Join(' ', lines);
   }
 }
