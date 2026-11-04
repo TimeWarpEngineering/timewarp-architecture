@@ -57,7 +57,7 @@ Acceptance:
 - Fix pass for round 2: M1–M4 fixed (dispositions in `review/round-1/merged.md`)
 - Round 2: Blocked — open M1
 - Fix pass for round 3: M1 fixed (disposition in `review/round-2/merged.md`)
-
+- Round 3: Done
 ## Learnings
 
 - Round-1 reviewer misread (M1): template.json `sources` excludes do not decide what ships. The template
@@ -96,6 +96,9 @@ beyond these.
 - Fix pass (implement-fix-3 oracle, claude-opus-5-5, 2026-11-04): fixed M1. The `.editorconfig` comment and
   the `tools/Directory.Build.props` Design region now say tools/ is monorepo-only; the scan-set entry is
   removed; the Results lines are corrected. Gates re-run (see Results).
+- Review round 3 (review-3 oracle, claude claude-opus-5-5, effort 1, roster: general, turn cap 80),
+  2026-11-04: the delta is `82383c9f0..e64099c4b`. M1 is fixed; no new findings. Disposition: clean.
+  Review files: `review/round-3/general.md`, `review/round-3/merged.md`, `review/disposition.md`.
 
 ## Results
 
@@ -183,6 +186,12 @@ Gates run (implement pass):
 - Fix pass 3: M1 fixed; disposition in `review/round-2/merged.md`. Round 3 re-reviews.
 - The reviewer re-ran these gates: dev-cli and agent-identity-cli builds (0 warnings), dev-cli tests
   342/342, and `ganda repo audit` (exit 0, only the pre-existing warnings).
+- Round 3 (effort 1, general): the delta is `82383c9f0..e64099c4b`. M1 re-verified fixed against the
+  template pack project's Content items (no tools/ path); the scan-set file matches master. No new findings.
+  Gate re-run by the reviewer: `dotnet build tools/dev-cli/dev.cs` (0 warnings, 0 errors).
+- **Review disposition: clean.** Rounds: 3. Roster: general (effort 1 / 2 / 1). Final counts: bug 0,
+  suggestion 4 fixed (M1–M4), nit 0; 0 open, 0 wontfix. Files: `review/review-framework.md`,
+  `review/round-3/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
