@@ -6,17 +6,18 @@
          IDE0211 is a .NET 11 file-based-app false positive: dev.cs stays top-level so
          `dotnet run tools/dev-cli/dev.cs` (CI workflow + template-smoke) keeps working.
          A Program.Main rewrite would not be that runfile.
-         IDE0005/IDE0022/IDE0046/IDE0055/IDE0058/IDE0065/IDE0066/IDE0078/IDE0160/IDE0290 fire in
-         TimeWarp.Nuru.DevCli content files that this runfile compiles in. Those sources live in
-         the NuGet package (outside this repo, so .editorconfig cannot mark them generated) and
-         follow the package's style. Our own CLI files do not emit these ids under `dotnet build dev.cs`. -->
-    <NoWarn>$(NoWarn);CA1031;CA1034;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;CA5399;RCS1046;IDE0005;IDE0022;IDE0046;IDE0055;IDE0058;IDE0065;IDE0066;IDE0078;IDE0160;IDE0211;IDE0290</NoWarn>
+         The IDE style rules that fire only in TimeWarp.Nuru.DevCli content files are not listed:
+         tools/Directory.Build.props exempts package content by path (task 470), so they stay on
+         for this repo's own CLI code. IDE0005 is the exception: it needs the XML documentation file
+         to run on build, and the dev CLI turns that file off (below), so the SDK would report
+         EnableGenerateDocumentationFile instead. -->
+    <NoWarn>$(NoWarn);CA1031;CA1034;CA1303;CA1508;CA1515;CA1849;CA2007;CA2016;CA2000;CA5399;RCS1046;IDE0005;IDE0211</NoWarn>
 
     <!-- No XML documentation file. The root props turn GenerateDocumentationFile on only so IDE0005
-         (unnecessary usings) can run during build (Roslyn #41640); IDE0005 is in NoWarn above, so the
-         dev CLI has no use for the file. On the .NET 11 RC2 SDK the runfile's AOT publish
-         (`dev self-install`) failed with MSB3030: it looked for bin/release/dev.xml, which the build
-         only wrote under obj/release (task 364). -->
+         (unnecessary usings) can run during build (Roslyn #41640). The dev CLI does not keep the
+         file, so IDE0005 is in NoWarn above. On the .NET 11 RC2 SDK the runfile's AOT publish
+         (`dev self-install`) failed with MSB3030, because it looked for bin/release/dev.xml, which
+         the build only wrote under obj/release (task 364). -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
     <!-- AOT Support -->

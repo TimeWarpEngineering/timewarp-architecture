@@ -1,0 +1,62 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- #region Purpose
+       Wires the repo convention analyzers (TWA*) into the runfile tools under tools/ (dev-cli and
+       agent-identity-cli), so TWA0038 (500-line cap) and the other rules guard those sources
+       directly, not only the files tests/tools/dev-cli-tests compile-includes.
+       #endregion
+
+       #region Design
+       Decision (Steve, task 470): the FULL convention set applies under tools/. There are exactly
+       two exemptions. Do not add another here without a new decision.
+       - TWA0008 is off for tools/dev-cli/services/template-smoke/ in .editorconfig, because that
+         code reads and writes template tokens as strings.
+       - C# content files that a NuGet package compiles into a tool are not this repo's code
+         (TimeWarp.Nuru.DevCli ships its endpoints as contentFiles; two are over 500 lines).
+         ExemptPackageContentFromAnalyzers below writes a global analyzer config with one section per
+         Compile item under $(NuGetPackageRoot), each setting dotnet_analyzer_diagnostic.severity =
+         none. That is a path exemption, with no per-file pragma, and it follows the package root
+         wherever NuGet puts it. A repo .editorconfig cannot do this: its globs do not reach files
+         outside the repo, and a global config section needs an absolute path, which only the build
+         knows. generated_code = true was tried and rejected: it also turns off the nullable context
+         for those files, so the compiler reports CS8669 on every annotation.
+         Reach: the bulk key silences every rule whose severity is not set by id. It covers the TWA*
+         rules and the IDE style rules. An id-level severity wins over the bulk key, so the CA rules
+         that AnalysisLevel latest-all sets by id still run on those files (CA1812 does; the root
+         NoWarn covers it). No config sets a TWA id severity for those paths, so TWA0038 stays off for
+         package content. A config that sets one by id would bypass this exemption.
+       The analyzer wiring itself is in the root Directory.Build.props, shared with source/ and
+       tests/; this file opts in. tools/ is monorepo-only: the template pack project packs no tools/
+       path. Under tools/ the wiring's ProjectReference form applies; its package form is reached only
+       with an explicit -p:UseAnalyzerPackages=true.
+       #endregion -->
+
+  <PropertyGroup Label="Convention Analyzers">
+    <EnableConventionAnalyzers>true</EnableConventionAnalyzers>
+  </PropertyGroup>
+
+  <Target Name="ExemptPackageContentFromAnalyzers"
+          BeforeTargets="CoreCompile"
+          Condition="'$(NuGetPackageRoot)' != ''">
+    <PropertyGroup>
+      <_TwPackageContentConfig>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'package-content-analyzers.globalconfig'))</_TwPackageContentConfig>
+      <_TwNuGetPackageRoot>$([System.String]::Copy('$(NuGetPackageRoot)').Replace('\','/'))</_TwNuGetPackageRoot>
+    </PropertyGroup>
+    <ItemGroup>
+      <_TwPackageContentCompile Include="@(Compile->'%(FullPath)'->Replace('\','/'))" />
+      <_TwPackageContentCompile Remove="@(_TwPackageContentCompile)"
+                                Condition="!$([System.String]::Copy('%(Identity)').StartsWith('$(_TwNuGetPackageRoot)'))" />
+      <_TwPackageContentLine Include="is_global = true" />
+      <_TwPackageContentLine Include="@(_TwPackageContentCompile->'[%(Identity)]%0Adotnet_analyzer_diagnostic.severity = none')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_TwPackageContentConfig)"
+                      Lines="@(_TwPackageContentLine)"
+                      Overwrite="true"
+                      WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <EditorConfigFiles Include="$(_TwPackageContentConfig)" />
+      <FileWrites Include="$(_TwPackageContentConfig)" />
+    </ItemGroup>
+  </Target>
+</Project>

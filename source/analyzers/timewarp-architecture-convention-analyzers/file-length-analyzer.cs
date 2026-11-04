@@ -25,6 +25,11 @@
 //   it lacks a generated header (goldens/ingress/*.g.cs is a checked-in generator snapshot).
 // - kanban/** research scripts are exempt because no project under kanban/ wires the convention
 //   analyzers. A done task's research script is a record, not product code to refactor.
+// - C# content files a NuGet package compiles into a tools/ runfile (TimeWarp.Nuru.DevCli) are not
+//   this repo's code. tools/Directory.Build.props sets the bulk analyzer severity to none for every
+//   Compile item under the NuGet package root (task 470). No config sets TWA0038 by id, so the bulk
+//   key turns it off there and the analyzer needs no package-path check. That file's Design region
+//   lists the rules an id-level severity keeps on.
 //
 // Line count matches `wc -l`: a trailing line break does not open a counted line. The diagnostic
 // anchors on the first token (as TWA0004 does) so a leading `#pragma warning disable` can suppress it.
