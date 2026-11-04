@@ -3,12 +3,13 @@
 #endregion
 
 #region Design
-// Task 182-004: PUT api/Roles/{RoleId}/permissions — full replace of IRolePermissionStore grants
-// for one product role. RoleId from route (source-generated on partial Command). Validator
+// Task 182-004: PUT api/Roles/{RoleId}/permissions — full replace of one role's permission ids
+// (Role.SetPermissions, task 473). RoleId from route (source-generated on partial Command). Validator
 // requires every PermissionId ∈ PermissionIds.All (catalog only — no free-form strings).
 // [EndpointAuthorize] admin.roles.manage; AuthenticationSchemes identity-session +
 // mock-identity-session (same as Create/Update/Delete). Handler enforces protected-core on
-// Administrator (RolePermissionSeed.AdminPermissions cannot be stripped) — store stays dumb.
+// Administrator (RolePermissionSeed.AdminPermissions cannot be stripped); that rule is not in the
+// Role aggregate.
 // Response echoes stored permission ids after write.
 // [Operation] names it roles.set-permissions for every transport. IIdempotentCommand: the PUT is
 // a full replace, so a retry leaves the same grants.

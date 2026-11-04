@@ -67,6 +67,18 @@ table/schema `profiles`, TypedId key conversion) is applied by `PostgresDbContex
 is supplied for free by the `AggregateDbContext` `Version` convention — an aggregate's own
 mapping does not declare it.
 
+`web/features/admin/roles/role-domain.cs` is the exemplar for owned child collections:
+
+- Value-record children (`PermissionGrant`, `AgentScopeGrant`) sit over private backing lists.
+  The mapping is `OwnsMany` with field access on those lists and keys made of the owner id plus
+  the value, so there is no surrogate id.
+- Full-replace setters keep a child instance that is already present, so EF writes only the
+  difference.
+- A catalog the domain cannot reference (contracts, other libraries) is copied into the domain
+  (`role-catalog-domain.cs`). A test that sees both assemblies fails when the copy drifts.
+- A rule that must answer with a status code (protected core, 409) stays in the application
+  layer. The domain only throws.
+
 ## Persistence golden path (Postgres + EF)
 
 The template's default durable path is **Postgres-only state-store EF**. No SQL Server dual

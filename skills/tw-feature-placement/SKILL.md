@@ -136,7 +136,7 @@ Not every file is an archetype instance. When a file has no registered function,
 function segment entirely — `<name>-<layer>.cs` — and the grammar imposes no archetype shape
 on it:
 
-- `role-store-application.cs`
+- `role-domain.cs`
 - `web-authn-payload-decoder-application.cs`
 
 An unregistered or misspelled *token that looks like it's trying to be a function* is
@@ -177,13 +177,14 @@ admin/roles/
     update-role-contracts.cs
     update-role-handler-application.cs
   role-details-contracts.cs          # shared bindable shape used by every use case above
-  role-store-application.cs          # shared store, not operation-specific
+  role-domain.cs                     # the aggregate every use case loads and saves
+  i-role-store-application.cs        # shared store port, not operation-specific
 ```
 
 Every use-case folder here holds exactly one contract file and one handler file — two files is
-the normal case, not a special one. `role-details-contracts.cs` and `role-store-application.cs`
-each serve multiple use cases (or the whole slice), so they stay at `admin/roles/` root rather
-than moving into any single use-case folder.
+the normal case, not a special one. `role-details-contracts.cs`, `role-domain.cs`, and
+`i-role-store-application.cs` each serve multiple use cases (or the whole slice), so they stay at
+`admin/roles/` root rather than moving into any single use-case folder.
 
 When a slice's operation name is identical to the slice name (a single-operation slice), the
 use-case folder is still literal — `hello/hello/hello-contracts.cs`, not a special-cased flat

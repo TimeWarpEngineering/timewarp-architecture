@@ -79,25 +79,120 @@ Acceptance:
 - EF mapping: `identity.roles`, `OwnsMany` onto the existing `identity.role_permissions` and
   `identity.role_agent_scopes` tables (same keys, columns, lengths), field access to backing lists.
 - One migration: create `identity.roles`, `InsertData` the four product roles, insert parents for
-  stray role ids already in the grant tables (and principal_roles), then add the FKs; the
-  `principal_roles` FK decision is recorded. A test checks the seeded ids equal `RoleIds.All`.
+  stray role ids already in the two grant tables, then add the FKs; the `principal_roles` FK
+  decision is recorded. A test checks the seeded ids equal `RoleIds.All`.
 - Gates: `dev build` 0 warnings, Jaribu tests (aggregate, stores in-memory + EF), existing admin
   roles flows unchanged, `ganda repo audit`, `dev template-smoke --matrix`, version + pins bumped.
 
 ## Checklist
 
-- [ ] Role aggregate, typed id, Invariants, catalog agreement test
-- [ ] IRoleStore with in-memory and EF implementations
-- [ ] Seven handlers on the aggregate; dictionary RoleStore retired
-- [ ] Grant stores: write side retired, read side over the aggregate's tables
-- [ ] Entity type configuration with both owned collections on the existing tables
-- [ ] Migration with InsertData seed, FK, principal_roles decision recorded
-- [ ] Product-role delete guard
-- [ ] Gates green, version bumped
+- [x] Role aggregate, typed id, Invariants, catalog agreement test
+- [x] IRoleStore with in-memory and EF implementations
+- [x] Seven handlers on the aggregate; dictionary RoleStore retired
+- [x] Grant stores: write side retired, read side over the aggregate's tables
+- [x] Entity type configuration with both owned collections on the existing tables
+- [x] Migration with InsertData seed, FK, principal_roles decision recorded
+- [x] Product-role delete guard
+- [x] Gates green, version bumped (no new bump: see Results, Version)
 
 ## Session
 
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-05)
+- 2026-11-05 implementer (Claude Opus 5.5, ganda task work): implemented the aggregate, stores,
+  handlers, mapping, migration, and tests; ran the gates listed under Results. Boy-scout:
+  `ganda repo audit --fix` landed this kitchen and set the executable bit on the new runfile.
+
+## Results
+
+### What changed
+
+- **Domain** (`features/admin/roles/`, compiled into `web-domain`): `RoleId` ([TypedId]);
+  `Role : Entity<RoleId>, IAggregateRoot` with `Name`, `Description`, `Permissions`
+  (`PermissionGrant`, max 128) and `AgentScopes` (`AgentScopeGrant`, max 64) over the private
+  lists `PermissionList` / `AgentScopeList`; two fail-closed `Create` overloads, `UpdateDetails`,
+  full-replace `SetPermissions` / `SetAgentScopes`, private nested `Invariants`.
+  The child records are not named `RolePermission`, because CA1711 reserves the `Permission` suffix.
+  `RoleCatalog` holds the domain copies of `PermissionIds.All`, `AgentScopes.All`, and `RoleIds.All`.
+- **Product-role delete guard: domain rule.** `Role.IsProductRole` / `Role.EnsureRemovable`.
+  Both stores call `EnsureRemovable` inside `RemoveAsync`; `DeleteRole` answers 409 first.
+- **Protected core** stays `AdminLockoutGuards` in the `SetRolePermissions` handler (409).
+- **Application:** `IRoleStore` (Find, FindMany, List, Add, Update, Remove; each write saves).
+  `InMemoryRoleStore` is a snapshot store, seeded from the new `ProductRoleSeed` (names and
+  descriptions) plus `RolePermissionSeed.DefaultGrants`. The seven handlers load, mutate, and save
+  the aggregate; each maps entity to response by hand. The dictionary `RoleStore` is deleted.
+- **Grant ports:** `IRolePermissionStore` / `IRoleAgentScopeStore` keep only their reads. The
+  implementations moved into the Roles slice: `InMemoryRolePermissionStore` /
+  `InMemoryRoleAgentScopeStore` read `InMemoryRoleStore`, and `EfRolePermissionStore` /
+  `EfRoleAgentScopeStore` project the owned rows without loading aggregates. `RolePermissionGrant`,
+  `RoleAgentScopeGrant`, their configurations, and the old platform stores are deleted.
+  The new `InMemoryRoleStoresModule` (called from Program) registers them, and `PostgresDbModule`
+  swaps all three ports together.
+- **Infrastructure:** `RoleEntityTypeConfiguration`: `identity.roles` plus `OwnsMany` onto
+  `identity.role_permissions (RoleId, PermissionId)` and `identity.role_agent_scopes (RoleId, Scope)`,
+  same columns, lengths, and keys, field access, cascade FK. `EfRoleStore` uses `AsSplitQuery`, so
+  the two collections do not multiply rows. `template.json` excludes the four EF files when
+  postgres is off.
+- **Migration `20261104193441_AddRoles`:** create `identity.roles`, `InsertData` the four product
+  roles (Guid literals), then raw SQL inserts a parent for every distinct `RoleId` already in
+  either grant table, then add the two FKs. No `HasData`. The EF tool wrote the model snapshot to
+  `projects/web-infrastructure/TimeWarp/...`, and I moved it back over the committed snapshot.
+- **principal_roles FK decision: no FK.** Its `RoleId` is a raw Guid owned by the principals slice,
+  `SetPrincipalRoles` accepts only `RoleIds.All`, and product roles cannot be deleted, so a
+  principal_roles row cannot point at a deleted role through the API. This is recorded in the
+  `RoleEntityTypeConfiguration` and migration Design text.
+- **Skills:** `tw-aggregate-pattern` names Role as the owned-collection exemplar.
+  `tw-feature-placement` no longer cites the deleted `role-store-application.cs`.
+
+### Tests
+
+- `web-domain-tests/role-tests.cs`: Create, UpdateDetails, full replace (order, duplicates,
+  instance reuse, catalog rejection), child length guards, product-role guard, and Invariants
+  (an injected off-catalog child fails).
+- `web-infrastructure-tests`: `role-catalog-agreement-tests.cs` (three copies equal their
+  sources), `role-migration-seed-tests.cs` (seeded ids equal `RoleIds.All`, rows equal
+  `ProductRoleSeed`, parents come before the FKs, read from `UpOperations`),
+  `role-model-mapping-tests.cs`, and `ef-role-store-tests.cs`. The EF tests run on real Postgres:
+  seed, round trip, update with a Version bump, cascade remove, product-role refusal, invariants
+  on save, read ports, and the stray-parent migration path (migrate to AddAgentScopeGrants, insert
+  stray grants, migrate to latest).
+- `features/admin/roles/in-memory-role-store-tests.cs`: seed, snapshot reads, write errors,
+  delete guard, read ports.
+- Existing tests that wrote grants through the retired `Set...` methods now write through the
+  aggregate (runfiles use the real `InMemoryRoleStore`; integration tests use a
+  `RoleGrantTestExtensions` helper over `IRoleStore`).
+
+### Gates run (2026-11-05)
+
+- `dev build`: 0 warnings, 0 errors.
+- `dev test --group fast`: 14/14 projects passed. `--group integration`: 8/8 passed
+  (web-infrastructure-tests 100 tests on Testcontainers Postgres, none skipped). `--group playwright`:
+  web-spa-playwright-tests passed, so the admin roles flows still work.
+- `ganda repo audit`: passes. Two advisory warnings remain: other tasks' claims with no worktree,
+  and EF-generated designer/snapshot files over the 500-line cap (generated, and TWA0038 exempts them).
+- `dev lint-skills`: 9/9 passed.
+- `dev template-smoke --matrix`: SMOKE_RESULT_PLACEHOLDER
+- **Version:** `dev check-version` reports source `2.0.0-beta.32` against latest NuGet
+  `2.0.0-beta.31`. beta.32 is unreleased, so this change ships in it. The `<Version>` and platform
+  pins are already beta.32. A second bump would skip a version, so I did not make one.
+
+### How to validate
+
+Smoke:
+
+```bash
+./bin/dev build
+./bin/dev test --group fast
+./bin/dev test --group integration
+(cd tests/container-apps/web/web-infrastructure-tests && dotnet test)
+dotnet run source/container-apps/web/features/admin/roles/in-memory-role-store-tests.cs
+```
+
+Expect: build 0 warnings. Every group passes. web-infrastructure-tests runs `Role_Catalog_Agreement_`,
+`Role_Migration_Seed_`, `Role_Model_Mapping_`, and `RoleStore_.Ef` with no `[SKIP]` when Docker is
+up. Manual check: `dev run`, sign in as an admin, open Admin → Roles. The four product roles are
+listed. Create a role, edit its permissions and agent scopes, reload (the changes persist in
+Postgres), and delete it. Deleting Member, Operator, Administrator, or Developer answers
+409 "Product role cannot be deleted".
 
 ## Notes
 
