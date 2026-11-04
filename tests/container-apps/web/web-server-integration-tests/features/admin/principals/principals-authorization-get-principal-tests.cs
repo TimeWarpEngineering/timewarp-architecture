@@ -22,6 +22,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Identity;
 using static PrincipalsAuthorization_.PrincipalsAuthorizationFixture;
+using IRoleStore = TimeWarp.Architecture.Features.Admin.Roles.Application.IRoleStore;
 
 public class Get_Principal_Returns_
 {
@@ -95,6 +96,7 @@ public class Get_Principal_Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     IReadOnlyList<Guid> originalRoleIds = await roleStore.GetRoleIdsAsync(principalId);
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Operator]);
     string email = await EnsureProfileAsync(scope, principalId);
@@ -103,7 +105,7 @@ public class Get_Principal_Returns_
       await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Operator);
     try
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(
+      await roleAggregates.SetPermissionIdsForRoleAsync(
         RoleIds.Operator,
         [.. originalOperatorPermissions, PermissionIds.AdminAccess, PermissionIds.AdminPrincipalsRead]);
 
@@ -134,7 +136,7 @@ public class Get_Principal_Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Operator, originalOperatorPermissions);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Operator, originalOperatorPermissions);
       await roleStore.SetRoleIdsAsync(principalId, [.. originalRoleIds]);
     }
   }

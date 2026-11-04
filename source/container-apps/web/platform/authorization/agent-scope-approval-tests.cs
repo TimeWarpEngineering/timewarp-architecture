@@ -23,6 +23,8 @@ namespace TimeWarp.Architecture.Authorization
   using System.Threading.Tasks;
   using Shouldly;
   using TimeWarp.Architecture.Features;
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using TimeWarp.Identity;
   using TimeWarp.Jaribu;
   using static TimeWarp.Jaribu.TestRunner;
@@ -35,16 +37,15 @@ namespace TimeWarp.Architecture.Authorization
 
     public static async Task MixedSources_Should_MarkDefaultRoleAndPrincipalInCatalogOrder()
     {
-      InMemoryRoleAgentScopeStore roleScopes = new();
-      await roleScopes.SetScopesForRoleAsync(
-        RoleIds.Member,
-        [AgentScopes.FeedbackRead]);
-      await roleScopes.SetScopesForRoleAsync(
+      // Role scopes are written through the Role aggregate; the port is a view over that store.
+      InMemoryRoleStore roles = new();
+      await SetScopesAsync(roles, RoleIds.Member, [AgentScopes.FeedbackRead]);
+      await SetScopesAsync(
+        roles,
         RoleIds.Developer,
         [AgentScopes.FeedbackRead, AgentScopes.IdentityRead, AgentScopes.DemoInvoke]);
-      await roleScopes.SetScopesForRoleAsync(
-        RoleIds.Operator,
-        [AgentScopes.FeedbackNote]);
+      await SetScopesAsync(roles, RoleIds.Operator, [AgentScopes.FeedbackNote]);
+      InMemoryRoleAgentScopeStore roleScopes = new(roles);
 
       InMemoryPrincipalAgentScopeStore principalScopes = new();
       PrincipalId principalId = PrincipalId.New();
@@ -106,6 +107,13 @@ namespace TimeWarp.Architecture.Authorization
       feedback.Sources[1].RoleId.ShouldBe(RoleIds.Developer);
       feedback.Sources[2].Kind.ShouldBe(AgentScopeGrantKind.Principal);
       feedback.Sources[2].RoleId.ShouldBeNull();
+    }
+
+    private static async Task SetScopesAsync(InMemoryRoleStore roles, Guid roleId, IReadOnlyList<string> scopes)
+    {
+      Role role = (await roles.FindAsync(RoleId.From(roleId))).ShouldNotBeNull();
+      role.SetAgentScopes(scopes);
+      await roles.UpdateAsync(role);
     }
 
     private sealed class FixedRoles : IEffectiveRolesResolver

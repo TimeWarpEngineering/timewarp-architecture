@@ -21,6 +21,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Admin.Principals;
 using TimeWarp.Identity;
 using static PrincipalsAuthorization_.PrincipalsAuthorizationFixture;
+using IRoleStore = TimeWarp.Architecture.Features.Admin.Roles.Application.IRoleStore;
 
 public class List_And_Set_Roles_Returns_
 {
@@ -192,13 +193,14 @@ public class List_And_Set_Roles_Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     IReadOnlyList<string> originalAdminPermissions =
       await permissionStore.GetPermissionIdsForRoleAsync(RoleIds.Administrator);
     try
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(
+      await roleAggregates.SetPermissionIdsForRoleAsync(
         RoleIds.Administrator,
         [
           PermissionIds.AdminAccess,
@@ -230,7 +232,7 @@ public class List_And_Set_Roles_Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Administrator, originalAdminPermissions);
     }
   }
 

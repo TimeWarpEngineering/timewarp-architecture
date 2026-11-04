@@ -45,7 +45,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.Empty);
 
@@ -69,7 +69,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.For(id, [AgentScopes.IdentityRead]));
 
@@ -95,7 +95,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       PermissionEvaluator evaluator = CreateEvaluator(
         new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.For(
           id,
@@ -119,7 +119,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId id = PrincipalId.New();
       PermissionEvaluator evaluator = CreateEvaluator(
         new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.For(
           id,
@@ -138,7 +138,7 @@ namespace TimeWarp.Architecture.Authorization
       PrincipalId ambient = PrincipalId.New();
       PermissionEvaluator evaluator = CreateEvaluator(
         new InMemoryPrincipalRoleStore(),
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.For(
           ambient,
@@ -156,7 +156,7 @@ namespace TimeWarp.Architecture.Authorization
 
       PermissionEvaluator evaluator = CreateEvaluator(
         principalRoles,
-        new InMemoryRolePermissionStore(),
+        RoleGrantFixture.SeededPermissions(),
         bootstrap: [],
         agentScopes: FakeAgentPermissionScopeSource.For(
           id,

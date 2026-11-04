@@ -6,6 +6,8 @@ namespace TimeWarp.Architecture.Authorization
 {
 
   using Microsoft.Extensions.Options;
+  using TimeWarp.Architecture.Features.Admin.Roles.Application;
+  using TimeWarp.Architecture.Features.Admin.Roles.Domain;
   using TimeWarp.Architecture.Features;
   using TimeWarp.Identity;
 
@@ -38,6 +40,30 @@ namespace TimeWarp.Architecture.Authorization
 
       return Scopes;
     }
+  }
+
+  /// <summary>
+  /// Writes role grants through the real Role aggregate (task 473): the grant read ports are
+  /// views over InMemoryRoleStore, so a test changes a role the way SetRolePermissions does.
+  /// </summary>
+  internal static class RoleGrantFixture
+  {
+    internal static async Task SetPermissionsAsync(this InMemoryRoleStore roles, Guid roleId, IEnumerable<string> permissionIds)
+    {
+      Role role = await roles.FindAsync(RoleId.From(roleId)) ?? throw new InvalidOperationException($"No role {roleId}.");
+      role.SetPermissions(permissionIds);
+      await roles.UpdateAsync(role);
+    }
+
+    internal static async Task SetAgentScopesAsync(this InMemoryRoleStore roles, Guid roleId, IEnumerable<string> scopes)
+    {
+      Role role = await roles.FindAsync(RoleId.From(roleId)) ?? throw new InvalidOperationException($"No role {roleId}.");
+      role.SetAgentScopes(scopes);
+      await roles.UpdateAsync(role);
+    }
+
+    /// <summary>The seeded read port (product roles with RolePermissionSeed grants).</summary>
+    internal static InMemoryRolePermissionStore SeededPermissions() => new(new InMemoryRoleStore());
   }
 
   internal static class PermissionEvaluatorFactory

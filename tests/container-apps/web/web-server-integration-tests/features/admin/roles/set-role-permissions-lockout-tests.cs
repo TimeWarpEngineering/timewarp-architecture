@@ -20,6 +20,7 @@ using TimeWarp.Architecture.Features;
 using TimeWarp.Architecture.Features.Identity;
 using TimeWarp.Architecture.Web.Server.Integration.Tests.Features.Identity.Infrastructure;
 using TimeWarp.Identity;
+using IRoleStore = TimeWarp.Architecture.Features.Admin.Roles.Application.IRoleStore;
 
 public class Returns_
 {
@@ -54,6 +55,7 @@ public class Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     IReadOnlyList<string> before =
@@ -99,6 +101,7 @@ public class Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     IReadOnlyList<string> originalMember =
@@ -128,7 +131,7 @@ public class Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Member, originalMember);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Member, originalMember);
     }
   }
 
@@ -139,6 +142,7 @@ public class Returns_
     await using AsyncServiceScope scope = Web.WebApplicationHost.ServiceProvider.CreateAsyncScope();
     IPrincipalRoleStore roleStore = scope.ServiceProvider.GetRequiredService<IPrincipalRoleStore>();
     IRolePermissionStore permissionStore = scope.ServiceProvider.GetRequiredService<IRolePermissionStore>();
+    IRoleStore roleAggregates = scope.ServiceProvider.GetRequiredService<IRoleStore>();
     await roleStore.SetRoleIdsAsync(principalId, [RoleIds.Member, RoleIds.Administrator]);
 
     IReadOnlyList<string> original =
@@ -176,7 +180,7 @@ public class Returns_
     }
     finally
     {
-      await permissionStore.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
+      await roleAggregates.SetPermissionIdsForRoleAsync(RoleIds.Administrator, original);
     }
   }
 
