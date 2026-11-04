@@ -55,6 +55,17 @@ Acceptance:
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Fix pass for round 2: M1–M4 fixed (dispositions in `review/round-1/merged.md`)
+- Round 2: Blocked — open M1
+- Fix pass for round 3: M1 fixed (disposition in `review/round-2/merged.md`)
+
+## Learnings
+
+- Round-1 reviewer misread (M1): template.json `sources` excludes do not decide what ships. The template
+  pack project's Content items do (`timewarp-templates/source/timewarp-architecture-template/timewarp-architecture-template.csproj`).
+  That project packs no tools/ path, so tools/ is monorepo-only, and a template.json exclude under tools/ is moot.
+  Before you claim a path ships in generated apps, check the pack project's Content items or the
+  template-smoke output tree. The implementer restatement matches the task, so it is not a misread.
+  why: review round 2 for task 470, 2026-11-04
 
 ## Notes
 
@@ -78,6 +89,13 @@ beyond these.
 
 - Fix pass (implement-fix-2 oracle, claude-opus-5-5, 2026-11-04): fixed M1–M4. Wiring moved to the
   root props behind `EnableConventionAnalyzers`. Gates re-run (see Results).
+- Review round 2 (review-2 oracle, claude claude-opus-5-5, effort 2, roster: general, turn cap 120),
+  2026-11-04: the delta is `c83a4bf12..82383c9f0`. M2–M4 are fixed. M1 is re-opened: the false claim that
+  tools/dev-cli ships in generated apps. 0 bugs. A fix pass is needed. Review files: `review/round-2/general.md`
+  and `review/round-2/merged.md`.
+- Fix pass (implement-fix-3 oracle, claude-opus-5-5, 2026-11-04): fixed M1. The `.editorconfig` comment and
+  the `tools/Directory.Build.props` Design region now say tools/ is monorepo-only; the scan-set entry is
+  removed; the Results lines are corrected. Gates re-run (see Results).
 
 ## Results
 
@@ -106,14 +124,25 @@ beyond these.
 - `file-length-analyzer.cs` Design region points at the tools/ exemption and states its reach
   (review M2). The bulk severity key silences TWA* and IDE rules on package content. CA ids that
   AnalysisLevel sets by id still run (CA1812, covered by root NoWarn).
-- `.editorconfig` template-smoke comment corrected (M1): tools/dev-cli ships in generated apps.
+- `.editorconfig` template-smoke comment (M1, round 2): tools/ is monorepo-only. The template pack project
+  packs no tools/ path, so the section matches nothing in a generated app. The `tools/Directory.Build.props`
+  Design region says the same, and that the wiring's package form is reached under tools/ only with an
+  explicit `-p:UseAnalyzerPackages=true`.
 - dev-cli NoWarn no longer lists the package-content IDE ids (M3). IDE0005 stays, because the dev CLI
   turns off the XML doc file (task 364) and the SDK would otherwise report EnableGenerateDocumentationFile.
-- Boy-scout: `tools/Directory.Build.props` added to the template-smoke source-name literal scan files
-  (it ships in generated apps).
+- The template-smoke source-name literal scan files do not list `tools/Directory.Build.props` (M1, round 2):
+  that file does not ship, so the scan-set file is unchanged from master.
 - `ganda repo audit`: exit 0. Remaining warnings are not from this change: `source-file-line-cap`
   (Warning by 469-001 policy: EF migrations and a done task's research script) and `kanban-landed`
   (stale claims on other tasks).
+
+Gates run (fix pass 3, after round-2 M1):
+
+- `dotnet build tools/dev-cli/dev.cs`: 0 warnings, 0 errors.
+- `dotnet build tools/agent-identity-cli/agent.cs`: 0 warnings, 0 errors.
+- `dotnet run --project tests/tools/dev-cli-tests`: 342/342 passed.
+- `dev build` (via `dotnet run tools/dev-cli/dev.cs -- build`): 0 warnings, 0 errors.
+- `ganda repo audit`: exit 0. Only the pre-existing warnings remain (`source-file-line-cap`, `kanban-landed`).
 
 Gates run (fix pass, after M1–M4):
 
@@ -144,6 +173,14 @@ Gates run (implement pass):
 
 - Round 1 (effort 1, general): bug 0, suggestion 4 (M1–M4), nit 0. The fix pass fixed all four;
   dispositions are in `review/round-1/merged.md`. Round 2 re-reviews.
+- Round 2 (effort 2, general): the delta is `c83a4bf12..82383c9f0`. Counts: bug 0; suggestion 1 open (M1
+  re-opened), 3 fixed (M2–M4); nit 0. No disposition yet, because M1 is open. Round 1's M1 wrongly said
+  tools/dev-cli ships in generated apps. The template pack project does not include tools/. The fix pass
+  carried that claim into `.editorconfig:407`, the `tools/Directory.Build.props` Design region, a
+  source-name scan-set entry, and the Results lines above. Gates re-run by the reviewer: dev-cli and
+  agent-identity-cli builds (0 warnings) and `dev build` (0 warnings, 0 errors). `-getItem` confirmed
+  the shared wiring.
+- Fix pass 3: M1 fixed; disposition in `review/round-2/merged.md`. Round 3 re-reviews.
 - The reviewer re-ran these gates: dev-cli and agent-identity-cli builds (0 warnings), dev-cli tests
   342/342, and `ganda repo audit` (exit 0, only the pre-existing warnings).
 

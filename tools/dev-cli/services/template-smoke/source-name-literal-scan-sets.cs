@@ -42,7 +42,6 @@ internal static class SourceNameLiteralScanSets
     "Directory.Packages.props",
     "source/Directory.Build.props",
     "tests/Directory.Build.props",
-    "tools/Directory.Build.props",
     "timewarp-architecture.slnx",
     "global.json",
     "BannedSymbols.txt",

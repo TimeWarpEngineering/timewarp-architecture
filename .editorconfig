@@ -404,7 +404,8 @@ dotnet_diagnostic.TWA0016.severity = none
 
 # Task 470: template-smoke reads and writes template tokens as strings (it drives `dotnet new` and
 # checks the generated output), so TWA0008 (template-conditional token guard) does not apply here.
-# tools/dev-cli ships in generated apps, so this section ships too. The other convention rules stay on.
+# tools/ is monorepo-only (the template pack project packs no tools/ path), so in a generated app
+# this section matches nothing. The other convention rules stay on.
 [tools/dev-cli/services/template-smoke/**.cs]
 dotnet_diagnostic.TWA0008.severity = none
 
