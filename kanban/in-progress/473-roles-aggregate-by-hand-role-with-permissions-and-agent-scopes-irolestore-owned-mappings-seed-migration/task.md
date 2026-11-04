@@ -101,6 +101,7 @@ Acceptance:
 - 2026-11-05 implementer (Claude Opus 5.5, ganda task work): implemented the aggregate, stores,
   handlers, mapping, migration, and tests; ran the gates listed under Results. Boy-scout:
   `ganda repo audit --fix` landed this kitchen and set the executable bit on the new runfile.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b43ec5fa-1193-46eb-9ae7-20ead1881e21, max-turns 500, Done — 2026-11-04T20:10:47Z
 
 ## Results
 
