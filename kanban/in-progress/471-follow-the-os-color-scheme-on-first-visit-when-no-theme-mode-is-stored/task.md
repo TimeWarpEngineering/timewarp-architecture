@@ -74,6 +74,9 @@ Acceptance:
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 452439f1-3eb0-43a1-bc28-b5b3b030581c, max-turns 120, artifacts general.md, merged.md — 2026-11-04T14:52:32Z
 - 2026-11-04 implementer fix pass (round 2 brief = round-1 merged.md): M1 fixed in the two
   skills; `dev lint-skills` and `ganda repo audit` run.
+- Review oracle round 2: claude-opus-5-5 (tw-implementation-review, effort 1, general reviewer,
+  turn cap 80), 2026-11-04. Delta `0ecd7649f` reviewed. M1 verified fixed, no new findings.
+  Disposition: clean.
 
 ## Results
 
@@ -123,6 +126,13 @@ Acceptance:
   `BrandThemeScript` first in `<body>` sets the stored mode, else the OS preference, and never
   stores a mode). `skills/tw-blazor-layout/SKILL.md` step 1 names the script. `dev lint-skills`
   9/9 pass. Skills-only change, so no build or Playwright rerun.
+- Round 2 (effort 1, general reviewer only) reviewed the delta since round 1 (`0ecd7649f`). The
+  rule 8 and 9 text matches `brand-theme-script.cs` and `App.razor`. M1 is verified fixed, and
+  there are no new findings. The reviewer re-ran `dev lint-skills`: 9/9 pass.
+- Final counts: bug 0, suggestion 1 fixed, nit 0, wontfix 0, open 0.
+- **Disposition: clean** (2 rounds, no exceptions, no escalations).
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
@@ -144,8 +154,9 @@ and a reload stays light on the dark OS. Clear site data again: it follows the O
 ## Review
 
 - Round 1: Blocked — open M1
-- Round 2 fix pass: M1 fixed (skills rules 8 and 9); awaiting review round 2
-
+- Round 2 fix pass: M1 fixed (skills rules 8 and 9)
+- Round 2 review: M1 verified fixed, no new findings. Disposition clean (`review/disposition.md`)
+- Round 2: Done
 ## Notes
 
 Steve asked for this on 2026-11-04 after 465 shipped ("does darkmode support system setting?").
