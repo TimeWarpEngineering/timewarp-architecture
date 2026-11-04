@@ -111,6 +111,10 @@ Acceptance:
   this change). Mutation check: with the handler's `IsProductRole` branch disabled, the new test fails
   (the store throws, so the endpoint answers 500, not 409). The handler was restored unchanged.
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 95a529cd-e494-4ef5-8ba5-af5362ab4c30, max-turns 200, artifacts general.md, merged.md — 2026-11-04T20:14:22Z
+- 2026-11-05 review oracle round 2 (Claude Opus 5.5, ganda task work, tw-implementation-review,
+  effort 1, roster general, turn cap 80): reviewed the fix delta 5cc7baaca..ca572cceb and re-ran
+  the web-server integration suite (436 passed, 1 skipped, 0 failed). M1 is verified fixed, with no
+  new findings. Disposition: clean.
 
 ## Results
 
@@ -190,13 +194,15 @@ Acceptance:
 
 ### Review
 
-- Rounds: 1 (in progress). Effort 3, roster: general.
-- Round 1 counts: bug 0, suggestion 1 (M1, fixed in the fix pass), nit 0.
-- M1: no test covers `DeleteRole` answering 409 for a product role. The domain guard and the store
-  refusals are tested. Fix: add an endpoint test in `roles-endpoint-tests.cs`.
-- M1 fixed: `Conflict_Given_Product_Role` added. A mutation check showed it catches a removed guard.
-- Disposition: pending round 2.
-- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
+- Rounds: 2. Round 1: effort 3, roster general (full diff). Round 2: effort 1, roster general
+  (fix delta only).
+- Final counts (round 2): bug 0, suggestion 1 fixed, nit 0. Open 0, wontfix 0.
+- M1: no test covered `DeleteRole` answering 409 for a product role. Fixed by
+  `Conflict_Given_Product_Role`. The implementer's mutation check showed the test catches a removed
+  guard. Round 2 re-ran the integration suite: 436 passed, 1 skipped, 0 failed.
+- Disposition: **clean**. No wontfix and no escalations.
+- Paths: `review/review-framework.md`, `review/round-1/`, `review/round-2/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
@@ -222,7 +228,7 @@ Postgres), and delete it. Deleting Member, Operator, Administrator, or Developer
 ## Review
 
 - Round 1: Blocked — open M1
-
+- Round 2: Done
 ## Notes
 
 Follows 461. Task 474 (analyzer) runs after this lands and uses Roles as its first target. The
