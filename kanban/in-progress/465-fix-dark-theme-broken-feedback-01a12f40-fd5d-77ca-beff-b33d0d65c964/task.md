@@ -55,6 +55,8 @@ Acceptance:
 - Review oracle round 1 (ganda task work, Claude Opus 5.5, tw-implementation-review): effort 3,
   roster general, turn cap 200. 1 open suggestion (M1, dark-mode focus rings); fix pass requested. 2026-11-04
 - Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 27e16840-c6a2-4f79-a5ba-64f389769084, max-turns 200, artifacts general.md, merged.md — 2026-11-04T13:04:57Z
+- Review oracle round 2 (ganda task work, Claude Opus 5.5, tw-implementation-review): effort 2,
+  roster general, turn cap 120. M1 fixed, 0 open; disposition clean. 2026-11-04
 
 ## Results
 
@@ -148,6 +150,14 @@ touched on the live server. It stays Planned until the admin moves it after the 
 - Fix-pass gates: `dev build` 0 warnings; Playwright suite 35/35 passed (including
   `DarkTheme_Given_Shell` 2/2); `dev lint-skills` passed; `ganda repo audit` has no errors (warnings
   only: `kanban-landed` for other tasks' claims and the pre-existing `source-file-line-cap` files).
+- Round 2 (effort 2, roster: general), the fix delta `3f2c4ea5a..016def93c`: M1 re-verified fixed,
+  no new findings. Measured, the dark ring is about 7.1:1 (`#c5b4ff` on `#303030`), not 8:1; the test checks
+  the real value. The reviewer re-ran `dev build` (0 warnings), `DarkTheme_Given_Shell` (2/2), and
+  `dev lint-skills` (9/9).
+- Final counts: bug 0; suggestion 1 fixed, 0 open, 0 wontfix; nit 0.
+- **Disposition: clean** (2 rounds, final open count 0).
+- Paths: `review/review-framework.md`, `review/round-2/general.md`, `review/round-2/merged.md`,
+  `review/disposition.md`.
 
 ### How to validate
 
@@ -169,7 +179,7 @@ and clearly visible. Click the button again: light, unchanged.
 ## Review
 
 - Round 1: M1 fixed in the fix pass; round 2 re-reviews.
-
+- Round 2: Done
 ## Notes
 
 Feedback ID: 01a12f40-fd5d-77ca-beff-b33d0d65c964. Owner has no email (FilerEmailed false).
