@@ -57,6 +57,13 @@ Acceptance:
 - Created: 66368815-cdd5-46be-bde8-a09d94e1cdc8 (2026-11-03)
 - Implemented under ganda task work, implement oracle (2026-11-04).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 11819ef8-9d7b-4f28-aa8c-6f30dae640a0, max-turns 500, Done — 2026-11-04T02:56:18Z
+- Review oracle: reviewer-claude (claude, vendor anthropic, model claude-opus-5-5), effort 2,
+  roster general, turn cap 120. Round 1, disposition accepted-exceptions — 2026-11-04.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session ef8fdfc1-4d52-4c60-ba7f-f1c627e8cb5a, max-turns 120, artifacts general.md, merged.md — 2026-11-04T02:59:17Z
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
@@ -156,3 +163,17 @@ Expect:
 - The padded probe build fails with
   `error TWA0038: File 'entity-version.cs' has 544 lines, over the 500-line limit; extract a responsibility into its own type`.
 - After the restore, `git status` is clean for that file.
+
+### Review disposition
+
+- Rounds: 1. Effort 2, reviewer roster `general`.
+- Final counts: bug 0. Suggestion 1 wontfix. Nit 2 wontfix. 0 open.
+- Disposition: **accepted-exceptions**.
+  - M1 (suggestion): TWA0038 does not reach `tools/`. That needs an operator decision on rules and
+    package-content exemptions, so it gets a follow-up task. `tools/dev-cli/services/aspire-run.cs`
+    is at 496 lines.
+  - M2 and M3 (nits): Design-region wording ("matches `wc -l`") and a typo. Comment-only.
+- The reviewer re-ran the analyzer tests: 269 total, 0 failed. The reviewer also re-ran the
+  offender scan: only the exempt migration files and the kanban research script are over 500.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
