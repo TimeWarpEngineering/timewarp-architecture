@@ -42,7 +42,9 @@ Acceptance:
 
 - [x] Glue inventory for Roles and Feedback handlers (`proposal.md` sections 2–3)
 - [x] Proposed generated shape as code (`proposal.md` section 6, options A–D)
-- [ ] Steve's decision recorded; implementation tasks split if yes (question in `proposal.md` section 8)
+- [x] Steve's decision recorded (option A, analyzer alone); no implementation tasks split
+- [x] Decision folded into `tw-aggregate-pattern` ("Projection and mutation calls stay hand-written")
+- [x] Follow-ups filed and published: 477, 478, 479
 
 ## Session
 
@@ -51,16 +53,39 @@ Acceptance:
   aggregate, the Roles and Feedback contracts, and the 461, 474, and 475 results. Wrote
   `proposal.md`. Product code is unchanged. The walk is parked as Blocked until Steve decides.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e70ced08-4ec9-4693-b067-71e605acccba, max-turns 500, Blocked — 2026-11-05T05:58:34Z
+- 2026-11-05 resumed implement (ganda task work) after Steve recorded decision A. Added the
+  "Projection and mutation calls stay hand-written" section to `skills/tw-aggregate-pattern/SKILL.md`.
+  Filed and published follow-ups 477 (remove Riok.Mapperly), 478 (agent-scope order in
+  `Role.AgentScopes`), and 479 (shared Roles and attachment projections, named arguments).
 
 ## Decision
 
-Pending: Steve. The question is in `proposal.md` section 8: should the entity-to-response
-projections be generated, and if yes, with a home-grown generator on the TWA0041 rules (option B)
-or with the Mapperly package that is already referenced (option C)? Option A is "the analyzer
-alone".
+Steve, 2026-11-05: **Option A, the analyzer alone.** No projection or handler generator now.
+
+Reasoning: only 3 mutation calls across Roles and Feedback are mechanical, all in Roles; mapping by
+name has a real leak case (`GetFeedback.Response.Activity` must be the redacted filer thread) that
+compiles clean when the opt-out is forgotten; TWA0039–TWA0043 already close the agreement problem.
+Revisit option B once the Order aggregate (backlog 118) shows the projection shape a third time.
+
+Fold-in on this task (no implementation tasks split; none needed):
+
+- Record the decision in `tw-aggregate-pattern` (projection stays hand-written, one shared
+  projection per aggregate with named arguments; the analyzer proves agreement).
+- File follow-ups: remove the unused `Riok.Mapperly` reference from `web-application`; move
+  agent-scope ordering into `Role.AgentScopes` so GetRole, GetRoles, and SetRoleAgentScopes stop
+  ordering by hand; share one `GetRole`/`GetRoles` projection and one attachment projection
+  (named arguments) to close the section 4 gaps.
 
 ## Results
 
+- **Decision:** option A, the analyzer alone (Steve, 2026-11-05). No generator, no Mapperly.
+- **Skill:** `skills/tw-aggregate-pattern/SKILL.md` gains "Projection and mutation calls stay
+  hand-written": one projection per aggregate and response shape in one static method, named
+  arguments, name agreement is not the value (the filer-thread redaction case), ordering belongs to
+  the root, mutation calls pass the principal and the clock.
+- **Follow-ups (to-do, published):** 477 remove the unused `Riok.Mapperly` reference; 478 order agent
+  scopes in `Role.AgentScopes` so GetRole, GetRoles, and SetRoleAgentScopes stop reordering; 479
+  share one GetRole/GetRoles projection and one attachment projection, with named arguments.
 - **Kitchen:** `proposal.md` holds the inventory, the analyzer-gap evidence, options A–D as code,
   the list of what stays hand-written, and the question.
 - **Inventory counts:**
@@ -81,7 +106,8 @@ alone".
   - `Riok.Mapperly` 4.3.1 is referenced by `web-application` and nothing uses it.
   - `web-application` does not reference the generator assembly (`timewarp-architecture-analyzers`).
   - "Last admin" is in Principals (`set-principal-roles`), not in Roles or Feedback.
-- **Gates:** no product code changed, so build, test, and template-smoke do not apply.
+- **Gates:** no product code changed, so build, test, and template-smoke do not apply. The skill
+  edit is checked with `dev lint-skills`.
   `ganda repo audit` exits 0 (35 passed). It reports 2 advisory warnings that were there before this
   task: `kanban-landed` (live claims on other tasks) and `source-file-line-cap` (EF migration
   Designer and snapshot files, plus one kanban research runfile). Neither one is in this task's diff.
@@ -94,13 +120,12 @@ alone".
 - **Expect:**
   - Every projection site the grep prints is in the inventory tables (sections 2–3).
   - The Mapperly grep shows only `Directory.Packages.props` and `web-application.csproj`, with no `[Mapper]`.
-  - Section 8 asks one question and does not answer it.
+  - Section 8 asks one question, and `## Decision` in task.md records the answer (option A).
+  - `skills/tw-aggregate-pattern/SKILL.md` has the "Projection and mutation calls stay hand-written"
+    section, and `dev lint-skills` passes.
+  - `ganda kanban show 477`, `478`, and `479` print to-do tasks whose specs name the files above.
 
 ## Notes
 
 Follows 461, 473, 474, 475. Steve 2026-11-05: "after we get the analyzer done, see if we can
 generate the glue in the application layer."
-
-## Blocked
-
-2026-11-05: Steve answers the question in kanban/in-progress/476-*/proposal.md section 8: generate the entity-to-response projections or not, and if yes, with a new generator on the TWA0041 rules (B) or with the Mapperly package already referenced (C). Record the answer under ## Decision in task.md, then resume. The resumed walk files implementation tasks if the answer is yes.
