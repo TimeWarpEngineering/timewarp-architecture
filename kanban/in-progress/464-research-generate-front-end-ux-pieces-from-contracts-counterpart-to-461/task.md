@@ -131,6 +131,11 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   Option D of `proposal.md`. Read `api-handler.cs`, `default-api-handler.cs`, and
   `http-api-service.cs`. `HttpClient` exceptions are not caught in `HttpApiService`, so they reach
   the rethrow at `api-handler.cs:87-92`. No product code changed.
+- Review oracle round 3 (2026-11-05): tw-implementation-review, effort 2, roster general (claude,
+  model claude-opus-5-5, headless ganda task work, turn cap 120). It reviewed the fix delta
+  `29d388aff..dfcd31272` only and verified M5 as fixed against `api-handler.cs`,
+  `default-api-handler.cs`, and `http-api-service.cs`. There are no new findings, and the
+  restatement still matches the task. Disposition is `clean`.
 
 ## Results
 
@@ -192,9 +197,17 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
     `HandleSuccess` throwing before its write.
   - The scope line and the A-only check now match. The check also flags `Running` set in
     `GetRequest`. The B example sets `Running` in an `OnStarted` override.
-- Disposition is pending until review round 3.
+- Round 3 (2026-11-05) ran at effort 2 with a general reviewer, on the fix delta
+  `29d388aff..dfcd31272`. It re-verified M5 as fixed. It checked the null skip at `:71`, the
+  rethrow at `:87-92` (an `HttpRequestException` is not caught in `HttpApiService`), the lock
+  release before the catch body, and the two named gaps outside the `try`. It raised no new
+  findings.
+- Final counts (3 rounds, roster general, effort 2): bug 0. Suggestion 3 fixed (M1, M2, M5). Nit
+  2 fixed (M3, M4). 0 open, 0 wontfix.
+- **Review disposition: `clean`** (`review/disposition.md`). No exceptions and no escalations.
 - Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
-  `review/round-2/general.md`, `review/round-2/merged.md`.
+  `review/round-2/general.md`, `review/round-2/merged.md`, `review/round-3/general.md`,
+  `review/round-3/merged.md`, `review/disposition.md`.
 
 ### How to validate
 
@@ -223,6 +236,7 @@ modifier. Section 7 asks the question and does not pick.
 
 - Round 1: Blocked — open M1, M2, M3, M4
 - Round 2: Blocked — open M5
+- Round 3: Done
 ## Notes
 
 - Related: 461 (back-end counterpart). Draft produced read-only from origin/HEAD `f003919db`.
