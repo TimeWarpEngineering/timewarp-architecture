@@ -43,4 +43,11 @@ description mismatch, a test for Save with seeded drafts.
 
 ## Decision
 
-Pending. Record Steve's answer here and under `## Decision` in `task.md`.
+**Parked (Steve, 2026-11-06).** Steve's response to the question: the proposal priced option C
+against TimeWarp.State's generators as they are, and we own that repository. State's ActionSet
+generator was hand-written when incremental generators were hard; Nuru and Mediator now carry
+much larger pipelines. Re-evaluate State's source generation first, then price C honestly.
+
+Filed: timewarp-state task 140, "Research: re-evaluate TimeWarp.State source generation against
+Nuru and Mediator", written without a preferred answer. This task stays in in-progress until 140
+reports; then the A / B / C / D question is asked again with 140's result as input.
