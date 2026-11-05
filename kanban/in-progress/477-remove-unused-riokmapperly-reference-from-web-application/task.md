@@ -36,6 +36,7 @@ Acceptance: `git grep -n -i mapperly -- ':!kanban'` prints nothing; `dev build` 
 
 - Created: 1002142 (2026-11-05)
 - 2026-11-05 implementer: removed the `Riok.Mapperly` reference and pin; ran build, template-smoke, audit, check-version.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 00a2def6-6f77-44f6-9a86-cbf2560d0ee0, max-turns 500, Done — 2026-11-05T08:08:22Z
 
 ## Notes
 
