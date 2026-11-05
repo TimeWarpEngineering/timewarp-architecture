@@ -8,13 +8,12 @@
 // Ordering by name keeps the list stable for UI and tests. Search (task 345) keeps roles whose
 // name contains the trimmed term, ignoring case. TotalCount equals the number of matching rows —
 // the handler does not implement the contract's OpenData paging parameters. The entity-to-DTO
-// mapping is hand-written here on purpose (task 476 evaluates generating it); AgentScopes are
-// ordered like AgentScopes.All (task 466).
+// mapping is hand-written here on purpose (task 476 evaluates generating it); Role.AgentScopes
+// already reads back in catalog order (task 478), so the handler projects it as is.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
-using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.GetRoles;
 
@@ -46,7 +45,7 @@ public sealed partial class GetRoles
             role.Name,
             role.Description,
             [.. role.Permissions.Select(permission => permission.PermissionId)],
-            AgentScopeOrder.OrderKnown([.. role.AgentScopes.Select(scope => scope.Scope)])))
+            [.. role.AgentScopes.Select(scope => scope.Scope)]))
       ];
 
       return new Response(items.Count, [.. items]);

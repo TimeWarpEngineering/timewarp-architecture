@@ -7,13 +7,12 @@
 // expected-failure path stays a value, not an exception, so the endpoint maps it to a status
 // code and the SPA renders it without try/catch. Task 473: one IRoleStore read loads the Role
 // with both child sets; the entity-to-response mapping is hand-written here on purpose (task 476
-// evaluates generating it). Permissions keep the stored order; AgentScopes are ordered like
-// AgentScopes.All (task 466).
+// evaluates generating it). Permissions keep the stored order; Role.AgentScopes already reads back
+// in catalog order (task 478), so the handler projects it as is.
 #endregion
 
 namespace TimeWarp.Architecture.Features.Admin.Roles.Application;
 
-using TimeWarp.Architecture.Authorization;
 using TimeWarp.Architecture.Features.Admin.Roles.Domain;
 using static TimeWarp.Architecture.Features.Admin.Roles.GetRole;
 
@@ -43,7 +42,7 @@ public sealed partial class GetRole
         role.Name,
         role.Description,
         [.. role.Permissions.Select(permission => permission.PermissionId)],
-        AgentScopeOrder.OrderKnown([.. role.AgentScopes.Select(scope => scope.Scope)]));
+        [.. role.AgentScopes.Select(scope => scope.Scope)]);
     }
 
     internal static SharedProblemDetails RoleNotFound(Guid roleId) => new()
