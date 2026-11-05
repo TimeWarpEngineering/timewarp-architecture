@@ -35,7 +35,9 @@
 //     parameter of a compatible element type.
 //   TWA0041 (error): each query-response member maps to a root member. A ListResponse<T> response
 //     is checked through T. Members inherited from another assembly (BaseResponse, ListResponse)
-//     are skipped. [Computed] on the response, the item class, or the member skips it.
+//     are skipped. [Computed] on the response, the item class, or the member skips it. Child
+//     classes and a wrapped projection are walked too (ContractAgreementProjection, task 475); the
+//     message then names the child or wrapped class and the type it projects from.
 //   TWA0042 (warning): a command that implements no details interface and is not a Set-list
 //     command. Opt out with [NotAggregate("reason")] on the request.
 // Drift is an error, not a silent mapping: the only name rule is the "<Root>Id" key (see Types).
@@ -64,7 +66,6 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
   private const string OperationAttributeFullName = "TimeWarp.Contracts.OperationAttribute";
   private const string AggregateRootFullName = "TimeWarp.Foundation.Entities.IAggregateRoot";
   private const string NotAggregateAttributeName = "NotAggregateAttribute";
-  private const string ComputedAttributeName = "ComputedAttribute";
   private const string DomainNamespaceSuffix = ".Domain";
   private const string SetPrefix = "Set";
 
@@ -213,7 +214,7 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
 
       if (operation.IsQuery)
       {
-        CheckProjection(context, root, rootProperties, group, operation);
+        CheckProjection(context, root, group, operation);
         continue;
       }
 
@@ -250,7 +251,7 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
   {
     foreach (IPropertySymbol member in ContractAgreementTypes.InterfaceProperties(details))
     {
-      string? problem = Disagreement(root, rootProperties, member);
+      string? problem = ContractAgreementTypes.Disagreement(root, rootProperties, member);
       if (problem is null) continue;
 
       context.ReportDiagnostic(Diagnostic.Create(DetailsMember, LocationOf(root, context.Compilation),
@@ -297,38 +298,16 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
   private static void CheckProjection(
     CompilationAnalysisContext context,
     INamedTypeSymbol root,
-    Dictionary<string, IPropertySymbol> rootProperties,
     string group,
     OperationShape operation)
   {
-    if (operation.Response is not INamedTypeSymbol response || HasAttribute(response, ComputedAttributeName)) return;
+    if (operation.Response is not INamedTypeSymbol response) return;
 
-    INamedTypeSymbol projected = ListItemType(response) ?? response;
-    if (HasAttribute(projected, ComputedAttributeName)) return;
-
-    foreach (IPropertySymbol member in ContractAgreementTypes.ContractProperties(projected))
+    foreach (ContractAgreementProjection.Problem problem in ContractAgreementProjection.Problems(root, response))
     {
-      if (HasAttribute(member, ComputedAttributeName)) continue;
-
-      string? problem = Disagreement(root, rootProperties, member);
-      if (problem is null) continue;
-
-      context.ReportDiagnostic(Diagnostic.Create(Projection, LocationOf(member, context.Compilation),
-        projected.ToDisplayString(), member.Name, root.Name, group, problem));
+      context.ReportDiagnostic(Diagnostic.Create(Projection, LocationOf(problem.Member, context.Compilation),
+        problem.Projected.ToDisplayString(), problem.Member.Name, problem.Source.Name, group, problem.Reason));
     }
-  }
-
-  private static string? Disagreement(INamedTypeSymbol root, Dictionary<string, IPropertySymbol> rootProperties, IPropertySymbol member)
-  {
-    IPropertySymbol? rootMember = ContractAgreementTypes.FindRootMember(root, rootProperties, member.Name);
-    if (rootMember is null)
-    {
-      return $"'{root.Name}' has no public member '{member.Name}'; names match exactly, so rename the side that drifted";
-    }
-
-    if (ContractAgreementTypes.Compatible(member.Type, rootMember.Type)) return null;
-
-    return $"'{root.Name}.{rootMember.Name}' is {ContractAgreementTypes.Display(rootMember.Type)} but the contract member is {ContractAgreementTypes.Display(member.Type)}";
   }
 
   private static bool TryGetOperation(INamedTypeSymbol type, INamedTypeSymbol operationAttribute, out OperationShape? operation)
@@ -412,19 +391,6 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
     && !type.IsAbstract
     && type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, aggregateRoot));
 
-  private static INamedTypeSymbol? ListItemType(INamedTypeSymbol response)
-  {
-    for (INamedTypeSymbol? current = response.BaseType; current is not null; current = current.BaseType)
-    {
-      if (current.Name == "ListResponse" && current.TypeArguments.Length == 1)
-      {
-        return current.TypeArguments[0] as INamedTypeSymbol;
-      }
-    }
-
-    return null;
-  }
-
   private static string SliceNamespace(INamedTypeSymbol root)
   {
     string name = root.ContainingNamespace.ToDisplayString();
@@ -439,9 +405,6 @@ public class ContractAgreementAnalyzer : DiagnosticAnalyzer
       && a.ConstructorArguments.Length == 1
       && a.ConstructorArguments[0].Value is string reason
       && !string.IsNullOrWhiteSpace(reason));
-
-  private static bool HasAttribute(ISymbol symbol, string attributeName) =>
-    symbol.GetAttributes().Any(a => a.AttributeClass?.Name == attributeName);
 
   private static bool AnotherReferenceJoins(Compilation compilation, List<INamedTypeSymbol> roots, List<OperationShape> operations)
   {

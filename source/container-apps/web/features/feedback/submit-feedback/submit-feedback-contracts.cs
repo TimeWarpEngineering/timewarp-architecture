@@ -5,8 +5,9 @@
 #region Design
 // The server derives the owner from the authenticated principal. The command carries no UserId
 // (IAuthApiRequest is a mock-mode signal this endpoint does not need).
-// Length literals 200 and 8000 duplicate FeedbackItem.MaxTitleLength / MaxBodyLength. Contracts
-// must not reference domain.
+// Kind, Title and Body are IFeedbackItemDetails (task 475), whose validator this one includes and
+// whose length literals duplicate FeedbackItem.MaxTitleLength / MaxBodyLength (contracts must not
+// reference domain). MaxTitleLength / MaxBodyLength here forward to it for existing callers.
 // Permalink in the response is the relative path /Feedback/{guid:D}. EmailCopySent is true only
 // when a copy was actually handed to the sender. AttachmentIds are uploads already stored for
 // this principal; the handler links them. The response echoes the ids that were linked.
@@ -26,14 +27,16 @@ namespace TimeWarp.Architecture.Features.Feedback;
 )]
 public static partial class SubmitFeedback
 {
-  public const int MaxTitleLength = 200;
-  public const int MaxBodyLength = 8000;
+  public const int MaxTitleLength = IFeedbackItemDetails.MaxTitleLength;
+  public const int MaxBodyLength = IFeedbackItemDetails.MaxBodyLength;
 
   /// <summary>Problem extension key listing the attachment ids that could not be filed.</summary>
   public const string UnavailableAttachmentIdsExtension = "unavailableAttachmentIds";
 
   [ApiRoute("api/Feedback", HttpVerb.Post)]
-  public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
+  [Operation("feedback.submit", Description = "File a feedback item for the current user.", Group = "feedback")]
+  public sealed partial class Command
+    : IApiRequest, IFeedbackItemDetails, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackKind Kind { get; set; }
     public string Title { get; set; } = null!;
@@ -46,9 +49,7 @@ public static partial class SubmitFeedback
   {
     public Validator()
     {
-      RuleFor(command => command.Kind).IsInEnum();
-      RuleFor(command => command.Title).NotEmpty().MaximumLength(MaxTitleLength);
-      RuleFor(command => command.Body).NotEmpty().MaximumLength(MaxBodyLength);
+      Include(new FeedbackItemDetailsValidator());
       RuleFor(command => command.AttachmentIds)
         .Cascade(CascadeMode.Stop)
         .NotNull()

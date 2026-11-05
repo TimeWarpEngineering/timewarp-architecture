@@ -22,6 +22,8 @@ namespace TimeWarp.Architecture.Features.Feedback;
 public static partial class ChangeFeedbackStatus
 {
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/status", HttpVerb.Put)]
+  [Operation("feedback.change-status", Description = "Move a feedback item to another status.", Group = "feedback")]
+  [NotAggregate("Writes FeedbackItem through ChangeStatus, a checked transition that appends an entry; no agreement check covers a named mutation.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public FeedbackStatus Status { get; set; }

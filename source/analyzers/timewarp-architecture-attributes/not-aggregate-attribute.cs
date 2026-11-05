@@ -8,8 +8,10 @@
 // then requires every operation in the group to be accounted for: a command implements the details
 // interface or is a Set-list command, a query's response projects from the root. An operation
 // that sits in the group for host grouping but does not read or write the root (the user's xAI key
-// under "profile"), or that carries no root data (a delete by route id), says so here. The reason
-// is required: whitespace does not opt out, so the skip is a stated decision.
+// under "profile"), that carries no root data (a delete by route id), or that writes the root
+// through a named mutation no check covers (task 475: FeedbackItem.ChangeStatus, AddAdminReply),
+// says so here; the reason names the mutation. The reason is required: whitespace does not opt
+// out, so the skip is a stated decision.
 // The attribute goes on the request type (the nested Command or Query that carries [Operation]).
 // It removes that operation from every agreement check; it does not unlink the group.
 // Lives in TimeWarp.Architecture.Attributes, matched BY SIMPLE NAME by the convention analyzers,

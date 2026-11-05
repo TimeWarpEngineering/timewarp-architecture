@@ -70,14 +70,24 @@ the group is checked wherever it lives. Nothing is declared on the entity. **Nam
 drift is an error, not a mapping.** The one name rule is the key: a contract `RoleId` maps to the
 root's `Id`. Compatible types: the same type and nullability; a value wrapper and what it wraps
 (`RoleId` ↔ `Guid` through `Value`, `PermissionGrant` ↔ `string` through its one property); two
-collections with compatible elements.
+collections with compatible elements; two enums with the same member names (the wire enum that
+mirrors a domain enum, because contracts must not reference domain; values are not compared); and
+`T?` against `T?` of compatible `T`. `Guid?` against `Guid` is still drift.
+
+Query responses are walked past the top level. A member and its root member that are both classes
+(or both collections of classes) are compared member by member. For example,
+`FeedbackActivityEntry` projects from the owned `FeedbackActivity` child, and the message names the
+child. On a non-list response, a member with no root member of its name whose type is a contract
+class is the wrapped projection. `GetFeedbackForAdmin.Response.Item` (`FeedbackAdminView`) and
+`ListMyFeedback.Response.Items` are checked against the root one level down, the way a
+`ListResponse<T>` is checked through `T`.
 
 | Id | Severity | Requires |
 |----|----------|----------|
 | TWA0039 | error | Each member of an `I*Details` interface a command implements exists on the root with a compatible type |
 | TWA0040 | error | A `Set<Name>` command with one list member has a public `Set<Name>(collection)` mutation (the root's own name drops out: `SetRolePermissions` → `Role.SetPermissions`) |
 | TWA0041 | error | Each query-response member (a `ListResponse<T>` is checked through `T`) maps to a root member; a handler-derived value is `[Computed]` on the member or the response |
-| TWA0042 | warning | Any other command says why with `[NotAggregate("reason")]` (a delete by route id; an operation grouped here for hosts that stores elsewhere) |
+| TWA0042 | warning | Any other command says why with `[NotAggregate("reason")]`: a delete by route id; an operation grouped here for hosts that stores elsewhere; or a named mutation no check covers (a status transition, a thread append), with the reason naming the mutation |
 | TWA0043 | warning | A group whose operations sit in two roots' slice namespaces is ambiguous; give each root its own group |
 
 When a check fires, fix the side that drifted: rename the contract member or the domain member so

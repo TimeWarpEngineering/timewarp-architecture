@@ -30,6 +30,7 @@ public static partial class ListMyFeedback
   public const int MaxSearchLength = 200;
 
   [ApiRoute("api/Feedback", HttpVerb.Get)]
+  [Operation("feedback.list-mine", Description = "List the current user's feedback items, optionally filtered by a search.", Group = "feedback")]
   public sealed partial class Query : IApiRequest, IQueryStringRouteProvider, IQuery<OneOf<Response, SharedProblemDetails>>
   {
     public string? Search { get; set; }
@@ -63,6 +64,8 @@ public static partial class ListMyFeedback
     public object Clone() => this;
 
     public Guid FeedbackItemId { get; }
+    /// <summary>App-rooted page path the handler builds from the item id.</summary>
+    [Computed]
     public string Permalink { get; }
     public FeedbackKind Kind { get; }
     public string Title { get; }
@@ -99,6 +102,8 @@ public static partial class ListMyFeedback
   public sealed class Response : BaseResponse
   {
     public IReadOnlyList<Item> Items { get; }
+    /// <summary>Whether the caller's profile has an email. The handler reads it from the profile slice.</summary>
+    [Computed]
     public bool EmailCopyAvailable { get; }
 
     public Response(IReadOnlyList<Item> items, bool emailCopyAvailable)

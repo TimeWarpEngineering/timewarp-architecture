@@ -22,6 +22,8 @@ public static partial class AddFeedbackNote
   public const int MaxBodyLength = 4000;
 
   [ApiRoute("api/admin/feedback/{FeedbackItemId:guid}/notes", HttpVerb.Post)]
+  [Operation("feedback.add-note", Description = "Add an internal note that the filer never sees.", Group = "feedback")]
+  [NotAggregate("Appends a thread entry through FeedbackItem.AddInternalNote; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Body { get; set; } = null!;

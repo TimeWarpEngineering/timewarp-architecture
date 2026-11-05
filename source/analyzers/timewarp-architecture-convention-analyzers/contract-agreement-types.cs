@@ -1,7 +1,7 @@
 #region Purpose
 // Type and member rules the contract-agreement analyzer (TWA0039–TWA0043) uses to decide whether
 // a contract member and an aggregate-root member agree: name lookup, compatible types, collection
-// element types, and value-wrapper unwrapping.
+// element types, value-wrapper unwrapping, mirrored enums, and the disagreement messages.
 #endregion
 
 #region Design
@@ -19,6 +19,14 @@
 //      (Value + HasValue) does not make Guid? agree with Guid. Unwrapping stops after two levels.
 //   3. Both sides are collections (IEnumerable<T>, not string) with compatible element types:
 //      List<string> agrees with IReadOnlyList<PermissionGrant> and with IEnumerable<string>.
+//   4. Both sides are enums with the same member names (task 475). Contracts must not reference
+//      domain, so a wire enum mirrors the domain enum (FeedbackStatus in Features.Feedback and in
+//      Features.Feedback.Domain); the names are what travel. Values are not compared.
+//   5. Both sides are Nullable<T> of compatible T (FeedbackStatus? and the domain's FeedbackStatus?).
+//      Guid? against Guid is still drift: only the two-sided form unwraps.
+// A class-typed member that none of these accepts may still project member by member; that walk
+// belongs to ContractAgreementProjection. Messages use the short type name unless both sides
+// print the same, which is the mirrored-type case; then they use the full name.
 // Contract members come from metadata or source alike; the analyzer only reads symbols, never
 // syntax or validator bodies (461 resolution: metadata is enough).
 #endregion
@@ -109,6 +117,42 @@ internal static class ContractAgreementTypes
   /// <summary>True when a contract type agrees with a root type (see Design).</summary>
   public static bool Compatible(ITypeSymbol contract, ITypeSymbol root) => Compatible(contract, root, depth: 0);
 
+  /// <summary>Null when <paramref name="member"/> agrees with the root member of its name, else why not.</summary>
+  public static string? Disagreement(INamedTypeSymbol root, Dictionary<string, IPropertySymbol> rootProperties, IPropertySymbol member)
+  {
+    IPropertySymbol? rootMember = FindRootMember(root, rootProperties, member.Name);
+    if (rootMember is null) return MissingMember(root, member.Name);
+
+    return Compatible(member.Type, rootMember.Type) ? null : TypeMismatch(root, rootMember, member);
+  }
+
+  /// <summary>Message for a contract member with no member of that name on <paramref name="root"/>.</summary>
+  public static string MissingMember(INamedTypeSymbol root, string memberName) =>
+    $"'{root.Name}' has no public member '{memberName}'; names match exactly, so rename the side that drifted";
+
+  /// <summary>Message for a contract member whose type does not agree with the root member's.</summary>
+  public static string TypeMismatch(INamedTypeSymbol root, IPropertySymbol rootMember, IPropertySymbol member)
+  {
+    string rootType = Display(rootMember.Type);
+    string contractType = Display(member.Type);
+    if (rootType == contractType)
+    {
+      rootType = rootMember.Type.ToDisplayString();
+      contractType = member.Type.ToDisplayString();
+    }
+
+    string message = $"'{root.Name}.{rootMember.Name}' is {rootType} but the contract member is {contractType}";
+    return EnumOf(member.Type) is { } contractEnum && EnumOf(rootMember.Type) is { } rootEnum
+      ? message + EnumDifference(contractEnum, rootEnum)
+      : message;
+  }
+
+  /// <summary>A class that can be projected member by member: not System, not string, not a collection.</summary>
+  public static bool IsProjectableClass(ITypeSymbol type) =>
+    type is INamedTypeSymbol { TypeKind: TypeKind.Class, SpecialType: SpecialType.None } named
+    && !IsSystemType(named)
+    && !TryGetElement(named, out _);
+
   /// <summary>Element type of a collection (array or IEnumerable&lt;T&gt;); string is not a collection.</summary>
   public static bool TryGetElement(ITypeSymbol type, out ITypeSymbol element)
   {
@@ -137,6 +181,16 @@ internal static class ContractAgreementTypes
   private static bool Compatible(ITypeSymbol contract, ITypeSymbol root, int depth)
   {
     if (SameType(contract, root)) return true;
+
+    if (contract.TypeKind == TypeKind.Enum && root.TypeKind == TypeKind.Enum)
+    {
+      return EnumNames(contract).SetEquals(EnumNames(root));
+    }
+
+    if (NullableArgument(contract) is { } contractValue && NullableArgument(root) is { } rootValue)
+    {
+      return Compatible(contractValue, rootValue, depth);
+    }
 
     if (depth < MaxUnwrapDepth && TryUnwrap(root, out ITypeSymbol wrapped) && Compatible(contract, wrapped, depth + 1))
     {
@@ -171,6 +225,31 @@ internal static class ContractAgreementTypes
 
     wrapped = value.Type;
     return true;
+  }
+
+  private static ITypeSymbol? NullableArgument(ITypeSymbol type) =>
+    type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+      ? nullable.TypeArguments[0]
+      : null;
+
+  private static ITypeSymbol? EnumOf(ITypeSymbol type)
+  {
+    ITypeSymbol candidate = NullableArgument(type) ?? type;
+    return candidate.TypeKind == TypeKind.Enum ? candidate : null;
+  }
+
+  private static HashSet<string> EnumNames(ITypeSymbol enumType) =>
+    new(
+      enumType.GetMembers().OfType<IFieldSymbol>().Where(static field => field.HasConstantValue).Select(static field => field.Name),
+      StringComparer.Ordinal);
+
+  private static string EnumDifference(ITypeSymbol contractEnum, ITypeSymbol rootEnum)
+  {
+    HashSet<string> contractNames = EnumNames(contractEnum);
+    HashSet<string> rootNames = EnumNames(rootEnum);
+    string onlyContract = string.Join(", ", contractNames.Where(name => !rootNames.Contains(name)).OrderBy(static name => name, StringComparer.Ordinal));
+    string onlyRoot = string.Join(", ", rootNames.Where(name => !contractNames.Contains(name)).OrderBy(static name => name, StringComparer.Ordinal));
+    return $"; the enum member names differ (contract only: {(onlyContract.Length == 0 ? "none" : onlyContract)}; root only: {(onlyRoot.Length == 0 ? "none" : onlyRoot)})";
   }
 
   private static bool IsSystemType(INamedTypeSymbol type)

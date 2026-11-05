@@ -24,6 +24,8 @@ public sealed class FeedbackActivityEntry : ICloneable
 
   public int Sequence { get; }
   public FeedbackActivityKind Kind { get; }
+  /// <summary>The entry's author on the admin copy. The handler sets it to null on the filer's copy (see Design).</summary>
+  [Computed]
   public Guid? AuthorPrincipalId { get; }
   public string? Body { get; }
   public FeedbackStatus? FromStatus { get; }

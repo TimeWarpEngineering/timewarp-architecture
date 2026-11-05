@@ -23,6 +23,8 @@ public static partial class ReplyAsFiler
   public const int MaxBodyLength = 4000;
 
   [ApiRoute("api/Feedback/{FeedbackItemId:guid}/replies", HttpVerb.Post)]
+  [Operation("feedback.reply-as-filer", Description = "Add the filer's reply to their own feedback item.", Group = "feedback")]
+  [NotAggregate("Appends a thread entry through FeedbackItem.AddFilerReply; Body is the entry's body, not FeedbackItem.Body.")]
   public sealed partial class Command : IApiRequest, ICommand<OneOf<Response, SharedProblemDetails>>
   {
     public string Body { get; set; } = null!;
