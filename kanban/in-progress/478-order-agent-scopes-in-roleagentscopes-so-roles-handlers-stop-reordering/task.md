@@ -60,6 +60,9 @@ Acceptance:
 - 2026-11-05 implementer (ganda task work): ordering moved into `Role.AgentScopes`; handlers,
   Design regions, and domain tests updated; build, tests, and audit run (see Results).
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session b6a65fe8-eb49-4187-a33a-876151f3de12, max-turns 500, Done — 2026-11-05T08:36:54Z
+- Review oracle: claude-opus-5-5 (ganda task work, headless), tw-implementation-review effort 2,
+  roster general, turn cap 120. Round 1 → accepted-exceptions (0 open) — 2026-11-05
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a7d08793-c7d0-4035-9473-fe4853654dec, max-turns 120, artifacts general.md, merged.md — 2026-11-05T08:39:11Z
 
 ## Results
 
@@ -107,6 +110,22 @@ Acceptance:
   `PUT api/Roles/{id}/agent-scopes` with `["feedback:read","identity:read"]` answers
   `["identity:read","feedback:read"]`, and a later GetRole and GetRoles return the same order. An
   unknown scope still answers 400.
+
+### Review disposition
+
+- Rounds: 1. Effort 2, roster: general (review oracle, claude-opus-5-5).
+- Final counts: bug 0, suggestion 0, nit 1 (wontfix). Open: 0.
+- Disposition: **accepted-exceptions**. M1 (nit): the Design comment at `role-domain.cs:16` is
+  144 characters and was not reflowed. It is cosmetic, no line-length rule is enforced, and the
+  gates pass, so it is accepted as is.
+- The reviewer re-ran web-domain-tests: 57 of 57 passed. The implementer restatement matches the
+  task. No misread.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`,
+  `review/disposition.md`.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
