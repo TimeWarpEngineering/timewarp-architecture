@@ -51,6 +51,7 @@ Acceptance criteria:
   NoUsableWorktree warnings, and `source-file-line-cap` on EF migration designers and a 238
   research runfile, which is warning severity since 469-001. `audit --fix` changed nothing.
   No build or test ran, since this is a kanban-only research change.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-sonnet-5-5), session 366929c4-70ea-405d-aa73-163352c48be3, max-turns 500, Done — 2026-11-05T18:47:26Z
 
 ## Notes
 
