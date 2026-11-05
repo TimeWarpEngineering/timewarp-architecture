@@ -73,6 +73,7 @@ Acceptance:
   handler to them, and named the arguments at every response/DTO/admin-view/activity/attachment
   constructor call in the Roles and Feedback application layers. `dev build` clean, `dev test`
   23/23, `ganda repo audit` exit 0.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session aeca77fe-a1ae-4be8-92a7-4ddb08d2c89a, max-turns 500, Done — 2026-11-05T09:08:05Z
 
 ## Results
 
