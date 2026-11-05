@@ -50,6 +50,7 @@ Acceptance:
 - 2026-11-05 implement (ganda task work): read all 20 handlers, `FeedbackContractMap`, the Role
   aggregate, the Roles and Feedback contracts, and the 461, 474, and 475 results. Wrote
   `proposal.md`. Product code is unchanged. The walk is parked as Blocked until Steve decides.
+- Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session e70ced08-4ec9-4693-b067-71e605acccba, max-turns 500, Blocked — 2026-11-05T05:58:34Z
 
 ## Decision
 
@@ -99,3 +100,7 @@ alone".
 
 Follows 461, 473, 474, 475. Steve 2026-11-05: "after we get the analyzer done, see if we can
 generate the glue in the application layer."
+
+## Blocked
+
+2026-11-05: Steve answers the question in kanban/in-progress/476-*/proposal.md section 8: generate the entity-to-response projections or not, and if yes, with a new generator on the TWA0041 rules (B) or with the Mapperly package already referenced (C). Record the answer under ## Decision in task.md, then resume. The resumed walk files implementation tasks if the answer is yes.
