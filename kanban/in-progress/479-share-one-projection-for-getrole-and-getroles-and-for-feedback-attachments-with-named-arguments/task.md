@@ -74,8 +74,22 @@ Acceptance:
   constructor call in the Roles and Feedback application layers. `dev build` clean, `dev test`
   23/23, `ganda repo audit` exit 0.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session aeca77fe-a1ae-4be8-92a7-4ddb08d2c89a, max-turns 500, Done — 2026-11-05T09:08:05Z
+- 2026-11-05 review oracle (claude-opus-5-5, ganda task work, effort 2, roster general, turn cap
+  120): round 1 raised no findings, disposition clean. `dev build` and `dev test` were re-run and passed.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 3926b4f0-7007-462d-8cff-16e1ff6ae5a3, max-turns 120, artifacts general.md, merged.md — 2026-11-05T09:17:54Z
 
 ## Results
+
+### Review disposition
+
+- Disposition: **clean**. 1 round, effort 2, reviewer roster: general (review oracle,
+  claude-opus-5-5).
+- Final counts: bug 0, suggestion 0, nit 0 (0 open, 0 fixed, 0 wontfix).
+- The reviewer re-ran the gates in the claim worktree: `./bin/dev build` gave 0 warnings and 0 errors, and
+  `./bin/dev test --no-build -q` gave 23 of 23 projects passed.
+- The implementer restatement matches the task. No misread.
+- Artifacts: `review/review-framework.md`, `review/round-1/general.md`,
+  `review/round-1/merged.md`, `review/disposition.md`.
 
 ### What changed
 
@@ -128,6 +142,10 @@ in the upload handler and `AttachmentsAsync` (`Select(Project)`), with no other 
 member list. In the app, Admin > Roles list and role detail show the same permissions and agent
 scopes as before, and a feedback attachment uploaded on the submit form shows the same name,
 size, and download link before and after submit.
+
+## Review
+
+- Round 1: Done
 
 ## Notes
 
