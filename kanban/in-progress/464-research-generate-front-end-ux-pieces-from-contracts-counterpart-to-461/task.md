@@ -3,7 +3,7 @@
 ## Description
 
 Research task (proposal only, no implementation). This is the front-end counterpart to task 461
-(`kanban/to-do/461-research-infer-role-aggregate-from-contracts-contract-driven-aggregate-generation`).
+(`kanban/in-progress/461-research-infer-role-aggregate-from-contracts-contract-driven-aggregate-generation`).
 Using the Roles slice, decide which SPA pieces can be source-generated from the contracts:
 - the typed API surface screens call (action sets over `DefaultApiHandler`)
 - the DTOs consumed and the fetchers for server-bound state
@@ -14,7 +14,8 @@ Using the Roles slice, decide which SPA pieces can be source-generated from the 
 - CRUD scaffolding
 
 
-Kitchen draft: `contracts-frontend-example.md` (real code quoted verbatim with paths; proposed code marked).
+Kitchen deliverable: `proposal.md` (current master, options A–D as code). The older draft
+`contracts-frontend-example.md` (written against `f003919db`) is superseded; it is Option C.
 
 ## Outcome of 461 (read first; Steve 2026-11-05)
 
@@ -92,13 +93,13 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 
 ## Checklist
 
-- [ ] Review the kitchen draft with Steven
+- [ ] Review `proposal.md` with Steven
 - [ ] Decide the opt-in shape (`[ContractState(...)]` on the state vs per-contract attribute)
 - [ ] Decide `ContractResult<T>` slots vs keeping hand-written success flags
 - [ ] Decide conflict rule with existing hand-written action sets (generate-if-absent vs require removal)
 - [ ] Decide refetch/invalidation declaration (default none)
 - [ ] Confirm every hand-written piece has a generated hook or failing stub
-- [ ] Split implementation tasks (coordinate with 461)
+- [ ] Steve answers the question in section 7 of `proposal.md`
 
 ## Session
 
@@ -112,6 +113,16 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   - `source-file-line-cap`: 3 EF migration designer and snapshot files, plus one kanban research
     runfile. The check is at warning severity since 469-001, and TWA0038 enforces the cap.
 - Implement oracle: implemented by implementer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session a6b13f79-d197-4902-975d-32873d675714, max-turns 500, Done — 2026-11-05T15:43:51Z
+- Review oracle round 1 (2026-11-05): tw-implementation-review, effort 2, roster general (claude,
+  model claude-opus-5-5, headless ganda task work, turn cap 120). The restatement matches the task,
+  so no misread was recorded. The falsifiable claims in sections 2–4 were re-run and hold. There are
+  4 open findings (2 suggestions, 2 nits), so a fix pass is requested. Disposition is pending.
+- Review oracle: review by reviewer-claude (claude, vendor anthropic, model claude-opus-5-5, response model claude-opus-5-5), session 4375f6c0-13ea-40f7-bcc1-53e385e3160f, max-turns 120, artifacts general.md, merged.md — 2026-11-05T15:47:14Z
+- 2026-11-05 implement-fix-2 (implementer-claude): fixed M1–M4 from `review/round-1/merged.md`.
+  Re-ran the greps behind the counts: `action.Command` hits 6 files, 5 of them `DefaultApiHandler`s;
+  19 files override `HandleError`; 16 `DefaultApiHandler`s take a `Query`. `HandleError` is abstract
+  on `ApiHandler` and called from the private `HandleApiResponseAsync`, which is why D needs the
+  `OnProblem` virtual. No product code changed.
 
 ## Results
 
@@ -119,8 +130,8 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
 
 - **Mechanical pieces in Roles:** 4 server-bound handlers. 2 of them have mechanical request builds
   (Create, Fetch). 4 success writes are mechanical (1 snapshot, 3 flags). 3 required hand-written
-  pieces read or seed local drafts. That is about 12 lines of mechanical body. SPA-wide, only 6 of
-  41 `DefaultApiHandler`s pass the contract request through.
+  pieces read or seed local drafts. That is about 12 lines of mechanical body. SPA-wide, only 5 of
+  41 `DefaultApiHandler`s build the request from the contract Command on the Action.
 - **Feasibility limit:** Roslyn generators cannot see each other's output. A generated action set
   gets no dispatch method from TimeWarp.State, no handler registration from TimeWarp.Mediator, and
   no roster entry. A generated `[Page]` partial gets no route. Only bodies inside hand-written
@@ -134,10 +145,29 @@ Every hand-written piece gets a generated partial hook or a stub that fails unti
   already differs), A4 mock coverage (today a missing factory falls through to the real API with
   only a Debug log).
 - **Option D:** `ContractResult<T>` slots replace the 9 hand-written success flags and ids, and the
-  sticky `LastCreatedRoleId` comparison in `RoleForm.razor`.
+  sticky `LastCreatedRoleId` comparison in `RoleForm.razor`. `Failed` is set through one new empty
+  virtual `OnProblem` on `ApiHandler`, so the 19 hand-written `HandleError` overrides stay as they
+  are.
+- **Option B hook rule:** the required `On…Loaded` seed hook is declared on every generated fetch
+  (up to 16 empty bodies SPA-wide). The opt-in alternative leaves 4f to a test.
 - **Forms and validation:** nothing to generate. The form already binds the contract's
   `IRoleDetails` and uses the contract's validator.
 - **Steve's question** is in section 7. No option is picked and no implementation tasks are split.
+
+### Review
+
+- Round 1 ran at effort 2 with a general reviewer.
+- Counts: bug 0. Suggestion 2 open (M1, M2). Nit 2 open (M3, M4).
+- Fix pass 1 (2026-11-05) addressed all four in `proposal.md` and `task.md`:
+  - M1: Option D now names a base-class `OnProblem` virtual for `Failed`, and the A-only check
+    covers all three assignments. The scope line names the base change.
+  - M2: Option B states the required-on-every-fetch rule and its cost, and the opt-in alternative
+    with its reliance on the test.
+  - M3: the count is 5 of 41, with the grep and why its sixth hit does not count.
+  - M4: the Description and Checklist point at `proposal.md`, the split item is now "Steve answers
+    section 7", and the 461 path is `kanban/in-progress/`.
+- Disposition is pending until round 2.
+- Paths: `review/review-framework.md`, `review/round-1/general.md`, `review/round-1/merged.md`.
 
 ### How to validate
 
@@ -151,10 +181,18 @@ path:
   nothing outside comments.
 - `sed -n 55,70p source/container-apps/web/projects/web-spa/services/mocks/mock-web-api-service.cs`
   shows the Debug fallback.
+- `git grep -l "action.Command" -- source/container-apps/web/projects/web-spa/features` lists 6
+  files; 5 contain `DefaultApiHandler<` (the chat-state one does not).
+- `git grep -l "override.*HandleError" -- source/container-apps/web/projects/web-spa/features | wc -l`
+  prints 19.
 
 Expect: every claim in sections 2 and 4 matches the code. Every option in section 5 is a code
 document, with input, generated code, and hand-written hooks. Required hooks carry an access
 modifier. Section 7 asks the question and does not pick.
+
+## Review
+
+- Round 1: Blocked — open M1, M2, M3, M4
 
 ## Notes
 
