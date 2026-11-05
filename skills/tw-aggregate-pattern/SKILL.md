@@ -100,6 +100,28 @@ both say the same thing, or add the missing mutation. `[Computed]` and `[NotAggr
 `TimeWarp.Architecture.Attributes` and state a fact about the contract; they are not a way to
 silence drift.
 
+### Projection and mutation calls stay hand-written
+
+The analyzer proves a projection *can* be written. The handler still writes it. There is no
+mapper library and no projection or handler generator.
+
+- **One projection per aggregate and response shape.** Put it in one static method in the
+  slice's application layer (for example `FeedbackContractMap`). A second handler that returns the
+  same shape calls that method, so the shape is never written twice.
+- **Named arguments.** Write `new Response(roleId: role.Id.Value, name: role.Name, …)`. Two members
+  of the same type cannot be swapped silently, and a dropped optional parameter is visible in the
+  diff.
+- **Agreement by name is not the value.** A member can match its root member by name and still
+  need a filtered or redacted value for its audience: `GetFeedback.Response.Activity` is the filer
+  thread with internal notes removed and admin ids redacted, not `FeedbackItem.Activity`. A test
+  asserts what each audience must not see.
+- **Ordering and normalization belong to the root.** When every read of a collection wants the
+  same order, the root's property returns it in that order. A handler does not reorder it.
+- **The handler supplies who and when.** A handler calls the named mutation with the command's
+  values, behind any `Can…` check. When the mutation records who acted or when, the handler also
+  passes the acting principal and the clock; the root does not read ambient context. A rule that
+  answers with a status code (protected core, 409) runs in the handler before the call.
+
 ## Exemplar
 
 `web/features/profile/profile-domain.cs` + `profile-id-domain.cs` — read both before adding a
