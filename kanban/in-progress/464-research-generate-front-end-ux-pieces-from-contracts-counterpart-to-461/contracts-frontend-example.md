@@ -1,5 +1,10 @@
 # Front-end (UX) pieces from contracts: worked example (Roles), the counterpart to task 461
 
+> **Superseded by `proposal.md` (2026-11-05, current master).** This draft predates 473/474/476. Its
+> section 2 is Option C there, and `proposal.md` section 4a shows that a generated action set is
+> invisible to the TimeWarp.State and TimeWarp.Mediator generators. Some names below are stale
+> (`RoleDto.PermissionIds` is now `Permissions`).
+
 Sources: TimeWarpEngineering/timewarp-architecture origin/HEAD `f003919db` (read-only). The ActionSet
 method generator is TimeWarp.State's own. Paths are relative to the repo root, and `SPA` =
 `source/container-apps/web/projects/web-spa`.
